@@ -1,6 +1,6 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Target, Heart, Users, MessageSquare, Video } from 'lucide-react';
+import { Sparkles, Heart, Users, Video, Hash, Megaphone } from 'lucide-react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
   Table,
@@ -17,6 +17,12 @@ interface SalesAngle {
   avatar?: string;
   emotion?: string;
   contentType?: string;
+  hookExample?: string;
+  ctaExample?: string;
+  funnelPhase?: string;
+  hashtags?: string[];
+  whyItWorks?: string;
+  developmentTips?: string;
 }
 
 interface SalesAnglesData {
@@ -26,6 +32,18 @@ interface SalesAnglesData {
 interface SalesAnglesTabProps {
   salesAnglesData?: SalesAnglesData | null;
 }
+
+const FUNNEL_LABELS: Record<string, string> = {
+  'tofu': 'TOFU',
+  'mofu': 'MOFU',
+  'bofu': 'BOFU',
+};
+
+const FUNNEL_COLORS: Record<string, string> = {
+  'tofu': 'bg-sky-100 text-sky-700',
+  'mofu': 'bg-amber-100 text-amber-700',
+  'bofu': 'bg-green-100 text-green-700',
+};
 
 const TYPE_COLORS: Record<string, string> = {
   'educativo': 'bg-blue-100 text-blue-700',
@@ -100,8 +118,10 @@ export function SalesAnglesTab({ salesAnglesData }: SalesAnglesTabProps) {
                   <TableHead className="w-[40px]">#</TableHead>
                   <TableHead className="min-w-[200px]">Ángulo</TableHead>
                   <TableHead className="min-w-[100px]">Tipo</TableHead>
+                  <TableHead className="min-w-[80px]">Funnel</TableHead>
                   <TableHead className="min-w-[120px]">Avatar</TableHead>
                   <TableHead className="min-w-[100px]">Emoción</TableHead>
+                  <TableHead className="min-w-[180px]">Hook</TableHead>
                   <TableHead className="min-w-[100px]">Formato</TableHead>
                 </TableRow>
               </TableHeader>
@@ -115,6 +135,13 @@ export function SalesAnglesTab({ salesAnglesData }: SalesAnglesTabProps) {
                         {angle.type || '-'}
                       </Badge>
                     </TableCell>
+                    <TableCell>
+                      {angle.funnelPhase && (
+                        <Badge className={`text-xs ${FUNNEL_COLORS[angle.funnelPhase] || 'bg-gray-100 text-gray-700'}`}>
+                          {FUNNEL_LABELS[angle.funnelPhase] || angle.funnelPhase}
+                        </Badge>
+                      )}
+                    </TableCell>
                     <TableCell className="text-sm">
                       <div className="flex items-center gap-1">
                         <Users className="h-3 w-3 text-muted-foreground" />
@@ -126,6 +153,9 @@ export function SalesAnglesTab({ salesAnglesData }: SalesAnglesTabProps) {
                         <Heart className="h-3 w-3 text-pink-500" />
                         {angle.emotion || '-'}
                       </div>
+                    </TableCell>
+                    <TableCell className="text-sm italic text-muted-foreground">
+                      {angle.hookExample ? `"${angle.hookExample}"` : '-'}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-xs">
@@ -142,25 +172,71 @@ export function SalesAnglesTab({ salesAnglesData }: SalesAnglesTabProps) {
         </CardContent>
       </Card>
 
-      {/* Angle Cards - First 6 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {angles.slice(0, 6).map((angle, idx) => (
-          <Card key={idx}>
+      {/* Angle Cards - All */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {angles.map((angle, idx) => (
+          <Card key={idx} className="overflow-hidden">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <Badge className={`text-xs ${TYPE_COLORS[angle.type || ''] || 'bg-gray-100 text-gray-700'}`}>
-                  {angle.type}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge className={`text-xs ${TYPE_COLORS[angle.type || ''] || 'bg-gray-100 text-gray-700'}`}>
+                    {angle.type}
+                  </Badge>
+                  {angle.funnelPhase && (
+                    <Badge className={`text-xs ${FUNNEL_COLORS[angle.funnelPhase] || 'bg-gray-100 text-gray-700'}`}>
+                      {FUNNEL_LABELS[angle.funnelPhase] || angle.funnelPhase}
+                    </Badge>
+                  )}
+                </div>
                 <span className="text-xs text-muted-foreground">#{idx + 1}</span>
               </div>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <p className="text-sm font-medium">{angle.angle}</p>
-              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                <span>👤 {angle.avatar}</span>
-                <span>💝 {angle.emotion}</span>
-                <span>🎬 {angle.contentType}</span>
+            <CardContent className="space-y-3">
+              <p className="text-sm">{angle.angle}</p>
+
+              {angle.hookExample && (
+                <div className="p-2 bg-amber-500/5 border border-amber-500/20 rounded-md">
+                  <p className="text-xs font-medium text-amber-600 mb-1 flex items-center gap-1">
+                    <Megaphone className="h-3 w-3" /> Hook
+                  </p>
+                  <p className="text-sm italic">"{angle.hookExample}"</p>
+                </div>
+              )}
+
+              {angle.ctaExample && (
+                <div className="p-2 bg-green-500/5 border border-green-500/20 rounded-md">
+                  <p className="text-xs font-medium text-green-600 mb-1">CTA</p>
+                  <p className="text-sm">{angle.ctaExample}</p>
+                </div>
+              )}
+
+              {angle.whyItWorks && (
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium text-purple-600">Por qué funciona:</span> {angle.whyItWorks}
+                </p>
+              )}
+
+              {angle.developmentTips && (
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium text-blue-600">Desarrollo:</span> {angle.developmentTips}
+                </p>
+              )}
+
+              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground pt-1 border-t">
+                <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {angle.avatar}</span>
+                <span className="flex items-center gap-1"><Heart className="h-3 w-3 text-pink-500" /> {angle.emotion}</span>
+                <span className="flex items-center gap-1"><Video className="h-3 w-3" /> {angle.contentType}</span>
               </div>
+
+              {angle.hashtags && angle.hashtags.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {angle.hashtags.map((tag, i) => (
+                    <Badge key={i} variant="outline" className="text-xs font-normal">
+                      <Hash className="h-2.5 w-2.5 mr-0.5" />{tag.replace(/^#/, '')}
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}

@@ -7,7 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// 10 pasos granulares para evitar truncamiento por límite de tokens
+// 12 pasos granulares para evitar truncamiento por límite de tokens
 const RESEARCH_STEPS = [
   { id: "market_overview", name: "Panorama de Mercado", dependsOn: [] as string[] },
   { id: "jtbd", name: "Jobs To Be Done", dependsOn: ["market_overview"] },
@@ -19,6 +19,8 @@ const RESEARCH_STEPS = [
   { id: "puv_transformation", name: "PUV y Transformación", dependsOn: ["sales_angles"] },
   { id: "lead_magnets", name: "Lead Magnets", dependsOn: ["avatars", "pains_desires"] },
   { id: "video_creatives", name: "Creativos de Video", dependsOn: ["sales_angles", "differentiation"] },
+  { id: "content_calendar", name: "Parrilla de Contenido 30 Días", dependsOn: ["avatars", "sales_angles", "differentiation"] },
+  { id: "launch_strategy", name: "Estrategia de Lanzamiento", dependsOn: ["avatars", "sales_angles", "puv_transformation"] },
 ];
 
 // Function to fetch document content from URL
@@ -79,17 +81,44 @@ function repairJsonForParse(str: string): string {
     JSON.parse(s);
     return s;
   } catch {
-    s = s.replace(/,\s*$/, "");
-    let open = 0, bracket = 0;
+    // Step 1: Fix unterminated strings (common when AI output is truncated)
+    let inString = false;
+    let escaped = false;
     for (let i = 0; i < s.length; i++) {
-      const c = s[i];
-      if (c === "{") open++;
-      else if (c === "}") open--;
-      else if (c === "[") bracket++;
-      else if (c === "]") bracket--;
+      if (escaped) { escaped = false; continue; }
+      if (s[i] === '\\' && inString) { escaped = true; continue; }
+      if (s[i] === '"') inString = !inString;
     }
-    while (bracket > 0) { s += "]"; bracket--; }
-    while (open > 0) { s += "}"; open--; }
+    if (inString) {
+      // Remove trailing backslash(es) that would escape our closing quote
+      while (s.endsWith('\\')) s = s.slice(0, -1);
+      s += '"';
+    }
+
+    // Step 2: Clean up dangling partial entries
+    // Remove dangling key without value: , "key"  at end
+    s = s.replace(/,\s*"[^"]*"\s*$/, '');
+    // Remove key with colon but no value: , "key":  at end
+    s = s.replace(/,\s*"[^"]*"\s*:\s*$/, '');
+    // Remove trailing comma
+    s = s.replace(/,\s*$/, '');
+
+    // Step 3: Count and close brackets/braces (string-aware)
+    let open = 0, bracket = 0;
+    inString = false;
+    escaped = false;
+    for (let i = 0; i < s.length; i++) {
+      if (escaped) { escaped = false; continue; }
+      if (s[i] === '\\' && inString) { escaped = true; continue; }
+      if (s[i] === '"') { inString = !inString; continue; }
+      if (inString) continue;
+      if (s[i] === '{') open++;
+      else if (s[i] === '}') open--;
+      else if (s[i] === '[') bracket++;
+      else if (s[i] === ']') bracket--;
+    }
+    while (bracket > 0) { s += ']'; bracket--; }
+    while (open > 0) { s += '}'; open--; }
     return s;
   }
 }
@@ -476,20 +505,63 @@ async function executeResearchStep(
           type: "object",
           additionalProperties: false,
           properties: {
-            enganchar: { type: "object", additionalProperties: true },
-            solucion: { type: "object", additionalProperties: true },
-            remarketing: { type: "object", additionalProperties: true },
-            fidelizar: { type: "object", additionalProperties: true },
+            enganchar: {
+              type: "object",
+              properties: {
+                marketDominance: { type: "string" },
+                saturated: { type: "string" },
+                opportunities: { type: "array", items: { type: "string" } },
+                hookTypes: { type: "array", items: { type: "string" } },
+                platforms: { type: "array", items: { type: "string" } },
+                contentFormats: { type: "array", items: { type: "string" } }
+              }
+            },
+            solucion: {
+              type: "object",
+              properties: {
+                currentPromises: { type: "string" },
+                unresolvedObjections: { type: "string" },
+                trustOpportunities: { type: "array", items: { type: "string" } },
+                educationAngles: { type: "array", items: { type: "string" } },
+                proofTypes: { type: "array", items: { type: "string" } }
+              }
+            },
+            remarketing: {
+              type: "object",
+              properties: {
+                existingProof: { type: "string" },
+                gaps: { type: "string" },
+                decisionMessages: { type: "array", items: { type: "string" } },
+                urgencyTactics: { type: "array", items: { type: "string" } },
+                objectionHandling: { type: "array", items: { type: "string" } },
+                touchpointSequence: { type: "array", items: { type: "string" } }
+              }
+            },
+            fidelizar: {
+              type: "object",
+              properties: {
+                commonErrors: { type: "string" },
+                communityOpportunities: { type: "array", items: { type: "string" } },
+                retentionStrategies: { type: "array", items: { type: "string" } },
+                referralAngles: { type: "array", items: { type: "string" } },
+                postPurchaseContent: { type: "array", items: { type: "string" } }
+              }
+            },
           }
         },
         executiveSummary: {
           type: "object",
           additionalProperties: false,
           properties: {
-            marketSummary: { type: "string" },
-            keyInsights: { type: "array", minItems: 3, maxItems: 5, items: { type: "object", additionalProperties: true } },
-            immediateActions: { type: "array", minItems: 3, maxItems: 3, items: { type: "object", additionalProperties: true } },
-            finalRecommendation: { type: "string" }
+            marketSummary: { type: "string", description: "Resumen del mercado con datos concretos (2 párrafos)" },
+            opportunityScore: { type: "number", description: "Score de oportunidad 1-10" },
+            opportunityScoreJustification: { type: "string", description: "Justificación del score" },
+            keyInsights: { type: "array", minItems: 3, maxItems: 5, items: { type: "object", properties: { insight: { type: "string" }, importance: { type: "string" }, action: { type: "string" } }, additionalProperties: false } },
+            psychologicalDrivers: { type: "array", minItems: 3, maxItems: 5, items: { type: "object", properties: { driver: { type: "string" }, why: { type: "string" }, howToUse: { type: "string" } }, additionalProperties: false } },
+            immediateActions: { type: "array", minItems: 3, maxItems: 5, items: { type: "object", properties: { action: { type: "string" }, howTo: { type: "string" }, expectedResult: { type: "string" } }, additionalProperties: false } },
+            quickWins: { type: "array", minItems: 2, maxItems: 4, items: { type: "object", properties: { win: { type: "string" }, effort: { type: "string" }, impact: { type: "string" } }, additionalProperties: false } },
+            risksToAvoid: { type: "array", minItems: 2, maxItems: 4, items: { type: "object", properties: { risk: { type: "string" }, why: { type: "string" } }, additionalProperties: false } },
+            finalRecommendation: { type: "string", description: "Recomendación estratégica priorizada con timeline" }
           }
         }
       },
@@ -516,6 +588,9 @@ async function executeResearchStep(
               whyItWorks: { type: "string", description: "Por qué funciona psicológicamente este ángulo" },
               contentType: { type: "string", description: "Formato ideal (Video UGC, Carrusel, Story, etc.)" },
               hookExample: { type: "string", description: "Hook completo y listo para usar (1-2 oraciones)" },
+              ctaExample: { type: "string", description: "CTA específico para este ángulo" },
+              funnelPhase: { type: "string", enum: ["tofu", "mofu", "bofu"], description: "Fase del funnel" },
+              hashtags: { type: "array", minItems: 3, maxItems: 5, items: { type: "string" }, description: "Hashtags relevantes" },
               developmentTips: { type: "string", description: "Cómo desarrollar este ángulo en contenido" }
             }
           }
@@ -629,6 +704,196 @@ async function executeResearchStep(
         },
       },
     },
+
+    content_calendar: {
+      type: "object",
+      additionalProperties: false,
+      required: ["calendar"],
+      properties: {
+        calendar: {
+          type: "array",
+          minItems: 28,
+          maxItems: 35,
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["week", "day", "dayLabel", "platform", "format", "pillar", "title", "hook", "description", "copy", "cta", "hashtags", "esferaPhase", "avatar", "productionNotes"],
+            properties: {
+              week: { type: "number", description: "Semana 1-4" },
+              day: { type: "number", description: "Día 1-7 de la semana" },
+              dayLabel: { type: "string", description: "Ej: 'Lunes - Día 1'" },
+              platform: { type: "string", description: "Instagram, TikTok, LinkedIn, Twitter" },
+              format: { type: "string", description: "Carrusel, Story, Reel texto, Post estático, Thread, Meme, Infografía, Quote, BTS, Encuesta" },
+              pillar: { type: "string", enum: ["educativo", "emocional", "autoridad", "venta", "comunidad"] },
+              title: { type: "string", description: "Título/concepto del contenido" },
+              hook: { type: "string", description: "Primera línea o gancho de apertura" },
+              description: { type: "string", description: "Descripción de qué va el contenido (2-3 oraciones)" },
+              copy: { type: "string", description: "Copy listo para publicar (2-3 oraciones)" },
+              cta: { type: "string", description: "Llamada a la acción específica" },
+              hashtags: { type: "array", minItems: 3, maxItems: 5, items: { type: "string" } },
+              esferaPhase: { type: "string", enum: ["enganchar", "solucion", "remarketing", "fidelizar"] },
+              avatar: { type: "string", description: "Nombre del avatar objetivo" },
+              productionNotes: { type: "string", description: "Instrucciones para diseñador/editor" }
+            }
+          }
+        },
+        weeklyThemes: {
+          type: "array",
+          minItems: 4,
+          maxItems: 4,
+          items: {
+            type: "object",
+            properties: {
+              week: { type: "number" },
+              theme: { type: "string" },
+              objective: { type: "string" },
+              focusPhase: { type: "string" }
+            }
+          }
+        },
+        leadMagnetDays: {
+          type: "array",
+          minItems: 3,
+          maxItems: 3,
+          items: {
+            type: "object",
+            properties: {
+              week: { type: "number" },
+              day: { type: "number" },
+              leadMagnetName: { type: "string" },
+              promotionCopy: { type: "string" }
+            }
+          }
+        }
+      },
+    },
+
+    launch_strategy: {
+      type: "object",
+      additionalProperties: false,
+      required: ["preLaunch", "launch", "postLaunch", "budget", "timeline", "team", "metrics"],
+      properties: {
+        preLaunch: {
+          type: "object",
+          properties: {
+            duration: { type: "string", description: "Ej: '2-3 semanas'" },
+            objectives: { type: "array", minItems: 3, items: { type: "string" } },
+            actions: { type: "array", minItems: 5, items: {
+              type: "object",
+              properties: {
+                action: { type: "string" },
+                week: { type: "string" },
+                channel: { type: "string" },
+                details: { type: "string" }
+              }
+            }},
+            contentPlan: { type: "array", minItems: 5, items: { type: "string" } },
+            checklist: { type: "array", minItems: 8, items: { type: "string" } }
+          }
+        },
+        launch: {
+          type: "object",
+          properties: {
+            dayPlan: { type: "array", minItems: 5, items: {
+              type: "object",
+              properties: {
+                time: { type: "string" },
+                action: { type: "string" },
+                channel: { type: "string" },
+                details: { type: "string" }
+              }
+            }},
+            offer: {
+              type: "object",
+              properties: {
+                description: { type: "string" },
+                price: { type: "string" },
+                bonuses: { type: "array", items: { type: "string" } },
+                urgency: { type: "string" },
+                scarcity: { type: "string" },
+                guarantee: { type: "string" }
+              }
+            },
+            emailSequence: { type: "array", minItems: 5, maxItems: 7, items: {
+              type: "object",
+              properties: {
+                day: { type: "string" },
+                subject: { type: "string" },
+                preview: { type: "string" },
+                bodyOutline: { type: "string" },
+                cta: { type: "string" }
+              }
+            }},
+            channels: { type: "array", items: {
+              type: "object",
+              properties: {
+                channel: { type: "string" },
+                role: { type: "string" },
+                content: { type: "string" }
+              }
+            }}
+          }
+        },
+        postLaunch: {
+          type: "object",
+          properties: {
+            retentionActions: { type: "array", minItems: 4, items: { type: "string" } },
+            postSaleContent: { type: "array", minItems: 4, items: { type: "string" } },
+            referralStrategy: { type: "string" },
+            nonBuyerFollowUp: { type: "array", minItems: 3, items: { type: "string" } },
+            analysisChecklist: { type: "array", minItems: 4, items: { type: "string" } }
+          }
+        },
+        budget: {
+          type: "object",
+          properties: {
+            organic: { type: "array", items: {
+              type: "object",
+              properties: { item: { type: "string" }, cost: { type: "string" } }
+            }},
+            paid: { type: "array", items: {
+              type: "object",
+              properties: { item: { type: "string" }, cost: { type: "string" }, platform: { type: "string" } }
+            }},
+            totalEstimated: { type: "string" }
+          }
+        },
+        timeline: { type: "array", minItems: 6, items: {
+          type: "object",
+          properties: {
+            phase: { type: "string" },
+            week: { type: "string" },
+            milestone: { type: "string" },
+            deliverables: { type: "array", items: { type: "string" } }
+          }
+        }},
+        team: { type: "array", items: {
+          type: "object",
+          properties: {
+            role: { type: "string" },
+            responsibilities: { type: "array", items: { type: "string" } },
+            hoursPerWeek: { type: "string" }
+          }
+        }},
+        metrics: {
+          type: "object",
+          properties: {
+            preLaunch: { type: "array", items: {
+              type: "object",
+              properties: { metric: { type: "string" }, target: { type: "string" } }
+            }},
+            launch: { type: "array", items: {
+              type: "object",
+              properties: { metric: { type: "string" }, target: { type: "string" } }
+            }},
+            postLaunch: { type: "array", items: {
+              type: "object",
+              properties: { metric: { type: "string" }, target: { type: "string" } }
+            }}
+          }
+        }
+      },
+    },
   };
 
   // Prompts optimizados para cada paso
@@ -655,8 +920,10 @@ INSTRUCCIONES CRÍTICAS:
 
 Genera un ANÁLISIS EXHAUSTIVO incluyendo:
 
-1. TAMAÑO DEL MERCADO:
-   - Valor total del mercado en USD (con fuente)
+1. TAMAÑO DEL MERCADO (TAM/SAM/SOM):
+   - TAM (Total Addressable Market): Valor total global en USD (con fuente)
+   - SAM (Serviceable Addressable Market): Segmento alcanzable en ${targetMarket}
+   - SOM (Serviceable Obtainable Market): Cuota realista a capturar en 12-24 meses
    - Segmentación por sub-categorías relevantes
    - Comparación vs años anteriores
 
@@ -664,37 +931,47 @@ Genera un ANÁLISIS EXHAUSTIVO incluyendo:
    - CAGR (tasa de crecimiento anual compuesta) con porcentaje específico
    - Proyección a 3-5 años
    - Factores que impulsan el crecimiento
+   - Factores que podrían frenarlo
 
 3. ESTADO DEL MERCADO:
    - Clasifica como "crecimiento", "saturacion" o "declive"
    - Justifica con datos concretos por qué está en ese estado
    - Describe la fase del ciclo de vida del mercado
 
-4. VARIABLES MACROECONÓMICAS (5-7 factores PESTEL):
+4. COMPORTAMIENTO DEL CONSUMIDOR:
+   - Cómo busca soluciones el consumidor en este nicho
+   - Canales predominantes donde está la audiencia (Instagram, TikTok, YouTube, Google, LinkedIn, etc.)
+   - Formatos de contenido que consume más (video corto, carruseles, blogs, podcasts)
+   - Estacionalidad: meses/épocas del año con mayor demanda
+   - Momentos clave del año para campañas (fechas importantes, eventos del sector)
+   - Ticket promedio y frecuencia de compra
+
+5. VARIABLES MACROECONÓMICAS (5-7 factores PESTEL):
    - Políticos/Regulatorios que afectan el mercado
-   - Económicos (inflación, poder adquisitivo, etc.)
+   - Económicos (inflación, poder adquisitivo, capacidad de pago digital)
    - Sociales (cambios demográficos, tendencias culturales)
-   - Tecnológicos (innovaciones disruptivas)
+   - Tecnológicos (innovaciones disruptivas, adopción digital)
    - Ecológicos/Ambientales si aplica
    - Legales específicos del sector
 
-5. NIVEL DE CONCIENCIA (Eugene Schwartz):
+6. NIVEL DE CONCIENCIA (Eugene Schwartz):
    - Determina el nivel predominante del mercado
    - Explica por qué llegaste a esa conclusión
    - Implicaciones para la comunicación de marketing
 
-6. RESUMEN EJECUTIVO (3-4 párrafos):
-   - Panorama general del mercado
+7. RESUMEN EJECUTIVO (3-4 párrafos):
+   - Panorama general del mercado con datos cuantificados
    - Principales players y dinámica competitiva
    - Hacia dónde se dirige el mercado
-   - Recomendación estratégica inicial
+   - Score de oportunidad (1-10) con justificación
+   - Recomendación estratégica priorizada (semana 1, mes 1, mes 3)
 
-7. OPORTUNIDADES (5 mínimo):
+8. OPORTUNIDADES (5 mínimo):
    - Oportunidades concretas y accionables
-   - Por qué representan una oportunidad
-   - Cómo aprovecharlas
+   - Por qué representan una oportunidad (con datos)
+   - Cómo aprovecharlas (táctica específica)
 
-8. AMENAZAS (5 mínimo):
+9. AMENAZAS (5 mínimo):
    - Amenazas reales y específicas
    - Nivel de riesgo (alto/medio/bajo)
    - Cómo mitigarlas`,
@@ -819,15 +1096,24 @@ Lista 8-10 COMPETIDORES REALES. Para cada uno analiza:
 - Tono de comunicación (formal, casual, inspiracional, técnico, etc.)
 - Canales de adquisición principales (ads, SEO, influencers, etc.)
 
-3. OFERTA COMERCIAL:
+3. ANÁLISIS DE CONTENIDO:
+- Qué tipo de contenido publican (videos, carruseles, posts, blogs, etc.)
+- Frecuencia de publicación estimada
+- Engagement promedio (alto/medio/bajo)
+- Gaps en su comunicación: ¿qué NO están diciendo que deberían?
+- Qué funciona bien de su contenido y qué se puede mejorar
+
+4. OFERTA COMERCIAL:
 - Rango de precios específico (ej: "$197-$997 USD")
 - Modelo de negocio (suscripción, pago único, freemium, etc.)
 - Garantías que ofrecen
+- Feature comparison: qué incluyen vs qué NO incluyen
 
-4. ANÁLISIS SWOT SIMPLIFICADO:
+5. ANÁLISIS SWOT + NIVEL DE AMENAZA:
 - Fortalezas (3 mínimo): ¿qué hacen bien? ¿por qué los clientes los eligen?
 - Debilidades (3 mínimo): ¿dónde fallan? ¿qué quejas tienen sus clientes?
 - Oportunidad para nosotros: ¿cómo podemos diferenciarnos de este competidor?
+- Nivel de amenaza (1-10): ¿qué tan peligroso es este competidor para nosotros y por qué?
 
 TIPOS DE COMPETIDORES A INCLUIR:
 - 3-4 competidores directos (mismo producto/servicio)
@@ -863,39 +1149,45 @@ Crea EXACTAMENTE 5 AVATARES. Para cada uno:
 - Situación familiar
 - Ubicación típica
 - Nivel socioeconómico
+- Rango de ingreso mensual estimado (ej: "$1,500-$3,000 USD")
 
 2. SITUACIÓN ACTUAL (ANTES del producto):
-- Descripción detallada de su día a día (un párrafo)
-- Qué ha intentado antes para resolver su problema
-- Por qué no le ha funcionado
-- Cómo se siente con su situación actual
+- Descripción detallada de su RUTINA DIARIA (desde que se levanta hasta que se duerme - un párrafo de 4-5 oraciones)
+- Qué ha intentado antes para resolver su problema (mínimo 3 intentos fallidos)
+- Por qué no le ha funcionado cada intento
+- Cómo se siente con su situación actual (emociones específicas)
+- Su diálogo interno: qué se dice a sí mismo sobre este problema
 
 3. PSICOGRAFÍA PROFUNDA:
 - Nivel de conciencia Eugene Schwartz (Unaware/Problem Aware/Solution Aware/Product Aware/Most Aware)
 - 3 drivers psicológicos principales (qué lo mueve a actuar)
-- 3 sesgos cognitivos que tiene (cómo toma decisiones)
-- 3 objeciones específicas de ESTE avatar (no genéricas)
-- Valores personales (qué es importante para esta persona)
-- Miedos más profundos
+- 3 sesgos cognitivos que tiene (cómo toma decisiones irracionales)
+- 3 objeciones específicas de ESTE avatar (no genéricas, con la frase exacta que diría)
+- Valores personales (qué es lo más importante para esta persona)
+- 3 miedos más profundos (no superficiales)
+- Su identidad: cómo se define a sí mismo en una oración
 
 4. COMUNICACIÓN:
 - 5-6 frases TEXTUALES que dice (entre comillas, en primera persona)
 - Ejemplos: "Ya no sé qué más intentar", "Siento que estoy dejando pasar el tiempo"
 - Palabras y expresiones que usa frecuentemente
-- Tono de comunicación que prefiere
+- Tono de comunicación que prefiere (casual, profesional, inspiracional)
 
-5. COMPORTAMIENTO:
+5. COMPORTAMIENTO Y CONSUMO DE CONTENIDO:
 - Metas a corto plazo (siguiente 3-6 meses)
 - Metas a largo plazo (1-3 años)
-- Dónde consume contenido (plataformas específicas)
-- Influencers o marcas que sigue
-- Cómo investiga antes de comprar
-- Qué lo haría actuar HOY
+- Dónde consume contenido (plataformas específicas con horas de uso estimadas)
+- Formatos que prefiere (videos cortos, carruseles, blogs, podcasts, stories)
+- Cuentas específicas de referencia que sigue (influencers, marcas, medios)
+- Horarios en que está más activo en redes
+- Cómo investiga antes de comprar (Google, YouTube reviews, pregunta a amigos, etc.)
+- Qué lo haría actuar HOY (el empujón final)
 
 6. TRIGGER DE COMPRA:
-- ¿Qué evento o situación lo llevaría a buscar una solución?
-- ¿Qué necesita ver/escuchar para confiar?
-- ¿Cuál sería su momento "aha"?`,
+- ¿Qué evento o situación lo llevaría a buscar una solución AHORA? (momento específico)
+- ¿Qué necesita ver/escuchar para confiar? (tipo de prueba social)
+- ¿Cuál sería su momento "aha"? (la revelación que lo convence)
+- ¿Cuánto tiempo le toma decidirse desde que conoce la solución?`,
 
       differentiation: `Realiza un ANÁLISIS ESTRATÉGICO DE DIFERENCIACIÓN usando el framework ESFERA y los datos de competencia.
 
@@ -961,22 +1253,40 @@ SOLUCIÓN (Middle of Funnel):
 REMARKETING (Decision Stage):
 - existingSocialProof: Qué prueba social usa la competencia
 - gaps: Vacíos en la comunicación de remarketing
-- decisionMessages: Mensajes que ayudan a decidir
-- urgencyTactics: Tácticas de urgencia éticas
-- objectionHandling: Cómo manejar objeciones finales
+- decisionMessages: Mensajes que ayudan a decidir (mínimo 5)
+- urgencyTactics: Tácticas de urgencia éticas (mínimo 3)
+- objectionHandling: Cómo manejar objeciones finales (mínimo 5, una por objeción principal)
+- touchpointSequence: Secuencia de 5-7 touchpoints con mensajes específicos para remarketing (emails, DMs, stories, ads)
+- retargetingAngles: 3 ángulos diferentes para retargetear a quienes visitaron pero no compraron
 
 FIDELIZAR (Post-Purchase):
-- commonMistakes: Errores comunes post-venta
-- communityOpportunities: Oportunidades de comunidad
-- retentionStrategies: Estrategias de retención
-- referralAngles: Cómo incentivar referidos
+- commonMistakes: Errores comunes post-venta (mínimo 4)
+- communityOpportunities: Oportunidades de comunidad (mínimo 3)
+- retentionStrategies: Estrategias de retención específicas (mínimo 4)
+- referralAngles: Cómo incentivar referidos (mínimo 3 tácticas con ejemplo)
+- postPurchaseContent: 5 tipos de contenido post-compra (onboarding, tutoriales, casos de éxito, behind the scenes, Q&A)
+- loyaltyProgram: Estructura sugerida de programa de lealtad o embajadores
+- npsStrategy: Cuándo y cómo medir satisfacción + qué hacer con las respuestas
 
-3. RESUMEN EJECUTIVO:
+3. POSICIONAMIENTO DE MARCA:
 
-- marketSummary: Resumen del estado del mercado (2 párrafos)
-- keyInsights: 5 insights clave más importantes (cada uno con título y explicación)
-- immediateActions: 3 acciones que hacer esta semana (con prioridad y responsable sugerido)
-- finalRecommendation: Recomendación estratégica final (1 párrafo)`,
+a) TERRITORIO DE MARCA:
+- brandTerritory: El espacio mental que la marca debe ocupar (ej: "la marca que hace X simple para Y")
+- brandNarrative: La narrativa central de la marca (ej: "De [situación actual] a [transformación] sin [obstáculo común]")
+- commonEnemy: El enemigo común contra el que pelea la marca junto con su audiencia (ej: "los gurús que prometen resultados fáciles", "la complejidad innecesaria del mercado")
+- categoryCreation: Si aplica, sugerir una nueva categoría vs competir en la existente (ej: en vez de "curso de marketing", ser "sistema de atracción de clientes")
+
+4. RESUMEN EJECUTIVO:
+
+- marketSummary: Resumen del estado del mercado con datos concretos (2 párrafos)
+- opportunityScore: Score de oportunidad del 1 al 10 (número)
+- opportunityScoreJustification: Justificación clara del score con datos
+- keyInsights: 5 insights clave (cada uno con: insight, importance, action recomendada)
+- psychologicalDrivers: 3-5 drivers psicológicos del comprador (cada uno con: driver, why - por qué es poderoso, howToUse - cómo usarlo en marketing)
+- immediateActions: 3-5 acciones concretas para esta semana (cada una con: action, howTo - paso a paso, expectedResult)
+- quickWins: 2-4 victorias rápidas de bajo esfuerzo y alto impacto (cada una con: win, effort - nivel de esfuerzo, impact - impacto esperado)
+- risksToAvoid: 2-4 riesgos estratégicos a evitar (cada uno con: risk, why - consecuencia de ignorarlo)
+- finalRecommendation: Recomendación estratégica priorizada con timeline (semana 1, mes 1, mes 3)`,
 
       sales_angles: `Crea 20 ÁNGULOS DE VENTA ESTRATÉGICOS Y CREATIVOS basados en la investigación completa.
 
@@ -1031,6 +1341,15 @@ Para CADA ÁNGULO incluye:
    - En primera o segunda persona
    - Máximo 2 oraciones
 
+7. ctaExample: CTA específico para este ángulo (ej: "Comenta 'GUÍA' y te envío el método gratis", "Link en bio para tu diagnóstico gratuito")
+
+8. funnelPhase: Fase del funnel donde funciona mejor
+   - "tofu" (Top of Funnel - awareness)
+   - "mofu" (Middle of Funnel - consideración)
+   - "bofu" (Bottom of Funnel - decisión)
+
+9. hashtags: 5 hashtags relevantes para este ángulo
+
 EJEMPLOS DE BUENOS HOOKS:
 - "Gasté $5,000 en cursos de marketing y esto es lo único que funcionó"
 - "El error que comete el 90% de [avatar] y que está saboteando sus resultados"
@@ -1083,6 +1402,11 @@ f) credibility (2-3 oraciones):
    - Por qué es creíble esta promesa
    - Qué respalda la afirmación
    - Por qué es sostenible en el tiempo
+
+g) variations (3 variaciones de la PUV para diferentes canales):
+   - instagramBio: Versión corta para bio de Instagram (máx 150 caracteres)
+   - elevatorPitch: Versión para pitch verbal de 10 segundos (1-2 oraciones)
+   - adHeadline: Versión para headline de anuncio (máx 10 palabras, impactante)
 
 2. TABLA DE TRANSFORMACIÓN (Antes → Después):
 
@@ -1181,16 +1505,35 @@ ESFERA INSIGHTS:
 - Fidelizar: ${Array.isArray(prevDiff?.esferaInsights?.fidelizar?.communityOpportunities) ? prevDiff.esferaInsights.fidelizar.communityOpportunities.slice(0, 2).join(', ') : (prevDiff?.esferaInsights?.fidelizar?.communityOpportunities || 'retener y referir')}
 
 INSTRUCCIONES CRÍTICAS:
-- Cada idea debe ser PRODUCIBLE (realista para el equipo)
+- Cada idea debe ser PRODUCIBLE rápidamente por un equipo pequeño
 - Los hooks deben ser IRRESISTIBLES
-- Incluir estructura básica del video (no solo la idea)
+- PRIORIZAR formatos que NO requieren producción audiovisual compleja:
+  * Carruseles de Instagram/LinkedIn (PRIORIDAD ALTA - fáciles de producir, alto engagement)
+  * Reels con texto en pantalla (sin necesidad de grabar persona hablando)
+  * Stories con stickers, encuestas, quizzes
+  * Posts estáticos con copy potente
+  * Memes y contenido de tendencia
+  * Infografías y datos visuales
+  * Quotes/Frases motivacionales
+  * Behind the scenes (fotos simples)
+  * Threads/Hilos
+- Los videos UGC y Talking Head son SECUNDARIOS (máximo 5 de 25)
 - Variar formatos para mantener el feed fresco
 
 Crea EXACTAMENTE 25 CREATIVOS distribuidos:
-- 6-7 para ENGANCHAR (Top of Funnel - atención y curiosidad)
-- 6-7 para SOLUCIÓN (Middle of Funnel - educar y presentar)
+- 7 para ENGANCHAR (Top of Funnel - atención y curiosidad)
+- 7 para SOLUCIÓN (Middle of Funnel - educar y presentar)
 - 6 para REMARKETING (Decision Stage - reforzar y convertir)
-- 5-6 para FIDELIZAR (Post-Purchase - retener y referir)
+- 5 para FIDELIZAR (Post-Purchase - retener y referir)
+
+DISTRIBUCIÓN DE FORMATOS RECOMENDADA:
+- 6-8 Carruseles (educativos, comparativos, paso a paso)
+- 4-5 Reels con texto/caption (sin persona hablando, solo texto animado + música)
+- 3-4 Stories interactivas (encuestas, quizzes, preguntas)
+- 2-3 Posts estáticos (quotes, datos, memes de nicho)
+- 2-3 Infografías
+- 2-3 Behind the scenes / Threads
+- Máximo 3-5 Videos con persona hablando (UGC o Talking Head)
 
 Para CADA creativo incluye:
 
@@ -1209,23 +1552,168 @@ Para CADA creativo incluye:
    - Qué mensaje transmite
    - Por qué funcionaría
 
-6. structure: Estructura básica del video en 4-5 pasos
-   - Hook (primeros 3 segundos)
-   - Desarrollo (cuerpo del video)
-   - Clímax/Revelación
-   - CTA (llamada a la acción)
+6. structure: Estructura del contenido en 4 pasos
+   - hook: Primeros 3 segundos o primera slide/línea (gancho)
+   - body: Desarrollo del contenido
+   - climax: Punto culminante o revelación
+   - cta: Llamada a la acción
 
 7. format: Formato específico
-   - Video UGC, Video Talking Head, Carrusel, Reel/TikTok, Story, Testimonio, Behind the Scenes, Tutorial, Comparación, Meme/Trend
+   - Carrusel, Reel texto, Story interactiva, Post estático, Infografía, Meme/Trend, Thread, Behind the Scenes, Quote, Video UGC, Talking Head, Tutorial, Comparación
 
 8. esferaPhase: Fase del funnel
    - "enganchar", "solucion", "remarketing", "fidelizar"
 
-9. duration: Duración sugerida (ej: "15-30 seg", "60-90 seg", "3-5 min")
+9. duration: Duración sugerida (ej: "5 slides", "15-30 seg", "7 slides", "Story 3 partes")
 
-10. platform: Plataforma ideal (TikTok, Reels, YouTube, Stories, etc.)
+10. platform: Plataforma ideal (Instagram, TikTok, LinkedIn, Twitter/X, Stories)
 
-11. productionNotes: Notas de producción (qué se necesita para grabarlo)`,
+11. productionNotes: Notas de producción (qué se necesita: diseñador para carrusel, editor para reel, solo copy, foto simple, etc.)`,
+
+      content_calendar: `Crea una PARRILLA DE CONTENIDO PROFESIONAL PARA 28 DÍAS (4 semanas) basada en toda la investigación estratégica previa.
+
+${baseContext}
+
+AVATARES DEFINIDOS:
+${prevAvatars?.avatars?.map((a: any) => `- ${a.name}`).join(', ') || 'N/A'}
+
+ÁNGULOS DE VENTA DISPONIBLES:
+${prevSales?.salesAngles?.slice(0, 10).map((a: any) => `- [${a.type}] "${a.hookExample}" → Avatar: ${a.avatar}`).join('\n') || 'N/A'}
+
+ESFERA INSIGHTS:
+- Enganchar: ${Array.isArray(prevDiff?.esferaInsights?.enganchar?.opportunities) ? prevDiff.esferaInsights.enganchar.opportunities.slice(0, 3).join(', ') : 'captar atención'}
+- Solución: ${Array.isArray(prevDiff?.esferaInsights?.solucion?.educationAngles) ? prevDiff.esferaInsights.solucion.educationAngles.slice(0, 3).join(', ') : 'educar y presentar'}
+- Remarketing: ${Array.isArray(prevDiff?.esferaInsights?.remarketing?.decisionMessages) ? prevDiff.esferaInsights.remarketing.decisionMessages.slice(0, 3).join(', ') : 'reforzar decisión'}
+- Fidelizar: ${Array.isArray(prevDiff?.esferaInsights?.fidelizar?.communityOpportunities) ? prevDiff.esferaInsights.fidelizar.communityOpportunities.slice(0, 3).join(', ') : 'retener y referir'}
+
+INSTRUCCIONES CRÍTICAS:
+- Genera contenido LISTO PARA PUBLICAR (copy completo, hashtags, CTA)
+- Cada pieza debe estar conectada con un avatar, ángulo y fase ESFERA
+- Varía formatos: Carruseles, Stories, Reels con texto, Posts estáticos, Threads, Memes, Infografías, Quotes, BTS, Encuestas
+- Distribución de pilares: 40% educativo, 20% emocional, 15% autoridad, 15% venta, 10% comunidad
+- Incluye 3 días estratégicos para promocionar lead magnets
+- Cada semana debe tener un tema/objetivo claro
+
+GENERA EXACTAMENTE:
+
+1. CALENDARIO (28-35 piezas de contenido):
+Para CADA pieza incluye:
+- week: Semana (1-4)
+- day: Día de la semana (1-7, donde 1=Lunes)
+- dayLabel: Etiqueta legible (ej: "Lunes - Semana 1")
+- platform: Plataforma principal (Instagram, TikTok, LinkedIn, Twitter)
+- format: Formato específico (Carrusel, Story, Reel con texto, Post estático, Thread, Meme, Infografía, Quote, BTS, Encuesta)
+- pillar: Pilar de contenido ("educativo", "emocional", "autoridad", "venta", "comunidad")
+- title: Título/concepto del contenido
+- hook: Primera línea o gancho de apertura (IRRESISTIBLE, máx 2 oraciones)
+- description: De qué trata el contenido (2-3 oraciones)
+- copy: Copy listo para publicar (2-3 oraciones con emojis)
+- cta: Llamada a la acción específica
+- hashtags: Array de 3-5 hashtags relevantes
+- esferaPhase: Fase ESFERA ("enganchar", "solucion", "remarketing", "fidelizar")
+- avatar: Nombre del avatar objetivo
+- productionNotes: Instrucciones para el diseñador/editor (qué diseñar, referencias visuales)
+
+DISTRIBUCIÓN POR SEMANA:
+- Semana 1: Awareness y Educación (enganchar + educativo)
+- Semana 2: Autoridad y Conexión (solucion + emocional)
+- Semana 3: Conversión y Prueba Social (remarketing + venta + autoridad)
+- Semana 4: Comunidad y Fidelización (fidelizar + comunidad + venta)
+
+FRECUENCIA: 7 publicaciones por semana (1 diaria)
+
+2. TEMAS SEMANALES (4 temas):
+Para cada semana incluye:
+- week: Número de semana
+- theme: Tema central de la semana
+- objective: Objetivo estratégico (ej: "Generar awareness del problema")
+- focusPhase: Fase ESFERA dominante
+
+3. DÍAS DE LEAD MAGNET (3 días):
+Para cada día incluye:
+- week: Semana
+- day: Día
+- leadMagnetName: Nombre del lead magnet a promocionar
+- promotionCopy: Copy de promoción del lead magnet (2-3 oraciones)`,
+
+      launch_strategy: `Diseña una ESTRATEGIA DE LANZAMIENTO COMPLETA para el producto, con plan detallado de Pre-Lanzamiento, Día de Lanzamiento y Post-Lanzamiento.
+
+${baseContext}
+
+AVATARES DEFINIDOS:
+${prevAvatars?.avatars?.map((a: any) => `- ${a.name}: Trigger de compra: ${typeof a.purchaseTrigger === 'string' ? a.purchaseTrigger : (a.purchaseTrigger?.event || a.trigger || 'N/A')}`).join('\n') || 'N/A'}
+
+PUV:
+${prevSales?.salesAngles?.length ? `Ángulos principales: ${prevSales.salesAngles.slice(0, 5).map((a: any) => a.hookExample).join(' | ')}` : 'N/A'}
+
+TRANSFORMACIÓN:
+${(previousResults as any).puv_transformation?.puv?.statement || 'N/A'}
+
+INSTRUCCIONES CRÍTICAS:
+- Plan REALISTA y ejecutable por un equipo pequeño (1-5 personas)
+- Incluye tanto estrategia orgánica como de pago
+- Cada acción debe tener fecha/semana, canal y responsable
+- Incluye secuencia de emails con copy resumido
+- Presupuesto adaptado al mercado LATAM
+- Métricas claras para medir éxito en cada fase
+
+GENERA UN PLAN COMPLETO:
+
+1. PRE-LANZAMIENTO (2-3 semanas antes):
+- duration: Duración del pre-lanzamiento
+- objectives: 3-5 objetivos medibles del pre-lanzamiento
+- actions: 5-8 acciones específicas con semana, canal y detalles
+- contentPlan: 5-7 tipos de contenido a publicar durante el pre-lanzamiento
+- checklist: 8-12 items del checklist pre-lanzamiento (todo lo que debe estar listo)
+
+2. DÍA DE LANZAMIENTO:
+- dayPlan: Plan hora a hora (5-8 acciones con time, action, channel, details)
+  Ejemplo: "8:00 AM - Publicar video de anuncio en Instagram"
+- offer: Estructura de oferta completa:
+  - description: Qué incluye la oferta
+  - price: Precio y estructura (early bird, regular, premium)
+  - bonuses: 3-5 bonos que aumenten el valor percibido
+  - urgency: Táctica de urgencia (timer, cupos limitados, etc.)
+  - scarcity: Táctica de escasez (primeros X, edición limitada, etc.)
+  - guarantee: Garantía que elimine el riesgo
+- emailSequence: 5-7 emails de lanzamiento:
+  Para cada email:
+  - day: Cuándo se envía (ej: "Día -3", "Día 0 AM", "Día +1")
+  - subject: Asunto del email (debe generar apertura)
+  - preview: Texto de preview (50-80 caracteres)
+  - bodyOutline: Resumen del cuerpo del email (3-4 bullets)
+  - cta: Llamada a la acción específica
+- channels: Canales a usar con rol y contenido específico
+
+3. POST-LANZAMIENTO (2 semanas después):
+- retentionActions: 4-6 acciones de retención de compradores
+- postSaleContent: 4-6 tipos de contenido post-venta (onboarding, tutoriales, etc.)
+- referralStrategy: Estrategia de referidos (1-2 párrafos)
+- nonBuyerFollowUp: 3-5 acciones para quienes no compraron
+- analysisChecklist: 4-6 métricas y análisis a realizar post-lanzamiento
+
+4. PRESUPUESTO:
+- organic: Items del presupuesto orgánico con costo estimado
+- paid: Items del presupuesto de pauta con costo y plataforma
+- totalEstimated: Total estimado en USD
+
+5. TIMELINE (6-8 hitos):
+Para cada hito:
+- phase: Pre-launch / Launch / Post-launch
+- week: Semana relativa (ej: "Semana -3", "Día 0", "Semana +1")
+- milestone: Hito específico
+- deliverables: Entregables de esa semana
+
+6. EQUIPO:
+Para cada rol:
+- role: Nombre del rol
+- responsibilities: 3-5 responsabilidades específicas
+- hoursPerWeek: Horas estimadas por semana
+
+7. MÉTRICAS DE ÉXITO:
+- preLaunch: Métricas y targets del pre-lanzamiento
+- launch: Métricas y targets del lanzamiento
+- postLaunch: Métricas y targets del post-lanzamiento`,
     };
 
     return prompts[stepId] || '';
@@ -1250,6 +1738,8 @@ Para CADA creativo incluye:
     puv_transformation: 6000, // Antes: 3000 - PUV elaborada + tabla de transformación
     lead_magnets: 5000,       // Antes: 2500 - 3 lead magnets con estructura completa
     video_creatives: 8000,    // Antes: 5000 - 25 creativos con guiones resumidos
+    content_calendar: 16000,  // 30-45 piezas de contenido con copy completo - needs extra tokens to avoid truncation
+    launch_strategy: 10000,   // Estrategia completa con emails, presupuesto, timeline
   };
 
   try {
@@ -1397,6 +1887,22 @@ async function consolidateFinalResults(
 
   if (Object.keys(salesAnglesData).length > 1) {
     update.sales_angles_data = salesAnglesData;
+  }
+
+  // Content Calendar (step 11)
+  if (r.content_calendar) {
+    update.content_calendar = {
+      ...r.content_calendar,
+      generatedAt: new Date().toISOString(),
+    };
+  }
+
+  // Launch Strategy (step 12)
+  if (r.launch_strategy) {
+    update.launch_strategy = {
+      ...r.launch_strategy,
+      generatedAt: new Date().toISOString(),
+    };
   }
 
   console.log("[product-research] Update keys:", Object.keys(update));

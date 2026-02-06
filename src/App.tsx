@@ -60,6 +60,7 @@ const Register = lazy(() => import("./pages/Register"));
 const OrgRegister = lazy(() => import("./pages/auth/OrgRegister"));
 const Live = lazy(() => import("./pages/Live"));
 const Marketing = lazy(() => import("./pages/Marketing"));
+const ResearchLanding = lazy(() => import("./pages/ResearchLanding"));
 
 // Wallet Module Pages
 const WalletPage = lazy(() => import("./modules/wallet/pages/WalletPage").then(m => ({ default: m.WalletPage })));
@@ -142,6 +143,7 @@ function AppRoutes() {
         <Route path="/client-dashboard" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/client-board" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientContentBoard /></MainLayout></ProtectedRoute>} />
         <Route path="/ranking" element={<ProtectedRoute allowedRoles={['admin', 'creator', 'editor']}><MainLayout><Ranking /></MainLayout></ProtectedRoute>} />
+        <Route path="/research/:productId" element={<ProtectedRoute allowNoRoles><ResearchLanding /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>

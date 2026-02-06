@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { invokeProductResearch } from '@/lib/productResearch';
+import { ResearchProgressIndicator } from './ResearchProgressIndicator';
 import { toast } from 'sonner';
 
 // Esfera phase distribution
@@ -588,6 +589,7 @@ export function CreateProductBriefWizard({
   // Load initial state from localStorage
   const [currentStep, setCurrentStep] = useState(() => loadStep(clientId));
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatingProductId, setGeneratingProductId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [enhancingField, setEnhancingField] = useState<string | null>(null);
   const [briefData, setBriefData] = useState<BriefData>(() => loadDraft(clientId) || DEFAULT_BRIEF);
@@ -865,6 +867,7 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
 
       if (createError) throw createError;
       createdProductId = newProduct.id;
+      setGeneratingProductId(newProduct.id);
 
       toast.success('Producto creado, iniciando investigación con IA...');
 
@@ -2144,24 +2147,8 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
         )}
       </div>
 
-      {isGenerating && (
-        <Card className="border-primary/50 bg-primary/5">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <Sparkles className="h-4 w-4 text-primary absolute -top-1 -right-1 animate-pulse" />
-              </div>
-              <div>
-                <p className="font-medium">Investigando con IA...</p>
-                <p className="text-sm text-muted-foreground">
-                  Creando producto, analizando mercado, competencia y generando avatares estratégicos. 
-                  Esto puede tomar 1-2 minutos.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {isGenerating && generatingProductId && (
+        <ResearchProgressIndicator productId={generatingProductId} isGenerating={isGenerating} />
       )}
     </div>
   );

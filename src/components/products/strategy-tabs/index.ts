@@ -9,3 +9,5 @@ export { SalesAnglesTab } from './SalesAnglesTab';
 export { PUVTransformationTab } from './PUVTransformationTab';
 export { LeadMagnetsCreativesTab } from './LeadMagnetsCreativesTab';
 export { StrategicPlaybookTab } from './StrategicPlaybookTab';
+export { ContentCalendarTab } from './ContentCalendarTab';
+export { LaunchStrategyTab } from './LaunchStrategyTab';

@@ -33,6 +33,8 @@ interface Risk {
 
 interface ExecutiveSummary {
   marketSummary?: string;
+  opportunityScore?: number;
+  opportunityScoreJustification?: string;
   keyInsights?: (string | KeyInsight)[];
   psychologicalDrivers?: (string | PsychologicalDriver)[];
   immediateActions?: (string | ImmediateAction)[];
@@ -113,6 +115,32 @@ export function ExecutiveSummaryTab({ contentStrategy, productName }: ExecutiveS
           </p>
         )}
       </div>
+
+      {/* Opportunity Score */}
+      {summary?.opportunityScore != null && (
+        <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="flex flex-col items-center">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold text-white ${
+                  summary.opportunityScore >= 8 ? 'bg-green-500' :
+                  summary.opportunityScore >= 6 ? 'bg-amber-500' :
+                  summary.opportunityScore >= 4 ? 'bg-orange-500' : 'bg-red-500'
+                }`}>
+                  {summary.opportunityScore}
+                </div>
+                <span className="text-xs text-muted-foreground mt-1">de 10</span>
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-sm">Score de Oportunidad</h4>
+                {summary.opportunityScoreJustification && (
+                  <p className="text-sm text-muted-foreground mt-1">{summary.opportunityScoreJustification}</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Market Summary */}
       {summary?.marketSummary && (
