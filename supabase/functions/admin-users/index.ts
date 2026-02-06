@@ -420,18 +420,59 @@ serve(async (req) => {
           });
         }
 
-        // First ensure the user has a profile
-        const { data: profile } = await supabaseAdmin
+        // Get user info from auth to auto-create profile if needed
+        const { data: authUser, error: authUserError } = await supabaseAdmin.auth.admin.getUserById(userId);
+        if (authUserError) {
+          console.error("Error getting auth user:", authUserError);
+          throw authUserError;
+        }
+
+        // Check if profile exists
+        const { data: existingProfile } = await supabaseAdmin
           .from("profiles")
-          .select("id")
+          .select("id, active_role")
           .eq("id", userId)
           .maybeSingle();
 
-        if (!profile) {
-          return new Response(JSON.stringify({ error: "User must have a profile first. Create profile before assigning to org." }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
+        if (!existingProfile) {
+          // AUTO-CREATE profile if it doesn't exist
+          const userEmail = authUser.user.email || '';
+          const fullName = authUser.user.user_metadata?.full_name
+            || authUser.user.user_metadata?.name
+            || userEmail.split('@')[0]
+            || 'Usuario';
+
+          console.log(`Auto-creating profile for user ${userId} (${userEmail})`);
+
+          const { error: createProfileError } = await supabaseAdmin
+            .from("profiles")
+            .insert({
+              id: userId,
+              email: userEmail,
+              full_name: fullName,
+              current_organization_id: organizationId,
+              is_active: true,
+              active_role: assignRole,
+            });
+
+          if (createProfileError) {
+            console.error("Error auto-creating profile:", createProfileError);
+            throw createProfileError;
+          }
+        } else {
+          // Update existing profile
+          const { error: profileUpdateError } = await supabaseAdmin
+            .from("profiles")
+            .update({
+              current_organization_id: organizationId,
+              active_role: assignRole,
+              is_active: true,
+            })
+            .eq("id", userId);
+
+          if (profileUpdateError) {
+            console.error("Error updating profile org:", profileUpdateError);
+          }
         }
 
         // Remove from all previous organizations
@@ -472,16 +513,6 @@ serve(async (req) => {
         if (roleError) {
           console.error("Error inserting organization member role:", roleError);
           // Don't throw - membership was created
-        }
-
-        // Update current org in profile
-        const { error: profileUpdateError } = await supabaseAdmin
-          .from("profiles")
-          .update({ current_organization_id: organizationId })
-          .eq("id", userId);
-
-        if (profileUpdateError) {
-          console.error("Error updating profile org:", profileUpdateError);
         }
 
         console.log(`User ${userId} assigned to org ${organizationId} with role ${assignRole}`);
