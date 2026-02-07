@@ -4,14 +4,12 @@ import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
 import { TrialBanner } from "./TrialBanner";
 import { IntegratedNotificationHeader } from "@/components/notifications/IntegratedNotificationHeader";
-import { EnhancedChatDrawer } from "@/components/chat/EnhancedChatDrawer";
-import { EnhancedChatButton } from "@/components/chat/EnhancedChatButton";
+import { KiroWidget } from "@/components/kiro";
+import { KiroProvider } from "@/contexts/KiroContext";
 import { TourProvider } from "@/components/tour/TourProvider";
 import { AmbassadorCelebration } from "@/components/AmbassadorCelebration";
-import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useAuth } from "@/hooks/useAuth";
 import { usePresence } from "@/hooks/usePresence";
-import { useChatNotifications } from "@/hooks/useChatNotifications";
 import { useClientRealtimeNotifications } from "@/hooks/useClientRealtimeNotifications";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -71,8 +69,6 @@ export function MainLayout({
   children
 }: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const { isClient, isEditor, isAdmin, isCreator, signOut, profile, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -83,12 +79,11 @@ export function MainLayout({
   // Client realtime notifications (for new videos, comments)
   useClientRealtimeNotifications();
   
-  // Setup chat notifications with sound
-  const { unreadCount: unreadChatCount } = useChatNotifications(chatOpen, activeConversationId);
 
   // For editors, show editor-specific layout with bottom nav on mobile
   if (isEditor && !isAdmin) {
     return (
+      <KiroProvider>
       <div className="min-h-screen bg-background">
         {/* Editor Desktop Sidebar */}
         <div className="hidden md:block">
@@ -125,7 +120,6 @@ export function MainLayout({
             >
               <Briefcase className="h-4 w-4" />
             </Button>
-            <NotificationBell />
             <Button variant="ghost" size="icon" onClick={signOut}>
               <LogOut className="h-4 w-4" />
             </Button>
@@ -153,13 +147,10 @@ export function MainLayout({
             })}
           </div>
         </nav>
-        
+
         {/* Desktop Integrated Notification Header */}
         <div className="hidden md:block">
           <IntegratedNotificationHeader
-            onChatClick={() => setChatOpen(!chatOpen)}
-            isChatOpen={chatOpen}
-            unreadChatCount={unreadChatCount}
             sidebarCollapsed={sidebarCollapsed}
           />
         </div>
@@ -170,8 +161,7 @@ export function MainLayout({
           className={cn(
             "pb-16 md:pb-0 transition-all duration-300",
             sidebarCollapsed ? "md:ml-20" : "md:ml-64",
-            chatOpen ? 'md:mr-96' : '',
-            "md:pt-14"
+                        "md:pt-14"
           )}
         >
           <div className="min-h-screen p-4 md:p-6">
@@ -181,26 +171,20 @@ export function MainLayout({
           </div>
         </main>
 
-        {/* Floating Chat Button */}
-        <EnhancedChatButton 
-          onClick={() => setChatOpen(!chatOpen)} 
-          isOpen={chatOpen} 
-          unreadCount={unreadChatCount} 
-        />
-
-        {/* Chat Panel */}
-        <EnhancedChatDrawer isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
-
+        {/* KIRO AI Assistant */}
+        <KiroWidget />
 
         {/* Ambassador Celebration */}
         <AmbassadorCelebration />
       </div>
+      </KiroProvider>
     );
   }
-  
+
   // For clients, reuse the main Sidebar so navigation + role switcher stay consistent
   if (isClient) {
     return (
+      <KiroProvider>
       <div className="min-h-screen bg-background">
         {/* Client Desktop Sidebar */}
         <div className="hidden md:block">
@@ -240,7 +224,6 @@ export function MainLayout({
             >
               <Briefcase className="h-4 w-4" />
             </Button>
-            <NotificationBell />
             <Button variant="ghost" size="icon" onClick={signOut}>
               <LogOut className="h-4 w-4" />
             </Button>
@@ -250,9 +233,6 @@ export function MainLayout({
         {/* Desktop Integrated Notification Header */}
         <div className="hidden md:block">
           <IntegratedNotificationHeader
-            onChatClick={() => setChatOpen(!chatOpen)}
-            isChatOpen={chatOpen}
-            unreadChatCount={unreadChatCount}
             sidebarCollapsed={sidebarCollapsed}
           />
         </div>
@@ -263,8 +243,7 @@ export function MainLayout({
           className={cn(
             "transition-all duration-300",
             sidebarCollapsed ? "md:ml-20" : "md:ml-64",
-            chatOpen ? 'md:mr-96' : '',
-            "md:pt-14"
+                        "md:pt-14"
           )}
         >
           <div className="min-h-screen p-4 md:p-6">
@@ -274,24 +253,19 @@ export function MainLayout({
           </div>
         </main>
 
-        {/* Floating Chat Button */}
-        <EnhancedChatButton
-          onClick={() => setChatOpen(!chatOpen)}
-          isOpen={chatOpen}
-          unreadCount={unreadChatCount}
-        />
-
-        {/* Chat Panel */}
-        <EnhancedChatDrawer isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
+        {/* KIRO AI Assistant */}
+        <KiroWidget />
 
         {/* Ambassador Celebration */}
         <AmbassadorCelebration />
       </div>
+      </KiroProvider>
     );
   }
 
   // Default admin/other layout - El Estudio theme
   return (
+    <KiroProvider>
     <div className="min-h-screen bg-background relative">
       {/* Tech ambient background effects - hidden on mobile for performance */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10 hidden md:block">
@@ -344,16 +318,12 @@ export function MainLayout({
           >
             <Briefcase className="h-4 w-4" />
           </Button>
-          <NotificationBell />
         </div>
       </header>
-      
+
       {/* Desktop Integrated Notification Header */}
       <div className="hidden md:block">
         <IntegratedNotificationHeader
-          onChatClick={() => setChatOpen(!chatOpen)}
-          isChatOpen={chatOpen}
-          unreadChatCount={unreadChatCount}
           sidebarCollapsed={sidebarCollapsed}
         />
       </div>
@@ -364,8 +334,7 @@ export function MainLayout({
         className={cn(
           "transition-all duration-300",
           sidebarCollapsed ? "md:ml-20" : "md:ml-64",
-          chatOpen ? 'md:mr-96' : '',
-          "md:pt-14"
+                    "md:pt-14"
         )}
       >
         <div className="min-h-screen p-4 md:p-6">
@@ -375,15 +344,8 @@ export function MainLayout({
         </div>
       </main>
 
-      {/* Floating Chat Button */}
-      <EnhancedChatButton
-        onClick={() => setChatOpen(!chatOpen)}
-        isOpen={chatOpen}
-        unreadCount={unreadChatCount}
-      />
-
-      {/* Chat Panel */}
-      <EnhancedChatDrawer isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
+      {/* KIRO AI Assistant */}
+      <KiroWidget />
 
       {/* Tour Provider */}
       <TourProvider />
@@ -391,5 +353,6 @@ export function MainLayout({
       {/* Ambassador Celebration */}
       <AmbassadorCelebration />
     </div>
+    </KiroProvider>
   );
 }
