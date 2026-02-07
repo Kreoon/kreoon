@@ -738,7 +738,7 @@ export function CreateProductBriefWizard({
           briefData.expectedResult.trim()
         );
       case 6:
-        return totalFromPhases >= 1;
+        return true; // Video quantity is optional
       default:
         return false;
     }
@@ -842,6 +842,110 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
     }
   };
 
+  // Helper: create product + content items (shared logic)
+  const createProductAndContent = async () => {
+    // Step 1: Create the product in database (saves the brief)
+    const { data: newProduct, error: createError } = await supabase
+      .from('products')
+      .insert({
+        client_id: clientId,
+        name: briefData.productName,
+        brief_data: JSON.parse(JSON.stringify(briefData)),
+        brief_status: 'in_progress',
+        business_type: briefData.businessType,
+      })
+      .select('id')
+      .single();
+
+    if (createError) throw createError;
+
+    // Get the client's organization_id
+    const { data: clientData } = await supabase
+      .from('clients')
+      .select('organization_id')
+      .eq('id', clientId)
+      .single();
+
+    // Create the content items automatically with phase distribution
+    if (totalFromPhases > 0) {
+      const contentItems: any[] = [];
+
+      ESFERA_PHASES.forEach((phase) => {
+        const count = briefData.phaseDistribution[phase.key];
+        const phaseDefaults = PHASE_DEFAULTS[phase.key];
+
+        for (let i = 0; i < count; i++) {
+          contentItems.push({
+            title: `${briefData.productName} - ${phase.label} ${i + 1}`,
+            client_id: clientId,
+            product_id: newProduct.id,
+            status: 'draft' as const,
+            organization_id: clientData?.organization_id || null,
+            sphere_phase: phase.key,
+            funnel_stage: phaseDefaults.funnelStage,
+            content_objective: phaseDefaults.objective,
+            cta: phaseDefaults.defaultCTA,
+            hooks_count: 3,
+            target_platform: briefData.platforms[0] || 'instagram',
+            description: `Contenido para fase ${phase.label}: ${phase.description}.\n\nObjetivo: ${briefData.currentObjective}\nTécnicas: ${phaseDefaults.techniques.join(', ')}\nTono: ${phaseDefaults.tone}`,
+            strategist_guidelines: buildStrategistGuidelines(briefData, phase),
+          });
+        }
+      });
+
+      if (contentItems.length > 0) {
+        const { error: contentError } = await supabase
+          .from('content')
+          .insert(contentItems);
+
+        if (contentError) {
+          console.error('Error creating content items:', contentError);
+          toast.error('Producto creado pero hubo un error al crear los creativos');
+        } else {
+          toast.success(`¡${contentItems.length} creativo${contentItems.length > 1 ? 's' : ''} creado${contentItems.length > 1 ? 's' : ''} en el board!`);
+        }
+      }
+    }
+
+    return newProduct.id;
+  };
+
+  // Create product WITHOUT research
+  const handleCreateProductOnly = async () => {
+    if (!isAllStepsComplete()) {
+      toast.error('Completa todos los campos obligatorios del brief');
+      return;
+    }
+
+    setIsGenerating(true);
+    let createdProductId: string | null = null;
+
+    try {
+      createdProductId = await createProductAndContent();
+      toast.success('¡Producto creado exitosamente!', {
+        description: 'Puedes generar la investigación con IA desde el detalle del producto.'
+      });
+      clearDraft(clientId);
+      onComplete(createdProductId);
+    } catch (error) {
+      console.error('Error creating product:', error);
+      if (createdProductId) {
+        toast.error('Error parcial', {
+          description: 'El producto fue creado pero hubo un problema adicional. Revisa el detalle del producto.'
+        });
+        clearDraft(clientId);
+        onComplete(createdProductId);
+      } else {
+        toast.error('Error al crear el producto', {
+          description: error instanceof Error ? error.message : 'Intenta de nuevo'
+        });
+      }
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Create product WITH research
   const handleCreateAndGenerateResearch = async () => {
     if (!isAllStepsComplete()) {
       toast.error('Completa todos los campos obligatorios del brief');
@@ -852,30 +956,15 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
     let createdProductId: string | null = null;
 
     try {
-      // Step 1: Create the product in database (saves the brief)
-      const { data: newProduct, error: createError } = await supabase
-        .from('products')
-        .insert({
-          client_id: clientId,
-          name: briefData.productName,
-          brief_data: JSON.parse(JSON.stringify(briefData)),
-          brief_status: 'in_progress',
-          business_type: briefData.businessType,
-        })
-        .select('id')
-        .single();
-
-      if (createError) throw createError;
-      createdProductId = newProduct.id;
-      setGeneratingProductId(newProduct.id);
+      createdProductId = await createProductAndContent();
+      setGeneratingProductId(createdProductId);
 
       toast.success('Producto creado, iniciando investigación con IA...');
 
-      // Step 2: Call the research function (Kreoon directo)
-      // Research errors are handled separately - product is already saved
+      // Call the research function (Kreoon directo)
       let researchSuccess = false;
       try {
-        const { data, error } = await invokeProductResearch({ productId: newProduct.id, briefData });
+        const { data, error } = await invokeProductResearch({ productId: createdProductId, briefData });
 
         if (error) {
           console.error('Research function error:', error);
@@ -897,76 +986,16 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
         });
       }
 
-      // Step 3: Get the client's organization_id
-      const { data: clientData } = await supabase
-        .from('clients')
-        .select('organization_id')
-        .eq('id', clientId)
-        .single();
-
-      // Step 4: Create the content items automatically with phase distribution
-      if (totalFromPhases > 0) {
-        const contentItems: any[] = [];
-
-        // Create content items for each phase with prefilled guionizador data
-        ESFERA_PHASES.forEach((phase) => {
-          const count = briefData.phaseDistribution[phase.key];
-          const phaseDefaults = PHASE_DEFAULTS[phase.key];
-
-          for (let i = 0; i < count; i++) {
-            contentItems.push({
-              // Basic info
-              title: `${briefData.productName} - ${phase.label} ${i + 1}`,
-              client_id: clientId,
-              product_id: newProduct.id,
-              status: 'draft' as const,
-              organization_id: clientData?.organization_id || null,
-
-              // Sphere phase
-              sphere_phase: phase.key,
-              funnel_stage: phaseDefaults.funnelStage,
-              content_objective: phaseDefaults.objective,
-
-              // Guionizador prefilled fields
-              cta: phaseDefaults.defaultCTA,
-              hooks_count: 3,
-              target_platform: briefData.platforms[0] || 'instagram',
-
-              // Description with context
-              description: `Contenido para fase ${phase.label}: ${phase.description}.\n\nObjetivo: ${briefData.currentObjective}\nTécnicas: ${phaseDefaults.techniques.join(', ')}\nTono: ${phaseDefaults.tone}`,
-
-              // Strategist guidelines generated from brief
-              strategist_guidelines: buildStrategistGuidelines(briefData, phase),
-            });
-          }
-        });
-
-        if (contentItems.length > 0) {
-          const { error: contentError } = await supabase
-            .from('content')
-            .insert(contentItems);
-
-          if (contentError) {
-            console.error('Error creating content items:', contentError);
-            toast.error('Producto creado pero hubo un error al crear los creativos');
-          } else {
-            toast.success(`¡${contentItems.length} creativo${contentItems.length > 1 ? 's' : ''} creado${contentItems.length > 1 ? 's' : ''} en el board!`);
-          }
-        }
-      }
-
       if (researchSuccess) {
         toast.success('¡Investigación completada!', {
           description: 'El producto ha sido creado con análisis de mercado completo.'
         });
       }
 
-      // Clear the draft after successful creation
       clearDraft(clientId);
-      onComplete(newProduct.id);
+      onComplete(createdProductId);
     } catch (error) {
       console.error('Error creating product:', error);
-      // If the product was already created, still navigate to it
       if (createdProductId) {
         toast.error('Error parcial', {
           description: 'El producto fue creado pero hubo un problema adicional. Revisa el detalle del producto.'
@@ -2133,17 +2162,31 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
             Siguiente <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         ) : (
-          <Button 
-            onClick={handleCreateAndGenerateResearch} 
-            disabled={isGenerating || !isAllStepsComplete()} 
-            className="gap-2"
-          >
-            {isGenerating ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Creando producto...</>
-            ) : (
-              <><Sparkles className="h-4 w-4" /> Crear Producto con IA</>
-            )}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleCreateProductOnly}
+              disabled={isGenerating || !isAllStepsComplete()}
+              className="gap-2"
+            >
+              {isGenerating ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Creando...</>
+              ) : (
+                <><Save className="h-4 w-4" /> Crear Producto</>
+              )}
+            </Button>
+            <Button
+              onClick={handleCreateAndGenerateResearch}
+              disabled={isGenerating || !isAllStepsComplete()}
+              className="gap-2"
+            >
+              {isGenerating ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Creando producto...</>
+              ) : (
+                <><Sparkles className="h-4 w-4" /> Crear con Investigación IA</>
+              )}
+            </Button>
+          </div>
         )}
       </div>
 
