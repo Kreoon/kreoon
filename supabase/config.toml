@@ -117,12 +117,6 @@ verify_jwt = true
 [functions.save-product-brief]
 verify_jwt = true
 
-[functions.kiro-chat]
-verify_jwt = false
-
-[functions.kiro-voice]
-verify_jwt = false
-
 [functions.product-research]
 verify_jwt = false
 
