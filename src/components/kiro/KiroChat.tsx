@@ -92,13 +92,23 @@ export function KiroChat({ onStateChange, currentZone = 'general', awardPoints, 
 
   // ─────────────────────────────────────────────────────────────────────────
   // Auto-send pending messages from quick actions
+  // Uses a ref guard to prevent double-send (React StrictMode double-mount)
   // ─────────────────────────────────────────────────────────────────────────
+  const sendMessageRef = useRef(sendMessage);
+  sendMessageRef.current = sendMessage;
+  const processedPendingRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (pendingMessage && !isLoading) {
-      sendMessage(pendingMessage);
+    if (pendingMessage && pendingMessage !== processedPendingRef.current) {
+      processedPendingRef.current = pendingMessage;
+      sendMessageRef.current(pendingMessage);
       onPendingMessageConsumed?.();
     }
-  }, [pendingMessage, isLoading, sendMessage, onPendingMessageConsumed]);
+    if (!pendingMessage) {
+      processedPendingRef.current = null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingMessage]);
   const isUserScrolling = useRef(false);
 
   // Estado de feedback

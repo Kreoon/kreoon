@@ -211,7 +211,7 @@ const ROUTE_TO_ZONE: Record<string, KiroZone> = {
   // Camerino - Perfil y portfolio del creador
   '/creator-dashboard': 'camerino',
   '/profile': 'camerino',
-  '/social': 'camerino',
+  '/marketplace': 'camerino',
   '/wallet': 'camerino',
 
   // Set de Grabación - Scripts y contenido

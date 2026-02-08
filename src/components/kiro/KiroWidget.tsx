@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence, type PanInfo } from 'framer-motion';
-import { MessageCircle, Zap, Gamepad2, Bell, X, GripVertical, MapPin, Settings, Minus, Wifi, WifiOff } from 'lucide-react';
+import { X, GripVertical, Wifi, WifiOff, Zap, Bell, Gamepad2, Settings, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Kiro3D, KIRO_STATES } from './Kiro3D';
 import { KiroChat } from './KiroChat';
@@ -14,29 +14,91 @@ import { getZoneConfig } from './config/zoneActions';
 import { shouldShowToast, getNotificationConfig } from './types/notifications';
 import { useKiro, ZONE_INFO } from '@/contexts/KiroContext';
 import { useKiroGamification } from './hooks/useKiroGamification';
-import { KiroProgressBar } from './chat/KiroProgressBar';
 import { LevelUpCelebration } from './chat/LevelUpCelebration';
 import { KiroFloatingButton } from './mobile/KiroFloatingButton';
 import { KiroBottomSheet } from './mobile/KiroBottomSheet';
 import { KiroBubble } from './KiroBubble';
 import { KiroSettingsPanel } from './settings/KiroSettings';
 import { kiroSounds } from './sounds/KiroSounds';
+import { formatPoints } from './config/gamification';
 import type { KiroLevel } from './config/gamification';
 import type { KiroCorner } from './settings/KiroSettings';
 
-type TabId = 'chat' | 'actions' | 'notifications' | 'game';
+// ═══════════════════════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════════════════════
 
-const TABS = [
-  { id: 'chat' as const, icon: MessageCircle, label: 'Chat' },
-  { id: 'actions' as const, icon: Zap, label: 'Acciones' },
-  { id: 'notifications' as const, icon: Bell, label: 'Alertas' },
-  { id: 'game' as const, icon: Gamepad2, label: 'Juego' },
+type ActivePanel = 'chat' | 'actions' | 'notifications' | 'game' | 'settings';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MINI PROGRESS RING — Ultra-compact gamification indicator
+// ═══════════════════════════════════════════════════════════════════════════
+
+function MiniProgressRing({ progress, level, points }: { progress: number; level: KiroLevel; points: number }) {
+  const radius = 10;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+
+  return (
+    <div className="flex items-center gap-1.5 group relative">
+      <svg width="26" height="26" className="transform -rotate-90">
+        <circle
+          cx="13" cy="13" r={radius}
+          fill="none"
+          stroke="rgba(124, 58, 237, 0.15)"
+          strokeWidth="2.5"
+        />
+        <circle
+          cx="13" cy="13" r={radius}
+          fill="none"
+          stroke="url(#kiro-ring-gradient)"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          className="transition-all duration-700 ease-out"
+        />
+        <defs>
+          <linearGradient id="kiro-ring-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#7c3aed" />
+            <stop offset="100%" stopColor="#c084fc" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <span className="text-[10px] text-violet-400 font-medium">
+        {formatPoints(points)}
+      </span>
+      {/* Tooltip on hover */}
+      <div className={cn(
+        'absolute left-1/2 -translate-x-1/2 top-full mt-2',
+        'px-2.5 py-1.5 rounded-lg whitespace-nowrap',
+        'bg-[#12101f] border border-violet-500/20',
+        'text-[10px] text-violet-200',
+        'shadow-xl shadow-black/40',
+        'opacity-0 group-hover:opacity-100 pointer-events-none',
+        'transition-opacity duration-200 z-50'
+      )}>
+        {level.emoji} {level.name} — {progress}%
+      </div>
+    </div>
+  );
+}
+
+// Header navigation icons — directly visible, no hamburger menu
+const NAV_ICONS: { id: ActivePanel; icon: typeof Zap; label: string }[] = [
+  { id: 'chat', icon: MessageCircle, label: 'Chat' },
+  { id: 'actions', icon: Zap, label: 'Acciones' },
+  { id: 'notifications', icon: Bell, label: 'Alertas' },
+  { id: 'game', icon: Gamepad2, label: 'Juego' },
+  { id: 'settings', icon: Settings, label: 'Config' },
 ];
 
+// ═══════════════════════════════════════════════════════════════════════════
+// MAIN WIDGET COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════
+
 export function KiroWidget() {
-  // ─────────────────────────────────────────────────────────────────────────
-  // Estado del contexto global
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─── Context ───
   const {
     kiroState,
     expression,
@@ -46,7 +108,6 @@ export function KiroWidget() {
     currentZone,
     notifications,
     unreadCount,
-    preferences,
     kiroSettings,
     setKiroState,
     setExpression,
@@ -54,26 +115,19 @@ export function KiroWidget() {
     togglePanel,
     toggleMinimize,
     updateKiroSettings,
-    voice: kiroVoice, // Phase 10
-    agentic, // Phase 9
+    voice: kiroVoice,
+    agentic,
   } = useKiro();
 
-  // Platform sync state (Phase 9)
   const isConnected = agentic.platformSyncState.connectionStatus === 'connected';
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Responsive detection
-  // ─────────────────────────────────────────────────────────────────────────
-  const { isMobile, isTablet, keyboardVisible, safeAreaBottom } = useKiroResponsive();
+  // ─── Responsive ───
+  const { isMobile, isTablet, keyboardVisible } = useKiroResponsive();
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Persistencia
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─── Persistence ───
   const { savePosition, loadPosition } = useKiroPersistence();
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Gamificación
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─── Gamification ───
   const {
     userPoints,
     currentLevel,
@@ -86,10 +140,8 @@ export function KiroWidget() {
     updateGameBestScore,
   } = useKiroGamification();
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Estado local del widget (no compartido)
-  // ─────────────────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState<TabId>(preferences.defaultTab as TabId);
+  // ─── Local State ───
+  const [activePanel, setActivePanel] = useState<ActivePanel>('chat');
   const [isDragging, setIsDragging] = useState(false);
   const [petCount, setPetCount] = useState(0);
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
@@ -97,20 +149,14 @@ export function KiroWidget() {
   const [notificationToasts, setNotificationToasts] = useState<
     Array<{ id: string; title: string; icon: string }>
   >([]);
-
-  // Estado de celebración de level up
   const [levelUpCelebration, setLevelUpCelebration] = useState<{
     level: KiroLevel;
     previousLevel: KiroLevel;
     pointsAwarded: number;
   } | null>(null);
+  const [pendingQuickMessage, setPendingQuickMessage] = useState<string | null>(null);
 
-  // Estado del panel de settings
-  const [showSettings, setShowSettings] = useState(false);
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Refs y hooks
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─── Refs ───
   const kiroRef = useRef<HTMLDivElement>(null);
   const mouseAngle = useMouseTracking(kiroRef);
   const positionLoaded = useRef(false);
@@ -119,436 +165,350 @@ export function KiroWidget() {
   const lastNotificationCount = useRef(notifications.length);
   const toastCooldown = useRef(false);
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Cargar posición inicial
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─── Load saved position ───
   useEffect(() => {
     if (positionLoaded.current) return;
     positionLoaded.current = true;
-
     const savedPosition = loadPosition();
     if (savedPosition) {
-      // Validar que la posición está dentro de la pantalla
       const maxX = window.innerWidth - 120;
       const maxY = window.innerHeight - 120;
-      const validX = Math.max(0, Math.min(savedPosition.x, maxX));
-      const validY = Math.max(0, Math.min(savedPosition.y, maxY));
-      setPosition({ x: validX, y: validY });
+      setPosition({
+        x: Math.max(0, Math.min(savedPosition.x, maxX)),
+        y: Math.max(0, Math.min(savedPosition.y, maxY)),
+      });
     }
   }, [loadPosition]);
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Greeting contextual cuando cambia la zona
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─── Zone change greeting ───
   useEffect(() => {
-    // Ignorar si es la misma zona
     if (currentZone === lastZoneRef.current) return;
+    if (zoneChangeTimeout.current) clearTimeout(zoneChangeTimeout.current);
 
-    // Limpiar timeout anterior (debounce de 1 segundo)
-    if (zoneChangeTimeout.current) {
-      clearTimeout(zoneChangeTimeout.current);
-    }
-
-    // Debounce: esperar 1 segundo antes de mostrar el greeting
     zoneChangeTimeout.current = setTimeout(() => {
-      // Actualizar la última zona
       const previousZone = lastZoneRef.current;
       lastZoneRef.current = currentZone;
 
-      // Solo mostrar greeting si realmente cambió la zona
       if (previousZone !== currentZone) {
         const zoneConfig = getZoneConfig(currentZone);
-
-        // KIRO se pone feliz por 2 segundos
         setExpression('happy');
         setTimeout(() => setExpression('neutral'), 2000);
 
-        // Mostrar greeting según el estado del panel
-        if (isOpen && activeTab === 'chat') {
-          // Si el panel está abierto en el chat, enviar como mensaje de KIRO
-          // (El chat mostrará el mensaje de bienvenida naturalmente)
-        } else if (!isOpen) {
-          // Si el panel está cerrado, mostrar bubble flotante
+        if (!isOpen) {
           setGreetingBubble(zoneConfig.greeting);
-
-          // Ocultar después de 3 segundos
-          setTimeout(() => {
-            setGreetingBubble(null);
-          }, 3000);
+          setTimeout(() => setGreetingBubble(null), 3000);
         }
       }
     }, 1000);
 
     return () => {
-      if (zoneChangeTimeout.current) {
-        clearTimeout(zoneChangeTimeout.current);
-      }
+      if (zoneChangeTimeout.current) clearTimeout(zoneChangeTimeout.current);
     };
-  }, [currentZone, isOpen, activeTab, setExpression]);
+  }, [currentZone, isOpen, setExpression]);
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Toast de notificaciones nuevas
-  // ─────────────────────────────────────────────────────────────────────────
+  // ─── Notification toasts ───
   useEffect(() => {
-    // Verificar si hay nuevas notificaciones
     if (notifications.length > lastNotificationCount.current && !isOpen) {
-      const newNotifications = notifications.slice(
-        0,
-        notifications.length - lastNotificationCount.current
-      );
+      const newNotifications = notifications.slice(0, notifications.length - lastNotificationCount.current);
+      const toastable = newNotifications.filter((n) => shouldShowToast(n.priority));
 
-      // Filtrar solo las que deben mostrar toast (medium, high, urgent)
-      const toastableNotifications = newNotifications.filter((n) =>
-        shouldShowToast(n.priority)
-      );
-
-      // Mostrar máximo 2 toasts
-      if (toastableNotifications.length > 0 && !toastCooldown.current) {
-        const toastsToShow = toastableNotifications.slice(0, 2).map((n) => ({
-          id: n.id,
-          title: n.title,
-          icon: getNotificationConfig(n.type).icon,
-        }));
-
-        setNotificationToasts(toastsToShow);
-
-        // Activar cooldown de 2 segundos
+      if (toastable.length > 0 && !toastCooldown.current) {
+        setNotificationToasts(
+          toastable.slice(0, 2).map((n) => ({
+            id: n.id,
+            title: n.title,
+            icon: getNotificationConfig(n.type).icon,
+          }))
+        );
         toastCooldown.current = true;
-        setTimeout(() => {
-          toastCooldown.current = false;
-        }, 2000);
-
-        // Ocultar toasts después de 4 segundos
-        setTimeout(() => {
-          setNotificationToasts([]);
-        }, 4000);
+        setTimeout(() => { toastCooldown.current = false; }, 2000);
+        setTimeout(() => setNotificationToasts([]), 4000);
       }
     }
-
     lastNotificationCount.current = notifications.length;
   }, [notifications, isOpen]);
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Handlers
-  // ─────────────────────────────────────────────────────────────────────────
-
-  // Easter egg: acariciar a KIRO con doble clic
+  // ─── Handlers ───
   const handlePetKiro = useCallback(() => {
     if (isOpen) return;
     setPetCount((prev) => prev + 1);
     setExpression('happy');
     setTimeout(() => setExpression('neutral'), 2000);
-
-    // Cada 5 caricias, KIRO celebra
     if (petCount > 0 && petCount % 5 === 4) {
       setKiroState('celebrating');
       setTimeout(() => setKiroState('idle'), 3000);
     }
   }, [isOpen, petCount, setExpression, setKiroState]);
 
-  // Toggle panel (clic simple) - con sonidos
   const handleToggle = useCallback(() => {
     if (!isDragging) {
-      // Reproducir sonido antes de cambiar estado
       kiroSounds.play(isOpen ? 'panel_close' : 'panel_open');
       togglePanel();
+      if (!isOpen) {
+        setActivePanel('chat');
+      }
     }
   }, [isDragging, togglePanel, isOpen]);
 
-  // Cambio de tab con sonido
-  const handleTabChange = useCallback((tab: TabId) => {
-    kiroSounds.play('action_click');
-    setActiveTab(tab);
-  }, []);
-
-  // Abrir settings
-  const handleOpenSettings = useCallback(() => {
-    kiroSounds.play('action_click');
-    setShowSettings(true);
-  }, []);
-
-  // Cerrar settings
-  const handleCloseSettings = useCallback(() => {
-    kiroSounds.play('action_click');
-    setShowSettings(false);
-  }, []);
-
-  // Minimizar panel
-  const handleMinimize = useCallback(() => {
-    kiroSounds.play('panel_close');
-    toggleMinimize();
-  }, [toggleMinimize]);
-
-  // Cerrar panel con sonido
   const handleClose = useCallback(() => {
     kiroSounds.play('panel_close');
     setIsOpen(false);
+    setActivePanel('chat');
   }, [setIsOpen]);
 
-  // Handler para cambio de esquina en mobile
+  const handleSwitchPanel = useCallback((panel: ActivePanel) => {
+    kiroSounds.play('action_click');
+    setActivePanel(panel);
+  }, []);
+
+  const handleSendMessage = useCallback((message: string) => {
+    setPendingQuickMessage(message);
+    setActivePanel('chat');
+  }, []);
+
   const handleCornerChange = useCallback((corner: KiroCorner) => {
     updateKiroSettings({ preferredCorner: corner });
   }, [updateKiroSettings]);
 
-  // Pending message from quick actions → KiroChat picks it up
-  const [pendingQuickMessage, setPendingQuickMessage] = useState<string | null>(null);
+  const handleGameScore = useCallback((_score: number) => {}, []);
 
-  // Enviar mensaje desde acciones rápidas
-  const handleSendMessage = useCallback(
-    (message: string) => {
-      setPendingQuickMessage(message);
-      setActiveTab('chat');
-    },
-    []
-  );
-
-  // Callback cuando termina el juego
-  const handleGameScore = useCallback((score: number) => {
-    console.log('[KIRO Game] Score:', score);
-  }, []);
-
-  // Wrapper de awardPoints que maneja el level up celebration
   const handleAwardPoints = useCallback(
     async (sourceKey: string, description?: string) => {
       const result = await awardPoints(sourceKey, description);
-
-      // Si hubo level up, mostrar celebración
       if (result.levelUp && result.previousLevel) {
         setLevelUpCelebration({
           level: result.levelUp,
           previousLevel: result.previousLevel,
           pointsAwarded: result.points,
         });
-
-        // KIRO celebra
         setKiroState('celebrating');
         setExpression('happy');
       }
-
       return result;
     },
     [awardPoints, setKiroState, setExpression]
   );
 
-  // Cerrar celebración de level up
   const handleLevelUpClose = useCallback(() => {
     setLevelUpCelebration(null);
     setKiroState('idle');
     setExpression('neutral');
   }, [setKiroState, setExpression]);
 
-  // Manejar fin del arrastre (guardar posición)
   const handleDragEnd = useCallback(
-    (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    (_event: MouseEvent | TouchEvent | PointerEvent, _info: PanInfo) => {
       setTimeout(() => setIsDragging(false), 100);
-
-      // Calcular la nueva posición basada en el offset del drag
       if (kiroRef.current) {
         const rect = kiroRef.current.getBoundingClientRect();
-        // La posición actual del elemento (considerando que está en bottom-right por defecto)
-        const newX = rect.left;
-        const newY = rect.top;
-
-        // Guardar la posición (con debounce interno en el hook)
-        savePosition(newX, newY);
-        setPosition({ x: newX, y: newY });
+        savePosition(rect.left, rect.top);
+        setPosition({ x: rect.left, y: rect.top });
       }
     },
     [savePosition]
   );
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // No renderizar si KIRO no es visible
-  // ─────────────────────────────────────────────────────────────────────────
-  if (!isVisible) {
-    return null;
-  }
-
-  // Si está minimizado, no renderizar nada (el contexto maneja la persistencia)
-  if (isMinimized) {
-    return null;
-  }
+  // ─── Bail if not visible ───
+  if (!isVisible || isMinimized) return null;
 
   const stateColor = KIRO_STATES[kiroState]?.color || '#a78bfa';
   const zoneInfo = ZONE_INFO[currentZone];
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // CONTENIDO COMPARTIDO DEL PANEL (usado tanto en mobile como desktop)
+  // PANEL CONTENT — Minimalist design
   // ═══════════════════════════════════════════════════════════════════════════
   const panelContent = (
-    <>
-      {/* Header con estado y zona */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-violet-500/10">
-        <div className="flex items-center gap-2">
+    <div className="flex flex-col h-full max-h-[500px]">
+      {/* ─── Header: KIRO + status + nav icons + progress + close ─── */}
+      <div className="flex items-center gap-1.5 px-3 py-2 border-b border-white/[0.06]">
+        {/* KIRO name + status */}
+        <div className="flex items-center gap-2 mr-1">
           <div
-            className="w-2.5 h-2.5 rounded-full animate-pulse"
-            style={{ backgroundColor: stateColor, boxShadow: `0 0 8px ${stateColor}50` }}
+            className="w-2 h-2 rounded-full flex-shrink-0"
+            style={{ backgroundColor: stateColor, boxShadow: `0 0 8px ${stateColor}60` }}
           />
-          <span className="font-mono text-xs text-violet-300 uppercase tracking-wider">
+          <span className="text-[13px] font-semibold text-white/90 tracking-wide">
             KIRO
           </span>
-          <span className="text-xs text-gray-500">
-            {KIRO_STATES[kiroState]?.label}
-          </span>
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={handleOpenSettings}
-            className="p-1.5 text-gray-500 hover:text-violet-300 hover:bg-violet-500/10 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-            title="Configuración"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
-          {!isMobile && (
+
+        {/* ── Nav icon buttons ── */}
+        <div className="flex items-center gap-0.5">
+          {NAV_ICONS.map((item) => (
             <button
-              onClick={handleMinimize}
-              className="p-1.5 text-gray-500 hover:text-violet-300 hover:bg-violet-500/10 rounded-lg transition-colors"
-              title="Minimizar"
+              key={item.id}
+              onClick={() => handleSwitchPanel(item.id)}
+              title={item.label}
+              className={cn(
+                'relative p-1.5 rounded-lg transition-all duration-200',
+                activePanel === item.id
+                  ? 'text-violet-300 bg-violet-500/15'
+                  : 'text-white/35 hover:text-white/70 hover:bg-white/[0.06]'
+              )}
             >
-              <Minus className="w-4 h-4" />
+              <item.icon className="w-3.5 h-3.5" />
+              {/* Notification badge on bell */}
+              {item.id === 'notifications' && unreadCount > 0 && (
+                <span className={cn(
+                  'absolute -top-0.5 -right-0.5',
+                  'w-3.5 h-3.5 rounded-full text-[8px] font-bold',
+                  'bg-red-500 text-white',
+                  'flex items-center justify-center',
+                  'shadow-sm shadow-red-500/40'
+                )}>
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
-          )}
-          <button
-            onClick={handleClose}
-            className="p-1.5 text-gray-500 hover:text-gray-300 hover:bg-gray-500/10 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-            title="Cerrar"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          ))}
         </div>
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Connection + Progress ring */}
+        <div className="flex items-center gap-1.5">
+          {isConnected ? (
+            <Wifi className="w-3 h-3 text-emerald-400/50" />
+          ) : (
+            <WifiOff className="w-3 h-3 text-white/20" />
+          )}
+          <MiniProgressRing progress={progress} level={currentLevel} points={userPoints} />
+        </div>
+
+        {/* Close */}
+        <button
+          onClick={handleClose}
+          className="p-1.5 text-white/30 hover:text-white/60 hover:bg-white/[0.06] rounded-lg transition-all duration-200 ml-0.5"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
       </div>
 
-      {/* Indicador de zona actual */}
-      <div className="flex items-center gap-2 px-4 py-2 bg-violet-500/5 border-b border-violet-500/10">
-        <MapPin className="w-3 h-3 text-violet-400" />
-        <span className="text-[11px] text-violet-300">
-          {zoneInfo.icon} {zoneInfo.label}
-        </span>
-        <span className="text-[10px] text-gray-500 ml-auto">
-          {zoneInfo.description}
-        </span>
-      </div>
+      {/* ─── Body: direct panel rendering ─── */}
+      <div className="flex-1 overflow-hidden relative">
+        <AnimatePresence mode="wait">
+          {activePanel === 'chat' && (
+            <motion.div
+              key="panel-chat"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.12 }}
+              className="h-full"
+            >
+              <KiroChat
+                onStateChange={setKiroState}
+                currentZone={currentZone}
+                speak={kiroVoice.speak}
+                awardPoints={handleAwardPoints}
+                pendingMessage={pendingQuickMessage}
+                onPendingMessageConsumed={() => setPendingQuickMessage(null)}
+              />
+            </motion.div>
+          )}
 
-      {/* Navegación de pestañas */}
-      <div className="flex border-b border-violet-500/10">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => handleTabChange(tab.id)}
-            className={cn(
-              'flex-1 flex items-center justify-center gap-1.5 py-2.5',
-              'text-xs font-medium transition-all min-h-[44px]',
-              activeTab === tab.id
-                ? 'text-violet-300 bg-violet-500/10 border-b-2 border-violet-500'
-                : 'text-gray-500 hover:text-gray-400 hover:bg-violet-500/5'
-            )}
-          >
-            <tab.icon className="w-3.5 h-3.5" />
-            {tab.label}
-          </button>
-        ))}
-      </div>
+          {activePanel === 'actions' && (
+            <motion.div
+              key="panel-actions"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.12 }}
+              className="h-full"
+            >
+              <KiroActions
+                onStateChange={setKiroState}
+                onSendMessage={handleSendMessage}
+                currentZone={currentZone}
+                awardPoints={handleAwardPoints}
+              />
+            </motion.div>
+          )}
 
-      {/* Barra de progreso de gamificación */}
-      <div className="px-3 py-2 border-b border-violet-500/5">
-        <KiroProgressBar
-          points={userPoints}
-          level={currentLevel}
-          nextLevel={nextLevel}
-          progress={progress}
-          pointsToNext={pointsToNext}
-        />
-      </div>
+          {activePanel === 'notifications' && (
+            <motion.div
+              key="panel-notifications"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.12 }}
+              className="h-full"
+            >
+              <KiroNotificationPanel awardPoints={handleAwardPoints} />
+            </motion.div>
+          )}
 
-      {/* Contenido de pestañas */}
-      <div className={cn('h-[240px]', isMobile && 'h-[calc(100%-200px)]')}>
-        {activeTab === 'chat' && (
-          <KiroChat
-            onStateChange={setKiroState}
-            currentZone={currentZone}
-            speak={kiroVoice.speak}
-            awardPoints={handleAwardPoints}
-            pendingMessage={pendingQuickMessage}
-            onPendingMessageConsumed={() => setPendingQuickMessage(null)}
-          />
-        )}
-        {activeTab === 'actions' && (
-          <KiroActions
-            onStateChange={setKiroState}
-            onSendMessage={handleSendMessage}
-            currentZone={currentZone}
-            awardPoints={handleAwardPoints}
-          />
-        )}
-        {activeTab === 'notifications' && (
-          <KiroNotificationPanel awardPoints={handleAwardPoints} />
-        )}
-        {activeTab === 'game' && (
-          <div className="p-4">
-            <KiroGame
-              onClose={() => handleTabChange('chat')}
-              onScore={handleGameScore}
-              onStateChange={setKiroState}
-              gameBestScore={gameBestScore}
-              bonusesRemaining={getGameBonusesRemaining()}
-              awardPoints={handleAwardPoints}
-              updateGameBestScore={updateGameBestScore}
-            />
-          </div>
-        )}
-      </div>
+          {activePanel === 'game' && (
+            <motion.div
+              key="panel-game"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.12 }}
+              className="h-full p-4"
+            >
+              <KiroGame
+                onClose={() => handleSwitchPanel('chat')}
+                onScore={handleGameScore}
+                onStateChange={setKiroState}
+                gameBestScore={gameBestScore}
+                bonusesRemaining={getGameBonusesRemaining()}
+                awardPoints={handleAwardPoints}
+                updateGameBestScore={updateGameBestScore}
+              />
+            </motion.div>
+          )}
 
-      {/* Panel de Settings (overlay) */}
-      <AnimatePresence>
-        {showSettings && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="absolute inset-0 bg-[#0a0a12]"
-          >
-            <KiroSettingsPanel
-              settings={kiroSettings}
-              onUpdate={updateKiroSettings}
-              onBack={handleCloseSettings}
-              gameBestScore={gameBestScore}
-              gamesPlayedToday={6 - getGameBonusesRemaining()}
-              onResetBestScore={() => updateGameBestScore(0)}
-              onClearChatHistory={() => {
-                console.log('[KIRO] Clear chat history');
-              }}
-              onResetPreferences={() => {
-                updateKiroSettings({
-                  soundEnabled: true,
-                  soundVolume: 0.7,
-                  voiceEnabled: false,
-                  voiceVolume: 0.8,
-                  showToasts: true,
-                  onlyUrgentToasts: false,
-                  visibleOnStart: true,
-                  preferredCorner: 'bottom-right',
-                });
-              }}
-              onTestVoice={() => {
-                kiroVoice.speak('¡Hola! Soy KIRO, tu asistente creativo. Estoy listo para ayudarte.', 'happy');
-              }}
-              isVoiceSpeaking={kiroVoice.isSpeaking}
-              isVoiceSupported={kiroVoice.isSupported}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+          {activePanel === 'settings' && (
+            <motion.div
+              key="panel-settings"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.12 }}
+              className="h-full"
+            >
+              <KiroSettingsPanel
+                settings={kiroSettings}
+                onUpdate={updateKiroSettings}
+                onBack={() => handleSwitchPanel('chat')}
+                gameBestScore={gameBestScore}
+                gamesPlayedToday={6 - getGameBonusesRemaining()}
+                onResetBestScore={() => updateGameBestScore(0)}
+                onClearChatHistory={() => {
+                  console.log('[KIRO] Clear chat history');
+                }}
+                onResetPreferences={() => {
+                  updateKiroSettings({
+                    soundEnabled: true,
+                    soundVolume: 0.7,
+                    voiceEnabled: true,
+                    voiceVolume: 0.8,
+                    showToasts: true,
+                    onlyUrgentToasts: false,
+                    visibleOnStart: true,
+                    preferredCorner: 'bottom-right',
+                  });
+                }}
+                onTestVoice={() => {
+                  kiroVoice.speak('¡Hola! Soy KIRO, tu asistente creativo. Estoy listo para ayudarte.', 'happy');
+                }}
+                isVoiceSpeaking={kiroVoice.isSpeaking}
+                isVoiceSupported={kiroVoice.isSupported}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
   );
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // RENDERIZADO MOBILE
+  // MOBILE RENDER
   // ═══════════════════════════════════════════════════════════════════════════
   if (isMobile) {
     return (
       <>
-        {/* Botón flotante mobile */}
         <KiroFloatingButton
           kiroState={kiroState}
           expression={expression}
@@ -556,18 +516,19 @@ export function KiroWidget() {
           onOpen={() => {
             kiroSounds.play('panel_open');
             setIsOpen(true);
+            setActivePanel('chat');
           }}
           keyboardVisible={keyboardVisible}
           preferredCorner={kiroSettings.preferredCorner}
           onCornerChange={handleCornerChange}
         />
 
-        {/* Bottom sheet mobile */}
         <KiroBottomSheet
           isOpen={isOpen}
           onClose={() => {
             kiroSounds.play('panel_close');
             setIsOpen(false);
+            setActivePanel('chat');
           }}
         >
           <div className="relative h-full overflow-hidden">
@@ -575,7 +536,6 @@ export function KiroWidget() {
           </div>
         </KiroBottomSheet>
 
-        {/* Celebración de Level Up (overlay global) */}
         <AnimatePresence>
           {levelUpCelebration && (
             <motion.div
@@ -598,7 +558,7 @@ export function KiroWidget() {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // RENDERIZADO DESKTOP/TABLET
+  // DESKTOP RENDER
   // ═══════════════════════════════════════════════════════════════════════════
   return (
     <motion.div
@@ -625,9 +585,7 @@ export function KiroWidget() {
           : { touchAction: 'none' as const }
       }
     >
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* GLOBO DE PENSAMIENTO (THOUGHT BUBBLE) */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* ═══ BUBBLE PANEL ═══ */}
       <KiroBubble
         isOpen={isOpen}
         kiroRef={kiroRef}
@@ -637,9 +595,7 @@ export function KiroWidget() {
         {panelContent}
       </KiroBubble>
 
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* MASCOTA FLOTANTE */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* ═══ FLOATING MASCOT ═══ */}
       <motion.div
         onClick={handleToggle}
         onDoubleClick={handlePetKiro}
@@ -647,7 +603,7 @@ export function KiroWidget() {
         whileTap={{ scale: 0.95 }}
         className="relative cursor-pointer"
       >
-        {/* Efecto glow - pulsa más rápido cuando está pensando/trabajando */}
+        {/* Glow effect */}
         <motion.div
           className="absolute inset-0 rounded-full"
           style={{
@@ -656,14 +612,10 @@ export function KiroWidget() {
           animate={{
             scale: kiroState === 'thinking' || kiroState === 'working'
               ? [1, 1.3, 1]
-              : isOpen
-                ? [1, 1.2, 1]
-                : 1,
+              : isOpen ? [1, 1.2, 1] : 1,
             opacity: kiroState === 'thinking' || kiroState === 'working'
               ? [0.5, 0.9, 0.5]
-              : isOpen
-                ? [0.5, 0.8, 0.5]
-                : 0.5,
+              : isOpen ? [0.5, 0.8, 0.5] : 0.5,
           }}
           transition={{
             duration: kiroState === 'thinking' || kiroState === 'working' ? 0.8 : 2,
@@ -672,7 +624,7 @@ export function KiroWidget() {
           }}
         />
 
-        {/* Mascota SVG */}
+        {/* KIRO 3D avatar */}
         <Kiro3D
           size={100}
           mouseAngle={mouseAngle}
@@ -680,27 +632,19 @@ export function KiroWidget() {
           expression={expression}
         />
 
-        {/* Indicador de arrastre */}
+        {/* Drag handle */}
         {!isOpen && (
           <div className="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 hover:opacity-60 transition-opacity">
             <GripVertical className="w-4 h-4 text-violet-400" />
           </div>
         )}
 
-        {/* Badge de notificaciones */}
+        {/* Notification badge */}
         {!isOpen && unreadCount > 0 && (
           <motion.div
             initial={{ scale: 0 }}
-            animate={{
-              scale: [1, 1.15, 1],
-            }}
-            transition={{
-              scale: {
-                duration: 1.5,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              },
-            }}
+            animate={{ scale: [1, 1.15, 1] }}
+            transition={{ scale: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' } }}
             className={cn(
               'absolute -top-1 -right-1',
               'w-5 h-5 rounded-full',
@@ -714,7 +658,7 @@ export function KiroWidget() {
           </motion.div>
         )}
 
-        {/* Indicador de zona (cuando está cerrado) */}
+        {/* Zone indicator (collapsed) */}
         {!isOpen && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -728,7 +672,6 @@ export function KiroWidget() {
             )}
           >
             {zoneInfo.icon}
-            {/* Connection indicator (Phase 9) */}
             {isConnected ? (
               <Wifi className="w-2.5 h-2.5 text-green-400" />
             ) : (
@@ -737,7 +680,7 @@ export function KiroWidget() {
           </motion.div>
         )}
 
-        {/* Greeting bubble flotante (cuando cambia de zona con panel cerrado) */}
+        {/* Greeting bubble */}
         <AnimatePresence>
           {greetingBubble && !isOpen && (
             <motion.div
@@ -753,24 +696,19 @@ export function KiroWidget() {
                 'shadow-lg shadow-violet-500/20'
               )}
             >
-              {/* Puntero/flecha hacia KIRO */}
-              <div
-                className={cn(
-                  'absolute -bottom-2 right-8',
-                  'w-0 h-0',
-                  'border-l-[8px] border-l-transparent',
-                  'border-r-[8px] border-r-transparent',
-                  'border-t-[8px] border-t-violet-500/30'
-                )}
-              />
-              <p className="text-[11px] text-violet-200 leading-tight">
-                {greetingBubble}
-              </p>
+              <div className={cn(
+                'absolute -bottom-2 right-8',
+                'w-0 h-0',
+                'border-l-[8px] border-l-transparent',
+                'border-r-[8px] border-r-transparent',
+                'border-t-[8px] border-t-violet-500/30'
+              )} />
+              <p className="text-[11px] text-violet-200 leading-tight">{greetingBubble}</p>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Notification toasts (cuando llegan alertas con panel cerrado) */}
+        {/* Notification toasts */}
         <AnimatePresence>
           {notificationToasts.length > 0 && !isOpen && !greetingBubble && (
             <motion.div
@@ -786,14 +724,9 @@ export function KiroWidget() {
                   initial={{ opacity: 0, y: 10, scale: 0.9 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -5, scale: 0.95 }}
-                  transition={{
-                    type: 'spring',
-                    stiffness: 400,
-                    damping: 25,
-                    delay: index * 0.1,
-                  }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25, delay: index * 0.1 }}
                   onClick={() => {
-                    setActiveTab('notifications');
+                    setActivePanel('notifications');
                     setIsOpen(true);
                     setNotificationToasts([]);
                   }}
@@ -807,21 +740,16 @@ export function KiroWidget() {
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-base flex-shrink-0">{toast.icon}</span>
-                    <p className="text-[11px] text-red-200 font-medium leading-tight truncate">
-                      {toast.title}
-                    </p>
+                    <p className="text-[11px] text-red-200 font-medium leading-tight truncate">{toast.title}</p>
                   </div>
-                  {/* Puntero/flecha */}
                   {index === 0 && (
-                    <div
-                      className={cn(
-                        'absolute -bottom-2 right-8',
-                        'w-0 h-0',
-                        'border-l-[8px] border-l-transparent',
-                        'border-r-[8px] border-r-transparent',
-                        'border-t-[8px] border-t-red-500/30'
-                      )}
-                    />
+                    <div className={cn(
+                      'absolute -bottom-2 right-8',
+                      'w-0 h-0',
+                      'border-l-[8px] border-l-transparent',
+                      'border-r-[8px] border-r-transparent',
+                      'border-t-[8px] border-t-red-500/30'
+                    )} />
                   )}
                 </motion.div>
               ))}
@@ -830,9 +758,7 @@ export function KiroWidget() {
         </AnimatePresence>
       </motion.div>
 
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* CELEBRACIÓN DE LEVEL UP (overlay global) */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* ═══ LEVEL UP CELEBRATION ═══ */}
       <AnimatePresence>
         {levelUpCelebration && (
           <motion.div
