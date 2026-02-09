@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Bot, Plus, Trash2, FileText, BookOpen, History, Settings2, Workflow, ThumbsUp, ThumbsDown, Ban, Sparkles, MessageSquare } from 'lucide-react';
+import { Loader2, Bot, Plus, Trash2, FileText, BookOpen, History, Settings2, Workflow, ThumbsUp, ThumbsDown, Ban, Sparkles, MessageSquare, Brain, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -27,6 +27,11 @@ interface AIConfig {
   assistant_name: string;
   system_prompt: string | null;
   tone: string | null;
+  auto_learn_content?: boolean;
+  auto_learn_research?: boolean;
+  auto_learn_products?: boolean;
+  auto_learn_clients?: boolean;
+  kiro_enabled?: boolean;
 }
 
 interface KnowledgeBase {
@@ -456,6 +461,10 @@ export function AIAssistantSettings() {
           <TabsTrigger value="logs" className="gap-1.5 text-xs">
             <History className="h-3.5 w-3.5" />
             Logs
+          </TabsTrigger>
+          <TabsTrigger value="kiro" className="gap-1.5 text-xs">
+            <Brain className="h-3.5 w-3.5" />
+            KIRO
           </TabsTrigger>
         </TabsList>
 
@@ -1068,6 +1077,144 @@ export function AIAssistantSettings() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* KIRO & Auto-Learning Tab */}
+        <TabsContent value="kiro">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Brain className="h-4 w-4 text-violet-500" />
+                  Conexión con KIRO
+                </CardTitle>
+                <CardDescription>
+                  Conecta el conocimiento de tu organización con KIRO, el asistente IA de la plataforma.
+                  KIRO usará tu conocimiento, ejemplos y reglas al responder a los miembros de tu equipo.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Activar KIRO para esta organización</p>
+                    <p className="text-xs text-muted-foreground">
+                      KIRO usará el conocimiento y reglas configuradas en esta sección
+                    </p>
+                  </div>
+                  <Switch
+                    checked={config?.kiro_enabled ?? true}
+                    onCheckedChange={(v) => {
+                      setConfig(c => c ? { ...c, kiro_enabled: v } : null);
+                      if (config?.id) {
+                        supabase.from('ai_assistant_config')
+                          .update({ kiro_enabled: v })
+                          .eq('id', config.id)
+                          .then(() => {});
+                      }
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-amber-500" />
+                  Auto-Aprendizaje
+                </CardTitle>
+                <CardDescription>
+                  KIRO puede aprender automáticamente de la actividad de tu organización.
+                  Cuando se crea contenido, productos o investigaciones, KIRO lo aprende.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Aprender de contenido creado</p>
+                    <p className="text-xs text-muted-foreground">
+                      Cuando se crea un nuevo contenido, KIRO aprende sobre él
+                    </p>
+                  </div>
+                  <Switch
+                    checked={config?.auto_learn_content ?? true}
+                    onCheckedChange={(v) => {
+                      setConfig(c => c ? { ...c, auto_learn_content: v } : null);
+                      if (config?.id) {
+                        supabase.from('ai_assistant_config')
+                          .update({ auto_learn_content: v })
+                          .eq('id', config.id)
+                          .then(() => {});
+                      }
+                    }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Aprender de investigaciones de producto</p>
+                    <p className="text-xs text-muted-foreground">
+                      Cuando se completa un product research, KIRO aprende los hallazgos
+                    </p>
+                  </div>
+                  <Switch
+                    checked={config?.auto_learn_research ?? true}
+                    onCheckedChange={(v) => {
+                      setConfig(c => c ? { ...c, auto_learn_research: v } : null);
+                      if (config?.id) {
+                        supabase.from('ai_assistant_config')
+                          .update({ auto_learn_research: v })
+                          .eq('id', config.id)
+                          .then(() => {});
+                      }
+                    }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Aprender de nuevos productos</p>
+                    <p className="text-xs text-muted-foreground">
+                      Cuando se crea un producto/brief, KIRO aprende sobre él
+                    </p>
+                  </div>
+                  <Switch
+                    checked={config?.auto_learn_products ?? true}
+                    onCheckedChange={(v) => {
+                      setConfig(c => c ? { ...c, auto_learn_products: v } : null);
+                      if (config?.id) {
+                        supabase.from('ai_assistant_config')
+                          .update({ auto_learn_products: v })
+                          .eq('id', config.id)
+                          .then(() => {});
+                      }
+                    }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Aprender de nuevos clientes</p>
+                    <p className="text-xs text-muted-foreground">
+                      Cuando se agrega un cliente, KIRO aprende sobre la marca
+                    </p>
+                  </div>
+                  <Switch
+                    checked={config?.auto_learn_clients ?? true}
+                    onCheckedChange={(v) => {
+                      setConfig(c => c ? { ...c, auto_learn_clients: v } : null);
+                      if (config?.id) {
+                        supabase.from('ai_assistant_config')
+                          .update({ auto_learn_clients: v })
+                          .eq('id', config.id)
+                          .then(() => {});
+                      }
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

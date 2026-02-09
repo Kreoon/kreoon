@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useKiro, ZONE_INFO } from '@/contexts/KiroContext';
@@ -28,6 +28,17 @@ export interface UseKiroChatReturn {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const MAX_MESSAGES = 50;
+const SESSION_KEY = 'kiro_session_id';
+
+// Generate or retrieve a session ID (persists per browser tab via sessionStorage)
+function getSessionId(): string {
+  let sessionId = sessionStorage.getItem(SESSION_KEY);
+  if (!sessionId) {
+    sessionId = `ks_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    sessionStorage.setItem(SESSION_KEY, sessionId);
+  }
+  return sessionId;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HOOK
@@ -36,6 +47,7 @@ const MAX_MESSAGES = 50;
 /**
  * Hook that manages KIRO's chat brain.
  * Sends messages to the kiro-chat edge function and manages conversation state.
+ * Now includes: organizationId, sessionId, server-side history loading.
  *
  * @param speak - Optional function to speak KIRO's response aloud
  */
@@ -49,6 +61,52 @@ export function useKiroChat(speak?: (text: string, emotion?: KiroVoiceEmotion) =
   // Queue for messages sent while KIRO is thinking
   const messageQueueRef = useRef<string[]>([]);
   const isProcessingRef = useRef(false);
+  const historyLoadedRef = useRef(false);
+
+  const orgId = profile?.current_organization_id || null;
+  const sessionId = useRef(getSessionId()).current;
+
+  // ─── Load server conversation history on mount ───
+  useEffect(() => {
+    if (!orgId || !user?.id || historyLoadedRef.current) return;
+    historyLoadedRef.current = true;
+
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('ai_assistant_logs')
+          .select('user_message, assistant_response, created_at')
+          .eq('organization_id', orgId)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        if (data && data.length > 0) {
+          const serverMessages: KiroChatMessage[] = [];
+          // Reverse to get chronological order
+          const reversed = [...data].reverse();
+          for (const log of reversed) {
+            if ((log as any).assistant_response === '[BLOCKED BY RULE]') continue;
+            serverMessages.push({
+              id: `srv-u-${log.created_at}`,
+              role: 'user',
+              content: (log as any).user_message,
+              timestamp: new Date(log.created_at),
+            });
+            serverMessages.push({
+              id: `srv-a-${log.created_at}`,
+              role: 'assistant',
+              content: (log as any).assistant_response,
+              timestamp: new Date(log.created_at),
+            });
+          }
+          setMessages(serverMessages.slice(-MAX_MESSAGES));
+        }
+      } catch (err) {
+        console.warn('[useKiroChat] Failed to load server history:', err);
+      }
+    })();
+  }, [orgId, user?.id]);
 
   // ─── Build context for the edge function ───
   const buildContext = useCallback(() => {
@@ -96,7 +154,12 @@ export function useKiroChat(speak?: (text: string, emotion?: KiroVoiceEmotion) =
         const context = buildContext();
 
         const { data, error } = await supabase.functions.invoke('kiro-chat', {
-          body: { message: text, context },
+          body: {
+            message: text,
+            organizationId: orgId,
+            sessionId,
+            context,
+          },
         });
 
         if (error) {
@@ -143,7 +206,7 @@ export function useKiroChat(speak?: (text: string, emotion?: KiroVoiceEmotion) =
         setIsLoading(false);
       }
     },
-    [buildContext, speak],
+    [buildContext, speak, orgId, sessionId],
   );
 
   // ─── Process queued messages ───

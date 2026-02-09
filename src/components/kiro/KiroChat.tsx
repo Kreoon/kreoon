@@ -11,6 +11,8 @@ import type { KiroZone, SuggestedAction } from '@/contexts/KiroContext';
 import { getZoneConfig } from './config/zoneActions';
 import { kiroSounds } from './sounds/KiroSounds';
 import type { AwardResult } from './hooks/useKiroGamification';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 // Phase 9: Intent detection
 import { ActionSuggestions, useActionSuggestions } from './agentic/ActionSuggestions';
 
@@ -79,6 +81,7 @@ export function KiroChat({ onStateChange, currentZone = 'general', awardPoints, 
   // ─────────────────────────────────────────────────────────────────────────
   const { messages, isLoading, sendMessage, clearMessages } = useKiroChat(speak);
   const { chatHistory, addChatMessage, clearChatHistory, notifications, markAsRead, agentic } = useKiro();
+  const { user, profile } = useAuth();
 
   // Intent detection (Phase 9)
   const { intentResult, isVisible: showSuggestions, analyzeText, dismiss: dismissSuggestions, clear: clearSuggestions } = useActionSuggestions();
@@ -293,9 +296,23 @@ export function KiroChat({ onStateChange, currentZone = 'general', awardPoints, 
         return updated;
       });
 
-      // Log para debugging (futura integración con Supabase)
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[KiroChat] Feedback:', feedback);
+      // Persist feedback to server
+      const orgId = profile?.current_organization_id;
+      if (orgId && user?.id) {
+        // Find the message to get its content for context
+        const targetMsg = messages.find(m => m.id === messageId);
+        const prevMsg = targetMsg
+          ? messages[messages.indexOf(targetMsg) - 1]
+          : undefined;
+
+        supabase.from('ai_chat_feedback').insert({
+          organization_id: orgId,
+          user_id: user.id,
+          rating: type === 'positive' ? 5 : 1,
+          user_question: prevMsg?.role === 'user' ? prevMsg.content : null,
+          ai_response: targetMsg?.content?.substring(0, 500) || null,
+          comment: reason || null,
+        }).then(() => {});
       }
 
       // Otorgar puntos por feedback
@@ -316,7 +333,7 @@ export function KiroChat({ onStateChange, currentZone = 'general', awardPoints, 
         }
       }
     },
-    [awardPoints]
+    [awardPoints, profile, user, messages]
   );
 
   // ─────────────────────────────────────────────────────────────────────────

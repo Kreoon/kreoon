@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings2, Palette, Globe, Coins, BarChart3, Webhook } from 'lucide-react';
+import { Settings2, Palette, Globe, Coins, BarChart3, Webhook, Brain } from 'lucide-react';
 import { AppSettingsManagement } from '@/components/settings/AppSettingsManagement';
 import { AppearanceSettings } from '@/components/settings/AppearanceSettings';
 import { IntegrationsSettings } from '@/components/settings/IntegrationsSettings';
@@ -7,6 +7,7 @@ import { TokenGiftingPanel } from '@/components/settings/TokenGiftingPanel';
 import { AITokensOrgAdmin } from '@/components/settings/ai/AITokensOrgAdmin';
 import { PlatformMetricsPanel } from '@/components/settings/PlatformMetricsPanel';
 import { KreoonIAWebhooksSettings } from '@/components/settings/KreoonIAWebhooksSettings';
+import { KiroBrainPlatform } from '@/components/settings/KiroBrainPlatform';
 
 export default function PlatformConfigSection() {
   return (
@@ -19,10 +20,14 @@ export default function PlatformConfigSection() {
       </div>
 
       <Tabs defaultValue="settings" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="settings" className="gap-2">
             <Settings2 className="h-4 w-4" />
             <span className="hidden sm:inline">Ajustes</span>
+          </TabsTrigger>
+          <TabsTrigger value="kiro-brain" className="gap-2">
+            <Brain className="h-4 w-4" />
+            <span className="hidden sm:inline">KIRO Brain</span>
           </TabsTrigger>
           <TabsTrigger value="webhooks" className="gap-2">
             <Webhook className="h-4 w-4" />
@@ -48,6 +53,10 @@ export default function PlatformConfigSection() {
 
         <TabsContent value="settings">
           <AppSettingsManagement />
+        </TabsContent>
+
+        <TabsContent value="kiro-brain">
+          <KiroBrainPlatform />
         </TabsContent>
 
         <TabsContent value="webhooks">
