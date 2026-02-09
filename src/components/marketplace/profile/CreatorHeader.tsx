@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { MapPin, Star, CheckCircle2, Share2, Heart, Circle, Gift, Lock } from 'lucide-react';
+import { MapPin, Star, CheckCircle2, Share2, Heart, Circle, Gift, Lock, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MarketplaceRoleBadge } from '../roles/MarketplaceRoleBadge';
+import { RecruitCreatorDialog } from './RecruitCreatorDialog';
+import { useAuth } from '@/hooks/useAuth';
+import { useHasPendingInvitation } from '@/hooks/useMarketplaceOrgInvitations';
 import type { CreatorFullProfile } from '../types/marketplace';
 
 interface CreatorHeaderProps {
@@ -67,6 +70,11 @@ const PLATFORM_ICONS: Record<string, React.FC<{ className?: string }>> = {
 export function CreatorHeader({ creator, hasPaidPlan = false }: CreatorHeaderProps) {
   const [isSaved, setIsSaved] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
+  const [showRecruitDialog, setShowRecruitDialog] = useState(false);
+  const { profile, roles } = useAuth();
+  const orgId = profile?.current_organization_id || null;
+  const hasPendingInvitation = useHasPendingInvitation(orgId, creator.user_id);
+  const canRecruit = orgId && (roles.includes('admin') || roles.includes('team_leader') || roles.includes('strategist'));
 
   const initials = creator.display_name
     .split(' ')
@@ -265,7 +273,34 @@ export function CreatorHeader({ creator, hasPaidPlan = false }: CreatorHeaderPro
             <Heart className={cn('h-4 w-4', isSaved && 'fill-pink-400')} />
             Guardar
           </button>
+
+          {/* Recruit button (visible to admin/team_leader/strategist) */}
+          {canRecruit && (
+            <button
+              onClick={() => setShowRecruitDialog(true)}
+              disabled={hasPendingInvitation}
+              className={cn(
+                'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors',
+                hasPendingInvitation
+                  ? 'bg-gray-500/20 text-gray-500 cursor-not-allowed'
+                  : 'bg-purple-600 hover:bg-purple-700 text-white',
+              )}
+            >
+              <UserPlus className="h-4 w-4" />
+              {hasPendingInvitation ? 'Invitación enviada' : 'Reclutar'}
+            </button>
+          )}
         </div>
+
+        {/* Recruit dialog */}
+        {canRecruit && (
+          <RecruitCreatorDialog
+            open={showRecruitDialog}
+            onOpenChange={setShowRecruitDialog}
+            creatorUserId={creator.user_id}
+            creatorName={creator.display_name}
+          />
+        )}
       </div>
     </div>
   );

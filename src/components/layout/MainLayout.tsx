@@ -9,6 +9,7 @@ import { EnhancedChatButton } from "@/components/chat/EnhancedChatButton";
 import { TourProvider } from "@/components/tour/TourProvider";
 import { AmbassadorCelebration } from "@/components/AmbassadorCelebration";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { KiroWidget } from "@/components/kiro/KiroWidget";
 import { useAuth } from "@/hooks/useAuth";
 import { usePresence } from "@/hooks/usePresence";
 import { useChatNotifications } from "@/hooks/useChatNotifications";
@@ -196,13 +197,15 @@ export function MainLayout({
         {/* Chat Panel */}
         <EnhancedChatDrawer isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
 
+        {/* KIRO AI Assistant */}
+        <KiroWidget />
 
         {/* Ambassador Celebration */}
         <AmbassadorCelebration />
       </div>
     );
   }
-  
+
   // For clients, reuse the main Sidebar so navigation + role switcher stay consistent
   if (isClient) {
     return (
@@ -288,6 +291,9 @@ export function MainLayout({
 
         {/* Chat Panel */}
         <EnhancedChatDrawer isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
+
+        {/* KIRO AI Assistant */}
+        <KiroWidget />
 
         {/* Ambassador Celebration */}
         <AmbassadorCelebration />
@@ -389,6 +395,9 @@ export function MainLayout({
 
       {/* Chat Panel */}
       <EnhancedChatDrawer isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
+
+      {/* KIRO AI Assistant */}
+      <KiroWidget />
 
       {/* Tour Provider */}
       <TourProvider />

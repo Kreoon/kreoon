@@ -31,12 +31,19 @@ export default function Auth() {
 
   const tabParam = searchParams.get("tab");
   const roleParam = searchParams.get("role");
+  const intentParam = searchParams.get("intent");
 
   const [view, setView] = useState<AuthView>(() => getInitialView(tabParam));
   const [direction, setDirection] = useState(0);
   const initialRole =
     roleParam && ["creator", "editor", "client"].includes(roleParam)
       ? roleParam
+      : null;
+
+  // Map intent param to RegistrationIntent
+  const initialIntent =
+    intentParam && ["talent", "brand", "organization", "join"].includes(intentParam)
+      ? (intentParam as "talent" | "brand" | "organization" | "join")
       : null;
 
   useEffect(() => {
@@ -145,6 +152,7 @@ export default function Auth() {
               <RegisterForm
                 onSwitchToLogin={() => setViewAndSyncUrl("login")}
                 preselectedRole={initialRole ?? undefined}
+                initialIntent={initialIntent}
               />
             </motion.div>
           )}

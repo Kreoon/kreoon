@@ -17,6 +17,7 @@ import { TrialProvider } from "@/contexts/TrialContext";
 import { TrackingProvider } from "@/contexts/TrackingContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 import { StrategistClientProvider } from "@/contexts/StrategistClientContext";
+import { KiroProvider } from "@/contexts/KiroContext";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import { MainLayout } from "./components/layout/MainLayout";
 import { MarketplaceLayout } from "./components/layout/MarketplacePublicLayout";
@@ -202,13 +203,15 @@ function AppContent() {
                   <AchievementNotificationProvider>
                     <StrategistClientProvider>
                       <AICopilotProvider>
-                        <TooltipProvider delayDuration={0}>
-                          <ImpersonationBanner />
-                          <Toaster />
-                          <Sonner />
-                          <UpdatePrompt />
-                          <AppRoutes />
-                        </TooltipProvider>
+                        <KiroProvider>
+                          <TooltipProvider delayDuration={0}>
+                            <ImpersonationBanner />
+                            <Toaster />
+                            <Sonner />
+                            <UpdatePrompt />
+                            <AppRoutes />
+                          </TooltipProvider>
+                        </KiroProvider>
                       </AICopilotProvider>
                     </StrategistClientProvider>
                   </AchievementNotificationProvider>

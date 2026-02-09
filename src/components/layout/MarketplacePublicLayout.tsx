@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { MainLayout } from './MainLayout';
 import { Button } from '@/components/ui/button';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus, Sparkles } from 'lucide-react';
 
 interface MarketplaceLayoutProps {
   children: ReactNode;
@@ -58,11 +58,20 @@ function AnonymousMarketplaceShell({ children }: { children: ReactNode }) {
           </Button>
           <Button
             size="sm"
-            onClick={() => navigate('/register')}
+            onClick={() => navigate('/register?intent=talent')}
             className="bg-purple-600 hover:bg-purple-700 text-white"
           >
+            <Sparkles className="h-4 w-4 mr-1.5" />
+            Soy Talento
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => navigate('/register?intent=brand')}
+            className="border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 hidden sm:flex"
+          >
             <UserPlus className="h-4 w-4 mr-1.5" />
-            Registrarse
+            Busco Talento
           </Button>
         </div>
       </header>
