@@ -20,28 +20,15 @@ export async function updateContentStatusWithUP(params: StatusChangeParams) {
   
   console.log('[ContentStatusWithUP] Starting status change:', { contentId, oldStatus, newStatus });
   
-  // First, fetch the content to get all required data
-  const { data: content, error: fetchError } = await supabase
-    .from('content')
-    .select(`
-      id,
-      organization_id,
-      creator_id,
-      editor_id,
-      recording_at,
-      recorded_at,
-      editing_at,
-      delivered_at,
-      issue_at,
-      approved_at,
-      corrected_at
-    `)
-    .eq('id', contentId)
-    .single();
+  // Fetch content via SECURITY DEFINER RPC (bypasses 18 RLS policies)
+  const { data: contentArr, error: fetchError } = await supabase
+    .rpc('get_content_by_id', { p_content_id: contentId });
+
+  const content = contentArr?.[0];
 
   if (fetchError || !content) {
     console.error('[ContentStatusWithUP] Error fetching content for UP:', fetchError);
-    throw fetchError;
+    throw fetchError || new Error('Content not found');
   }
 
   console.log('[ContentStatusWithUP] Content fetched:', {
@@ -86,11 +73,9 @@ export async function updateContentStatusWithUP(params: StatusChangeParams) {
       break;
   }
 
-  // Update the content status
+  // Update via SECURITY DEFINER RPC (bypasses 18 RLS policies)
   const { error: updateError } = await supabase
-    .from('content')
-    .update(updates)
-    .eq('id', contentId);
+    .rpc('update_content_by_id', { p_content_id: contentId, p_updates: updates });
 
   if (updateError) {
     console.error('[ContentStatusWithUP] Error updating content:', updateError);
@@ -175,10 +160,9 @@ export async function updateContentStatusSimple(contentId: string, newStatus: Co
       break;
   }
 
+  // Update via SECURITY DEFINER RPC (bypasses 18 RLS policies)
   const { error } = await supabase
-    .from('content')
-    .update(updates)
-    .eq('id', contentId);
+    .rpc('update_content_by_id', { p_content_id: contentId, p_updates: updates });
 
   if (error) throw error;
 }
