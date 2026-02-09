@@ -117,6 +117,15 @@ verify_jwt = true
 [functions.save-product-brief]
 verify_jwt = true
 
+[functions.kiro-chat]
+verify_jwt = true
+
+[functions.kiro-voice]
+verify_jwt = false
+
+[functions.kiro-auto-learn]
+verify_jwt = false
+
 [functions.product-research]
 verify_jwt = false
 
@@ -131,6 +140,12 @@ verify_jwt = true
 
 [functions.bunny-status]
 verify_jwt = false
+
+[functions.bunny-marketplace-upload]
+verify_jwt = true
+
+[functions.bunny-marketplace-status]
+verify_jwt = true
 
 [functions.bunny-download]
 verify_jwt = true
@@ -194,3 +209,9 @@ verify_jwt = true
 
 [functions.update-exchange-rates]
 verify_jwt = false
+
+[functions.marketplace-recommendations]
+verify_jwt = true
+
+[functions.send-recruitment]
+verify_jwt = true
