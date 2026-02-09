@@ -116,25 +116,36 @@ export default defineConfig(({ mode }) => ({
         // CRITICAL: Prevent any automatic takeover that could cause reloads
         skipWaiting: false,
         clientsClaim: false,
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // PERFORMANCE FIX: Only precache the HTML shell + core vendor chunks (~15 files)
+        // Previously: **/*.{js,css,html,...} = 202 files (~10MB) downloaded on EVERY deploy
+        // Now: only essential entry files; lazy chunks are cached on-demand via runtimeCaching
+        globPatterns: [
+          'index.html',
+          'assets/index-*.css',
+          'assets/vendor-react-*.js',
+          'assets/vendor-router-*.js',
+          'assets/vendor-supabase-*.js',
+          'assets/index-*.js',
+        ],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit
         // Disable navigateFallback to prevent SW interference
         navigateFallback: undefined,
         // Disable navigation preload to prevent race conditions
         navigationPreload: false,
         // Force cache invalidation by using a unique cache name prefix
-        cacheId: 'kreoon-v2',
-        // Clean up old caches
+        cacheId: 'kreoon-v3',
+        // Clean up old caches (including v2 bloated ones)
         cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-            handler: 'NetworkFirst',
+            // Lazy-loaded JS/CSS chunks: cache on first visit, serve from cache next time
+            urlPattern: /\/assets\/.*\.(?:js|css)$/i,
+            handler: 'StaleWhileRevalidate',
             options: {
-              cacheName: 'supabase-cache-v2',
+              cacheName: 'app-chunks-v1',
               expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 // 24 hours
+                maxEntries: 150,
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
               },
               cacheableResponse: {
                 statuses: [0, 200]
@@ -142,14 +153,13 @@ export default defineConfig(({ mode }) => ({
             }
           },
           {
-            // HLS manifests - cache for 1 hour (faster subsequent loads)
-            urlPattern: /\.m3u8$/i,
-            handler: 'CacheFirst',
+            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+            handler: 'NetworkFirst',
             options: {
-              cacheName: 'hls-manifest-cache-v1',
+              cacheName: 'supabase-cache-v3',
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 60 * 60 // 1 hour
+                maxAgeSeconds: 60 * 60 * 24 // 24 hours
               },
               cacheableResponse: {
                 statuses: [0, 200]
@@ -165,21 +175,6 @@ export default defineConfig(({ mode }) => ({
               expiration: {
                 maxEntries: 200,
                 maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
-            // Video content from Bunny CDN
-            urlPattern: /^https:\/\/.*\.b-cdn\.net\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'bunny-video-cache-v1',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
               },
               cacheableResponse: {
                 statuses: [0, 200]
