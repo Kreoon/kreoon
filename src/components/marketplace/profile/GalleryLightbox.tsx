@@ -522,9 +522,9 @@ function TikTokSlideVideo({ item, isActive }: { item: PortfolioMedia; isActive: 
           </div>
         ) : (
           <div className="relative w-full max-w-lg aspect-[9/16] max-h-full">
-            {(item.thumbnail_url || getBunnyThumbnailUrl(item.url)) ? (
+            {(getBunnyThumbnailUrl(item.url) || item.thumbnail_url) ? (
               <img
-                src={item.thumbnail_url || getBunnyThumbnailUrl(item.url)!}
+                src={getBunnyThumbnailUrl(item.url) || item.thumbnail_url!}
                 alt=""
                 className="w-full h-full object-cover rounded-lg"
               />
@@ -541,7 +541,7 @@ function TikTokSlideVideo({ item, isActive }: { item: PortfolioMedia; isActive: 
       ) : (
         <video
           src={item.url}
-          poster={item.thumbnail_url || getBunnyThumbnailUrl(item.url) || undefined}
+          poster={getBunnyThumbnailUrl(item.url) || item.thumbnail_url || undefined}
           autoPlay={isActive}
           controls
           playsInline

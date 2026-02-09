@@ -11,11 +11,11 @@ interface OrgPortfolioSectionProps {
 }
 
 function resolveThumb(item: OrgMemberContent): string {
-  if (item.thumbnail_url) return item.thumbnail_url;
   if (item.type === 'video') {
     const bunnyThumb = getBunnyThumbnailUrl(item.url);
     if (bunnyThumb) return bunnyThumb;
   }
+  if (item.thumbnail_url) return item.thumbnail_url;
   return item.url;
 }
 

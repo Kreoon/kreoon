@@ -7,11 +7,11 @@ import { getBunnyThumbnailUrl } from '@/hooks/useHLSPlayer';
 import { GalleryLightbox } from './GalleryLightbox';
 
 function resolveThumb(item: PortfolioMedia): string {
-  if (item.thumbnail_url) return item.thumbnail_url;
   if (item.type === 'video') {
     const bunnyThumb = getBunnyThumbnailUrl(item.url);
     if (bunnyThumb) return bunnyThumb;
   }
+  if (item.thumbnail_url) return item.thumbnail_url;
   return item.url;
 }
 

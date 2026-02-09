@@ -5,11 +5,13 @@ import type { MarketplaceCreator, PortfolioMedia } from './types/marketplace';
 import { getBunnyThumbnailUrl } from '@/hooks/useHLSPlayer';
 
 function resolveThumb(item: PortfolioMedia): string {
-  if (item.thumbnail_url) return item.thumbnail_url;
+  // For videos: prefer Bunny Stream CDN thumbnail (always reliable)
+  // This ensures consistent thumbnails regardless of what's stored in DB
   if (item.type === 'video') {
     const bunnyThumb = getBunnyThumbnailUrl(item.url);
     if (bunnyThumb) return bunnyThumb;
   }
+  if (item.thumbnail_url) return item.thumbnail_url;
   return item.url;
 }
 
