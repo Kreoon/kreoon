@@ -89,18 +89,16 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
 
     try {
       // ── 0. Fetch exclusions & subscriptions ──────────────────────────
-      // Users who are clients of organizations should NOT appear as creators
-      const { data: clientUserRows } = await supabase
-        .from('client_users')
-        .select('user_id');
-      const clientUserIds = new Set((clientUserRows || []).map((r: any) => r.user_id));
-
-      // Fetch paid subscriptions (basic or pro, active) to identify subscribed users
-      const { data: subRows } = await (supabase as any)
-        .from('user_subscriptions')
-        .select('user_id, plan, status')
-        .neq('plan', 'free')
-        .eq('status', 'active');
+      // Use SECURITY DEFINER RPC to get client user_ids (works for anon + authenticated)
+      const [{ data: excludedRows }, { data: subRows }] = await Promise.all([
+        (supabase as any).rpc('get_marketplace_excluded_user_ids'),
+        (supabase as any)
+          .from('user_subscriptions')
+          .select('user_id, plan, status')
+          .neq('plan', 'free')
+          .eq('status', 'active'),
+      ]);
+      const clientUserIds = new Set((excludedRows || []).map((r: any) => r.user_id));
       const subscribedUserIds = new Set((subRows || []).map((r: any) => r.user_id));
 
       // ── 1. Fetch from creator_profiles (marketplace-native) ──────────

@@ -4,19 +4,15 @@ import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
 import { TrialBanner } from "./TrialBanner";
 import { IntegratedNotificationHeader } from "@/components/notifications/IntegratedNotificationHeader";
-import { EnhancedChatDrawer } from "@/components/chat/EnhancedChatDrawer";
-import { EnhancedChatButton } from "@/components/chat/EnhancedChatButton";
 import { TourProvider } from "@/components/tour/TourProvider";
 import { AmbassadorCelebration } from "@/components/AmbassadorCelebration";
-import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { KiroWidget } from "@/components/kiro/KiroWidget";
 import { useAuth } from "@/hooks/useAuth";
 import { usePresence } from "@/hooks/usePresence";
-import { useChatNotifications } from "@/hooks/useChatNotifications";
 import { useClientRealtimeNotifications } from "@/hooks/useClientRealtimeNotifications";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Kanban, Settings, LogOut, Video, Sparkles, Scissors, Briefcase } from "lucide-react";
+import { LayoutDashboard, Kanban, Settings, LogOut, Sparkles, Scissors, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -72,12 +68,10 @@ export function MainLayout({
   children
 }: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const { isClient, isEditor, isAdmin, isCreator, signOut, profile, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   // Track user presence
   usePresence();
 
@@ -86,9 +80,6 @@ export function MainLayout({
 
   // Detect marketplace routes for dark styling
   const isMarketplaceRoute = location.pathname.startsWith('/marketplace');
-  
-  // Setup chat notifications with sound
-  const { unreadCount: unreadChatCount } = useChatNotifications(chatOpen, activeConversationId);
 
   // For editors, show editor-specific layout with bottom nav on mobile
   if (isEditor && !isAdmin) {
@@ -129,7 +120,6 @@ export function MainLayout({
             >
               <Briefcase className="h-4 w-4" />
             </Button>
-            <NotificationBell />
             <Button variant="ghost" size="icon" onClick={signOut}>
               <LogOut className="h-4 w-4" />
             </Button>
@@ -159,24 +149,20 @@ export function MainLayout({
             })}
           </div>
         </nav>
-        
+
         {/* Desktop Integrated Notification Header */}
         <div className="hidden md:block">
           <IntegratedNotificationHeader
-            onChatClick={() => setChatOpen(!chatOpen)}
-            isChatOpen={chatOpen}
-            unreadChatCount={unreadChatCount}
             sidebarCollapsed={sidebarCollapsed}
           />
         </div>
-        
+
         {/* Main Content */}
         <main
           id="main-content"
           className={cn(
             "pb-16 md:pb-0 transition-all duration-300",
             sidebarCollapsed ? "md:ml-20" : "md:ml-64",
-            chatOpen ? 'md:mr-96' : '',
             "md:pt-14"
           )}
         >
@@ -186,16 +172,6 @@ export function MainLayout({
             </PageWrapper>
           </div>
         </main>
-
-        {/* Floating Chat Button */}
-        <EnhancedChatButton 
-          onClick={() => setChatOpen(!chatOpen)} 
-          isOpen={chatOpen} 
-          unreadCount={unreadChatCount} 
-        />
-
-        {/* Chat Panel */}
-        <EnhancedChatDrawer isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
 
         {/* KIRO AI Assistant */}
         <KiroWidget />
@@ -248,7 +224,6 @@ export function MainLayout({
             >
               <Briefcase className="h-4 w-4" />
             </Button>
-            <NotificationBell />
             <Button variant="ghost" size="icon" onClick={signOut}>
               <LogOut className="h-4 w-4" />
             </Button>
@@ -258,9 +233,6 @@ export function MainLayout({
         {/* Desktop Integrated Notification Header */}
         <div className="hidden md:block">
           <IntegratedNotificationHeader
-            onChatClick={() => setChatOpen(!chatOpen)}
-            isChatOpen={chatOpen}
-            unreadChatCount={unreadChatCount}
             sidebarCollapsed={sidebarCollapsed}
           />
         </div>
@@ -271,7 +243,6 @@ export function MainLayout({
           className={cn(
             "transition-all duration-300",
             sidebarCollapsed ? "md:ml-20" : "md:ml-64",
-            chatOpen ? 'md:mr-96' : '',
             "md:pt-14"
           )}
         >
@@ -281,16 +252,6 @@ export function MainLayout({
             </PageWrapper>
           </div>
         </main>
-
-        {/* Floating Chat Button */}
-        <EnhancedChatButton
-          onClick={() => setChatOpen(!chatOpen)}
-          isOpen={chatOpen}
-          unreadCount={unreadChatCount}
-        />
-
-        {/* Chat Panel */}
-        <EnhancedChatDrawer isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
 
         {/* KIRO AI Assistant */}
         <KiroWidget />
@@ -355,27 +316,22 @@ export function MainLayout({
           >
             <Briefcase className="h-4 w-4" />
           </Button>
-          <NotificationBell />
         </div>
       </header>
-      
+
       {/* Desktop Integrated Notification Header */}
       <div className="hidden md:block">
         <IntegratedNotificationHeader
-          onChatClick={() => setChatOpen(!chatOpen)}
-          isChatOpen={chatOpen}
-          unreadChatCount={unreadChatCount}
           sidebarCollapsed={sidebarCollapsed}
         />
       </div>
-      
+
       {/* Main Content */}
       <main
         id="main-content"
         className={cn(
           "transition-all duration-300",
           sidebarCollapsed ? "md:ml-20" : "md:ml-64",
-          chatOpen ? 'md:mr-96' : '',
           "md:pt-14"
         )}
       >
@@ -385,16 +341,6 @@ export function MainLayout({
           </PageWrapper>
         </div>
       </main>
-
-      {/* Floating Chat Button */}
-      <EnhancedChatButton
-        onClick={() => setChatOpen(!chatOpen)}
-        isOpen={chatOpen}
-        unreadCount={unreadChatCount}
-      />
-
-      {/* Chat Panel */}
-      <EnhancedChatDrawer isOpen={chatOpen} onClose={() => setChatOpen(false)} onActiveConversationChange={setActiveConversationId} />
 
       {/* KIRO AI Assistant */}
       <KiroWidget />

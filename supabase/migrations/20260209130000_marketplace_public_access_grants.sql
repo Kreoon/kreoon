@@ -21,3 +21,22 @@ END $$;
 
 -- Grant anon read on profiles table (needed for avatar fallback)
 GRANT SELECT ON public.profiles TO anon;
+
+-- RPC function to get user_ids that should be excluded from the marketplace
+-- Runs as SECURITY DEFINER so it works for both authenticated and anonymous users
+-- Returns user_ids from client_users table + organization_members with role='client'
+CREATE OR REPLACE FUNCTION public.get_marketplace_excluded_user_ids()
+RETURNS TABLE(user_id uuid)
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT cu.user_id FROM public.client_users cu
+  UNION
+  SELECT om.user_id FROM public.organization_members om WHERE om.role = 'client'::app_role;
+$$;
+
+-- Grant execute to both anon and authenticated roles
+GRANT EXECUTE ON FUNCTION public.get_marketplace_excluded_user_ids() TO anon;
+GRANT EXECUTE ON FUNCTION public.get_marketplace_excluded_user_ids() TO authenticated;
