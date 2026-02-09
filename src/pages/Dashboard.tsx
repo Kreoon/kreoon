@@ -432,14 +432,9 @@ export default function Dashboard() {
       setClients(clientsList.map(c => ({ id: c.id, name: c.name })));
       setRawClientsList(clientsList);
 
-      // Fetch packages for org clients
-      const orgClientIds = clientsList.map(c => c.id);
-      let packagesData: any[] = [];
-      if (orgClientIds.length > 0) {
-        const { data } = await supabase.from('client_packages').select('*').eq('is_active', true).in('client_id', orgClientIds);
-        packagesData = data || [];
-      }
-      setRawPackagesData(packagesData);
+      // Fetch packages via server-side JOIN (avoids massive .in() with 500+ UUIDs)
+      const { data: packagesData } = await supabase.rpc('get_org_client_packages', { p_organization_id: currentOrgId });
+      setRawPackagesData(packagesData || []);
 
       // Goals
       if (goalRes.data) {

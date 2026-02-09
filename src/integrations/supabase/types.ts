@@ -10056,6 +10056,21 @@ export type Database = {
           [key: string]: Json
         }[]
       }
+      get_org_client_packages: {
+        Args: { p_organization_id: string }
+        Returns: {
+          [key: string]: Json
+        }[]
+      }
+      get_org_products: {
+        Args: { p_organization_id: string }
+        Returns: {
+          id: string
+          name: string
+          client_id: string
+          client_name: string
+        }[]
+      }
       get_random_editor_from_pool: { Args: { org_id: string }; Returns: string }
       get_up_setting: { Args: { setting_key: string }; Returns: Json }
       get_user_organizations: {

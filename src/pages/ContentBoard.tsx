@@ -383,21 +383,14 @@ export default function ContentBoard() {
       return;
     }
     const fetchClientProducts = async () => {
-      const { data: clientsList } = await supabase
-        .from('clients').select('id, name').eq('organization_id', currentOrgId);
-      const cl = clientsList || [];
-      setClients(cl.map(c => ({ id: c.id, name: c.name })));
-
-      const orgClientIds = cl.map(c => c.id);
-      if (orgClientIds.length > 0) {
-        const clientMap = new Map(cl.map(c => [c.id, c.name]));
-        const { data } = await supabase
-          .from('products').select('id, name, client_id')
-          .in('client_id', orgClientIds).order('name');
-        setProducts((data || []).map((p: any) => ({ id: p.id, name: p.name, client_name: clientMap.get(p.client_id) })));
-      } else {
-        setProducts([]);
-      }
+      // Fetch clients and products in parallel using server-side JOINs
+      // (avoids massive .in() clause with 500+ UUIDs that exceeds URL limits)
+      const [clientsRes, productsRes] = await Promise.all([
+        supabase.from('clients').select('id, name').eq('organization_id', currentOrgId),
+        supabase.rpc('get_org_products', { p_organization_id: currentOrgId }),
+      ]);
+      setClients((clientsRes.data || []).map(c => ({ id: c.id, name: c.name })));
+      setProducts((productsRes.data || []).map((p: any) => ({ id: p.id, name: p.name, client_name: p.client_name })));
     };
     fetchClientProducts();
   }, [showAdminControls, currentOrgId, orgLoading]);
