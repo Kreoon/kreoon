@@ -211,6 +211,17 @@ export default function ContentBoard() {
   const [clients, setClients] = useState<{id: string; name: string}[]>([]);
   const [products, setProducts] = useState<{id: string; name: string; client_name?: string}[]>([]);
   
+  // Limit visible cards per column to reduce DOM/network load (240+ cards → ~80 visible)
+  const CARDS_PER_COLUMN = 8;
+  const [expandedColumns, setExpandedColumns] = useState<Set<string>>(new Set());
+  const toggleColumnExpand = useCallback((status: string) => {
+    setExpandedColumns(prev => {
+      const next = new Set(prev);
+      if (next.has(status)) next.delete(status); else next.add(status);
+      return next;
+    });
+  }, []);
+
   // Estado de drag
   const [draggingContent, setDraggingContent] = useState<Content | null>(null);
   const [dropTarget, setDropTarget] = useState<ContentStatus | string | null>(null);
@@ -357,66 +368,39 @@ export default function ContentBoard() {
     }
   };
 
-  // Cargar listas para filtros (solo admin) - siempre scope por organización actual
+  // Derive filter lists from useOrgAssignableUsers (avoids duplicate org_members + profiles queries)
   useEffect(() => {
-    // Wait for org context
-    if (orgLoading) return;
+    setCreators(assignableCreators.map(c => ({ id: c.id, name: c.full_name || '' })));
+    setEditors(assignableEditors.map(e => ({ id: e.id, name: e.full_name || '' })));
+  }, [assignableCreators, assignableEditors]);
 
+  // Fetch clients & products for filter dropdowns (admin only)
+  useEffect(() => {
+    if (orgLoading) return;
     if (!showAdminControls || !currentOrgId) {
-      setCreators([]);
-      setEditors([]);
       setClients([]);
       setProducts([]);
       return;
     }
+    const fetchClientProducts = async () => {
+      const { data: clientsList } = await supabase
+        .from('clients').select('id, name').eq('organization_id', currentOrgId);
+      const cl = clientsList || [];
+      setClients(cl.map(c => ({ id: c.id, name: c.name })));
 
-    const fetchFilters = async () => {
-      // Run independent queries in parallel
-      const [membersRes, clientsRes] = await Promise.all([
-        supabase.from('organization_members').select('user_id, role').eq('organization_id', currentOrgId),
-        supabase.from('clients').select('id, name').eq('organization_id', currentOrgId),
-      ]);
-
-      const membersData = membersRes.data || [];
-      const creatorIds = membersData.filter(m => m.role === 'creator').map(m => m.user_id);
-      const editorIds = membersData.filter(m => m.role === 'editor').map(m => m.user_id);
-
-      // Fetch profiles in parallel
-      const [creatorProfilesRes, editorProfilesRes] = await Promise.all([
-        creatorIds.length > 0 ? supabase.from('profiles').select('id, full_name').in('id', creatorIds) : { data: [] },
-        editorIds.length > 0 ? supabase.from('profiles').select('id, full_name').in('id', editorIds) : { data: [] },
-      ]);
-
-      setCreators(creatorProfilesRes.data?.map(p => ({ id: p.id, name: p.full_name })) || []);
-      setEditors(editorProfilesRes.data?.map(p => ({ id: p.id, name: p.full_name })) || []);
-
-      const clientsList = clientsRes.data || [];
-      setClients(clientsList.map(c => ({ id: c.id, name: c.name })));
-
-      // Products - single query with all client IDs (Supabase .in() handles large arrays)
-      const orgClientIds = clientsList.map(c => c.id);
-      const clientMap = new Map(clientsList.map(c => [c.id, c.name]));
-      let productsList: any[] = [];
+      const orgClientIds = cl.map(c => c.id);
       if (orgClientIds.length > 0) {
+        const clientMap = new Map(cl.map(c => [c.id, c.name]));
         const { data } = await supabase
-          .from('products')
-          .select('id, name, client_id')
-          .in('client_id', orgClientIds)
-          .order('name');
-        productsList = data || [];
+          .from('products').select('id, name, client_id')
+          .in('client_id', orgClientIds).order('name');
+        setProducts((data || []).map((p: any) => ({ id: p.id, name: p.name, client_name: clientMap.get(p.client_id) })));
+      } else {
+        setProducts([]);
       }
-
-      setProducts(
-        productsList.map((p: any) => ({
-          id: p.id,
-          name: p.name,
-          client_name: clientMap.get(p.client_id),
-        }))
-      );
     };
-
-    fetchFilters();
-  }, [showAdminControls, currentOrgId]);
+    fetchClientProducts();
+  }, [showAdminControls, currentOrgId, orgLoading]);
 
   // Extract unique campaign weeks from content
   const campaignWeeks = useMemo(() => {
@@ -590,10 +574,10 @@ export default function ContentBoard() {
   const handleAssignCreator = useCallback(
     async (contentId: string, userId: string) => {
       try {
-        const { error } = await supabase
-          .from("content")
-          .update({ creator_id: userId, updated_at: new Date().toISOString() })
-          .eq("id", contentId);
+        const { error } = await supabase.rpc('update_content_by_id', {
+          p_content_id: contentId,
+          p_updates: { creator_id: userId, updated_at: new Date().toISOString() }
+        });
         if (error) throw error;
         refetch();
         refetchAssignable();
@@ -609,10 +593,10 @@ export default function ContentBoard() {
   const handleAssignEditor = useCallback(
     async (contentId: string, userId: string) => {
       try {
-        const { error } = await supabase
-          .from("content")
-          .update({ editor_id: userId, updated_at: new Date().toISOString() })
-          .eq("id", contentId);
+        const { error } = await supabase.rpc('update_content_by_id', {
+          p_content_id: contentId,
+          p_updates: { editor_id: userId, updated_at: new Date().toISOString() }
+        });
         if (error) throw error;
         refetch();
         refetchAssignable();
@@ -983,42 +967,69 @@ export default function ContentBoard() {
                     isDropTarget={isCurrentDropTarget}
                     canDrop={canDropHere}
                   >
-                    {columnContent.map(item => (
-                      <EnhancedContentCard
-                        key={item.id}
-                        content={item}
-                        cardSize={settings?.card_size || 'normal'}
-                        visibleFields={settings?.visible_fields || ['title', 'status', 'client', 'deadline', 'responsible']}
-                        onClick={() => setSelectedContent(item)}
-                        onDragStart={(e) => handleDragStart(e, item)}
-                        isDragging={draggingContent?.id === item.id}
-                        showAIIndicators={showAdminControls}
-                        organizationStatuses={orgStatuses}
-                        userRole={primaryRole as any}
-                        userId={targetUserId}
-                        onStatusChange={async (contentId, newStatus) => {
-                          await updateContentStatus(contentId, newStatus);
-                          refetch();
-                        }}
-                        showStatusControls={true}
-                        ambassadorIds={ambassadorIds}
-                        onAnalyzeWithAI={showAdminControls ? (contentId, title) => {
-                          setAIPanelMode('card');
-                          setAIContentId(contentId);
-                          setAIContentTitle(title);
-                          setShowAIPanel(true);
-                        } : undefined}
-                        onShowMarketingInfo={(content) => {
-                          setMarketingPanelContent(content);
-                          setShowMarketingPanel(true);
-                        }}
-                        creators={assignableCreators}
-                        editors={assignableEditors}
-                        onAssignCreator={showAdminControls || primaryRole === "strategist" || primaryRole === "team_leader" ? handleAssignCreator : undefined}
-                        onAssignEditor={showAdminControls || primaryRole === "strategist" || primaryRole === "team_leader" ? handleAssignEditor : undefined}
-                        onUpdate={refetch}
-                      />
-                    ))}
+                    {(() => {
+                      const isExpanded = expandedColumns.has(column.status);
+                      const visibleItems = isExpanded ? columnContent : columnContent.slice(0, CARDS_PER_COLUMN);
+                      const hiddenCount = columnContent.length - CARDS_PER_COLUMN;
+                      return (
+                        <>
+                          {visibleItems.map(item => (
+                            <EnhancedContentCard
+                              key={item.id}
+                              content={item}
+                              cardSize={settings?.card_size || 'normal'}
+                              visibleFields={settings?.visible_fields || ['title', 'status', 'client', 'deadline', 'responsible']}
+                              onClick={() => setSelectedContent(item)}
+                              onDragStart={(e) => handleDragStart(e, item)}
+                              isDragging={draggingContent?.id === item.id}
+                              showAIIndicators={showAdminControls}
+                              organizationStatuses={orgStatuses}
+                              userRole={primaryRole as any}
+                              userId={targetUserId}
+                              onStatusChange={async (contentId, newStatus) => {
+                                await updateContentStatus(contentId, newStatus);
+                                refetch();
+                              }}
+                              showStatusControls={true}
+                              ambassadorIds={ambassadorIds}
+                              onAnalyzeWithAI={showAdminControls ? (contentId, title) => {
+                                setAIPanelMode('card');
+                                setAIContentId(contentId);
+                                setAIContentTitle(title);
+                                setShowAIPanel(true);
+                              } : undefined}
+                              onShowMarketingInfo={(content) => {
+                                setMarketingPanelContent(content);
+                                setShowMarketingPanel(true);
+                              }}
+                              creators={assignableCreators}
+                              editors={assignableEditors}
+                              onAssignCreator={showAdminControls || primaryRole === "strategist" || primaryRole === "team_leader" ? handleAssignCreator : undefined}
+                              onAssignEditor={showAdminControls || primaryRole === "strategist" || primaryRole === "team_leader" ? handleAssignEditor : undefined}
+                              onUpdate={refetch}
+                            />
+                          ))}
+                          {!isExpanded && hiddenCount > 0 && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); toggleColumnExpand(column.status); }}
+                              className="w-full py-2 px-3 rounded-lg text-xs font-medium text-[#a78bfa] hover:text-[#c4b5fd] transition-colors"
+                              style={{ background: 'rgba(139, 92, 246, 0.08)', border: '1px dashed rgba(139, 92, 246, 0.25)' }}
+                            >
+                              Ver {hiddenCount} más
+                            </button>
+                          )}
+                          {isExpanded && hiddenCount > 0 && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); toggleColumnExpand(column.status); }}
+                              className="w-full py-2 px-3 rounded-lg text-xs font-medium text-[#64748b] hover:text-[#94a3b8] transition-colors"
+                              style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px dashed rgba(255, 255, 255, 0.1)' }}
+                            >
+                              Mostrar menos
+                            </button>
+                          )}
+                        </>
+                      );
+                    })()}
                     {columnContent.length === 0 && (
                       <div className="border-2 border-dashed border-border rounded-lg p-4 md:p-8 text-center text-muted-foreground text-xs md:text-sm">
                         Sin contenido
