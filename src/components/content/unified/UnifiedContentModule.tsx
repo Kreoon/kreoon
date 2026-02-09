@@ -34,7 +34,7 @@ import {
   Video,
   Download,
   Loader2,
-  Handshake,
+  Globe,
   RefreshCw
 } from 'lucide-react';
 
@@ -123,8 +123,8 @@ const MetricsDashboard = memo(function MetricsDashboard({
         </div>
         <div className="bg-card rounded-lg p-3 md:p-4 border border-border col-span-2 bg-gradient-to-br from-purple-500/10 to-pink-500/10">
           <div className="flex items-center gap-1 md:gap-2 text-purple-500 text-xs md:text-sm mb-1">
-            <Handshake className="h-3 w-3 md:h-4 md:w-4" />
-            Kreoon Social
+            <Globe className="h-3 w-3 md:h-4 md:w-4" />
+            En Marketplace
           </div>
           <div className="text-xl md:text-2xl font-bold text-foreground">{kreoonSocial}/{total}</div>
         </div>
@@ -592,8 +592,8 @@ export const UnifiedContentModule = memo(function UnifiedContentModule({
               Aprobados
             </TabsTrigger>
             <TabsTrigger value="kreoon_social" className="text-xs">
-              <Handshake className="h-3 w-3 mr-1" />
-              Kreoon Social
+              <Globe className="h-3 w-3 mr-1" />
+              Publicados
               <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
                 {content.filter(c => c.is_published || c.shared_on_kreoon).length}
               </Badge>

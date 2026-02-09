@@ -218,7 +218,7 @@ export const CollaborativeStats = memo(function CollaborativeStats({
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Handshake className="h-5 w-5 text-purple-500" />
-            Kreoon Social
+            Marketplace
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -269,7 +269,7 @@ export const CollaborativeStats = memo(function CollaborativeStats({
             <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
               <Handshake className="h-4 w-4 text-white" />
             </div>
-            Kreoon Social
+            Marketplace
           </CardTitle>
           <Button
             variant="ghost"

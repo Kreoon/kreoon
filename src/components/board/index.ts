@@ -9,3 +9,4 @@ export { BoardAIPanel } from './BoardAIPanel';
 export { StatusChangeDropdown, QuickStatusButtons } from './StatusChangeDropdown';
 export { MarketingInfoPanel } from './MarketingInfoPanel';
 export { CampaignAssignmentDialog } from './CampaignAssignmentDialog';
+export { MarketplaceBoardView } from './MarketplaceBoardView';

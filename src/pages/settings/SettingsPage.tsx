@@ -13,6 +13,7 @@ const ProfileSection = lazy(() => import('./sections/ProfileSection'));
 const NotificationsUnifiedSection = lazy(() => import('./sections/NotificationsUnifiedSection'));
 const SecuritySection = lazy(() => import('./sections/SecuritySection'));
 const TourSection = lazy(() => import('./sections/TourSection'));
+// MarketplaceSection merged into ProfileSection (unified profile)
 
 // Organization level - CONSOLIDATED
 const OrganizationSection = lazy(() => import('./sections/OrganizationSection'));
@@ -24,6 +25,8 @@ const PermissionsUnifiedSection = lazy(() => import('./sections/PermissionsUnifi
 const AuditLogSection = lazy(() => import('./sections/AuditLogSection'));
 const TrackingSection = lazy(() => import('./sections/TrackingSection'));
 const OrgSocialSection = lazy(() => import('./sections/OrgSocialSection'));
+const OrgMarketplaceSection = lazy(() => import('./sections/OrgMarketplaceSection'));
+const OrgAgencyProfileSection = lazy(() => import('./sections/OrgAgencyProfileSection'));
 
 // Platform level - CONSOLIDATED
 const OrganizationRegistrationsSection = lazy(() => import('./sections/OrganizationRegistrationsSection'));
@@ -51,6 +54,7 @@ const SECTION_COMPONENTS: Record<SettingsSectionKey, React.LazyExoticComponent<R
   notifications: NotificationsUnifiedSection,
   security: SecuritySection,
   tour: TourSection,
+  marketplace: ProfileSection, // Redirect: marketplace merged into profile
   // Organization level
   organization: OrganizationSection,
   org_registration_settings: OrgRegistrationSettingsSection,
@@ -60,6 +64,8 @@ const SECTION_COMPONENTS: Record<SettingsSectionKey, React.LazyExoticComponent<R
   permissions: PermissionsUnifiedSection,
   audit_log: AuditLogSection,
   tracking: TrackingSection,
+  org_marketplace: OrgMarketplaceSection,
+  org_agency_profile: OrgAgencyProfileSection,
   org_social: OrgSocialSection,
   live_streaming_org: LiveStreamingOrgSection,
   // Platform level
@@ -74,7 +80,7 @@ const SECTION_COMPONENTS: Record<SettingsSectionKey, React.LazyExoticComponent<R
 };
 
 // Wide sections that need more space
-const WIDE_SECTIONS: SettingsSectionKey[] = ['billing', 'platform_users', 'organization_registrations'];
+const WIDE_SECTIONS: SettingsSectionKey[] = ['billing', 'platform_users', 'organization_registrations', 'marketplace', 'profile'];
 
 const SettingsPage = memo(() => {
   const [searchParams, setSearchParams] = useSearchParams();

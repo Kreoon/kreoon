@@ -59,7 +59,7 @@ export function SocialNotificationsDropdown() {
     if (notification.type === 'follow') {
       navigate(`/profile/${notification.actor_id}`);
     } else if (notification.content_id) {
-      navigate(`/social#post-${notification.content_id}`);
+      navigate(`/marketplace#post-${notification.content_id}`);
     }
 
     setOpen(false);

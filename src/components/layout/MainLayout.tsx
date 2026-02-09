@@ -45,7 +45,7 @@ interface MainLayoutProps {
 const editorMobileNavigation = [
   { name: "Edición", href: "/editor-dashboard", icon: LayoutDashboard },
   { name: "Producciones", href: "/board", icon: Kanban },
-  { name: "Red", href: "/social", icon: Video },
+  { name: "Market", href: "/marketplace", icon: Briefcase },
   { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
   { name: "Config", href: "/settings", icon: Settings },
 ];
@@ -79,9 +79,12 @@ export function MainLayout({
   
   // Track user presence
   usePresence();
-  
+
   // Client realtime notifications (for new videos, comments)
   useClientRealtimeNotifications();
+
+  // Detect marketplace routes for dark styling
+  const isMarketplaceRoute = location.pathname.startsWith('/marketplace');
   
   // Setup chat notifications with sound
   const { unreadCount: unreadChatCount } = useChatNotifications(chatOpen, activeConversationId);
@@ -107,7 +110,7 @@ export function MainLayout({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(user?.id ? `/p/${user.id}` : '/social')}
+              onClick={() => navigate(user?.id ? `/p/${user.id}` : '/marketplace')}
               className="h-9 w-9 rounded-full p-0"
             >
               <Avatar className="h-8 w-8">
@@ -120,7 +123,7 @@ export function MainLayout({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate('/social')}
+              onClick={() => navigate('/marketplace')}
               className="h-9 w-9 rounded-full"
             >
               <Briefcase className="h-4 w-4" />
@@ -136,7 +139,9 @@ export function MainLayout({
         <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden">
           <div className="flex justify-around py-2">
             {editorMobileNavigation.map((item) => {
-              const isActive = location.pathname === item.href;
+              const isActive = item.href.startsWith('/marketplace')
+                ? location.pathname.startsWith(item.href)
+                : location.pathname === item.href;
               return (
                 <NavLink
                   key={item.name}
@@ -174,7 +179,7 @@ export function MainLayout({
             "md:pt-14"
           )}
         >
-          <div className="min-h-screen p-4 md:p-6">
+          <div className={cn("min-h-screen", isMarketplaceRoute ? "bg-[#0a0a0f]" : "p-4 md:p-6")}>
             <PageWrapper locationKey={location.pathname}>
               {children}
             </PageWrapper>
@@ -222,7 +227,7 @@ export function MainLayout({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(user?.id ? `/p/${user.id}` : '/social')}
+              onClick={() => navigate(user?.id ? `/p/${user.id}` : '/marketplace')}
               className="h-9 w-9 rounded-full p-0"
             >
               <Avatar className="h-8 w-8">
@@ -235,7 +240,7 @@ export function MainLayout({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate('/social')}
+              onClick={() => navigate('/marketplace')}
               className="h-9 w-9 rounded-full"
             >
               <Briefcase className="h-4 w-4" />
@@ -267,7 +272,7 @@ export function MainLayout({
             "md:pt-14"
           )}
         >
-          <div className="min-h-screen p-4 md:p-6">
+          <div className={cn("min-h-screen", isMarketplaceRoute ? "bg-[#0a0a0f]" : "p-4 md:p-6")}>
             <PageWrapper locationKey={location.pathname}>
               {children}
             </PageWrapper>
@@ -326,7 +331,7 @@ export function MainLayout({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(user?.id ? `/p/${user.id}` : '/social')}
+            onClick={() => navigate(user?.id ? `/p/${user.id}` : '/marketplace')}
             className="h-9 w-9 rounded-full p-0"
           >
             <Avatar className="h-8 w-8">
@@ -339,7 +344,7 @@ export function MainLayout({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/social')}
+            onClick={() => navigate('/marketplace')}
             className="h-9 w-9 rounded-full"
           >
             <Briefcase className="h-4 w-4" />
@@ -368,7 +373,7 @@ export function MainLayout({
           "md:pt-14"
         )}
       >
-        <div className="min-h-screen p-4 md:p-6">
+        <div className={cn("min-h-screen", isMarketplaceRoute ? "bg-[#0a0a0f]" : "p-4 md:p-6")}>
           <PageWrapper locationKey={location.pathname}>
             {children}
           </PageWrapper>

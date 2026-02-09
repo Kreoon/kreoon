@@ -175,7 +175,7 @@ export function SocialSharePanel({
                       <Sparkles className="h-4 w-4 text-white" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-sm">Kreoon Social</h4>
+                      <h4 className="font-semibold text-sm">Marketplace</h4>
                       <p className="text-xs text-muted-foreground">
                         Publicar como contenido colaborativo
                       </p>

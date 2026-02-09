@@ -18,7 +18,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { updateContentStatusWithUP } from '@/hooks/useContentStatusWithUP';
 import { Content, ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
+import { useBrand } from '@/hooks/useBrand';
 import { ClientFinanceChart } from '@/components/dashboard/ClientFinanceChart';
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { FullscreenContentViewer } from '@/components/content/FullscreenContentViewer';
@@ -63,7 +64,6 @@ import {
   Users,
   Sparkles,
   ExternalLink,
-  ShoppingBag,
   FolderOpen,
   AlertTriangle,
   FileCheck,
@@ -261,6 +261,7 @@ const PremiumStatsCard = ({
 export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
   const { isImpersonating, effectiveClientId } = useImpersonation();
+  const brandHook = useBrand();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [content, setContent] = useState<Content[]>([]);
@@ -280,7 +281,7 @@ export default function ClientDashboard() {
   const [showFullscreenReview, setShowFullscreenReview] = useState(false);
   const [fullscreenStartIndex, setFullscreenStartIndex] = useState(0);
   const [showCreateProductWizard, setShowCreateProductWizard] = useState(false);
-  
+
   // Edit company state
   const [isEditingCompany, setIsEditingCompany] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -816,20 +817,26 @@ export default function ClientDashboard() {
   }
 
   if (!clientInfo) {
+    // Brand-mode: redirect to admin dashboard (marketplace tab available there)
+    if (brandHook.hasBrand && brandHook.activeBrand) {
+      return <Navigate to="/dashboard" replace />;
+    }
+
+    // No brand and no client — show fallback
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
         <Package className="w-16 h-16 text-muted-foreground mb-4" />
         <h2 className="text-xl font-semibold mb-2">Sin empresa vinculada</h2>
         <p className="text-muted-foreground text-center max-w-md mb-6">
-          Tu cuenta aún no está vinculada a una empresa. Contacta al administrador para completar la configuración.
+          Tu cuenta aun no esta vinculada a una empresa. Contacta al administrador para completar la configuracion.
         </p>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={() => navigate('/social')}>
+          <Button variant="outline" onClick={() => navigate('/marketplace')}>
             Ver Portafolio
           </Button>
           <Button variant="ghost" onClick={signOut}>
             <LogOut className="w-4 h-4 mr-2" />
-            Cerrar Sesión
+            Cerrar Sesion
           </Button>
         </div>
       </div>

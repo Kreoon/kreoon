@@ -62,7 +62,7 @@ export default function SavedPage() {
 
   if (loading) {
     return (
-      <div className="h-full overflow-y-auto md:ml-20 lg:ml-64 p-4">
+      <div className="h-full overflow-y-auto  p-4">
         <Skeleton className="h-8 w-48 mb-6" />
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -74,7 +74,7 @@ export default function SavedPage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto md:ml-20 lg:ml-64 pb-20">
+    <div className="h-full overflow-y-auto  pb-20">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">

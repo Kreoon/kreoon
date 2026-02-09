@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
+import { useOrgMarketplace } from '@/hooks/useOrgMarketplace';
 import { AppRole } from '@/types/database';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,8 +35,8 @@ function withTimeout<T>(promise: PromiseLike<T>, ms: number, label: string): Pro
 
 // Helper to get the correct dashboard path based on active role or user roles
 function getDashboardPath(roles: AppRole[], activeRole?: AppRole | null): string {
-  // Users without roles go to social network
-  if (roles.length === 0) return '/social';
+  // Users without roles go to marketplace
+  if (roles.length === 0) return '/marketplace';
 
   // If activeRole is set and valid, use it
   if (activeRole && roles.includes(activeRole)) {
@@ -64,19 +65,20 @@ function getDashboardPath(roles: AppRole[], activeRole?: AppRole | null): string
   if (roles.includes('creator')) return '/creator-dashboard';
   if (roles.includes('editor')) return '/editor-dashboard';
   if (roles.includes('client')) return '/client-dashboard';
-  return '/social';
+  return '/marketplace';
 }
 
 // Routes that require an organization to be selected
 const ORG_REQUIRED_ROUTES = ['/dashboard', '/board', '/content', '/creators', '/scripts', '/clients', '/team', '/ranking'];
 
-// Routes that users without roles can access (social network)
-const SOCIAL_ROUTES = ['/social', '/explore', '/profile', '/settings'];
+// Routes that users without roles can access (social/marketplace)
+const SOCIAL_ROUTES = ['/social', '/marketplace', '/explore', '/profile', '/settings'];
 
 export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRoles }: ProtectedRouteProps) {
   const { user, profile, roles: realRoles, activeRole, loading, rolesLoaded } = useAuth();
   const { isImpersonating, effectiveRoles, isRootAdmin } = useImpersonation();
   const { isPlatformRoot, currentOrgId, loading: orgLoading } = useOrgOwner();
+  const { marketplaceEnabled, loading: mktLoading } = useOrgMarketplace();
   const location = useLocation();
 
   const [clientHasCompany, setClientHasCompany] = useState<boolean | null>(null);
@@ -104,19 +106,37 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
 
       setCheckingCompany(true);
       try {
-        const result = await withTimeout(
-          supabase.from('client_users').select('id').eq('user_id', user.id).limit(1),
-          CLIENT_COMPANY_TIMEOUT_MS,
-          'client_users'
-        );
+        // Check client_users (org-linked), company_profiles (AI matching), and brand_members (independent brands)
+        const [clientResult, companyResult, brandResult] = await Promise.all([
+          withTimeout(
+            supabase.from('client_users').select('id').eq('user_id', user.id).limit(1),
+            CLIENT_COMPANY_TIMEOUT_MS,
+            'client_users'
+          ),
+          withTimeout(
+            (supabase as any).from('company_profiles').select('id').eq('user_id', user.id).limit(1),
+            CLIENT_COMPANY_TIMEOUT_MS,
+            'company_profiles'
+          ),
+          withTimeout(
+            (supabase as any).from('brand_members').select('id').eq('user_id', user.id).eq('status', 'active').limit(1),
+            CLIENT_COMPANY_TIMEOUT_MS,
+            'brand_members'
+          ),
+        ]);
 
-        const { data, error } = result as { data: unknown[] | null; error: unknown | null };
+        const { data: clientData, error: clientError } = clientResult as { data: unknown[] | null; error: unknown | null };
+        const { data: companyData, error: companyError } = companyResult as { data: unknown[] | null; error: unknown | null };
+        const { data: brandData, error: brandError } = brandResult as { data: unknown[] | null; error: unknown | null };
 
-        if (error) {
-          console.error('Error checking client company:', error);
+        if (clientError && companyError && brandError) {
+          console.error('Error checking client company:', clientError, companyError, brandError);
           setClientHasCompany(false);
         } else {
-          setClientHasCompany(!!(data && data.length > 0));
+          const hasClient = !!(clientData && clientData.length > 0);
+          const hasCompany = !!(companyData && companyData.length > 0);
+          const hasBrand = !!(brandData && brandData.length > 0);
+          setClientHasCompany(hasClient || hasCompany || hasBrand);
         }
       } catch (err) {
         console.error('Error checking client company:', err);
@@ -171,7 +191,7 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
   // Users without any roles can only access social routes
   if (realRoles.length === 0 && !isPlatformRoot) {
     if (!isSocialRoute) {
-      return <Navigate to="/social" replace />;
+      return <Navigate to="/marketplace" replace />;
     }
     // Allow access to social routes for users without roles
     return <>{children}</>;
@@ -188,6 +208,20 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
       return <>{children}</>;
     }
     return <Navigate to="/no-company" replace />;
+  }
+
+  // Block marketplace routes for users whose org has marketplace disabled
+  // BUT allow browse-only routes (/marketplace, /marketplace/org/*, /marketplace/creator/*) for talent recruitment
+  const isMarketplaceRoute = location.pathname.startsWith('/marketplace');
+  const isMarketplaceBrowseRoute = location.pathname === '/marketplace'
+    || location.pathname.startsWith('/marketplace/org/')
+    || location.pathname.startsWith('/marketplace/creator/')
+    || location.pathname.startsWith('/marketplace/talent-lists')
+    || location.pathname.startsWith('/marketplace/invitations')
+    || location.pathname.startsWith('/marketplace/inquiries');
+  if (isMarketplaceRoute && !marketplaceEnabled && !isMarketplaceBrowseRoute && realRoles.length > 0 && !isPlatformRoot) {
+    const correctDashboard = getDashboardPath(rolesToCheck, activeRole);
+    return <Navigate to={correctDashboard} replace />;
   }
 
   // Check if user has the required role

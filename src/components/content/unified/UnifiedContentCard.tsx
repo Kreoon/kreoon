@@ -30,7 +30,7 @@ import {
   Building2,
   Video,
   Settings,
-  Handshake,
+  Globe,
   Heart,
   Eye,
   Play,
@@ -228,7 +228,7 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
     }
   };
 
-  const handleToggleKreoon = async () => {
+  const handleTogglePublish = async () => {
     if (isTogglingKreoon) return;
     setIsTogglingKreoon(true);
     const newValue = !kreoonEnabled;
@@ -238,15 +238,15 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
         show_on_creator_profile: newValue,
         show_on_client_profile: newValue,
         is_collaborative: newValue,
-        is_published: newValue, // Also mark as published so it appears in feed
+        is_published: newValue,
         shared_at: newValue ? new Date().toISOString() : null
       }).eq('id', content.id);
       if (error) throw error;
       setKreoonEnabled(newValue);
-      toast.success(newValue ? 'Compartido en Kreoon Social' : 'Removido de Kreoon Social');
+      toast.success(newValue ? 'Publicado en Marketplace' : 'Removido del Marketplace');
       onUpdate?.();
     } catch (error) {
-      toast.error('Error al compartir');
+      toast.error('Error al publicar');
     } finally {
       setIsTogglingKreoon(false);
     }
@@ -313,8 +313,9 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
 
           <div className="flex items-center gap-1">
             {kreoonEnabled && (
-              <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] px-2 py-0.5 shadow-md">
-                <Handshake className="h-3 w-3" />
+              <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] px-2 py-0.5 shadow-md gap-1">
+                <Globe className="h-3 w-3" />
+                Publicado
               </Badge>
             )}
             {canManage && (
@@ -330,9 +331,9 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
                     Configuración
                   </DropdownMenuItem>
                   {showKreoonToggle && (
-                    <DropdownMenuItem onClick={handleToggleKreoon} disabled={isTogglingKreoon}>
-                      <Handshake className="h-4 w-4 mr-2" />
-                      {kreoonEnabled ? 'Quitar de Kreoon Social' : 'Compartir en Kreoon Social'}
+                    <DropdownMenuItem onClick={handleTogglePublish} disabled={isTogglingKreoon}>
+                      <Globe className="h-4 w-4 mr-2" />
+                      {kreoonEnabled ? 'Quitar del Marketplace' : 'Publicar en Marketplace'}
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />

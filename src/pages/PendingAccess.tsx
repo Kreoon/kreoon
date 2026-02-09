@@ -180,7 +180,7 @@ export default function PendingAccess() {
           variant="primary"
           size="lg"
           className="w-full sm:w-auto"
-          onClick={() => navigate("/social")}
+          onClick={() => navigate("/marketplace")}
         >
           Explorar la comunidad
         </KreoonButton>

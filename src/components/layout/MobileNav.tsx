@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { 
-  LayoutDashboard, 
-  Video, 
-  Users, 
+import {
+  LayoutDashboard,
+  Video,
+  Users,
   Sparkles,
-  Building2, 
+  Building2,
   Settings,
   UsersRound,
   LogOut,
@@ -13,8 +13,17 @@ import {
   Kanban,
   RefreshCw,
   Trophy,
-  Globe,
-  FileText
+  Store,
+  Play,
+  Bookmark,
+  FileText,
+  Megaphone,
+  Wallet,
+  UserCircle,
+  Search,
+  UserPlus,
+  MessageSquare,
+  ListChecks,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -22,6 +31,7 @@ import { getRoleBadgeInfo } from "@/lib/roles";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
+import { useOrgMarketplace } from "@/hooks/useOrgMarketplace";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -47,7 +57,7 @@ const adminSections: NavSection[] = [
       { name: "Projects", href: "/board", icon: Kanban },
       { name: "IA", href: "/scripts", icon: Sparkles },
       { name: "UP", href: "/ranking", icon: Trophy },
-      { name: "Network", href: "/social", icon: Globe },
+      { name: "Marketplace", href: "/marketplace", icon: Store },
     ]
   },
   {
@@ -74,7 +84,7 @@ const strategistSections: NavSection[] = [
     items: [
       { name: "Board", href: "/strategist-dashboard", icon: LayoutDashboard },
       { name: "IA", href: "/scripts", icon: Sparkles },
-      { name: "Network", href: "/social", icon: Globe },
+      { name: "Marketplace", href: "/marketplace", icon: Store },
     ]
   },
   {
@@ -91,8 +101,9 @@ const creatorSections: NavSection[] = [
     items: [
       { name: "Board", href: "/creator-dashboard", icon: LayoutDashboard },
       { name: "Projects", href: "/board", icon: Kanban },
+      { name: "Portafolio", href: "/content", icon: FileText },
       { name: "IA", href: "/scripts", icon: Sparkles },
-      { name: "Network", href: "/social", icon: Globe },
+      { name: "Marketplace", href: "/marketplace", icon: Store },
     ]
   },
   {
@@ -109,8 +120,9 @@ const editorSections: NavSection[] = [
     items: [
       { name: "Board", href: "/editor-dashboard", icon: LayoutDashboard },
       { name: "Projects", href: "/board", icon: Kanban },
+      { name: "Portafolio", href: "/content", icon: FileText },
       { name: "IA", href: "/scripts", icon: Sparkles },
-      { name: "Network", href: "/social", icon: Globe },
+      { name: "Marketplace", href: "/marketplace", icon: Store },
     ]
   },
   {
@@ -126,7 +138,8 @@ const clientSections: NavSection[] = [
     label: "PRINCIPAL",
     items: [
       { name: "Dashboard", href: "/client-dashboard", icon: Package },
-      { name: "Network", href: "/social", icon: Globe },
+      { name: "Portafolio", href: "/content", icon: FileText },
+      { name: "Marketplace", href: "/marketplace", icon: Store },
     ]
   },
   {
@@ -137,6 +150,37 @@ const clientSections: NavSection[] = [
   }
 ];
 
+function getMarketplaceSections(activeRole: string | null): NavSection[] {
+  const items: NavItem[] = [
+    { name: "Marketplace", href: "/marketplace", icon: Store },
+    { name: "Videos", href: "/marketplace/videos", icon: Play },
+    { name: "Mi Perfil", href: "/marketplace/profile/setup", icon: UserCircle },
+  ];
+
+  if (activeRole === 'client' || activeRole === 'admin' || activeRole === 'strategist') {
+    items.push({ name: "Mis Campanas", href: "/marketplace/my-campaigns", icon: Megaphone });
+  } else if (activeRole !== 'editor') {
+    items.push({ name: "Campanas", href: "/marketplace/campaigns", icon: Megaphone });
+  }
+
+  items.push({ name: "Wallet", href: "/wallet", icon: Wallet });
+
+  const savedItems: NavItem[] = [
+    { name: "Guardados", href: "/marketplace/guardados", icon: Bookmark },
+    { name: "Listas de Talento", href: "/marketplace/talent-lists", icon: ListChecks },
+    { name: "Invitaciones", href: "/marketplace/invitations", icon: UserPlus },
+  ];
+
+  if (activeRole === 'admin' || activeRole === 'strategist') {
+    savedItems.push({ name: "Consultas", href: "/marketplace/inquiries", icon: MessageSquare });
+  }
+
+  return [
+    { label: "KREOON MARKETPLACE", items },
+    { label: "GESTIÓN TALENTO", items: savedItems },
+  ];
+}
+
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const [showClientSelector, setShowClientSelector] = useState(false);
@@ -146,8 +190,9 @@ export function MobileNav() {
   const navigate = useNavigate();
   const { signOut, profile, user, isAdmin, isCreator, isEditor, isClient, isStrategist, roles } = useAuth();
   const { currentOrgName } = useOrgOwner();
+  const { marketplaceEnabled } = useOrgMarketplace();
 
-  // Fetch current client name and count for client users
+  // Fetch current client name and count for client users (with brand fallback)
   useEffect(() => {
     if (isClient && user) {
       const fetchCurrentClient = async () => {
@@ -161,14 +206,14 @@ export function MobileNav() {
         setClientCount(totalClients);
 
         const savedClientId = localStorage.getItem('selectedClientId');
-        
+
         if (savedClientId) {
           const { data } = await supabase
             .from('clients')
             .select('name')
             .eq('id', savedClientId)
             .maybeSingle();
-          
+
           if (data) {
             setCurrentClientName(data.name);
             return;
@@ -185,6 +230,36 @@ export function MobileNav() {
 
           if (client) {
             setCurrentClientName(client.name);
+            return;
+          }
+        }
+
+        // Fallback: check brand_members for independent brands
+        if (totalClients === 0) {
+          const { data: brandMembers } = await (supabase as any)
+            .from('brand_members')
+            .select('brand_id')
+            .eq('user_id', user.id)
+            .eq('status', 'active');
+
+          if (brandMembers && brandMembers.length > 0) {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('active_brand_id')
+              .eq('id', user.id)
+              .maybeSingle();
+
+            const activeBrandId = (profileData as any)?.active_brand_id || brandMembers[0].brand_id;
+            const { data: brand } = await (supabase as any)
+              .from('brands')
+              .select('name')
+              .eq('id', activeBrandId)
+              .maybeSingle();
+
+            if (brand) {
+              setCurrentClientName(brand.name);
+              setClientCount(brandMembers.length);
+            }
           }
         }
       };
@@ -199,14 +274,47 @@ export function MobileNav() {
     navigate('/auth');
   };
 
-  // Get navigation sections based on role
+  // Get navigation sections based on role (with marketplace sections)
   const getSections = (): NavSection[] => {
-    if (isAdmin) return adminSections;
-    if (isStrategist) return strategistSections;
-    if (isEditor) return editorSections;
-    if (isCreator) return creatorSections;
-    if (isClient) return clientSections;
-    return [{ label: "CUENTA", items: [{ name: "Configuración", href: "/settings", icon: Settings }] }];
+    let baseSections: NavSection[];
+    let roleStr: string | null;
+
+    if (isAdmin) { baseSections = adminSections; roleStr = 'admin'; }
+    else if (isStrategist) { baseSections = strategistSections; roleStr = 'strategist'; }
+    else if (isEditor) { baseSections = editorSections; roleStr = 'editor'; }
+    else if (isCreator) { baseSections = creatorSections; roleStr = 'creator'; }
+    else if (isClient) { baseSections = clientSections; roleStr = 'client'; }
+    else {
+      baseSections = [];
+      roleStr = null;
+    }
+
+    const mktSections = marketplaceEnabled ? getMarketplaceSections(roleStr) : [];
+
+    // "Buscar Talento" section - always visible for recruitment
+    const recruitSection: NavSection = {
+      label: "RECLUTAMIENTO",
+      items: [{ name: "Buscar Talento", href: "/marketplace", icon: Search }],
+    };
+
+    // Filter marketplace link from role sections when org has marketplace disabled
+    const filteredBase = baseSections.map(section => ({
+      ...section,
+      items: section.items.filter(item => {
+        if (!marketplaceEnabled && item.href === '/marketplace') return false;
+        return true;
+      })
+    })).filter(section => section.items.length > 0);
+
+    const cuentaSection = filteredBase.find(s => s.label === 'CUENTA');
+    const otherSections = filteredBase.filter(s => s.label !== 'CUENTA');
+
+    return [
+      ...otherSections,
+      ...mktSections,
+      ...(!marketplaceEnabled ? [recruitSection] : []),
+      ...(cuentaSection ? [cuentaSection] : [{ label: "CUENTA", items: [{ name: "Configuración", href: "/settings", icon: Settings }] }]),
+    ];
   };
 
   const sections = getSections();
@@ -280,7 +388,15 @@ export function MobileNav() {
                 {/* Section Items */}
                 <div className="space-y-1">
                   {section.items.map((item) => {
-                    const isActive = location.pathname === item.href;
+                    const itemPath = item.href.split('?')[0];
+                    const itemSearch = item.href.includes('?') ? item.href.slice(item.href.indexOf('?')) : '';
+                    const isActive = item.href === '/marketplace'
+                      ? location.pathname === '/marketplace'
+                      : (itemPath.startsWith('/marketplace/') || item.href === '/wallet')
+                      ? location.pathname.startsWith(itemPath)
+                      : itemSearch
+                      ? location.pathname === itemPath && location.search === itemSearch
+                      : location.pathname === item.href;
                     return (
                       <NavLink
                         key={item.name}

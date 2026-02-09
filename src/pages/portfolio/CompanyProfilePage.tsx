@@ -362,7 +362,7 @@ export default function CompanyProfilePage() {
           <h1 className="text-xl font-semibold text-social-foreground">Empresa no encontrada</h1>
           <p className="text-social-muted-foreground">Este perfil no existe o no es público.</p>
           <Button 
-            onClick={() => navigate('/social')}
+            onClick={() => navigate('/marketplace')}
             className="bg-social-accent hover:bg-social-accent/90 text-social-accent-foreground"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -594,7 +594,7 @@ export default function CompanyProfilePage() {
                   <div className="mb-4 p-4 rounded-lg bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
                     <div className="flex items-center gap-2 mb-2">
                       <Handshake className="h-5 w-5 text-purple-500" />
-                      <span className="font-medium text-purple-400">Kreoon Social</span>
+                      <span className="font-medium text-purple-400">Marketplace</span>
                     </div>
                     <p className="text-sm text-social-muted-foreground">
                       Contenido colaborativo donde creadores y marcas trabajan juntos
