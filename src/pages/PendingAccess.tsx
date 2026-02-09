@@ -74,14 +74,14 @@ export default function PendingAccess() {
         if (orgError) throw orgError;
         setOrganizationName(org?.name ?? null);
 
-        const { data: memberRole, error: roleError } = await supabase
+        const { data: memberRoles, error: roleError } = await supabase
           .from("organization_member_roles")
           .select("role")
           .eq("organization_id", profile.current_organization_id)
           .eq("user_id", user.id)
-          .single();
-        if (!roleError && memberRole) {
-          setUserRole(memberRole.role);
+          .limit(1);
+        if (!roleError && memberRoles && memberRoles.length > 0) {
+          setUserRole(memberRoles[0].role);
         }
       } catch (error) {
         console.error("Error fetching organization info:", error);

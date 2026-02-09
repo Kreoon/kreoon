@@ -242,7 +242,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const ROOT_EMAILS = ["jacsolucionesgraficas@gmail.com", "kairosgp.sas@gmail.com"];
     
     try {
-      // First fetch profile to get current_organization_id (with 10s timeout)
+      // First fetch profile to get current_organization_id (with 20s timeout)
       let profileResult = await withTimeout(
         () =>
           supabase
@@ -250,7 +250,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .select('*')
             .eq('id', userId)
             .maybeSingle(),
-        10000
+        20000
       );
 
       if (profileResult.error) {

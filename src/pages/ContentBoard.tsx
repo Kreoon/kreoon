@@ -371,64 +371,39 @@ export default function ContentBoard() {
     }
 
     const fetchFilters = async () => {
-      // Users from this org only
-      const { data: membersData } = await supabase
-        .from('organization_members')
-        .select('user_id, role')
-        .eq('organization_id', currentOrgId);
+      // Run independent queries in parallel
+      const [membersRes, clientsRes] = await Promise.all([
+        supabase.from('organization_members').select('user_id, role').eq('organization_id', currentOrgId),
+        supabase.from('clients').select('id, name').eq('organization_id', currentOrgId),
+      ]);
 
-      const creatorIds = (membersData || [])
-        .filter(m => m.role === 'creator')
-        .map(m => m.user_id);
+      const membersData = membersRes.data || [];
+      const creatorIds = membersData.filter(m => m.role === 'creator').map(m => m.user_id);
+      const editorIds = membersData.filter(m => m.role === 'editor').map(m => m.user_id);
 
-      const editorIds = (membersData || [])
-        .filter(m => m.role === 'editor')
-        .map(m => m.user_id);
+      // Fetch profiles in parallel
+      const [creatorProfilesRes, editorProfilesRes] = await Promise.all([
+        creatorIds.length > 0 ? supabase.from('profiles').select('id, full_name').in('id', creatorIds) : { data: [] },
+        editorIds.length > 0 ? supabase.from('profiles').select('id, full_name').in('id', editorIds) : { data: [] },
+      ]);
 
-      if (creatorIds.length) {
-        const { data: creatorProfiles } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', creatorIds);
+      setCreators(creatorProfilesRes.data?.map(p => ({ id: p.id, name: p.full_name })) || []);
+      setEditors(editorProfilesRes.data?.map(p => ({ id: p.id, name: p.full_name })) || []);
 
-        setCreators(creatorProfiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
-      } else {
-        setCreators([]);
-      }
+      const clientsList = clientsRes.data || [];
+      setClients(clientsList.map(c => ({ id: c.id, name: c.name })));
 
-      if (editorIds.length) {
-        const { data: editorProfiles } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', editorIds);
-
-        setEditors(editorProfiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
-      } else {
-        setEditors([]);
-      }
-
-      const { data: clientsList } = await supabase
-        .from('clients')
-        .select('id, name')
-        .eq('organization_id', currentOrgId);
-
-      setClients(clientsList?.map(c => ({ id: c.id, name: c.name })) || []);
-
-      // Products only from clients in this org (sin join clients() para evitar 400 con muchos IDs)
-      const orgClientIds = clientsList?.map(c => c.id) ?? [];
-      const clientMap = new Map(clientsList?.map(c => [c.id, c.name]) ?? []);
+      // Products - single query with all client IDs (Supabase .in() handles large arrays)
+      const orgClientIds = clientsList.map(c => c.id);
+      const clientMap = new Map(clientsList.map(c => [c.id, c.name]));
       let productsList: any[] = [];
       if (orgClientIds.length > 0) {
-        const CHUNK = 50;
-        for (let i = 0; i < orgClientIds.length; i += CHUNK) {
-          const chunk = orgClientIds.slice(i, i + CHUNK);
-          const { data } = await supabase
-            .from('products')
-            .select('id, name, client_id')
-            .in('client_id', chunk)
-            .order('name');
-          if (data?.length) productsList.push(...data);
-        }
+        const { data } = await supabase
+          .from('products')
+          .select('id, name, client_id')
+          .in('client_id', orgClientIds)
+          .order('name');
+        productsList = data || [];
       }
 
       setProducts(

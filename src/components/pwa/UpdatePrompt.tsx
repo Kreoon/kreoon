@@ -63,16 +63,19 @@ export function UpdatePrompt() {
   useEffect(() => {
     checkForUpdates();
 
-    // Reload when the new SW takes control
+    // Only reload when the user explicitly triggered the update (via button click)
+    // This prevents unexpected reloads during active form editing or mid-session
     const handleControllerChange = () => {
-      window.location.reload();
+      if (isUpdating) {
+        window.location.reload();
+      }
     };
 
     navigator.serviceWorker?.addEventListener('controllerchange', handleControllerChange);
     return () => {
       navigator.serviceWorker?.removeEventListener('controllerchange', handleControllerChange);
     };
-  }, [checkForUpdates]);
+  }, [checkForUpdates, isUpdating]);
 
   const handleUpdateNow = () => {
     triggerUpdate();

@@ -10,6 +10,12 @@ const recentLocalUpdates = new Set<string>();
 const localUpdateTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const LOCAL_UPDATE_DEBOUNCE_MS = 3000;
 
+// Default page size for content queries to prevent statement timeouts
+const CONTENT_PAGE_SIZE = 200;
+
+// Cooldown after errors before realtime can trigger refetches (30s)
+const ERROR_COOLDOWN_MS = 30_000;
+
 // Helper to mark a content as recently updated locally
 // Exported so other hooks (like useContentDetail) can use it
 // durationMs allows extending the window for long operations like video encoding
@@ -31,6 +37,64 @@ function shouldSkipRealtimeRefetch(contentId?: string): boolean {
   return recentLocalUpdates.has(contentId);
 }
 
+// Shared helper: fetch content without JOIN (avoids RLS timeout on clients table)
+// Client info is loaded separately in a lightweight query
+async function fetchContentData(opts: {
+  currentOrgId?: string;
+  role?: string;
+  userId?: string;
+  clientId?: string;
+  creatorId?: string;
+  editorId?: string;
+}) {
+  // Main content query - NO JOIN to clients (avoids RLS timeout)
+  let query = supabase
+    .from('content')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(CONTENT_PAGE_SIZE);
+
+  if (opts.currentOrgId) query = query.eq('organization_id', opts.currentOrgId);
+  if (opts.clientId) query = query.eq('client_id', opts.clientId);
+  if (opts.creatorId) query = query.eq('creator_id', opts.creatorId);
+  if (opts.editorId) query = query.eq('editor_id', opts.editorId);
+  if (opts.role === 'creator' && opts.userId) query = query.eq('creator_id', opts.userId);
+  else if (opts.role === 'editor' && opts.userId) query = query.eq('editor_id', opts.userId);
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  const contentData = data || [];
+
+  // Fetch client, creator, editor info in parallel (lightweight individual queries)
+  const clientIds = [...new Set(contentData.filter(c => c.client_id).map(c => c.client_id))] as string[];
+  const creatorIds = [...new Set(contentData.filter(c => c.creator_id).map(c => c.creator_id))] as string[];
+  const editorIds = [...new Set(contentData.filter(c => c.editor_id).map(c => c.editor_id))] as string[];
+
+  const [clientsRes, creatorsRes, editorsRes] = await Promise.all([
+    clientIds.length > 0
+      ? supabase.from('clients').select('id, name, logo_url').in('id', clientIds)
+      : { data: [] },
+    creatorIds.length > 0
+      ? supabase.from('profiles').select('id, full_name').in('id', creatorIds)
+      : { data: [] },
+    editorIds.length > 0
+      ? supabase.from('profiles').select('id, full_name').in('id', editorIds)
+      : { data: [] },
+  ]);
+
+  const clientMap = new Map((clientsRes.data || []).map(c => [c.id, c]));
+  const creatorMap = new Map((creatorsRes.data || []).map(c => [c.id, c]));
+  const editorMap = new Map((editorsRes.data || []).map(e => [e.id, e]));
+
+  return contentData.map(item => ({
+    ...item,
+    client: item.client_id ? clientMap.get(item.client_id) || null : null,
+    creator: item.creator_id ? creatorMap.get(item.creator_id) || null : null,
+    editor: item.editor_id ? editorMap.get(item.editor_id) || null : null,
+  }));
+}
+
 interface UseContentOptions {
   userId?: string;
   role?: 'creator' | 'editor' | 'client' | 'admin' | 'strategist';
@@ -47,6 +111,8 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isPlatformRoot, currentOrgId, loading: orgLoading } = useOrgOwner();
+  const realtimeDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastErrorTimeRef = useRef<number>(0);
 
   const fetchContent = useCallback(async () => {
     // Wait for org context to resolve before fetching
@@ -54,99 +120,35 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
 
     try {
       setLoading(true);
-      let query = supabase
-        .from('content')
-        .select(`
-          *,
-          client:clients(id,name,logo_url)
-        `)
-        .order('created_at', { ascending: false });
-
-      // Filter by organization - always apply when org is selected (including for root)
-      if (currentOrgId) {
-        query = query.eq('organization_id', currentOrgId);
-      }
-
-      if (role === 'creator' && userId) {
-        query = query.eq('creator_id', userId);
-      } else if (role === 'editor' && userId) {
-        query = query.eq('editor_id', userId);
-      }
-
-      const { data, error: queryError } = await query;
-
-      if (queryError) throw queryError;
-
-      // Obtener perfiles de creadores y editores
-      const contentData = data || [];
-      const creatorIds = [...new Set(contentData.filter(c => c.creator_id).map(c => c.creator_id))];
-      const editorIds = [...new Set(contentData.filter(c => c.editor_id).map(c => c.editor_id))];
-
-      let creatorMap = new Map();
-      let editorMap = new Map();
-
-      if (creatorIds.length > 0) {
-        const { data: creators } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', creatorIds);
-        creators?.forEach(c => creatorMap.set(c.id, c));
-      }
-
-      if (editorIds.length > 0) {
-        const { data: editors } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', editorIds);
-        editors?.forEach(e => editorMap.set(e.id, e));
-      }
-
-      const contentWithProfiles = contentData.map(item => ({
-        ...item,
-        creator: item.creator_id ? creatorMap.get(item.creator_id) : null,
-        editor: item.editor_id ? editorMap.get(item.editor_id) : null
-      }));
-
-      setContent(contentWithProfiles as unknown as Content[]);
+      const result = await fetchContentData({
+        currentOrgId: currentOrgId || undefined,
+        role,
+        userId,
+      });
+      setContent(result as unknown as Content[]);
+      setError(null);
+      lastErrorTimeRef.current = 0;
     } catch (err) {
       console.error('Error fetching content:', err);
       setError(err instanceof Error ? err.message : 'Error desconocido');
+      lastErrorTimeRef.current = Date.now();
     } finally {
       setLoading(false);
     }
   }, [userId, role, isPlatformRoot, currentOrgId, orgLoading]);
 
   const updateContentStatus = async (contentId: string, newStatus: ContentStatus, oldStatus?: ContentStatus) => {
-    markLocalUpdate(contentId); // Mark as local update to skip realtime refetch
-    // If oldStatus is provided, use UP integration
+    markLocalUpdate(contentId);
     if (oldStatus) {
-      await updateContentStatusWithUP({
-        contentId,
-        oldStatus,
-        newStatus
-      });
+      await updateContentStatusWithUP({ contentId, oldStatus, newStatus });
     } else {
-      // Fetch current status if not provided
       const { data: currentContent, error: contentErr } = await supabase
-        .from('content')
-        .select('status')
-        .eq('id', contentId)
-        .single();
-
+        .from('content').select('status').eq('id', contentId).single();
       if (contentErr) throw contentErr;
-
       if (currentContent) {
-        await updateContentStatusWithUP({
-          contentId,
-          oldStatus: currentContent.status as ContentStatus,
-          newStatus
-        });
+        await updateContentStatusWithUP({ contentId, oldStatus: currentContent.status as ContentStatus, newStatus });
       } else {
-        // Fallback to simple update
-        const { error } = await supabase
-          .from('content')
-          .update({ status: newStatus })
-          .eq('id', contentId);
+        const { error } = await supabase.from('content').update({ status: newStatus }).eq('id', contentId);
         if (error) throw error;
       }
     }
@@ -154,68 +156,38 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
   };
 
   const updateContent = async (contentId: string, updates: Partial<Content>) => {
-    markLocalUpdate(contentId); // Mark as local update to skip realtime refetch
-    const { error } = await supabase
-      .from('content')
-      .update(updates)
-      .eq('id', contentId);
-
+    markLocalUpdate(contentId);
+    const { error } = await supabase.from('content').update(updates).eq('id', contentId);
     if (error) throw error;
     await fetchContent();
   };
 
   const deleteContent = async (contentId: string) => {
-    markLocalUpdate(contentId); // Mark as local update to skip realtime refetch
-    const { error } = await supabase
-      .from('content')
-      .delete()
-      .eq('id', contentId);
-
+    markLocalUpdate(contentId);
+    const { error } = await supabase.from('content').delete().eq('id', contentId);
     if (error) throw error;
     await fetchContent();
   };
 
   const approveContent = async (contentId: string, approverId: string) => {
-    markLocalUpdate(contentId); // Mark as local update to skip realtime refetch
-    // First, fetch current status for UP integration
+    markLocalUpdate(contentId);
     const { data: currentContent, error: approveErr } = await supabase
-      .from('content')
-      .select('status')
-      .eq('id', contentId)
-      .single();
-
+      .from('content').select('status').eq('id', contentId).single();
     if (approveErr) throw approveErr;
-
     if (currentContent) {
-      // Use UP-aware status change
-      await updateContentStatusWithUP({
-        contentId,
-        oldStatus: currentContent.status as ContentStatus,
-        newStatus: 'approved'
-      });
+      await updateContentStatusWithUP({ contentId, oldStatus: currentContent.status as ContentStatus, newStatus: 'approved' });
     }
-
-    // Update approved_by separately
-    const { error } = await supabase
-      .from('content')
-      .update({ approved_by: approverId })
-      .eq('id', contentId);
-
+    const { error } = await supabase.from('content').update({ approved_by: approverId }).eq('id', contentId);
     if (error) throw error;
     await fetchContent();
   };
 
   const approveScript = async (contentId: string, approverId: string) => {
-    markLocalUpdate(contentId); // Mark as local update to skip realtime refetch
+    markLocalUpdate(contentId);
     const { error } = await supabase
       .from('content')
-      .update({
-        status: 'script_approved' as ContentStatus,
-        script_approved_at: new Date().toISOString(),
-        script_approved_by: approverId
-      })
+      .update({ status: 'script_approved' as ContentStatus, script_approved_at: new Date().toISOString(), script_approved_by: approverId })
       .eq('id', contentId);
-
     if (error) throw error;
     await fetchContent();
   };
@@ -224,8 +196,7 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
     fetchContent();
   }, [fetchContent]);
 
-  // Realtime subscription for automatic sync
-  // Uses debouncing to avoid refetching when local updates trigger realtime events
+  // Realtime subscription with debounce and error cooldown
   useEffect(() => {
     if (!currentOrgId) return;
 
@@ -233,41 +204,25 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
       .channel('content-changes')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'content',
-          filter: `organization_id=eq.${currentOrgId}`
-        },
+        { event: '*', schema: 'public', table: 'content', filter: `organization_id=eq.${currentOrgId}` },
         (payload) => {
           const contentId = (payload.new as { id?: string })?.id || (payload.old as { id?: string })?.id;
-          // Skip refetch if this was a local update (prevents dialog closing during autoSave)
-          if (shouldSkipRealtimeRefetch(contentId)) {
-            console.log('[Realtime] Skipping refetch for local update:', payload.eventType, contentId);
-            return;
-          }
-          console.log('[Realtime] Content change from another user:', payload.eventType);
-          fetchContent();
+          if (shouldSkipRealtimeRefetch(contentId)) return;
+          // Cooldown: skip realtime refetch for 30s after an error
+          if (lastErrorTimeRef.current > 0 && Date.now() - lastErrorTimeRef.current < ERROR_COOLDOWN_MS) return;
+          if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
+          realtimeDebounceRef.current = setTimeout(() => fetchContent(), 3000);
         }
       )
       .subscribe();
 
     return () => {
+      if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
       supabase.removeChannel(channel);
     };
   }, [currentOrgId, fetchContent]);
 
-  return {
-    content,
-    loading,
-    error,
-    refetch: fetchContent,
-    updateContentStatus,
-    updateContent,
-    deleteContent,
-    approveContent,
-    approveScript
-  };
+  return { content, loading, error, refetch: fetchContent, updateContentStatus, updateContent, deleteContent, approveContent, approveScript };
 }
 
 // Hook para usar con filtros más avanzados
@@ -276,122 +231,46 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isPlatformRoot, currentOrgId, loading: orgLoading } = useOrgOwner();
+  const realtimeDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastErrorTimeRef = useRef<number>(0);
 
   const fetchContent = useCallback(async () => {
-    // Wait for org context to resolve before fetching
     if (orgLoading) return;
 
     try {
       setLoading(true);
-      let query = supabase
-        .from('content')
-        .select(`
-          *,
-          client:clients(id,name,logo_url)
-        `)
-        .order('created_at', { ascending: false });
-
-      // Filter by organization - always apply when org is selected (including for root)
-      if (currentOrgId) {
-        query = query.eq('organization_id', currentOrgId);
-      }
-
-      // Aplicar filtros
-      if (options.clientId) {
-        query = query.eq('client_id', options.clientId);
-      }
-      if (options.creatorId) {
-        query = query.eq('creator_id', options.creatorId);
-      }
-      if (options.editorId) {
-        query = query.eq('editor_id', options.editorId);
-      }
-
-      // Filtro por rol
-      if (options.role === 'creator' && options.userId) {
-        query = query.eq('creator_id', options.userId);
-      } else if (options.role === 'editor' && options.userId) {
-        query = query.eq('editor_id', options.userId);
-      }
-
-      const { data, error: queryError } = await query;
-
-      if (queryError) throw queryError;
-
-      // Obtener perfiles de creadores y editores
-      const contentData = data || [];
-      const creatorIds = [
-        ...new Set(contentData.filter((c) => c.creator_id).map((c) => c.creator_id)),
-      ];
-      const editorIds = [
-        ...new Set(contentData.filter((c) => c.editor_id).map((c) => c.editor_id)),
-      ];
-
-      let creatorMap = new Map();
-      let editorMap = new Map();
-
-      if (creatorIds.length > 0) {
-        const { data: creators } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', creatorIds);
-        creators?.forEach((c) => creatorMap.set(c.id, c));
-      }
-
-      if (editorIds.length > 0) {
-        const { data: editors } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', editorIds);
-        editors?.forEach((e) => editorMap.set(e.id, e));
-      }
-
-      const contentWithProfiles = contentData.map((item) => ({
-        ...item,
-        creator: item.creator_id ? creatorMap.get(item.creator_id) : null,
-        editor: item.editor_id ? editorMap.get(item.editor_id) : null,
-      }));
-
-      setContent(contentWithProfiles as unknown as Content[]);
+      const result = await fetchContentData({
+        currentOrgId: currentOrgId || undefined,
+        role: options.role,
+        userId: options.userId,
+        clientId: options.clientId,
+        creatorId: options.creatorId,
+        editorId: options.editorId,
+      });
+      setContent(result as unknown as Content[]);
+      setError(null);
+      lastErrorTimeRef.current = 0;
     } catch (err) {
       console.error('Error fetching content:', err);
       setError(err instanceof Error ? err.message : 'Error desconocido');
+      lastErrorTimeRef.current = Date.now();
     } finally {
       setLoading(false);
     }
   }, [options.userId, options.role, options.clientId, options.creatorId, options.editorId, options.showOnlyAssigned, isPlatformRoot, currentOrgId, orgLoading]);
 
   const updateContentStatus = async (contentId: string, newStatus: ContentStatus, oldStatus?: ContentStatus) => {
-    markLocalUpdate(contentId); // Mark as local update to skip realtime refetch
-    // If oldStatus is provided, use UP integration
+    markLocalUpdate(contentId);
     if (oldStatus) {
-      await updateContentStatusWithUP({
-        contentId,
-        oldStatus,
-        newStatus
-      });
+      await updateContentStatusWithUP({ contentId, oldStatus, newStatus });
     } else {
-      // Fetch current status if not provided
       const { data: currentContent, error: statusErr } = await supabase
-        .from('content')
-        .select('status')
-        .eq('id', contentId)
-        .single();
-
+        .from('content').select('status').eq('id', contentId).single();
       if (statusErr) throw statusErr;
-
       if (currentContent) {
-        await updateContentStatusWithUP({
-          contentId,
-          oldStatus: currentContent.status as ContentStatus,
-          newStatus
-        });
+        await updateContentStatusWithUP({ contentId, oldStatus: currentContent.status as ContentStatus, newStatus });
       } else {
-        // Fallback to simple update
-        const { error } = await supabase
-          .from('content')
-          .update({ status: newStatus })
-          .eq('id', contentId);
+        const { error } = await supabase.from('content').update({ status: newStatus }).eq('id', contentId);
         if (error) throw error;
       }
     }
@@ -399,12 +278,8 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
   };
 
   const deleteContent = async (contentId: string) => {
-    markLocalUpdate(contentId); // Mark as local update to skip realtime refetch
-    const { error } = await supabase
-      .from('content')
-      .delete()
-      .eq('id', contentId);
-
+    markLocalUpdate(contentId);
+    const { error } = await supabase.from('content').delete().eq('id', contentId);
     if (error) throw error;
     await fetchContent();
   };
@@ -413,8 +288,7 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
     fetchContent();
   }, [fetchContent]);
 
-  // Realtime subscription for automatic sync
-  // Uses debouncing to avoid refetching when local updates trigger realtime events
+  // Realtime subscription with debounce and error cooldown
   useEffect(() => {
     if (!currentOrgId) return;
 
@@ -422,36 +296,22 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
       .channel('content-changes-filtered')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'content',
-          filter: `organization_id=eq.${currentOrgId}`
-        },
+        { event: '*', schema: 'public', table: 'content', filter: `organization_id=eq.${currentOrgId}` },
         (payload) => {
           const contentId = (payload.new as { id?: string })?.id || (payload.old as { id?: string })?.id;
-          // Skip refetch if this was a local update (prevents dialog closing during autoSave)
-          if (shouldSkipRealtimeRefetch(contentId)) {
-            console.log('[Realtime] Skipping refetch for local update (filtered):', payload.eventType, contentId);
-            return;
-          }
-          console.log('[Realtime] Content change from another user (filtered):', payload.eventType);
-          fetchContent();
+          if (shouldSkipRealtimeRefetch(contentId)) return;
+          if (lastErrorTimeRef.current > 0 && Date.now() - lastErrorTimeRef.current < ERROR_COOLDOWN_MS) return;
+          if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
+          realtimeDebounceRef.current = setTimeout(() => fetchContent(), 3000);
         }
       )
       .subscribe();
 
     return () => {
+      if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
       supabase.removeChannel(channel);
     };
   }, [currentOrgId, fetchContent]);
 
-  return {
-    content,
-    loading,
-    error,
-    refetch: fetchContent,
-    updateContentStatus,
-    deleteContent
-  };
+  return { content, loading, error, refetch: fetchContent, updateContentStatus, deleteContent };
 }
