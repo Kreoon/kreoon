@@ -666,10 +666,10 @@ export const UnifiedContentModule = memo(function UnifiedContentModule({
           onClose={() => setFullscreenIndex(null)}
           onApprove={async (item) => {
             try {
-              await supabase.from('content').update({
-                status: 'approved',
-                approved_by: user?.id
-              }).eq('id', item.id);
+              await supabase.rpc('update_content_by_id', {
+                p_content_id: item.id,
+                p_updates: { status: 'approved', approved_by: user?.id }
+              });
               toast.success('Contenido aprobado');
               fetchContent(true);
             } catch (error) {
@@ -678,10 +678,10 @@ export const UnifiedContentModule = memo(function UnifiedContentModule({
           }}
           onReject={async (item, feedbackText) => {
             try {
-              await supabase.from('content').update({
-                status: 'issue',
-                notes: feedbackText
-              }).eq('id', item.id);
+              await supabase.rpc('update_content_by_id', {
+                p_content_id: item.id,
+                p_updates: { status: 'issue', notes: feedbackText }
+              });
               if (feedbackText && user?.id) {
                 await supabase.from('content_comments').insert({
                   content_id: item.id,

@@ -10004,6 +10004,12 @@ export type Database = {
         Args: { _company_id: string }
         Returns: number
       }
+      get_content_by_id: {
+        Args: { p_content_id: string }
+        Returns: {
+          [key: string]: Json
+        }[]
+      }
       get_current_organization_id: {
         Args: { _user_id: string }
         Returns: string
@@ -10034,6 +10040,20 @@ export type Database = {
         Returns: {
           followers_count: number
           following_count: number
+        }[]
+      }
+      get_org_content: {
+        Args: {
+          p_organization_id: string
+          p_role?: string
+          p_user_id?: string
+          p_client_id?: string
+          p_creator_id?: string
+          p_editor_id?: string
+          p_limit?: number
+        }
+        Returns: {
+          [key: string]: Json
         }[]
       }
       get_random_editor_from_pool: { Args: { org_id: string }; Returns: string }
@@ -10245,6 +10265,10 @@ export type Database = {
           _to_currency: Database["public"]["Enums"]["currency_type"]
         }
         Returns: string
+      }
+      update_content_by_id: {
+        Args: { p_content_id: string; p_updates: Json }
+        Returns: undefined
       }
       update_talent_performance_scores: {
         Args: { p_organization_id: string; p_user_id: string }

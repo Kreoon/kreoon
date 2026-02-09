@@ -233,14 +233,17 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
     setIsTogglingKreoon(true);
     const newValue = !kreoonEnabled;
     try {
-      const { error } = await supabase.from('content').update({
-        shared_on_kreoon: newValue,
-        show_on_creator_profile: newValue,
-        show_on_client_profile: newValue,
-        is_collaborative: newValue,
-        is_published: newValue,
-        shared_at: newValue ? new Date().toISOString() : null
-      }).eq('id', content.id);
+      const { error } = await supabase.rpc('update_content_by_id', {
+        p_content_id: content.id,
+        p_updates: {
+          shared_on_kreoon: newValue,
+          show_on_creator_profile: newValue,
+          show_on_client_profile: newValue,
+          is_collaborative: newValue,
+          is_published: newValue,
+          shared_at: newValue ? new Date().toISOString() : null
+        }
+      });
       if (error) throw error;
       setKreoonEnabled(newValue);
       toast.success(newValue ? 'Publicado en Marketplace' : 'Removido del Marketplace');
@@ -271,7 +274,7 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
           updateData.script_approved_by = userId;
         }
         if (Object.keys(updateData).length > 0) {
-          await supabase.from('content').update(updateData).eq('id', content.id);
+          await supabase.rpc('update_content_by_id', { p_content_id: content.id, p_updates: updateData });
         }
       }
       if (feedback) {

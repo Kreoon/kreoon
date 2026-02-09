@@ -164,14 +164,15 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
     if (oldStatus) {
       await updateContentStatusWithUP({ contentId, oldStatus, newStatus });
     } else {
-      const { data: currentContent, error: contentErr } = await supabase
-        .from('content').select('status').eq('id', contentId).single();
+      // Fetch current status via RPC (bypasses 18 RLS policies)
+      const { data: contentArr, error: contentErr } = await supabase
+        .rpc('get_content_by_id', { p_content_id: contentId });
       if (contentErr) throw contentErr;
+      const currentContent = contentArr?.[0];
       if (currentContent) {
         await updateContentStatusWithUP({ contentId, oldStatus: currentContent.status as ContentStatus, newStatus });
       } else {
-        const { error } = await supabase.from('content').update({ status: newStatus }).eq('id', contentId);
-        if (error) throw error;
+        await supabase.rpc('update_content_by_id', { p_content_id: contentId, p_updates: { status: newStatus } });
       }
     }
     await fetchContent();
@@ -179,7 +180,7 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
 
   const updateContent = async (contentId: string, updates: Partial<Content>) => {
     markLocalUpdate(contentId);
-    const { error } = await supabase.from('content').update(updates).eq('id', contentId);
+    const { error } = await supabase.rpc('update_content_by_id', { p_content_id: contentId, p_updates: updates as any });
     if (error) throw error;
     await fetchContent();
   };
@@ -193,23 +194,24 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
 
   const approveContent = async (contentId: string, approverId: string) => {
     markLocalUpdate(contentId);
-    const { data: currentContent, error: approveErr } = await supabase
-      .from('content').select('status').eq('id', contentId).single();
+    // Fetch current status via RPC (bypasses 18 RLS policies)
+    const { data: contentArr, error: approveErr } = await supabase
+      .rpc('get_content_by_id', { p_content_id: contentId });
     if (approveErr) throw approveErr;
+    const currentContent = contentArr?.[0];
     if (currentContent) {
       await updateContentStatusWithUP({ contentId, oldStatus: currentContent.status as ContentStatus, newStatus: 'approved' });
     }
-    const { error } = await supabase.from('content').update({ approved_by: approverId }).eq('id', contentId);
-    if (error) throw error;
+    await supabase.rpc('update_content_by_id', { p_content_id: contentId, p_updates: { approved_by: approverId } });
     await fetchContent();
   };
 
   const approveScript = async (contentId: string, approverId: string) => {
     markLocalUpdate(contentId);
-    const { error } = await supabase
-      .from('content')
-      .update({ status: 'script_approved' as ContentStatus, script_approved_at: new Date().toISOString(), script_approved_by: approverId })
-      .eq('id', contentId);
+    const { error } = await supabase.rpc('update_content_by_id', {
+      p_content_id: contentId,
+      p_updates: { status: 'script_approved', script_approved_at: new Date().toISOString(), script_approved_by: approverId }
+    });
     if (error) throw error;
     await fetchContent();
   };
@@ -286,14 +288,15 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
     if (oldStatus) {
       await updateContentStatusWithUP({ contentId, oldStatus, newStatus });
     } else {
-      const { data: currentContent, error: statusErr } = await supabase
-        .from('content').select('status').eq('id', contentId).single();
+      // Fetch current status via RPC (bypasses 18 RLS policies)
+      const { data: contentArr, error: statusErr } = await supabase
+        .rpc('get_content_by_id', { p_content_id: contentId });
       if (statusErr) throw statusErr;
+      const currentContent = contentArr?.[0];
       if (currentContent) {
         await updateContentStatusWithUP({ contentId, oldStatus: currentContent.status as ContentStatus, newStatus });
       } else {
-        const { error } = await supabase.from('content').update({ status: newStatus }).eq('id', contentId);
-        if (error) throw error;
+        await supabase.rpc('update_content_by_id', { p_content_id: contentId, p_updates: { status: newStatus } });
       }
     }
     await fetchContent();

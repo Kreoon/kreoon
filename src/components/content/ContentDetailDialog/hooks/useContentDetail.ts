@@ -292,10 +292,9 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
         }
       }
 
+      // Update via SECURITY DEFINER RPC (bypasses 18 RLS policies)
       const { error } = await supabase
-        .from('content')
-        .update(updates)
-        .eq('id', content.id);
+        .rpc('update_content_by_id', { p_content_id: content.id, p_updates: updates });
 
       if (error) throw error;
 
@@ -390,7 +389,8 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
       if (!updates) return;
       // Mark as local update to prevent realtime refetch from closing the dialog
       markLocalUpdate(content.id);
-      await supabase.from('content').update(updates).eq('id', content.id);
+      // Update via SECURITY DEFINER RPC (bypasses 18 RLS policies)
+      await supabase.rpc('update_content_by_id', { p_content_id: content.id, p_updates: updates });
     },
     enabled: editMode,
     debounceMs: 3000,
