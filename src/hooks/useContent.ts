@@ -11,7 +11,7 @@ const localUpdateTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const LOCAL_UPDATE_DEBOUNCE_MS = 3000;
 
 // Default page size for content queries to prevent statement timeouts
-const CONTENT_PAGE_SIZE = 200;
+const CONTENT_PAGE_SIZE = 500;
 
 // Cooldown after errors before realtime can trigger refetches (30s)
 const ERROR_COOLDOWN_MS = 30_000;
@@ -67,25 +67,34 @@ async function fetchContentData(opts: {
   const contentData = data || [];
 
   // Fetch client, creator, editor info in parallel (lightweight individual queries)
+  // Each fetch is wrapped in try/catch so a timeout on clients (heavy RLS) won't block everything
   const clientIds = [...new Set(contentData.filter(c => c.client_id).map(c => c.client_id))] as string[];
   const creatorIds = [...new Set(contentData.filter(c => c.creator_id).map(c => c.creator_id))] as string[];
   const editorIds = [...new Set(contentData.filter(c => c.editor_id).map(c => c.editor_id))] as string[];
 
-  const [clientsRes, creatorsRes, editorsRes] = await Promise.all([
+  const safeFetch = async <T>(fn: () => Promise<{ data: T[] | null; error: any }>): Promise<T[]> => {
+    try {
+      const res = await fn();
+      if (res.error) { console.warn('[useContent] Non-critical fetch error:', res.error); return []; }
+      return res.data || [];
+    } catch (e) { console.warn('[useContent] Non-critical fetch failed:', e); return []; }
+  };
+
+  const [clientsData, creatorsData, editorsData] = await Promise.all([
     clientIds.length > 0
-      ? supabase.from('clients').select('id, name, logo_url').in('id', clientIds)
-      : { data: [] },
+      ? safeFetch(() => supabase.from('clients').select('id, name, logo_url').in('id', clientIds))
+      : [] as any[],
     creatorIds.length > 0
-      ? supabase.from('profiles').select('id, full_name').in('id', creatorIds)
-      : { data: [] },
+      ? safeFetch(() => supabase.from('profiles').select('id, full_name').in('id', creatorIds))
+      : [] as any[],
     editorIds.length > 0
-      ? supabase.from('profiles').select('id, full_name').in('id', editorIds)
-      : { data: [] },
+      ? safeFetch(() => supabase.from('profiles').select('id, full_name').in('id', editorIds))
+      : [] as any[],
   ]);
 
-  const clientMap = new Map((clientsRes.data || []).map(c => [c.id, c]));
-  const creatorMap = new Map((creatorsRes.data || []).map(c => [c.id, c]));
-  const editorMap = new Map((editorsRes.data || []).map(e => [e.id, e]));
+  const clientMap = new Map(clientsData.map((c: any) => [c.id, c]));
+  const creatorMap = new Map(creatorsData.map((c: any) => [c.id, c]));
+  const editorMap = new Map(editorsData.map((e: any) => [e.id, e]));
 
   return contentData.map(item => ({
     ...item,
