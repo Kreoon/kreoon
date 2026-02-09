@@ -37,8 +37,8 @@ function shouldSkipRealtimeRefetch(contentId?: string): boolean {
   return recentLocalUpdates.has(contentId);
 }
 
-// Shared helper: fetch content without JOIN (avoids RLS timeout on clients table)
-// Client info is loaded separately in a lightweight query
+// Shared helper: fetch content via SECURITY DEFINER RPC (bypasses 18 RLS policies)
+// Falls back to direct query if no org context (rare case)
 async function fetchContentData(opts: {
   currentOrgId?: string;
   role?: string;
@@ -47,24 +47,37 @@ async function fetchContentData(opts: {
   creatorId?: string;
   editorId?: string;
 }) {
-  // Main content query - NO JOIN to clients (avoids RLS timeout)
-  let query = supabase
-    .from('content')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(CONTENT_PAGE_SIZE);
+  let contentData: any[] = [];
 
-  if (opts.currentOrgId) query = query.eq('organization_id', opts.currentOrgId);
-  if (opts.clientId) query = query.eq('client_id', opts.clientId);
-  if (opts.creatorId) query = query.eq('creator_id', opts.creatorId);
-  if (opts.editorId) query = query.eq('editor_id', opts.editorId);
-  if (opts.role === 'creator' && opts.userId) query = query.eq('creator_id', opts.userId);
-  else if (opts.role === 'editor' && opts.userId) query = query.eq('editor_id', opts.userId);
-
-  const { data, error } = await query;
-  if (error) throw error;
-
-  const contentData = data || [];
+  if (opts.currentOrgId) {
+    // Use RPC function - checks membership ONCE instead of 18 RLS policies per row
+    const { data, error } = await supabase.rpc('get_org_content', {
+      p_organization_id: opts.currentOrgId,
+      p_role: opts.role || null,
+      p_user_id: opts.userId || null,
+      p_client_id: opts.clientId || null,
+      p_creator_id: opts.creatorId || null,
+      p_editor_id: opts.editorId || null,
+      p_limit: CONTENT_PAGE_SIZE,
+    });
+    if (error) throw error;
+    contentData = data || [];
+  } else {
+    // Fallback: direct query (only when no org context)
+    let query = supabase
+      .from('content')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(CONTENT_PAGE_SIZE);
+    if (opts.clientId) query = query.eq('client_id', opts.clientId);
+    if (opts.creatorId) query = query.eq('creator_id', opts.creatorId);
+    if (opts.editorId) query = query.eq('editor_id', opts.editorId);
+    if (opts.role === 'creator' && opts.userId) query = query.eq('creator_id', opts.userId);
+    else if (opts.role === 'editor' && opts.userId) query = query.eq('editor_id', opts.userId);
+    const { data, error } = await query;
+    if (error) throw error;
+    contentData = data || [];
+  }
 
   // Fetch client, creator, editor info in parallel (lightweight individual queries)
   // Each fetch is wrapped in try/catch so a timeout on clients (heavy RLS) won't block everything
