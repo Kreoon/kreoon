@@ -2,7 +2,7 @@ import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, dehydrate, hydrate } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
@@ -91,11 +91,51 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
-      // Increase stale time to reduce background refetches on tab switch
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000,   // 10 minutes garbage collection
+      staleTime: 15 * 60 * 1000, // 15 min – data stays "fresh" longer, fewer background refetches
+      gcTime: 60 * 60 * 1000,    // 60 min – keep unused cache in memory for 1 hour
     },
   },
+});
+
+// ── localStorage persistence: cache survives page refresh / tab close ──
+const RQ_CACHE_KEY = 'kreoon-rq-v1';
+const RQ_CACHE_MAX_AGE = 60 * 60 * 1000; // 1 hour – matches gcTime
+
+// Restore on startup
+try {
+  const raw = localStorage.getItem(RQ_CACHE_KEY);
+  if (raw) {
+    const { ts, state } = JSON.parse(raw);
+    if (Date.now() - ts < RQ_CACHE_MAX_AGE) {
+      hydrate(queryClient, state);
+    } else {
+      localStorage.removeItem(RQ_CACHE_KEY);
+    }
+  }
+} catch { localStorage.removeItem(RQ_CACHE_KEY); }
+
+// Persist on changes (debounced 3s to avoid thrashing)
+let _rqPersistTimer: ReturnType<typeof setTimeout> | null = null;
+queryClient.getQueryCache().subscribe(() => {
+  if (_rqPersistTimer) clearTimeout(_rqPersistTimer);
+  _rqPersistTimer = setTimeout(() => {
+    try {
+      const state = dehydrate(queryClient, {
+        shouldDehydrateQuery: (q) => {
+          if (q.state.status !== 'success') return false;
+          // Skip large datasets (content lists 240+ items) to keep cache small
+          const d = q.state.data;
+          if (Array.isArray(d) && d.length > 100) return false;
+          return true;
+        },
+      });
+      const payload = JSON.stringify({ ts: Date.now(), state });
+      // Safety: don't exceed 4 MB in localStorage
+      if (payload.length < 4 * 1024 * 1024) {
+        localStorage.setItem(RQ_CACHE_KEY, payload);
+      }
+    } catch { /* localStorage full – silently ignore */ }
+  }, 3000);
 });
 
 // Component to redirect /profile to social
