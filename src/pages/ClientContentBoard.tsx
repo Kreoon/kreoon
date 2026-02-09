@@ -195,13 +195,10 @@ export default function ClientContentBoard() {
 
           // Solo traemos contenido en estados relevantes para el cliente (fallback + custom)
           const statusesToFetch = ['draft', 'script_approved', 'delivered', 'issue', 'corrected', 'approved', 'published'];
+          // Fetch content WITHOUT JOIN to clients (avoids RLS timeout)
           const { data: contentData } = await supabase
             .from('content')
-            .select(`
-              *,
-              client:clients(*),
-              profiles:creator_id(full_name, avatar_url)
-            `)
+            .select('*')
             .eq('client_id', clientData.id)
             .in('status', statusesToFetch)
             .order('created_at', { ascending: false });

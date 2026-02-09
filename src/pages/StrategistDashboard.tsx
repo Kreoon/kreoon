@@ -66,13 +66,10 @@ export default function StrategistDashboard() {
     if (!user?.id) return;
     
     try {
+      // Fetch content WITHOUT JOIN to clients (avoids RLS timeout)
       const { data: contentData, error: contentError } = await supabase
         .from('content')
-        .select(`
-          *,
-          client:clients(*),
-          product_rel:products(*)
-        `)
+        .select('*')
         .eq('strategist_id', user.id)
         .order('created_at', { ascending: false });
 
