@@ -490,6 +490,13 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
 
       const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
       updateField('avatar_url', data.publicUrl);
+
+      // Persist to profiles DB immediately (don't wait for "Save" button)
+      await supabase
+        .from('profiles')
+        .update({ avatar_url: data.publicUrl })
+        .eq('id', user.id);
+
       showToast('Avatar actualizado');
       return data.publicUrl;
     } catch (error) {

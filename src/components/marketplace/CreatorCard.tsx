@@ -210,12 +210,18 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
         <div className="absolute bottom-0 inset-x-0 z-10 p-3 space-y-1">
           {/* Name + verified */}
           <div className="flex items-center gap-1.5">
-            {creator.avatar_url && media.length > 0 && (
+            {creator.avatar_url ? (
               <img
                 src={creator.avatar_url}
                 alt=""
                 className="w-6 h-6 rounded-full object-cover flex-shrink-0 border border-white/30"
               />
+            ) : (
+              <div className="w-6 h-6 rounded-full bg-purple-500/60 flex items-center justify-center flex-shrink-0 border border-white/30">
+                <span className="text-[10px] text-white font-bold leading-none">
+                  {creator.display_name.charAt(0).toUpperCase()}
+                </span>
+              </div>
             )}
             <span className="font-semibold text-white text-sm truncate drop-shadow-md">
               {creator.display_name}

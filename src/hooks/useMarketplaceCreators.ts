@@ -213,8 +213,31 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
         }
       }
 
+      // ── 2d. Fetch avatar fallbacks from profiles table for creators missing avatar ──
+      const missingAvatarUserIds = creatorRows
+        .filter((r: any) => !r.avatar_url)
+        .map((r: any) => r.user_id as string);
+
+      const avatarFallbackMap = new Map<string, string>();
+      if (missingAvatarUserIds.length > 0) {
+        const { data: avatarRows } = await supabase
+          .from('profiles')
+          .select('id, avatar_url')
+          .in('id', missingAvatarUserIds)
+          .not('avatar_url', 'is', null)
+          .neq('avatar_url', '');
+
+        for (const r of avatarRows || []) {
+          if (r.avatar_url) avatarFallbackMap.set(r.id, r.avatar_url);
+        }
+      }
+
       const mapped = creatorRows.map((row: any) => {
         const creator = mapCreatorRow(row);
+        // Fallback avatar from profiles table
+        if (!creator.avatar_url) {
+          creator.avatar_url = avatarFallbackMap.get(row.user_id) || null;
+        }
         // Show up to 5 items on the card (prioritized: portfolio_items first, then content, then posts)
         creator.portfolio_media = (portfolioMap.get(row.id) || []).slice(0, 5);
         // Enrich with subscription status

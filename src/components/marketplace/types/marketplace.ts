@@ -170,6 +170,54 @@ export const CONTENT_TYPES = [
   'Compra en Vivo',
 ] as const;
 
+// --- Predefined Expertise Tags (grouped) ---
+
+export interface ExpertiseTagGroup {
+  label: string;
+  tags: string[];
+}
+
+export const EXPERTISE_TAG_GROUPS: ExpertiseTagGroup[] = [
+  {
+    label: 'Nichos / Industrias',
+    tags: [
+      'UGC', 'Moda & Estilo', 'Belleza & Skincare', 'Fitness & Deporte',
+      'Salud & Bienestar', 'Tecnología', 'Gaming', 'Food & Cocina',
+      'Viajes & Turismo', 'Educación', 'Finanzas & Inversión',
+      'Hogar & Decoración', 'Mascotas', 'Bebés & Maternidad',
+      'Música', 'Arte & Diseño', 'Automotriz', 'Entretenimiento',
+      'Lifestyle', 'Negocios & Emprendimiento',
+    ],
+  },
+  {
+    label: 'Habilidades de Producción',
+    tags: [
+      'Edición de Video', 'Fotografía Profesional', 'Motion Graphics',
+      'Diseño Gráfico', 'Copywriting', 'Guionismo',
+      'Locución & Voz en Off', 'Animación 2D/3D',
+      'Color Grading', 'Producción de Audio',
+    ],
+  },
+  {
+    label: 'Formatos de Contenido',
+    tags: [
+      'Reels & Shorts', 'Livestream', 'Podcast',
+      'Video Largo (YouTube)', 'Stories', 'Blog & Artículos',
+      'VSL', 'Unboxing', 'Reviews & Reseñas',
+      'Tutoriales & How-to', 'Testimonios', 'Compra en Vivo',
+    ],
+  },
+  {
+    label: 'Servicios Especializados',
+    tags: [
+      'Dirección Creativa', 'Community Management', 'Influencer Marketing',
+      'Paid Media', 'SEO & Contenido Web', 'Email Marketing',
+      'Branding & Identidad', 'Estrategia de Contenido',
+      'Analítica & Data', 'Social Listening',
+    ],
+  },
+];
+
 // --- Phase 3: Hiring & Project types ---
 
 export type ProjectStatus = 'pending' | 'briefing' | 'in_progress' | 'revision' | 'approved' | 'completed' | 'cancelled';
@@ -262,18 +310,29 @@ export const DEFAULT_FILTERS: MarketplaceFilters = {
 export type MarketplaceRoleCategory =
   | 'content_creation'
   | 'post_production'
-  | 'strategy'
+  | 'strategy_marketing'
   | 'technology'
   | 'education'
   | 'client';
 
 export type MarketplaceRoleId =
+  // Content Creation
   | 'ugc_creator' | 'lifestyle_creator' | 'micro_influencer'
-  | 'nano_influencer' | 'live_streamer' | 'podcast_host'
+  | 'nano_influencer' | 'macro_influencer' | 'brand_ambassador'
+  | 'live_streamer' | 'podcast_host'
+  | 'photographer' | 'copywriter' | 'graphic_designer' | 'voice_artist'
+  // Post-Production
   | 'video_editor' | 'motion_graphics' | 'sound_designer' | 'colorist'
+  | 'director' | 'producer' | 'animator_2d3d'
+  // Estrategia & Marketing
   | 'content_strategist' | 'social_media_manager' | 'community_manager'
+  | 'digital_strategist' | 'trafficker' | 'seo_specialist'
+  | 'email_marketer' | 'growth_hacker' | 'crm_specialist' | 'conversion_optimizer'
+  // Technology
   | 'web_developer' | 'app_developer' | 'ai_specialist'
+  // Education
   | 'online_instructor' | 'workshop_facilitator'
+  // Client
   | 'brand_manager' | 'marketing_director';
 
 export interface MarketplaceRoleDefinition {

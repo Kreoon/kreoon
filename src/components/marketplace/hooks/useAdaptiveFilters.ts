@@ -59,7 +59,7 @@ const ADAPTIVE_FILTERS: Partial<Record<MarketplaceViewMode, AdaptiveFilterConfig
   post_production: [
     { key: 'software', label: 'Software', type: 'multi-select', options: SOFTWARE_TOOLS, filterKey: 'software' },
   ],
-  strategy: [
+  strategy_marketing: [
     { key: 'platforms', label: 'Plataformas que gestiona', type: 'multi-select', options: PLATFORMS, filterKey: 'platforms' },
   ],
   technology: [

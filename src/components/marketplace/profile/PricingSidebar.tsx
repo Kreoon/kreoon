@@ -47,10 +47,7 @@ export function PricingSidebar({
 
   const handleHire = () => {
     if (!user) {
-      toast({
-        title: 'Inicia sesión',
-        description: 'Necesitas una cuenta para contratar creadores.',
-      });
+      navigate('/auth');
       return;
     }
     navigate(`/marketplace/hire/${creatorId}`);
