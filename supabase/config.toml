@@ -211,7 +211,7 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.marketplace-recommendations]
-verify_jwt = true
+verify_jwt = false
 
 [functions.send-recruitment]
-verify_jwt = true
+verify_jwt = false

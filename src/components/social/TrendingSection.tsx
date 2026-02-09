@@ -121,7 +121,7 @@ export function TrendingSection({ className, variant = 'sidebar' }: TrendingSect
                 transition={{ delay: index * 0.1 }}
               >
                 <Link
-                  to={`/social/explore?tag=${hashtag.tag}`}
+                  to={`/marketplace?tag=${hashtag.tag}`}
                   className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors group"
                 >
                   <div className="flex items-center gap-2">
@@ -143,7 +143,7 @@ export function TrendingSection({ className, variant = 'sidebar' }: TrendingSect
         )}
 
         <Link
-          to="/social/explore"
+          to="/marketplace"
           className="flex items-center justify-center gap-1 mt-4 text-sm text-social-accent hover:underline"
         >
           Ver más <ChevronRight className="h-3 w-3" />
@@ -197,7 +197,7 @@ export function TrendingSection({ className, variant = 'sidebar' }: TrendingSect
               transition={{ delay: index * 0.05 }}
             >
               <Link
-                to={`/social/explore?tag=${hashtag.tag}`}
+                to={`/marketplace?tag=${hashtag.tag}`}
                 className="flex items-center gap-3 p-3 rounded-xl glass-card-hover group"
               >
                 <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-social-accent/20 to-pink-500/20 group-hover:from-social-accent/30 group-hover:to-pink-500/30 transition-colors">
@@ -233,7 +233,7 @@ export function TrendingSection({ className, variant = 'sidebar' }: TrendingSect
               transition={{ delay: index * 0.05 }}
             >
               <Link
-                to={`/social/u/${creator.id}`}
+                to={`/profile/${creator.id}`}
                 className="flex items-center gap-3 p-3 rounded-xl glass-card-hover group"
               >
                 <div className="relative">

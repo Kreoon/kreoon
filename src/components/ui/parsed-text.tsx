@@ -99,7 +99,7 @@ export function ParsedText({
       onMentionClick(username);
     } else {
       // Navigate to the user's profile page
-      navigate('/social#profile');
+      navigate('/settings?section=marketplace');
     }
   };
   

@@ -388,6 +388,14 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
       // Sync common fields to client record if user owns a client
       await syncProfileToClient(profile);
 
+      // Sync username → creator_profiles.slug so marketplace URL stays in sync
+      if (profile.username) {
+        await (supabase as any)
+          .from('creator_profiles')
+          .update({ slug: profile.username.toLowerCase().trim() })
+          .eq('user_id', profile.id);
+      }
+
       setOriginalProfile(profile);
       originalUsernameRef.current = profile.username;
       showToast('Perfil actualizado', 'Tus cambios se han guardado correctamente');

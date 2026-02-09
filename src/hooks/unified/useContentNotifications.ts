@@ -195,7 +195,7 @@ export function useContentNotifications(options: UseContentNotificationsOptions 
               createNotification({
                 type: 'content_published',
                 title: 'Contenido publicado',
-                message: `"${content.title}" ahora está publicado en Kreoon Social`,
+                message: `"${content.title}" ahora está publicado en el Marketplace`,
                 contentId: content.id,
                 contentTitle: content.title,
                 metadata: {
@@ -211,7 +211,7 @@ export function useContentNotifications(options: UseContentNotificationsOptions 
               createNotification({
                 type: 'content_shared',
                 title: 'Contenido compartido',
-                message: `"${content.title}" fue compartido en Kreoon Social como colaboración`,
+                message: `"${content.title}" fue compartido en el Marketplace como colaboración`,
                 contentId: content.id,
                 contentTitle: content.title,
                 metadata: {

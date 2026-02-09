@@ -2,7 +2,7 @@ import { memo, useMemo } from 'react';
 import { 
   User, Bell, Shield, HelpCircle, Building2, Crown, Star, History,
   Landmark, Users, Share2, CreditCard, Settings2, ShieldCheck,
-  Bot, UserCog, ChevronRight, LockKeyhole, BarChart3, Brain, UserPlus, Video, Globe
+  Bot, UserCog, ChevronRight, LockKeyhole, BarChart3, Brain, UserPlus, Video, Globe, Store
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SettingsPermissions, SettingsSectionKey } from '@/hooks/useSettingsPermissions';
@@ -35,7 +35,7 @@ const ALL_SECTIONS: SectionGroup[] = [
     description: 'Configuración personal',
     icon: User,
     sections: [
-      { key: 'profile', icon: User, title: 'Perfil', description: 'Información personal' },
+      { key: 'profile', icon: User, title: 'Mi Perfil', description: 'Perfil, portafolio y servicios' },
       { key: 'notifications', icon: Bell, title: 'Notificaciones', description: 'Alertas y chat' },
       { key: 'security', icon: Shield, title: 'Seguridad', description: 'Contraseña y 2FA' },
       { key: 'tour', icon: HelpCircle, title: 'Tour Guiado', description: 'Introducción' },
@@ -54,6 +54,8 @@ const ALL_SECTIONS: SectionGroup[] = [
       { key: 'ambassadors', icon: Star, title: 'Embajadores', description: 'Red de referidos' },
       { key: 'permissions', icon: UserCog, title: 'Permisos', description: 'Por rol' },
       { key: 'audit_log', icon: History, title: 'Historial', description: 'Actividad' },
+      { key: 'org_marketplace', icon: Store, title: 'Marketplace & Portafolio', description: 'Control y portafolio público' },
+      { key: 'org_agency_profile', icon: Building2, title: 'Perfil de Agencia', description: 'Perfil público marketplace' },
       { key: 'org_social', icon: Globe, title: 'Red Social', description: 'Integración pública' },
       { key: 'live_streaming_org', icon: Video, title: 'KREOON Live', description: 'Paquetes y clientes' },
     ],

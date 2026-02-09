@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { 
-  Video, Users, CheckCircle, Clock, DollarSign, TrendingUp, 
+  Video, Users, CheckCircle, Clock, DollarSign, TrendingUp,
   Activity, Target, BarChart3, ArrowUpRight, ArrowDownRight,
   Play, UserCheck, Calendar, Banknote, Filter, X, Settings,
-  Building2, Scissors, Zap, Trophy, Crown
+  Building2, Scissors, Zap, Trophy, Crown, Store
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
@@ -33,6 +33,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AmbassadorBadge } from "@/components/ui/ambassador-badge";
 import { ReferralStats } from "@/components/dashboard/ReferralStats";
+import { MarketplaceDashboardTab } from "@/components/marketplace/dashboard/MarketplaceDashboardTab";
 import { CurrencyDisplay, CurrencyBadge, formatCurrency, type CurrencyType } from "@/components/ui/currency-input";
 import { useCurrency } from "@/hooks/useCurrency";
 import { UPSystemKPIs } from "@/components/dashboard/UPSystemKPIs";
@@ -1149,7 +1150,7 @@ export default function Dashboard() {
       <div className="px-4 py-2 lg:px-6">
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="principal" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 h-10 mb-4">
+          <TabsList className="grid w-full grid-cols-5 h-10 mb-4">
             <TabsTrigger value="principal" className="text-xs gap-1">
               <BarChart3 className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Principal</span>
@@ -1165,6 +1166,10 @@ export default function Dashboard() {
             <TabsTrigger value="usuarios" className="text-xs gap-1">
               <Users className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Usuarios</span>
+            </TabsTrigger>
+            <TabsTrigger value="marketplace" className="text-xs gap-1">
+              <Store className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Marketplace</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1883,6 +1888,11 @@ export default function Dashboard() {
               </h3>
               <ReferralStats />
             </div>
+          </TabsContent>
+
+          {/* TAB 5: MARKETPLACE */}
+          <TabsContent value="marketplace" className="space-y-3 mt-0">
+            <MarketplaceDashboardTab role="admin" />
           </TabsContent>
         </Tabs>
       </div>

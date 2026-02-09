@@ -137,6 +137,22 @@ export const PLATFORM_NOTIFICATION_MAP: Record<PlatformNotificationType, Platfor
     voiceMessage: 'Hay un cambio de estado en tu producción',
     voiceEmotion: 'neutral',
   },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Reclutamiento
+  // ─────────────────────────────────────────────────────────────────────────
+  recruitment_request: {
+    kiroType: 'creator_assigned',
+    zone: 'casting',
+    priority: 'high',
+    reaction: 'bounce',
+    kiroMessageTemplate: '¡Te quieren reclutar! {title}',
+    actionLabel: 'Ver invitación',
+    vibrateAntenna: true,
+    confettiType: 'celebration',
+    voiceMessage: 'Tienes una invitación de reclutamiento',
+    voiceEmotion: 'excited',
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -176,6 +192,9 @@ const ENTITY_TYPE_TO_ZONE: Record<string, KiroZone> = {
   course: 'escuela',
   lesson: 'escuela',
   tutorial: 'escuela',
+
+  // Reclutamiento
+  recruitment: 'casting',
 
   // Default
   system: 'general',
@@ -221,6 +240,12 @@ const KIRO_MESSAGE_PREFIXES: Record<PlatformNotificationType, string[]> = {
     'Cambio detectado: ',
     'Movimiento: ',
     'Novedades: ',
+  ],
+  recruitment_request: [
+    '¡Te quieren reclutar! ',
+    '¡Nueva oportunidad! ',
+    '¡Una org te busca! ',
+    '¡Invitación especial! ',
   ],
 };
 

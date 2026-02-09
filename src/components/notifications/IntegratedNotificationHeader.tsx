@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Eye, Building2, Shield, User, Sparkles, Zap, Globe } from "lucide-react";
+import { Eye, Building2, Shield, User, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RootOrgSwitcher } from "@/components/layout/RootOrgSwitcher";
 import {
@@ -266,7 +266,7 @@ export function IntegratedNotificationHeader({
 
       {/* User Profile Section - Avatar with name */}
       <button
-        onClick={() => navigate('/social#profile')}
+        onClick={() => navigate('/settings?section=marketplace')}
         className={cn(
           "flex items-center gap-2 px-3 py-1.5 rounded-xl",
           "bg-[hsl(270,100%,60%,0.05)] hover:bg-[hsl(270,100%,60%,0.1)]",
@@ -301,26 +301,6 @@ export function IntegratedNotificationHeader({
         <RootModePopover />
       )}
 
-      {/* Kreoon Social Button - Prominent */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => navigate('/social')}
-        className={cn(
-          "gap-2 rounded-xl relative overflow-hidden group",
-          "bg-gradient-to-r from-[hsl(270,100%,60%,0.15)] to-[hsl(280,100%,55%,0.1)]",
-          "hover:from-[hsl(270,100%,60%,0.25)] hover:to-[hsl(280,100%,55%,0.2)]",
-          "border border-[hsl(270,100%,60%,0.3)] hover:border-[hsl(270,100%,60%,0.5)]",
-          "text-white hover:text-white",
-          "shadow-[0_0_20px_-5px_hsl(270,100%,60%,0.3)]",
-          "hover:shadow-[0_0_30px_-5px_hsl(270,100%,60%,0.5)]",
-          "transition-all duration-300"
-        )}
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-[hsl(270,100%,60%,0.1)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        <Globe className="h-4 w-4 text-[hsl(270,100%,70%)] group-hover:text-white transition-colors" />
-        <span className="hidden sm:inline font-medium">Kreoon Social</span>
-      </Button>
     </div>
   );
 }

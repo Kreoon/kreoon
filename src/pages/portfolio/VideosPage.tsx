@@ -1,23 +1,21 @@
-import { useState, useEffect, useCallback, useRef, memo } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, memo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useSavedItems } from '@/hooks/useSavedItems';
 import { cn } from '@/lib/utils';
-import { Heart, MessageCircle, Bookmark, Share2, Volume2, VolumeX, Download } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Heart, MessageCircle, Bookmark, Share2, Download, ChevronDown } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useNavigate } from 'react-router-dom';
-import { HLSVideoPlayer } from '@/components/video';
-import { getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
+import { extractBunnyIds, getBunnyThumbnailUrl } from '@/hooks/useHLSPlayer';
 import { PortfolioCommentsSection } from '@/components/content/PortfolioCommentsSection';
 import { SocialSharePanel } from '@/components/content/unified';
 import { useDownload } from '@/hooks/unified';
 
 interface VideoItem {
   id: string;
-  type: 'work' | 'post';
+  type: 'portfolio' | 'work' | 'post';
   title?: string;
   caption?: string;
   video_url: string;
@@ -29,6 +27,8 @@ interface VideoItem {
   client_name?: string;
   client_id?: string;
   creator_id?: string;
+  /** Marketplace creator profile id or slug for navigation */
+  marketplace_id?: string;
   views_count: number;
   likes_count: number;
   comments_count: number;
@@ -37,17 +37,98 @@ interface VideoItem {
   status?: string;
 }
 
-type VideoFilter = 'all' | 'work' | 'posts';
+type VideoFilter = 'all' | 'portfolio' | 'work' | 'posts';
 
-// Memoized video slide component
+// ── Helpers ──────────────────────────────────────────────
+
+function buildBunnyEmbedUrl(libraryId: string, videoId: string, muted = true): string {
+  const params = new URLSearchParams({
+    autoplay: 'true',
+    muted: muted ? 'true' : 'false',
+    preload: 'true',
+    responsive: 'true',
+    loop: 'true',
+    quality: '720',
+    'fast-start': 'true',
+    t: '0',
+  });
+  return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?${params.toString()}`;
+}
+
+function resolvePoster(video: VideoItem): string | undefined {
+  if (video.thumbnail_url) return video.thumbnail_url;
+  return getBunnyThumbnailUrl(video.video_url) || undefined;
+}
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const out = [...arr];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+// ── Bunny Iframe Slide ──────────────────────────────────
+
+function BunnyIframeSlide({ url, isVisible }: { url: string; isVisible: boolean }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [iframeSrc, setIframeSrc] = useState<string | null>(null);
+
+  const bunnyIds = useMemo(() => extractBunnyIds(url), [url]);
+  const canUseIframe = !!bunnyIds && /^\d+$/.test(String(bunnyIds.libraryId));
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !canUseIframe) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.1) {
+            setIframeSrc(buildBunnyEmbedUrl(bunnyIds!.libraryId, bunnyIds!.videoId));
+          } else {
+            setIframeSrc(null);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '200px 0px' },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [canUseIframe, bunnyIds]);
+
+  if (!canUseIframe) return null;
+
+  return (
+    <div ref={containerRef} className="h-full w-full flex items-center justify-center">
+      {iframeSrc ? (
+        <div className="relative w-full h-full max-w-md mx-auto">
+          <iframe
+            src={iframeSrc}
+            className="absolute inset-0 w-full h-full border-0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      ) : (
+        <div className="w-full h-full max-w-md mx-auto bg-zinc-900 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── VideoSlide ──────────────────────────────────────────
+
 interface VideoSlideProps {
   video: VideoItem;
   isActive: boolean;
-  isMuted: boolean;
-  onMuteToggle: () => void;
   onSave: () => void;
   isSaved: boolean;
-  onProfileClick: (userId: string) => void;
+  onProfileClick: (userId: string, marketplaceId?: string) => void;
   onOpenComments: () => void;
   onShare: () => void;
   onDownload: () => void;
@@ -57,211 +138,185 @@ interface VideoSlideProps {
 const VideoSlide = memo(function VideoSlide({
   video,
   isActive,
-  isMuted,
-  onMuteToggle,
   onSave,
   isSaved,
   onProfileClick,
   onOpenComments,
   onShare,
   onDownload,
-  canDownload
+  canDownload,
 }: VideoSlideProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [showHeart, setShowHeart] = useState(false);
-  const videoContainerRef = useRef<HTMLDivElement>(null);
   const directVideoRef = useRef<HTMLVideoElement>(null);
-  const hlsRef = useRef<import('@/components/video').HLSVideoPlayerRef>(null);
+  const lastTapRef = useRef(0);
 
-  // Get video source - try Bunny HLS first, fallback to direct URL
-  const bunnyUrls = getBunnyVideoUrls(video.video_url);
-  const videoSrc = bunnyUrls?.hls || video.video_url;
-  const posterSrc = video.thumbnail_url || bunnyUrls?.thumbnail;
+  const posterSrc = resolvePoster(video);
+  const bunnyIds = useMemo(() => extractBunnyIds(video.video_url), [video.video_url]);
+  const canUseBunnyIframe = !!bunnyIds && /^\d+$/.test(String(bunnyIds.libraryId));
 
-  // Check if it's a direct video file (mp4, etc) vs HLS/embed
-  const isDirectVideo = video.video_url.match(/\.(mp4|webm|mov)(\?|$)/i) ||
-                        video.video_url.includes('supabase.co/storage');
+  const isDirectVideo = !canUseBunnyIframe && (
+    video.video_url.match(/\.(mp4|webm|mov)(\?|$)/i) ||
+    video.video_url.includes('supabase.co/storage')
+  );
 
-  // Hard guarantee: pause when not active (fixes audio continuing on scroll)
   useEffect(() => {
-    if (isDirectVideo) {
-      const el = directVideoRef.current;
-      if (!el) return;
-      el.muted = isMuted;
-      if (isActive) {
-        el.play().catch(() => {
-          el.muted = true;
-          el.play().catch(() => {});
-        });
-      } else {
-        el.pause();
-      }
-      return;
+    if (!isDirectVideo) return;
+    const el = directVideoRef.current;
+    if (!el) return;
+    if (isActive) {
+      el.muted = true;
+      el.play().catch(() => {});
+    } else {
+      el.pause();
     }
-
-    // HLS player
-    hlsRef.current?.setMuted(isMuted);
-    if (isActive) hlsRef.current?.play();
-    else hlsRef.current?.pause();
-  }, [isActive, isMuted, isDirectVideo]);
+  }, [isActive, isDirectVideo]);
 
   const handleDoubleTap = useCallback(() => {
-    if (!isLiked) {
-      setIsLiked(true);
-      setShowHeart(true);
-      setTimeout(() => setShowHeart(false), 1000);
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      if (!isLiked) {
+        setIsLiked(true);
+        setShowHeart(true);
+        setTimeout(() => setShowHeart(false), 1000);
+      }
     }
+    lastTapRef.current = now;
   }, [isLiked]);
 
   return (
     <div
-      ref={videoContainerRef}
-      className="h-full w-full snap-start relative flex items-center justify-center bg-black"
-      onDoubleClick={handleDoubleTap}
+      className="h-full w-full relative flex items-center justify-center bg-black"
+      onClick={handleDoubleTap}
     >
-      {isDirectVideo ? (
-        // For direct video files (from Supabase storage), use native video element
+      {/* Video content */}
+      {canUseBunnyIframe ? (
+        <BunnyIframeSlide url={video.video_url} isVisible={isActive} />
+      ) : isDirectVideo ? (
         <video
           ref={directVideoRef}
           src={video.video_url}
           poster={posterSrc}
           loop
-          muted={isMuted}
+          muted
           playsInline
           className="h-full w-full object-contain"
         />
       ) : (
-        // For Bunny videos, use HLS player
-        <HLSVideoPlayer
-          ref={hlsRef}
-          src={videoSrc}
-          poster={posterSrc}
-          autoPlay={false}
-          muted={isMuted}
-          loop={true}
-          className="w-full h-full"
-          aspectRatio="auto"
-          objectFit="contain"
-        />
+        <div className="h-full w-full flex items-center justify-center">
+          {posterSrc ? (
+            <img src={posterSrc} alt="" className="max-h-full max-w-full object-contain" />
+          ) : (
+            <div className="w-full h-full max-w-md mx-auto bg-zinc-900" />
+          )}
+        </div>
       )}
 
       {/* Double-tap heart animation */}
       {showHeart && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
           <Heart className="h-24 w-24 text-white fill-white animate-ping" />
         </div>
       )}
 
-      {/* Overlay gradient */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+      {/* Gradient overlays */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none z-10" />
 
-      {/* Content info */}
-      <div className="absolute bottom-20 left-4 right-16 text-white">
+      {/* Content info — bottom left */}
+      <div className="absolute bottom-6 left-4 right-16 z-20 text-white">
         <button
           className="flex items-center gap-2 mb-2"
-          onClick={() => onProfileClick(video.user_id)}
+          onClick={(e) => { e.stopPropagation(); onProfileClick(video.user_id, video.marketplace_id); }}
         >
           <Avatar className="h-10 w-10 border-2 border-white">
             <AvatarImage src={video.user_avatar} />
             <AvatarFallback>{video.user_name?.[0]}</AvatarFallback>
           </Avatar>
-          <span className="font-semibold">{video.user_name}</span>
+          <span className="font-semibold text-sm">{video.user_name}</span>
         </button>
 
         {video.client_name && (
-          <Badge variant="secondary" className="mb-2 bg-white/20">
+          <Badge variant="secondary" className="mb-2 bg-white/20 text-xs">
             {video.client_name}
           </Badge>
         )}
 
-        <p className="text-sm line-clamp-2">
+        <p className="text-sm line-clamp-2 drop-shadow-md">
           {video.title || video.caption}
         </p>
       </div>
 
-      {/* Action buttons */}
-      <div className="absolute bottom-20 right-4 flex flex-col gap-4 items-center">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-12 w-12 rounded-full bg-black/30 text-white hover:bg-black/50"
-          onClick={() => setIsLiked(!isLiked)}
+      {/* Action buttons — right sidebar */}
+      <div className="absolute bottom-6 right-3 z-20 flex flex-col items-center gap-5">
+        {/* Like */}
+        <button
+          onClick={(e) => { e.stopPropagation(); setIsLiked(!isLiked); }}
+          className="flex flex-col items-center gap-1"
         >
-          <Heart className={cn("h-6 w-6", isLiked && "fill-red-500 text-red-500")} />
-        </Button>
-        <span className="text-white text-xs">
-          {video.likes_count > 0 ? video.likes_count : ''}
-        </span>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-12 w-12 rounded-full bg-black/30 text-white hover:bg-black/50"
-          onClick={onOpenComments}
-        >
-          <MessageCircle className="h-6 w-6" />
-        </Button>
-        <span className="text-white text-xs">
-          {video.comments_count > 0 ? video.comments_count : ''}
-        </span>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn(
-            "h-12 w-12 rounded-full bg-black/30 text-white hover:bg-black/50",
-            isSaved && "text-yellow-400"
+          <Heart className={cn(
+            "h-7 w-7 transition-all duration-200",
+            isLiked ? "fill-pink-500 text-pink-500 scale-110" : "text-white hover:scale-110",
+          )} />
+          {video.likes_count > 0 && (
+            <span className="text-white text-xs">{video.likes_count}</span>
           )}
-          onClick={onSave}
-        >
-          <Bookmark className={cn("h-6 w-6", isSaved && "fill-current")} />
-        </Button>
+        </button>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-12 w-12 rounded-full bg-black/30 text-white hover:bg-black/50"
-          onClick={onShare}
+        {/* Comments */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onOpenComments(); }}
+          className="flex flex-col items-center gap-1"
         >
-          <Share2 className="h-6 w-6" />
-        </Button>
+          <MessageCircle className="h-7 w-7 text-white hover:scale-110 transition-transform" />
+          {video.comments_count > 0 && (
+            <span className="text-white text-xs">{video.comments_count}</span>
+          )}
+        </button>
 
-        {/* Download button - only for approved/published content */}
+        {/* Save */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onSave(); }}
+          className="flex flex-col items-center gap-1"
+        >
+          <Bookmark className={cn(
+            "h-7 w-7 transition-all duration-200",
+            isSaved ? "text-yellow-400 fill-yellow-400" : "text-white hover:scale-110",
+          )} />
+        </button>
+
+        {/* Share */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onShare(); }}
+        >
+          <Share2 className="h-7 w-7 text-white hover:scale-110 transition-transform" />
+        </button>
+
+        {/* Download */}
         {canDownload && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-12 w-12 rounded-full bg-black/30 text-white hover:bg-black/50"
-            onClick={onDownload}
+          <button
+            onClick={(e) => { e.stopPropagation(); onDownload(); }}
           >
-            <Download className="h-6 w-6" />
-          </Button>
+            <Download className="h-7 w-7 text-white hover:scale-110 transition-transform" />
+          </button>
         )}
-
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-12 w-12 rounded-full bg-black/30 text-white hover:bg-black/50"
-          onClick={onMuteToggle}
-        >
-          {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
-        </Button>
       </div>
     </div>
   );
 });
 
+// ── Main Page ───────────────────────────────────────────
+
 export default function VideosPage() {
   const { user } = useAuth();
   const { isSaved, toggleSave } = useSavedItems();
-  const { download, canDownload, isDownloading } = useDownload();
+  const { download, canDownload } = useDownload();
   const navigate = useNavigate();
 
+  const [videoPool, setVideoPool] = useState<VideoItem[]>([]);
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [filter, setFilter] = useState<VideoFilter>('all');
-  const [isMuted, setIsMuted] = useState(true);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [commentsVideoId, setCommentsVideoId] = useState<string | null>(null);
 
@@ -279,8 +334,48 @@ export default function VideosPage() {
   const fetchVideos = useCallback(async () => {
     setLoading(true);
     try {
-      const queries = [];
+      // 1. Fetch active marketplace creator profiles
+      const { data: creatorProfiles } = await (supabase as any)
+        .from('creator_profiles')
+        .select('id, user_id, display_name, avatar_url, slug')
+        .eq('is_active', true);
 
+      if (!creatorProfiles || creatorProfiles.length === 0) {
+        setVideos([]);
+        setLoading(false);
+        return;
+      }
+
+      // Build lookup maps
+      const userIdToCreator = new Map<string, { id: string; display_name: string; avatar_url: string | null; slug: string | null }>();
+      const creatorIdToCreator = new Map<string, { id: string; user_id: string; display_name: string; avatar_url: string | null; slug: string | null }>();
+      for (const cp of creatorProfiles) {
+        userIdToCreator.set(cp.user_id, cp);
+        creatorIdToCreator.set(cp.id, cp);
+      }
+      const creatorProfileIds = creatorProfiles.map((cp: any) => cp.id);
+      const creatorUserIds = creatorProfiles.map((cp: any) => cp.user_id);
+
+      // 2. Fetch from all marketplace sources in parallel
+      const queries: Promise<any>[] = [];
+
+      // Portfolio items (marketplace native content)
+      if (filter === 'all' || filter === 'portfolio') {
+        queries.push(
+          (supabase as any)
+            .from('portfolio_items')
+            .select('id, creator_id, title, description, media_type, media_url, thumbnail_url, bunny_video_id, views_count, likes_count, is_featured, created_at')
+            .in('creator_id', creatorProfileIds)
+            .eq('media_type', 'video')
+            .eq('is_public', true)
+            .order('created_at', { ascending: false })
+            .limit(50)
+        );
+      } else {
+        queries.push(Promise.resolve({ data: [] }));
+      }
+
+      // Published content from marketplace creators
       if (filter === 'all' || filter === 'work') {
         queries.push(
           supabase
@@ -288,139 +383,123 @@ export default function VideosPage() {
             .select('id, title, video_url, video_urls, thumbnail_url, creator_id, client_id, views_count, likes_count, created_at, is_published, status')
             .eq('is_published', true)
             .not('video_url', 'is', null)
+            .in('creator_id', creatorUserIds)
             .order('created_at', { ascending: false })
-            .limit(30)
+            .limit(50)
         );
+      } else {
+        queries.push(Promise.resolve({ data: [] }));
       }
 
+      // Portfolio posts from marketplace creators
       if (filter === 'all' || filter === 'posts') {
         queries.push(
           supabase
             .from('portfolio_posts')
-            .select(`
-              id,
-              user_id,
-              media_url,
-              media_type,
-              thumbnail_url,
-              caption,
-              views_count,
-              likes_count,
-              comments_count,
-              created_at
-            `)
+            .select('id, user_id, media_url, media_type, thumbnail_url, caption, views_count, likes_count, comments_count, created_at')
             .eq('media_type', 'video')
+            .in('user_id', creatorUserIds)
             .order('created_at', { ascending: false })
-            .limit(30)
+            .limit(50)
         );
+      } else {
+        queries.push(Promise.resolve({ data: [] }));
       }
 
-      const results = await Promise.all(queries);
+      const [portfolioRes, contentRes, postsRes] = await Promise.all(queries);
 
-      // Process content videos - fetch profiles and clients separately (embeds cause 400)
-      let contentVideos: VideoItem[] = [];
-      if (filter !== 'posts' && results[0]?.data && results[0].data.length > 0) {
-        const contentData = results[0].data as any[];
-        const creatorIds = [...new Set(contentData.map((c) => c.creator_id).filter(Boolean))];
-        const clientIds = [...new Set(contentData.map((c) => c.client_id).filter(Boolean))];
-        const [profilesRes, clientsRes] = await Promise.all([
-          creatorIds.length > 0 ? supabase.from('profiles').select('id, full_name, avatar_url').in('id', creatorIds) : { data: [] },
-          clientIds.length > 0 ? supabase.from('clients').select('id, name').in('id', clientIds) : { data: [] },
-        ]);
-        const profileMap = new Map((profilesRes.data ?? []).map((p) => [p.id, p]));
-        const clientMap = new Map((clientsRes.data ?? []).map((c) => [c.id, c]));
-        contentVideos = contentData.map((c) => {
-          const creator = c.creator_id ? profileMap.get(c.creator_id) : null;
-          const client = c.client_id ? clientMap.get(c.client_id) : null;
-          return {
-            id: c.id,
-            type: 'work' as const,
-            title: c.title,
-            video_url: c.video_urls?.[0] || c.video_url,
-            video_urls: c.video_urls,
-            thumbnail_url: c.thumbnail_url,
-            user_id: creator?.id ?? c.creator_id,
-            user_name: creator?.full_name ?? null,
-            user_avatar: creator?.avatar_url ?? null,
-            client_name: client?.name ?? null,
-            client_id: c.client_id,
-            creator_id: c.creator_id,
-            views_count: c.views_count || 0,
-            likes_count: c.likes_count || 0,
-            comments_count: 0,
-            created_at: c.created_at,
-            is_published: c.is_published,
-            status: c.status,
-          };
+      // Deduplicate by video URL
+      const seenUrls = new Set<string>();
+      const allItems: VideoItem[] = [];
+
+      // 3a. Process portfolio items
+      for (const item of portfolioRes.data || []) {
+        if (!item.media_url || seenUrls.has(item.media_url)) continue;
+        seenUrls.add(item.media_url);
+        const cp = creatorIdToCreator.get(item.creator_id);
+        allItems.push({
+          id: item.id,
+          type: 'portfolio',
+          title: item.title,
+          video_url: item.media_url,
+          thumbnail_url: item.thumbnail_url,
+          user_id: cp?.user_id || '',
+          user_name: cp?.display_name,
+          user_avatar: cp?.avatar_url,
+          marketplace_id: cp?.slug || cp?.id,
+          views_count: item.views_count || 0,
+          likes_count: item.likes_count || 0,
+          comments_count: 0,
+          created_at: item.created_at,
+          is_published: true,
+          status: 'published',
         });
       }
 
-      // Process post videos - need to fetch profiles separately
-      let postVideos: VideoItem[] = [];
-      const postsResult = filter === 'posts' ? results[0] : results[1];
+      // 3b. Process content videos
+      const clientIds = [...new Set((contentRes.data || []).map((c: any) => c.client_id).filter(Boolean))];
+      const { data: clientsData } = clientIds.length > 0
+        ? await supabase.from('clients').select('id, name').in('id', clientIds)
+        : { data: [] };
+      const clientMap = new Map((clientsData ?? []).map((c) => [c.id, c]));
 
-      if (postsResult?.data && postsResult.data.length > 0) {
-        const userIdSet = new Set<string>();
-        postsResult.data.forEach((p: any) => userIdSet.add(p.user_id as string));
-        const userIds = Array.from(userIdSet);
-
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, full_name, avatar_url')
-          .in('id', userIds);
-
-        const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
-
-        postVideos = postsResult.data.map((p: any) => {
-          const profile = profilesMap.get(p.user_id);
-          return {
-            id: p.id,
-            type: 'post' as const,
-            caption: p.caption,
-            video_url: p.media_url,
-            thumbnail_url: p.thumbnail_url,
-            user_id: p.user_id,
-            user_name: profile?.full_name,
-            user_avatar: profile?.avatar_url,
-            views_count: p.views_count || 0,
-            likes_count: p.likes_count || 0,
-            comments_count: p.comments_count || 0,
-            created_at: p.created_at,
-            is_published: true, // Posts are always considered published
-            status: 'published',
-          };
+      for (const c of contentRes.data || []) {
+        const url = (c as any).video_urls?.[0] || (c as any).video_url;
+        if (!url || seenUrls.has(url)) continue;
+        seenUrls.add(url);
+        const cp = userIdToCreator.get((c as any).creator_id);
+        const client = (c as any).client_id ? clientMap.get((c as any).client_id) : null;
+        allItems.push({
+          id: c.id,
+          type: 'work',
+          title: (c as any).title,
+          video_url: url,
+          video_urls: (c as any).video_urls,
+          thumbnail_url: (c as any).thumbnail_url,
+          user_id: (c as any).creator_id,
+          user_name: cp?.display_name,
+          user_avatar: cp?.avatar_url,
+          client_name: client?.name ?? null,
+          client_id: (c as any).client_id,
+          creator_id: (c as any).creator_id,
+          marketplace_id: cp?.slug || cp?.id,
+          views_count: (c as any).views_count || 0,
+          likes_count: (c as any).likes_count || 0,
+          comments_count: 0,
+          created_at: (c as any).created_at,
+          is_published: (c as any).is_published,
+          status: (c as any).status,
         });
       }
 
-      // Combine videos
-      const combined = [...contentVideos, ...postVideos];
+      // 3c. Process portfolio posts
+      for (const p of postsRes.data || []) {
+        if (!p.media_url || seenUrls.has(p.media_url)) continue;
+        seenUrls.add(p.media_url);
+        const cp = userIdToCreator.get(p.user_id);
+        allItems.push({
+          id: p.id,
+          type: 'post',
+          caption: p.caption,
+          video_url: p.media_url,
+          thumbnail_url: p.thumbnail_url,
+          user_id: p.user_id,
+          user_name: cp?.display_name,
+          user_avatar: cp?.avatar_url,
+          marketplace_id: cp?.slug || cp?.id,
+          views_count: p.views_count || 0,
+          likes_count: p.likes_count || 0,
+          comments_count: p.comments_count || 0,
+          created_at: p.created_at,
+          is_published: true,
+          status: 'published',
+        });
+      }
 
-      // Deterministic shuffle for variety (seeded by current timestamp rounded to minutes)
-      const shuffleSeeded = <T,>(arr: T[], seedStr: string): T[] => {
-        let seed = 0;
-        for (let i = 0; i < seedStr.length; i++) {
-          seed = ((seed << 5) - seed) + seedStr.charCodeAt(i);
-          seed |= 0;
-        }
-        const rand = () => {
-          seed ^= seed << 13;
-          seed ^= seed >> 17;
-          seed ^= seed << 5;
-          return ((seed >>> 0) % 1_000_000) / 1_000_000;
-        };
-        const out = [...arr];
-        for (let i = out.length - 1; i > 0; i--) {
-          const j = Math.floor(rand() * (i + 1));
-          [out[i], out[j]] = [out[j], out[i]];
-        }
-        return out;
-      };
-
-      // Seed changes every minute so refresh gives new order
-      const seed = `videos-${filter}-${Math.floor(Date.now() / 60000)}`;
-      const allVideos = shuffleSeeded(combined, seed);
-
-      setVideos(allVideos);
+      // Shuffle randomly and store the pool for infinite scroll
+      const shuffled = shuffleArray(allItems);
+      setVideoPool(allItems);
+      setVideos(shuffled);
       setActiveIndex(0);
     } catch (error) {
       console.error('[VideosPage] Error:', error);
@@ -433,23 +512,50 @@ export default function VideosPage() {
     fetchVideos();
   }, [fetchVideos]);
 
-  // Handle scroll snap
+  // Infinite scroll: append more shuffled videos when nearing the end
+  useEffect(() => {
+    if (videoPool.length === 0 || videos.length === 0) return;
+    if (activeIndex >= videos.length - 3) {
+      setVideos(prev => [...prev, ...shuffleArray(videoPool)]);
+    }
+  }, [activeIndex, videos.length, videoPool]);
+
+  // Track active item via scroll position
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-
+    let ticking = false;
     const handleScroll = () => {
-      const scrollTop = container.scrollTop;
-      const height = container.clientHeight;
-      const newIndex = Math.round(scrollTop / height);
-
-      if (newIndex !== activeIndex && newIndex >= 0 && newIndex < videos.length) {
-        setActiveIndex(newIndex);
-      }
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const h = container.clientHeight;
+        if (h > 0) {
+          const idx = Math.round(container.scrollTop / h);
+          setActiveIndex(Math.min(Math.max(idx, 0), videos.length - 1));
+        }
+        ticking = false;
+      });
     };
-
     container.addEventListener('scroll', handleScroll, { passive: true });
     return () => container.removeEventListener('scroll', handleScroll);
+  }, [videos.length]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const container = containerRef.current;
+      if (!container) return;
+      const h = container.clientHeight;
+      if (e.key === 'ArrowUp' && activeIndex > 0) {
+        container.scrollTo({ top: (activeIndex - 1) * h, behavior: 'smooth' });
+      }
+      if (e.key === 'ArrowDown' && activeIndex < videos.length - 1) {
+        container.scrollTo({ top: (activeIndex + 1) * h, behavior: 'smooth' });
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [activeIndex, videos.length]);
 
   const handleSave = async (video: VideoItem) => {
@@ -457,8 +563,12 @@ export default function VideosPage() {
     await toggleSave(itemType, video.id);
   };
 
-  const handleProfileClick = (userId: string) => {
-    navigate(`/profile/${userId}`);
+  const handleProfileClick = (userId: string, marketplaceId?: string) => {
+    if (marketplaceId) {
+      navigate(`/marketplace/creator/${marketplaceId}`);
+    } else {
+      navigate(`/marketplace/creator/${userId}`);
+    }
   };
 
   const checkIsSaved = (video: VideoItem) => {
@@ -476,76 +586,79 @@ export default function VideosPage() {
       contentId: video.id,
       videoUrl: video.video_url,
       videoUrls: video.video_urls,
-      title: video.title || video.caption
+      title: video.title || video.caption,
     });
   };
 
   const checkCanDownload = (video: VideoItem) => {
-    // For work items, check if published/approved
     if (video.type === 'work') {
       return canDownload(video.status || '', video.is_published);
     }
-    // Posts can always be downloaded (they're public)
     return true;
   };
 
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center md:ml-20 lg:ml-64">
-        <div className="animate-pulse text-muted-foreground">Cargando videos...</div>
+      <div className="fixed inset-0 flex items-center justify-center bg-black z-50">
+        <div className="w-10 h-10 rounded-full border-2 border-white/30 border-t-white animate-spin" />
       </div>
     );
   }
 
   if (videos.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center md:ml-20 lg:ml-64 text-muted-foreground">
+      <div className="fixed inset-0 flex items-center justify-center bg-black text-white/60 z-50">
         No hay videos disponibles
       </div>
     );
   }
 
   return (
-    <div className="h-full bg-black md:ml-20 lg:ml-64">
+    <div className="fixed inset-0 bg-black z-50">
       {/* Filter chips */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex gap-2 md:left-auto md:right-1/2 md:translate-x-1/2">
-        {(['all', 'work', 'posts'] as VideoFilter[]).map((f) => (
-          <Badge
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+        {(['all', 'portfolio', 'work', 'posts'] as VideoFilter[]).map((f) => (
+          <button
             key={f}
-            variant={filter === f ? 'default' : 'secondary'}
             className={cn(
-              "cursor-pointer transition-all",
+              "px-4 py-1.5 rounded-full text-xs font-medium transition-all",
               filter === f
                 ? "bg-white text-black"
-                : "bg-black/50 text-white hover:bg-black/70"
+                : "bg-white/10 text-white/70 hover:bg-white/20",
             )}
             onClick={() => setFilter(f)}
           >
-            {f === 'all' ? 'Todos' : f === 'work' ? 'Trabajo' : 'Posts'}
-          </Badge>
+            {f === 'all' ? 'Todos' : f === 'portfolio' ? 'Portfolio' : f === 'work' ? 'Contenido' : 'Posts'}
+          </button>
         ))}
       </div>
 
       {/* Counter */}
-      <div className="absolute top-4 left-4 z-20 text-sm text-white/80 bg-black/40 px-3 py-1 rounded-full md:left-auto md:ml-24 lg:ml-72">
-        {activeIndex + 1} / {videos.length}
+      <div className="absolute top-4 left-4 z-30 text-white/50 text-xs font-medium">
+        {activeIndex + 1} / {videoPool.length}
       </div>
 
-      {/* Video container with snap scroll */}
+      {/* Scroll hint */}
+      {activeIndex === 0 && videos.length > 1 && (
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 text-white/40 text-xs flex flex-col items-center gap-1 animate-bounce">
+          <span>Desliza</span>
+          <ChevronDown className="h-4 w-4" />
+        </div>
+      )}
+
+      {/* Video container — full screen with snap scroll */}
       <div
         ref={containerRef}
-        className="h-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
+        className="h-full w-full overflow-y-auto snap-y snap-mandatory scrollbar-hide overscroll-none"
       >
         {videos.map((video, index) => (
           <div
-            key={`${video.type}-${video.id}`}
-            className="h-full w-full"
+            key={`${index}-${video.type}-${video.id}`}
+            className="h-full w-full snap-start snap-always"
           >
             <VideoSlide
               video={video}
               isActive={index === activeIndex}
-              isMuted={isMuted}
-              onMuteToggle={() => setIsMuted(!isMuted)}
               onSave={() => handleSave(video)}
               isSaved={checkIsSaved(video)}
               onProfileClick={handleProfileClick}
@@ -560,7 +673,7 @@ export default function VideosPage() {
 
       {/* Comments Drawer */}
       <Drawer open={commentsOpen} onOpenChange={setCommentsOpen}>
-        <DrawerContent className="h-[70vh] bg-zinc-900 border-0">
+        <DrawerContent className="h-[60vh] bg-zinc-900 border-0 rounded-t-2xl">
           {commentsVideoId && (
             <PortfolioCommentsSection
               postId={commentsVideoId}
@@ -577,7 +690,7 @@ export default function VideosPage() {
           open={showSharePanel}
           onOpenChange={setShowSharePanel}
           contentId={shareVideo.id}
-          url={`${window.location.origin}/social/u/${shareVideo.user_id}?${shareVideo.type === 'work' ? 'content' : 'post'}=${shareVideo.id}`}
+          url={`${window.location.origin}/marketplace/creator/${shareVideo.marketplace_id || shareVideo.user_id}`}
           title={shareVideo.title || shareVideo.caption || 'Mira este video'}
           allowKreoonShare={shareVideo.type === 'work'}
           creatorId={shareVideo.creator_id || shareVideo.user_id}

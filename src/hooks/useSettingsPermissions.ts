@@ -10,6 +10,7 @@ export type SettingsSectionKey =
   | 'notifications'      // Merged: personal notifications + org preferences + chat RBAC
   | 'security'
   | 'tour'
+  | 'marketplace'        // Marketplace profile, roles, services, availability
   // Organization level
   | 'organization'
   | 'org_registration_settings' // Registration & invite settings
@@ -18,6 +19,8 @@ export type SettingsSectionKey =
   | 'ambassadors'
   | 'permissions'        // Merged: organization_permissions + global_permissions
   | 'audit_log'
+  | 'org_marketplace'    // Marketplace access control & public portfolio
+  | 'org_agency_profile' // Public agency profile for marketplace
   | 'org_social'         // Social network integration settings
   | 'live_streaming_org' // KREOON Live - Organization level config
   // Platform level (Root only)
@@ -60,6 +63,7 @@ const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'plat
   notifications: 'user',
   security: 'user',
   tour: 'user',
+  marketplace: 'user',
   // Organization level - org admin/owner only
   organization: 'organization',
   org_registration_settings: 'organization',
@@ -68,6 +72,8 @@ const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'plat
   ambassadors: 'organization',
   permissions: 'organization',
   audit_log: 'organization',
+  org_marketplace: 'organization', // Marketplace control & portfolio
+  org_agency_profile: 'organization', // Agency profile for marketplace
   org_social: 'organization', // Social network settings
   live_streaming_org: 'organization', // KREOON Live org config
   // Platform level - root only
