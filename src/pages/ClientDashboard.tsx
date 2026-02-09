@@ -447,12 +447,10 @@ export default function ClientDashboard() {
           notes: clientData.notes || ''
         });
 
+        // Fetch content WITHOUT JOIN to clients (avoids RLS timeout)
         const { data: contentData, error: contentError } = await supabase
           .from('content')
-          .select(`
-            *,
-            client:clients(*)
-          `)
+          .select('*')
           .eq('client_id', clientData.id)
           .order('created_at', { ascending: false });
 
