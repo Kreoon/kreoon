@@ -89,6 +89,10 @@ export function useCreatorProfile(options: UseCreatorProfileOptions = {}): UseCr
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // Ref to always have the latest profile for save() to avoid stale closure
+  const profileRef = useRef<CreatorProfileData | null>(null);
+  useEffect(() => { profileRef.current = profile; }, [profile]);
+
   const hasChanges = profile !== null && originalProfile !== null &&
     JSON.stringify(profile) !== JSON.stringify(originalProfile);
 
@@ -246,47 +250,49 @@ export function useCreatorProfile(options: UseCreatorProfileOptions = {}): UseCr
   }, []);
 
   const save = useCallback(async (): Promise<boolean> => {
-    if (!profile?.id) return false;
+    // Use ref to get the latest profile (avoids stale closure after updateFields)
+    const current = profileRef.current;
+    if (!current?.id) return false;
 
     setSaving(true);
     try {
       const updateData: Record<string, unknown> = {
-        display_name: profile.display_name,
-        bio: profile.bio,
-        bio_full: profile.bio_full,
-        avatar_url: profile.avatar_url,
-        banner_url: profile.banner_url,
-        location_city: profile.location_city,
-        location_country: profile.location_country,
-        country_flag: profile.country_flag,
-        categories: profile.categories,
-        content_types: profile.content_types,
-        languages: profile.languages,
-        platforms: profile.platforms,
-        social_links: profile.social_links,
-        is_available: profile.is_available,
-        base_price: profile.base_price,
-        currency: profile.currency,
-        accepts_product_exchange: profile.accepts_product_exchange,
-        exchange_conditions: profile.exchange_conditions,
-        response_time_hours: profile.response_time_hours,
-        marketplace_roles: profile.marketplace_roles,
-        is_active: profile.is_active,
-        profile_customization: profile.profile_customization,
-        showreel_video_id: profile.showreel_video_id,
-        showreel_url: profile.showreel_url,
-        showreel_thumbnail: profile.showreel_thumbnail,
+        display_name: current.display_name,
+        bio: current.bio,
+        bio_full: current.bio_full,
+        avatar_url: current.avatar_url,
+        banner_url: current.banner_url,
+        location_city: current.location_city,
+        location_country: current.location_country,
+        country_flag: current.country_flag,
+        categories: current.categories,
+        content_types: current.content_types,
+        languages: current.languages,
+        platforms: current.platforms,
+        social_links: current.social_links,
+        is_available: current.is_available,
+        base_price: current.base_price,
+        currency: current.currency,
+        accepts_product_exchange: current.accepts_product_exchange,
+        exchange_conditions: current.exchange_conditions,
+        response_time_hours: current.response_time_hours,
+        marketplace_roles: current.marketplace_roles,
+        is_active: current.is_active,
+        profile_customization: current.profile_customization,
+        showreel_video_id: current.showreel_video_id,
+        showreel_url: current.showreel_url,
+        showreel_thumbnail: current.showreel_thumbnail,
         updated_at: new Date().toISOString(),
       };
 
       const { error } = await (supabase as any)
         .from('creator_profiles')
         .update(updateData)
-        .eq('id', profile.id);
+        .eq('id', current.id);
 
       if (error) throw error;
 
-      setOriginalProfile(profile);
+      setOriginalProfile(current);
       toast.success('Perfil guardado');
       return true;
     } catch (err) {
@@ -296,7 +302,7 @@ export function useCreatorProfile(options: UseCreatorProfileOptions = {}): UseCr
     } finally {
       setSaving(false);
     }
-  }, [profile]);
+  }, []);
 
   return {
     profile,

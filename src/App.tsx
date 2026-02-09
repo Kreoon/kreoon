@@ -19,6 +19,7 @@ import { BrandingProvider } from "@/contexts/BrandingContext";
 import { StrategistClientProvider } from "@/contexts/StrategistClientContext";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import { MainLayout } from "./components/layout/MainLayout";
+import { MarketplaceLayout } from "./components/layout/MarketplacePublicLayout";
 
 // Loading fallback component
 const PageLoader = () => (
@@ -123,22 +124,24 @@ function AppRoutes() {
         {/* Redirect old /social routes to /marketplace */}
         <Route path="/social" element={<Navigate to="/marketplace" replace />} />
         <Route path="/social/*" element={<Navigate to="/marketplace" replace />} />
-        {/* Marketplace routes - unified within MainLayout */}
-        <Route path="/marketplace" element={<ProtectedRoute allowNoRoles><MainLayout><MarketplaceBrowse /></MainLayout></ProtectedRoute>} />
+        {/* Marketplace routes — PUBLIC browse/view, PROTECTED actions */}
+        {/* Public: browse, creator profiles, org profiles, campaigns feed/detail */}
+        <Route path="/marketplace" element={<MarketplaceLayout><MarketplaceBrowse /></MarketplaceLayout>} />
+        <Route path="/marketplace/creator/:id" element={<CreatorProfilePage_Marketplace />} />
+        <Route path="/marketplace/org/:slug" element={<OrgProfilePage_Marketplace />} />
+        <Route path="/marketplace/campaigns" element={<MarketplaceLayout><CampaignsFeedPage /></MarketplaceLayout>} />
+        <Route path="/marketplace/campaigns/:id" element={<MarketplaceLayout><CampaignDetailPage /></MarketplaceLayout>} />
+        {/* Protected: actions that require login */}
         <Route path="/marketplace/videos" element={<ProtectedRoute allowNoRoles><MainLayout><VideosPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/guardados" element={<ProtectedRoute allowNoRoles><MainLayout><SavedPage /></MainLayout></ProtectedRoute>} />
-        <Route path="/marketplace/creator/:id" element={<ProtectedRoute allowNoRoles><CreatorProfilePage_Marketplace /></ProtectedRoute>} />
         <Route path="/marketplace/hire/:creatorId" element={<ProtectedRoute allowNoRoles><HiringWizardPage /></ProtectedRoute>} />
         <Route path="/marketplace/profile/setup" element={<ProtectedRoute allowNoRoles><CreatorProfileSetup /></ProtectedRoute>} />
         <Route path="/marketplace/dashboard" element={<ProtectedRoute allowNoRoles><MainLayout><MarketplaceDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/projects" element={<Navigate to="/board?view=marketplace" replace />} />
         <Route path="/marketplace/content" element={<Navigate to="/content?view=marketplace" replace />} />
-        <Route path="/marketplace/campaigns" element={<ProtectedRoute allowNoRoles><MainLayout><CampaignsFeedPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/campaigns/create" element={<ProtectedRoute allowNoRoles><MainLayout><CampaignWizardPage /></MainLayout></ProtectedRoute>} />
-        <Route path="/marketplace/campaigns/:id" element={<ProtectedRoute allowNoRoles><MainLayout><CampaignDetailPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/my-campaigns" element={<ProtectedRoute allowNoRoles><MainLayout><BrandCampaignsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/creator-campaigns" element={<ProtectedRoute allowNoRoles><MainLayout><CreatorCampaignsPage /></MainLayout></ProtectedRoute>} />
-        <Route path="/marketplace/org/:slug" element={<ProtectedRoute allowNoRoles><OrgProfilePage_Marketplace /></ProtectedRoute>} />
         <Route path="/marketplace/talent-lists" element={<ProtectedRoute allowNoRoles><MainLayout><TalentListsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/talent-lists/:id" element={<ProtectedRoute allowNoRoles><MainLayout><TalentListDetailPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/invitations" element={<ProtectedRoute allowNoRoles><MainLayout><MarketplaceInvitationsPage /></MainLayout></ProtectedRoute>} />

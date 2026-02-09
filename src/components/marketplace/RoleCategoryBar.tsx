@@ -1,5 +1,5 @@
 import { memo, useRef, useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, LayoutGrid, Video, Film, Target, Code, GraduationCap } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutGrid, Video, Film, Target, Code, GraduationCap, Megaphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MarketplaceViewMode, MarketplaceRoleCategory } from './types/marketplace';
 
@@ -9,7 +9,7 @@ interface RoleCategoryBarProps {
 }
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  LayoutGrid, Video, Film, Target, Code, GraduationCap,
+  LayoutGrid, Video, Film, Target, Code, GraduationCap, Megaphone,
 };
 
 interface CategoryItem {
@@ -23,7 +23,7 @@ const ITEMS: CategoryItem[] = [
   { id: 'all', label: 'Todos', icon: 'LayoutGrid', color: 'text-purple-400' },
   { id: 'content_creation', label: 'Creación de Contenido', icon: 'Video', color: 'text-pink-400' },
   { id: 'post_production', label: 'Post-Producción', icon: 'Film', color: 'text-blue-400' },
-  { id: 'strategy', label: 'Estrategia', icon: 'Target', color: 'text-green-400' },
+  { id: 'strategy_marketing', label: 'Estrategia & Marketing', icon: 'Target', color: 'text-green-400' },
   { id: 'technology', label: 'Tecnología', icon: 'Code', color: 'text-cyan-400' },
   { id: 'education', label: 'Educación', icon: 'GraduationCap', color: 'text-yellow-400' },
 ];

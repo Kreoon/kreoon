@@ -160,6 +160,18 @@ export function useCreatorPublicProfile(creatorProfileId: string | undefined) {
 
         const profile = mapProfileRow(profileRow);
 
+        // 1b. Fallback avatar from profiles table if creator_profiles.avatar_url is empty
+        if (!profile.avatar_url && profile.user_id) {
+          const { data: userProfile } = await supabase
+            .from('profiles')
+            .select('avatar_url')
+            .eq('id', profile.user_id)
+            .maybeSingle();
+          if (userProfile?.avatar_url) {
+            profile.avatar_url = userProfile.avatar_url;
+          }
+        }
+
         // 2. Fetch portfolio items from ALL sources (portfolio_items + content + portfolio_posts)
         const { data: portfolioRows } = await (supabase as any)
           .from('portfolio_items')

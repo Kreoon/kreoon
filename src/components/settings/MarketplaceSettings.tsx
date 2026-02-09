@@ -25,6 +25,7 @@ import { useCreatorServices } from '@/hooks/useCreatorServices';
 import { cn } from '@/lib/utils';
 import { MarketplaceRoleSelector } from '@/components/marketplace/roles/MarketplaceRoleSelector';
 import type { MarketplaceRoleId } from '@/components/marketplace/types/marketplace';
+import { EXPERTISE_TAG_GROUPS } from '@/components/marketplace/types/marketplace';
 import { CONTENT_STYLE_LABELS, BUDGET_RANGE_LABELS } from '@/types/ai-matching';
 import type { ContentStyle, BudgetRange } from '@/types/ai-matching';
 import { SERVICE_TYPE_LABELS } from '@/types/marketplace';
@@ -368,34 +369,68 @@ export function CreatorExpertiseTab() {
       <Card>
         <CardHeader>
           <CardTitle>Etiquetas de Especialización</CardTitle>
-          <CardDescription>Agrega tags que describan tu expertise</CardDescription>
+          <CardDescription>Selecciona las que apliquen o agrega personalizadas</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              placeholder="Agregar etiqueta personalizada"
-              value={customTag}
-              onChange={e => setCustomTag(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && addCustomTag()}
-            />
-            <Button variant="outline" onClick={addCustomTag}>
-              <Plus className="h-4 w-4 mr-1" />
-              Agregar
-            </Button>
-          </div>
+        <CardContent className="space-y-6">
+          {/* Selected tags summary */}
           {expertiseTags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {expertiseTags.map(tag => (
-                <Badge key={tag} className="gap-1">
-                  {tag}
-                  <X
-                    className="h-3 w-3 cursor-pointer"
-                    onClick={() => setExpertiseTags(expertiseTags.filter(t => t !== tag))}
-                  />
-                </Badge>
-              ))}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">
+                Seleccionadas ({expertiseTags.length})
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {expertiseTags.map(tag => (
+                  <Badge key={tag} className="gap-1">
+                    {tag}
+                    <X
+                      className="h-3 w-3 cursor-pointer"
+                      onClick={() => setExpertiseTags(expertiseTags.filter(t => t !== tag))}
+                    />
+                  </Badge>
+                ))}
+              </div>
             </div>
           )}
+
+          {/* Predefined tag groups */}
+          {EXPERTISE_TAG_GROUPS.map(group => (
+            <div key={group.label} className="space-y-2">
+              <label className="text-sm font-medium">{group.label}</label>
+              <div className="flex flex-wrap gap-2">
+                {group.tags.map(tag => (
+                  <Badge
+                    key={tag}
+                    variant={expertiseTags.includes(tag) ? 'default' : 'outline'}
+                    className="cursor-pointer"
+                    onClick={() => {
+                      setExpertiseTags(prev =>
+                        prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+                      );
+                    }}
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {/* Custom tag input */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Etiqueta personalizada</label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Agregar etiqueta personalizada"
+                value={customTag}
+                onChange={e => setCustomTag(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && addCustomTag()}
+              />
+              <Button variant="outline" onClick={addCustomTag}>
+                <Plus className="h-4 w-4 mr-1" />
+                Agregar
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

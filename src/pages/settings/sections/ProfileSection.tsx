@@ -254,10 +254,15 @@ function PublicProfileTab() {
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    await uploadAvatar(file);
-    // Sync avatar to creator_profile
-    if (creatorProfile && userProfile?.avatar_url) {
-      updateCreatorField('avatar_url', userProfile.avatar_url);
+    const newAvatarUrl = await uploadAvatar(file);
+    if (creatorProfile && newAvatarUrl) {
+      // Update local state
+      updateCreatorField('avatar_url', newAvatarUrl);
+      // Also persist to creator_profiles DB immediately (don't wait for "Guardar")
+      await (supabase as any)
+        .from('creator_profiles')
+        .update({ avatar_url: newAvatarUrl })
+        .eq('id', creatorProfile.id);
     }
   };
 
@@ -324,7 +329,7 @@ function PublicProfileTab() {
         is_active: marketplaceEnabled,
         banner_url: bannerUrl,
         display_name: userProfile?.full_name || creatorProfile.display_name,
-        avatar_url: userProfile?.avatar_url || creatorProfile.avatar_url,
+        avatar_url: creatorProfile.avatar_url || userProfile?.avatar_url,
         location_city: userProfile?.city || creatorProfile.location_city,
         location_country: userProfile?.country || creatorProfile.location_country,
       });

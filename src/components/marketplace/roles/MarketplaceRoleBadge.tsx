@@ -1,4 +1,10 @@
-import { Camera, Sparkles, Users, User, Radio, Mic, Film, Layers, Volume2, Palette, Target, Share2, MessageCircle, Code, Smartphone, Brain, GraduationCap, Presentation, Briefcase, TrendingUp } from 'lucide-react';
+import {
+  Camera, Sparkles, Users, User, Radio, Mic, Film, Layers, Volume2, Palette,
+  Target, Share2, MessageCircle, Code, Smartphone, Brain, GraduationCap,
+  Presentation, Briefcase, TrendingUp, Crown, Award, ImageIcon, PenTool,
+  AudioLines, Paintbrush, Clapperboard, MonitorPlay, Wand2,
+  Compass, Megaphone, Search, Mail, Rocket, HeartHandshake, BarChart3,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MARKETPLACE_ROLES_MAP } from './marketplaceRoleConfig';
 import type { MarketplaceRoleId } from '../types/marketplace';
@@ -6,7 +12,9 @@ import type { MarketplaceRoleId } from '../types/marketplace';
 const ICON_MAP: Record<string, React.ElementType> = {
   Camera, Sparkles, Users, User, Radio, Mic, Film, Layers, Volume2, Palette,
   Target, Share2, MessageCircle, Code, Smartphone, Brain, GraduationCap,
-  Presentation, Briefcase, TrendingUp,
+  Presentation, Briefcase, TrendingUp, Crown, Award, ImageIcon, PenTool,
+  AudioLines, Paintbrush, Clapperboard, MonitorPlay, Wand2,
+  Compass, Megaphone, Search, Mail, Rocket, HeartHandshake, BarChart3,
 };
 
 interface MarketplaceRoleBadgeProps {
