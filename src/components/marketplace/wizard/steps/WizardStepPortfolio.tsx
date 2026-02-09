@@ -198,7 +198,7 @@ export function WizardStepPortfolio({
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold text-white">Tu portafolio</h2>
         <p className="text-gray-400 text-sm">
-          Sube tu mejor contenido vertical (9:16). Las marcas veran esto primero.
+          Sube tu mejor trabajo. Esto sera lo primero que vean en tu perfil.
         </p>
       </div>
 

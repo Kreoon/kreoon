@@ -34,7 +34,7 @@ import {
   CONTENT_STYLE_LABELS,
   BUDGET_RANGE_LABELS,
 } from '@/types/ai-matching';
-import { SERVICE_TYPE_LABELS } from '@/types/marketplace';
+import { SERVICE_TYPE_LABELS, SERVICE_TYPE_CATEGORIES } from '@/types/marketplace';
 
 interface CompanyOnboardingProps {
   onComplete?: () => void;
@@ -474,16 +474,23 @@ export function CompanyOnboarding({
                 <label className="text-sm font-medium text-social-foreground">
                   Tipos de contenido que te interesan
                 </label>
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(SERVICE_TYPE_LABELS).map(([key, label]) => (
-                    <Badge
-                      key={key}
-                      variant={formData.preferred_content_types?.includes(key) ? 'default' : 'outline'}
-                      className="cursor-pointer"
-                      onClick={() => toggleArrayField('preferred_content_types', key)}
-                    >
-                      {label}
-                    </Badge>
+                <div className="space-y-3">
+                  {Object.entries(SERVICE_TYPE_CATEGORIES).map(([catKey, category]) => (
+                    <div key={catKey}>
+                      <p className="text-xs font-medium text-muted-foreground mb-1.5">{category.label}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {category.types.map(type => (
+                          <Badge
+                            key={type}
+                            variant={formData.preferred_content_types?.includes(type) ? 'default' : 'outline'}
+                            className="cursor-pointer"
+                            onClick={() => toggleArrayField('preferred_content_types', type)}
+                          >
+                            {SERVICE_TYPE_LABELS[type]}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>

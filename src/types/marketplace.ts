@@ -2,52 +2,166 @@
 // TIPOS PARA EL MARKETPLACE DE KREOON SOCIAL
 // =====================================================
 
-// Tipos de servicio disponibles
+// Tipos de servicio disponibles (agrupados por categoría)
 export type ServiceType =
+  // Content Creation
   | 'ugc_video'
   | 'ugc_photo'
   | 'ugc_carousel'
-  | 'video_editing'
-  | 'motion_graphics'
-  | 'thumbnail_design'
-  | 'social_management'
-  | 'content_strategy'
+  | 'photography'
   | 'live_streaming'
   | 'voice_over'
   | 'script_writing'
-  | 'photography'
+  | 'podcast_production'
+  | 'influencer_post'
+  | 'graphic_design'
+  // Post-Production
+  | 'video_editing'
+  | 'motion_graphics'
+  | 'thumbnail_design'
+  | 'sound_design'
+  | 'color_grading'
+  | 'animation_2d3d'
+  | 'creative_direction'
+  | 'audiovisual_production'
+  // Strategy & Marketing
+  | 'social_management'
+  | 'content_strategy'
+  | 'community_management'
+  | 'digital_strategy'
+  | 'paid_advertising'
+  | 'seo_sem'
+  | 'email_marketing'
+  | 'growth_hacking'
+  | 'crm_management'
+  | 'conversion_optimization'
+  // Technology
+  | 'web_development'
+  | 'app_development'
+  | 'ai_automation'
+  // Education
+  | 'online_courses'
+  | 'workshops'
+  // General
+  | 'consulting'
   | 'custom';
 
 export const SERVICE_TYPE_LABELS: Record<ServiceType, string> = {
+  // Content Creation
   ugc_video: 'Video UGC',
   ugc_photo: 'Foto UGC',
   ugc_carousel: 'Carrusel UGC',
-  video_editing: 'Edición de Video',
-  motion_graphics: 'Motion Graphics',
-  thumbnail_design: 'Diseño de Thumbnails',
-  social_management: 'Gestión de Redes',
-  content_strategy: 'Estrategia de Contenido',
+  photography: 'Fotografía',
   live_streaming: 'Live Streaming',
   voice_over: 'Locución',
   script_writing: 'Guionismo',
-  photography: 'Fotografía',
+  podcast_production: 'Producción de Podcast',
+  influencer_post: 'Post de Influencer',
+  graphic_design: 'Diseño Gráfico',
+  // Post-Production
+  video_editing: 'Edición de Video',
+  motion_graphics: 'Motion Graphics',
+  thumbnail_design: 'Diseño de Thumbnails',
+  sound_design: 'Diseño de Sonido',
+  color_grading: 'Colorización',
+  animation_2d3d: 'Animación 2D/3D',
+  creative_direction: 'Dirección Creativa',
+  audiovisual_production: 'Producción Audiovisual',
+  // Strategy & Marketing
+  social_management: 'Gestión de Redes',
+  content_strategy: 'Estrategia de Contenido',
+  community_management: 'Community Management',
+  digital_strategy: 'Estrategia Digital',
+  paid_advertising: 'Pauta Digital / Media Buying',
+  seo_sem: 'SEO / SEM',
+  email_marketing: 'Email Marketing',
+  growth_hacking: 'Growth Hacking',
+  crm_management: 'Gestión CRM',
+  conversion_optimization: 'Optimización de Conversión',
+  // Technology
+  web_development: 'Desarrollo Web',
+  app_development: 'Desarrollo de Apps',
+  ai_automation: 'IA y Automatización',
+  // Education
+  online_courses: 'Cursos Online',
+  workshops: 'Talleres y Capacitaciones',
+  // General
+  consulting: 'Consultoría',
   custom: 'Personalizado',
 };
 
 export const SERVICE_TYPE_ICONS: Record<ServiceType, string> = {
+  // Content Creation
   ugc_video: '📹',
   ugc_photo: '📸',
   ugc_carousel: '🎠',
-  video_editing: '🎬',
-  motion_graphics: '✨',
-  thumbnail_design: '🖼️',
-  social_management: '📱',
-  content_strategy: '📊',
+  photography: '📷',
   live_streaming: '🔴',
   voice_over: '🎙️',
   script_writing: '✍️',
-  photography: '📷',
-  custom: '🎯',
+  podcast_production: '🎧',
+  influencer_post: '⭐',
+  graphic_design: '🎨',
+  // Post-Production
+  video_editing: '🎬',
+  motion_graphics: '✨',
+  thumbnail_design: '🖼️',
+  sound_design: '🔊',
+  color_grading: '🌈',
+  animation_2d3d: '🎭',
+  creative_direction: '🎯',
+  audiovisual_production: '🎥',
+  // Strategy & Marketing
+  social_management: '📱',
+  content_strategy: '📊',
+  community_management: '💬',
+  digital_strategy: '🧭',
+  paid_advertising: '📣',
+  seo_sem: '🔍',
+  email_marketing: '📧',
+  growth_hacking: '🚀',
+  crm_management: '🤝',
+  conversion_optimization: '📈',
+  // Technology
+  web_development: '💻',
+  app_development: '📲',
+  ai_automation: '🤖',
+  // Education
+  online_courses: '🎓',
+  workshops: '👨‍🏫',
+  // General
+  consulting: '💼',
+  custom: '⚙️',
+};
+
+// Categorías de servicios para agrupar en dropdowns
+export type ServiceTypeCategory = 'content_creation' | 'post_production' | 'strategy_marketing' | 'technology' | 'education' | 'general';
+
+export const SERVICE_TYPE_CATEGORIES: Record<ServiceTypeCategory, { label: string; types: ServiceType[] }> = {
+  content_creation: {
+    label: 'Creación de Contenido',
+    types: ['ugc_video', 'ugc_photo', 'ugc_carousel', 'photography', 'live_streaming', 'voice_over', 'script_writing', 'podcast_production', 'influencer_post', 'graphic_design'],
+  },
+  post_production: {
+    label: 'Post-Producción',
+    types: ['video_editing', 'motion_graphics', 'thumbnail_design', 'sound_design', 'color_grading', 'animation_2d3d', 'creative_direction', 'audiovisual_production'],
+  },
+  strategy_marketing: {
+    label: 'Estrategia & Marketing',
+    types: ['social_management', 'content_strategy', 'community_management', 'digital_strategy', 'paid_advertising', 'seo_sem', 'email_marketing', 'growth_hacking', 'crm_management', 'conversion_optimization'],
+  },
+  technology: {
+    label: 'Tecnología',
+    types: ['web_development', 'app_development', 'ai_automation'],
+  },
+  education: {
+    label: 'Educación',
+    types: ['online_courses', 'workshops'],
+  },
+  general: {
+    label: 'General',
+    types: ['consulting', 'custom'],
+  },
 };
 
 // Tipos de precio

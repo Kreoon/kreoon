@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Plus, X, DollarSign, Gift, Package, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { CreatorServiceData, ServicePackage } from '@/hooks/useCreatorServices';
-import { SERVICE_TYPE_LABELS } from '@/types/marketplace';
+import { SERVICE_TYPE_LABELS, SERVICE_TYPE_CATEGORIES } from '@/types/marketplace';
 
 interface ServicesData {
   accepts_exchange: boolean;
@@ -96,7 +96,7 @@ export function WizardStepServices({
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Precio base por video</label>
+            <label className="block text-xs font-medium text-gray-400 mb-1.5">Precio base</label>
             <div className="relative">
               <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <input
@@ -258,8 +258,12 @@ export function WizardStepServices({
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
               >
                 <option value="" className="bg-[#1a1a2e]">Seleccionar...</option>
-                {Object.entries(SERVICE_TYPE_LABELS).map(([key, label]) => (
-                  <option key={key} value={key} className="bg-[#1a1a2e]">{label}</option>
+                {Object.entries(SERVICE_TYPE_CATEGORIES).map(([, category]) => (
+                  <optgroup key={category.label} label={category.label}>
+                    {category.types.map(type => (
+                      <option key={type} value={type} className="bg-[#1a1a2e]">{SERVICE_TYPE_LABELS[type]}</option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </div>

@@ -70,12 +70,12 @@ export function WizardStepExpertise({ data, onChange }: WizardStepExpertiseProps
       {/* Header */}
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold text-white">Tu expertise</h2>
-        <p className="text-gray-400 text-sm">Define tus habilidades para que las marcas te encuentren</p>
+        <p className="text-gray-400 text-sm">Define tus habilidades y areas de especializacion</p>
       </div>
 
       {/* Categories */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-3">Categorias de contenido</label>
+        <label className="block text-sm font-medium text-gray-300 mb-3">Categorias</label>
         <div className="flex flex-wrap gap-2">
           {MARKETPLACE_CATEGORIES.filter(c => c.id !== 'all').map(cat => (
             <button
@@ -96,7 +96,7 @@ export function WizardStepExpertise({ data, onChange }: WizardStepExpertiseProps
 
       {/* Content types */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-3">Tipos de contenido</label>
+        <label className="block text-sm font-medium text-gray-300 mb-3">Tipos de servicio</label>
         <div className="flex flex-wrap gap-2">
           {CONTENT_TYPES.map(type => (
             <button

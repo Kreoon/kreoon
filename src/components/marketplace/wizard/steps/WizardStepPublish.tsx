@@ -32,7 +32,7 @@ export function WizardStepPublish({
     { label: 'Foto de perfil', completed: !!avatarUrl, required: false },
     { label: 'Bio extendida', completed: !!draft.basic.bio_full, required: false },
     { label: 'Al menos 1 rol seleccionado', completed: draft.roles.length > 0, required: true },
-    { label: 'Categorias de contenido', completed: draft.expertise.categories.length > 0, required: false },
+    { label: 'Categorias de especializacion', completed: draft.expertise.categories.length > 0, required: false },
     { label: 'Al menos 1 item en portafolio', completed: portfolioCount > 0, required: false },
     { label: 'Al menos 1 servicio creado', completed: servicesCount > 0, required: false },
   ];
@@ -46,7 +46,7 @@ export function WizardStepPublish({
       {/* Header */}
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold text-white">Listo para publicar</h2>
-        <p className="text-gray-400 text-sm">Revisa tu perfil antes de hacerlo visible para las marcas</p>
+        <p className="text-gray-400 text-sm">Revisa tu perfil antes de hacerlo visible en el marketplace</p>
       </div>
 
       {/* Completion summary */}

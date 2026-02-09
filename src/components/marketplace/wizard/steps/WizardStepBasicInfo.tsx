@@ -39,7 +39,7 @@ export function WizardStepBasicInfo({ data, avatarUrl, bannerUrl, onChange }: Wi
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold text-white">Tu perfil profesional</h2>
         <p className="text-gray-400 text-sm">
-          Esta informacion sera visible para las marcas que buscan creadores
+          Esta informacion sera visible en tu perfil del marketplace
         </p>
       </div>
 

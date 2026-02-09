@@ -15,7 +15,9 @@ import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -28,7 +30,7 @@ import type { MarketplaceRoleId } from '@/components/marketplace/types/marketpla
 import { EXPERTISE_TAG_GROUPS } from '@/components/marketplace/types/marketplace';
 import { CONTENT_STYLE_LABELS, BUDGET_RANGE_LABELS } from '@/types/ai-matching';
 import type { ContentStyle, BudgetRange } from '@/types/ai-matching';
-import { SERVICE_TYPE_LABELS } from '@/types/marketplace';
+import { SERVICE_TYPE_LABELS, SERVICE_TYPE_CATEGORIES } from '@/types/marketplace';
 
 // ─── Constants ──────────────────────────────────────────────────────────────────
 
@@ -563,10 +565,15 @@ export function CreatorServicesTab() {
                 <SelectValue placeholder="Tipo" />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(SERVICE_TYPE_LABELS).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>
-                    {label}
-                  </SelectItem>
+                {Object.entries(SERVICE_TYPE_CATEGORIES).map(([catKey, category]) => (
+                  <SelectGroup key={catKey}>
+                    <SelectLabel>{category.label}</SelectLabel>
+                    {category.types.map(type => (
+                      <SelectItem key={type} value={type}>
+                        {SERVICE_TYPE_LABELS[type]}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
                 ))}
               </SelectContent>
             </Select>
@@ -1020,16 +1027,23 @@ function BrandPreferencesTab() {
         {/* Content types */}
         <div className="space-y-3">
           <label className="text-sm font-medium">Tipos de contenido preferidos</label>
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(SERVICE_TYPE_LABELS).map(([key, label]) => (
-              <Badge
-                key={key}
-                variant={contentTypes.includes(key) ? 'default' : 'outline'}
-                className="cursor-pointer"
-                onClick={() => toggleArrayItem(contentTypes, key, setContentTypes)}
-              >
-                {label}
-              </Badge>
+          <div className="space-y-3">
+            {Object.entries(SERVICE_TYPE_CATEGORIES).map(([catKey, category]) => (
+              <div key={catKey}>
+                <p className="text-xs font-medium text-muted-foreground mb-1.5">{category.label}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {category.types.map(type => (
+                    <Badge
+                      key={type}
+                      variant={contentTypes.includes(type) ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => toggleArrayItem(contentTypes, type, setContentTypes)}
+                    >
+                      {SERVICE_TYPE_LABELS[type]}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </div>

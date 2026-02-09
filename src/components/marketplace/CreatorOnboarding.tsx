@@ -23,7 +23,9 @@ import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -34,7 +36,7 @@ import {
   CONTENT_STYLE_LABELS,
   BUDGET_RANGE_LABELS,
 } from '@/types/ai-matching';
-import { SERVICE_TYPE_LABELS } from '@/types/marketplace';
+import { SERVICE_TYPE_LABELS, SERVICE_TYPE_CATEGORIES } from '@/types/marketplace';
 import { MarketplaceRoleSelector } from './roles/MarketplaceRoleSelector';
 import type { MarketplaceRoleId } from './types/marketplace';
 
@@ -578,10 +580,15 @@ export function CreatorOnboarding({
                       <SelectValue placeholder="Tipo" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.entries(SERVICE_TYPE_LABELS).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>
-                          {label}
-                        </SelectItem>
+                      {Object.entries(SERVICE_TYPE_CATEGORIES).map(([catKey, category]) => (
+                        <SelectGroup key={catKey}>
+                          <SelectLabel>{category.label}</SelectLabel>
+                          {category.types.map(type => (
+                            <SelectItem key={type} value={type}>
+                              {SERVICE_TYPE_LABELS[type]}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
                       ))}
                     </SelectContent>
                   </Select>

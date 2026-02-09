@@ -34,7 +34,7 @@ import { useCompanyProfile } from '@/hooks/useCompanyProfile';
 import { CreatorMatchingGrid } from './CreatorMatchingCard';
 import type { MatchingCriteria, IndustryId, CreatorMatch } from '@/types/ai-matching';
 import { INDUSTRY_DATA, CONTENT_STYLE_LABELS, BUDGET_RANGE_LABELS } from '@/types/ai-matching';
-import { SERVICE_TYPE_LABELS } from '@/types/marketplace';
+import { SERVICE_TYPE_LABELS, SERVICE_TYPE_CATEGORIES } from '@/types/marketplace';
 
 interface AIRecommendationsProps {
   onCreatorSelect?: (match: CreatorMatch) => void;
@@ -196,22 +196,29 @@ export function AIRecommendations({
                     <label className="text-sm font-medium text-social-foreground">
                       Tipo de contenido
                     </label>
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(SERVICE_TYPE_LABELS).slice(0, 6).map(([key, label]) => (
-                        <Badge
-                          key={key}
-                          variant={criteria.content_types?.includes(key) ? 'default' : 'outline'}
-                          className="cursor-pointer"
-                          onClick={() => {
-                            const current = criteria.content_types || [];
-                            const updated = current.includes(key)
-                              ? current.filter((t) => t !== key)
-                              : [...current, key];
-                            updateCriteria('content_types', updated);
-                          }}
-                        >
-                          {label}
-                        </Badge>
+                    <div className="space-y-2">
+                      {Object.entries(SERVICE_TYPE_CATEGORIES).map(([catKey, category]) => (
+                        <div key={catKey}>
+                          <p className="text-[10px] font-medium text-social-muted-foreground mb-1">{category.label}</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {category.types.map(type => (
+                              <Badge
+                                key={type}
+                                variant={criteria.content_types?.includes(type) ? 'default' : 'outline'}
+                                className="cursor-pointer text-xs"
+                                onClick={() => {
+                                  const current = criteria.content_types || [];
+                                  const updated = current.includes(type)
+                                    ? current.filter((t) => t !== type)
+                                    : [...current, type];
+                                  updateCriteria('content_types', updated);
+                                }}
+                              >
+                                {SERVICE_TYPE_LABELS[type]}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
                       ))}
                     </div>
                   </div>
