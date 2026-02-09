@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrgOwner } from './useOrgOwner';
 
@@ -7,6 +7,77 @@ interface InternalBrandClient {
   name: string;
   organization_id: string;
   is_internal_brand: boolean;
+}
+
+// Module-level concurrency guard: one in-flight promise per org.
+// Prevents race condition when multiple components call the hook simultaneously.
+const inflightByOrg = new Map<string, Promise<InternalBrandClient | null>>();
+
+async function fetchOrCreateInternalBrandClient(
+  orgId: string,
+  orgName: string
+): Promise<InternalBrandClient | null> {
+  const existing = inflightByOrg.get(orgId);
+  if (existing) return existing;
+
+  const work = (async () => {
+    try {
+      // Use .limit(1) before .maybeSingle() to safely handle legacy duplicates
+      // (plain .maybeSingle() returns 406 error when count >= 2)
+      const { data: existingClient, error: selectError } = await supabase
+        .from('clients')
+        .select('id, name, organization_id, is_internal_brand')
+        .eq('organization_id', orgId)
+        .eq('is_internal_brand', true)
+        .limit(1)
+        .maybeSingle();
+
+      if (selectError) {
+        console.error('Error checking internal brand client:', selectError);
+        return null;
+      }
+
+      if (existingClient) {
+        return existingClient as InternalBrandClient;
+      }
+
+      // Create — the partial unique index prevents duplicates at DB level
+      const { data: newClient, error: insertError } = await supabase
+        .from('clients')
+        .insert({
+          name: orgName,
+          organization_id: orgId,
+          is_internal_brand: true,
+          is_public: false,
+          bio: `Marca interna de ${orgName} para contenido de embajadores`
+        })
+        .select('id, name, organization_id, is_internal_brand')
+        .single();
+
+      if (insertError) {
+        // Unique constraint violation = another caller won the race
+        if (insertError.code === '23505') {
+          const { data: raceWinner } = await supabase
+            .from('clients')
+            .select('id, name, organization_id, is_internal_brand')
+            .eq('organization_id', orgId)
+            .eq('is_internal_brand', true)
+            .limit(1)
+            .maybeSingle();
+          return raceWinner as InternalBrandClient | null;
+        }
+        console.error('Error creating internal brand client:', insertError);
+        return null;
+      }
+
+      return newClient as InternalBrandClient;
+    } finally {
+      inflightByOrg.delete(orgId);
+    }
+  })();
+
+  inflightByOrg.set(orgId, work);
+  return work;
 }
 
 /**
@@ -19,73 +90,42 @@ export function useInternalBrandClient() {
   const [internalBrandClient, setInternalBrandClient] = useState<InternalBrandClient | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch or create the internal brand client for the current organization
-  const ensureInternalBrandClient = useCallback(async () => {
-    if (!currentOrgId || !currentOrgName) {
+  // Store orgName in ref so it doesn't trigger re-runs of the effect
+  const orgNameRef = useRef(currentOrgName);
+  orgNameRef.current = currentOrgName;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!currentOrgId || !orgNameRef.current) {
       setInternalBrandClient(null);
       setLoading(false);
-      return null;
+      return;
     }
 
     setLoading(true);
 
-    try {
-      // Check if internal brand client already exists
-      const { data: existingClient } = await supabase
-        .from('clients')
-        .select('id, name, organization_id, is_internal_brand')
-        .eq('organization_id', currentOrgId)
-        .eq('is_internal_brand', true)
-        .maybeSingle();
-
-      if (existingClient) {
-        setInternalBrandClient(existingClient as InternalBrandClient);
-        setLoading(false);
-        return existingClient;
+    fetchOrCreateInternalBrandClient(currentOrgId, orgNameRef.current).then(
+      (client) => {
+        if (!cancelled) {
+          setInternalBrandClient(client);
+          setLoading(false);
+        }
       }
+    );
 
-      // Create internal brand client for the organization
-      const { data: newClient, error } = await supabase
-        .from('clients')
-        .insert({
-          name: currentOrgName,
-          organization_id: currentOrgId,
-          is_internal_brand: true,
-          is_public: false,
-          bio: `Marca interna de ${currentOrgName} para contenido de embajadores`
-        })
-        .select('id, name, organization_id, is_internal_brand')
-        .single();
-
-      if (error) {
-        console.error('Error creating internal brand client:', error);
-        setLoading(false);
-        return null;
-      }
-
-      setInternalBrandClient(newClient as InternalBrandClient);
-      setLoading(false);
-      return newClient;
-    } catch (error) {
-      console.error('Error in ensureInternalBrandClient:', error);
-      setLoading(false);
-      return null;
-    }
-  }, [currentOrgId, currentOrgName]);
-
-  // Auto-fetch on mount and when org changes
-  useEffect(() => {
-    ensureInternalBrandClient();
-  }, [ensureInternalBrandClient]);
+    return () => { cancelled = true; };
+  }, [currentOrgId]);
 
   return {
     internalBrandClient,
     loading,
-    ensureInternalBrandClient,
-    /** The current organization ID */
+    ensureInternalBrandClient: () =>
+      currentOrgId && orgNameRef.current
+        ? fetchOrCreateInternalBrandClient(currentOrgId, orgNameRef.current)
+        : Promise.resolve(null),
     currentOrgId,
-    /** Check if a client ID is the internal brand */
-    isInternalBrand: (clientId: string | null | undefined) => 
+    isInternalBrand: (clientId: string | null | undefined) =>
       clientId === internalBrandClient?.id
   };
 }

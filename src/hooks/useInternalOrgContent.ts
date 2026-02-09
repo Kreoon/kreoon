@@ -78,13 +78,18 @@ export function useInternalOrgContent(clientId?: string | null): UseInternalOrgC
     setLoading(true);
 
     try {
-      // Fetch internal brand client
-      const { data: internalClient } = await supabase
+      // Fetch internal brand client (.limit(1) prevents 406 if legacy duplicates exist)
+      const { data: internalClient, error: clientError } = await supabase
         .from('clients')
         .select('id')
         .eq('organization_id', currentOrgId)
         .eq('is_internal_brand', true)
+        .limit(1)
         .maybeSingle();
+
+      if (clientError) {
+        console.error('Error fetching internal brand client:', clientError);
+      }
 
       setInternalBrandClientId(internalClient?.id || null);
 
