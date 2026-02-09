@@ -26,9 +26,9 @@ export function KreoonSocialBrand({
   return (
     <div className={cn('flex items-center gap-2', className)}>
       {showSymbol && (
-        <img 
-          src="/favicon.png" 
-          alt="KREOON" 
+        <img
+          src="/favicon.png"
+          alt="KREOON"
           className={cn('rounded-md', symbolSizes[size])}
         />
       )}
@@ -37,7 +37,6 @@ export function KreoonSocialBrand({
         sizeClasses[size]
       )}>
         <span className="text-social-foreground">KREOON</span>
-        <span className="text-social-accent ml-1">Social</span>
       </span>
     </div>
   );
@@ -47,14 +46,13 @@ export function KreoonSocialBrand({
 export function KreoonSocialLogo({ className }: { className?: string }) {
   return (
     <div className={cn('flex items-center gap-1.5', className)}>
-      <img 
-        src="/favicon.png" 
-        alt="KREOON" 
+      <img
+        src="/favicon.png"
+        alt="KREOON"
         className="h-7 w-7 rounded-md"
       />
       <span className="font-bold text-lg tracking-tight">
         <span className="text-social-foreground">KREOON</span>
-        <span className="text-social-accent">Social</span>
       </span>
     </div>
   );

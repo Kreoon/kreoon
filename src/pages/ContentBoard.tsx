@@ -4,7 +4,7 @@ import { es } from "date-fns/locale";
 import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanColumn";
 import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
 import { ContentDetailDialog } from "@/components/content/ContentDetailDialog/index";
-import { Search, Plus, Filter, CalendarIcon, X, Settings2, Scroll, RotateCcw, Brain } from "lucide-react";
+import { Search, Plus, Filter, CalendarIcon, X, Settings2, Scroll, RotateCcw, Brain, ShoppingBag } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +37,8 @@ import {
   EnhancedContentCard,
   BoardAIPanel,
   MarketingInfoPanel,
-  CampaignAssignmentDialog
+  CampaignAssignmentDialog,
+  MarketplaceBoardView
 } from "@/components/board";
 import { useBoardSettings } from "@/hooks/useBoardSettings";
 import { useBoardPersistence } from "@/hooks/useBoardPersistence";
@@ -160,6 +161,12 @@ export default function ContentBoard() {
     ? impersonationTarget.role 
     : realActiveRole;
   
+  // Board mode: content (internal) vs marketplace (external projects)
+  const [boardMode, setBoardMode] = useState<'content' | 'marketplace'>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('view') === 'marketplace' ? 'marketplace' : 'content';
+  });
+
   // Get ambassador IDs for the organization
   const { ambassadors } = useInternalOrgContent();
   const ambassadorIds = useMemo(() => new Set(ambassadors.map(a => a.id)), [ambassadors]);
@@ -707,6 +714,39 @@ export default function ContentBoard() {
           </div>
         </div>
 
+        {/* Board Mode Toggle: Contenido | Marketplace */}
+        <div className="flex items-center gap-1 bg-[hsl(250,20%,8%)] rounded-xl p-1 w-fit border border-white/5">
+          <button
+            onClick={() => setBoardMode('content')}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+              boardMode === 'content'
+                ? "bg-purple-600/20 text-purple-300 border border-purple-500/30"
+                : "text-gray-500 hover:text-gray-300"
+            )}
+          >
+            <Scroll className="h-4 w-4" />
+            Contenido
+          </button>
+          <button
+            onClick={() => setBoardMode('marketplace')}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+              boardMode === 'marketplace'
+                ? "bg-purple-600/20 text-purple-300 border border-purple-500/30"
+                : "text-gray-500 hover:text-gray-300"
+            )}
+          >
+            <ShoppingBag className="h-4 w-4" />
+            Marketplace
+          </button>
+        </div>
+
+        {/* Marketplace Board View */}
+        {boardMode === 'marketplace' ? (
+          <MarketplaceBoardView />
+        ) : (
+        <>
         {/* Filtros para admin */}
         {showAdminControls && (
           <div className="flex flex-wrap items-center gap-2 md:gap-3 px-4 md:px-6 pb-4 overflow-x-auto">
@@ -1052,8 +1092,10 @@ export default function ContentBoard() {
             />
           )}
         </div>
+      </>
+        )}
       </div>
-      
+
       {/* Config Dialog */}
       {showAdminControls && (
         <BoardConfigDialog 

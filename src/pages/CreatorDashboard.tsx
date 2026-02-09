@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Store } from 'lucide-react';
+import { MarketplaceDashboardTab } from '@/components/marketplace/dashboard/MarketplaceDashboardTab';
 import { useAuth } from '@/hooks/useAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useContent } from '@/hooks/useContent';
@@ -67,6 +69,7 @@ export default function CreatorDashboard() {
   const { content: allContent, loading, refetch } = useContent(targetUserId, 'creator');
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
   const [thisMonthActive, setThisMonthActive] = useState(false);
+  const [dashboardTab, setDashboardTab] = useState<'studio' | 'marketplace'>('studio');
   const [kpiDialog, setKpiDialog] = useState<{
     open: boolean;
     title: string;
@@ -166,6 +169,32 @@ export default function CreatorDashboard() {
           }
         />
 
+        {/* Dashboard Mode Toggle */}
+        <div className="flex gap-2 bg-white/5 p-1 rounded-xl w-fit">
+          <button
+            onClick={() => setDashboardTab('studio')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              dashboardTab === 'studio' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <Clapperboard className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
+            Estudio
+          </button>
+          <button
+            onClick={() => setDashboardTab('marketplace')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              dashboardTab === 'marketplace' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <Store className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
+            Marketplace
+          </button>
+        </div>
+
+        {dashboardTab === 'marketplace' ? (
+          <MarketplaceDashboardTab role="creator" />
+        ) : (
+        <>
         {/* Season Urgency Banner */}
         <SeasonUrgencyBanner />
 
@@ -536,6 +565,8 @@ export default function CreatorDashboard() {
             </motion.div>
           )}
         </div>
+        </>
+        )}
 
         {/* Content Detail Dialog */}
         <ContentDetailDialog

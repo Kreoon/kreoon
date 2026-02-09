@@ -49,7 +49,7 @@ export default function PublicProfilePage() {
 
       // If viewing own profile (by id or username), redirect to internal profile
       if (user?.id && data.id === user.id) {
-        navigate('/social#profile', { replace: true });
+        navigate('/settings?section=marketplace', { replace: true });
         return;
       }
 
@@ -88,7 +88,7 @@ export default function PublicProfilePage() {
           <h1 className="text-xl font-semibold text-social-foreground">Usuario no encontrado</h1>
           <p className="text-social-muted-foreground">Este perfil no existe.</p>
           <Button 
-            onClick={() => navigate('/social')}
+            onClick={() => navigate('/marketplace')}
             className="bg-social-accent hover:bg-social-accent/90 text-social-accent-foreground"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />

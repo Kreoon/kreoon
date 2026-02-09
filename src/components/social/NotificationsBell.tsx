@@ -95,7 +95,7 @@ export function NotificationsBell() {
     if (notificationType === 'follow' && notification.actor_id) {
       navigate(`/profile/${notification.actor_id}`);
     } else if ((notification as any).entity_id || notification.content_id) {
-      navigate(`/social`);
+      navigate(`/marketplace`);
     }
   };
 

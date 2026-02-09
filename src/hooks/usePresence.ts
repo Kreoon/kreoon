@@ -12,7 +12,7 @@ const PAGE_NAMES: Record<string, string> = {
   '/clients': 'Clientes',
   '/team': 'Equipo',
   '/settings': 'Configuración',
-  '/social': 'Red Social',
+  '/marketplace': 'Marketplace',
   '/creator-dashboard': 'Dashboard Creador',
   '/editor-dashboard': 'Dashboard Editor',
   '/strategist-dashboard': 'Dashboard Estratega',

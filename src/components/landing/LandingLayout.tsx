@@ -14,7 +14,7 @@ const NAV_LINKS = [
   { label: "Características", href: "#features" },
   { label: "Cómo funciona", href: "#how-it-works" },
   { label: "Precios", href: "#pricing" },
-  { label: "Comunidad", to: "/social" as const },
+  { label: "Marketplace", to: "/marketplace" as const },
 ] as const;
 
 const FOOTER_PRODUCT = [

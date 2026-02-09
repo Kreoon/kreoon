@@ -370,7 +370,7 @@ export default function CompanyDashboardPage() {
                         key={match.creator_id}
                         match={match}
                         variant="compact"
-                        onClick={() => navigate(`/social/profile/${match.creator.username || match.creator.id}`)}
+                        onClick={() => navigate(`/profile/${match.creator.username || match.creator.id}`)}
                       />
                     ))}
                   </div>

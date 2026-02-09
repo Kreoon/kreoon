@@ -146,6 +146,17 @@ export function extractBunnyIds(url: string): { libraryId: string; videoId: stri
 }
 
 /**
+ * Get a Bunny CDN thumbnail URL from any Bunny video URL.
+ * Returns null for non-Bunny URLs.
+ */
+export function getBunnyThumbnailUrl(url: string): string | null {
+  const ids = extractBunnyIds(url);
+  if (!ids) return null;
+  const BUNNY_CDN_HOST = 'vz-78fcd769-050.b-cdn.net';
+  return `https://${BUNNY_CDN_HOST}/${ids.videoId}/thumbnail.jpg`;
+}
+
+/**
  * Generate Bunny.net HLS, MP4 and thumbnail URLs from any Bunny URL format
  * Now includes multiple quality MP4s for progressive loading
  */

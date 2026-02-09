@@ -423,7 +423,7 @@ export function IntegratedNotificationHeader({
 
       {/* User Profile Section - Avatar with name */}
       <button
-        onClick={() => navigate('/social#profile')}
+        onClick={() => navigate('/settings?section=marketplace')}
         className={cn(
           "flex items-center gap-2 px-3 py-1.5 rounded-xl",
           "bg-[hsl(270,100%,60%,0.05)] hover:bg-[hsl(270,100%,60%,0.1)]",
@@ -510,8 +510,8 @@ export function IntegratedNotificationHeader({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent 
-          className="w-96 p-0 shadow-2xl border-border/50 bg-card/95 backdrop-blur-md" 
+        <PopoverContent
+          className="w-96 p-0 shadow-2xl border-border/50 bg-card/95 backdrop-blur-md"
           align="end"
           sideOffset={8}
         >

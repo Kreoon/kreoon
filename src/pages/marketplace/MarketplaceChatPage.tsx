@@ -314,7 +314,7 @@ export default function MarketplaceChatPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => navigate(`/social/profile/${otherUser?.username || otherUser?.id}`)}
+                      onClick={() => navigate(`/profile/${otherUser?.username || otherUser?.id}`)}
                     >
                       <Info className="h-5 w-5" />
                     </Button>

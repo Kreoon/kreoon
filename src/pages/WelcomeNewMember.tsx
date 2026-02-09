@@ -229,7 +229,7 @@ export default function WelcomeNewMember() {
         <KreoonButton
           variant="secondary"
           size="lg"
-          onClick={() => navigate("/social")}
+          onClick={() => navigate("/marketplace")}
           className="flex-1"
         >
           Explorar la comunidad

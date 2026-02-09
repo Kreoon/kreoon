@@ -42,8 +42,8 @@ const EditorDashboard = lazy(() => import("./pages/EditorDashboard"));
 const StrategistDashboard = lazy(() => import("./pages/StrategistDashboard"));
 const ClientDashboard = lazy(() => import("./pages/ClientDashboard"));
 const ClientContentBoard = lazy(() => import("./pages/ClientContentBoard"));
-const PortfolioShell = lazy(() => import("./pages/portfolio/PortfolioShell"));
-const ExplorePage = lazy(() => import("./pages/portfolio/ExplorePage"));
+const VideosPage = lazy(() => import("./pages/portfolio/VideosPage"));
+const SavedPage = lazy(() => import("./pages/portfolio/SavedPage"));
 const CompanyProfilePage = lazy(() => import("./pages/portfolio/CompanyProfilePage"));
 const PublicProfilePage = lazy(() => import("./pages/portfolio/PublicProfilePage"));
 const Ranking = lazy(() => import("./pages/Ranking"));
@@ -61,6 +61,22 @@ const OrgRegister = lazy(() => import("./pages/auth/OrgRegister"));
 const Live = lazy(() => import("./pages/Live"));
 const Marketing = lazy(() => import("./pages/Marketing"));
 const ResearchLanding = lazy(() => import("./pages/ResearchLanding"));
+const OrgPortfolioPage = lazy(() => import("./pages/OrgPortfolioPage"));
+const CreatorProfilePage_Marketplace = lazy(() => import("./components/marketplace/profile/CreatorProfilePage"));
+const HiringWizardPage = lazy(() => import("./pages/HiringWizardPage"));
+const MarketplaceDashboard = lazy(() => import("./pages/MarketplaceDashboard"));
+const CampaignsFeedPage = lazy(() => import("./pages/CampaignsFeedPage"));
+const CampaignDetailPage = lazy(() => import("./pages/CampaignDetailPage"));
+const CampaignWizardPage = lazy(() => import("./pages/CampaignWizardPage"));
+const BrandCampaignsPage = lazy(() => import("./pages/BrandCampaignsPage"));
+const CreatorCampaignsPage = lazy(() => import("./pages/CreatorCampaignsPage"));
+const MarketplaceBrowse = lazy(() => import("./components/marketplace/MarketplacePage"));
+const OrgProfilePage_Marketplace = lazy(() => import("./components/marketplace/org-profile/OrgProfilePage"));
+const TalentListsPage = lazy(() => import("./pages/marketplace/TalentListsPage"));
+const TalentListDetailPage = lazy(() => import("./pages/marketplace/TalentListDetailPage"));
+const MarketplaceInvitationsPage = lazy(() => import("./pages/marketplace/MarketplaceInvitationsPage"));
+const MarketplaceInquiriesPage = lazy(() => import("./pages/marketplace/MarketplaceInquiriesPage"));
+const CreatorProfileSetup = lazy(() => import("./pages/CreatorProfileSetup"));
 
 // Wallet Module Pages
 const WalletPage = lazy(() => import("./modules/wallet/pages/WalletPage").then(m => ({ default: m.WalletPage })));
@@ -92,7 +108,7 @@ function ProfileRedirect() {
     return <Navigate to="/auth" replace />;
   }
   
-  return <Navigate to="/social#profile" replace />;
+  return <Navigate to="/settings?section=marketplace" replace />;
 }
 
 function AppRoutes() {
@@ -104,9 +120,29 @@ function AppRoutes() {
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes key={impersonationKey}>
-        <Route path="/social" element={<ProtectedRoute allowNoRoles><PortfolioShell /></ProtectedRoute>} />
-        <Route path="/social/*" element={<ProtectedRoute allowNoRoles><PortfolioShell /></ProtectedRoute>} />
-        <Route path="/explore" element={<ProtectedRoute allowNoRoles><ExplorePage /></ProtectedRoute>} />
+        {/* Redirect old /social routes to /marketplace */}
+        <Route path="/social" element={<Navigate to="/marketplace" replace />} />
+        <Route path="/social/*" element={<Navigate to="/marketplace" replace />} />
+        {/* Marketplace routes - unified within MainLayout */}
+        <Route path="/marketplace" element={<ProtectedRoute allowNoRoles><MainLayout><MarketplaceBrowse /></MainLayout></ProtectedRoute>} />
+        <Route path="/marketplace/videos" element={<ProtectedRoute allowNoRoles><MainLayout><VideosPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/marketplace/guardados" element={<ProtectedRoute allowNoRoles><MainLayout><SavedPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/marketplace/creator/:id" element={<ProtectedRoute allowNoRoles><CreatorProfilePage_Marketplace /></ProtectedRoute>} />
+        <Route path="/marketplace/hire/:creatorId" element={<ProtectedRoute allowNoRoles><HiringWizardPage /></ProtectedRoute>} />
+        <Route path="/marketplace/profile/setup" element={<ProtectedRoute allowNoRoles><CreatorProfileSetup /></ProtectedRoute>} />
+        <Route path="/marketplace/dashboard" element={<ProtectedRoute allowNoRoles><MainLayout><MarketplaceDashboard /></MainLayout></ProtectedRoute>} />
+        <Route path="/marketplace/projects" element={<Navigate to="/board?view=marketplace" replace />} />
+        <Route path="/marketplace/content" element={<Navigate to="/content?view=marketplace" replace />} />
+        <Route path="/marketplace/campaigns" element={<ProtectedRoute allowNoRoles><MainLayout><CampaignsFeedPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/marketplace/campaigns/create" element={<ProtectedRoute allowNoRoles><MainLayout><CampaignWizardPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/marketplace/campaigns/:id" element={<ProtectedRoute allowNoRoles><MainLayout><CampaignDetailPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/marketplace/my-campaigns" element={<ProtectedRoute allowNoRoles><MainLayout><BrandCampaignsPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/marketplace/creator-campaigns" element={<ProtectedRoute allowNoRoles><MainLayout><CreatorCampaignsPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/marketplace/org/:slug" element={<ProtectedRoute allowNoRoles><OrgProfilePage_Marketplace /></ProtectedRoute>} />
+        <Route path="/marketplace/talent-lists" element={<ProtectedRoute allowNoRoles><MainLayout><TalentListsPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/marketplace/talent-lists/:id" element={<ProtectedRoute allowNoRoles><MainLayout><TalentListDetailPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/marketplace/invitations" element={<ProtectedRoute allowNoRoles><MainLayout><MarketplaceInvitationsPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/marketplace/inquiries" element={<ProtectedRoute allowNoRoles><MainLayout><MarketplaceInquiriesPage /></MainLayout></ProtectedRoute>} />
         <Route path="/company/:username" element={<CompanyProfilePage />} />
         <Route path="/profile/:userId" element={<PublicProfilePage />} />
         <Route path="/profile" element={<ProfileRedirect />} />
@@ -116,6 +152,7 @@ function AppRoutes() {
         <Route path="/pending-access" element={<PendingAccess />} />
         <Route path="/welcome" element={<WelcomeNewMember />} />
         <Route path="/up-documentation" element={<UPDocumentation />} />
+        <Route path="/org/:slug/talento" element={<OrgPortfolioPage />} />
         <Route path="/org/:slug" element={<OrgAuth />} />
         <Route path="/auth/org/:slug" element={<OrgRegister />} />
         <Route path="/register" element={<Register />} />
@@ -123,8 +160,8 @@ function AppRoutes() {
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="/" element={<HomePage />} />
         <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'team_leader']}><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
-        <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'creator']}><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
-        <Route path="/content" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Content /></MainLayout></ProtectedRoute>} />
+        <Route path="/board" element={<ProtectedRoute allowNoRoles><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
+        <Route path="/content" element={<ProtectedRoute allowNoRoles><MainLayout><Content /></MainLayout></ProtectedRoute>} />
         <Route path="/creators" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Creators /></MainLayout></ProtectedRoute>} />
         <Route path="/scripts" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'strategist']}><MainLayout><Scripts /></MainLayout></ProtectedRoute>} />
         <Route path="/clients" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Clients /></MainLayout></ProtectedRoute>} />

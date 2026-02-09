@@ -38,7 +38,7 @@ const NETWORKS = [
   { id: 'facebook' as SocialNetwork, name: 'Facebook', color: 'bg-blue-600' },
   { id: 'linkedin' as SocialNetwork, name: 'LinkedIn', color: 'bg-blue-700' },
   { id: 'whatsapp' as SocialNetwork, name: 'WhatsApp', color: 'bg-green-500' },
-  { id: 'kreoon' as SocialNetwork, name: 'Kreoon Social', color: 'bg-purple-600' },
+  { id: 'kreoon' as SocialNetwork, name: 'Marketplace', color: 'bg-purple-600' },
 ];
 
 export function useSocialShare(): UseSocialShareReturn {
@@ -85,7 +85,7 @@ export function useSocialShare(): UseSocialShareReturn {
     clientId?: string
   ) => {
     if (!user?.id) {
-      toast.error('Debes iniciar sesión para compartir en Kreoon Social');
+      toast.error('Debes iniciar sesión para publicar en el Marketplace');
       return;
     }
 
@@ -125,8 +125,8 @@ export function useSocialShare(): UseSocialShareReturn {
             supabase.from('notifications').insert({
               user_id: contentData.creator_id,
               type: 'content_shared',
-              title: 'Contenido compartido en Kreoon Social',
-              message: `Tu contenido "${contentTitle}" ha sido compartido como colaborativo`,
+              title: 'Contenido publicado en Marketplace',
+              message: `Tu contenido "${contentTitle}" ha sido publicado en el marketplace`,
               data: { content_id: contentId, is_collaborative: settings.isCollaborative },
               is_read: false
             })
@@ -147,8 +147,8 @@ export function useSocialShare(): UseSocialShareReturn {
                   supabase.from('notifications').insert({
                     user_id: cu.user_id,
                     type: 'content_shared',
-                    title: 'Nuevo contenido colaborativo',
-                    message: `El contenido "${contentTitle}" está disponible en tu portafolio colaborativo`,
+                    title: 'Nuevo contenido publicado',
+                    message: `El contenido "${contentTitle}" ha sido publicado en el marketplace`,
                     data: { content_id: contentId, is_collaborative: settings.isCollaborative },
                     is_read: false
                   })
@@ -164,12 +164,12 @@ export function useSocialShare(): UseSocialShareReturn {
 
       toast.success(
         settings.shareOnKreoon
-          ? 'Contenido compartido en Kreoon Social'
-          : 'Contenido removido de Kreoon Social'
+          ? 'Contenido publicado en Marketplace'
+          : 'Contenido removido del Marketplace'
       );
     } catch (error) {
       console.error('[useSocialShare] Error sharing to Kreoon:', error);
-      toast.error('Error al compartir en Kreoon Social');
+      toast.error('Error al publicar en Marketplace');
     } finally {
       setIsSharing(false);
     }

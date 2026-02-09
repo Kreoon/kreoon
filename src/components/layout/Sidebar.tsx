@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
-import { 
-  LayoutDashboard, 
-  Users, 
-  FileText, 
-  Building2, 
+import {
+  LayoutDashboard,
+  Users,
+  FileText,
+  Building2,
   Settings,
   Sparkles,
   ChevronLeft,
@@ -14,9 +14,18 @@ import {
   RefreshCw,
   Trophy,
   Eye,
-  Globe,
   Video,
-  TrendingUp
+  TrendingUp,
+  Megaphone,
+  Wallet,
+  Store,
+  Play,
+  Bookmark,
+  UserCircle,
+  Search,
+  UserPlus,
+  MessageSquare,
+  ListChecks,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -24,6 +33,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
+import { useOrgMarketplace } from "@/hooks/useOrgMarketplace";
 import { ClientSelectorDialog } from "@/components/clients/ClientSelectorDialog";
 import { RootOrgSwitcher } from "@/components/layout/RootOrgSwitcher";
 import { RoleSwitcher } from "@/components/layout/RoleSwitcher";
@@ -112,6 +122,7 @@ const editorSections: NavSection[] = [
     items: [
       { name: "Editor Hub", href: "/editor-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
+      { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
     ]
   },
@@ -129,6 +140,7 @@ const creatorSections: NavSection[] = [
     items: [
       { name: "Creator Hub", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
+      { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
     ]
   },
@@ -146,6 +158,7 @@ const clientSections: NavSection[] = [
     items: [
       { name: "Client Portal", href: "/client-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
       { name: "Producciones", href: "/client-board", icon: Kanban, tourId: "sidebar-board" },
+      { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
     ]
   },
   {
@@ -155,6 +168,41 @@ const clientSections: NavSection[] = [
     ]
   }
 ];
+
+// Marketplace navigation sections — available to ALL users
+function getMarketplaceSections(activeRole: string | null): NavSection[] {
+  const items: NavItem[] = [
+    { name: "Marketplace", href: "/marketplace", icon: Store, tourId: "sidebar-mkt-browse" },
+    { name: "Videos", href: "/marketplace/videos", icon: Play, tourId: "sidebar-mkt-videos" },
+    { name: "Mi Perfil", href: "/marketplace/profile/setup", icon: UserCircle, tourId: "sidebar-mkt-profile" },
+  ];
+
+  // Campaign items — feed is always visible (except editor), "my campaigns" for brand roles
+  if (activeRole !== 'editor') {
+    items.push({ name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone, tourId: "sidebar-mkt-campaigns" });
+  }
+  if (activeRole === 'client' || activeRole === 'admin' || activeRole === 'strategist') {
+    items.push({ name: "Mis Campañas", href: "/marketplace/my-campaigns", icon: Megaphone, tourId: "sidebar-mkt-my-campaigns" });
+  }
+
+  items.push({ name: "Wallet", href: "/wallet", icon: Wallet, tourId: "sidebar-mkt-wallet" });
+
+  const savedItems: NavItem[] = [
+    { name: "Guardados", href: "/marketplace/guardados", icon: Bookmark, tourId: "sidebar-mkt-saved" },
+    { name: "Listas de Talento", href: "/marketplace/talent-lists", icon: ListChecks, tourId: "sidebar-mkt-talent-lists" },
+    { name: "Invitaciones", href: "/marketplace/invitations", icon: UserPlus, tourId: "sidebar-mkt-invitations" },
+  ];
+
+  // Inquiries only for admin/strategist
+  if (activeRole === 'admin' || activeRole === 'strategist') {
+    savedItems.push({ name: "Consultas", href: "/marketplace/inquiries", icon: MessageSquare, tourId: "sidebar-mkt-inquiries" });
+  }
+
+  return [
+    { label: "KREOON MARKETPLACE", items },
+    { label: "GESTIÓN TALENTO", items: savedItems },
+  ];
+}
 
 interface SidebarProps {
   collapsed: boolean;
@@ -167,6 +215,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const { signOut, profile, user, activeRole, roles: realRoles } = useAuth();
   const { isImpersonating, effectiveRoles, isRootAdmin, impersonationTarget } = useImpersonation();
   const { isPlatformRoot, currentOrgName } = useOrgOwner();
+  const { marketplaceEnabled } = useOrgMarketplace();
   const [showClientSelector, setShowClientSelector] = useState(false);
   const [currentClientName, setCurrentClientName] = useState<string | null>(null);
   const [clientCount, setClientCount] = useState(0);
@@ -199,14 +248,14 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         setClientCount(totalClients);
 
         const savedClientId = localStorage.getItem('selectedClientId');
-        
+
         if (savedClientId) {
           const { data } = await supabase
             .from('clients')
             .select('name')
             .eq('id', savedClientId)
             .maybeSingle();
-          
+
           if (data) {
             setCurrentClientName(data.name);
             return;
@@ -223,6 +272,37 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
 
           if (client) {
             setCurrentClientName(client.name);
+            return;
+          }
+        }
+
+        // Fallback: check brand_members for independent brands
+        if (totalClients === 0) {
+          const { data: brandMembers } = await (supabase as any)
+            .from('brand_members')
+            .select('brand_id')
+            .eq('user_id', user.id)
+            .eq('status', 'active');
+
+          if (brandMembers && brandMembers.length > 0) {
+            // Get active brand from profile or first brand
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('active_brand_id')
+              .eq('id', user.id)
+              .maybeSingle();
+
+            const activeBrandId = (profileData as any)?.active_brand_id || brandMembers[0].brand_id;
+            const { data: brand } = await (supabase as any)
+              .from('brands')
+              .select('name')
+              .eq('id', activeBrandId)
+              .maybeSingle();
+
+            if (brand) {
+              setCurrentClientName(brand.name);
+              setClientCount(brandMembers.length);
+            }
           }
         }
       };
@@ -246,19 +326,47 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       : adminSections;
 
     // Filter items within sections
-    return baseSections.map(section => ({
+    const filtered = baseSections.map(section => ({
       ...section,
       items: section.items.filter(item => {
-        // For org owners (not platform root), filter out platformRootOnly items
         if (!isPlatformRoot && item.platformRootOnly) return false;
-        
-        // For platform root without org selected, hide org-specific modules
         if (isPlatformRoot && !profile?.current_organization_id && item.requiresOrg) return false;
-        
+        // Hide marketplace link from role sections when org has it disabled
+        if (!marketplaceEnabled && item.href === '/marketplace') return false;
         return true;
       })
-    })).filter(section => section.items.length > 0); // Remove empty sections
-  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, profile?.current_organization_id]);
+    })).filter(section => section.items.length > 0);
+
+    // Determine active role string for marketplace sections
+    const roleStr = activeIsAdmin ? 'admin'
+      : activeIsStrategist ? 'strategist'
+      : activeIsEditor ? 'editor'
+      : activeIsCreator ? 'creator'
+      : activeIsClient ? 'client'
+      : null;
+
+    const mktSections = marketplaceEnabled ? getMarketplaceSections(roleStr) : [];
+
+    // "Buscar Talento" section - ALWAYS visible for recruitment, even when marketplace is disabled
+    const recruitSection: NavSection = {
+      label: "RECLUTAMIENTO",
+      items: [
+        { name: "Buscar Talento", href: "/marketplace", icon: Search, tourId: "sidebar-recruit" },
+      ],
+    };
+
+    // Extract CONFIG section, insert marketplace before it
+    const configSection = filtered.find(s => s.label === 'CONFIG');
+    const nonConfigSections = filtered.filter(s => s.label !== 'CONFIG');
+
+    return [
+      ...nonConfigSections,
+      ...mktSections,
+      // Only add recruit section when marketplace is disabled (when enabled, /marketplace is already in mktSections)
+      ...(!marketplaceEnabled ? [recruitSection] : []),
+      ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" }] }]),
+    ];
+  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, profile?.current_organization_id, marketplaceEnabled]);
 
   const userId = user?.id || '';
 
@@ -339,7 +447,15 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
                   const href = item.isDynamic && typeof item.href === 'function' 
                     ? item.href(userId) 
                     : item.href as string;
-                  const isActive = location.pathname === href;
+                  const hrefPath = href.split('?')[0];
+                  const hrefSearch = href.includes('?') ? href.slice(href.indexOf('?')) : '';
+                  const isActive = href === '/marketplace'
+                    ? location.pathname === '/marketplace'
+                    : (hrefPath.startsWith('/marketplace/') || href === '/wallet')
+                    ? location.pathname.startsWith(hrefPath)
+                    : hrefSearch
+                    ? location.pathname === hrefPath && location.search === hrefSearch
+                    : location.pathname === href;
                   return (
                     <NavLink
                       key={item.name}

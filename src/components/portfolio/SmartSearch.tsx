@@ -198,7 +198,7 @@ export function SmartSearch({
     if (onSelectContent) {
       onSelectContent(contentId);
     } else {
-      navigate(`/social?v=${contentId}`);
+      navigate(`/marketplace?v=${contentId}`);
     }
   };
 

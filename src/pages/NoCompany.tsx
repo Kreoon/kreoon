@@ -1,73 +1,32 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 import {
-  Briefcase,
-  Clock,
-  CheckCircle,
-  Circle,
-  Lightbulb,
+  Building2,
   Users,
-  UserCircle,
   ArrowRight,
+  Rocket,
+  Link2,
+  Sparkles,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
+import { useBrand } from "@/hooks/useBrand";
 import { StatusPageLayout } from "@/components/status/StatusPageLayout";
 import { StatusCard } from "@/components/status/StatusCard";
 import { KreoonButton } from "@/components/ui/kreoon";
-
-type TimelineStatus = "completed" | "current" | "pending";
-
-interface TimelineItemProps {
-  status: TimelineStatus;
-  title: string;
-  description: string;
-}
-
-function TimelineItem({ status, title, description }: TimelineItemProps) {
-  return (
-    <div className="relative flex items-start gap-3">
-      {/* Línea conectora (no mostrar en el último) */}
-      <div className="absolute left-[11px] top-6 -z-10 h-full w-0.5 bg-kreoon-border" />
-
-      <div
-        className={cn(
-          "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-          status === "current" && "ring-4 ring-kreoon-purple-500/20",
-        )}
-      >
-        {status === "completed" ? (
-          <CheckCircle className="h-6 w-6 text-green-500" />
-        ) : status === "current" ? (
-          <div className="h-3 w-3 animate-pulse rounded-full bg-kreoon-purple-500" />
-        ) : (
-          <Circle className="h-6 w-6 text-kreoon-text-muted" />
-        )}
-      </div>
-
-      <div>
-        <p
-          className={cn(
-            "font-medium",
-            status === "pending" ? "text-kreoon-text-muted" : "text-white",
-          )}
-        >
-          {title}
-        </p>
-        <p className="text-sm text-kreoon-text-secondary">{description}</p>
-      </div>
-    </div>
-  );
-}
+import { CreateBrandDialog } from "@/components/brands/CreateBrandDialog";
+import { JoinBrandDialog } from "@/components/brands/JoinBrandDialog";
 
 export default function NoCompany() {
   const navigate = useNavigate();
   const { user, signOut, roles, rolesLoaded, loading } = useAuth();
   const { isPlatformRoot, currentOrgId, loading: orgLoading } = useOrgOwner();
+  const { hasBrand, isLoading: brandLoading } = useBrand();
+
+  const [showCreate, setShowCreate] = useState(false);
+  const [showJoin, setShowJoin] = useState(false);
 
   useEffect(() => {
-    // Si el usuario no es cliente (ej. rol removido), redirigir según rol y permisos.
     if (loading || !rolesLoaded || orgLoading) return;
     if (!user) return;
 
@@ -81,16 +40,12 @@ export default function NoCompany() {
         navigate("/dashboard", { replace: true });
       }
     }
-  }, [
-    loading,
-    rolesLoaded,
-    orgLoading,
-    user,
-    roles,
-    isPlatformRoot,
-    currentOrgId,
-    navigate,
-  ]);
+  }, [loading, rolesLoaded, orgLoading, user, roles, isPlatformRoot, currentOrgId, navigate]);
+
+  // If user already has a brand, redirect to dashboard
+  if (!brandLoading && hasBrand) {
+    return <Navigate to="/client-dashboard" replace />;
+  }
 
   const handleSignOut = async () => {
     await signOut();
@@ -100,100 +55,80 @@ export default function NoCompany() {
   return (
     <StatusPageLayout
       variant="pending"
-      icon={<Briefcase className="h-12 w-12" />}
-      title="¡Ya casi estás listo!"
-      subtitle="Tu cuenta está activa, solo falta un paso más"
+      icon={<Building2 className="h-12 w-12" />}
+      title="Bienvenido a KREOON"
+      subtitle="Crea o unete a una marca para comenzar"
       userInfo={{
         name: user?.user_metadata?.full_name ?? undefined,
         email: user?.email ?? undefined,
       }}
       backgroundOrbs
     >
-      {/* Explicación del estado */}
-      <StatusCard variant="glass" className="mb-6">
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-500/20">
-            <Clock className="h-6 w-6 text-amber-500" />
-          </div>
-          <div>
-            <p className="mb-1 font-medium text-white">
-              Asignación de empresa pendiente
-            </p>
-            <p className="text-sm text-kreoon-text-secondary">
-              Un administrador de tu organización te asignará a una empresa
-              pronto. Recibirás una notificación cuando esté listo.
-            </p>
-          </div>
-        </div>
-      </StatusCard>
+      {/* Main action cards */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <button type="button" onClick={() => setShowCreate(true)} className="text-left">
+          <StatusCard variant="glass" className="cursor-pointer hover:ring-2 hover:ring-kreoon-purple-500/40 transition-all h-full">
+            <div className="flex flex-col items-center gap-3 py-4 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-kreoon-purple-500/20">
+                <Rocket className="h-7 w-7 text-kreoon-purple-400" />
+              </div>
+              <div>
+                <p className="font-semibold text-white text-lg">Crear mi marca</p>
+                <p className="text-sm text-kreoon-text-secondary mt-1">
+                  Registra tu empresa y comienza a buscar talento creativo
+                </p>
+              </div>
+            </div>
+          </StatusCard>
+        </button>
 
-      {/* Timeline visual del proceso */}
-      <StatusCard title="Estado de tu cuenta">
-        <div className="space-y-4">
-          <TimelineItem
-            status="completed"
-            title="Cuenta creada"
-            description="Tu registro fue exitoso"
-          />
-          <TimelineItem
-            status="completed"
-            title="Email verificado"
-            description="Tu identidad está confirmada"
-          />
-          <TimelineItem
-            status="current"
-            title="Asignación de empresa"
-            description="En proceso..."
-          />
-          <TimelineItem
-            status="pending"
-            title="Acceso completo"
-            description="Podrás gestionar campañas y contenido"
-          />
-        </div>
-      </StatusCard>
+        <button type="button" onClick={() => setShowJoin(true)} className="text-left">
+          <StatusCard variant="glass" className="cursor-pointer hover:ring-2 hover:ring-kreoon-purple-500/40 transition-all h-full">
+            <div className="flex flex-col items-center gap-3 py-4 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-500/20">
+                <Link2 className="h-7 w-7 text-blue-400" />
+              </div>
+              <div>
+                <p className="font-semibold text-white text-lg">Unirme a una marca</p>
+                <p className="text-sm text-kreoon-text-secondary mt-1">
+                  Busca una marca existente o usa un codigo de invitacion
+                </p>
+              </div>
+            </div>
+          </StatusCard>
+        </button>
+      </div>
 
-      {/* Mientras tanto... */}
+      {/* Explore community */}
       <StatusCard
         title="Mientras tanto, puedes:"
-        icon={<Lightbulb className="h-5 w-5 text-amber-500" />}
-        className="mt-4"
+        icon={<Sparkles className="h-5 w-5 text-amber-500" />}
+        className="mt-6"
       >
-        <ul className="space-y-3">
-          <li>
-            <button
-              type="button"
-              onClick={() => navigate("/social")}
-              className="flex items-center gap-2 text-kreoon-purple-400 transition-colors hover:text-kreoon-purple-300"
-            >
-              <Users className="h-4 w-4" />
-              Explorar la comunidad de creadores
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </li>
-          <li>
-            <button
-              type="button"
-              onClick={() => navigate("/profile")}
-              className="flex items-center gap-2 text-kreoon-purple-400 transition-colors hover:text-kreoon-purple-300"
-            >
-              <UserCircle className="h-4 w-4" />
-              Completar tu perfil
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </li>
-        </ul>
+        <button
+          type="button"
+          onClick={() => navigate("/marketplace")}
+          className="flex items-center gap-2 text-kreoon-purple-400 transition-colors hover:text-kreoon-purple-300"
+        >
+          <Users className="h-4 w-4" />
+          Explorar la comunidad de creadores
+          <ArrowRight className="h-4 w-4" />
+        </button>
       </StatusCard>
 
-      {/* Acciones */}
+      {/* Actions */}
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-        <KreoonButton variant="primary" onClick={() => navigate("/social")}>
-          Explorar la comunidad
+        <KreoonButton variant="primary" onClick={() => setShowCreate(true)}>
+          Crear mi marca
         </KreoonButton>
         <KreoonButton variant="outline" onClick={handleSignOut}>
-          Cerrar sesión
+          Cerrar sesion
         </KreoonButton>
       </div>
+
+      {/* Dialogs */}
+      <CreateBrandDialog open={showCreate} onOpenChange={setShowCreate} />
+      <JoinBrandDialog open={showJoin} onOpenChange={setShowJoin} />
     </StatusPageLayout>
   );
 }

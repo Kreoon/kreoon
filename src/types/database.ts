@@ -47,6 +47,7 @@ export interface Profile {
   current_organization_id: string | null;
   organization_status?: string;
   active_role?: AppRole | string | null;
+  active_brand_id?: string | null;
   created_at: string;
   updated_at: string;
 }

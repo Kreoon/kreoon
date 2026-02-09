@@ -35,6 +35,8 @@ import {
   BUDGET_RANGE_LABELS,
 } from '@/types/ai-matching';
 import { SERVICE_TYPE_LABELS } from '@/types/marketplace';
+import { MarketplaceRoleSelector } from './roles/MarketplaceRoleSelector';
+import type { MarketplaceRoleId } from './types/marketplace';
 
 interface CreatorOnboardingProps {
   onComplete?: () => void;
@@ -46,7 +48,7 @@ type Step = 'basics' | 'expertise' | 'services' | 'availability' | 'complete';
 
 const STEPS: { id: Step; title: string; icon: React.ElementType }[] = [
   { id: 'basics', title: 'Perfil', icon: User },
-  { id: 'expertise', title: 'Expertise', icon: Briefcase },
+  { id: 'expertise', title: 'Especialización', icon: Briefcase },
   { id: 'services', title: 'Servicios', icon: Star },
   { id: 'availability', title: 'Disponibilidad', icon: Calendar },
   { id: 'complete', title: 'Listo', icon: Check },
@@ -94,6 +96,7 @@ export function CreatorOnboarding({
     expertise_tags: [] as string[],
     years_experience: 0,
     content_styles: [] as ContentStyle[],
+    marketplace_roles: [] as MarketplaceRoleId[],
     platforms: [] as string[],
     min_budget: '' as BudgetRange | '',
     preferred_project_duration: '',
@@ -356,7 +359,7 @@ export function CreatorOnboarding({
                   <Briefcase className="h-8 w-8 text-social-accent" />
                 </div>
                 <h2 className="text-xl font-semibold text-social-foreground">
-                  Tu área de expertise
+                  Tu área de especialización
                 </h2>
                 <p className="text-social-muted-foreground mt-2">
                   Define en qué industrias y estilos te especializas
@@ -435,6 +438,15 @@ export function CreatorOnboarding({
                   )}
                 </div>
               )}
+
+              {/* Marketplace roles */}
+              <MarketplaceRoleSelector
+                selectedRoles={formData.marketplace_roles}
+                onChange={(roles: MarketplaceRoleId[]) => updateField('marketplace_roles', roles)}
+                maxRoles={5}
+                showCategories
+                label="Tus Roles en el Marketplace"
+              />
 
               {/* Content styles */}
               <div className="space-y-3">
