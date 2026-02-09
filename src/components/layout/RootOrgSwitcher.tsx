@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 interface Organization {
@@ -24,6 +26,8 @@ interface Organization {
 export function RootOrgSwitcher() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [open, setOpen] = useState(false);
@@ -123,9 +127,11 @@ export function RootOrgSwitcher() {
       setCurrentOrg(org);
       localStorage.setItem('currentOrganizationId', org.id);
       setOpen(false);
-      
-      // Reload to apply org context
-      window.location.reload();
+
+      // Refresh auth context and invalidate all cached queries instead of hard reload
+      await supabase.auth.refreshSession();
+      await queryClient.invalidateQueries();
+      navigate('/dashboard', { replace: true });
     } catch (error) {
       console.error('Error switching organization:', error);
       toast({

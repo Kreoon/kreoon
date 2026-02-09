@@ -376,10 +376,14 @@ export default function Dashboard() {
   const [activeCreators, setActiveCreators] = useState<(Profile & { content_count?: number; total_payment?: number })[]>([]);
   const [activeEditors, setActiveEditors] = useState<(Profile & { content_count?: number; total_payment?: number })[]>([]);
 
-  // Load filters and data - wait for org context
+  // Raw DB data loaded once per org (not on every content change)
+  const [rawClientsList, setRawClientsList] = useState<any[]>([]);
+  const [rawPackagesData, setRawPackagesData] = useState<any[]>([]);
+
+  // Load filters and DB data - only when org or date filters change (NOT on content change)
   useEffect(() => {
     if (orgLoading) return;
-    
+
     // Reset data when no org is selected
     if (!currentOrgId) {
       setClients([]);
@@ -392,319 +396,195 @@ export default function Dashboard() {
       setCurrentGoal(null);
       setAllGoals([]);
       setMonthlyActuals([]);
-      setClientsBilling({ 
+      setRawClientsList([]);
+      setRawPackagesData([]);
+      setClientsBilling({
         totalBilled: 0, totalPending: 0, totalPaid: 0, contentOwed: 0,
         totalBilledUSD: 0, totalPendingUSD: 0, totalPaidUSD: 0,
         totalBilledCOP: 0, totalPendingCOP: 0, totalPaidCOP: 0
       });
       return;
     }
-    
+
     const fetchFiltersAndData = async () => {
-      // Get org member IDs for filtering creators/editors
-      let orgMemberIds: string[] = [];
-      if (currentOrgId) {
-        const { data: orgMembers } = await supabase
-          .from('organization_members')
-          .select('user_id')
-          .eq('organization_id', currentOrgId);
-        orgMemberIds = orgMembers?.map(m => m.user_id) || [];
-      }
+      // Run independent queries in parallel
+      const [creatorRolesRes, editorRolesRes, clientsRes, goalRes, allGoalsRes] = await Promise.all([
+        supabase.from('organization_member_roles').select('user_id').eq('organization_id', currentOrgId).eq('role', 'creator'),
+        supabase.from('organization_member_roles').select('user_id').eq('organization_id', currentOrgId).eq('role', 'editor'),
+        supabase.from('clients').select('*').eq('organization_id', currentOrgId),
+        supabase.from('goals').select('*').eq('period_type', 'month').eq('period_value', new Date().getMonth() + 1).in('year', [new Date().getFullYear(), new Date().getFullYear() + 1]).order('year', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('goals').select('*').in('year', [new Date().getFullYear(), new Date().getFullYear() + 1]).eq('period_type', 'month'),
+      ]);
 
-      // Fetch creators from organization_member_roles
-      if (currentOrgId) {
-        const { data: creatorRoles } = await supabase
-          .from('organization_member_roles')
-          .select('user_id')
-          .eq('organization_id', currentOrgId)
-          .eq('role', 'creator');
-        
-        if (creatorRoles?.length) {
-          const { data: creatorProfiles } = await supabase
-            .from('profiles')
-            .select('id, full_name')
-            .in('id', creatorRoles.map(r => r.user_id));
-          setCreators(creatorProfiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
-        } else {
-          setCreators([]);
-        }
+      // Fetch creator/editor profiles in parallel
+      const creatorIds = creatorRolesRes.data?.map(r => r.user_id) || [];
+      const editorIds = editorRolesRes.data?.map(r => r.user_id) || [];
 
-        const { data: editorRoles } = await supabase
-          .from('organization_member_roles')
-          .select('user_id')
-          .eq('organization_id', currentOrgId)
-          .eq('role', 'editor');
-        
-        if (editorRoles?.length) {
-          const { data: editorProfiles } = await supabase
-            .from('profiles')
-            .select('id, full_name')
-            .in('id', editorRoles.map(r => r.user_id));
-          setEditors(editorProfiles?.map(p => ({ id: p.id, name: p.full_name })) || []);
-        } else {
-          setEditors([]);
-        }
-      } else {
-        setCreators([]);
-        setEditors([]);
-      }
+      const [creatorProfilesRes, editorProfilesRes] = await Promise.all([
+        creatorIds.length > 0 ? supabase.from('profiles').select('id, full_name').in('id', creatorIds) : { data: [] },
+        editorIds.length > 0 ? supabase.from('profiles').select('id, full_name').in('id', editorIds) : { data: [] },
+      ]);
 
-      // Fetch clients - filter by org
-      let clientsQuery = supabase.from('clients').select('*');
-      if (currentOrgId) {
-        clientsQuery = clientsQuery.eq('organization_id', currentOrgId);
-      }
-      const { data: clientsList } = await clientsQuery;
-      setClients(clientsList?.map(c => ({ id: c.id, name: c.name })) || []);
+      setCreators(creatorProfilesRes.data?.map(p => ({ id: p.id, name: p.full_name })) || []);
+      setEditors(editorProfilesRes.data?.map(p => ({ id: p.id, name: p.full_name })) || []);
 
-      // Fetch packages (do NOT embed clients). The external DB may not expose FK metadata
-      // for PostgREST embedding, which causes a 400 and zeroes all finance KPIs.
-      // We'll attach client info locally from the already-fetched clientsList.
-      // Get client IDs for this org first
-      const orgClientIds = clientsList?.map(c => c.id) || [];
-      
-      // Only fetch packages if there are clients in this org
+      const clientsList = clientsRes.data || [];
+      setClients(clientsList.map(c => ({ id: c.id, name: c.name })));
+      setRawClientsList(clientsList);
+
+      // Fetch packages for org clients
+      const orgClientIds = clientsList.map(c => c.id);
       let packagesData: any[] = [];
       if (orgClientIds.length > 0) {
-        const { data } = await supabase
-          .from('client_packages')
-          .select('*')
-          .eq('is_active', true)
-          .in('client_id', orgClientIds);
+        const { data } = await supabase.from('client_packages').select('*').eq('is_active', true).in('client_id', orgClientIds);
         packagesData = data || [];
       }
+      setRawPackagesData(packagesData);
 
-      if (packagesData) {
-        const clientById = new Map((clientsList || []).map(c => [c.id, c]));
-        const mappedPackages = packagesData.map(p => ({
-          ...p,
-          client: (clientById.get(p.client_id) as Client | undefined)
-        })) as (ClientPackage & { client?: Client })[];
-        
-        // Filter packages by date range (created_at for "vendido")
-        const filteredPackagesByCreated = mappedPackages.filter(p => {
-          const packageDate = p.created_at ? new Date(p.created_at) : null;
-          if (startDateFilter && packageDate && packageDate < startDateFilter) return false;
-          if (endDateFilter && packageDate && packageDate > endDateFilter) return false;
-          return true;
-        });
-        
-        // Filter packages by paid_at for "Recaudado" (what was actually collected in this period)
-        const filteredPackagesByPaid = mappedPackages.filter(p => {
-          const paidDate = p.paid_at ? new Date(p.paid_at) : null;
-          if (!paidDate) return false; // Only count packages that have been paid
-          if (startDateFilter && paidDate < startDateFilter) return false;
-          if (endDateFilter && paidDate > endDateFilter) return false;
-          return true;
-        });
-        
-        setPackages(filteredPackagesByCreated);
-
-        // Calculate billing - separated by currency
-        // "Facturado" = total_value of packages created in period
-        // "Recaudado" = paid_amount of packages paid in period
-        // "Por Cobrar" = pending from packages created in period
-        
-        // COP - Facturado (created in period)
-        const copPackagesCreated = filteredPackagesByCreated.filter(p => (p as any).currency === 'COP' || !(p as any).currency);
-        const totalBilledCOP = copPackagesCreated.reduce((sum, p) => sum + (p.total_value || 0), 0);
-        const totalPendingCOP = copPackagesCreated.reduce((sum, p) => sum + ((p.total_value || 0) - (p.paid_amount || 0)), 0);
-        
-        // COP - Recaudado (paid in period)
-        const copPackagesPaid = filteredPackagesByPaid.filter(p => (p as any).currency === 'COP' || !(p as any).currency);
-        const totalPaidCOP = copPackagesPaid.reduce((sum, p) => sum + (p.paid_amount || 0), 0);
-        
-        // USD - Facturado (created in period)
-        const usdPackagesCreated = filteredPackagesByCreated.filter(p => (p as any).currency === 'USD');
-        const totalBilledUSD = usdPackagesCreated.reduce((sum, p) => sum + (p.total_value || 0), 0);
-        const totalPendingUSD = usdPackagesCreated.reduce((sum, p) => sum + ((p.total_value || 0) - (p.paid_amount || 0)), 0);
-        
-        // USD - Recaudado (paid in period)
-        const usdPackagesPaid = filteredPackagesByPaid.filter(p => (p as any).currency === 'USD');
-        const totalPaidUSD = usdPackagesPaid.reduce((sum, p) => sum + (p.paid_amount || 0), 0);
-
-        // Total for backward compatibility
-        const totalBilled = totalBilledCOP + totalBilledUSD;
-        const totalPaid = totalPaidCOP + totalPaidUSD;
-        const totalPending = totalPendingCOP + totalPendingUSD;
-        
-        // Content owed = total content promised in filtered packages - delivered/approved content in range
-        const totalContentPromised = filteredPackagesByCreated.reduce((sum, p) => sum + (p.content_quantity || 0), 0);
-        const deliveredContent = content.filter(c => ['approved', 'delivered'].includes(c.status)).length;
-        const contentOwed = Math.max(0, totalContentPromised - deliveredContent);
-
-        setClientsBilling({ 
-          totalBilled, totalPending, totalPaid, contentOwed,
-          totalBilledUSD, totalPendingUSD, totalPaidUSD,
-          totalBilledCOP, totalPendingCOP, totalPaidCOP
-        });
-        
-        // Filter active clients by date range
-        const filteredClients = (clientsList || []).filter(c => {
-          const clientDate = c.created_at ? new Date(c.created_at) : null;
-          if (startDateFilter && clientDate && clientDate < startDateFilter) return false;
-          if (endDateFilter && clientDate && clientDate > endDateFilter) return false;
-          return true;
-        });
-        setActiveClients(filteredClients as Client[]);
-      }
-
-      // Determine which year(s) to query based on date filters or current/next year
-      const currentMonth = new Date().getMonth() + 1;
-      const currentYear = new Date().getFullYear();
-      const filterYear = startDateFilter ? startDateFilter.getFullYear() : 
-                         endDateFilter ? endDateFilter.getFullYear() : 
-                         currentYear;
-      
-      // Fetch current month/quarter goal - check both current year and filter year
-      // NOTE: Do NOT client-filter by organization_id; rely on RLS to scope rows.
-      let goalQuery = supabase
-        .from('goals')
-        .select('*')
-        .eq('period_type', 'month')
-        .eq('period_value', currentMonth)
-        .in('year', [currentYear, currentYear + 1, filterYear])
-        .order('year', { ascending: false })
-        .limit(1);
-      
-      const { data: goalData } = await goalQuery.maybeSingle();
-
-      if (goalData) {
+      // Goals
+      if (goalRes.data) {
         setCurrentGoal({
-          revenue_goal: goalData.revenue_goal || 0,
-          content_goal: goalData.content_goal || 0,
-          new_clients_goal: goalData.new_clients_goal || 0
+          revenue_goal: goalRes.data.revenue_goal || 0,
+          content_goal: goalRes.data.content_goal || 0,
+          new_clients_goal: goalRes.data.new_clients_goal || 0
         });
       }
-
-      // Fetch all goals for chart - include current year, next year, and filter year
-      const yearsToFetch = [...new Set([currentYear, currentYear + 1, filterYear])];
-      let allGoalsQuery = supabase
-        .from('goals')
-        .select('*')
-        .in('year', yearsToFetch)
-        .eq('period_type', 'month');
-      
-      const { data: allGoalsData } = await allGoalsQuery;
-      
-      setAllGoals(allGoalsData || []);
-
-      // Calculate monthly actuals for each year that has goals
-      const monthlyData: any[] = [];
-      const yearsWithGoals = [...new Set((allGoalsData || []).map(g => g.year))];
-      
-      for (const year of yearsWithGoals) {
-        for (let month = 1; month <= 12; month++) {
-          const monthStart = new Date(year, month - 1, 1);
-          const monthEnd = endOfMonth(monthStart);
-          
-          // Revenue from packages paid in this month - separated by currency
-          const monthPackages = packagesData?.filter(p => {
-            const paidDate = p.paid_at ? new Date(p.paid_at) : null;
-            return paidDate && paidDate >= monthStart && paidDate <= monthEnd;
-          }) || [];
-          
-          const monthRevenueCOP = monthPackages
-            .filter(p => (p as any).currency !== 'USD')
-            .reduce((sum, p) => sum + (p.paid_amount || 0), 0);
-          
-          const monthRevenueUSD = monthPackages
-            .filter(p => (p as any).currency === 'USD')
-            .reduce((sum, p) => sum + (p.paid_amount || 0), 0);
-
-          // Content completed in this month
-          const monthContent = allContent.filter(c => {
-            const approvedDate = c.approved_at ? new Date(c.approved_at) : null;
-            return approvedDate && approvedDate >= monthStart && approvedDate <= monthEnd;
-          }).length;
-
-          // Clients created in this month
-          const monthClients = clientsList?.filter(c => {
-            const createdDate = c.created_at ? new Date(c.created_at) : null;
-            return createdDate && createdDate >= monthStart && createdDate <= monthEnd;
-          }).length || 0;
-
-          monthlyData.push({
-            month,
-            year,
-            revenue: monthRevenueCOP + monthRevenueUSD,
-            revenueCOP: monthRevenueCOP,
-            revenueUSD: monthRevenueUSD,
-            content: monthContent,
-            clients: monthClients
-          });
-        }
-      }
-      
-      // Also add current year if no goals exist yet
-      if (yearsWithGoals.length === 0) {
-        for (let month = 1; month <= 12; month++) {
-          monthlyData.push({
-            month,
-            year: currentYear,
-            revenue: 0,
-            revenueCOP: 0,
-            revenueUSD: 0,
-            content: 0,
-            clients: 0
-          });
-        }
-      }
-      
-      setMonthlyActuals(monthlyData);
+      setAllGoals(allGoalsRes.data || []);
     };
 
     fetchFiltersAndData();
-  }, [allContent, startDateFilter, endDateFilter, currentOrgId]);
+  }, [currentOrgId, orgLoading]);
+
+  // Billing, packages, monthly actuals - derived from raw data + content + date filters
+  // This is pure computation, no DB queries
+  useMemo(() => {
+    if (!rawClientsList.length && !rawPackagesData.length) return;
+
+    const clientById = new Map(rawClientsList.map(c => [c.id, c]));
+    const mappedPackages = rawPackagesData.map(p => ({
+      ...p,
+      client: (clientById.get(p.client_id) as Client | undefined)
+    })) as (ClientPackage & { client?: Client })[];
+
+    // Filter packages by date range (created_at for "vendido")
+    const filteredPackagesByCreated = mappedPackages.filter(p => {
+      const packageDate = p.created_at ? new Date(p.created_at) : null;
+      if (startDateFilter && packageDate && packageDate < startDateFilter) return false;
+      if (endDateFilter && packageDate && packageDate > endDateFilter) return false;
+      return true;
+    });
+
+    // Filter packages by paid_at for "Recaudado"
+    const filteredPackagesByPaid = mappedPackages.filter(p => {
+      const paidDate = p.paid_at ? new Date(p.paid_at) : null;
+      if (!paidDate) return false;
+      if (startDateFilter && paidDate < startDateFilter) return false;
+      if (endDateFilter && paidDate > endDateFilter) return false;
+      return true;
+    });
+
+    setPackages(filteredPackagesByCreated);
+
+    // Calculate billing - separated by currency
+    const copPackagesCreated = filteredPackagesByCreated.filter(p => (p as any).currency === 'COP' || !(p as any).currency);
+    const totalBilledCOP = copPackagesCreated.reduce((sum, p) => sum + (p.total_value || 0), 0);
+    const totalPendingCOP = copPackagesCreated.reduce((sum, p) => sum + ((p.total_value || 0) - (p.paid_amount || 0)), 0);
+    const copPackagesPaid = filteredPackagesByPaid.filter(p => (p as any).currency === 'COP' || !(p as any).currency);
+    const totalPaidCOP = copPackagesPaid.reduce((sum, p) => sum + (p.paid_amount || 0), 0);
+    const usdPackagesCreated = filteredPackagesByCreated.filter(p => (p as any).currency === 'USD');
+    const totalBilledUSD = usdPackagesCreated.reduce((sum, p) => sum + (p.total_value || 0), 0);
+    const totalPendingUSD = usdPackagesCreated.reduce((sum, p) => sum + ((p.total_value || 0) - (p.paid_amount || 0)), 0);
+    const usdPackagesPaid = filteredPackagesByPaid.filter(p => (p as any).currency === 'USD');
+    const totalPaidUSD = usdPackagesPaid.reduce((sum, p) => sum + (p.paid_amount || 0), 0);
+    const totalBilled = totalBilledCOP + totalBilledUSD;
+    const totalPaid = totalPaidCOP + totalPaidUSD;
+    const totalPending = totalPendingCOP + totalPendingUSD;
+
+    const totalContentPromised = filteredPackagesByCreated.reduce((sum, p) => sum + (p.content_quantity || 0), 0);
+    const deliveredContent = content.filter(c => ['approved', 'delivered'].includes(c.status)).length;
+    const contentOwed = Math.max(0, totalContentPromised - deliveredContent);
+
+    setClientsBilling({
+      totalBilled, totalPending, totalPaid, contentOwed,
+      totalBilledUSD, totalPendingUSD, totalPaidUSD,
+      totalBilledCOP, totalPendingCOP, totalPaidCOP
+    });
+
+    // Filter active clients by date range
+    const filteredClients = rawClientsList.filter(c => {
+      const clientDate = c.created_at ? new Date(c.created_at) : null;
+      if (startDateFilter && clientDate && clientDate < startDateFilter) return false;
+      if (endDateFilter && clientDate && clientDate > endDateFilter) return false;
+      return true;
+    });
+    setActiveClients(filteredClients as Client[]);
+
+    // Monthly actuals for chart
+    const currentYear = new Date().getFullYear();
+    const yearsWithGoals = [...new Set((allGoals || []).map((g: any) => g.year))];
+    const monthlyData: any[] = [];
+
+    for (const year of yearsWithGoals) {
+      for (let month = 1; month <= 12; month++) {
+        const monthStart = new Date(year, month - 1, 1);
+        const monthEnd = endOfMonth(monthStart);
+
+        const monthPackages = rawPackagesData.filter(p => {
+          const paidDate = p.paid_at ? new Date(p.paid_at) : null;
+          return paidDate && paidDate >= monthStart && paidDate <= monthEnd;
+        });
+        const monthRevenueCOP = monthPackages.filter(p => (p as any).currency !== 'USD').reduce((sum: number, p: any) => sum + (p.paid_amount || 0), 0);
+        const monthRevenueUSD = monthPackages.filter(p => (p as any).currency === 'USD').reduce((sum: number, p: any) => sum + (p.paid_amount || 0), 0);
+        const monthContent = allContent.filter(c => {
+          const approvedDate = c.approved_at ? new Date(c.approved_at) : null;
+          return approvedDate && approvedDate >= monthStart && approvedDate <= monthEnd;
+        }).length;
+        const monthClients = rawClientsList.filter(c => {
+          const createdDate = c.created_at ? new Date(c.created_at) : null;
+          return createdDate && createdDate >= monthStart && createdDate <= monthEnd;
+        }).length;
+
+        monthlyData.push({ month, year, revenue: monthRevenueCOP + monthRevenueUSD, revenueCOP: monthRevenueCOP, revenueUSD: monthRevenueUSD, content: monthContent, clients: monthClients });
+      }
+    }
+
+    if (yearsWithGoals.length === 0) {
+      for (let month = 1; month <= 12; month++) {
+        monthlyData.push({ month, year: currentYear, revenue: 0, revenueCOP: 0, revenueUSD: 0, content: 0, clients: 0 });
+      }
+    }
+
+    setMonthlyActuals(monthlyData);
+  }, [rawClientsList, rawPackagesData, allContent, content, startDateFilter, endDateFilter, allGoals]);
 
   // Calculate active creators and editors with their stats
-  useEffect(() => {
-    const calculateActiveUsers = async () => {
-      // Get unique creator IDs from content
-      const creatorIds = [...new Set(content.map(c => c.creator_id).filter(Boolean))] as string[];
-      const editorIds = [...new Set(content.map(c => c.editor_id).filter(Boolean))] as string[];
+  // Uses profiles already fetched in useContent hook (creator/editor fields)
+  useMemo(() => {
+    // Build stats from content data directly (profiles are already embedded by useContent)
+    const creatorMap = new Map<string, { id: string; full_name: string; content_count: number; total_payment: number }>();
+    const editorMap = new Map<string, { id: string; full_name: string; content_count: number; total_payment: number }>();
 
-      if (creatorIds.length > 0) {
-        const { data: creatorProfiles } = await supabase
-          .from('profiles')
-          .select('*')
-          .in('id', creatorIds);
-
-        const creatorsWithStats = creatorProfiles?.map(p => {
-          const creatorContent = content.filter(c => c.creator_id === p.id);
-          return {
-            ...p,
-            content_count: creatorContent.length,
-            total_payment: creatorContent.reduce((sum, c) => sum + (c.creator_payment || 0), 0)
-          };
-        }) || [];
-
-        setActiveCreators(creatorsWithStats);
+    for (const c of content) {
+      if (c.creator_id && (c as any).creator?.full_name) {
+        const existing = creatorMap.get(c.creator_id) || { id: c.creator_id, full_name: (c as any).creator.full_name, content_count: 0, total_payment: 0 };
+        existing.content_count++;
+        existing.total_payment += (c.creator_payment || 0);
+        creatorMap.set(c.creator_id, existing);
       }
-
-      if (editorIds.length > 0) {
-        const { data: editorProfiles } = await supabase
-          .from('profiles')
-          .select('*')
-          .in('id', editorIds);
-
-        const editorsWithStats = editorProfiles?.map(p => {
-          const editorContent = content.filter(c => c.editor_id === p.id);
-          return {
-            ...p,
-            content_count: editorContent.length,
-            total_payment: editorContent.reduce((sum, c) => sum + (c.editor_payment || 0), 0)
-          };
-        }) || [];
-
-        setActiveEditors(editorsWithStats);
+      if (c.editor_id && (c as any).editor?.full_name) {
+        const existing = editorMap.get(c.editor_id) || { id: c.editor_id, full_name: (c as any).editor.full_name, content_count: 0, total_payment: 0 };
+        existing.content_count++;
+        existing.total_payment += (c.editor_payment || 0);
+        editorMap.set(c.editor_id, existing);
       }
-    };
+    }
 
-    calculateActiveUsers();
+    setActiveCreators(Array.from(creatorMap.values()) as any);
+    setActiveEditors(Array.from(editorMap.values()) as any);
   }, [content]);
 
-  // Realtime subscription for clients and packages
+  // Realtime subscription for clients and packages (debounced)
+  const dashboardRealtimeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!currentOrgId) return;
 
@@ -719,8 +599,11 @@ export default function Dashboard() {
           filter: `organization_id=eq.${currentOrgId}`
         },
         () => {
-          console.log('[Realtime] Clients changed, refetching...');
-          refetch();
+          if (dashboardRealtimeRef.current) clearTimeout(dashboardRealtimeRef.current);
+          dashboardRealtimeRef.current = setTimeout(() => {
+            console.log('[Realtime] Clients changed, refetching...');
+            refetch();
+          }, 3000);
         }
       )
       .on(
@@ -731,13 +614,17 @@ export default function Dashboard() {
           table: 'client_packages'
         },
         () => {
-          console.log('[Realtime] Packages changed, refetching...');
-          refetch();
+          if (dashboardRealtimeRef.current) clearTimeout(dashboardRealtimeRef.current);
+          dashboardRealtimeRef.current = setTimeout(() => {
+            console.log('[Realtime] Packages changed, refetching...');
+            refetch();
+          }, 3000);
         }
       )
       .subscribe();
 
     return () => {
+      if (dashboardRealtimeRef.current) clearTimeout(dashboardRealtimeRef.current);
       supabase.removeChannel(channel);
     };
   }, [currentOrgId, refetch]);
