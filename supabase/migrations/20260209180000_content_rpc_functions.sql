@@ -38,6 +38,7 @@ END;
 $$;
 
 -- Update a content row by ID using JSONB payload (bypasses RLS)
+DROP FUNCTION IF EXISTS update_content_by_id(uuid, jsonb);
 CREATE OR REPLACE FUNCTION update_content_by_id(p_content_id uuid, p_updates jsonb)
 RETURNS void
 LANGUAGE plpgsql
