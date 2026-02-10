@@ -2,6 +2,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { calculateDaysInColombia, calculateCreatorPoints, CREATOR_POINTS_CONFIG } from './useUPCreadores';
 import { calculateEditorPoints, EDITOR_POINTS_CONFIG } from './useUPEditores';
 
+// Cache whether UP tables exist to avoid 8-10 phantom HTTP requests per status change
+let upTablesAvailable: boolean | null = null;
+
 /**
  * Central handler for UP points based on content status changes
  * This should be called when content status changes
@@ -37,7 +40,26 @@ export async function handleUPStatusChange(params: {
 
   const now = new Date();
 
+  // Short-circuit if UP tables are confirmed missing (avoids 8-10 failed HTTP requests)
+  if (upTablesAvailable === false) {
+    return { success: true };
+  }
+
   console.log('[UP Handler] Status change:', { contentId, oldStatus, newStatus, creatorId, editorId });
+
+  // Probe table existence on first call
+  if (upTablesAvailable === null) {
+    const { error: probeError } = await supabase
+      .from('up_creadores')
+      .select('id')
+      .limit(1);
+    if (probeError && (probeError.code === '42P01' || probeError.message?.includes('does not exist'))) {
+      console.log('[UP Handler] UP tables not available, disabling handler');
+      upTablesAvailable = false;
+      return { success: true };
+    }
+    upTablesAvailable = true;
+  }
 
   try {
     // ============================================

@@ -116,7 +116,8 @@ const canMoveToStatusLegacy = (
   const currentIndex = STATUS_ORDER.indexOf(currentStatus as ContentStatus);
   const targetIndex = STATUS_ORDER.indexOf(targetStatus as ContentStatus);
 
-  if (role === 'admin') return true;
+  // Admin and management roles can move anything
+  if (role === 'admin' || role === 'strategist' || role === 'team_leader' || role === 'trafficker') return true;
 
   if (role === 'client') {
     if (currentStatus === 'draft' && targetStatus === 'script_approved') return true;
