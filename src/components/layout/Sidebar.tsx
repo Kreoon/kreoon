@@ -177,15 +177,21 @@ function getMarketplaceSections(activeRole: string | null): NavSection[] {
     { name: "Mi Perfil", href: "/marketplace/profile/setup", icon: UserCircle, tourId: "sidebar-mkt-profile" },
   ];
 
-  // Campaign items — feed is always visible (except editor), "my campaigns" for brand roles
-  if (activeRole !== 'editor') {
+  // Campaign items — feed visible for internal roles (not editor/client)
+  if (activeRole !== 'editor' && activeRole !== 'client') {
     items.push({ name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone, tourId: "sidebar-mkt-campaigns" });
   }
-  if (activeRole === 'client' || activeRole === 'admin' || activeRole === 'strategist') {
+  // "Mis Campañas" only for admin/strategist (clients manage from client-dashboard)
+  if (activeRole === 'admin' || activeRole === 'strategist') {
     items.push({ name: "Mis Campañas", href: "/marketplace/my-campaigns", icon: Megaphone, tourId: "sidebar-mkt-my-campaigns" });
   }
 
   items.push({ name: "Wallet", href: "/wallet", icon: Wallet, tourId: "sidebar-mkt-wallet" });
+
+  // Talent management — not visible to clients
+  if (activeRole === 'client') {
+    return [{ label: "KREOON MARKETPLACE", items }];
+  }
 
   const savedItems: NavItem[] = [
     { name: "Guardados", href: "/marketplace/guardados", icon: Bookmark, tourId: "sidebar-mkt-saved" },

@@ -23,6 +23,7 @@ import { useBrand } from '@/hooks/useBrand';
 import { ClientFinanceChart } from '@/components/dashboard/ClientFinanceChart';
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { FullscreenContentViewer } from '@/components/content/FullscreenContentViewer';
+import { AutoPauseVideo } from '@/components/content/AutoPauseVideo';
 import { ReviewCard } from '@/components/content/ReviewCard';
 import { ContentVideoCard } from '@/components/content/ContentVideoCard';
 import { ScriptReviewCard } from '@/components/content/ScriptReviewCard';
@@ -1244,26 +1245,36 @@ export default function ClientDashboard() {
                 </Button>
               </div>
               <div className="space-y-2">
-                {content.slice(0, 4).map(item => (
-                  <Card key={item.id} className="hover:bg-muted/50 transition-colors">
-                    <CardContent className="p-3 flex items-center gap-3">
-                      <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                        {item.thumbnail_url ? (
-                          <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover rounded-lg" />
-                        ) : (
-                          <Play className="h-5 w-5 text-muted-foreground" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{item.title}</p>
-                        <p className="text-xs text-muted-foreground">{formatDate(item.created_at || '')}</p>
-                      </div>
-                      <Badge className={STATUS_COLORS[item.status]} variant="secondary">
-                        {STATUS_LABELS[item.status]}
-                      </Badge>
-                    </CardContent>
-                  </Card>
-                ))}
+                {content.slice(0, 4).map(item => {
+                  // Resolve thumbnail: skip Bunny embed URLs (not valid <img> src)
+                  const thumbUrl = item.thumbnail_url && !item.thumbnail_url.includes('iframe.mediadelivery.net')
+                    ? item.thumbnail_url
+                    : null;
+                  return (
+                    <Card
+                      key={item.id}
+                      className="hover:bg-muted/50 transition-colors cursor-pointer"
+                      onClick={() => setSelectedContent(item)}
+                    >
+                      <CardContent className="p-3 flex items-center gap-3">
+                        <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          {thumbUrl ? (
+                            <img src={thumbUrl} alt="" className="h-full w-full object-cover rounded-lg" />
+                          ) : (
+                            <Play className="h-5 w-5 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{item.title}</p>
+                          <p className="text-xs text-muted-foreground">{formatDate(item.created_at || '')}</p>
+                        </div>
+                        <Badge className={STATUS_COLORS[item.status]} variant="secondary">
+                          {STATUS_LABELS[item.status]}
+                        </Badge>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -1852,20 +1863,32 @@ export default function ClientDashboard() {
                   </div>
                 )}
 
-                {selectedContent.video_url && (
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Video</Label>
-                    <a 
-                      href={selectedContent.video_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="mt-1 block p-3 bg-primary/10 rounded-lg text-primary text-sm hover:bg-primary/20 transition-colors"
-                    >
-                      <Play className="w-4 h-4 inline mr-2" />
-                      Ver video
-                    </a>
-                  </div>
-                )}
+                {/* Video(s) inline */}
+                {(() => {
+                  const urls = (selectedContent.video_urls as string[] | undefined)?.filter(u => u?.trim()) || [];
+                  const singleUrl = selectedContent.video_url || selectedContent.bunny_embed_url;
+                  const allUrls = urls.length > 0 ? urls : (singleUrl ? [singleUrl] : []);
+                  if (allUrls.length === 0) return null;
+                  return (
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">
+                        {allUrls.length > 1 ? `Videos (${allUrls.length})` : 'Video'}
+                      </Label>
+                      {allUrls.map((url, i) => (
+                        <div key={i} className="rounded-lg overflow-hidden bg-black" style={{ aspectRatio: '9/16', maxHeight: '350px' }}>
+                          <AutoPauseVideo
+                            src={url}
+                            contentId={selectedContent.id}
+                            thumbnailUrl={selectedContent.thumbnail_url}
+                            className="w-full h-full"
+                            autoPlay={false}
+                            muted
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
 
                 {selectedContent.status === 'review' && (
                   <>
