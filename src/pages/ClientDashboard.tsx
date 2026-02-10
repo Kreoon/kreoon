@@ -665,7 +665,7 @@ export default function ClientDashboard() {
   const getContentByStatus = (statuses: ContentStatus[]) => content.filter(c => statuses.includes(c.status));
 
   const inProgressContent = getContentByStatus(['draft', 'script_pending', 'script_approved', 'recording', 'editing', 'review']);
-  const scriptReviewContent = getContentByStatus(['draft', 'script_pending']); // Guiones pendientes de aprobar (draft y script_pending)
+  const scriptReviewContent = getContentByStatus(['draft', 'script_pending']).filter(c => c.script); // Only show if script exists
   const videoReviewContent = getContentByStatus(['review', 'delivered', 'issue']); // Videos en review, entregados y novedades
   const approvedContent = getContentByStatus(['approved', 'paid']);
   const publishedContent = content.filter(c => c.is_published);
