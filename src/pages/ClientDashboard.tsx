@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
@@ -27,7 +27,7 @@ import { ReviewCard } from '@/components/content/ReviewCard';
 import { ContentVideoCard } from '@/components/content/ContentVideoCard';
 import { ScriptReviewCard } from '@/components/content/ScriptReviewCard';
 import { UnifiedContentModule } from '@/components/content/unified';
-import { useClientRealtimeContent } from '@/hooks/useClientRealtimeContent';
+// Realtime removed — updates only on explicit user actions
 import { CreateProductBriefWizard } from '@/components/products/CreateProductBriefWizard';
 import { ProductDetailDialog } from '@/components/products/ProductDetailDialog';
 import { TechGrid, TechParticles, TechOrb } from '@/components/ui/tech-effects';
@@ -331,20 +331,7 @@ export default function ClientDashboard() {
     };
   }, [selectedClientId]);
 
-  // Memoized callback for real-time content updates
-  const handleRealtimeContentChange = useCallback(() => {
-    if (selectedClientId) {
-      // Silently refetch content data when realtime update comes (avoid UI flicker)
-      fetchClientData(selectedClientId, { silent: true });
-    }
-  }, [selectedClientId]);
-
-  // Subscribe to real-time updates for this client's content
-  useClientRealtimeContent(
-    selectedClientId,
-    handleRealtimeContentChange,
-    handleRealtimeContentChange
-  );
+  // Realtime auto-refresh removed — client dashboard updates only on explicit user actions
 
   useEffect(() => {
     if (selectedClientId) {
