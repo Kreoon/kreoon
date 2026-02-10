@@ -158,7 +158,6 @@ const clientSections: NavSection[] = [
     items: [
       { name: "Client Portal", href: "/client-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
       { name: "Producciones", href: "/client-board", icon: Kanban, tourId: "sidebar-board" },
-      { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
     ]
   },
   {
