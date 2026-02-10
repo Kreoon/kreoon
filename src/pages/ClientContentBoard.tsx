@@ -3,11 +3,11 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
   Search, Eye, AlertCircle, CheckCircle2, Package, FileText, RefreshCw,
-  FileCheck, Scroll, Maximize2, Grid3X3, Columns, Download, Share2, Presentation, Bell
+  FileCheck, Scroll, Maximize2, Download, Share2, Presentation, Bell
 } from "lucide-react";
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+// Tabs removed — only Kanban view remains
 import { useAuth } from "@/hooks/useAuth";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { Content, ContentStatus, STATUS_LABELS } from "@/types/database";
@@ -21,8 +21,8 @@ import { updateContentStatusWithUP } from "@/hooks/useContentStatusWithUP";
 import { Card, CardContent } from "@/components/ui/card";
 
 // Unified components
-import { ContentGrid, UnifiedContentViewer, SocialSharePanel, ContentNotificationsDropdown, PresentationMode } from "@/components/content/unified";
-import { UnifiedContentItem, CardVariant, useDownload, useContentNotifications } from "@/hooks/unified";
+import { UnifiedContentViewer, SocialSharePanel, ContentNotificationsDropdown, PresentationMode } from "@/components/content/unified";
+import { UnifiedContentItem, useDownload, useContentNotifications } from "@/hooks/unified";
 
 // Legacy components for Kanban view
 import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanColumn";
@@ -78,7 +78,6 @@ interface ClientInfo {
   name: string;
 }
 
-type ViewMode = 'grid' | 'kanban';
 type FilterTab = 'all' | 'pending' | 'approved' | 'published';
 
 export default function ClientContentBoard() {
@@ -95,9 +94,6 @@ export default function ClientContentBoard() {
   const [clientInfo, setClientInfo] = useState<ClientInfo | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // View mode state
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [gridVariant, setGridVariant] = useState<CardVariant>('grid');
   const [filterTab, setFilterTab] = useState<FilterTab>('all');
 
   // Estado de drag (para modo Kanban)
@@ -116,9 +112,6 @@ export default function ClientContentBoard() {
   // Share panel state
   const [showSharePanel, setShowSharePanel] = useState(false);
   const [shareItem, setShareItem] = useState<UnifiedContentItem | null>(null);
-
-  // Selected items for batch operations
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // Presentation mode state
   const [showPresentation, setShowPresentation] = useState(false);
@@ -544,30 +537,8 @@ export default function ClientContentBoard() {
           </Badge>
         </div>
 
-        {/* View mode toggle and actions */}
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Button
-              variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-              className="gap-2"
-            >
-              <Grid3X3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Grid</span>
-            </Button>
-            <Button
-              variant={viewMode === 'kanban' ? 'secondary' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('kanban')}
-              className="gap-2"
-            >
-              <Columns className="h-4 w-4" />
-              <span className="hidden sm:inline">Kanban</span>
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-2">
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-2">
             {/* Review All Button */}
             {reviewableContent.length > 0 && (
               <Button
@@ -609,64 +580,10 @@ export default function ClientContentBoard() {
             >
               <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             </Button>
-          </div>
         </div>
 
-        {/* Content area */}
-        {viewMode === 'grid' ? (
-          <>
-            {/* Filter tabs */}
-            <Tabs value={filterTab} onValueChange={(v) => setFilterTab(v as FilterTab)}>
-              <TabsList>
-                <TabsTrigger value="all">Todos</TabsTrigger>
-                <TabsTrigger value="pending" className="gap-1">
-                  Por Revisar
-                  {(deliveredCount + correctedCount) > 0 && (
-                    <Badge variant="destructive" className="ml-1 h-5 px-1.5">
-                      {deliveredCount + correctedCount}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="approved">Aprobados</TabsTrigger>
-                <TabsTrigger value="published">Publicados</TabsTrigger>
-              </TabsList>
-            </Tabs>
-
-            {/* Content Grid */}
-            <ContentGrid
-              items={unifiedItems}
-              loading={loading}
-              onItemClick={handleItemClick}
-              variant={gridVariant}
-              onVariantChange={setGridVariant}
-              columns={3}
-              searchQuery={searchTerm}
-              onSearchChange={setSearchTerm}
-              searchPlaceholder="Buscar contenido..."
-              selectable={filterTab === 'approved' || filterTab === 'published'}
-              selectedIds={selectedIds}
-              onSelectionChange={setSelectedIds}
-              showBatchDownload={true}
-              showStatus={true}
-              showStats={true}
-              showCreator={true}
-              showVariantCount={true}
-              onRefresh={() => fetchClientData(true)}
-              isRefreshing={refreshing}
-              emptyStateMessage={
-                filterTab === 'pending'
-                  ? 'No hay contenido pendiente de revisión'
-                  : filterTab === 'approved'
-                  ? 'No hay contenido aprobado aún'
-                  : filterTab === 'published'
-                  ? 'No hay contenido publicado aún'
-                  : 'No hay contenido disponible'
-              }
-            />
-          </>
-        ) : (
-          /* Kanban View */
-          <>
+        {/* Kanban View */}
+        <>
             {/* Search */}
             <div className="relative max-w-xs">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -758,8 +675,7 @@ export default function ClientContentBoard() {
                 );
               })}
             </div>
-          </>
-        )}
+        </>
       </div>
 
       {/* Content Detail Dialog - For non-review content in Kanban mode */}
