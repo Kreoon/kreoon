@@ -46,10 +46,10 @@ export function UpdatePrompt() {
         setShowPrompt(true);
       }
 
-      // Check for updates periodically (every 2 minutes)
+      // Check for updates periodically (every 30 minutes)
       const interval = setInterval(() => {
         registration.update().catch(() => {});
-      }, 2 * 60 * 1000);
+      }, 30 * 60 * 1000);
 
       return () => clearInterval(interval);
     } catch (err) {

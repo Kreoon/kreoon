@@ -45,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const rolesLoadedRef = useRef<boolean>(false);
   const bootstrappedRef = useRef<boolean>(false);
   const bootTimeoutRef = useRef<number | null>(null);
+  const fetchInProgressRef = useRef<string | null>(null);
 
   useEffect(() => {
     userIdRef.current = user?.id ?? null;
@@ -228,6 +229,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const fetchUserData = async (userId: string, silent = false) => {
+    // Dedup: skip if a non-silent fetch is already in progress for the same user
+    // Silent refreshes always skip if there's already a fetch running
+    if (fetchInProgressRef.current === userId) {
+      if (silent) return;
+      // Non-silent: wait briefly for the in-progress fetch to finish
+      await new Promise(r => setTimeout(r, 100));
+      if (fetchInProgressRef.current === userId) return;
+    }
+    fetchInProgressRef.current = userId;
+
     // Helper to add timeout to promises
     const withTimeout = <T,>(promiseFn: () => PromiseLike<T>, ms: number): Promise<T> => {
       return Promise.race([
@@ -452,6 +463,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } finally {
       bootstrappedRef.current = true;
+      fetchInProgressRef.current = null;
 
       if (bootTimeoutRef.current) {
         window.clearTimeout(bootTimeoutRef.current);

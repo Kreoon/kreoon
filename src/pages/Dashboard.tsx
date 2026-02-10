@@ -578,51 +578,7 @@ export default function Dashboard() {
     setActiveEditors(Array.from(editorMap.values()) as any);
   }, [content]);
 
-  // Realtime subscription for clients and packages (debounced)
-  const dashboardRealtimeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (!currentOrgId) return;
-
-    const channel = supabase
-      .channel('dashboard-data-sync')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'clients',
-          filter: `organization_id=eq.${currentOrgId}`
-        },
-        () => {
-          if (dashboardRealtimeRef.current) clearTimeout(dashboardRealtimeRef.current);
-          dashboardRealtimeRef.current = setTimeout(() => {
-            console.log('[Realtime] Clients changed, refetching...');
-            refetch();
-          }, 3000);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'client_packages'
-        },
-        () => {
-          if (dashboardRealtimeRef.current) clearTimeout(dashboardRealtimeRef.current);
-          dashboardRealtimeRef.current = setTimeout(() => {
-            console.log('[Realtime] Packages changed, refetching...');
-            refetch();
-          }, 3000);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      if (dashboardRealtimeRef.current) clearTimeout(dashboardRealtimeRef.current);
-      supabase.removeChannel(channel);
-    };
-  }, [currentOrgId, refetch]);
+  // Realtime auto-refresh removed — dashboard updates only on explicit user actions
 
   // Stats calculations
   const totalContent = content.length;

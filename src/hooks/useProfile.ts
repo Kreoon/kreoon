@@ -119,19 +119,62 @@ interface UseProfileReturn {
  * Centralized hook for managing user profile data.
  * All profile editors should use this hook to ensure data consistency.
  */
+// Helper: convert raw profile row (from auth or DB) to ProfileData
+function toProfileData(raw: any): ProfileData {
+  return {
+    id: raw.id,
+    full_name: raw.full_name || '',
+    email: raw.email || '',
+    username: raw.username || '',
+    bio: raw.bio || '',
+    tagline: raw.tagline || '',
+    avatar_url: raw.avatar_url || '',
+    cover_url: raw.cover_url || '',
+    city: raw.city || '',
+    country: raw.country || '',
+    address: raw.address || '',
+    phone: raw.phone || '',
+    document_type: raw.document_type || '',
+    document_number: raw.document_number || '',
+    best_at: raw.best_at || '',
+    experience_level: raw.experience_level || 'junior',
+    availability_status: raw.availability_status || 'available',
+    rate_per_content: raw.rate_per_content || null,
+    rate_currency: raw.rate_currency || 'COP',
+    interests: raw.interests || [],
+    specialties_tags: raw.specialties_tags || [],
+    content_categories: raw.content_categories || [],
+    industries: raw.industries || [],
+    style_keywords: raw.style_keywords || [],
+    languages: raw.languages || [],
+    instagram: raw.instagram || '',
+    tiktok: raw.tiktok || '',
+    facebook: raw.facebook || '',
+    social_linkedin: raw.social_linkedin || '',
+    social_youtube: raw.social_youtube || '',
+    social_twitter: raw.social_twitter || '',
+    portfolio_url: raw.portfolio_url || '',
+    is_public: raw.is_public ?? true,
+    current_organization_id: raw.current_organization_id || null,
+    created_at: raw.created_at || '',
+    updated_at: raw.updated_at || '',
+  };
+}
+
 export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
   const { useSonner = false, autoFetch = true } = options;
-  const { user } = useAuth();
+  const { user, profile: authProfile } = useAuth();
   const { toast } = useToast();
-  
+
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [originalProfile, setOriginalProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
-  
+
   const originalUsernameRef = useRef<string>('');
+  const initializedFromAuthRef = useRef(false);
 
   // Calculate hasChanges
   const hasChanges = profile !== null && originalProfile !== null && 
@@ -150,22 +193,20 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
     }
   }, [useSonner, toast]);
 
-  // Fetch profile
+  // Fetch profile from DB (only when explicitly refreshing or auth didn't have data)
   const fetchProfile = useCallback(async () => {
     if (!user?.id) return;
-    
+
     setLoading(true);
     try {
       const ROOT_EMAILS = ["jacsolucionesgraficas@gmail.com", "kairosgp.sas@gmail.com"];
 
-      // Prefer lookup by auth user id
       let { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .maybeSingle();
 
-      // If not found, try email lookup for root admins (migration ID mismatch)
       if (!data) {
         const { data: authRes } = await supabase.auth.getUser();
         const email = authRes.user?.email;
@@ -185,46 +226,7 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
       if (error) throw error;
 
       if (data) {
-        const profileData = data as any;
-        const fullProfile: ProfileData = {
-          id: profileData.id,
-          full_name: profileData.full_name || '',
-          email: profileData.email || '',
-          username: profileData.username || '',
-          bio: profileData.bio || '',
-          tagline: profileData.tagline || '',
-          avatar_url: profileData.avatar_url || '',
-          cover_url: profileData.cover_url || '',
-          city: profileData.city || '',
-          country: profileData.country || '',
-          address: profileData.address || '',
-          phone: profileData.phone || '',
-          document_type: profileData.document_type || '',
-          document_number: profileData.document_number || '',
-          best_at: profileData.best_at || '',
-          experience_level: profileData.experience_level || 'junior',
-          availability_status: profileData.availability_status || 'available',
-          rate_per_content: profileData.rate_per_content || null,
-          rate_currency: profileData.rate_currency || 'COP',
-          interests: profileData.interests || [],
-          specialties_tags: profileData.specialties_tags || [],
-          content_categories: profileData.content_categories || [],
-          industries: profileData.industries || [],
-          style_keywords: profileData.style_keywords || [],
-          languages: profileData.languages || [],
-          instagram: profileData.instagram || '',
-          tiktok: profileData.tiktok || '',
-          facebook: profileData.facebook || '',
-          social_linkedin: profileData.social_linkedin || '',
-          social_youtube: profileData.social_youtube || '',
-          social_twitter: profileData.social_twitter || '',
-          portfolio_url: profileData.portfolio_url || '',
-          is_public: profileData.is_public ?? true,
-          current_organization_id: profileData.current_organization_id || null,
-          created_at: profileData.created_at || '',
-          updated_at: profileData.updated_at || '',
-        };
-        
+        const fullProfile = toProfileData(data);
         setProfile(fullProfile);
         setOriginalProfile(fullProfile);
         originalUsernameRef.current = fullProfile.username;
@@ -285,12 +287,26 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
     return () => clearTimeout(debounce);
   }, [profile?.username, user?.id]);
 
-  // Auto-fetch on mount
+  // Initialize from auth profile to avoid redundant DB query
   useEffect(() => {
-    if (autoFetch && user?.id) {
+    if (!autoFetch || !user?.id) return;
+
+    // If auth already has the profile, hydrate from it (no extra DB call)
+    if (authProfile && !initializedFromAuthRef.current) {
+      initializedFromAuthRef.current = true;
+      const fullProfile = toProfileData(authProfile);
+      setProfile(fullProfile);
+      setOriginalProfile(fullProfile);
+      originalUsernameRef.current = fullProfile.username;
+      setLoading(false);
+      return;
+    }
+
+    // Fallback: auth doesn't have profile yet (shouldn't happen normally)
+    if (!authProfile && !initializedFromAuthRef.current) {
       fetchProfile();
     }
-  }, [autoFetch, user?.id, fetchProfile]);
+  }, [autoFetch, user?.id, authProfile, fetchProfile]);
 
   // Update single field
   const updateField = useCallback(<K extends keyof ProfileData>(

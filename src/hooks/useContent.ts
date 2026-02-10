@@ -220,31 +220,7 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
     fetchContent();
   }, [fetchContent]);
 
-  // Realtime subscription with debounce and error cooldown
-  useEffect(() => {
-    if (!currentOrgId) return;
-
-    const channel = supabase
-      .channel('content-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'content', filter: `organization_id=eq.${currentOrgId}` },
-        (payload) => {
-          const contentId = (payload.new as { id?: string })?.id || (payload.old as { id?: string })?.id;
-          if (shouldSkipRealtimeRefetch(contentId)) return;
-          // Cooldown: skip realtime refetch for 30s after an error
-          if (lastErrorTimeRef.current > 0 && Date.now() - lastErrorTimeRef.current < ERROR_COOLDOWN_MS) return;
-          if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
-          realtimeDebounceRef.current = setTimeout(() => fetchContent(), 3000);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
-      supabase.removeChannel(channel);
-    };
-  }, [currentOrgId, fetchContent]);
+  // Realtime auto-refresh removed — content updates only on explicit user actions (refetch)
 
   return { content, loading, error, refetch: fetchContent, updateContentStatus, updateContent, deleteContent, approveContent, approveScript };
 }
@@ -313,30 +289,7 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
     fetchContent();
   }, [fetchContent]);
 
-  // Realtime subscription with debounce and error cooldown
-  useEffect(() => {
-    if (!currentOrgId) return;
-
-    const channel = supabase
-      .channel('content-changes-filtered')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'content', filter: `organization_id=eq.${currentOrgId}` },
-        (payload) => {
-          const contentId = (payload.new as { id?: string })?.id || (payload.old as { id?: string })?.id;
-          if (shouldSkipRealtimeRefetch(contentId)) return;
-          if (lastErrorTimeRef.current > 0 && Date.now() - lastErrorTimeRef.current < ERROR_COOLDOWN_MS) return;
-          if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
-          realtimeDebounceRef.current = setTimeout(() => fetchContent(), 3000);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current);
-      supabase.removeChannel(channel);
-    };
-  }, [currentOrgId, fetchContent]);
+  // Realtime auto-refresh removed — content updates only on explicit user actions (refetch)
 
   return { content, loading, error, refetch: fetchContent, updateContentStatus, deleteContent };
 }
