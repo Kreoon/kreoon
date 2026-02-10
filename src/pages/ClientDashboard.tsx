@@ -1236,20 +1236,29 @@ export default function ClientDashboard() {
               </CardContent>
             </Card>
 
-            {/* Recent Content */}
+            {/* Contenido Aprobado Reciente */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold">Contenido Reciente</h3>
+                <h3 className="font-semibold">Contenido Aprobado</h3>
                 <Button variant="ghost" size="sm" onClick={() => setActiveTab('content')}>
                   Ver todo
                 </Button>
               </div>
               <div className="space-y-2">
-                {content.slice(0, 4).map(item => {
-                  // Resolve thumbnail: skip Bunny embed URLs (not valid <img> src)
-                  const thumbUrl = item.thumbnail_url && !item.thumbnail_url.includes('iframe.mediadelivery.net')
-                    ? item.thumbnail_url
-                    : null;
+                {content.filter(c => c.status === 'approved').slice(0, 4).map(item => {
+                  // Resolve thumbnail: prefer thumbnail_url, fallback to Bunny video thumbnail
+                  let thumbUrl: string | null = null;
+                  if (item.thumbnail_url && !item.thumbnail_url.includes('iframe.mediadelivery.net')) {
+                    thumbUrl = item.thumbnail_url;
+                  } else {
+                    // Extract thumbnail from first video URL (Bunny embed → thumbnail.jpg)
+                    const videoUrl = (item.video_urls as string[] | undefined)?.find(u => u?.trim())
+                      || item.video_url || item.bunny_embed_url || '';
+                    const embedMatch = videoUrl.match(/iframe\.mediadelivery\.net\/embed\/(\d+)\/([a-f0-9-]+)/i);
+                    if (embedMatch) {
+                      thumbUrl = `https://vz-${embedMatch[1]}.b-cdn.net/${embedMatch[2]}/thumbnail.jpg`;
+                    }
+                  }
                   return (
                     <Card
                       key={item.id}
@@ -1259,7 +1268,7 @@ export default function ClientDashboard() {
                       <CardContent className="p-3 flex items-center gap-3">
                         <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
                           {thumbUrl ? (
-                            <img src={thumbUrl} alt="" className="h-full w-full object-cover rounded-lg" />
+                            <img src={thumbUrl} alt="" className="h-full w-full object-cover rounded-lg" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                           ) : (
                             <Play className="h-5 w-5 text-muted-foreground" />
                           )}
@@ -1268,8 +1277,8 @@ export default function ClientDashboard() {
                           <p className="font-medium text-sm truncate">{item.title}</p>
                           <p className="text-xs text-muted-foreground">{formatDate(item.created_at || '')}</p>
                         </div>
-                        <Badge className={STATUS_COLORS[item.status]} variant="secondary">
-                          {STATUS_LABELS[item.status]}
+                        <Badge className="bg-green-500/10 text-green-600" variant="secondary">
+                          Aprobado
                         </Badge>
                       </CardContent>
                     </Card>
