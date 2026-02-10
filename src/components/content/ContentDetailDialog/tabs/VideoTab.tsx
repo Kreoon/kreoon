@@ -143,15 +143,15 @@ export function VideoTab({
               onUploadComplete={(urls) => {
                 setFormData(prev => ({ ...prev, video_urls: urls }));
                 if (!editMode) setEditMode(true);
-                // Auto-save video URLs to DB immediately to prevent loss on Realtime refetch
+                // Auto-save video URLs to DB immediately via RPC (bypasses 18 RLS policies)
                 const contentId = content?.id;
                 if (contentId) {
-                  // Use 5-minute window to cover video encoding time
                   markLocalUpdate(contentId, 5 * 60 * 1000);
                   supabase
-                    .from('content')
-                    .update({ video_urls: urls } as any)
-                    .eq('id', contentId)
+                    .rpc('update_content_by_id', {
+                      p_content_id: contentId,
+                      p_updates: { video_urls: urls.filter((u: string) => u.trim() !== '') }
+                    })
                     .then(({ error }) => {
                       if (error) {
                         console.error('[VideoTab] Failed to auto-save video URLs:', error);
