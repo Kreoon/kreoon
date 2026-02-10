@@ -180,8 +180,8 @@ function getMarketplaceSections(activeRole: string | null): NavSection[] {
   if (activeRole !== 'editor' && activeRole !== 'client') {
     items.push({ name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone, tourId: "sidebar-mkt-campaigns" });
   }
-  // "Mis Campañas" only for admin/strategist (clients manage from client-dashboard)
-  if (activeRole === 'admin' || activeRole === 'strategist') {
+  // "Mis Campañas" for admin/strategist/client (clients create offers here)
+  if (activeRole === 'admin' || activeRole === 'strategist' || activeRole === 'client') {
     items.push({ name: "Mis Campañas", href: "/marketplace/my-campaigns", icon: Megaphone, tourId: "sidebar-mkt-my-campaigns" });
   }
 
