@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,6 +69,15 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const pendingRefreshRef = useRef(false);
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && pendingRefreshRef.current) {
+      pendingRefreshRef.current = false;
+      onUpdate?.();
+    }
+    onOpenChange(nextOpen);
+  };
   const [editMode, setEditMode] = useState(false);
   const [assignedContent, setAssignedContent] = useState<Content[]>([]);
   const [loadingContent, setLoadingContent] = useState(false);
@@ -276,7 +285,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
       });
       
       setEditMode(false);
-      onUpdate?.();
+      pendingRefreshRef.current = true;
     } catch (error) {
       console.error('Error updating client:', error);
       toast({
@@ -304,7 +313,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
   if (!client) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-4">

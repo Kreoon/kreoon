@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,15 @@ interface CalendarItemDetailDialogProps {
 export function CalendarItemDetailDialog({ item, open, onOpenChange, onUpdate }: CalendarItemDetailDialogProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const pendingRefreshRef = useRef(false);
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && pendingRefreshRef.current) {
+      pendingRefreshRef.current = false;
+      onUpdate();
+    }
+    onOpenChange(nextOpen);
+  };
   const [editData, setEditData] = useState({
     title: "",
     description: "",
@@ -71,7 +80,7 @@ export function CalendarItemDetailDialog({ item, open, onOpenChange, onUpdate }:
 
       toast.success('Contenido actualizado');
       setIsEditing(false);
-      onUpdate();
+      pendingRefreshRef.current = true;
     } catch (error) {
       console.error('Error updating item:', error);
       toast.error('Error al actualizar');
@@ -99,7 +108,7 @@ export function CalendarItemDetailDialog({ item, open, onOpenChange, onUpdate }:
       if (error) throw error;
 
       toast.success(`Estado actualizado a ${getStatusLabel(newStatus)}`);
-      onUpdate();
+      pendingRefreshRef.current = true;
     } catch (error) {
       console.error('Error updating status:', error);
       toast.error('Error al actualizar estado');
@@ -146,7 +155,7 @@ export function CalendarItemDetailDialog({ item, open, onOpenChange, onUpdate }:
   const Icon = getContentTypeIcon(item.content_type);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">

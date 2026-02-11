@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,6 +66,15 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
   const { isAdmin, isClient, isCreator, isEditor, user } = useAuth();
   const { currentOrgId } = useOrgOwner();
   const [loading, setLoading] = useState(false);
+  const pendingRefreshRef = useRef(false);
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && pendingRefreshRef.current) {
+      pendingRefreshRef.current = false;
+      onUpdate?.();
+    }
+    onOpenChange(nextOpen);
+  };
   const [editMode, setEditMode] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<ContentStatus | null>(null);
   const [comments, setComments] = useState<(ContentComment & { profile?: { full_name: string } })[]>([]);
@@ -439,7 +448,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
       }
       
       setEditMode(false);
-      onUpdate?.();
+      pendingRefreshRef.current = true;
     } catch (error) {
       console.error('Error updating content:', error);
       toast({
@@ -592,7 +601,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
   const canEditNotes = isAdmin || isAssignedCreator || isAssignedEditor;
   const canEnterEditMode = isAdmin || isAssignedCreator || isAssignedEditor;
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-5xl max-h-[90vh] overflow-hidden p-0" aria-describedby="content-detail-desc">
         <DialogDescription id="content-detail-desc" className="sr-only">Detalle del proyecto de contenido</DialogDescription>
         {/* Hero Header - Landing Page Style */}
@@ -1760,7 +1769,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                   <AlertDialogAction
                     onClick={() => {
                       onDelete?.(content.id);
-                      onOpenChange(false);
+                      handleOpenChange(false);
                     }}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >

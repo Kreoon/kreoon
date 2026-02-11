@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,15 @@ interface CampaignDetailDialogProps {
 export function CampaignDetailDialog({ campaign, open, onOpenChange, onDelete, onUpdate, isAdmin }: CampaignDetailDialogProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const pendingRefreshRef = useRef(false);
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && pendingRefreshRef.current) {
+      pendingRefreshRef.current = false;
+      onUpdate?.();
+    }
+    onOpenChange(nextOpen);
+  };
   const [editData, setEditData] = useState({
     name: '',
     description: '',
@@ -83,7 +92,7 @@ export function CampaignDetailDialog({ campaign, open, onOpenChange, onDelete, o
 
       toast.success('Campaña actualizada');
       setIsEditing(false);
-      onUpdate?.();
+      pendingRefreshRef.current = true;
     } catch (error) {
       console.error('Error updating campaign:', error);
       toast.error('Error al actualizar campaña');
@@ -118,7 +127,7 @@ export function CampaignDetailDialog({ campaign, open, onOpenChange, onDelete, o
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh]">
         <DialogHeader>
           <div className="flex items-start justify-between">
@@ -378,7 +387,7 @@ export function CampaignDetailDialog({ campaign, open, onOpenChange, onDelete, o
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => {
               setIsEditing(false);
-              onOpenChange(false);
+              handleOpenChange(false);
             }}>
               Cerrar
             </Button>
