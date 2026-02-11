@@ -240,6 +240,9 @@ export function ContentDetailDialog({
   const handleClose = () => {
     if (isCreateMode) {
       createHooks.resetForm();
+    } else {
+      // Refresh parent data if save happened (deferred from handleSave to avoid jarring refresh)
+      viewHooks.flushPendingRefresh();
     }
     onOpenChange(false);
   };

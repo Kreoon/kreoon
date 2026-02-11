@@ -65,6 +65,7 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
   const [formData, setFormData] = useState<ContentFormData>(initialFormData);
   const originalFormDataRef = useRef<ContentFormData>(initialFormData);
   const skipNextContentResetRef = useRef(false);
+  const pendingRefreshRef = useRef(false);
 
   // Initialize form data from content
   useEffect(() => {
@@ -314,9 +315,9 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
       markAsSaved('content-detail');
       toast({ title: 'Cambios guardados' });
       setEditMode(false);
-      // Skip the next formData reset from content prop change (prevents dialog "refresh")
-      skipNextContentResetRef.current = true;
-      onUpdate?.();
+      // Don't call onUpdate() here — it causes a jarring refresh that temporarily
+      // hides videos/data. Instead, mark for refresh when the dialog closes.
+      pendingRefreshRef.current = true;
     } catch (error) {
       toast({ title: 'Error al guardar', variant: 'destructive' });
     } finally {
@@ -397,6 +398,14 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
     intervalMs: 30000
   });
 
+  // Call when dialog closes to refresh parent with saved data
+  const flushPendingRefresh = useCallback(() => {
+    if (pendingRefreshRef.current) {
+      pendingRefreshRef.current = false;
+      onUpdate?.();
+    }
+  }, [onUpdate]);
+
   return {
     // State
     loading,
@@ -408,18 +417,19 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
     selectedProduct,
     formData,
     setFormData,
-    
+
     // Actions
     handleStatusChange,
     handleSave,
     handleProductChange,
     fetchComments,
     forceSave,
-    
+    flushPendingRefresh,
+
     // AutoSave
     autoSaveStatus,
     lastSaved,
-    
+
     // Helpers
     hasUnsavedChanges: JSON.stringify(formData) !== JSON.stringify(originalFormDataRef.current)
   };
