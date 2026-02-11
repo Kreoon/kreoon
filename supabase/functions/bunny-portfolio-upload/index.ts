@@ -42,6 +42,8 @@ Deno.serve(async (req) => {
     const userId = formData.get('user_id') as string
     const type = formData.get('type') as string // 'post', 'story', or 'featured'
     const caption = formData.get('caption') as string || null
+    const fileHash = formData.get('file_hash') as string || null
+    const fileSize = formData.get('file_size') as string || null
 
     if (!file || !userId) {
       return new Response(
@@ -110,6 +112,28 @@ Deno.serve(async (req) => {
     const thumbnailUrl = `https://${bunnyCdnHostname}/${videoData.guid}/thumbnail.jpg`
 
     console.log(`[bunny-portfolio-upload] Video uploaded: ${embedUrl}`)
+
+    // Save file hash for dedup (if provided by client)
+    if (fileHash) {
+      const { error: hashError } = await supabase
+        .from('video_hashes')
+        .upsert({
+          file_hash: fileHash,
+          file_size: parseInt(fileSize || String(file.size)),
+          bunny_video_id: videoData.guid,
+          embed_url: embedUrl,
+          thumbnail_url: thumbnailUrl,
+          mp4_url: mp4Url,
+          created_by: userId,
+        }, { onConflict: 'file_hash' })
+
+      if (hashError) {
+        console.error('[bunny-portfolio-upload] Error saving video hash:', hashError)
+        // Non-blocking - upload still succeeded
+      } else {
+        console.log('[bunny-portfolio-upload] Video hash saved for dedup:', fileHash.substring(0, 16) + '...')
+      }
+    }
 
     // Step 3: Create database record (skip for featured videos - they're stored in profiles)
     if (type === 'featured') {

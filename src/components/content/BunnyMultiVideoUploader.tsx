@@ -6,9 +6,45 @@ import { SUPABASE_FUNCTIONS_URL } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, Loader2, CheckCircle, XCircle, Video, RefreshCw, Plus, Trash2 } from "lucide-react";
 
+/**
+ * Compute a fast fingerprint of a video file for dedup.
+ * Reads first 2MB + last 2MB + file size → SHA-256 hash.
+ * Fast regardless of file size (reads max 4MB).
+ */
+async function computeVideoFingerprint(file: File): Promise<string> {
+  const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB
+  const parts: Uint8Array[] = [];
+
+  // First 2MB
+  const firstChunk = await file.slice(0, Math.min(CHUNK_SIZE, file.size)).arrayBuffer();
+  parts.push(new Uint8Array(firstChunk));
+
+  // Last 2MB (only if file > 4MB to avoid overlap with first chunk)
+  if (file.size > CHUNK_SIZE * 2) {
+    const lastChunk = await file.slice(-CHUNK_SIZE).arrayBuffer();
+    parts.push(new Uint8Array(lastChunk));
+  }
+
+  // Include file size to differentiate files with same start/end but different length
+  const sizeBytes = new TextEncoder().encode(String(file.size));
+  parts.push(sizeBytes);
+
+  // Combine all parts into one buffer
+  const totalLen = parts.reduce((sum, p) => sum + p.byteLength, 0);
+  const combined = new Uint8Array(totalLen);
+  let offset = 0;
+  for (const part of parts) {
+    combined.set(part, offset);
+    offset += part.byteLength;
+  }
+
+  const hashBuffer = await crypto.subtle.digest('SHA-256', combined);
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 interface VideoUpload {
   id: string;
-  status: 'idle' | 'uploading' | 'processing' | 'completed' | 'failed';
+  status: 'idle' | 'hashing' | 'uploading' | 'processing' | 'completed' | 'failed';
   progress: number;
   embedUrl: string;
   videoId: string | null;
@@ -160,12 +196,56 @@ export function BunnyMultiVideoUploader({
       return;
     }
 
-    // Update upload state
+    // Step 1: Compute file fingerprint for dedup
     setUploads(prev => prev.map(u =>
-      u.id === uploadId ? { ...u, status: 'uploading', progress: 0 } : u
+      u.id === uploadId ? { ...u, status: 'hashing', progress: 0 } : u
     ));
 
     try {
+      let fileHash: string | null = null;
+      try {
+        fileHash = await computeVideoFingerprint(file);
+        console.log('[BunnyMultiVideoUploader] File hash:', fileHash);
+
+        // Step 2: Check for existing video with same hash
+        const { data: existing } = await supabase.rpc('check_video_hash', { p_file_hash: fileHash });
+
+        if (existing && existing.length > 0 && existing[0].embed_url) {
+          const match = existing[0];
+          console.log('[BunnyMultiVideoUploader] Dedup match found, reusing:', match.bunny_video_id);
+
+          let allUrls: string[] = [];
+          setUploads(prev => {
+            const newUploads = prev.map(u =>
+              u.id === uploadId ? {
+                ...u,
+                progress: 100,
+                videoId: match.bunny_video_id,
+                embedUrl: match.embed_url,
+                status: 'completed' as const
+              } : u
+            );
+            allUrls = newUploads.map(u => u.embedUrl);
+            return newUploads;
+          });
+
+          setTimeout(() => onUploadComplete?.(allUrls), 0);
+          toast({
+            title: "Video reutilizado",
+            description: "Este video ya existe en el sistema, se reutilizó sin subir de nuevo"
+          });
+          return;
+        }
+      } catch (hashErr) {
+        // Non-blocking: if hash/check fails, proceed with normal upload
+        console.warn('[BunnyMultiVideoUploader] Hash check failed, proceeding with upload:', hashErr);
+      }
+
+      // Step 3: No dedup match - proceed with upload
+      setUploads(prev => prev.map(u =>
+        u.id === uploadId ? { ...u, status: 'uploading', progress: 0 } : u
+      ));
+
       // Get user id for the edge function
       const { data: { session } } = await supabase.auth.getSession();
       const userId = session?.user?.id || 'anonymous';
@@ -177,6 +257,10 @@ export function BunnyMultiVideoUploader({
       formData.append('file', file);
       formData.append('user_id', userId);
       formData.append('type', 'featured');
+      if (fileHash) {
+        formData.append('file_hash', fileHash);
+        formData.append('file_size', String(file.size));
+      }
 
       // Upload via XHR for progress tracking
       // The edge function proxies the file to Bunny server-side (no CORS issues)
@@ -315,6 +399,8 @@ export function BunnyMultiVideoUploader({
 
   const getStatusIcon = (status: VideoUpload['status']) => {
     switch (status) {
+      case 'hashing':
+        return <Loader2 className="h-4 w-4 animate-spin" />;
       case 'uploading':
         return <Upload className="h-4 w-4 animate-pulse" />;
       case 'processing':
@@ -330,6 +416,8 @@ export function BunnyMultiVideoUploader({
 
   const getStatusText = (status: VideoUpload['status']) => {
     switch (status) {
+      case 'hashing':
+        return 'Verificando...';
       case 'uploading':
         return 'Subiendo...';
       case 'processing':
@@ -438,14 +526,14 @@ export function BunnyMultiVideoUploader({
               accept="video/mp4,video/webm,video/quicktime,video/x-msvideo"
               onChange={(e) => handleFileSelect(upload.id, index, e)}
               className="hidden"
-              disabled={disabled || upload.status === 'uploading' || upload.status === 'processing'}
+              disabled={disabled || upload.status === 'hashing' || upload.status === 'uploading' || upload.status === 'processing'}
             />
 
             <Button
               variant={upload.status === 'completed' ? 'outline' : 'default'}
               size="sm"
               onClick={() => fileInputRefs.current[upload.id]?.click()}
-              disabled={disabled || upload.status === 'uploading' || upload.status === 'processing'}
+              disabled={disabled || upload.status === 'hashing' || upload.status === 'uploading' || upload.status === 'processing'}
               className="flex items-center gap-2"
             >
               {getStatusIcon(upload.status)}
@@ -461,11 +549,11 @@ export function BunnyMultiVideoUploader({
           </div>
 
           {/* Progress Bar */}
-          {(upload.status === 'uploading' || upload.status === 'processing') && (
+          {(upload.status === 'hashing' || upload.status === 'uploading' || upload.status === 'processing') && (
             <div className="space-y-1">
-              <Progress value={upload.progress} className="h-2" />
+              <Progress value={upload.status === 'hashing' ? undefined : upload.progress} className="h-2" />
               <p className="text-xs text-muted-foreground">
-                {upload.status === 'uploading' ? `Subiendo... ${upload.progress}%` : `Procesando... ${upload.progress}%`}
+                {upload.status === 'hashing' ? 'Verificando duplicados...' : upload.status === 'uploading' ? `Subiendo... ${upload.progress}%` : `Procesando... ${upload.progress}%`}
               </p>
             </div>
           )}
