@@ -928,3 +928,53 @@
     animation: neonFlicker 4s linear infinite;
   }
 }
+
+/* Audio Recorder - KIRO waveform bars */
+@keyframes audioBar {
+  0% {
+    height: 8px;
+    opacity: 0.5;
+  }
+  100% {
+    height: 24px;
+    opacity: 1;
+  }
+}
+
+/* KIRO Research Progress - orbital animation */
+@keyframes kiroOrbit {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes kiroBreath {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.4), 0 0 40px rgba(168, 85, 247, 0.1);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.6), 0 0 60px rgba(168, 85, 247, 0.2);
+    transform: scale(1.05);
+  }
+}
+
+@keyframes kiroStepPulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+@keyframes kiroDots {
+  0%, 80%, 100% { opacity: 0; transform: scale(0.6); }
+  40% { opacity: 1; transform: scale(1); }
+}
+
+/* DNA Wizard - button shimmer while transcribing */
+@keyframes shimmerBg {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+@keyframes shimmerSlide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}

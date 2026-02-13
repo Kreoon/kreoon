@@ -1432,6 +1432,56 @@ export type Database = {
           },
         ]
       }
+      client_dna: {
+        Row: {
+          id: string
+          client_id: string
+          transcription: string | null
+          emotional_analysis: Json
+          audience_locations: Json
+          dna_data: Json
+          status: string
+          version: number
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          client_id: string
+          transcription?: string | null
+          emotional_analysis?: Json
+          audience_locations?: Json
+          dna_data: Json
+          status?: string
+          version?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          client_id?: string
+          transcription?: string | null
+          emotional_analysis?: Json
+          audience_locations?: Json
+          dna_data?: Json
+          status?: string
+          version?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_dna_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_marketing_ai_insights: {
         Row: {
           action_taken: string | null

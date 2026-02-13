@@ -29,7 +29,8 @@ import { ContentVideoCard } from '@/components/content/ContentVideoCard';
 import { ScriptReviewCard } from '@/components/content/ScriptReviewCard';
 import { UnifiedContentModule } from '@/components/content/unified';
 // Realtime removed — updates only on explicit user actions
-import { CreateProductBriefWizard } from '@/components/products/CreateProductBriefWizard';
+import { ProductDNAWizard } from '@/components/product-dna';
+import { ClientDNATab } from '@/components/clients/dna';
 import { ProductDetailDialog } from '@/components/products/ProductDetailDialog';
 import { TechGrid, TechParticles, TechOrb } from '@/components/ui/tech-effects';
 import { TechKpiCard } from '@/components/dashboard/TechKpiCard';
@@ -69,7 +70,9 @@ import {
   AlertTriangle,
   FileCheck,
   Maximize2,
-  Plus
+  Plus,
+  Dna,
+  Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -662,6 +665,19 @@ export default function ClientDashboard() {
     }
   };
 
+  const handleDeleteProduct = async (productId: string, productName: string) => {
+    if (!window.confirm(`¿Eliminar "${productName}"? Esta acción no se puede deshacer.`)) return;
+    try {
+      const { error } = await supabase.from('products').delete().eq('id', productId);
+      if (error) throw error;
+      setProducts(prev => prev.filter(p => p.id !== productId));
+      toast({ title: 'Producto eliminado' });
+    } catch (err) {
+      console.error('Error deleting product:', err);
+      toast({ title: 'Error', description: 'No se pudo eliminar el producto', variant: 'destructive' });
+    }
+  };
+
   const getContentByStatus = (statuses: ContentStatus[]) => content.filter(c => statuses.includes(c.status));
 
   const inProgressContent = getContentByStatus(['draft', 'script_pending', 'script_approved', 'recording', 'editing', 'review']);
@@ -954,7 +970,8 @@ export default function ClientDashboard() {
           {[
             { id: 'overview', label: 'Dashboard', icon: Home },
             { id: 'finance', label: 'Finanzas', icon: Wallet },
-            { id: 'products', label: 'Productos', icon: Package, badge: products.length },
+            { id: 'dna', label: 'ADN de Marca', icon: Dna },
+            { id: 'products', label: 'ADN de Productos', icon: Package, badge: products.length },
             { id: 'review', label: 'Revisar', icon: Eye, badge: totalPendingReview },
             { id: 'content', label: 'Contenido', icon: Video },
             { id: 'company', label: 'Empresa', icon: Building2 },
@@ -1421,36 +1438,26 @@ export default function ClientDashboard() {
           </div>
         )}
 
+        {/* DNA Tab */}
+        {activeTab === 'dna' && selectedClientId && (
+          <ClientDNATab clientId={selectedClientId} />
+        )}
+
         {/* Products Tab */}
         {activeTab === 'products' && (
           <div className="space-y-6">
             {/* Show wizard if creating new product */}
             {showCreateProductWizard ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-bold mb-1 flex items-center gap-2">
-                      <Sparkles className="h-5 w-5 text-primary" />
-                      Crear Nuevo Producto con IA
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      Completa el brief y generaremos investigación de mercado automáticamente
-                    </p>
-                  </div>
-                </div>
-                
-                <CreateProductBriefWizard
-                  clientId={selectedClientId!}
-                  onComplete={(productId) => {
-                    setShowCreateProductWizard(false);
-                    // Refresh products
-                    if (selectedClientId) {
-                      fetchClientData(selectedClientId);
-                    }
-                  }}
-                  onCancel={() => setShowCreateProductWizard(false)}
-                />
-              </div>
+              <ProductDNAWizard
+                clientId={selectedClientId!}
+                onComplete={() => {
+                  setShowCreateProductWizard(false);
+                  if (selectedClientId) {
+                    fetchClientData(selectedClientId);
+                  }
+                }}
+                onCancel={() => setShowCreateProductWizard(false)}
+              />
             ) : (
               <>
                 {/* Header with CTA */}
@@ -1482,8 +1489,8 @@ export default function ClientDashboard() {
                       </div>
                       <h4 className="font-semibold text-lg mb-2">¡Crea tu primer producto!</h4>
                       <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
-                        Completa el Brief inteligente y nuestra IA investigará tu mercado, competencia y 
-                        creará avatares estratégicos automáticamente.
+                        Graba un audio describiendo tu producto y nuestra IA investigará tu mercado,
+                        competencia y creará estrategias automáticamente.
                       </p>
                       <Button 
                         size="lg"
@@ -1518,10 +1525,23 @@ export default function ClientDashboard() {
                                   </p>
                                 </div>
                               </div>
-                              <Button variant="ghost" size="sm">
-                                <Eye className="h-4 w-4 mr-1" />
-                                Ver detalles
-                              </Button>
+                              <div className="flex items-center gap-1">
+                                <Button variant="ghost" size="sm">
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  Ver detalles
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteProduct(product.id, product.name);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
 

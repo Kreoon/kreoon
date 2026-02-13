@@ -19,9 +19,10 @@ import { es } from "date-fns/locale";
 import { 
   Building2, Video, Save, Mail, Phone, Calendar, DollarSign, 
   Package, Plus, Trash2, Edit2, ExternalLink, ShoppingBag, CheckCircle,
-  Star, Eye, Settings, Radio
+  Star, Eye, Settings, Radio, Dna
 } from "lucide-react";
 import { ClientStreamingChannels } from "@/components/clients/ClientStreamingChannels";
+import { ClientDNATab } from "@/components/clients/dna";
 import { VipBadge } from "@/components/ui/vip-badge";
 import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
@@ -352,8 +353,12 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
         </DialogHeader>
 
         <Tabs defaultValue="info" className="mt-4">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="info">Info</TabsTrigger>
+            <TabsTrigger value="dna" className="gap-1">
+              <Dna className="h-3 w-3" />
+              ADN
+            </TabsTrigger>
             <TabsTrigger value="packages">Paquetes ({packages.length})</TabsTrigger>
             <TabsTrigger value="products">Productos ({products.length})</TabsTrigger>
             <TabsTrigger value="content">Videos ({assignedContent.length})</TabsTrigger>
@@ -494,6 +499,11 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
                 />
               </div>
             )}
+          </TabsContent>
+
+          {/* DNA Tab */}
+          <TabsContent value="dna" className="mt-4">
+            <ClientDNATab clientId={client.id} />
           </TabsContent>
 
           {/* Packages Tab */}

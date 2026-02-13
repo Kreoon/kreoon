@@ -4,8 +4,24 @@
 
 // Tipos de servicio disponibles (agrupados por categoría)
 export type ServiceType =
-  // Content Creation
+  // Content Creation — Videos UGC
   | 'ugc_video'
+  | 'video_testimonial'
+  | 'video_unboxing'
+  | 'video_review'
+  | 'video_tutorial'
+  | 'video_before_after'
+  | 'video_problem_solution'
+  // Content Creation — Videos Comerciales
+  | 'video_ad'
+  | 'video_vsl'
+  | 'video_product_demo'
+  // Content Creation — Videos por Formato
+  | 'video_reel_short'
+  | 'video_stories'
+  // Content Creation — Videos Tendencia
+  | 'video_behind_scenes'
+  // Content Creation — Otros
   | 'ugc_photo'
   | 'ugc_carousel'
   | 'photography'
@@ -47,8 +63,24 @@ export type ServiceType =
   | 'custom';
 
 export const SERVICE_TYPE_LABELS: Record<ServiceType, string> = {
-  // Content Creation
+  // Content Creation — Videos UGC
   ugc_video: 'Video UGC',
+  video_testimonial: 'Video Testimonial',
+  video_unboxing: 'Video Unboxing',
+  video_review: 'Video Review',
+  video_tutorial: 'Video Tutorial / How-to',
+  video_before_after: 'Video Before/After',
+  video_problem_solution: 'Video Problema/Solución',
+  // Content Creation — Videos Comerciales
+  video_ad: 'Video Ad / Comercial',
+  video_vsl: 'Video VSL (Carta de Ventas)',
+  video_product_demo: 'Video Demo de Producto',
+  // Content Creation — Videos por Formato
+  video_reel_short: 'Video Reel / Short',
+  video_stories: 'Video Stories',
+  // Content Creation — Videos Tendencia
+  video_behind_scenes: 'Video Behind the Scenes',
+  // Content Creation — Otros
   ugc_photo: 'Foto UGC',
   ugc_carousel: 'Carrusel UGC',
   photography: 'Fotografía',
@@ -91,8 +123,24 @@ export const SERVICE_TYPE_LABELS: Record<ServiceType, string> = {
 };
 
 export const SERVICE_TYPE_ICONS: Record<ServiceType, string> = {
-  // Content Creation
+  // Content Creation — Videos UGC
   ugc_video: '📹',
+  video_testimonial: '🗣️',
+  video_unboxing: '📦',
+  video_review: '⭐',
+  video_tutorial: '📚',
+  video_before_after: '🔄',
+  video_problem_solution: '💡',
+  // Content Creation — Videos Comerciales
+  video_ad: '📺',
+  video_vsl: '💰',
+  video_product_demo: '🎯',
+  // Content Creation — Videos por Formato
+  video_reel_short: '🎞️',
+  video_stories: '📱',
+  // Content Creation — Videos Tendencia
+  video_behind_scenes: '🎬',
+  // Content Creation — Otros
   ugc_photo: '📸',
   ugc_carousel: '🎠',
   photography: '📷',
@@ -100,7 +148,7 @@ export const SERVICE_TYPE_ICONS: Record<ServiceType, string> = {
   voice_over: '🎙️',
   script_writing: '✍️',
   podcast_production: '🎧',
-  influencer_post: '⭐',
+  influencer_post: '🌟',
   graphic_design: '🎨',
   // Post-Production
   video_editing: '🎬',
@@ -140,7 +188,13 @@ export type ServiceTypeCategory = 'content_creation' | 'post_production' | 'stra
 export const SERVICE_TYPE_CATEGORIES: Record<ServiceTypeCategory, { label: string; types: ServiceType[] }> = {
   content_creation: {
     label: 'Creación de Contenido',
-    types: ['ugc_video', 'ugc_photo', 'ugc_carousel', 'photography', 'live_streaming', 'voice_over', 'script_writing', 'podcast_production', 'influencer_post', 'graphic_design'],
+    types: [
+      'ugc_video', 'video_testimonial', 'video_unboxing', 'video_review', 'video_tutorial', 'video_before_after', 'video_problem_solution',
+      'video_ad', 'video_vsl', 'video_product_demo',
+      'video_reel_short', 'video_stories',
+      'video_behind_scenes',
+      'ugc_photo', 'ugc_carousel', 'photography', 'live_streaming', 'voice_over', 'script_writing', 'podcast_production', 'influencer_post', 'graphic_design',
+    ],
   },
   post_production: {
     label: 'Post-Producción',
