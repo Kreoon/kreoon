@@ -39,6 +39,7 @@ import {
   RefreshCw, Mic, Check
 } from "lucide-react";
 import { generateProductResearchPdf } from "./productResearchPdfGenerator";
+import { CreateContentFromResearchDialog } from "./CreateContentFromResearchDialog";
 
 interface Product {
   id: string;
@@ -123,6 +124,9 @@ export function ProductDetailDialog({
   const [researchStartTime, setResearchStartTime] = useState<number | null>(null);
   const [researchElapsed, setResearchElapsed] = useState(0);
   const lastRefetchedStepRef = useRef(0);
+
+  // Content creation dialog state
+  const [showContentDialog, setShowContentDialog] = useState(false);
 
   const isNew = !product;
 
@@ -377,7 +381,7 @@ export function ProductDetailDialog({
     return null;
   })();
 
-  return (
+  return (<>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-0 shrink-0">
@@ -390,59 +394,61 @@ export function ProductDetailDialog({
         <Tabs defaultValue={isNew ? "info" : "brief"} className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {/* Tabs en dos filas */}
           <div className="px-6 pt-4 shrink-0 space-y-1">
+            {/* Row 1: ADN + steps 1-6 (in research invocation order) */}
             <TabsList className="grid grid-cols-7 h-auto gap-1">
               <TabsTrigger value="brief" className="gap-1 text-xs py-2">
-                <Dna className="h-3 w-3" />
+                {dnaRecord ? <Check className="h-3 w-3 text-emerald-400" /> : <Dna className="h-3 w-3" />}
                 ADN
               </TabsTrigger>
-              <TabsTrigger value="summary" className="gap-1 text-xs py-2">
-                <FileText className="h-3 w-3" />
-                Conclusión
-              </TabsTrigger>
               <TabsTrigger value="market" className="gap-1 text-xs py-2">
-                <Globe className="h-3 w-3" />
+                {product?.market_research?.market_overview ? <Check className="h-3 w-3 text-emerald-400" /> : <Globe className="h-3 w-3" />}
                 Mercado
               </TabsTrigger>
               <TabsTrigger value="jtbd" className="gap-1 text-xs py-2">
-                <Target className="h-3 w-3" />
+                {product?.market_research?.jtbd ? <Check className="h-3 w-3 text-emerald-400" /> : <Target className="h-3 w-3" />}
                 JTBD
               </TabsTrigger>
-              <TabsTrigger value="avatars" className="gap-1 text-xs py-2">
-                <Users className="h-3 w-3" />
-                Avatares
-              </TabsTrigger>
               <TabsTrigger value="competition" className="gap-1 text-xs py-2">
-                <Swords className="h-3 w-3" />
+                {product?.competitor_analysis?.competitors ? <Check className="h-3 w-3 text-emerald-400" /> : <Swords className="h-3 w-3" />}
                 Competencia
               </TabsTrigger>
+              <TabsTrigger value="avatars" className="gap-1 text-xs py-2">
+                {product?.avatar_profiles?.profiles ? <Check className="h-3 w-3 text-emerald-400" /> : <Users className="h-3 w-3" />}
+                Avatares
+              </TabsTrigger>
               <TabsTrigger value="differentiation" className="gap-1 text-xs py-2">
-                <Lightbulb className="h-3 w-3" />
+                {product?.competitor_analysis?.differentiation ? <Check className="h-3 w-3 text-emerald-400" /> : <Lightbulb className="h-3 w-3" />}
                 Diferenciación
               </TabsTrigger>
-            </TabsList>
-            <TabsList className="grid grid-cols-8 h-auto gap-1">
               <TabsTrigger value="esfera" className="gap-1 text-xs py-2">
-                <Brain className="h-3 w-3" />
+                {product?.content_strategy?.esferaInsights ? <Check className="h-3 w-3 text-emerald-400" /> : <Brain className="h-3 w-3" />}
                 Playbook
               </TabsTrigger>
+            </TabsList>
+            {/* Row 2: steps 7-12 + utilities */}
+            <TabsList className="grid grid-cols-8 h-auto gap-1">
+              <TabsTrigger value="summary" className="gap-1 text-xs py-2">
+                {product?.content_strategy?.executiveSummary ? <Check className="h-3 w-3 text-emerald-400" /> : <FileText className="h-3 w-3" />}
+                Conclusión
+              </TabsTrigger>
               <TabsTrigger value="angles" className="gap-1 text-xs py-2">
-                <Sparkles className="h-3 w-3" />
+                {product?.sales_angles_data?.angles ? <Check className="h-3 w-3 text-emerald-400" /> : <Sparkles className="h-3 w-3" />}
                 Ángulos
               </TabsTrigger>
               <TabsTrigger value="puv" className="gap-1 text-xs py-2">
-                <Trophy className="h-3 w-3" />
+                {product?.sales_angles_data?.puv ? <Check className="h-3 w-3 text-emerald-400" /> : <Trophy className="h-3 w-3" />}
                 PUV
               </TabsTrigger>
               <TabsTrigger value="leads" className="gap-1 text-xs py-2">
-                <Gift className="h-3 w-3" />
+                {product?.sales_angles_data?.leadMagnets ? <Check className="h-3 w-3 text-emerald-400" /> : <Gift className="h-3 w-3" />}
                 Leads
               </TabsTrigger>
               <TabsTrigger value="calendar" className="gap-1 text-xs py-2">
-                <Calendar className="h-3 w-3" />
+                {product?.content_calendar ? <Check className="h-3 w-3 text-emerald-400" /> : <Calendar className="h-3 w-3" />}
                 Parrilla
               </TabsTrigger>
               <TabsTrigger value="launch" className="gap-1 text-xs py-2">
-                <Rocket className="h-3 w-3" />
+                {product?.launch_strategy ? <Check className="h-3 w-3 text-emerald-400" /> : <Rocket className="h-3 w-3" />}
                 Lanzamiento
               </TabsTrigger>
               <TabsTrigger value="info" className="text-xs py-2">Info</TabsTrigger>
@@ -452,6 +458,7 @@ export function ProductDetailDialog({
 
           <div className="flex-1 overflow-y-auto px-6 pb-6">
 
+          {/* TabsContent ordered by research invocation flow */}
           <TabsContent value="brief" className="mt-4 space-y-6">
             {product ? (
               dnaLoading ? (
@@ -496,13 +503,7 @@ export function ProductDetailDialog({
             )}
           </TabsContent>
 
-          <TabsContent value="summary" className="mt-4">
-            <ExecutiveSummaryTab 
-              contentStrategy={product?.content_strategy as any} 
-              productName={formData.name}
-            />
-          </TabsContent>
-
+          {/* Step 1: Panorama de Mercado */}
           <TabsContent value="market" className="mt-4">
             <MarketOverviewTab marketResearch={(() => {
               try {
@@ -517,18 +518,22 @@ export function ProductDetailDialog({
             })()} />
           </TabsContent>
 
+          {/* Steps 2-3: JTBD + Dolores y Deseos */}
           <TabsContent value="jtbd" className="mt-4">
             <JTBDAnalysisTab jtbdData={jtbdData} />
           </TabsContent>
 
-          <TabsContent value="avatars" className="mt-4">
-            <AvatarSegmentationTab avatarProfiles={product?.avatar_profiles as any} />
-          </TabsContent>
-
+          {/* Step 4: Competencia */}
           <TabsContent value="competition" className="mt-4">
             <CompetitionAnalysisTab competitorAnalysis={product?.competitor_analysis as any} />
           </TabsContent>
 
+          {/* Step 5: Avatares */}
+          <TabsContent value="avatars" className="mt-4">
+            <AvatarSegmentationTab avatarProfiles={product?.avatar_profiles as any} />
+          </TabsContent>
+
+          {/* Step 6: Diferenciación + ESFERA + Conclusión */}
           <TabsContent value="differentiation" className="mt-4">
             <DifferentiationTab differentiation={product?.competitor_analysis?.differentiation as any} />
           </TabsContent>
@@ -542,22 +547,34 @@ export function ProductDetailDialog({
             />
           </TabsContent>
 
+          <TabsContent value="summary" className="mt-4">
+            <ExecutiveSummaryTab
+              contentStrategy={product?.content_strategy as any}
+              productName={formData.name}
+            />
+          </TabsContent>
+
+          {/* Step 7: Ángulos de Venta */}
           <TabsContent value="angles" className="mt-4">
             <SalesAnglesTab salesAnglesData={product?.sales_angles_data as any} />
           </TabsContent>
 
+          {/* Step 8: PUV y Transformación */}
           <TabsContent value="puv" className="mt-4">
             <PUVTransformationTab salesAnglesData={product?.sales_angles_data as any} />
           </TabsContent>
 
+          {/* Steps 9-10: Lead Magnets + Creativos */}
           <TabsContent value="leads" className="mt-4">
             <LeadMagnetsCreativesTab salesAnglesData={product?.sales_angles_data as any} />
           </TabsContent>
 
+          {/* Step 11: Parrilla de Contenido */}
           <TabsContent value="calendar" className="mt-4">
             <ContentCalendarTab contentCalendar={product?.content_calendar as any} />
           </TabsContent>
 
+          {/* Step 12: Estrategia de Lanzamiento */}
           <TabsContent value="launch" className="mt-4">
             <LaunchStrategyTab launchStrategy={product?.launch_strategy as any} />
           </TabsContent>
@@ -722,11 +739,19 @@ export function ProductDetailDialog({
                 <Download className="h-4 w-4 mr-2" />
                 PDF
               </Button>
+              <Button
+                variant="outline"
+                className="border-purple-500/30 text-purple-600 dark:text-purple-400 hover:bg-purple-500/10"
+                onClick={() => setShowContentDialog(true)}
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Crear Contenidos
+              </Button>
             </div>
           ) : (
             <div />
           )}
-          
+
           {canEdit && (
             <Button onClick={handleSave} disabled={loading}>
               <Save className="h-4 w-4 mr-2" />
@@ -736,6 +761,24 @@ export function ProductDetailDialog({
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Content creation dialog (from research + DNA) */}
+    {product && (
+      <CreateContentFromResearchDialog
+        open={showContentDialog}
+        onOpenChange={setShowContentDialog}
+        productId={product.id}
+        productName={product.name || 'Producto'}
+        clientId={product.client_id || clientId || ''}
+        onCreated={(count) => {
+          toast({
+            title: `${count} creativos creados`,
+            description: 'Se han creado en el board con datos del ADN.',
+          });
+        }}
+      />
+    )}
+    </>
   );
 }
 

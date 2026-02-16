@@ -28,6 +28,9 @@ const RESEARCH_STEPS = [
   { id: "launch_strategy", name: "Estrategia de Lanzamiento" },
 ];
 
+// ── Batch size: steps per invocation (stay within 150s edge function limit) ──
+const BATCH_SIZE = 1; // 1 step per invocation → auto-invokes next immediately
+
 // ── Token limits per step ──────────────────────────────────────────────────
 const TOKEN_MAP: Record<string, number> = {
   market_overview: 6000,
@@ -251,7 +254,7 @@ async function callAI(
   if (perplexityKey) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 120000);
+      const timeout = setTimeout(() => controller.abort(), 50000); // 50s (was 120s)
       const res = await fetch("https://api.perplexity.ai/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${perplexityKey}`, "Content-Type": "application/json" },
@@ -281,11 +284,14 @@ async function callAI(
 
   // Gemini fallback
   if (!geminiKey) throw new Error("No AI API key available");
+  const geminiController = new AbortController();
+  const geminiTimeout = setTimeout(() => geminiController.abort(), 50000); // 50s
   const res = await fetch(
     "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
     {
       method: "POST",
       headers: { Authorization: `Bearer ${geminiKey}`, "Content-Type": "application/json" },
+      signal: geminiController.signal,
       body: JSON.stringify({
         model: "gemini-2.5-flash",
         max_tokens: maxTokens,
@@ -297,6 +303,7 @@ async function callAI(
       }),
     },
   );
+  clearTimeout(geminiTimeout);
   if (!res.ok) throw new Error(`Gemini HTTP ${res.status}: ${await res.text()}`);
   const data = await res.json();
   const content = (data.choices?.[0]?.message?.content || "").toString().trim();
@@ -688,11 +695,121 @@ Genera: preLaunch (duration, objectives, actions, contentPlan, checklist), launc
 }
 
 
-// (reconstructPrevResults and buildIncrementalUpdate removed —
-//  sequential loop accumulates results in memory, no need to re-fetch from DB)
+// ── Read current DB column value before writing (prevents data loss) ────────
+async function readColumnFromDB(
+  sb: any,
+  productId: string,
+  column: string,
+): Promise<any> {
+  try {
+    const { data, error } = await sb
+      .from("products")
+      .select(column)
+      .eq("id", productId)
+      .single();
+    if (error || !data) {
+      console.warn(`[full-research] readColumnFromDB(${column}) failed:`, error?.message);
+      return null; // Return null so caller knows the read failed
+    }
+    return data[column] || {};
+  } catch (err: any) {
+    console.warn(`[full-research] readColumnFromDB(${column}) exception:`, err.message);
+    return null;
+  }
+}
 
-// ── MAIN HANDLER — runs ALL 12 steps sequentially in one invocation ──────────
-// Same proven pattern as product-research. No self-invocation needed.
+// ── Reconstruct previous step results from DB (for batch resumption) ────────
+async function reconstructPrevResults(
+  sb: any,
+  prodId: string,
+): Promise<{
+  stepResults: Record<string, any>;
+  marketResearch: any;
+  competitorAnalysis: any;
+  salesAnglesData: any;
+}> {
+  const { data: p, error } = await sb
+    .from("products")
+    .select(
+      "market_research, competitor_analysis, avatar_profiles, sales_angles_data, content_strategy, content_calendar, launch_strategy",
+    )
+    .eq("id", prodId)
+    .single();
+
+  if (error || !p) {
+    return {
+      stepResults: {},
+      marketResearch: {},
+      competitorAnalysis: {},
+      salesAnglesData: {},
+    };
+  }
+
+  const stepResults: Record<string, any> = {};
+  const mr = p.market_research || {};
+  const ca = p.competitor_analysis || {};
+  const ap = p.avatar_profiles || {};
+  const sa = p.sales_angles_data || {};
+  const cs = p.content_strategy || {};
+
+  if (mr.market_overview) {
+    stepResults.market_overview = { market_overview: mr.market_overview };
+  }
+  if (mr.jtbd) {
+    stepResults.jtbd = { jtbd: mr.jtbd };
+    if (mr.jtbd.pains) {
+      stepResults.pains_desires = {
+        pains: mr.jtbd.pains,
+        desires: mr.jtbd.desires,
+        objections: mr.jtbd.objections,
+      };
+    }
+  }
+  if (ca.competitors) {
+    stepResults.competitors = { competitors: ca.competitors };
+  }
+  if (ap.profiles) {
+    stepResults.avatars = { avatars: ap.profiles };
+  }
+  if (ca.differentiation) {
+    stepResults.differentiation = {
+      differentiation: ca.differentiation,
+      esferaInsights: cs.esferaInsights || {},
+      executiveSummary: cs.executiveSummary || {},
+    };
+  }
+  if (sa.angles) {
+    stepResults.sales_angles = { salesAngles: sa.angles };
+  }
+  if (sa.puv) {
+    stepResults.puv_transformation = {
+      puv: sa.puv,
+      transformation: sa.transformation,
+    };
+  }
+  if (sa.leadMagnets) {
+    stepResults.lead_magnets = { leadMagnets: sa.leadMagnets };
+  }
+  if (sa.videoCreatives) {
+    stepResults.video_creatives = { creatives: sa.videoCreatives };
+  }
+  if (p.content_calendar?.calendar) {
+    stepResults.content_calendar = p.content_calendar;
+  }
+  if (p.launch_strategy?.preLaunch) {
+    stepResults.launch_strategy = p.launch_strategy;
+  }
+
+  return {
+    stepResults,
+    marketResearch: mr,
+    competitorAnalysis: ca,
+    salesAnglesData: sa,
+  };
+}
+
+// ── MAIN HANDLER — runs steps in batches with self-invocation ────────────────
+// Each batch processes BATCH_SIZE steps, then triggers the next batch.
 // Key optimization: minimal SELECT to avoid 3MB+ product rows hitting CPU limit.
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -704,6 +821,7 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     productId = body.product_id;
+    const startStep: number = body.start_step || 0;
 
     if (!productId) {
       return new Response(
@@ -712,7 +830,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[full-research] Starting 12-step research for product: ${productId}`);
+    console.log(`[full-research] Product ${productId} — starting from step ${startStep} of 12`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -759,17 +877,57 @@ Deno.serve(async (req) => {
     const systemPrompt =
       "Eres un experto en investigacion de mercado. Responde SOLO en espanol. Devuelve UNICAMENTE JSON valido, sin explicaciones, sin markdown, sin texto adicional.";
 
-    // ── 3. Run all 12 steps sequentially ──────────────────────────────
-    // Results accumulate in memory — no need to re-fetch from DB.
-    const stepResults: Record<string, any> = {};
+    // ── 3. Run batch of steps ────────────────────────────────────────
+    let stepResults: Record<string, any> = {};
     const completedSteps: string[] = [];
 
-    // In-memory column accumulators (avoid re-fetching large JSONB)
+    // In-memory column accumulators
     let marketResearch: any = {};
     let competitorAnalysis: any = {};
     let salesAnglesData: any = {};
 
-    for (let i = 0; i < RESEARCH_STEPS.length; i++) {
+    // Always reconstruct from DB to detect already-completed steps
+    const restored = await reconstructPrevResults(supabase, productId);
+    stepResults = restored.stepResults;
+    marketResearch = restored.marketResearch;
+    competitorAnalysis = restored.competitorAnalysis;
+    salesAnglesData = restored.salesAnglesData;
+    const restoredCount = Object.keys(stepResults).length;
+    if (restoredCount > 0) {
+      console.log(`[full-research] Restored ${restoredCount} previous results from DB`);
+    }
+
+    // Fast-forward past already-completed steps
+    let actualStart = startStep;
+    while (actualStart < RESEARCH_STEPS.length && stepResults[RESEARCH_STEPS[actualStart].id]) {
+      console.log(`[full-research] Skipping step ${actualStart + 1} (${RESEARCH_STEPS[actualStart].id}) — already generated`);
+      actualStart++;
+    }
+
+    // If we skipped steps, update progress so the frontend sees the jump
+    if (actualStart > startStep) {
+      console.log(`[full-research] Fast-forwarded from step ${startStep + 1} to ${actualStart + 1}`);
+      await supabase
+        .from("products")
+        .update({
+          research_progress: {
+            step: actualStart,
+            total: 12,
+            label: actualStart < RESEARCH_STEPS.length
+              ? RESEARCH_STEPS[actualStart].name
+              : "Completado",
+            stepId: actualStart < RESEARCH_STEPS.length
+              ? RESEARCH_STEPS[actualStart].id
+              : "done",
+          },
+        })
+        .eq("id", productId);
+    }
+
+    // If all steps already done, go straight to finalize
+    const endStep = Math.min(actualStart + BATCH_SIZE, RESEARCH_STEPS.length);
+
+    for (let i = actualStart; i < endStep; i++) {
       const step = RESEARCH_STEPS[i];
 
       console.log(`[full-research] === Step ${i + 1}/12: ${step.name} ===`);
@@ -822,7 +980,10 @@ Deno.serve(async (req) => {
             update.market_research = marketResearch;
             break;
 
-          case "jtbd":
+          case "jtbd": {
+            // Read-before-write: ensure we don't lose market_overview
+            const mrForJtbd = await readColumnFromDB(supabase, productId, "market_research");
+            if (mrForJtbd !== null) marketResearch = mrForJtbd;
             marketResearch = { ...marketResearch, jtbd: result.jtbd, generatedAt: now };
             update.market_research = marketResearch;
             update.ideal_avatar = JSON.stringify({
@@ -830,8 +991,12 @@ Deno.serve(async (req) => {
               summary: result.jtbd?.functional,
             });
             break;
+          }
 
-          case "pains_desires":
+          case "pains_desires": {
+            // Read-before-write: ensure we don't lose market_overview or jtbd
+            const mrForPains = await readColumnFromDB(supabase, productId, "market_research");
+            if (mrForPains !== null) marketResearch = mrForPains;
             marketResearch = {
               ...marketResearch,
               jtbd: { ...(marketResearch.jtbd || {}), ...result },
@@ -839,6 +1004,7 @@ Deno.serve(async (req) => {
             };
             update.market_research = marketResearch;
             break;
+          }
 
           case "competitors":
             competitorAnalysis = { competitors: result.competitors, generatedAt: now };
@@ -849,7 +1015,10 @@ Deno.serve(async (req) => {
             update.avatar_profiles = { profiles: result.avatars, generatedAt: now };
             break;
 
-          case "differentiation":
+          case "differentiation": {
+            // Read-before-write: ensure we don't lose competitors data
+            const caForDiff = await readColumnFromDB(supabase, productId, "competitor_analysis");
+            if (caForDiff !== null) competitorAnalysis = caForDiff;
             competitorAnalysis = { ...competitorAnalysis, differentiation: result.differentiation, generatedAt: now };
             update.competitor_analysis = competitorAnalysis;
             update.content_strategy = {
@@ -858,6 +1027,7 @@ Deno.serve(async (req) => {
               generatedAt: now,
             };
             break;
+          }
 
           case "sales_angles":
             salesAnglesData = { angles: result.salesAngles, generatedAt: now };
@@ -868,20 +1038,30 @@ Deno.serve(async (req) => {
               .slice(0, 20);
             break;
 
-          case "puv_transformation":
+          case "puv_transformation": {
+            // Read-before-write: ensure we don't lose angles data
+            const saForPuv = await readColumnFromDB(supabase, productId, "sales_angles_data");
+            if (saForPuv !== null) salesAnglesData = saForPuv;
             salesAnglesData = { ...salesAnglesData, puv: result.puv, transformation: result.transformation, generatedAt: now };
             update.sales_angles_data = salesAnglesData;
             break;
+          }
 
-          case "lead_magnets":
+          case "lead_magnets": {
+            const saForLM = await readColumnFromDB(supabase, productId, "sales_angles_data");
+            if (saForLM !== null) salesAnglesData = saForLM;
             salesAnglesData = { ...salesAnglesData, leadMagnets: result.leadMagnets, generatedAt: now };
             update.sales_angles_data = salesAnglesData;
             break;
+          }
 
-          case "video_creatives":
+          case "video_creatives": {
+            const saForVC = await readColumnFromDB(supabase, productId, "sales_angles_data");
+            if (saForVC !== null) salesAnglesData = saForVC;
             salesAnglesData = { ...salesAnglesData, videoCreatives: result.creatives, generatedAt: now };
             update.sales_angles_data = salesAnglesData;
             break;
+          }
 
           case "content_calendar":
             update.content_calendar = { ...result, generatedAt: now };
@@ -916,12 +1096,69 @@ Deno.serve(async (req) => {
       }
 
       // Small delay between API calls to avoid rate limiting
-      if (i < RESEARCH_STEPS.length - 1) {
+      if (i < endStep - 1) {
         await new Promise((r) => setTimeout(r, 1000));
       }
     }
 
-    // ── 4. Finalize ──────────────────────────────────────────────────
+    // ── 4. If more steps remain → self-invoke next batch ─────────────
+    if (endStep < RESEARCH_STEPS.length) {
+      const selfUrl = `${supabaseUrl}/functions/v1/generate-full-research`;
+      fetch(selfUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({
+          product_id: productId,
+          start_step: endStep,
+        }),
+      })
+        .then((res) => {
+          console.log(
+            `[full-research] Next batch (step ${endStep}) triggered, HTTP ${res.status}`,
+          );
+        })
+        .catch((err: any) => {
+          console.error(
+            `[full-research] Self-invoke for step ${endStep} failed:`,
+            err.message,
+          );
+          // Mark progress as error so frontend stops polling
+          supabase
+            .from("products")
+            .update({
+              research_progress: {
+                step: endStep,
+                total: 12,
+                label: `Error al continuar (paso ${endStep + 1})`,
+                error: true,
+              },
+            })
+            .eq("id", productId)
+            .then(() => {});
+        });
+
+      // Small delay to ensure fetch is dispatched before returning
+      await new Promise((r) => setTimeout(r, 500));
+
+      console.log(
+        `[full-research] Batch ${startStep}-${endStep - 1} done. Next batch: step ${endStep}.`,
+      );
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          batch: `${startStep}-${endStep - 1}`,
+          nextBatch: endStep,
+          completedSteps,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // ── 5. All 12 steps done → Finalize ──────────────────────────────
     const briefData = {
       ...(product.brief_data || {}),
       product_dna_id: productDnaId,
@@ -934,14 +1171,21 @@ Deno.serve(async (req) => {
       .from("products")
       .update({
         research_generated_at: new Date().toISOString(),
-        research_progress: { step: 12, total: 12, label: "Completado", done: true },
+        research_progress: {
+          step: 12,
+          total: 12,
+          label: "Completado",
+          done: true,
+        },
         brief_status: "completed",
         brief_completed_at: new Date().toISOString(),
         brief_data: briefData,
       })
       .eq("id", productId);
 
-    console.log(`[full-research] All 12 steps complete for product ${productId}. Completed: ${completedSteps.join(", ")}`);
+    console.log(
+      `[full-research] All 12 steps complete for product ${productId}. Completed: ${completedSteps.join(", ")}`,
+    );
 
     return new Response(
       JSON.stringify({ success: true, completedSteps, totalSteps: 12 }),

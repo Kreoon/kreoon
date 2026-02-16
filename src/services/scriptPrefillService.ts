@@ -32,6 +32,20 @@ export interface ResearchData {
     esferaPhase?: string;
     structure?: { hook?: string };
   }>;
+  // DNA enrichment data
+  brandTone?: string;
+  brandStyle?: string;
+  brandKeyMessages?: string[];
+  productCreativeBrief?: {
+    tone?: string;
+    style?: string;
+    key_messages?: string[];
+    hooks_suggestions?: string[];
+    cta_recommendations?: string[];
+  };
+  leadMagnets?: Array<{ title?: string; type?: string; description?: string }>;
+  puv?: { main?: string; pillars?: any[] };
+  transformation?: { before?: string; after?: string; journey?: string };
 }
 
 export interface PrefillData {
@@ -106,13 +120,23 @@ const CTA_BY_PHASE: Record<string, string[]> = {
   ],
 };
 
+const sb = supabase as any;
+
+// Parse JSON fields that may come as strings
+const parseIfString = (value: any) => {
+  if (typeof value === 'string') {
+    try { return JSON.parse(value); } catch { return value; }
+  }
+  return value;
+};
+
 /**
- * Fetches and parses research data from a product
+ * Fetches and parses research data from a product + DNA tables
  */
 async function fetchProductResearch(productId: string): Promise<ResearchData | null> {
   const { data, error } = await supabase
     .from('products')
-    .select('market_research, avatar_profiles, sales_angles_data, ideal_avatar, sales_angles')
+    .select('client_id, market_research, avatar_profiles, sales_angles_data, ideal_avatar, sales_angles, brief_data, content_strategy')
     .eq('id', productId)
     .maybeSingle();
 
@@ -121,40 +145,32 @@ async function fetchProductResearch(productId: string): Promise<ResearchData | n
     return null;
   }
 
-  // Parse JSON fields if they are strings
-  const parseIfString = (value: any) => {
-    if (typeof value === 'string') {
-      try {
-        return JSON.parse(value);
-      } catch {
-        return value;
-      }
-    }
-    return value;
-  };
-
   const marketResearch = parseIfString(data.market_research);
   const avatarProfiles = parseIfString(data.avatar_profiles);
   const salesAnglesData = parseIfString(data.sales_angles_data);
   const idealAvatar = parseIfString(data.ideal_avatar);
+  const contentStrategy = parseIfString(data.content_strategy);
 
   // Extract research data from various possible structures
   const research: ResearchData = {};
 
-  // Extract pains
-  research.pains = marketResearch?.pains ||
+  // Extract pains (ADN Recargado stores in market_research.jtbd.pains)
+  research.pains = marketResearch?.jtbd?.pains ||
+                   marketResearch?.pains ||
                    marketResearch?.pains_desires?.pains ||
                    idealAvatar?.jtbd?.pains ||
                    [];
 
   // Extract desires
-  research.desires = marketResearch?.desires ||
+  research.desires = marketResearch?.jtbd?.desires ||
+                     marketResearch?.desires ||
                      marketResearch?.pains_desires?.desires ||
                      idealAvatar?.jtbd?.desires ||
                      [];
 
   // Extract objections
-  research.objections = marketResearch?.objections ||
+  research.objections = marketResearch?.jtbd?.objections ||
+                        marketResearch?.objections ||
                         marketResearch?.pains_desires?.objections ||
                         idealAvatar?.jtbd?.objections ||
                         [];
@@ -174,9 +190,96 @@ async function fetchProductResearch(productId: string): Promise<ResearchData | n
                          (data.sales_angles || []).map((a: string) => ({ angle: a }));
 
   // Extract video creatives
-  research.creatives = marketResearch?.video_creatives?.creatives ||
+  research.creatives = salesAnglesData?.videoCreatives ||
+                       marketResearch?.video_creatives?.creatives ||
                        marketResearch?.creatives ||
                        [];
+
+  // Extract lead magnets
+  research.leadMagnets = salesAnglesData?.leadMagnets || [];
+
+  // Extract PUV and transformation
+  research.puv = salesAnglesData?.puv || null;
+  research.transformation = salesAnglesData?.transformation || null;
+
+  // ── Fetch Product DNA (ai_analysis has creative_brief, hooks, etc.) ──
+  const productDnaId = (data.brief_data as any)?.product_dna_id;
+  if (productDnaId) {
+    const { data: pdna } = await sb
+      .from('product_dna')
+      .select('ai_analysis, wizard_responses')
+      .eq('id', productDnaId)
+      .maybeSingle();
+
+    if (pdna?.ai_analysis) {
+      const analysis = parseIfString(pdna.ai_analysis);
+      research.productCreativeBrief = analysis.creative_brief || analysis.creativeBrief || {};
+
+      // Merge hooks from Product DNA creative brief
+      const dnaHooks = research.productCreativeBrief?.hooks_suggestions || [];
+      if (dnaHooks.length) {
+        const existing = research.creatives || [];
+        research.creatives = [
+          ...existing,
+          ...dnaHooks.map((h: string) => ({ title: h, structure: { hook: h } })),
+        ];
+      }
+
+      // Merge CTA recommendations from DNA
+      if (research.productCreativeBrief?.cta_recommendations?.length) {
+        // Store for use in selectCTA
+        (research as any)._dnaCTAs = research.productCreativeBrief.cta_recommendations;
+      }
+    }
+  }
+
+  // ── Fetch Client DNA (brand voice, tone, ideal customer) ──
+  const clientId = data.client_id;
+  if (clientId) {
+    const { data: cdna } = await sb
+      .from('client_dna')
+      .select('dna_data, emotional_analysis')
+      .eq('client_id', clientId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (cdna?.dna_data) {
+      const dnaData = parseIfString(cdna.dna_data);
+      const brand = dnaData.brand_identity || dnaData.brandIdentity || {};
+      research.brandTone = brand.tone_of_voice || brand.toneOfVoice || '';
+      research.brandStyle = brand.communication_style || brand.communicationStyle || '';
+      research.brandKeyMessages = brand.key_messages || brand.keyMessages || [];
+
+      // Merge Client DNA ideal customer pains/desires if product research is thin
+      const idealCustomer = dnaData.ideal_customer || dnaData.idealCustomer || {};
+      if (research.pains.length === 0 && idealCustomer.pain_points?.length) {
+        research.pains = idealCustomer.pain_points.map((p: string) => ({ pain: p }));
+      }
+      if (research.desires.length === 0 && idealCustomer.desires?.length) {
+        research.desires = idealCustomer.desires.map((d: string) => ({ desire: d }));
+      }
+
+      // Merge hook suggestions from ads targeting
+      const adsTargeting = dnaData.ads_targeting || dnaData.adsTargeting || {};
+      if (adsTargeting.hook_suggestions?.length) {
+        const existing = research.creatives || [];
+        research.creatives = [
+          ...existing,
+          ...adsTargeting.hook_suggestions.map((h: string) => ({ title: h, structure: { hook: h } })),
+        ];
+      }
+    }
+
+    // Use emotional analysis content recommendations for tone enrichment
+    if (cdna?.emotional_analysis) {
+      const ea = parseIfString(cdna.emotional_analysis);
+      if (ea.content_recommendations?.suggested_tone && !research.brandTone) {
+        research.brandTone = ea.content_recommendations.suggested_tone;
+      }
+    }
+  }
 
   return research;
 }
@@ -285,10 +388,11 @@ function selectSalesAngle(research: ResearchData, phase: string, index: number =
 }
 
 /**
- * Generates suggested hooks based on research and sphere phase
+ * Generates suggested hooks based on research and sphere phase.
+ * Uses a global index offset to ensure each content item gets different hooks.
  */
-function generateHooks(research: ResearchData, phase: string, count: number = 3): string[] {
-  const hooks: string[] = [];
+function generateHooks(research: ResearchData, phase: string, count: number = 3, globalIndex: number = 0): string[] {
+  const allHooks: string[] = [];
   const phaseSpanish = SPHERE_PHASE_MAP[phase] || phase;
 
   // Get hooks from video creatives that match the phase
@@ -297,20 +401,33 @@ function generateHooks(research: ResearchData, phase: string, count: number = 3)
     c.esferaPhase?.toLowerCase() === phaseSpanish.toLowerCase()
   );
 
-  for (const creative of phaseCreatives.slice(0, count)) {
+  for (const creative of phaseCreatives) {
     const hook = creative.structure?.hook || creative.title;
-    if (hook) hooks.push(hook);
+    if (hook) allHooks.push(hook);
   }
 
   // Add hooks from sales angles
   const angles = research.salesAngles || [];
-  for (const angle of angles.slice(0, count - hooks.length)) {
-    if (angle.hookExample) {
-      hooks.push(angle.hookExample);
-    }
+  for (const angle of angles) {
+    if (angle.hookExample) allHooks.push(angle.hookExample);
   }
 
-  return hooks.slice(0, count);
+  // Add hooks from DNA creative brief
+  const dnaHookSuggestions = research.productCreativeBrief?.hooks_suggestions || [];
+  for (const h of dnaHookSuggestions) {
+    if (h && !allHooks.includes(h)) allHooks.push(h);
+  }
+
+  if (allHooks.length === 0) return [];
+
+  // Offset by globalIndex to give each content item different hooks
+  const offset = (globalIndex * count) % allHooks.length;
+  const result: string[] = [];
+  for (let i = 0; i < count && i < allHooks.length; i++) {
+    result.push(allHooks[(offset + i) % allHooks.length]);
+  }
+
+  return result;
 }
 
 /**
@@ -330,11 +447,14 @@ function selectVideoDuration(phase: string, index: number = 0): string {
 }
 
 /**
- * Selects CTA based on sphere phase
+ * Selects CTA based on sphere phase + DNA recommendations
  */
-function selectCTA(phase: string, index: number = 0): string {
-  const ctas = CTA_BY_PHASE[phase] || CTA_BY_PHASE.engage;
-  return ctas[index % ctas.length];
+function selectCTA(research: ResearchData, phase: string, index: number = 0): string {
+  // Prefer DNA CTA recommendations if available
+  const dnaCTAs = (research as any)?._dnaCTAs || research.productCreativeBrief?.cta_recommendations || [];
+  const phaseCTAs = CTA_BY_PHASE[phase] || CTA_BY_PHASE.engage;
+  const allCTAs = dnaCTAs.length > 0 ? [...dnaCTAs, ...phaseCTAs] : phaseCTAs;
+  return allCTAs[index % allCTAs.length];
 }
 
 /**
@@ -355,13 +475,13 @@ export async function generatePrefillData(request: PrefillRequest): Promise<Pref
     selected_pain: selectPain(research, spherePhase, contentIndex),
     selected_desire: selectDesire(research, spherePhase, contentIndex),
     selected_objection: selectObjection(research, spherePhase, contentIndex),
-    target_country: 'México', // Default, can be customized based on product data
+    target_country: 'México',
     narrative_structure: selectNarrativeStructure(spherePhase, contentIndex),
     video_duration: selectVideoDuration(spherePhase, contentIndex),
     ideal_avatar: selectAvatar(research, spherePhase, contentIndex),
     sales_angle: selectSalesAngle(research, spherePhase, contentIndex),
-    suggested_hooks: generateHooks(research, spherePhase, 3),
-    cta: selectCTA(spherePhase, contentIndex),
+    suggested_hooks: generateHooks(research, spherePhase, 3, contentIndex),
+    cta: selectCTA(research, spherePhase, contentIndex),
   };
 
   return prefillData;
@@ -390,6 +510,70 @@ export async function generateBatchPrefills(
   }
 
   return prefills;
+}
+
+/**
+ * Builds strategist guidelines enriched with DNA + research data for a content item.
+ * Each item gets unique combinations via contentIndex rotation.
+ */
+export async function buildDNAEnrichedGuidelines(
+  productId: string,
+  phase: { key: string; label: string; description: string; audience: string; metaCampaign: string; contentExamples: string },
+  phaseDefaults: { objective: string; techniques: string[]; tone: string; defaultCTA: string },
+  contentIndex: number = 0
+): Promise<string> {
+  const research = await fetchProductResearch(productId);
+
+  const pain = research ? selectPain(research, phase.key, contentIndex) : '';
+  const desire = research ? selectDesire(research, phase.key, contentIndex) : '';
+  const objection = research ? selectObjection(research, phase.key, contentIndex) : '';
+  const avatar = research ? selectAvatar(research, phase.key, contentIndex) : '';
+  const angle = research ? selectSalesAngle(research, phase.key, contentIndex) : '';
+  const hooks = research ? generateHooks(research, phase.key, 3, contentIndex) : [];
+  const puv = research?.puv?.main || '';
+  const transformation = research?.transformation;
+
+  let guidelines = `## Fase: ${phase.label}
+**Objetivo:** ${phaseDefaults.objective}
+**Audiencia:** ${phase.audience}
+**Tono recomendado:** ${phaseDefaults.tone}`;
+
+  // Add brand DNA tone if available
+  if (research?.brandTone) {
+    guidelines += `\n**Tono de marca (ADN):** ${research.brandTone}`;
+  }
+  if (research?.brandStyle) {
+    guidelines += `\n**Estilo de comunicacion:** ${research.brandStyle}`;
+  }
+
+  guidelines += `\n\n### Investigacion Asignada (unico para este creativo)`;
+  if (pain) guidelines += `\n- **Dolor:** ${pain}`;
+  if (desire) guidelines += `\n- **Deseo:** ${desire}`;
+  if (objection) guidelines += `\n- **Objecion a superar:** ${objection}`;
+  if (avatar) guidelines += `\n- **Avatar ideal:** ${avatar}`;
+  if (angle) guidelines += `\n- **Angulo de venta:** ${angle}`;
+  if (puv) guidelines += `\n- **PUV:** ${puv}`;
+  if (transformation) {
+    guidelines += `\n- **Transformacion:** De "${transformation.before || '...'}" a "${transformation.after || '...'}"`;
+  }
+
+  if (hooks.length) {
+    guidelines += `\n\n### Hooks Sugeridos`;
+    hooks.forEach((h, i) => { guidelines += `\n${i + 1}. ${h}`; });
+  }
+
+  if (research?.brandKeyMessages?.length) {
+    guidelines += `\n\n### Mensajes Clave de Marca`;
+    research.brandKeyMessages.forEach(m => { guidelines += `\n- ${m}`; });
+  }
+
+  guidelines += `\n\n### Direccion Estrategica
+- **Tecnicas recomendadas:** ${phaseDefaults.techniques.join(', ')}
+- **CTA sugerido:** ${phaseDefaults.defaultCTA}
+- **Tipo de campana Meta:** ${phase.metaCampaign}
+- **Ejemplos de contenido:** ${phase.contentExamples}`;
+
+  return guidelines.trim();
 }
 
 /**

@@ -414,10 +414,11 @@ export function pollResearchProgress(
 
       const progress = data?.research_progress as any;
       const isDone = !!data?.research_generated_at && (!progress || progress.step >= progress.total);
+      const isError = !!progress?.error;
 
-      onUpdate(progress, isDone);
+      onUpdate(progress, isDone || isError);
 
-      if (isDone || attempts >= maxAttempts) {
+      if (isDone || isError || attempts >= maxAttempts) {
         clearInterval(intervalId);
       }
     } catch (err) {
