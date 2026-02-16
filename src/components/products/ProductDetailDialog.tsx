@@ -387,7 +387,12 @@ export function ProductDetailDialog({
         <DialogHeader className="px-6 pt-6 pb-0 shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-primary" />
-            {isNew ? "Nuevo Producto" : formData.name}
+            {isNew ? "Nuevo Producto" : (
+              <>
+                {product?.product_code && <span className="text-primary">#{product.product_code}</span>}
+                {' '}{formData.name}
+              </>
+            )}
           </DialogTitle>
         </DialogHeader>
 

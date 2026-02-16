@@ -495,7 +495,7 @@ export default function ClientDashboard() {
           .from('products')
           .select('*')
           .eq('client_id', clientData.id)
-          .order('name');
+          .order('product_code', { ascending: true });
 
         setProducts(productsData || []);
       }
@@ -1519,7 +1519,10 @@ export default function ClientDashboard() {
                                   <Package className="h-5 w-5 text-primary" />
                                 </div>
                                 <div>
-                                  <h3 className="font-semibold text-lg">{product.name}</h3>
+                                  <h3 className="font-semibold text-lg">
+                                    {product.product_code && <span className="text-primary">#{product.product_code}</span>}{' '}
+                                    {product.name}
+                                  </h3>
                                   <p className="text-xs text-muted-foreground">
                                     Creado: {product.created_at ? format(new Date(product.created_at), "d 'de' MMM, yyyy", { locale: es }) : 'N/A'}
                                   </p>

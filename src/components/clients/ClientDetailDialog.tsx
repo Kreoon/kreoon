@@ -52,6 +52,7 @@ interface Product {
   research_url: string | null;
   brief_data?: any;
   created_at: string;
+  product_code?: number;
 }
 
 interface ClientDetailDialogProps {
@@ -186,7 +187,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
         .from('products')
         .select('*')
         .eq('client_id', client.id)
-        .order('name');
+        .order('product_code', { ascending: true });
       setProducts(data || []);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -746,7 +747,10 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
                                   <Package className="h-5 w-5 text-primary" />
                                 </div>
                                 <div>
-                                  <h4 className="font-semibold">{product.name}</h4>
+                                  <h4 className="font-semibold">
+                                    {product.product_code && <span className="text-primary">#{product.product_code}</span>}{' '}
+                                    {product.name}
+                                  </h4>
                                   <p className="text-xs text-muted-foreground">
                                     Creado: {formatDate(product.created_at)}
                                   </p>
