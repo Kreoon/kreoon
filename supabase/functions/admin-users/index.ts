@@ -438,7 +438,9 @@ serve(async (req) => {
           || authUser.user.user_metadata?.name
           || userEmail.split('@')[0]
           || 'Usuario';
-        const roleToAssign = assignRole || 'creator';
+        // GUARD: Never assign 'ambassador' as active_role - it's a badge, not a functional role
+        const functionalRoles = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client'];
+        const roleToAssign = (assignRole && functionalRoles.includes(assignRole)) ? assignRole : 'creator';
 
         console.log(`Assigning user ${userId} (${userEmail}) to org ${organizationId} with role ${roleToAssign}`);
 

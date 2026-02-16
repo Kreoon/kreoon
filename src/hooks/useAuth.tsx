@@ -57,28 +57,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [rolesLoaded]);
 
   // When roles change, set activeRole from profile DB, localStorage, or default
+  // IMPORTANT: active_role must ALWAYS be a functional role (never 'ambassador')
+  // Ambassador is a badge/privilege, not a functional role for permissions.
   useEffect(() => {
     if (roles.length > 0) {
       // Priority: 1) profile.active_role from DB (ALWAYS trust this first), 2) admin check, 3) localStorage, 4) default
       const dbRole = (profile as any)?.active_role as AppRole | null;
       const storedRole = localStorage.getItem(ACTIVE_ROLE_STORAGE_KEY) as AppRole | null;
 
-      // CRITICAL FIX: Always prioritize the DB role if it exists and is valid.
-      // This ensures that when a creator logs in, they see the creator view
-      // even if localStorage has 'admin' from a previous session.
-      if (dbRole && roles.includes(dbRole)) {
+      // CRITICAL: Skip 'ambassador' as active_role - it's a badge, not a functional role.
+      // Functional roles: admin, team_leader, strategist, trafficker, creator, editor, client
+      const isValidFunctionalRole = (r: string | null): boolean =>
+        !!r && r !== 'ambassador' && roles.includes(r as AppRole);
+
+      if (dbRole && isValidFunctionalRole(dbRole)) {
         setActiveRoleState(dbRole);
         localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, dbRole);
       } else if (roles.includes('admin')) {
         // Admin users default to admin to avoid accidentally loading scoped views.
         setActiveRoleState('admin');
         localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, 'admin');
-      } else if (storedRole && roles.includes(storedRole)) {
-        // Only use localStorage if it matches a valid role for this user
+      } else if (storedRole && isValidFunctionalRole(storedRole)) {
+        // Only use localStorage if it matches a valid functional role for this user
         setActiveRoleState(storedRole);
       } else {
-        // Default to first role by priority
-        const priority: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'ambassador', 'creator', 'editor', 'client'];
+        // Default to first functional role by priority (ambassador excluded)
+        const priority: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client'];
         const primaryRole = priority.find((r) => roles.includes(r)) || roles[0];
         setActiveRoleState(primaryRole);
         localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, primaryRole);
@@ -89,10 +93,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [roles, profile]);
 
   const setActiveRole = async (role: AppRole) => {
+    // GUARD: Never allow 'ambassador' as active_role - it's a badge, not a functional role
+    if (role === 'ambassador') {
+      console.warn('[auth] Blocked attempt to set active_role to ambassador. Ambassador is a badge, not a functional role.');
+      return;
+    }
     if (roles.includes(role)) {
       setActiveRoleState(role);
       localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, role);
-      
+
       // Persist to database
       if (user?.id) {
         supabase
@@ -103,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (error) console.warn('[auth] Failed to persist active_role:', error);
           });
       }
-      
+
       // Dispatch event for components that need to react to role change
       window.dispatchEvent(new CustomEvent('active-role-changed', { detail: { role } }));
     }

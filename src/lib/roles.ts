@@ -99,18 +99,26 @@ export function getRoleSolidColor(role: AppRole | string): string {
   return ROLE_SOLID_COLORS[role as AppRole] || 'bg-muted';
 }
 
-// Get the primary role from an array (priority order)
+// Functional roles that can be used as active_role (ambassador is a badge, NOT a functional role)
+export const FUNCTIONAL_ROLES: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client'];
+
+// Check if a role is a functional role (can be used as active_role)
+export function isFunctionalRole(role: string): boolean {
+  return FUNCTIONAL_ROLES.includes(role as AppRole);
+}
+
+// Get the primary role from an array (priority order) - only returns functional roles
 export function getPrimaryRole(roles: AppRole[]): AppRole | null {
   if (roles.length === 0) return null;
-  
-  const priority: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'ambassador', 'creator', 'editor', 'client'];
-  
+
+  const priority: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client'];
+
   for (const role of priority) {
     if (roles.includes(role)) {
       return role;
     }
   }
-  
+
   return roles[0];
 }
 
@@ -130,14 +138,14 @@ export function isAdminRole(roles: AppRole[]): boolean {
   return roles.includes('admin');
 }
 
-// Roles that can appear in UI selectors
-export const SELECTABLE_ROLES: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'ambassador', 'creator', 'editor', 'client'];
+// Roles that can appear in UI role-switching selectors (ambassador excluded - it's a badge)
+export const SELECTABLE_ROLES: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client'];
 
-// All available roles
+// All available roles (including ambassador for display/label purposes)
 export const ALL_ROLES: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'ambassador', 'creator', 'editor', 'client'];
 
-// Roles that can be assigned by org owners
-export const ORG_ASSIGNABLE_ROLES: AppRole[] = ['team_leader', 'strategist', 'trafficker', 'ambassador', 'creator', 'editor', 'client'];
+// Roles that can be assigned by org owners (ambassador excluded - use ambassador badge system instead)
+export const ORG_ASSIGNABLE_ROLES: AppRole[] = ['team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client'];
 
 // Ambassador badge levels for selection
 export const AMBASSADOR_LEVELS: AmbassadorLevel[] = ['bronze', 'silver', 'gold'];

@@ -37,8 +37,8 @@ const ROLE_DASHBOARDS: Record<AppRole, string> = {
   ambassador: '/creator-dashboard',
 };
 
-// Classify roles into personal vs company context
-const PERSONAL_ROLES: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'ambassador', 'creator', 'editor'];
+// Classify roles into personal vs company context (ambassador excluded - it's a badge)
+const PERSONAL_ROLES: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor'];
 const COMPANY_ROLES: AppRole[] = ['client'];
 
 // Role descriptions for better UX
@@ -61,7 +61,8 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
   const { roles, activeRole, setActiveRole } = useAuth();
   const navigate = useNavigate();
 
-  const selectableRoles = roles;
+  // Filter out 'ambassador' - it's a badge/privilege, not a switchable functional role
+  const selectableRoles = roles.filter((r) => r !== 'ambassador');
 
   // Only show if user has multiple selectable roles
   if (selectableRoles.length <= 1) {
