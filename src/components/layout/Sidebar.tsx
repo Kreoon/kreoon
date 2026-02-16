@@ -164,7 +164,7 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, profile, user, activeRole, roles: realRoles } = useAuth();
+  const { signOut, profile, user, activeRole, roles: realRoles, isSuperadmin } = useAuth();
   const { isImpersonating, effectiveRoles, isRootAdmin, impersonationTarget } = useImpersonation();
   const { isPlatformRoot, currentOrgName } = useOrgOwner();
   const [showClientSelector, setShowClientSelector] = useState(false);
@@ -313,8 +313,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           )}
         </div>
 
-        {/* Root Admin Organization Switcher */}
-        {isPlatformRoot && !collapsed && (
+        {/* Root Admin Organization Switcher - show for superadmins or platform root */}
+        {(isSuperadmin || isPlatformRoot) && !collapsed && (
           <div className="px-3 py-2 border-b border-[hsl(270,100%,60%,0.08)]">
             <RootOrgSwitcher />
           </div>

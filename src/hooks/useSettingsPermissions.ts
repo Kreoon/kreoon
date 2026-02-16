@@ -114,8 +114,9 @@ export function useSettingsPermissions(): SettingsPermissions {
   const isPlatformRoot = useMemo(() => {
     // IMPORTANT: during migrations profile can fail to load by auth.uid();
     // use auth user email as the source of truth.
-    return (user?.email && ROOT_EMAILS.includes(user.email)) || isPlatformRootFromHook;
-  }, [user?.email, isPlatformRootFromHook]);
+    // NEW: isPlatformRootFromHook now checks is_superadmin from database, but we add explicit check for safety
+    return profile?.is_superadmin === true || (user?.email && ROOT_EMAILS.includes(user.email)) || isPlatformRootFromHook;
+  }, [user?.email, isPlatformRootFromHook, profile?.is_superadmin]);
 
   // Determine if user is org admin (uses activeRole for current context)
   const isOrgAdmin = useMemo(() => {

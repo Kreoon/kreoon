@@ -6,13 +6,15 @@ import { useAuth } from '@/hooks/useAuth';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { Loader2 } from 'lucide-react';
 
+// DEPRECATED: ROOT_EMAILS hardcoded - now using is_superadmin from database via useOrgOwner hook
 const ROOT_EMAILS = ["jacsolucionesgraficas@gmail.com", "kairosgp.sas@gmail.com"];
 
 export default function PermissionsUnifiedSection() {
   const { user, profile } = useAuth();
   const { isPlatformRoot: isPlatformRootFromHook } = useOrgOwner();
   // IMPORTANT: profile can fail to load by auth uid after migrations; rely on auth email.
-  const isPlatformRoot = (user?.email && ROOT_EMAILS.includes(user.email)) || isPlatformRootFromHook;
+  // NEW: isPlatformRootFromHook now checks is_superadmin from database
+  const isPlatformRoot = profile?.is_superadmin === true || (user?.email && ROOT_EMAILS.includes(user.email)) || isPlatformRootFromHook;
   
   if (!profile?.current_organization_id) {
     return (
