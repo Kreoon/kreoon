@@ -19,6 +19,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isCreator: boolean;
   isEditor: boolean;
+  isSuperadmin: boolean; // Platform superadmin with access to all organizations
   isClient: boolean;
   isStrategist: boolean;
   isTrafficker: boolean;
@@ -531,6 +532,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isCreator = activeRole === 'creator';
   const isEditor = activeRole === 'editor';
   const isClient = activeRole === 'client';
+  const isSuperadmin = profile?.is_superadmin === true; // Platform superadmin
   const isStrategist = activeRole === 'strategist';
   const isTrafficker = activeRole === 'trafficker';
   const isTeamLeader = activeRole === 'team_leader';
@@ -555,7 +557,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isClient,
       isStrategist,
       isTrafficker,
-      isTeamLeader
+      isTeamLeader,
+      isSuperadmin
     }}>
       {children}
     </AuthContext.Provider>

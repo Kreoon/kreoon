@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Building2, ChevronDown, Crown, Check } from "lucide-react";
+import { Building2, ChevronDown, Crown, Check, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -22,7 +22,7 @@ interface Organization {
 }
 
 export function RootOrgSwitcher() {
-  const { user, profile } = useAuth();
+  const { user, profile, isSuperadmin } = useAuth();
   const { toast } = useToast();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
@@ -159,9 +159,16 @@ export function RootOrgSwitcher() {
         <Button
           variant="outline"
           size="sm"
-          className="gap-2 border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400"
+          className={cn(
+            "gap-2 border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400",
+            isSuperadmin && "ring-2 ring-amber-500/30"
+          )}
         >
-          <Crown className="h-4 w-4" />
+          {isSuperadmin ? (
+            <ShieldCheck className="h-4 w-4" />
+          ) : (
+            <Crown className="h-4 w-4" />
+          )}
           <span className="hidden md:inline max-w-[120px] truncate">
             {currentOrg?.name || 'Seleccionar Org'}
           </span>
@@ -171,11 +178,26 @@ export function RootOrgSwitcher() {
       <PopoverContent className="w-80 p-0" align="end">
         <div className="p-3 border-b">
           <div className="flex items-center gap-2 mb-2">
-            <Crown className="h-4 w-4 text-amber-500" />
-            <h4 className="font-semibold text-sm">Acceso Root</h4>
+            {isSuperadmin ? (
+              <>
+                <ShieldCheck className="h-4 w-4 text-amber-500" />
+                <h4 className="font-semibold text-sm">Superadmin</h4>
+                <span className="ml-auto text-xs font-semibold px-2 py-0.5 bg-amber-500/20 text-amber-600 rounded-full">
+                  ACCESO TOTAL
+                </span>
+              </>
+            ) : (
+              <>
+                <Crown className="h-4 w-4 text-amber-500" />
+                <h4 className="font-semibold text-sm">Acceso Root</h4>
+              </>
+            )}
           </div>
           <p className="text-xs text-muted-foreground">
-            Cambia entre organizaciones para administrarlas
+            {isSuperadmin
+              ? "Acceso a todas las organizaciones de la plataforma"
+              : "Cambia entre organizaciones para administrarlas"
+            }
           </p>
         </div>
         
