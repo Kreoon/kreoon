@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SUPABASE_FUNCTIONS_URL } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, Loader2, CheckCircle, XCircle, Video, RefreshCw } from "lucide-react";
+import { useContentAnalytics } from "@/analytics";
 
 type VideoUploadStatus = 'idle' | 'uploading' | 'processing' | 'completed' | 'failed';
 
@@ -28,6 +29,7 @@ export function BunnyVideoUploader({
   disabled
 }: BunnyVideoUploaderProps) {
   const { toast } = useToast();
+  const { trackUploadStarted, trackUploadCompleted, trackUploadFailed } = useContentAnalytics();
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<VideoUploadStatus>(
@@ -130,6 +132,12 @@ export function BunnyVideoUploader({
     setUploading(true);
     setStatus('uploading');
     setProgress(0);
+    trackUploadStarted({
+      content_type: 'video',
+      file_size_bytes: file.size,
+      file_format: file.type,
+      source: 'bunny_uploader',
+    });
 
     try {
       // Get user id for the edge function
@@ -213,6 +221,13 @@ export function BunnyVideoUploader({
         setStatus('completed');
       }
 
+      trackUploadCompleted(contentId, {
+        content_type: 'video',
+        file_size_bytes: file.size,
+        file_format: file.type,
+        source: 'bunny_uploader',
+      });
+
       toast({
         title: "Video subido",
         description: "El video se esta procesando en Bunny.net"
@@ -221,6 +236,10 @@ export function BunnyVideoUploader({
     } catch (error) {
       console.error('Upload error:', error);
       setStatus('failed');
+      trackUploadFailed(
+        error instanceof Error ? error.message : 'unknown',
+        { content_type: 'video', source: 'bunny_uploader' },
+      );
       toast({
         title: "Error al subir",
         description: error instanceof Error ? error.message : "No se pudo subir el video",

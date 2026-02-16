@@ -30,7 +30,9 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 
-import { ROLE_LABELS, ROLE_COLORS, ORG_ASSIGNABLE_ROLES, getRoleLabel } from '@/lib/roles';
+import { getRoleLabel, getRoleBadgeColor } from '@/lib/roles';
+import { getPermissionGroup } from '@/lib/permissionGroups';
+import { UnifiedRolePicker } from '@/components/roles/UnifiedRolePicker';
 
 export default function Team() {
   const { user, profile: authProfile } = useAuth();
@@ -162,8 +164,8 @@ export default function Team() {
       toast({
         title: roleAction === 'replace' ? 'Rol actualizado' : 'Rol agregado',
         description: roleAction === 'replace' 
-          ? `Se cambió el rol de ${selectedUser.full_name} a ${ROLE_LABELS[newRole]}`
-          : `Se agregó el rol ${ROLE_LABELS[newRole]} a ${selectedUser.full_name}`
+          ? `Se cambió el rol de ${selectedUser.full_name} a ${getRoleLabel(newRole)}`
+          : `Se agregó el rol ${getRoleLabel(newRole)} a ${selectedUser.full_name}`
       });
       setAddRoleDialog(false);
       fetchData();
@@ -210,7 +212,7 @@ export default function Team() {
 
       toast({
         title: 'Rol eliminado',
-        description: `Se eliminó el rol ${ROLE_LABELS[role]}`
+        description: `Se eliminó el rol ${getRoleLabel(role)}`
       });
       fetchData();
     } catch (error) {
@@ -276,16 +278,17 @@ export default function Team() {
     );
   }
 
-  // Excluir usuarios con rol cliente del equipo (se gestionan en /clients)
-  const teamProfiles = profiles.filter(p => !p.roles.includes('client'));
+  // Excluir usuarios cuyo grupo sea 'client' del equipo (se gestionan en /clients)
+  const teamProfiles = profiles.filter(p =>
+    !p.roles.some(r => getPermissionGroup(r) === 'client')
+  );
 
   const noRole = teamProfiles.filter(p => p.roles.length === 0);
-  const admins = teamProfiles.filter(p => p.roles.includes('admin'));
-  const strategists = teamProfiles.filter(p => p.roles.includes('strategist'));
-  const creators = teamProfiles.filter(p => p.roles.includes('creator'));
-  const editors = teamProfiles.filter(p => p.roles.includes('editor'));
-  const traffickers = teamProfiles.filter(p => p.roles.includes('trafficker'));
-  const teamLeaders = teamProfiles.filter(p => p.roles.includes('team_leader'));
+  const admins = teamProfiles.filter(p => p.roles.some(r => getPermissionGroup(r) === 'admin'));
+  const teamLeaders = teamProfiles.filter(p => p.roles.some(r => getPermissionGroup(r) === 'team_leader'));
+  const strategists = teamProfiles.filter(p => p.roles.some(r => getPermissionGroup(r) === 'strategist'));
+  const creators = teamProfiles.filter(p => p.roles.some(r => getPermissionGroup(r) === 'creator'));
+  const editors = teamProfiles.filter(p => p.roles.some(r => getPermissionGroup(r) === 'editor'));
 
   // Reusable user card component
   const UserCard = ({ profile, showAddRole = true }: { profile: Profile & { roles: AppRole[] }, showAddRole?: boolean }) => (
@@ -312,13 +315,13 @@ export default function Team() {
           </Badge>
         ) : (
           profile.roles.map(role => (
-            <Badge 
-              key={role} 
-              className={`${ROLE_COLORS[role]} cursor-pointer hover:opacity-75`}
+            <Badge
+              key={role}
+              className={`${getRoleBadgeColor(role)} cursor-pointer hover:opacity-75`}
               onClick={() => handleRemoveRole(profile.id, role)}
               title="Clic para eliminar rol"
             >
-              {ROLE_LABELS[role]} ×
+              {getRoleLabel(role)} ×
             </Badge>
           ))
         )}
@@ -397,22 +400,12 @@ export default function Team() {
                 </div>
                 <div>
                   <Label>Rol</Label>
-                  <Select 
-                    value={inviteData.role} 
-                    onValueChange={(v) => setInviteData({ ...inviteData, role: v as AppRole })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Administrador</SelectItem>
-                      <SelectItem value="creator">Creador de Contenido</SelectItem>
-                      <SelectItem value="editor">Productor Audio-Visual</SelectItem>
-                      <SelectItem value="strategist">Estratega</SelectItem>
-                      <SelectItem value="trafficker">Trafficker</SelectItem>
-                      <SelectItem value="team_leader">Líder de Equipo</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <UnifiedRolePicker
+                    value={inviteData.role}
+                    onChange={(v) => setInviteData({ ...inviteData, role: (Array.isArray(v) ? v[0] : v) as AppRole })}
+                    showSystemRoles={true}
+                    showClientRoles={false}
+                  />
                   <p className="text-xs text-muted-foreground mt-1">
                     Para agregar clientes, usa la sección Clientes
                   </p>
@@ -464,10 +457,6 @@ export default function Team() {
           <TabsTrigger value="editors" className="gap-2">
             <User className="w-4 h-4" />
             Editores ({editors.length})
-          </TabsTrigger>
-          <TabsTrigger value="traffickers" className="gap-2">
-            <Star className="w-4 h-4" />
-            Traffickers ({traffickers.length})
           </TabsTrigger>
           <TabsTrigger value="team_leaders" className="gap-2">
             <Star className="w-4 h-4" />
@@ -600,31 +589,6 @@ export default function Team() {
           </Card>
         </TabsContent>
 
-        {/* Traffickers Tab */}
-        <TabsContent value="traffickers" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-cyan-500" />
-                Traffickers ({traffickers.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {traffickers.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  No hay traffickers registrados
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {traffickers.map(profile => (
-                    <UserCard key={profile.id} profile={profile} />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         {/* Team Leaders Tab */}
         <TabsContent value="team_leaders" className="mt-6">
           <Card>
@@ -666,29 +630,22 @@ export default function Team() {
                 <p className="text-sm text-muted-foreground mb-2">Roles actuales:</p>
                 <div className="flex gap-2 flex-wrap">
                   {selectedUser.roles.map(role => (
-                    <Badge key={role} className={ROLE_COLORS[role]}>
-                      {ROLE_LABELS[role]}
+                    <Badge key={role} className={getRoleBadgeColor(role)}>
+                      {getRoleLabel(role)}
                     </Badge>
                   ))}
                 </div>
               </div>
             ) : null}
-            
+
             <div>
               <Label>Nuevo rol</Label>
-              <Select value={newRole} onValueChange={(v) => setNewRole(v as AppRole)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Administrador</SelectItem>
-                  <SelectItem value="creator">Creador de Contenido</SelectItem>
-                  <SelectItem value="editor">Productor Audio-Visual</SelectItem>
-                  <SelectItem value="strategist">Estratega</SelectItem>
-                  <SelectItem value="trafficker">Trafficker</SelectItem>
-                  <SelectItem value="team_leader">Líder de Equipo</SelectItem>
-                </SelectContent>
-              </Select>
+              <UnifiedRolePicker
+                value={newRole}
+                onChange={(v) => setNewRole((Array.isArray(v) ? v[0] : v) as AppRole)}
+                showSystemRoles={true}
+                showClientRoles={false}
+              />
               <p className="text-xs text-muted-foreground mt-1">
                 Para gestionar clientes, usa la sección Clientes
               </p>

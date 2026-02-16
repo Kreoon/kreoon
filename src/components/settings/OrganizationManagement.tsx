@@ -32,33 +32,12 @@ import {
   FileText
 } from 'lucide-react';
 import type { AppRole } from '@/types/database';
+import { getRoleLabel, getRoleBadgeColor, SELECTABLE_ROLES } from '@/lib/roles';
 import { OrganizationProfileEditor } from './OrganizationProfileEditor';
 import { EditorRandomizerSettings } from './EditorRandomizerSettings';
 
-const ROLE_LABELS: Record<AppRole, string> = {
-  admin: 'Administrador',
-  strategist: 'Estratega',
-  creator: 'Creador',
-  editor: 'Editor',
-  client: 'Cliente',
-  trafficker: 'Trafficker',
-  team_leader: 'Líder de Equipo',
-  ambassador: 'Embajador'
-};
-
-// Roles that can be assigned in org management
-const ASSIGNABLE_ROLES: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'ambassador', 'creator', 'editor', 'client'];
-
-const ROLE_COLORS: Record<AppRole, string> = {
-  admin: 'bg-red-500/10 text-red-500 border-red-500/20',
-  strategist: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
-  creator: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-  editor: 'bg-green-500/10 text-green-500 border-green-500/20',
-  client: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
-  trafficker: 'bg-cyan-500/10 text-cyan-500 border-cyan-500/20',
-  team_leader: 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20',
-  ambassador: 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-};
+// Roles that can be assigned in org management (all roles including system)
+const ASSIGNABLE_ROLES = SELECTABLE_ROLES;
 
 export function OrganizationManagement() {
   const { profile, isAdmin } = useAuth();
@@ -315,9 +294,9 @@ export function OrganizationManagement() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {Object.entries(ROLE_LABELS).map(([role, label]) => (
+                          {SELECTABLE_ROLES.map((role) => (
                             <SelectItem key={role} value={role}>
-                              {label}
+                              {getRoleLabel(role)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -447,8 +426,8 @@ function MemberCard({
       </div>
 
       <div className="flex items-center gap-2">
-        <Badge variant="outline" className={ROLE_COLORS[member.role]}>
-          {ROLE_LABELS[member.role]}
+        <Badge variant="outline" className={getRoleBadgeColor(member.role)}>
+          {getRoleLabel(member.role)}
         </Badge>
 
         {!member.is_owner && !isCurrentUser && (
@@ -461,9 +440,9 @@ function MemberCard({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(ROLE_LABELS).map(([role, label]) => (
+                {SELECTABLE_ROLES.map((role) => (
                   <SelectItem key={role} value={role}>
-                    {label}
+                    {getRoleLabel(role)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -530,8 +509,8 @@ function InvitationCard({
       </div>
 
       <div className="flex items-center gap-2">
-        <Badge variant="outline" className={ROLE_COLORS[invitation.role]}>
-          {ROLE_LABELS[invitation.role]}
+        <Badge variant="outline" className={getRoleBadgeColor(invitation.role)}>
+          {getRoleLabel(invitation.role)}
         </Badge>
 
         <AlertDialog>

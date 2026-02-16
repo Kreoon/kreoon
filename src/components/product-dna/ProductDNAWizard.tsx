@@ -7,6 +7,7 @@ import {
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { useAIAnalytics } from '@/analytics';
 
 import { SERVICE_GROUPS, type ServiceGroupConfig, type ServiceConfig } from '@/config/service-catalog';
 import {
@@ -69,6 +70,7 @@ const STEP_ORDER: WizardStep[] = [
 ];
 
 export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAWizardProps) {
+  const { trackDNAWizardStarted, trackDNAWizardCompleted, trackDNAAnalysisGenerated } = useAIAnalytics();
   const [currentStep, setCurrentStep] = useState<WizardStep>('group_selection');
   const [state, setState] = useState<WizardState>({
     selectedGroup: null,
@@ -194,6 +196,8 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setCurrentStep('analyzing');
+    const startTime = Date.now();
+    trackDNAWizardStarted('manual');
 
     try {
       // product_dna table not yet in generated types — cast to any
@@ -222,10 +226,15 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
 
       if (analyzeError) throw analyzeError;
 
+      const elapsed = Math.round((Date.now() - startTime) / 1000);
+      trackDNAAnalysisGenerated(productDna.id, 'product_dna', true, elapsed);
+      trackDNAWizardCompleted(productDna.id, ['service_selection', 'goal', 'audience', 'audio', 'references']);
       toast.success('¡Análisis completado! Tu Product DNA está listo.');
       onComplete(productDna.id);
     } catch (error) {
       console.error('Error creating product DNA:', error);
+      const elapsed = Math.round((Date.now() - startTime) / 1000);
+      trackDNAAnalysisGenerated(clientId, 'product_dna', false, elapsed);
       toast.error('Error al procesar tu solicitud');
       setCurrentStep('review');
     } finally {

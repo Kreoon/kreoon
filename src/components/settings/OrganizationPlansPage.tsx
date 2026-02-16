@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { Check, Crown, Zap, Building2, Users, Video, Sparkles, Clock, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useBillingAnalytics } from '@/analytics';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -103,6 +104,7 @@ const PLANS: Plan[] = [
 export function OrganizationPlansPage() {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
+  const { trackPlanSelected, trackPlanViewed } = useBillingAnalytics();
   const organizationId = profile?.current_organization_id;
   
   const trialStatus = useOrganizationTrial(organizationId || null);
@@ -156,11 +158,27 @@ export function OrganizationPlansPage() {
   });
 
   const handleSelectPlan = (planId: string) => {
+    const plan = PLANS.find(p => p.id === planId);
+    if (plan) {
+      trackPlanViewed({
+        plan_id: plan.id,
+        plan_name: plan.name,
+        is_current_plan: plan.id === currentPlan,
+      });
+    }
     setSelectedPlan(planId);
   };
 
   const handleConfirmUpgrade = () => {
     if (!selectedPlan) return;
+    const plan = PLANS.find(p => p.id === selectedPlan);
+    if (plan) {
+      trackPlanSelected({
+        plan_id: plan.id,
+        plan_name: plan.name,
+        is_current_plan: false,
+      });
+    }
     setIsUpgrading(true);
     updatePlanMutation.mutate(selectedPlan);
   };

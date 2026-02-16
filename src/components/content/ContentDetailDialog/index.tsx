@@ -8,6 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AutoSaveIndicator } from '@/components/ui/autosave-indicator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+
+// Feature flag: Unified Project Modal
+const UnifiedProjectModal = lazy(() => import('@/components/projects/UnifiedProjectModal'));
+const USE_UNIFIED_MODAL = import.meta.env.VITE_USE_UNIFIED_MODAL === 'true';
 import { ProductDetailDialog } from '@/components/products/ProductDetailDialog';
 import { ProductSelector } from '@/components/products/ProductSelector';
 import { ContentConfigDialog } from './Config';
@@ -64,14 +68,31 @@ function TabSkeleton() {
   );
 }
 
-export function ContentDetailDialog({ 
-  content, 
-  open, 
-  onOpenChange, 
-  onUpdate, 
+export function ContentDetailDialog({
+  content,
+  open,
+  onOpenChange,
+  onUpdate,
   onDelete,
   mode = 'view'
 }: ContentDetailDialogProps) {
+  // Feature flag: delegate to unified modal
+  if (USE_UNIFIED_MODAL) {
+    return (
+      <Suspense fallback={null}>
+        <UnifiedProjectModal
+          source="content"
+          projectId={content?.id}
+          open={open}
+          onOpenChange={onOpenChange}
+          onUpdate={onUpdate}
+          onDelete={onDelete}
+          mode={mode}
+        />
+      </Suspense>
+    );
+  }
+
   const { isAdmin, isClient, user } = useAuth();
   const { internalBrandClient } = useInternalBrandClient();
   const [showProductDialog, setShowProductDialog] = useState(false);

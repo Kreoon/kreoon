@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useAuthAnalytics } from "@/analytics";
 import {
   KreoonButton,
   KreoonInput,
@@ -40,6 +41,7 @@ export function LoginForm({
 }: LoginFormProps) {
   const { signIn } = useAuth();
   const { toast } = useToast();
+  const { trackLogin, trackLoginFailed, trackOAuthStarted } = useAuthAnalytics();
 
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -69,6 +71,7 @@ export function LoginForm({
       if (signInError) {
         const message = mapAuthErrorMessage(signInError.message);
         setError(message);
+        trackLoginFailed(signInError.message || 'unknown', 'email');
         toast({
           title: "Error al iniciar sesión",
           description: message,
@@ -76,6 +79,7 @@ export function LoginForm({
         });
         return;
       }
+      trackLogin({ login_method: 'email' });
       onSuccess?.();
     } catch (err) {
       const fallback = "Ocurrió un error inesperado. Por favor intenta de nuevo.";
@@ -93,6 +97,7 @@ export function LoginForm({
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     setError(null);
+    trackOAuthStarted('google');
     try {
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -101,6 +106,7 @@ export function LoginForm({
 
       if (oauthError) {
         setError(oauthError.message);
+        trackLoginFailed(oauthError.message, 'google');
         toast({
           title: "Error con Google",
           description: oauthError.message,

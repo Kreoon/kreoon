@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { usePortfolioAI } from '@/hooks/usePortfolioAI';
 import { usePortfolioAIConfig } from '@/hooks/usePortfolioAIConfig';
 import { toast } from 'sonner';
+import { useDiscoveryAnalytics } from '@/analytics';
 
 interface SmartSearchBarProps {
   className?: string;
@@ -18,9 +19,19 @@ export default function SmartSearchBar({ className, onSearch }: SmartSearchBarPr
   const { semanticSearch, loading: aiLoading } = usePortfolioAI();
   const { isFeatureEnabled } = usePortfolioAIConfig();
   const aiSearchEnabled = isFeatureEnabled('ai_search');
+  const { trackSearchPerformed } = useDiscoveryAnalytics();
 
   const handleSearch = useCallback(async () => {
     if (!query.trim()) return;
+
+    trackSearchPerformed({
+      query,
+      query_length: query.length,
+      search_type: aiSearchEnabled ? 'ai' : 'text',
+      results_count: 0,
+      filters_applied: [],
+      page_number: 1,
+    });
 
     if (aiSearchEnabled) {
       const result = await semanticSearch(query);

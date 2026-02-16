@@ -7,6 +7,7 @@ import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { StoryViewer } from '@/components/portfolio/StoryViewer';
 import { useStoryViews } from '@/hooks/useStoryViews';
+import { usePortfolioAnalytics } from '@/analytics';
 
 interface Story {
   id: string;
@@ -35,6 +36,7 @@ interface StoriesBarProps {
 export default function StoriesBar({ followingIds, onAddStory }: StoriesBarProps) {
   const { user } = useAuth();
   const { markStoryAsViewed, hasUnseenStories } = useStoryViews();
+  const { trackStoryViewed } = usePortfolioAnalytics();
   const [users, setUsers] = useState<StoryUser[]>([]);
   const [myStories, setMyStories] = useState<Story[]>([]);
   const [selectedUser, setSelectedUser] = useState<StoryUser | null>(null);
@@ -130,6 +132,7 @@ export default function StoriesBar({ followingIds, onAddStory }: StoriesBarProps
 
   const handleStoryViewed = (storyId: string) => {
     markStoryAsViewed(storyId);
+    trackStoryViewed(storyId, 'stories_bar');
   };
 
   return (

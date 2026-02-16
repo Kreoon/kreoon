@@ -14,7 +14,7 @@ import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
 import { ImpersonationBanner } from "@/components/impersonation/ImpersonationBanner";
 import { AICopilotProvider } from "@/contexts/AICopilotContext";
 import { TrialProvider } from "@/contexts/TrialContext";
-import { TrackingProvider } from "@/contexts/TrackingContext";
+import { AnalyticsProvider } from "@/contexts/AnalyticsContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 import { StrategistClientProvider } from "@/contexts/StrategistClientContext";
 import { KiroProvider } from "@/contexts/KiroContext";
@@ -79,6 +79,26 @@ const TalentListDetailPage = lazy(() => import("./pages/marketplace/TalentListDe
 const MarketplaceInvitationsPage = lazy(() => import("./pages/marketplace/MarketplaceInvitationsPage"));
 const MarketplaceInquiriesPage = lazy(() => import("./pages/marketplace/MarketplaceInquiriesPage"));
 const CreatorProfileSetup = lazy(() => import("./pages/CreatorProfileSetup"));
+const Unete = lazy(() => import("./pages/Unete"));
+const UneteTalento = lazy(() => import("./pages/unete/talento"));
+const UneteMarcas = lazy(() => import("./pages/unete/marcas"));
+const UneteOrganizaciones = lazy(() => import("./pages/unete/organizaciones"));
+// CRM Platform
+const PlatformCRMDashboard = lazy(() => import("./pages/crm/platform/PlatformCRMDashboard"));
+const PlatformCRMLeads = lazy(() => import("./pages/crm/platform/PlatformCRMLeads"));
+const PlatformCRMOrganizations = lazy(() => import("./pages/crm/platform/PlatformCRMOrganizations"));
+const PlatformCRMCreators = lazy(() => import("./pages/crm/platform/PlatformCRMCreators"));
+const PlatformCRMUsers = lazy(() => import("./pages/crm/platform/PlatformCRMUsers"));
+const PlatformCRMFinances = lazy(() => import("./pages/crm/platform/PlatformCRMFinances"));
+// CRM Org
+const OrgCRMDashboard = lazy(() => import("./pages/crm/org/OrgCRMDashboard"));
+const OrgCRMContacts = lazy(() => import("./pages/crm/org/OrgCRMContacts"));
+const OrgCRMCreatorsPage = lazy(() => import("./pages/crm/org/OrgCRMCreators"));
+const OrgCRMPipelines = lazy(() => import("./pages/crm/org/OrgCRMPipelines"));
+const OrgCRMFinances = lazy(() => import("./pages/crm/org/OrgCRMFinances"));
+
+// KAE Analytics
+const KAEAnalyticsDashboard = lazy(() => import("./components/admin/analytics/KAEDashboard"));
 
 // Wallet Module Pages
 const WalletPage = lazy(() => import("./modules/wallet/pages/WalletPage").then(m => ({ default: m.WalletPage })));
@@ -202,6 +222,10 @@ function AppRoutes() {
         <Route path="/register" element={<Register />} />
         <Route path="/register/:slug" element={<Register />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="/unete" element={<Unete />} />
+        <Route path="/unete/talento" element={<UneteTalento />} />
+        <Route path="/unete/marcas" element={<UneteMarcas />} />
+        <Route path="/unete/organizaciones" element={<UneteOrganizaciones />} />
         <Route path="/" element={<HomePage />} />
         <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'team_leader']}><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor']}><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
@@ -212,11 +236,25 @@ function AppRoutes() {
         <Route path="/team" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Team /></MainLayout></ProtectedRoute>} />
         <Route path="/live" element={<ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Live /></MainLayout></ProtectedRoute>} />
         <Route path="/marketing" element={<ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Marketing /></MainLayout></ProtectedRoute>} />
+        {/* CRM Plataforma */}
+        <Route path="/crm" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMDashboard /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/leads" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMLeads /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/organizaciones" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMOrganizations /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/creadores" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMCreators /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/usuarios" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMUsers /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/finanzas" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMFinances /></MainLayout></ProtectedRoute>} />
+        {/* CRM Organización */}
+        <Route path="/org-crm" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist']}><MainLayout><OrgCRMDashboard /></MainLayout></ProtectedRoute>} />
+        <Route path="/org-crm/contactos" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist']}><MainLayout><OrgCRMContacts /></MainLayout></ProtectedRoute>} />
+        <Route path="/org-crm/creadores" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist']}><MainLayout><OrgCRMCreatorsPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/org-crm/pipelines" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist']}><MainLayout><OrgCRMPipelines /></MainLayout></ProtectedRoute>} />
+        <Route path="/org-crm/finanzas" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist']}><MainLayout><OrgCRMFinances /></MainLayout></ProtectedRoute>} />
         {/* Wallet Module Routes */}
         <Route path="/wallet" element={<ProtectedRoute allowNoRoles><MainLayout><WalletPage /></MainLayout></ProtectedRoute>} />
         <Route path="/wallet/transactions" element={<ProtectedRoute allowNoRoles><MainLayout><TransactionsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/wallet/withdrawals" element={<ProtectedRoute allowNoRoles><MainLayout><WithdrawalsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/admin/wallets" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><AdminWalletsPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><KAEAnalyticsDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute allowNoRoles><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
         <Route path="/creator-dashboard" element={<ProtectedRoute allowedRoles={['creator']}><MainLayout><CreatorDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/editor-dashboard" element={<ProtectedRoute allowedRoles={['editor']}><MainLayout><EditorDashboard /></MainLayout></ProtectedRoute>} />
@@ -236,7 +274,7 @@ function AppContent() {
     <BrowserRouter>
       <BrandingProvider>
         <AuthProvider>
-          <TrackingProvider>
+          <AnalyticsProvider>
             <ImpersonationProvider>
               <TrialProvider>
                 <UnsavedChangesProvider>
@@ -258,7 +296,7 @@ function AppContent() {
                 </UnsavedChangesProvider>
               </TrialProvider>
             </ImpersonationProvider>
-          </TrackingProvider>
+          </AnalyticsProvider>
         </AuthProvider>
       </BrandingProvider>
     </BrowserRouter>

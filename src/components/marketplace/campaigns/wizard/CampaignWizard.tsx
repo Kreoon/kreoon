@@ -1,22 +1,32 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, ChevronLeft, ChevronRight, FileText, Eye, Video, DollarSign, ClipboardList, CheckCircle2 } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, FileText, Eye, Video, ImageIcon, DollarSign, ClipboardList, CheckCircle2, Radio, Clapperboard, UserSearch } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMarketplaceCampaigns } from '@/hooks/useMarketplaceCampaigns';
+import type { CampaignMediaType } from '@/hooks/useMarketplaceCampaigns';
+import { useCampaignAnalytics } from '@/analytics';
 import { useCampaignInvitations } from '@/hooks/useCampaignInvitations';
 import { CampaignStepBasicInfo } from './CampaignStepBasicInfo';
 import { CampaignStepVisibility } from './CampaignStepVisibility';
 import { CampaignStepContent } from './CampaignStepContent';
+import { CampaignStepMedia } from './CampaignStepMedia';
+import type { CampaignMediaData } from './CampaignStepMedia';
 import { CampaignStepBudget } from './CampaignStepBudget';
 import { CampaignStepReview } from './CampaignStepReview';
 import type { CampaignBasicInfo } from './CampaignStepBasicInfo';
 import type { CampaignBudgetData } from './CampaignStepBudget';
-import type { CampaignContentRequirement, CampaignCreatorRequirements, CampaignVisibilityData } from '../../types/marketplace';
+import type { CampaignContentRequirement, CampaignCreatorRequirements, CampaignVisibilityData, MarketplaceRoleId } from '../../types/marketplace';
+import { MarketplaceRoleSelector } from '../../roles/MarketplaceRoleSelector';
+import { ActivationCampaignConfig } from './ActivationCampaignConfig';
+import type { BrandActivationConfig } from '../../types/brandActivation';
+
+type CampaignPurpose = 'content' | 'activation' | 'talent';
 
 const STEPS = [
   { id: 'basic', title: 'Basicos', icon: FileText },
   { id: 'visibility', title: 'Alcance', icon: Eye },
   { id: 'content', title: 'Contenido', icon: Video },
+  { id: 'media', title: 'Media', icon: ImageIcon },
   { id: 'budget', title: 'Compensacion', icon: DollarSign },
   { id: 'review', title: 'Revision', icon: ClipboardList },
 ];
@@ -27,10 +37,22 @@ interface WizardDraft {
   basicInfo: CampaignBasicInfo;
   visibilityData: CampaignVisibilityData;
   contentRequirements: CampaignContentRequirement[];
+  mediaData: CampaignMediaData;
   budgetData: CampaignBudgetData;
   creatorRequirements: CampaignCreatorRequirements;
+  isBrandActivation: boolean;
+  activationConfig: BrandActivationConfig;
+  campaignPurpose: CampaignPurpose;
   step: number;
 }
+
+const DEFAULT_MEDIA: CampaignMediaData = {
+  coverImageUrl: '',
+  coverMediaId: '',
+  videoBriefUrl: '',
+  videoBriefMediaId: '',
+  videoBriefThumbnailUrl: '',
+};
 
 const DEFAULT_BASIC_INFO: CampaignBasicInfo = {
   title: '',
@@ -79,6 +101,20 @@ const DEFAULT_CREATOR_REQS: CampaignCreatorRequirements = {
   content_types: [],
 };
 
+const DEFAULT_ACTIVATION_CONFIG: BrandActivationConfig = {
+  required_platforms: [],
+  min_followers: {},
+  required_hashtags: [],
+  required_mentions: [],
+  min_post_duration_days: 30,
+  content_approval_required: true,
+  allow_reshare_brand: false,
+  usage_rights_duration_days: 90,
+  engagement_bonus: { enabled: false, max_bonus: 500000 },
+  verification_method: 'manual',
+  requires_insights_screenshot: false,
+};
+
 function loadDraft(): WizardDraft | null {
   try {
     const stored = localStorage.getItem(DRAFT_KEY);
@@ -103,29 +139,39 @@ function clearDraft() {
 
 export default function CampaignWizard() {
   const navigate = useNavigate();
-  const { createCampaign } = useMarketplaceCampaigns();
+  const { createCampaign, uploadCampaignMedia, sendCampaignNotifications } = useMarketplaceCampaigns();
   const { createBulkInvitations } = useCampaignInvitations();
+  const { trackCampaignCreated, trackCampaignPublished } = useCampaignAnalytics();
   const draft = loadDraft();
 
   const [currentStep, setCurrentStep] = useState(draft?.step ?? 0);
   const [basicInfo, setBasicInfo] = useState<CampaignBasicInfo>(draft?.basicInfo ?? DEFAULT_BASIC_INFO);
   const [visibilityData, setVisibilityData] = useState<CampaignVisibilityData>(draft?.visibilityData ?? DEFAULT_VISIBILITY);
   const [contentRequirements, setContentRequirements] = useState<CampaignContentRequirement[]>(draft?.contentRequirements ?? DEFAULT_CONTENT);
+  const [mediaData, setMediaData] = useState<CampaignMediaData>(draft?.mediaData ?? DEFAULT_MEDIA);
   const [budgetData, setBudgetData] = useState<CampaignBudgetData>(draft?.budgetData ?? DEFAULT_BUDGET);
   const [creatorRequirements, setCreatorRequirements] = useState<CampaignCreatorRequirements>(draft?.creatorRequirements ?? DEFAULT_CREATOR_REQS);
+  const [campaignPurpose, setCampaignPurpose] = useState<CampaignPurpose>(draft?.campaignPurpose ?? 'content');
+  const isBrandActivation = campaignPurpose === 'activation';
+  const [activationConfig, setActivationConfig] = useState<BrandActivationConfig>(draft?.activationConfig ?? DEFAULT_ACTIVATION_CONFIG);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [notificationsSent, setNotificationsSent] = useState(0);
 
-  // Auto-save draft (debounced 1s)
+  // File refs — raw File objects for upload after campaign creation (not serializable to draft)
+  const coverFileRef = useRef<File | null>(null);
+  const videoBriefFileRef = useRef<File | null>(null);
+
+  // Auto-save draft (debounced 1s) — File refs are NOT serializable, only URLs/IDs persist
   useEffect(() => {
     if (isComplete) return;
     const timeout = setTimeout(() => {
-      saveDraftToStorage({ basicInfo, visibilityData, contentRequirements, budgetData, creatorRequirements, step: currentStep });
+      saveDraftToStorage({ basicInfo, visibilityData, contentRequirements, mediaData, budgetData, creatorRequirements, isBrandActivation, activationConfig, campaignPurpose, step: currentStep });
     }, 1000);
     return () => clearTimeout(timeout);
-  }, [basicInfo, visibilityData, contentRequirements, budgetData, creatorRequirements, currentStep, isComplete]);
+  }, [basicInfo, visibilityData, contentRequirements, mediaData, budgetData, creatorRequirements, isBrandActivation, activationConfig, campaignPurpose, currentStep, isComplete]);
 
   const updateBasicInfo = useCallback(<K extends keyof CampaignBasicInfo>(field: K, value: CampaignBasicInfo[K]) => {
     setBasicInfo(prev => ({ ...prev, [field]: value }));
@@ -143,6 +189,15 @@ export default function CampaignWizard() {
     setCreatorRequirements(prev => ({ ...prev, [field]: value }));
   }, []);
 
+  const updateMediaData = useCallback(<K extends keyof CampaignMediaData>(field: K, value: CampaignMediaData[K]) => {
+    setMediaData(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  const handleMediaTempFile = useCallback((mediaType: 'cover_image' | 'video_brief', file: File) => {
+    if (mediaType === 'cover_image') coverFileRef.current = file;
+    else videoBriefFileRef.current = file;
+  }, []);
+
   const totalVideos = contentRequirements.reduce((sum, r) => sum + r.quantity, 0);
 
   const isStepValid = (step: number): boolean => {
@@ -154,12 +209,27 @@ export default function CampaignWizard() {
         return true;
       case 2: // Content
         return contentRequirements.length > 0 && contentRequirements.every(r => r.content_type);
-      case 3: { // Budget
-        if (budgetData.campaign_type === 'exchange') return !!budgetData.exchange_product_name.trim();
-        if (budgetData.campaign_type === 'paid') return budgetData.budget_per_video > 0 || budgetData.total_budget > 0;
-        return (budgetData.budget_per_video > 0 || budgetData.total_budget > 0) && !!budgetData.exchange_product_name.trim();
+      case 3: // Media (optional — always valid)
+        return true;
+      case 4: { // Budget
+        const isExchange = budgetData.campaign_type === 'exchange';
+        const isPaid = budgetData.campaign_type === 'paid';
+        const isHybrid = budgetData.campaign_type === 'hybrid';
+        const hasExchangeName = !!budgetData.exchange_product_name.trim();
+
+        // Payment validation depends on pricing mode
+        const hasPaidAmount = budgetData.pricing_mode === 'auction'
+          ? true // auction mode doesn't require a fixed amount
+          : budgetData.pricing_mode === 'range'
+            ? budgetData.min_bid > 0 && budgetData.max_bid > 0 && budgetData.max_bid >= budgetData.min_bid
+            : budgetData.budget_per_video > 0 || budgetData.total_budget > 0; // fixed
+
+        if (isExchange) return hasExchangeName;
+        if (isPaid) return hasPaidAmount;
+        if (isHybrid) return hasPaidAmount && hasExchangeName;
+        return false;
       }
-      case 4: // Review
+      case 5: // Review
         return termsAccepted;
       default:
         return false;
@@ -200,6 +270,12 @@ export default function CampaignWizard() {
       // Creator requirements
       creator_requirements: creatorRequirements,
       desired_roles: creatorRequirements.desired_roles || [],
+      // Media — only set if a real (non-temp) URL exists
+      cover_image_url: (mediaData.coverMediaId && mediaData.coverMediaId !== 'temp') ? mediaData.coverImageUrl : null,
+      // Campaign purpose & Brand Activation
+      campaign_purpose: campaignPurpose,
+      is_brand_activation: isBrandActivation,
+      activation_config: isBrandActivation ? activationConfig : null,
       // Status
       status,
     };
@@ -224,12 +300,60 @@ export default function CampaignWizard() {
         throw new Error('No se pudo crear la campana');
       }
 
+      // Upload temp media files now that we have a campaignId
+      const mediaUploads: Promise<any>[] = [];
+
+      if (coverFileRef.current) {
+        mediaUploads.push(
+          uploadCampaignMedia({
+            campaign_id: campaignId,
+            media_type: 'cover_image' as CampaignMediaType,
+            file: coverFileRef.current,
+          })
+        );
+      }
+
+      if (videoBriefFileRef.current) {
+        mediaUploads.push(
+          uploadCampaignMedia({
+            campaign_id: campaignId,
+            media_type: 'video_brief' as CampaignMediaType,
+            file: videoBriefFileRef.current,
+          })
+        );
+      }
+
+      // Upload media in parallel (non-blocking — campaign is already created)
+      if (mediaUploads.length > 0) {
+        const results = await Promise.allSettled(mediaUploads);
+        results.forEach((r, i) => {
+          if (r.status === 'rejected' || (r.status === 'fulfilled' && !r.value)) {
+            console.warn(`[CampaignWizard] Media upload ${i} failed (non-blocking)`);
+          }
+        });
+      }
+
       // Create invitations for selective campaigns
       if (visibilityData.visibility === 'selective' && visibilityData.invited_profiles.length > 0) {
         await createBulkInvitations(campaignId, visibilityData.invited_profiles);
       }
 
+      // Notify eligible creators (non-blocking — campaign is already live)
+      const notifResult = await sendCampaignNotifications(campaignId).catch(() => null);
+      if (notifResult?.notifications_sent) {
+        setNotificationsSent(notifResult.notifications_sent);
+      }
+
+      trackCampaignCreated({
+        campaign_type: basicInfo.campaign_type || 'standard',
+        content_types_required: contentRequirements.map(r => r.content_type),
+        platforms_targeted: [],
+      });
+      trackCampaignPublished({ campaign_id: campaignId });
+
       clearDraft();
+      coverFileRef.current = null;
+      videoBriefFileRef.current = null;
       setIsComplete(true);
     } catch (err) {
       console.error('[CampaignWizard] Publish error:', err);
@@ -269,7 +393,9 @@ export default function CampaignWizard() {
             {visibilityData.visibility === 'public' && 'para todos los creadores del marketplace.'}
             {visibilityData.visibility === 'internal' && 'para los miembros de tu organizacion.'}
             {visibilityData.visibility === 'selective' && `para los ${visibilityData.invited_profiles.length} creadores invitados.`}
-            {' '}Recibiras notificaciones cuando los creadores apliquen.
+            {notificationsSent > 0
+              ? ` Se notifico a ${notificationsSent} creador${notificationsSent !== 1 ? 'es' : ''} elegible${notificationsSent !== 1 ? 's' : ''}.`
+              : ' Recibiras notificaciones cuando los creadores apliquen.'}
           </p>
           <div className="bg-white/5 rounded-xl p-4 text-left space-y-3">
             <h3 className="text-gray-300 text-sm font-semibold">Proximos pasos</h3>
@@ -359,7 +485,113 @@ export default function CampaignWizard() {
       {/* Step content */}
       <div className="max-w-2xl mx-auto px-4 py-6 pb-32">
         {currentStep === 0 && (
-          <CampaignStepBasicInfo data={basicInfo} onChange={updateBasicInfo} />
+          <div className="space-y-8">
+            {/* Campaign Purpose Selector */}
+            <div>
+              <h2 className="text-lg font-bold text-white mb-1">Tipo de Campaña</h2>
+              <p className="text-gray-500 text-sm mb-4">Selecciona el tipo de campaña que deseas crear</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Content Campaign */}
+                <button
+                  onClick={() => setCampaignPurpose('content')}
+                  className={cn(
+                    'text-left p-4 rounded-xl border-2 transition-all relative overflow-hidden',
+                    campaignPurpose === 'content'
+                      ? 'border-purple-500 bg-purple-500/10 ring-1 ring-purple-500/30'
+                      : 'border-white/10 bg-white/5 hover:border-white/20',
+                  )}
+                >
+                  {campaignPurpose === 'content' && (
+                    <div className="absolute top-2.5 right-2.5">
+                      <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-white" />
+                      </div>
+                    </div>
+                  )}
+                  <Clapperboard className="h-7 w-7 text-purple-400 mb-2" />
+                  <p className="text-white font-semibold text-sm">Contenido</p>
+                  <p className="text-gray-400 text-xs mt-1 leading-relaxed">
+                    Contrata creadores para producir videos, fotos o reels para tus canales
+                  </p>
+                </button>
+
+                {/* Brand Activation Campaign */}
+                <button
+                  onClick={() => setCampaignPurpose('activation')}
+                  className={cn(
+                    'text-left p-4 rounded-xl border-2 transition-all relative overflow-hidden',
+                    campaignPurpose === 'activation'
+                      ? 'border-green-500 bg-green-500/10 ring-1 ring-green-500/30'
+                      : 'border-white/10 bg-white/5 hover:border-white/20',
+                  )}
+                >
+                  {campaignPurpose === 'activation' && (
+                    <div className="absolute top-2.5 right-2.5">
+                      <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-white" />
+                      </div>
+                    </div>
+                  )}
+                  <Radio className="h-7 w-7 text-green-400 mb-2" />
+                  <p className="text-white font-semibold text-sm">Activación de Marca</p>
+                  <p className="text-gray-400 text-xs mt-1 leading-relaxed">
+                    Creadores publican en sus redes con tus hashtags y menciones
+                  </p>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-300">Verificación</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-300">Engagement</span>
+                  </div>
+                </button>
+
+                {/* Talent Search Campaign */}
+                <button
+                  onClick={() => setCampaignPurpose('talent')}
+                  className={cn(
+                    'text-left p-4 rounded-xl border-2 transition-all relative overflow-hidden',
+                    campaignPurpose === 'talent'
+                      ? 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/30'
+                      : 'border-white/10 bg-white/5 hover:border-white/20',
+                  )}
+                >
+                  {campaignPurpose === 'talent' && (
+                    <div className="absolute top-2.5 right-2.5">
+                      <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-white" />
+                      </div>
+                    </div>
+                  )}
+                  <UserSearch className="h-7 w-7 text-blue-400 mb-2" />
+                  <p className="text-white font-semibold text-sm">Búsqueda de Talento</p>
+                  <p className="text-gray-400 text-xs mt-1 leading-relaxed">
+                    Busca editores, estrategas, traffickers u otros roles especializados
+                  </p>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-300">Editores</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-300">Estrategas</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-300">+30 roles</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Role selector (shown when talent purpose is selected) */}
+            {campaignPurpose === 'talent' && (
+              <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-5">
+                <MarketplaceRoleSelector
+                  selectedRoles={creatorRequirements.desired_roles ?? []}
+                  onChange={(roles: MarketplaceRoleId[]) => updateCreatorReqs('desired_roles', roles)}
+                  maxRoles={10}
+                  showCategories
+                  excludeCategories={['client']}
+                  label="¿Qué roles necesitas?"
+                />
+              </div>
+            )}
+
+            <div className="border-t border-white/10" />
+
+            <CampaignStepBasicInfo data={basicInfo} onChange={updateBasicInfo} />
+          </div>
         )}
         {currentStep === 1 && (
           <CampaignStepVisibility
@@ -370,12 +602,36 @@ export default function CampaignWizard() {
           />
         )}
         {currentStep === 2 && (
-          <CampaignStepContent requirements={contentRequirements} onChange={setContentRequirements} />
+          <div className="space-y-8">
+            <CampaignStepContent requirements={contentRequirements} onChange={setContentRequirements} />
+
+            {/* Activation config (shown when brand activation was selected in Step 0) */}
+            {isBrandActivation && (
+              <>
+                <div className="border-t border-white/10 pt-2" />
+                <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Radio className="h-4 w-4 text-green-400" />
+                    <p className="text-green-300 text-sm font-semibold">Configuración de Activación de Marca</p>
+                  </div>
+                  <p className="text-gray-500 text-xs mb-4">Define los requisitos de publicación para los creadores en sus redes sociales</p>
+                  <ActivationCampaignConfig config={activationConfig} onChange={setActivationConfig} />
+                </div>
+              </>
+            )}
+          </div>
         )}
         {currentStep === 3 && (
-          <CampaignStepBudget data={budgetData} onChange={updateBudgetData} contentCount={totalVideos} />
+          <CampaignStepMedia
+            data={mediaData}
+            onChange={updateMediaData}
+            onTempFile={handleMediaTempFile}
+          />
         )}
         {currentStep === 4 && (
+          <CampaignStepBudget data={budgetData} onChange={updateBudgetData} contentCount={totalVideos} />
+        )}
+        {currentStep === 5 && (
           <CampaignStepReview
             basicInfo={basicInfo}
             visibilityData={visibilityData}
@@ -407,7 +663,7 @@ export default function CampaignWizard() {
             {submitError && (
               <p className="text-red-400 text-xs self-center mr-2">{submitError}</p>
             )}
-            {currentStep === 4 ? (
+            {currentStep === 5 ? (
               <>
                 <button
                   onClick={handleSaveDraft}
@@ -418,7 +674,7 @@ export default function CampaignWizard() {
                 </button>
                 <button
                   onClick={handlePublish}
-                  disabled={!isStepValid(4) || isSubmitting}
+                  disabled={!isStepValid(5) || isSubmitting}
                   className="bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-all flex items-center gap-1.5"
                 >
                   {isSubmitting ? 'Publicando...' : 'Publicar Campana'}

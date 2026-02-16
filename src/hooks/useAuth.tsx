@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, createContext, useContext, ReactNode } fro
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AppRole, Profile } from '@/types/database';
+import { getPermissionGroup, type PermissionGroup } from '@/lib/permissionGroups';
 
 interface AuthContextType {
   user: User | null;
@@ -9,6 +10,7 @@ interface AuthContextType {
   profile: Profile | null;
   roles: AppRole[];
   activeRole: AppRole | null;
+  permissionGroup: PermissionGroup | null;
   setActiveRole: (role: AppRole) => void;
   loading: boolean;
   rolesLoaded: boolean;
@@ -77,9 +79,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Only use localStorage if it matches a valid role for this user
         setActiveRoleState(storedRole);
       } else {
-        // Default to first role by priority
-        const priority: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'ambassador', 'creator', 'editor', 'client'];
-        const primaryRole = priority.find((r) => roles.includes(r)) || roles[0];
+        // Default to first role by priority (group-based)
+        const groupPriority: PermissionGroup[] = ['admin', 'team_leader', 'strategist', 'editor', 'creator', 'client'];
+        const primaryRole = groupPriority
+          .map(g => roles.find(r => getPermissionGroup(r) === g))
+          .find(Boolean) || roles[0];
         setActiveRoleState(primaryRole);
         localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, primaryRole);
       }
@@ -537,15 +541,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
-  
-  // These now check against activeRole for UI purposes, but hasRole checks all roles
-  const isAdmin = activeRole === 'admin';
-  const isCreator = activeRole === 'creator';
-  const isEditor = activeRole === 'editor';
-  const isClient = activeRole === 'client';
-  const isStrategist = activeRole === 'strategist';
-  const isTrafficker = activeRole === 'trafficker';
-  const isTeamLeader = activeRole === 'team_leader';
+
+  // Permission group for current active role
+  const permissionGroup = activeRole ? getPermissionGroup(activeRole) : null;
+
+  // These check permission GROUP, not exact role string.
+  // e.g. isCreator is true for 'ugc_creator', 'photographer', etc.
+  const isAdmin = permissionGroup === 'admin';
+  const isCreator = permissionGroup === 'creator';
+  const isEditor = permissionGroup === 'editor';
+  const isClient = permissionGroup === 'client';
+  const isStrategist = permissionGroup === 'strategist';
+  const isTrafficker = permissionGroup === 'strategist'; // trafficker maps to strategist group
+  const isTeamLeader = permissionGroup === 'team_leader';
 
   return (
     <AuthContext.Provider value={{
@@ -554,6 +562,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       roles,
       activeRole,
+      permissionGroup,
       setActiveRole,
       loading,
       rolesLoaded,

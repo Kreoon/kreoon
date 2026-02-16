@@ -123,15 +123,15 @@ export function useSettingsPermissions(): SettingsPermissions {
     return (user?.email && ROOT_EMAILS.includes(user.email)) || isPlatformRootFromHook;
   }, [user?.email, isPlatformRootFromHook]);
 
-  // Determine if user is org admin (uses activeRole for current context)
+  // Determine if user is org admin (uses permission group from useAuth)
   const isOrgAdmin = useMemo(() => {
-    return activeRole === 'admin' || isAdmin;
-  }, [isAdmin, activeRole]);
+    return isAdmin; // isAdmin already checks via permission group in useAuth
+  }, [isAdmin]);
 
   // Determine if user is strategist with limited org access
   const isOrgStrategist = useMemo(() => {
-    return activeRole === 'strategist' || isStrategist;
-  }, [isStrategist, activeRole]);
+    return isStrategist; // isStrategist already checks via permission group in useAuth
+  }, [isStrategist]);
 
   // Fetch organization-level permission overrides
   const fetchOrgPermissions = useCallback(async () => {

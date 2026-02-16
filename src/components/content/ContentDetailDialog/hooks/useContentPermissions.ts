@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Content } from '@/types/database';
 import { useAuth } from '@/hooks/useAuth';
+import { getPermissionGroup } from '@/lib/permissionGroups';
 import { ContentResource, ContentAction, ContentPermissions, TabKey } from '../types';
 
 /**
@@ -125,18 +126,19 @@ export function useContentPermissions(content: Content | null): ContentPermissio
   const { user, isAdmin, isCreator, isEditor, isClient, isStrategist, activeRole } = useAuth();
 
   return useMemo(() => {
-    // Determine effective role - prioritize activeRole for role switching
+    // Determine effective role - resolve to permission group for RBAC matrix lookup
     const getEffectiveRole = (): string => {
-      // If user has explicitly switched roles, respect that
-      if (activeRole) {
-        // Special case: check if they're assigned to this content
-        if (activeRole === 'strategist' && content?.strategist_id === user?.id) return 'strategist';
-        if (activeRole === 'creator' && content?.creator_id === user?.id) return 'creator';
-        if (activeRole === 'editor' && content?.editor_id === user?.id) return 'editor';
-        return activeRole;
+      const group = activeRole ? getPermissionGroup(activeRole) : null;
+
+      if (group) {
+        // Check if they're assigned to this content (use group for matching)
+        if (group === 'strategist' && content?.strategist_id === user?.id) return 'strategist';
+        if (group === 'creator' && content?.creator_id === user?.id) return 'creator';
+        if (group === 'editor' && content?.editor_id === user?.id) return 'editor';
+        return group;
       }
-      
-      // Fallback to checking boolean flags (for backwards compatibility)
+
+      // Fallback to checking boolean flags (already group-based via useAuth)
       if (isAdmin) return 'admin';
       if (content?.strategist_id === user?.id) return 'strategist';
       if (isCreator && content?.creator_id === user?.id) return 'creator';

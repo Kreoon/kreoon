@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { X, Send, Link, Calendar, DollarSign, Gavel, ArrowUpDown, EyeOff, Loader2 } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { X, Send, Link, Calendar, DollarSign, Gavel, ArrowUpDown, EyeOff, Loader2, Scissors, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils/formatters';
 import { useToast } from '@/hooks/use-toast';
 import { useMarketplaceCampaigns } from '@/hooks/useMarketplaceCampaigns';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,6 +15,8 @@ interface CampaignApplicationModalProps {
   onSuccess: () => void;
 }
 
+const PLATFORM_FEE_PCT = 0.15;
+
 export function CampaignApplicationModal({ campaign, onClose, onSuccess }: CampaignApplicationModalProps) {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -25,6 +28,8 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
   const [portfolioInput, setPortfolioInput] = useState('');
   const [portfolioLinks, setPortfolioLinks] = useState<string[]>([]);
   const [availabilityDate, setAvailabilityDate] = useState('');
+  const [includesEditing, setIncludesEditing] = useState(true);
+  const [estimatedDeliveryDays, setEstimatedDeliveryDays] = useState(7);
   const [showSuccess, setShowSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -32,6 +37,21 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
   const isAuction = pricingMode === 'auction';
   const isRange = pricingMode === 'range';
   const isBidMode = isAuction || isRange;
+  const isPaidCampaign = campaign.campaign_type !== 'exchange';
+
+  // Payment preview calculation
+  const paymentPreview = useMemo(() => {
+    const rawPrice = Number(proposedPrice) || campaign.budget_per_video || 0;
+    if (!rawPrice || !isPaidCampaign) return null;
+    const fee = Math.round(rawPrice * PLATFORM_FEE_PCT);
+    const net = rawPrice - fee;
+    if (includesEditing) {
+      return { creatorPayout: net, editorPayout: 0, fee, total: rawPrice };
+    }
+    const creatorPayout = Math.round(net * (2 / 3));
+    const editorPayout = net - creatorPayout;
+    return { creatorPayout, editorPayout, fee, total: rawPrice };
+  }, [proposedPrice, campaign.budget_per_video, isPaidCampaign, includesEditing]);
 
   const addPortfolioLink = () => {
     const trimmed = portfolioInput.trim();
@@ -79,6 +99,8 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
         cover_letter: coverLetter.trim(),
         portfolio_links: portfolioLinks.length > 0 ? portfolioLinks : undefined,
         availability_date: availabilityDate || undefined,
+        includes_editing: includesEditing,
+        estimated_delivery_days: estimatedDeliveryDays,
       };
 
       if (proposedPrice) {
@@ -175,7 +197,7 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
             </div>
 
             {/* Price / Bid input (only for paid campaigns) */}
-            {campaign.campaign_type !== 'exchange' && (
+            {isPaidCampaign && (
               <div>
                 <label className="text-gray-300 text-sm font-medium block mb-1.5">
                   {isBidMode ? (
@@ -230,6 +252,68 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
                   rows={3}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500 resize-none"
                 />
+              </div>
+            )}
+
+            {/* Editing toggle */}
+            <div className="rounded-xl p-4 bg-white/5 border border-white/5">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={includesEditing}
+                  onChange={e => setIncludesEditing(e.target.checked)}
+                  className="mt-0.5 w-5 h-5 rounded bg-white/10 border-white/20 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
+                />
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <Scissors className="h-3.5 w-3.5 text-purple-400" />
+                    <span className="text-white text-sm font-medium">Yo tambien edito el contenido</span>
+                  </div>
+                  <p className="text-gray-500 text-xs mt-1">
+                    {includesEditing
+                      ? 'Recibes el 100% del pago neto (despues de comision).'
+                      : 'Kreoon asignara un editor. El pago se divide: 2/3 para ti, 1/3 para el editor.'}
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            {/* Estimated delivery days */}
+            <div>
+              <label className="text-gray-300 text-sm font-medium block mb-1.5">
+                <span className="flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5 text-gray-500" />
+                  Tiempo de entrega estimado
+                </span>
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={estimatedDeliveryDays}
+                  onChange={e => setEstimatedDeliveryDays(Math.max(1, Math.min(30, parseInt(e.target.value) || 7)))}
+                  className="w-24 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm text-center focus:outline-none focus:border-purple-500"
+                />
+                <span className="text-gray-500 text-sm">dias despues de aprobacion</span>
+              </div>
+            </div>
+
+            {/* Payment preview (paid campaigns only) */}
+            {isPaidCampaign && paymentPreview && paymentPreview.total > 0 && (
+              <div className="rounded-xl p-4 bg-purple-500/10 border border-purple-500/15">
+                <p className="text-purple-300 text-xs font-medium mb-2">Tu pago estimado</p>
+                <p className="text-2xl font-bold text-white">
+                  {formatCurrency(paymentPreview.creatorPayout, campaign.currency || 'COP')}
+                </p>
+                {!includesEditing && paymentPreview.editorPayout > 0 && (
+                  <p className="text-purple-300/70 text-xs mt-1">
+                    Editor recibira: {formatCurrency(paymentPreview.editorPayout, campaign.currency || 'COP')}
+                  </p>
+                )}
+                <p className="text-purple-400/50 text-[10px] mt-1.5">
+                  Comision plataforma: {formatCurrency(paymentPreview.fee, campaign.currency || 'COP')} (15%)
+                </p>
               </div>
             )}
 

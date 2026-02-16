@@ -6,6 +6,7 @@ import { DNA_QUESTIONS } from '@/lib/dna-questions';
 import type { AudienceLocation } from '@/lib/locations-data';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAIAnalytics } from '@/analytics';
 
 interface ClientDNAWizardProps {
   clientId: string;
@@ -71,6 +72,7 @@ async function invokeWithRetry<T>(
 }
 
 export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) {
+  const { trackDNAWizardStarted, trackDNAWizardCompleted, trackDNAAnalysisGenerated } = useAIAnalytics();
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [selectedLocations, setSelectedLocations] = useState<AudienceLocation[]>([]);
   const [processingStep, setProcessingStep] = useState<ProcessingStep>('idle');
@@ -135,6 +137,8 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
+    const startTime = Date.now();
+    trackDNAWizardStarted('audio');
 
     try {
       setError(null);
@@ -179,6 +183,9 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
       });
 
       setProcessingStep('complete');
+      const elapsed = Math.round((Date.now() - startTime) / 1000);
+      trackDNAAnalysisGenerated(clientId, 'client_dna', true, elapsed);
+      trackDNAWizardCompleted(clientId, ['transcription', 'dna_generation']);
       toast.success('ADN del negocio generado exitosamente');
 
       setTimeout(() => {
@@ -187,6 +194,8 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
 
     } catch (err) {
       console.error('Error:', err);
+      const elapsed = Math.round((Date.now() - startTime) / 1000);
+      trackDNAAnalysisGenerated(clientId, 'client_dna', false, elapsed);
       setError(err instanceof Error ? err.message : 'Error desconocido');
       setProcessingStep('error');
       toast.error('Error al procesar el ADN');

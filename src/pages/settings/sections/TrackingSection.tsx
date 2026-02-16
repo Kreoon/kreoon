@@ -1,5 +1,5 @@
-import { TrackingSettingsSection } from '@/components/settings/tracking/TrackingSettingsSection';
+import { KaeSettingsSection } from '@/components/settings/analytics/KaeSettingsSection';
 
 export default function TrackingSection() {
-  return <TrackingSettingsSection />;
+  return <KaeSettingsSection />;
 }

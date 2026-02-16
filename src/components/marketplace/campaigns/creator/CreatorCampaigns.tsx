@@ -11,9 +11,10 @@ import {
 import { useCampaignInvitations } from '@/hooks/useCampaignInvitations';
 import { useAuth } from '@/hooks/useAuth';
 import { useCreatorProfile } from '@/hooks/useCreatorProfile';
+import { CreatorActivationCampaigns } from '../activation/CreatorActivationCampaigns';
 import type { CampaignApplication, ApplicationStatus, Campaign, CampaignInvitation } from '../../types/marketplace';
 
-type TabId = 'available' | 'invitations' | 'applications' | 'active' | 'completed';
+type TabId = 'available' | 'invitations' | 'applications' | 'active' | 'completed' | 'activaciones';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'available', label: 'Disponibles' },
@@ -21,6 +22,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'applications', label: 'Mis Aplicaciones' },
   { id: 'active', label: 'En Progreso' },
   { id: 'completed', label: 'Completadas' },
+  { id: 'activaciones', label: 'Activaciones' },
 ];
 
 const ACTIVE_STATUSES: ApplicationStatus[] = ['approved', 'assigned', 'delivered'];
@@ -135,6 +137,7 @@ export function CreatorCampaigns() {
               : tab.id === 'applications' ? applicationsTab.length
               : tab.id === 'available' ? availableCampaigns.length
               : tab.id === 'active' ? activeTab_.length
+              : tab.id === 'activaciones' ? 0
               : completedTab.length;
             return (
               <button
@@ -210,6 +213,11 @@ export function CreatorCampaigns() {
               subtitle="Las marcas pueden invitarte a campanas selectivas"
             />
           )
+        )}
+
+        {/* Activaciones tab */}
+        {activeTab === 'activaciones' && (
+          <CreatorActivationCampaigns />
         )}
 
         {/* Applications / Active / Completed tabs */}

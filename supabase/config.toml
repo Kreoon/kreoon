@@ -1,5 +1,14 @@
 project_id = "wjkbqcrxwsmvtxmqgiqc"
 
+[functions.campaign-notifications]
+verify_jwt = true
+
+[functions.verify-campaign-access]
+verify_jwt = true
+
+[functions.upload-campaign-media]
+verify_jwt = true
+
 [functions.analyze-product-dna]
 verify_jwt = true
 
@@ -216,6 +225,18 @@ verify_jwt = false
 [functions.marketplace-recommendations]
 verify_jwt = false
 
+[functions.kae-track]
+verify_jwt = false
+
+[functions.kae-conversion]
+verify_jwt = false
+
+[functions.kae-identify]
+verify_jwt = true
+
+[functions.kae-test-connection]
+verify_jwt = true
+
 [functions.send-recruitment]
 verify_jwt = false
 
@@ -232,4 +253,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.generate-full-research]
+verify_jwt = false
+
+[functions.capture-lead]
 verify_jwt = false

@@ -12,6 +12,8 @@ import { ChevronDown, Check, Lock } from 'lucide-react';
 import { ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
 import { cn } from '@/lib/utils';
 import { AppRole } from '@/types/database';
+import { getPermissionGroup, type PermissionGroup } from '@/lib/permissionGroups';
+import { useContentAnalytics } from '@/analytics';
 
 interface StatusChangeDropdownProps {
   currentStatus: ContentStatus;
@@ -25,47 +27,42 @@ interface StatusChangeDropdownProps {
   size?: 'sm' | 'default';
 }
 
-// Define allowed status transitions per role
-// Each role can only move content to specific statuses
-const ROLE_ALLOWED_STATUSES: Record<AppRole, ContentStatus[]> = {
+// Define allowed status transitions per permission group
+const GROUP_ALLOWED_STATUSES: Record<PermissionGroup, ContentStatus[]> = {
   admin: [
     'draft', 'script_approved', 'assigned', 'recording', 'recorded',
     'editing', 'delivered', 'issue', 'corrected', 'approved', 'paid'
   ],
-  strategist: [
+  team_leader: [
     'draft', 'script_approved', 'assigned', 'recording', 'recorded',
     'editing', 'delivered', 'issue', 'corrected', 'approved'
   ],
-  team_leader: [
+  strategist: [
     'draft', 'script_approved', 'assigned', 'recording', 'recorded',
     'editing', 'delivered', 'issue', 'corrected', 'approved'
   ],
   creator: ['recording', 'recorded', 'issue'],
   editor: ['editing', 'delivered', 'issue', 'corrected'],
   client: ['approved', 'issue'],
-  trafficker: ['approved'],
-  ambassador: ['recording', 'recorded', 'issue'],
 };
 
-// Define which statuses each role can move FROM
-const ROLE_CAN_MOVE_FROM: Record<AppRole, ContentStatus[]> = {
+// Define which statuses each group can move FROM
+const GROUP_CAN_MOVE_FROM: Record<PermissionGroup, ContentStatus[]> = {
   admin: [
     'draft', 'script_approved', 'assigned', 'recording', 'recorded',
     'editing', 'delivered', 'issue', 'corrected', 'approved', 'paid'
   ],
-  strategist: [
+  team_leader: [
     'draft', 'script_approved', 'assigned', 'recording', 'recorded',
     'editing', 'delivered', 'issue', 'corrected'
   ],
-  team_leader: [
+  strategist: [
     'draft', 'script_approved', 'assigned', 'recording', 'recorded',
     'editing', 'delivered', 'issue', 'corrected'
   ],
   creator: ['assigned', 'recording', 'recorded', 'issue'],
   editor: ['recorded', 'editing', 'issue', 'corrected'],
   client: ['delivered', 'corrected'],
-  trafficker: ['approved'],
-  ambassador: ['assigned', 'recording', 'recorded', 'issue'],
 };
 
 export function StatusChangeDropdown({
@@ -80,22 +77,24 @@ export function StatusChangeDropdown({
   size = 'default',
 }: StatusChangeDropdownProps) {
   const [isChanging, setIsChanging] = useState(false);
+  const { trackContentApproved, trackContentRejected } = useContentAnalytics();
 
-  // Get allowed statuses for this user's role
+  // Get allowed statuses for this user's role (resolved via permission group)
   const getAllowedStatuses = (): ContentStatus[] => {
     if (!userRole) return [];
 
-    const allowedToStatuses = ROLE_ALLOWED_STATUSES[userRole] || [];
-    const canMoveFrom = ROLE_CAN_MOVE_FROM[userRole] || [];
+    const group = getPermissionGroup(userRole);
+    const allowedToStatuses = GROUP_ALLOWED_STATUSES[group] || [];
+    const canMoveFrom = GROUP_CAN_MOVE_FROM[group] || [];
 
     // Check if user can move from current status
-    if (!canMoveFrom.includes(currentStatus) && userRole !== 'admin') {
+    if (!canMoveFrom.includes(currentStatus) && group !== 'admin') {
       // Special cases for assigned users
-      if (userRole === 'creator' && isAssignedCreator && ['assigned', 'recording', 'recorded', 'issue'].includes(currentStatus)) {
+      if (group === 'creator' && isAssignedCreator && ['assigned', 'recording', 'recorded', 'issue'].includes(currentStatus)) {
         // Creator can move their assigned content
-      } else if (userRole === 'editor' && isAssignedEditor && ['recorded', 'editing', 'issue'].includes(currentStatus)) {
+      } else if (group === 'editor' && isAssignedEditor && ['recorded', 'editing', 'issue'].includes(currentStatus)) {
         // Editor can move their assigned content
-      } else if (userRole === 'strategist' && isAssignedStrategist) {
+      } else if (group === 'strategist' && isAssignedStrategist) {
         // Strategist assigned to this content can always move it
       } else {
         return [];
@@ -111,10 +110,15 @@ export function StatusChangeDropdown({
 
   const handleStatusChange = async (newStatus: ContentStatus) => {
     if (!canChangeStatus || isChanging) return;
-    
+
     setIsChanging(true);
     try {
       await onStatusChange(contentId, newStatus);
+      if (newStatus === 'approved') {
+        trackContentApproved({ content_id: contentId, reviewer_role: userRole || 'client' });
+      } else if (newStatus === 'issue') {
+        trackContentRejected({ content_id: contentId, reviewer_role: userRole || 'client', reason: 'status_change' });
+      }
     } finally {
       setIsChanging(false);
     }

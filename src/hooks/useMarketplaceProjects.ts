@@ -16,6 +16,7 @@ export const BRAND_COLUMNS: KanbanColumnConfig[] = [
   { id: 'briefing', label: 'En Brief', color: '#3b82f6', allowedTransitions: ['in_progress', 'cancelled'] },
   { id: 'in_progress', label: 'En Producción', color: '#eab308', allowedTransitions: [] },
   { id: 'revision', label: 'En Revisión', color: '#ec4899', allowedTransitions: ['approved', 'in_progress'] },
+  { id: 'overdue', label: 'Vencidos', color: '#ef4444', allowedTransitions: ['in_progress', 'cancelled'] },
   { id: 'approved', label: 'Aprobados', color: '#22c55e', allowedTransitions: ['completed'] },
   { id: 'completed', label: 'Completados', color: '#06b6d4', allowedTransitions: [] },
 ];
@@ -25,6 +26,7 @@ export const CREATOR_COLUMNS: KanbanColumnConfig[] = [
   { id: 'briefing', label: 'En Brief', color: '#3b82f6', allowedTransitions: ['in_progress'] },
   { id: 'in_progress', label: 'En Producción', color: '#eab308', allowedTransitions: ['revision'] },
   { id: 'revision', label: 'En Revisión', color: '#ec4899', allowedTransitions: [] },
+  { id: 'overdue', label: 'Vencidos', color: '#ef4444', allowedTransitions: ['in_progress'] },
   { id: 'approved', label: 'Aprobados', color: '#22c55e', allowedTransitions: ['completed'] },
   { id: 'completed', label: 'Completados', color: '#06b6d4', allowedTransitions: [] },
 ];
@@ -99,6 +101,19 @@ interface UseMarketplaceProjectsOptions {
   brandId?: string;
 }
 
+export interface CreateProjectParams {
+  campaign_id: string;
+  application_id: string;
+  creator_id: string; // auth.users.id (NOT creator_profiles.id)
+  brand_id?: string | null;
+  organization_id?: string | null;
+  title: string;
+  total_price?: number;
+  currency?: string;
+  deadline?: string;
+  payment_method?: string;
+}
+
 export function useMarketplaceProjects(options: UseMarketplaceProjectsOptions = {}) {
   const { user } = useAuth();
   const [projects, setProjects] = useState<MarketplaceProject[]>([]);
@@ -115,13 +130,12 @@ export function useMarketplaceProjects(options: UseMarketplaceProjectsOptions = 
     setError(null);
 
     try {
-      // 1. Fetch marketplace projects
+      // NOTE: marketplace_projects.creator_id references auth.users(id), NOT creator_profiles(id)
       let query = (supabase as any)
         .from('marketplace_projects')
         .select('*')
         .order('updated_at', { ascending: false });
 
-      // Filter by role if specified
       if (options.role === 'creator') {
         query = query.eq('creator_id', user.id);
       } else if (options.role === 'editor') {
@@ -138,7 +152,7 @@ export function useMarketplaceProjects(options: UseMarketplaceProjectsOptions = 
         return;
       }
 
-      // 2. Fetch brands for these projects
+      // Fetch brands for these projects
       const brandIds = [...new Set(projectRows.map((p: any) => p.brand_id).filter(Boolean))] as string[];
       const brandsMap = new Map<string, { name: string; logo_url: string | null }>();
 
@@ -152,7 +166,7 @@ export function useMarketplaceProjects(options: UseMarketplaceProjectsOptions = 
         }
       }
 
-      // 3. Fetch creator profiles
+      // Fetch creator profiles (creator_id = auth user UUID, so look up by user_id)
       const creatorUserIds = [...new Set(projectRows.map((p: any) => p.creator_id).filter(Boolean))] as string[];
       const creatorsMap = new Map<string, MarketplaceCreator>();
 
@@ -166,17 +180,31 @@ export function useMarketplaceProjects(options: UseMarketplaceProjectsOptions = 
         }
       }
 
-      // 4. Map to MarketplaceProject shape
+      // 5. Fetch org names for org-based projects
+      const orgIds = [...new Set(projectRows.map((p: any) => p.organization_id).filter(Boolean))] as string[];
+      const orgNamesMap = new Map<string, string>();
+      if (orgIds.length > 0) {
+        const { data: orgs } = await supabase
+          .from('organizations')
+          .select('id, name')
+          .in('id', orgIds);
+        for (const o of orgs || []) {
+          orgNamesMap.set(o.id, o.name);
+        }
+      }
+
+      // 6. Map to MarketplaceProject shape
       const mapped: MarketplaceProject[] = projectRows.map((row: any) => {
-        const brand = brandsMap.get(row.brand_id);
+        const brand = row.brand_id ? brandsMap.get(row.brand_id) : null;
         const creator = creatorsMap.get(row.creator_id) || { ...UNKNOWN_CREATOR, user_id: row.creator_id };
+        const orgName = row.organization_id ? orgNamesMap.get(row.organization_id) : null;
 
         return {
           id: row.id,
           creator_id: row.creator_id,
-          brand_user_id: row.brand_id, // brand_id in DB maps to brand_user_id in type
+          brand_user_id: row.brand_id || '',
           creator,
-          brand_name: brand?.name || '',
+          brand_name: brand?.name || orgName || '',
           brand_logo: brand?.logo_url || undefined,
           package_id: row.service_id || '',
           package_name: row.package_name || '',
@@ -201,7 +229,21 @@ export function useMarketplaceProjects(options: UseMarketplaceProjectsOptions = 
           deliverables_count: Number(row.deliverables_count) || 0,
           deliverables_approved: Number(row.deliverables_approved) || 0,
           last_message_at: row.last_message_at || undefined,
-          unread_messages: Number(row.unread_brand_messages || 0) + Number(row.unread_creator_messages || 0),
+          unread_messages: options.role === 'brand'
+            ? Number(row.unread_brand_messages || 0)
+            : Number(row.unread_creator_messages || 0),
+          // Editor & payment split
+          requires_editor: row.requires_editor ?? false,
+          editor_id: row.editor_id || undefined,
+          editor_payout: row.editor_payout != null ? Number(row.editor_payout) : undefined,
+          creator_payout: row.creator_payout != null ? Number(row.creator_payout) : undefined,
+          platform_fee: row.platform_fee != null ? Number(row.platform_fee) : undefined,
+          delivery_days: row.delivery_days != null ? Number(row.delivery_days) : undefined,
+          // Overdue / novedades
+          overdue_at: row.overdue_at || undefined,
+          overdue_action: row.overdue_action || undefined,
+          overdue_notes: row.overdue_notes || undefined,
+          deadline_extension_reason: row.deadline_extension_reason || undefined,
         };
       });
 
@@ -217,6 +259,58 @@ export function useMarketplaceProjects(options: UseMarketplaceProjectsOptions = 
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
+
+  // ── Create project from approved application ────────────────────────
+
+  const createProject = useCallback(
+    async (params: CreateProjectParams): Promise<string | null> => {
+      try {
+        const { data: result, error: err } = await (supabase as any)
+          .from('marketplace_projects')
+          .insert({
+            campaign_id: params.campaign_id,
+            application_id: params.application_id,
+            creator_id: params.creator_id,
+            brand_id: params.brand_id || null,
+            organization_id: params.organization_id || null,
+            title: params.title,
+            total_price: params.total_price ?? 0,
+            currency: params.currency || 'COP',
+            deadline: params.deadline || null,
+            payment_method: params.payment_method || 'payment',
+            status: 'pending',
+          })
+          .select('id')
+          .single();
+
+        if (err) throw err;
+        return result?.id || null;
+      } catch (err) {
+        console.error('[useMarketplaceProjects] Create project error:', err);
+        return null;
+      }
+    },
+    [],
+  );
+
+  // ── Get projects by campaign ────────────────────────────────────────
+
+  const getProjectsByCampaign = useCallback(
+    async (campaignId: string): Promise<Array<{ id: string; application_id: string; status: string; creator_id: string }>> => {
+      try {
+        const { data, error: err } = await (supabase as any)
+          .from('marketplace_projects')
+          .select('id, application_id, status, creator_id')
+          .eq('campaign_id', campaignId);
+        if (err) throw err;
+        return data || [];
+      } catch (err) {
+        console.error('[useMarketplaceProjects] Get by campaign error:', err);
+        return [];
+      }
+    },
+    [],
+  );
 
   const updateProjectStatus = useCallback(
     async (projectId: string, newStatus: ProjectStatus): Promise<boolean> => {
@@ -249,6 +343,8 @@ export function useMarketplaceProjects(options: UseMarketplaceProjectsOptions = 
     projects,
     loading,
     error,
+    createProject,
+    getProjectsByCampaign,
     updateProjectStatus,
     getProjectById,
     refetch: fetchProjects,
