@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Building2, ShieldCheck, ShieldOff, KeyRound, Ban, UserX, UserPlus,
-  Loader2, AlertTriangle, Trash2,
+  Loader2, AlertTriangle, Trash2, UserCog,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,24 @@ import type { AppRole } from '@/types/database';
 
 const ROOT_EMAILS = ['jacsolucionesgraficas@gmail.com', 'kairosgp.sas@gmail.com'];
 
+// All roles available for assignment (org roles + common marketplace specializations)
+const ALL_ASSIGNABLE_ROLES: { value: string; label: string }[] = [
+  ...ORG_ASSIGNABLE_ROLES.map(r => ({ value: r, label: getRoleLabel(r) })),
+  { value: 'ugc_creator', label: 'UGC Creator' },
+  { value: 'lifestyle_creator', label: 'Lifestyle Creator' },
+  { value: 'photographer', label: 'Fotógrafo' },
+  { value: 'copywriter', label: 'Copywriter' },
+  { value: 'graphic_designer', label: 'Diseñador Gráfico' },
+  { value: 'video_editor', label: 'Video Editor' },
+  { value: 'motion_graphics', label: 'Motion Graphics' },
+  { value: 'content_strategist', label: 'Content Strategist' },
+  { value: 'social_media_manager', label: 'Social Media Manager' },
+  { value: 'community_manager', label: 'Community Manager' },
+  { value: 'web_developer', label: 'Desarrollador Web' },
+  { value: 'brand_manager', label: 'Gerente de Marca' },
+  { value: 'marketing_director', label: 'Dir. Marketing' },
+];
+
 interface AdminActionsSectionProps {
   userId: string;
   userEmail: string;
@@ -32,6 +50,7 @@ interface AdminActionsSectionProps {
   isBanned: boolean;
   orgId: string | null;
   orgName: string | null;
+  activeRole: string | null;
   currentUserEmail: string;
   onActionComplete: () => void;
 }
@@ -45,11 +64,16 @@ export function AdminActionsSection({
   isBanned,
   orgId,
   orgName,
+  activeRole,
   currentUserEmail,
   onActionComplete,
 }: AdminActionsSectionProps) {
   const isRoot = ROOT_EMAILS.includes(currentUserEmail);
   const [loading, setLoading] = useState<string | null>(null);
+
+  // Change role state
+  const [changeRoleOpen, setChangeRoleOpen] = useState(false);
+  const [selectedActiveRole, setSelectedActiveRole] = useState<string>(activeRole || 'creator');
 
   // Assign to org state
   const [assignOpen, setAssignOpen] = useState(false);
@@ -90,6 +114,18 @@ export function AdminActionsSection({
     try {
       await invokeAdmin('update_role', { userId, role: 'admin' });
       toast.success(isPlatformAdmin ? 'Admin plataforma removido' : 'Admin plataforma asignado');
+      onActionComplete();
+    } catch (e: any) {
+      toast.error(`Error: ${e.message}`);
+    }
+  };
+
+  const handleSetActiveRole = async () => {
+    if (!selectedActiveRole) return;
+    try {
+      await invokeAdmin('set_active_role', { userId, activeRole: selectedActiveRole });
+      toast.success(`Rol cambiado a ${getRoleLabel(selectedActiveRole as AppRole)}`);
+      setChangeRoleOpen(false);
       onActionComplete();
     } catch (e: any) {
       toast.error(`Error: ${e.message}`);
@@ -173,6 +209,54 @@ export function AdminActionsSection({
     <>
       <DetailSection title="Acciones Admin">
         <div className="space-y-2">
+          {/* Change Active Role (works without org) */}
+          {!changeRoleOpen ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setChangeRoleOpen(true)}
+              disabled={!!loading}
+              className="w-full justify-start gap-2 h-8 text-xs text-white/70 hover:text-white hover:bg-white/10"
+            >
+              <UserCog className="h-3.5 w-3.5 text-purple-400" />
+              Cambiar rol {activeRole ? `(${getRoleLabel(activeRole as AppRole)})` : '(Sin rol)'}
+            </Button>
+          ) : (
+            <div className="space-y-2 p-2 rounded-lg bg-white/5 border border-white/10">
+              <p className="text-[10px] text-white/40">Seleccionar rol de plataforma</p>
+              <Select value={selectedActiveRole} onValueChange={setSelectedActiveRole}>
+                <SelectTrigger className="h-8 text-xs bg-transparent border-white/10">
+                  <SelectValue placeholder="Rol..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {ALL_ASSIGNABLE_ROLES.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>
+                      {r.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={handleSetActiveRole}
+                  disabled={!selectedActiveRole || !!loading}
+                  className="h-7 text-xs bg-[#8b5cf6] hover:bg-[#7c3aed] text-white"
+                >
+                  {loading === 'set_active_role' ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Guardar'}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setChangeRoleOpen(false)}
+                  className="h-7 text-xs text-white/50"
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Toggle Platform Admin */}
           {!isSelf && !isTargetRoot && (
             <Button

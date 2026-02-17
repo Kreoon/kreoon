@@ -23,12 +23,16 @@ export default function PlanesPage() {
         .single();
       return data?.organization_type as string | null;
     },
-    enabled: !!organizationId && (group === 'admin' || group === 'team_leader' || group === 'strategist'),
+    enabled: !!organizationId && (group === 'admin' || group === 'team_leader' || group === 'client'),
     staleTime: 30 * 60 * 1000,
   });
 
   let segment: Segment;
-  if (group === 'creator' || group === 'editor') {
+  if (!organizationId) {
+    // Freelance users without org: talent → creadores, brand/client → marcas
+    segment = group === 'client' ? 'marcas' : 'creadores';
+  } else if (group === 'creator' || group === 'editor' || group === 'strategist') {
+    // Org members with talent-type roles always see creadores
     segment = 'creadores';
   } else if (orgType === 'agency') {
     segment = 'agencias';

@@ -101,12 +101,16 @@ export function useRegistrationSubmit() {
 // --- Intent handlers ---
 
 async function handleTalentSubmit(userId: string, data: UnifiedRegistrationData) {
-  // Update profiles
+  // Determine the primary role from marketplace roles selection
+  const primaryRole = data.marketplaceRoles?.[0] || 'creator';
+
+  // Update profiles with active_role so useAuth can resolve permissions
   await supabase
     .from('profiles')
     .update({
       country: data.locationCountry,
       bio: data.bio || null,
+      active_role: primaryRole,
     })
     .eq('id', userId);
 
@@ -168,13 +172,14 @@ async function handleBrandSubmit(userId: string, data: UnifiedRegistrationData) 
         role: 'owner',
       });
 
-    // Update profile
+    // Update profile with active_role so useAuth can resolve permissions
     await supabase
       .from('profiles')
       .update({
         active_brand_id: brandData.id,
         country: data.locationCountry,
         bio: data.bio || null,
+        active_role: 'client',
       })
       .eq('id', userId);
   }
