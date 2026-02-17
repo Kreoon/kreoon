@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import { Building2, AlertTriangle, RefreshCw, Settings, ShieldCheck, KeyRound, Ban, Trash2 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -54,12 +55,19 @@ interface UserDetailPanelProps {
 
 export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProps) {
   const { profile } = useAuth();
+  const queryClient = useQueryClient();
   const currentUserEmail = profile?.email || '';
   const isRoot = ROOT_EMAILS.includes(currentUserEmail);
   const isPlatformAdmin = isRoot; // Platform CRM is already admin-gated
 
   const recalculate = useRecalculateHealthScore();
   const { data: full, isLoading: fullLoading } = useFullUserDetail(user.id);
+
+  const handleActionComplete = useCallback(() => {
+    // Invalidate the detail query so the panel refreshes with updated data
+    queryClient.invalidateQueries({ queryKey: ['full-user-detail', user.id] });
+    onUpdate?.();
+  }, [queryClient, user.id, onUpdate]);
   const { data: fieldDefs = [] } = useCrmCustomFieldDefs(
     full?.organization_id || undefined,
     'user',
@@ -77,7 +85,7 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
 
   const handleRecalculate = () => {
     recalculate.mutate(user.id, {
-      onSuccess: () => onUpdate?.(),
+      onSuccess: () => handleActionComplete(),
     });
   };
 
@@ -107,7 +115,7 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
       onClose={onClose}
       avatar={avatar}
       name={user.full_name || 'Sin nombre'}
-      subtitle={user.role || undefined}
+      subtitle={user.role || full?.active_role || undefined}
       badges={
         <>
           <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-semibold', HEALTH_STATUS_COLORS[healthStatus])}>
@@ -400,7 +408,7 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
           orgName={user.organization_name}
           activeRole={full?.active_role || null}
           currentUserEmail={currentUserEmail}
-          onActionComplete={() => onUpdate?.()}
+          onActionComplete={handleActionComplete}
         />
       )}
 
