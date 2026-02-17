@@ -40,6 +40,7 @@ import {
   usePlatformLeads,
   useUsersNeedingAttention,
 } from "@/hooks/useCrm";
+import { usePlatformFinanceStats } from "@/hooks/useFinance";
 import { CreateLeadModal } from "@/components/crm";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -132,31 +133,8 @@ function StatCard({
   );
 }
 
-function PlaceholderStatCard({
-  title,
-  icon: Icon,
-  color,
-}: {
-  title: string;
-  icon: React.ComponentType<{ className?: string }>;
-  color: StatColor;
-}) {
-  const c = STAT_COLORS[color];
-  return (
-    <Card className="p-5 opacity-60">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-white/40 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-white/20">—</p>
-          <p className="text-xs text-white/20 mt-1">Próximamente</p>
-        </div>
-        <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", c.bg, "opacity-50")}>
-          <Icon className={cn("h-6 w-6", c.icon)} />
-        </div>
-      </div>
-    </Card>
-  );
-}
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
 
 // =====================================================
 // CUSTOM TOOLTIPS
@@ -201,6 +179,7 @@ const PlatformCRMDashboard = () => {
   const { data: distribution } = useLeadDistribution();
   const { data: recentLeads = [] } = usePlatformLeads({ limit: 5 });
   const { data: usersNeedingAttention = [] } = useUsersNeedingAttention();
+  const { data: financeStats } = usePlatformFinanceStats();
 
   // Prepare category chart data with proper labels
   const categoryDistribution = (distribution?.by_category || []).slice(0, 6).map((c) => ({
@@ -235,7 +214,7 @@ const PlatformCRMDashboard = () => {
             trend={overview?.new_orgs_this_month ? { value: overview.new_orgs_this_month, isPositive: true } : undefined}
           />
           <StatCard
-            title="Creadores Activos"
+            title="Talento Activo"
             value={overview?.total_creators ?? "—"}
             icon={Video}
             color="pink"
@@ -252,10 +231,33 @@ const PlatformCRMDashboard = () => {
 
         {/* ========== SECTION 2: FINANCE KPIs ========== */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <PlaceholderStatCard title="MRR" icon={DollarSign} color="green" />
-          <PlaceholderStatCard title="Ingresos Este Mes" icon={TrendingUp} color="blue" />
-          <PlaceholderStatCard title="Pagos a Creadores" icon={Wallet} color="purple" />
-          <PlaceholderStatCard title="Por Cobrar" icon={AlertCircle} color="orange" />
+          <StatCard
+            title="MRR"
+            value={financeStats ? formatCurrency(financeStats.mrr) : "—"}
+            subtitle={financeStats ? `ARR ${formatCurrency(financeStats.arr)}` : undefined}
+            icon={DollarSign}
+            color="green"
+          />
+          <StatCard
+            title="Ingresos Este Mes"
+            value={financeStats ? formatCurrency(financeStats.revenue_period) : "—"}
+            icon={TrendingUp}
+            color="blue"
+          />
+          <StatCard
+            title="Pagos a Talento"
+            value={financeStats ? formatCurrency(financeStats.payouts_period) : "—"}
+            subtitle={financeStats?.payouts_pending ? `${formatCurrency(financeStats.payouts_pending)} pendientes` : undefined}
+            icon={Wallet}
+            color="purple"
+          />
+          <StatCard
+            title="Por Cobrar"
+            value={financeStats ? formatCurrency(financeStats.invoices_pending_amount) : "—"}
+            subtitle={financeStats?.invoices_pending_count ? `${financeStats.invoices_pending_count} facturas` : undefined}
+            icon={AlertCircle}
+            color="orange"
+          />
         </div>
 
         {/* ========== SECTION 3: MAIN GRID (3/2 split) ========== */}

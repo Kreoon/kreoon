@@ -36,7 +36,12 @@ import {
   useOrgContacts,
 } from "@/hooks/useCrm";
 import { CreateContactModal } from "@/components/crm";
+import { useOrgFinanceStats, useOrgSubscription } from "@/hooks/useFinance";
 import { CONTACT_TYPE_LABELS } from "@/types/crm.types";
+import {
+  SUBSCRIPTION_PLAN_LABELS,
+  type SubscriptionPlan,
+} from "@/types/finance.types";
 
 // =====================================================
 // STAT CARD
@@ -77,29 +82,6 @@ function StatCard({
           <p className="text-2xl font-bold text-white">{value}</p>
           <p className="text-xs text-white/50">{title}</p>
           {subtitle && <p className="text-[10px] text-white/30 mt-0.5">{subtitle}</p>}
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-function PlaceholderStatCard({
-  title,
-  icon: Icon,
-}: {
-  title: string;
-  icon: React.ComponentType<{ className?: string }>;
-}) {
-  return (
-    <Card className="p-4 opacity-60">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/5">
-          <Icon className="h-5 w-5 text-white/20" />
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-white/20">—</p>
-          <p className="text-xs text-white/30">{title}</p>
-          <p className="text-[10px] text-white/20 mt-0.5">Pr&#243;ximamente</p>
         </div>
       </div>
     </Card>
@@ -176,6 +158,8 @@ function DashboardContent({ orgId, orgName }: { orgId: string; orgName: string |
   const { data: upcomingActions = [] } = useOrgUpcomingActions(orgId, 5);
   const { data: recentActivity = [] } = useOrgRecentActivity(orgId, 10);
   const { data: recentContacts = [] } = useOrgContacts(orgId, { limit: 5 });
+  const { data: financeStats } = useOrgFinanceStats(orgId);
+  const { data: subscription } = useOrgSubscription(orgId);
 
   // Derived
   const topCreators = creatorStats?.top_collaborators || [];
@@ -196,7 +180,7 @@ function DashboardContent({ orgId, orgName }: { orgId: string; orgName: string |
                 CRM {orgName || "Organizaci\u00f3n"}
               </h1>
               <p className="text-white/60">
-                Gestiona tus relaciones con contactos y creadores
+                Gestiona tus relaciones con contactos y talento
               </p>
             </div>
           </div>
@@ -219,7 +203,7 @@ function DashboardContent({ orgId, orgName }: { orgId: string; orgName: string |
             color="orange"
           />
           <StatCard
-            title="Creadores Favoritos"
+            title="Talento Favorito"
             value={creatorStats?.total_favorites ?? "\u2014"}
             subtitle={
               overview
@@ -250,14 +234,29 @@ function DashboardContent({ orgId, orgName }: { orgId: string; orgName: string |
             color="green"
           />
           <StatCard
-            title="Pagado a Creadores"
+            title="Pagado a Talento"
             value={formatCurrency(overview?.total_paid_to_creators || 0)}
             subtitle={`${overview?.worked_with_creators || 0} proyectos`}
             icon={Wallet}
             color="purple"
           />
-          <PlaceholderStatCard title="Por Pagar" icon={AlertCircle} />
-          <PlaceholderStatCard title="Plan Actual" icon={CreditCard} />
+          <StatCard
+            title="Por Pagar"
+            value={formatCurrency(financeStats?.invoices_pending || 0)}
+            subtitle={financeStats?.invoices_pending_count ? `${financeStats.invoices_pending_count} facturas` : undefined}
+            icon={AlertCircle}
+            color="orange"
+          />
+          <StatCard
+            title="Plan Actual"
+            value={SUBSCRIPTION_PLAN_LABELS[(subscription?.plan || "free") as SubscriptionPlan] || "Free"}
+            subtitle={subscription?.current_period_end
+              ? `Renueva ${format(new Date(subscription.current_period_end), "dd MMM", { locale: es })}`
+              : undefined
+            }
+            icon={CreditCard}
+            color="blue"
+          />
         </div>
 
         {/* ========== SECTION 3: TWO COLUMNS ========== */}
@@ -327,7 +326,7 @@ function DashboardContent({ orgId, orgName }: { orgId: string; orgName: string |
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-white">Contactos Recientes</h3>
                 <Link
-                  to="/org-crm/contactos"
+                  to="/clients-hub?tab=contactos"
                   className="text-purple-400 text-sm hover:underline"
                 >
                   Ver todos
@@ -378,12 +377,12 @@ function DashboardContent({ orgId, orgName }: { orgId: string; orgName: string |
 
           {/* --- Right Column (2/5) --- */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Top Creadores */}
+            {/* Top Talento */}
             <Card className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-white">Top Creadores</h3>
+                <h3 className="text-lg font-semibold text-white">Top Talento</h3>
                 <Link
-                  to="/org-crm/creadores"
+                  to="/talent?tab=externo"
                   className="text-purple-400 text-sm hover:underline"
                 >
                   Ver todos
@@ -511,7 +510,7 @@ function DashboardContent({ orgId, orgName }: { orgId: string; orgName: string |
                 </Button>
                 <Button asChild variant="ghost" className="w-full justify-start">
                   <Link to="/marketplace">
-                    <Search className="w-4 h-4 mr-2" /> Buscar Creadores
+                    <Search className="w-4 h-4 mr-2" /> Buscar Talento
                   </Link>
                 </Button>
               </div>

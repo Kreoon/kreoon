@@ -21,6 +21,7 @@ import {
   CalendarClock,
   MessageCircle,
   Link as LinkIcon,
+  Settings,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -45,6 +46,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { InteractionTimeline } from './InteractionTimeline';
 import { AddInteractionModal } from './AddInteractionModal';
+import { CustomFieldsSection } from './detail-sections/CustomFieldsSection';
+import { CrmFieldsConfigDialog } from './detail-sections/CrmFieldsConfigDialog';
 import {
   useUpdateOrgContact,
   useDeleteOrgContact,
@@ -52,6 +55,7 @@ import {
   useAddContactInteraction,
   useOrgPipelines,
 } from '@/hooks/useCrm';
+import { useCrmCustomFieldDefs, useUpdateContactCustomFields } from '@/hooks/useCrmCustomFields';
 import type { OrgContact, RelationshipStrength, ContactType } from '@/types/crm.types';
 import {
   CONTACT_TYPE_LABELS,
@@ -159,8 +163,11 @@ export function ContactDetailPanel({
   const addInteraction = useAddContactInteraction(organizationId);
   const { data: interactions, isLoading: interactionsLoading } = useContactInteractions(contact.id);
   const { data: pipelines } = useOrgPipelines(organizationId);
+  const { data: fieldDefs = [] } = useCrmCustomFieldDefs(organizationId, 'contact');
+  const updateCustomFields = useUpdateContactCustomFields(organizationId);
 
   const [showInteractionModal, setShowInteractionModal] = useState(false);
+  const [showFieldsConfig, setShowFieldsConfig] = useState(false);
   const [tags, setTags] = useState<string[]>(contact.tags || []);
   const [tagInput, setTagInput] = useState('');
   const [notes, setNotes] = useState(contact.notes || '');
@@ -168,6 +175,15 @@ export function ContactDetailPanel({
   const [nameValue, setNameValue] = useState(contact.full_name);
   const [dealValue, setDealValue] = useState(contact.deal_value?.toString() || '');
   const [expectedClose, setExpectedClose] = useState(contact.expected_close_date || '');
+
+  // Custom fields
+  const customFieldsRef = useRef<Record<string, unknown>>((contact as any).custom_fields || {});
+
+  const handleCustomFieldChange = useCallback((key: string, value: unknown) => {
+    const updated = { ...customFieldsRef.current, [key]: value };
+    customFieldsRef.current = updated;
+    updateCustomFields.mutate({ contactId: contact.id, fields: updated });
+  }, [contact.id, updateCustomFields]);
 
   // Reset local state when contact changes
   useEffect(() => {
@@ -177,6 +193,7 @@ export function ContactDetailPanel({
     setDealValue(contact.deal_value?.toString() || '');
     setExpectedClose(contact.expected_close_date || '');
     setEditingName(false);
+    customFieldsRef.current = (contact as any).custom_fields || {};
   }, [contact.id]);
 
   // Pipeline stages
@@ -802,6 +819,24 @@ export function ContactDetailPanel({
               )}
             </section>
 
+            {/* ---- Custom Fields ---- */}
+            {fieldDefs.length > 0 && (
+              <CustomFieldsSection
+                customFields={customFieldsRef.current}
+                fieldDefs={fieldDefs.filter(d => d.is_active)}
+                onChange={handleCustomFieldChange}
+                configAction={
+                  <button
+                    onClick={() => setShowFieldsConfig(true)}
+                    className="p-1 rounded hover:bg-white/10 transition-colors"
+                    title="Configurar campos"
+                  >
+                    <Settings className="h-3.5 w-3.5 text-white/40 hover:text-white/60" />
+                  </button>
+                }
+              />
+            )}
+
             {/* ---- Interactions Timeline ---- */}
             <section className="space-y-2">
               <div className="flex items-center justify-between">
@@ -827,6 +862,16 @@ export function ContactDetailPanel({
           </div>
         </div>
       </div>
+
+      {/* Custom Fields Config Dialog */}
+      {showFieldsConfig && (
+        <CrmFieldsConfigDialog
+          open={showFieldsConfig}
+          onOpenChange={setShowFieldsConfig}
+          entityType="contact"
+          organizationId={organizationId}
+        />
+      )}
 
       {/* Interaction Modal */}
       <AddInteractionModal

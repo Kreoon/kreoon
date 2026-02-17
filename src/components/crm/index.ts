@@ -11,3 +11,16 @@ export { ContactDetailPanel } from './ContactDetailPanel';
 export { PipelineManager } from './PipelineManager';
 export { CreatePipelineModal } from './CreatePipelineModal';
 export { ContactKanban } from './ContactKanban';
+
+// Shared components
+export { CopyButton } from './CopyButton';
+export { DetailSection } from './DetailSection';
+export { DetailPanelShell } from './DetailPanelShell';
+export { ViewModeToggle } from './ViewModeToggle';
+export type { ViewMode } from './ViewModeToggle';
+
+// Detail panels
+export { OrgDetailPanel } from './OrgDetailPanel';
+export { UserDetailPanel } from './UserDetailPanel';
+export { TalentDetailPanel } from './TalentDetailPanel';
+export { OrgTalentDetailPanel } from './OrgTalentDetailPanel';

@@ -15,6 +15,8 @@ import type {
   SpecificRole,
   RegistrationIntent,
   ExperienceLevel,
+  FullUserDetail,
+  FullCreatorDetail,
 } from '@/types/crm.types';
 
 // =====================================================
@@ -388,10 +390,33 @@ export interface UserWithHealth {
   total_actions: number;
   needs_attention: boolean;
   created_at: string;
+  // Auth-level fields
+  email_confirmed_at: string | null;
+  is_banned: boolean;
+  has_profile: boolean;
+  is_platform_admin: boolean;
 }
 
 export async function getUsersWithHealth(): Promise<UserWithHealth[]> {
   const { data, error } = await (supabase as any).rpc('get_platform_users_with_health');
   if (error) throw error;
   return (data || []) as UserWithHealth[];
+}
+
+// =====================================================
+// FULL DETAIL RPCs
+// =====================================================
+
+export async function getFullUserDetail(userId: string): Promise<FullUserDetail> {
+  const { data, error } = await (supabase as any)
+    .rpc('get_full_user_detail', { p_user_id: userId });
+  if (error) throw error;
+  return data as FullUserDetail;
+}
+
+export async function getFullCreatorDetail(creatorProfileId: string): Promise<FullCreatorDetail> {
+  const { data, error } = await (supabase as any)
+    .rpc('get_full_creator_detail', { p_creator_profile_id: creatorProfileId });
+  if (error) throw error;
+  return data as FullCreatorDetail;
 }

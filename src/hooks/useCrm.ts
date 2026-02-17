@@ -309,6 +309,7 @@ export function useCreateOrgContact(orgId: string) {
       orgCrm.createOrgContact(orgId, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['org-contacts', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['unified-clients', orgId] });
       toast.success('Contacto creado exitosamente');
     },
     onError: (error: Error) => {
@@ -326,6 +327,7 @@ export function useUpdateOrgContact(orgId: string) {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['org-contacts', orgId] });
       queryClient.invalidateQueries({ queryKey: ['org-contact', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['unified-clients', orgId] });
       toast.success('Contacto actualizado');
     },
     onError: (error: Error) => {
@@ -341,6 +343,7 @@ export function useDeleteOrgContact(orgId: string) {
     mutationFn: (id: string) => orgCrm.deleteOrgContact(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['org-contacts', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['unified-clients', orgId] });
       toast.success('Contacto eliminado');
     },
     onError: (error: Error) => {
@@ -401,6 +404,7 @@ export function useToggleFavoriteCreator(orgId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['org-creator-relationships', orgId] });
       queryClient.invalidateQueries({ queryKey: ['org-creator-stats', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['unified-talent', orgId] });
     },
     onError: (error: Error) => {
       toast.error(`Error: ${error.message}`);
@@ -416,6 +420,7 @@ export function useBlockCreator(orgId: string) {
       orgCrm.blockCreator(orgId, creatorId, reason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['org-creator-relationships', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['unified-talent', orgId] });
       toast.success('Creador bloqueado');
     },
     onError: (error: Error) => {
@@ -432,6 +437,7 @@ export function useAddCreatorToList(orgId: string) {
       orgCrm.addCreatorToList(orgId, creatorId, listName),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['org-creator-relationships', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['unified-talent', orgId] });
       toast.success('Creador agregado a la lista');
     },
     onError: (error: Error) => {
@@ -448,6 +454,7 @@ export function useUpdateCreatorRelationship(orgId: string) {
       orgCrm.updateCreatorRelationship(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['org-creator-relationships', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['unified-talent', orgId] });
       toast.success('Relación actualizada');
     },
     onError: (error: Error) => {
@@ -558,5 +565,36 @@ export function useOrgPipelineSummary(orgId: string | undefined) {
     queryFn: () => orgCrm.getOrgPipelineSummary(orgId!),
     enabled: !!orgId,
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+// =====================================================
+// FULL DETAIL HOOKS (fetch on panel open)
+// =====================================================
+
+export function useFullUserDetail(userId: string | undefined) {
+  return useQuery({
+    queryKey: ['full-user-detail', userId],
+    queryFn: () => platformCrm.getFullUserDetail(userId!),
+    enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export function useFullCreatorDetail(creatorProfileId: string | undefined) {
+  return useQuery({
+    queryKey: ['full-creator-detail', creatorProfileId],
+    queryFn: () => platformCrm.getFullCreatorDetail(creatorProfileId!),
+    enabled: !!creatorProfileId,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export function useFullOrgCreatorDetail(orgId: string | undefined, creatorId: string | undefined) {
+  return useQuery({
+    queryKey: ['full-org-creator-detail', orgId, creatorId],
+    queryFn: () => orgCrm.getFullOrgCreatorDetail(orgId!, creatorId!),
+    enabled: !!orgId && !!creatorId,
+    staleTime: 2 * 60 * 1000,
   });
 }

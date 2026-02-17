@@ -5,14 +5,9 @@ import {
   BadgeCheck,
   UserPlus,
   Star,
-  LayoutGrid,
-  List,
-  MoreHorizontal,
   Search,
 } from "lucide-react";
-import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -29,14 +24,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { useCreatorsWithMetrics } from "@/hooks/useCrm";
+import { ViewModeToggle, TalentDetailPanel } from "@/components/crm";
+import type { ViewMode } from "@/components/crm";
 import type { CreatorWithMetrics } from "@/services/crm/platformCrmService";
 import {
   TALENT_CATEGORY_LABELS,
@@ -124,10 +115,11 @@ const PlatformCRMCreators = () => {
   const { data: creators = [], isLoading } = useCreatorsWithMetrics();
 
   const [search, setSearch] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedCreator, setSelectedCreator] = useState<CreatorWithMetrics | null>(null);
 
   // Derive stats
   const stats = useMemo(() => {
@@ -187,47 +179,41 @@ const PlatformCRMCreators = () => {
     setRoleFilter("all");
   };
 
+  const handleSelect = (creator: CreatorWithMetrics) => {
+    setSelectedCreator((prev) => (prev?.id === creator.id ? null : creator));
+  };
+
   return (
-    <div className="min-h-screen">
-      <div className="p-4 md:p-6 space-y-8">
+    <div className="min-h-screen flex">
+      <div
+        className={cn(
+          "flex-1 p-4 md:p-6 space-y-8 transition-[margin] duration-300",
+          selectedCreator && "mr-[440px]"
+        )}
+      >
         {/* ========== HEADER ========== */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-white">Creadores</h1>
-            <p className="text-white/60">Todos los creadores del ecosistema Kreoon</p>
+            <h1 className="text-3xl font-bold text-white">Talento</h1>
+            <p className="text-white/60">Todo el talento del ecosistema Kreoon</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 items-center">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
               <Input
-                placeholder="Buscar creador..."
+                placeholder="Buscar talento..."
                 className="w-64 bg-white/5 border-white/10 pl-9"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <div className="flex border border-white/10 rounded-lg overflow-hidden">
-              <Button
-                variant={viewMode === "grid" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("grid")}
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === "table" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("table")}
-              >
-                <List className="w-4 h-4" />
-              </Button>
-            </div>
+            <ViewModeToggle value={viewMode} onChange={setViewMode} />
           </div>
         </div>
 
         {/* ========== KPI CARDS ========== */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Total Creadores" value={stats.total} icon={Video} color="pink" />
+          <StatCard title="Total Talento" value={stats.total} icon={Video} color="pink" />
           <StatCard
             title="Activos"
             value={stats.active}
@@ -288,7 +274,7 @@ const PlatformCRMCreators = () => {
           </Select>
 
           <div className="ml-auto text-sm text-white/40 self-center">
-            {filtered.length} creadores
+            {filtered.length} talento
           </div>
         </div>
 
@@ -296,7 +282,7 @@ const PlatformCRMCreators = () => {
         {isLoading && (
           <div className="p-12 text-center">
             <div className="w-8 h-8 border-2 border-pink-500/30 border-t-pink-500 rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-sm text-white/40">Cargando creadores...</p>
+            <p className="text-sm text-white/40">Cargando talento...</p>
           </div>
         )}
 
@@ -307,13 +293,13 @@ const PlatformCRMCreators = () => {
             <p className="text-sm text-white/40">
               {search || categoryFilter !== "all" || roleFilter !== "all" || statusFilter !== "all"
                 ? "Sin resultados para los filtros aplicados"
-                : "A\u00fan no hay creadores registrados"}
+                : "A\u00fan no hay talento registrado"}
             </p>
           </div>
         )}
 
-        {/* ========== GRID VIEW ========== */}
-        {!isLoading && filtered.length > 0 && viewMode === "grid" && (
+        {/* ========== CARDS VIEW ========== */}
+        {!isLoading && filtered.length > 0 && viewMode === "cards" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filtered.map((creator) => {
               const category = getPrimaryCategory(creator);
@@ -321,9 +307,12 @@ const PlatformCRMCreators = () => {
               return (
                 <Card
                   key={creator.id}
-                  className="p-4 hover:bg-white/10 transition-colors cursor-pointer"
+                  onClick={() => handleSelect(creator)}
+                  className={cn(
+                    "p-4 hover:bg-white/10 transition-colors cursor-pointer",
+                    selectedCreator?.id === creator.id && "ring-1 ring-[#8b5cf6] bg-white/10"
+                  )}
                 >
-                  {/* Avatar + Name */}
                   <div className="flex items-start gap-3 mb-3">
                     <div className="relative shrink-0">
                       {creator.avatar_url ? (
@@ -351,7 +340,6 @@ const PlatformCRMCreators = () => {
                     </div>
                   </div>
 
-                  {/* Category + Role badges */}
                   <div className="flex flex-wrap gap-1 mb-3">
                     {category && (
                       <span
@@ -370,7 +358,6 @@ const PlatformCRMCreators = () => {
                     )}
                   </div>
 
-                  {/* Rating + Projects */}
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-1 text-yellow-400">
                       <Star className="w-4 h-4 fill-current" />
@@ -383,7 +370,6 @@ const PlatformCRMCreators = () => {
                     </span>
                   </div>
 
-                  {/* Earnings + Status */}
                   <div className="flex items-center justify-between text-sm mt-2">
                     <span className="text-green-400">
                       {formatCurrency(creator.total_earned)}
@@ -411,7 +397,7 @@ const PlatformCRMCreators = () => {
             <Table>
               <TableHeader>
                 <TableRow className="border-white/10 hover:bg-transparent">
-                  <TableHead className="text-white/70">Creador</TableHead>
+                  <TableHead className="text-white/70">Talento</TableHead>
                   <TableHead className="text-white/70">{"Categor\u00eda"}</TableHead>
                   <TableHead className="text-white/70 hidden md:table-cell">Rol</TableHead>
                   <TableHead className="text-white/70">Rating</TableHead>
@@ -422,7 +408,6 @@ const PlatformCRMCreators = () => {
                     Ganado
                   </TableHead>
                   <TableHead className="text-white/70">Estado</TableHead>
-                  <TableHead className="text-white/70 w-10"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -432,7 +417,11 @@ const PlatformCRMCreators = () => {
                   return (
                     <TableRow
                       key={creator.id}
-                      className="border-white/10 hover:bg-white/5"
+                      onClick={() => handleSelect(creator)}
+                      className={cn(
+                        "border-white/10 hover:bg-white/5 cursor-pointer",
+                        selectedCreator?.id === creator.id && "bg-[#8b5cf6]/10"
+                      )}
                     >
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -505,28 +494,6 @@ const PlatformCRMCreators = () => {
                           {creator.is_active ? "Activo" : "Inactivo"}
                         </span>
                       </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <Link to={`/crm/creadores/${creator.user_id}`}>
-                                Ver perfil
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem disabled>
-                              Ver proyectos
-                            </DropdownMenuItem>
-                            <DropdownMenuItem disabled>
-                              Enviar mensaje
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -534,7 +501,84 @@ const PlatformCRMCreators = () => {
             </Table>
           </Card>
         )}
+
+        {/* ========== LIST VIEW ========== */}
+        {!isLoading && filtered.length > 0 && viewMode === "list" && (
+          <div className="space-y-1.5">
+            {filtered.map((creator) => {
+              const category = getPrimaryCategory(creator);
+              return (
+                <div
+                  key={creator.id}
+                  onClick={() => handleSelect(creator)}
+                  className={cn(
+                    "flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-white/5 cursor-pointer transition-colors border border-transparent",
+                    selectedCreator?.id === creator.id && "bg-[#8b5cf6]/10 border-[#8b5cf6]/30"
+                  )}
+                >
+                  <div className="relative shrink-0">
+                    {creator.avatar_url ? (
+                      <img
+                        src={creator.avatar_url}
+                        alt=""
+                        className="w-9 h-9 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-300 text-sm">
+                        {creator.full_name?.charAt(0) || "?"}
+                      </div>
+                    )}
+                    {creator.is_verified && (
+                      <BadgeCheck className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 text-blue-400" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white font-medium truncate">{creator.full_name}</p>
+                    <p className="text-xs text-white/40 truncate">{creator.email}</p>
+                  </div>
+                  {category && (
+                    <span
+                      className={cn(
+                        "text-[10px] px-2 py-0.5 rounded-full hidden sm:inline-flex",
+                        TALENT_CATEGORY_COLORS[category]
+                      )}
+                    >
+                      {TALENT_CATEGORY_LABELS[category]}
+                    </span>
+                  )}
+                  <div className="flex items-center gap-1 text-yellow-400 text-xs">
+                    <Star className="w-3.5 h-3.5 fill-current" />
+                    {creator.rating_avg > 0 ? creator.rating_avg.toFixed(1) : "—"}
+                  </div>
+                  <span className="text-xs text-white/50 hidden md:inline">
+                    {creator.completed_projects} proy.
+                  </span>
+                  <span
+                    className={cn(
+                      "px-2 py-0.5 rounded-full text-[10px]",
+                      creator.is_active
+                        ? "bg-green-500/20 text-green-300"
+                        : "bg-white/10 text-white/50"
+                    )}
+                  >
+                    {creator.is_active ? "Activo" : "Inactivo"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
+
+      {/* ========== DETAIL PANEL ========== */}
+      {selectedCreator && (
+        <div className="fixed top-0 right-0 h-full z-40">
+          <TalentDetailPanel
+            creator={selectedCreator}
+            onClose={() => setSelectedCreator(null)}
+          />
+        </div>
+      )}
     </div>
   );
 };

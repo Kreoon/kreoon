@@ -153,7 +153,7 @@ export const SPECIFIC_ROLE_LABELS: Record<SpecificRole, string> = {
 };
 
 export const TALENT_SUBTYPE_LABELS: Record<TalentSubtype, string> = {
-  creator: 'Creador',
+  creator: 'Talento',
   editor: 'Editor/Productor',
   both: 'Ambos',
 };
@@ -167,7 +167,7 @@ export const EXPERIENCE_LEVEL_LABELS: Record<ExperienceLevel, string> = {
 
 export const REGISTRATION_INTENT_LABELS: Record<RegistrationIntent, string> = {
   talent: 'Quiero ofrecer mis servicios',
-  brand: 'Busco creadores para mi marca',
+  brand: 'Busco talento para mi marca',
   organization: 'Gestiono equipos/agencia',
   join: 'Quiero unirme al equipo Kreoon',
 };
@@ -276,7 +276,7 @@ export const INTERACTION_OUTCOME_LABELS: Record<InteractionOutcome, string> = {
 
 export const PIPELINE_TYPE_LABELS: Record<PipelineType, string> = {
   sales: 'Ventas',
-  creators: 'Creadores',
+  creators: 'Talento',
   partnerships: 'Alianzas',
   custom: 'Personalizado',
 };
@@ -596,6 +596,312 @@ export interface LeadStats {
   conversion_rate: number;
   leads_in_period: number;
   total_leads: number;
+}
+
+// =====================================================
+// FULL DETAIL INTERFACES (for expanded panels)
+// =====================================================
+
+export interface PortfolioItemSummary {
+  id: string;
+  title: string | null;
+  media_type: string;
+  media_url: string;
+  thumbnail_url: string | null;
+  bunny_video_id: string | null;
+  category: string | null;
+  is_featured: boolean;
+}
+
+export interface ServiceSummary {
+  id: string;
+  title: string;
+  service_type: string;
+  price_type: string;
+  price_amount: number | null;
+  price_currency: string;
+  delivery_days: number | null;
+  is_featured: boolean;
+}
+
+export interface RoleSummary {
+  role: string;
+  organization_id: string;
+  organization_name: string;
+}
+
+export interface BadgeSummary {
+  badge: string;
+  level: string;
+  is_active: boolean;
+  granted_at: string;
+}
+
+export interface FullUserDetail {
+  // profiles
+  id: string;
+  email: string;
+  full_name: string;
+  username: string | null;
+  avatar_url: string | null;
+  phone: string | null;
+  bio: string | null;
+  tagline: string | null;
+  cover_url: string | null;
+  document_type: string | null;
+  document_number: string | null;
+  address: string | null;
+  city: string | null;
+  country: string | null;
+  instagram: string | null;
+  tiktok: string | null;
+  facebook: string | null;
+  social_linkedin: string | null;
+  social_twitter: string | null;
+  social_youtube: string | null;
+  portfolio_url: string | null;
+  featured_video_url: string | null;
+  experience_level: string | null;
+  availability_status: string | null;
+  best_at: string | null;
+  content_categories: string[];
+  specialties_tags: string[];
+  style_keywords: string[];
+  industries: string[];
+  interests: string[];
+  languages: string[];
+  rate_per_content: number | null;
+  rate_currency: string | null;
+  quality_score_avg: number | null;
+  reliability_score: number | null;
+  velocity_score: number | null;
+  editor_rating: number | null;
+  is_ambassador: boolean;
+  is_platform_founder: boolean;
+  founder_badge_type: string | null;
+  active_role: string | null;
+  ai_recommended_level: string | null;
+  ai_risk_flag: string | null;
+  is_active: boolean;
+  crm_custom_fields: Record<string, unknown>;
+  created_at: string;
+  // creator_profiles (nullable)
+  creator_profile_id: string | null;
+  slug: string | null;
+  bio_full: string | null;
+  banner_url: string | null;
+  creator_social_links: Record<string, string> | null;
+  level: string | null;
+  is_verified: boolean;
+  is_available: boolean;
+  rating_avg: number;
+  rating_count: number;
+  completed_projects: number;
+  base_price: number | null;
+  currency: string;
+  categories: string[];
+  content_types: string[];
+  platforms: string[];
+  marketplace_roles: string[];
+  accepts_product_exchange: boolean;
+  response_time_hours: number | null;
+  on_time_delivery_pct: number | null;
+  repeat_clients_pct: number | null;
+  showreel_video_id: string | null;
+  showreel_url: string | null;
+  showreel_thumbnail: string | null;
+  // health
+  health_score: number;
+  health_status: string;
+  total_logins: number;
+  days_since_last_activity: number | null;
+  last_login_at: string | null;
+  needs_attention: boolean;
+  total_applications: number;
+  total_completed_projects: number;
+  total_spent: number;
+  // org context
+  organization_id: string | null;
+  organization_name: string | null;
+  is_owner: boolean;
+  ambassador_level: string | null;
+  // nested
+  roles: RoleSummary[];
+  badges: BadgeSummary[];
+  portfolio: PortfolioItemSummary[];
+  services: ServiceSummary[];
+}
+
+export interface FullCreatorDetail {
+  // profiles
+  id: string;
+  email: string;
+  full_name: string;
+  username: string | null;
+  avatar_url: string | null;
+  phone: string | null;
+  bio: string | null;
+  tagline: string | null;
+  cover_url: string | null;
+  city: string | null;
+  country: string | null;
+  instagram: string | null;
+  tiktok: string | null;
+  facebook: string | null;
+  social_linkedin: string | null;
+  social_twitter: string | null;
+  social_youtube: string | null;
+  portfolio_url: string | null;
+  featured_video_url: string | null;
+  experience_level: string | null;
+  availability_status: string | null;
+  best_at: string | null;
+  content_categories: string[];
+  specialties_tags: string[];
+  style_keywords: string[];
+  industries: string[];
+  interests: string[];
+  languages: string[];
+  rate_per_content: number | null;
+  rate_currency: string | null;
+  quality_score_avg: number | null;
+  reliability_score: number | null;
+  velocity_score: number | null;
+  editor_rating: number | null;
+  active_role: string | null;
+  is_ambassador: boolean;
+  crm_custom_fields: Record<string, unknown>;
+  profile_created_at: string;
+  // creator_profiles
+  creator_profile_id: string;
+  user_id: string;
+  slug: string;
+  display_name: string;
+  bio_full: string | null;
+  banner_url: string | null;
+  location_city: string | null;
+  location_country: string | null;
+  country_flag: string | null;
+  creator_social_links: Record<string, string> | null;
+  level: string;
+  is_verified: boolean;
+  is_available: boolean;
+  is_active: boolean;
+  rating_avg: number;
+  rating_count: number;
+  completed_projects: number;
+  base_price: number | null;
+  currency: string;
+  categories: string[];
+  content_types: string[];
+  platforms: string[];
+  marketplace_roles: string[];
+  accepts_product_exchange: boolean;
+  exchange_conditions: string | null;
+  response_time_hours: number | null;
+  on_time_delivery_pct: number | null;
+  repeat_clients_pct: number | null;
+  showreel_video_id: string | null;
+  showreel_url: string | null;
+  showreel_thumbnail: string | null;
+  created_at: string;
+  total_earned: number;
+  // nested
+  portfolio: PortfolioItemSummary[];
+  services: ServiceSummary[];
+}
+
+export interface FullOrgCreatorDetail {
+  // relationship
+  relationship_id: string;
+  relationship_type: CreatorRelationshipType | null;
+  times_worked_together: number;
+  total_paid: number;
+  average_rating_given: number | null;
+  last_collaboration_at: string | null;
+  internal_notes: string | null;
+  internal_tags: string[] | null;
+  list_name: string | null;
+  custom_fields: Record<string, unknown>;
+  relationship_created_at: string;
+  // profiles
+  id: string;
+  email: string;
+  full_name: string;
+  username: string | null;
+  avatar_url: string | null;
+  phone: string | null;
+  bio: string | null;
+  tagline: string | null;
+  cover_url: string | null;
+  city: string | null;
+  country: string | null;
+  instagram: string | null;
+  tiktok: string | null;
+  facebook: string | null;
+  social_linkedin: string | null;
+  social_twitter: string | null;
+  social_youtube: string | null;
+  portfolio_url: string | null;
+  experience_level: string | null;
+  content_categories: string[];
+  specialties_tags: string[];
+  languages: string[];
+  // creator_profiles
+  creator_profile_id: string | null;
+  slug: string | null;
+  display_name: string | null;
+  bio_full: string | null;
+  banner_url: string | null;
+  location_city: string | null;
+  location_country: string | null;
+  country_flag: string | null;
+  creator_social_links: Record<string, string> | null;
+  level: string | null;
+  is_verified: boolean;
+  is_available: boolean;
+  is_active: boolean;
+  rating_avg: number;
+  rating_count: number;
+  completed_projects: number;
+  base_price: number | null;
+  currency: string;
+  categories: string[];
+  content_types: string[];
+  platforms: string[];
+  marketplace_roles: string[];
+  accepts_product_exchange: boolean;
+  response_time_hours: number | null;
+  on_time_delivery_pct: number | null;
+  repeat_clients_pct: number | null;
+  showreel_video_id: string | null;
+  showreel_url: string | null;
+  showreel_thumbnail: string | null;
+  created_at: string;
+  // nested
+  portfolio: PortfolioItemSummary[];
+  services: ServiceSummary[];
+}
+
+export type CrmCustomFieldType =
+  | 'text' | 'textarea' | 'number' | 'date' | 'datetime'
+  | 'select' | 'multiselect' | 'checkbox' | 'currency'
+  | 'url' | 'email' | 'phone' | 'rating' | 'color' | 'tags';
+
+export type CrmEntityType = 'user' | 'creator' | 'org_creator' | 'contact' | 'lead';
+
+export interface CrmCustomFieldDefinition {
+  id: string;
+  organization_id: string;
+  entity_type: CrmEntityType;
+  name: string;
+  field_type: CrmCustomFieldType;
+  options: string[] | null;
+  is_required: boolean;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface OrgCreatorStats {

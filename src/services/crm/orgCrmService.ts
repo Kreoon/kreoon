@@ -16,6 +16,7 @@ import type {
   ContactType,
   RelationshipStrength,
   CreatorRelationshipType,
+  FullOrgCreatorDetail,
 } from '@/types/crm.types';
 
 // =====================================================
@@ -384,4 +385,15 @@ export async function getOrgPipelineSummary(orgId: string): Promise<OrgPipelineS
   const { data, error } = await (supabase as any).rpc('get_org_pipeline_summary', { p_org_id: orgId });
   if (error) throw error;
   return data as OrgPipelineSummary;
+}
+
+// =====================================================
+// FULL DETAIL RPCs
+// =====================================================
+
+export async function getFullOrgCreatorDetail(orgId: string, creatorId: string): Promise<FullOrgCreatorDetail> {
+  const { data, error } = await (supabase as any)
+    .rpc('get_org_creator_full_detail', { p_org_id: orgId, p_creator_id: creatorId });
+  if (error) throw error;
+  return data as FullOrgCreatorDetail;
 }

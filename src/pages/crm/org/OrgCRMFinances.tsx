@@ -114,7 +114,7 @@ function FinancesContent({ orgId }: { orgId: string }) {
           <Card className="bg-white/5 border-white/10 p-6">
             <div className="flex items-center gap-3 mb-2">
               <Users className="w-5 h-5 text-pink-400" />
-              <span className="text-white/60 text-sm">Pagado a Creadores</span>
+              <span className="text-white/60 text-sm">Pagado a Talento</span>
             </div>
             <p className="text-2xl font-bold text-white">{formatCurrency(stats?.total_paid_creators || 0)}</p>
             <p className="text-pink-400 text-sm mt-1">
@@ -330,7 +330,7 @@ function FinancesContent({ orgId }: { orgId: string }) {
 
             {/* Creator payments summary */}
             <Card className="bg-white/5 border-white/10 p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Pagos a Creadores</h3>
+              <h3 className="text-lg font-semibold text-white mb-4">Pagos a Talento</h3>
 
               <div className="space-y-4">
                 <div className="flex justify-between">
@@ -348,8 +348,8 @@ function FinancesContent({ orgId }: { orgId: string }) {
 
                 <div className="pt-4 border-t border-white/10">
                   <Button asChild variant="ghost" className="w-full justify-start text-white/70">
-                    <Link to="/org-crm/creadores">
-                      <Users className="w-4 h-4 mr-2" /> Ver creadores con los que has trabajado
+                    <Link to="/talent?tab=externo">
+                      <Users className="w-4 h-4 mr-2" /> Ver talento con el que has trabajado
                     </Link>
                   </Button>
                 </div>

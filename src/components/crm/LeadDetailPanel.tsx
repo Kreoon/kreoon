@@ -20,6 +20,7 @@ import {
   UserCheck,
   Link as LinkIcon,
   MessageCircle,
+  Settings,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -46,12 +47,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { InteractionTimeline } from './InteractionTimeline';
 import { AddInteractionModal } from './AddInteractionModal';
+import { CustomFieldsSection } from './detail-sections/CustomFieldsSection';
+import { CrmFieldsConfigDialog } from './detail-sections/CrmFieldsConfigDialog';
 import {
   useUpdateLead,
   useDeleteLead,
   useLeadInteractions,
   useAddLeadInteraction,
 } from '@/hooks/useCrm';
+import { useCrmCustomFieldDefs, useUpdateLeadCustomFields } from '@/hooks/useCrmCustomFields';
 import type {
   PlatformLead,
   PlatformLeadSummary,
@@ -142,8 +146,14 @@ export function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailPanelProp
   const deleteLead = useDeleteLead();
   const addInteraction = useAddLeadInteraction();
   const { data: interactions, isLoading: interactionsLoading } = useLeadInteractions(lead.id);
+  const { data: fieldDefs = [] } = useCrmCustomFieldDefs(
+    (lead as any).organization_id || undefined,
+    'lead',
+  );
+  const updateCustomFields = useUpdateLeadCustomFields();
 
   const [showInteractionModal, setShowInteractionModal] = useState(false);
+  const [showFieldsConfig, setShowFieldsConfig] = useState(false);
   const [tags, setTags] = useState<string[]>(lead.tags || []);
   const [tagInput, setTagInput] = useState('');
   const [notes, setNotes] = useState(lead.notes || '');
@@ -151,6 +161,15 @@ export function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailPanelProp
   const [stageNote, setStageNote] = useState('');
   const [showStageNote, setShowStageNote] = useState(false);
   const [pendingStage, setPendingStage] = useState<LeadStage | null>(null);
+
+  // Custom fields
+  const customFieldsRef = useRef<Record<string, unknown>>((lead as any).custom_fields || {});
+
+  const handleCustomFieldChange = useCallback((key: string, value: unknown) => {
+    const updated = { ...customFieldsRef.current, [key]: value };
+    customFieldsRef.current = updated;
+    updateCustomFields.mutate({ leadId: lead.id, fields: updated });
+  }, [lead.id, updateCustomFields]);
 
   // Debounced notes save
   const notesTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -678,6 +697,26 @@ export function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailPanelProp
               </section>
             )}
 
+            {/* ---- Custom Fields ---- */}
+            {fieldDefs.length > 0 && (
+              <CustomFieldsSection
+                customFields={customFieldsRef.current}
+                fieldDefs={fieldDefs.filter(d => d.is_active)}
+                onChange={handleCustomFieldChange}
+                configAction={
+                  (lead as any).organization_id ? (
+                    <button
+                      onClick={() => setShowFieldsConfig(true)}
+                      className="p-1 rounded hover:bg-white/10 transition-colors"
+                      title="Configurar campos"
+                    >
+                      <Settings className="h-3.5 w-3.5 text-white/40 hover:text-white/60" />
+                    </button>
+                  ) : undefined
+                }
+              />
+            )}
+
             {/* ---- Interactions Timeline ---- */}
             <section className="space-y-2">
               <div className="flex items-center justify-between">
@@ -703,6 +742,16 @@ export function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailPanelProp
           </div>
         </div>
       </div>
+
+      {/* Custom Fields Config Dialog */}
+      {showFieldsConfig && (lead as any).organization_id && (
+        <CrmFieldsConfigDialog
+          open={showFieldsConfig}
+          onOpenChange={setShowFieldsConfig}
+          entityType="lead"
+          organizationId={(lead as any).organization_id}
+        />
+      )}
 
       {/* Interaction Modal */}
       <AddInteractionModal

@@ -197,7 +197,7 @@ const PlatformCRMFinances = () => {
               <div className="p-2 bg-purple-500/20 rounded-lg">
                 <Wallet className="w-5 h-5 text-purple-400" />
               </div>
-              <span className="text-white/60 text-sm">Pagos a Creadores</span>
+              <span className="text-white/60 text-sm">Pagos a Talento</span>
             </div>
             <p className="text-3xl font-bold text-white">{formatCurrency(stats?.payouts_period || 0)}</p>
             <p className="text-purple-400 text-sm mt-1">
@@ -226,7 +226,7 @@ const PlatformCRMFinances = () => {
             <TabsTrigger value="subscriptions">Suscripciones</TabsTrigger>
             <TabsTrigger value="transactions">Transacciones</TabsTrigger>
             <TabsTrigger value="invoices">Facturas</TabsTrigger>
-            <TabsTrigger value="payouts">Pagos a Creadores</TabsTrigger>
+            <TabsTrigger value="payouts">Pagos a Talento</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -423,7 +423,7 @@ const PlatformCRMFinances = () => {
                   <SelectItem value="all">Todos los tipos</SelectItem>
                   <SelectItem value="subscription_payment">Pago suscripción</SelectItem>
                   <SelectItem value="campaign_payment">Pago campaña</SelectItem>
-                  <SelectItem value="creator_payout">Pago a creador</SelectItem>
+                  <SelectItem value="creator_payout">Pago a talento</SelectItem>
                   <SelectItem value="platform_fee">Comisión</SelectItem>
                   <SelectItem value="refund">Reembolso</SelectItem>
                 </SelectContent>
@@ -608,7 +608,7 @@ const PlatformCRMFinances = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="border-white/10">
-                    <TableHead className="text-white/70">Creador</TableHead>
+                    <TableHead className="text-white/70">Talento</TableHead>
                     <TableHead className="text-white/70">Monto bruto</TableHead>
                     <TableHead className="text-white/70">Comisión</TableHead>
                     <TableHead className="text-white/70">Neto</TableHead>
