@@ -42,6 +42,7 @@ interface UnifiedContentModuleProps {
   organizationId?: string;
   clientId?: string;
   creatorId?: string;
+  editorId?: string;
   mode: 'admin' | 'client' | 'creator';
   showMetrics?: boolean;
   showKreoonToggle?: boolean;
@@ -137,6 +138,7 @@ export const UnifiedContentModule = memo(function UnifiedContentModule({
   organizationId,
   clientId,
   creatorId,
+  editorId,
   mode,
   showMetrics = true,
   showKreoonToggle = true,
@@ -216,6 +218,9 @@ export const UnifiedContentModule = memo(function UnifiedContentModule({
       if (creatorId) {
         query = query.eq('creator_id', creatorId);
       }
+      if (editorId) {
+        query = query.eq('editor_id', editorId);
+      }
 
       const { data, error } = await query;
       if (error) throw error;
@@ -260,7 +265,7 @@ export const UnifiedContentModule = memo(function UnifiedContentModule({
       setLoading(false);
       setRefreshing(false);
     }
-  }, [organizationId, clientId, creatorId, viewerId]);
+  }, [organizationId, clientId, creatorId, editorId, viewerId]);
 
   useEffect(() => {
     fetchContent();

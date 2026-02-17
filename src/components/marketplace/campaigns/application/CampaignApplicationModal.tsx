@@ -15,7 +15,9 @@ interface CampaignApplicationModalProps {
   onSuccess: () => void;
 }
 
-const PLATFORM_FEE_PCT = 0.15;
+import { COMMISSION_RATES } from '@/lib/finance/constants';
+
+const PLATFORM_FEE_PCT = COMMISSION_RATES.campaigns_managed.base / 100;
 
 export function CampaignApplicationModal({ campaign, onClose, onSuccess }: CampaignApplicationModalProps) {
   const { toast } = useToast();

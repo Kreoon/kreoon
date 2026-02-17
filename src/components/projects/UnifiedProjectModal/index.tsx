@@ -12,6 +12,8 @@ import { Save, Trash2, Eye, Plus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUnifiedProject } from './hooks/useUnifiedProject';
 import { SECTION_TAB_CONFIG } from '@/types/unifiedProject.types';
+import { getWorkflowForType } from '@/types/workflows';
+import { WorkflowProgressBar } from './WorkflowProgressBar';
 import type { UnifiedProjectModalProps } from './types';
 import type { UnifiedSectionKey } from '@/types/unifiedProject.types';
 
@@ -22,8 +24,6 @@ const DeliverablesTab = lazy(() => import('./tabs/DeliverablesTab'));
 const TeamTab = lazy(() => import('./tabs/TeamTab'));
 const DatesTab = lazy(() => import('./tabs/DatesTab'));
 const PaymentsTab = lazy(() => import('./tabs/PaymentsTab'));
-const ChatTab = lazy(() => import('./tabs/ChatTab'));
-
 // Map section keys to lazy components
 const TAB_COMPONENTS: Record<UnifiedSectionKey, React.LazyExoticComponent<any>> = {
   workspace: WorkspaceTab,
@@ -34,7 +34,6 @@ const TAB_COMPONENTS: Record<UnifiedSectionKey, React.LazyExoticComponent<any>> 
   team: TeamTab,
   dates: DatesTab,
   payments: PaymentsTab,
-  chat: ChatTab,
 };
 
 function TabSkeleton() {
@@ -76,6 +75,9 @@ export function UnifiedProjectModal({
     autoSaveStatus,
     lastSaved,
     flushPendingRefresh,
+    assignmentsHook,
+    selectedProduct,
+    handleProductChange,
   } = useUnifiedProject({
     source,
     projectId,
@@ -89,6 +91,12 @@ export function UnifiedProjectModal({
     if (isCreateMode) return typeConfig.visibleTabs;
     return permissions.visibleSections.filter(s => typeConfig.visibleTabs.includes(s));
   }, [isCreateMode, typeConfig.visibleTabs, permissions.visibleSections]);
+
+  // Workflow phases for progress bar (must be before early return to respect Rules of Hooks)
+  const workflow = useMemo(
+    () => getWorkflowForType(typeConfig.type, typeConfig.workflow.states),
+    [typeConfig.type, typeConfig.workflow.states],
+  );
 
   const handleClose = () => {
     if (!isCreateMode) {
@@ -108,6 +116,9 @@ export function UnifiedProjectModal({
     permissions,
     typeConfig,
     onUpdate,
+    assignmentsHook,
+    selectedProduct,
+    onProductChange: handleProductChange,
   };
 
   // Status options from workflow config
@@ -232,6 +243,13 @@ export function UnifiedProjectModal({
             </div>
           </div>
         </div>
+
+        {/* ============ WORKFLOW PROGRESS BAR ============ */}
+        {!isCreateMode && project?.status && (
+          <div className="px-4 sm:px-6 py-3 border-b bg-muted/10 shrink-0">
+            <WorkflowProgressBar workflow={workflow} currentStatus={project.status} />
+          </div>
+        )}
 
         {/* ============ CONTENT AREA WITH TABS ============ */}
         <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6">

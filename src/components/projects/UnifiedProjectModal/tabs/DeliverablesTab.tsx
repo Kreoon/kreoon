@@ -33,9 +33,43 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
 export default function DeliverablesTab({ project, permissions, readOnly, sectionKey }: UnifiedTabProps & { sectionKey?: string }) {
   const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
   const [loading, setLoading] = useState(true);
+  const isContent = project.source === 'content';
 
-  // For content source, show video/material tabs info instead
-  if (project.source === 'content') {
+  // Fetch deliverables for marketplace projects
+  useEffect(() => {
+    if (isContent) {
+      setLoading(false);
+      return;
+    }
+
+    if (!project.id) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchDeliverables = async () => {
+      try {
+        const { data, error } = await (supabase as any)
+          .from('project_deliveries')
+          .select('*')
+          .eq('project_id', project.id)
+          .order('created_at', { ascending: true });
+
+        if (!error && data) {
+          setDeliverables(data);
+        }
+      } catch (err) {
+        console.error('[DeliverablesTab] Fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDeliverables();
+  }, [project.id, isContent]);
+
+  // Content source: show video/material info
+  if (isContent) {
     return (
       <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
@@ -75,29 +109,6 @@ export default function DeliverablesTab({ project, permissions, readOnly, sectio
       </div>
     );
   }
-
-  // Marketplace source: fetch project_deliveries
-  useEffect(() => {
-    const fetchDeliverables = async () => {
-      try {
-        const { data, error } = await (supabase as any)
-          .from('project_deliveries')
-          .select('*')
-          .eq('project_id', project.id)
-          .order('created_at', { ascending: true });
-
-        if (!error && data) {
-          setDeliverables(data);
-        }
-      } catch (err) {
-        console.error('[DeliverablesTab] Fetch error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (project.id) fetchDeliverables();
-  }, [project.id]);
 
   if (loading) {
     return (

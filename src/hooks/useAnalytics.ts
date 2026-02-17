@@ -210,15 +210,19 @@ export function useAnalytics(): AnalyticsReturnType {
     const eventsToSend = eventQueue.current.splice(0, MAX_BATCH_SIZE);
 
     try {
-      await supabase.functions.invoke('kae-track', {
+      const { error } = await supabase.functions.invoke('kae-track', {
         body: {
           events: eventsToSend,
           context: contextRef.current,
         },
       });
+
+      if (error) {
+        console.error('[KAE] kae-track error:', error);
+        eventQueue.current.unshift(...eventsToSend);
+      }
     } catch (error) {
-      console.error('[KAE] Error sending events:', error);
-      // Re-queue eventos fallidos (al principio)
+      console.error('[KAE] Network error sending events:', error);
       eventQueue.current.unshift(...eventsToSend);
     }
   }, []);
@@ -229,7 +233,6 @@ export function useAnalytics(): AnalyticsReturnType {
       ...event,
       client_timestamp: new Date().toISOString(),
     });
-
     // Programar flush
     if (flushTimeout.current) {
       clearTimeout(flushTimeout.current);
@@ -382,23 +385,25 @@ export function useAnalytics(): AnalyticsReturnType {
 
   // === LIFECYCLE ===
 
-  // Inicialización (una sola vez)
+  // Inicialización — compatible con React StrictMode double-mount.
+  // initializedRef only guards the initial page_view to avoid double-tracking.
+  // Event listeners and flush scheduling MUST be re-attached on every mount
+  // because cleanup removes them between StrictMode unmount/remount cycles.
   useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
-
     contextRef.current = initializeContext();
 
-    // Track page view inicial
-    trackPageView();
+    // Track initial page view only once (ref persists across StrictMode remounts)
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      trackPageView();
+    }
 
-    // Escuchar cambios de ruta (SPA)
+    // Always set up event listeners (they get removed in cleanup)
     const handlePopState = () => {
       trackPageView();
     };
     window.addEventListener('popstate', handlePopState);
 
-    // Flush al cerrar/cambiar de tab
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
         flushEvents();
@@ -406,11 +411,32 @@ export function useAnalytics(): AnalyticsReturnType {
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Flush antes de cerrar
+    // Use fetch+keepalive for reliable send on page close
     const handleBeforeUnload = () => {
-      flushEvents();
+      if (eventQueue.current.length > 0 && contextRef.current) {
+        const eventsToSend = eventQueue.current.splice(0, MAX_BATCH_SIZE);
+        const url = `${import.meta.env.VITE_SUPABASE_URL || 'https://wjkbqcrxwsmvtxmqgiqc.supabase.co'}/functions/v1/kae-track`;
+        try {
+          fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+            },
+            body: JSON.stringify({ events: eventsToSend, context: contextRef.current }),
+            keepalive: true,
+          }).catch(() => {});
+        } catch {
+          // Best-effort on page unload
+        }
+      }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Re-schedule flush for any events orphaned by StrictMode cleanup
+    if (eventQueue.current.length > 0 && !flushTimeout.current) {
+      flushTimeout.current = setTimeout(flushEvents, FLUSH_INTERVAL);
+    }
 
     return () => {
       window.removeEventListener('popstate', handlePopState);
@@ -418,6 +444,7 @@ export function useAnalytics(): AnalyticsReturnType {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       if (flushTimeout.current) {
         clearTimeout(flushTimeout.current);
+        flushTimeout.current = null;
       }
     };
   }, [initializeContext, trackPageView, flushEvents]);

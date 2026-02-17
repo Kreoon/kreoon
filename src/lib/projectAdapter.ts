@@ -1,5 +1,5 @@
 import type { Content } from '@/types/database';
-import type { UnifiedProject, ProjectType } from '@/types/unifiedProject.types';
+import type { UnifiedProject, ProjectType, ProjectAssignment } from '@/types/unifiedProject.types';
 
 /**
  * ProjectAdapter - translates between content/marketplace data sources
@@ -10,7 +10,7 @@ export class ProjectAdapter {
    * Convert a Content record (from content table) to UnifiedProject.
    * Content projects are always type 'content_creation'.
    */
-  static fromContent(content: Content, organizationId: string): UnifiedProject {
+  static fromContent(content: Content, organizationId: string, assignments?: ProjectAssignment[]): UnifiedProject {
     return {
       id: content.id,
       source: 'content',
@@ -44,6 +44,7 @@ export class ProjectAdapter {
       currency: 'COP',
 
       contentData: content,
+      assignments,
     };
   }
 
@@ -51,7 +52,7 @@ export class ProjectAdapter {
    * Convert a marketplace_projects record to UnifiedProject.
    * The project_type comes from the DB row.
    */
-  static fromMarketplace(project: any): UnifiedProject {
+  static fromMarketplace(project: any, assignments?: ProjectAssignment[]): UnifiedProject {
     const brief = typeof project.brief === 'string'
       ? JSON.parse(project.brief)
       : project.brief || {};
@@ -90,6 +91,7 @@ export class ProjectAdapter {
       unreadMessages: project.unread_brand_messages || project.unread_creator_messages || 0,
 
       marketplaceData: project,
+      assignments,
     };
   }
 

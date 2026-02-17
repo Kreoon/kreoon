@@ -38,7 +38,7 @@ const MKT_STATUS_LABELS: Record<string, string> = {
 type ContentFilter = 'all' | 'in_progress' | 'delivered' | 'approved';
 
 const Content = () => {
-  const { roles, isCreator, isEditor } = useAuth();
+  const { user, roles, isCreator, isEditor } = useAuth();
   const { currentOrgId, loading: orgLoading } = useOrgOwner();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -234,7 +234,9 @@ const Content = () => {
           <UnifiedContentModule
             key={refreshKey}
             organizationId={currentOrgId || undefined}
-            mode="admin"
+            mode={isAdmin ? 'admin' : isCreator ? 'creator' : isEditor ? 'creator' : 'admin'}
+            creatorId={isCreator && !isAdmin ? user?.id : undefined}
+            editorId={isEditor && !isAdmin && !isCreator ? user?.id : undefined}
             showMetrics={isAdmin}
             showKreoonToggle={true}
             onContentUpdate={() => setRefreshKey(prev => prev + 1)}

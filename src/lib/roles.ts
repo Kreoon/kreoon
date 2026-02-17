@@ -3,13 +3,26 @@ import { getPermissionGroup, isDeprecatedRole, isSystemRole, type PermissionGrou
 import { MARKETPLACE_ROLES, MARKETPLACE_ROLES_MAP } from '@/components/marketplace/roles/marketplaceRoleConfig';
 import type { MarketplaceRoleId } from '@/components/marketplace/types/marketplace';
 
+// ============= 8 GLOBAL NICHE ROLES =============
+// These are the primary roles shown in role pickers (instead of 36 marketplace specializations)
+const GLOBAL_ROLE_LABELS: Record<string, string> = {
+  admin: 'Administrador',
+  team_leader: 'Líder de Equipo',
+  creator: 'Creador de Contenido',
+  editor: 'Editor / Post-Producción',
+  strategist: 'Estratega & Marketing',
+  developer: 'Desarrollador',
+  educator: 'Educador',
+  client: 'Cliente',
+};
+
 // ============= GROUP-BASED LABELS =============
 // Base labels per permission group (fallback when marketplace config doesn't have a specific label)
 const GROUP_LABELS: Record<PermissionGroup, string> = {
   admin: 'Administrador',
   team_leader: 'Líder de Equipo',
   creator: 'Creador de Contenido',
-  editor: 'Productor Audio-Visual',
+  editor: 'Editor / Post-Producción',
   strategist: 'Estratega',
   client: 'Cliente',
 };
@@ -18,7 +31,7 @@ const GROUP_LABELS_SHORT: Record<PermissionGroup, string> = {
   admin: 'Admin',
   team_leader: 'Líder',
   creator: 'Creador',
-  editor: 'Productor AV',
+  editor: 'Editor',
   strategist: 'Estratega',
   client: 'Cliente',
 };
@@ -74,8 +87,9 @@ export const AMBASSADOR_BADGE_SOLID_COLORS: Record<AmbassadorLevel, string> = {
 
 // ============= HELPER FUNCTIONS =============
 
-/** Get the display label for any role (marketplace-specific label or group fallback) */
+/** Get the display label for any role (global niche → marketplace-specific → group fallback) */
 export function getRoleLabel(role: AppRole | string): string {
+  if (GLOBAL_ROLE_LABELS[role]) return GLOBAL_ROLE_LABELS[role];
   const mktRole = MARKETPLACE_ROLES_MAP[role as MarketplaceRoleId];
   if (mktRole) return mktRole.label;
   const group = getPermissionGroup(role);
@@ -143,27 +157,27 @@ export function isAdminRole(roles: AppRole[]): boolean {
 
 // ============= ROLE ARRAYS =============
 
-// All marketplace roles (non-deprecated, non-system) for role pickers
+// The 8 global niche roles (simplified role system)
+export const GLOBAL_NICHE_ROLES: AppRole[] = [
+  'admin', 'team_leader', 'creator', 'editor', 'strategist', 'developer', 'educator', 'client',
+];
+
+// All marketplace roles (specializations within creator_profiles, not for org assignment)
 export const MARKETPLACE_ASSIGNABLE_ROLES: AppRole[] = MARKETPLACE_ROLES.map(r => r.id as AppRole);
 
-// All roles that can appear in UI selectors (system + marketplace, excluding deprecated legacy)
-export const SELECTABLE_ROLES: AppRole[] = [
-  'admin', 'team_leader',
-  ...MARKETPLACE_ASSIGNABLE_ROLES,
-];
+// All roles that can appear in UI selectors
+export const SELECTABLE_ROLES: AppRole[] = [...GLOBAL_NICHE_ROLES];
 
-// All available roles (system + marketplace + legacy for backward compat)
+// All available roles (global + marketplace + legacy for backward compat)
 export const ALL_ROLES: AppRole[] = [
-  'admin', 'team_leader',
+  ...GLOBAL_NICHE_ROLES,
   ...MARKETPLACE_ASSIGNABLE_ROLES,
-  // Legacy roles kept for backward compat (not shown in pickers)
-  'creator', 'editor', 'strategist', 'client', 'ambassador', 'trafficker',
+  'ambassador', 'trafficker',
 ];
 
-// Roles that can be assigned by org owners (everything except admin)
+// Roles that can be assigned by org owners (8 global minus admin)
 export const ORG_ASSIGNABLE_ROLES: AppRole[] = [
-  'team_leader',
-  ...MARKETPLACE_ASSIGNABLE_ROLES,
+  'team_leader', 'creator', 'editor', 'strategist', 'developer', 'educator', 'client',
 ];
 
 // Ambassador badge levels for selection
@@ -177,8 +191,10 @@ export const ROLE_LABELS: Partial<Record<AppRole, string>> = {
   admin: 'Administrador',
   team_leader: 'Líder de Equipo',
   creator: 'Creador de Contenido',
-  editor: 'Productor Audio-Visual',
-  strategist: 'Estratega',
+  editor: 'Editor / Post-Producción',
+  strategist: 'Estratega & Marketing',
+  developer: 'Desarrollador',
+  educator: 'Educador',
   client: 'Cliente',
   trafficker: 'Trafficker',
   ambassador: 'Embajador',
@@ -188,8 +204,10 @@ export const ROLE_LABELS_SHORT: Partial<Record<AppRole, string>> = {
   admin: 'Admin',
   team_leader: 'Líder',
   creator: 'Creador',
-  editor: 'Productor AV',
+  editor: 'Editor',
   strategist: 'Estratega',
+  developer: 'Dev',
+  educator: 'Educador',
   client: 'Cliente',
   trafficker: 'Trafficker',
   ambassador: 'Embajador',
@@ -201,6 +219,8 @@ export const ROLE_COLORS: Partial<Record<AppRole, string>> = {
   creator: 'bg-primary/20 text-primary',
   editor: 'bg-purple-500/20 text-purple-500',
   strategist: 'bg-orange-500/20 text-orange-500',
+  developer: 'bg-cyan-500/20 text-cyan-500',
+  educator: 'bg-yellow-500/20 text-yellow-500',
   client: 'bg-info/20 text-info',
   trafficker: 'bg-cyan-500/20 text-cyan-500',
   ambassador: 'bg-amber-500/20 text-amber-500',
@@ -212,6 +232,8 @@ export const ROLE_BADGE_COLORS: Partial<Record<AppRole, string>> = {
   creator: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
   editor: 'bg-pink-500/10 text-pink-500 border-pink-500/20',
   strategist: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+  developer: 'bg-cyan-500/10 text-cyan-500 border-cyan-500/20',
+  educator: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
   client: 'bg-green-500/10 text-green-500 border-green-500/20',
   trafficker: 'bg-cyan-500/10 text-cyan-500 border-cyan-500/20',
   ambassador: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
@@ -223,6 +245,8 @@ export const ROLE_SOLID_COLORS: Partial<Record<AppRole, string>> = {
   creator: 'bg-purple-500',
   editor: 'bg-blue-500',
   strategist: 'bg-orange-500',
+  developer: 'bg-cyan-500',
+  educator: 'bg-yellow-500',
   client: 'bg-green-500',
   trafficker: 'bg-cyan-500',
   ambassador: 'bg-amber-500',

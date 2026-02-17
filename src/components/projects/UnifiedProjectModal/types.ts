@@ -4,6 +4,7 @@ import type {
   UnifiedSectionKey,
   ProjectTypeConfig,
 } from '@/types/unifiedProject.types';
+import type { UseProjectAssignmentsReturn } from '@/hooks/useProjectAssignments';
 
 // ============================================================
 // MODAL PROPS
@@ -45,6 +46,11 @@ export interface UnifiedTabProps {
   typeConfig: ProjectTypeConfig;
   onUpdate?: () => void;
   readOnly?: boolean;
+  assignmentsHook?: UseProjectAssignmentsReturn;
+  /** Selected product (for content projects - needed by script generation) */
+  selectedProduct?: any;
+  /** Callback to change the selected product */
+  onProductChange?: (productId: string) => void;
 }
 
 // ============================================================
@@ -66,4 +72,7 @@ export interface UseUnifiedProjectReturn {
   autoSaveStatus: 'idle' | 'saving' | 'saved' | 'error';
   lastSaved: Date | null;
   flushPendingRefresh: () => void;
+  assignmentsHook: UseProjectAssignmentsReturn;
+  selectedProduct: any;
+  handleProductChange: (productId: string) => void;
 }

@@ -52,6 +52,18 @@ const PLATFORMS = [
   { value: 'blog', label: 'Blog' },
 ];
 
+const LANGUAGES = [
+  { id: 'es', label: 'Español' },
+  { id: 'en', label: 'Inglés' },
+  { id: 'pt', label: 'Portugués' },
+  { id: 'fr', label: 'Francés' },
+  { id: 'de', label: 'Alemán' },
+  { id: 'it', label: 'Italiano' },
+  { id: 'zh', label: 'Mandarín' },
+  { id: 'ja', label: 'Japonés' },
+  { id: 'ko', label: 'Coreano' },
+];
+
 const BRAND_VOICES = [
   { value: 'professional', label: 'Profesional' },
   { value: 'friendly', label: 'Amigable' },
@@ -295,6 +307,7 @@ export function CreatorExpertiseTab() {
   const [contentStyles, setContentStyles] = useState<ContentStyle[]>([]);
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [marketplaceRoles, setMarketplaceRoles] = useState<MarketplaceRoleId[]>([]);
+  const [languages, setLanguages] = useState<string[]>(['es']);
 
   // Sync from DB
   useEffect(() => {
@@ -303,6 +316,7 @@ export function CreatorExpertiseTab() {
       setMarketplaceRoles((profile.marketplace_roles || []) as MarketplaceRoleId[]);
       setContentStyles((profile.content_types || []) as ContentStyle[]);
       setExpertiseTags(profile.categories || []);
+      setLanguages(profile.languages || ['es']);
     }
   }, [profile]);
 
@@ -325,6 +339,7 @@ export function CreatorExpertiseTab() {
         marketplace_roles: marketplaceRoles,
         content_types: contentStyles,
         categories: expertiseTags,
+        languages,
       });
       return;
     }
@@ -333,6 +348,7 @@ export function CreatorExpertiseTab() {
       marketplace_roles: marketplaceRoles,
       content_types: contentStyles,
       categories: expertiseTags,
+      languages,
     });
     setTimeout(() => save(), 50);
   };
@@ -480,6 +496,28 @@ export function CreatorExpertiseTab() {
         </CardContent>
       </Card>
 
+      {/* Languages */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Idiomas</CardTitle>
+          <CardDescription>Idiomas en los que puedes crear contenido</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {LANGUAGES.map(lang => (
+              <Badge
+                key={lang.id}
+                variant={languages.includes(lang.id) ? 'default' : 'outline'}
+                className="cursor-pointer"
+                onClick={() => toggleArrayItem(languages, lang.id, setLanguages)}
+              >
+                {lang.label}
+              </Badge>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       <Button className="w-full sm:w-auto" onClick={handleSave} disabled={saving}>
         {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Guardando...</> : 'Guardar Expertise'}
       </Button>
@@ -494,19 +532,28 @@ export function CreatorServicesTab() {
   const [newTitle, setNewTitle] = useState('');
   const [newType, setNewType] = useState('');
   const [newPrice, setNewPrice] = useState('');
+  const [newCurrency, setNewCurrency] = useState('USD');
+  const [newDescription, setNewDescription] = useState('');
+  const [newDeliveryDays, setNewDeliveryDays] = useState('');
+  const [expandedService, setExpandedService] = useState<string | null>(null);
 
   const handleAdd = () => {
     if (newTitle && newType && newPrice) {
       createService({
         service_type: newType as any,
         title: newTitle,
+        description: newDescription || undefined,
         price_amount: parseFloat(newPrice),
-        price_currency: 'USD',
+        price_currency: newCurrency,
+        delivery_days: newDeliveryDays ? parseInt(newDeliveryDays) : undefined,
         is_active: true,
       });
       setNewTitle('');
       setNewType('');
       setNewPrice('');
+      setNewCurrency('USD');
+      setNewDescription('');
+      setNewDeliveryDays('');
     }
   };
 
@@ -531,21 +578,32 @@ export function CreatorServicesTab() {
         {services.length > 0 && (
           <div className="space-y-2">
             {services.map(service => (
-              <div key={service.id} className="flex items-center justify-between p-3 rounded-lg bg-muted">
-                <div>
-                  <p className="font-medium">{service.title}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {SERVICE_TYPE_LABELS[service.service_type as keyof typeof SERVICE_TYPE_LABELS] || service.service_type}
-                    {service.price_amount ? ` · $${service.price_amount.toLocaleString()} ${service.price_currency}` : ''}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => deleteService(service.id)}
+              <div key={service.id} className="rounded-lg bg-muted overflow-hidden">
+                <div
+                  className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/80 transition-colors"
+                  onClick={() => setExpandedService(expandedService === service.id ? null : service.id)}
                 >
-                  <X className="h-4 w-4" />
-                </Button>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium">{service.title}</p>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>{SERVICE_TYPE_LABELS[service.service_type as keyof typeof SERVICE_TYPE_LABELS] || service.service_type}</span>
+                      {service.price_amount ? <span>· ${service.price_amount.toLocaleString()} {service.price_currency}</span> : null}
+                      {(service as any).delivery_days ? <span>· {(service as any).delivery_days} días</span> : null}
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => { e.stopPropagation(); deleteService(service.id); }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                {expandedService === service.id && (service as any).description && (
+                  <div className="px-3 pb-3 border-t border-border/50">
+                    <p className="text-sm text-muted-foreground pt-2">{(service as any).description}</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -578,8 +636,15 @@ export function CreatorServicesTab() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex gap-3">
-            <div className="relative flex-1">
+          <Textarea
+            placeholder="Descripción del servicio (qué incluye, proceso de trabajo...)"
+            value={newDescription}
+            onChange={e => setNewDescription(e.target.value)}
+            className="min-h-[80px]"
+            maxLength={500}
+          />
+          <div className="grid grid-cols-3 gap-3">
+            <div className="relative">
               <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="number"
@@ -589,16 +654,34 @@ export function CreatorServicesTab() {
                 className="pl-9"
               />
             </div>
-            <Button
-              variant="outline"
-              onClick={handleAdd}
-              disabled={!newTitle || !newType || !newPrice}
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Agregar
-            </Button>
+            <Select value={newCurrency} onValueChange={setNewCurrency}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="USD">USD</SelectItem>
+                <SelectItem value="COP">COP</SelectItem>
+                <SelectItem value="MXN">MXN</SelectItem>
+                <SelectItem value="EUR">EUR</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
+              type="number"
+              placeholder="Días entrega"
+              value={newDeliveryDays}
+              onChange={e => setNewDeliveryDays(e.target.value)}
+              min={1}
+            />
           </div>
+          <Button
+            variant="outline"
+            onClick={handleAdd}
+            disabled={!newTitle || !newType || !newPrice}
+            className="gap-2 w-full sm:w-auto"
+          >
+            <Plus className="h-4 w-4" />
+            Agregar Servicio
+          </Button>
         </div>
       </CardContent>
     </Card>

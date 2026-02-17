@@ -4,11 +4,11 @@
 //
 // Receives high-value conversion events immediately (not batched).
 // Inserts into kae_events + kae_conversions and forwards to enabled
-// ad platforms: Meta CAPI, TikTok Events API, Google Ads.
+// ad platforms: Meta CAPI, TikTok Events API, Google Analytics 4.
 //
 // JWT: verify_jwt = false (conversions from anonymous visitors too)
 
-import { getKreoonClient } from "../_shared/kreoon-client.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.46.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -181,32 +181,100 @@ async function sendToTikTok(
   }
 }
 
-// ===== GOOGLE ADS CONVERSION API =====
-async function sendToGoogleAds(
+// ===== GOOGLE ANALYTICS 4 MEASUREMENT PROTOCOL =====
+async function sendToGA4(
   conversion: Record<string, unknown>,
   context: Record<string, unknown>,
   platformConfig: Record<string, unknown> | undefined,
   _geo: Record<string, string>
 ): Promise<{ success: boolean; event_id?: string; error?: string }> {
-  if (!platformConfig?.enabled) {
-    return { success: false, error: "Google Ads not configured" };
+  if (!platformConfig?.enabled || !platformConfig?.pixel_id || !platformConfig?.access_token) {
+    return { success: false, error: "GA4 not configured" };
   }
 
-  // Google Ads usa Enhanced Conversions
-  // Requiere configuración diferente (conversion_action_id, customer_id)
-  // La implementación completa requiere OAuth y Google Ads API
+  const measurementId = platformConfig.pixel_id as string;
+  const apiSecret = platformConfig.access_token as string;
 
-  console.log("Google Ads conversion would be sent:", {
-    gclid: (context.click_ids as Record<string, string>)?.gclid,
-    conversion_type: conversion.conversion_type,
-    value: conversion.value_usd,
-  });
-
-  return {
-    success: true,
-    event_id: `ga_${Date.now()}`,
-    error: "Google Ads API requires additional setup",
+  const eventMapping: Record<string, string> = (platformConfig.event_mapping as Record<string, string>) || {
+    signup: "sign_up",
+    trial_start: "start_trial",
+    subscription: "purchase",
+    content_created: "generate_lead",
   };
+
+  const ga4EventName = eventMapping[conversion.conversion_type as string] || conversion.conversion_type as string;
+  const eventId = crypto.randomUUID();
+
+  // GA4 MP usa client_id (anonymous_id) o user_id
+  const clientId = (context.anonymous_id as string) || eventId;
+
+  const payload: Record<string, unknown> = {
+    client_id: clientId,
+    events: [
+      {
+        name: ga4EventName,
+        params: {
+          event_id: eventId,
+          value: conversion.value_usd || 0,
+          currency: "USD",
+          conversion_type: conversion.conversion_type,
+          page_location: conversion.page_url,
+          page_referrer: conversion.page_referrer,
+          source: (context.utms as Record<string, string>)?.utm_source,
+          medium: (context.utms as Record<string, string>)?.utm_medium,
+          campaign: (context.utms as Record<string, string>)?.utm_campaign,
+          gclid: (context.click_ids as Record<string, string>)?.gclid,
+          session_id: context.session_id,
+          engagement_time_msec: "1",
+        },
+      },
+    ],
+  };
+
+  // Agregar user_id si el usuario está autenticado
+  if (context.user_id) {
+    payload.user_id = context.user_id;
+  }
+
+  // Usar debug endpoint en test_mode
+  const baseUrl = platformConfig.test_mode
+    ? "https://www.google-analytics.com/debug/mp/collect"
+    : "https://www.google-analytics.com/mp/collect";
+
+  const url = `${baseUrl}?measurement_id=${measurementId}&api_secret=${apiSecret}`;
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    // GA4 MP retorna 204 en producción (sin body) o 200 con validación en debug
+    if (platformConfig.test_mode) {
+      const result = await response.json();
+      const hasErrors = result.validationMessages?.some(
+        (m: Record<string, unknown>) => (m.validationCode as string) !== "VALID"
+      );
+      if (hasErrors) {
+        console.error("GA4 MP validation errors:", result.validationMessages);
+        return {
+          success: false,
+          event_id: eventId,
+          error: JSON.stringify(result.validationMessages),
+        };
+      }
+    }
+
+    if (!response.ok && response.status !== 204) {
+      return { success: false, error: `GA4 MP HTTP ${response.status}` };
+    }
+
+    return { success: true, event_id: eventId };
+  } catch (error) {
+    console.error("GA4 MP exception:", error);
+    return { success: false, error: (error as Error).message };
+  }
 }
 
 // ── Main Handler ───────────────────────────────────────────
@@ -217,7 +285,10 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const supabase = getKreoonClient();
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
 
     const body = await req.json();
     const {
@@ -296,7 +367,7 @@ Deno.serve(async (req: Request) => {
     const [metaResult, tiktokResult, googleResult] = await Promise.all([
       sendToMetaCAPI(conversionData, enrichedContext, platformsMap.meta as Record<string, unknown> | undefined, geo),
       sendToTikTok(conversionData, enrichedContext, platformsMap.tiktok as Record<string, unknown> | undefined, geo),
-      sendToGoogleAds(conversionData, enrichedContext, platformsMap.google as Record<string, unknown> | undefined, geo),
+      sendToGA4(conversionData, enrichedContext, platformsMap.google as Record<string, unknown> | undefined, geo),
     ]);
 
     // 4. Guardar conversión

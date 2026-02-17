@@ -1,8 +1,8 @@
 import { memo, useMemo } from 'react';
 import { 
-  User, Bell, Shield, HelpCircle, Building2, Crown, Star, History,
+  User, Bell, Shield, HelpCircle, Building2, History,
   Landmark, Users, Share2, CreditCard, Settings2, ShieldCheck,
-  Bot, UserCog, ChevronRight, LockKeyhole, BarChart3, Brain, UserPlus, Video, Globe, Store
+  Bot, UserCog, ChevronRight, LockKeyhole, BarChart3, Brain, Video, Store
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SettingsPermissions, SettingsSectionKey } from '@/hooks/useSettingsPermissions';
@@ -35,8 +35,7 @@ const ALL_SECTIONS: SectionGroup[] = [
     description: 'Configuración personal',
     icon: User,
     sections: [
-      { key: 'profile', icon: User, title: 'Mi Perfil', description: 'Perfil, portafolio y servicios' },
-      { key: 'notifications', icon: Bell, title: 'Notificaciones', description: 'Alertas y chat' },
+      { key: 'notifications', icon: Bell, title: 'Notificaciones', description: 'Alertas y preferencias' },
       { key: 'security', icon: Shield, title: 'Seguridad', description: 'Contraseña y 2FA' },
       { key: 'tour', icon: HelpCircle, title: 'Tour Guiado', description: 'Introducción' },
     ],
@@ -47,16 +46,12 @@ const ALL_SECTIONS: SectionGroup[] = [
     description: 'Ajustes de tu empresa',
     icon: Building2,
     sections: [
-      { key: 'organization', icon: Building2, title: 'Datos', description: 'Info de organización' },
-      { key: 'org_registration_settings', icon: UserPlus, title: 'Registro', description: 'Accesos e invitaciones' },
-      { key: 'organization_plans', icon: Crown, title: 'Plan', description: 'Suscripción activa' },
+      { key: 'organization', icon: Building2, title: 'Organización', description: 'Datos, registro y marca' },
       { key: 'ai_settings', icon: Bot, title: 'IA & Modelos', description: 'Proveedores y asistente' },
-      { key: 'ambassadors', icon: Star, title: 'Embajadores', description: 'Red de referidos' },
       { key: 'permissions', icon: UserCog, title: 'Permisos', description: 'Por rol' },
       { key: 'audit_log', icon: History, title: 'Historial', description: 'Actividad' },
       { key: 'org_marketplace', icon: Store, title: 'Marketplace & Portafolio', description: 'Control y portafolio público' },
       { key: 'org_agency_profile', icon: Building2, title: 'Perfil de Agencia', description: 'Perfil público marketplace' },
-      { key: 'org_social', icon: Globe, title: 'Red Social', description: 'Integración pública' },
       { key: 'live_streaming_org', icon: Video, title: 'KREOON Live', description: 'Paquetes y clientes' },
     ],
   },
@@ -67,8 +62,7 @@ const ALL_SECTIONS: SectionGroup[] = [
     icon: Settings2,
     sections: [
       { key: 'organization_registrations', icon: Landmark, title: 'Organizaciones', description: 'Gestionar' },
-      { key: 'platform_users', icon: Users, title: 'Usuarios', description: 'Todos' },
-      { key: 'referrals', icon: Share2, title: 'Referidos', description: 'Sistema' },
+{ key: 'referrals', icon: Share2, title: 'Referidos', description: 'Sistema' },
       { key: 'billing', icon: CreditCard, title: 'Facturación', description: 'Planes y cobros' },
       { key: 'platform_config', icon: Settings2, title: 'Configuración', description: 'Ajustes globales' },
       { key: 'platform_admin', icon: ShieldCheck, title: 'Administración', description: 'Seguridad y datos' },

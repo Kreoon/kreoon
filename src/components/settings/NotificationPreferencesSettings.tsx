@@ -31,7 +31,6 @@ const EVENT_TYPES = [
   { key: 'content_status_change', label: 'Cambio de estado de contenido', description: 'Cuando un contenido cambia de estado' },
   { key: 'content_assigned', label: 'Asignación de contenido', description: 'Cuando te asignan un contenido' },
   { key: 'comment_mention', label: 'Mención en comentario', description: 'Cuando alguien te menciona' },
-  { key: 'chat_message', label: 'Mensaje de chat', description: 'Nuevos mensajes en tus chats' },
   { key: 'deadline_reminder', label: 'Recordatorio de fecha límite', description: 'Alertas antes de fechas límite' },
   { key: 'script_approved', label: 'Guión aprobado', description: 'Cuando se aprueba un guión' },
   { key: 'video_uploaded', label: 'Video subido', description: 'Cuando se sube un video' },
@@ -127,7 +126,7 @@ export function NotificationPreferencesSettings() {
             Preferencias de Notificación
           </CardTitle>
           <CardDescription>
-            Configura qué notificaciones recibir y por qué canal
+            Configura qué notificaciones recibir y por qué canal. Kiro respeta estas reglas al mostrarte alertas.
           </CardDescription>
         </CardHeader>
       </Card>

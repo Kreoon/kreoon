@@ -7,6 +7,7 @@ import type {
   RolePermissions,
   ProjectParticipantRole,
   Permission,
+  ProjectAssignment,
 } from '@/types/unifiedProject.types';
 import {
   getProjectTypeConfig,
@@ -40,11 +41,26 @@ const FULL_ROLE_PERMISSIONS: RolePermissions = {
   workspace: { own_block: 'edit', other_blocks: 'edit' },
   materials: { view: 'view', upload: 'edit' },
   deliverables: { view: 'view', upload: 'edit', approve: 'approve' },
-  chat: 'edit',
   team: 'edit',
   payments: { view_own: true, view_all: true, edit: true },
   delete: 'edit',
 };
+
+/** Resolve participant role from assignments only (for content source adapter) */
+function resolveParticipantRoleFromAssignments(
+  userId?: string,
+  assignments?: ProjectAssignment[],
+): ProjectParticipantRole {
+  if (!userId || !assignments?.length) return 'admin'; // default for content
+  const match = assignments.find(a => a.userId === userId && a.status !== 'cancelled');
+  if (!match) return 'admin';
+  switch (match.roleGroup) {
+    case 'creator': return 'assigned_creator';
+    case 'editor': return 'assigned_editor';
+    case 'strategist': return 'assigned_strategist';
+    default: return 'assigned_talent';
+  }
+}
 
 /**
  * Adapt existing ContentPermissions + BlockConfigHook into UnifiedPermissions.
@@ -62,6 +78,8 @@ export function adaptContentPermissions(
     canEditBlock: (key: string) => boolean;
     isBlockLocked: (key: string) => boolean;
   },
+  userId?: string,
+  assignments?: ProjectAssignment[],
 ): UnifiedPermissions {
   // Map content resource keys to unified resource keys
   const contentToUnified: Record<string, UnifiedResource> = {
@@ -74,7 +92,6 @@ export function adaptContentPermissions(
     'content.team': 'project.team',
     'content.dates': 'project.dates',
     'content.payments': 'project.payments',
-    'content.comments': 'project.chat',
     'content.delete': 'project.delete',
   };
 
@@ -92,11 +109,6 @@ export function adaptContentPermissions(
   const visibleSections: UnifiedSectionKey[] = contentPermissions.visibleTabs
     .map(tab => tabToSection[tab])
     .filter((s): s is UnifiedSectionKey => !!s);
-
-  // Always include chat for content
-  if (!visibleSections.includes('chat')) {
-    visibleSections.push('chat');
-  }
 
   return {
     can: (resource: UnifiedResource, action: UnifiedAction) => {
@@ -117,7 +129,7 @@ export function adaptContentPermissions(
     // Content source uses the existing 3-layer permission system;
     // rolePermissions here is a best-effort approximation
     rolePermissions: FULL_ROLE_PERMISSIONS,
-    participantRole: 'admin',
+    participantRole: resolveParticipantRoleFromAssignments(userId, assignments),
   };
 }
 
@@ -163,7 +175,6 @@ export function buildMarketplacePermissions(
       case 'team': return permissionSatisfies(rp.team, 'view');
       case 'dates': return permissionSatisfies(rp.header.dates, 'view');
       case 'payments': return rp.payments.view_own || rp.payments.view_all;
-      case 'chat': return permissionSatisfies(rp.chat, 'view');
       default: return false;
     }
   });
@@ -191,7 +202,6 @@ export function buildMarketplacePermissions(
         case 'project.deliverables.upload': return permissionSatisfies(rp.deliverables.upload, action);
         case 'project.deliverables.approve': return permissionSatisfies(rp.deliverables.approve, action);
         case 'project.review': return permissionSatisfies(rp.deliverables.view, action);
-        case 'project.chat': return permissionSatisfies(rp.chat, action);
         case 'project.team': return permissionSatisfies(rp.team, action);
         case 'project.payments': return action === 'view' ? (rp.payments.view_own || rp.payments.view_all) : rp.payments.edit;
         case 'project.delete': return permissionSatisfies(rp.delete, action);
@@ -205,7 +215,6 @@ export function buildMarketplacePermissions(
         case 'project.brief': return !permissionSatisfies(rp.brief.edit, 'edit');
         case 'project.deliverables': return !permissionSatisfies(rp.deliverables.upload, 'edit');
         case 'project.materials': return !permissionSatisfies(rp.materials.upload, 'edit');
-        case 'project.chat': return !permissionSatisfies(rp.chat, 'edit');
         case 'project.team': return !permissionSatisfies(rp.team, 'edit');
         case 'project.dates': return !permissionSatisfies(rp.header.dates, 'edit');
         case 'project.payments': return !rp.payments.edit;

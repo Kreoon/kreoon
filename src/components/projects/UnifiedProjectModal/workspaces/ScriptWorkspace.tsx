@@ -15,6 +15,8 @@ export default function ScriptWorkspace({
   permissions,
   onUpdate,
   readOnly,
+  selectedProduct,
+  onProductChange,
 }: UnifiedTabProps) {
   // ScriptsTabContainer expects ContentFormData shape and ContentPermissions
   // For content source, we can pass through directly since formData matches
@@ -27,6 +29,13 @@ export default function ScriptWorkspace({
       canEnterEditMode: permissions.canEnterEditMode,
     };
 
+    const handleProductChange = (productId: string) => {
+      // Update formData with new product_id
+      setFormData((prev: Record<string, any>) => ({ ...prev, product_id: productId }));
+      // Also notify parent to fetch product data
+      onProductChange?.(productId);
+    };
+
     return (
       <ScriptsTabContainer
         content={project.contentData}
@@ -36,8 +45,8 @@ export default function ScriptWorkspace({
         setEditMode={setEditMode}
         permissions={contentPermissions}
         onUpdate={onUpdate}
-        selectedProduct={null}
-        onProductChange={() => {}}
+        selectedProduct={selectedProduct || null}
+        onProductChange={handleProductChange}
       />
     );
   }

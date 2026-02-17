@@ -90,7 +90,7 @@ export function KaePlatformLogsTab() {
                 <SelectItem value="all">Todas</SelectItem>
                 <SelectItem value="meta">Meta</SelectItem>
                 <SelectItem value="tiktok">TikTok</SelectItem>
-                <SelectItem value="google">Google</SelectItem>
+                <SelectItem value="google">Google Analytics 4</SelectItem>
                 <SelectItem value="linkedin">LinkedIn</SelectItem>
               </SelectContent>
             </Select>

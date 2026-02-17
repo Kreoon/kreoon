@@ -1,4 +1,8 @@
 import type { Content } from './database';
+import type { RoleId, RoleGroup } from './roles';
+
+// Re-export for convenience (consumers don't need to import from two files)
+export type { RoleId, RoleGroup };
 
 // ============================================================
 // PROJECT TYPES
@@ -24,8 +28,7 @@ export type UnifiedSectionKey =
   | 'review'
   | 'team'
   | 'dates'
-  | 'payments'
-  | 'chat';
+  | 'payments';
 
 // ============================================================
 // BRIEF CONFIG
@@ -51,6 +54,8 @@ export interface BriefConfig {
   hasHooks: boolean;
   /** Content-creation: has Esfera sphere_phase selector */
   hasSpherePhase: boolean;
+  /** Show Project DNA section (audio + written questions) */
+  hasProjectDNA: boolean;
 }
 
 // ============================================================
@@ -141,9 +146,9 @@ export interface WorkflowConfig {
 // ============================================================
 
 export interface RolesConfig {
-  primary: string[];
-  support: string[];
-  reviewer: string[];
+  primary: RoleId[];
+  support: RoleId[];
+  reviewer: RoleId[];
 }
 
 // ============================================================
@@ -199,6 +204,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
         hasScript: true,
         hasHooks: true,
         hasSpherePhase: true,
+        hasProjectDNA: true,
       },
       workspace: {
         type: 'script',
@@ -265,7 +271,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
       support: ['video_editor', 'motion_graphics', 'sound_designer'],
       reviewer: ['content_strategist', 'brand_ambassador'],
     },
-    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'team', 'dates', 'payments', 'chat'],
+    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'team', 'dates', 'payments'],
   },
 
   // -------------------------------------------------------
@@ -291,6 +297,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
         hasScript: false,
         hasHooks: false,
         hasSpherePhase: false,
+        hasProjectDNA: true,
       },
       workspace: {
         type: 'checklist',
@@ -350,7 +357,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
       support: ['sound_designer', 'colorist'],
       reviewer: ['director', 'producer'],
     },
-    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'team', 'dates', 'payments', 'chat'],
+    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'team', 'dates', 'payments'],
   },
 
   // -------------------------------------------------------
@@ -376,6 +383,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
         hasScript: false,
         hasHooks: false,
         hasSpherePhase: false,
+        hasProjectDNA: true,
       },
       workspace: {
         type: 'document',
@@ -435,7 +443,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
       support: ['community_manager', 'trafficker', 'seo_specialist', 'email_marketer', 'crm_specialist', 'conversion_optimizer'],
       reviewer: ['digital_strategist', 'content_strategist'],
     },
-    visibleTabs: ['workspace', 'brief', 'materials', 'review', 'team', 'dates', 'payments', 'chat'],
+    visibleTabs: ['workspace', 'brief', 'materials', 'review', 'team', 'dates', 'payments'],
   },
 
   // -------------------------------------------------------
@@ -460,6 +468,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
         hasScript: false,
         hasHooks: false,
         hasSpherePhase: false,
+        hasProjectDNA: true,
       },
       workspace: {
         type: 'technical',
@@ -520,7 +529,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
       support: [],
       reviewer: [],
     },
-    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'team', 'dates', 'payments', 'chat'],
+    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'team', 'dates', 'payments'],
   },
 
   // -------------------------------------------------------
@@ -546,6 +555,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
         hasScript: false,
         hasHooks: false,
         hasSpherePhase: false,
+        hasProjectDNA: true,
       },
       workspace: {
         type: 'curriculum',
@@ -604,7 +614,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
       support: [],
       reviewer: [],
     },
-    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'team', 'dates', 'payments', 'chat'],
+    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'team', 'dates', 'payments'],
   },
 };
 
@@ -648,10 +658,6 @@ export interface UnifiedProject {
   deliverablesCount?: number;
   deliverablesApproved?: number;
 
-  // Chat
-  lastMessageAt?: string;
-  unreadMessages?: number;
-
   // Source-specific raw data (for hooks that need original shape)
   contentData?: Content;
   marketplaceData?: any; // MarketplaceProject from marketplace.ts
@@ -682,7 +688,6 @@ export interface RolePermissions {
     upload: Permission;
     approve: Permission;
   };
-  chat: Permission;
   team: Permission;
   payments: { view_own: boolean; view_all: boolean; edit: boolean };
   delete: Permission;
@@ -706,20 +711,18 @@ const FULL_ACCESS: RolePermissions = {
   workspace: { own_block: 'edit', other_blocks: 'edit' },
   materials: { view: 'view', upload: 'edit' },
   deliverables: { view: 'view', upload: 'edit', approve: 'approve' },
-  chat: 'edit',
   team: 'edit',
   payments: { view_own: true, view_all: true, edit: true },
   delete: 'edit',
 };
 
-// ---- Role preset for generic talent (own workspace, materials, deliverables, chat) ----
+// ---- Role preset for generic talent (own workspace, materials, deliverables) ----
 const TALENT_ACCESS: RolePermissions = {
   header: { status: 'view', title: 'view', dates: 'view' },
   brief: { view: 'view', edit: 'none' },
   workspace: { own_block: 'edit', other_blocks: 'none' },
   materials: { view: 'view', upload: 'edit' },
   deliverables: { view: 'view', upload: 'edit', approve: 'none' },
-  chat: 'edit',
   team: 'none',
   payments: { view_own: true, view_all: false, edit: false },
   delete: 'none',
@@ -732,7 +735,6 @@ const VIEWER_ACCESS: RolePermissions = {
   workspace: { own_block: 'view', other_blocks: 'view' },
   materials: { view: 'view', upload: 'none' },
   deliverables: { view: 'view', upload: 'none', approve: 'none' },
-  chat: 'view',
   team: 'view',
   payments: { view_own: false, view_all: false, edit: false },
   delete: 'none',
@@ -753,7 +755,7 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       workspace: { own_block: 'edit', other_blocks: 'none' },
       materials: { view: 'view', upload: 'edit' },
       deliverables: { view: 'view', upload: 'edit', approve: 'none' },
-      chat: 'edit',
+
       team: 'none',
       payments: { view_own: true, view_all: false, edit: false },
       delete: 'none',
@@ -764,7 +766,7 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       workspace: { own_block: 'edit', other_blocks: 'none' },
       materials: { view: 'view', upload: 'edit' },
       deliverables: { view: 'view', upload: 'edit', approve: 'none' },
-      chat: 'edit',
+
       team: 'none',
       payments: { view_own: true, view_all: false, edit: false },
       delete: 'none',
@@ -775,7 +777,7 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       workspace: { own_block: 'edit', other_blocks: 'view' },
       materials: { view: 'view', upload: 'none' },
       deliverables: { view: 'view', upload: 'none', approve: 'none' },
-      chat: 'edit',
+
       team: 'view',
       payments: { view_own: false, view_all: false, edit: false },
       delete: 'none',
@@ -787,7 +789,7 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       workspace: { own_block: 'view', other_blocks: 'view' },
       materials: { view: 'view', upload: 'none' },
       deliverables: { view: 'view', upload: 'none', approve: 'approve' },
-      chat: 'edit',
+
       team: 'view',
       payments: { view_own: false, view_all: false, edit: false },
       delete: 'none',
@@ -805,7 +807,7 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       workspace: { own_block: 'view', other_blocks: 'none' },
       materials: { view: 'view', upload: 'edit' },
       deliverables: { view: 'view', upload: 'none', approve: 'none' },
-      chat: 'edit',
+
       team: 'none',
       payments: { view_own: true, view_all: false, edit: false },
       delete: 'none',
@@ -816,7 +818,7 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       workspace: { own_block: 'edit', other_blocks: 'view' },
       materials: { view: 'view', upload: 'edit' },
       deliverables: { view: 'view', upload: 'edit', approve: 'none' },
-      chat: 'edit',
+
       team: 'none',
       payments: { view_own: true, view_all: false, edit: false },
       delete: 'none',
@@ -829,7 +831,7 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       workspace: { own_block: 'view', other_blocks: 'view' },
       materials: { view: 'view', upload: 'none' },
       deliverables: { view: 'view', upload: 'none', approve: 'approve' },
-      chat: 'edit',
+
       team: 'view',
       payments: { view_own: false, view_all: false, edit: false },
       delete: 'none',
@@ -847,7 +849,7 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       workspace: { own_block: 'edit', other_blocks: 'view' },
       materials: { view: 'view', upload: 'edit' },
       deliverables: { view: 'view', upload: 'edit', approve: 'none' },
-      chat: 'edit',
+
       team: 'none',
       payments: { view_own: true, view_all: false, edit: false },
       delete: 'none',
@@ -859,7 +861,7 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       workspace: { own_block: 'edit', other_blocks: 'edit' },
       materials: { view: 'view', upload: 'edit' },
       deliverables: { view: 'view', upload: 'edit', approve: 'none' },
-      chat: 'edit',
+
       team: 'view',
       payments: { view_own: true, view_all: false, edit: false },
       delete: 'none',
@@ -871,7 +873,7 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       workspace: { own_block: 'view', other_blocks: 'view' },
       materials: { view: 'view', upload: 'none' },
       deliverables: { view: 'view', upload: 'none', approve: 'approve' },
-      chat: 'edit',
+
       team: 'view',
       payments: { view_own: false, view_all: false, edit: false },
       delete: 'none',
@@ -889,7 +891,7 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       workspace: { own_block: 'edit', other_blocks: 'view' },
       materials: { view: 'view', upload: 'edit' },
       deliverables: { view: 'view', upload: 'edit', approve: 'none' },
-      chat: 'edit',
+
       team: 'none',
       payments: { view_own: true, view_all: false, edit: false },
       delete: 'none',
@@ -903,7 +905,7 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       workspace: { own_block: 'view', other_blocks: 'view' },
       materials: { view: 'view', upload: 'none' },
       deliverables: { view: 'view', upload: 'none', approve: 'approve' },
-      chat: 'edit',
+
       team: 'view',
       payments: { view_own: false, view_all: false, edit: false },
       delete: 'none',
@@ -921,7 +923,7 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       workspace: { own_block: 'edit', other_blocks: 'view' },
       materials: { view: 'view', upload: 'edit' },
       deliverables: { view: 'view', upload: 'edit', approve: 'none' },
-      chat: 'edit',
+
       team: 'none',
       payments: { view_own: true, view_all: false, edit: false },
       delete: 'none',
@@ -935,7 +937,7 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       workspace: { own_block: 'view', other_blocks: 'view' },
       materials: { view: 'view', upload: 'none' },
       deliverables: { view: 'view', upload: 'none', approve: 'approve' },
-      chat: 'edit',
+
       team: 'view',
       payments: { view_own: false, view_all: false, edit: false },
       delete: 'none',
@@ -1004,7 +1006,6 @@ export type UnifiedResource =
   | 'project.team'
   | 'project.dates'
   | 'project.payments'
-  | 'project.chat'
   | 'project.delete';
 
 export type UnifiedAction = 'view' | 'edit' | 'approve';
@@ -1039,7 +1040,6 @@ export const SECTION_TAB_CONFIG: Record<UnifiedSectionKey, UnifiedTabConfig> = {
   team: { key: 'team', label: 'Equipo', icon: 'Users' },
   dates: { key: 'dates', label: 'Fechas', icon: 'Calendar' },
   payments: { key: 'payments', label: 'Finanzas', icon: 'DollarSign' },
-  chat: { key: 'chat', label: 'Chat', icon: 'MessageCircle' },
 };
 
 // ============================================================
@@ -1060,7 +1060,7 @@ export function getWorkflowStates(type: ProjectType): WorkflowState[] {
 }
 
 /** Get all roles (primary + support + reviewer) flattened */
-export function getAllRoles(type: ProjectType): string[] {
+export function getAllRoles(type: ProjectType): RoleId[] {
   const { primary, support, reviewer } = PROJECT_TYPE_REGISTRY[type].roles;
   return [...new Set([...primary, ...support, ...reviewer])];
 }
@@ -1094,8 +1094,8 @@ export interface ProjectAssignment {
   contentId?: string;
   marketplaceProjectId?: string;
   userId: string;
-  roleId: string;
-  roleGroup: string;
+  roleId: RoleId;
+  roleGroup: RoleGroup;
   phase: number;
   dependsOn: string[];
   status: AssignmentStatus;

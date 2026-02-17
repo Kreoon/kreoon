@@ -67,22 +67,25 @@ const adminSections: NavSection[] = [
     label: "GESTIÓN",
     items: [
       { name: "Portafolio", href: "/content", icon: FileText },
-      { name: "Creadores", href: "/creators", icon: Users },
-      { name: "Clientes", href: "/clients", icon: Building2 },
+      { name: "Talento", href: "/talent", icon: Users },
+      { name: "Clientes", href: "/clients-hub", icon: Building2 },
       { name: "Equipo", href: "/team", icon: UsersRound },
       { name: "Live", href: "/live", icon: Video },
+      { name: "CRM", href: "/org-crm", icon: ContactRound },
+      { name: "Pipelines", href: "/org-crm/pipelines", icon: Building2 },
+      { name: "Finanzas", href: "/org-crm/finanzas", icon: Building2 },
     ]
   },
   {
-    label: "CRM",
+    label: "CRM PLATAFORMA",
     items: [
       { name: "Platform CRM", href: "/crm", icon: ContactRound },
-      { name: "CRM Organización", href: "/org-crm", icon: Building2 },
     ]
   },
   {
     label: "CUENTA",
     items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
       { name: "Configuración", href: "/settings", icon: Settings },
     ]
   }
@@ -98,14 +101,19 @@ const strategistSections: NavSection[] = [
     ]
   },
   {
-    label: "CRM",
+    label: "GESTIÓN",
     items: [
-      { name: "CRM Organización", href: "/org-crm", icon: Building2 },
+      { name: "Portafolio", href: "/content", icon: FileText },
+      { name: "Talento", href: "/talent", icon: Users },
+      { name: "Clientes", href: "/clients-hub", icon: Building2 },
+      { name: "Pipelines", href: "/org-crm/pipelines", icon: Building2 },
+      { name: "Finanzas", href: "/org-crm/finanzas", icon: Building2 },
     ]
   },
   {
     label: "CUENTA",
     items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
       { name: "Configuración", href: "/settings", icon: Settings },
     ]
   }
@@ -125,6 +133,7 @@ const creatorSections: NavSection[] = [
   {
     label: "CUENTA",
     items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
       { name: "Configuración", href: "/settings", icon: Settings },
     ]
   }
@@ -144,6 +153,7 @@ const editorSections: NavSection[] = [
   {
     label: "CUENTA",
     items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
       { name: "Configuración", href: "/settings", icon: Settings },
     ]
   }
@@ -161,6 +171,7 @@ const clientSections: NavSection[] = [
   {
     label: "CUENTA",
     items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
       { name: "Configuración", href: "/settings", icon: Settings },
     ]
   }
@@ -170,7 +181,6 @@ function getMarketplaceSections(activeGroup: PermissionGroup | null): NavSection
   const items: NavItem[] = [
     { name: "Marketplace", href: "/marketplace", icon: Store },
     { name: "Videos", href: "/marketplace/videos", icon: Play },
-    { name: "Mi Perfil", href: "/marketplace/profile/setup", icon: UserCircle },
   ];
 
   if (activeGroup === 'client' || activeGroup === 'admin' || activeGroup === 'strategist') {
@@ -407,13 +417,20 @@ export function MobileNav() {
                   {section.items.map((item) => {
                     const itemPath = item.href.split('?')[0];
                     const itemSearch = item.href.includes('?') ? item.href.slice(item.href.indexOf('?')) : '';
+                    // When an item has no query string, check if a sibling with a more specific match exists
+                    const siblingHasFullMatch = !itemSearch && location.search && section.items.some(sib => {
+                      if (sib === item) return false;
+                      const sibPath = sib.href.split('?')[0];
+                      const sibSearch = sib.href.includes('?') ? sib.href.slice(sib.href.indexOf('?')) : '';
+                      return sibSearch && location.pathname === sibPath && location.search === sibSearch;
+                    });
                     const isActive = item.href === '/marketplace'
                       ? location.pathname === '/marketplace'
                       : (itemPath.startsWith('/marketplace/') || item.href === '/wallet')
                       ? location.pathname.startsWith(itemPath)
                       : itemSearch
                       ? location.pathname === itemPath && location.search === itemSearch
-                      : location.pathname === item.href;
+                      : location.pathname === item.href && !siblingHasFullMatch;
                     return (
                       <NavLink
                         key={item.name}

@@ -22,7 +22,7 @@ const PLATFORM_INFO: Record<string, { label: string; color: string; docsUrl: str
     fields: ['pixel_id', 'access_token'],
   },
   google: {
-    label: 'Google Ads',
+    label: 'Google Analytics 4',
     color: 'bg-green-500',
     docsUrl: 'https://developers.google.com/analytics/devguides/collection/protocol/ga4',
     fields: ['pixel_id', 'access_token'],
@@ -35,10 +35,18 @@ const PLATFORM_INFO: Record<string, { label: string; color: string; docsUrl: str
   },
 };
 
-const FIELD_LABELS: Record<string, string> = {
-  pixel_id: 'Pixel ID / Measurement ID',
-  access_token: 'Access Token / API Secret',
-  dataset_id: 'Dataset ID',
+const FIELD_LABELS: Record<string, Record<string, string>> = {
+  meta: { pixel_id: 'Pixel ID', access_token: 'Access Token', dataset_id: 'Dataset ID' },
+  tiktok: { pixel_id: 'Pixel Code', access_token: 'Access Token' },
+  google: { pixel_id: 'Measurement ID (G-XXXXXXX)', access_token: 'API Secret' },
+  linkedin: { access_token: 'Access Token' },
+};
+
+const FIELD_PLACEHOLDERS: Record<string, Record<string, string>> = {
+  meta: { pixel_id: 'Ej: 123456789012345', access_token: 'Ej: EAABsbCS1IHg...', dataset_id: 'Ej: 123456789' },
+  tiktok: { pixel_id: 'Ej: C5K8FH1234567890', access_token: 'Ej: abc123def456...' },
+  google: { pixel_id: 'Ej: G-GQG3GP15WF', access_token: 'Ej: HH--WXS3Q-6TNXfVMlXrxw' },
+  linkedin: { access_token: 'Ej: abc123...' },
 };
 
 export function KaeAdPlatformsTab() {
@@ -157,14 +165,14 @@ export function KaeAdPlatformsTab() {
                   {info.fields.map((field) => (
                     <div key={field} className="space-y-1.5">
                       <Label htmlFor={`${platform.platform}-${field}`}>
-                        {FIELD_LABELS[field] || field}
+                        {FIELD_LABELS[platform.platform]?.[field] || field}
                       </Label>
                       <Input
                         id={`${platform.platform}-${field}`}
                         type={field === 'access_token' ? 'password' : 'text'}
                         value={(formState[field] as string) || ''}
                         onChange={(e) => setFormState((s) => ({ ...s, [field]: e.target.value }))}
-                        placeholder={`Ingresa ${FIELD_LABELS[field] || field}`}
+                        placeholder={FIELD_PLACEHOLDERS[platform.platform]?.[field] || `Ingresa ${field}`}
                       />
                     </div>
                   ))}

@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useSavedItems } from '@/hooks/useSavedItems';
 import { cn } from '@/lib/utils';
-import { Heart, MessageCircle, Bookmark, Share2, Download, ChevronDown } from 'lucide-react';
+import { Heart, MessageCircle, Bookmark, Share2, Download, ChevronDown, X } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
@@ -608,6 +608,13 @@ export default function VideosPage() {
   if (videos.length === 0) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-black text-white/60 z-50">
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute top-4 right-4 z-30 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-colors"
+          aria-label="Cerrar"
+        >
+          <X className="h-5 w-5 text-white" />
+        </button>
         No hay videos disponibles
       </div>
     );
@@ -637,6 +644,15 @@ export default function VideosPage() {
       <div className="absolute top-4 left-4 z-30 text-white/50 text-xs font-medium">
         {activeIndex + 1} / {videoPool.length}
       </div>
+
+      {/* Close / Back button */}
+      <button
+        onClick={() => navigate(-1)}
+        className="absolute top-4 right-4 z-30 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition-colors"
+        aria-label="Cerrar"
+      >
+        <X className="h-5 w-5 text-white" />
+      </button>
 
       {/* Scroll hint */}
       {activeIndex === 0 && videos.length > 1 && (

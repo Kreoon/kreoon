@@ -1,14 +1,34 @@
+import { useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { DollarSign, CheckCircle2, Clock } from 'lucide-react';
 import type { UnifiedTabProps } from '../types';
+import { ASSIGNMENT_STATUS_LABELS } from '@/types/unifiedProject.types';
+import { getRoleLabel } from '@/types/roles';
 
-export default function PaymentsTab({ project, formData, setFormData, editMode, readOnly, typeConfig }: UnifiedTabProps) {
+export default function PaymentsTab({ project, formData, setFormData, editMode, readOnly, typeConfig, permissions, assignmentsHook }: UnifiedTabProps) {
   const isEditing = editMode && !readOnly;
+  const assignments = assignmentsHook?.assignments || [];
+  const canMarkPaid = permissions.can('project.payments', 'edit');
 
   const formatCurrency = (amount: number | undefined, currency: string = 'COP') => {
     if (amount == null) return '-';
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency, minimumFractionDigits: 0 }).format(amount);
+  };
+
+  // Assignment payment totals
+  const assignmentTotals = useMemo(() => {
+    const active = assignments.filter(a => a.status !== 'cancelled');
+    const total = active.reduce((sum, a) => sum + (a.paymentAmount || 0), 0);
+    const paid = active.filter(a => a.isPaid).reduce((sum, a) => sum + (a.paymentAmount || 0), 0);
+    const pending = total - paid;
+    return { total, paid, pending, count: active.length, paidCount: active.filter(a => a.isPaid).length };
+  }, [assignments]);
+
+  const handleMarkPaid = (assignmentId: string) => {
+    assignmentsHook?.updatePayment(assignmentId, { is_paid: true, paid_at: new Date().toISOString() });
+    assignmentsHook?.updateStatus(assignmentId, 'paid');
   };
 
   // Content source uses creator_payment / editor_payment
@@ -41,6 +61,16 @@ export default function PaymentsTab({ project, formData, setFormData, editMode, 
           {formData.invoiced && <Badge variant="secondary">Facturado</Badge>}
           {formData.is_published && <Badge variant="secondary">Publicado</Badge>}
         </div>
+
+        {/* Assignment payments */}
+        <AssignmentPaymentsSection
+          assignments={assignments}
+          totals={assignmentTotals}
+          canMarkPaid={canMarkPaid}
+          onMarkPaid={handleMarkPaid}
+          formatCurrency={formatCurrency}
+          currency="COP"
+        />
       </div>
     );
   }
@@ -84,9 +114,123 @@ export default function PaymentsTab({ project, formData, setFormData, editMode, 
           </>
         )}
       </div>
+
+      {/* Assignment payments */}
+      <AssignmentPaymentsSection
+        assignments={assignments}
+        totals={assignmentTotals}
+        canMarkPaid={canMarkPaid}
+        onMarkPaid={handleMarkPaid}
+        formatCurrency={formatCurrency}
+        currency={project.currency || 'USD'}
+      />
     </div>
   );
 }
+
+// ============================================================
+// Assignment Payments Section
+// ============================================================
+
+function AssignmentPaymentsSection({
+  assignments,
+  totals,
+  canMarkPaid,
+  onMarkPaid,
+  formatCurrency,
+  currency,
+}: {
+  assignments: UnifiedTabProps['assignmentsHook'] extends { assignments: infer A } ? A : any[];
+  totals: { total: number; paid: number; pending: number; count: number; paidCount: number };
+  canMarkPaid: boolean;
+  onMarkPaid: (id: string) => void;
+  formatCurrency: (amount: number | undefined, currency?: string) => string;
+  currency: string;
+}) {
+  const active = (assignments || []).filter((a: any) => a.status !== 'cancelled');
+  if (active.length === 0) return null;
+
+  return (
+    <div className="border-t pt-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          Pagos por Asignacion
+        </h4>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span>{totals.paidCount}/{totals.count} pagados</span>
+          <Badge variant="outline" className="text-xs">
+            {formatCurrency(totals.total, currency)}
+          </Badge>
+        </div>
+      </div>
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="border rounded-lg p-3 text-center">
+          <p className="text-xs text-muted-foreground">Total</p>
+          <p className="text-sm font-bold mt-0.5">{formatCurrency(totals.total, currency)}</p>
+        </div>
+        <div className="border rounded-lg p-3 text-center">
+          <p className="text-xs text-green-600">Pagado</p>
+          <p className="text-sm font-bold mt-0.5 text-green-600">{formatCurrency(totals.paid, currency)}</p>
+        </div>
+        <div className="border rounded-lg p-3 text-center">
+          <p className="text-xs text-amber-600">Pendiente</p>
+          <p className="text-sm font-bold mt-0.5 text-amber-600">{formatCurrency(totals.pending, currency)}</p>
+        </div>
+      </div>
+
+      {/* Per-assignment rows */}
+      <div className="space-y-2">
+        {active.map((assignment: any) => (
+          <div key={assignment.id} className="border rounded-lg p-3 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs shrink-0">
+              {(assignment.user?.full_name || '?')[0]}
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-medium truncate">
+                  {assignment.user?.full_name || 'Sin nombre'}
+                </span>
+                <Badge variant="outline" className="text-xs">
+                  {getRoleLabel(assignment.roleId)}
+                </Badge>
+                <Badge variant="secondary" className="text-xs">
+                  {ASSIGNMENT_STATUS_LABELS[assignment.status as keyof typeof ASSIGNMENT_STATUS_LABELS] || assignment.status}
+                </Badge>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-sm font-semibold">
+                {formatCurrency(assignment.paymentAmount, assignment.paymentCurrency || currency)}
+              </span>
+              {assignment.isPaid ? (
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+              ) : canMarkPaid && assignment.status === 'approved' ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => onMarkPaid(assignment.id)}
+                >
+                  Marcar Pagado
+                </Button>
+              ) : (
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Legacy Payment Field
+// ============================================================
 
 function PaymentField({
   label,

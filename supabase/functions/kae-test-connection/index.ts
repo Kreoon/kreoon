@@ -1,5 +1,4 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { getKreoonClient } from "../_shared/kreoon-client.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.46.2";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -42,7 +41,10 @@ Deno.serve(async (req: Request) => {
     }
 
     // Fetch platform config from DB
-    const supabase = getKreoonClient();
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
     const { data: config, error: dbError } = await supabase
       .from("kae_ad_platforms")
       .select("*")
@@ -182,24 +184,75 @@ async function testTikTok(pixelCode: string, accessToken: string): Promise<TestR
   }
 }
 
-// ── Google Ads Test ──
+// ── Google Analytics 4 Measurement Protocol Test ──
 
-async function testGoogle(conversionId: string, _accessToken: string): Promise<TestResult> {
-  // Google Ads Enhanced Conversions requires OAuth2 setup
-  // For now, validate that the conversion ID format looks correct
-  if (conversionId && conversionId.match(/^AW-\d+$/)) {
+async function testGoogle(measurementId: string, apiSecret: string): Promise<TestResult> {
+  // Validar formato del Measurement ID
+  if (!measurementId || !measurementId.match(/^G-[A-Z0-9]+$/)) {
     return {
-      success: true,
-      message: `Conversion ID "${conversionId}" tiene formato válido. La verificación completa requiere configuración OAuth adicional.`,
-      details: { conversion_id: conversionId, note: "Full validation requires OAuth2 setup" },
+      success: false,
+      message: 'El Measurement ID debe tener el formato "G-XXXXXXXXXX"',
+      details: { provided_id: measurementId },
     };
   }
 
-  return {
-    success: false,
-    message: 'El Conversion ID debe tener el formato "AW-XXXXXXXXX"',
-    details: { provided_id: conversionId },
-  };
+  if (!apiSecret) {
+    return {
+      success: false,
+      message: "Se requiere el API Secret de Measurement Protocol",
+    };
+  }
+
+  try {
+    // Enviar evento de test al endpoint de validación de GA4
+    const url = `https://www.google-analytics.com/debug/mp/collect?measurement_id=${measurementId}&api_secret=${apiSecret}`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        client_id: "kae_test_" + Date.now(),
+        events: [
+          {
+            name: "kae_connection_test",
+            params: {
+              test: true,
+              engagement_time_msec: "1",
+            },
+          },
+        ],
+      }),
+    });
+
+    const data = await response.json();
+
+    // El debug endpoint retorna validationMessages
+    const messages = data.validationMessages || [];
+    const hasErrors = messages.some(
+      (m: Record<string, unknown>) => (m.validationCode as string) !== "VALID"
+    );
+
+    if (hasErrors) {
+      const errorDetails = messages.map(
+        (m: Record<string, unknown>) => m.description || m.validationCode
+      ).join("; ");
+      return {
+        success: false,
+        message: `Error de validación GA4: ${errorDetails}`,
+        details: { validationMessages: messages },
+      };
+    }
+
+    return {
+      success: true,
+      message: `GA4 "${measurementId}" verificado correctamente via Measurement Protocol`,
+      details: { measurement_id: measurementId, validation: "passed" },
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message: `Error de red al contactar GA4 API: ${(err as Error).message}`,
+    };
+  }
 }
 
 // ── LinkedIn CAPI Test ──

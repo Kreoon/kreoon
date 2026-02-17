@@ -1,5 +1,5 @@
 import { useState, useEffect, Suspense, lazy, useMemo, memo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Loader2, Cog } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -17,20 +17,16 @@ const TourSection = lazy(() => import('./sections/TourSection'));
 
 // Organization level - CONSOLIDATED
 const OrganizationSection = lazy(() => import('./sections/OrganizationSection'));
-const OrgRegistrationSettingsSection = lazy(() => import('./sections/OrgRegistrationSettingsSection'));
 const OrganizationPlansSection = lazy(() => import('./sections/OrganizationPlansSection'));
 const AISettingsSection = lazy(() => import('./sections/AISettingsSection'));
-const AmbassadorsSection = lazy(() => import('./sections/AmbassadorsSection'));
 const PermissionsUnifiedSection = lazy(() => import('./sections/PermissionsUnifiedSection'));
 const AuditLogSection = lazy(() => import('./sections/AuditLogSection'));
 const TrackingSection = lazy(() => import('./sections/TrackingSection'));
-const OrgSocialSection = lazy(() => import('./sections/OrgSocialSection'));
 const OrgMarketplaceSection = lazy(() => import('./sections/OrgMarketplaceSection'));
 const OrgAgencyProfileSection = lazy(() => import('./sections/OrgAgencyProfileSection'));
 
 // Platform level - CONSOLIDATED
 const OrganizationRegistrationsSection = lazy(() => import('./sections/OrganizationRegistrationsSection'));
-const PlatformUsersSection = lazy(() => import('./sections/PlatformUsersSection'));
 const ReferralSection = lazy(() => import('./sections/ReferralSection'));
 const BillingUnifiedSection = lazy(() => import('./sections/BillingUnifiedSection'));
 const PlatformConfigSection = lazy(() => import('./sections/PlatformConfigSection'));
@@ -57,21 +53,18 @@ const SECTION_COMPONENTS: Record<SettingsSectionKey, React.LazyExoticComponent<R
   marketplace: ProfileSection, // Redirect: marketplace merged into profile
   // Organization level
   organization: OrganizationSection,
-  org_registration_settings: OrgRegistrationSettingsSection,
+  org_registration_settings: OrganizationSection, // Redirect: merged into organization
   organization_plans: OrganizationPlansSection,
   ai_settings: AISettingsSection,
-  ambassadors: AmbassadorsSection,
   permissions: PermissionsUnifiedSection,
   audit_log: AuditLogSection,
   tracking: TrackingSection,
   org_marketplace: OrgMarketplaceSection,
   org_agency_profile: OrgAgencyProfileSection,
-  org_social: OrgSocialSection,
   live_streaming_org: LiveStreamingOrgSection,
   // Platform level
   organization_registrations: OrganizationRegistrationsSection,
-  platform_users: PlatformUsersSection,
-  referrals: ReferralSection,
+referrals: ReferralSection,
   billing: BillingUnifiedSection,
   platform_config: PlatformConfigSection,
   platform_admin: PlatformAdminSection,
@@ -80,16 +73,25 @@ const SECTION_COMPONENTS: Record<SettingsSectionKey, React.LazyExoticComponent<R
 };
 
 // Wide sections that need more space
-const WIDE_SECTIONS: SettingsSectionKey[] = ['billing', 'platform_users', 'organization_registrations', 'marketplace', 'profile'];
+const WIDE_SECTIONS: SettingsSectionKey[] = ['billing', 'organization_registrations', 'marketplace', 'profile'];
 
 const SettingsPage = memo(() => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const permissions = useSettingsPermissions();
-  
+
+  // Redirect organization_plans to /planes
+  const sectionParam = searchParams.get('section');
+  useEffect(() => {
+    if (sectionParam === 'organization_plans') {
+      navigate('/planes', { replace: true });
+    }
+  }, [sectionParam, navigate]);
+
   // Get section from URL or default
-  const sectionFromUrl = searchParams.get('section') as SettingsSectionKey | null;
+  const sectionFromUrl = sectionParam as SettingsSectionKey | null;
   const [activeSection, setActiveSection] = useState<SettingsSectionKey | null>(
-    sectionFromUrl && permissions.canAccess(sectionFromUrl) ? sectionFromUrl : null
+    sectionFromUrl && sectionFromUrl !== 'organization_plans' && permissions.canAccess(sectionFromUrl) ? sectionFromUrl : null
   );
 
   // If the page booted before permissions finished loading (common on refresh),
@@ -173,19 +175,17 @@ const SettingsPage = memo(() => {
             <>
               {/* Mobile menu cards */}
               <div className="md:hidden">
-                <SettingsSidebar 
+                <SettingsSidebar
                   activeSection={activeSection}
                   onSectionChange={handleSectionChange}
                   permissions={permissions}
                   variant="cards"
                 />
               </div>
-              
-              {/* Desktop: Show profile by default */}
-              <div className="hidden md:block max-w-3xl">
-                <Suspense fallback={<SectionLoader />}>
-                  <ProfileSection />
-                </Suspense>
+
+              {/* Desktop: prompt to pick a section */}
+              <div className="hidden md:flex items-center justify-center text-muted-foreground py-20">
+                <p className="text-sm">Selecciona una sección del menú</p>
               </div>
             </>
           ) : (

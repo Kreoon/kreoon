@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import type { ProjectAssignment, AssignmentStatus } from '@/types/unifiedProject.types';
+import type { ProjectAssignment, AssignmentStatus, RoleId, RoleGroup } from '@/types/unifiedProject.types';
+import { getRoleGroup } from '@/types/roles';
 
 interface UseProjectAssignmentsOptions {
   projectSource: 'content' | 'marketplace';
@@ -16,8 +17,8 @@ function mapRow(row: any): ProjectAssignment {
     contentId: row.content_id,
     marketplaceProjectId: row.marketplace_project_id,
     userId: row.user_id,
-    roleId: row.role_id,
-    roleGroup: row.role_group,
+    roleId: row.role_id as RoleId,
+    roleGroup: row.role_group as RoleGroup,
     phase: row.phase,
     dependsOn: row.depends_on || [],
     status: row.status as AssignmentStatus,
@@ -80,8 +81,8 @@ export function useProjectAssignments({ projectSource, projectId }: UseProjectAs
   // ---- Create a new assignment ----
   const createAssignment = useCallback(async (params: {
     userId: string;
-    roleId: string;
-    roleGroup: string;
+    roleId: RoleId;
+    roleGroup?: RoleGroup;  // Auto-resolved from roleId if omitted
     phase?: number;
     dependsOn?: string[];
     paymentAmount?: number;
@@ -90,12 +91,13 @@ export function useProjectAssignments({ projectSource, projectId }: UseProjectAs
     workspaceBlockType?: string;
   }) => {
     try {
+      const resolvedGroup = params.roleGroup || getRoleGroup(params.roleId);
       const payload: Record<string, any> = {
         project_source: projectSource,
         [fkColumn]: projectId,
         user_id: params.userId,
         role_id: params.roleId,
-        role_group: params.roleGroup,
+        role_group: resolvedGroup,
         phase: params.phase || 1,
         depends_on: params.dependsOn || [],
         payment_amount: params.paymentAmount ?? null,

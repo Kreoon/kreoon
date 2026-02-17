@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useAutoSave } from '@/hooks/useAutoSave';
+import { useProjectAssignments } from '@/hooks/useProjectAssignments';
+import { useProductSelection } from './useProductSelection';
 import { ProjectAdapter } from '@/lib/projectAdapter';
 import {
   getProjectTypeConfig,
@@ -53,9 +55,33 @@ export function useUnifiedProject({
   const contentPermissions = useContentPermissions(contentData);
   const blockConfig = useBlockConfig(contentData);
 
+  // ---- Product selection (content projects reference a product for AI script generation) ----
+  const contentProductId = source === 'content' ? (formData.product_id || contentData?.product_id) : undefined;
+  const { selectedProduct, handleProductChange } = useProductSelection(contentProductId);
+
+  // ---- Multi-talent assignments ----
+  const assignmentsHook = useProjectAssignments({
+    projectSource: source,
+    projectId: projectId || project?.id || '',
+  });
+
+  // Fetch assignments when project is loaded
+  useEffect(() => {
+    if (projectId || project?.id) {
+      assignmentsHook.fetchAssignments();
+    }
+  }, [projectId, project?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Attach assignments to project for permission resolution
+  const projectWithAssignments = useMemo(() => {
+    if (!project) return null;
+    if (assignmentsHook.assignments.length === 0 && !project.assignments?.length) return project;
+    return { ...project, assignments: assignmentsHook.assignments };
+  }, [project, assignmentsHook.assignments]);
+
   // ---- Build unified permissions ----
   const permissions: UnifiedPermissions = useMemo(() => {
-    if (!project) {
+    if (!projectWithAssignments) {
       // Create mode: full permissions
       return {
         can: () => true,
@@ -66,18 +92,23 @@ export function useUnifiedProject({
     }
 
     if (source === 'content') {
-      return adaptContentPermissions(contentPermissions, blockConfig);
+      return adaptContentPermissions(
+        contentPermissions,
+        blockConfig,
+        user?.id,
+        assignmentsHook.assignments,
+      );
     }
 
-    return buildMarketplacePermissions(project, {
+    return buildMarketplacePermissions(projectWithAssignments, {
       userId: user?.id || '',
       isAdmin,
       roles: [],
-      isBrandOwner: project.marketplaceData?.brand_user_id === user?.id,
-      isProjectCreator: project.creatorId === user?.id,
-      isProjectEditor: project.editorId === user?.id,
+      isBrandOwner: projectWithAssignments.marketplaceData?.brand_user_id === user?.id,
+      isProjectCreator: projectWithAssignments.creatorId === user?.id,
+      isProjectEditor: projectWithAssignments.editorId === user?.id,
     });
-  }, [project, source, contentPermissions, blockConfig, typeConfig, user?.id, isAdmin]);
+  }, [projectWithAssignments, source, contentPermissions, blockConfig, typeConfig, user?.id, isAdmin, assignmentsHook.assignments]);
 
   // ---- Fetch project data ----
   useEffect(() => {
@@ -249,7 +280,7 @@ export function useUnifiedProject({
   }, [onUpdate]);
 
   return {
-    project,
+    project: projectWithAssignments,
     formData,
     setFormData,
     loading,
@@ -263,6 +294,9 @@ export function useUnifiedProject({
     autoSaveStatus: autoSave.status,
     lastSaved: autoSave.lastSaved,
     flushPendingRefresh,
+    assignmentsHook,
+    selectedProduct,
+    handleProductChange,
   };
 }
 

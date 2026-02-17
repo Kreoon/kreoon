@@ -1,8 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bell, Building2, MessageSquare } from 'lucide-react';
-import { NotificationSettings } from '@/components/settings/NotificationSettings';
+import { Sparkles, Building2 } from 'lucide-react';
+import { KiroNotificationSettingsTab } from '@/components/settings/KiroNotificationSettingsTab';
 import { NotificationPreferencesSettings } from '@/components/settings/NotificationPreferencesSettings';
-import { ChatRBACSettings } from '@/components/settings/ChatRBACSettings';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function NotificationsUnifiedSection() {
@@ -14,44 +13,32 @@ export default function NotificationsUnifiedSection() {
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Notificaciones</h2>
         <p className="text-muted-foreground">
-          Configura tus preferencias de notificaciones personales y de organización
+          Configura cómo Kiro te notifica y qué eventos generan alertas
         </p>
       </div>
 
-      <Tabs defaultValue="personal" className="space-y-6">
-        <TabsList className={`grid w-full ${isOrgMember ? 'grid-cols-3' : 'grid-cols-1'}`}>
-          <TabsTrigger value="personal" className="gap-2">
-            <Bell className="h-4 w-4" />
-            Personal
+      <Tabs defaultValue="kiro" className="space-y-6">
+        <TabsList className={`grid w-full ${isOrgMember ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          <TabsTrigger value="kiro" className="gap-2">
+            <Sparkles className="h-4 w-4" />
+            Kiro
           </TabsTrigger>
           {isOrgMember && (
-            <>
-              <TabsTrigger value="preferences" className="gap-2">
-                <Building2 className="h-4 w-4" />
-                Preferencias Org
-              </TabsTrigger>
-              <TabsTrigger value="chat" className="gap-2">
-                <MessageSquare className="h-4 w-4" />
-                Reglas de Chat
-              </TabsTrigger>
-            </>
+            <TabsTrigger value="org-rules" className="gap-2">
+              <Building2 className="h-4 w-4" />
+              Reglas de Org
+            </TabsTrigger>
           )}
         </TabsList>
 
-        <TabsContent value="personal">
-          <NotificationSettings />
+        <TabsContent value="kiro">
+          <KiroNotificationSettingsTab />
         </TabsContent>
 
         {isOrgMember && (
-          <>
-            <TabsContent value="preferences">
-              <NotificationPreferencesSettings />
-            </TabsContent>
-
-            <TabsContent value="chat">
-              <ChatRBACSettings />
-            </TabsContent>
-          </>
+          <TabsContent value="org-rules">
+            <NotificationPreferencesSettings />
+          </TabsContent>
         )}
       </Tabs>
     </div>

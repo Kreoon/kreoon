@@ -1,10 +1,14 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, lazy, Suspense } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanColumn";
 import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
 import { ContentDetailDialog } from "@/components/content/ContentDetailDialog/index";
+import { ProjectTypeSelector } from "@/components/projects/ProjectTypeSelector";
 import { Search, Plus, Filter, CalendarIcon, X, Settings2, Scroll, RotateCcw, Brain, ShoppingBag } from "lucide-react";
+import type { ProjectType } from "@/types/unifiedProject.types";
+
+const UnifiedProjectModal = lazy(() => import('@/components/projects/UnifiedProjectModal'));
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -232,6 +236,11 @@ export default function ContentBoard() {
   
   // Dialog para crear contenido
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+
+  // Project type selector flow
+  const [showTypeSelector, setShowTypeSelector] = useState(false);
+  const [showUnifiedCreate, setShowUnifiedCreate] = useState(false);
+  const [createProjectType, setCreateProjectType] = useState<ProjectType | null>(null);
   
   // AI Panel state
   const [showAIPanel, setShowAIPanel] = useState(false);
@@ -636,19 +645,6 @@ export default function ContentBoard() {
                   className="h-9 md:h-10 w-40 md:w-64 rounded-xl border border-[hsl(270,100%,60%,0.15)] bg-[hsl(250,20%,6%)] pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(270,100%,60%,0.3)] focus:border-[hsl(270,100%,60%,0.3)] transition-all placeholder:text-[hsl(270,30%,45%)]"
                 />
               </div>
-              {showAdminControls && (
-                <Button
-                  variant="glow"
-                  size="sm"
-                  className="gap-1 md:gap-2 text-xs md:text-sm"
-                  onClick={() => guardAction(() => setShowCreateDialog(true))}
-                  disabled={isReadOnly}
-                >
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Nueva Producción</span>
-                  <span className="sm:hidden">Nueva</span>
-                </Button>
-              )}
             </div>
           }
         />
@@ -898,9 +894,9 @@ export default function ContentBoard() {
                     </TooltipTrigger>
                     <TooltipContent>Analizar tablero con IA</TooltipContent>
                   </Tooltip>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="gap-1.5"
                     onClick={() => setShowConfigDialog(true)}
                   >
@@ -908,6 +904,19 @@ export default function ContentBoard() {
                     <span className="hidden sm:inline">Configurar</span>
                   </Button>
                 </>
+              )}
+              {showAdminControls && (
+                <Button
+                  variant="glow"
+                  size="sm"
+                  className="gap-1 md:gap-2 text-xs md:text-sm"
+                  onClick={() => guardAction(() => setShowTypeSelector(true))}
+                  disabled={isReadOnly}
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Nueva Producción</span>
+                  <span className="sm:hidden">Nueva</span>
+                </Button>
               )}
             </div>
           </div>
@@ -1101,6 +1110,37 @@ export default function ContentBoard() {
         onUpdate={refetch}
         mode="create"
       />
+
+      {/* Project type selector */}
+      <ProjectTypeSelector
+        open={showTypeSelector}
+        onOpenChange={setShowTypeSelector}
+        onSelect={(type) => {
+          if (type === 'content_creation') {
+            setShowCreateDialog(true);
+          } else {
+            setCreateProjectType(type);
+            setShowUnifiedCreate(true);
+          }
+        }}
+      />
+
+      {/* Unified modal for non-content project types */}
+      {showUnifiedCreate && createProjectType && (
+        <Suspense fallback={null}>
+          <UnifiedProjectModal
+            source="marketplace"
+            open={showUnifiedCreate}
+            onOpenChange={(open) => {
+              setShowUnifiedCreate(open);
+              if (!open) setCreateProjectType(null);
+            }}
+            onUpdate={refetch}
+            mode="create"
+            createProjectType={createProjectType}
+          />
+        </Suspense>
+      )}
 
       {/* AI Analysis Panel */}
       {showAdminControls && currentOrgId && (

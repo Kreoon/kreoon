@@ -6,7 +6,7 @@
 export type SystemRole = 'admin' | 'team_leader';
 
 /** Legacy roles: still valid but deprecated in favor of specific marketplace roles */
-export type LegacyRole = 'creator' | 'editor' | 'strategist' | 'client' | 'trafficker' | 'ambassador';
+export type LegacyRole = 'creator' | 'editor' | 'strategist' | 'client' | 'trafficker' | 'ambassador' | 'developer' | 'educator';
 
 /** Marketplace roles: 36 specialized roles organized by category */
 export type MarketplaceRole =

@@ -1,10 +1,15 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useMarketplaceProjects, BRAND_COLUMNS, CREATOR_COLUMNS, EDITOR_COLUMNS } from '@/hooks/useMarketplaceProjects';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Briefcase, DollarSign, Calendar, User, Package } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2, Briefcase, DollarSign, Calendar, User, Package, Plus } from 'lucide-react';
+import { ProjectTypeSelector } from '@/components/projects/ProjectTypeSelector';
 import type { MarketplaceProject, ProjectStatus, KanbanColumnConfig } from '@/components/marketplace/types/marketplace';
+import type { ProjectType } from '@/types/unifiedProject.types';
+
+const UnifiedProjectModal = lazy(() => import('@/components/projects/UnifiedProjectModal'));
 
 // ── Status styling ─────────────────────────────────────────────────────
 
@@ -124,11 +129,11 @@ function MarketplaceProjectCard({
 // ── Main Board View ────────────────────────────────────────────────────
 
 export function MarketplaceBoardView() {
-  const { isCreator, isEditor } = useAuth();
+  const { isCreator, isEditor, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const role = isCreator ? 'creator' : isEditor ? 'editor' : 'brand';
-  const { projects, loading, updateProjectStatus } = useMarketplaceProjects({ role });
+  const { projects, loading, refetch, updateProjectStatus } = useMarketplaceProjects({ role });
 
   const columns: KanbanColumnConfig[] = useMemo(() => {
     if (isCreator) return CREATOR_COLUMNS;
@@ -139,6 +144,9 @@ export function MarketplaceBoardView() {
   const [draggingProject, setDraggingProject] = useState<MarketplaceProject | null>(null);
   const [dropTarget, setDropTarget] = useState<ProjectStatus | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showTypeSelector, setShowTypeSelector] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [createProjectType, setCreateProjectType] = useState<ProjectType | null>(null);
 
   const filteredProjects = useMemo(() => {
     if (!searchTerm) return projects;
@@ -200,7 +208,7 @@ export function MarketplaceBoardView() {
 
   return (
     <div className="space-y-4">
-      {/* Search */}
+      {/* Search + Actions */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
@@ -215,6 +223,18 @@ export function MarketplaceBoardView() {
         <Badge variant="outline" className="text-xs whitespace-nowrap">
           {filteredProjects.length} proyectos
         </Badge>
+        {isAdmin && (
+          <Button
+            variant="glow"
+            size="sm"
+            className="gap-1.5 text-xs md:text-sm ml-auto"
+            onClick={() => setShowTypeSelector(true)}
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Nuevo Proyecto</span>
+            <span className="sm:hidden">Nuevo</span>
+          </Button>
+        )}
       </div>
 
       {/* Kanban columns */}
@@ -275,6 +295,33 @@ export function MarketplaceBoardView() {
           );
         })}
       </div>
+
+      {/* Project type selector */}
+      <ProjectTypeSelector
+        open={showTypeSelector}
+        onOpenChange={setShowTypeSelector}
+        onSelect={(type) => {
+          setCreateProjectType(type);
+          setShowCreateDialog(true);
+        }}
+      />
+
+      {/* Create marketplace project dialog */}
+      {showCreateDialog && createProjectType && (
+        <Suspense fallback={null}>
+          <UnifiedProjectModal
+            source="marketplace"
+            open={showCreateDialog}
+            onOpenChange={(open) => {
+              setShowCreateDialog(open);
+              if (!open) setCreateProjectType(null);
+            }}
+            onUpdate={refetch}
+            mode="create"
+            createProjectType={createProjectType}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

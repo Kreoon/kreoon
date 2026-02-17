@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { X, Plus } from 'lucide-react';
 import { useState } from 'react';
+import { ProjectDNASection } from '../components/ProjectDNASection';
 import type { UnifiedTabProps } from '../types';
 import type { BriefFieldConfig } from '@/types/unifiedProject.types';
 
@@ -18,6 +19,13 @@ export default function BriefTab({ project, formData, setFormData, editMode, typ
     }));
   };
 
+  const updateDNA = (dna: any) => {
+    setFormData((prev: Record<string, any>) => ({
+      ...prev,
+      brief: { ...prev.brief, dna },
+    }));
+  };
+
   // Group fields by group key
   const groupedFields = typeConfig.sections.brief.fields.reduce<Record<string, BriefFieldConfig[]>>((acc, field) => {
     const group = field.group || 'general';
@@ -28,6 +36,17 @@ export default function BriefTab({ project, formData, setFormData, editMode, typ
 
   return (
     <div className="space-y-6">
+      {/* Project DNA section */}
+      {typeConfig.sections.brief.hasProjectDNA && (
+        <ProjectDNASection
+          projectType={typeConfig.type}
+          projectId={project?.id}
+          dnaData={brief.dna || { responses: {}, audio_url: null, audio_duration: null }}
+          onUpdate={updateDNA}
+          editing={isEditing}
+        />
+      )}
+
       <h3 className="text-lg font-semibold">Brief del Proyecto</h3>
 
       {Object.entries(groupedFields).map(([group, fields]) => (
@@ -51,12 +70,12 @@ export default function BriefTab({ project, formData, setFormData, editMode, typ
       ))}
 
       {/* Display any extra brief fields not in the config (from existing data) */}
-      {Object.keys(brief).filter(k => !typeConfig.sections.brief.fields.some(f => f.key === k) && brief[k]).length > 0 && (
+      {Object.keys(brief).filter(k => k !== 'dna' && !typeConfig.sections.brief.fields.some(f => f.key === k) && brief[k]).length > 0 && (
         <div className="space-y-4 border-t pt-4">
           <h4 className="text-sm font-medium text-muted-foreground">Campos adicionales</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {Object.entries(brief)
-              .filter(([k]) => !typeConfig.sections.brief.fields.some(f => f.key === k))
+              .filter(([k]) => k !== 'dna' && !typeConfig.sections.brief.fields.some(f => f.key === k))
               .filter(([, v]) => v != null && v !== '')
               .map(([key, value]) => (
                 <div key={key}>

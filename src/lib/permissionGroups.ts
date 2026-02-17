@@ -14,11 +14,13 @@ const ROLE_TO_PERMISSION_GROUP: Record<string, PermissionGroup> = {
   admin: 'admin',
   team_leader: 'team_leader',
 
-  // Legacy platform roles (deprecated but still functional)
+  // Global niche roles (primary assignment roles)
   creator: 'creator',
   editor: 'editor',
   strategist: 'strategist',
   client: 'client',
+  developer: 'creator',
+  educator: 'creator',
   ambassador: 'creator',
   trafficker: 'strategist',
 
@@ -97,7 +99,7 @@ export function getRolesForGroup(group: PermissionGroup): string[] {
 export const SYSTEM_ONLY_ROLES = ['admin', 'team_leader'] as const;
 
 /** Legacy roles that still work but should not appear in role pickers for new assignments */
-export const DEPRECATED_ROLES = ['creator', 'editor', 'strategist', 'client', 'ambassador', 'trafficker'] as const;
+export const DEPRECATED_ROLES = ['ambassador', 'trafficker'] as const;
 
 /** Check if a role is a system-only role */
 export function isSystemRole(role: string): boolean {
@@ -108,6 +110,98 @@ export function isSystemRole(role: string): boolean {
 export function isDeprecatedRole(role: string): boolean {
   return (DEPRECATED_ROLES as readonly string[]).includes(role);
 }
+
+// ─── Role Areas (finer-grained than permission groups) ─────────────────────
+// Permission groups are for ACCESS CONTROL (6 groups).
+// Role areas are for UI PERSONALIZATION (7 areas) — they reflect the user's
+// professional domain so the UI can adapt labels, descriptions, and features.
+
+export type RoleArea =
+  | 'content_creation'    // Creación de Contenido (12 roles)
+  | 'post_production'     // Post-Producción (7 roles)
+  | 'strategy_marketing'  // Estrategia & Marketing (10 roles)
+  | 'technology'          // Tecnología (3 roles)
+  | 'education'           // Educación (2 roles)
+  | 'client'              // Cliente (2 roles)
+  | 'system';             // Admin / Team Leader
+
+const ROLE_TO_AREA: Record<string, RoleArea> = {
+  // System
+  admin: 'system',
+  team_leader: 'system',
+
+  // Content Creation
+  creator: 'content_creation',
+  ambassador: 'content_creation',
+  ugc_creator: 'content_creation',
+  lifestyle_creator: 'content_creation',
+  micro_influencer: 'content_creation',
+  nano_influencer: 'content_creation',
+  macro_influencer: 'content_creation',
+  brand_ambassador: 'content_creation',
+  live_streamer: 'content_creation',
+  podcast_host: 'content_creation',
+  photographer: 'content_creation',
+  copywriter: 'content_creation',
+  graphic_designer: 'content_creation',
+  voice_artist: 'content_creation',
+
+  // Post-Production
+  editor: 'post_production',
+  video_editor: 'post_production',
+  motion_graphics: 'post_production',
+  sound_designer: 'post_production',
+  colorist: 'post_production',
+  director: 'post_production',
+  producer: 'post_production',
+  animator_2d3d: 'post_production',
+
+  // Strategy & Marketing
+  strategist: 'strategy_marketing',
+  trafficker: 'strategy_marketing',
+  content_strategist: 'strategy_marketing',
+  social_media_manager: 'strategy_marketing',
+  community_manager: 'strategy_marketing',
+  digital_strategist: 'strategy_marketing',
+  seo_specialist: 'strategy_marketing',
+  email_marketer: 'strategy_marketing',
+  growth_hacker: 'strategy_marketing',
+  crm_specialist: 'strategy_marketing',
+  conversion_optimizer: 'strategy_marketing',
+
+  // Technology
+  developer: 'technology',
+  web_developer: 'technology',
+  app_developer: 'technology',
+  ai_specialist: 'technology',
+
+  // Education
+  educator: 'education',
+  online_instructor: 'education',
+  workshop_facilitator: 'education',
+
+  // Client
+  client: 'client',
+  brand_manager: 'client',
+  marketing_director: 'client',
+};
+
+/** Get the professional area for any role */
+export function getRoleArea(role: string | null | undefined): RoleArea {
+  if (!role) return 'content_creation';
+  return ROLE_TO_AREA[role] || 'content_creation';
+}
+
+/** Human-readable labels for each area */
+export const ROLE_AREA_LABELS: Record<RoleArea, string> = {
+  content_creation: 'Creación de Contenido',
+  post_production: 'Post-Producción',
+  strategy_marketing: 'Estrategia & Marketing',
+  technology: 'Tecnología',
+  education: 'Educación',
+  client: 'Cliente',
+  system: 'Administración',
+};
 
 /** Dashboard path for each permission group */
 export const GROUP_DASHBOARD_PATHS: Record<PermissionGroup, string> = {

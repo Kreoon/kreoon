@@ -13,13 +13,11 @@ import { cn } from '@/lib/utils';
 import { formatCurrency, formatDate } from '@/lib/utils/formatters';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ProjectChatPanel } from '../chat/ProjectChatPanel';
 import type { MarketplaceProject, ProjectStatus, KanbanColumnConfig } from '../types/marketplace';
 import { ProjectAdapter } from '@/lib/projectAdapter';
 
-// Feature flag: Unified Project Modal
+// Unified Project Modal for marketplace projects
 const UnifiedProjectModal = lazy(() => import('@/components/projects/UnifiedProjectModal'));
-const USE_UNIFIED_MODAL = import.meta.env.VITE_USE_UNIFIED_MODAL === 'true';
 
 // ============================================================
 // LOCAL TYPES (for data fetched inside the modal)
@@ -418,25 +416,24 @@ export function ProjectDetailModal({
   onStatusChange,
   columns,
 }: ProjectDetailModalProps) {
-  // Feature flag: delegate to unified modal
-  if (USE_UNIFIED_MODAL) {
-    const unifiedProject = ProjectAdapter.fromMarketplace(project);
-    return (
-      <Suspense fallback={null}>
-        <UnifiedProjectModal
-          source="marketplace"
-          projectId={project.id}
-          project={unifiedProject}
-          open={true}
-          onOpenChange={(open) => { if (!open) onClose(); }}
-          onUpdate={() => {}}
-        />
-      </Suspense>
-    );
-  }
+  // Always use the Unified Project Modal for marketplace projects
+  const unifiedProject = ProjectAdapter.fromMarketplace(project);
+  return (
+    <Suspense fallback={null}>
+      <UnifiedProjectModal
+        source="marketplace"
+        projectId={project.id}
+        project={unifiedProject}
+        open={true}
+        onOpenChange={(open) => { if (!open) onClose(); }}
+        onUpdate={() => {}}
+      />
+    </Suspense>
+  );
 
+  // Legacy marketplace modal code below (kept for reference, unreachable)
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'brief' | 'deliverables' | 'chat'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'brief' | 'deliverables'>('overview');
   const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
   const [deliverablesLoading, setDeliverablesLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -602,7 +599,6 @@ export function ProjectDetailModal({
     { id: 'overview' as const, label: 'Resumen', icon: Eye },
     { id: 'brief' as const, label: 'Brief', icon: FileText },
     { id: 'deliverables' as const, label: 'Entregables', icon: Package, badge: pendingReview },
-    { id: 'chat' as const, label: 'Chat', icon: MessageSquare, badge: project.unread_messages },
   ];
 
   return (
@@ -1128,16 +1124,6 @@ export function ProjectDetailModal({
             </div>
           )}
 
-          {/* CHAT TAB */}
-          {activeTab === 'chat' && user && (
-            <ProjectChatPanel
-              projectId={project.id}
-              currentUserId={user.id}
-              currentUserName={user.user_metadata?.full_name || user.email?.split('@')[0] || 'Tú'}
-              currentUserAvatar={user.user_metadata?.avatar_url || null}
-              currentUserRole={viewRole}
-            />
-          )}
         </div>
 
         {/* ========== FOOTER ========== */}

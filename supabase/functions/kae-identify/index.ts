@@ -9,7 +9,7 @@
 //
 // JWT: verify_jwt = true (only authenticated users)
 
-import { getKreoonClient } from "../_shared/kreoon-client.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.46.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,7 +23,10 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const supabase = getKreoonClient();
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
 
     const { user_id, anonymous_id, traits } = await req.json();
 

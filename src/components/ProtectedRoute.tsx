@@ -54,7 +54,7 @@ function getDashboardPath(roles: AppRole[], activeRole?: AppRole | null): string
 }
 
 // Routes that require an organization to be selected
-const ORG_REQUIRED_ROUTES = ['/dashboard', '/board', '/content', '/creators', '/scripts', '/clients', '/team', '/ranking'];
+const ORG_REQUIRED_ROUTES = ['/dashboard', '/board', '/content', '/talent', '/scripts', '/clients-hub', '/team', '/ranking'];
 
 // Routes that users without roles can access (social/marketplace)
 const SOCIAL_ROUTES = ['/social', '/marketplace', '/explore', '/profile', '/settings'];

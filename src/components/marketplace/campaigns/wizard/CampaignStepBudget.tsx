@@ -36,7 +36,9 @@ const PRICING_OPTIONS: { value: CampaignPricingMode; label: string; description:
   { value: 'range', label: 'Rango', description: 'Define min/max, creadores pujan dentro', icon: ArrowUpDown, color: 'text-blue-400' },
 ];
 
-const PLATFORM_FEE_PCT = 15;
+import { COMMISSION_RATES } from '@/lib/finance/constants';
+
+const PLATFORM_FEE_PCT = COMMISSION_RATES.campaigns_managed.base;
 
 export function CampaignStepBudget({ data, onChange, contentCount }: CampaignStepBudgetProps) {
   const showPaymentFields = data.campaign_type === 'paid' || data.campaign_type === 'hybrid';

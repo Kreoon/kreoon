@@ -33,6 +33,7 @@ import {
   GitBranch,
   Star,
   DollarSign,
+  Crown,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -83,9 +84,10 @@ const adminSections: NavSection[] = [
     label: "GESTIÓN",
     items: [
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
-      { name: "Creadores", href: "/creators", icon: Users, tourId: "sidebar-creators", requiresOrg: true },
-      { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
-      { name: "Equipo", href: "/team", icon: UsersRound, tourId: "sidebar-team", requiresOrg: true },
+      { name: "Talento", href: "/talent", icon: Users, tourId: "sidebar-talent", requiresOrg: true },
+      { name: "Clientes", href: "/clients-hub", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
+      { name: "Pipelines", href: "/org-crm/pipelines", icon: GitBranch, tourId: "sidebar-org-pipelines", requiresOrg: true },
+      { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, tourId: "sidebar-org-finances", requiresOrg: true },
     ]
   },
   {
@@ -94,24 +96,16 @@ const adminSections: NavSection[] = [
       { name: "Dashboard", href: "/crm", icon: LayoutDashboard, tourId: "sidebar-crm-dashboard" },
       { name: "Leads", href: "/crm/leads", icon: UserPlus, tourId: "sidebar-crm-leads" },
       { name: "Organizaciones", href: "/crm/organizaciones", icon: Building2, tourId: "sidebar-crm-orgs" },
-      { name: "Creadores", href: "/crm/creadores", icon: Video, tourId: "sidebar-crm-creators" },
+      { name: "Talento", href: "/crm/creadores", icon: Video, tourId: "sidebar-crm-creators" },
       { name: "Usuarios", href: "/crm/usuarios", icon: Users, tourId: "sidebar-crm-users" },
       { name: "Finanzas", href: "/crm/finanzas", icon: DollarSign, tourId: "sidebar-crm-finances" },
     ]
   },
   {
-    label: "CRM ORGANIZACIÓN",
-    items: [
-      { name: "Dashboard", href: "/org-crm", icon: LayoutDashboard, tourId: "sidebar-org-crm-dashboard", requiresOrg: true },
-      { name: "Contactos", href: "/org-crm/contactos", icon: Contact, tourId: "sidebar-org-contacts", requiresOrg: true },
-      { name: "Creadores", href: "/org-crm/creadores", icon: Star, tourId: "sidebar-org-creators", requiresOrg: true },
-      { name: "Pipelines", href: "/org-crm/pipelines", icon: GitBranch, tourId: "sidebar-org-pipelines", requiresOrg: true },
-      { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, tourId: "sidebar-org-finances", requiresOrg: true },
-    ]
-  },
-  {
     label: "CONFIG",
     items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
+      { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
       { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
   }
@@ -133,16 +127,8 @@ const strategistSections: NavSection[] = [
     label: "GESTIÓN",
     items: [
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
-      { name: "Creadores", href: "/creators", icon: Users, tourId: "sidebar-creators", requiresOrg: true },
-      { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
-    ]
-  },
-  {
-    label: "CRM",
-    items: [
-      { name: "Dashboard", href: "/org-crm", icon: LayoutDashboard, tourId: "sidebar-org-crm-dashboard", requiresOrg: true },
-      { name: "Contactos", href: "/org-crm/contactos", icon: Contact, tourId: "sidebar-org-contacts", requiresOrg: true },
-      { name: "Creadores", href: "/org-crm/creadores", icon: Star, tourId: "sidebar-org-creators", requiresOrg: true },
+      { name: "Talento", href: "/talent", icon: Users, tourId: "sidebar-talent", requiresOrg: true },
+      { name: "Clientes", href: "/clients-hub", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
       { name: "Pipelines", href: "/org-crm/pipelines", icon: GitBranch, tourId: "sidebar-org-pipelines", requiresOrg: true },
       { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, tourId: "sidebar-org-finances", requiresOrg: true },
     ]
@@ -150,6 +136,8 @@ const strategistSections: NavSection[] = [
   {
     label: "CONFIG",
     items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
+      { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
       { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
   }
@@ -168,6 +156,8 @@ const editorSections: NavSection[] = [
   {
     label: "CONFIG",
     items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
+      { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
       { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
   }
@@ -186,6 +176,8 @@ const creatorSections: NavSection[] = [
   {
     label: "CONFIG",
     items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
+      { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
       { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
   }
@@ -202,6 +194,7 @@ const clientSections: NavSection[] = [
   {
     label: "CONFIG",
     items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
       { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
   }
@@ -212,7 +205,6 @@ function getMarketplaceSections(activeGroup: PermissionGroup | null): NavSection
   const items: NavItem[] = [
     { name: "Marketplace", href: "/marketplace", icon: Store, tourId: "sidebar-mkt-browse" },
     { name: "Videos", href: "/marketplace/videos", icon: Play, tourId: "sidebar-mkt-videos" },
-    { name: "Mi Perfil", href: "/marketplace/profile/setup", icon: UserCircle, tourId: "sidebar-mkt-profile" },
   ];
 
   // Campaign items — feed visible for internal roles (not editor/client)
@@ -534,13 +526,21 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
                       : item.href as string;
                     const hrefPath = href.split('?')[0];
                     const hrefSearch = href.includes('?') ? href.slice(href.indexOf('?')) : '';
+                    // When an item has no query string, check if a sibling with a more specific match exists
+                    const siblingHasFullMatch = !hrefSearch && location.search && section.items.some(sib => {
+                      if (sib === item) return false;
+                      const sibHref = sib.isDynamic && typeof sib.href === 'function' ? sib.href(userId) : sib.href as string;
+                      const sibPath = sibHref.split('?')[0];
+                      const sibSearch = sibHref.includes('?') ? sibHref.slice(sibHref.indexOf('?')) : '';
+                      return sibSearch && location.pathname === sibPath && location.search === sibSearch;
+                    });
                     const isActive = href === '/marketplace'
                       ? location.pathname === '/marketplace'
                       : (hrefPath.startsWith('/marketplace/') || href === '/wallet')
                       ? location.pathname.startsWith(hrefPath)
                       : hrefSearch
                       ? location.pathname === hrefPath && location.search === hrefSearch
-                      : location.pathname === href;
+                      : location.pathname === href && !siblingHasFullMatch;
                     return (
                       <NavLink
                         key={item.name}

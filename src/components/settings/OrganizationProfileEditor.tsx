@@ -7,8 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { 
@@ -24,9 +22,7 @@ import {
   Save,
   Ban,
   Loader2,
-  Palette,
   Clock,
-  Users,
   Link2,
   Upload,
   Image as ImageIcon
@@ -141,8 +137,6 @@ export function OrganizationProfileEditor({ organizationId, isRootAdmin = false,
         timezone: profile.timezone as any,
         primary_color: profile.primary_color as any,
         max_members: profile.max_members,
-        is_registration_open: profile.is_registration_open,
-        default_role: profile.default_role as any,
       })
       .eq('id', organizationId);
 
@@ -594,92 +588,6 @@ export function OrganizationProfileEditor({ organizationId, isRootAdmin = false,
                 className="pl-10"
               />
             </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Configuración */}
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Palette className="h-5 w-5 text-primary" />
-            Personalización
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="primary_color">Color Principal</Label>
-            <div className="flex gap-2">
-              <Input
-                id="primary_color"
-                type="color"
-                value={profile.primary_color || '#8B5CF6'}
-                onChange={(e) => updateField('primary_color', e.target.value)}
-                className="w-14 h-10 p-1 cursor-pointer"
-              />
-              <Input
-                value={profile.primary_color || '#8B5CF6'}
-                onChange={(e) => updateField('primary_color', e.target.value)}
-                placeholder="#8B5CF6"
-                className="flex-1 font-mono"
-              />
-            </div>
-          </div>
-
-          <Separator />
-
-          <div className="space-y-2">
-            <Label htmlFor="max_members" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Límite de Miembros
-            </Label>
-            <Input
-              id="max_members"
-              type="number"
-              value={profile.max_members || ''}
-              onChange={(e) => updateField('max_members', e.target.value ? parseInt(e.target.value) : null)}
-              placeholder="Sin límite"
-            />
-            <p className="text-xs text-muted-foreground">
-              Deja vacío para no limitar el número de miembros
-            </p>
-          </div>
-
-          <Separator />
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Registro Público Abierto</Label>
-                <p className="text-sm text-muted-foreground">
-                  Permite que nuevos usuarios se registren
-                </p>
-              </div>
-              <Switch
-                checked={profile.is_registration_open || false}
-                onCheckedChange={(checked) => updateField('is_registration_open', checked)}
-              />
-            </div>
-
-            {profile.is_registration_open && (
-              <div className="space-y-2 pl-0 border-l-2 border-primary/20 ml-0">
-                <Label>Rol por Defecto</Label>
-                <Select
-                  value={profile.default_role || 'creator'}
-                  onValueChange={(v) => updateField('default_role', v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="creator">Creador</SelectItem>
-                    <SelectItem value="editor">Editor</SelectItem>
-                    <SelectItem value="strategist">Estratega</SelectItem>
-                    <SelectItem value="client">Cliente</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>

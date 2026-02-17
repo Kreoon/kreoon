@@ -16,7 +16,7 @@ const KAE_EVENTS = [
 const PLATFORM_LABELS: Record<string, string> = {
   meta: 'Meta',
   tiktok: 'TikTok',
-  google: 'Google',
+  google: 'Google Analytics 4',
   linkedin: 'LinkedIn',
 };
 
