@@ -13,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface OrgOption {
   id: string;
@@ -22,11 +21,24 @@ interface OrgOption {
 }
 
 interface TokenBalance {
-  tokens_remaining: number;
-  purchased_tokens: number;
-  monthly_tokens_included: number;
-  tokens_used_this_period: number;
-  custom_api_enabled: boolean;
+  balance_subscription: number;
+  balance_purchased: number;
+  balance_bonus: number;
+  total_consumed: number;
+  monthly_allowance: number;
+}
+
+async function invokeTokenService<T = any>(action: string, body?: Record<string, any>): Promise<T | null> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return null;
+
+  const { data, error } = await supabase.functions.invoke(`ai-tokens-service/${action}`, {
+    body: body || {},
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  });
+
+  if (error || data?.error) return null;
+  return data as T;
 }
 
 function formatTokens(n: number) {
@@ -77,21 +89,24 @@ export function AITokensOrgAdmin() {
     }
     const fetchBalance = async () => {
       try {
-        const { data, error } = await supabase
-          .from("organization_ai_tokens")
-          .select("tokens_remaining, purchased_tokens, monthly_tokens_included, tokens_used_this_period, custom_api_enabled")
-          .eq("organization_id", selectedOrgId)
-          .maybeSingle();
-        if (error) throw error;
-        if (data) {
-          setBalance(data as TokenBalance);
+        const res = await invokeTokenService<{ success: boolean; balance: any }>("get-balance", {
+          organization_id: selectedOrgId,
+        });
+        if (res?.success && res.balance) {
+          setBalance({
+            balance_subscription: res.balance.balance_subscription ?? 0,
+            balance_purchased: res.balance.balance_purchased ?? 0,
+            balance_bonus: res.balance.balance_bonus ?? 0,
+            total_consumed: res.balance.total_consumed ?? 0,
+            monthly_allowance: res.balance.monthly_allowance ?? 0,
+          });
         } else {
           setBalance({
-            tokens_remaining: 0,
-            purchased_tokens: 0,
-            monthly_tokens_included: 0,
-            tokens_used_this_period: 0,
-            custom_api_enabled: false,
+            balance_subscription: 0,
+            balance_purchased: 0,
+            balance_bonus: 0,
+            total_consumed: 0,
+            monthly_allowance: 0,
           });
         }
       } catch (e) {
@@ -111,53 +126,23 @@ export function AITokensOrgAdmin() {
 
     setCrediting(true);
     try {
-      const { data: existing } = await supabase
-        .from("organization_ai_tokens")
-        .select("id, purchased_tokens")
-        .eq("organization_id", selectedOrgId)
-        .maybeSingle();
-
-      if (existing) {
-        const newPurchased = (existing.purchased_tokens ?? 0) + amount;
-        const { error: updateError } = await supabase
-          .from("organization_ai_tokens")
-          .update({
-            purchased_tokens: newPurchased,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("organization_id", selectedOrgId);
-
-        if (updateError) throw updateError;
-      } else {
-        const { error: insertError } = await supabase
-          .from("organization_ai_tokens")
-          .insert({
-            organization_id: selectedOrgId,
-            monthly_tokens_included: 0,
-            tokens_remaining: 0,
-            tokens_used_this_period: 0,
-            purchased_tokens: amount,
-            period_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          });
-
-        if (insertError) throw insertError;
-      }
-
-      await supabase.from("ai_token_transactions").insert({
+      const res = await invokeTokenService("admin-credit", {
         organization_id: selectedOrgId,
-        type: "plan_credit",
-        tokens_amount: amount,
-        module_key: "admin",
-        action: "manual_credit",
+        tokens: amount,
         description: "Crédito manual por administrador",
       });
 
+      if (!res?.success) {
+        throw new Error(res?.error || "Error al agregar coins");
+      }
+
       toast.success(`${formatTokens(amount)} Kreoon Coins agregados correctamente`);
       setTokenAmount("1000");
+      // Refresh balance
       setBalance((prev) =>
         prev
-          ? { ...prev, purchased_tokens: prev.purchased_tokens + amount }
-          : { tokens_remaining: 0, purchased_tokens: amount, monthly_tokens_included: 0, tokens_used_this_period: 0, custom_api_enabled: false }
+          ? { ...prev, balance_purchased: prev.balance_purchased + amount }
+          : { balance_subscription: 0, balance_purchased: amount, balance_bonus: 0, total_consumed: 0, monthly_allowance: 0 }
       );
     } catch (e: any) {
       console.error(e);
@@ -168,7 +153,7 @@ export function AITokensOrgAdmin() {
   };
 
   const totalAvailable = balance
-    ? balance.tokens_remaining + balance.purchased_tokens
+    ? balance.balance_subscription + balance.balance_purchased + balance.balance_bonus
     : 0;
 
   return (
@@ -231,12 +216,10 @@ export function AITokensOrgAdmin() {
                 </strong>
               </span>
               <span className="text-muted-foreground">
-                Plan: {formatTokens(balance.tokens_remaining)} | Extra:{" "}
-                {formatTokens(balance.purchased_tokens)}
+                Plan: {formatTokens(balance.balance_subscription)} | Extra:{" "}
+                {formatTokens(balance.balance_purchased)} | Bonus:{" "}
+                {formatTokens(balance.balance_bonus)}
               </span>
-              {balance.custom_api_enabled && (
-                <span className="text-amber-600">API propia activa</span>
-              )}
             </div>
           </div>
         )}

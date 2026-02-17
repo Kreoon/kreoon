@@ -26,14 +26,12 @@ import {
 } from "@/components/ui/dialog";
 import { KreoonCard } from "@/components/ui/kreoon";
 import { useAITokens } from "@/hooks/useAITokens";
+import { useUnifiedTokens } from "@/hooks/useUnifiedTokens";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { toast } from "sonner";
 
-const TOKEN_PACKAGES = [
-  { tokens: 1200, price: 9, popular: false },
-  { tokens: 6000, price: 39, popular: true },
-  { tokens: 18000, price: 99, popular: false },
-];
+import { TOKEN_PACKAGES } from "@/lib/finance/constants";
 
 function formatTokens(n: number) {
   return n.toLocaleString("es-CO");
@@ -70,7 +68,20 @@ export function AITokensPanel({
     refetch,
   } = useAITokens(organizationId);
 
+  const { purchaseTokens, isPurchasing } = useUnifiedTokens(organizationId);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [purchasingPkg, setPurchasingPkg] = useState<string | null>(null);
+
+  const handlePurchase = async (pkgId: string) => {
+    setPurchasingPkg(pkgId);
+    try {
+      await purchaseTokens(pkgId);
+    } catch (err: any) {
+      toast.error(err?.message || "Error al comprar tokens");
+    } finally {
+      setPurchasingPkg(null);
+    }
+  };
 
   const monthlyIncluded = balance?.monthlyTokensIncluded ?? 0;
   const purchased = balance?.purchasedTokens ?? 0;
@@ -188,9 +199,9 @@ export function AITokensPanel({
             <div className="flex-1">
               <p className="font-medium text-amber-800 dark:text-amber-200">Te quedan pocos Kreoon Coins</p>
               <div className="flex gap-2 mt-2">
-                <Button size="sm" onClick={() => {}}>
+                <Button size="sm" onClick={() => handlePurchase("popular")} disabled={isPurchasing}>
                   <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
-                  Comprar más
+                  {isPurchasing ? "Procesando..." : "Comprar más"}
                 </Button>
                 <Button size="sm" variant="outline" asChild>
                   <Link to="/settings?section=ai_settings&tab=providers&subTab=custom-api">
@@ -212,8 +223,8 @@ export function AITokensPanel({
           {TOKEN_PACKAGES.map((pkg) => (
             <KreoonCard
               key={pkg.tokens}
-              className={`p-4 text-center cursor-pointer transition-all hover:border-primary/50 ${pkg.popular ? "ring-1 ring-primary" : ""}`}
-              onClick={() => {}}
+              className={`p-4 text-center cursor-pointer transition-all hover:border-primary/50 ${pkg.popular ? "ring-1 ring-primary" : ""} ${purchasingPkg === pkg.id ? "opacity-70" : ""}`}
+              onClick={() => handlePurchase(pkg.id)}
             >
               {pkg.popular && (
                 <span className="text-[10px] font-semibold text-primary uppercase tracking-wide">

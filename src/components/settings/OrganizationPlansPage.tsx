@@ -1,115 +1,176 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrganizationTrial } from '@/hooks/useOrganizationTrial';
+import { useSubscription } from '@/hooks/useSubscription';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Check, Crown, Zap, Building2, Users, Video, Sparkles, Clock, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import {
+  Check, Crown, Zap, Building2, Users, Video, Sparkles, Clock,
+  AlertTriangle, CheckCircle2, CreditCard, ExternalLink, Briefcase, UserCircle,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useBillingAnalytics } from '@/analytics';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { PLANS as PLAN_DEFS, type PlanDef } from '@/lib/finance/constants';
+import type { SubscriptionTier, BillingCycle } from '@/types/unified-finance.types';
 
-interface Plan {
-  id: string;
-  name: string;
-  price: number;
-  currency: string;
-  period: string;
-  features: string[];
-  limits: {
-    users: number | 'unlimited';
-    content: number | 'unlimited';
-    storage: string;
-  };
-  highlighted?: boolean;
-  badge?: string;
+type Segment = PlanDef['segment'];
+
+// Map plan IDs to subscription tier IDs
+const PLAN_TO_TIER: Record<string, SubscriptionTier> = {
+  'marcas-starter': 'brand_starter',
+  'marcas-pro': 'brand_pro',
+  'marcas-business': 'brand_business',
+  'creadores-pro': 'creator_pro',
+  'agencias-starter': 'org_starter',
+  'agencias-pro': 'org_pro',
+};
+
+const SEGMENT_CONFIG: Record<Segment, { label: string; icon: React.ReactNode }> = {
+  marcas: { label: 'Marcas', icon: <Building2 className="h-4 w-4" /> },
+  creadores: { label: 'Creadores', icon: <UserCircle className="h-4 w-4" /> },
+  agencias: { label: 'Agencias', icon: <Briefcase className="h-4 w-4" /> },
+};
+
+function getPlanFeatures(plan: PlanDef): string[] {
+  const features: string[] = [];
+
+  // Common features based on limits
+  if (plan.users !== undefined) {
+    features.push(`Hasta ${plan.users ?? 'ilimitados'} usuarios`);
+  }
+  if (plan.contentPerMonth !== undefined && plan.contentPerMonth !== null) {
+    features.push(`${plan.contentPerMonth} proyectos/mes`);
+  } else if (plan.contentPerMonth === null && plan.priceMonthly > 0) {
+    features.push('Proyectos ilimitados');
+  }
+  if (plan.storage && plan.storage !== '—') {
+    features.push(`${plan.storage} almacenamiento`);
+  }
+  features.push(`${plan.aiTokens >= 1000 ? `${(plan.aiTokens / 1000).toFixed(0)}k` : plan.aiTokens} Kreoon Coins/mes`);
+
+  // Agency-specific
+  if (plan.clients !== undefined) {
+    features.push(`${plan.clients ?? 'Ilimitados'} clientes`);
+  }
+  if (plan.teamMembers !== undefined) {
+    features.push(`${plan.teamMembers ?? 'Ilimitados'} miembros del equipo`);
+  }
+
+  // Segment + tier specific features
+  switch (plan.id) {
+    // Marcas
+    case 'marcas-free':
+      features.push('Exploracion de la plataforma');
+      break;
+    case 'marcas-starter':
+      features.push('Soporte por email');
+      features.push('Board Kanban basico');
+      break;
+    case 'marcas-pro':
+      features.push('Soporte prioritario');
+      features.push('Board Kanban avanzado');
+      features.push('Integraciones basicas');
+      features.push('Reportes de rendimiento');
+      break;
+    case 'marcas-business':
+      features.push('Soporte 24/7');
+      features.push('Todas las integraciones');
+      features.push('API access');
+      features.push('Reportes avanzados');
+      features.push('White-label');
+      features.push('Manager dedicado');
+      break;
+    // Creadores
+    case 'creadores-basico':
+      features.push('Portafolio publico');
+      features.push('Postulacion a campanas');
+      break;
+    case 'creadores-pro':
+      features.push('Badge verificado');
+      features.push('Prioridad en campanas');
+      features.push('Estadisticas avanzadas');
+      features.push('Soporte prioritario');
+      break;
+    // Agencias
+    case 'agencias-starter':
+      features.push('Gestion multi-cliente');
+      features.push('Board Kanban avanzado');
+      features.push('Reportes por cliente');
+      break;
+    case 'agencias-pro':
+      features.push('Gestion multi-cliente');
+      features.push('Todas las integraciones');
+      features.push('White-label');
+      features.push('API access');
+      features.push('Manager dedicado');
+      break;
+    case 'agencias-enterprise':
+      features.push('Todo de Agency Pro');
+      features.push('SLA personalizado');
+      features.push('Onboarding dedicado');
+      features.push('Infraestructura dedicada');
+      break;
+  }
+
+  return features;
 }
 
-const PLANS: Plan[] = [
-  {
-    id: 'starter',
-    name: 'Starter',
-    price: 0,
-    currency: 'USD',
-    period: 'mes',
-    features: [
-      'Hasta 3 usuarios',
-      '50 proyectos/mes',
-      '5GB almacenamiento',
-      'Soporte por email',
-      'Board Kanban básico',
-    ],
-    limits: {
-      users: 3,
-      content: 50,
-      storage: '5GB',
-    },
-  },
-  {
-    id: 'professional',
-    name: 'Professional',
-    price: 49,
-    currency: 'USD',
-    period: 'mes',
-    features: [
-      'Hasta 10 usuarios',
-      '200 proyectos/mes',
-      '50GB almacenamiento',
-      'Soporte prioritario',
-      'Board Kanban avanzado',
-      'Integraciones básicas',
-      'Reportes de rendimiento',
-    ],
-    limits: {
-      users: 10,
-      content: 200,
-      storage: '50GB',
-    },
-    highlighted: true,
-    badge: 'Más popular',
-  },
-  {
-    id: 'business',
-    name: 'Business',
-    price: 149,
-    currency: 'USD',
-    period: 'mes',
-    features: [
-      'Usuarios ilimitados',
-      'Proyectos ilimitados',
-      '500GB almacenamiento',
-      'Soporte 24/7',
-      'Todas las integraciones',
-      'API access',
-      'Reportes avanzados',
-      'White-label',
-      'Manager dedicado',
-    ],
-    limits: {
-      users: 'unlimited',
-      content: 'unlimited',
-      storage: '500GB',
-    },
-    badge: 'Enterprise',
-  },
-];
+function getPopularPlanId(segment: Segment): string {
+  switch (segment) {
+    case 'marcas': return 'marcas-pro';
+    case 'creadores': return 'creadores-pro';
+    case 'agencias': return 'agencias-pro';
+  }
+}
 
-export function OrganizationPlansPage() {
+function getPlanIcon(planId: string) {
+  if (planId.includes('business') || planId.includes('enterprise')) {
+    return <Crown className="h-5 w-5 text-amber-500" />;
+  }
+  if (planId.includes('pro')) {
+    return <Zap className="h-5 w-5 text-primary" />;
+  }
+  return null;
+}
+
+interface OrganizationPlansPageProps {
+  fixedSegment?: Segment;
+}
+
+export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPageProps = {}) {
   const { profile } = useAuth();
-  const queryClient = useQueryClient();
   const { trackPlanSelected, trackPlanViewed } = useBillingAnalytics();
   const organizationId = profile?.current_organization_id;
-  
+
   const trialStatus = useOrganizationTrial(organizationId || null);
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const [isUpgrading, setIsUpgrading] = useState(false);
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
+  const [segment, setSegment] = useState<Segment>(fixedSegment || 'marcas');
+
+  const {
+    subscription,
+    isActive,
+    isFree,
+    isPastDue,
+    isCancellingSubscription: subIsCancelling,
+    currentTier,
+    periodEnd,
+    createCheckout,
+    isCheckingOut,
+    openBillingPortal,
+    isOpeningPortal,
+    cancelSubscription,
+    isLoading: subLoading,
+  } = useSubscription(organizationId);
 
   // Fetch current organization data
   const { data: organization, isLoading } = useQuery({
@@ -127,66 +188,43 @@ export function OrganizationPlansPage() {
     enabled: !!organizationId,
   });
 
-  const updatePlanMutation = useMutation({
-    mutationFn: async (planId: string) => {
-      if (!organizationId) throw new Error('No organization');
-      
-      const { error } = await supabase
-        .from('organizations')
-        .update({ 
-          selected_plan: planId,
-          subscription_status: 'active',
-          trial_active: false,
-        })
-        .eq('id', organizationId);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['organization-plan'] });
-      queryClient.invalidateQueries({ queryKey: ['organization-trial'] });
-      toast.success('Plan actualizado', {
-        description: 'Tu plan ha sido actualizado exitosamente.',
-      });
-      setIsUpgrading(false);
-      setSelectedPlan(null);
-    },
-    onError: () => {
-      toast.error('Error al actualizar plan');
-      setIsUpgrading(false);
-    },
-  });
+  // Get plans for the selected segment
+  const segmentPlans = PLAN_DEFS.filter(p => p.segment === segment);
+  const popularPlanId = getPopularPlanId(segment);
 
-  const handleSelectPlan = (planId: string) => {
-    const plan = PLANS.find(p => p.id === planId);
-    if (plan) {
-      trackPlanViewed({
-        plan_id: plan.id,
-        plan_name: plan.name,
-        is_current_plan: plan.id === currentPlan,
-      });
+  const handleSelectPlan = async (planId: string) => {
+    const plan = PLAN_DEFS.find(p => p.id === planId);
+    if (!plan) return;
+
+    // Enterprise plan → contact sales
+    if (planId === 'agencias-enterprise') {
+      window.open('mailto:ventas@kreoon.com?subject=Consulta%20Plan%20Enterprise', '_blank');
+      return;
     }
-    setSelectedPlan(planId);
+
+    trackPlanViewed({
+      plan_id: plan.id,
+      plan_name: plan.name,
+      is_current_plan: plan.id === currentTier,
+    });
+
+    trackPlanSelected({
+      plan_id: plan.id,
+      plan_name: plan.name,
+      is_current_plan: false,
+    });
+
+    try {
+      const tier = PLAN_TO_TIER[plan.id] || plan.id as SubscriptionTier;
+      await createCheckout(tier, billingCycle);
+    } catch (err: any) {
+      toast.error(err?.message || 'Error al crear checkout');
+    }
   };
 
-  const handleConfirmUpgrade = () => {
-    if (!selectedPlan) return;
-    const plan = PLANS.find(p => p.id === selectedPlan);
-    if (plan) {
-      trackPlanSelected({
-        plan_id: plan.id,
-        plan_name: plan.name,
-        is_current_plan: false,
-      });
-    }
-    setIsUpgrading(true);
-    updatePlanMutation.mutate(selectedPlan);
-  };
-
-  const currentPlan = organization?.selected_plan || 'starter';
   const isTrialActive = trialStatus.isTrialActive && !trialStatus.isExpired;
 
-  if (isLoading) {
+  if (isLoading || subLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -203,17 +241,17 @@ export function OrganizationPlansPage() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Building2 className="h-5 w-5" />
-                Estado de tu Suscripción
+                Estado de tu Suscripcion
               </CardTitle>
               <CardDescription>
-                {organization?.name || 'Tu organización'}
+                {organization?.name || 'Tu organizacion'}
               </CardDescription>
             </div>
-            <Badge 
-              variant={isTrialActive ? 'secondary' : trialStatus.isExpired ? 'destructive' : 'default'}
+            <Badge
+              variant={isTrialActive ? 'secondary' : isPastDue ? 'destructive' : isActive ? 'default' : trialStatus.isExpired ? 'destructive' : 'secondary'}
               className="text-sm"
             >
-              {isTrialActive ? 'Periodo de prueba' : trialStatus.isExpired ? 'Expirado' : 'Activo'}
+              {isTrialActive ? 'Periodo de prueba' : isPastDue ? 'Pago pendiente' : isActive ? 'Activo' : trialStatus.isExpired ? 'Expirado' : isFree ? 'Plan gratuito' : 'Inactivo'}
             </Badge>
           </div>
         </CardHeader>
@@ -221,8 +259,8 @@ export function OrganizationPlansPage() {
           {isTrialActive && (
             <>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Días restantes</span>
-                <span className="font-medium">{trialStatus.daysRemaining} días</span>
+                <span className="text-muted-foreground">Dias restantes</span>
+                <span className="font-medium">{trialStatus.daysRemaining} dias</span>
               </div>
               <Progress value={(trialStatus.daysRemaining / 30) * 100} className="h-2" />
               {trialStatus.trialEndDate && (
@@ -232,8 +270,17 @@ export function OrganizationPlansPage() {
               )}
             </>
           )}
-          
-          {trialStatus.isExpired && (
+
+          {isPastDue && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Tu ultimo pago fallo. Actualiza tu metodo de pago para evitar la suspension del servicio.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {trialStatus.isExpired && !isActive && (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
@@ -242,85 +289,184 @@ export function OrganizationPlansPage() {
             </Alert>
           )}
 
-          {!isTrialActive && !trialStatus.isExpired && (
-            <div className="flex items-center gap-2 text-sm text-green-600">
-              <CheckCircle2 className="h-4 w-4" />
-              <span>Plan activo: {PLANS.find(p => p.id === currentPlan)?.name || currentPlan}</span>
+          {isActive && !isTrialActive && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm text-green-600">
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Plan activo: {
+                  PLAN_DEFS.find(p => PLAN_TO_TIER[p.id] === currentTier)?.name || currentTier
+                }</span>
+              </div>
+              {periodEnd && (
+                <p className="text-xs text-muted-foreground">
+                  Proximo cobro: {format(periodEnd, "d 'de' MMMM, yyyy", { locale: es })}
+                  {subIsCancelling && ' (se cancela al final del periodo)'}
+                </p>
+              )}
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => openBillingPortal()} disabled={isOpeningPortal}>
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  {isOpeningPortal ? 'Abriendo...' : 'Gestionar facturacion'}
+                  <ExternalLink className="h-3 w-3 ml-1" />
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
       </Card>
 
+      {/* Segment Tabs — hidden when segment is fixed by role */}
+      {!fixedSegment && (
+        <Tabs value={segment} onValueChange={(v) => setSegment(v as Segment)}>
+          <TabsList className="grid w-full grid-cols-3">
+            {(Object.entries(SEGMENT_CONFIG) as [Segment, typeof SEGMENT_CONFIG[Segment]][]).map(([key, cfg]) => (
+              <TabsTrigger key={key} value={key} className="flex items-center gap-2">
+                {cfg.icon}
+                {cfg.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      )}
+
+      {/* Billing Cycle Toggle */}
+      <div className="flex items-center justify-center gap-4">
+        <Button
+          variant={billingCycle === 'monthly' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setBillingCycle('monthly')}
+        >
+          Mensual
+        </Button>
+        <Button
+          variant={billingCycle === 'annual' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setBillingCycle('annual')}
+        >
+          Anual
+          <Badge variant="secondary" className="ml-2 text-xs">-17%</Badge>
+        </Button>
+      </div>
+
       {/* Plans Grid */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Selecciona tu Plan</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {PLANS.map((plan) => {
-            const isCurrentPlan = currentPlan === plan.id;
-            const isSelected = selectedPlan === plan.id;
-            
+        <h2 className="text-xl font-semibold mb-4">
+          Planes para {SEGMENT_CONFIG[segment].label}
+        </h2>
+        <div className={cn(
+          "grid gap-6",
+          segmentPlans.length <= 2 && "grid-cols-1 md:grid-cols-2 max-w-2xl mx-auto",
+          segmentPlans.length === 3 && "grid-cols-1 md:grid-cols-3",
+          segmentPlans.length >= 4 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-4",
+        )}>
+          {segmentPlans.map((plan) => {
+            const tier = PLAN_TO_TIER[plan.id] || plan.id;
+            const isCurrentPlan = currentTier === tier;
+            const isFreeplan = plan.priceMonthly === 0 && plan.id !== 'agencias-enterprise';
+            const isEnterprise = plan.id === 'agencias-enterprise';
+            const price = billingCycle === 'annual' && plan.priceAnnual
+              ? Math.round(plan.priceAnnual / 12)
+              : plan.priceMonthly;
+            const isPopular = plan.id === popularPlanId;
+            const features = getPlanFeatures(plan);
+
             return (
-              <Card 
+              <Card
                 key={plan.id}
                 className={cn(
-                  "relative transition-all duration-200 cursor-pointer",
-                  plan.highlighted && "border-primary shadow-lg",
-                  isSelected && "ring-2 ring-primary",
-                  isCurrentPlan && !isTrialActive && "bg-primary/5"
+                  "relative transition-all duration-200 flex flex-col",
+                  isPopular && "border-primary shadow-lg",
+                  (plan.highlighted && !isPopular) && "border-primary/50",
+                  isCurrentPlan && isActive && "bg-primary/5"
                 )}
-                onClick={() => handleSelectPlan(plan.id)}
               >
-                {plan.badge && (
+                {(isPopular || plan.badge) && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-primary text-primary-foreground">
-                      {plan.badge}
+                    <Badge className={cn(
+                      isPopular ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+                    )}>
+                      {isPopular ? 'Mas popular' : plan.badge}
                     </Badge>
                   </div>
                 )}
-                
+
                 <CardHeader className="text-center pb-2">
                   <CardTitle className="flex items-center justify-center gap-2">
-                    {plan.id === 'business' && <Crown className="h-5 w-5 text-amber-500" />}
-                    {plan.id === 'professional' && <Zap className="h-5 w-5 text-primary" />}
+                    {getPlanIcon(plan.id)}
                     {plan.name}
                   </CardTitle>
                   <div className="mt-4">
-                    <span className="text-4xl font-bold">${plan.price}</span>
-                    <span className="text-muted-foreground">/{plan.period}</span>
+                    {isEnterprise ? (
+                      <>
+                        <span className="text-3xl font-bold">Personalizado</span>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Contacta a ventas para una cotizacion
+                        </p>
+                      </>
+                    ) : isFreeplan ? (
+                      <>
+                        <span className="text-4xl font-bold">Gratis</span>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Sin tarjeta de credito
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-4xl font-bold">${price}</span>
+                        <span className="text-muted-foreground">/mes</span>
+                        {billingCycle === 'annual' && plan.priceAnnual > 0 && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            ${plan.priceAnnual}/ano facturado anualmente
+                          </p>
+                        )}
+                      </>
+                    )}
                   </div>
                 </CardHeader>
-                
-                <CardContent className="space-y-4">
+
+                <CardContent className="space-y-4 flex-1">
                   <Separator />
-                  
+
                   {/* Limits */}
-                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className={cn(
+                    "grid gap-2 text-center text-xs",
+                    (plan.clients !== undefined) ? "grid-cols-4" : "grid-cols-3"
+                  )}>
                     <div className="p-2 rounded-lg bg-muted/50">
                       <Users className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
                       <span className="font-medium">
-                        {plan.limits.users === 'unlimited' ? '∞' : plan.limits.users}
+                        {plan.users ?? '∞'}
                       </span>
                       <p className="text-muted-foreground">usuarios</p>
                     </div>
-                    <div className="p-2 rounded-lg bg-muted/50">
-                      <Video className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                      <span className="font-medium">
-                        {plan.limits.content === 'unlimited' ? '∞' : plan.limits.content}
-                      </span>
-                      <p className="text-muted-foreground">proyectos</p>
-                    </div>
+                    {plan.contentPerMonth !== undefined && (
+                      <div className="p-2 rounded-lg bg-muted/50">
+                        <Video className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                        <span className="font-medium">
+                          {plan.contentPerMonth ?? '∞'}
+                        </span>
+                        <p className="text-muted-foreground">proyectos</p>
+                      </div>
+                    )}
                     <div className="p-2 rounded-lg bg-muted/50">
                       <Sparkles className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                      <span className="font-medium">{plan.limits.storage}</span>
-                      <p className="text-muted-foreground">storage</p>
+                      <span className="font-medium">{plan.aiTokens >= 1000 ? `${(plan.aiTokens / 1000).toFixed(0)}k` : plan.aiTokens}</span>
+                      <p className="text-muted-foreground">coins</p>
                     </div>
+                    {plan.clients !== undefined && (
+                      <div className="p-2 rounded-lg bg-muted/50">
+                        <Briefcase className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                        <span className="font-medium">{plan.clients ?? '∞'}</span>
+                        <p className="text-muted-foreground">clientes</p>
+                      </div>
+                    )}
                   </div>
-                  
+
                   <Separator />
-                  
+
                   {/* Features */}
                   <ul className="space-y-2">
-                    {plan.features.map((feature, idx) => (
+                    {features.map((feature, idx) => (
                       <li key={idx} className="flex items-start gap-2 text-sm">
                         <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
                         <span>{feature}</span>
@@ -328,24 +474,43 @@ export function OrganizationPlansPage() {
                     ))}
                   </ul>
                 </CardContent>
-                
+
                 <CardFooter>
-                  <Button 
-                    className="w-full" 
-                    variant={isCurrentPlan && !isTrialActive ? "outline" : plan.highlighted ? "default" : "secondary"}
-                    disabled={isCurrentPlan && !isTrialActive}
-                  >
-                    {isCurrentPlan && !isTrialActive ? (
-                      <span className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4" />
-                        Plan actual
-                      </span>
-                    ) : isSelected ? (
-                      'Seleccionado'
-                    ) : (
-                      'Seleccionar'
-                    )}
-                  </Button>
+                  {isFreeplan ? (
+                    <Button className="w-full" variant="outline" disabled>
+                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      Plan incluido
+                    </Button>
+                  ) : isEnterprise ? (
+                    <Button
+                      className="w-full"
+                      variant="secondary"
+                      onClick={() => handleSelectPlan(plan.id)}
+                    >
+                      Contactar ventas
+                    </Button>
+                  ) : (
+                    <Button
+                      className="w-full"
+                      variant={isCurrentPlan && isActive ? "outline" : isPopular ? "default" : "secondary"}
+                      disabled={(isCurrentPlan && isActive) || isCheckingOut}
+                      onClick={() => handleSelectPlan(plan.id)}
+                    >
+                      {isCurrentPlan && isActive ? (
+                        <span className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4" />
+                          Plan actual
+                        </span>
+                      ) : isCheckingOut ? (
+                        <>
+                          <Clock className="h-4 w-4 mr-2 animate-spin" />
+                          Procesando...
+                        </>
+                      ) : (
+                        'Seleccionar plan'
+                      )}
+                    </Button>
+                  )}
                 </CardFooter>
               </Card>
             );
@@ -353,53 +518,19 @@ export function OrganizationPlansPage() {
         </div>
       </div>
 
-      {/* Confirm Selection */}
-      {selectedPlan && selectedPlan !== currentPlan && (
-        <Card className="border-primary bg-primary/5">
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="text-center md:text-left">
-                <h3 className="font-semibold">
-                  {selectedPlan === 'starter' ? 'Cambiar a plan Starter' : `Actualizar a ${PLANS.find(p => p.id === selectedPlan)?.name}`}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {selectedPlan === 'starter' 
-                    ? 'Este es el plan gratuito con funcionalidades limitadas.'
-                    : 'Próximamente podrás pagar con tarjeta de crédito o transferencia.'}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setSelectedPlan(null)}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleConfirmUpgrade} disabled={isUpgrading}>
-                  {isUpgrading ? (
-                    <>
-                      <Clock className="h-4 w-4 mr-2 animate-spin" />
-                      Procesando...
-                    </>
-                  ) : (
-                    <>Confirmar selección</>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Info Card */}
       <Card className="bg-muted/30">
         <CardContent className="pt-6">
           <div className="flex items-start gap-4">
             <div className="p-2 rounded-lg bg-primary/10">
-              <Clock className="h-5 w-5 text-primary" />
+              <CreditCard className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h4 className="font-medium">Próximamente: Pagos en línea</h4>
+              <h4 className="font-medium">Pago seguro con Stripe</h4>
               <p className="text-sm text-muted-foreground mt-1">
-                Estamos trabajando en la integración de pagos. Por ahora, al seleccionar un plan 
-                nuestro equipo se pondrá en contacto contigo para coordinar el pago.
+                Todos los pagos son procesados de forma segura a traves de Stripe.
+                Aceptamos tarjetas de credito/debito Visa, Mastercard y American Express.
+                Puedes cancelar en cualquier momento desde el portal de facturacion.
               </p>
             </div>
           </div>

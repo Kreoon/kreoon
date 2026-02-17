@@ -420,3 +420,168 @@ export function useAdminReferrals(organizationId?: string) {
 
   return { allReferrals, pendingPayouts, loading, processPayout, refetch: fetchAll };
 }
+
+// ═══════════════════════════════════════════════════════════════
+// PERPETUAL REFERRAL SYSTEM (platform-level, not org-scoped)
+// Tables: referral_relationships, referral_earnings
+// ═══════════════════════════════════════════════════════════════
+
+export interface ReferralRelationship {
+  id: string;
+  referrer_id: string;
+  referred_id: string;
+  code: string;
+  status: 'active' | 'paused' | 'terminated';
+  created_at: string;
+  updated_at: string;
+  referrer_last_active: string | null;
+  referred_last_active: string | null;
+  total_subscription_earned: number;
+  total_transaction_earned: number;
+}
+
+export interface ReferralEarning {
+  id: string;
+  relationship_id: string;
+  source_type: 'subscription' | 'transaction';
+  source_id: string | null;
+  gross_amount: number;
+  commission_rate: number;
+  commission_amount: number;
+  status: 'pending' | 'credited' | 'paid' | 'cancelled';
+  created_at: string;
+  credited_at: string | null;
+}
+
+export interface PerpetualReferralStats {
+  total_referrals: number;
+  active_referrals: number;
+  total_subscription_earned: number;
+  total_transaction_earned: number;
+  total_earned: number;
+}
+
+/**
+ * Hook for perpetual referral relationships (platform-level).
+ * Users earn 20% of subscription payments + 5% of transaction amounts
+ * as long as both parties remain active.
+ */
+export function usePerpetualReferrals(userId?: string) {
+  const [relationships, setRelationships] = useState<ReferralRelationship[]>([]);
+  const [stats, setStats] = useState<PerpetualReferralStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  const fetchData = useCallback(async () => {
+    if (!userId) { setLoading(false); return; }
+    setLoading(true);
+    try {
+      // Fetch relationships where user is referrer
+      const { data: rels } = await (supabase as any)
+        .from('referral_relationships')
+        .select('*')
+        .eq('referrer_id', userId)
+        .order('created_at', { ascending: false });
+
+      setRelationships((rels || []) as ReferralRelationship[]);
+
+      // Fetch aggregated stats via RPC
+      const { data: statsData } = await supabase.rpc('get_perpetual_referral_stats', {
+        p_user_id: userId,
+      });
+
+      if (statsData) {
+        setStats(statsData as unknown as PerpetualReferralStats);
+      }
+    } catch (err) {
+      console.error('Error fetching perpetual referrals:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const generateCode = useCallback(async (customCode?: string) => {
+    if (!userId) return null;
+
+    const code = customCode || `ref-${userId.slice(0, 8)}-${Math.random().toString(36).slice(2, 6)}`;
+
+    const { data, error } = await (supabase as any)
+      .from('referral_relationships')
+      .insert({
+        referrer_id: userId,
+        referred_id: userId, // placeholder — gets updated when referred user signs up
+        code,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === '23505') {
+        toast({ variant: 'destructive', description: 'Ese código ya existe' });
+      } else {
+        toast({ variant: 'destructive', description: 'Error al generar código' });
+      }
+      return null;
+    }
+
+    fetchData();
+    return data as ReferralRelationship;
+  }, [userId, toast, fetchData]);
+
+  return { relationships, stats, loading, generateCode, refetch: fetchData };
+}
+
+/**
+ * Hook for viewing referral earnings history.
+ */
+export function useReferralEarnings(userId?: string) {
+  const [earnings, setEarnings] = useState<ReferralEarning[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchEarnings = useCallback(async () => {
+    if (!userId) { setLoading(false); return; }
+    setLoading(true);
+    try {
+      // Get all relationship IDs for this user
+      const { data: rels } = await (supabase as any)
+        .from('referral_relationships')
+        .select('id')
+        .eq('referrer_id', userId);
+
+      if (!rels?.length) {
+        setEarnings([]);
+        setLoading(false);
+        return;
+      }
+
+      const relIds = rels.map((r: { id: string }) => r.id);
+
+      const { data } = await (supabase as any)
+        .from('referral_earnings')
+        .select('*')
+        .in('relationship_id', relIds)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      setEarnings((data || []) as ReferralEarning[]);
+    } catch (err) {
+      console.error('Error fetching referral earnings:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => { fetchEarnings(); }, [fetchEarnings]);
+
+  const pendingTotal = earnings
+    .filter(e => e.status === 'pending')
+    .reduce((sum, e) => sum + e.commission_amount, 0);
+
+  const creditedTotal = earnings
+    .filter(e => e.status === 'credited')
+    .reduce((sum, e) => sum + e.commission_amount, 0);
+
+  return { earnings, loading, pendingTotal, creditedTotal, refetch: fetchEarnings };
+}

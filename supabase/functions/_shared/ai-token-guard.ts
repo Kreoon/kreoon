@@ -5,26 +5,33 @@
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-/** Costo en tokens por acción (~20% menos = más utilidad, réplica para Edge Functions) */
+/**
+ * Costo en tokens por acción de IA.
+ * SYNC: src/lib/finance/constants.ts v2026.02.17
+ * Estos valores deben coincidir con AI_TOKEN_COSTS del frontend.
+ */
 const AI_TOKEN_COSTS: Record<string, number> = {
-  "scripts.generate": 80,
-  "scripts.improve": 40,
-  "research.full": 400,
-  "research.phase": 65,
-  "board.suggestions": 25,
-  "board.prioritize": 30,
-  "board.analyze_card": 50,
-  "board.analyze_board": 80,
-  "board.research_context": 120,
-  "talent.match": 50,
-  "talent.suggest_creator": 95,
-  "live.generate": 120,
-  "portfolio.bio": 30,
-  "portfolio.caption": 20,
-  "content.generate_script": 80,
-  "content.improve_script": 40,
-  "content.analyze": 30,
-  "script_chat": 25,
+  "research.full": 600,
+  "dna.full_analysis": 500,
+  "dna.project_analysis": 400,
+  "scripts.generate": 120,
+  "content.generate_script": 120,
+  "research.phase": 100,
+  "board.analyze_board": 100,
+  "board.research_context": 150,
+  "talent.suggest_creator": 120,
+  "live.generate": 150,
+  "board.analyze_card": 80,
+  "talent.match": 60,
+  "scripts.improve": 60,
+  "content.improve_script": 60,
+  "portfolio.bio": 50,
+  "content.analyze": 40,
+  "board.suggestions": 40,
+  "board.prioritize": 40,
+  "portfolio.caption": 25,
+  "script_chat": 20,
+  "transcription": 15,
 };
 
 export interface TokenCheckResult {

@@ -7,7 +7,7 @@ import { EscrowCard } from './EscrowCard';
 import { EscrowStatusBadge } from './EscrowStatusBadge';
 import { EscrowTimelineEnhanced } from './EscrowTimelineEnhanced';
 import { EscrowDetailDrawer } from './EscrowDetailDrawer';
-import { useEscrow, useEscrowMutations } from '../../hooks/useEscrow';
+import { useProjectEscrow, useEscrowMutations } from '../../hooks/useEscrow';
 import type { EscrowDisplay } from '../../types';
 import { formatCurrency } from '../../types';
 
@@ -26,7 +26,7 @@ export function CampaignEscrowSection({
 }: CampaignEscrowSectionProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const { escrow, isLoading, error } = useEscrow({ campaignId });
+  const { escrow, isLoading, error } = useProjectEscrow(campaignId);
   const {
     releaseEscrow,
     refundEscrow,
@@ -79,11 +79,11 @@ export function CampaignEscrowSection({
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
           userRole="brand"
-          onApprove={(data) => {
-            releaseEscrow({ escrowId: escrow.id, ...data });
+          onApprove={() => {
+            releaseEscrow({ escrowId: escrow.id });
           }}
           onRefund={() => {
-            refundEscrow(escrow.id);
+            refundEscrow({ escrowId: escrow.id });
           }}
           isProcessing={isReleasing || isRefunding}
         />

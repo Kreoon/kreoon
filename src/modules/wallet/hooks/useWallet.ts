@@ -32,7 +32,7 @@ export function useWallet(options: UseWalletOptions = {}) {
       if (!user?.id) return null;
 
       let query = supabase
-        .from('wallets')
+        .from('unified_wallets')
         .select('*');
 
       if (organizationId) {
@@ -116,7 +116,7 @@ export function useUserWallets() {
       if (!user?.id) return [];
 
       const { data, error } = await supabase
-        .from('wallets')
+        .from('unified_wallets')
         .select('*')
         .eq('user_id', user.id)
         .order('wallet_type');
@@ -161,7 +161,7 @@ export function useOrganizationWallets(organizationId: string | null) {
       if (!organizationId) return [];
 
       const { data, error } = await supabase
-        .from('wallets')
+        .from('unified_wallets')
         .select('*')
         .eq('organization_id', organizationId)
         .order('wallet_type');
@@ -204,7 +204,7 @@ export function useAllWallets(filters?: { status?: string; walletType?: WalletTy
     queryKey: ['wallets', 'all', filters],
     queryFn: async (): Promise<Wallet[]> => {
       let query = supabase
-        .from('wallets')
+        .from('unified_wallets')
         .select(`
           *,
           profiles:user_id (

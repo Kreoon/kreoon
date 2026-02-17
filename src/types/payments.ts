@@ -251,8 +251,10 @@ export interface CompanySpendingStats {
   average_project_value: number;
 }
 
-// Platform fee configuration
-export const PLATFORM_FEE_PERCENTAGE = 0.10; // 10%
-export const MIN_PAYMENT_AMOUNT = 50; // Minimum $50 per project
-export const STRIPE_PROCESSING_FEE = 0.029; // 2.9%
-export const STRIPE_FIXED_FEE = 0.30; // $0.30
+// Platform fee configuration — imports from single source of truth
+import { COMMISSION_RATES, PAYMENT_PROVIDER_FEES, ESCROW_MIN_PAYMENT_USD } from '@/lib/finance/constants';
+
+export const PLATFORM_FEE_PERCENTAGE = COMMISSION_RATES.marketplace_direct.base / 100;
+export const MIN_PAYMENT_AMOUNT = ESCROW_MIN_PAYMENT_USD;
+export const STRIPE_PROCESSING_FEE = PAYMENT_PROVIDER_FEES.stripe.percentage / 100;
+export const STRIPE_FIXED_FEE = PAYMENT_PROVIDER_FEES.stripe.fixed;
