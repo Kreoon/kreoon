@@ -23,7 +23,7 @@ BEGIN
             COALESCE(p.email, au.email) AS email,
             COALESCE(p.full_name, au.raw_user_meta_data->>'full_name', 'Sin nombre') AS full_name,
             p.avatar_url,
-            COALESCE(om.role, p.active_role) AS role,
+            COALESCE(om.role::text, p.active_role) AS role,
             om.organization_id,
             o.name AS organization_name,
             COALESCE(h.health_score, 50) AS health_score,
