@@ -336,6 +336,29 @@ serve(async (req) => {
         }
       }
 
+      case "set_active_role": {
+        // Set active_role on a user's profile (works even without org membership)
+        const { activeRole } = body;
+        if (!userId || !activeRole) {
+          return new Response(JSON.stringify({ error: "User ID and activeRole required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        const { error: roleUpdateError } = await supabaseAdmin
+          .from("profiles")
+          .update({ active_role: activeRole })
+          .eq("id", userId);
+
+        if (roleUpdateError) throw roleUpdateError;
+
+        console.log(`Active role set to ${activeRole} for user ${userId}`);
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
       case "delete_user": {
         if (!userId) {
           return new Response(JSON.stringify({ error: "User ID required" }), {

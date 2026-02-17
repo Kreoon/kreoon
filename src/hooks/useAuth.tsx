@@ -451,6 +451,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         userRoles = [profileActiveRole];
       }
 
+      // FALLBACK 2: If still no roles, check creator_profiles for marketplace users
+      // This handles users who registered as talent before the active_role fix
+      if (userRoles.length === 0) {
+        try {
+          const cpResult = await withTimeout(
+            () => (supabase as any)
+              .from('creator_profiles')
+              .select('marketplace_roles')
+              .eq('user_id', roleUserId)
+              .limit(1)
+              .maybeSingle(),
+            5000
+          );
+          if (cpResult.data?.marketplace_roles?.length > 0) {
+            const mpRole = cpResult.data.marketplace_roles[0] as AppRole;
+            console.log('[auth] Found creator_profile, using marketplace role:', mpRole);
+            userRoles = [mpRole];
+            // Auto-fix the missing active_role for future logins
+            supabase.from('profiles').update({ active_role: mpRole } as any).eq('id', roleUserId);
+          }
+        } catch (err) {
+          console.warn('[auth] Error checking creator_profiles:', err);
+        }
+      }
+
       console.log('[auth] Final roles for user:', userRoles, 'Profile active_role:', profileActiveRole);
 
       if (!silent || userRoles.length > 0) {

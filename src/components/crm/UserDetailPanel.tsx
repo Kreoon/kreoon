@@ -398,6 +398,7 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
           isBanned={user.is_banned}
           orgId={user.organization_id}
           orgName={user.organization_name}
+          activeRole={full?.active_role || null}
           currentUserEmail={currentUserEmail}
           onActionComplete={() => onUpdate?.()}
         />
