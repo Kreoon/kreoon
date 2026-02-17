@@ -1,10 +1,55 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ArrowLeft, MessageSquare, Gift, DollarSign, Calendar, GripVertical, Film, Play } from 'lucide-react';
+import { Search, ArrowLeft, MessageSquare, Gift, DollarSign, Calendar, GripVertical, Film, Play, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMarketplaceProjects } from '@/hooks/useMarketplaceProjects';
 import { ProjectDetailModal } from './ProjectDetailModal';
 import type { MarketplaceProject, ProjectStatus, KanbanColumnConfig } from '../types/marketplace';
+
+// ── Deadline indicator helper ────────────────────────────────────────
+function DeadlineIndicator({ deadline, status }: { deadline: string; status: ProjectStatus }) {
+  const now = new Date();
+  const dl = new Date(deadline);
+  const diffMs = dl.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  if (status === 'completed' || status === 'cancelled') {
+    return (
+      <div className="flex items-center gap-0.5 text-gray-600 text-[10px]">
+        <Calendar className="h-2.5 w-2.5" />
+        {dl.toLocaleDateString('es-CO', { month: 'short', day: 'numeric' })}
+      </div>
+    );
+  }
+
+  if (diffDays < 0) {
+    // Overdue
+    return (
+      <div className="flex items-center gap-0.5 text-red-400 text-[10px] font-medium">
+        <AlertTriangle className="h-2.5 w-2.5" />
+        Vencido {Math.abs(diffDays)}d
+      </div>
+    );
+  }
+
+  if (diffDays <= 3) {
+    // Urgent
+    return (
+      <div className="flex items-center gap-0.5 text-amber-400 text-[10px] font-medium">
+        <Calendar className="h-2.5 w-2.5" />
+        {diffDays === 0 ? 'Hoy' : `${diffDays}d`}
+      </div>
+    );
+  }
+
+  // Normal
+  return (
+    <div className="flex items-center gap-0.5 text-gray-600 text-[10px]">
+      <Calendar className="h-2.5 w-2.5" />
+      {dl.toLocaleDateString('es-CO', { month: 'short', day: 'numeric' })}
+    </div>
+  );
+}
 
 interface MarketplaceKanbanBoardProps {
   columns: KanbanColumnConfig[];
@@ -69,11 +114,14 @@ export function MarketplaceKanbanBoard({ columns, viewRole }: MarketplaceKanbanB
       const sourceColumn = columns.find(c => c.id === project.status);
       if (!sourceColumn?.allowedTransitions.includes(targetStatus)) return;
 
+      // Optimistic local update
       setProjects(prev =>
         prev.map(p => (p.id === projectId ? { ...p, status: targetStatus, updated_at: new Date().toISOString() } : p)),
       );
+      // Persist to DB
+      dbUpdateStatus(projectId, targetStatus);
     },
-    [projects, columns],
+    [projects, columns, dbUpdateStatus],
   );
 
   const selectedProject = selectedProjectId ? projects.find(p => p.id === selectedProjectId) : null;
@@ -210,10 +258,7 @@ export function MarketplaceKanbanBoard({ columns, viewRole }: MarketplaceKanbanB
                             </div>
                             <div className="flex items-center gap-1.5">
                               {project.deadline && (
-                                <div className="flex items-center gap-0.5 text-gray-600 text-[10px]">
-                                  <Calendar className="h-2.5 w-2.5" />
-                                  {new Date(project.deadline).toLocaleDateString('es-CO', { month: 'short', day: 'numeric' })}
-                                </div>
+                                <DeadlineIndicator deadline={project.deadline} status={project.status} />
                               )}
                               {project.unread_messages > 0 && (
                                 <span className="flex items-center gap-0.5 bg-purple-500/20 text-purple-300 text-[10px] px-1 py-0.5 rounded-full">
@@ -247,11 +292,14 @@ export function MarketplaceKanbanBoard({ columns, viewRole }: MarketplaceKanbanB
           viewRole={viewRole}
           onClose={() => setSelectedProjectId(null)}
           onStatusChange={(projectId, newStatus) => {
+            // Optimistic local update
             setProjects(prev =>
               prev.map(p =>
                 p.id === projectId ? { ...p, status: newStatus, updated_at: new Date().toISOString() } : p,
               ),
             );
+            // Persist to DB
+            dbUpdateStatus(projectId, newStatus);
           }}
           columns={columns}
         />

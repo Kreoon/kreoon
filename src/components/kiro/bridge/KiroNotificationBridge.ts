@@ -95,19 +95,6 @@ export const PLATFORM_NOTIFICATION_MAP: Record<PlatformNotificationType, Platfor
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Mensajes
-  // ─────────────────────────────────────────────────────────────────────────
-  message: {
-    kiroType: 'mention',
-    zone: 'sala-de-prensa',
-    priority: 'medium',
-    reaction: 'nod',
-    kiroMessageTemplate: '¡Nuevo mensaje! {title}',
-    actionLabel: 'Abrir chat',
-    vibrateAntenna: true,
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────
   // Asignaciones
   // ─────────────────────────────────────────────────────────────────────────
   assignment: {
@@ -180,8 +167,6 @@ const ENTITY_TYPE_TO_ZONE: Record<string, KiroZone> = {
   board: 'sala-de-control',
 
   // Comunicación
-  chat: 'sala-de-prensa',
-  message: 'sala-de-prensa',
   comment: 'sala-de-prensa',
 
   // Live y Streaming
@@ -222,12 +207,6 @@ const KIRO_MESSAGE_PREFIXES: Record<PlatformNotificationType, string[]> = {
     '¡Te buscan! ',
     '¡Noticia! ',
     '¡Ding ding! ',
-  ],
-  message: [
-    '¡Nuevo mensaje! ',
-    '¡Tienes correo! ',
-    '¡Alguien te escribió! ',
-    '¡Mensaje entrante! ',
   ],
   assignment: [
     '¡Tienes trabajo! ',
@@ -344,9 +323,6 @@ function generateActionRoute(entityType: string, entityId: string): string {
       return `/campaigns/${entityId}`;
     case 'board':
       return `/content-board`;
-    case 'chat':
-    case 'message':
-      return `/chat/${entityId}`;
     case 'stream':
     case 'live':
       return `/live/${entityId}`;
@@ -549,11 +525,6 @@ export function getVoiceAnnouncementForNotification(
     }
     // Fallback genérico para cualquier otro cambio de estado
     return { text: 'Hay un cambio de estado en tu producción', emotion: 'neutral' };
-  }
-
-  // Mensajes de chat no usan voz (ya tienen su propio sistema de sonido)
-  if (platformNotification.type === 'message') {
-    return null;
   }
 
   // Para otros tipos, usar el voiceMessage configurado

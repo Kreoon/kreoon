@@ -37,50 +37,58 @@ const MODULE_LABELS: Record<string, string> = {
   content: "Contenido",
   live: "Live",
   portfolio: "Portafolio",
+  dna: "ADN",
 };
 
+async function invokeTokenService<T = any>(action: string, body?: Record<string, any>): Promise<T | null> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return null;
+
+  const { data, error } = await supabase.functions.invoke(`ai-tokens-service/${action}`, {
+    body: body || {},
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  });
+
+  if (error || data?.error) return null;
+  return data as T;
+}
+
 export function useAITokens(organizationId?: string) {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const orgId = organizationId ?? profile?.current_organization_id ?? null;
   const [balance, setBalance] = useState<AITokenBalance | null>(null);
   const [transactions, setTransactions] = useState<AITokenTransaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
-    if (!orgId) {
+    if (!orgId && !user?.id) {
       setLoading(false);
       return;
     }
     setLoading(true);
     try {
-      const [tokensRes, txRes] = await Promise.all([
-        supabase
-          .from("organization_ai_tokens")
-          .select("*")
-          .eq("organization_id", orgId)
-          .maybeSingle(),
-        supabase
-          .from("ai_token_transactions")
-          .select("id, type, tokens_amount, module_key, action, description, created_at")
-          .eq("organization_id", orgId)
-          .order("created_at", { ascending: false })
-          .limit(20),
+      const [balanceRes, historyRes] = await Promise.all([
+        invokeTokenService<{ success: boolean; balance: any }>("get-balance", {
+          organization_id: orgId || undefined,
+        }),
+        invokeTokenService<{ success: boolean; transactions: any[]; stats: any }>("get-history", {
+          organization_id: orgId || undefined,
+          limit: 20,
+        }),
       ]);
 
-      // Si las tablas no existen (404) o hay error, usar valores por defecto
-      const tokensData = tokensRes.error ? null : tokensRes.data;
-      const txData = txRes.error ? [] : (txRes.data ?? []);
+      if (balanceRes?.success && balanceRes.balance) {
+        const b = balanceRes.balance;
+        const totalBalance = (b.balance_subscription ?? 0) + (b.balance_purchased ?? 0) + (b.balance_bonus ?? 0);
 
-      if (tokensData) {
-        const d = tokensRes.data as any;
         setBalance({
-          tokensRemaining: d.tokens_remaining ?? 0,
-          tokensUsedThisPeriod: d.tokens_used_this_period ?? 0,
-          monthlyTokensIncluded: d.monthly_tokens_included ?? 0,
-          purchasedTokens: d.purchased_tokens ?? 0,
-          periodStartDate: d.period_start_date ?? null,
-          periodEndDate: d.period_end_date ?? null,
-          customApiEnabled: d.custom_api_enabled ?? false,
+          tokensRemaining: totalBalance,
+          tokensUsedThisPeriod: b.total_consumed ?? 0,
+          monthlyTokensIncluded: b.monthly_allowance ?? 0,
+          purchasedTokens: b.balance_purchased ?? 0,
+          periodStartDate: b.last_reset_at ?? null,
+          periodEndDate: b.next_reset_at ?? null,
+          customApiEnabled: false,
         });
       } else {
         setBalance({
@@ -94,14 +102,28 @@ export function useAITokens(organizationId?: string) {
         });
       }
 
-      setTransactions((txData as AITokenTransaction[]) ?? []);
+      if (historyRes?.success && historyRes.transactions) {
+        setTransactions(
+          historyRes.transactions.map((t: any) => ({
+            id: t.id,
+            type: t.transaction_type === "consumption" ? "usage" : t.transaction_type,
+            tokens_amount: t.transaction_type === "consumption" ? -Math.abs(t.tokens) : t.tokens,
+            module_key: t.action_type?.split(".")?.[0] || null,
+            action: t.action_type || null,
+            description: null,
+            created_at: t.created_at,
+          }))
+        );
+      } else {
+        setTransactions([]);
+      }
     } catch {
       setBalance(null);
       setTransactions([]);
     } finally {
       setLoading(false);
     }
-  }, [orgId]);
+  }, [orgId, user?.id]);
 
   useEffect(() => {
     fetchData();
@@ -143,7 +165,6 @@ export function useAITokens(organizationId?: string) {
       .sort((a, b) => b.tokens - a.tokens);
   })();
 
-  // If no usage data, show default distribution
   const displayUsage =
     usageByModule.length > 0
       ? usageByModule

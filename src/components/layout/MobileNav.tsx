@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAuthAnalytics } from "@/analytics";
 import {
   LayoutDashboard,
   Video,
@@ -24,10 +25,12 @@ import {
   UserPlus,
   MessageSquare,
   ListChecks,
+  ContactRound,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { getRoleBadgeInfo } from "@/lib/roles";
+import { getPermissionGroup, type PermissionGroup } from "@/lib/permissionGroups";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
@@ -64,15 +67,25 @@ const adminSections: NavSection[] = [
     label: "GESTIÓN",
     items: [
       { name: "Portafolio", href: "/content", icon: FileText },
-      { name: "Creadores", href: "/creators", icon: Users },
-      { name: "Clientes", href: "/clients", icon: Building2 },
+      { name: "Talento", href: "/talent", icon: Users },
+      { name: "Clientes", href: "/clients-hub", icon: Building2 },
       { name: "Equipo", href: "/team", icon: UsersRound },
       { name: "Live", href: "/live", icon: Video },
+      { name: "CRM", href: "/org-crm", icon: ContactRound },
+      { name: "Pipelines", href: "/org-crm/pipelines", icon: Building2 },
+      { name: "Finanzas", href: "/org-crm/finanzas", icon: Building2 },
+    ]
+  },
+  {
+    label: "CRM PLATAFORMA",
+    items: [
+      { name: "Platform CRM", href: "/crm", icon: ContactRound },
     ]
   },
   {
     label: "CUENTA",
     items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
       { name: "Configuración", href: "/settings", icon: Settings },
     ]
   }
@@ -88,8 +101,19 @@ const strategistSections: NavSection[] = [
     ]
   },
   {
+    label: "GESTIÓN",
+    items: [
+      { name: "Portafolio", href: "/content", icon: FileText },
+      { name: "Talento", href: "/talent", icon: Users },
+      { name: "Clientes", href: "/clients-hub", icon: Building2 },
+      { name: "Pipelines", href: "/org-crm/pipelines", icon: Building2 },
+      { name: "Finanzas", href: "/org-crm/finanzas", icon: Building2 },
+    ]
+  },
+  {
     label: "CUENTA",
     items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
       { name: "Configuración", href: "/settings", icon: Settings },
     ]
   }
@@ -109,6 +133,7 @@ const creatorSections: NavSection[] = [
   {
     label: "CUENTA",
     items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
       { name: "Configuración", href: "/settings", icon: Settings },
     ]
   }
@@ -128,6 +153,7 @@ const editorSections: NavSection[] = [
   {
     label: "CUENTA",
     items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
       { name: "Configuración", href: "/settings", icon: Settings },
     ]
   }
@@ -145,21 +171,21 @@ const clientSections: NavSection[] = [
   {
     label: "CUENTA",
     items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
       { name: "Configuración", href: "/settings", icon: Settings },
     ]
   }
 ];
 
-function getMarketplaceSections(activeRole: string | null): NavSection[] {
+function getMarketplaceSections(activeGroup: PermissionGroup | null): NavSection[] {
   const items: NavItem[] = [
     { name: "Marketplace", href: "/marketplace", icon: Store },
     { name: "Videos", href: "/marketplace/videos", icon: Play },
-    { name: "Mi Perfil", href: "/marketplace/profile/setup", icon: UserCircle },
   ];
 
-  if (activeRole === 'client' || activeRole === 'admin' || activeRole === 'strategist') {
+  if (activeGroup === 'client' || activeGroup === 'admin' || activeGroup === 'strategist') {
     items.push({ name: "Mis Campanas", href: "/marketplace/my-campaigns", icon: Megaphone });
-  } else if (activeRole !== 'editor') {
+  } else if (activeGroup !== 'editor') {
     items.push({ name: "Campanas", href: "/marketplace/campaigns", icon: Megaphone });
   }
 
@@ -171,7 +197,7 @@ function getMarketplaceSections(activeRole: string | null): NavSection[] {
     { name: "Invitaciones", href: "/marketplace/invitations", icon: UserPlus },
   ];
 
-  if (activeRole === 'admin' || activeRole === 'strategist') {
+  if (activeGroup === 'admin' || activeGroup === 'strategist') {
     savedItems.push({ name: "Consultas", href: "/marketplace/inquiries", icon: MessageSquare });
   }
 
@@ -189,6 +215,7 @@ export function MobileNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile, user, isAdmin, isCreator, isEditor, isClient, isStrategist, roles } = useAuth();
+  const { trackLogout } = useAuthAnalytics();
   const { currentOrgName } = useOrgOwner();
   const { marketplaceEnabled } = useOrgMarketplace();
 
@@ -269,6 +296,7 @@ export function MobileNav() {
   }, [isClient, user]);
 
   const handleSignOut = async () => {
+    trackLogout();
     setOpen(false);
     await signOut();
     navigate('/auth');
@@ -279,17 +307,16 @@ export function MobileNav() {
     let baseSections: NavSection[];
     let roleStr: string | null;
 
-    if (isAdmin) { baseSections = adminSections; roleStr = 'admin'; }
-    else if (isStrategist) { baseSections = strategistSections; roleStr = 'strategist'; }
-    else if (isEditor) { baseSections = editorSections; roleStr = 'editor'; }
-    else if (isCreator) { baseSections = creatorSections; roleStr = 'creator'; }
-    else if (isClient) { baseSections = clientSections; roleStr = 'client'; }
-    else {
-      baseSections = [];
-      roleStr = null;
-    }
+    // Use permission groups from useAuth (isAdmin, isCreator, etc. already resolve via groups)
+    if (isAdmin) { baseSections = adminSections; }
+    else if (isStrategist) { baseSections = strategistSections; }
+    else if (isEditor) { baseSections = editorSections; }
+    else if (isCreator) { baseSections = creatorSections; }
+    else if (isClient) { baseSections = clientSections; }
+    else { baseSections = []; }
 
-    const mktSections = marketplaceEnabled ? getMarketplaceSections(roleStr) : [];
+    const activeGroup: PermissionGroup | null = roles.length > 0 ? getPermissionGroup(roles[0]) : null;
+    const mktSections = marketplaceEnabled ? getMarketplaceSections(activeGroup) : [];
 
     // "Buscar Talento" section - always visible for recruitment
     const recruitSection: NavSection = {
@@ -390,13 +417,20 @@ export function MobileNav() {
                   {section.items.map((item) => {
                     const itemPath = item.href.split('?')[0];
                     const itemSearch = item.href.includes('?') ? item.href.slice(item.href.indexOf('?')) : '';
+                    // When an item has no query string, check if a sibling with a more specific match exists
+                    const siblingHasFullMatch = !itemSearch && location.search && section.items.some(sib => {
+                      if (sib === item) return false;
+                      const sibPath = sib.href.split('?')[0];
+                      const sibSearch = sib.href.includes('?') ? sib.href.slice(sib.href.indexOf('?')) : '';
+                      return sibSearch && location.pathname === sibPath && location.search === sibSearch;
+                    });
                     const isActive = item.href === '/marketplace'
                       ? location.pathname === '/marketplace'
                       : (itemPath.startsWith('/marketplace/') || item.href === '/wallet')
                       ? location.pathname.startsWith(itemPath)
                       : itemSearch
                       ? location.pathname === itemPath && location.search === itemSearch
-                      : location.pathname === item.href;
+                      : location.pathname === item.href && !siblingHasFullMatch;
                     return (
                       <NavLink
                         key={item.name}

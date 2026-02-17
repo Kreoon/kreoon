@@ -2,16 +2,30 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { EscrowHold, EscrowStatus, CreateEscrowInput } from '../types';
 
+// Helper to invoke the escrow-service edge function with auth
+async function invokeEscrowService<T = any>(
+  action: string,
+  body: Record<string, any>
+): Promise<T> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('No autenticado');
+
+  const { data, error } = await supabase.functions.invoke(`escrow-service/${action}`, {
+    body,
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  });
+
+  if (error) throw new Error(error.message || `Error en escrow/${action}`);
+  if (data?.error) throw new Error(data.error);
+  return data as T;
+}
+
 export class EscrowService {
   /**
    * Create a new escrow hold (via edge function for atomic operation)
    */
   static async createEscrow(input: CreateEscrowInput): Promise<string> {
-    const { data, error } = await supabase.functions.invoke('wallet-create-escrow', {
-      body: input,
-    });
-
-    if (error) throw error;
+    const data = await invokeEscrowService('create', input);
     return data.escrow_id;
   }
 
@@ -30,27 +44,13 @@ export class EscrowService {
   }
 
   /**
-   * Get escrows for a content piece
+   * Get escrows for a project
    */
-  static async getContentEscrows(contentId: string): Promise<EscrowHold[]> {
+  static async getProjectEscrows(projectId: string): Promise<EscrowHold[]> {
     const { data, error } = await supabase
       .from('escrow_holds')
       .select('*')
-      .eq('content_id', contentId)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return (data || []) as EscrowHold[];
-  }
-
-  /**
-   * Get escrows for a campaign
-   */
-  static async getCampaignEscrows(campaignId: string): Promise<EscrowHold[]> {
-    const { data, error } = await supabase
-      .from('escrow_holds')
-      .select('*')
-      .eq('campaign_id', campaignId)
+      .eq('project_id', projectId)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -80,42 +80,6 @@ export class EscrowService {
   }
 
   /**
-   * Assign editor to escrow
-   */
-  static async assignEditor(escrowId: string, editorWalletId: string): Promise<EscrowHold> {
-    const { data, error } = await supabase
-      .from('escrow_holds')
-      .update({
-        editor_wallet_id: editorWalletId,
-        editor_assigned_at: new Date().toISOString(),
-        status: 'pending_editor' as EscrowStatus,
-      })
-      .eq('id', escrowId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data as EscrowHold;
-  }
-
-  /**
-   * Assign creator to escrow
-   */
-  static async assignCreator(escrowId: string, creatorWalletId: string): Promise<EscrowHold> {
-    const { data, error } = await supabase
-      .from('escrow_holds')
-      .update({
-        creator_wallet_id: creatorWalletId,
-      })
-      .eq('id', escrowId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data as EscrowHold;
-  }
-
-  /**
    * Mark content as delivered
    */
   static async markDelivered(escrowId: string): Promise<EscrowHold> {
@@ -134,50 +98,45 @@ export class EscrowService {
   }
 
   /**
+   * Approve escrow (via edge function)
+   */
+  static async approveEscrow(escrowId: string): Promise<boolean> {
+    const data = await invokeEscrowService('approve', { escrow_id: escrowId });
+    return data.success;
+  }
+
+  /**
    * Release escrow (via edge function for atomic operation)
    */
-  static async releaseEscrow(escrowId: string, platformWalletId?: string): Promise<boolean> {
-    const { data, error } = await supabase.functions.invoke('wallet-release-escrow', {
-      body: { escrow_id: escrowId, platform_wallet_id: platformWalletId },
+  static async releaseEscrow(escrowId: string, milestoneId?: string): Promise<boolean> {
+    const data = await invokeEscrowService('release', {
+      escrow_id: escrowId,
+      milestone_id: milestoneId,
     });
-
-    if (error) throw error;
     return data.success;
   }
 
   /**
    * Refund escrow (via edge function for atomic operation)
    */
-  static async refundEscrow(escrowId: string, reason?: string): Promise<boolean> {
-    const { data, error } = await supabase.functions.invoke('wallet-refund-escrow', {
-      body: { escrow_id: escrowId, reason },
+  static async refundEscrow(escrowId: string, reason?: string, partialAmount?: number): Promise<boolean> {
+    const data = await invokeEscrowService('refund', {
+      escrow_id: escrowId,
+      reason,
+      partial_amount: partialAmount,
     });
-
-    if (error) throw error;
     return data.success;
   }
 
   /**
-   * Initiate dispute
+   * Initiate dispute (via edge function)
    */
-  static async initiateDispute(escrowId: string, reason: string): Promise<EscrowHold> {
-    const { data, error } = await supabase
-      .from('escrow_holds')
-      .update({
-        status: 'disputed' as EscrowStatus,
-        metadata: supabase.rpc('jsonb_set', {
-          target: 'metadata',
-          path: '{dispute_reason}',
-          value: JSON.stringify(reason),
-        }),
-        notes: `Disputa iniciada: ${reason}`,
-      })
-      .eq('id', escrowId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data as EscrowHold;
+  static async initiateDispute(escrowId: string, reason: string): Promise<boolean> {
+    const data = await invokeEscrowService('dispute', {
+      escrow_id: escrowId,
+      reason,
+    });
+    return data.success;
   }
 
   /**
@@ -186,8 +145,8 @@ export class EscrowService {
   static calculateDistribution(
     totalAmount: number,
     creatorPercentage: number = 70,
-    editorPercentage: number = 20,
-    platformPercentage: number = 10
+    editorPercentage: number = 15,
+    platformPercentage: number = 25
   ): {
     creatorAmount: number;
     editorAmount: number;

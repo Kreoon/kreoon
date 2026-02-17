@@ -1,7 +1,17 @@
-import { Star, MapPin, CheckCircle2, XCircle, ExternalLink, Gavel, ArrowLeftRight, DollarSign } from 'lucide-react';
+import { Star, MapPin, CheckCircle2, XCircle, ExternalLink, Gavel, ArrowLeftRight, DollarSign, FolderOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { APPLICATION_STATUS_COLORS, APPLICATION_STATUS_LABELS } from '@/hooks/useMarketplaceCampaigns';
 import type { CampaignApplication, CampaignPricingMode } from '../../types/marketplace';
+
+const PROJECT_STATUS_LABELS: Record<string, string> = {
+  pending: 'Pendiente',
+  briefing: 'En Brief',
+  in_progress: 'En Produccion',
+  revision: 'En Revision',
+  approved: 'Aprobado',
+  completed: 'Completado',
+  cancelled: 'Cancelado',
+};
 
 interface ApplicationCardProps {
   application: CampaignApplication;
@@ -10,9 +20,10 @@ interface ApplicationCardProps {
   showActions: boolean;
   pricingMode?: CampaignPricingMode;
   onCounterOffer?: (id: string) => void;
+  projectInfo?: { id: string; status: string } | null;
 }
 
-export function ApplicationCard({ application, onApprove, onReject, showActions, pricingMode, onCounterOffer }: ApplicationCardProps) {
+export function ApplicationCard({ application, onApprove, onReject, showActions, pricingMode, onCounterOffer, projectInfo }: ApplicationCardProps) {
   const creator = application.creator;
   const isBidMode = pricingMode === 'auction' || pricingMode === 'range';
   const hasBid = !!application.bid_amount;
@@ -49,9 +60,17 @@ export function ApplicationCard({ application, onApprove, onReject, showActions,
             </div>
           </div>
         </div>
-        <span className={cn('text-xs px-2 py-0.5 rounded-full', APPLICATION_STATUS_COLORS[application.status])}>
-          {APPLICATION_STATUS_LABELS[application.status]}
-        </span>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <span className={cn('text-xs px-2 py-0.5 rounded-full', APPLICATION_STATUS_COLORS[application.status])}>
+            {APPLICATION_STATUS_LABELS[application.status]}
+          </span>
+          {projectInfo && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 flex items-center gap-1">
+              <FolderOpen className="h-3 w-3" />
+              {PROJECT_STATUS_LABELS[projectInfo.status] || projectInfo.status}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Cover letter */}

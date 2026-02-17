@@ -21,29 +21,51 @@ export interface EscrowMetadata {
   dispute_reason?: string;
 }
 
+export type EscrowProjectType = 'marketplace_direct' | 'campaign_managed' | 'live_shopping' | 'professional_service' | 'corporate_package';
+
+export interface EscrowDistribution {
+  user_id: string;
+  role: 'creator' | 'editor' | 'organization';
+  percentage: number;
+  wallet_id?: string;
+  amount?: number;
+}
+
+export interface EscrowMilestone {
+  id: string;
+  title: string;
+  percentage: number;
+  due_date?: string;
+  completed_at?: string;
+  status: 'pending' | 'completed';
+}
+
 export interface EscrowHold {
   id: string;
-  campaign_id: string | null;
-  content_id: string | null;
+  project_id: string | null;
+  project_type: EscrowProjectType;
   organization_id: string;
-  payer_wallet_id: string;
-  creator_wallet_id: string | null;
-  editor_wallet_id: string | null;
+  client_wallet_id: string;
   total_amount: number;
-  creator_amount: number | null;
-  editor_amount: number | null;
+  currency: string;
+  distributions: EscrowDistribution[];
+  milestones: EscrowMilestone[];
   platform_fee: number | null;
-  creator_percentage: number | null;
-  editor_percentage: number | null;
   platform_percentage: number;
   status: EscrowStatus;
   created_at: string;
   updated_at: string;
-  editor_assigned_at: string | null;
+  funded_at: string | null;
   content_delivered_at: string | null;
   released_at: string | null;
   notes: string | null;
   metadata: EscrowMetadata;
+  stripe_payment_intent_id: string | null;
+  // Legacy compat (may be null in new schema)
+  creator_amount: number | null;
+  editor_amount: number | null;
+  creator_percentage: number | null;
+  editor_percentage: number | null;
 }
 
 // Para mostrar en UI con información adicional
@@ -110,7 +132,7 @@ export function calculateEscrowProgress(escrow: EscrowHold): number {
     case 'refunded':
       return 0;
     case 'active':
-      return escrow.creator_wallet_id ? 25 : 15;
+      return escrow.funded_at ? 25 : 15;
     case 'pending_editor':
       return 40;
     case 'pending_approval':
@@ -120,7 +142,7 @@ export function calculateEscrowProgress(escrow: EscrowHold): number {
     case 'released':
       return 100;
     case 'disputed':
-      return 75; // Se queda donde estaba cuando inició disputa
+      return 75;
     default:
       return 0;
   }
@@ -140,32 +162,17 @@ export function generateEscrowTimeline(escrow: EscrowHold): EscrowTimelineStep[]
     icon: 'Lock',
   });
 
-  // Paso 2: Creador asignado
-  const creatorAssigned = escrow.creator_wallet_id !== null;
+  // Paso 2: Fondos depositados
+  const isFunded = escrow.funded_at !== null;
   steps.push({
-    key: 'creator_assigned',
-    label: 'Creador Asignado',
-    description: creatorAssigned ? 'Creador trabajando' : 'Esperando asignación',
-    timestamp: creatorAssigned ? escrow.created_at : null, // No tenemos timestamp específico
-    status: creatorAssigned ? 'completed' :
+    key: 'funded',
+    label: 'Fondos Depositados',
+    description: isFunded ? 'Pago confirmado' : 'Esperando pago',
+    timestamp: escrow.funded_at,
+    status: isFunded ? 'completed' :
             escrow.status === 'active' ? 'current' : 'pending',
-    icon: 'User',
+    icon: 'CreditCard',
   });
-
-  // Paso 3: Editor asignado (si aplica)
-  if (escrow.editor_percentage && escrow.editor_percentage > 0) {
-    const editorAssigned = escrow.editor_wallet_id !== null;
-    steps.push({
-      key: 'editor_assigned',
-      label: 'Editor Asignado',
-      description: editorAssigned ? 'Editando contenido' : 'Esperando asignación',
-      timestamp: escrow.editor_assigned_at,
-      status: editorAssigned ? 'completed' :
-              escrow.status === 'pending_editor' ? 'current' :
-              escrow.status === 'active' ? 'pending' : 'pending',
-      icon: 'Edit',
-    });
-  }
 
   // Paso 4: Contenido entregado
   const contentDelivered = escrow.content_delivered_at !== null;
@@ -233,20 +240,22 @@ export function toEscrowDisplay(escrow: EscrowHold, currency: Currency = 'USD'):
   };
 }
 
-// Para crear un nuevo escrow
+// Para crear un nuevo escrow (matches escrow-service edge function API)
 export interface CreateEscrowInput {
-  organization_id: string;
-  payer_wallet_id: string;
-  content_id?: string;
-  campaign_id?: string;
+  project_type: EscrowProjectType;
+  project_id?: string;
+  project_title: string;
   total_amount: number;
-  creator_percentage?: number;
-  editor_percentage?: number;
-  platform_percentage?: number;
-}
-
-// Para asignar editor a escrow
-export interface AssignEditorInput {
-  escrow_id: string;
-  editor_wallet_id: string;
+  currency?: string;
+  distributions: {
+    user_id: string;
+    role: 'creator' | 'editor' | 'organization';
+    percentage: number;
+  }[];
+  milestones?: {
+    title: string;
+    percentage: number;
+    due_date?: string;
+  }[];
+  referral_code?: string;
 }

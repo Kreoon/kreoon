@@ -1,5 +1,14 @@
 project_id = "wjkbqcrxwsmvtxmqgiqc"
 
+[functions.campaign-notifications]
+verify_jwt = true
+
+[functions.verify-campaign-access]
+verify_jwt = true
+
+[functions.upload-campaign-media]
+verify_jwt = true
+
 [functions.analyze-product-dna]
 verify_jwt = true
 
@@ -82,12 +91,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.ai-assistant]
-verify_jwt = true
-
-[functions.cleanup-chat-attachments]
-verify_jwt = false
-
-[functions.bunny-chat-upload]
 verify_jwt = true
 
 [functions.portfolio-ai]
@@ -216,6 +219,18 @@ verify_jwt = false
 [functions.marketplace-recommendations]
 verify_jwt = false
 
+[functions.kae-track]
+verify_jwt = false
+
+[functions.kae-conversion]
+verify_jwt = false
+
+[functions.kae-identify]
+verify_jwt = false
+
+[functions.kae-test-connection]
+verify_jwt = true
+
 [functions.send-recruitment]
 verify_jwt = false
 
@@ -228,8 +243,31 @@ verify_jwt = false
 [functions.generate-client-dna]
 verify_jwt = false
 
+[functions.generate-project-dna]
+verify_jwt = false
+
 [functions.generate-product-dna]
 verify_jwt = false
 
 [functions.generate-full-research]
+verify_jwt = false
+
+[functions.capture-lead]
+verify_jwt = false
+
+# ── Unified Financial System ──
+
+[functions.ai-tokens-service]
+verify_jwt = false
+
+[functions.escrow-service]
+verify_jwt = false
+
+[functions.referral-service]
+verify_jwt = false
+
+[functions.subscription-service]
+verify_jwt = false
+
+[functions.stripe-webhook]
 verify_jwt = false

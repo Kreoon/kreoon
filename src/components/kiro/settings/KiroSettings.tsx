@@ -524,6 +524,27 @@ export function KiroSettingsPanel({
           </button>
         </div>
 
+        {/* Link a configuración completa */}
+        <div className="border-t border-violet-500/10 pt-4">
+          <a
+            href="/settings?section=notifications"
+            onClick={(e) => {
+              e.preventDefault();
+              kiroSounds.play('action_click');
+              window.location.href = '/settings?section=notifications';
+            }}
+            className={cn(
+              'w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg',
+              'text-xs text-violet-300',
+              'bg-violet-500/10 border border-violet-500/20',
+              'hover:bg-violet-500/20 transition-colors'
+            )}
+          >
+            <Bell className="w-3 h-3" />
+            Ver todas las preferencias de notificación
+          </a>
+        </div>
+
         {/* Footer */}
         <div className="border-t border-violet-500/10 pt-4 pb-2 text-center">
           <p className="text-[10px] text-gray-600">

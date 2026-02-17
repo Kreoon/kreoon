@@ -10354,6 +10354,41 @@ export type Database = {
         | "strategist"
         | "trafficker"
         | "team_leader"
+        | "ugc_creator"
+        | "lifestyle_creator"
+        | "micro_influencer"
+        | "nano_influencer"
+        | "macro_influencer"
+        | "brand_ambassador"
+        | "live_streamer"
+        | "podcast_host"
+        | "photographer"
+        | "copywriter"
+        | "graphic_designer"
+        | "voice_artist"
+        | "video_editor"
+        | "motion_graphics"
+        | "sound_designer"
+        | "colorist"
+        | "director"
+        | "producer"
+        | "animator_2d3d"
+        | "content_strategist"
+        | "social_media_manager"
+        | "community_manager"
+        | "digital_strategist"
+        | "seo_specialist"
+        | "email_marketer"
+        | "growth_hacker"
+        | "crm_specialist"
+        | "conversion_optimizer"
+        | "web_developer"
+        | "app_developer"
+        | "ai_specialist"
+        | "online_instructor"
+        | "workshop_facilitator"
+        | "brand_manager"
+        | "marketing_director"
       chat_type: "direct" | "group" | "ai_assistant"
       content_status:
         | "draft"
@@ -10571,6 +10606,41 @@ export const Constants = {
         "strategist",
         "trafficker",
         "team_leader",
+        "ugc_creator",
+        "lifestyle_creator",
+        "micro_influencer",
+        "nano_influencer",
+        "macro_influencer",
+        "brand_ambassador",
+        "live_streamer",
+        "podcast_host",
+        "photographer",
+        "copywriter",
+        "graphic_designer",
+        "voice_artist",
+        "video_editor",
+        "motion_graphics",
+        "sound_designer",
+        "colorist",
+        "director",
+        "producer",
+        "animator_2d3d",
+        "content_strategist",
+        "social_media_manager",
+        "community_manager",
+        "digital_strategist",
+        "seo_specialist",
+        "email_marketer",
+        "growth_hacker",
+        "crm_specialist",
+        "conversion_optimizer",
+        "web_developer",
+        "app_developer",
+        "ai_specialist",
+        "online_instructor",
+        "workshop_facilitator",
+        "brand_manager",
+        "marketing_director",
       ],
       chat_type: ["direct", "group", "ai_assistant"],
       content_status: [

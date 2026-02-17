@@ -8,22 +8,38 @@ import type {
   EscrowDisplay,
   EscrowStatus,
   CreateEscrowInput,
-  AssignEditorInput,
   toEscrowDisplay,
 } from '../types';
 import type { Currency } from '../types/wallet.types';
 
+// Helper to invoke escrow-service edge function with auth
+async function invokeEscrowService<T = any>(
+  action: string,
+  body: Record<string, any>
+): Promise<T> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('No autenticado');
+
+  const { data, error } = await supabase.functions.invoke(`escrow-service/${action}`, {
+    body,
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  });
+
+  if (error) throw new Error(error.message || `Error en escrow/${action}`);
+  if (data?.error) throw new Error(data.error);
+  return data as T;
+}
+
 interface UseEscrowOptions {
   organizationId?: string;
-  contentId?: string;
-  campaignId?: string;
+  projectId?: string;
   status?: EscrowStatus[];
 }
 
 export function useEscrows(options: UseEscrowOptions = {}) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { organizationId, contentId, campaignId, status } = options;
+  const { organizationId, projectId, status } = options;
 
   const {
     data: escrows,
@@ -31,7 +47,7 @@ export function useEscrows(options: UseEscrowOptions = {}) {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['escrows', organizationId, contentId, campaignId, status],
+    queryKey: ['escrows', organizationId, projectId, status],
     queryFn: async (): Promise<EscrowHold[]> => {
       let query = supabase
         .from('escrow_holds')
@@ -41,11 +57,8 @@ export function useEscrows(options: UseEscrowOptions = {}) {
       if (organizationId) {
         query = query.eq('organization_id', organizationId);
       }
-      if (contentId) {
-        query = query.eq('content_id', contentId);
-      }
-      if (campaignId) {
-        query = query.eq('campaign_id', campaignId);
+      if (projectId) {
+        query = query.eq('project_id', projectId);
       }
       if (status && status.length > 0) {
         query = query.in('status', status);
@@ -55,7 +68,7 @@ export function useEscrows(options: UseEscrowOptions = {}) {
       if (error) throw error;
       return (data || []) as EscrowHold[];
     },
-    enabled: !!(organizationId || contentId || campaignId),
+    enabled: !!(organizationId || projectId),
     staleTime: 30 * 1000,
   });
 
@@ -90,19 +103,11 @@ export function useEscrow(escrowId: string | null, currency: Currency = 'USD') {
         .from('escrow_holds')
         .select(`
           *,
-          payer:payer_wallet_id (
+          client_wallet:client_wallet_id (
             id,
             user_id,
             organization_id,
             wallet_type
-          ),
-          creator:creator_wallet_id (
-            id,
-            user_id
-          ),
-          editor:editor_wallet_id (
-            id,
-            user_id
           )
         `)
         .eq('id', escrowId)
@@ -128,30 +133,30 @@ export function useEscrow(escrowId: string | null, currency: Currency = 'USD') {
   };
 }
 
-// Hook para escrow de un contenido específico
-export function useContentEscrow(contentId: string | null, currency: Currency = 'USD') {
+// Hook para escrow de un proyecto específico
+export function useProjectEscrow(projectId: string | null, currency: Currency = 'USD') {
   const {
     data: escrow,
     isLoading,
     error,
     refetch,
   } = useQuery({
-    queryKey: ['escrow', 'content', contentId],
+    queryKey: ['escrow', 'project', projectId],
     queryFn: async (): Promise<EscrowDisplay | null> => {
-      if (!contentId) return null;
+      if (!projectId) return null;
 
       const { data, error } = await supabase
         .from('escrow_holds')
         .select('*')
-        .eq('content_id', contentId)
+        .eq('project_id', projectId)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
       return data ? toEscrowDisplay(data as EscrowHold, currency) : null;
     },
-    enabled: !!contentId,
+    enabled: !!projectId,
     staleTime: 30 * 1000,
   });
 
@@ -163,56 +168,30 @@ export function useContentEscrow(contentId: string | null, currency: Currency = 
   };
 }
 
-// Mutations para gestión de escrow (requieren service role, se ejecutan via edge function)
+// Mutations para gestión de escrow (via escrow-service edge function)
 export function useEscrowMutations() {
   const queryClient = useQueryClient();
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['escrows'] });
+    queryClient.invalidateQueries({ queryKey: ['escrow'] });
+    queryClient.invalidateQueries({ queryKey: ['wallet'] });
+    queryClient.invalidateQueries({ queryKey: ['transactions'] });
+  };
 
   // Crear un nuevo escrow
   const createEscrowMutation = useMutation({
     mutationFn: async (input: CreateEscrowInput): Promise<string> => {
-      const { data, error } = await supabase.functions.invoke('wallet-create-escrow', {
-        body: input,
-      });
-
-      if (error) throw error;
+      const data = await invokeEscrowService('create', input);
       return data.escrow_id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['escrows'] });
-      queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      invalidateAll();
       toast.success('Escrow creado exitosamente');
     },
     onError: (error: Error) => {
       console.error('Error creating escrow:', error);
       toast.error(`Error al crear escrow: ${error.message}`);
-    },
-  });
-
-  // Asignar editor a un escrow
-  const assignEditorMutation = useMutation({
-    mutationFn: async (input: AssignEditorInput): Promise<boolean> => {
-      const { data, error } = await supabase
-        .from('escrow_holds')
-        .update({
-          editor_wallet_id: input.editor_wallet_id,
-          editor_assigned_at: new Date().toISOString(),
-          status: 'pending_editor',
-        })
-        .eq('id', input.escrow_id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return !!data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['escrows'] });
-      queryClient.invalidateQueries({ queryKey: ['escrow'] });
-      toast.success('Editor asignado al escrow');
-    },
-    onError: (error: Error) => {
-      console.error('Error assigning editor:', error);
-      toast.error(`Error al asignar editor: ${error.message}`);
     },
   });
 
@@ -243,21 +222,33 @@ export function useEscrowMutations() {
     },
   });
 
-  // Liberar escrow (requiere edge function con service role)
-  const releaseEscrowMutation = useMutation({
+  // Aprobar escrow (via edge function)
+  const approveEscrowMutation = useMutation({
     mutationFn: async (escrowId: string): Promise<boolean> => {
-      const { data, error } = await supabase.functions.invoke('wallet-release-escrow', {
-        body: { escrow_id: escrowId },
-      });
-
-      if (error) throw error;
+      const data = await invokeEscrowService('approve', { escrow_id: escrowId });
       return data.success;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['escrows'] });
-      queryClient.invalidateQueries({ queryKey: ['escrow'] });
-      queryClient.invalidateQueries({ queryKey: ['wallet'] });
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      invalidateAll();
+      toast.success('Escrow aprobado');
+    },
+    onError: (error: Error) => {
+      console.error('Error approving escrow:', error);
+      toast.error(`Error al aprobar escrow: ${error.message}`);
+    },
+  });
+
+  // Liberar escrow (via edge function)
+  const releaseEscrowMutation = useMutation({
+    mutationFn: async ({ escrowId, milestoneId }: { escrowId: string; milestoneId?: string }): Promise<boolean> => {
+      const data = await invokeEscrowService('release', {
+        escrow_id: escrowId,
+        milestone_id: milestoneId,
+      });
+      return data.success;
+    },
+    onSuccess: () => {
+      invalidateAll();
       toast.success('Escrow liberado - pagos distribuidos');
     },
     onError: (error: Error) => {
@@ -266,21 +257,17 @@ export function useEscrowMutations() {
     },
   });
 
-  // Reembolsar escrow (requiere edge function con service role)
+  // Reembolsar escrow (via edge function)
   const refundEscrowMutation = useMutation({
     mutationFn: async ({ escrowId, reason }: { escrowId: string; reason?: string }): Promise<boolean> => {
-      const { data, error } = await supabase.functions.invoke('wallet-refund-escrow', {
-        body: { escrow_id: escrowId, reason },
+      const data = await invokeEscrowService('refund', {
+        escrow_id: escrowId,
+        reason,
       });
-
-      if (error) throw error;
       return data.success;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['escrows'] });
-      queryClient.invalidateQueries({ queryKey: ['escrow'] });
-      queryClient.invalidateQueries({ queryKey: ['wallet'] });
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      invalidateAll();
       toast.success('Escrow reembolsado');
     },
     onError: (error: Error) => {
@@ -289,22 +276,44 @@ export function useEscrowMutations() {
     },
   });
 
+  // Disputar escrow (via edge function)
+  const disputeEscrowMutation = useMutation({
+    mutationFn: async ({ escrowId, reason }: { escrowId: string; reason: string }): Promise<boolean> => {
+      const data = await invokeEscrowService('dispute', {
+        escrow_id: escrowId,
+        reason,
+      });
+      return data.success;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      toast.success('Disputa iniciada');
+    },
+    onError: (error: Error) => {
+      console.error('Error disputing escrow:', error);
+      toast.error(`Error al iniciar disputa: ${error.message}`);
+    },
+  });
+
   return {
     createEscrow: createEscrowMutation.mutate,
     createEscrowAsync: createEscrowMutation.mutateAsync,
     isCreating: createEscrowMutation.isPending,
 
-    assignEditor: assignEditorMutation.mutate,
-    isAssigningEditor: assignEditorMutation.isPending,
-
     markDelivered: markDeliveredMutation.mutate,
     isMarkingDelivered: markDeliveredMutation.isPending,
+
+    approveEscrow: approveEscrowMutation.mutate,
+    isApproving: approveEscrowMutation.isPending,
 
     releaseEscrow: releaseEscrowMutation.mutate,
     isReleasing: releaseEscrowMutation.isPending,
 
     refundEscrow: refundEscrowMutation.mutate,
     isRefunding: refundEscrowMutation.isPending,
+
+    disputeEscrow: disputeEscrowMutation.mutate,
+    isDisputing: disputeEscrowMutation.isPending,
   };
 }
 

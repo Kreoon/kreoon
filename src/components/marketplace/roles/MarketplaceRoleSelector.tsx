@@ -10,6 +10,7 @@ interface MarketplaceRoleSelectorProps {
   onChange: (roles: MarketplaceRoleId[]) => void;
   maxRoles?: number;
   showCategories?: boolean;
+  excludeCategories?: MarketplaceRoleCategory[];
   label?: string;
 }
 
@@ -18,6 +19,7 @@ export function MarketplaceRoleSelector({
   onChange,
   maxRoles = MAX_ROLES_PER_CREATOR,
   showCategories = true,
+  excludeCategories,
   label,
 }: MarketplaceRoleSelectorProps) {
   const [expandedCategories, setExpandedCategories] = useState<Set<MarketplaceRoleCategory>>(
@@ -43,7 +45,8 @@ export function MarketplaceRoleSelector({
 
   const atLimit = selectedRoles.length >= maxRoles;
 
-  const categories = Object.entries(MARKETPLACE_ROLE_CATEGORIES) as [MarketplaceRoleCategory, typeof MARKETPLACE_ROLE_CATEGORIES[MarketplaceRoleCategory]][];
+  const categories = (Object.entries(MARKETPLACE_ROLE_CATEGORIES) as [MarketplaceRoleCategory, typeof MARKETPLACE_ROLE_CATEGORIES[MarketplaceRoleCategory]][])
+    .filter(([catId]) => !excludeCategories?.includes(catId));
 
   return (
     <div className="space-y-3">
@@ -131,7 +134,7 @@ export function MarketplaceRoleSelector({
         </div>
       ) : (
         <div className="flex flex-wrap gap-2">
-          {MARKETPLACE_ROLES.map(role => {
+          {MARKETPLACE_ROLES.filter(r => !excludeCategories?.includes(r.category)).map(role => {
             const isSelected = selectedRoles.includes(role.id);
             const isDisabled = !isSelected && atLimit;
             return (

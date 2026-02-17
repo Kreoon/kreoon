@@ -16,16 +16,13 @@ export type SettingsSectionKey =
   | 'org_registration_settings' // Registration & invite settings
   | 'organization_plans'
   | 'ai_settings'        // Merged: portfolio_ai + organization_ai + assistant
-  | 'ambassadors'
   | 'permissions'        // Merged: organization_permissions + global_permissions
   | 'audit_log'
   | 'org_marketplace'    // Marketplace access control & public portfolio
   | 'org_agency_profile' // Public agency profile for marketplace
-  | 'org_social'         // Social network integration settings
   | 'live_streaming_org' // KREOON Live - Organization level config
   // Platform level (Root only)
   | 'organization_registrations'
-  | 'platform_users'
   | 'referrals'
   | 'billing'            // Merged: subscription_management + user_plans + currency + billing_control
   | 'platform_config'    // Merged: app_settings + appearance + integrations
@@ -69,16 +66,13 @@ const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'plat
   org_registration_settings: 'organization',
   organization_plans: 'organization',
   ai_settings: 'organization',
-  ambassadors: 'organization',
   permissions: 'organization',
   audit_log: 'organization',
   org_marketplace: 'organization', // Marketplace control & portfolio
   org_agency_profile: 'organization', // Agency profile for marketplace
-  org_social: 'organization', // Social network settings
   live_streaming_org: 'organization', // KREOON Live org config
   // Platform level - root only
   organization_registrations: 'platform',
-  platform_users: 'platform',
   referrals: 'platform',
   billing: 'platform',
   platform_config: 'platform',
@@ -93,7 +87,6 @@ const SECTION_TO_MODULE: Partial<Record<SettingsSectionKey, string>> = {
   profile: 'settings_profile',
   organization: 'settings_organization',
   organization_plans: 'settings_plans',
-  ambassadors: 'settings_ambassadors',
   ai_settings: 'settings_ai',
   audit_log: 'settings_audit',
   permissions: 'settings_permissions',
@@ -123,15 +116,15 @@ export function useSettingsPermissions(): SettingsPermissions {
     return (user?.email && ROOT_EMAILS.includes(user.email)) || isPlatformRootFromHook;
   }, [user?.email, isPlatformRootFromHook]);
 
-  // Determine if user is org admin (uses activeRole for current context)
+  // Determine if user is org admin (uses permission group from useAuth)
   const isOrgAdmin = useMemo(() => {
-    return activeRole === 'admin' || isAdmin;
-  }, [isAdmin, activeRole]);
+    return isAdmin; // isAdmin already checks via permission group in useAuth
+  }, [isAdmin]);
 
   // Determine if user is strategist with limited org access
   const isOrgStrategist = useMemo(() => {
-    return activeRole === 'strategist' || isStrategist;
-  }, [isStrategist, activeRole]);
+    return isStrategist; // isStrategist already checks via permission group in useAuth
+  }, [isStrategist]);
 
   // Fetch organization-level permission overrides
   const fetchOrgPermissions = useCallback(async () => {

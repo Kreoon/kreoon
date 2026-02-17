@@ -1,6 +1,9 @@
 import { useAuth } from "@/hooks/useAuth";
 import { AppRole } from "@/types/database";
-import { getRoleLabel, ROLE_SOLID_COLORS } from "@/lib/roles";
+import { getRoleLabel, getRoleSolidColor } from "@/lib/roles";
+import { getPermissionGroup, getDashboardForRole, type PermissionGroup } from "@/lib/permissionGroups";
+import { MARKETPLACE_ROLES_MAP } from "@/components/marketplace/roles/marketplaceRoleConfig";
+import type { MarketplaceRoleId } from "@/components/marketplace/types/marketplace";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -11,47 +14,44 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Check, ChevronDown, Shield, Users, Edit3, Building2, Star, Lightbulb, User, Briefcase, Radio, UserCog, Crown } from "lucide-react";
+import { Check, ChevronDown, Shield, Users, Edit3, Building2, Lightbulb, User, Briefcase, UserCog } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const ROLE_ICONS: Record<AppRole, React.ComponentType<{ className?: string }>> = {
+// Icons per permission group (fallback for roles without marketplace config)
+const GROUP_ICONS: Record<PermissionGroup, React.ComponentType<{ className?: string }>> = {
   admin: Shield,
+  team_leader: UserCog,
   creator: Users,
   editor: Edit3,
-  client: Building2,
   strategist: Lightbulb,
-  trafficker: Radio,
-  team_leader: UserCog,
-  ambassador: Crown,
+  client: Building2,
 };
 
-// Dashboard routes for each role
-const ROLE_DASHBOARDS: Record<AppRole, string> = {
-  admin: '/dashboard',
-  strategist: '/strategist-dashboard',
-  creator: '/creator-dashboard',
-  editor: '/editor-dashboard',
-  client: '/client-dashboard',
-  trafficker: '/marketing',
-  team_leader: '/dashboard',
-  ambassador: '/creator-dashboard',
-};
-
-// Classify roles into personal vs company context
-const PERSONAL_ROLES: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'ambassador', 'creator', 'editor'];
-const COMPANY_ROLES: AppRole[] = ['client'];
-
-// Role descriptions for better UX
-const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
+// Group descriptions
+const GROUP_DESCRIPTIONS: Record<PermissionGroup, string> = {
   admin: 'Gestión completa de la plataforma',
+  team_leader: 'Liderazgo y supervisión del equipo',
   strategist: 'Estrategia y planificación de contenido',
   creator: 'Creación de contenido y grabación',
   editor: 'Edición y postproducción',
   client: 'Vista de empresa y aprobaciones',
-  trafficker: 'Gestión de tráfico y campañas',
-  team_leader: 'Liderazgo y supervisión del equipo',
-  ambassador: 'Referidos y bonificaciones de red',
 };
+
+/** Get the icon component for any role */
+function getRoleIcon(role: AppRole): React.ComponentType<{ className?: string }> {
+  const group = getPermissionGroup(role);
+  return GROUP_ICONS[group] || Users;
+}
+
+/** Get the description for any role */
+function getRoleDescription(role: AppRole): string {
+  // For marketplace roles, use their specific description
+  const mktRole = MARKETPLACE_ROLES_MAP[role as MarketplaceRoleId];
+  if (mktRole) return mktRole.description;
+  // Fallback to group description
+  const group = getPermissionGroup(role);
+  return GROUP_DESCRIPTIONS[group] || '';
+}
 
 interface RoleSwitcherProps {
   collapsed?: boolean;
@@ -71,16 +71,15 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
   const handleRoleChange = (role: AppRole) => {
     setActiveRole(role);
     // Navigate to the appropriate dashboard for the selected role
-    const dashboard = ROLE_DASHBOARDS[role] || '/';
-    navigate(dashboard);
+    navigate(getDashboardForRole(role));
   };
 
-  const ActiveIcon = activeRole ? ROLE_ICONS[activeRole] : Shield;
-  const isClientActive = activeRole === 'client';
+  const ActiveIcon = activeRole ? getRoleIcon(activeRole) : Shield;
+  const isClientActive = activeRole ? getPermissionGroup(activeRole) === 'client' : false;
 
-  // Separate roles by context (using selectable roles)
-  const personalRoles = selectableRoles.filter((r) => PERSONAL_ROLES.includes(r));
-  const companyRoles = selectableRoles.filter((r) => COMPANY_ROLES.includes(r));
+  // Separate roles by context: client-group = company, everything else = personal
+  const personalRoles = selectableRoles.filter((r) => getPermissionGroup(r) !== 'client');
+  const companyRoles = selectableRoles.filter((r) => getPermissionGroup(r) === 'client');
 
   if (collapsed) {
     return (
@@ -106,7 +105,7 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
                 Perfil Personal
               </DropdownMenuLabel>
               {personalRoles.map((role) => {
-                const Icon = ROLE_ICONS[role];
+                const Icon = getRoleIcon(role);
                 const isActive = role === activeRole;
                 return (
                   <DropdownMenuItem
@@ -134,7 +133,7 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
                 Contexto Empresa
               </DropdownMenuLabel>
               {companyRoles.map((role) => {
-                const Icon = ROLE_ICONS[role];
+                const Icon = getRoleIcon(role);
                 const isActive = role === activeRole;
                 return (
                   <DropdownMenuItem
@@ -196,7 +195,7 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
               <span className="text-xs font-medium">Perfil Personal</span>
             </DropdownMenuLabel>
             {personalRoles.map((role) => {
-              const Icon = ROLE_ICONS[role];
+              const Icon = getRoleIcon(role);
               const isActive = role === activeRole;
               return (
                 <DropdownMenuItem
@@ -209,14 +208,14 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
                 >
                   <div className={cn(
                     "flex h-7 w-7 items-center justify-center rounded-md",
-                    ROLE_SOLID_COLORS[role]
+                    getRoleSolidColor(role)
                   )}>
                     <Icon className="h-3.5 w-3.5 text-white" />
                   </div>
                   <div className="flex flex-col flex-1">
                     <span className="text-sm font-medium">{getRoleLabel(role)}</span>
                     <span className="text-[10px] text-muted-foreground">
-                      {ROLE_DESCRIPTIONS[role]}
+                      {getRoleDescription(role)}
                     </span>
                   </div>
                   {isActive && <Check className="h-4 w-4 text-primary shrink-0" />}
@@ -235,7 +234,7 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
               <span className="text-xs font-medium text-primary">Contexto Empresa</span>
             </DropdownMenuLabel>
             {companyRoles.map((role) => {
-              const Icon = ROLE_ICONS[role];
+              const Icon = getRoleIcon(role);
               const isActive = role === activeRole;
               return (
                 <DropdownMenuItem
@@ -248,14 +247,14 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
                 >
                   <div className={cn(
                     "flex h-7 w-7 items-center justify-center rounded-md",
-                    ROLE_SOLID_COLORS[role]
+                    getRoleSolidColor(role)
                   )}>
                     <Icon className="h-3.5 w-3.5 text-white" />
                   </div>
                   <div className="flex flex-col flex-1">
                     <span className="text-sm font-medium">{getRoleLabel(role)}</span>
                     <span className="text-[10px] text-muted-foreground">
-                      {ROLE_DESCRIPTIONS[role]}
+                      {getRoleDescription(role)}
                     </span>
                   </div>
                   {isActive && <Check className="h-4 w-4 text-primary shrink-0" />}

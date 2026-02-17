@@ -190,8 +190,10 @@ export const DELIVERABLE_STATUS_COLORS: Record<DeliverableStatus, string> = {
   rejected: 'bg-red-500/10 text-red-500',
 };
 
-// Platform fee (10%)
-export const MARKETPLACE_PLATFORM_FEE_PERCENTAGE = 10.00;
+import { COMMISSION_RATES } from '@/lib/finance/constants';
+
+// Platform fee — from single source of truth
+export const MARKETPLACE_PLATFORM_FEE_PERCENTAGE = COMMISSION_RATES.marketplace_direct.base;
 
 // Calcular fee y montos
 export function calculateMarketplaceFee(totalAmount: number): {

@@ -6,7 +6,7 @@ export interface UserNotification {
   id: string;
   user_id: string;
   organization_id: string;
-  type: 'content_update' | 'mention' | 'message' | 'assignment' | 'status_change' | 'recruitment_request';
+  type: 'content_update' | 'mention' | 'assignment' | 'status_change' | 'recruitment_request';
   title: string;
   message: string | null;
   entity_type: string | null;

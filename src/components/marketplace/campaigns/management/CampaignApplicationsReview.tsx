@@ -2,10 +2,14 @@ import { useState, useMemo, useEffect } from 'react';
 import { ArrowLeft, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMarketplaceCampaigns, CAMPAIGN_STATUS_LABELS } from '@/hooks/useMarketplaceCampaigns';
+import { useCampaignAnalytics } from '@/analytics';
+import { useMarketplaceProjects } from '@/hooks/useMarketplaceProjects';
+import { useBrandActivation } from '@/hooks/useBrandActivation';
 import { ApplicationCard } from './ApplicationCard';
 import { BidAnalytics } from './BidAnalytics';
 import { CounterOfferModal } from './CounterOfferModal';
 import type { ApplicationStatus, CampaignApplication, CounterOffer } from '../../types/marketplace';
+import type { BrandActivationConfig, SocialPlatform } from '../../types/brandActivation';
 
 interface CampaignApplicationsReviewProps {
   campaignId: string;
@@ -21,20 +25,34 @@ const TABS: { value: ApplicationStatus | 'all'; label: string }[] = [
 
 export function CampaignApplicationsReview({ campaignId, onBack }: CampaignApplicationsReviewProps) {
   const { getCampaignById, getApplicationsForCampaign, updateApplicationStatus } = useMarketplaceCampaigns();
+  const { createProject, getProjectsByCampaign } = useMarketplaceProjects();
+  const { createPublication } = useBrandActivation();
+  const { trackCreatorAccepted, trackCreatorRejected } = useCampaignAnalytics();
 
   const campaign = useMemo(() => getCampaignById(campaignId), [campaignId, getCampaignById]);
 
   const [applications, setApplications] = useState<CampaignApplication[]>([]);
   const [activeTab, setActiveTab] = useState<ApplicationStatus | 'all'>('all');
   const [counterOfferTargetId, setCounterOfferTargetId] = useState<string | null>(null);
+  // Map of application_id → project info
+  const [projectsMap, setProjectsMap] = useState<Map<string, { id: string; status: string }>>(new Map());
 
   useEffect(() => {
     let cancelled = false;
     getApplicationsForCampaign(campaignId).then(apps => {
       if (!cancelled) setApplications(apps);
     });
+    getProjectsByCampaign(campaignId).then(projects => {
+      if (!cancelled) {
+        const map = new Map<string, { id: string; status: string }>();
+        for (const p of projects) {
+          if (p.application_id) map.set(p.application_id, { id: p.id, status: p.status });
+        }
+        setProjectsMap(map);
+      }
+    });
     return () => { cancelled = true; };
-  }, [campaignId, getApplicationsForCampaign]);
+  }, [campaignId, getApplicationsForCampaign, getProjectsByCampaign]);
 
   const pricingMode = campaign?.pricing_mode ?? 'fixed';
   const isBidMode = pricingMode === 'auction' || pricingMode === 'range';
@@ -51,15 +69,62 @@ export function CampaignApplicationsReview({ campaignId, onBack }: CampaignAppli
   const handleApprove = async (appId: string) => {
     const success = await updateApplicationStatus(appId, 'approved');
     if (success) {
+      const app = applications.find(a => a.id === appId);
+      trackCreatorAccepted({
+        campaign_id: campaignId,
+        creator_id: app?.creator?.user_id || appId,
+        action: 'accepted',
+      });
       setApplications(prev =>
         prev.map(a => (a.id === appId ? { ...a, status: 'approved' as ApplicationStatus, updated_at: new Date().toISOString() } : a)),
       );
+
+      // Auto-create a marketplace project for the approved creator
+      if (campaign) {
+        const app = applications.find(a => a.id === appId);
+        if (app) {
+          const price = app.bid_amount ?? app.proposed_price ?? campaign.budget_per_video ?? 0;
+          const projectId = await createProject({
+            campaign_id: campaignId,
+            application_id: appId,
+            creator_id: app.creator.user_id, // auth user UUID, not creator_profiles.id
+            brand_id: campaign.brand_user_id || null,
+            organization_id: campaign.organization_id || null,
+            title: `${campaign.title} - ${app.creator.display_name}`,
+            total_price: price,
+            currency: 'COP',
+            deadline: campaign.deadline,
+            payment_method: campaign.campaign_type === 'exchange' ? 'exchange' : 'payment',
+          });
+          if (projectId) {
+            setProjectsMap(prev => new Map(prev).set(appId, { id: projectId, status: 'pending' }));
+          }
+        }
+
+        // Auto-create activation publications for brand activation campaigns
+        if (campaign.is_brand_activation) {
+          const appForActivation = app || applications.find(a => a.id === appId);
+          const config = campaign.activation_requirements as BrandActivationConfig | undefined;
+          const platforms = config?.required_platforms ?? [];
+          if (appForActivation && platforms.length > 0) {
+            for (const platform of platforms) {
+              await createPublication(campaignId, appId, appForActivation.creator_id, platform as SocialPlatform);
+            }
+          }
+        }
+      }
     }
   };
 
   const handleReject = async (appId: string) => {
     const success = await updateApplicationStatus(appId, 'rejected');
     if (success) {
+      const app = applications.find(a => a.id === appId);
+      trackCreatorRejected({
+        campaign_id: campaignId,
+        creator_id: app?.creator?.user_id || appId,
+        action: 'rejected',
+      });
       setApplications(prev =>
         prev.map(a => (a.id === appId ? { ...a, status: 'rejected' as ApplicationStatus, updated_at: new Date().toISOString() } : a)),
       );
@@ -154,6 +219,7 @@ export function CampaignApplicationsReview({ campaignId, onBack }: CampaignAppli
               showActions={true}
               pricingMode={pricingMode}
               onCounterOffer={setCounterOfferTargetId}
+              projectInfo={projectsMap.get(app.id) || null}
             />
           ))}
         </div>

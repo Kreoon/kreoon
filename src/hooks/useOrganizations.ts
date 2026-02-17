@@ -62,42 +62,32 @@ export function useOrganizations() {
   // Check if user is platform root (can see all organizations)
   const isPlatformRoot = user?.email ? ROOT_EMAILS.includes(user.email) : false;
 
-  // Fetch user's organizations (filtered by membership, unless platform root)
+  // Fetch user's organizations (always filtered by membership for security)
+  // Platform root users who need to manage ALL orgs should use /crm/organizaciones
   const fetchOrganizations = useCallback(async () => {
     if (!user) return;
 
     try {
       let data: any[] = [];
 
-      if (isPlatformRoot) {
-        // Platform root can see all organizations
-        const { data: allOrgs, error } = await supabase
+      // Always scope to orgs the user is a member of (prevents cross-org leak)
+      const { data: memberships, error: memberError } = await supabase
+        .from('organization_members')
+        .select('organization_id')
+        .eq('user_id', user.id);
+
+      if (memberError) throw memberError;
+
+      if (memberships && memberships.length > 0) {
+        const orgIds = memberships.map(m => m.organization_id);
+        const { data: userOrgs, error: orgsError } = await supabase
           .from('organizations')
           .select('*')
+          .in('id', orgIds)
           .order('name');
 
-        if (error) throw error;
-        data = allOrgs || [];
-      } else {
-        // Regular users only see organizations they are members of
-        const { data: memberships, error: memberError } = await supabase
-          .from('organization_members')
-          .select('organization_id')
-          .eq('user_id', user.id);
-
-        if (memberError) throw memberError;
-
-        if (memberships && memberships.length > 0) {
-          const orgIds = memberships.map(m => m.organization_id);
-          const { data: userOrgs, error: orgsError } = await supabase
-            .from('organizations')
-            .select('*')
-            .in('id', orgIds)
-            .order('name');
-
-          if (orgsError) throw orgsError;
-          data = userOrgs || [];
-        }
+        if (orgsError) throw orgsError;
+        data = userOrgs || [];
       }
 
       // Cast to handle potential legacy 'ambassador' values from DB
@@ -128,7 +118,7 @@ export function useOrganizations() {
     } finally {
       setLoading(false);
     }
-  }, [user, isPlatformRoot, profile?.current_organization_id]);
+  }, [user, profile?.current_organization_id]);
 
   // Fetch organization members
   const fetchMembers = useCallback(async (orgId: string) => {

@@ -1,6 +1,34 @@
 // AppRole - Defines all available user roles in the system
-// Note: Ambassador can also exist as a badge via is_ambassador flag on profiles
-export type AppRole = 'admin' | 'creator' | 'editor' | 'client' | 'strategist' | 'trafficker' | 'team_leader' | 'ambassador';
+// System roles + Legacy roles + 36 Marketplace specialization roles
+// All roles map to a PermissionGroup via getPermissionGroup() in src/lib/permissionGroups.ts
+
+/** System roles: special platform management roles */
+export type SystemRole = 'admin' | 'team_leader';
+
+/** Legacy roles: still valid but deprecated in favor of specific marketplace roles */
+export type LegacyRole = 'creator' | 'editor' | 'strategist' | 'client' | 'trafficker' | 'ambassador' | 'developer' | 'educator';
+
+/** Marketplace roles: 36 specialized roles organized by category */
+export type MarketplaceRole =
+  // Content Creation (12)
+  | 'ugc_creator' | 'lifestyle_creator' | 'micro_influencer' | 'nano_influencer'
+  | 'macro_influencer' | 'brand_ambassador' | 'live_streamer' | 'podcast_host'
+  | 'photographer' | 'copywriter' | 'graphic_designer' | 'voice_artist'
+  // Post-Production (7)
+  | 'video_editor' | 'motion_graphics' | 'sound_designer' | 'colorist'
+  | 'director' | 'producer' | 'animator_2d3d'
+  // Strategy & Marketing (10)
+  | 'content_strategist' | 'social_media_manager' | 'community_manager'
+  | 'digital_strategist' | 'seo_specialist' | 'email_marketer'
+  | 'growth_hacker' | 'crm_specialist' | 'conversion_optimizer'
+  // Technology (3)
+  | 'web_developer' | 'app_developer' | 'ai_specialist'
+  // Education (2)
+  | 'online_instructor' | 'workshop_facilitator'
+  // Client (2)
+  | 'brand_manager' | 'marketing_director';
+
+export type AppRole = SystemRole | LegacyRole | MarketplaceRole;
 
 // Ambassador badge levels (badge system - not a role)
 export type AmbassadorLevel = 'bronze' | 'silver' | 'gold';

@@ -14,7 +14,7 @@ import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
 import { ImpersonationBanner } from "@/components/impersonation/ImpersonationBanner";
 import { AICopilotProvider } from "@/contexts/AICopilotContext";
 import { TrialProvider } from "@/contexts/TrialContext";
-import { TrackingProvider } from "@/contexts/TrackingContext";
+import { AnalyticsProvider } from "@/contexts/AnalyticsContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 import { StrategistClientProvider } from "@/contexts/StrategistClientContext";
 import { KiroProvider } from "@/contexts/KiroContext";
@@ -34,9 +34,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const ContentBoard = lazy(() => import("./pages/ContentBoard"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Content = lazy(() => import("./pages/Content"));
-const Creators = lazy(() => import("./pages/Creators"));
 const Scripts = lazy(() => import("./pages/Scripts"));
-const Clients = lazy(() => import("./pages/Clients"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Team = lazy(() => import("./pages/Team"));
 const CreatorDashboard = lazy(() => import("./pages/CreatorDashboard"));
@@ -79,6 +77,32 @@ const TalentListDetailPage = lazy(() => import("./pages/marketplace/TalentListDe
 const MarketplaceInvitationsPage = lazy(() => import("./pages/marketplace/MarketplaceInvitationsPage"));
 const MarketplaceInquiriesPage = lazy(() => import("./pages/marketplace/MarketplaceInquiriesPage"));
 const CreatorProfileSetup = lazy(() => import("./pages/CreatorProfileSetup"));
+const Unete = lazy(() => import("./pages/Unete"));
+const UneteTalento = lazy(() => import("./pages/unete/talento"));
+const UneteMarcas = lazy(() => import("./pages/unete/marcas"));
+const UneteOrganizaciones = lazy(() => import("./pages/unete/organizaciones"));
+// CRM Platform
+const PlatformCRMDashboard = lazy(() => import("./pages/crm/platform/PlatformCRMDashboard"));
+const PlatformCRMLeads = lazy(() => import("./pages/crm/platform/PlatformCRMLeads"));
+const PlatformCRMOrganizations = lazy(() => import("./pages/crm/platform/PlatformCRMOrganizations"));
+const PlatformCRMCreators = lazy(() => import("./pages/crm/platform/PlatformCRMCreators"));
+const PlatformCRMUsers = lazy(() => import("./pages/crm/platform/PlatformCRMUsers"));
+const PlatformCRMFinances = lazy(() => import("./pages/crm/platform/PlatformCRMFinances"));
+// CRM Org
+const OrgCRMDashboard = lazy(() => import("./pages/crm/org/OrgCRMDashboard"));
+const OrgCRMPipelines = lazy(() => import("./pages/crm/org/OrgCRMPipelines"));
+const OrgCRMFinances = lazy(() => import("./pages/crm/org/OrgCRMFinances"));
+// Unified pages (Talent + Clients)
+const UnifiedTalentPage = lazy(() => import("./pages/UnifiedTalentPage"));
+const UnifiedClientsPage = lazy(() => import("./pages/UnifiedClientsPage"));
+
+// KAE Analytics
+const KAEAnalyticsDashboard = lazy(() => import("./components/admin/analytics/KAEDashboard"));
+
+// Subscription pages
+const SubscriptionSuccess = lazy(() => import("./pages/subscription/SubscriptionSuccess"));
+const SubscriptionCancel = lazy(() => import("./pages/subscription/SubscriptionCancel"));
+const PlanesPage = lazy(() => import("./pages/PlanesPage"));
 
 // Wallet Module Pages
 const WalletPage = lazy(() => import("./modules/wallet/pages/WalletPage").then(m => ({ default: m.WalletPage })));
@@ -201,23 +225,46 @@ function AppRoutes() {
         <Route path="/auth/org/:slug" element={<OrgRegister />} />
         <Route path="/register" element={<Register />} />
         <Route path="/register/:slug" element={<Register />} />
+        <Route path="/subscription/success" element={<SubscriptionSuccess />} />
+        <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="/unete" element={<Unete />} />
+        <Route path="/unete/talento" element={<UneteTalento />} />
+        <Route path="/unete/marcas" element={<UneteMarcas />} />
+        <Route path="/unete/organizaciones" element={<UneteOrganizaciones />} />
         <Route path="/" element={<HomePage />} />
         <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'team_leader']}><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor']}><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
         <Route path="/content" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor']}><MainLayout><Content /></MainLayout></ProtectedRoute>} />
-        <Route path="/creators" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Creators /></MainLayout></ProtectedRoute>} />
+        <Route path="/talent" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist']}><MainLayout><UnifiedTalentPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/clients-hub" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist']}><MainLayout><UnifiedClientsPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/creators" element={<Navigate to="/talent" replace />} />
+        <Route path="/clients" element={<Navigate to="/clients-hub" replace />} />
         <Route path="/scripts" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'strategist']}><MainLayout><Scripts /></MainLayout></ProtectedRoute>} />
-        <Route path="/clients" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Clients /></MainLayout></ProtectedRoute>} />
-        <Route path="/team" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Team /></MainLayout></ProtectedRoute>} />
+        <Route path="/team" element={<Navigate to="/talent" replace />} />
         <Route path="/live" element={<ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Live /></MainLayout></ProtectedRoute>} />
         <Route path="/marketing" element={<ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Marketing /></MainLayout></ProtectedRoute>} />
+        {/* CRM Plataforma */}
+        <Route path="/crm" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMDashboard /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/leads" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMLeads /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/organizaciones" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMOrganizations /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/creadores" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMCreators /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/usuarios" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMUsers /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/finanzas" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMFinances /></MainLayout></ProtectedRoute>} />
+        {/* CRM Organización */}
+        <Route path="/org-crm" element={<Navigate to="/talent" replace />} />
+        <Route path="/org-crm/contactos" element={<Navigate to="/clients-hub?tab=contactos" replace />} />
+        <Route path="/org-crm/creadores" element={<Navigate to="/talent?tab=externo" replace />} />
+        <Route path="/org-crm/pipelines" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist']}><MainLayout><OrgCRMPipelines /></MainLayout></ProtectedRoute>} />
+        <Route path="/org-crm/finanzas" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist']}><MainLayout><OrgCRMFinances /></MainLayout></ProtectedRoute>} />
         {/* Wallet Module Routes */}
         <Route path="/wallet" element={<ProtectedRoute allowNoRoles><MainLayout><WalletPage /></MainLayout></ProtectedRoute>} />
         <Route path="/wallet/transactions" element={<ProtectedRoute allowNoRoles><MainLayout><TransactionsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/wallet/withdrawals" element={<ProtectedRoute allowNoRoles><MainLayout><WithdrawalsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/admin/wallets" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><AdminWalletsPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><KAEAnalyticsDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute allowNoRoles><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
+        <Route path="/planes" element={<ProtectedRoute allowNoRoles><MainLayout><PlanesPage /></MainLayout></ProtectedRoute>} />
         <Route path="/creator-dashboard" element={<ProtectedRoute allowedRoles={['creator']}><MainLayout><CreatorDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/editor-dashboard" element={<ProtectedRoute allowedRoles={['editor']}><MainLayout><EditorDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/strategist-dashboard" element={<ProtectedRoute allowedRoles={['strategist']}><MainLayout><StrategistDashboard /></MainLayout></ProtectedRoute>} />
@@ -236,7 +283,7 @@ function AppContent() {
     <BrowserRouter>
       <BrandingProvider>
         <AuthProvider>
-          <TrackingProvider>
+          <AnalyticsProvider>
             <ImpersonationProvider>
               <TrialProvider>
                 <UnsavedChangesProvider>
@@ -258,7 +305,7 @@ function AppContent() {
                 </UnsavedChangesProvider>
               </TrialProvider>
             </ImpersonationProvider>
-          </TrackingProvider>
+          </AnalyticsProvider>
         </AuthProvider>
       </BrandingProvider>
     </BrowserRouter>

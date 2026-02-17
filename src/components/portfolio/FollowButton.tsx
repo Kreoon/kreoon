@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { UserPlus, UserMinus, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useDiscoveryAnalytics } from '@/analytics';
 
 interface FollowButtonProps {
   userId: string;
@@ -24,6 +25,7 @@ export function FollowButton({
 }: FollowButtonProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { trackCreatorFollowed, trackCreatorUnfollowed } = useDiscoveryAnalytics();
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
   const [loading, setLoading] = useState(false);
 
@@ -52,6 +54,11 @@ export function FollowButton({
       const newFollowingState = data as boolean;
       setIsFollowing(newFollowingState);
       onFollowChange?.(newFollowingState);
+      if (newFollowingState) {
+        trackCreatorFollowed(userId, 'profile');
+      } else {
+        trackCreatorUnfollowed(userId);
+      }
 
       toast({
         title: newFollowingState ? 'Siguiendo' : 'Dejaste de seguir',

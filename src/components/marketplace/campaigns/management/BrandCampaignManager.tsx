@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ArrowLeft, Users, Calendar, DollarSign, Gift, Layers, Megaphone, Gavel, ArrowUpDown, Loader2 } from 'lucide-react';
+import { Plus, ArrowLeft, Users, Calendar, DollarSign, Gift, Layers, Megaphone, Gavel, ArrowUpDown, Loader2, Radio, UserSearch } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMarketplaceCampaigns, CAMPAIGN_STATUS_COLORS, CAMPAIGN_STATUS_LABELS } from '@/hooks/useMarketplaceCampaigns';
 import { CampaignApplicationsReview } from './CampaignApplicationsReview';
 import { CampaignProgress } from './CampaignProgress';
+import { BrandPublicationReview } from '../activation/BrandPublicationReview';
 import type { Campaign, CampaignStatus } from '../../types/marketplace';
 
 type TabFilter = 'all' | 'active' | 'draft' | 'in_progress' | 'completed';
@@ -27,7 +28,7 @@ export function BrandCampaignManager() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabFilter>('all');
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'applications' | 'progress'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'applications' | 'progress' | 'activations'>('list');
 
   const { campaigns, loading } = useMarketplaceCampaigns();
 
@@ -61,6 +62,19 @@ export function BrandCampaignManager() {
             Volver a mis campanas
           </button>
           <CampaignProgress campaignId={selectedCampaignId} />
+        </div>
+      </div>
+    );
+  }
+
+  if (viewMode === 'activations' && selectedCampaignId) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0f]">
+        <div className="max-w-4xl mx-auto px-4 md:px-6 py-6">
+          <BrandPublicationReview
+            campaignId={selectedCampaignId}
+            onBack={() => { setViewMode('list'); setSelectedCampaignId(null); }}
+          />
         </div>
       </div>
     );
@@ -127,6 +141,7 @@ export function BrandCampaignManager() {
                 campaign={campaign}
                 onViewApplications={() => { setSelectedCampaignId(campaign.id); setViewMode('applications'); }}
                 onViewProgress={() => { setSelectedCampaignId(campaign.id); setViewMode('progress'); }}
+                onViewActivations={() => { setSelectedCampaignId(campaign.id); setViewMode('activations'); }}
                 onViewDetail={() => navigate(`/marketplace/campaigns/${campaign.id}`)}
               />
             ))}
@@ -155,11 +170,13 @@ function CampaignRow({
   campaign,
   onViewApplications,
   onViewProgress,
+  onViewActivations,
   onViewDetail,
 }: {
   campaign: Campaign;
   onViewApplications: () => void;
   onViewProgress: () => void;
+  onViewActivations: () => void;
   onViewDetail: () => void;
 }) {
   const TypeIcon = TYPE_ICONS[campaign.campaign_type];
@@ -186,6 +203,18 @@ function CampaignRow({
             <span className={cn('text-xs px-2 py-0.5 rounded-full flex-shrink-0', CAMPAIGN_STATUS_COLORS[campaign.status])}>
               {CAMPAIGN_STATUS_LABELS[campaign.status]}
             </span>
+            {campaign.campaign_purpose === 'activation' && (
+              <span className="text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 flex items-center gap-0.5 bg-green-500/15 text-green-300">
+                <Radio className="h-3 w-3" />
+                Activación
+              </span>
+            )}
+            {campaign.campaign_purpose === 'talent' && (
+              <span className="text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 flex items-center gap-0.5 bg-blue-500/15 text-blue-300">
+                <UserSearch className="h-3 w-3" />
+                Talento
+              </span>
+            )}
             {isBidMode && (
               <span className={cn(
                 'text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 flex items-center gap-0.5',
@@ -235,6 +264,15 @@ function CampaignRow({
           >
             Progreso
           </button>
+          {campaign.is_brand_activation && (
+            <button
+              onClick={onViewActivations}
+              className="text-xs bg-green-600/20 hover:bg-green-600/30 text-green-300 px-3 py-2 rounded-lg transition-colors flex items-center gap-1"
+            >
+              <Radio className="h-3 w-3" />
+              Activaciones
+            </button>
+          )}
           <button
             onClick={onViewDetail}
             className="text-xs bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 px-3 py-2 rounded-lg transition-colors"

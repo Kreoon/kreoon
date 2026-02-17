@@ -30,7 +30,6 @@ import { Progress } from '@/components/ui/progress';
 import { useCompanyProfile } from '@/hooks/useCompanyProfile';
 import { useMarketplaceProposals } from '@/hooks/useMarketplaceProposals';
 import { useMarketplaceFavorites } from '@/hooks/useMarketplaceFavorites';
-import { useMarketplaceConversations } from '@/hooks/useMarketplaceChat';
 import { useCreatorMatching } from '@/hooks/useCreatorMatching';
 import { CreatorMatchingCard } from '@/components/marketplace/CreatorMatchingCard';
 import { CompanyOnboarding } from '@/components/marketplace/CompanyOnboarding';
@@ -86,7 +85,8 @@ export default function CompanyDashboardPage() {
   const { companyProfile, hasProfile, getProfileProgress } = useCompanyProfile();
   const { proposals, isLoading: proposalsLoading } = useMarketplaceProposals();
   const { favorites } = useMarketplaceFavorites();
-  const { conversations, totalUnread } = useMarketplaceConversations();
+  const conversations: any[] = [];
+  const totalUnread = 0;
   const { searchCreators, isSearching } = useCreatorMatching();
 
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -400,19 +400,6 @@ export default function CompanyDashboardPage() {
                 <Button
                   variant="outline"
                   className="w-full justify-start gap-3"
-                  onClick={() => navigate('/marketplace/chat')}
-                >
-                  <MessageCircle className="h-4 w-4 text-social-accent" />
-                  Mensajes
-                  {totalUnread > 0 && (
-                    <Badge variant="destructive" className="ml-auto">
-                      {totalUnread}
-                    </Badge>
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start gap-3"
                   onClick={() => navigate('/marketplace/favorites')}
                 >
                   <Heart className="h-4 w-4 text-social-accent" />
@@ -421,64 +408,6 @@ export default function CompanyDashboardPage() {
                     {favorites.length}
                   </Badge>
                 </Button>
-              </CardContent>
-            </Card>
-
-            {/* Recent conversations */}
-            <Card className="bg-social-card border-social-border">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-social-foreground text-base">
-                  Conversaciones
-                </CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate('/marketplace/chat')}
-                >
-                  Ver todas
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {conversations.length === 0 ? (
-                  <p className="text-sm text-social-muted-foreground text-center py-4">
-                    Sin conversaciones
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {conversations.slice(0, 4).map((conv) => {
-                      const other = conv.creator_user;
-                      return (
-                        <div
-                          key={conv.id}
-                          className="flex items-center gap-3 cursor-pointer hover:bg-social-muted/50 p-2 rounded-lg transition-colors"
-                          onClick={() => navigate(`/marketplace/chat/${conv.id}`)}
-                        >
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={other?.avatar_url || undefined} />
-                            <AvatarFallback>
-                              {other?.full_name?.[0] || '?'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-social-foreground truncate">
-                              {other?.full_name}
-                            </p>
-                            {conv.last_message_preview && (
-                              <p className="text-xs text-social-muted-foreground truncate">
-                                {conv.last_message_preview}
-                              </p>
-                            )}
-                          </div>
-                          {conv.company_unread_count > 0 && (
-                            <Badge variant="destructive" className="h-5 w-5 p-0 flex items-center justify-center">
-                              {conv.company_unread_count}
-                            </Badge>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
               </CardContent>
             </Card>
 

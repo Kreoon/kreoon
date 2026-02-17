@@ -3,18 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { 
-  MessageSquare, Brain, Package, Sparkles, TrendingUp,
+import {
+  Brain, Package, Sparkles, TrendingUp,
   Users, Building2, Activity, Database
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
 interface PlatformStats {
-  // Chat & Collaboration (all orgs)
-  totalConversations: number;
-  totalMessages: number;
-  
   // AI Usage (all orgs)
   aiRequests: number;
   aiSuccessRate: number;
@@ -34,8 +30,6 @@ interface PlatformStats {
 export function PlatformMetricsPanel() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<PlatformStats>({
-    totalConversations: 0,
-    totalMessages: 0,
     aiRequests: 0,
     aiSuccessRate: 0,
     tokensUsed: 0,
@@ -54,15 +48,6 @@ export function PlatformMetricsPanel() {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      // Fetch global chat stats
-      const { count: conversationsCount } = await supabase
-        .from('chat_conversations')
-        .select('*', { count: 'exact', head: true });
-
-      const { count: messagesCount } = await supabase
-        .from('chat_messages')
-        .select('*', { count: 'exact', head: true });
-
       // Fetch AI usage (global)
       const { data: aiLogs } = await supabase
         .from('ai_usage_logs')
@@ -99,8 +84,6 @@ export function PlatformMetricsPanel() {
         .select('*', { count: 'exact', head: true });
 
       setStats({
-        totalConversations: conversationsCount || 0,
-        totalMessages: messagesCount || 0,
         aiRequests: aiLogs?.length || 0,
         aiSuccessRate,
         tokensUsed,
@@ -157,13 +140,6 @@ export function PlatformMetricsPanel() {
   ];
 
   const platformKpis = [
-    {
-      label: 'Conversaciones',
-      value: stats.totalConversations,
-      icon: MessageSquare,
-      color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
-      subtitle: `${stats.totalMessages.toLocaleString()} mensajes`,
-    },
     {
       label: 'Peticiones IA',
       value: stats.aiRequests,
@@ -235,7 +211,7 @@ export function PlatformMetricsPanel() {
             Uso de Plataforma
           </CardTitle>
           <CardDescription>
-            Métricas de chat, IA y productos
+            Métricas de IA y productos
           </CardDescription>
         </CardHeader>
         <CardContent>

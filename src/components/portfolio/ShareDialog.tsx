@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Copy, Check, Share2, Twitter, Facebook, Linkedin, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { usePortfolioAnalytics } from '@/analytics';
 
 interface ShareDialogProps {
   open: boolean;
@@ -27,6 +28,7 @@ export function ShareDialog({
   description = '',
 }: ShareDialogProps) {
   const [copied, setCopied] = useState(false);
+  const { trackPortfolioShared } = usePortfolioAnalytics();
 
   const fullUrl = url.startsWith('http') ? url : `${window.location.origin}${url}`;
   const encodedUrl = encodeURIComponent(fullUrl);
@@ -64,6 +66,7 @@ export function ShareDialog({
     try {
       await navigator.clipboard.writeText(fullUrl);
       setCopied(true);
+      trackPortfolioShared('unknown', 'clipboard');
       toast.success('Enlace copiado');
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {

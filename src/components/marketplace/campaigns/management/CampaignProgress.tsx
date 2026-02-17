@@ -1,27 +1,59 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Users, CheckCircle2, Package, DollarSign, Star, MapPin } from 'lucide-react';
+import { Users, CheckCircle2, Package, DollarSign, Star, MapPin, FolderOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMarketplaceCampaigns, APPLICATION_STATUS_COLORS, APPLICATION_STATUS_LABELS } from '@/hooks/useMarketplaceCampaigns';
+import { useMarketplaceProjects } from '@/hooks/useMarketplaceProjects';
 import type { CampaignApplication } from '../../types/marketplace';
 
 interface CampaignProgressProps {
   campaignId: string;
 }
 
+const PROJECT_STATUS_LABELS: Record<string, string> = {
+  pending: 'Pendiente',
+  briefing: 'En Brief',
+  in_progress: 'En Produccion',
+  revision: 'En Revision',
+  approved: 'Aprobado',
+  completed: 'Completado',
+  cancelled: 'Cancelado',
+};
+
+const PROJECT_STATUS_COLORS: Record<string, string> = {
+  pending: 'bg-purple-500/20 text-purple-300',
+  briefing: 'bg-blue-500/20 text-blue-300',
+  in_progress: 'bg-yellow-500/20 text-yellow-300',
+  revision: 'bg-pink-500/20 text-pink-300',
+  approved: 'bg-green-500/20 text-green-300',
+  completed: 'bg-cyan-500/20 text-cyan-300',
+  cancelled: 'bg-red-500/20 text-red-300',
+};
+
 export function CampaignProgress({ campaignId }: CampaignProgressProps) {
   const { getCampaignById, getApplicationsForCampaign } = useMarketplaceCampaigns();
+  const { getProjectsByCampaign } = useMarketplaceProjects();
 
   const campaign = useMemo(() => getCampaignById(campaignId), [campaignId, getCampaignById]);
 
   const [applications, setApplications] = useState<CampaignApplication[]>([]);
+  const [projectsMap, setProjectsMap] = useState<Map<string, { id: string; status: string }>>(new Map());
 
   useEffect(() => {
     let cancelled = false;
     getApplicationsForCampaign(campaignId).then(apps => {
       if (!cancelled) setApplications(apps);
     });
+    getProjectsByCampaign(campaignId).then(projects => {
+      if (!cancelled) {
+        const map = new Map<string, { id: string; status: string }>();
+        for (const p of projects) {
+          if (p.application_id) map.set(p.application_id, { id: p.id, status: p.status });
+        }
+        setProjectsMap(map);
+      }
+    });
     return () => { cancelled = true; };
-  }, [campaignId, getApplicationsForCampaign]);
+  }, [campaignId, getApplicationsForCampaign, getProjectsByCampaign]);
 
   if (!campaign) return null;
 
@@ -59,7 +91,7 @@ export function CampaignProgress({ campaignId }: CampaignProgressProps) {
         {approvedApps.length > 0 ? (
           <div className="space-y-3">
             {approvedApps.map(app => (
-              <CreatorProgressRow key={app.id} application={app} />
+              <CreatorProgressRow key={app.id} application={app} projectInfo={projectsMap.get(app.id)} />
             ))}
           </div>
         ) : (
@@ -86,7 +118,7 @@ function KpiCard({ icon: Icon, label, value, color }: { icon: React.ElementType;
   );
 }
 
-function CreatorProgressRow({ application }: { application: CampaignApplication }) {
+function CreatorProgressRow({ application, projectInfo }: { application: CampaignApplication; projectInfo?: { id: string; status: string } }) {
   const creator = application.creator;
   return (
     <div className="flex items-center justify-between bg-white/5 rounded-lg p-3">
@@ -114,9 +146,18 @@ function CreatorProgressRow({ application }: { application: CampaignApplication 
           </div>
         </div>
       </div>
-      <span className={cn('text-xs px-2 py-0.5 rounded-full', APPLICATION_STATUS_COLORS[application.status])}>
-        {APPLICATION_STATUS_LABELS[application.status]}
-      </span>
+      <div className="flex items-center gap-2">
+        {projectInfo ? (
+          <span className={cn('text-xs px-2 py-0.5 rounded-full flex items-center gap-1', PROJECT_STATUS_COLORS[projectInfo.status] || 'bg-white/10 text-gray-300')}>
+            <FolderOpen className="h-3 w-3" />
+            {PROJECT_STATUS_LABELS[projectInfo.status] || projectInfo.status}
+          </span>
+        ) : (
+          <span className={cn('text-xs px-2 py-0.5 rounded-full', APPLICATION_STATUS_COLORS[application.status])}>
+            {APPLICATION_STATUS_LABELS[application.status]}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

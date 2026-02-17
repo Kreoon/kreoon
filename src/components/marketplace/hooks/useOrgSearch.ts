@@ -10,10 +10,11 @@ export function useOrgSearch(filters: MarketplaceFilters) {
     const fetchOrgs = async () => {
       setLoading(true);
       try {
-        // Query organizations table for marketplace-enabled orgs
+        // Query organizations table for marketplace-enabled orgs only
         const { data: rows } = await supabase
           .from('organizations')
           .select('id, slug, name, logo_url, org_tagline, created_at')
+          .eq('marketplace_enabled', true)
           .order('name');
 
         const mapped: MarketplaceOrg[] = (rows || []).map((row: any) => ({

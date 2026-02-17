@@ -42,33 +42,12 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { AppRole } from "@/types/database";
+import { getRoleLabel, getRoleBadgeColor, SELECTABLE_ROLES } from "@/lib/roles";
 
 const ROOT_EMAIL = "jacsolucionesgraficas@gmail.com";
 
-const ROLE_LABELS: Record<AppRole, string> = {
-  admin: "Administrador",
-  creator: "Creador de Contenido",
-  editor: "Productor Audio-Visual",
-  client: "Cliente",
-  strategist: "Estratega",
-  trafficker: "Trafficker",
-  team_leader: "Líder de Equipo",
-  ambassador: "Embajador"
-};
-
-// Roles that can be assigned in user management
-const ASSIGNABLE_ROLES: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'ambassador', 'creator', 'editor', 'client'];
-
-const ROLE_COLORS: Record<AppRole, string> = {
-  admin: "bg-red-500/10 text-red-500 border-red-500/20",
-  creator: "bg-purple-500/10 text-purple-500 border-purple-500/20",
-  editor: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  client: "bg-green-500/10 text-green-500 border-green-500/20",
-  strategist: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
-  trafficker: "bg-teal-500/10 text-teal-500 border-teal-500/20",
-  team_leader: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
-  ambassador: "bg-amber-500/10 text-amber-500 border-amber-500/20"
-};
+// Roles that can be assigned in user management (all roles including system)
+const ASSIGNABLE_ROLES = SELECTABLE_ROLES;
 
 interface UserData {
   id: string;
@@ -171,7 +150,7 @@ export function UserManagement() {
         };
       }));
       
-      toast.success(data.added ? `Rol ${ROLE_LABELS[role]} agregado` : `Rol ${ROLE_LABELS[role]} removido`);
+      toast.success(data.added ? `Rol ${getRoleLabel(role)} agregado` : `Rol ${getRoleLabel(role)} removido`);
     } catch (error: any) {
       toast.error("Error al cambiar rol");
     } finally {
@@ -306,9 +285,9 @@ export function UserManagement() {
                             <Badge 
                               key={role} 
                               variant="outline" 
-                              className={`text-xs ${ROLE_COLORS[role]}`}
+                              className={`text-xs ${getRoleBadgeColor(role)}`}
                             >
-                              {ROLE_LABELS[role]}
+                              {getRoleLabel(role)}
                             </Badge>
                           ))}
                           {user.roles.length === 0 && (
@@ -356,14 +335,14 @@ export function UserManagement() {
                           <DropdownMenuSeparator />
                           <DropdownMenuLabel>Roles</DropdownMenuLabel>
                           
-                          {(Object.keys(ROLE_LABELS) as AppRole[]).map(role => (
+                          {SELECTABLE_ROLES.map(role => (
                             <DropdownMenuCheckboxItem
                               key={role}
                               checked={user.roles.includes(role)}
                               onCheckedChange={() => handleToggleRole(user.id, role)}
                               disabled={actionLoading === `role-${user.id}-${role}`}
                             >
-                              {ROLE_LABELS[role]}
+                              {getRoleLabel(role)}
                             </DropdownMenuCheckboxItem>
                           ))}
 

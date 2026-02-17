@@ -442,6 +442,7 @@ export function CampaignStepVisibility({
                 onChange={(roles: MarketplaceRoleId[]) => onCreatorReqChange('desired_roles', roles)}
                 maxRoles={5}
                 showCategories
+                excludeCategories={['client']}
                 label="Roles Deseados"
               />
 

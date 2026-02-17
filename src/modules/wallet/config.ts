@@ -1,4 +1,5 @@
 // Wallet Module Configuration
+import { COMMISSION_RATES } from '@/lib/finance/constants';
 
 /**
  * Feature flags for the wallet module
@@ -27,9 +28,9 @@ export const WALLET_CONFIG = {
   MIN_WITHDRAWAL_AMOUNT: 50000,
 
   /**
-   * Platform fee percentage (0-100)
+   * Platform fee percentage (0-100) — from single source of truth
    */
-  PLATFORM_FEE_PERCENTAGE: 10,
+  PLATFORM_FEE_PERCENTAGE: COMMISSION_RATES.marketplace_direct.base,
 
   /**
    * Coming soon message configuration
@@ -46,7 +47,7 @@ export const WALLET_CONFIG = {
       'Sistema de escrow para campañas',
       'Panel de administración',
     ],
-    estimatedLaunch: 'Q1 2026',
+    estimatedLaunch: 'Q2 2026',
   },
 } as const;
 

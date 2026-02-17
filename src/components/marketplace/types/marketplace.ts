@@ -220,7 +220,8 @@ export const EXPERTISE_TAG_GROUPS: ExpertiseTagGroup[] = [
 
 // --- Phase 3: Hiring & Project types ---
 
-export type ProjectStatus = 'pending' | 'briefing' | 'in_progress' | 'revision' | 'approved' | 'completed' | 'cancelled';
+export type MarketplaceProjectType = 'content_creation' | 'post_production' | 'strategy_marketing' | 'technology' | 'education';
+export type ProjectStatus = 'pending' | 'briefing' | 'in_progress' | 'revision' | 'approved' | 'completed' | 'cancelled' | 'overdue';
 export type ProjectPaymentMethod = 'payment' | 'exchange';
 export type ProjectPaymentStatus = 'pending' | 'escrow' | 'released' | 'refunded';
 
@@ -250,6 +251,7 @@ export interface MarketplaceProject {
   payment_method: ProjectPaymentMethod;
   payment_status: ProjectPaymentStatus;
   status: ProjectStatus;
+  project_type?: MarketplaceProjectType;
   brief: HiringBrief;
   total_price: number;
   currency: string;
@@ -260,6 +262,18 @@ export interface MarketplaceProject {
   deliverables_approved: number;
   last_message_at?: string;
   unread_messages: number;
+  // Editor & payment split
+  requires_editor?: boolean;
+  editor_id?: string;
+  editor_payout?: number;
+  creator_payout?: number;
+  platform_fee?: number;
+  delivery_days?: number;
+  // Overdue / novedades
+  overdue_at?: string;
+  overdue_action?: 'extend' | 'reassign' | 'cancel';
+  overdue_notes?: string;
+  deadline_extension_reason?: string;
 }
 
 export interface ProjectMessage {
@@ -542,6 +556,9 @@ export interface Campaign {
   // Flags
   is_urgent?: boolean;
   is_featured?: boolean;
+  campaign_purpose?: 'content' | 'activation' | 'talent';
+  is_brand_activation?: boolean;
+  activation_requirements?: any;
   published_at?: string;
   // Content guidelines
   content_guidelines?: string;
@@ -564,6 +581,8 @@ export interface CampaignApplication {
   bid_amount?: number;
   bid_message?: string;
   counter_offer?: CounterOffer;
+  includes_editing?: boolean;
+  estimated_delivery_days?: number;
 }
 
 export interface CampaignFilters {

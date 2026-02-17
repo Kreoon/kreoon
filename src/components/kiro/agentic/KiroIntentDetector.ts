@@ -427,13 +427,13 @@ const SECTION_ROUTES: Record<string, { route: string; label: string; icon: strin
   contenido: { route: '/content-board', label: 'Contenido', icon: '📊' },
   board: { route: '/content-board', label: 'Board', icon: '📊' },
 
-  // Creadores
-  creadores: { route: '/creators', label: 'Creadores', icon: '🎭' },
-  casting: { route: '/creators', label: 'Casting', icon: '🎭' },
-  talentos: { route: '/creators', label: 'Talentos', icon: '🎭' },
+  // Talento
+  creadores: { route: '/talent', label: 'Talento', icon: '🎭' },
+  casting: { route: '/talent', label: 'Talento', icon: '🎭' },
+  talentos: { route: '/talent', label: 'Talento', icon: '🎭' },
 
   // Clientes
-  clientes: { route: '/clients', label: 'Clientes', icon: '👔' },
+  clientes: { route: '/clients-hub', label: 'Clientes', icon: '👔' },
 
   // Equipo
   equipo: { route: '/team', label: 'Equipo', icon: '👥' },

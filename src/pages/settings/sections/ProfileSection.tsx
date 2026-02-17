@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   User, Globe, Briefcase, FolderOpen, Star, Calendar, Save,
-  Loader2, Camera, ImageIcon, X,
+  Loader2, Camera, ImageIcon, X, Palette, CheckCircle2, Circle,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Progress } from '@/components/ui/progress';
 import {
   Select,
   SelectContent,
@@ -24,6 +25,7 @@ import { useCreatorProfile } from '@/hooks/useCreatorProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { getRoleArea, type RoleArea, ROLE_AREA_LABELS } from '@/lib/permissionGroups';
 import {
   CreatorExpertiseTab,
   CreatorServicesTab,
@@ -33,18 +35,35 @@ import {
   EXPERIENCE_LEVELS,
 } from '@/components/settings/MarketplaceSettings';
 import { PortfolioTab } from '@/components/settings/PortfolioTab';
+import { ProfileCustomizationTab } from '@/components/settings/ProfileCustomizationTab';
+
+const COUNTRIES = [
+  { code: 'CO', name: 'Colombia', flag: '\u{1F1E8}\u{1F1F4}' },
+  { code: 'MX', name: 'México', flag: '\u{1F1F2}\u{1F1FD}' },
+  { code: 'CL', name: 'Chile', flag: '\u{1F1E8}\u{1F1F1}' },
+  { code: 'PE', name: 'Perú', flag: '\u{1F1F5}\u{1F1EA}' },
+  { code: 'AR', name: 'Argentina', flag: '\u{1F1E6}\u{1F1F7}' },
+  { code: 'EC', name: 'Ecuador', flag: '\u{1F1EA}\u{1F1E8}' },
+  { code: 'US', name: 'Estados Unidos', flag: '\u{1F1FA}\u{1F1F8}' },
+  { code: 'ES', name: 'España', flag: '\u{1F1EA}\u{1F1F8}' },
+  { code: 'BR', name: 'Brasil', flag: '\u{1F1E7}\u{1F1F7}' },
+  { code: 'CR', name: 'Costa Rica', flag: '\u{1F1E8}\u{1F1F7}' },
+  { code: 'PA', name: 'Panamá', flag: '\u{1F1F5}\u{1F1E6}' },
+  { code: 'DO', name: 'Rep. Dominicana', flag: '\u{1F1E9}\u{1F1F4}' },
+];
 
 // ─── Main Section ────────────────────────────────────────────────────────────
 
 export default function ProfileSection() {
   const { activeRole } = useAuth();
-  const isBrand = activeRole === 'client';
+  const roleArea = getRoleArea(activeRole);
+  const isBrand = roleArea === 'client';
 
   const { profile: userProfile, loading: profileLoading } = useProfile();
   const { exists, createProfile, loading: cpLoading } = useCreatorProfile();
   const [creatingProfile, setCreatingProfile] = useState(false);
 
-  // Auto-create creator_profile if not exists
+  // Auto-create creator_profile if not exists (for non-brand users)
   useEffect(() => {
     if (userProfile && !exists && !cpLoading && !creatingProfile && !isBrand) {
       setCreatingProfile(true);
@@ -60,27 +79,149 @@ export default function ProfileSection() {
     );
   }
 
+  // Clients: personal + social tabs, then brand-specific tabs below
   if (isBrand) {
-    return <BrandSettingsTabs />;
+    return (
+      <div className="space-y-8">
+        <CreatorUnifiedProfile roleArea="client" />
+        <BrandSettingsTabs />
+      </div>
+    );
   }
 
-  return <CreatorUnifiedProfile />;
+  return <CreatorUnifiedProfile roleArea={roleArea} />;
+}
+
+// ─── Role-Area-Based Tabs ────────────────────────────────────────────────────
+// Tab visibility is driven by RoleArea (7 areas), NOT PermissionGroup (6 groups).
+// This preserves the distinction between Technology, Education, and Content Creation
+// which PermissionGroup merges into 'creator'.
+
+interface TabDef {
+  value: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  component: React.ComponentType;
+  /** Which role areas can see this tab */
+  visibleTo: RoleArea[];
+}
+
+/** Every area except 'client' */
+const ALL_NON_CLIENT: RoleArea[] = ['system', 'content_creation', 'post_production', 'strategy_marketing', 'technology', 'education'];
+/** Every area */
+const ALL_AREAS: RoleArea[] = [...ALL_NON_CLIENT, 'client'];
+
+const ALL_TABS: TabDef[] = [
+  {
+    value: 'personal', icon: User, label: 'Personal',
+    component: PersonalInfoTab,
+    visibleTo: ALL_AREAS,
+  },
+  {
+    value: 'public', icon: Globe, label: 'Perfil Público',
+    component: PublicProfileTab,
+    visibleTo: ALL_NON_CLIENT,
+  },
+  {
+    value: 'social', icon: Globe, label: 'Redes',
+    component: SocialLinksTab,
+    visibleTo: ALL_AREAS,
+  },
+  {
+    value: 'expertise', icon: Briefcase, label: 'Especialización',
+    component: CreatorExpertiseTab,
+    visibleTo: ALL_NON_CLIENT,
+  },
+  {
+    value: 'portfolio', icon: FolderOpen, label: 'Portafolio',
+    component: PortfolioTab,
+    visibleTo: ALL_NON_CLIENT,
+  },
+  {
+    value: 'services', icon: Star, label: 'Servicios',
+    component: CreatorServicesTab,
+    visibleTo: ALL_NON_CLIENT,
+  },
+  {
+    value: 'availability', icon: Calendar, label: 'Disponibilidad',
+    component: AvailabilityAndPricingTab,
+    visibleTo: ALL_NON_CLIENT,
+  },
+  {
+    value: 'customization', icon: Palette, label: 'Personalización',
+    component: ProfileCustomizationTab,
+    visibleTo: ALL_NON_CLIENT,
+  },
+];
+
+// ─── Profile Completion Card ─────────────────────────────────────────────────
+
+function ProfileCompletionCard() {
+  const { profile: userProfile } = useProfile();
+  const { profile: creatorProfile } = useCreatorProfile();
+
+  const checks = useMemo(() => {
+    if (!userProfile) return [];
+    return [
+      { label: 'Nombre completo', done: !!userProfile.full_name, required: true },
+      { label: 'Foto de perfil', done: !!userProfile.avatar_url, required: true },
+      { label: 'Bio / Tagline', done: !!(creatorProfile?.bio), required: false },
+      { label: 'Al menos 1 rol', done: (creatorProfile?.marketplace_roles?.length || 0) > 0, required: false },
+      { label: 'Categorías', done: (creatorProfile?.categories?.length || 0) > 0, required: false },
+      { label: 'Portafolio', done: false, required: false }, // Would need portfolio count
+      { label: 'Al menos 1 servicio', done: false, required: false }, // Would need services count
+    ];
+  }, [userProfile, creatorProfile]);
+
+  const doneCount = checks.filter(c => c.done).length;
+  const pct = Math.round((doneCount / checks.length) * 100);
+
+  if (pct === 100) return null;
+
+  return (
+    <Card className="border-primary/20 bg-primary/5">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-sm font-medium">Completitud del perfil</p>
+          <span className="text-xs font-semibold text-primary">{pct}%</span>
+        </div>
+        <Progress value={pct} className="h-2 mb-3" />
+        <div className="grid grid-cols-2 gap-1">
+          {checks.map(check => (
+            <div key={check.label} className="flex items-center gap-1.5 text-xs">
+              {check.done ? (
+                <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
+              ) : (
+                <Circle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              )}
+              <span className={check.done ? 'text-muted-foreground line-through' : ''}>
+                {check.label}{check.required ? ' *' : ''}
+              </span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 // ─── Creator Unified Profile ─────────────────────────────────────────────────
 
-const TABS = [
-  { value: 'personal', icon: User, label: 'Personal' },
-  { value: 'public', icon: Globe, label: 'Perfil Público' },
-  { value: 'social', icon: Globe, label: 'Redes' },
-  { value: 'expertise', icon: Briefcase, label: 'Especialización' },
-  { value: 'portfolio', icon: FolderOpen, label: 'Portafolio' },
-  { value: 'services', icon: Star, label: 'Servicios' },
-  { value: 'availability', icon: Calendar, label: 'Disponibilidad' },
-];
-
-function CreatorUnifiedProfile() {
+function CreatorUnifiedProfile({ roleArea }: { roleArea: RoleArea }) {
   const [activeTab, setActiveTab] = useState('personal');
+  const showCompletion = roleArea !== 'client';
+
+  const visibleTabs = useMemo(
+    () => ALL_TABS.filter(tab => tab.visibleTo.includes(roleArea)),
+    [roleArea]
+  );
+
+  // Reset to first visible tab if current is not visible
+  useEffect(() => {
+    if (!visibleTabs.some(t => t.value === activeTab)) {
+      setActiveTab(visibleTabs[0]?.value || 'personal');
+    }
+  }, [visibleTabs, activeTab]);
 
   return (
     <div className="space-y-6">
@@ -93,15 +234,18 @@ function CreatorUnifiedProfile() {
           <div>
             <h2 className="text-2xl font-bold tracking-tight">Mi Perfil</h2>
             <p className="text-muted-foreground">
-              Personaliza tu perfil, portafolio y servicios en un solo lugar
+              {ROLE_AREA_LABELS[roleArea]} — Personaliza tu perfil, portafolio y servicios
             </p>
           </div>
         </div>
       </div>
 
+      {/* Completion indicator for creators/editors */}
+      {showCompletion && <ProfileCompletionCard />}
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="flex w-full h-auto p-1 overflow-x-auto">
-          {TABS.map(tab => (
+          {visibleTabs.map(tab => (
             <TabsTrigger
               key={tab.value}
               value={tab.value}
@@ -113,13 +257,11 @@ function CreatorUnifiedProfile() {
           ))}
         </TabsList>
 
-        <TabsContent value="personal"><PersonalInfoTab /></TabsContent>
-        <TabsContent value="public"><PublicProfileTab /></TabsContent>
-        <TabsContent value="social"><SocialLinksTab /></TabsContent>
-        <TabsContent value="expertise"><CreatorExpertiseTab /></TabsContent>
-        <TabsContent value="portfolio"><PortfolioTab /></TabsContent>
-        <TabsContent value="services"><CreatorServicesTab /></TabsContent>
-        <TabsContent value="availability"><AvailabilityAndPricingTab /></TabsContent>
+        {visibleTabs.map(tab => (
+          <TabsContent key={tab.value} value={tab.value}>
+            <tab.component />
+          </TabsContent>
+        ))}
       </Tabs>
     </div>
   );
@@ -250,6 +392,14 @@ function PublicProfileTab() {
       setBannerUrl(creatorProfile.banner_url || null);
     }
   }, [creatorProfile]);
+
+  // Sync experience level from profiles table
+  useEffect(() => {
+    if (userProfile?.experience_level) {
+      const level = EXPERIENCE_LEVELS.find(l => l.value === userProfile.experience_level);
+      if (level) setYearsExperience(level.years);
+    }
+  }, [userProfile]);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -488,12 +638,16 @@ function PublicProfileTab() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="country">País</Label>
-                <Input
-                  id="country"
-                  value={userProfile.country}
-                  onChange={(e) => updateProfileField('country', e.target.value)}
-                  placeholder="Tu país"
-                />
+                <Select value={userProfile.country} onValueChange={(v) => updateProfileField('country', v)}>
+                  <SelectTrigger id="country">
+                    <SelectValue placeholder="Selecciona tu país" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COUNTRIES.map(c => (
+                      <SelectItem key={c.code} value={c.code}>{c.flag} {c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -538,7 +692,10 @@ function PublicProfileTab() {
               return (
                 <button
                   key={level.value}
-                  onClick={() => setYearsExperience(level.years)}
+                  onClick={() => {
+                    setYearsExperience(level.years);
+                    updateProfileField('experience_level', level.value);
+                  }}
                   className={cn(
                     'p-3 rounded-lg border text-left transition-all',
                     isSelected
@@ -571,6 +728,8 @@ function PublicProfileTab() {
 // ─── Tab 3: Social Links ─────────────────────────────────────────────────────
 
 function SocialLinksTab() {
+  const { activeRole } = useAuth();
+  const isClient = getRoleArea(activeRole) === 'client';
   const {
     profile, loading, saving, updateField, save,
   } = useProfile();
@@ -584,8 +743,8 @@ function SocialLinksTab() {
     // Save to profiles table
     await save();
 
-    // Sync to creator_profiles.social_links
-    if (creatorProfile && profile) {
+    // Sync to creator_profiles.social_links (skip for clients)
+    if (!isClient && creatorProfile && profile) {
       const socialLinks: Record<string, string> = {};
       if (profile.instagram) socialLinks.instagram = profile.instagram;
       if (profile.tiktok) socialLinks.tiktok = profile.tiktok;

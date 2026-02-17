@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useAuthAnalytics } from "@/analytics";
 import {
   LayoutDashboard,
   Users,
@@ -8,6 +9,7 @@ import {
   Sparkles,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   UsersRound,
   LogOut,
   Kanban,
@@ -26,11 +28,18 @@ import {
   UserPlus,
   MessageSquare,
   ListChecks,
+  ContactRound,
+  Contact,
+  GitBranch,
+  Star,
+  DollarSign,
+  Crown,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { getPermissionGroup, type PermissionGroup } from "@/lib/permissionGroups";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { useOrgMarketplace } from "@/hooks/useOrgMarketplace";
@@ -75,14 +84,28 @@ const adminSections: NavSection[] = [
     label: "GESTIÓN",
     items: [
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
-      { name: "Creadores", href: "/creators", icon: Users, tourId: "sidebar-creators", requiresOrg: true },
-      { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
-      { name: "Equipo", href: "/team", icon: UsersRound, tourId: "sidebar-team", requiresOrg: true },
+      { name: "Talento", href: "/talent", icon: Users, tourId: "sidebar-talent", requiresOrg: true },
+      { name: "Clientes", href: "/clients-hub", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
+      { name: "Pipelines", href: "/org-crm/pipelines", icon: GitBranch, tourId: "sidebar-org-pipelines", requiresOrg: true },
+      { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, tourId: "sidebar-org-finances", requiresOrg: true },
+    ]
+  },
+  {
+    label: "CRM PLATAFORMA",
+    items: [
+      { name: "Dashboard", href: "/crm", icon: LayoutDashboard, tourId: "sidebar-crm-dashboard" },
+      { name: "Leads", href: "/crm/leads", icon: UserPlus, tourId: "sidebar-crm-leads" },
+      { name: "Organizaciones", href: "/crm/organizaciones", icon: Building2, tourId: "sidebar-crm-orgs" },
+      { name: "Talento", href: "/crm/creadores", icon: Video, tourId: "sidebar-crm-creators" },
+      { name: "Usuarios", href: "/crm/usuarios", icon: Users, tourId: "sidebar-crm-users" },
+      { name: "Finanzas", href: "/crm/finanzas", icon: DollarSign, tourId: "sidebar-crm-finances" },
     ]
   },
   {
     label: "CONFIG",
     items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
+      { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
       { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
   }
@@ -104,13 +127,17 @@ const strategistSections: NavSection[] = [
     label: "GESTIÓN",
     items: [
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
-      { name: "Creadores", href: "/creators", icon: Users, tourId: "sidebar-creators", requiresOrg: true },
-      { name: "Clientes", href: "/clients", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
+      { name: "Talento", href: "/talent", icon: Users, tourId: "sidebar-talent", requiresOrg: true },
+      { name: "Clientes", href: "/clients-hub", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
+      { name: "Pipelines", href: "/org-crm/pipelines", icon: GitBranch, tourId: "sidebar-org-pipelines", requiresOrg: true },
+      { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, tourId: "sidebar-org-finances", requiresOrg: true },
     ]
   },
   {
     label: "CONFIG",
     items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
+      { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
       { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
   }
@@ -129,6 +156,8 @@ const editorSections: NavSection[] = [
   {
     label: "CONFIG",
     items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
+      { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
       { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
   }
@@ -147,6 +176,8 @@ const creatorSections: NavSection[] = [
   {
     label: "CONFIG",
     items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
+      { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
       { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
   }
@@ -163,32 +194,32 @@ const clientSections: NavSection[] = [
   {
     label: "CONFIG",
     items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
       { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
   }
 ];
 
 // Marketplace navigation sections — available to ALL users
-function getMarketplaceSections(activeRole: string | null): NavSection[] {
+function getMarketplaceSections(activeGroup: PermissionGroup | null): NavSection[] {
   const items: NavItem[] = [
     { name: "Marketplace", href: "/marketplace", icon: Store, tourId: "sidebar-mkt-browse" },
     { name: "Videos", href: "/marketplace/videos", icon: Play, tourId: "sidebar-mkt-videos" },
-    { name: "Mi Perfil", href: "/marketplace/profile/setup", icon: UserCircle, tourId: "sidebar-mkt-profile" },
   ];
 
   // Campaign items — feed visible for internal roles (not editor/client)
-  if (activeRole !== 'editor' && activeRole !== 'client') {
+  if (activeGroup !== 'editor' && activeGroup !== 'client') {
     items.push({ name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone, tourId: "sidebar-mkt-campaigns" });
   }
   // "Mis Campañas" for admin/strategist/client (clients create offers here)
-  if (activeRole === 'admin' || activeRole === 'strategist' || activeRole === 'client') {
+  if (activeGroup === 'admin' || activeGroup === 'strategist' || activeGroup === 'client') {
     items.push({ name: "Mis Campañas", href: "/marketplace/my-campaigns", icon: Megaphone, tourId: "sidebar-mkt-my-campaigns" });
   }
 
   items.push({ name: "Wallet", href: "/wallet", icon: Wallet, tourId: "sidebar-mkt-wallet" });
 
   // Talent management — not visible to clients
-  if (activeRole === 'client') {
+  if (activeGroup === 'client') {
     return [{ label: "KREOON MARKETPLACE", items }];
   }
 
@@ -199,7 +230,7 @@ function getMarketplaceSections(activeRole: string | null): NavSection[] {
   ];
 
   // Inquiries only for admin/strategist
-  if (activeRole === 'admin' || activeRole === 'strategist') {
+  if (activeGroup === 'admin' || activeGroup === 'strategist') {
     savedItems.push({ name: "Consultas", href: "/marketplace/inquiries", icon: MessageSquare, tourId: "sidebar-mkt-inquiries" });
   }
 
@@ -218,6 +249,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile, user, activeRole, roles: realRoles } = useAuth();
+  const { trackLogout } = useAuthAnalytics();
   const { isImpersonating, effectiveRoles, isRootAdmin, impersonationTarget } = useImpersonation();
   const { isPlatformRoot, currentOrgName } = useOrgOwner();
   const { marketplaceEnabled } = useOrgMarketplace();
@@ -225,12 +257,16 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const [currentClientName, setCurrentClientName] = useState<string | null>(null);
   const [clientCount, setClientCount] = useState(0);
 
-  // Use effective roles when impersonating, otherwise use activeRole for UI
-  const activeIsAdmin = isImpersonating ? effectiveRoles.includes('admin') : activeRole === 'admin';
-  const activeIsStrategist = isImpersonating ? effectiveRoles.includes('strategist') : activeRole === 'strategist';
-  const activeIsEditor = isImpersonating ? effectiveRoles.includes('editor') : activeRole === 'editor';
-  const activeIsCreator = isImpersonating ? effectiveRoles.includes('creator') : activeRole === 'creator';
-  const activeIsClient = isImpersonating ? effectiveRoles.includes('client') : activeRole === 'client';
+  // Resolve permission group for active role (supports all 36+ marketplace roles)
+  const activeGroup: PermissionGroup | null = isImpersonating
+    ? (effectiveRoles.length > 0 ? getPermissionGroup(effectiveRoles[0]) : null)
+    : (activeRole ? getPermissionGroup(activeRole) : null);
+
+  const activeIsAdmin = activeGroup === 'admin';
+  const activeIsStrategist = activeGroup === 'strategist';
+  const activeIsEditor = activeGroup === 'editor';
+  const activeIsCreator = activeGroup === 'creator';
+  const activeIsClient = activeGroup === 'client';
 
   // Fetch current client name and count for client users
   useEffect(() => {
@@ -342,15 +378,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       })
     })).filter(section => section.items.length > 0);
 
-    // Determine active role string for marketplace sections
-    const roleStr = activeIsAdmin ? 'admin'
-      : activeIsStrategist ? 'strategist'
-      : activeIsEditor ? 'editor'
-      : activeIsCreator ? 'creator'
-      : activeIsClient ? 'client'
-      : null;
-
-    const mktSections = marketplaceEnabled ? getMarketplaceSections(roleStr) : [];
+    // Use permission group for marketplace sections
+    const mktSections = marketplaceEnabled ? getMarketplaceSections(activeGroup) : [];
 
     // "Buscar Talento" section - ALWAYS visible for recruitment, even when marketplace is disabled
     const recruitSection: NavSection = {
@@ -373,9 +402,39 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     ];
   }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, profile?.current_organization_id, marketplaceEnabled]);
 
+  // Collapsible sections state — auto-expand section containing active route
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+
+  // Auto-expand the section that contains the current route
+  const pathname = location.pathname;
+  useEffect(() => {
+    for (const section of filteredSections) {
+      const hasActiveItem = section.items.some(item => {
+        const href = item.isDynamic && typeof item.href === 'function'
+          ? item.href(user?.id || '')
+          : item.href as string;
+        const hrefPath = href.split('?')[0];
+        if (href === '/marketplace') return pathname === '/marketplace';
+        if (hrefPath.startsWith('/marketplace/') || href === '/wallet') return pathname.startsWith(hrefPath);
+        return pathname === hrefPath;
+      });
+      if (hasActiveItem) {
+        setCollapsedSections(prev =>
+          prev[section.label] === false ? prev : { ...prev, [section.label]: false }
+        );
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  const toggleSection = (label: string) => {
+    setCollapsedSections(prev => ({ ...prev, [label]: !prev[label] }));
+  };
+
   const userId = user?.id || '';
 
   const handleSignOut = async () => {
+    trackLogout();
     await signOut();
     navigate('/auth');
   };
@@ -433,67 +492,89 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           </div>
         )}
 
-        {/* Navigation with Sections */}
+        {/* Navigation with Collapsible Sections */}
         <nav className="flex-1 overflow-y-auto p-3 scrollbar-thin">
-          {filteredSections.map((section, sectionIndex) => (
-            <div key={section.label} className={cn(sectionIndex > 0 && "mt-6")}>
-              {/* Section Label */}
-              {!collapsed && (
-                <div className="px-3 mb-2">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[hsl(270,100%,65%,0.6)]">
-                    {section.label}
-                  </span>
+          {filteredSections.map((section, sectionIndex) => {
+            const isSectionCollapsed = !!collapsedSections[section.label];
+            return (
+              <div key={section.label} className={cn(sectionIndex > 0 && "mt-4")}>
+                {/* Section Label — clickable to toggle */}
+                {!collapsed && (
+                  <button
+                    onClick={() => toggleSection(section.label)}
+                    className="w-full flex items-center justify-between px-3 mb-1.5 group/section cursor-pointer"
+                  >
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[hsl(270,100%,65%,0.6)] group-hover/section:text-[hsl(270,100%,65%,0.9)] transition-colors">
+                      {section.label}
+                    </span>
+                    <ChevronDown className={cn(
+                      "h-3 w-3 text-[hsl(270,100%,65%,0.4)] group-hover/section:text-[hsl(270,100%,65%,0.8)] transition-all duration-200",
+                      isSectionCollapsed && "-rotate-90"
+                    )} />
+                  </button>
+                )}
+
+                {/* Section Items — collapsible */}
+                <div className={cn(
+                  "space-y-1 overflow-hidden transition-all duration-200",
+                  !collapsed && isSectionCollapsed && "max-h-0 opacity-0",
+                  (!collapsed && !isSectionCollapsed || collapsed) && "max-h-[500px] opacity-100"
+                )}>
+                  {section.items.map((item) => {
+                    const href = item.isDynamic && typeof item.href === 'function'
+                      ? item.href(userId)
+                      : item.href as string;
+                    const hrefPath = href.split('?')[0];
+                    const hrefSearch = href.includes('?') ? href.slice(href.indexOf('?')) : '';
+                    // When an item has no query string, check if a sibling with a more specific match exists
+                    const siblingHasFullMatch = !hrefSearch && location.search && section.items.some(sib => {
+                      if (sib === item) return false;
+                      const sibHref = sib.isDynamic && typeof sib.href === 'function' ? sib.href(userId) : sib.href as string;
+                      const sibPath = sibHref.split('?')[0];
+                      const sibSearch = sibHref.includes('?') ? sibHref.slice(sibHref.indexOf('?')) : '';
+                      return sibSearch && location.pathname === sibPath && location.search === sibSearch;
+                    });
+                    const isActive = href === '/marketplace'
+                      ? location.pathname === '/marketplace'
+                      : (hrefPath.startsWith('/marketplace/') || href === '/wallet')
+                      ? location.pathname.startsWith(hrefPath)
+                      : hrefSearch
+                      ? location.pathname === hrefPath && location.search === hrefSearch
+                      : location.pathname === href && !siblingHasFullMatch;
+                    return (
+                      <NavLink
+                        key={item.name}
+                        to={href}
+                        data-tour={item.tourId}
+                        className={cn(
+                          "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300",
+                          isActive
+                            ? "bg-gradient-to-r from-[hsl(270,100%,60%,0.15)] to-[hsl(270,100%,60%,0.05)] text-white border border-[hsl(270,100%,60%,0.3)] shadow-[0_0_20px_-5px_hsl(270,100%,60%,0.3)]"
+                            : "text-[hsl(270,30%,65%)] hover:bg-[hsl(270,100%,60%,0.05)] hover:text-white border border-transparent hover:border-[hsl(270,100%,60%,0.1)]",
+                          collapsed && "justify-center px-2"
+                        )}
+                      >
+                        {/* Active indicator neon line */}
+                        {isActive && (
+                          <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 w-1 h-6 bg-[hsl(270,100%,60%)] rounded-full shadow-[0_0_10px_hsl(270,100%,60%,0.8)]" />
+                        )}
+                        <item.icon className={cn(
+                          "h-5 w-5 shrink-0 transition-all duration-300",
+                          isActive ? "text-[hsl(270,100%,70%)]" : "text-[hsl(270,40%,50%)] group-hover:text-[hsl(270,100%,70%)]"
+                        )} />
+                        {!collapsed && (
+                          <span className={cn(
+                            "transition-colors duration-300",
+                            isActive && "text-white"
+                          )}>{item.name}</span>
+                        )}
+                      </NavLink>
+                    );
+                  })}
                 </div>
-              )}
-              
-              {/* Section Items */}
-              <div className="space-y-1">
-                {section.items.map((item) => {
-                  const href = item.isDynamic && typeof item.href === 'function' 
-                    ? item.href(userId) 
-                    : item.href as string;
-                  const hrefPath = href.split('?')[0];
-                  const hrefSearch = href.includes('?') ? href.slice(href.indexOf('?')) : '';
-                  const isActive = href === '/marketplace'
-                    ? location.pathname === '/marketplace'
-                    : (hrefPath.startsWith('/marketplace/') || href === '/wallet')
-                    ? location.pathname.startsWith(hrefPath)
-                    : hrefSearch
-                    ? location.pathname === hrefPath && location.search === hrefSearch
-                    : location.pathname === href;
-                  return (
-                    <NavLink
-                      key={item.name}
-                      to={href}
-                      data-tour={item.tourId}
-                      className={cn(
-                        "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300",
-                        isActive 
-                          ? "bg-gradient-to-r from-[hsl(270,100%,60%,0.15)] to-[hsl(270,100%,60%,0.05)] text-white border border-[hsl(270,100%,60%,0.3)] shadow-[0_0_20px_-5px_hsl(270,100%,60%,0.3)]" 
-                          : "text-[hsl(270,30%,65%)] hover:bg-[hsl(270,100%,60%,0.05)] hover:text-white border border-transparent hover:border-[hsl(270,100%,60%,0.1)]",
-                        collapsed && "justify-center px-2"
-                      )}
-                    >
-                      {/* Active indicator neon line */}
-                      {isActive && (
-                        <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 w-1 h-6 bg-[hsl(270,100%,60%)] rounded-full shadow-[0_0_10px_hsl(270,100%,60%,0.8)]" />
-                      )}
-                      <item.icon className={cn(
-                        "h-5 w-5 shrink-0 transition-all duration-300",
-                        isActive ? "text-[hsl(270,100%,70%)]" : "text-[hsl(270,40%,50%)] group-hover:text-[hsl(270,100%,70%)]"
-                      )} />
-                      {!collapsed && (
-                        <span className={cn(
-                          "transition-colors duration-300",
-                          isActive && "text-white"
-                        )}>{item.name}</span>
-                      )}
-                    </NavLink>
-                  );
-                })}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
 
         {/* AI Tokens - solo si tiene org y no es cliente */}

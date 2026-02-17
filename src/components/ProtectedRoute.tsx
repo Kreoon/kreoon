@@ -5,6 +5,7 @@ import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { useOrgMarketplace } from '@/hooks/useOrgMarketplace';
 import { AppRole } from '@/types/database';
+import { getPermissionGroup, getDashboardForRole, type PermissionGroup } from '@/lib/permissionGroups';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -38,38 +39,22 @@ function getDashboardPath(roles: AppRole[], activeRole?: AppRole | null): string
   // Users without roles go to marketplace
   if (roles.length === 0) return '/marketplace';
 
-  // If activeRole is set and valid, use it
+  // If activeRole is set and valid, use it (resolves via permission group)
   if (activeRole && roles.includes(activeRole)) {
-    switch (activeRole) {
-      case 'admin':
-      case 'team_leader':
-        return '/dashboard';
-      case 'strategist':
-        return '/strategist-dashboard';
-      case 'creator':
-        return '/creator-dashboard';
-      case 'editor':
-        return '/editor-dashboard';
-      case 'client':
-        return '/client-dashboard';
-      case 'trafficker':
-        return '/marketing';
-    }
+    return getDashboardForRole(activeRole);
   }
 
-  // Fallback to role priority
-  if (roles.includes('admin')) return '/dashboard';
-  if (roles.includes('team_leader')) return '/dashboard';
-  if (roles.includes('strategist')) return '/strategist-dashboard';
-  if (roles.includes('trafficker')) return '/marketing';
-  if (roles.includes('creator')) return '/creator-dashboard';
-  if (roles.includes('editor')) return '/editor-dashboard';
-  if (roles.includes('client')) return '/client-dashboard';
+  // Fallback to first role by group priority
+  const groupPriority: PermissionGroup[] = ['admin', 'team_leader', 'strategist', 'editor', 'creator', 'client'];
+  for (const group of groupPriority) {
+    const match = roles.find(r => getPermissionGroup(r) === group);
+    if (match) return getDashboardForRole(match);
+  }
   return '/marketplace';
 }
 
 // Routes that require an organization to be selected
-const ORG_REQUIRED_ROUTES = ['/dashboard', '/board', '/content', '/creators', '/scripts', '/clients', '/team', '/ranking'];
+const ORG_REQUIRED_ROUTES = ['/dashboard', '/board', '/content', '/talent', '/scripts', '/clients-hub', '/team', '/ranking'];
 
 // Routes that users without roles can access (social/marketplace)
 const SOCIAL_ROUTES = ['/social', '/marketplace', '/explore', '/profile', '/settings'];
@@ -86,7 +71,7 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
 
   // Use effective roles when impersonating, otherwise real roles
   const rolesToCheck = isImpersonating ? effectiveRoles : realRoles;
-  const isClient = rolesToCheck.includes('client');
+  const isClient = rolesToCheck.some(r => getPermissionGroup(r) === 'client');
 
   // Check if current route requires org
   const routeRequiresOrg = requiresOrg ?? ORG_REQUIRED_ROUTES.includes(location.pathname);
@@ -224,11 +209,15 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     return <Navigate to={correctDashboard} replace />;
   }
 
-  // Check if user has the required role
+  // Check if user has the required role (allowedRoles are treated as permission groups)
   if (allowedRoles && allowedRoles.length > 0) {
     // Platform root with org selected is treated as admin
-    const effectiveRolesToCheck = isPlatformRoot && currentOrgId ? ['admin', ...rolesToCheck] : rolesToCheck;
-    const hasAllowedRole = allowedRoles.some((role) => effectiveRolesToCheck.includes(role));
+    const effectiveRolesToCheck = isPlatformRoot && currentOrgId ? ['admin' as AppRole, ...rolesToCheck] : rolesToCheck;
+    // Match by permission group: allowedRoles names correspond to permission group names
+    const hasAllowedRole = allowedRoles.some((allowedRole) => {
+      const allowedGroup = getPermissionGroup(allowedRole);
+      return effectiveRolesToCheck.some(r => getPermissionGroup(r) === allowedGroup);
+    });
     if (!hasAllowedRole) {
       // Instead of showing unauthorized, redirect to their appropriate dashboard
       const correctDashboard = getDashboardPath(rolesToCheck, activeRole);

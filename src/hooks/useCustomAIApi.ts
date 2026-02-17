@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import {
   useOrganizationAI,
   AI_PROVIDERS_CONFIG,
@@ -41,49 +40,14 @@ const TEST_ENDPOINTS: Record<string, { url: string; body: Record<string, unknown
 
 export function useCustomAIApi(organizationId?: string) {
   const orgAI = useOrganizationAI(organizationId);
-  const [customApiEnabled, setCustomApiEnabledState] = useState(false);
-  const [tokensLoading, setTokensLoading] = useState(true);
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
 
-  const fetchTokenConfig = useCallback(async () => {
-    if (!organizationId) return;
-    setTokensLoading(true);
-    try {
-      const { data } = await supabase
-        .from("organization_ai_tokens")
-        .select("custom_api_enabled")
-        .eq("organization_id", organizationId)
-        .maybeSingle();
-      setCustomApiEnabledState(data?.custom_api_enabled ?? false);
-    } catch {
-      setCustomApiEnabledState(false);
-    } finally {
-      setTokensLoading(false);
-    }
-  }, [organizationId]);
+  // Derive custom API enabled from whether any provider has an API key configured
+  const customApiEnabled = orgAI.providers.some((p) => !!p.api_key_encrypted);
+  const tokensLoading = orgAI.loading;
 
-  useEffect(() => {
-    fetchTokenConfig();
-  }, [fetchTokenConfig]);
-
-  const setCustomApiEnabled = async (enabled: boolean) => {
-    if (!organizationId) return;
-    try {
-      const { error } = await supabase.from("organization_ai_tokens").upsert(
-        {
-          organization_id: organizationId,
-          custom_api_enabled: enabled,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "organization_id" }
-      );
-      if (error) throw error;
-      setCustomApiEnabledState(enabled);
-      return true;
-    } catch {
-      return false;
-    }
-  };
+  // Toggle is a no-op now — custom API mode is implicitly enabled when keys are configured
+  const setCustomApiEnabled = async (_enabled: boolean) => true;
 
   const testProviderConnection = async (providerKey: string): Promise<boolean> => {
     const provider = orgAI.providers.find((p) => p.provider_key === providerKey);

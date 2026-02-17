@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AutoSaveIndicator } from '@/components/ui/autosave-indicator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+
 import { ProductDetailDialog } from '@/components/products/ProductDetailDialog';
 import { ProductSelector } from '@/components/products/ProductSelector';
 import { ContentConfigDialog } from './Config';
@@ -64,11 +65,11 @@ function TabSkeleton() {
   );
 }
 
-export function ContentDetailDialog({ 
-  content, 
-  open, 
-  onOpenChange, 
-  onUpdate, 
+export function ContentDetailDialog({
+  content,
+  open,
+  onOpenChange,
+  onUpdate,
   onDelete,
   mode = 'view'
 }: ContentDetailDialogProps) {

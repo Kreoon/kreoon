@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { getDashboardForRole } from "@/lib/permissionGroups";
+import { getRoleLabel } from "@/lib/roles";
 import { PartyPopper, Trophy, Rocket, ArrowRight, Check, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -33,21 +35,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 function getDashboardPath(role: string | null): string {
-  if (!role) return "/dashboard";
-  switch (role) {
-    case "creator":
-      return "/creator-dashboard";
-    case "editor":
-      return "/editor-dashboard";
-    case "client":
-      return "/client-dashboard";
-    case "strategist":
-      return "/strategist-dashboard";
-    case "ambassador":
-    case "admin":
-    default:
-      return "/dashboard";
-  }
+  return getDashboardForRole(role);
 }
 
 interface NextStepItemProps {

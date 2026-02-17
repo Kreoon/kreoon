@@ -11,6 +11,73 @@ import type {
   MarketplaceCreator,
 } from '@/components/marketplace/types/marketplace';
 
+// ── Media types (campaign_media_type enum from migration) ─────────────
+
+export type CampaignMediaType =
+  | 'cover_image'
+  | 'gallery_image'
+  | 'product_image'
+  | 'video_brief'
+  | 'reference_video';
+
+export interface CampaignMediaItem {
+  id: string;
+  media_type: CampaignMediaType;
+  file_url: string;
+  thumbnail_url: string | null;
+  file_name: string | null;
+  duration_seconds: number | null;
+  width: number | null;
+  height: number | null;
+  display_order: number;
+  is_primary: boolean;
+  bunny_video_id: string | null;
+}
+
+export interface MediaUploadProgress {
+  loaded: number;
+  total: number;
+  percentage: number;
+}
+
+export interface CampaignAccessResult {
+  can_create: boolean;
+  has_paid_subscription: boolean;
+  limits: {
+    max_campaigns_per_month: number;
+    max_active_campaigns: number;
+    max_creators_per_campaign: number;
+    commission_discount_pct: number;
+    plan_type: string;
+    plan_name: string;
+  };
+  usage: {
+    active_campaigns: number;
+    month_campaigns: number;
+  };
+  blocked_reason?: string | null;
+}
+
+export interface NotificationResult {
+  success: boolean;
+  notifications_sent: number;
+  total_eligible?: number;
+  message?: string;
+}
+
+const MEDIA_TYPE_IS_VIDEO: Record<string, boolean> = {
+  cover_image: false,
+  gallery_image: false,
+  product_image: false,
+  video_brief: true,
+  reference_video: true,
+};
+
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-msvideo'];
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500 MB
+
 // ── Status/Label maps ─────────────────────────────────────────────────
 
 export const CAMPAIGN_STATUS_COLORS: Record<CampaignStatus, string> = {
@@ -129,6 +196,9 @@ function mapCampaignRow(row: any, brandName?: string, brandLogo?: string | null,
     // Flags
     is_urgent: row.is_urgent || false,
     is_featured: row.is_featured || false,
+    campaign_purpose: row.campaign_purpose || 'content',
+    is_brand_activation: row.is_brand_activation || false,
+    activation_requirements: row.activation_config || undefined,
     published_at: row.published_at || undefined,
     // Content
     content_guidelines: row.content_guidelines || undefined,
@@ -372,6 +442,215 @@ export function useMarketplaceCampaigns(options: UseMarketplaceCampaignsOptions 
     }
   }, []);
 
+  // ── Media operations (credential issuer pattern) ─────────────────
+
+  /**
+   * Upload media for a campaign.
+   * 2-step flow: POST to get Bunny credentials → client uploads directly → PUT to confirm.
+   * Images go to Bunny Storage, videos to Bunny Stream.
+   */
+  const uploadCampaignMedia = useCallback(async (params: {
+    campaign_id: string;
+    media_type: CampaignMediaType;
+    file: File;
+    onProgress?: (progress: MediaUploadProgress) => void;
+  }): Promise<{ id: string; file_url: string; thumbnail_url?: string } | null> => {
+    const { campaign_id, media_type, file, onProgress } = params;
+
+    // Client-side validation
+    const isVideo = MEDIA_TYPE_IS_VIDEO[media_type] ?? false;
+    const allowedTypes = isVideo ? ALLOWED_VIDEO_TYPES : ALLOWED_IMAGE_TYPES;
+    if (!allowedTypes.includes(file.type)) {
+      console.error(`[uploadCampaignMedia] Invalid MIME type '${file.type}' for ${media_type}`);
+      return null;
+    }
+    const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+    if (file.size > maxSize) {
+      console.error(`[uploadCampaignMedia] File too large: ${file.size} > ${maxSize}`);
+      return null;
+    }
+
+    try {
+      // Step 1: Get upload credentials from edge function
+      const { data: creds, error: credsError } = await supabase.functions.invoke(
+        'upload-campaign-media',
+        {
+          method: 'POST',
+          body: {
+            campaign_id,
+            media_type,
+            file_name: file.name,
+            file_size: file.size,
+            mime_type: file.type,
+          },
+        },
+      );
+
+      if (credsError || !creds?.success) {
+        throw new Error(credsError?.message || creds?.error || 'Error al obtener credenciales');
+      }
+
+      // Step 2: Upload directly to Bunny via XHR (for progress tracking)
+      const uploadUrl: string = creds.upload_url;
+      const accessKey: string = creds.access_key;
+      const isStream = creds.upload_type === 'bunny_stream';
+
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable) {
+            onProgress?.({
+              loaded: event.loaded,
+              total: event.total,
+              percentage: Math.round((event.loaded / event.total) * 100),
+            });
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            reject(new Error(`Error al subir: ${xhr.status} ${xhr.statusText}`));
+          }
+        });
+
+        xhr.addEventListener('error', () => reject(new Error('Error de red al subir')));
+        xhr.addEventListener('timeout', () => reject(new Error('Tiempo de espera agotado')));
+
+        xhr.open('PUT', uploadUrl);
+        xhr.setRequestHeader('AccessKey', accessKey);
+        if (!isStream) {
+          xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+        }
+        xhr.timeout = isVideo ? 300000 : 60000; // 5min videos, 1min images
+        xhr.send(file);
+      });
+
+      onProgress?.({ loaded: 1, total: 1, percentage: 100 });
+
+      // Step 3: Confirm upload and create DB record
+      const { data: confirmed, error: confirmError } = await supabase.functions.invoke(
+        'upload-campaign-media',
+        {
+          method: 'PUT',
+          body: {
+            campaign_id,
+            media_type,
+            file_name: file.name,
+            file_size: file.size,
+            mime_type: file.type,
+            file_url: creds.cdn_url,
+            thumbnail_url: creds.thumbnail_url || null,
+            bunny_video_id: creds.video_id || null,
+          },
+        },
+      );
+
+      if (confirmError || !confirmed?.success) {
+        throw new Error(confirmError?.message || confirmed?.error || 'Error al confirmar subida');
+      }
+
+      return {
+        id: confirmed.media.id,
+        file_url: confirmed.media.file_url,
+        thumbnail_url: confirmed.media.thumbnail_url || undefined,
+      };
+    } catch (err) {
+      console.error('[useMarketplaceCampaigns] Upload error:', err);
+      return null;
+    }
+  }, []);
+
+  /** Fetch all media for a campaign via SECURITY DEFINER RPC */
+  const getCampaignMedia = useCallback(
+    async (campaignId: string): Promise<CampaignMediaItem[]> => {
+      try {
+        const { data, error: err } = await supabase.rpc('get_campaign_media', {
+          p_campaign_id: campaignId,
+        });
+        if (err) throw err;
+        return (data || []) as CampaignMediaItem[];
+      } catch (err) {
+        console.error('[useMarketplaceCampaigns] Media fetch error:', err);
+        return [];
+      }
+    },
+    [],
+  );
+
+  /** Delete a campaign media item */
+  const deleteCampaignMedia = useCallback(
+    async (mediaId: string): Promise<boolean> => {
+      try {
+        const { error: err } = await (supabase as any)
+          .from('campaign_media')
+          .delete()
+          .eq('id', mediaId);
+        if (err) throw err;
+        return true;
+      } catch (err) {
+        console.error('[useMarketplaceCampaigns] Media delete error:', err);
+        return false;
+      }
+    },
+    [],
+  );
+
+  // ── Campaign access (subscription/limits check) ─────────────────
+
+  /**
+   * Check if the current user can create campaigns.
+   * Calls verify-campaign-access edge function (user_id extracted from JWT).
+   */
+  const checkCampaignAccess = useCallback(
+    async (action: 'create_campaign' | 'view_limits' = 'view_limits'): Promise<CampaignAccessResult | null> => {
+      try {
+        const { data, error: err } = await supabase.functions.invoke(
+          'verify-campaign-access',
+          { body: { action } },
+        );
+        if (err) throw err;
+        return data as CampaignAccessResult;
+      } catch (err) {
+        console.error('[useMarketplaceCampaigns] Access check error:', err);
+        return null;
+      }
+    },
+    [],
+  );
+
+  // ── Notifications ───────────────────────────────────────────────
+
+  /**
+   * Send matching notifications to eligible creators for a campaign.
+   * Only callable by campaign owner/brand admin/org admin.
+   * Campaign must be active and not already notified.
+   */
+  const sendCampaignNotifications = useCallback(
+    async (campaignId: string, minMatchScore = 50): Promise<NotificationResult | null> => {
+      try {
+        const { data, error: err } = await supabase.functions.invoke(
+          'campaign-notifications',
+          {
+            body: {
+              campaign_id: campaignId,
+              notification_type: 'new_campaign',
+              min_match_score: minMatchScore,
+            },
+          },
+        );
+        if (err) throw err;
+        return data as NotificationResult;
+      } catch (err) {
+        console.error('[useMarketplaceCampaigns] Notification error:', err);
+        return null;
+      }
+    },
+    [],
+  );
+
   // ── Application read operations ───────────────────────────────────
 
   const getApplicationsForCampaign = useCallback(
@@ -505,5 +784,13 @@ export function useMarketplaceCampaigns(options: UseMarketplaceCampaignsOptions 
     publishCampaign,
     submitApplication,
     updateApplicationStatus,
+    // Media operations
+    uploadCampaignMedia,
+    getCampaignMedia,
+    deleteCampaignMedia,
+    // Access & subscriptions
+    checkCampaignAccess,
+    // Notifications
+    sendCampaignNotifications,
   };
 }

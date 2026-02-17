@@ -7,14 +7,13 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bell, MessageSquare, Mail, Smartphone, Volume2, VolumeX, Clock, BellRing, Vibrate, Globe } from "lucide-react";
+import { Bell, Mail, Smartphone, Volume2, VolumeX, Clock, BellRing, Vibrate, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 interface NotificationPreferences {
   // Push notifications
   pushEnabled: boolean;
-  pushChat: boolean;
   pushContent: boolean;
   pushAssignments: boolean;
   pushPayments: boolean;
@@ -24,7 +23,6 @@ interface NotificationPreferences {
   // Email notifications
   emailEnabled: boolean;
   emailDigest: 'instant' | 'daily' | 'weekly' | 'never';
-  emailChat: boolean;
   emailContent: boolean;
   emailAssignments: boolean;
   emailPayments: boolean;
@@ -46,7 +44,6 @@ interface NotificationPreferences {
 
 const defaultPreferences: NotificationPreferences = {
   pushEnabled: true,
-  pushChat: true,
   pushContent: true,
   pushAssignments: true,
   pushPayments: true,
@@ -55,7 +52,6 @@ const defaultPreferences: NotificationPreferences = {
   
   emailEnabled: true,
   emailDigest: 'instant',
-  emailChat: false,
   emailContent: true,
   emailAssignments: true,
   emailPayments: true,
@@ -236,17 +232,6 @@ export function NotificationSettings() {
                     <div className="grid gap-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                          <Label>Mensajes de chat</Label>
-                        </div>
-                        <Switch
-                          checked={preferences.pushChat}
-                          onCheckedChange={(checked) => updatePreference('pushChat', checked)}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
                           <Globe className="h-4 w-4 text-muted-foreground" />
                           <Label>Actualizaciones de contenido</Label>
                         </div>
@@ -368,14 +353,6 @@ export function NotificationSettings() {
                 <p className="text-sm font-medium">Tipos de notificaciones:</p>
                 
                 <div className="grid gap-4">
-                  <div className="flex items-center justify-between">
-                    <Label>Mensajes de chat</Label>
-                    <Switch
-                      checked={preferences.emailChat}
-                      onCheckedChange={(checked) => updatePreference('emailChat', checked)}
-                    />
-                  </div>
-
                   <div className="flex items-center justify-between">
                     <Label>Actualizaciones de contenido</Label>
                     <Switch

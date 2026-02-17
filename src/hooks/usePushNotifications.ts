@@ -100,27 +100,6 @@ export function usePushNotifications() {
     }
   }, [state.permission]);
 
-  const showChatNotification = useCallback(async (
-    senderName: string,
-    message: string,
-    conversationId?: string
-  ) => {
-    // Vibrate device if supported
-    if ('vibrate' in navigator) {
-      navigator.vibrate([200, 100, 200]);
-    }
-
-    return showNotification(`💬 ${senderName}`, {
-      body: message.length > 100 ? message.substring(0, 100) + '...' : message,
-      tag: `chat-${conversationId || Date.now()}`,
-      data: { conversationId },
-      onClick: () => {
-        // Focus on chat when notification is clicked
-        window.focus();
-      },
-    });
-  }, [showNotification]);
-
   const showGeneralNotification = useCallback(async (
     title: string,
     message: string,
@@ -149,7 +128,6 @@ export function usePushNotifications() {
     ...state,
     requestPermission,
     showNotification,
-    showChatNotification,
     showGeneralNotification,
   };
 }

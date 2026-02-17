@@ -3,15 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { UnifiedRegistrationData } from './types';
+import { useAuthAnalytics } from '@/analytics';
 
 const PENDING_REG_KEY = 'kreoon_pending_registration';
 
 export function useRegistrationSubmit() {
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { trackSignupStarted, trackSignupCompleted, trackSignupFailed } = useAuthAnalytics();
 
   const submit = useCallback(async (data: UnifiedRegistrationData): Promise<boolean> => {
     setSubmitting(true);
+    trackSignupStarted({ signup_method: 'email', landing_page: window.location.href });
 
     try {
       // 1. Sign up
@@ -73,18 +76,24 @@ export function useRegistrationSubmit() {
           break;
       }
 
+      trackSignupCompleted(userId, {
+        signup_method: 'email',
+        user_role: data.intent || 'talent',
+      });
+
       return true;
     } catch (error: any) {
       console.error('Registration error:', error);
       const msg = error.message?.includes('already registered')
         ? 'Este correo ya está registrado'
         : error.message || 'Ocurrió un error al registrar';
+      trackSignupFailed(msg, 'email');
       toast.error(msg);
       return false;
     } finally {
       setSubmitting(false);
     }
-  }, [navigate]);
+  }, [navigate, trackSignupStarted, trackSignupCompleted, trackSignupFailed]);
 
   return { submit, submitting };
 }
