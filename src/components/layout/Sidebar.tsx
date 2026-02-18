@@ -250,7 +250,7 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, profile, user, activeRole, roles: realRoles } = useAuth();
+  const { signOut, profile, user, activeRole, roles: realRoles, isPlatformAdmin } = useAuth();
   const { trackLogout } = useAuthAnalytics();
   const { isImpersonating, effectiveRoles, isRootAdmin, impersonationTarget } = useImpersonation();
   const { isPlatformRoot, currentOrgName } = useOrgOwner();
@@ -376,17 +376,23 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     };
 
     // Filter items within sections and apply white-label labels
-    const filtered = baseSections.map(section => ({
-      ...section,
-      label: labelMap[section.label] || section.label,
-      items: section.items.filter(item => {
-        if (!isPlatformRoot && item.platformRootOnly) return false;
-        if (isPlatformRoot && !profile?.current_organization_id && item.requiresOrg) return false;
-        // Hide marketplace link from role sections when org has it disabled
-        if (!marketplaceEnabled && item.href === '/marketplace') return false;
+    const filtered = baseSections
+      .filter(section => {
+        // Only platform admins see CRM PLATAFORMA (not org-level admins)
+        if (section.label === 'CRM PLATAFORMA' && !isPlatformAdmin) return false;
         return true;
       })
-    })).filter(section => section.items.length > 0);
+      .map(section => ({
+        ...section,
+        label: labelMap[section.label] || section.label,
+        items: section.items.filter(item => {
+          if (!isPlatformRoot && item.platformRootOnly) return false;
+          if (isPlatformRoot && !profile?.current_organization_id && item.requiresOrg) return false;
+          // Hide marketplace link from role sections when org has it disabled
+          if (!marketplaceEnabled && item.href === '/marketplace') return false;
+          return true;
+        })
+      })).filter(section => section.items.length > 0);
 
     // Use permission group for marketplace sections (apply label map)
     const mktSections = marketplaceEnabled
@@ -412,7 +418,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       ...(!marketplaceEnabled ? [recruitSection] : []),
       ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" }] }]),
     ];
-  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, profile?.current_organization_id, marketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel]);
+  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, profile?.current_organization_id, marketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel]);
 
   // Collapsible sections state — auto-expand section containing active route
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});

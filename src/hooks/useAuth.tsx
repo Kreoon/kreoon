@@ -18,6 +18,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName: string, role: AppRole, companyName?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
+  isPlatformAdmin: boolean;
   isAdmin: boolean;
   isCreator: boolean;
   isEditor: boolean;
@@ -40,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [activeRole, setActiveRoleState] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
   const [rolesLoaded, setRolesLoaded] = useState(false);
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
 
   // Keep latest values accessible inside auth listeners (effect has [] deps).
   const userIdRef = useRef<string | null>(null);
@@ -181,6 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setProfile(null);
         setRoles([]);
+        setIsPlatformAdmin(false);
         setRolesLoaded(true);
         setLoading(false);
         if (bootTimeoutRef.current) {
@@ -310,6 +313,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // (common when user is currently acting as a client), fall back to ANY org roles
       // so multi-role users can still switch roles.
       let userRoles: AppRole[] = [];
+      // Track if roles came from the canonical source (organization_member_roles)
+      // vs the fallback (organization_members.role which has NOT NULL DEFAULT 'creator')
+      let rolesFromCanonical = false;
 
       // IMPORTANT: Use profile ID for role lookups if profile was found by email (ID mismatch scenario)
       const roleUserId = userProfile?.id || userId;
@@ -335,6 +341,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (memberRolesResult.data && memberRolesResult.data.length > 0) {
           userRoles = memberRolesResult.data.map((r) => r.role as AppRole);
+          rolesFromCanonical = true;
         } else {
           // Fallback to organization_members single role for backward compatibility
           const memberResult = await withTimeout(
@@ -365,6 +372,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (anyOrgRolesResult.data && anyOrgRolesResult.data.length > 0) {
           userRoles = anyOrgRolesResult.data.map((r) => r.role as AppRole);
+          rolesFromCanonical = true;
         } else {
           // Backward-compatible fallback: some installations still store a single role
           // on organization_members. If user has no current org selected, still load
@@ -394,6 +402,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Dedupe roles defensively
       userRoles = Array.from(new Set(userRoles));
 
+      // ── Organization owner → admin access ──
+      // The owner is the highest rank in the organization and gets admin-level
+      // access automatically, even without an explicit role assigned.
+      if (userProfile?.current_organization_id) {
+        try {
+          const ownerCheck = await withTimeout(
+            () =>
+              supabase
+                .from('organization_members')
+                .select('is_owner')
+                .eq('user_id', roleUserId)
+                .eq('organization_id', userProfile.current_organization_id!)
+                .maybeSingle(),
+            5000
+          );
+          if (ownerCheck.data?.is_owner) {
+            // Owner without explicit role gets a ghost 'creator' from the NOT NULL DEFAULT
+            // on organization_members.role. Remove it if no real role is assigned.
+            // Key: if roles came from the fallback (not canonical), the 'creator' is always
+            // the ghost default. Don't rely on active_role which may be stale.
+            if (!rolesFromCanonical && userRoles.length <= 1 && (!userRoles[0] || userRoles[0] === 'creator')) {
+              userRoles = [];
+            }
+            if (!userRoles.includes('admin')) {
+              userRoles.unshift('admin');
+            }
+            console.log('[auth] User is org owner — granted admin access');
+          }
+        } catch (err) {
+          console.warn('[auth] Error checking owner status:', err);
+        }
+      }
+
       // ALWAYS check if user is in client_users table - they should have client role
       // This runs regardless of other roles to ensure multi-role users get client access
       if (!userRoles.includes('client')) {
@@ -422,10 +463,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Fallback: check user_roles for platform-level admin (root admin)
-      // This ensures the root admin still has access even without org membership
-      if (userRoles.length === 0) {
-        const rolesResult = await withTimeout(
+      // ── Platform admin check ──
+      // Always query user_roles for platform-level admin status.
+      // This is separate from org-level admin (organization_member_roles).
+      // Platform admin = entry in user_roles with role='admin' OR ROOT_EMAILS.
+      let detectedPlatformAdmin = !!(userProfile?.email && ROOT_EMAILS.includes(userProfile.email));
+      try {
+        const platformRolesResult = await withTimeout(
           () =>
             supabase
               .from('user_roles')
@@ -434,14 +478,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           8000
         );
 
-        userRoles = (rolesResult.data || []).map((r) => r.role as AppRole);
+        const platformRoles = (platformRolesResult.data || []).map((r) => r.role as AppRole);
+        if (platformRoles.includes('admin')) {
+          detectedPlatformAdmin = true;
+        }
+
+        // Fallback: if user has no org roles, use platform-level roles
+        if (userRoles.length === 0 && platformRoles.length > 0) {
+          userRoles = platformRoles;
+        }
+      } catch (err) {
+        console.warn('[auth] Error checking user_roles:', err);
       }
-      
+
       // FINAL FALLBACK: If still no roles and this is a root admin, grant admin role
-      if (userRoles.length === 0 && userProfile?.email && ROOT_EMAILS.includes(userProfile.email)) {
-        console.log('[auth] Root admin detected with no roles, granting admin role');
+      if (userRoles.length === 0 && detectedPlatformAdmin) {
+        console.log('[auth] Platform admin detected with no roles, granting admin role');
         userRoles = ['admin'];
       }
+
+      setIsPlatformAdmin(detectedPlatformAdmin);
 
       // CRITICAL FALLBACK: If still no roles but profile has active_role, use that
       // This handles cases where RLS queries fail but the profile was loaded successfully
@@ -595,6 +651,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signOut,
       hasRole,
+      isPlatformAdmin,
       isAdmin,
       isCreator,
       isEditor,

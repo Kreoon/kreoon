@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import {
   Building2, ShieldCheck, ShieldOff, KeyRound, Ban, UserX, UserPlus,
-  Loader2, AlertTriangle, Trash2, UserCog,
+  Loader2, AlertTriangle, Trash2, UserCog, Crown,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   AlertDialog,
@@ -23,23 +25,9 @@ import type { AppRole } from '@/types/database';
 
 const ROOT_EMAILS = ['jacsolucionesgraficas@gmail.com', 'kairosgp.sas@gmail.com'];
 
-// All roles available for assignment (org roles + common marketplace specializations)
-const ALL_ASSIGNABLE_ROLES: { value: string; label: string }[] = [
-  ...ORG_ASSIGNABLE_ROLES.map(r => ({ value: r, label: getRoleLabel(r) })),
-  { value: 'ugc_creator', label: 'UGC Creator' },
-  { value: 'lifestyle_creator', label: 'Lifestyle Creator' },
-  { value: 'photographer', label: 'Fotógrafo' },
-  { value: 'copywriter', label: 'Copywriter' },
-  { value: 'graphic_designer', label: 'Diseñador Gráfico' },
-  { value: 'video_editor', label: 'Video Editor' },
-  { value: 'motion_graphics', label: 'Motion Graphics' },
-  { value: 'content_strategist', label: 'Content Strategist' },
-  { value: 'social_media_manager', label: 'Social Media Manager' },
-  { value: 'community_manager', label: 'Community Manager' },
-  { value: 'web_developer', label: 'Desarrollador Web' },
-  { value: 'brand_manager', label: 'Gerente de Marca' },
-  { value: 'marketing_director', label: 'Dir. Marketing' },
-];
+// 8 global niche roles for assignment (simplified from 36 marketplace roles)
+const ALL_ASSIGNABLE_ROLES: { value: string; label: string }[] =
+  ORG_ASSIGNABLE_ROLES.map(r => ({ value: r, label: getRoleLabel(r) }));
 
 interface AdminActionsSectionProps {
   userId: string;
@@ -50,6 +38,7 @@ interface AdminActionsSectionProps {
   isBanned: boolean;
   orgId: string | null;
   orgName: string | null;
+  isOwner: boolean;
   activeRole: string | null;
   currentUserEmail: string;
   onActionComplete: () => void;
@@ -64,6 +53,7 @@ export function AdminActionsSection({
   isBanned,
   orgId,
   orgName,
+  isOwner,
   activeRole,
   currentUserEmail,
   onActionComplete,
@@ -73,13 +63,14 @@ export function AdminActionsSection({
 
   // Change role state
   const [changeRoleOpen, setChangeRoleOpen] = useState(false);
-  const [selectedActiveRole, setSelectedActiveRole] = useState<string>(activeRole || 'creator');
+  const [selectedActiveRole, setSelectedActiveRole] = useState<string>(activeRole || 'none');
 
   // Assign to org state
   const [assignOpen, setAssignOpen] = useState(false);
   const [allOrgs, setAllOrgs] = useState<{ id: string; name: string }[]>([]);
   const [selectedOrgId, setSelectedOrgId] = useState('');
-  const [selectedRole, setSelectedRole] = useState<AppRole>('creator');
+  const [selectedRole, setSelectedRole] = useState<string>('');
+  const [assignAsOwner, setAssignAsOwner] = useState(false);
 
   // Delete confirm
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -122,9 +113,10 @@ export function AdminActionsSection({
 
   const handleSetActiveRole = async () => {
     if (!selectedActiveRole) return;
+    const roleValue = selectedActiveRole === 'none' ? null : selectedActiveRole;
     try {
-      await invokeAdmin('set_active_role', { userId, activeRole: selectedActiveRole });
-      toast.success(`Rol cambiado a ${getRoleLabel(selectedActiveRole as AppRole)}`);
+      await invokeAdmin('set_active_role', { userId, activeRole: roleValue });
+      toast.success(roleValue ? `Rol cambiado a ${getRoleLabel(roleValue as AppRole)}` : 'Rol removido');
       setChangeRoleOpen(false);
       onActionComplete();
     } catch (e: any) {
@@ -171,10 +163,21 @@ export function AdminActionsSection({
       await invokeAdmin('assign_to_org', {
         userId,
         organizationId: selectedOrgId,
-        assignRole: selectedRole,
+        assignRole: selectedRole && selectedRole !== 'none' ? selectedRole : null,
+        makeOwner: assignAsOwner,
       });
       toast.success('Usuario asignado a organización');
       setAssignOpen(false);
+      onActionComplete();
+    } catch (e: any) {
+      toast.error(`Error: ${e.message}`);
+    }
+  };
+
+  const handleToggleOwner = async () => {
+    try {
+      await invokeAdmin('set_owner', { userId, organizationId: orgId, makeOwner: !isOwner });
+      toast.success(isOwner ? 'Propietario removido' : 'Propietario asignado');
       onActionComplete();
     } catch (e: any) {
       toast.error(`Error: ${e.message}`);
@@ -229,6 +232,9 @@ export function AdminActionsSection({
                   <SelectValue placeholder="Rol..." />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">
+                    <span className="text-white/40">Sin rol</span>
+                  </SelectItem>
                   {ALL_ASSIGNABLE_ROLES.map((r) => (
                     <SelectItem key={r.value} value={r.value}>
                       {r.label}
@@ -277,6 +283,24 @@ export function AdminActionsSection({
             </Button>
           )}
 
+          {/* Toggle Owner */}
+          {orgId && !isSelf && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleToggleOwner}
+              disabled={!!loading}
+              className="w-full justify-start gap-2 h-8 text-xs text-white/70 hover:text-white hover:bg-white/10"
+            >
+              {loading === 'set_owner' ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Crown className={cn('h-3.5 w-3.5', isOwner ? 'text-yellow-400' : 'text-white/40')} />
+              )}
+              {isOwner ? 'Quitar propietario' : 'Hacer propietario de org'}
+            </Button>
+          )}
+
           {/* Assign to Org */}
           {!assignOpen ? (
             <Button
@@ -304,11 +328,14 @@ export function AdminActionsSection({
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as AppRole)}>
+              <Select value={selectedRole} onValueChange={setSelectedRole}>
                 <SelectTrigger className="h-8 text-xs bg-transparent border-white/10">
-                  <SelectValue />
+                  <SelectValue placeholder="Rol (opcional)..." />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">
+                    <span className="text-white/40">Sin rol</span>
+                  </SelectItem>
                   {ORG_ASSIGNABLE_ROLES.map((r) => (
                     <SelectItem key={r} value={r}>
                       {getRoleLabel(r)}
@@ -316,6 +343,17 @@ export function AdminActionsSection({
                   ))}
                 </SelectContent>
               </Select>
+              <label className="flex items-center gap-2 cursor-pointer py-1">
+                <Checkbox
+                  checked={assignAsOwner}
+                  onCheckedChange={(v) => setAssignAsOwner(v === true)}
+                  className="border-white/20 data-[state=checked]:bg-yellow-500 data-[state=checked]:border-yellow-500"
+                />
+                <span className="flex items-center gap-1 text-xs text-white/60">
+                  <Crown className="h-3 w-3 text-yellow-400" />
+                  Asignar como propietario
+                </span>
+              </label>
               <div className="flex gap-2">
                 <Button
                   size="sm"

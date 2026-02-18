@@ -88,6 +88,7 @@ const PlatformCRMOrganizations = lazy(() => import("./pages/crm/platform/Platfor
 const PlatformCRMCreators = lazy(() => import("./pages/crm/platform/PlatformCRMCreators"));
 const PlatformCRMUsers = lazy(() => import("./pages/crm/platform/PlatformCRMUsers"));
 const PlatformCRMFinances = lazy(() => import("./pages/crm/platform/PlatformCRMFinances"));
+const PlatformCRMEmailMarketing = lazy(() => import("./pages/crm/platform/PlatformCRMEmailMarketing"));
 // CRM Org
 const OrgCRMDashboard = lazy(() => import("./pages/crm/org/OrgCRMDashboard"));
 const OrgCRMPipelines = lazy(() => import("./pages/crm/org/OrgCRMPipelines"));
@@ -245,12 +246,13 @@ function AppRoutes() {
         <Route path="/live" element={<ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Live /></MainLayout></ProtectedRoute>} />
         <Route path="/marketing" element={<ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Marketing /></MainLayout></ProtectedRoute>} />
         {/* CRM Plataforma */}
-        <Route path="/crm" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMDashboard /></MainLayout></ProtectedRoute>} />
-        <Route path="/crm/leads" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMLeads /></MainLayout></ProtectedRoute>} />
-        <Route path="/crm/organizaciones" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMOrganizations /></MainLayout></ProtectedRoute>} />
-        <Route path="/crm/creadores" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMCreators /></MainLayout></ProtectedRoute>} />
-        <Route path="/crm/usuarios" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMUsers /></MainLayout></ProtectedRoute>} />
-        <Route path="/crm/finanzas" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMFinances /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMDashboard /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/leads" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMLeads /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/organizaciones" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMOrganizations /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/creadores" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMCreators /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/usuarios" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMUsers /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/finanzas" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMFinances /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/email-marketing" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMEmailMarketing /></MainLayout></ProtectedRoute>} />
         {/* CRM Organización */}
         <Route path="/org-crm" element={<Navigate to="/talent" replace />} />
         <Route path="/org-crm/contactos" element={<Navigate to="/clients-hub?tab=contactos" replace />} />

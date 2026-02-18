@@ -637,6 +637,23 @@ export interface BadgeSummary {
   granted_at: string;
 }
 
+export interface OrganizationMembership {
+  organization_id: string;
+  organization_name: string;
+  role: string | null;
+  is_owner: boolean;
+  joined_at: string;
+}
+
+export interface CompanyLink {
+  client_id: string;
+  client_name: string;
+  organization_id: string;
+  organization_name: string;
+  role: string;
+  created_at: string;
+}
+
 export interface FullUserDetail {
   // profiles
   id: string;
@@ -725,6 +742,9 @@ export interface FullUserDetail {
   organization_name: string | null;
   is_owner: boolean;
   ambassador_level: string | null;
+  // cross-org
+  organizations: OrganizationMembership[];
+  companies: CompanyLink[];
   // nested
   roles: RoleSummary[];
   badges: BadgeSummary[];

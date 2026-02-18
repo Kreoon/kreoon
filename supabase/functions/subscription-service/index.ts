@@ -119,9 +119,11 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("Subscription error:", error?.message, error?.stack);
+    // Return 200 with error field so supabase.functions.invoke passes the message through
+    // (non-2xx responses get wrapped in a generic FunctionsHttpError, losing the actual message)
     return new Response(
-      JSON.stringify({ error: error.message, details: error.stack?.split("\n").slice(0, 3).join(" | ") }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ success: false, error: error.message }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
@@ -140,7 +142,10 @@ async function createCheckoutSession(supabase: any, userId: string, request: Sub
 
   const priceId = PRICE_IDS[tier][billing_cycle];
   if (!priceId) {
-    throw new Error(`Price not found for ${tier} ${billing_cycle}`);
+    throw new Error(
+      `Stripe Price ID no configurado para ${tier} (${billing_cycle}). ` +
+      `Configura la variable STRIPE_PRICE_* en Supabase.`
+    );
   }
 
   // Obtener o crear wallet
@@ -184,6 +189,16 @@ async function createCheckoutSession(supabase: any, userId: string, request: Sub
 
   // Crear o obtener Stripe customer
   let customerId = wallet.stripe_customer_id;
+
+  if (customerId) {
+    // Verify the customer still exists in Stripe (may be stale from test mode or deleted)
+    try {
+      await stripe.customers.retrieve(customerId);
+    } catch (verifyErr: any) {
+      console.warn(`Stripe customer ${customerId} not found, creating new one:`, verifyErr?.message);
+      customerId = null; // Force re-creation below
+    }
+  }
 
   if (!customerId) {
     const customer = await stripe.customers.create({
@@ -267,34 +282,40 @@ async function createCheckoutSession(supabase: any, userId: string, request: Sub
   const baseUrl = Deno.env.get("FRONTEND_URL") || "https://kreoon.com";
 
   // Crear Checkout Session
-  const session = await stripe.checkout.sessions.create({
-    customer: customerId,
-    mode: "subscription",
-    payment_method_types: ["card"],
-    line_items: [
-      {
-        price: priceId,
-        quantity: 1,
+  let session;
+  try {
+    session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: "subscription",
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      subscription_data: {
+        trial_period_days: tier.includes("free") ? 0 : 14, // 14 días de trial
+        metadata: {
+          tier,
+          user_id: userId,
+          organization_id: organization_id || "",
+          wallet_id: wallet.id,
+          referral_relationship_id: referralRelationshipId || "",
+        },
       },
-    ],
-    subscription_data: {
-      trial_period_days: tier.includes("free") ? 0 : 14, // 14 días de trial
+      success_url: `${baseUrl}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/planes`,
       metadata: {
         tier,
-        user_id: userId,
-        organization_id: organization_id || "",
-        wallet_id: wallet.id,
-        referral_relationship_id: referralRelationshipId || "",
+        billing_cycle,
       },
-    },
-    success_url: `${baseUrl}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${baseUrl}/subscription/cancel`,
-    metadata: {
-      tier,
-      billing_cycle,
-    },
-    allow_promotion_codes: true,
-  });
+      allow_promotion_codes: true,
+    });
+  } catch (stripeErr: any) {
+    console.error("Stripe checkout error:", stripeErr?.message, "price:", priceId, "customer:", customerId);
+    throw new Error(`Error de Stripe: ${stripeErr?.message || 'Error desconocido'}`);
+  }
 
   return {
     success: true,

@@ -14,6 +14,7 @@ interface ProtectedRouteProps {
   allowedRoles?: AppRole[];
   requiresOrg?: boolean; // Whether this route requires an organization
   allowNoRoles?: boolean; // Allow users without any roles (for social routes)
+  requirePlatformAdmin?: boolean; // Only platform admins (user_roles or ROOT_EMAILS) can access
 }
 
 const CLIENT_COMPANY_TIMEOUT_MS = 8000;
@@ -59,8 +60,8 @@ const ORG_REQUIRED_ROUTES = ['/dashboard', '/board', '/content', '/talent', '/sc
 // Routes that users without roles can access (social/marketplace)
 const SOCIAL_ROUTES = ['/social', '/marketplace', '/explore', '/profile', '/settings'];
 
-export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRoles }: ProtectedRouteProps) {
-  const { user, profile, roles: realRoles, activeRole, loading, rolesLoaded } = useAuth();
+export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRoles, requirePlatformAdmin }: ProtectedRouteProps) {
+  const { user, profile, roles: realRoles, activeRole, loading, rolesLoaded, isPlatformAdmin } = useAuth();
   const { isImpersonating, effectiveRoles, isRootAdmin } = useImpersonation();
   const { isPlatformRoot, currentOrgId, loading: orgLoading } = useOrgOwner();
   const { marketplaceEnabled, loading: mktLoading } = useOrgMarketplace();
@@ -168,6 +169,12 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
       }
     }
     return <>{children}</>;
+  }
+
+  // Platform-admin-only routes (e.g., /crm/*) — only platform admins can access
+  if (requirePlatformAdmin && !isPlatformAdmin) {
+    const correctDashboard = getDashboardPath(rolesToCheck, activeRole);
+    return <Navigate to={correctDashboard} replace />;
   }
 
   // Check if current route is a social route (accessible without roles)

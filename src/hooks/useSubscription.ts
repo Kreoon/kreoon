@@ -24,7 +24,15 @@ async function invokeSubscriptionService<T = any>(
     headers: { Authorization: `Bearer ${session.access_token}` },
   });
 
-  if (error) throw new Error(error.message || `Error en ${action}`);
+  if (error) {
+    // Try to extract actual error from FunctionsHttpError context
+    const ctx = (error as any)?.context;
+    let msg = error.message;
+    if (ctx && typeof ctx.json === 'function') {
+      try { const body = await ctx.json(); msg = body?.error || msg; } catch {}
+    }
+    throw new Error(msg || `Error en ${action}`);
+  }
   if (data?.error) throw new Error(data.error);
   return data as T;
 }
