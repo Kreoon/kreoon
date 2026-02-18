@@ -20,10 +20,11 @@ SELECT cron.schedule(
   $$
     UPDATE ai_token_balances
     SET
-      balance_subscription = monthly_allowance,
+      balance_subscription = balance_subscription + monthly_allowance,
       last_reset_at = NOW(),
       next_reset_at = NOW() + INTERVAL '30 days'
-    WHERE next_reset_at <= NOW();
+    WHERE monthly_allowance > 0
+      AND next_reset_at <= NOW();
   $$
 );
 

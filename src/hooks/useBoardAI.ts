@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { invokeAIWithTokens } from '@/lib/ai/token-gate';
 
 export interface CardAnalysis {
   card_id: string;
@@ -107,9 +108,26 @@ export function useBoardAI(organizationId?: string) {
 
     setModuleInactive(null);
 
-    const { data, error } = await supabase.functions.invoke('board-ai', {
-      body: { action, organizationId, contentId, ...extra }
-    });
+    // Map board-ai actions to token action types
+    const tokenActionMap: Record<string, string> = {
+      analyze_card: 'board.analyze_card',
+      suggestions: 'board.suggestions',
+      analyze_board: 'board.analyze_board',
+      prioritize: 'board.prioritize',
+      research_context: 'board.research_context',
+    };
+    const tokenAction = tokenActionMap[action] || 'board.suggestions';
+
+    let data: any, error: any;
+    try {
+      data = await invokeAIWithTokens('board-ai', tokenAction, { action, organizationId, contentId, ...extra }, organizationId);
+    } catch (err: any) {
+      if (err.message?.includes('Kreoon Coins insuficientes')) {
+        toast({ title: 'Coins insuficientes', description: err.message, variant: 'destructive' });
+        return null;
+      }
+      error = err;
+    }
 
     // Handle MODULE_INACTIVE error
     if (data?.error === 'MODULE_INACTIVE') {

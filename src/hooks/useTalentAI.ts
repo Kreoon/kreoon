@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { toast } from "@/hooks/use-toast";
+import { invokeAIWithTokens } from "@/lib/ai/token-gate";
 
 export interface TalentMatchingResult {
   selected_id: string | null;
@@ -85,16 +86,12 @@ export function useTalentAI() {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("talent-ai", {
-        body: {
-          action: "matching",
-          organizationId: currentOrgId,
-          role,
-          ...options,
-        },
-      });
-
-      if (error) throw error;
+      const data = await invokeAIWithTokens("talent-ai", "talent.match", {
+        action: "matching",
+        organizationId: currentOrgId,
+        role,
+        ...options,
+      }, currentOrgId);
       return data as TalentMatchingResult;
     } catch (error: any) {
       console.error("Talent matching error:", error);
@@ -113,16 +110,12 @@ export function useTalentAI() {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("talent-ai", {
-        body: {
-          action: "quality",
-          organizationId: currentOrgId,
-          userId,
-          contentId,
-        },
-      });
-
-      if (error) throw error;
+      const data = await invokeAIWithTokens("talent-ai", "talent.suggest_creator", {
+        action: "quality",
+        organizationId: currentOrgId,
+        userId,
+        contentId,
+      }, currentOrgId);
       return data as TalentQualityResult;
     } catch (error: any) {
       console.error("Quality evaluation error:", error);
@@ -138,15 +131,11 @@ export function useTalentAI() {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("talent-ai", {
-        body: {
-          action: "risk",
-          organizationId: currentOrgId,
-          userId,
-        },
-      });
-
-      if (error) throw error;
+      const data = await invokeAIWithTokens("talent-ai", "talent.suggest_creator", {
+        action: "risk",
+        organizationId: currentOrgId,
+        userId,
+      }, currentOrgId);
       return data as TalentRiskResult;
     } catch (error: any) {
       console.error("Risk analysis error:", error);
@@ -162,15 +151,11 @@ export function useTalentAI() {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("talent-ai", {
-        body: {
-          action: "reputation",
-          organizationId: currentOrgId,
-          userId,
-        },
-      });
-
-      if (error) throw error;
+      const data = await invokeAIWithTokens("talent-ai", "talent.suggest_creator", {
+        action: "reputation",
+        organizationId: currentOrgId,
+        userId,
+      }, currentOrgId);
       return data as TalentReputationResult;
     } catch (error: any) {
       console.error("Reputation evaluation error:", error);
@@ -186,15 +171,11 @@ export function useTalentAI() {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("talent-ai", {
-        body: {
-          action: "ambassador",
-          organizationId: currentOrgId,
-          userId,
-        },
-      });
-
-      if (error) throw error;
+      const data = await invokeAIWithTokens("talent-ai", "talent.suggest_creator", {
+        action: "ambassador",
+        organizationId: currentOrgId,
+        userId,
+      }, currentOrgId);
       return data as TalentAmbassadorResult;
     } catch (error: any) {
       console.error("Ambassador evaluation error:", error);

@@ -4,6 +4,7 @@ import { usePortfolioAIConfig } from "./usePortfolioAIConfig";
 import { useAuth } from "./useAuth";
 import type { PortfolioAIAction } from "@/lib/prompts/portfolio-ai-types";
 import { toast } from "sonner";
+import { invokeAIWithTokens } from "@/lib/ai/token-gate";
 
 interface UsePortfolioAIResult {
   isEnabled: boolean;
@@ -34,17 +35,17 @@ export function usePortfolioAI(): UsePortfolioAIResult {
         organizationId: profile?.current_organization_id ?? undefined,
       };
 
+      // Map portfolio action to token action type
+      const tokenActionMap: Record<string, string> = {
+        bio: 'portfolio.bio',
+        caption: 'portfolio.caption',
+      };
+      const tokenAction = tokenActionMap[action] || 'portfolio.bio';
+      const orgId = profile?.current_organization_id ?? undefined;
+
       setLoading(true);
       try {
-        const { data, error } = await supabase.functions.invoke("portfolio-ai", {
-          body,
-        });
-
-        if (error) {
-          console.error("[usePortfolioAI] Error:", error);
-          toast.error("Error al ejecutar IA");
-          return null;
-        }
+        const data = await invokeAIWithTokens("portfolio-ai", tokenAction, body, orgId);
 
         if (data?.error) {
           toast.error(data.error);
@@ -52,9 +53,13 @@ export function usePortfolioAI(): UsePortfolioAIResult {
         }
 
         return data?.data as T;
-    } catch (error) {
-      console.error('[usePortfolioAI] Exception:', error);
-      toast.error('Error de conexión con IA');
+    } catch (error: any) {
+      if (error.message?.includes('Kreoon Coins insuficientes')) {
+        toast.error(error.message);
+      } else {
+        console.error('[usePortfolioAI] Exception:', error);
+        toast.error('Error de conexión con IA');
+      }
       return null;
     } finally {
       setLoading(false);

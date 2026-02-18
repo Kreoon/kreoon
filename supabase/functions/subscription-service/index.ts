@@ -350,7 +350,7 @@ async function createPortalSession(supabase: any, userId: string, organizationId
 
   const session = await stripe.billingPortal.sessions.create({
     customer: wallet.stripe_customer_id,
-    return_url: `${baseUrl}/settings/billing`,
+    return_url: `${baseUrl}/planes`,
   });
 
   return {

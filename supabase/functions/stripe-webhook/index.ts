@@ -586,15 +586,16 @@ async function resetMonthlyTokens(supabase: any, walletId: string) {
 
   const { data: balance } = await supabase
     .from("ai_token_balances")
-    .select("id, monthly_allowance")
+    .select("id, monthly_allowance, balance_subscription")
     .match(query)
     .single();
 
   if (balance) {
+    // Cumulative: ADD monthly allowance to remaining balance (not replace)
     await supabase
       .from("ai_token_balances")
       .update({
-        balance_subscription: balance.monthly_allowance,
+        balance_subscription: (balance.balance_subscription || 0) + balance.monthly_allowance,
         last_reset_at: new Date().toISOString(),
         next_reset_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       })
