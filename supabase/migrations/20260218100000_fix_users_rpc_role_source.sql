@@ -1,8 +1,11 @@
 -- =====================================================
--- Enhanced Platform Users with Health RPC
--- Migration: 20260217700000_enhance_platform_users_rpc
--- Changes: Start from auth.users (catches users without profiles),
---          add email_confirmed_at, is_banned, has_profile, is_platform_admin
+-- Fix: Platform Users RPC role source
+-- Migration: 20260218100000_fix_users_rpc_role_source
+-- Problem: om.role from organization_members is NOT NULL DEFAULT 'creator',
+--          so COALESCE(om.role, p.active_role) always returns 'creator'
+--          even when the user has no assigned role.
+-- Fix: Use organization_member_roles (which IS cleared) as role source,
+--       falling back to p.active_role.
 -- =====================================================
 
 CREATE OR REPLACE FUNCTION get_platform_users_with_health()
@@ -23,7 +26,9 @@ BEGIN
             COALESCE(p.email, au.email) AS email,
             COALESCE(p.full_name, au.raw_user_meta_data->>'full_name', 'Sin nombre') AS full_name,
             p.avatar_url,
-            COALESCE(om.role::text, p.active_role) AS role,
+            -- Use organization_member_roles as source of truth (can be empty = no role)
+            -- Falls back to profiles.active_role, then NULL
+            COALESCE(omr.role::text, p.active_role) AS role,
             om.organization_id,
             o.name AS organization_name,
             COALESCE(h.health_score, 50) AS health_score,
@@ -39,7 +44,7 @@ BEGIN
                 + COALESCE(h.total_content_received, 0) AS total_actions,
             COALESCE(h.needs_attention, FALSE) AS needs_attention,
             COALESCE(p.created_at, au.created_at) AS created_at,
-            -- New auth-level fields
+            -- Auth-level fields
             au.email_confirmed_at,
             CASE WHEN au.banned_until IS NOT NULL AND au.banned_until > NOW() THEN TRUE ELSE FALSE END AS is_banned,
             (p.id IS NOT NULL) AS has_profile,
@@ -47,12 +52,19 @@ BEGIN
         FROM auth.users au
         LEFT JOIN profiles p ON p.id = au.id
         LEFT JOIN LATERAL (
-            SELECT om2.role, om2.organization_id
+            SELECT om2.organization_id, om2.is_owner
             FROM organization_members om2
             WHERE om2.user_id = au.id
             ORDER BY om2.is_owner DESC, om2.joined_at ASC
             LIMIT 1
         ) om ON TRUE
+        LEFT JOIN LATERAL (
+            SELECT omr2.role
+            FROM organization_member_roles omr2
+            WHERE omr2.user_id = au.id
+              AND omr2.organization_id = om.organization_id
+            LIMIT 1
+        ) omr ON TRUE
         LEFT JOIN organizations o ON o.id = om.organization_id
         LEFT JOIN platform_user_health h ON h.user_id = au.id
     ) t;
@@ -60,5 +72,3 @@ BEGIN
     RETURN result;
 END;
 $$;
-
-GRANT EXECUTE ON FUNCTION get_platform_users_with_health() TO authenticated;

@@ -8,6 +8,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useBranding } from "@/contexts/BrandingContext";
 import { StatusPageLayout } from "@/components/status/StatusPageLayout";
 import { StatusCard } from "@/components/status/StatusCard";
 import { KreoonButton, KreoonBadge } from "@/components/ui/kreoon";
@@ -35,6 +36,8 @@ function getMyDashboardPath(roles: string[]): string {
 export default function Unauthorized() {
   const navigate = useNavigate();
   const { user, signOut, roles } = useAuth();
+  const { branding } = useBranding();
+  const supportEmail = branding.support_email || 'soporte@kreoon.com';
 
   return (
     <StatusPageLayout
@@ -126,10 +129,10 @@ export default function Unauthorized() {
       <p className="mt-6 text-center text-sm text-kreoon-text-muted">
         ¿Necesitas ayuda? Contacta a{" "}
         <a
-          href="mailto:soporte@kreoon.com"
+          href={`mailto:${supportEmail}`}
           className="text-kreoon-purple-400 hover:underline"
         >
-          soporte@kreoon.com
+          {supportEmail}
         </a>
       </p>
     </StatusPageLayout>

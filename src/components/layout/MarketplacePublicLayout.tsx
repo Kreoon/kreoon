@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { MainLayout } from './MainLayout';
 import { Button } from '@/components/ui/button';
 import { LogIn, UserPlus, Sparkles } from 'lucide-react';
+import { useBranding } from '@/contexts/BrandingContext';
 
 interface MarketplaceLayoutProps {
   children: ReactNode;
@@ -31,6 +32,9 @@ export function MarketplaceLayout({ children }: MarketplaceLayoutProps) {
 
 function AnonymousMarketplaceShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
+  const { branding } = useBranding();
+  const logoUrl = branding.logo_url || '/favicon.png';
+  const platformName = branding.platform_name || 'KREOON';
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] relative">
@@ -41,9 +45,9 @@ function AnonymousMarketplaceShell({ children }: { children: ReactNode }) {
           className="flex items-center gap-2"
         >
           <div className="flex h-7 w-7 items-center justify-center rounded-lg overflow-hidden">
-            <img src="/favicon.png" alt="KREOON" className="h-7 w-7 object-cover" loading="lazy" />
+            <img src={logoUrl} alt={platformName} className="h-7 w-7 object-cover" loading="lazy" />
           </div>
-          <span className="text-sm font-bold text-white">KREOON</span>
+          <span className="text-sm font-bold text-white">{platformName}</span>
         </button>
 
         <div className="flex items-center gap-2">

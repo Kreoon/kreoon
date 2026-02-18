@@ -1,7 +1,8 @@
 import { useState, useCallback, useRef } from 'react';
-import { Building2, AlertTriangle, RefreshCw, Settings, ShieldCheck, KeyRound, Ban, Trash2 } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Settings, ShieldCheck, KeyRound, Ban, Trash2 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -27,6 +28,8 @@ import { ScoresSection } from './detail-sections/ScoresSection';
 import { CustomFieldsSection } from './detail-sections/CustomFieldsSection';
 import { CrmFieldsConfigDialog } from './detail-sections/CrmFieldsConfigDialog';
 import { AdminActionsSection } from './detail-sections/AdminActionsSection';
+import { OrganizationsListSection } from './detail-sections/OrganizationsListSection';
+import { CompaniesSection } from './detail-sections/CompaniesSection';
 
 const ROOT_EMAILS = ['jacsolucionesgraficas@gmail.com', 'kairosgp.sas@gmail.com'];
 
@@ -54,12 +57,19 @@ interface UserDetailPanelProps {
 
 export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProps) {
   const { profile } = useAuth();
+  const queryClient = useQueryClient();
   const currentUserEmail = profile?.email || '';
   const isRoot = ROOT_EMAILS.includes(currentUserEmail);
   const isPlatformAdmin = isRoot; // Platform CRM is already admin-gated
 
   const recalculate = useRecalculateHealthScore();
   const { data: full, isLoading: fullLoading } = useFullUserDetail(user.id);
+
+  const handleActionComplete = useCallback(() => {
+    // Invalidate the detail query so the panel refreshes with updated data
+    queryClient.invalidateQueries({ queryKey: ['full-user-detail', user.id] });
+    onUpdate?.();
+  }, [queryClient, user.id, onUpdate]);
   const { data: fieldDefs = [] } = useCrmCustomFieldDefs(
     full?.organization_id || undefined,
     'user',
@@ -77,7 +87,7 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
 
   const handleRecalculate = () => {
     recalculate.mutate(user.id, {
-      onSuccess: () => onUpdate?.(),
+      onSuccess: () => handleActionComplete(),
     });
   };
 
@@ -107,7 +117,7 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
       onClose={onClose}
       avatar={avatar}
       name={user.full_name || 'Sin nombre'}
-      subtitle={user.role || undefined}
+      subtitle={user.role || full?.active_role || undefined}
       badges={
         <>
           <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-semibold', HEALTH_STATUS_COLORS[healthStatus])}>
@@ -116,6 +126,11 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
           {user.is_platform_admin && (
             <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/20 text-amber-400">
               Admin Plataforma
+            </span>
+          )}
+          {full?.is_owner && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-yellow-500/20 text-yellow-400">
+              Propietario
             </span>
           )}
           {user.is_banned && (
@@ -340,14 +355,22 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
         </div>
       </DetailSection>
 
-      {/* Organization */}
-      {user.organization_name && (
-        <DetailSection title="Organización">
-          <div className="flex items-center gap-2">
-            <Building2 className="h-3.5 w-3.5 text-white/30 flex-shrink-0" />
-            <span className="text-sm text-white/70">{user.organization_name}</span>
-          </div>
-        </DetailSection>
+      {/* Organizations (all memberships) */}
+      {full && (
+        <OrganizationsListSection
+          organizations={full.organizations || []}
+          userId={user.id}
+          onActionComplete={handleActionComplete}
+        />
+      )}
+
+      {/* Companies (all linked via client_users) */}
+      {full && (
+        <CompaniesSection
+          companies={full.companies || []}
+          userId={user.id}
+          onActionComplete={handleActionComplete}
+        />
       )}
 
       {/* Custom Fields */}
@@ -398,9 +421,10 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
           isBanned={user.is_banned}
           orgId={user.organization_id}
           orgName={user.organization_name}
+          isOwner={full?.is_owner ?? false}
           activeRole={full?.active_role || null}
           currentUserEmail={currentUserEmail}
-          onActionComplete={() => onUpdate?.()}
+          onActionComplete={handleActionComplete}
         />
       )}
 

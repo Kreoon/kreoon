@@ -28,7 +28,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { UnifiedTalentMember } from '@/types/unifiedTalent.types';
 import type { AppRole } from '@/types/database';
 
-type FilterTab = 'todos' | 'admins' | 'estrategas' | 'creadores' | 'editores' | 'traffickers' | 'embajadores' | 'externos' | 'ranking';
+type FilterTab = 'todos' | 'admins' | 'estrategas' | 'creadores' | 'editores' | 'traffickers' | 'embajadores' | 'leads' | 'externos' | 'ranking';
 
 const FILTER_TABS: { key: FilterTab; label: string }[] = [
   { key: 'todos', label: 'Todos' },
@@ -38,6 +38,7 @@ const FILTER_TABS: { key: FilterTab; label: string }[] = [
   { key: 'editores', label: 'Editores' },
   { key: 'traffickers', label: 'Traffickers' },
   { key: 'embajadores', label: 'Embajadores' },
+  { key: 'leads', label: 'Leads' },
   { key: 'externos', label: 'Externos' },
   { key: 'ranking', label: 'Ranking' },
 ];
@@ -75,8 +76,9 @@ const UnifiedTalentPage = () => {
     const internal = members.filter(m => m.source !== 'external');
     const external = members.filter(m => m.source !== 'internal');
     const favorites = members.filter(m => m.relationship_type === 'favorite');
+    const leads = members.filter(m => m.source !== 'external' && (!m.all_roles || m.all_roles.length === 0) && !m.is_owner);
     const totalInvested = members.reduce((sum, m) => sum + (m.total_paid || 0), 0);
-    return { internal: internal.length, external: external.length, favorites: favorites.length, totalInvested };
+    return { internal: internal.length, external: external.length, favorites: favorites.length, leads: leads.length, totalInvested };
   }, [members]);
 
   // Filtered list
@@ -90,6 +92,10 @@ const UnifiedTalentPage = () => {
 
     // Tab filter
     switch (filter) {
+      case 'todos':
+        // Exclude leads (no roles, not owner) from "Todos" — they have their own tab
+        list = list.filter(m => m.source === 'external' || (m.all_roles && m.all_roles.length > 0) || m.is_owner);
+        break;
       case 'admins':
         list = list.filter(m => m.source !== 'external' && (m.org_role === 'admin' || m.org_role === 'team_leader' || m.is_owner));
         break;
@@ -108,10 +114,13 @@ const UnifiedTalentPage = () => {
       case 'embajadores':
         list = list.filter(m => m.is_ambassador);
         break;
+      case 'leads':
+        list = list.filter(m => m.source !== 'external' && (!m.all_roles || m.all_roles.length === 0) && !m.is_owner);
+        break;
       case 'externos':
         list = list.filter(m => m.source !== 'internal');
         break;
-      // 'todos' and 'ranking' show all
+      // 'ranking' shows all
     }
 
     // Search
@@ -253,6 +262,15 @@ const UnifiedTalentPage = () => {
             </div>
             <p className="text-xl font-bold text-card-foreground">{stats.external}</p>
           </div>
+          {canSeeInternal && stats.leads > 0 && (
+            <div className="rounded-xl border border-border bg-card p-3">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                <UserPlus className="h-3.5 w-3.5" />
+                Leads
+              </div>
+              <p className="text-xl font-bold text-card-foreground">{stats.leads}</p>
+            </div>
+          )}
           <div className="rounded-xl border border-border bg-card p-3">
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
               <Heart className="h-3.5 w-3.5" />

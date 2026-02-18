@@ -24,7 +24,15 @@ async function invokeSubscriptionService<T = any>(
     headers: { Authorization: `Bearer ${session.access_token}` },
   });
 
-  if (error) throw new Error(error.message || `Error en ${action}`);
+  if (error) {
+    // Try to extract actual error from FunctionsHttpError context
+    const ctx = (error as any)?.context;
+    let msg = error.message;
+    if (ctx && typeof ctx.json === 'function') {
+      try { const body = await ctx.json(); msg = body?.error || msg; } catch {}
+    }
+    throw new Error(msg || `Error en ${action}`);
+  }
   if (data?.error) throw new Error(data.error);
   return data as T;
 }
@@ -45,10 +53,17 @@ export function useSubscription(organizationId?: string) {
     refetch,
   } = useQuery({
     queryKey,
-    queryFn: () =>
-      invokeSubscriptionService<PlatformSubscription | null>('get-status', {
+    queryFn: async (): Promise<PlatformSubscription | null> => {
+      const res = await invokeSubscriptionService<any>('get-status', {
         organization_id: organizationId,
-      }),
+      });
+      // Edge function returns { has_subscription, subscription?: {...}, tier?, ... }
+      if (res?.has_subscription && res.subscription) {
+        return res.subscription as PlatformSubscription;
+      }
+      // No subscription → return null (free tier)
+      return null;
+    },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
   });
@@ -142,7 +157,7 @@ export function useSubscription(organizationId?: string) {
 
   // ─── Derived state ───
   const isActive = subscription?.status === 'active' || subscription?.status === 'trialing';
-  const isFree = !subscription || subscription.tier.endsWith('_free');
+  const isFree = !subscription || (subscription.tier && subscription.tier.endsWith('_free')) || false;
   const isPastDue = subscription?.status === 'past_due';
   const isCancelling = subscription?.cancel_at_period_end === true;
   const currentTier = subscription?.tier || 'brand_free';

@@ -166,9 +166,10 @@ async function handleSubscriptionChange(supabase: any, subscription: Stripe.Subs
   // Obtener límites del plan
   const planConfig = await getPlanConfig(supabase, tierMapping.tier);
 
+  // subscription_owner_check: must have EITHER user_id OR organization_id, not both
   const subscriptionData = {
-    user_id: wallet.user_id,
-    organization_id: wallet.organization_id,
+    user_id: wallet.organization_id ? null : wallet.user_id,
+    organization_id: wallet.organization_id || null,
     wallet_id: wallet.id,
     tier: tierMapping.tier,
     status: mapStripeStatus(subscription.status),
@@ -203,6 +204,18 @@ async function handleSubscriptionChange(supabase: any, subscription: Stripe.Subs
 
   // Actualizar tokens mensuales si cambió el plan
   await updateTokenAllowance(supabase, wallet, planConfig.ai_tokens_monthly, tierMapping.tier);
+
+  // Sync organizations table (backward compat with old trial system)
+  if (wallet.organization_id && (subscription.status === "active" || subscription.status === "trialing")) {
+    await supabase
+      .from("organizations")
+      .update({
+        trial_active: false,
+        subscription_status: "active",
+        selected_plan: tierMapping.tier,
+      })
+      .eq("id", wallet.organization_id);
+  }
 
   // Procesar comisión de referido si es nueva suscripción
   if (subscription.status === "active") {

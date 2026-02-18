@@ -337,23 +337,69 @@ serve(async (req) => {
       }
 
       case "set_active_role": {
-        // Set active_role on a user's profile (works even without org membership)
+        // Set active_role on profile + organization_members + organization_member_roles
+        // activeRole can be null to clear the role
         const { activeRole } = body;
-        if (!userId || !activeRole) {
-          return new Response(JSON.stringify({ error: "User ID and activeRole required" }), {
+        if (!userId) {
+          return new Response(JSON.stringify({ error: "User ID required" }), {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" }
           });
         }
 
+        // 1. Update profiles.active_role (null clears it)
         const { error: roleUpdateError } = await supabaseAdmin
           .from("profiles")
-          .update({ active_role: activeRole })
+          .update({ active_role: activeRole || null })
           .eq("id", userId);
-
         if (roleUpdateError) throw roleUpdateError;
 
-        console.log(`Active role set to ${activeRole} for user ${userId}`);
+        // 2. Get org memberships
+        const { data: memberships } = await supabaseAdmin
+          .from("organization_members")
+          .select("organization_id")
+          .eq("user_id", userId);
+
+        if (activeRole) {
+          // Setting a role: update org_members + upsert org_member_roles
+          const { error: omError } = await supabaseAdmin
+            .from("organization_members")
+            .update({ role: activeRole })
+            .eq("user_id", userId);
+          if (omError) console.error("Error updating organization_members:", omError);
+
+          if (memberships && memberships.length > 0) {
+            for (const m of memberships) {
+              await supabaseAdmin
+                .from("organization_member_roles")
+                .delete()
+                .eq("user_id", userId)
+                .eq("organization_id", m.organization_id);
+
+              await supabaseAdmin
+                .from("organization_member_roles")
+                .insert({
+                  user_id: userId,
+                  organization_id: m.organization_id,
+                  role: activeRole,
+                });
+            }
+          }
+        } else {
+          // Clearing role: remove from org_member_roles, reset org_members.role to default
+          // org_members.role is NOT NULL DEFAULT 'creator' so we keep default
+          if (memberships && memberships.length > 0) {
+            for (const m of memberships) {
+              await supabaseAdmin
+                .from("organization_member_roles")
+                .delete()
+                .eq("user_id", userId)
+                .eq("organization_id", m.organization_id);
+            }
+          }
+        }
+
+        console.log(`Active role ${activeRole ? `set to ${activeRole}` : 'cleared'} for user ${userId}`);
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -436,7 +482,7 @@ serve(async (req) => {
 
       case "assign_to_org": {
         // Assign a user to an organization with a specific role
-        const { organizationId, assignRole } = body;
+        const { organizationId, assignRole, makeOwner: assignOwner } = body;
         console.log("assign_to_org params:", { userId, organizationId, assignRole });
 
         if (!userId || !organizationId) {
@@ -461,22 +507,25 @@ serve(async (req) => {
           || authUser.user.user_metadata?.name
           || userEmail.split('@')[0]
           || 'Usuario';
-        const roleToAssign = assignRole || 'creator';
+        const roleToAssign = assignRole || null; // null = no role, DB default 'creator' used for membership
 
-        console.log(`Assigning user ${userId} (${userEmail}) to org ${organizationId} with role ${roleToAssign}`);
+        console.log(`Assigning user ${userId} (${userEmail}) to org ${organizationId} with role ${roleToAssign || '(owner only)'}`);
 
         // Use UPSERT for profile - creates if not exists, updates if exists
-        // This avoids NOT NULL constraint issues
+        const profileData: Record<string, unknown> = {
+          id: userId,
+          email: userEmail,
+          full_name: fullName,
+          current_organization_id: organizationId,
+          is_active: true,
+        };
+        if (roleToAssign) {
+          profileData.active_role = roleToAssign;
+        }
+
         const { error: upsertError } = await supabaseAdmin
           .from("profiles")
-          .upsert({
-            id: userId,
-            email: userEmail,
-            full_name: fullName,
-            current_organization_id: organizationId,
-            is_active: true,
-            active_role: roleToAssign,
-          }, {
+          .upsert(profileData, {
             onConflict: 'id',
             ignoreDuplicates: false
           });
@@ -498,36 +547,95 @@ serve(async (req) => {
           .eq("user_id", userId);
 
         // Insert new membership
+        // organization_members.role is NOT NULL DEFAULT 'creator',
+        // so we only include role if one was explicitly chosen
+        const memberData: Record<string, unknown> = {
+          organization_id: organizationId,
+          user_id: userId,
+          is_owner: !!assignOwner,
+        };
+        if (roleToAssign) {
+          memberData.role = roleToAssign;
+        }
+
         const { error: memberError } = await supabaseAdmin
           .from("organization_members")
-          .insert({
-            organization_id: organizationId,
-            user_id: userId,
-            role: roleToAssign,
-            is_owner: false,
-          });
+          .insert(memberData);
 
         if (memberError) {
           console.error("Error inserting organization member:", memberError);
           throw memberError;
         }
 
-        // Insert role
-        const { error: roleError } = await supabaseAdmin
-          .from("organization_member_roles")
-          .insert({
-            organization_id: organizationId,
-            user_id: userId,
-            role: roleToAssign,
-          });
+        // Insert role mapping only if a role was specified
+        if (roleToAssign) {
+          const { error: roleError } = await supabaseAdmin
+            .from("organization_member_roles")
+            .insert({
+              organization_id: organizationId,
+              user_id: userId,
+              role: roleToAssign,
+            });
 
-        if (roleError) {
-          console.error("Error inserting organization member role:", roleError);
-          // Don't throw - membership was created
+          if (roleError) {
+            console.error("Error inserting organization member role:", roleError);
+            // Don't throw - membership was created
+          }
         }
 
-        console.log(`User ${userId} assigned to org ${organizationId} with role ${roleToAssign}`);
+        console.log(`User ${userId} assigned to org ${organizationId}${roleToAssign ? ` with role ${roleToAssign}` : ' as owner (no role)'}`);
         return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      case "set_owner": {
+        // Toggle is_owner on organization_members for a user
+        const { organizationId: ownerOrgId, makeOwner } = body;
+        if (!userId) {
+          return new Response(JSON.stringify({ error: "User ID required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        // Find the user's org membership (use provided orgId or look it up)
+        let targetOrgId = ownerOrgId;
+        if (!targetOrgId) {
+          const { data: membership } = await supabaseAdmin
+            .from("organization_members")
+            .select("organization_id")
+            .eq("user_id", userId)
+            .limit(1)
+            .maybeSingle();
+
+          if (!membership) {
+            return new Response(JSON.stringify({ error: "User is not a member of any organization" }), {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" }
+            });
+          }
+          targetOrgId = membership.organization_id;
+        }
+
+        const setOwner = makeOwner !== false; // default to true
+
+        // If making owner, optionally remove is_owner from all other members in that org
+        // (allow multiple owners - the UI toggle is per-user)
+
+        const { error: ownerError } = await supabaseAdmin
+          .from("organization_members")
+          .update({ is_owner: setOwner })
+          .eq("user_id", userId)
+          .eq("organization_id", targetOrgId);
+
+        if (ownerError) {
+          console.error("Error setting owner:", ownerError);
+          throw ownerError;
+        }
+
+        console.log(`User ${userId} is_owner set to ${setOwner} in org ${targetOrgId}`);
+        return new Response(JSON.stringify({ success: true, is_owner: setOwner }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
       }
@@ -701,6 +809,71 @@ serve(async (req) => {
         if (error) throw error;
         
         console.log(`Referral ${referralId} deleted by root`);
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      case "link_to_company": {
+        // Link a user to a company via client_users
+        if (!userId || !clientId) {
+          return new Response(JSON.stringify({ error: "User ID and Client ID required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        // Check if already linked
+        const { data: existingLink } = await supabaseAdmin
+          .from("client_users")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("client_id", clientId)
+          .maybeSingle();
+
+        if (existingLink) {
+          return new Response(JSON.stringify({ error: "User is already linked to this company" }), {
+            status: 409,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        const { error: linkError } = await supabaseAdmin
+          .from("client_users")
+          .insert({ user_id: userId, client_id: clientId, role: "viewer" });
+
+        if (linkError) {
+          console.error("Error linking user to company:", linkError);
+          throw linkError;
+        }
+
+        console.log(`User ${userId} linked to company ${clientId}`);
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      case "unlink_from_company": {
+        // Remove a user from a company via client_users
+        if (!userId || !clientId) {
+          return new Response(JSON.stringify({ error: "User ID and Client ID required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        const { error: unlinkError } = await supabaseAdmin
+          .from("client_users")
+          .delete()
+          .eq("user_id", userId)
+          .eq("client_id", clientId);
+
+        if (unlinkError) {
+          console.error("Error unlinking user from company:", unlinkError);
+          throw unlinkError;
+        }
+
+        console.log(`User ${userId} unlinked from company ${clientId}`);
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });

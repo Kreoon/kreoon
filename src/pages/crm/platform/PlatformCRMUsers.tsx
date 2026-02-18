@@ -576,7 +576,14 @@ const PlatformCRMUsers = () => {
           <UserDetailPanel
             user={selectedUser}
             onClose={() => setSelectedUser(null)}
-            onUpdate={() => refetch()}
+            onUpdate={async () => {
+              const result = await refetch();
+              // Sync selectedUser with fresh data so the panel reflects changes
+              if (result.data && selectedUser) {
+                const fresh = result.data.find((u: UserWithHealth) => u.id === selectedUser.id);
+                if (fresh) setSelectedUser(fresh);
+              }
+            }}
           />
         </div>
       )}

@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,6 +8,8 @@ import { AuthTabs } from "@/components/auth/AuthTabs";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { RegisterForm } from "@/components/auth/RegisterForm";
 import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
+import { useBranding } from "@/contexts/BrandingContext";
+import { supabase } from "@/integrations/supabase/client";
 
 export type AuthView = "login" | "register" | "forgot-password";
 
@@ -49,6 +51,22 @@ export default function Auth() {
   useEffect(() => {
     setView(getInitialView(tabParam));
   }, [tabParam]);
+
+  // Auto-select org from domain-resolved branding (subdomain or custom domain)
+  const { branding } = useBranding();
+  const orgAutoSelectedRef = useRef(false);
+  useEffect(() => {
+    if (!user || authLoading || !branding.resolved_org_id || orgAutoSelectedRef.current) return;
+    orgAutoSelectedRef.current = true;
+    // Set the user's current_organization_id to the domain-resolved org
+    supabase
+      .from("profiles")
+      .update({ current_organization_id: branding.resolved_org_id })
+      .eq("id", user.id)
+      .then(() => {
+        // The auth context will pick up the change via its listener
+      });
+  }, [user, authLoading, branding.resolved_org_id]);
 
   useEffect(() => {
     if (!user || authLoading || !rolesLoaded) return;

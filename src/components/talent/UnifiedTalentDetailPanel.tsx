@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Star, Heart, Ban, Briefcase, DollarSign, Calendar,
   Plus, X, Settings, Video, TrendingUp, Zap, Brain, Shield,
+  UserMinus, Trash2,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -11,6 +12,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { DetailPanelShell } from '@/components/crm/DetailPanelShell';
 import { DetailSection } from '@/components/crm/DetailSection';
 import { PersonalDataSection } from '@/components/crm/detail-sections/PersonalDataSection';
@@ -38,6 +44,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getRoleLabel, getRoleBadgeColor } from '@/lib/roles';
 import { UnifiedRolePicker } from '@/components/roles/UnifiedRolePicker';
 import { supabase } from '@/integrations/supabase/client';
+import { usePurgeMember, useRemoveMember } from '@/hooks/useOrgMemberActions';
 import type { Content, AppRole } from '@/types/database';
 
 const SOURCE_LABELS = { internal: 'Equipo', external: 'Externo', both: 'Equipo + CRM' };
@@ -167,6 +174,10 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
       setLoadingRoles(false);
     }
   };
+
+  // Membership action hooks (admin only)
+  const purgeMember = usePurgeMember();
+  const removeMember = useRemoveMember();
 
   // CRM hooks (only used if external relationship exists)
   const updateRelationship = useUpdateCreatorRelationship(organizationId);
@@ -476,6 +487,85 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
               Agregar rol
             </Button>
           )}
+        </DetailSection>
+      )}
+
+      {/* 4c. Membership Actions (admin only, internal, not owner) */}
+      {isAdmin && hasInternal && !member.is_owner && (
+        <DetailSection title="Membresía">
+          <div className="flex gap-2">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={purgeMember.isPending}
+                  className="h-7 text-xs bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/20"
+                >
+                  <UserMinus className="h-3 w-3 mr-1.5" />
+                  Depurar
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Depurar miembro</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Se eliminarán todos los roles de <strong>{member.full_name}</strong>. El usuario quedará como Lead y podrás reasignarle roles después.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-orange-600 text-white hover:bg-orange-700"
+                    onClick={() =>
+                      purgeMember.mutate(
+                        { userId: member.id, orgId: organizationId, userName: member.full_name },
+                        { onSuccess: () => { onUpdate(); onClose(); } },
+                      )
+                    }
+                  >
+                    Depurar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={removeMember.isPending}
+                  className="h-7 text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20"
+                >
+                  <Trash2 className="h-3 w-3 mr-1.5" />
+                  Eliminar de la org
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Eliminar de la organización</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    <strong>{member.full_name}</strong> será eliminado completamente de la organización. Esta acción no se puede deshacer.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={() =>
+                      removeMember.mutate(
+                        { userId: member.id, orgId: organizationId, userName: member.full_name },
+                        { onSuccess: () => { onUpdate(); onClose(); } },
+                      )
+                    }
+                  >
+                    Eliminar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </DetailSection>
       )}
 

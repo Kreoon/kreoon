@@ -8,6 +8,7 @@ import { StatusPageLayout } from "@/components/status/StatusPageLayout";
 import { StatusCard } from "@/components/status/StatusCard";
 import { RoleBadgeCard } from "@/components/status/RoleBadgeCard";
 import { PendingAnimation } from "@/components/status/PendingAnimation";
+import { useBranding } from "@/contexts/BrandingContext";
 import { KreoonButton } from "@/components/ui/kreoon";
 import { Loader2 } from "lucide-react";
 import type { RoleBadgeRole } from "@/components/status/RoleBadgeCard";
@@ -29,6 +30,8 @@ export default function PendingAccess() {
   const { user, signOut, roles, loading, rolesLoaded, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { branding } = useBranding();
+  const supportEmail = branding.support_email || 'soporte@kreoon.com';
   const [organizationName, setOrganizationName] = useState<string | null>(null);
   const [loadingOrg, setLoadingOrg] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -197,10 +200,10 @@ export default function PendingAccess() {
       <p className="mt-6 text-center text-sm text-kreoon-text-muted">
         ¿Tienes preguntas? Contacta a{" "}
         <a
-          href="mailto:soporte@kreoon.com"
+          href={`mailto:${supportEmail}`}
           className="text-kreoon-purple-400 hover:underline"
         >
-          soporte@kreoon.com
+          {supportEmail}
         </a>
       </p>
     </StatusPageLayout>

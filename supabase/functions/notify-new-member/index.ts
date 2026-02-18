@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getOrgEmailConfig } from "../_shared/resend-client.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -150,8 +151,9 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`Sending email to admin: ${adminEmail}`);
 
       try {
+        const emailConfig = await getOrgEmailConfig(supabase, organization_id);
         const { data, error } = await resend.emails.send({
-          from: "Kreoon <noreply@kreoon.com>",
+          from: emailConfig.from,
           to: [adminEmail],
           subject: `Nuevo miembro en ${org.name}: ${displayName}`,
           html: `

@@ -21,6 +21,7 @@ export type SettingsSectionKey =
   | 'org_marketplace'    // Marketplace access control & public portfolio
   | 'org_agency_profile' // Public agency profile for marketplace
   | 'live_streaming_org' // KREOON Live - Organization level config
+  | 'white_label'        // White-label branding, domain, email config
   // Platform level (Root only)
   | 'organization_registrations'
   | 'referrals'
@@ -71,6 +72,7 @@ const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'plat
   org_marketplace: 'organization', // Marketplace control & portfolio
   org_agency_profile: 'organization', // Agency profile for marketplace
   live_streaming_org: 'organization', // KREOON Live org config
+  white_label: 'organization',       // White-label settings
   // Platform level - root only
   organization_registrations: 'platform',
   referrals: 'platform',

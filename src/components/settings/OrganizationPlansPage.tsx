@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import {
   Check, Crown, Zap, Building2, Users, Video, Sparkles, Clock,
   AlertTriangle, CheckCircle2, CreditCard, ExternalLink, Briefcase, UserCircle,
+  Shield, Compass, Film, Camera,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useBillingAnalytics } from '@/analytics';
@@ -58,12 +59,15 @@ function getPlanFeatures(plan: PlanDef): string[] {
   }
   features.push(`${plan.aiTokens >= 1000 ? `${(plan.aiTokens / 1000).toFixed(0)}k` : plan.aiTokens} Kreoon Coins/mes`);
 
-  // Agency-specific
-  if (plan.clients !== undefined) {
-    features.push(`${plan.clients ?? 'Ilimitados'} clientes`);
+  // Agency-specific: role-based limits
+  if (plan.adminUsers !== undefined) {
+    features.push(`${plan.adminUsers ?? 'Ilimitados'} admins`);
+    features.push(`${plan.strategists ?? 'Ilimitados'} estrategas`);
+    features.push(`${plan.editors ?? 'Ilimitados'} post-produccion`);
+    features.push(`${plan.creators ?? 'Ilimitados'} creadores activos`);
   }
-  if (plan.teamMembers !== undefined) {
-    features.push(`${plan.teamMembers ?? 'Ilimitados'} miembros del equipo`);
+  if (plan.clients !== undefined) {
+    features.push(`Hasta ${plan.clients ?? 'ilimitados'} clientes`);
   }
 
   // Segment + tier specific features
@@ -196,9 +200,10 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
     const plan = PLAN_DEFS.find(p => p.id === planId);
     if (!plan) return;
 
-    // Enterprise plan → contact sales
+    // Enterprise plan → WhatsApp
     if (planId === 'agencias-enterprise') {
-      window.open('mailto:ventas@kreoon.com?subject=Consulta%20Plan%20Enterprise', '_blank');
+      const msg = encodeURIComponent('Hola, estoy interesado en el Plan Agency Enterprise de Kreoon. Me gustaria recibir mas informacion.');
+      window.open(`https://wa.me/573132947776?text=${msg}`, '_blank');
       return;
     }
 
@@ -222,7 +227,8 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
     }
   };
 
-  const isTrialActive = trialStatus.isTrialActive && !trialStatus.isExpired;
+  // Active subscription from platform_subscriptions takes priority over old trial system
+  const isTrialActive = !isActive && !isPastDue && trialStatus.isTrialActive && !trialStatus.isExpired;
 
   if (isLoading || subLoading) {
     return (
@@ -428,39 +434,78 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
                   <Separator />
 
                   {/* Limits */}
-                  <div className={cn(
-                    "grid gap-2 text-center text-xs",
-                    (plan.clients !== undefined) ? "grid-cols-4" : "grid-cols-3"
-                  )}>
-                    <div className="p-2 rounded-lg bg-muted/50">
-                      <Users className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                      <span className="font-medium">
-                        {plan.users ?? '∞'}
-                      </span>
-                      <p className="text-muted-foreground">usuarios</p>
+                  {plan.adminUsers !== undefined ? (
+                    /* Agency plans: role-based grid */
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2 text-center text-xs">
+                        <div className="p-2 rounded-lg bg-muted/50">
+                          <Shield className="h-4 w-4 mx-auto mb-1 text-blue-500" />
+                          <span className="font-medium">{plan.adminUsers ?? '∞'}</span>
+                          <p className="text-muted-foreground">admins</p>
+                        </div>
+                        <div className="p-2 rounded-lg bg-muted/50">
+                          <Compass className="h-4 w-4 mx-auto mb-1 text-purple-500" />
+                          <span className="font-medium">{plan.strategists ?? '∞'}</span>
+                          <p className="text-muted-foreground">estrategas</p>
+                        </div>
+                        <div className="p-2 rounded-lg bg-muted/50">
+                          <Film className="h-4 w-4 mx-auto mb-1 text-orange-500" />
+                          <span className="font-medium">{plan.editors ?? '∞'}</span>
+                          <p className="text-muted-foreground">editores</p>
+                        </div>
+                        <div className="p-2 rounded-lg bg-muted/50">
+                          <Camera className="h-4 w-4 mx-auto mb-1 text-green-500" />
+                          <span className="font-medium">{plan.creators ?? '∞'}</span>
+                          <p className="text-muted-foreground">creadores</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                        <div className="p-2 rounded-lg bg-muted/50">
+                          <Briefcase className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                          <span className="font-medium">{plan.clients ?? '∞'}</span>
+                          <p className="text-muted-foreground">clientes</p>
+                        </div>
+                        <div className="p-2 rounded-lg bg-muted/50">
+                          <Sparkles className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                          <span className="font-medium">{plan.aiTokens >= 1000 ? `${(plan.aiTokens / 1000).toFixed(0)}k` : plan.aiTokens}</span>
+                          <p className="text-muted-foreground">coins</p>
+                        </div>
+                        <div className="p-2 rounded-lg bg-muted/50">
+                          <Video className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                          <span className="font-medium">∞</span>
+                          <p className="text-muted-foreground">proyectos</p>
+                        </div>
+                      </div>
                     </div>
-                    {plan.contentPerMonth !== undefined && (
+                  ) : (
+                    /* Non-agency plans: standard grid */
+                    <div className={cn(
+                      "grid gap-2 text-center text-xs",
+                      "grid-cols-3"
+                    )}>
                       <div className="p-2 rounded-lg bg-muted/50">
-                        <Video className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                        <Users className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
                         <span className="font-medium">
-                          {plan.contentPerMonth ?? '∞'}
+                          {plan.users ?? '∞'}
                         </span>
-                        <p className="text-muted-foreground">proyectos</p>
+                        <p className="text-muted-foreground">usuarios</p>
                       </div>
-                    )}
-                    <div className="p-2 rounded-lg bg-muted/50">
-                      <Sparkles className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                      <span className="font-medium">{plan.aiTokens >= 1000 ? `${(plan.aiTokens / 1000).toFixed(0)}k` : plan.aiTokens}</span>
-                      <p className="text-muted-foreground">coins</p>
-                    </div>
-                    {plan.clients !== undefined && (
+                      {plan.contentPerMonth !== undefined && (
+                        <div className="p-2 rounded-lg bg-muted/50">
+                          <Video className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                          <span className="font-medium">
+                            {plan.contentPerMonth ?? '∞'}
+                          </span>
+                          <p className="text-muted-foreground">proyectos</p>
+                        </div>
+                      )}
                       <div className="p-2 rounded-lg bg-muted/50">
-                        <Briefcase className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                        <span className="font-medium">{plan.clients ?? '∞'}</span>
-                        <p className="text-muted-foreground">clientes</p>
+                        <Sparkles className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                        <span className="font-medium">{plan.aiTokens >= 1000 ? `${(plan.aiTokens / 1000).toFixed(0)}k` : plan.aiTokens}</span>
+                        <p className="text-muted-foreground">coins</p>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
                   <Separator />
 

@@ -74,8 +74,9 @@ export function useOrganizationTrial(organizationId: string | null) {
       ? Math.max(0, Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
       : 0;
     
-    // Check if expired
-    const isExpired = trialEndDate ? now > trialEndDate : false;
+    // Check if expired (active subscription overrides trial expiry)
+    const hasActiveSubscription = orgData?.subscription_status === 'active';
+    const isExpired = hasActiveSubscription ? false : (trialEndDate ? now > trialEndDate : false);
     
     // Determine if we should show warning banner
     const warningThresholds = warningDays || [7, 3];
@@ -85,7 +86,7 @@ export function useOrganizationTrial(organizationId: string | null) {
       : null;
 
     return {
-      isTrialActive: orgData?.trial_active ?? true,
+      isTrialActive: hasActiveSubscription ? false : (orgData?.trial_active ?? true),
       trialEndDate,
       trialStartedAt,
       daysRemaining,

@@ -1,5 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { getPermissionGroup } from '@/lib/permissionGroups';
 import { OrganizationPlansPage } from '@/components/settings/OrganizationPlansPage';
@@ -12,21 +10,6 @@ export default function PlanesPage() {
   const organizationId = profile?.current_organization_id;
   const group = activeRole ? getPermissionGroup(activeRole) : null;
 
-  // For org roles, detect org type to choose segment
-  const { data: orgType } = useQuery({
-    queryKey: ['org-type-for-plans', organizationId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('organizations')
-        .select('organization_type')
-        .eq('id', organizationId!)
-        .single();
-      return data?.organization_type as string | null;
-    },
-    enabled: !!organizationId && (group === 'admin' || group === 'team_leader' || group === 'client'),
-    staleTime: 30 * 60 * 1000,
-  });
-
   let segment: Segment;
   if (!organizationId) {
     // Freelance users without org: talent → creadores, brand/client → marcas
@@ -34,10 +17,9 @@ export default function PlanesPage() {
   } else if (group === 'creator' || group === 'editor' || group === 'strategist') {
     // Org members with talent-type roles always see creadores
     segment = 'creadores';
-  } else if (orgType === 'agency') {
-    segment = 'agencias';
   } else {
-    segment = 'marcas';
+    // Any org member (admin, team_leader, client, etc.) → agencias plans
+    segment = 'agencias';
   }
 
   return <OrganizationPlansPage fixedSegment={segment} />;

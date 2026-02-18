@@ -133,7 +133,12 @@ export interface PlanDef {
   contentPerMonth: number | null;
   storage: string;
   clients?: number | null;     // agencies only
-  teamMembers?: number | null; // agencies only
+  teamMembers?: number | null; // agencies only (legacy, kept for compat)
+  // Role-based limits (agencies only)
+  adminUsers?: number | null;
+  strategists?: number | null;
+  editors?: number | null;     // post-production
+  creators?: number | null;    // active creators
   badge?: string;
   highlighted?: boolean;
 }
@@ -223,8 +228,12 @@ export const PLANS: PlanDef[] = [
     users: null,
     contentPerMonth: null,
     storage: "50GB",
-    clients: 5,
-    teamMembers: 10,
+    clients: 10,
+    teamMembers: 29, // total: 5 admin + 2 strat + 2 editors + 20 creators
+    adminUsers: 5,
+    strategists: 2,
+    editors: 2,
+    creators: 20,
   },
   {
     id: "agencias-pro",
@@ -236,8 +245,12 @@ export const PLANS: PlanDef[] = [
     users: null,
     contentPerMonth: null,
     storage: "200GB",
-    clients: 20,
-    teamMembers: 30,
+    clients: 25,
+    teamMembers: 70, // total: 10 admin + 5 strat + 5 editors + 50 creators
+    adminUsers: 10,
+    strategists: 5,
+    editors: 5,
+    creators: 50,
     badge: "Más popular para agencias",
     highlighted: true,
   },
@@ -253,6 +266,10 @@ export const PLANS: PlanDef[] = [
     storage: "Ilimitado",
     clients: null,
     teamMembers: null,
+    adminUsers: null,
+    strategists: null,
+    editors: null,
+    creators: null,
   },
 ];
 
