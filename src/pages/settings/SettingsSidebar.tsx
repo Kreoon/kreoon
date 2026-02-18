@@ -2,7 +2,7 @@ import { memo, useMemo } from 'react';
 import { 
   User, Bell, Shield, HelpCircle, Building2, History,
   Landmark, Users, Share2, CreditCard, Settings2, ShieldCheck,
-  Bot, UserCog, ChevronRight, LockKeyhole, BarChart3, Brain, Video, Store
+  Bot, UserCog, ChevronRight, LockKeyhole, BarChart3, Brain, Video, Store, Paintbrush
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SettingsPermissions, SettingsSectionKey } from '@/hooks/useSettingsPermissions';
@@ -53,6 +53,7 @@ const ALL_SECTIONS: SectionGroup[] = [
       { key: 'org_marketplace', icon: Store, title: 'Marketplace & Portafolio', description: 'Control y portafolio público' },
       { key: 'org_agency_profile', icon: Building2, title: 'Perfil de Agencia', description: 'Perfil público marketplace' },
       { key: 'live_streaming_org', icon: Video, title: 'KREOON Live', description: 'Paquetes y clientes' },
+      { key: 'white_label', icon: Paintbrush, title: 'Marca Blanca', description: 'Dominio y branding' },
     ],
   },
   {

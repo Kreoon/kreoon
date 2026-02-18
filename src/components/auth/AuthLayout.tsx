@@ -2,6 +2,7 @@ import * as React from "react";
 import { motion } from "framer-motion";
 import { KreoonPageWrapper } from "@/components/ui/kreoon";
 import { cn } from "@/lib/utils";
+import { useBranding } from "@/contexts/BrandingContext";
 
 export interface AuthLayoutProps {
   /** Contenido principal (formulario de login, registro, etc.) */
@@ -43,6 +44,10 @@ export function AuthLayout({
   leftColumnContent,
   className,
 }: AuthLayoutProps) {
+  const { branding } = useBranding();
+  const logoUrl = branding.logo_url || '/favicon.png';
+  const platformName = branding.platform_name || 'KREOON';
+
   return (
     <KreoonPageWrapper showGradientOrb={!showBranding} className={className}>
       <div className="relative z-0 grid min-h-screen grid-cols-1 lg:grid-cols-2">
@@ -84,12 +89,12 @@ export function AuthLayout({
                     className="flex items-center gap-3"
                   >
                     <img
-                      src="/favicon.png"
-                      alt="KREOON"
+                      src={logoUrl}
+                      alt={platformName}
                       className="h-10 w-10 rounded-lg object-cover"
                     />
                     <span className="text-xl font-bold tracking-tight text-kreoon-text-primary">
-                      KREOON
+                      {platformName}
                     </span>
                   </motion.div>
                   <motion.div

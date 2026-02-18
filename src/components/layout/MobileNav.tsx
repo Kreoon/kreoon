@@ -40,6 +40,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ClientSelectorDialog } from "@/components/clients/ClientSelectorDialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useWhiteLabel } from "@/hooks/useWhiteLabel";
 
 interface NavItem {
   name: string;
@@ -218,6 +219,7 @@ export function MobileNav() {
   const { trackLogout } = useAuthAnalytics();
   const { currentOrgName } = useOrgOwner();
   const { marketplaceEnabled } = useOrgMarketplace();
+  const { effectivePlatformName, effectiveMarketplaceLabel, effectiveLogoUrl, isWhiteLabelActive } = useWhiteLabel();
 
   // Fetch current client name and count for client users (with brand fallback)
   useEffect(() => {
@@ -316,7 +318,11 @@ export function MobileNav() {
     else { baseSections = []; }
 
     const activeGroup: PermissionGroup | null = roles.length > 0 ? getPermissionGroup(roles[0]) : null;
-    const mktSections = marketplaceEnabled ? getMarketplaceSections(activeGroup) : [];
+    // White-label label replacement map
+    const labelMap: Record<string, string> = { 'KREOON MARKETPLACE': effectiveMarketplaceLabel };
+    const mktSections = marketplaceEnabled
+      ? getMarketplaceSections(activeGroup).map(s => ({ ...s, label: labelMap[s.label] || s.label }))
+      : [];
 
     // "Buscar Talento" section - always visible for recruitment
     const recruitSection: NavSection = {
@@ -361,13 +367,13 @@ export function MobileNav() {
           <div className="flex h-16 items-center border-b border-sidebar-border px-4">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg overflow-hidden">
-                <img src="/favicon.png" alt="KREOON" className="h-9 w-9 object-cover" />
+                <img src={effectiveLogoUrl} alt={effectivePlatformName} className="h-9 w-9 object-cover" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-sm font-bold text-sidebar-foreground">KREOON</h1>
-                {currentOrgName ? (
+                <h1 className="text-sm font-bold text-sidebar-foreground">{effectivePlatformName}</h1>
+                {currentOrgName && !isWhiteLabelActive ? (
                   <p className="text-xs text-primary/80 truncate font-medium">{currentOrgName}</p>
-                ) : (
+                ) : isWhiteLabelActive ? null : (
                   <p className="text-xs text-sidebar-foreground/60">Content Platform</p>
                 )}
               </div>

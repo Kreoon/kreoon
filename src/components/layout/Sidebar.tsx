@@ -51,6 +51,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SidebarAchievementsWidget } from "@/components/points/SidebarAchievementsWidget";
 import { AITokensPanelTrigger } from "@/components/ai/AITokensPanel";
 import { Badge } from "@/components/ui/badge";
+import { useWhiteLabel } from "@/hooks/useWhiteLabel";
 
 interface NavItem {
   name: string;
@@ -99,6 +100,7 @@ const adminSections: NavSection[] = [
       { name: "Talento", href: "/crm/creadores", icon: Video, tourId: "sidebar-crm-creators" },
       { name: "Usuarios", href: "/crm/usuarios", icon: Users, tourId: "sidebar-crm-users" },
       { name: "Finanzas", href: "/crm/finanzas", icon: DollarSign, tourId: "sidebar-crm-finances" },
+      { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone, tourId: "sidebar-crm-email" },
     ]
   },
   {
@@ -253,6 +255,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const { isImpersonating, effectiveRoles, isRootAdmin, impersonationTarget } = useImpersonation();
   const { isPlatformRoot, currentOrgName } = useOrgOwner();
   const { marketplaceEnabled } = useOrgMarketplace();
+  const { effectivePlatformName, effectiveStudioLabel, effectiveMarketplaceLabel, effectiveLogoUrl, isWhiteLabelActive } = useWhiteLabel();
   const [showClientSelector, setShowClientSelector] = useState(false);
   const [currentClientName, setCurrentClientName] = useState<string | null>(null);
   const [clientCount, setClientCount] = useState(0);
@@ -366,9 +369,16 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       ? clientSections 
       : adminSections;
 
-    // Filter items within sections
+    // White-label label replacement map
+    const labelMap: Record<string, string> = {
+      'KREOON STUDIO': effectiveStudioLabel,
+      'KREOON MARKETPLACE': effectiveMarketplaceLabel,
+    };
+
+    // Filter items within sections and apply white-label labels
     const filtered = baseSections.map(section => ({
       ...section,
+      label: labelMap[section.label] || section.label,
       items: section.items.filter(item => {
         if (!isPlatformRoot && item.platformRootOnly) return false;
         if (isPlatformRoot && !profile?.current_organization_id && item.requiresOrg) return false;
@@ -378,8 +388,10 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       })
     })).filter(section => section.items.length > 0);
 
-    // Use permission group for marketplace sections
-    const mktSections = marketplaceEnabled ? getMarketplaceSections(activeGroup) : [];
+    // Use permission group for marketplace sections (apply label map)
+    const mktSections = marketplaceEnabled
+      ? getMarketplaceSections(activeGroup).map(s => ({ ...s, label: labelMap[s.label] || s.label }))
+      : [];
 
     // "Buscar Talento" section - ALWAYS visible for recruitment, even when marketplace is disabled
     const recruitSection: NavSection = {
@@ -400,7 +412,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       ...(!marketplaceEnabled ? [recruitSection] : []),
       ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" }] }]),
     ];
-  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, profile?.current_organization_id, marketplaceEnabled]);
+  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, profile?.current_organization_id, marketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel]);
 
   // Collapsible sections state — auto-expand section containing active route
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
@@ -465,14 +477,14 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           {!collapsed && (
             <div className="flex items-center gap-3">
               <div className="relative flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(270,100%,60%,0.05)] border border-[hsl(270,100%,60%,0.25)] shadow-[0_0_20px_-5px_hsl(270,100%,60%,0.4)]">
-                <img src="/favicon.png" alt="KREOON" className="h-8 w-8 object-cover" />
+                <img src={effectiveLogoUrl} alt={effectivePlatformName} className="h-8 w-8 object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[hsl(270,100%,60%,0.1)] to-transparent" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-base font-bold bg-gradient-to-r from-white to-[hsl(270,100%,80%)] bg-clip-text text-transparent">KREOON</h1>
-                {currentOrgName ? (
+                <h1 className="text-base font-bold bg-gradient-to-r from-white to-[hsl(270,100%,80%)] bg-clip-text text-transparent">{effectivePlatformName}</h1>
+                {currentOrgName && !isWhiteLabelActive ? (
                   <p className="text-xs text-[hsl(270,100%,70%)] truncate font-medium">{currentOrgName}</p>
-                ) : (
+                ) : isWhiteLabelActive ? null : (
                   <p className="text-[10px] uppercase tracking-widest text-[hsl(270,40%,45%)]">AI Content Platform</p>
                 )}
               </div>
@@ -480,7 +492,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           )}
           {collapsed && (
             <div className="relative flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(270,100%,60%,0.05)] border border-[hsl(270,100%,60%,0.25)] shadow-[0_0_20px_-5px_hsl(270,100%,60%,0.4)]">
-              <img src="/favicon.png" alt="KREOON" className="h-8 w-8 object-cover" />
+              <img src={effectiveLogoUrl} alt={effectivePlatformName} className="h-8 w-8 object-cover" />
             </div>
           )}
         </div>

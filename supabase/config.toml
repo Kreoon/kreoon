@@ -271,3 +271,24 @@ verify_jwt = false
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.resend-webhook]
+verify_jwt = false
+
+[functions.email-marketing-service]
+verify_jwt = true
+
+[functions.email-drip-processor]
+verify_jwt = false
+
+[functions.workflow-notifications]
+verify_jwt = false
+
+[functions.verify-custom-domain]
+verify_jwt = true
+
+[functions.auth-email-proxy]
+verify_jwt = false
+
+[functions.resend-domain-management]
+verify_jwt = true
