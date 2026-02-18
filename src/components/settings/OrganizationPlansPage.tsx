@@ -227,7 +227,8 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
     }
   };
 
-  const isTrialActive = trialStatus.isTrialActive && !trialStatus.isExpired;
+  // Active subscription from platform_subscriptions takes priority over old trial system
+  const isTrialActive = !isActive && !isPastDue && trialStatus.isTrialActive && !trialStatus.isExpired;
 
   if (isLoading || subLoading) {
     return (

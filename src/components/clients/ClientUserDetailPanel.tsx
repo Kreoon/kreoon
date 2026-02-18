@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   Building2, Phone, Mail, MapPin, Crown, Shield, Eye,
   Unlink, Link as LinkIcon, Users, MessageCircle,
+  UserMinus, Trash2,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -18,6 +19,7 @@ import {
 import { DetailPanelShell } from '@/components/crm/DetailPanelShell';
 import { DetailSection } from '@/components/crm/DetailSection';
 import { CopyButton } from '@/components/crm/CopyButton';
+import { usePurgeMember, useRemoveMember } from '@/hooks/useOrgMemberActions';
 import type { ClientUser } from '@/types/unifiedClient.types';
 
 const ROLE_ICON: Record<string, typeof Crown> = {
@@ -45,6 +47,8 @@ export function ClientUserDetailPanel({
 }: ClientUserDetailPanelProps) {
   const { isAdmin } = useAuth();
   const [loading, setLoading] = useState(false);
+  const purgeMember = usePurgeMember();
+  const removeMember = useRemoveMember();
 
   const linkedIds = new Set(user.linked_companies.map(c => c.client_id));
   const availableCompanies = allCompanies.filter(c => !linkedIds.has(c.id));
@@ -258,6 +262,85 @@ export function ClientUserDetailPanel({
           </div>
         )}
       </DetailSection>
+
+      {/* Membership Actions (admin only) */}
+      {isAdmin && (
+        <DetailSection title="Membresía">
+          <div className="flex gap-2">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={purgeMember.isPending || loading}
+                  className="h-7 text-xs bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/20"
+                >
+                  <UserMinus className="h-3 w-3 mr-1.5" />
+                  Depurar
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Depurar miembro</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Se eliminarán todos los roles y vínculos de empresas de <strong>{user.full_name}</strong>. El usuario quedará como Lead en la pestaña Talento y podrás reasignarle roles después.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-orange-600 text-white hover:bg-orange-700"
+                    onClick={() =>
+                      purgeMember.mutate(
+                        { userId: user.user_id, orgId: organizationId, userName: user.full_name, clearClientLinks: true },
+                        { onSuccess: () => { onUpdate(); onClose(); } },
+                      )
+                    }
+                  >
+                    Depurar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={removeMember.isPending || loading}
+                  className="h-7 text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20"
+                >
+                  <Trash2 className="h-3 w-3 mr-1.5" />
+                  Eliminar de la org
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Eliminar de la organización</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    <strong>{user.full_name}</strong> será eliminado completamente de la organización. Esta acción no se puede deshacer.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={() =>
+                      removeMember.mutate(
+                        { userId: user.user_id, orgId: organizationId, userName: user.full_name },
+                        { onSuccess: () => { onUpdate(); onClose(); } },
+                      )
+                    }
+                  >
+                    Eliminar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </DetailSection>
+      )}
     </DetailPanelShell>
   );
 }
