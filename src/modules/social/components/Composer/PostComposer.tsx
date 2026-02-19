@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   Send, Clock, Hash, MapPin, MessageSquare, Calendar as CalendarIcon,
-  X, Plus, Sparkles, Eye, ChevronDown,
+  X, Plus, Sparkles, Eye, ChevronDown, User, Building, Globe,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +20,7 @@ import { MediaUploader } from './MediaUploader';
 import { HashtagManager } from './HashtagManager';
 import { PreviewPanel } from './PreviewPanel';
 import { PLATFORMS } from '../../config';
-import type { SocialPostType, ComposerFormData, QuickShareData, CollaborationType, SocialPlatform } from '../../types/social.types';
+import type { SocialPostType, ComposerFormData, QuickShareData, CollaborationType, SocialPlatform, SocialAccount } from '../../types/social.types';
 import { toast } from 'sonner';
 
 interface PostComposerProps {
@@ -32,7 +32,7 @@ interface PostComposerProps {
 }
 
 export function PostComposer({ initialData, campaignId, brandUsername, onSuccess, onClose }: PostComposerProps) {
-  const { accounts } = useSocialAccounts();
+  const { accounts, personalAccounts, clientAccounts, orgAccounts, accountsByClient } = useSocialAccounts();
   const { createPost, publishNow } = useScheduledPosts();
   const { groups } = useAccountGroups();
 
@@ -69,7 +69,22 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
 
   const captionOverLimit = caption.length > minCaptionLimit;
 
+  // Check if selecting an account would violate the 1-per-platform-per-entity rule
+  const isAccountDisabled = (account: SocialAccount) => {
+    if (selectedAccountIds.includes(account.id)) return false; // Already selected, allow deselect
+    // Find the entity key for this account
+    const entityKey = getEntityKey(account);
+    // Check if another account with the same platform + entity is already selected
+    return accounts.some(a =>
+      selectedAccountIds.includes(a.id) &&
+      a.platform === account.platform &&
+      getEntityKey(a) === entityKey
+    );
+  };
+
   const toggleAccount = (accountId: string) => {
+    const account = accounts.find(a => a.id === accountId);
+    if (account && isAccountDisabled(account)) return;
     setSelectedAccountIds(prev =>
       prev.includes(accountId)
         ? prev.filter(id => id !== accountId)
@@ -132,9 +147,12 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
 
   const fullCaption = caption + (hashtags.length > 0 ? '\n\n' + hashtags.map(t => `#${t}`).join(' ') : '');
 
+  const clientGroups = Object.values(accountsByClient);
+  const hasAnySections = personalAccounts.length > 0 || clientGroups.length > 0 || orgAccounts.length > 0;
+
   return (
     <div className="space-y-6">
-      {/* Account selector */}
+      {/* Account selector - grouped by entity */}
       <div className="space-y-3">
         <Label className="text-sm font-semibold">Publicar en</Label>
         {accounts.length === 0 ? (
@@ -142,32 +160,95 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
             No tienes cuentas conectadas. Ve a la pestaña "Cuentas" para conectar tus redes.
           </p>
         ) : (
-          <div className="flex flex-wrap gap-2">
-            {accounts.map(account => {
-              const selected = selectedAccountIds.includes(account.id);
-              return (
-                <button
-                  key={account.id}
-                  onClick={() => toggleAccount(account.id)}
-                  className={cn(
-                    'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm',
-                    selected
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border bg-card hover:border-primary/30'
+          <div className="space-y-4">
+            {/* Personal accounts */}
+            {personalAccounts.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                  <User className="w-3 h-3" />
+                  Personal
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {personalAccounts.map(account => (
+                    <AccountButton
+                      key={account.id}
+                      account={account}
+                      selected={selectedAccountIds.includes(account.id)}
+                      disabled={isAccountDisabled(account)}
+                      onClick={() => toggleAccount(account.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Client (empresa) accounts - grouped by client */}
+            {clientGroups.map(group => (
+              <div key={group.clientId} className="space-y-1.5">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                  {group.clientLogoUrl ? (
+                    <img
+                      src={group.clientLogoUrl}
+                      alt={group.clientName}
+                      className="w-4 h-4 rounded-full object-cover"
+                    />
+                  ) : (
+                    <Building className="w-3 h-3" />
                   )}
-                >
-                  <PlatformIcon platform={account.platform} size="xs" />
-                  <span className="truncate max-w-[120px]">
-                    {account.platform_display_name || account.platform_username}
-                  </span>
-                  {account.platform_page_name && (
-                    <span className="text-[10px] text-muted-foreground truncate max-w-[80px]">
-                      ({account.platform_page_name})
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+                  {group.clientName}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {group.accounts.map(account => (
+                    <AccountButton
+                      key={account.id}
+                      account={account}
+                      selected={selectedAccountIds.includes(account.id)}
+                      disabled={isAccountDisabled(account)}
+                      onClick={() => toggleAccount(account.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            {/* Organization accounts */}
+            {orgAccounts.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                  <Globe className="w-3 h-3" />
+                  Organización
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {orgAccounts.map(account => (
+                    <AccountButton
+                      key={account.id}
+                      account={account}
+                      selected={selectedAccountIds.includes(account.id)}
+                      disabled={isAccountDisabled(account)}
+                      onClick={() => toggleAccount(account.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Uncategorized accounts (brand or missing owner_type) */}
+            {accounts.filter(a =>
+              a.owner_type !== 'user' && a.owner_type !== 'client' && a.owner_type !== 'organization' &&
+              !(a.owner_type === 'user' && a.user_id)
+            ).length > 0 && !hasAnySections && (
+              <div className="flex flex-wrap gap-2">
+                {accounts.map(account => (
+                  <AccountButton
+                    key={account.id}
+                    account={account}
+                    selected={selectedAccountIds.includes(account.id)}
+                    disabled={isAccountDisabled(account)}
+                    onClick={() => toggleAccount(account.id)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -390,5 +471,51 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
         </Button>
       </div>
     </div>
+  );
+}
+
+// ── Helper: entity key for max-1-per-platform validation ──
+function getEntityKey(account: SocialAccount): string {
+  if (account.owner_type === 'client' && account.client_id) return `client:${account.client_id}`;
+  if (account.owner_type === 'organization') return 'org';
+  return `user:${account.user_id}`;
+}
+
+// ── Reusable account toggle button ──
+function AccountButton({
+  account,
+  selected,
+  disabled,
+  onClick,
+}: {
+  account: SocialAccount;
+  selected: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      title={disabled ? 'Ya hay una cuenta de esta red seleccionada para esta entidad' : undefined}
+      className={cn(
+        'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm',
+        selected
+          ? 'border-primary bg-primary/10 text-primary'
+          : disabled
+            ? 'border-border bg-muted/50 text-muted-foreground opacity-50 cursor-not-allowed'
+            : 'border-border bg-card hover:border-primary/30'
+      )}
+    >
+      <PlatformIcon platform={account.platform} size="xs" />
+      <span className="truncate max-w-[120px]">
+        {account.platform_display_name || account.platform_username}
+      </span>
+      {account.platform_page_name && (
+        <span className="text-[10px] text-muted-foreground truncate max-w-[80px]">
+          ({account.platform_page_name})
+        </span>
+      )}
+    </button>
   );
 }

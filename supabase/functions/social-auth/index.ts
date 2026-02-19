@@ -220,6 +220,7 @@ async function handleConnect(req: Request): Promise<Response> {
   let orgId = url.searchParams.get("org_id");
   let ownerType = url.searchParams.get("owner_type") || "user";
   let brandId = url.searchParams.get("brand_id");
+  let stateClientId = url.searchParams.get("client_id");
 
   // Also support JSON body (from supabase.functions.invoke)
   if (req.method === "POST") {
@@ -229,6 +230,7 @@ async function handleConnect(req: Request): Promise<Response> {
       if (body.organization_id) orgId = body.organization_id;
       if (body.owner_type) ownerType = body.owner_type;
       if (body.brand_id) brandId = body.brand_id;
+      if (body.client_id) stateClientId = body.client_id;
     } catch {
       // not JSON body, use URL params
     }
@@ -264,6 +266,7 @@ async function handleConnect(req: Request): Promise<Response> {
   if (orgId) statePayload.org_id = orgId;
   if (ownerType && ownerType !== "user") statePayload.owner_type = ownerType;
   if (brandId) statePayload.brand_id = brandId;
+  if (stateClientId) statePayload.client_id = stateClientId;
 
   // For PKCE, include code_verifier in state so callback can use it
   let codeVerifier: string | undefined;
@@ -344,6 +347,7 @@ async function handleCallback(req: Request): Promise<Response> {
     code_verifier?: string;
     owner_type?: string;
     brand_id?: string;
+    client_id?: string;
   };
   try {
     state = JSON.parse(atob(stateStr));
@@ -353,7 +357,7 @@ async function handleCallback(req: Request): Promise<Response> {
     );
   }
 
-  const { user_id, platform, org_id, code_verifier, owner_type, brand_id } = state;
+  const { user_id, platform, org_id, code_verifier, owner_type, brand_id, client_id } = state;
 
   if (!user_id || !platform || !PLATFORM_CONFIGS[platform]) {
     return redirectResponse(
@@ -399,22 +403,23 @@ async function handleCallback(req: Request): Promise<Response> {
           clientSecret,
           owner_type,
           brand_id,
+          client_id,
         );
         break;
       case "tiktok":
-        await handleTikTokCallback(supabase, tokenData, user_id, org_id, owner_type, brand_id);
+        await handleTikTokCallback(supabase, tokenData, user_id, org_id, owner_type, brand_id, client_id);
         break;
       case "youtube":
-        await handleYouTubeCallback(supabase, tokenData, user_id, org_id, owner_type, brand_id);
+        await handleYouTubeCallback(supabase, tokenData, user_id, org_id, owner_type, brand_id, client_id);
         break;
       case "twitter":
-        await handleTwitterCallback(supabase, tokenData, user_id, org_id, owner_type, brand_id);
+        await handleTwitterCallback(supabase, tokenData, user_id, org_id, owner_type, brand_id, client_id);
         break;
       case "linkedin":
-        await handleLinkedInCallback(supabase, tokenData, user_id, org_id, owner_type, brand_id);
+        await handleLinkedInCallback(supabase, tokenData, user_id, org_id, owner_type, brand_id, client_id);
         break;
       case "pinterest":
-        await handlePinterestCallback(supabase, tokenData, user_id, org_id, owner_type, brand_id);
+        await handlePinterestCallback(supabase, tokenData, user_id, org_id, owner_type, brand_id, client_id);
         break;
     }
 
@@ -547,20 +552,21 @@ async function handleMetaCallback(
   tokenData: TokenResponse,
   userId: string,
   orgId?: string,
-  clientId?: string,
-  clientSecret?: string,
+  oauthClientId?: string,
+  oauthClientSecret?: string,
   ownerType?: string,
   brandId?: string,
+  clientId?: string,
 ): Promise<void> {
   let accessToken = tokenData.access_token;
   let tokenExpiresAt: string | null = null;
 
   // Exchange for long-lived token
-  if (clientId && clientSecret) {
+  if (oauthClientId && oauthClientSecret) {
     try {
       const llResponse = await fetch(
         `https://graph.facebook.com/v21.0/oauth/access_token?` +
-          `grant_type=fb_exchange_token&client_id=${clientId}&client_secret=${clientSecret}&fb_exchange_token=${accessToken}`,
+          `grant_type=fb_exchange_token&client_id=${oauthClientId}&client_secret=${oauthClientSecret}&fb_exchange_token=${accessToken}`,
       );
       if (llResponse.ok) {
         const llData = await llResponse.json();
@@ -629,6 +635,7 @@ async function handleMetaCallback(
     metadata: { token_type: "long_lived", fb_user_id: fbUserId },
     owner_type: ownerType || "user",
     brand_id: brandId || null,
+    client_id: clientId || null,
   });
 
   // Fetch pages
@@ -678,6 +685,7 @@ async function handleMetaCallback(
       },
       owner_type: ownerType || "user",
       brand_id: brandId || null,
+      client_id: clientId || null,
       account_type: "page",
     });
 
@@ -729,6 +737,7 @@ async function handleMetaCallback(
         },
         owner_type: ownerType || "user",
         brand_id: brandId || null,
+        client_id: clientId || null,
         account_type: "business",
       });
     }
@@ -744,6 +753,7 @@ async function handleTikTokCallback(
   orgId?: string,
   ownerType?: string,
   brandId?: string,
+  clientId?: string,
 ): Promise<void> {
   const accessToken = tokenData.access_token;
   const refreshToken = tokenData.refresh_token || null;
@@ -806,6 +816,7 @@ async function handleTikTokCallback(
     },
     owner_type: ownerType || "user",
     brand_id: brandId || null,
+    client_id: clientId || null,
   });
 }
 
@@ -818,6 +829,7 @@ async function handleYouTubeCallback(
   orgId?: string,
   ownerType?: string,
   brandId?: string,
+  clientId?: string,
 ): Promise<void> {
   const accessToken = tokenData.access_token;
   const refreshToken = tokenData.refresh_token || null;
@@ -905,6 +917,7 @@ async function handleYouTubeCallback(
     },
     owner_type: ownerType || "user",
     brand_id: brandId || null,
+    client_id: clientId || null,
   });
 }
 
@@ -917,6 +930,7 @@ async function handleTwitterCallback(
   orgId?: string,
   ownerType?: string,
   brandId?: string,
+  clientId?: string,
 ): Promise<void> {
   const accessToken = tokenData.access_token;
   const refreshToken = tokenData.refresh_token || null;
@@ -976,6 +990,7 @@ async function handleTwitterCallback(
     },
     owner_type: ownerType || "user",
     brand_id: brandId || null,
+    client_id: clientId || null,
   });
 }
 
@@ -988,6 +1003,7 @@ async function handleLinkedInCallback(
   orgId?: string,
   ownerType?: string,
   brandId?: string,
+  clientId?: string,
 ): Promise<void> {
   const accessToken = tokenData.access_token;
   const refreshToken = tokenData.refresh_token || null;
@@ -1046,6 +1062,7 @@ async function handleLinkedInCallback(
     },
     owner_type: ownerType || "user",
     brand_id: brandId || null,
+    client_id: clientId || null,
   });
 }
 
@@ -1058,6 +1075,7 @@ async function handlePinterestCallback(
   orgId?: string,
   ownerType?: string,
   brandId?: string,
+  clientId?: string,
 ): Promise<void> {
   const accessToken = tokenData.access_token;
   const refreshToken = tokenData.refresh_token || null;
@@ -1121,6 +1139,7 @@ async function handlePinterestCallback(
     },
     owner_type: ownerType || "user",
     brand_id: brandId || null,
+    client_id: clientId || null,
   });
 }
 
@@ -1144,6 +1163,7 @@ interface SocialAccountData {
   // v2 fields
   owner_type?: string;
   brand_id?: string | null;
+  client_id?: string | null;
   account_type?: string;
 }
 
@@ -1193,6 +1213,7 @@ async function upsertSocialAccount(
       };
       if (data.owner_type) updatePayload.owner_type = data.owner_type;
       if (data.brand_id) updatePayload.brand_id = data.brand_id;
+      if (data.client_id !== undefined) updatePayload.client_id = data.client_id;
       if (data.account_type) updatePayload.account_type = data.account_type;
       const { error: updateError } = await supabase
         .from("social_accounts")
@@ -1237,6 +1258,7 @@ async function upsertSocialAccount(
       };
       if (data.owner_type) updatePayload2.owner_type = data.owner_type;
       if (data.brand_id) updatePayload2.brand_id = data.brand_id;
+      if (data.client_id !== undefined) updatePayload2.client_id = data.client_id;
       if (data.account_type) updatePayload2.account_type = data.account_type;
       const { error: updateError } = await supabase
         .from("social_accounts")
@@ -1279,6 +1301,7 @@ async function upsertSocialAccount(
   };
   if (data.owner_type) insertPayload.owner_type = data.owner_type;
   if (data.brand_id) insertPayload.brand_id = data.brand_id;
+  if (data.client_id) insertPayload.client_id = data.client_id;
   if (data.account_type) insertPayload.account_type = data.account_type;
 
   const { error: insertError } = await supabase

@@ -6,7 +6,15 @@ import type { SocialAccount, SocialPlatform, SocialAccountOwnerType } from '../t
 interface UseSocialAccountsOptions {
   ownerType?: SocialAccountOwnerType;
   brandId?: string;
+  clientId?: string;
   groupId?: string;
+}
+
+export interface ClientAccountGroup {
+  clientId: string;
+  clientName: string;
+  clientLogoUrl: string | null;
+  accounts: SocialAccount[];
 }
 
 export function useSocialAccounts(options?: UseSocialAccountsOptions) {
@@ -20,7 +28,7 @@ export function useSocialAccounts(options?: UseSocialAccountsOptions) {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['social-accounts', user?.id, orgId, options?.ownerType, options?.brandId, options?.groupId],
+    queryKey: ['social-accounts', user?.id, orgId, options?.ownerType, options?.brandId, options?.clientId, options?.groupId],
     queryFn: async () => {
       // If orgId exists, use the v2 RPC for enriched data
       if (orgId) {
@@ -38,6 +46,9 @@ export function useSocialAccounts(options?: UseSocialAccountsOptions) {
         }
         if (options?.brandId) {
           result = result.filter(a => a.brand_id === options.brandId);
+        }
+        if (options?.clientId) {
+          result = result.filter(a => a.client_id === options.clientId);
         }
         if (options?.groupId) {
           result = result.filter(a =>
@@ -67,6 +78,7 @@ export function useSocialAccounts(options?: UseSocialAccountsOptions) {
       platform: SocialPlatform;
       owner_type?: SocialAccountOwnerType;
       brand_id?: string;
+      client_id?: string;
     }) => {
       const { data, error } = await supabase.functions.invoke('social-auth/connect', {
         body: {
@@ -74,6 +86,7 @@ export function useSocialAccounts(options?: UseSocialAccountsOptions) {
           organization_id: orgId,
           owner_type: input.owner_type || 'user',
           brand_id: input.brand_id || null,
+          client_id: input.client_id || null,
         },
       });
       if (error) throw error;
@@ -107,6 +120,22 @@ export function useSocialAccounts(options?: UseSocialAccountsOptions) {
     },
   });
 
+  const assignAccountToClient = useMutation({
+    mutationFn: async ({ accountId, clientId }: { accountId: string; clientId: string | null }) => {
+      const { error } = await supabase
+        .from('social_accounts')
+        .update({
+          client_id: clientId,
+          owner_type: clientId ? 'client' : 'user',
+        })
+        .eq('id', accountId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['social-accounts'] });
+    },
+  });
+
   // Group accounts by platform
   const accountsByPlatform = accounts.reduce<Record<string, SocialAccount[]>>((acc, a) => {
     if (!acc[a.platform]) acc[a.platform] = [];
@@ -122,6 +151,23 @@ export function useSocialAccounts(options?: UseSocialAccountsOptions) {
     return acc;
   }, {});
 
+  // Group client accounts by client_id
+  const accountsByClient = accounts
+    .filter(a => a.owner_type === 'client' && a.client_id)
+    .reduce<Record<string, ClientAccountGroup>>((acc, a) => {
+      const cid = a.client_id!;
+      if (!acc[cid]) {
+        acc[cid] = {
+          clientId: cid,
+          clientName: a.client_name || 'Empresa',
+          clientLogoUrl: a.client_logo_url || null,
+          accounts: [],
+        };
+      }
+      acc[cid].accounts.push(a);
+      return acc;
+    }, {});
+
   // Check if token is expired or expiring soon (within 24h)
   const isTokenExpiring = (account: SocialAccount) => {
     if (!account.token_expires_at) return false;
@@ -134,6 +180,8 @@ export function useSocialAccounts(options?: UseSocialAccountsOptions) {
   const personalAccounts = accounts.filter(a => a.owner_type === 'user' && a.user_id === user?.id);
   // Brand accounts
   const brandAccounts = accounts.filter(a => a.owner_type === 'brand');
+  // Client (empresa) accounts
+  const clientAccounts = accounts.filter(a => a.owner_type === 'client');
   // Org-level accounts
   const orgAccounts = accounts.filter(a => a.owner_type === 'organization');
 
@@ -141,8 +189,10 @@ export function useSocialAccounts(options?: UseSocialAccountsOptions) {
     accounts,
     accountsByPlatform,
     accountsByOwner,
+    accountsByClient,
     personalAccounts,
     brandAccounts,
+    clientAccounts,
     orgAccounts,
     isLoading,
     error: error as Error | null,
@@ -150,6 +200,7 @@ export function useSocialAccounts(options?: UseSocialAccountsOptions) {
     connectAccount,
     disconnectAccount,
     refreshToken,
+    assignAccountToClient,
     isTokenExpiring,
   };
 }

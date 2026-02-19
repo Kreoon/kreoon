@@ -30,7 +30,7 @@ export type SocialPostType =
 
 // ── Social Account ───────────────────────────────────────────────────────
 
-export type SocialAccountOwnerType = 'user' | 'brand' | 'organization';
+export type SocialAccountOwnerType = 'user' | 'brand' | 'organization' | 'client';
 export type SocialAccountType = 'personal' | 'business' | 'creator' | 'page';
 
 export interface SocialAccount {
@@ -56,10 +56,13 @@ export interface SocialAccount {
   // v2 fields
   owner_type: SocialAccountOwnerType;
   brand_id: string | null;
+  client_id: string | null;
   account_type: SocialAccountType;
   settings: Record<string, unknown>;
   platform_metadata: Record<string, unknown>;
   // Populated by RPC
+  client_name?: string;
+  client_logo_url?: string;
   groups?: AccountGroupRef[];
   permissions?: AccountPermissionRef[];
 }
