@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import {
   BarChart3, TrendingUp, Users, Eye, Heart, MessageCircle,
   Share2, Play, RefreshCw, ArrowUp, ArrowDown, Bookmark,
-  Calendar, ExternalLink, ImageIcon,
+  Calendar, ExternalLink, ImageIcon, MousePointerClick, UserCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -91,7 +91,7 @@ function AccountCard({
 }) {
   const maxEngagement = Math.max(summary.totalLikes, summary.totalComments, summary.totalShares, 1);
   const followerHistory = snapshots.map(s => s.followers_count);
-  const impressionHistory = snapshots.map(s => Number(s.impressions));
+  const reachHistory = snapshots.map(s => Number(s.reach));
 
   return (
     <Card className="bg-card/50">
@@ -134,9 +134,9 @@ function AccountCard({
           </div>
           <div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Eye className="w-3 h-3" /> Impresiones
+              <Eye className="w-3 h-3" /> Alcance
             </p>
-            <p className="text-sm font-medium">{formatNumber(summary.totalImpressions)}</p>
+            <p className="text-sm font-medium">{formatNumber(summary.totalReach)}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
@@ -154,11 +154,11 @@ function AccountCard({
           </div>
         )}
 
-        {/* Impressions sparkline */}
-        {impressionHistory.length > 1 && impressionHistory.some(v => v > 0) && (
+        {/* Reach sparkline */}
+        {reachHistory.length > 1 && reachHistory.some(v => v > 0) && (
           <div>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Impresiones (tendencia)</p>
-            <Sparkline data={impressionHistory} color="bg-blue-500" />
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Alcance (tendencia)</p>
+            <Sparkline data={reachHistory} color="bg-blue-500" />
           </div>
         )}
 
@@ -248,12 +248,12 @@ function FollowerGrowthChart({ snapshots }: { snapshots: AccountSnapshot[] }) {
 
 // ── Impressions/Reach Chart ─────────────────────────────────────────────────
 
-function ImpressionsChart({ snapshots }: { snapshots: AccountSnapshot[] }) {
-  const byDate = new Map<string, { impressions: number; reach: number }>();
+function ReachInteractionsChart({ snapshots }: { snapshots: AccountSnapshot[] }) {
+  const byDate = new Map<string, { interactions: number; reach: number }>();
   for (const s of snapshots) {
-    const current = byDate.get(s.snapshot_date) || { impressions: 0, reach: 0 };
+    const current = byDate.get(s.snapshot_date) || { interactions: 0, reach: 0 };
     byDate.set(s.snapshot_date, {
-      impressions: current.impressions + Number(s.impressions),
+      interactions: current.interactions + Number(s.impressions),
       reach: current.reach + Number(s.reach),
     });
   }
@@ -261,7 +261,7 @@ function ImpressionsChart({ snapshots }: { snapshots: AccountSnapshot[] }) {
   const dates = Array.from(byDate.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   if (dates.length < 2) return null;
 
-  const maxVal = Math.max(...dates.map(d => Math.max(d[1].impressions, d[1].reach)), 1);
+  const maxVal = Math.max(...dates.map(d => Math.max(d[1].interactions, d[1].reach)), 1);
 
   return (
     <Card className="bg-card/50">
@@ -269,11 +269,11 @@ function ImpressionsChart({ snapshots }: { snapshots: AccountSnapshot[] }) {
         <div className="flex items-center gap-4">
           <CardTitle className="text-sm flex items-center gap-2">
             <Eye className="w-4 h-4" />
-            Impresiones y Alcance
+            Alcance e Interacciones
           </CardTitle>
           <div className="flex items-center gap-3 text-[10px]">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> Impresiones</span>
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" /> Alcance</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> Interacciones</span>
           </div>
         </div>
       </CardHeader>
@@ -282,15 +282,15 @@ function ImpressionsChart({ snapshots }: { snapshots: AccountSnapshot[] }) {
           {dates.map(([date, val]) => (
             <div key={date} className="flex-1 flex flex-col items-center gap-px group relative">
               <div
-                className="w-full bg-blue-500/60 rounded-t-sm"
-                style={{ height: `${Math.max((val.impressions / maxVal) * 100, 2)}%` }}
-              />
-              <div
                 className="w-full bg-green-500/60 rounded-t-sm"
                 style={{ height: `${Math.max((val.reach / maxVal) * 100, 2)}%` }}
               />
+              <div
+                className="w-full bg-blue-500/60 rounded-t-sm"
+                style={{ height: `${Math.max((val.interactions / maxVal) * 100, 2)}%` }}
+              />
               <div className="opacity-0 group-hover:opacity-100 absolute -top-10 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-[10px] px-1.5 py-0.5 rounded shadow-lg whitespace-nowrap z-10 pointer-events-none">
-                {formatDate(date)}: {formatNumber(val.impressions)} imp / {formatNumber(val.reach)} alc
+                {formatDate(date)}: {formatNumber(val.reach)} alc / {formatNumber(val.interactions)} int
               </div>
             </div>
           ))}
@@ -325,15 +325,15 @@ export function AnalyticsDashboard() {
 
   // Compute period growth
   const periodGrowth = useMemo(() => {
-    if (snapshots.length < 2) return { followers: 0, impressions: 0, reach: 0 };
+    if (snapshots.length < 2) return { followers: 0, interactions: 0, reach: 0 };
 
     // Get first and last totals
-    const byDate = new Map<string, { followers: number; impressions: number; reach: number }>();
+    const byDate = new Map<string, { followers: number; interactions: number; reach: number }>();
     for (const s of snapshots) {
-      const cur = byDate.get(s.snapshot_date) || { followers: 0, impressions: 0, reach: 0 };
+      const cur = byDate.get(s.snapshot_date) || { followers: 0, interactions: 0, reach: 0 };
       byDate.set(s.snapshot_date, {
         followers: cur.followers + s.followers_count,
-        impressions: cur.impressions + Number(s.impressions),
+        interactions: cur.interactions + Number(s.impressions),
         reach: cur.reach + Number(s.reach),
       });
     }
@@ -342,11 +342,11 @@ export function AnalyticsDashboard() {
     const first = dates[0]?.[1];
     const last = dates[dates.length - 1]?.[1];
 
-    if (!first || !last) return { followers: 0, impressions: 0, reach: 0 };
+    if (!first || !last) return { followers: 0, interactions: 0, reach: 0 };
 
     return {
       followers: first.followers > 0 ? ((last.followers - first.followers) / first.followers) * 100 : 0,
-      impressions: first.impressions > 0 ? ((last.impressions - first.impressions) / first.impressions) * 100 : 0,
+      interactions: first.interactions > 0 ? ((last.interactions - first.interactions) / first.interactions) * 100 : 0,
       reach: first.reach > 0 ? ((last.reach - first.reach) / first.reach) * 100 : 0,
     };
   }, [snapshots]);
@@ -398,14 +398,14 @@ export function AnalyticsDashboard() {
       {/* Global KPI cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <MetricCard
-          icon={Eye}
-          label="Impresiones"
-          value={formatNumber(totals.impressions)}
-          trend={periodGrowth.impressions}
+          icon={MousePointerClick}
+          label="Interacciones"
+          value={formatNumber(totals.interactions)}
+          trend={periodGrowth.interactions}
           color="bg-blue-500/10"
         />
         <MetricCard
-          icon={Users}
+          icon={Eye}
           label="Alcance"
           value={formatNumber(totals.reach)}
           trend={periodGrowth.reach}
@@ -429,7 +429,7 @@ export function AnalyticsDashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <MetricCard icon={Heart} label="Likes" value={formatNumber(totals.likes)} color="bg-red-500/10" />
         <MetricCard icon={MessageCircle} label="Comentarios" value={formatNumber(totals.comments)} color="bg-blue-500/10" />
-        <MetricCard icon={Share2} label="Compartidos" value={formatNumber(totals.shares)} color="bg-green-500/10" />
+        <MetricCard icon={UserCheck} label="Visitas al Perfil" value={formatNumber(totals.profileViews)} color="bg-green-500/10" />
         <MetricCard icon={Play} label="Video Views" value={formatNumber(totals.videoViews)} color="bg-yellow-500/10" />
       </div>
 
@@ -437,7 +437,7 @@ export function AnalyticsDashboard() {
       {snapshots.length > 1 && (
         <div className="grid md:grid-cols-2 gap-4">
           <FollowerGrowthChart snapshots={snapshots} />
-          <ImpressionsChart snapshots={snapshots} />
+          <ReachInteractionsChart snapshots={snapshots} />
         </div>
       )}
 

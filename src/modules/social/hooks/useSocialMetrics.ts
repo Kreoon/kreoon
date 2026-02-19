@@ -180,21 +180,33 @@ export function useSocialMetrics() {
   // Build per-account summaries from snapshots
   const accountSummaries = accounts.map(account => {
     const snapshot = snapshotSummaries.find(s => s.account_id === account.id);
+    const likes = Number(snapshot?.total_likes ?? 0);
+    const comments = Number(snapshot?.total_comments ?? 0);
+    const shares = Number(snapshot?.total_shares ?? 0);
+    const reach = Number(snapshot?.reach ?? 0);
+    const followers = snapshot?.followers_count ?? 0;
+    const engagement = likes + comments + shares;
+
+    // Engagement rate: prefer reach as denominator, fallback to followers
+    const denominator = reach > 0 ? reach : followers > 0 ? followers : 1;
+    const engagementRate = (engagement / denominator) * 100;
+
     return {
       account,
       totalPosts: snapshot?.posts_count ?? 0,
-      totalImpressions: Number(snapshot?.impressions ?? 0),
-      totalReach: Number(snapshot?.reach ?? 0),
-      totalEngagement: Number((snapshot?.total_likes ?? 0)) + Number((snapshot?.total_comments ?? 0)) + Number((snapshot?.total_shares ?? 0)),
-      totalLikes: Number(snapshot?.total_likes ?? 0),
-      totalComments: Number(snapshot?.total_comments ?? 0),
-      totalShares: Number(snapshot?.total_shares ?? 0),
+      totalInteractions: Number(snapshot?.impressions ?? 0), // IG: total_interactions, FB: 0
+      totalReach: reach,
+      totalEngagement: engagement,
+      totalLikes: likes,
+      totalComments: comments,
+      totalShares: shares,
+      totalSaves: Number(snapshot?.total_saves ?? 0),
       totalVideoViews: Number(snapshot?.video_views ?? 0),
-      followersCount: snapshot?.followers_count ?? 0,
+      profileViews: snapshot?.profile_views ?? 0,
+      accountsEngaged: snapshot?.accounts_engaged ?? 0,
+      followersCount: followers,
       followersGrowth: snapshot?.followers_gained ?? 0,
-      engagementRate: Number(snapshot?.impressions ?? 0) > 0
-        ? ((Number(snapshot?.total_likes ?? 0) + Number(snapshot?.total_comments ?? 0) + Number(snapshot?.total_shares ?? 0)) / Number(snapshot?.impressions ?? 1)) * 100
-        : 0,
+      engagementRate,
       bestPostingHour: null,
       topPost: null,
     };
@@ -203,17 +215,18 @@ export function useSocialMetrics() {
   // Aggregate totals
   const totals = accountSummaries.reduce(
     (acc, s) => ({
-      impressions: acc.impressions + s.totalImpressions,
+      interactions: acc.interactions + s.totalInteractions,
       reach: acc.reach + s.totalReach,
       engagement: acc.engagement + s.totalEngagement,
       likes: acc.likes + s.totalLikes,
       comments: acc.comments + s.totalComments,
       shares: acc.shares + s.totalShares,
       videoViews: acc.videoViews + s.totalVideoViews,
+      profileViews: acc.profileViews + s.profileViews,
       followers: acc.followers + s.followersCount,
       followersGrowth: acc.followersGrowth + s.followersGrowth,
     }),
-    { impressions: 0, reach: 0, engagement: 0, likes: 0, comments: 0, shares: 0, videoViews: 0, followers: 0, followersGrowth: 0 }
+    { interactions: 0, reach: 0, engagement: 0, likes: 0, comments: 0, shares: 0, videoViews: 0, profileViews: 0, followers: 0, followersGrowth: 0 }
   );
 
   // Sync mutation
