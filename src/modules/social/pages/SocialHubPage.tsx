@@ -21,11 +21,11 @@ import { useScheduledPosts } from '../hooks/useScheduledPosts';
 import type { ScheduledPost } from '../types/social.types';
 
 const TABS = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'analytics', label: 'Métricas', icon: BarChart3 },
+  { id: 'dashboard', label: 'Publicaciones', icon: LayoutDashboard },
   { id: 'composer', label: 'Crear Post', icon: PenSquare },
   { id: 'calendar', label: 'Calendario', icon: Calendar },
   { id: 'queue', label: 'Cola', icon: Clock },
-  { id: 'analytics', label: 'Métricas', icon: BarChart3 },
   { id: 'groups', label: 'Grupos', icon: FolderOpen },
   { id: 'accounts', label: 'Cuentas', icon: LinkIcon },
 ] as const;
@@ -33,7 +33,7 @@ const TABS = [
 type TabId = (typeof TABS)[number]['id'];
 
 export default function SocialHubPage() {
-  const [activeTab, setActiveTab] = useState<TabId>('dashboard');
+  const [activeTab, setActiveTab] = useState<TabId>('analytics');
   const [composerOpen, setComposerOpen] = useState(false);
   const [viewingPost, setViewingPost] = useState<ScheduledPost | null>(null);
   const [accountSelection, setAccountSelection] = useState<AccountSelection>({ type: 'all' });
