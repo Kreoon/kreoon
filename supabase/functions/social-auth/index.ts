@@ -1795,15 +1795,15 @@ async function refreshTokenForPlatform(
       const connectionMethod = (account.connection_method as string) || "facebook";
 
       if (connectionMethod === "direct") {
-        // Instagram Direct: refresh long-lived token via Instagram Graph API
+        // Instagram Direct: exchange existing long-lived token for a new one
         const igClientSecret = Deno.env.get("SOCIAL_META_IG_CLIENT_SECRET");
         if (!igClientSecret) {
           throw new Error("Instagram Direct OAuth not configured");
         }
 
         const response = await fetch(
-          `https://graph.instagram.com/refresh_access_token?` +
-            `grant_type=ig_refresh_token&access_token=${account.access_token}`,
+          `https://graph.instagram.com/access_token?` +
+            `grant_type=ig_exchange_token&client_secret=${igClientSecret}&access_token=${account.access_token}`,
         );
 
         if (!response.ok) {
