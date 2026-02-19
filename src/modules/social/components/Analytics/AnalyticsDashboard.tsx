@@ -80,7 +80,97 @@ function Sparkline({ data, color = 'bg-primary' }: { data: number[]; color?: str
   );
 }
 
-// ── Account Card ────────────────────────────────────────────────────────────
+// ── Account Card (platform-aware) ───────────────────────────────────────────
+
+interface MiniMetric {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: number;
+  isBig?: boolean;
+  suffix?: string;
+  growth?: number;
+}
+
+interface EngagementBar {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: number;
+  color: string;
+}
+
+function getInstagramMetrics(summary: ReturnType<typeof useSocialMetrics>['accountSummaries'][number]): {
+  kpis: MiniMetric[];
+  bars: EngagementBar[];
+  sparklineKey: 'reach';
+  sparklineLabel: string;
+} {
+  return {
+    kpis: [
+      { icon: Users, label: 'Seguidores', value: summary.followersCount, isBig: true, growth: summary.followersGrowth },
+      { icon: Eye, label: 'Alcance', value: summary.totalReach, isBig: true },
+      { icon: MousePointerClick, label: 'Interacciones', value: summary.totalInteractions },
+      { icon: UserCheck, label: 'Visitas al Perfil', value: summary.profileViews },
+      { icon: Users, label: 'Cuentas Alcanzadas', value: summary.accountsEngaged },
+      { icon: TrendingUp, label: 'Engagement', value: 0, suffix: `${summary.engagementRate.toFixed(2)}%` },
+    ],
+    bars: [
+      { icon: Heart, label: 'Likes', value: summary.totalLikes, color: 'text-red-400' },
+      { icon: MessageCircle, label: 'Comentarios', value: summary.totalComments, color: 'text-blue-400' },
+    ],
+    sparklineKey: 'reach',
+    sparklineLabel: 'Alcance (tendencia)',
+  };
+}
+
+function getFacebookMetrics(summary: ReturnType<typeof useSocialMetrics>['accountSummaries'][number]): {
+  kpis: MiniMetric[];
+  bars: EngagementBar[];
+  sparklineKey: 'reach';
+  sparklineLabel: string;
+} {
+  return {
+    kpis: [
+      { icon: Users, label: 'Seguidores', value: summary.followersCount, isBig: true },
+      { icon: ImageIcon, label: 'Publicaciones', value: summary.totalPosts, isBig: true },
+      { icon: Eye, label: 'Vistas de Página', value: summary.profileViews },
+      { icon: Play, label: 'Video Views', value: summary.totalVideoViews },
+      { icon: Heart, label: 'Reacciones', value: summary.totalLikes },
+      { icon: UserCheck, label: 'Interacciones', value: summary.accountsEngaged },
+    ],
+    bars: [
+      { icon: Heart, label: 'Reacciones', value: summary.totalLikes, color: 'text-red-400' },
+      { icon: MessageCircle, label: 'Comentarios', value: summary.totalComments, color: 'text-blue-400' },
+      { icon: Share2, label: 'Compartidos', value: summary.totalShares, color: 'text-green-400' },
+    ],
+    sparklineKey: 'reach',
+    sparklineLabel: 'Vistas de Página (tendencia)',
+  };
+}
+
+function getGenericMetrics(summary: ReturnType<typeof useSocialMetrics>['accountSummaries'][number]): {
+  kpis: MiniMetric[];
+  bars: EngagementBar[];
+  sparklineKey: 'reach';
+  sparklineLabel: string;
+} {
+  return {
+    kpis: [
+      { icon: Users, label: 'Seguidores', value: summary.followersCount, isBig: true, growth: summary.followersGrowth },
+      { icon: TrendingUp, label: 'Engagement', value: 0, isBig: true, suffix: `${summary.engagementRate.toFixed(2)}%` },
+      { icon: Eye, label: 'Alcance', value: summary.totalReach },
+      { icon: Play, label: 'Views', value: summary.totalVideoViews },
+      { icon: Heart, label: 'Likes', value: summary.totalLikes },
+      { icon: MessageCircle, label: 'Comentarios', value: summary.totalComments },
+    ],
+    bars: [
+      { icon: Heart, label: 'Likes', value: summary.totalLikes, color: 'text-red-400' },
+      { icon: MessageCircle, label: 'Comentarios', value: summary.totalComments, color: 'text-blue-400' },
+      { icon: Share2, label: 'Compartidos', value: summary.totalShares, color: 'text-green-400' },
+    ],
+    sparklineKey: 'reach',
+    sparklineLabel: 'Alcance (tendencia)',
+  };
+}
 
 function AccountCard({
   summary,
@@ -89,15 +179,32 @@ function AccountCard({
   summary: ReturnType<typeof useSocialMetrics>['accountSummaries'][number];
   snapshots: AccountSnapshot[];
 }) {
-  const maxEngagement = Math.max(summary.totalLikes, summary.totalComments, summary.totalShares, 1);
+  const platform = summary.account.platform;
+
+  // Platform-specific metrics
+  const config = platform === 'instagram'
+    ? getInstagramMetrics(summary)
+    : platform === 'facebook'
+    ? getFacebookMetrics(summary)
+    : getGenericMetrics(summary);
+
+  // Filter KPIs: only show non-zero (unless it has a suffix like engagement %)
+  const visibleKpis = config.kpis.filter(k => k.value > 0 || k.suffix);
+  // Filter engagement bars: only show non-zero
+  const visibleBars = config.bars.filter(b => b.value > 0);
+  const maxBar = Math.max(...visibleBars.map(b => b.value), 1);
+
   const followerHistory = snapshots.map(s => s.followers_count);
-  const reachHistory = snapshots.map(s => Number(s.reach));
+  // For FB use profile_views (page_views_total), for IG use reach
+  const trendHistory = platform === 'facebook'
+    ? snapshots.map(s => s.profile_views)
+    : snapshots.map(s => Number(s.reach));
 
   return (
     <Card className="bg-card/50">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-3">
-          <PlatformIcon platform={summary.account.platform} size="md" showBg />
+          <PlatformIcon platform={platform} size="md" showBg />
           <div className="flex-1 min-w-0">
             <CardTitle className="text-sm truncate">
               {summary.account.platform_display_name || summary.account.platform_username}
@@ -114,36 +221,26 @@ function AccountCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
+        {/* KPI Grid — adaptive: 2 big + rest small */}
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Users className="w-3 h-3" /> Seguidores
-            </p>
-            <p className="text-lg font-bold">{formatNumber(summary.followersCount)}</p>
-            {summary.followersGrowth > 0 && (
-              <p className="text-[10px] text-green-400 flex items-center gap-0.5">
-                <ArrowUp className="w-2.5 h-2.5" />+{summary.followersGrowth} hoy
-              </p>
-            )}
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" /> Engagement
-            </p>
-            <p className="text-lg font-bold">{summary.engagementRate.toFixed(2)}%</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Eye className="w-3 h-3" /> Alcance
-            </p>
-            <p className="text-sm font-medium">{formatNumber(summary.totalReach)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Play className="w-3 h-3" /> Views
-            </p>
-            <p className="text-sm font-medium">{formatNumber(summary.totalVideoViews)}</p>
-          </div>
+          {visibleKpis.map((kpi, i) => {
+            const Icon = kpi.icon;
+            return (
+              <div key={i}>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Icon className="w-3 h-3" /> {kpi.label}
+                </p>
+                <p className={kpi.isBig ? 'text-lg font-bold' : 'text-sm font-medium'}>
+                  {kpi.suffix || formatNumber(kpi.value)}
+                </p>
+                {kpi.growth != null && kpi.growth > 0 && (
+                  <p className="text-[10px] text-green-400 flex items-center gap-0.5">
+                    <ArrowUp className="w-2.5 h-2.5" />+{kpi.growth} hoy
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* Follower trend sparkline */}
@@ -154,41 +251,34 @@ function AccountCard({
           </div>
         )}
 
-        {/* Reach sparkline */}
-        {reachHistory.length > 1 && reachHistory.some(v => v > 0) && (
+        {/* Platform-specific trend sparkline */}
+        {trendHistory.length > 1 && trendHistory.some(v => v > 0) && (
           <div>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Alcance (tendencia)</p>
-            <Sparkline data={reachHistory} color="bg-blue-500" />
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{config.sparklineLabel}</p>
+            <Sparkline data={trendHistory} color="bg-blue-500" />
           </div>
         )}
 
-        {/* Engagement breakdown */}
-        <div className="space-y-2 pt-2 border-t">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Engagement</p>
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <Heart className="w-3 h-3 text-red-400" />
-              <div className="flex-1">
-                <Progress value={(summary.totalLikes / maxEngagement) * 100} className="h-1.5" />
-              </div>
-              <span className="text-xs w-12 text-right">{formatNumber(summary.totalLikes)}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <MessageCircle className="w-3 h-3 text-blue-400" />
-              <div className="flex-1">
-                <Progress value={(summary.totalComments / maxEngagement) * 100} className="h-1.5" />
-              </div>
-              <span className="text-xs w-12 text-right">{formatNumber(summary.totalComments)}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Share2 className="w-3 h-3 text-green-400" />
-              <div className="flex-1">
-                <Progress value={(summary.totalShares / maxEngagement) * 100} className="h-1.5" />
-              </div>
-              <span className="text-xs w-12 text-right">{formatNumber(summary.totalShares)}</span>
+        {/* Engagement breakdown — only non-zero bars */}
+        {visibleBars.length > 0 && (
+          <div className="space-y-2 pt-2 border-t">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Engagement</p>
+            <div className="space-y-1.5">
+              {visibleBars.map((bar, i) => {
+                const Icon = bar.icon;
+                return (
+                  <div key={i} className="flex items-center gap-2">
+                    <Icon className={cn('w-3 h-3', bar.color)} />
+                    <div className="flex-1">
+                      <Progress value={(bar.value / maxBar) * 100} className="h-1.5" />
+                    </div>
+                    <span className="text-xs w-12 text-right">{formatNumber(bar.value)}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

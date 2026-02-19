@@ -144,10 +144,32 @@ interface PlatformOAuthConfig {
 
 const PLATFORM_CONFIGS: Record<PlatformKey, PlatformOAuthConfig> = {
   meta: {
-    authUrl: "https://www.facebook.com/v19.0/dialog/oauth",
-    tokenUrl: "https://graph.facebook.com/v19.0/oauth/access_token",
-    scopes:
-      "pages_show_list,pages_read_engagement,pages_manage_posts,read_insights,instagram_basic,instagram_content_publish,instagram_manage_comments,instagram_manage_insights,business_management",
+    authUrl: "https://www.facebook.com/v21.0/dialog/oauth",
+    tokenUrl: "https://graph.facebook.com/v21.0/oauth/access_token",
+    scopes: [
+      // Pages
+      "pages_show_list",
+      "pages_read_engagement",
+      "pages_manage_posts",
+      "pages_manage_metadata",
+      "pages_manage_ads",
+      // Insights
+      "read_insights",
+      // Instagram
+      "instagram_basic",
+      "instagram_content_publish",
+      "instagram_manage_comments",
+      "instagram_manage_insights",
+      // Business & Ads
+      "business_management",
+      "ads_management",
+      "ads_read",
+      // Catalogs & Leads
+      "catalog_management",
+      "leads_retrieval",
+      // Live streaming
+      "publish_video",
+    ].join(","),
     scopeSeparator: ",",
     clientIdEnvKey: "SOCIAL_META_FB_CLIENT_ID",
     clientSecretEnvKey: "SOCIAL_META_FB_CLIENT_SECRET",
@@ -186,7 +208,7 @@ const PLATFORM_CONFIGS: Record<PlatformKey, PlatformOAuthConfig> = {
     authUrl: "https://accounts.google.com/o/oauth2/v2/auth",
     tokenUrl: "https://oauth2.googleapis.com/token",
     scopes:
-      "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/yt-analytics.readonly",
+      "https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/yt-analytics.readonly https://www.googleapis.com/auth/youtube.force-ssl",
     scopeSeparator: " ",
     clientIdEnvKey: "SOCIAL_YOUTUBE_CLIENT_ID",
     clientSecretEnvKey: "SOCIAL_YOUTUBE_CLIENT_SECRET",
@@ -660,7 +682,7 @@ async function handleMetaCallback(
   if (oauthClientId && oauthClientSecret) {
     try {
       const llResponse = await fetch(
-        `https://graph.facebook.com/v19.0/oauth/access_token?` +
+        `https://graph.facebook.com/v21.0/oauth/access_token?` +
           `grant_type=fb_exchange_token&client_id=${oauthClientId}&client_secret=${oauthClientSecret}&fb_exchange_token=${accessToken}`,
       );
       if (llResponse.ok) {
@@ -696,7 +718,7 @@ async function handleMetaCallback(
 
   // Fetch user info (only to get fb_user_id, NOT saved as account)
   const meResponse = await fetch(
-    `https://graph.facebook.com/v19.0/me?fields=id,name&access_token=${accessToken}`,
+    `https://graph.facebook.com/v21.0/me?fields=id,name&access_token=${accessToken}`,
   );
   if (!meResponse.ok) {
     const meErrText = await meResponse.text();
@@ -710,7 +732,36 @@ async function handleMetaCallback(
   console.log(`[social-auth] Meta user: ${meData.name} (${fbUserId}) — NOT saving personal profile`);
 
   // Fetch Fan Pages with rich Instagram Business Account data
-  const pagesUrl = `https://graph.facebook.com/v19.0/me/accounts?fields=id,name,access_token,picture,category,fan_count,followers_count,instagram_business_account{id,username,name,profile_picture_url,followers_count,media_count}&access_token=${accessToken}`;
+  const pagesUrl = `https://graph.facebook.com/v21.0/me/accounts?fields=id,name,access_token,picture,category,fan_count,followers_count,instagram_business_account{id,username,name,profile_picture_url,followers_count,media_count}&access_token=${accessToken}`;
+  // Also fetch user's ad accounts for marketing module
+  let adAccounts: Array<Record<string, unknown>> = [];
+  try {
+    const adAccountsRes = await fetch(
+      `https://graph.facebook.com/v21.0/me/adaccounts?fields=id,name,account_id,account_status,currency,business_name&access_token=${accessToken}`
+    );
+    if (adAccountsRes.ok) {
+      const adData = await adAccountsRes.json();
+      adAccounts = adData.data || [];
+      console.log(`[social-auth] Found ${adAccounts.length} ad accounts`);
+    }
+  } catch (adErr) {
+    console.warn("[social-auth] Could not fetch ad accounts:", adErr);
+  }
+
+  // Fetch user's businesses for BM access
+  let businesses: Array<Record<string, unknown>> = [];
+  try {
+    const bizRes = await fetch(
+      `https://graph.facebook.com/v21.0/me/businesses?fields=id,name&access_token=${accessToken}`
+    );
+    if (bizRes.ok) {
+      const bizData = await bizRes.json();
+      businesses = bizData.data || [];
+      console.log(`[social-auth] Found ${businesses.length} businesses`);
+    }
+  } catch (bizErr) {
+    console.warn("[social-auth] Could not fetch businesses:", bizErr);
+  }
   console.log(`[social-auth] Fetching pages from: ${pagesUrl.replace(accessToken, "TOKEN_HIDDEN")}`);
 
   const pagesResponse = await fetch(pagesUrl);
@@ -761,7 +812,7 @@ async function handleMetaCallback(
     console.log("[social-auth] No pages found via /me/accounts. Trying /me?fields=accounts...");
     try {
       const altResponse = await fetch(
-        `https://graph.facebook.com/v19.0/me?fields=id,name,accounts{id,name,instagram_business_account{id,username}}&access_token=${accessToken}`,
+        `https://graph.facebook.com/v21.0/me?fields=id,name,accounts{id,name,instagram_business_account{id,username}}&access_token=${accessToken}`,
       );
       const altText = await altResponse.text();
       console.log(`[social-auth] Alternative /me?accounts response (${altResponse.status}): ${altText.substring(0, 2000)}`);
@@ -806,10 +857,18 @@ async function handleMetaCallback(
       refresh_token: null,
       token_expires_at: null, // Page tokens from long-lived user tokens don't expire
       scopes: [
-        "pages_manage_posts",
-        "pages_read_engagement",
         "pages_show_list",
+        "pages_read_engagement",
+        "pages_manage_posts",
+        "pages_manage_metadata",
+        "pages_manage_ads",
         "read_insights",
+        "business_management",
+        "ads_management",
+        "ads_read",
+        "publish_video",
+        "catalog_management",
+        "leads_retrieval",
       ],
       metadata: {
         token_type: "page_token",
@@ -819,6 +878,12 @@ async function handleMetaCallback(
         page_fan_count: page.fan_count || 0,
         page_followers_count: page.followers_count || 0,
         ig_business_account_id: igAccount?.id || null,
+        // User-level token for ads/BM operations
+        user_access_token: accessToken,
+        user_token_expires_at: tokenExpiresAt || null,
+        // Ad accounts & businesses for marketing module
+        ad_accounts: adAccounts.map(a => ({ id: a.id, name: a.name, account_id: a.account_id, status: a.account_status, currency: a.currency, business_name: a.business_name })),
+        businesses: businesses.map(b => ({ id: b.id, name: b.name })),
       },
       owner_type: ownerType || "user",
       brand_id: brandId || null,
@@ -848,7 +913,12 @@ async function handleMetaCallback(
         access_token: pageToken,
         refresh_token: null,
         token_expires_at: null,
-        scopes: ["instagram_basic", "instagram_content_publish", "instagram_manage_insights"],
+        scopes: [
+          "instagram_basic",
+          "instagram_content_publish",
+          "instagram_manage_comments",
+          "instagram_manage_insights",
+        ],
         metadata: {
           token_type: "page_token",
           fb_user_id: fbUserId,
@@ -857,6 +927,9 @@ async function handleMetaCallback(
           linked_page_name: pageName,
           ig_followers_count: igAccount.followers_count || 0,
           ig_media_count: igAccount.media_count || 0,
+          // User-level token for ads/BM operations
+          user_access_token: accessToken,
+          user_token_expires_at: tokenExpiresAt || null,
         },
         owner_type: ownerType || "user",
         brand_id: brandId || null,
@@ -1722,7 +1795,7 @@ async function revokeTokenForPlatform(
     case "meta": {
       // Facebook token revocation
       await fetch(
-        `https://graph.facebook.com/v19.0/me/permissions?access_token=${accessToken}`,
+        `https://graph.facebook.com/v21.0/me/permissions?access_token=${accessToken}`,
         { method: "DELETE" },
       );
       break;
@@ -1940,7 +2013,7 @@ async function refreshTokenForPlatform(
       }
 
       const response = await fetch(
-        `https://graph.facebook.com/v19.0/oauth/access_token?` +
+        `https://graph.facebook.com/v21.0/oauth/access_token?` +
           `grant_type=fb_exchange_token&client_id=${fbClientId}&client_secret=${fbClientSecret}&fb_exchange_token=${account.access_token}`,
       );
 
