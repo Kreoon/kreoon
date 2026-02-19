@@ -194,16 +194,19 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     return <Navigate to="/pending-access" replace />;
   }
 
-  // Referral gate: users must have platform_access_unlocked = true
-  // Bypass: platform root/admin, social/marketplace routes, org members, clients
+  // Referral gate: only talent roles (creator/editor) need platform_access_unlocked
+  // Bypass: platform root/admin, social/marketplace routes, org members, clients, non-talent roles
   const hasOrganization = !!(currentOrgId || profile?.current_organization_id);
+  const isTalentRole = rolesToCheck.length > 0 && rolesToCheck.every(r => {
+    const pg = getPermissionGroup(r);
+    return pg === 'creator' || pg === 'editor';
+  });
   if (
+    isTalentRole &&
     !isPlatformRoot &&
     !isPlatformAdmin &&
-    !requirePlatformAdmin &&
     !isSocialRoute &&
     !hasOrganization &&
-    !isClient &&
     profile?.platform_access_unlocked !== true
   ) {
     return <Navigate to="/unlock-access" replace />;
