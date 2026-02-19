@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   LayoutDashboard, LinkIcon, PenSquare, Calendar, BarChart3,
   Plus, FolderOpen, Clock, Shield,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -37,6 +39,23 @@ export default function SocialHubPage() {
   const [accountSelection, setAccountSelection] = useState<AccountSelection>({ type: 'all' });
   const { accounts, isLoading: accountsLoading } = useSocialAccounts();
   const { stats } = useScheduledPosts();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle OAuth callback redirect (fallback when popup doesn't have opener)
+  useEffect(() => {
+    const success = searchParams.get('success');
+    const error = searchParams.get('error');
+    const platform = searchParams.get('platform');
+    if (success === 'true') {
+      toast.success(`${platform || 'Cuenta'} conectado correctamente`);
+      setActiveTab('accounts');
+      setSearchParams({}, { replace: true });
+    } else if (error) {
+      toast.error(`Error: ${decodeURIComponent(error)}`);
+      setActiveTab('accounts');
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleCreatePost = () => {
     if (accounts.length === 0) {

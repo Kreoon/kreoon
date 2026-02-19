@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Plus, RefreshCw, Unlink, AlertTriangle, CheckCircle2,
   Building2, User, Globe, Building, Facebook,
@@ -36,6 +36,7 @@ const CONNECTION_METHOD_LABELS: Record<string, string> = {
 export function AccountsManager() {
   const { profile } = useAuth();
   const orgId = profile?.current_organization_id;
+  const queryClient = useQueryClient();
 
   const {
     accounts,
@@ -53,6 +54,24 @@ export function AccountsManager() {
   const [connectOwnerType, setConnectOwnerType] = useState<SocialAccountOwnerType>('user');
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [showIgMethodDialog, setShowIgMethodDialog] = useState(false);
+
+  // Listen for OAuth popup result via postMessage
+  const handleOAuthMessage = useCallback((event: MessageEvent) => {
+    if (event.data?.type !== 'social-auth-result') return;
+    const { success, platform, error } = event.data;
+    if (success) {
+      toast.success(`${platform} conectado correctamente`);
+      // Refetch social accounts
+      queryClient.invalidateQueries({ queryKey: ['social-accounts'] });
+    } else {
+      toast.error(`Error al conectar ${platform}: ${error || 'Unknown error'}`);
+    }
+  }, [queryClient]);
+
+  useEffect(() => {
+    window.addEventListener('message', handleOAuthMessage);
+    return () => window.removeEventListener('message', handleOAuthMessage);
+  }, [handleOAuthMessage]);
 
   // Fetch clients (empresas) for the org
   const { data: orgClients = [] } = useQuery({

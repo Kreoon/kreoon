@@ -29,6 +29,29 @@ function redirectResponse(url: string) {
   });
 }
 
+function oauthResultPage(frontendUrl: string, success: boolean, platform: string, errorMsg?: string) {
+  const payload = JSON.stringify({ type: "social-auth-result", success, platform, error: errorMsg || null });
+  const fallbackUrl = success
+    ? `${frontendUrl}/social-hub?success=true&platform=${platform}`
+    : `${frontendUrl}/social-hub?error=${encodeURIComponent(errorMsg || "Unknown error")}&platform=${platform}`;
+  const html = `<!DOCTYPE html><html><head><title>${success ? "Connected" : "Error"}</title></head><body>
+<p style="font-family:sans-serif;text-align:center;margin-top:40px">${success ? "Account connected! This window will close..." : `Error: ${errorMsg || "Unknown"}`}</p>
+<script>
+try {
+  if (window.opener) {
+    window.opener.postMessage(${payload}, "${frontendUrl}");
+    setTimeout(function() { window.close(); }, 800);
+  } else {
+    window.location.href = "${fallbackUrl}";
+  }
+} catch(e) { window.location.href = "${fallbackUrl}"; }
+</script></body></html>`;
+  return new Response(html, {
+    status: 200,
+    headers: { ...CORS_HEADERS, "Content-Type": "text/html; charset=utf-8" },
+  });
+}
+
 // ─── Supabase Client ─────────────────────────────────────────────────────────
 
 function getServiceClient() {
@@ -457,16 +480,15 @@ async function handleCallback(req: Request): Promise<Response> {
         break;
     }
 
-    return redirectResponse(
-      `${frontendUrl}/social-hub?success=true&platform=${platform}`,
-    );
+    // Return HTML page that notifies parent window and closes popup
+    const dbPlatform = platformToDbEnum(platform);
+    return oauthResultPage(frontendUrl, true, dbPlatform);
   } catch (err) {
     console.error(`[social-auth] Callback error for ${platform}:`, err);
     const message =
       err instanceof Error ? err.message : "Unknown error during OAuth";
-    return redirectResponse(
-      `${frontendUrl}/social-hub?error=${encodeURIComponent(message)}&platform=${platform}`,
-    );
+    const dbPlatform = platformToDbEnum(platform);
+    return oauthResultPage(frontendUrl, false, dbPlatform, message);
   }
 }
 
@@ -679,14 +701,16 @@ async function handleMetaCallback(
   );
 
   if (!pagesResponse.ok) {
+    const pagesErrText = await pagesResponse.text();
     console.warn(
-      `[social-auth] Failed to fetch Meta pages: ${pagesResponse.status}`,
+      `[social-auth] Failed to fetch Meta pages: ${pagesResponse.status} ${pagesErrText}`,
     );
     return;
   }
 
   const pagesData = await pagesResponse.json();
   const pages = pagesData.data || [];
+  console.log(`[social-auth] Found ${pages.length} Facebook pages. Page names: ${pages.map((p: { name: string }) => p.name).join(", ") || "(none)"}`);
 
   for (const page of pages) {
     const pageId = page.id;
@@ -726,6 +750,7 @@ async function handleMetaCallback(
     });
 
     // Check for Instagram Business Account linked to this page
+    console.log(`[social-auth] Page "${pageName}" (${pageId}): instagram_business_account = ${JSON.stringify(page.instagram_business_account || null)}`);
     if (page.instagram_business_account?.id) {
       const igId = page.instagram_business_account.id;
 
@@ -800,16 +825,20 @@ async function handleInstagramDirectCallback(
 
   // Instagram token response includes user_id
   const igUserId = String(tokenData.user_id || "");
+  console.log(`[social-auth] Instagram Direct token response: user_id=${igUserId}, has_access_token=${!!tokenData.access_token}, expires_in=${tokenData.expires_in}`);
 
   // Exchange short-lived token for long-lived token (60 days)
   if (oauthClientSecret) {
     try {
-      const llResponse = await fetch(
-        `https://graph.instagram.com/access_token?` +
-          `grant_type=ig_exchange_token&client_secret=${oauthClientSecret}&access_token=${accessToken}`,
-      );
+      const llUrl = `https://graph.instagram.com/access_token?` +
+        `grant_type=ig_exchange_token&client_secret=${oauthClientSecret}&access_token=${accessToken}`;
+      console.log(`[social-auth] Exchanging IG short-lived token for long-lived...`);
+      const llResponse = await fetch(llUrl);
+      const llText = await llResponse.text();
+      console.log(`[social-auth] IG long-lived token exchange: ${llResponse.status} ${llText.substring(0, 300)}`);
+
       if (llResponse.ok) {
-        const llData = await llResponse.json();
+        const llData = JSON.parse(llText);
         if (llData.access_token) {
           accessToken = llData.access_token;
           if (llData.expires_in) {
@@ -820,7 +849,7 @@ async function handleInstagramDirectCallback(
         }
       } else {
         console.warn(
-          `[social-auth] Failed to get long-lived IG token: ${llResponse.status} ${await llResponse.text()}`,
+          `[social-auth] Failed to get long-lived IG token: ${llResponse.status}`,
         );
         if (tokenData.expires_in) {
           tokenExpiresAt = new Date(
@@ -845,23 +874,35 @@ async function handleInstagramDirectCallback(
   let igAccountType = "";
   let resolvedUserId = igUserId;
 
-  try {
-    const meResponse = await fetch(
-      `https://graph.instagram.com/v21.0/me?fields=user_id,username,name,account_type,profile_picture_url&access_token=${accessToken}`,
-    );
-    if (meResponse.ok) {
-      const meData = await meResponse.json();
-      resolvedUserId = String(meData.user_id || meData.id || igUserId);
-      igUsername = meData.username || "";
-      igDisplayName = meData.name || meData.username || "";
-      igAvatarUrl = meData.profile_picture_url || null;
-      igAccountType = meData.account_type || "";
-    } else {
-      const errText = await meResponse.text();
-      console.warn(`[social-auth] Failed to fetch IG profile: ${meResponse.status} ${errText}`);
+  const profileFields = "user_id,username,name,account_type,profile_picture_url";
+
+  // Try /me first, then fall back to /{user_id}
+  let profileFetched = false;
+  for (const endpoint of [`me`, igUserId].filter(Boolean)) {
+    if (profileFetched) break;
+    try {
+      const profileUrl = `https://graph.instagram.com/v21.0/${endpoint}?fields=${profileFields}&access_token=${accessToken}`;
+      console.log(`[social-auth] Fetching IG profile from /${endpoint}...`);
+      const meResponse = await fetch(profileUrl);
+      const responseText = await meResponse.text();
+      console.log(`[social-auth] IG profile /${endpoint} response: ${meResponse.status} ${responseText.substring(0, 500)}`);
+
+      if (meResponse.ok) {
+        const meData = JSON.parse(responseText);
+        resolvedUserId = String(meData.user_id || meData.id || igUserId);
+        igUsername = meData.username || "";
+        igDisplayName = meData.name || meData.username || "";
+        igAvatarUrl = meData.profile_picture_url || null;
+        igAccountType = meData.account_type || "";
+        profileFetched = true;
+      }
+    } catch (err) {
+      console.warn(`[social-auth] Failed to fetch IG profile from /${endpoint}:`, err);
     }
-  } catch (err) {
-    console.warn("[social-auth] Failed to fetch IG profile:", err);
+  }
+
+  if (!profileFetched) {
+    console.warn(`[social-auth] Could not fetch IG profile, saving with user_id only: ${igUserId}`);
   }
 
   if (!resolvedUserId) {
