@@ -347,7 +347,7 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
       <Separator />
 
       {/* Preview (v2) */}
-      {caption.trim() && (
+      {(caption.trim() || mediaUrls.length > 0 || thumbnailUrl) && (
         <PreviewPanel
           caption={caption}
           hashtags={hashtags}

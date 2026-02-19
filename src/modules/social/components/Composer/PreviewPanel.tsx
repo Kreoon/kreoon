@@ -46,12 +46,32 @@ export function PreviewPanel({ caption, hashtags, mediaUrls, thumbnailUrl, platf
 
           {/* Media */}
           {(thumbnailUrl || mediaUrls.length > 0) && (
-            <div className="aspect-square bg-muted relative">
-              <img
-                src={thumbnailUrl || mediaUrls[0]}
-                alt=""
-                className="w-full h-full object-cover"
-              />
+            <div className="aspect-square bg-muted relative overflow-hidden">
+              {(() => {
+                const src = thumbnailUrl || mediaUrls[0];
+                const isVideo = src && /\.(mp4|mov|avi|webm|m4v|mkv)/i.test(src);
+                if (isVideo && !thumbnailUrl) {
+                  return (
+                    <video
+                      src={src}
+                      className="w-full h-full object-cover"
+                      muted
+                      playsInline
+                      preload="metadata"
+                    />
+                  );
+                }
+                return (
+                  <img
+                    src={src}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                );
+              })()}
               {mediaUrls.length > 1 && (
                 <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">
                   1/{mediaUrls.length}

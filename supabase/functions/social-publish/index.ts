@@ -2077,21 +2077,26 @@ Deno.serve(async (req: Request) => {
     // Create service_role client for reading tokens and updating posts
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify user token
+    // Verify caller: allow service_role key (internal calls from social-scheduler)
+    // or validate as user JWT
     const token = authHeader.replace("Bearer ", "");
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(token);
+    const isServiceRole = token === supabaseServiceKey;
 
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Invalid or expired token" }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+    if (!isServiceRole) {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser(token);
+
+      if (authError || !user) {
+        return new Response(
+          JSON.stringify({ error: "Invalid or expired token" }),
+          {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
     }
 
     // Parse route
