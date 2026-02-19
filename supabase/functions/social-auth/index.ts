@@ -650,75 +650,122 @@ async function handleMetaCallback(
     ).toISOString();
   }
 
-  // Fetch user info
+  console.log("=== META CALLBACK DEBUG START ===");
+  console.log(`[social-auth] User access token (first 20 chars): ${accessToken?.substring(0, 20)}...`);
+  console.log(`[social-auth] Token length: ${accessToken?.length || 0}`);
+  console.log(`[social-auth] Token expires at: ${tokenExpiresAt || "never (long-lived page token)"}`);
+
+  // Fetch user info (only to get fb_user_id, NOT saved as account)
   const meResponse = await fetch(
-    `https://graph.facebook.com/v19.0/me?fields=id,name,picture&access_token=${accessToken}`,
+    `https://graph.facebook.com/v19.0/me?fields=id,name&access_token=${accessToken}`,
   );
   if (!meResponse.ok) {
+    const meErrText = await meResponse.text();
+    console.error(`[social-auth] /me failed: ${meResponse.status} ${meErrText}`);
     throw new Error(
-      `Failed to fetch Meta user info: ${meResponse.status} ${await meResponse.text()}`,
+      `Failed to fetch Meta user info: ${meResponse.status} ${meErrText}`,
     );
   }
   const meData = await meResponse.json();
   const fbUserId = meData.id;
-  const fbUserName = meData.name;
-  const fbAvatarUrl = meData.picture?.data?.url || null;
+  console.log(`[social-auth] Meta user: ${meData.name} (${fbUserId}) — NOT saving personal profile`);
 
-  // Save the base Facebook user account
-  await upsertSocialAccount(supabase, {
-    user_id: userId,
-    organization_id: orgId || null,
-    platform: "facebook",
-    platform_user_id: fbUserId,
-    platform_username: fbUserName,
-    platform_display_name: fbUserName,
-    platform_avatar_url: fbAvatarUrl,
-    platform_page_id: null,
-    platform_page_name: null,
-    access_token: accessToken,
-    refresh_token: null,
-    token_expires_at: tokenExpiresAt,
-    scopes: tokenData.scope
-      ? tokenData.scope.split(",").map((s: string) => s.trim())
-      : [
-          "pages_manage_posts",
-          "pages_read_engagement",
-          "instagram_basic",
-          "instagram_content_publish",
-          "pages_show_list",
-          "business_management",
-        ],
-    metadata: { token_type: "long_lived", fb_user_id: fbUserId },
-    owner_type: ownerType || "user",
-    brand_id: brandId || null,
-    client_id: clientId || null,
-    connection_method: "facebook",
-  });
+  // Fetch Fan Pages with rich Instagram Business Account data
+  const pagesUrl = `https://graph.facebook.com/v19.0/me/accounts?fields=id,name,access_token,picture,category,fan_count,followers_count,instagram_business_account{id,username,name,profile_picture_url,followers_count,media_count}&access_token=${accessToken}`;
+  console.log(`[social-auth] Fetching pages from: ${pagesUrl.replace(accessToken, "TOKEN_HIDDEN")}`);
 
-  // Fetch pages
-  const pagesResponse = await fetch(
-    `https://graph.facebook.com/v19.0/me/accounts?fields=id,name,access_token,picture,instagram_business_account&access_token=${accessToken}`,
-  );
+  const pagesResponse = await fetch(pagesUrl);
+  const pagesRawText = await pagesResponse.text();
+
+  console.log(`[social-auth] Pages API Response Status: ${pagesResponse.status}`);
+  console.log(`[social-auth] Pages API Raw Response (first 2000 chars): ${pagesRawText.substring(0, 2000)}`);
 
   if (!pagesResponse.ok) {
-    const pagesErrText = await pagesResponse.text();
-    console.warn(
-      `[social-auth] Failed to fetch Meta pages: ${pagesResponse.status} ${pagesErrText}`,
+    console.error(`[social-auth] Pages API FAILED: ${pagesResponse.status} ${pagesRawText}`);
+    throw new Error(
+      "No se pudieron obtener las Fan Pages de Facebook. Asegúrate de seleccionar al menos una página durante la autorización.",
     );
-    return;
   }
 
-  const pagesData = await pagesResponse.json();
-  const pages = pagesData.data || [];
-  console.log(`[social-auth] Found ${pages.length} Facebook pages. Page names: ${pages.map((p: { name: string }) => p.name).join(", ") || "(none)"}`);
+  let pagesData: { data?: Array<Record<string, unknown>> };
+  try {
+    pagesData = JSON.parse(pagesRawText);
+  } catch (parseErr) {
+    console.error(`[social-auth] Failed to parse pages response as JSON:`, parseErr);
+    throw new Error("Respuesta inválida de la API de Facebook al obtener páginas.");
+  }
 
-  for (const page of pages) {
-    const pageId = page.id;
-    const pageName = page.name;
-    const pageToken = page.access_token;
-    const pageAvatar = page.picture?.data?.url || null;
+  const allPages = pagesData.data || [];
+  console.log(`[social-auth] Number of pages found: ${allPages.length}`);
 
-    // Save Facebook Page account
+  // Log each page with its Instagram details
+  if (allPages.length > 0) {
+    allPages.forEach((page: Record<string, unknown>, index: number) => {
+      const igBiz = page.instagram_business_account as Record<string, unknown> | undefined;
+      console.log(`[social-auth] Page ${index + 1}: ${JSON.stringify({
+        id: page.id,
+        name: page.name,
+        category: page.category,
+        fan_count: page.fan_count,
+        followers_count: page.followers_count,
+        has_page_token: !!(page.access_token as string)?.length,
+        page_token_len: (page.access_token as string)?.length || 0,
+        hasInstagramBusiness: !!igBiz?.id,
+        instagramId: igBiz?.id || "N/A",
+        instagramUsername: igBiz?.username || "N/A",
+        instagramFollowers: igBiz?.followers_count || 0,
+        instagramMediaCount: igBiz?.media_count || 0,
+      })}`);
+    });
+  } else {
+    // If no pages, try alternative endpoint
+    console.log("[social-auth] No pages found via /me/accounts. Trying /me?fields=accounts...");
+    try {
+      const altResponse = await fetch(
+        `https://graph.facebook.com/v19.0/me?fields=id,name,accounts{id,name,instagram_business_account{id,username}}&access_token=${accessToken}`,
+      );
+      const altText = await altResponse.text();
+      console.log(`[social-auth] Alternative /me?accounts response (${altResponse.status}): ${altText.substring(0, 2000)}`);
+    } catch (altErr) {
+      console.warn("[social-auth] Alternative endpoint also failed:", altErr);
+    }
+  }
+
+  // Filter to only pages with linked Instagram Business Account
+  const pagesWithIG = allPages.filter(
+    (p: Record<string, unknown>) => {
+      const igBiz = p.instagram_business_account as Record<string, unknown> | undefined;
+      return !!igBiz?.id;
+    },
+  );
+
+  console.log(`[social-auth] Pages with Instagram Business: ${pagesWithIG.length} of ${allPages.length}`);
+
+  if (pagesWithIG.length === 0) {
+    console.warn(`[social-auth] NO pages with instagram_business_account found for user ${fbUserId}`);
+    console.warn(`[social-auth] This means either: (1) No pages selected during OAuth, (2) Pages don't have IG Business linked, (3) Permission not granted`);
+    throw new Error(
+      "No se encontraron Fan Pages con cuenta de Instagram Business vinculada. " +
+      "Asegúrate de que tu página de Facebook tenga una cuenta de Instagram Business/Creator conectada en la configuración de la página.",
+    );
+  }
+
+  console.log(`[social-auth] ${pagesWithIG.length} page(s) with Instagram Business Account — saving...`);
+
+  for (const page of pagesWithIG) {
+    const pageId = page.id as string;
+    const pageName = page.name as string;
+    const pageToken = page.access_token as string;
+    const pagePicture = page.picture as Record<string, unknown> | undefined;
+    const pageAvatar = (pagePicture?.data as Record<string, unknown>)?.url as string || null;
+    const igAccount = page.instagram_business_account as Record<string, unknown>;
+    const igId = igAccount.id as string;
+
+    console.log(`[social-auth] === Saving Page: ${pageName} (${pageId}) ===`);
+    console.log(`[social-auth] Page token (first 20): ${pageToken?.substring(0, 20)}... (len: ${pageToken?.length})`);
+    console.log(`[social-auth] IG Business: @${igAccount.username} (${igId})`);
+
+    // Save the Facebook Fan Page account (using page token)
     await upsertSocialAccount(supabase, {
       user_id: userId,
       organization_id: orgId || null,
@@ -741,6 +788,10 @@ async function handleMetaCallback(
         token_type: "page_token",
         fb_user_id: fbUserId,
         page_id: pageId,
+        page_category: page.category || null,
+        page_fan_count: page.fan_count || 0,
+        page_followers_count: page.followers_count || 0,
+        ig_business_account_id: igId,
       },
       owner_type: ownerType || "user",
       brand_id: brandId || null,
@@ -749,61 +800,46 @@ async function handleMetaCallback(
       connection_method: "facebook",
     });
 
-    // Check for Instagram Business Account linked to this page
-    console.log(`[social-auth] Page "${pageName}" (${pageId}): instagram_business_account = ${JSON.stringify(page.instagram_business_account || null)}`);
-    if (page.instagram_business_account?.id) {
-      const igId = page.instagram_business_account.id;
+    console.log(`[social-auth] FB Page "${pageName}" saved successfully`);
 
-      // Fetch Instagram account details
-      let igUsername = pageName;
-      let igAvatarUrl = pageAvatar;
+    // Save the linked Instagram Business Account (using page token)
+    const igUsername = (igAccount.username || igAccount.name || pageName) as string;
+    const igAvatarUrl = (igAccount.profile_picture_url as string) || pageAvatar;
+    console.log(`[social-auth] Saving IG Business: @${igUsername} (${igId}), followers: ${igAccount.followers_count || 0}, media: ${igAccount.media_count || 0}`);
 
-      try {
-        const igResponse = await fetch(
-          `https://graph.facebook.com/v19.0/${igId}?fields=id,username,name,profile_picture_url&access_token=${pageToken}`,
-        );
-        if (igResponse.ok) {
-          const igData = await igResponse.json();
-          igUsername = igData.username || igData.name || pageName;
-          igAvatarUrl =
-            igData.profile_picture_url || pageAvatar;
-        }
-      } catch (err) {
-        console.warn(
-          `[social-auth] Failed to fetch IG details for ${igId}:`,
-          err,
-        );
-      }
-
-      await upsertSocialAccount(supabase, {
-        user_id: userId,
-        organization_id: orgId || null,
-        platform: "instagram",
-        platform_user_id: igId,
-        platform_username: igUsername,
-        platform_display_name: igUsername,
-        platform_avatar_url: igAvatarUrl,
-        platform_page_id: pageId,
-        platform_page_name: pageName,
-        access_token: pageToken,
-        refresh_token: null,
-        token_expires_at: null,
-        scopes: ["instagram_basic", "instagram_content_publish"],
-        metadata: {
-          token_type: "page_token",
-          fb_user_id: fbUserId,
-          ig_business_account_id: igId,
-          linked_page_id: pageId,
-          linked_page_name: pageName,
-        },
-        owner_type: ownerType || "user",
-        brand_id: brandId || null,
-        client_id: clientId || null,
-        account_type: "business",
-        connection_method: "facebook",
-      });
-    }
+    await upsertSocialAccount(supabase, {
+      user_id: userId,
+      organization_id: orgId || null,
+      platform: "instagram",
+      platform_user_id: igId,
+      platform_username: igUsername,
+      platform_display_name: igUsername,
+      platform_avatar_url: igAvatarUrl,
+      platform_page_id: pageId,
+      platform_page_name: pageName,
+      access_token: pageToken,
+      refresh_token: null,
+      token_expires_at: null,
+      scopes: ["instagram_basic", "instagram_content_publish"],
+      metadata: {
+        token_type: "page_token",
+        fb_user_id: fbUserId,
+        ig_business_account_id: igId,
+        linked_page_id: pageId,
+        linked_page_name: pageName,
+        ig_followers_count: igAccount.followers_count || 0,
+        ig_media_count: igAccount.media_count || 0,
+      },
+      owner_type: ownerType || "user",
+      brand_id: brandId || null,
+      client_id: clientId || null,
+      account_type: "business",
+      connection_method: "facebook",
+    });
   }
+
+  console.log(`[social-auth] Meta callback complete: saved ${pagesWithIG.length} page(s) + ${pagesWithIG.length} IG business account(s)`);
+  console.log("=== META CALLBACK DEBUG END ===");
 }
 
 // ─── Instagram Direct Callback ───────────────────────────────────────────────
