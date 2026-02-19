@@ -1538,18 +1538,33 @@ async function handleDisconnect(req: Request): Promise<Response> {
 
   const supabase = getServiceClient();
 
-  // Verify the account belongs to this user
+  // Verify the account belongs to the user or their org
   const { data: account, error: findError } = await supabase
     .from("social_accounts")
-    .select("id, platform, access_token, platform_user_id, metadata")
+    .select("id, platform, access_token, platform_user_id, metadata, user_id, organization_id")
     .eq("id", accountId)
-    .eq("user_id", user.id)
     .eq("is_active", true)
     .limit(1)
     .maybeSingle();
 
   if (findError || !account) {
-    return errorResponse("Account not found or does not belong to you", 404);
+    return errorResponse("Account not found", 404);
+  }
+
+  // Check ownership: direct owner OR same org member
+  if (account.user_id !== user.id && account.organization_id) {
+    const { data: orgMember } = await supabase
+      .from("organization_members")
+      .select("id")
+      .eq("organization_id", account.organization_id)
+      .eq("user_id", user.id)
+      .limit(1)
+      .maybeSingle();
+    if (!orgMember) {
+      return errorResponse("Account not found or access denied", 404);
+    }
+  } else if (account.user_id !== user.id) {
+    return errorResponse("Account not found or access denied", 404);
   }
 
   // Attempt to revoke token on the platform side (best-effort)
@@ -1698,13 +1713,28 @@ async function handleRefresh(req: Request): Promise<Response> {
     .from("social_accounts")
     .select("*")
     .eq("id", accountId)
-    .eq("user_id", user.id)
     .eq("is_active", true)
     .limit(1)
     .maybeSingle();
 
   if (findError || !account) {
     return errorResponse("Account not found", 404);
+  }
+
+  // Check ownership: direct owner OR same org member
+  if (account.user_id !== user.id && account.organization_id) {
+    const { data: orgMember } = await supabase
+      .from("organization_members")
+      .select("id")
+      .eq("organization_id", account.organization_id)
+      .eq("user_id", user.id)
+      .limit(1)
+      .maybeSingle();
+    if (!orgMember) {
+      return errorResponse("Account not found or access denied", 404);
+    }
+  } else if (account.user_id !== user.id) {
+    return errorResponse("Account not found or access denied", 404);
   }
 
   const platform = account.platform as string;
