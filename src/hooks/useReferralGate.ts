@@ -25,13 +25,18 @@ interface GateStatus {
 export function useReferralGate() {
   const { user, profile, roles, isPlatformAdmin, isClient, loading: authLoading, rolesLoaded } = useAuth();
 
-  // Quick bypass: platform admin, already unlocked, belongs to an org, or is a client
+  // Quick bypass: platform admin, already unlocked, belongs to an org, client, or non-talent role
+  // Only pure talent roles (creator/editor) need to go through the referral gate
   const hasOrganization = !!profile?.current_organization_id;
+  const isTalentOnly = roles.length > 0 && roles.every(
+    r => r === 'creator' || r === 'editor'
+  );
   const quickBypass =
     isPlatformAdmin ||
     profile?.platform_access_unlocked === true ||
     hasOrganization ||
-    isClient;
+    isClient ||
+    !isTalentOnly;
 
   const {
     data: gateStatus,
