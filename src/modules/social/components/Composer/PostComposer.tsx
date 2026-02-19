@@ -354,6 +354,7 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
           mediaUrls={mediaUrls}
           thumbnailUrl={thumbnailUrl}
           platforms={selectedPlatforms as SocialPlatform[]}
+          postType={postType}
         />
       )}
 

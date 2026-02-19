@@ -308,7 +308,9 @@ async function publishToInstagram(
   account: SocialAccount,
   post: ScheduledPost
 ): Promise<{ platform_post_id: string }> {
-  const igUserId = account.platform_page_id || account.platform_user_id;
+  // platform_user_id holds the IG Business Account ID (17841xxx)
+  // platform_page_id holds the Facebook Page ID — wrong for IG API calls
+  const igUserId = account.platform_user_id || account.platform_page_id;
   const token = account.access_token;
   const caption = buildCaption(post);
   const baseUrl = "https://graph.facebook.com/v21.0";
