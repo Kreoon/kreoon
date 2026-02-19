@@ -391,14 +391,26 @@ async function handleSyncAll(
   supabase: ReturnType<typeof createClient>,
   userId: string | null
 ) {
-  // Get all active accounts for the user or all if service_role
+  // Get all active accounts for the user's org (or all if service_role)
   let query = supabase
     .from("social_accounts")
     .select("id, platform")
     .eq("is_active", true);
 
   if (userId) {
-    query = query.eq("user_id", userId);
+    // Find user's org and sync ALL org accounts, not just their own
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("current_organization_id")
+      .eq("id", userId)
+      .limit(1)
+      .maybeSingle();
+
+    if (profile?.current_organization_id) {
+      query = query.eq("organization_id", profile.current_organization_id);
+    } else {
+      query = query.eq("user_id", userId);
+    }
   }
 
   const { data: accounts, error } = await query;

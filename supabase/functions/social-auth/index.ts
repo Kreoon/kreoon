@@ -35,20 +35,49 @@ function oauthResultPage(frontendUrl: string, success: boolean, platform: string
     ? `${frontendUrl}/social-hub?success=true&platform=${platform}`
     : `${frontendUrl}/social-hub?error=${encodeURIComponent(errorMsg || "Unknown error")}&platform=${platform}`;
   const displayMsg = success ? "Cuenta conectada. Esta ventana se cerrara..." : `Error: ${errorMsg || "Unknown"}`;
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${success ? "Connected" : "Error"}</title>
-<style>body{font-family:sans-serif;text-align:center;margin-top:40px;background:#111;color:#eee}p{max-width:600px;margin:40px auto;line-height:1.5}.spinner{display:inline-block;width:24px;height:24px;border:3px solid #333;border-top-color:#6ee7b7;border-radius:50%;animation:spin .6s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}</style></head><body>
-<p>${displayMsg}</p>
-<p><span class="spinner"></span></p>
+  const successIcon = `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
+  const errorIcon = `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Kreoon - ${success ? "Conectado" : "Error"}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0a;color:#e5e5e5;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.card{background:#171717;border:1px solid #262626;border-radius:16px;padding:40px 32px;max-width:400px;width:90%;text-align:center}
+.logo{font-size:24px;font-weight:700;color:#6ee7b7;margin-bottom:24px;letter-spacing:-0.5px}
+.icon{margin-bottom:16px}
+h2{font-size:18px;font-weight:600;margin-bottom:8px;color:${success ? "#e5e5e5" : "#f87171"}}
+.subtitle{font-size:14px;color:#a3a3a3;margin-bottom:20px;line-height:1.5}
+.countdown{font-size:13px;color:#737373;margin-bottom:16px}
+.countdown span{color:#6ee7b7;font-weight:600}
+.btn{display:inline-block;padding:10px 24px;background:${success ? "#6ee7b7" : "#404040"};color:#0a0a0a;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;transition:opacity .2s}
+.btn:hover{opacity:.85}
+.link{display:block;margin-top:12px;font-size:13px;color:#6ee7b7;text-decoration:none}
+.link:hover{text-decoration:underline}
+</style></head><body>
+<div class="card">
+<div class="logo">KREOON</div>
+<div class="icon">${success ? successIcon : errorIcon}</div>
+<h2>${success ? "Cuenta conectada exitosamente" : "Error al conectar"}</h2>
+<p class="subtitle">${success ? `Tu cuenta de <strong>${platform}</strong> ha sido vinculada correctamente.` : `${errorMsg || "Ocurrio un error desconocido."}`}</p>
+<p class="countdown" id="countdown">Cerrando en <span id="timer">5</span> segundos...</p>
+<button class="btn" onclick="window.close()">Cerrar ventana</button>
+<a class="link" href="${fallbackUrl}">Ir al Social Hub</a>
+</div>
 <script>
-try {
-  if (window.opener) {
-    window.opener.postMessage(${payload}, "${frontendUrl}");
+try { if (window.opener) window.opener.postMessage(${payload}, "${frontendUrl}"); } catch(e) {}
+var t = 5;
+var interval = setInterval(function() {
+  t--;
+  var el = document.getElementById("timer");
+  if (el) el.textContent = t;
+  if (t <= 0) {
+    clearInterval(interval);
+    try { window.close(); } catch(e) {}
+    setTimeout(function() {
+      var cd = document.getElementById("countdown");
+      if (cd) cd.textContent = "No se pudo cerrar automaticamente.";
+      window.location.href = "${fallbackUrl}";
+    }, 500);
   }
-} catch(e) {}
-setTimeout(function() {
-  try { window.close(); } catch(e) {}
-  // If close didn't work, redirect back to the app
-  setTimeout(function() { window.location.href = "${fallbackUrl}"; }, 300);
 }, 1000);
 </script></body></html>`;
   return new Response(html, {
