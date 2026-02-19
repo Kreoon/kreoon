@@ -721,51 +721,70 @@ async function fetchInstagramFullMetrics(
   }
   const accountInfo = await accountInfoRes.json();
 
-  // 2. Account insights — v19+ valid metrics:
-  //    reach, follower_count, website_clicks, profile_views, online_followers,
-  //    accounts_engaged, total_interactions, likes, comments
-  //    NOTE: "impressions" was REMOVED in v19+; use "reach" and "total_interactions" instead
+  // 2. Account insights — Instagram v19+ requires metric_type + period
+  //    Valid metrics with metric_type=total_value & period=day:
+  //      reach, accounts_engaged, total_interactions, likes, comments, follower_count
+  //    profile_views needs a SEPARATE call (incompatible with day period in some versions)
   let insights: Record<string, number> = {};
   let insightsError: string | null = null;
   try {
     const nowTs = Math.floor(Date.now() / 1000);
     const sinceTs = nowTs - 28 * 86400;
 
-    // metric_type=total_value with since/until (v19+ valid metrics only)
-    const validMetrics = "reach,profile_views,accounts_engaged,total_interactions,likes,comments,follower_count";
-    const insightsUrl = `${baseUrl}/${igUserId}/insights?metric=${validMetrics}&metric_type=total_value&since=${sinceTs}&until=${nowTs}&access_token=${token}`;
-    const insightsRes = await fetch(insightsUrl);
+    // Group 1: metrics with metric_type=total_value + period=day
+    // NOTE: follower_count is INCOMPATIBLE with total_value, needs time_series
+    const group1Metrics = "reach,accounts_engaged,total_interactions,likes,comments";
+    const group1Url = `${baseUrl}/${igUserId}/insights?metric=${group1Metrics}&metric_type=total_value&period=day&since=${sinceTs}&until=${nowTs}&access_token=${token}`;
+    const group1Res = await fetch(group1Url);
 
-    if (insightsRes.ok) {
-      const insightsData = await insightsRes.json();
-      if (insightsData.data) {
-        for (const item of insightsData.data) {
+    if (group1Res.ok) {
+      const group1Data = await group1Res.json();
+      for (const item of (group1Data.data || [])) {
+        const val = item.total_value?.value ?? item.values?.[0]?.value ?? 0;
+        insights[item.name] = typeof val === "number" ? val : 0;
+      }
+    } else {
+      const errText = await group1Res.text();
+      insightsError = `group1(${group1Res.status}): ${errText.substring(0, 300)}`;
+    }
+
+    // Group 2: profile_views (total_value + period=day)
+    try {
+      const pvUrl = `${baseUrl}/${igUserId}/insights?metric=profile_views&metric_type=total_value&period=day&since=${sinceTs}&until=${nowTs}&access_token=${token}`;
+      const pvRes = await fetch(pvUrl);
+      if (pvRes.ok) {
+        const pvData = await pvRes.json();
+        for (const item of (pvData.data || [])) {
           const val = item.total_value?.value ?? item.values?.[0]?.value ?? 0;
           insights[item.name] = typeof val === "number" ? val : 0;
         }
-      }
-    } else {
-      const errText = await insightsRes.text();
-      insightsError = `total_value(${insightsRes.status}): ${errText.substring(0, 300)}`;
-
-      // Fallback: period=day with fewer metrics
-      const fallbackUrl = `${baseUrl}/${igUserId}/insights?metric=reach,profile_views&period=day&since=${sinceTs}&until=${nowTs}&access_token=${token}`;
-      const fbRes = await fetch(fallbackUrl);
-      if (fbRes.ok) {
-        const fbData = await fbRes.json();
-        insightsError = null;
-        if (fbData.data) {
-          for (const item of fbData.data) {
-            const total = (item.values || []).reduce(
-              (s: number, v: any) => s + (typeof v.value === "number" ? v.value : 0), 0
-            );
-            insights[item.name] = total;
-          }
-        }
       } else {
-        const fbErr = await fbRes.text();
-        insightsError += ` | day(${fbRes.status}): ${fbErr.substring(0, 200)}`;
+        const pvErr = await pvRes.text();
+        insightsError = insightsError
+          ? `${insightsError} | profile_views(${pvRes.status}): ${pvErr.substring(0, 200)}`
+          : `profile_views(${pvRes.status}): ${pvErr.substring(0, 200)}`;
       }
+    } catch {
+      // Non-critical
+    }
+
+    // Group 3: follower_count — needs metric_type=time_series (sum daily gains)
+    try {
+      const fcUrl = `${baseUrl}/${igUserId}/insights?metric=follower_count&metric_type=time_series&period=day&since=${sinceTs}&until=${nowTs}&access_token=${token}`;
+      const fcRes = await fetch(fcUrl);
+      if (fcRes.ok) {
+        const fcData = await fcRes.json();
+        const fcItem = (fcData.data || [])[0];
+        if (fcItem?.values) {
+          // Sum daily follower gains over the period
+          const totalGain = fcItem.values.reduce(
+            (s: number, v: { value: number }) => s + (v.value ?? 0), 0
+          );
+          insights["follower_count_gained"] = totalGain;
+        }
+      }
+    } catch {
+      // Non-critical
     }
   } catch (e) {
     insightsError = `exception: ${(e as Error).message}`;
@@ -904,19 +923,19 @@ async function fetchInstagramFullMetrics(
     profile_picture_url: accountInfo.profile_picture_url,
     username: accountInfo.username,
     biography: accountInfo.biography,
-    // "impressions" was removed in v19+ — use media-level sum as primary source
-    impressions: totalMediaImpressions || insights["total_interactions"] || 0,
+    // "impressions" removed in v19+ — total_interactions is closest equivalent
+    impressions: insights["total_interactions"] || totalMediaImpressions || 0,
     reach: insights["reach"] || totalMediaReach,
     profile_views: insights["profile_views"] ?? 0,
     accounts_engaged: insights["accounts_engaged"] ?? 0,
-    // Use account-level likes/comments from insights if media-level totals are 0
-    total_likes: totalLikes || insights["likes"] || 0,
-    total_comments: totalComments || insights["comments"] || 0,
+    // Prefer account-level insights; fall back to media-level sums
+    total_likes: insights["likes"] || totalLikes || 0,
+    total_comments: insights["comments"] || totalComments || 0,
     total_shares: totalShares,
     total_saves: totalSaves,
     video_views: totalVideoViews,
-    followers_gained: 0,
-    followers_lost: 0,
+    followers_gained: insights["follower_count_gained"] ?? 0,
+    followers_lost: 0, // computed from snapshot delta
     audience_demographics: demographics,
     recent_media: recentMedia,
     raw_data: {
@@ -951,22 +970,21 @@ async function fetchFacebookFullMetrics(
   }
   const pageInfo = await pageInfoRes.json();
 
-  // 2. Page insights — try metric groups individually for resilience
+  // 2. Page insights — New Pages Experience deprecated most page-level metrics.
+  //    Only page_views_total and page_video_views still work reliably.
+  //    For impressions/reach/engagement, we aggregate from per-post insights below.
   let insights: Record<string, number> = {};
   let fbInsightsError: string | null = null;
   const nowTs = Math.floor(Date.now() / 1000);
   const sinceTs = nowTs - 28 * 86400;
 
-  // Try metric groups separately so one failing group doesn't kill all insights
-  const metricGroups = [
-    ["page_impressions", "page_impressions_unique"],
-    ["page_engaged_users", "page_post_engagements"],
+  // Only fetch metrics that still work on New Pages Experience
+  const workingMetricGroups = [
     ["page_views_total"],
-    ["page_fan_adds", "page_fan_removes"],
     ["page_video_views"],
   ];
 
-  for (const group of metricGroups) {
+  for (const group of workingMetricGroups) {
     try {
       const url = `${baseUrl}/${pageId}/insights?metric=${group.join(",")}&period=day&since=${sinceTs}&until=${nowTs}&access_token=${token}`;
       const res = await fetch(url);
@@ -1007,21 +1025,8 @@ async function fetchFacebookFullMetrics(
         totalComments += comments;
         totalShares += shares;
 
-        // Try post insights
-        let postImpressions = 0, postReach = 0;
-        try {
-          const piRes = await fetch(
-            `${baseUrl}/${post.id}/insights?metric=post_impressions,post_reach&access_token=${token}`
-          );
-          if (piRes.ok) {
-            const piData = await piRes.json();
-            for (const pi of piData.data || []) {
-              const v = pi.values?.[0]?.value ?? 0;
-              if (pi.name === "post_impressions") postImpressions = v;
-              if (pi.name === "post_reach") postReach = v;
-            }
-          }
-        } catch { /* non-critical */ }
+        // NOTE: post_impressions/post_reach are deprecated for New Pages Experience.
+        // We only have likes/comments/shares from the post fields.
 
         recentMedia.push({
           id: post.id,
@@ -1033,8 +1038,8 @@ async function fetchFacebookFullMetrics(
           timestamp: post.created_time || new Date().toISOString(),
           likes,
           comments,
-          impressions: postImpressions,
-          reach: postReach,
+          impressions: 0, // unavailable for New Pages Experience
+          reach: 0,       // unavailable for New Pages Experience
           shares,
           saves: 0,
           video_views: 0,
@@ -1048,9 +1053,11 @@ async function fetchFacebookFullMetrics(
 
   const followersCount = pageInfo.followers_count ?? pageInfo.fan_count ?? 0;
 
-  // Fallback: sum from per-post insights if page-level insights failed
+  // New Pages Experience: page-level impressions/reach are deprecated.
+  // Use per-post insights aggregation as primary source.
   const postImprTotal = recentMedia.reduce((s, m) => s + m.impressions, 0);
   const postReachTotal = recentMedia.reduce((s, m) => s + m.reach, 0);
+  const totalEngagement = totalLikes + totalComments + totalShares;
 
   return {
     followers_count: followersCount,
@@ -1059,17 +1066,17 @@ async function fetchFacebookFullMetrics(
     profile_picture_url: pageInfo.picture?.data?.url,
     username: pageInfo.name,
     biography: undefined,
-    impressions: insights["page_impressions"] || postImprTotal,
-    reach: insights["page_impressions_unique"] || postReachTotal,
+    impressions: postImprTotal,
+    reach: postReachTotal,
     profile_views: insights["page_views_total"] ?? 0,
-    accounts_engaged: insights["page_engaged_users"] ?? 0,
+    accounts_engaged: totalEngagement, // derived from post engagement
     total_likes: totalLikes,
     total_comments: totalComments,
     total_shares: totalShares,
     total_saves: 0,
     video_views: insights["page_video_views"] ?? 0,
-    followers_gained: insights["page_fan_adds"] ?? 0,
-    followers_lost: insights["page_fan_removes"] ?? 0,
+    followers_gained: 0, // computed from snapshot delta
+    followers_lost: 0,   // computed from snapshot delta
     audience_demographics: {},
     recent_media: recentMedia,
     raw_data: {
