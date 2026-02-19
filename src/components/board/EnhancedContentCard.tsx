@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -20,6 +20,7 @@ import {
   CheckCircle,
   XCircle,
   GripVertical,
+  Share2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -44,7 +45,14 @@ import { StatusChangeDropdown, QuickStatusButtons } from "./StatusChangeDropdown
 import { KanbanCardVideoPreview, shouldShowVideoArea } from "./KanbanCardVideoPreview";
 import { UserAssignmentSection } from "./UserAssignmentSection";
 import { TECH_COLORS, getStatusNeonStyle } from "./kanbanTechStyles";
+import { QuickShareButton } from "@/modules/social/components/Dashboard/QuickShareButton";
+import { PostComposer } from "@/modules/social/components/Composer/PostComposer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PromoteContentDialog } from "@/modules/marketing/components/Promote/PromoteContentDialog";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { motion } from "framer-motion";
+import type { ContentSocialStatus } from "@/modules/social/hooks/useContentSocialStatus";
 
 const SPHERE_PHASE_DISPLAY: Record<
   string,
@@ -86,6 +94,8 @@ interface EnhancedContentCardProps {
   onAssignCreator?: (contentId: string, userId: string) => Promise<void>;
   onAssignEditor?: (contentId: string, userId: string) => Promise<void>;
   onUpdate?: () => void;
+  /** Social publishing status for this content */
+  socialStatus?: ContentSocialStatus;
 }
 
 const SIZE_CONFIG = {
@@ -148,8 +158,11 @@ export function EnhancedContentCard({
   onAssignCreator,
   onAssignEditor,
   onUpdate,
+  socialStatus,
 }: EnhancedContentCardProps) {
   const sizeConfig = SIZE_CONFIG[cardSize] || SIZE_CONFIG.normal;
+  const { toast } = useToast();
+  const [showShareDialog, setShowShareDialog] = useState(false);
 
   const currentStatusConfig = useMemo(
     () => organizationStatuses.find((s) => s.status_key === content.status),
@@ -224,6 +237,27 @@ export function EnhancedContentCard({
     onShowMarketingInfo?.(content);
   };
 
+  // Wrap onStatusChange to show share prompt when content is approved
+  const handleStatusChange = useCallback(async (contentId: string, newStatus: ContentStatus) => {
+    if (!onStatusChange) return;
+    await onStatusChange(contentId, newStatus);
+    if (newStatus === 'approved') {
+      toast({
+        title: "Contenido aprobado",
+        description: "Puedes compartirlo en redes sociales",
+        action: (
+          <ToastAction altText="Compartir en redes" onClick={() => setShowShareDialog(true)}>
+            <Share2 className="h-3.5 w-3.5 mr-1" />
+            Compartir
+          </ToastAction>
+        ),
+        duration: 8000,
+      });
+    }
+  }, [onStatusChange, toast]);
+
+  const isShareableStatus = ['approved', 'review', 'paid'].includes(content.status);
+
   const marketingIndicator = (() => {
     if (content.marketing_approved_at)
       return { icon: CheckCircle, color: "#4ade80", label: "Aprobado MKT" };
@@ -267,11 +301,30 @@ export function EnhancedContentCard({
           onClick?.();
         }}
       >
-        {/* Drag handle */}
+        {/* Drag handle + Social share button */}
         <div
           data-no-click
-          className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
         >
+          {isShareableStatus && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  data-no-click
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 rounded-lg bg-[#8b5cf6]/20 hover:bg-[#8b5cf6]/40 text-[#a78bfa] hover:text-white border border-[#8b5cf6]/30"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowShareDialog(true);
+                  }}
+                >
+                  <Share2 className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Compartir en redes sociales</TooltipContent>
+            </Tooltip>
+          )}
           <GripVertical className="h-4 w-4 text-[#cbd5e1]" />
         </div>
 
@@ -328,6 +381,35 @@ export function EnhancedContentCard({
                   Analizar con IA
                 </DropdownMenuItem>
               )}
+              <DropdownMenuSeparator className="bg-white/10" />
+              <DropdownMenuItem asChild className="gap-2 text-[#f8fafc] focus:bg-white/10 p-0">
+                <QuickShareButton
+                  contentId={content.id}
+                  title={content.title || ""}
+                  videoUrl={primaryVideoUrl}
+                  thumbnailUrl={content.thumbnail_url}
+                  caption={content.title || ""}
+                  variant="button"
+                  className="w-full justify-start gap-2 px-2 py-1.5 h-auto font-normal text-sm border-0 hover:bg-white/10"
+                />
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="gap-2 text-[#f8fafc] focus:bg-white/10 p-0">
+                <PromoteContentDialog
+                  content={{
+                    contentId: content.id,
+                    title: content.title || "",
+                    videoUrl: content.video_url || (content as any).bunny_embed_url || null,
+                    thumbnailUrl: content.thumbnail_url || null,
+                    description: content.title || "",
+                  }}
+                  trigger={
+                    <button className="w-full flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-white/10 rounded-sm">
+                      <Megaphone className="h-4 w-4 text-[#22d3ee]" />
+                      Pautar contenido
+                    </button>
+                  }
+                />
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )}
@@ -378,7 +460,7 @@ export function EnhancedContentCard({
                   isAssignedCreator={isAssignedCreator}
                   isAssignedEditor={isAssignedEditor}
                   isAssignedStrategist={isAssignedStrategist}
-                  onStatusChange={onStatusChange}
+                  onStatusChange={handleStatusChange}
                   size={cardSize === "compact" ? "sm" : "default"}
                 />
               ) : (
@@ -477,6 +559,21 @@ export function EnhancedContentCard({
             </div>
           )}
           <div className={cn("flex items-center ml-auto", sizeConfig.spacing)}>
+            {socialStatus && socialStatus.count > 0 && (
+              <Tooltip>
+                <TooltipTrigger>
+                  <span className="flex items-center gap-0.5">
+                    <Share2 className={cn(sizeConfig.iconSize, socialStatus.hasPublished ? "text-emerald-400" : "text-[#8b5cf6]")} />
+                    <span className="text-[10px] font-medium text-[#cbd5e1]">{socialStatus.count}</span>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {socialStatus.count} publicaci{socialStatus.count === 1 ? 'ón' : 'ones'} social{socialStatus.count === 1 ? '' : 'es'}
+                  {socialStatus.hasPublished && ' (publicado)'}
+                  {socialStatus.hasScheduled && !socialStatus.hasPublished && ' (programado)'}
+                </TooltipContent>
+              </Tooltip>
+            )}
             {hasRawVideo && (
               <Tooltip>
                 <TooltipTrigger>
@@ -534,11 +631,31 @@ export function EnhancedContentCard({
               userRole={userRole}
               isAssignedCreator={isAssignedCreator}
               isAssignedEditor={isAssignedEditor}
-              onStatusChange={onStatusChange}
+              onStatusChange={handleStatusChange}
             />
           </div>
         )}
       </motion.div>
+
+      {/* Standalone Share Dialog (triggered by share button or approval toast) */}
+      <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <DialogHeader>
+            <DialogTitle>Compartir en Redes Sociales</DialogTitle>
+          </DialogHeader>
+          <PostComposer
+            initialData={{
+              contentId: content.id,
+              title: content.title || "",
+              videoUrl: primaryVideoUrl,
+              thumbnailUrl: content.thumbnail_url || null,
+              caption: content.title || "",
+            }}
+            onSuccess={() => setShowShareDialog(false)}
+            onClose={() => setShowShareDialog(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

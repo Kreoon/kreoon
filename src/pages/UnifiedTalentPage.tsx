@@ -172,7 +172,7 @@ const UnifiedTalentPage = () => {
   if (!currentOrgId) {
     return (
       <div className="min-h-screen p-4 md:p-6">
-        <PageHeader icon={Sword} title="Talento" subtitle="Gesti\u00f3n de equipo interno y talento externo" />
+        <PageHeader icon={Sword} title="Talento" subtitle="Gestion de equipo interno y talento externo" />
         <div className="text-center py-16">
           <p className="text-sm text-muted-foreground">Selecciona una organizaci\u00f3n</p>
         </div>
@@ -186,7 +186,7 @@ const UnifiedTalentPage = () => {
         <PageHeader
           icon={Sword}
           title="Talento"
-          subtitle="Gesti\u00f3n de equipo interno y talento externo"
+          subtitle="Gestion de equipo interno y talento externo"
           action={
             isAdmin ? (
               <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>

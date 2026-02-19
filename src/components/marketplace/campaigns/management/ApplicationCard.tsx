@@ -1,4 +1,4 @@
-import { Star, MapPin, CheckCircle2, XCircle, ExternalLink, Gavel, ArrowLeftRight, DollarSign, FolderOpen } from 'lucide-react';
+import { Star, MapPin, CheckCircle2, XCircle, ExternalLink, Gavel, ArrowLeftRight, DollarSign, FolderOpen, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { APPLICATION_STATUS_COLORS, APPLICATION_STATUS_LABELS } from '@/hooks/useMarketplaceCampaigns';
 import type { CampaignApplication, CampaignPricingMode } from '../../types/marketplace';
@@ -100,6 +100,12 @@ export function ApplicationCard({ application, onApprove, onReject, showActions,
             </p>
           </div>
         )}
+        {application.agreed_price != null && application.agreed_price > 0 && (
+          <div>
+            <span className="text-gray-500 text-xs">Precio acordado</span>
+            <p className="text-green-300 font-medium">${application.agreed_price.toLocaleString()}</p>
+          </div>
+        )}
         <div>
           <span className="text-gray-500 text-xs">Disponible desde</span>
           <p className="text-white font-medium">{new Date(application.availability_date).toLocaleDateString('es-CO', { month: 'short', day: 'numeric' })}</p>
@@ -108,6 +114,21 @@ export function ApplicationCard({ application, onApprove, onReject, showActions,
           <span className="text-gray-500 text-xs">Proyectos completados</span>
           <p className="text-white font-medium">{creator.completed_projects}</p>
         </div>
+        {application.payment_status && application.payment_status !== 'unpaid' && (
+          <div>
+            <span className="text-gray-500 text-xs flex items-center gap-1"><CreditCard className="h-3 w-3" />Pago</span>
+            <p className={cn('font-medium text-xs', {
+              'text-blue-300': application.payment_status === 'in_escrow',
+              'text-green-300': application.payment_status === 'released',
+              'text-red-300': application.payment_status === 'refunded',
+            })}>
+              {application.payment_status === 'in_escrow' ? 'En escrow' :
+               application.payment_status === 'released' ? 'Liberado' :
+               application.payment_status === 'refunded' ? 'Reembolsado' :
+               application.payment_status}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Counter offer section */}

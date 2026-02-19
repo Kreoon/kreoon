@@ -117,6 +117,13 @@ const ORG_BADGE_CONFIG: Record<string, { label: string; icon: React.ComponentTyp
   top_performer: { label: 'Top Performer', icon: TrendingUp, color: 'from-emerald-500 to-green-500' },
 };
 
+function mapLevel(newLevel: string): string {
+  const MAP: Record<string, string> = {
+    Novato: 'bronze', Pro: 'silver', Elite: 'gold', Master: 'diamond', Legend: 'diamond'
+  };
+  return MAP[newLevel] || 'bronze';
+}
+
 export function UnifiedBadgesShowcase({ 
   userId, 
   variant = 'full',
@@ -152,25 +159,18 @@ export function UnifiedBadgesShowcase({
           setOrgBadges(orgBadgesData);
         }
 
-        // Fetch UP stats from V2 tables
+        // Fetch UP stats from reputation totals table
         const { data: upData } = await supabase
-          .from('up_creadores')
-          .select('points')
-          .eq('user_id', userId);
-
-        // Calculate total UP points
-        const totalPoints = (upData || []).reduce((sum: number, r: any) => sum + (r.points || 0), 0);
-        
-        const getLevel = (points: number): string => {
-          if (points >= 5000) return 'diamond';
-          if (points >= 2000) return 'gold';
-          if (points >= 500) return 'silver';
-          return 'bronze';
-        };
+          .from('user_reputation_totals' as any)
+          .select('lifetime_points, current_level')
+          .eq('user_id', userId)
+          .order('lifetime_points', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
         setUpStats({
-          total_points: totalPoints,
-          current_level: getLevel(totalPoints)
+          total_points: upData?.lifetime_points || 0,
+          current_level: mapLevel(upData?.current_level || 'Novato'),
         });
       } catch (error) {
         console.error('Error fetching extra badge data:', error);

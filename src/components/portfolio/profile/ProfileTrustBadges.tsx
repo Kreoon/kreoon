@@ -132,9 +132,11 @@ export function ProfileTrustBadges({ userId, compact = false }: ProfileTrustBadg
         // Fetch from V2 tables and user_achievements
         const [creatorTotalsRes, achievementsRes, badgesRes] = await Promise.all([
           supabase
-            .from('up_creadores_totals')
-            .select('total_points, current_level, total_deliveries, on_time_deliveries')
+            .from('user_reputation_totals' as any)
+            .select('lifetime_points, current_level, lifetime_tasks, on_time_rate')
             .eq('user_id', userId)
+            .order('lifetime_points', { ascending: false })
+            .limit(1)
             .maybeSingle(),
           supabase
             .from('user_achievements')
@@ -150,13 +152,14 @@ export function ProfileTrustBadges({ userId, compact = false }: ProfileTrustBadg
         ]);
 
         if (creatorTotalsRes.data) {
-          // Map V2 data to the UserPoints interface
+          const d = creatorTotalsRes.data;
+          const levelMap: Record<string, string> = { Novato: 'bronze', Pro: 'silver', Elite: 'gold', Master: 'diamond', Legend: 'diamond' };
           setUserPoints({
-            total_points: creatorTotalsRes.data.total_points || 0,
-            current_level: creatorTotalsRes.data.current_level || 'bronze',
-            total_completions: creatorTotalsRes.data.total_deliveries || 0,
-            total_on_time: creatorTotalsRes.data.on_time_deliveries || 0,
-            consecutive_on_time: 0 // Not tracked in V2 totals
+            total_points: d.lifetime_points || 0,
+            current_level: levelMap[d.current_level] || 'bronze',
+            total_completions: d.lifetime_tasks || 0,
+            total_on_time: Math.round((d.on_time_rate || 0) * (d.lifetime_tasks || 0)),
+            consecutive_on_time: 0
           });
         }
         if (achievementsRes.data && achievementsRes.data.length > 0) {

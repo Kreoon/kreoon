@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ArrowLeft, Users, Calendar, DollarSign, Gift, Layers, Megaphone, Gavel, ArrowUpDown, Loader2, Radio, UserSearch } from 'lucide-react';
+import { Plus, ArrowLeft, Users, Calendar, DollarSign, Gift, Layers, Megaphone, Gavel, ArrowUpDown, Loader2, Radio, UserSearch, Shield, Briefcase, CreditCard, Star, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 import { useMarketplaceCampaigns, CAMPAIGN_STATUS_COLORS, CAMPAIGN_STATUS_LABELS } from '@/hooks/useMarketplaceCampaigns';
 import { CampaignApplicationsReview } from './CampaignApplicationsReview';
 import { CampaignProgress } from './CampaignProgress';
 import { BrandPublicationReview } from '../activation/BrandPublicationReview';
+import { SuggestedCreators } from '../SuggestedCreators';
 import type { Campaign, CampaignStatus } from '../../types/marketplace';
 
 type TabFilter = 'all' | 'active' | 'draft' | 'in_progress' | 'completed';
@@ -28,9 +30,19 @@ export function BrandCampaignManager() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabFilter>('all');
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'applications' | 'progress' | 'activations'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'applications' | 'progress' | 'activations' | 'smart_match'>('list');
 
-  const { campaigns, loading } = useMarketplaceCampaigns();
+  const { toast } = useToast();
+  const { campaigns, loading, activateCampaign } = useMarketplaceCampaigns();
+
+  const handleActivate = async (campaignId: string) => {
+    const result = await activateCampaign(campaignId);
+    if (result?.success) {
+      toast({ title: 'Campana activada exitosamente' });
+    } else {
+      toast({ title: result?.error || 'Error al activar la campana', variant: 'destructive' });
+    }
+  };
 
   const filtered = useMemo(() => {
     if (activeTab === 'all') return campaigns;
@@ -75,6 +87,27 @@ export function BrandCampaignManager() {
             campaignId={selectedCampaignId}
             onBack={() => { setViewMode('list'); setSelectedCampaignId(null); }}
           />
+        </div>
+      </div>
+    );
+  }
+
+  if (viewMode === 'smart_match' && selectedCampaignId) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="max-w-4xl mx-auto px-4 md:px-6 py-6">
+          <button
+            onClick={() => { setViewMode('list'); setSelectedCampaignId(null); }}
+            className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm mb-6 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Volver a mis campanas
+          </button>
+          <h2 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
+            <Star className="h-5 w-5 text-amber-400" />
+            Creadores Sugeridos
+          </h2>
+          <SuggestedCreators campaignId={selectedCampaignId} limit={20} />
         </div>
       </div>
     );
@@ -142,7 +175,9 @@ export function BrandCampaignManager() {
                 onViewApplications={() => { setSelectedCampaignId(campaign.id); setViewMode('applications'); }}
                 onViewProgress={() => { setSelectedCampaignId(campaign.id); setViewMode('progress'); }}
                 onViewActivations={() => { setSelectedCampaignId(campaign.id); setViewMode('activations'); }}
+                onViewSmartMatch={() => { setSelectedCampaignId(campaign.id); setViewMode('smart_match'); }}
                 onViewDetail={() => navigate(`/marketplace/campaigns/${campaign.id}`)}
+                onActivate={() => handleActivate(campaign.id)}
               />
             ))}
           </div>
@@ -171,13 +206,17 @@ function CampaignRow({
   onViewApplications,
   onViewProgress,
   onViewActivations,
+  onViewSmartMatch,
   onViewDetail,
+  onActivate,
 }: {
   campaign: Campaign;
   onViewApplications: () => void;
   onViewProgress: () => void;
   onViewActivations: () => void;
+  onViewSmartMatch: () => void;
   onViewDetail: () => void;
+  onActivate: () => void;
 }) {
   const TypeIcon = TYPE_ICONS[campaign.campaign_type];
   const pricingMode = campaign.pricing_mode ?? 'fixed';
@@ -225,7 +264,7 @@ function CampaignRow({
               </span>
             )}
           </div>
-          <div className="flex items-center gap-4 text-xs text-gray-500">
+          <div className="flex items-center gap-4 text-xs text-gray-500 flex-wrap">
             <span className="flex items-center gap-1">
               <TypeIcon className="h-3.5 w-3.5" />
               {budgetText}
@@ -238,6 +277,33 @@ function CampaignRow({
               <Calendar className="h-3.5 w-3.5" />
               {new Date(campaign.deadline).toLocaleDateString('es-CO', { month: 'short', day: 'numeric' })}
             </span>
+            {campaign.commission_rate != null && (
+              <span className="flex items-center gap-1">
+                <Shield className="h-3.5 w-3.5" />
+                {campaign.commission_rate}% comision
+              </span>
+            )}
+            {campaign.requires_agency_support && (
+              <span className="flex items-center gap-1 text-amber-400">
+                <Briefcase className="h-3.5 w-3.5" />
+                Agency
+              </span>
+            )}
+            {campaign.payment_status && campaign.payment_status !== 'unpaid' && (
+              <span className={cn('flex items-center gap-1', {
+                'text-yellow-400': campaign.payment_status === 'pending_payment',
+                'text-blue-400': campaign.payment_status === 'in_escrow',
+                'text-green-400': campaign.payment_status === 'fully_released',
+                'text-orange-400': campaign.payment_status === 'partially_released',
+              })}>
+                <CreditCard className="h-3.5 w-3.5" />
+                {campaign.payment_status === 'in_escrow' ? 'En escrow' :
+                 campaign.payment_status === 'pending_payment' ? 'Pendiente pago' :
+                 campaign.payment_status === 'fully_released' ? 'Pagado' :
+                 campaign.payment_status === 'partially_released' ? 'Pago parcial' :
+                 campaign.payment_status}
+              </span>
+            )}
           </div>
           {/* Progress bar */}
           <div className="mt-2 flex items-center gap-2">
@@ -252,11 +318,26 @@ function CampaignRow({
         </div>
 
         <div className="flex gap-2 flex-shrink-0">
+          {campaign.status === 'draft' && (
+            <button
+              onClick={onActivate}
+              className="text-xs bg-green-600/20 hover:bg-green-600/30 text-green-300 px-3 py-2 rounded-lg transition-colors font-medium"
+            >
+              Activar
+            </button>
+          )}
           <button
             onClick={onViewApplications}
             className="text-xs bg-white/5 hover:bg-white/10 text-foreground/80 px-3 py-2 rounded-lg transition-colors"
           >
             Aplicaciones
+          </button>
+          <button
+            onClick={onViewSmartMatch}
+            className="text-xs bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 px-3 py-2 rounded-lg transition-colors flex items-center gap-1"
+          >
+            <Star className="h-3 w-3" />
+            Match
           </button>
           <button
             onClick={onViewProgress}

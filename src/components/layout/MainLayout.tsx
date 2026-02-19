@@ -275,7 +275,7 @@ export function MainLayout({
       {/* Trial Banner - Shows when billing is enabled and trial is expiring/expired */}
       <TrialBanner 
         organizationId={profile?.current_organization_id || null} 
-        onUpgrade={() => navigate('/settings?section=planes-org')}
+        onUpgrade={() => navigate('/planes')}
       />
       
       {/* Desktop Sidebar */}

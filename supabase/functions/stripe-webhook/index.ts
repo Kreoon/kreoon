@@ -643,7 +643,9 @@ async function processReferralSubscriptionCommission(supabase: any, wallet: any,
     return;
   }
 
-  const commissionAmount = subscription.current_price * referral.subscription_rate;
+  // Use tier-based subscription_rate (kept in sync by DB trigger update_user_referral_tier)
+  const rate = referral.subscription_rate || 0.20;
+  const commissionAmount = subscription.current_price * rate;
   if (commissionAmount <= 0) return;
 
   // Registrar ganancia con source_id que incluye periodo

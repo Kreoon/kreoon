@@ -49,6 +49,7 @@ import { useBoardPersistence } from "@/hooks/useBoardPersistence";
 import { useOrgAssignableUsers } from "@/hooks/useOrgAssignableUsers";
 import { AutoSaveIndicator } from "@/components/ui/autosave-indicator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useContentSocialStatus } from "@/modules/social/hooks/useContentSocialStatus";
 
 // Helper types for movement rules
 interface StatusRule {
@@ -404,6 +405,10 @@ export default function ContentBoard() {
     };
     fetchClientProducts();
   }, [showAdminControls, currentOrgId, orgLoading]);
+
+  // Batch-fetch social publishing status for all content
+  const allContentIds = useMemo(() => content.map(c => c.id), [content]);
+  const { data: socialStatusMap } = useContentSocialStatus(allContentIds);
 
   // Extract unique campaign weeks from content
   const campaignWeeks = useMemo(() => {
@@ -1010,6 +1015,7 @@ export default function ContentBoard() {
                               onAssignCreator={showAdminControls || primaryRole === "strategist" || primaryRole === "team_leader" ? handleAssignCreator : undefined}
                               onAssignEditor={showAdminControls || primaryRole === "strategist" || primaryRole === "team_leader" ? handleAssignEditor : undefined}
                               onUpdate={refetch}
+                              socialStatus={socialStatusMap?.get(item.id)}
                             />
                           ))}
                           {!isExpanded && hiddenCount > 0 && (

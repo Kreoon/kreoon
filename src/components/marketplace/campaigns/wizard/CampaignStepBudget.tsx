@@ -1,4 +1,4 @@
-import { DollarSign, Gift, Layers, Shield, Gavel, ArrowUpDown, Eye, EyeOff, Calendar } from 'lucide-react';
+import { DollarSign, Gift, Layers, Shield, Gavel, ArrowUpDown, Eye, EyeOff, Calendar, Briefcase } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { CampaignType, CampaignBudgetMode, CampaignPricingMode, BidVisibility } from '../../types/marketplace';
 
@@ -16,6 +16,7 @@ export interface CampaignBudgetData {
   max_bid: number;
   bid_deadline: string;
   bid_visibility: BidVisibility;
+  requires_agency_support: boolean;
 }
 
 interface CampaignStepBudgetProps {
@@ -38,17 +39,20 @@ const PRICING_OPTIONS: { value: CampaignPricingMode; label: string; description:
 
 import { COMMISSION_RATES } from '@/lib/finance/constants';
 
-const PLATFORM_FEE_PCT = COMMISSION_RATES.campaigns_managed.base;
-
 export function CampaignStepBudget({ data, onChange, contentCount }: CampaignStepBudgetProps) {
   const showPaymentFields = data.campaign_type === 'paid' || data.campaign_type === 'hybrid';
   const showExchangeFields = data.campaign_type === 'exchange' || data.campaign_type === 'hybrid';
+
+  // Dynamic commission: 30% self-service, 40% with agency support
+  const commissionPct = data.requires_agency_support
+    ? COMMISSION_RATES.campaigns_managed.max   // 40%
+    : COMMISSION_RATES.campaigns_managed.base;  // 30%
 
   // Financial summary
   const totalCreatorPayment = data.budget_mode === 'per_video'
     ? data.budget_per_video * contentCount * data.max_creators
     : data.total_budget;
-  const platformFee = Math.round(totalCreatorPayment * PLATFORM_FEE_PCT / 100);
+  const platformFee = Math.round(totalCreatorPayment * commissionPct / 100);
   const totalCost = totalCreatorPayment + platformFee;
 
   return (
@@ -56,6 +60,47 @@ export function CampaignStepBudget({ data, onChange, contentCount }: CampaignSte
       <div>
         <h2 className="text-lg font-bold text-white mb-1">Presupuesto y Compensacion</h2>
         <p className="text-gray-500 text-sm">Define como compensaras a los creadores</p>
+      </div>
+
+      {/* Agency support toggle */}
+      <div className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <Briefcase className="h-5 w-5 text-amber-400" />
+          <h3 className="text-white text-sm font-semibold">Tipo de Gestion</h3>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button
+            onClick={() => onChange('requires_agency_support', false)}
+            className={cn(
+              'text-left p-4 rounded-xl border transition-all',
+              !data.requires_agency_support
+                ? 'border-green-500/50 bg-green-500/10'
+                : 'border-white/10 bg-white/5 hover:border-white/20',
+            )}
+          >
+            <p className="text-white text-sm font-medium">Self-Service</p>
+            <p className="text-gray-500 text-xs mt-0.5">Tu gestionas la campana directamente</p>
+            <p className="text-green-400 text-xs mt-2 font-semibold">Comision: 30%</p>
+          </button>
+          <button
+            onClick={() => onChange('requires_agency_support', true)}
+            className={cn(
+              'text-left p-4 rounded-xl border transition-all',
+              data.requires_agency_support
+                ? 'border-amber-500/50 bg-amber-500/10'
+                : 'border-white/10 bg-white/5 hover:border-white/20',
+            )}
+          >
+            <p className="text-white text-sm font-medium">Con Kreoon Agency</p>
+            <p className="text-gray-500 text-xs mt-0.5">Estrategia, guiones y acompanamiento completo</p>
+            <p className="text-amber-400 text-xs mt-2 font-semibold">Comision: 40%</p>
+          </button>
+        </div>
+        {data.requires_agency_support && (
+          <p className="text-amber-400/80 text-xs bg-amber-500/5 rounded-lg px-3 py-2">
+            Kreoon Agency te acompana con estrategia, guiones, revision y todo el proceso hasta la entrega final.
+          </p>
+        )}
       </div>
 
       {/* Campaign type selection */}
@@ -167,7 +212,7 @@ export function CampaignStepBudget({ data, onChange, contentCount }: CampaignSte
                 <span className="text-white">${totalCreatorPayment.toLocaleString()} COP</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400 flex items-center gap-1"><Shield className="h-3 w-3" />Comision Kreoon ({PLATFORM_FEE_PCT}%)</span>
+                <span className="text-gray-400 flex items-center gap-1"><Shield className="h-3 w-3" />Comision Kreoon ({commissionPct}%)</span>
                 <span className="text-gray-400">${platformFee.toLocaleString()} COP</span>
               </div>
               <div className="flex justify-between text-sm pt-2 border-t border-white/5">
@@ -273,13 +318,13 @@ export function CampaignStepBudget({ data, onChange, contentCount }: CampaignSte
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Costo min estimado</span>
-                <span className="text-foreground/80">${Math.round(data.min_bid * contentCount * data.max_creators * (1 + PLATFORM_FEE_PCT / 100)).toLocaleString()} COP</span>
+                <span className="text-foreground/80">${Math.round(data.min_bid * contentCount * data.max_creators * (1 + commissionPct / 100)).toLocaleString()} COP</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Costo max estimado</span>
-                <span className="text-purple-300 font-bold">${Math.round(data.max_bid * contentCount * data.max_creators * (1 + PLATFORM_FEE_PCT / 100)).toLocaleString()} COP</span>
+                <span className="text-purple-300 font-bold">${Math.round(data.max_bid * contentCount * data.max_creators * (1 + commissionPct / 100)).toLocaleString()} COP</span>
               </div>
-              <p className="text-gray-600 text-xs">Incluye {PLATFORM_FEE_PCT}% comision | {contentCount} videos x {data.max_creators} creadores</p>
+              <p className="text-gray-600 text-xs">Incluye {commissionPct}% comision | {contentCount} videos x {data.max_creators} creadores</p>
             </div>
           )}
         </div>

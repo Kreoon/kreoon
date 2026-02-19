@@ -9,6 +9,11 @@ import type {
   CampaignPricingMode,
   CampaignVisibility,
   MarketplaceCreator,
+  CampaignTemplate,
+  CaseStudy,
+  BrandCredit,
+  BrandCreditTransaction,
+  SmartMatchResult,
 } from '@/components/marketplace/types/marketplace';
 
 // ── Media types (campaign_media_type enum from migration) ─────────────
@@ -203,6 +208,14 @@ function mapCampaignRow(row: any, brandName?: string, brandLogo?: string | null,
     // Content
     content_guidelines: row.content_guidelines || undefined,
     reference_urls: row.reference_urls || [],
+    // Payment & Commission
+    requires_agency_support: row.requires_agency_support || false,
+    commission_rate: row.commission_rate != null ? Number(row.commission_rate) : 30,
+    payment_status: row.payment_status || 'unpaid',
+    escrow_hold_id: row.escrow_hold_id || undefined,
+    total_paid: row.total_paid != null ? Number(row.total_paid) : 0,
+    activated_at: row.activated_at || undefined,
+    completed_at: row.completed_at || undefined,
   };
 }
 
@@ -770,6 +783,75 @@ export function useMarketplaceCampaigns(options: UseMarketplaceCampaignsOptions 
     [],
   );
 
+  // ── Campaign activation (payment + escrow) ─────────────────────
+
+  /**
+   * Activate a campaign: creates escrow hold for the budget, sets status to active.
+   * Commission: 30% self-service, 40% with Kreoon Agency support.
+   */
+  const activateCampaign = useCallback(async (
+    campaignId: string,
+    paymentIntentId?: string,
+  ): Promise<{ success: boolean; escrow_hold_id?: string; error?: string }> => {
+    try {
+      const { data, error: err } = await supabase.rpc('activate_campaign', {
+        p_campaign_id: campaignId,
+        p_payment_intent_id: paymentIntentId || null,
+      });
+      if (err) throw err;
+      const result = data as any;
+      if (result?.success) await fetchCampaigns();
+      return result || { success: false, error: 'No response' };
+    } catch (err: any) {
+      console.error('[useMarketplaceCampaigns] Activate error:', err);
+      return { success: false, error: err.message };
+    }
+  }, [fetchCampaigns]);
+
+  /**
+   * Approve an application: creates a project, assigns the creator.
+   */
+  const approveApplication = useCallback(async (
+    applicationId: string,
+    agreedPrice?: number,
+  ): Promise<{ success: boolean; project_id?: string; error?: string }> => {
+    try {
+      const { data, error: err } = await supabase.rpc('approve_campaign_application', {
+        p_application_id: applicationId,
+        p_agreed_price: agreedPrice || null,
+      });
+      if (err) throw err;
+      const result = data as any;
+      if (result?.success) await fetchCampaigns();
+      return result || { success: false, error: 'No response' };
+    } catch (err: any) {
+      console.error('[useMarketplaceCampaigns] Approve error:', err);
+      return { success: false, error: err.message };
+    }
+  }, [fetchCampaigns]);
+
+  /**
+   * Complete a delivery: marks application as completed, releases payment.
+   */
+  const completeDelivery = useCallback(async (
+    applicationId: string,
+    rating?: number,
+  ): Promise<{ success: boolean; creator_payout?: number; commission?: number; error?: string }> => {
+    try {
+      const { data, error: err } = await supabase.rpc('complete_campaign_delivery', {
+        p_application_id: applicationId,
+        p_rating: rating || null,
+      });
+      if (err) throw err;
+      const result = data as any;
+      if (result?.success) await fetchCampaigns();
+      return result || { success: false, error: 'No response' };
+    } catch (err: any) {
+      console.error('[useMarketplaceCampaigns] Complete delivery error:', err);
+      return { success: false, error: err.message };
+    }
+  }, [fetchCampaigns]);
+
   return {
     campaigns,
     loading,
@@ -792,5 +874,176 @@ export function useMarketplaceCampaigns(options: UseMarketplaceCampaignsOptions 
     checkCampaignAccess,
     // Notifications
     sendCampaignNotifications,
+    // Campaign activation & payment
+    activateCampaign,
+    approveApplication,
+    completeDelivery,
   };
+}
+
+// ── Campaign Templates hook ─────────────────────────────────────
+
+export function useCampaignTemplates() {
+  const [templates, setTemplates] = useState<CampaignTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data, error } = await (supabase as any)
+          .from('campaign_templates')
+          .select('*')
+          .eq('is_active', true)
+          .order('sort_order', { ascending: true });
+
+        if (error) throw error;
+        setTemplates((data || []).map((t: any) => ({
+          ...t,
+          default_content_types: Array.isArray(t.default_content_types) ? t.default_content_types : [],
+          default_platforms: Array.isArray(t.default_platforms) ? t.default_platforms : [],
+          default_deliverables: Array.isArray(t.default_deliverables) ? t.default_deliverables : [],
+        })));
+      } catch (err) {
+        console.error('[useCampaignTemplates] Error:', err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  return { templates, loading };
+}
+
+// ── Smart Match hook ────────────────────────────────────────────
+
+export function useSmartMatch(campaignId: string | null) {
+  const [results, setResults] = useState<SmartMatchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchMatch = useCallback(async (id: string) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('smart_match_creators', {
+        p_campaign_id: id,
+      });
+      if (error) throw error;
+      setResults((data || []) as SmartMatchResult[]);
+    } catch (err) {
+      console.error('[useSmartMatch] Error:', err);
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (campaignId) fetchMatch(campaignId);
+  }, [campaignId, fetchMatch]);
+
+  return { results, loading, refetch: () => campaignId && fetchMatch(campaignId) };
+}
+
+// ── Brand Credits hook ──────────────────────────────────────────
+
+export function useBrandCredits(brandId: string | null) {
+  const [credits, setCredits] = useState<BrandCredit | null>(null);
+  const [transactions, setTransactions] = useState<BrandCreditTransaction[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!brandId) { setLoading(false); return; }
+    (async () => {
+      try {
+        const [creditsRes, txRes] = await Promise.all([
+          (supabase as any)
+            .from('brand_credits')
+            .select('*')
+            .eq('brand_id', brandId)
+            .limit(1)
+            .maybeSingle(),
+          (supabase as any)
+            .from('brand_credit_transactions')
+            .select('*')
+            .eq('brand_id', brandId)
+            .order('created_at', { ascending: false })
+            .limit(50),
+        ]);
+        if (creditsRes.data) setCredits(creditsRes.data);
+        if (txRes.data) setTransactions(txRes.data);
+      } catch (err) {
+        console.error('[useBrandCredits] Error:', err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [brandId]);
+
+  return { credits, transactions, loading };
+}
+
+// ── Case Studies hook ───────────────────────────────────────────
+
+export function useCaseStudies(brandId?: string) {
+  const [caseStudies, setCaseStudies] = useState<CaseStudy[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchCaseStudies = useCallback(async () => {
+    setLoading(true);
+    try {
+      let query = (supabase as any)
+        .from('campaign_case_studies')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (brandId) {
+        query = query.eq('brand_id', brandId);
+      } else {
+        query = query.eq('is_published', true);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      setCaseStudies(data || []);
+    } catch (err) {
+      console.error('[useCaseStudies] Error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [brandId]);
+
+  useEffect(() => {
+    fetchCaseStudies();
+  }, [fetchCaseStudies]);
+
+  const publishCaseStudy = useCallback(async (id: string) => {
+    try {
+      const { error } = await (supabase as any)
+        .from('campaign_case_studies')
+        .update({ is_published: true, published_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+      await fetchCaseStudies();
+      return true;
+    } catch (err) {
+      console.error('[useCaseStudies] Publish error:', err);
+      return false;
+    }
+  }, [fetchCaseStudies]);
+
+  const updateCaseStudy = useCallback(async (id: string, data: Partial<CaseStudy>) => {
+    try {
+      const { error } = await (supabase as any)
+        .from('campaign_case_studies')
+        .update({ ...data, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+      await fetchCaseStudies();
+      return true;
+    } catch (err) {
+      console.error('[useCaseStudies] Update error:', err);
+      return false;
+    }
+  }, [fetchCaseStudies]);
+
+  return { caseStudies, loading, refetch: fetchCaseStudies, publishCaseStudy, updateCaseStudy };
 }

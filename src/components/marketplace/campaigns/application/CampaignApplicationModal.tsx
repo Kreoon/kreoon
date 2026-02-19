@@ -17,8 +17,6 @@ interface CampaignApplicationModalProps {
 
 import { COMMISSION_RATES } from '@/lib/finance/constants';
 
-const PLATFORM_FEE_PCT = COMMISSION_RATES.campaigns_managed.base / 100;
-
 export function CampaignApplicationModal({ campaign, onClose, onSuccess }: CampaignApplicationModalProps) {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -41,19 +39,24 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
   const isBidMode = isAuction || isRange;
   const isPaidCampaign = campaign.campaign_type !== 'exchange';
 
+  // Dynamic commission from campaign (30% self-service, 40% with agency)
+  const campaignCommissionPct = campaign.commission_rate
+    ?? (campaign.requires_agency_support ? COMMISSION_RATES.campaigns_managed.max : COMMISSION_RATES.campaigns_managed.base);
+  const commissionDecimal = campaignCommissionPct / 100;
+
   // Payment preview calculation
   const paymentPreview = useMemo(() => {
     const rawPrice = Number(proposedPrice) || campaign.budget_per_video || 0;
     if (!rawPrice || !isPaidCampaign) return null;
-    const fee = Math.round(rawPrice * PLATFORM_FEE_PCT);
+    const fee = Math.round(rawPrice * commissionDecimal);
     const net = rawPrice - fee;
     if (includesEditing) {
-      return { creatorPayout: net, editorPayout: 0, fee, total: rawPrice };
+      return { creatorPayout: net, editorPayout: 0, fee, total: rawPrice, commissionPct: campaignCommissionPct };
     }
     const creatorPayout = Math.round(net * (2 / 3));
     const editorPayout = net - creatorPayout;
-    return { creatorPayout, editorPayout, fee, total: rawPrice };
-  }, [proposedPrice, campaign.budget_per_video, isPaidCampaign, includesEditing]);
+    return { creatorPayout, editorPayout, fee, total: rawPrice, commissionPct: campaignCommissionPct };
+  }, [proposedPrice, campaign.budget_per_video, isPaidCampaign, includesEditing, commissionDecimal, campaignCommissionPct]);
 
   const addPortfolioLink = () => {
     const trimmed = portfolioInput.trim();
@@ -314,7 +317,7 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
                   </p>
                 )}
                 <p className="text-purple-400/50 text-[10px] mt-1.5">
-                  Comision plataforma: {formatCurrency(paymentPreview.fee, campaign.currency || 'COP')} (15%)
+                  Comision plataforma: {formatCurrency(paymentPreview.fee, campaign.currency || 'COP')} ({paymentPreview.commissionPct}%)
                 </p>
               </div>
             )}

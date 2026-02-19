@@ -609,6 +609,60 @@ export interface ConsumeTokensResponse {
   available?: number;
 }
 
+// ============================================================================
+// INTERFACES - REFERRAL TIERS & LEADERBOARD
+// ============================================================================
+
+export interface ReferralTier {
+  tier_key: string;
+  label: string;
+  min_referrals: number;
+  bonus_subscription_percent: number;
+  badge_emoji: string;
+  badge_color: string;
+  sort_order: number;
+}
+
+export interface ReferralLeaderboardEntry {
+  id: string;
+  user_id: string;
+  period_month: string;
+  referrals_count: number;
+  earnings_amount: number;
+  rank_position: number;
+  is_featured: boolean;
+  // Joined from profiles
+  full_name?: string;
+  avatar_url?: string;
+  referral_tier?: string;
+}
+
+export interface PromotionalCampaign {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  start_date: string;
+  end_date: string;
+  is_active: boolean;
+  referred_discount_percent: number;
+  referred_bonus_coins: number;
+  referrer_bonus_coins: number;
+  referral_extra_free_months: number;
+  max_redemptions: number | null;
+  current_redemptions: number;
+  promo_badge_text: string | null;
+  promo_badge_color: string | null;
+}
+
+export interface NurtureStatus {
+  has_creator_profile: boolean;
+  has_avatar: boolean;
+  has_portfolio: boolean;
+  is_qualified: boolean;
+  completed_at: string | null;
+}
+
 export interface ReferralDashboard {
   success: boolean;
   codes: ReferralCode[];
@@ -638,4 +692,19 @@ export interface ReferralDashboard {
     transaction: string;
     duration: string;
   };
+  // Enhanced fields
+  tier?: {
+    current: string;
+    label: string;
+    effective_rate: number;
+    bonus_percent: number;
+  };
+  next_tier?: {
+    key: string;
+    label: string;
+    referrals_needed: number;
+    bonus_percent: number;
+  } | null;
+  leaderboard_rank?: number | null;
+  active_promo?: PromotionalCampaign | null;
 }

@@ -563,6 +563,14 @@ export interface Campaign {
   // Content guidelines
   content_guidelines?: string;
   reference_urls?: string[];
+  // Payment & Commission
+  requires_agency_support?: boolean;
+  commission_rate?: number; // 30 (self-service) or 40 (with Kreoon Agency)
+  payment_status?: 'unpaid' | 'pending_payment' | 'in_escrow' | 'partially_released' | 'fully_released' | 'refunded';
+  escrow_hold_id?: string;
+  total_paid?: number;
+  activated_at?: string;
+  completed_at?: string;
 }
 
 export interface CampaignApplication {
@@ -583,6 +591,13 @@ export interface CampaignApplication {
   counter_offer?: CounterOffer;
   includes_editing?: boolean;
   estimated_delivery_days?: number;
+  // Payment
+  agreed_price?: number;
+  payment_status?: 'unpaid' | 'in_escrow' | 'released' | 'refunded';
+  escrow_hold_id?: string;
+  delivered_at?: string;
+  completed_at?: string;
+  rating?: number;
 }
 
 export interface CampaignFilters {
@@ -800,3 +815,74 @@ export const INQUIRY_TYPE_LABELS: Record<InquiryType, string> = {
   partnership: 'Alianza',
   other: 'Otro',
 };
+
+// --- Campaign Optimization Types ---
+
+export interface CampaignTemplate {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  icon_emoji: string;
+  category: 'ugc' | 'social' | 'review' | 'event' | 'collab';
+  default_budget_min: number;
+  default_budget_max: number;
+  default_currency: string;
+  default_content_types: string[];
+  default_platforms: string[];
+  default_deliverables: Array<{ content_type: string; quantity: number; description: string }>;
+  default_timeline_days: number;
+  suggested_creator_count: number;
+  is_active: boolean;
+  sort_order: number;
+}
+
+export interface CaseStudy {
+  id: string;
+  campaign_id: string;
+  brand_id: string;
+  title: string;
+  summary_html: string | null;
+  metrics: Record<string, any>;
+  creator_highlights: Array<{ name: string; avatar_url?: string; role?: string }>;
+  gallery_urls: string[];
+  is_published: boolean;
+  is_featured: boolean;
+  slug: string | null;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BrandCredit {
+  id: string;
+  brand_id: string;
+  balance: number;
+  lifetime_earned: number;
+  lifetime_spent: number;
+  updated_at: string;
+}
+
+export interface BrandCreditTransaction {
+  id: string;
+  brand_id: string;
+  amount: number;
+  type: 'earned' | 'spent' | 'expired';
+  source: 'referral' | 'promo' | 'manual';
+  description: string | null;
+  related_campaign_id: string | null;
+  related_brand_id: string | null;
+  created_at: string;
+}
+
+export interface SmartMatchResult {
+  creator_id: string;
+  user_id: string;
+  display_name: string;
+  avatar_url: string | null;
+  slug: string | null;
+  rating_avg: number;
+  completed_projects: number;
+  match_score: number;
+  match_reasons: string[];
+}
