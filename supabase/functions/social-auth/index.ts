@@ -902,7 +902,10 @@ async function handleInstagramDirectCallback(
   }
 
   if (!profileFetched) {
-    console.warn(`[social-auth] Could not fetch IG profile, saving with user_id only: ${igUserId}`);
+    console.warn(`[social-auth] Could not fetch IG profile, saving with user_id as fallback: ${igUserId}`);
+    // Use user_id as fallback so the account at least shows something meaningful
+    igUsername = igUserId;
+    igDisplayName = `Instagram ${igUserId}`;
   }
 
   if (!resolvedUserId) {
