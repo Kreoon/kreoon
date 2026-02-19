@@ -34,21 +34,30 @@ function oauthResultPage(frontendUrl: string, success: boolean, platform: string
   const fallbackUrl = success
     ? `${frontendUrl}/social-hub?success=true&platform=${platform}`
     : `${frontendUrl}/social-hub?error=${encodeURIComponent(errorMsg || "Unknown error")}&platform=${platform}`;
-  const html = `<!DOCTYPE html><html><head><title>${success ? "Connected" : "Error"}</title></head><body>
-<p style="font-family:sans-serif;text-align:center;margin-top:40px">${success ? "Account connected! This window will close..." : `Error: ${errorMsg || "Unknown"}`}</p>
+  const displayMsg = success ? "Cuenta conectada. Esta ventana se cerrara..." : `Error: ${errorMsg || "Unknown"}`;
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${success ? "Connected" : "Error"}</title>
+<style>body{font-family:sans-serif;text-align:center;margin-top:40px;background:#111;color:#eee}p{max-width:600px;margin:40px auto;line-height:1.5}.spinner{display:inline-block;width:24px;height:24px;border:3px solid #333;border-top-color:#6ee7b7;border-radius:50%;animation:spin .6s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}</style></head><body>
+<p>${displayMsg}</p>
+<p><span class="spinner"></span></p>
 <script>
 try {
   if (window.opener) {
     window.opener.postMessage(${payload}, "${frontendUrl}");
-    setTimeout(function() { window.close(); }, 800);
-  } else {
-    window.location.href = "${fallbackUrl}";
   }
-} catch(e) { window.location.href = "${fallbackUrl}"; }
+} catch(e) {}
+setTimeout(function() {
+  try { window.close(); } catch(e) {}
+  // If close didn't work, redirect back to the app
+  setTimeout(function() { window.location.href = "${fallbackUrl}"; }, 300);
+}, 1000);
 </script></body></html>`;
   return new Response(html, {
     status: 200,
-    headers: { ...CORS_HEADERS, "Content-Type": "text/html; charset=utf-8" },
+    headers: {
+      ...CORS_HEADERS,
+      "Content-Type": "text/html; charset=utf-8",
+      "Content-Security-Policy": "default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'",
+    },
   });
 }
 
@@ -109,13 +118,14 @@ const PLATFORM_CONFIGS: Record<PlatformKey, PlatformOAuthConfig> = {
     authUrl: "https://www.facebook.com/v19.0/dialog/oauth",
     tokenUrl: "https://graph.facebook.com/v19.0/oauth/access_token",
     scopes:
-      "pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish,instagram_manage_comments,instagram_manage_insights",
+      "pages_show_list,pages_read_engagement,pages_manage_posts,read_insights,instagram_basic,instagram_content_publish,instagram_manage_comments,instagram_manage_insights,business_management",
     scopeSeparator: ",",
     clientIdEnvKey: "SOCIAL_META_FB_CLIENT_ID",
     clientSecretEnvKey: "SOCIAL_META_FB_CLIENT_SECRET",
     clientIdParamName: "client_id",
     usesPKCE: false,
     responseType: "code",
+    extraAuthParams: { auth_type: "rerequest" },
     tokenAuthMethod: "body",
   },
   instagram_direct: {
@@ -731,39 +741,26 @@ async function handleMetaCallback(
     }
   }
 
-  // Filter to only pages with linked Instagram Business Account
-  const pagesWithIG = allPages.filter(
-    (p: Record<string, unknown>) => {
-      const igBiz = p.instagram_business_account as Record<string, unknown> | undefined;
-      return !!igBiz?.id;
-    },
-  );
-
-  console.log(`[social-auth] Pages with Instagram Business: ${pagesWithIG.length} of ${allPages.length}`);
-
-  if (pagesWithIG.length === 0) {
-    console.warn(`[social-auth] NO pages with instagram_business_account found for user ${fbUserId}`);
-    console.warn(`[social-auth] This means either: (1) No pages selected during OAuth, (2) Pages don't have IG Business linked, (3) Permission not granted`);
+  if (allPages.length === 0) {
+    console.warn(`[social-auth] NO pages returned by /me/accounts for user ${fbUserId}`);
     throw new Error(
-      "No se encontraron Fan Pages con cuenta de Instagram Business vinculada. " +
-      "Asegúrate de que tu página de Facebook tenga una cuenta de Instagram Business/Creator conectada en la configuración de la página.",
+      "No se encontraron Fan Pages. Durante la autorizacion de Facebook, asegurate de seleccionar las paginas que quieres conectar. " +
+      "Vuelve a intentarlo y en el dialogo de Facebook marca las paginas.",
     );
   }
 
-  console.log(`[social-auth] ${pagesWithIG.length} page(s) with Instagram Business Account — saving...`);
-
-  for (const page of pagesWithIG) {
+  // Save ALL pages (FB pages always, IG only when linked)
+  let igCount = 0;
+  for (const page of allPages) {
     const pageId = page.id as string;
     const pageName = page.name as string;
     const pageToken = page.access_token as string;
     const pagePicture = page.picture as Record<string, unknown> | undefined;
     const pageAvatar = (pagePicture?.data as Record<string, unknown>)?.url as string || null;
-    const igAccount = page.instagram_business_account as Record<string, unknown>;
-    const igId = igAccount.id as string;
+    const igAccount = page.instagram_business_account as Record<string, unknown> | undefined;
 
     console.log(`[social-auth] === Saving Page: ${pageName} (${pageId}) ===`);
     console.log(`[social-auth] Page token (first 20): ${pageToken?.substring(0, 20)}... (len: ${pageToken?.length})`);
-    console.log(`[social-auth] IG Business: @${igAccount.username} (${igId})`);
 
     // Save the Facebook Fan Page account (using page token)
     await upsertSocialAccount(supabase, {
@@ -783,6 +780,7 @@ async function handleMetaCallback(
         "pages_manage_posts",
         "pages_read_engagement",
         "pages_show_list",
+        "read_insights",
       ],
       metadata: {
         token_type: "page_token",
@@ -791,7 +789,7 @@ async function handleMetaCallback(
         page_category: page.category || null,
         page_fan_count: page.fan_count || 0,
         page_followers_count: page.followers_count || 0,
-        ig_business_account_id: igId,
+        ig_business_account_id: igAccount?.id || null,
       },
       owner_type: ownerType || "user",
       brand_id: brandId || null,
@@ -799,46 +797,51 @@ async function handleMetaCallback(
       account_type: "page",
       connection_method: "facebook",
     });
-
     console.log(`[social-auth] FB Page "${pageName}" saved successfully`);
 
-    // Save the linked Instagram Business Account (using page token)
-    const igUsername = (igAccount.username || igAccount.name || pageName) as string;
-    const igAvatarUrl = (igAccount.profile_picture_url as string) || pageAvatar;
-    console.log(`[social-auth] Saving IG Business: @${igUsername} (${igId}), followers: ${igAccount.followers_count || 0}, media: ${igAccount.media_count || 0}`);
+    // Save linked Instagram Business Account if exists (using page token)
+    if (igAccount?.id) {
+      const igId = igAccount.id as string;
+      const igUsername = (igAccount.username || igAccount.name || pageName) as string;
+      const igAvatarUrl = (igAccount.profile_picture_url as string) || pageAvatar;
+      console.log(`[social-auth] Saving IG Business: @${igUsername} (${igId}), followers: ${igAccount.followers_count || 0}, media: ${igAccount.media_count || 0}`);
 
-    await upsertSocialAccount(supabase, {
-      user_id: userId,
-      organization_id: orgId || null,
-      platform: "instagram",
-      platform_user_id: igId,
-      platform_username: igUsername,
-      platform_display_name: igUsername,
-      platform_avatar_url: igAvatarUrl,
-      platform_page_id: pageId,
-      platform_page_name: pageName,
-      access_token: pageToken,
-      refresh_token: null,
-      token_expires_at: null,
-      scopes: ["instagram_basic", "instagram_content_publish"],
-      metadata: {
-        token_type: "page_token",
-        fb_user_id: fbUserId,
-        ig_business_account_id: igId,
-        linked_page_id: pageId,
-        linked_page_name: pageName,
-        ig_followers_count: igAccount.followers_count || 0,
-        ig_media_count: igAccount.media_count || 0,
-      },
-      owner_type: ownerType || "user",
-      brand_id: brandId || null,
-      client_id: clientId || null,
-      account_type: "business",
-      connection_method: "facebook",
-    });
+      await upsertSocialAccount(supabase, {
+        user_id: userId,
+        organization_id: orgId || null,
+        platform: "instagram",
+        platform_user_id: igId,
+        platform_username: igUsername,
+        platform_display_name: igUsername,
+        platform_avatar_url: igAvatarUrl,
+        platform_page_id: pageId,
+        platform_page_name: pageName,
+        access_token: pageToken,
+        refresh_token: null,
+        token_expires_at: null,
+        scopes: ["instagram_basic", "instagram_content_publish", "instagram_manage_insights"],
+        metadata: {
+          token_type: "page_token",
+          fb_user_id: fbUserId,
+          ig_business_account_id: igId,
+          linked_page_id: pageId,
+          linked_page_name: pageName,
+          ig_followers_count: igAccount.followers_count || 0,
+          ig_media_count: igAccount.media_count || 0,
+        },
+        owner_type: ownerType || "user",
+        brand_id: brandId || null,
+        client_id: clientId || null,
+        account_type: "business",
+        connection_method: "facebook",
+      });
+      igCount++;
+    } else {
+      console.log(`[social-auth] Page "${pageName}" has no IG Business linked — skipping IG account`);
+    }
   }
 
-  console.log(`[social-auth] Meta callback complete: saved ${pagesWithIG.length} page(s) + ${pagesWithIG.length} IG business account(s)`);
+  console.log(`[social-auth] Meta callback complete: saved ${allPages.length} page(s) + ${igCount} IG business account(s)`);
   console.log("=== META CALLBACK DEBUG END ===");
 }
 

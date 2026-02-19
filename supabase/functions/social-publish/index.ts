@@ -102,6 +102,94 @@ async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// ── Instagram media re-hosting (download from CDN → Supabase Storage) ───────
+
+const IG_TEMP_BUCKET = "social-temp";
+
+async function ensureTempBucket(
+  supabase: ReturnType<typeof createClient>
+): Promise<void> {
+  // Try to create the bucket; ignore if it already exists
+  const { error } = await supabase.storage.createBucket(IG_TEMP_BUCKET, {
+    public: true,
+    fileSizeLimit: 500 * 1024 * 1024, // 500MB max for videos
+  });
+  if (error && !error.message?.includes("already exists")) {
+    console.warn("Bucket creation warning:", error.message);
+  }
+}
+
+async function rehostMediaForIG(
+  supabase: ReturnType<typeof createClient>,
+  mediaUrl: string
+): Promise<{ publicUrl: string; storagePath: string }> {
+  console.log(`[IG rehost] Downloading media from: ${mediaUrl}`);
+  const res = await fetch(mediaUrl);
+  if (!res.ok) {
+    throw new Error(
+      `Failed to download media from ${mediaUrl}: ${res.status} ${res.statusText}`
+    );
+  }
+  const blob = await res.blob();
+  console.log(`[IG rehost] Downloaded ${blob.size} bytes, type: ${blob.type}`);
+
+  // Extract extension from URL
+  const urlPath = new URL(mediaUrl).pathname;
+  const ext = urlPath.split(".").pop()?.split("?")[0] || "mp4";
+  const fileName = `ig-temp/${crypto.randomUUID()}.${ext}`;
+
+  // Determine content type
+  let contentType = blob.type || "application/octet-stream";
+  if (contentType === "application/octet-stream") {
+    if (ext === "mp4" || ext === "m4v") contentType = "video/mp4";
+    else if (ext === "mov") contentType = "video/quicktime";
+    else if (ext === "jpg" || ext === "jpeg") contentType = "image/jpeg";
+    else if (ext === "png") contentType = "image/png";
+    else if (ext === "webp") contentType = "image/webp";
+  }
+
+  // Upload to Supabase Storage public bucket
+  const { error } = await supabase.storage
+    .from(IG_TEMP_BUCKET)
+    .upload(fileName, blob, {
+      contentType,
+      upsert: true,
+    });
+
+  if (error) {
+    throw new Error(
+      `Failed to upload media to temp storage: ${error.message}`
+    );
+  }
+
+  // Get the public URL
+  const { data: urlData } = supabase.storage
+    .from(IG_TEMP_BUCKET)
+    .getPublicUrl(fileName);
+
+  console.log(`[IG rehost] Rehosted to: ${urlData.publicUrl}`);
+  return { publicUrl: urlData.publicUrl, storagePath: fileName };
+}
+
+async function cleanupTempMedia(
+  supabase: ReturnType<typeof createClient>,
+  paths: string[]
+): Promise<void> {
+  if (paths.length === 0) return;
+  try {
+    const { error } = await supabase.storage
+      .from(IG_TEMP_BUCKET)
+      .remove(paths);
+    if (error) {
+      console.warn("[IG rehost] Cleanup warning:", error.message);
+    } else {
+      console.log(`[IG rehost] Cleaned up ${paths.length} temp files`);
+    }
+  } catch (err) {
+    console.warn("[IG rehost] Cleanup error:", err);
+  }
+}
+
 // ── Facebook Publish ─────────────────────────────────────────────────────────
 
 async function publishToFacebook(
@@ -319,67 +407,157 @@ async function publishToInstagram(
     throw new Error("Instagram requires at least one media item");
   }
 
-  const isCarousel =
-    post.post_type === "carousel" || post.media_urls.length > 1;
+  // ── Re-host all media to publicly accessible Supabase Storage URLs ──
+  // Instagram's servers need to fetch media from the URL, but CDN URLs
+  // (e.g. Bunny CDN) may not be accessible from Meta's servers.
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  await ensureTempBucket(supabase);
 
-  // ── Carousel ──
-  if (isCarousel) {
-    const childIds: string[] = [];
+  const rehostedMedia: { publicUrl: string; storagePath: string }[] = [];
+  const tempPaths: string[] = [];
 
+  try {
     for (const url of post.media_urls) {
-      const mType = getMediaType(url);
-      const childBody: Record<string, string> = {
-        is_carousel_item: "true",
-        access_token: token,
-      };
+      const rehosted = await rehostMediaForIG(supabase, url);
+      rehostedMedia.push(rehosted);
+      tempPaths.push(rehosted.storagePath);
+    }
 
-      if (mType === "video") {
-        childBody.media_type = "VIDEO";
-        childBody.video_url = url;
-      } else {
-        childBody.media_type = "IMAGE";
-        childBody.image_url = url;
+    // Also rehost thumbnail if present
+    let rehostedThumbnailUrl: string | null = null;
+    if (post.thumbnail_url) {
+      const thumbRehosted = await rehostMediaForIG(supabase, post.thumbnail_url);
+      rehostedThumbnailUrl = thumbRehosted.publicUrl;
+      tempPaths.push(thumbRehosted.storagePath);
+    }
+
+    const isCarousel =
+      post.post_type === "carousel" || post.media_urls.length > 1;
+
+    // ── Carousel ──
+    if (isCarousel) {
+      const childIds: string[] = [];
+
+      for (let i = 0; i < rehostedMedia.length; i++) {
+        const publicUrl = rehostedMedia[i].publicUrl;
+        const mType = getMediaType(post.media_urls[i]);
+        const childBody: Record<string, string> = {
+          is_carousel_item: "true",
+          access_token: token,
+        };
+
+        if (mType === "video") {
+          childBody.media_type = "VIDEO";
+          childBody.video_url = publicUrl;
+        } else {
+          childBody.media_type = "IMAGE";
+          childBody.image_url = publicUrl;
+        }
+
+        const childRes = await fetch(`${baseUrl}/${igUserId}/media`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(childBody),
+        });
+        const childData = await childRes.json();
+        if (childData.error) {
+          throw new Error(
+            `Instagram carousel item error: ${childData.error.message || JSON.stringify(childData.error)}`
+          );
+        }
+
+        // Poll video items until ready
+        if (mType === "video") {
+          await pollInstagramMediaStatus(childData.id, token);
+        }
+
+        childIds.push(childData.id);
       }
 
-      const childRes = await fetch(`${baseUrl}/${igUserId}/media`, {
+      // Create carousel container
+      const containerRes = await fetch(`${baseUrl}/${igUserId}/media`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(childBody),
+        body: JSON.stringify({
+          media_type: "CAROUSEL",
+          caption: caption,
+          children: childIds.join(","),
+          access_token: token,
+        }),
       });
-      const childData = await childRes.json();
-      if (childData.error) {
+      const containerData = await containerRes.json();
+      if (containerData.error) {
         throw new Error(
-          `Instagram carousel item error: ${childData.error.message || JSON.stringify(childData.error)}`
+          `Instagram carousel container error: ${containerData.error.message || JSON.stringify(containerData.error)}`
         );
       }
 
-      // Poll video items until ready
-      if (mType === "video") {
-        await pollInstagramMediaStatus(childData.id, token);
+      // Publish carousel
+      const publishRes = await fetch(
+        `${baseUrl}/${igUserId}/media_publish`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            creation_id: containerData.id,
+            access_token: token,
+          }),
+        }
+      );
+      const publishData = await publishRes.json();
+      if (publishData.error) {
+        throw new Error(
+          `Instagram carousel publish error: ${publishData.error.message || JSON.stringify(publishData.error)}`
+        );
       }
-
-      childIds.push(childData.id);
+      return { platform_post_id: publishData.id };
     }
 
-    // Create carousel container
+    // ── Single image or video ──
+    const publicUrl = rehostedMedia[0].publicUrl;
+    const mType = getMediaType(post.media_urls[0]);
+
+    const containerBody: Record<string, string> = {
+      caption: caption,
+      access_token: token,
+    };
+
+    if (mType === "video") {
+      // Determine if it's a Reel or regular video
+      const isReel =
+        post.post_type === "reel" || post.post_type === "short";
+      containerBody.media_type = isReel ? "REELS" : "VIDEO";
+      containerBody.video_url = publicUrl;
+
+      if (rehostedThumbnailUrl) {
+        containerBody.cover_url = rehostedThumbnailUrl;
+      }
+    } else {
+      containerBody.media_type = "IMAGE";
+      containerBody.image_url = publicUrl;
+    }
+
+    // Create media container
+    console.log(`[IG publish] Creating container for ${igUserId}, media_type=${containerBody.media_type}`);
     const containerRes = await fetch(`${baseUrl}/${igUserId}/media`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        media_type: "CAROUSEL",
-        caption: caption,
-        children: childIds.join(","),
-        access_token: token,
-      }),
+      body: JSON.stringify(containerBody),
     });
     const containerData = await containerRes.json();
     if (containerData.error) {
       throw new Error(
-        `Instagram carousel container error: ${containerData.error.message || JSON.stringify(containerData.error)}`
+        `Instagram container error: ${containerData.error.message || JSON.stringify(containerData.error)}`
       );
     }
+    console.log(`[IG publish] Container created: ${containerData.id}`);
 
-    // Publish carousel
+    // For video, poll until processing is complete
+    if (mType === "video") {
+      await pollInstagramMediaStatus(containerData.id, token);
+    }
+
+    // Publish
     const publishRes = await fetch(
       `${baseUrl}/${igUserId}/media_publish`,
       {
@@ -394,74 +572,16 @@ async function publishToInstagram(
     const publishData = await publishRes.json();
     if (publishData.error) {
       throw new Error(
-        `Instagram carousel publish error: ${publishData.error.message || JSON.stringify(publishData.error)}`
+        `Instagram publish error: ${publishData.error.message || JSON.stringify(publishData.error)}`
       );
     }
+
+    console.log(`[IG publish] Published successfully: ${publishData.id}`);
     return { platform_post_id: publishData.id };
+  } finally {
+    // Always clean up temp files, even on error
+    await cleanupTempMedia(supabase, tempPaths);
   }
-
-  // ── Single image or video ──
-  const mediaUrl = post.media_urls[0];
-  const mType = getMediaType(mediaUrl);
-
-  const containerBody: Record<string, string> = {
-    caption: caption,
-    access_token: token,
-  };
-
-  if (mType === "video") {
-    // Determine if it's a Reel or regular video
-    const isReel =
-      post.post_type === "reel" || post.post_type === "short";
-    containerBody.media_type = isReel ? "REELS" : "VIDEO";
-    containerBody.video_url = mediaUrl;
-
-    if (post.thumbnail_url) {
-      containerBody.cover_url = post.thumbnail_url;
-    }
-  } else {
-    containerBody.media_type = "IMAGE";
-    containerBody.image_url = mediaUrl;
-  }
-
-  // Create media container
-  const containerRes = await fetch(`${baseUrl}/${igUserId}/media`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(containerBody),
-  });
-  const containerData = await containerRes.json();
-  if (containerData.error) {
-    throw new Error(
-      `Instagram container error: ${containerData.error.message || JSON.stringify(containerData.error)}`
-    );
-  }
-
-  // For video, poll until processing is complete
-  if (mType === "video") {
-    await pollInstagramMediaStatus(containerData.id, token);
-  }
-
-  // Publish
-  const publishRes = await fetch(
-    `${baseUrl}/${igUserId}/media_publish`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        creation_id: containerData.id,
-        access_token: token,
-      }),
-    }
-  );
-  const publishData = await publishRes.json();
-  if (publishData.error) {
-    throw new Error(
-      `Instagram publish error: ${publishData.error.message || JSON.stringify(publishData.error)}`
-    );
-  }
-
-  return { platform_post_id: publishData.id };
 }
 
 // ── Instagram Delete ─────────────────────────────────────────────────────────

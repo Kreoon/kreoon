@@ -104,7 +104,7 @@ export function AccountsManager() {
         method,
       });
       if (result.url) {
-        window.open(result.url, '_blank', 'width=600,height=700');
+        window.open(result.url, 'kreoon-oauth', 'width=600,height=700,popup=yes');
       }
     } catch (err: any) {
       toast.error(`Error al conectar ${platform}: ${err.message}`);
