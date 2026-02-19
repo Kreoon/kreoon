@@ -95,8 +95,8 @@ export function TransactionList({
     return (
       <div className={cn('flex flex-col items-center justify-center py-16', className)}>
         <DollarSign className="h-12 w-12 text-[hsl(270,100%,60%,0.2)] mb-4" />
-        <p className="text-[hsl(270,30%,60%)] text-lg">No hay transacciones</p>
-        <p className="text-[hsl(270,30%,50%)] text-sm mt-1">
+        <p className="text-muted-foreground text-lg">No hay transacciones</p>
+        <p className="text-muted-foreground text-sm mt-1">
           Las transacciones aparecerán aquí
         </p>
       </div>
@@ -124,7 +124,7 @@ export function TransactionList({
     <div className={cn('space-y-6', className)}>
       {Object.entries(groupedTransactions).map(([date, dayTransactions]) => (
         <div key={date}>
-          <h3 className="text-sm font-medium text-[hsl(270,30%,60%)] mb-3 sticky top-0 bg-background/80 backdrop-blur-sm py-2">
+          <h3 className="text-sm font-medium text-muted-foreground mb-3 sticky top-0 bg-background/80 backdrop-blur-sm py-2">
             {date}
           </h3>
           <div className="space-y-2">
@@ -162,7 +162,7 @@ export function TransactionList({
                         'h-6 w-6',
                         transaction.isCredit
                           ? 'text-emerald-400'
-                          : 'text-[hsl(270,100%,70%)]'
+                          : 'text-primary'
                       )}
                     />
                   </div>
@@ -180,10 +180,10 @@ export function TransactionList({
                         {transaction.statusLabel}
                       </Badge>
                     </div>
-                    <p className="text-sm text-[hsl(270,30%,60%)] truncate">
+                    <p className="text-sm text-muted-foreground truncate">
                       {transaction.description || 'Sin descripción'}
                     </p>
-                    <p className="text-xs text-[hsl(270,30%,50%)] mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {new Date(transaction.created_at).toLocaleTimeString('es-CO', {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -203,11 +203,11 @@ export function TransactionList({
                       {transaction.formattedAmount}
                     </p>
                     {transaction.fee > 0 && (
-                      <p className="text-xs text-[hsl(270,30%,50%)]">
+                      <p className="text-xs text-muted-foreground">
                         Fee: {transaction.formattedFee}
                       </p>
                     )}
-                    <p className="text-xs text-[hsl(270,30%,50%)] mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       Balance: {transaction.formattedBalanceAfter}
                     </p>
                   </div>

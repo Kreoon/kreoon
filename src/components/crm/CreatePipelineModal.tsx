@@ -367,7 +367,7 @@ export function CreatePipelineModal({
                   <SelectTrigger className="bg-white/5 border-white/10 text-white">
                     <SelectValue placeholder="Seleccionar tipo" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#0a0118] border-[#8b5cf6]/30">
+                  <SelectContent className="bg-popover border-[#8b5cf6]/30">
                     {PIPELINE_TYPES.map((t) => (
                       <SelectItem key={t} value={t} className="text-white focus:bg-white/10">
                         {PIPELINE_TYPE_LABELS[t]}

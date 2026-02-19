@@ -123,7 +123,7 @@ export function IdealCustomerSection({ data, isEditing, onFieldChange }: Props) 
                 {isEditing ? (
                   <EditableText value={data.psychographic?.lifestyle || data.psychographics?.lifestyle} onChange={change('psychographic.lifestyle') as (v: string) => void} placeholder="Estilo de vida..." />
                 ) : (
-                  <p className="text-sm text-gray-300">{psycho.lifestyle}</p>
+                  <p className="text-sm text-foreground/80">{psycho.lifestyle}</p>
                 )}
               </div>
             )}
@@ -265,7 +265,7 @@ function ListCard({
       ) : (
         <ul className="space-y-2">
           {items.map((item, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm text-gray-300">
+            <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
               <div className={`w-1.5 h-1.5 rounded-full ${styles.dot} mt-1.5 flex-shrink-0`} />
               {item}
             </li>

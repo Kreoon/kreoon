@@ -103,7 +103,7 @@ export function BrandIdentitySection({ data, isEditing, onFieldChange }: Props) 
               {isEditing ? (
                 <EditableText value={data.tone_of_voice || (data.voice?.tone?.join(', ') ?? '')} onChange={change('tone_of_voice') as (v: string) => void} placeholder="Tono de voz..." />
               ) : (
-                <p className="text-sm text-gray-300">{toneOfVoice}</p>
+                <p className="text-sm text-foreground/80">{toneOfVoice}</p>
               )}
             </div>
           )}
@@ -116,7 +116,7 @@ export function BrandIdentitySection({ data, isEditing, onFieldChange }: Props) 
               {isEditing ? (
                 <EditableText value={data.communication_style} onChange={change('communication_style') as (v: string) => void} placeholder="Estilo de comunicación..." />
               ) : (
-                <p className="text-sm text-gray-300">{data.communication_style}</p>
+                <p className="text-sm text-foreground/80">{data.communication_style}</p>
               )}
             </div>
           )}
@@ -134,7 +134,7 @@ export function BrandIdentitySection({ data, isEditing, onFieldChange }: Props) 
               ) : (
                 <ul className="space-y-2">
                   {data.voice?.do_say?.map((phrase, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                    <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
                       <Check className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
                       {phrase}
                     </li>
@@ -151,7 +151,7 @@ export function BrandIdentitySection({ data, isEditing, onFieldChange }: Props) 
               ) : (
                 <ul className="space-y-2">
                   {data.voice?.dont_say?.map((phrase, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                    <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
                       <X className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
                       {phrase}
                     </li>
@@ -188,7 +188,7 @@ export function BrandIdentitySection({ data, isEditing, onFieldChange }: Props) 
           ) : (
             <ul className="space-y-2">
               {keyMessages.map((msg, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
                   <span className="text-purple-400 font-medium mt-0.5 flex-shrink-0">{i + 1}.</span>
                   {msg}
                 </li>
@@ -205,7 +205,7 @@ export function BrandIdentitySection({ data, isEditing, onFieldChange }: Props) 
           {isEditing ? (
             <EditableText value={data.messaging?.elevator_pitch} onChange={change('messaging.elevator_pitch') as (v: string) => void} multiline placeholder="Elevator pitch..." />
           ) : (
-            <p className="text-sm text-gray-300 leading-relaxed">{data.messaging?.elevator_pitch}</p>
+            <p className="text-sm text-foreground/80 leading-relaxed">{data.messaging?.elevator_pitch}</p>
           )}
         </div>
       )}

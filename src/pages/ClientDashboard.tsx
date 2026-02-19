@@ -772,7 +772,7 @@ export default function ClientDashboard() {
             <Loader2 className="w-10 h-10 text-[hsl(270,100%,60%)]" />
           </motion.div>
           <motion.span
-            className="text-[hsl(270,100%,70%)] text-sm font-medium"
+            className="text-primary text-sm font-medium"
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           >
@@ -856,7 +856,7 @@ export default function ClientDashboard() {
       </div>
 
       {/* Header - Tech Style */}
-      <header className="sticky top-0 z-30 border-b border-[hsl(270,100%,60%,0.15)] bg-[hsl(250,20%,5%,0.9)] backdrop-blur-xl relative overflow-hidden">
+      <header className="sticky top-0 z-30 border-b border-border bg-card/90 backdrop-blur-xl relative overflow-hidden">
         <div className="flex h-14 items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-3">
             {clientInfo.logo_url ? (
@@ -1007,7 +1007,7 @@ export default function ClientDashboard() {
               animate={{ opacity: 1, y: 0 }}
             >
               <h2 className="text-xl font-bold text-white">Hola, {profile?.full_name?.split(' ')[0] || 'Cliente'} 👋</h2>
-              <p className="text-sm text-[hsl(270,30%,60%)]">Aquí está el resumen de tu cuenta</p>
+              <p className="text-sm text-muted-foreground">Aquí está el resumen de tu cuenta</p>
             </motion.div>
 
             {/* Main KPIs - Tech Style */}
@@ -1062,7 +1062,7 @@ export default function ClientDashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <Card className="border-[hsl(270,100%,60%,0.15)] bg-gradient-to-br from-[hsl(250,20%,6%)] to-[hsl(250,20%,4%)] overflow-hidden relative">
+              <Card className="border-border bg-gradient-to-br from-card to-background overflow-hidden relative">
                 <motion.div
                   className="absolute inset-0 opacity-30"
                   style={{
@@ -1091,7 +1091,7 @@ export default function ClientDashboard() {
                       </motion.div>
                       <div>
                         <h3 className="font-semibold text-white">Progreso General</h3>
-                        <p className="text-xs text-[hsl(270,30%,60%)]">
+                        <p className="text-xs text-muted-foreground">
                           {content.length} contenidos en proceso
                         </p>
                       </div>
@@ -1106,12 +1106,12 @@ export default function ClientDashboard() {
                       >
                         {overallProgress}%
                       </motion.span>
-                      <p className="text-xs text-[hsl(270,30%,60%)]">completado</p>
+                      <p className="text-xs text-muted-foreground">completado</p>
                     </div>
                   </div>
                   
                   {/* Tech Progress Bar */}
-                  <div className="h-3 bg-[hsl(250,20%,10%)] rounded-full overflow-hidden border border-[hsl(270,100%,60%,0.2)]">
+                  <div className="h-3 bg-muted rounded-full overflow-hidden border border-[hsl(270,100%,60%,0.2)]">
                     <motion.div
                       className="h-full relative overflow-hidden"
                       style={{
@@ -1156,13 +1156,13 @@ export default function ClientDashboard() {
                           stage.count > 0 && "cursor-pointer",
                           stage.count === 0 && "opacity-40 cursor-not-allowed",
                           stageFilter === stage.id 
-                            ? "bg-[hsl(270,100%,60%,0.2)] border-[hsl(270,100%,60%,0.5)] text-[hsl(270,100%,70%)]" 
-                            : "border-[hsl(270,100%,60%,0.1)] hover:border-[hsl(270,100%,60%,0.3)] text-[hsl(270,30%,60%)]"
+                            ? "bg-[hsl(270,100%,60%,0.2)] border-[hsl(270,100%,60%,0.5)] text-primary" 
+                            : "border-[hsl(270,100%,60%,0.1)] hover:border-[hsl(270,100%,60%,0.3)] text-muted-foreground"
                         )}
                         whileHover={stage.count > 0 ? { scale: 1.05 } : {}}
                         whileTap={stage.count > 0 ? { scale: 0.95 } : {}}
                       >
-                        <span className={stageFilter === stage.id ? "text-[hsl(270,100%,70%)]" : ""}>
+                        <span className={stageFilter === stage.id ? "text-primary" : ""}>
                           {stage.label}
                         </span>
                         {stage.count > 0 && (
@@ -1171,7 +1171,7 @@ export default function ClientDashboard() {
                               "h-5 text-[10px] border",
                               stageFilter === stage.id 
                                 ? "bg-[hsl(270,100%,60%,0.3)] border-[hsl(270,100%,60%,0.5)] text-white" 
-                                : "bg-[hsl(250,20%,15%)] border-[hsl(270,100%,60%,0.2)] text-[hsl(270,30%,70%)]"
+                                : "bg-muted border-[hsl(270,100%,60%,0.2)] text-[hsl(270,30%,70%)]"
                             )}
                           >
                             {stage.count}

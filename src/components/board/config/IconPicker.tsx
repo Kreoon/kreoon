@@ -76,12 +76,12 @@ export function IconPicker({ value, onChange, className }: IconPickerProps) {
           size="sm"
           className={cn(
             "gap-2 border-white/20 bg-white/5 hover:bg-white/10",
-            "focus:ring-[#a855f7]/50 focus:border-[#a855f7]/50",
+            "focus:ring-[#a855f7]/50 focus:border-primary/50",
             className
           )}
         >
           {SelectedIcon ? (
-            <SelectedIcon className="h-4 w-4 text-[#a855f7]" />
+            <SelectedIcon className="h-4 w-4 text-primary" />
           ) : (
             <Circle className="h-4 w-4 text-[#64748b]" />
           )}
@@ -89,7 +89,7 @@ export function IconPicker({ value, onChange, className }: IconPickerProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-72 p-3 bg-[#0a0118] border-[#8b5cf6]/30"
+        className="w-72 p-3 bg-popover border-[#8b5cf6]/30"
         align="start"
       >
         <Input
@@ -112,9 +112,9 @@ export function IconPicker({ value, onChange, className }: IconPickerProps) {
                 }}
                 className={cn(
                   "h-9 w-9 flex items-center justify-center rounded-lg transition-all",
-                  "hover:bg-white/10 hover:border-[#a855f7]/50",
+                  "hover:bg-white/10 hover:border-primary/50",
                   isSelected
-                    ? "bg-[#a855f7]/20 border border-[#a855f7] text-[#a855f7]"
+                    ? "bg-primary/20 border border-primary text-primary"
                     : "border border-transparent text-[#94a3b8]"
                 )}
                 title={item.id}

@@ -55,7 +55,7 @@ export function RecruitCreatorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#1a1a2e] border-white/10 text-white max-w-md">
+      <DialogContent className="bg-card border-white/10 text-white max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-white">
             <UserPlus className="h-5 w-5 text-purple-400" />
@@ -68,12 +68,12 @@ export function RecruitCreatorDialog({
 
         <div className="space-y-4 pt-2">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">Rol propuesto</label>
+            <label className="text-sm font-medium text-foreground/80">Rol propuesto</label>
             <Select value={role} onValueChange={setRole}>
               <SelectTrigger className="bg-white/5 border-white/10 text-white">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#1a1a2e] border-white/10">
+              <SelectContent className="bg-card border-white/10">
                 {ROLE_OPTIONS.map(opt => (
                   <SelectItem key={opt.value} value={opt.value} className="text-white">
                     {opt.label}
@@ -84,7 +84,7 @@ export function RecruitCreatorDialog({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">
+            <label className="text-sm font-medium text-foreground/80">
               Mensaje <span className="text-gray-500 font-normal">(opcional)</span>
             </label>
             <Textarea

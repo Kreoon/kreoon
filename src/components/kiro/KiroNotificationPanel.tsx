@@ -181,7 +181,7 @@ const NotificationItem = memo(function NotificationItem({
           className={cn(
             'absolute top-1 right-1',
             'w-8 h-8 rounded-lg flex items-center justify-center',
-            'text-gray-500 hover:text-gray-300',
+            'text-gray-500 hover:text-foreground',
             'bg-transparent hover:bg-red-500/20',
             'opacity-0 group-hover:opacity-100 transition-opacity',
             'min-w-[44px] min-h-[44px]' // WCAG touch target

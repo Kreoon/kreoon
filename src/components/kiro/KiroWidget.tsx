@@ -65,15 +65,15 @@ function MiniProgressRing({ progress, level, points }: { progress: number; level
           </linearGradient>
         </defs>
       </svg>
-      <span className="text-[10px] text-violet-400 font-medium">
+      <span className="text-[10px] text-primary font-medium">
         {formatPoints(points)}
       </span>
       {/* Tooltip on hover */}
       <div className={cn(
         'absolute left-1/2 -translate-x-1/2 top-full mt-2',
         'px-2.5 py-1.5 rounded-lg whitespace-nowrap',
-        'bg-[#12101f] border border-violet-500/20',
-        'text-[10px] text-violet-200',
+        'bg-card border border-violet-500/20',
+        'text-[10px] text-muted-foreground',
         'shadow-xl shadow-black/40',
         'opacity-0 group-hover:opacity-100 pointer-events-none',
         'transition-opacity duration-200 z-50'
@@ -319,14 +319,14 @@ export function KiroWidget() {
   const panelContent = (
     <div className="flex flex-col h-full max-h-[500px]">
       {/* ─── Header: KIRO + status + nav icons + progress + close ─── */}
-      <div className="flex items-center gap-1.5 px-3 py-2 border-b border-white/[0.06]">
+      <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border">
         {/* KIRO name + status */}
         <div className="flex items-center gap-2 mr-1">
           <div
             className="w-2 h-2 rounded-full flex-shrink-0"
             style={{ backgroundColor: stateColor, boxShadow: `0 0 8px ${stateColor}60` }}
           />
-          <span className="text-[13px] font-semibold text-white/90 tracking-wide">
+          <span className="text-[13px] font-semibold text-foreground tracking-wide">
             KIRO
           </span>
         </div>
@@ -342,7 +342,7 @@ export function KiroWidget() {
                 'relative p-1.5 rounded-lg transition-all duration-200',
                 activePanel === item.id
                   ? 'text-violet-300 bg-violet-500/15'
-                  : 'text-white/35 hover:text-white/70 hover:bg-white/[0.06]'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
               )}
             >
               <item.icon className="w-3.5 h-3.5" />
@@ -370,7 +370,7 @@ export function KiroWidget() {
           {isConnected ? (
             <Wifi className="w-3 h-3 text-emerald-400/50" />
           ) : (
-            <WifiOff className="w-3 h-3 text-white/20" />
+            <WifiOff className="w-3 h-3 text-muted-foreground/50" />
           )}
           <MiniProgressRing progress={progress} level={currentLevel} points={userPoints} />
         </div>
@@ -378,7 +378,7 @@ export function KiroWidget() {
         {/* Close */}
         <button
           onClick={handleClose}
-          className="p-1.5 text-white/30 hover:text-white/60 hover:bg-white/[0.06] rounded-lg transition-all duration-200 ml-0.5"
+          className="p-1.5 text-muted-foreground hover:text-muted-foreground hover:bg-accent rounded-lg transition-all duration-200 ml-0.5"
         >
           <X className="w-3.5 h-3.5" />
         </button>
@@ -648,7 +648,7 @@ export function KiroWidget() {
             className={cn(
               'absolute -top-1 -right-1',
               'w-5 h-5 rounded-full',
-              'bg-red-500 border-2 border-[#0a0a12]',
+              'bg-red-500 border-2 border-background',
               'flex items-center justify-center',
               'text-[10px] font-bold text-white',
               'shadow-lg shadow-red-500/50'
@@ -691,7 +691,7 @@ export function KiroWidget() {
               className={cn(
                 'absolute bottom-full mb-3 right-0',
                 'max-w-[200px] px-3 py-2 rounded-xl',
-                'bg-[#0a0a12]/95 backdrop-blur-xl',
+                'bg-card/95 backdrop-blur-xl',
                 'border border-violet-500/30',
                 'shadow-lg shadow-violet-500/20'
               )}
@@ -703,7 +703,7 @@ export function KiroWidget() {
                 'border-r-[8px] border-r-transparent',
                 'border-t-[8px] border-t-violet-500/30'
               )} />
-              <p className="text-[11px] text-violet-200 leading-tight">{greetingBubble}</p>
+              <p className="text-[11px] text-muted-foreground leading-tight">{greetingBubble}</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -732,7 +732,7 @@ export function KiroWidget() {
                   }}
                   className={cn(
                     'max-w-[220px] px-3 py-2 rounded-xl cursor-pointer',
-                    'bg-[#0a0a12]/95 backdrop-blur-xl',
+                    'bg-card/95 backdrop-blur-xl',
                     'border border-red-500/30',
                     'shadow-lg shadow-red-500/10',
                     'hover:border-red-500/50 transition-colors'
@@ -740,7 +740,7 @@ export function KiroWidget() {
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-base flex-shrink-0">{toast.icon}</span>
-                    <p className="text-[11px] text-red-200 font-medium leading-tight truncate">{toast.title}</p>
+                    <p className="text-[11px] text-red-500 dark:text-red-200 font-medium leading-tight truncate">{toast.title}</p>
                   </div>
                   {index === 0 && (
                     <div className={cn(

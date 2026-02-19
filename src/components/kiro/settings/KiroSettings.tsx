@@ -93,8 +93,8 @@ function Toggle({
       className={cn(
         'relative inline-flex h-6 w-11 items-center rounded-full',
         'transition-colors duration-200 ease-in-out',
-        'focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-[#0a0a12]',
-        enabled ? 'bg-violet-500' : 'bg-gray-600',
+        'focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-background',
+        enabled ? 'bg-violet-500' : 'bg-muted-foreground/40',
         disabled && 'opacity-50 cursor-not-allowed'
       )}
     >
@@ -123,7 +123,7 @@ function VolumeSlider({
 }) {
   return (
     <div className="flex items-center gap-3">
-      <VolumeX className="w-4 h-4 text-gray-500" />
+      <VolumeX className="w-4 h-4 text-muted-foreground" />
       <input
         type="range"
         min={0}
@@ -133,7 +133,7 @@ function VolumeSlider({
         disabled={disabled}
         className={cn(
           'flex-1 h-2 rounded-full appearance-none cursor-pointer',
-          'bg-gray-700',
+          'bg-muted',
           '[&::-webkit-slider-thumb]:appearance-none',
           '[&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4',
           '[&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-violet-500',
@@ -148,7 +148,7 @@ function VolumeSlider({
         }}
       />
       <Volume2 className="w-4 h-4 text-violet-400" />
-      <span className="text-xs text-gray-400 w-8 text-right">{Math.round(value * 100)}%</span>
+      <span className="text-xs text-muted-foreground w-8 text-right">{Math.round(value * 100)}%</span>
     </div>
   );
 }
@@ -178,7 +178,7 @@ function CornerSelector({
             'rounded transition-colors',
             value === corner
               ? 'bg-violet-500'
-              : 'bg-gray-700 hover:bg-gray-600'
+              : 'bg-muted hover:bg-muted/80'
           )}
         />
       ))}
@@ -191,7 +191,7 @@ function CornerSelector({
  */
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-[10px] font-mono text-gray-500 uppercase tracking-wider mb-2">
+    <h3 className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-2">
       {children}
     </h3>
   );
@@ -214,10 +214,10 @@ function SettingRow({
   return (
     <div className="flex items-center justify-between py-2">
       <div className="flex items-center gap-2">
-        {Icon && <Icon className="w-4 h-4 text-gray-500" />}
+        {Icon && <Icon className="w-4 h-4 text-muted-foreground" />}
         <div>
-          <p className="text-sm text-gray-300">{label}</p>
-          {description && <p className="text-[10px] text-gray-600">{description}</p>}
+          <p className="text-sm text-foreground">{label}</p>
+          {description && <p className="text-[10px] text-muted-foreground/60">{description}</p>}
         </div>
       </div>
       {children}
@@ -306,11 +306,11 @@ export function KiroSettingsPanel({
             kiroSounds.play('action_click');
             onBack();
           }}
-          className="p-1.5 rounded-lg text-gray-400 hover:text-violet-300 hover:bg-violet-500/10 transition-colors"
+          className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
-        <h2 className="text-sm font-medium text-violet-300">Configuración de KIRO</h2>
+        <h2 className="text-sm font-medium text-primary">Configuración de KIRO</h2>
       </div>
 
       {/* Contenido scrolleable */}
@@ -344,7 +344,7 @@ export function KiroSettingsPanel({
               'border border-violet-500/30',
               settings.soundEnabled
                 ? 'text-violet-300 bg-violet-500/10 hover:bg-violet-500/20'
-                : 'text-gray-600 bg-gray-800/50 cursor-not-allowed',
+                : 'text-muted-foreground bg-muted/50 cursor-not-allowed',
               'transition-colors'
             )}
           >
@@ -359,7 +359,7 @@ export function KiroSettingsPanel({
           <SectionTitle>Voz de KIRO</SectionTitle>
 
           {!isVoiceSupported ? (
-            <p className="text-xs text-gray-500 italic">
+            <p className="text-xs text-muted-foreground italic">
               Voz no disponible en este navegador
             </p>
           ) : (
@@ -373,7 +373,7 @@ export function KiroSettingsPanel({
 
               <div className="mt-2">
                 <div className="flex items-center gap-3">
-                  <MicOff className="w-4 h-4 text-gray-500" />
+                  <MicOff className="w-4 h-4 text-muted-foreground" />
                   <input
                     type="range"
                     min={0}
@@ -383,7 +383,7 @@ export function KiroSettingsPanel({
                     disabled={!settings.voiceEnabled}
                     className={cn(
                       'flex-1 h-2 rounded-full appearance-none cursor-pointer',
-                      'bg-gray-700',
+                      'bg-muted',
                       '[&::-webkit-slider-thumb]:appearance-none',
                       '[&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4',
                       '[&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-violet-500',
@@ -398,7 +398,7 @@ export function KiroSettingsPanel({
                     }}
                   />
                   <Mic className="w-4 h-4 text-violet-400" />
-                  <span className="text-xs text-gray-400 w-8 text-right">{Math.round(settings.voiceVolume * 100)}%</span>
+                  <span className="text-xs text-muted-foreground w-8 text-right">{Math.round(settings.voiceVolume * 100)}%</span>
                 </div>
               </div>
 
@@ -410,7 +410,7 @@ export function KiroSettingsPanel({
                   'border border-violet-500/30',
                   settings.voiceEnabled && !isVoiceSpeaking
                     ? 'text-violet-300 bg-violet-500/10 hover:bg-violet-500/20'
-                    : 'text-gray-600 bg-gray-800/50 cursor-not-allowed',
+                    : 'text-muted-foreground bg-muted/50 cursor-not-allowed',
                   'transition-colors'
                 )}
               >
@@ -461,8 +461,8 @@ export function KiroSettingsPanel({
 
           <div className="flex items-center justify-between py-2">
             <div>
-              <p className="text-sm text-gray-300">Esquina preferida</p>
-              <p className="text-[10px] text-gray-600">Posición del botón en mobile</p>
+              <p className="text-sm text-foreground">Esquina preferida</p>
+              <p className="text-[10px] text-muted-foreground/60">Posición del botón en mobile</p>
             </div>
             <CornerSelector
               value={settings.preferredCorner}
@@ -486,7 +486,7 @@ export function KiroSettingsPanel({
             </button>
           </SettingRow>
 
-          <div className="text-xs text-gray-500 mt-1">
+          <div className="text-xs text-muted-foreground mt-1">
             Partidas jugadas hoy: {gamesPlayedToday}/6
           </div>
         </div>
@@ -547,7 +547,7 @@ export function KiroSettingsPanel({
 
         {/* Footer */}
         <div className="border-t border-violet-500/10 pt-4 pb-2 text-center">
-          <p className="text-[10px] text-gray-600">
+          <p className="text-[10px] text-muted-foreground">
             KIRO v1.0 • Kreoon Studio
           </p>
         </div>
@@ -558,11 +558,11 @@ export function KiroSettingsPanel({
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {confirmAction && (
         <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10 animate-in fade-in duration-150">
-          <div className="bg-[#0a0a12] border border-violet-500/30 rounded-xl p-4 mx-4 max-w-[280px]">
+          <div className="bg-card border border-violet-500/30 rounded-xl p-4 mx-4 max-w-[280px]">
             <h3 className="text-sm font-medium text-violet-300 mb-2">
               ¿Confirmar acción?
             </h3>
-            <p className="text-xs text-gray-400 mb-4">
+            <p className="text-xs text-muted-foreground mb-4">
               {confirmAction === 'bestScore' && 'Se reseteará tu mejor puntaje del juego.'}
               {confirmAction === 'chatHistory' && 'Se eliminará todo el historial de conversación con KIRO.'}
               {confirmAction === 'preferences' && 'Se restaurarán todas las preferencias a sus valores por defecto.'}
@@ -570,7 +570,7 @@ export function KiroSettingsPanel({
             <div className="flex gap-2">
               <button
                 onClick={() => setConfirmAction(null)}
-                className="flex-1 py-1.5 px-3 rounded-lg text-xs text-gray-400 bg-gray-800 hover:bg-gray-700 transition-colors"
+                className="flex-1 py-1.5 px-3 rounded-lg text-xs text-muted-foreground bg-muted hover:bg-muted/80 transition-colors"
               >
                 Cancelar
               </button>

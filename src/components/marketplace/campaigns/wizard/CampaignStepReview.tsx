@@ -61,7 +61,7 @@ export function CampaignStepReview({
           {basicInfo.deadline && (
             <div><span className="text-gray-500">Fecha limite:</span> <span className="text-white">{new Date(basicInfo.deadline).toLocaleDateString('es-CO')}</span></div>
           )}
-          <div><span className="text-gray-500">Descripcion:</span> <p className="text-gray-300 text-xs mt-1">{basicInfo.description}</p></div>
+          <div><span className="text-gray-500">Descripcion:</span> <p className="text-foreground/80 text-xs mt-1">{basicInfo.description}</p></div>
           {basicInfo.tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
               {basicInfo.tags.map(tag => (
@@ -208,7 +208,7 @@ function ReviewSection({
   return (
     <div className="bg-white/5 border border-white/10 rounded-xl p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-gray-300 text-sm font-semibold">{title}</h3>
+        <h3 className="text-foreground/80 text-sm font-semibold">{title}</h3>
         <button
           onClick={onEdit}
           className="flex items-center gap-1 text-purple-400 text-xs hover:text-purple-300 transition-colors"

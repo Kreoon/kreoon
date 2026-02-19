@@ -45,10 +45,11 @@ export function useWallet(options: UseWalletOptions = {}) {
           .eq('wallet_type', walletType);
       }
 
-      const { data, error } = await query.single();
+      const { data, error } = await query.limit(1).maybeSingle();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-        throw error;
+      if (error) {
+        console.error('[useWallet] Error:', error);
+        return null;
       }
 
       return data as Wallet | null;

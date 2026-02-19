@@ -157,9 +157,9 @@ export default function MarketplacePage() {
 
   return (
     <ScrollArea className="h-full">
-      <div className="min-h-full bg-[#0a0a0f]">
+      <div className="min-h-full bg-background">
         {/* Sticky header area */}
-        <div className="sticky top-0 z-30 bg-[#0a0a0f]/95 backdrop-blur-xl border-b border-white/5">
+        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-xl border-b border-white/5">
           <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
             {/* Search bar */}
             <div className="py-4">
@@ -232,7 +232,7 @@ export default function MarketplacePage() {
                 <Sparkles className="h-6 w-6 text-purple-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-white font-semibold text-sm">
+                <h3 className="text-foreground font-semibold text-sm">
                   Muestra tu talento en el marketplace
                 </h3>
                 <p className="text-gray-400 text-xs mt-0.5">
@@ -241,14 +241,14 @@ export default function MarketplacePage() {
               </div>
               <button
                 onClick={() => navigate('/settings?section=marketplace')}
-                className="flex-shrink-0 bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors flex items-center gap-1.5"
+                className="flex-shrink-0 bg-purple-600 hover:bg-purple-500 text-foreground text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors flex items-center gap-1.5"
               >
                 Crear perfil
                 <ArrowRight className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setBannerDismissed(true)}
-                className="absolute top-2 right-2 text-gray-500 hover:text-white text-xs px-1.5 py-0.5 rounded"
+                className="absolute top-2 right-2 text-gray-500 hover:text-foreground text-xs px-1.5 py-0.5 rounded"
               >
                 ×
               </button>

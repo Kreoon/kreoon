@@ -10,56 +10,56 @@ const TechCard = React.forwardRef<HTMLDivElement, TechCardProps>(
   ({ className, variant = "default", noBorder = false, ...props }, ref) => {
     const variants = {
       default: cn(
-        "rounded-2xl backdrop-blur-xl",
-        "bg-gradient-to-br from-[hsl(250,20%,6%)] via-[hsl(250,20%,5%)] to-[hsl(250,20%,4%)]",
-        "border border-[hsl(270,100%,60%,0.12)]",
-        "shadow-[0_0_40px_-15px_hsl(270,100%,60%,0.15)]",
-        "transition-all duration-500",
-        "hover:border-[hsl(270,100%,60%,0.25)]",
-        "hover:shadow-[0_0_60px_-15px_hsl(270,100%,60%,0.25)]"
+        "rounded-2xl",
+        "bg-card text-card-foreground",
+        "border border-border",
+        "shadow-sm",
+        "transition-all duration-300",
+        "hover:border-primary/20",
+        "hover:shadow-md"
       ),
       glass: cn(
         "rounded-2xl backdrop-blur-2xl",
-        "bg-[hsl(250,20%,5%,0.7)]",
-        "border border-[hsl(0,0%,100%,0.04)]",
-        "shadow-[0_8px_32px_hsl(0,0%,0%,0.4)]",
-        "transition-all duration-500",
-        "hover:bg-[hsl(250,20%,6%,0.8)]",
-        "hover:border-[hsl(270,100%,60%,0.15)]"
+        "bg-card/70",
+        "border border-border/50",
+        "shadow-md",
+        "transition-all duration-300",
+        "hover:bg-card/80",
+        "hover:border-primary/15"
       ),
       glow: cn(
-        "rounded-2xl backdrop-blur-xl",
-        "bg-gradient-to-br from-[hsl(250,20%,7%)] to-[hsl(250,20%,4%)]",
-        "border border-[hsl(270,100%,60%,0.2)]",
-        "shadow-[0_0_50px_-10px_hsl(270,100%,60%,0.25)]",
-        "transition-all duration-500",
-        "hover:border-[hsl(270,100%,60%,0.35)]",
-        "hover:shadow-[0_0_70px_-10px_hsl(270,100%,60%,0.4)]"
+        "rounded-2xl",
+        "bg-card text-card-foreground",
+        "border border-primary/20",
+        "shadow-md dark:shadow-[0_0_50px_-10px_hsl(270,100%,60%,0.25)]",
+        "transition-all duration-300",
+        "hover:border-primary/35",
+        "hover:shadow-lg dark:hover:shadow-[0_0_70px_-10px_hsl(270,100%,60%,0.4)]"
       ),
       gradient: cn(
-        "rounded-2xl backdrop-blur-xl",
-        "bg-gradient-to-br from-[hsl(270,100%,60%,0.08)] via-[hsl(250,20%,5%)] to-[hsl(250,20%,4%)]",
-        "border border-[hsl(270,100%,60%,0.15)]",
+        "rounded-2xl",
+        "bg-gradient-to-br from-primary/5 via-card to-background",
+        "border border-primary/15",
         "shadow-lg",
-        "transition-all duration-500",
-        "hover:from-[hsl(270,100%,60%,0.12)]"
+        "transition-all duration-300",
+        "hover:from-primary/10"
       ),
       neon: cn(
-        "rounded-2xl backdrop-blur-xl",
-        "bg-[hsl(250,20%,5%)]",
-        "border-2 border-[hsl(270,100%,60%,0.35)]",
-        "shadow-[0_0_30px_-5px_hsl(270,100%,60%,0.35),inset_0_1px_0_hsl(270,100%,60%,0.1)]",
-        "transition-all duration-500",
-        "hover:border-[hsl(270,100%,60%,0.5)]",
-        "hover:shadow-[0_0_50px_-5px_hsl(270,100%,60%,0.5)]"
+        "rounded-2xl",
+        "bg-card text-card-foreground",
+        "border-2 border-primary/35",
+        "shadow-md dark:shadow-[0_0_30px_-5px_hsl(270,100%,60%,0.35)]",
+        "transition-all duration-300",
+        "hover:border-primary/50",
+        "hover:shadow-lg dark:hover:shadow-[0_0_50px_-5px_hsl(270,100%,60%,0.5)]"
       ),
       subtle: cn(
         "rounded-2xl",
-        "bg-[hsl(250,20%,5%,0.5)]",
-        "border border-[hsl(250,15%,12%)]",
+        "bg-muted/50",
+        "border border-border",
         "transition-all duration-300",
-        "hover:bg-[hsl(250,20%,6%,0.6)]",
-        "hover:border-[hsl(270,100%,60%,0.1)]"
+        "hover:bg-muted/70",
+        "hover:border-primary/10"
       ),
     };
 
@@ -97,7 +97,7 @@ const TechCardTitle = React.forwardRef<
   <h3
     ref={ref}
     className={cn(
-      "text-xl font-semibold leading-none tracking-tight text-white",
+      "text-xl font-semibold leading-none tracking-tight text-foreground",
       className
     )}
     {...props}
@@ -111,7 +111,7 @@ const TechCardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm text-[hsl(270,30%,60%)]", className)}
+    className={cn("text-sm text-muted-foreground", className)}
     {...props}
   />
 ));

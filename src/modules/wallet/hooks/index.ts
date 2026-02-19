@@ -8,3 +8,4 @@ export * from './useCurrency';
 export * from './useProviders';
 export * from './useOrganizationPayments';
 export * from './useMarketplace';
+export * from './useStripeConnect';

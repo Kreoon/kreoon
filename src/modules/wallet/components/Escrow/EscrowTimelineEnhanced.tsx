@@ -103,8 +103,8 @@ function HorizontalTimeline({
                       <Icon
                         className={cn(
                           iconSize,
-                          step.status === 'current' && 'text-[hsl(270,100%,70%)]',
-                          step.status === 'pending' && 'text-[hsl(270,30%,50%)]',
+                          step.status === 'current' && 'text-primary',
+                          step.status === 'pending' && 'text-muted-foreground',
                           step.status === 'skipped' && 'text-gray-500'
                         )}
                       />
@@ -166,7 +166,7 @@ function HorizontalTimeline({
                   'text-xs truncate',
                   step.status === 'completed' && 'text-emerald-400',
                   step.status === 'current' && 'text-white',
-                  step.status === 'pending' && 'text-[hsl(270,30%,50%)]',
+                  step.status === 'pending' && 'text-muted-foreground',
                   step.status === 'error' && 'text-red-400',
                   step.status === 'skipped' && 'text-gray-500'
                 )}
@@ -243,8 +243,8 @@ function VerticalTimeline({
                 <Icon
                   className={cn(
                     iconSize,
-                    step.status === 'current' && 'text-[hsl(270,100%,70%)]',
-                    step.status === 'pending' && 'text-[hsl(270,30%,50%)]',
+                    step.status === 'current' && 'text-primary',
+                    step.status === 'pending' && 'text-muted-foreground',
                     step.status === 'skipped' && 'text-gray-500'
                   )}
                 />
@@ -265,7 +265,7 @@ function VerticalTimeline({
                     'font-medium',
                     step.status === 'completed' && 'text-emerald-400',
                     step.status === 'current' && 'text-white',
-                    step.status === 'pending' && 'text-[hsl(270,30%,60%)]',
+                    step.status === 'pending' && 'text-muted-foreground',
                     step.status === 'error' && 'text-red-400',
                     step.status === 'skipped' && 'text-gray-500 line-through'
                   )}
@@ -284,7 +284,7 @@ function VerticalTimeline({
                   className={cn(
                     'mt-0.5',
                     size === 'sm' ? 'text-xs' : 'text-sm',
-                    'text-[hsl(270,30%,50%)]'
+                    'text-muted-foreground'
                   )}
                 >
                   {step.description}

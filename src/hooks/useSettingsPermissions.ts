@@ -75,7 +75,7 @@ const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'plat
   white_label: 'organization',       // White-label settings
   // Platform level - root only
   organization_registrations: 'platform',
-  referrals: 'platform',
+  referrals: 'user', // Accessible to all users (perpetual referral program)
   billing: 'platform',
   platform_config: 'platform',
   platform_admin: 'platform',

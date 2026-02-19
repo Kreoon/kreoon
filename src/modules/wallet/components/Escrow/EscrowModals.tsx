@@ -114,7 +114,7 @@ export function ApproveContentModal({
                   />
                 </button>
               ))}
-              <span className="text-sm text-[hsl(270,30%,60%)] ml-2">
+              <span className="text-sm text-muted-foreground ml-2">
                 {rating}/5
               </span>
             </div>
@@ -207,7 +207,7 @@ export function RequestChangesModal({
         <div className="space-y-4 py-4">
           {/* Revisions count */}
           <div className="flex items-center justify-between p-3 rounded-lg bg-[hsl(270,100%,60%,0.05)]">
-            <span className="text-sm text-[hsl(270,30%,60%)]">Revisiones restantes</span>
+            <span className="text-sm text-muted-foreground">Revisiones restantes</span>
             <span
               className={cn(
                 'font-medium',
@@ -375,11 +375,11 @@ export function OpenDisputeModal({
 
           {/* Evidence upload hint */}
           <div className="p-3 rounded-lg bg-[hsl(270,100%,60%,0.05)] border border-dashed border-[hsl(270,100%,60%,0.2)]">
-            <div className="flex items-center gap-2 text-[hsl(270,30%,60%)]">
+            <div className="flex items-center gap-2 text-muted-foreground">
               <Upload className="h-4 w-4" />
               <span className="text-sm">Adjuntar evidencia (opcional)</span>
             </div>
-            <p className="text-xs text-[hsl(270,30%,50%)] mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Puedes adjuntar capturas de pantalla o documentos después de abrir la disputa.
             </p>
           </div>

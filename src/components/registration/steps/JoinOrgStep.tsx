@@ -84,7 +84,7 @@ export function JoinOrgStep({ data, onChange, onNext, onBack, mode }: StepCompon
     >
       <button
         onClick={onBack}
-        className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors mb-5"
+        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-5"
       >
         <ArrowLeft className="h-4 w-4" /> Atrás
       </button>
@@ -92,11 +92,11 @@ export function JoinOrgStep({ data, onChange, onNext, onBack, mode }: StepCompon
       <h2 className={cn('font-bold text-white mb-1', isCompact ? 'text-lg' : 'text-xl')}>
         Unirte a una organización
       </h2>
-      <p className="text-sm text-gray-400 mb-5">Ingresa el enlace, slug o código de invitación</p>
+      <p className="text-sm text-muted-foreground mb-5">Ingresa el enlace, slug o código de invitación</p>
 
       {/* Search */}
       <div className="mb-4">
-        <label className="block text-xs font-medium text-gray-300 mb-1">Enlace o código</label>
+        <label className="block text-xs font-medium text-foreground/80 mb-1">Enlace o código</label>
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
@@ -106,7 +106,7 @@ export function JoinOrgStep({ data, onChange, onNext, onBack, mode }: StepCompon
               onChange={e => { onChange({ joinLink: e.target.value, foundOrg: null }); setError(''); }}
               onKeyDown={e => e.key === 'Enter' && searchOrg()}
               placeholder="kreoon.com/org/mi-org o código..."
-              className="w-full rounded-lg border border-white/10 bg-white/5 pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/30"
+              className="w-full rounded-lg border border-border bg-white/5 pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/30"
             />
           </div>
           <button
@@ -136,7 +136,7 @@ export function JoinOrgStep({ data, onChange, onNext, onBack, mode }: StepCompon
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-white text-sm">{data.foundOrg.name}</p>
-              <p className="text-xs text-gray-400">kreoon.com/org/{data.foundOrg.slug}</p>
+              <p className="text-xs text-muted-foreground">kreoon.com/org/{data.foundOrg.slug}</p>
             </div>
             <Check className="h-5 w-5 text-blue-400 shrink-0" />
           </div>

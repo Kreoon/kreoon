@@ -29,6 +29,9 @@ export interface Wallet {
   currency: Currency;
   status: WalletStatus;
   settings: WalletSettings;
+  stripe_customer_id?: string;
+  stripe_connect_account_id?: string;
+  stripe_connect_status?: 'not_connected' | 'pending' | 'active' | 'restricted';
   created_at: string;
   updated_at: string;
 }

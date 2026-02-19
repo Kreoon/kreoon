@@ -50,7 +50,7 @@ export function WalletStatusDot({ status, className }: { status: WalletStatus; c
   return (
     <div className={cn('flex items-center gap-1.5', className)}>
       <div className={cn('h-2 w-2 rounded-full', config.dotColor)} />
-      <span className="text-xs text-[hsl(270,30%,60%)]">{WALLET_STATUS_LABELS[status]}</span>
+      <span className="text-xs text-muted-foreground">{WALLET_STATUS_LABELS[status]}</span>
     </div>
   );
 }

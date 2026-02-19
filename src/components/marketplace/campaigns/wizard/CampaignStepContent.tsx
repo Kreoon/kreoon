@@ -63,9 +63,9 @@ export function CampaignStepContent({ requirements, onChange }: CampaignStepCont
                   onChange={e => updateRequirement(index, { content_type: e.target.value })}
                   className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500 appearance-none cursor-pointer"
                 >
-                  <option value="" className="bg-[#1a1a2e]">Seleccionar</option>
+                  <option value="" className="bg-card">Seleccionar</option>
                   {CONTENT_TYPES.map(ct => (
-                    <option key={ct} value={ct} className="bg-[#1a1a2e]">{ct}</option>
+                    <option key={ct} value={ct} className="bg-card">{ct}</option>
                   ))}
                 </select>
               </div>

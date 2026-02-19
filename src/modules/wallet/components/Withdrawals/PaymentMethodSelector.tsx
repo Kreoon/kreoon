@@ -91,7 +91,7 @@ export function PaymentMethodSelector({
       {methods.length === 0 ? (
         <div className="p-6 rounded-xl bg-[hsl(270,100%,60%,0.05)] text-center">
           <Wallet className="h-10 w-10 mx-auto mb-3 text-[hsl(270,100%,60%,0.3)]" />
-          <p className="text-[hsl(270,30%,60%)] mb-3">
+          <p className="text-muted-foreground mb-3">
             No tienes métodos de pago configurados
           </p>
           <Button variant="outline" onClick={onAddNew}>
@@ -146,7 +146,7 @@ export function PaymentMethodSelector({
                     <Icon
                       className={cn(
                         'h-5 w-5',
-                        isSelected ? 'text-[hsl(270,100%,70%)]' : 'text-[hsl(270,30%,60%)]'
+                        isSelected ? 'text-primary' : 'text-muted-foreground'
                       )}
                     />
                   </div>
@@ -164,10 +164,10 @@ export function PaymentMethodSelector({
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-[hsl(270,30%,60%)] truncate">
+                    <p className="text-sm text-muted-foreground truncate">
                       {method.summary}
                     </p>
-                    <p className="text-xs text-[hsl(270,30%,50%)] mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Comisión: {getFeeDescription(method.method_type)}
                     </p>
                   </div>
@@ -192,10 +192,10 @@ export function PaymentMethodSelector({
       {/* Fee info */}
       {methods.length > 0 && (
         <div className="p-3 rounded-lg bg-[hsl(270,100%,60%,0.03)] border border-[hsl(270,100%,60%,0.1)]">
-          <p className="text-xs text-[hsl(270,30%,60%)]">
+          <p className="text-xs text-muted-foreground">
             <strong className="text-[hsl(270,30%,70%)]">Comisiones por método:</strong>
           </p>
-          <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-[hsl(270,30%,50%)]">
+          <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span>• Bancolombia: Gratis</span>
             <span>• Nequi: Gratis</span>
             <span>• PayPal: 2.5%</span>

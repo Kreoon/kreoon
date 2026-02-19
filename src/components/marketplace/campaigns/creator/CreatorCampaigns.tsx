@@ -101,9 +101,9 @@ export function CreatorCampaigns() {
     : [];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f]">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur-sm sticky top-0 z-10">
+      <div className="border-b border-white/10 bg-background/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -147,7 +147,7 @@ export function CreatorCampaigns() {
                   'px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap',
                   activeTab === tab.id
                     ? 'bg-purple-500/20 text-purple-300'
-                    : 'text-gray-500 hover:text-gray-300',
+                    : 'text-gray-500 hover:text-foreground',
                 )}
               >
                 {tab.label}
@@ -276,7 +276,7 @@ function CreatorCampaignRow({
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-[#1a1a2e]/80 border border-white/5 rounded-xl p-5 hover:border-purple-500/30 transition-all"
+      className="w-full text-left bg-card/80 border border-white/5 rounded-xl p-5 hover:border-purple-500/30 transition-all"
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -360,7 +360,7 @@ function AvailableCampaignRow({ campaign, onClick }: { campaign: Campaign; onCli
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-[#1a1a2e]/80 border border-white/5 rounded-xl p-5 hover:border-purple-500/30 transition-all"
+      className="w-full text-left bg-card/80 border border-white/5 rounded-xl p-5 hover:border-purple-500/30 transition-all"
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -415,7 +415,7 @@ function InvitationRow({
   const campaign = getCampaignById(invitation.campaign_id);
 
   return (
-    <div className="bg-[#1a1a2e]/80 border border-amber-500/20 rounded-xl p-5">
+    <div className="bg-card/80 border border-amber-500/20 rounded-xl p-5">
       <div className="flex items-start justify-between mb-2">
         <button onClick={onClick} className="flex items-center gap-2.5 min-w-0 text-left">
           <div className="w-9 h-9 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-300 flex-shrink-0">

@@ -242,7 +242,7 @@ export function KiroBottomSheet({
         ref={sheetRef}
         className={cn(
           'absolute bottom-0 left-0 right-0',
-          'bg-[#0a0a12] rounded-t-[20px]',
+          'bg-card rounded-t-[20px]',
           'shadow-2xl shadow-violet-500/10',
           'flex flex-col',
           // Transición suave cuando no está arrastrando
@@ -261,7 +261,7 @@ export function KiroBottomSheet({
       >
         {/* Handle bar */}
         <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing">
-          <div className="w-10 h-1 rounded-full bg-gray-600" />
+          <div className="w-10 h-1 rounded-full bg-muted-foreground/40" />
         </div>
 
         {/* Contenido scrolleable */}

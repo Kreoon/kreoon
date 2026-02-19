@@ -106,7 +106,7 @@ function ProjectRow({ project, statusLabels }: { project: MarketplaceProject; st
   return (
     <button
       onClick={() => navigate('/board?view=marketplace')}
-      className="w-full bg-[#1a1a2e]/60 border border-white/5 rounded-xl p-4 flex items-center gap-4 hover:border-purple-500/30 transition-all text-left"
+      className="w-full bg-card/60 border border-white/5 rounded-xl p-4 flex items-center gap-4 hover:border-purple-500/30 transition-all text-left"
     >
       {project.creator.avatar_url ? (
         <img src={project.creator.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
@@ -182,7 +182,7 @@ export function MarketplaceDashboardTab({ role }: MarketplaceDashboardTabProps) 
       {/* KPIs */}
       <div className={`grid grid-cols-2 ${kpis.length > 4 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-3`}>
         {kpis.map(kpi => (
-          <div key={kpi.label} className="bg-[#1a1a2e]/80 backdrop-blur-xl border border-white/10 rounded-xl p-4">
+          <div key={kpi.label} className="bg-card/80 backdrop-blur-xl border border-white/10 rounded-xl p-4">
             <div className="flex items-center gap-3">
               <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${kpi.color}`}>
                 <kpi.icon className="h-4 w-4" />
@@ -305,7 +305,7 @@ export function MarketplaceDashboardTab({ role }: MarketplaceDashboardTabProps) 
         </div>
 
         {recentProjects.length === 0 ? (
-          <div className="bg-[#1a1a2e]/40 border border-white/5 rounded-xl p-8 text-center">
+          <div className="bg-card/40 border border-white/5 rounded-xl p-8 text-center">
             <FolderKanban className="h-10 w-10 mx-auto text-gray-600 mb-3" />
             <p className="text-gray-400 text-sm">Sin proyectos activos en el marketplace</p>
             <button

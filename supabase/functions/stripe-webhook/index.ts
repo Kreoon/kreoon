@@ -425,7 +425,7 @@ async function handlePayoutFailed(supabase: any, payout: Stripe.Payout) {
     .from("withdrawal_requests")
     .update({
       status: "failed",
-      failure_reason: failureMessage,
+      rejection_reason: failureMessage,
       processed_at: new Date().toISOString(),
     })
     .eq("stripe_payout_id", payout.id);
@@ -612,37 +612,57 @@ async function resetMonthlyTokens(supabase: any, walletId: string) {
 }
 
 async function processReferralSubscriptionCommission(supabase: any, wallet: any, subscription: any) {
-  // Buscar si este usuario fue referido
+  const referredId = wallet.user_id || wallet.organization_id;
+  if (!referredId) return;
+
   const { data: referral } = await supabase
     .from("referral_relationships")
     .select("id, referrer_id, referrer_wallet_id, subscription_rate, status")
-    .eq("referred_id", wallet.user_id || wallet.organization_id)
+    .eq("referred_id", referredId)
     .eq("status", "active")
-    .single();
+    .limit(1)
+    .maybeSingle();
 
   if (!referral) return;
 
-  const commissionAmount = subscription.current_price * referral.subscription_rate;
+  // Deduplicación: clave única por periodo de facturación (mes/año)
+  const now = new Date();
+  const periodKey = `${subscription.stripe_subscription_id}_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-  // Registrar ganancia
-  const { data: earning } = await supabase
+  const { data: existingEarning } = await supabase
+    .from("referral_earnings")
+    .select("id")
+    .eq("relationship_id", referral.id)
+    .eq("source_type", "subscription")
+    .eq("source_id", periodKey)
+    .limit(1)
+    .maybeSingle();
+
+  if (existingEarning) {
+    console.log(`Referral commission already exists for period ${periodKey}, skipping`);
+    return;
+  }
+
+  const commissionAmount = subscription.current_price * referral.subscription_rate;
+  if (commissionAmount <= 0) return;
+
+  // Registrar ganancia con source_id que incluye periodo
+  await supabase
     .from("referral_earnings")
     .insert({
       relationship_id: referral.id,
       referrer_id: referral.referrer_id,
       referrer_wallet_id: referral.referrer_wallet_id,
       source_type: "subscription",
-      source_id: subscription.stripe_subscription_id,
+      source_id: periodKey,
       gross_amount: subscription.current_price,
       commission_rate: referral.subscription_rate,
       commission_amount: commissionAmount,
       status: "credited",
-      credited_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
+      credited_at: now.toISOString(),
+    });
 
-  // Acreditar al wallet del referidor atómicamente via RPC
+  // Acreditar al wallet del referidor
   if (referral.referrer_wallet_id) {
     await supabase.rpc("update_wallet_balance", {
       p_wallet_id: referral.referrer_wallet_id,
@@ -650,19 +670,39 @@ async function processReferralSubscriptionCommission(supabase: any, wallet: any,
       p_earned_delta: commissionAmount,
     });
 
-    // Registrar transacción
+    // Registrar transacción en wallet del referidor
     await supabase.from("unified_transactions").insert({
       wallet_id: referral.referrer_wallet_id,
       transaction_type: "referral_commission",
       status: "completed",
       amount: commissionAmount,
       referral_id: referral.id,
-      description: `Referral commission: ${subscription.tier} subscription`,
-      processed_at: new Date().toISOString(),
+      description: `Comisión referido: suscripción ${subscription.tier}`,
+      processed_at: now.toISOString(),
     });
+
+    // Registrar débito en wallet de plataforma
+    const { data: platformWallet } = await supabase
+      .from("unified_wallets")
+      .select("id")
+      .eq("wallet_type", "platform")
+      .limit(1)
+      .maybeSingle();
+
+    if (platformWallet) {
+      await supabase.from("unified_transactions").insert({
+        wallet_id: platformWallet.id,
+        transaction_type: "referral_commission",
+        status: "completed",
+        amount: -commissionAmount,
+        referral_id: referral.id,
+        description: `Pago comisión referido: suscripción ${subscription.tier}`,
+        processed_at: now.toISOString(),
+      });
+    }
   }
 
-  // Actualizar totales del referido atómicamente via RPC
+  // Actualizar totales atómicamente
   await supabase.rpc("increment_column", {
     p_table: "referral_relationships",
     p_column: "total_subscription_earned",
@@ -670,5 +710,5 @@ async function processReferralSubscriptionCommission(supabase: any, wallet: any,
     p_id: referral.id,
   });
 
-  console.log(`Referral commission ${commissionAmount} credited to ${referral.referrer_id}`);
+  console.log(`Referral commission $${commissionAmount} credited to ${referral.referrer_id} for period ${periodKey}`);
 }

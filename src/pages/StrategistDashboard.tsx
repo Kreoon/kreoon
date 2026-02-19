@@ -315,7 +315,7 @@ export default function StrategistDashboard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card className="border-[hsl(270,100%,60%,0.15)] bg-gradient-to-br from-[hsl(250,20%,6%)] to-[hsl(250,20%,4%)] overflow-hidden relative">
+          <Card className="border-[hsl(270,100%,60%,0.15)] bg-gradient-to-br from-card to-background overflow-hidden relative">
             <motion.div
               className="absolute inset-0 opacity-30"
               style={{
@@ -350,7 +350,7 @@ export default function StrategistDashboard() {
               </div>
               
               {/* Custom Tech Progress Bar */}
-              <div className="h-3 bg-[hsl(250,20%,10%)] rounded-full overflow-hidden border border-amber-500/20">
+              <div className="h-3 bg-muted rounded-full overflow-hidden border border-amber-500/20">
                 <motion.div
                   className="h-full relative overflow-hidden"
                   style={{
@@ -380,7 +380,7 @@ export default function StrategistDashboard() {
           transition={{ delay: 0.3 }}
         >
           {/* AI Script Generator - Tech Style */}
-          <Card className="border-amber-500/20 bg-gradient-to-br from-[hsl(250,20%,6%)] via-amber-500/5 to-[hsl(250,20%,4%)] overflow-hidden relative">
+          <Card className="border-amber-500/20 bg-gradient-to-br from-card via-amber-500/5 to-background overflow-hidden relative">
             <motion.div
               className="absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none"
               style={{ background: 'radial-gradient(circle, hsl(40 100% 50% / 0.2), transparent 70%)' }}
@@ -407,7 +407,7 @@ export default function StrategistDashboard() {
               <div className="space-y-2">
                 <Label className="text-amber-400/80">Producto</Label>
                 <Select value={selectedProductId} onValueChange={setSelectedProductId}>
-                  <SelectTrigger className="border-amber-500/30 bg-[hsl(250,20%,8%)] focus:border-amber-500/50">
+                  <SelectTrigger className="border-amber-500/30 bg-muted focus:border-amber-500/50">
                     <SelectValue placeholder="Seleccionar producto..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -424,7 +424,7 @@ export default function StrategistDashboard() {
                 <div className="space-y-2">
                   <Label className="text-amber-400/80">Ángulo de Venta</Label>
                   <Select value={selectedAngle} onValueChange={setSelectedAngle}>
-                    <SelectTrigger className="border-amber-500/30 bg-[hsl(250,20%,8%)] focus:border-amber-500/50">
+                    <SelectTrigger className="border-amber-500/30 bg-muted focus:border-amber-500/50">
                       <SelectValue placeholder="Seleccionar ángulo..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -445,7 +445,7 @@ export default function StrategistDashboard() {
                   onChange={(e) => setAdditionalContext(e.target.value)}
                   placeholder="Indicaciones específicas para el guión..."
                   rows={3}
-                  className="border-amber-500/30 bg-[hsl(250,20%,8%)] focus:border-amber-500/50"
+                  className="border-amber-500/30 bg-muted focus:border-amber-500/50"
                 />
               </div>
 
@@ -488,7 +488,7 @@ export default function StrategistDashboard() {
                       Copiar
                     </Button>
                   </div>
-                  <div className="p-4 bg-[hsl(250,20%,8%)] border border-amber-500/20 rounded-lg text-sm whitespace-pre-wrap max-h-64 overflow-auto">
+                  <div className="p-4 bg-muted border border-amber-500/20 rounded-lg text-sm whitespace-pre-wrap max-h-64 overflow-auto">
                     {generatedScript}
                   </div>
                 </motion.div>
@@ -497,7 +497,7 @@ export default function StrategistDashboard() {
           </Card>
 
           {/* Recent Content - Tech Style */}
-          <Card className="border-[hsl(270,100%,60%,0.15)] bg-gradient-to-br from-[hsl(250,20%,6%)] to-[hsl(250,20%,4%)] overflow-hidden relative">
+          <Card className="border-[hsl(270,100%,60%,0.15)] bg-gradient-to-br from-card to-background overflow-hidden relative">
             <motion.div
               className="absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none"
               style={{ background: 'radial-gradient(circle, hsl(270 100% 60% / 0.15), transparent 70%)' }}
@@ -505,7 +505,7 @@ export default function StrategistDashboard() {
             <CardHeader className="relative z-10">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <FileText className="w-5 h-5 text-[hsl(270,100%,60%)]" />
-                <span className="text-[hsl(270,100%,70%)]">Contenido Reciente</span>
+                <span className="text-primary">Contenido Reciente</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="relative z-10">
@@ -513,7 +513,7 @@ export default function StrategistDashboard() {
                 {content.slice(0, 6).map((item, index) => (
                   <motion.div 
                     key={item.id} 
-                    className="p-3 bg-[hsl(250,20%,8%)] border border-[hsl(270,100%,60%,0.1)] rounded-lg hover:border-[hsl(270,100%,60%,0.3)] cursor-pointer transition-all group"
+                    className="p-3 bg-muted border border-[hsl(270,100%,60%,0.1)] rounded-lg hover:border-[hsl(270,100%,60%,0.3)] cursor-pointer transition-all group"
                     onClick={() => setSelectedContent(item)}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -521,7 +521,7 @@ export default function StrategistDashboard() {
                     whileHover={{ x: 5 }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-[hsl(250,20%,12%)] flex items-center justify-center flex-shrink-0 border border-[hsl(270,100%,60%,0.2)]">
+                      <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 border border-[hsl(270,100%,60%,0.2)]">
                         {item.thumbnail_url ? (
                           <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover rounded-lg" />
                         ) : (
@@ -529,8 +529,8 @@ export default function StrategistDashboard() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate text-white group-hover:text-[hsl(270,100%,70%)] transition-colors">{item.title}</p>
-                        <p className="text-xs text-[hsl(270,30%,50%)]">{item.client?.name || 'Sin cliente'}</p>
+                        <p className="font-medium text-sm truncate text-white group-hover:text-primary transition-colors">{item.title}</p>
+                        <p className="text-xs text-muted-foreground">{item.client?.name || 'Sin cliente'}</p>
                       </div>
                       <Badge className={cn("text-xs", STATUS_COLORS[item.status])} variant="secondary">
                         {STATUS_LABELS[item.status]}
@@ -547,7 +547,7 @@ export default function StrategistDashboard() {
                       <Lightbulb className="w-12 h-12 mx-auto text-[hsl(270,100%,60%)] mb-4" />
                     </motion.div>
                     <h4 className="font-semibold mb-2 text-white">Sin proyectos asignados</h4>
-                    <p className="text-sm text-[hsl(270,30%,60%)]">Cuando te asignen proyectos aparecerán aquí</p>
+                    <p className="text-sm text-muted-foreground">Cuando te asignen proyectos aparecerán aquí</p>
                   </div>
                 )}
               </div>

@@ -260,7 +260,7 @@ export default function ProductDNADisplay({
 
       {/* Audio */}
       {productDna.audio_url && (
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+        <div className="bg-muted/50 backdrop-blur-sm rounded-xl p-4 border border-border">
           <div className="flex items-center gap-3">
             <button
               onClick={toggleAudio}
@@ -284,7 +284,7 @@ export default function ProductDNADisplay({
             {productDna.transcription && (
               <button
                 onClick={() => handleCopy(productDna.transcription!, 'transcript')}
-                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                className="p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                 title="Copiar transcripción"
               >
                 {copiedSection === 'transcript' ? (
@@ -296,9 +296,9 @@ export default function ProductDNADisplay({
             )}
           </div>
           {productDna.transcription && (
-            <div className="mt-3 p-3 bg-white/5 rounded-lg">
+            <div className="mt-3 p-3 bg-muted/50 rounded-lg">
               <p className="text-xs text-gray-400 uppercase font-medium mb-1">Transcripción</p>
-              <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto">
+              <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto">
                 {productDna.transcription}
               </p>
             </div>
@@ -472,7 +472,7 @@ function HeaderSection({
   onToggleEdit?: () => void;
 }) {
   return (
-    <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+    <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 backdrop-blur-sm rounded-2xl p-6 border border-border">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         {/* Info */}
         <div className="flex items-start gap-4">
@@ -486,11 +486,11 @@ function HeaderSection({
             </p>
             <div className="flex flex-wrap items-center gap-2 mt-2">
               {productDna.service_types?.map((s) => (
-                <span key={s} className="text-xs bg-white/10 px-2 py-0.5 rounded-full text-gray-300">
+                <span key={s} className="text-xs bg-muted px-2 py-0.5 rounded-full text-foreground/80">
                   {s.replace(/_/g, ' ')}
                 </span>
               ))}
-              <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full text-gray-300">
+              <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-foreground/80">
                 v{productDna.version || 1}
               </span>
             </div>
@@ -508,8 +508,8 @@ function HeaderSection({
           )}
           {productDna.estimated_complexity && (
             <div className="text-center">
-              <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-gray-300" />
+              <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-foreground/80" />
               </div>
               <p className="text-gray-400 text-xs mt-1 capitalize">{productDna.estimated_complexity}</p>
             </div>
@@ -568,11 +568,11 @@ function SectionCard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden"
+      className="bg-muted/50 backdrop-blur-sm rounded-xl border border-border overflow-hidden"
     >
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
+        className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors"
       >
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${accentColor} flex items-center justify-center`}>
@@ -580,7 +580,7 @@ function SectionCard({
           </div>
           <h3 className="text-lg font-semibold text-white">{title}</h3>
           {badge && (
-            <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full text-gray-300">{badge}</span>
+            <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-foreground/80">{badge}</span>
           )}
         </div>
         {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
@@ -594,7 +594,7 @@ function SectionCard({
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="p-4 pt-0 border-t border-white/5">{children}</div>
+            <div className="p-4 pt-0 border-t border-border">{children}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -612,17 +612,17 @@ function MarketResearchSection({ data }: { data: MarketResearchData }) {
       {/* Overview */}
       {data.market_overview && (
         <div className="p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-lg border border-green-500/20">
-          <p className="text-gray-300 leading-relaxed">{data.market_overview}</p>
+          <p className="text-foreground/80 leading-relaxed">{data.market_overview}</p>
         </div>
       )}
 
       {/* Market Size */}
       {data.market_size && (
-        <div className="p-4 bg-white/5 rounded-lg">
+        <div className="p-4 bg-muted/50 rounded-lg">
           <h4 className="text-sm font-semibold text-green-400 uppercase tracking-wider mb-2">
             Tamaño del Mercado
           </h4>
-          <p className="text-gray-300">{data.market_size}</p>
+          <p className="text-foreground/80">{data.market_size}</p>
         </div>
       )}
 
@@ -634,9 +634,9 @@ function MarketResearchSection({ data }: { data: MarketResearchData }) {
           </h4>
           <div className="grid gap-2">
             {data.growth_trends.map((trend, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 bg-white/5 rounded-lg">
+              <div key={i} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
                 <TrendingUp className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                <span className="text-gray-300 text-sm">{trend}</span>
+                <span className="text-foreground/80 text-sm">{trend}</span>
               </div>
             ))}
           </div>
@@ -652,7 +652,7 @@ function MarketResearchSection({ data }: { data: MarketResearchData }) {
               {data.opportunities.map((opp, i) => (
                 <div key={i} className="flex items-start gap-2 p-2 bg-green-500/10 rounded-lg">
                   <Zap className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-gray-300 text-sm">{opp}</span>
+                  <span className="text-foreground/80 text-sm">{opp}</span>
                 </div>
               ))}
             </div>
@@ -665,7 +665,7 @@ function MarketResearchSection({ data }: { data: MarketResearchData }) {
               {data.threats.map((threat, i) => (
                 <div key={i} className="flex items-start gap-2 p-2 bg-red-500/10 rounded-lg">
                   <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-gray-300 text-sm">{threat}</span>
+                  <span className="text-foreground/80 text-sm">{threat}</span>
                 </div>
               ))}
             </div>
@@ -679,7 +679,7 @@ function MarketResearchSection({ data }: { data: MarketResearchData }) {
           <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Segmentos Objetivo</h4>
           <div className="grid gap-3">
             {data.target_segments.map((seg, i) => (
-              <div key={i} className="p-4 bg-white/5 rounded-lg">
+              <div key={i} className="p-4 bg-muted/50 rounded-lg">
                 <div className="flex items-center justify-between mb-1">
                   <h5 className="font-medium text-white">{seg.name}</h5>
                   {seg.priority && (
@@ -715,7 +715,7 @@ function CompetitorSection({ data }: { data: CompetitorAnalysisData }) {
       {data.competitive_advantage && (
         <div className="p-4 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-lg border border-orange-500/20">
           <p className="text-xs text-orange-400 uppercase font-semibold mb-1">Ventaja Competitiva</p>
-          <p className="text-gray-300 font-medium">{data.competitive_advantage}</p>
+          <p className="text-foreground/80 font-medium">{data.competitive_advantage}</p>
         </div>
       )}
 
@@ -724,11 +724,11 @@ function CompetitorSection({ data }: { data: CompetitorAnalysisData }) {
           <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Competidores Directos</h4>
           <div className="grid gap-3">
             {data.direct_competitors.map((comp, i) => (
-              <div key={i} className="p-4 bg-white/5 rounded-lg">
+              <div key={i} className="p-4 bg-muted/50 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <h5 className="font-medium text-white">{comp.name}</h5>
                   {comp.price_range && (
-                    <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full text-gray-300">{comp.price_range}</span>
+                    <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-foreground/80">{comp.price_range}</span>
                   )}
                 </div>
                 {comp.positioning && (
@@ -767,9 +767,9 @@ function CompetitorSection({ data }: { data: CompetitorAnalysisData }) {
       )}
 
       {data.positioning_strategy && (
-        <div className="p-4 bg-white/5 rounded-lg">
+        <div className="p-4 bg-muted/50 rounded-lg">
           <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Estrategia de Posicionamiento</p>
-          <p className="text-gray-300">{data.positioning_strategy}</p>
+          <p className="text-foreground/80">{data.positioning_strategy}</p>
         </div>
       )}
 
@@ -791,7 +791,7 @@ function CompetitorSection({ data }: { data: CompetitorAnalysisData }) {
           <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Competidores Indirectos</h4>
           <div className="flex flex-wrap gap-2">
             {data.indirect_competitors.map((c, i) => (
-              <span key={i} className="text-xs bg-white/10 px-2 py-1 rounded-full text-gray-300">{c}</span>
+              <span key={i} className="text-xs bg-muted px-2 py-1 rounded-full text-foreground/80">{c}</span>
             ))}
           </div>
         </div>
@@ -811,13 +811,13 @@ function TargetAudienceSection({ data }: { data: NonNullable<MarketResearchData[
         {data.demographics && (
           <div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
             <p className="text-xs text-purple-400 uppercase font-semibold mb-2">Demográfico</p>
-            <p className="text-gray-300">{data.demographics}</p>
+            <p className="text-foreground/80">{data.demographics}</p>
           </div>
         )}
         {data.psychographics && (
           <div className="p-4 bg-gradient-to-r from-pink-500/10 to-rose-500/10 rounded-lg border border-pink-500/20">
             <p className="text-xs text-pink-400 uppercase font-semibold mb-2">Psicográfico</p>
-            <p className="text-gray-300">{data.psychographics}</p>
+            <p className="text-foreground/80">{data.psychographics}</p>
           </div>
         )}
       </div>
@@ -828,7 +828,7 @@ function TargetAudienceSection({ data }: { data: NonNullable<MarketResearchData[
             <h4 className="text-sm font-semibold text-red-400 uppercase tracking-wider mb-3">Puntos de Dolor</h4>
             <div className="space-y-2">
               {data.pain_points.map((p, i) => (
-                <div key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                <div key={i} className="flex items-start gap-2 text-sm text-foreground/80">
                   <span className="text-red-400">•</span> {p}
                 </div>
               ))}
@@ -840,7 +840,7 @@ function TargetAudienceSection({ data }: { data: NonNullable<MarketResearchData[
             <h4 className="text-sm font-semibold text-green-400 uppercase tracking-wider mb-3">Deseos</h4>
             <div className="space-y-2">
               {data.desires.map((d, i) => (
-                <div key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                <div key={i} className="flex items-start gap-2 text-sm text-foreground/80">
                   <span className="text-green-400">•</span> {d}
                 </div>
               ))}
@@ -852,7 +852,7 @@ function TargetAudienceSection({ data }: { data: NonNullable<MarketResearchData[
             <h4 className="text-sm font-semibold text-yellow-400 uppercase tracking-wider mb-3">Objeciones</h4>
             <div className="space-y-2">
               {data.objections.map((o, i) => (
-                <div key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                <div key={i} className="flex items-start gap-2 text-sm text-foreground/80">
                   <span className="text-yellow-400">•</span> {o}
                 </div>
               ))}
@@ -864,7 +864,7 @@ function TargetAudienceSection({ data }: { data: NonNullable<MarketResearchData[
             <h4 className="text-sm font-semibold text-blue-400 uppercase tracking-wider mb-3">Disparadores de Compra</h4>
             <div className="space-y-2">
               {data.buying_triggers.map((t, i) => (
-                <div key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                <div key={i} className="flex items-start gap-2 text-sm text-foreground/80">
                   <span className="text-blue-400">•</span> {t}
                 </div>
               ))}
@@ -905,7 +905,7 @@ function SalesAnglesSection({
         </button>
       </div>
       {data.map((angle, i) => (
-        <div key={i} className="p-4 bg-white/5 rounded-lg border-l-2 border-yellow-500">
+        <div key={i} className="p-4 bg-muted/50 rounded-lg border-l-2 border-yellow-500">
           <div className="flex items-start justify-between">
             <h5 className="font-medium text-white">{angle.angle_name}</h5>
             {angle.target_emotion && (
@@ -915,7 +915,7 @@ function SalesAnglesSection({
             )}
           </div>
           {angle.headline && (
-            <p className="text-gray-300 mt-1 font-medium">{angle.headline}</p>
+            <p className="text-foreground/80 mt-1 font-medium">{angle.headline}</p>
           )}
           {angle.hook && (
             <p className="text-gray-400 text-sm mt-2 italic">Hook: "{angle.hook}"</p>
@@ -946,7 +946,7 @@ function ContentBriefSection({
         <div className="space-y-4">
           <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Voz de Marca</h4>
           {data.brand_voice.personality && (
-            <p className="text-gray-300">{data.brand_voice.personality}</p>
+            <p className="text-foreground/80">{data.brand_voice.personality}</p>
           )}
           {data.brand_voice.tone && data.brand_voice.tone.length > 0 && (
             <div className="flex flex-wrap gap-2">
@@ -961,7 +961,7 @@ function ContentBriefSection({
                 <p className="text-xs text-green-400 uppercase font-semibold mb-2">Sí decir</p>
                 <ul className="space-y-1">
                   {data.brand_voice.do_say.map((s, i) => (
-                    <li key={i} className="text-gray-300 text-sm flex items-start gap-1">
+                    <li key={i} className="text-foreground/80 text-sm flex items-start gap-1">
                       <span className="text-green-400">✓</span> {s}
                     </li>
                   ))}
@@ -973,7 +973,7 @@ function ContentBriefSection({
                 <p className="text-xs text-red-400 uppercase font-semibold mb-2">No decir</p>
                 <ul className="space-y-1">
                   {data.brand_voice.dont_say.map((s, i) => (
-                    <li key={i} className="text-gray-300 text-sm flex items-start gap-1">
+                    <li key={i} className="text-foreground/80 text-sm flex items-start gap-1">
                       <span className="text-red-400">✗</span> {s}
                     </li>
                   ))}
@@ -999,11 +999,11 @@ function ContentBriefSection({
           </div>
           <div className="grid gap-2">
             {data.key_messages.map((msg, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 bg-white/5 rounded-lg">
+              <div key={i} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
                 <span className="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 text-xs flex items-center justify-center flex-shrink-0">
                   {i + 1}
                 </span>
-                <span className="text-gray-300">{msg}</span>
+                <span className="text-foreground/80">{msg}</span>
               </div>
             ))}
           </div>
@@ -1016,8 +1016,8 @@ function ContentBriefSection({
           <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Taglines Sugeridos</h4>
           <div className="grid md:grid-cols-2 gap-3">
             {data.tagline_suggestions.map((t, i) => (
-              <div key={i} className="p-3 bg-white/5 rounded-lg border-l-2 border-purple-500">
-                <p className="text-gray-300 text-sm italic">"{t}"</p>
+              <div key={i} className="p-3 bg-muted/50 rounded-lg border-l-2 border-purple-500">
+                <p className="text-foreground/80 text-sm italic">"{t}"</p>
               </div>
             ))}
           </div>
@@ -1030,7 +1030,7 @@ function ContentBriefSection({
           <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Ideas de Contenido</h4>
           <div className="grid gap-3">
             {data.content_ideas.map((idea, i) => (
-              <div key={i} className="p-4 bg-white/5 rounded-lg">
+              <div key={i} className="p-4 bg-muted/50 rounded-lg">
                 <div className="flex items-start justify-between">
                   <h5 className="font-medium text-white">{idea.title}</h5>
                   <div className="flex gap-2">
@@ -1056,7 +1056,7 @@ function ContentBriefSection({
         <div className="p-4 bg-gradient-to-r from-pink-500/10 to-rose-500/10 rounded-lg border border-pink-500/20">
           <h4 className="text-sm font-semibold text-pink-400 uppercase tracking-wider mb-3">Dirección Visual</h4>
           {data.visual_direction.style && (
-            <p className="text-gray-300 mb-2">{data.visual_direction.style}</p>
+            <p className="text-foreground/80 mb-2">{data.visual_direction.style}</p>
           )}
           {data.visual_direction.mood && (
             <p className="text-gray-400 text-sm italic mb-3">Mood: {data.visual_direction.mood}</p>
@@ -1066,7 +1066,7 @@ function ContentBriefSection({
               <p className="text-xs text-gray-400 uppercase">Paleta:</p>
               {data.visual_direction.color_palette.map((color, i) => (
                 <div key={i} className="flex items-center gap-1">
-                  <div className="w-6 h-6 rounded-full border border-white/20" style={{ backgroundColor: color }} />
+                  <div className="w-6 h-6 rounded-full border border-border" style={{ backgroundColor: color }} />
                   <span className="text-xs text-gray-400">{color}</span>
                 </div>
               ))}
@@ -1096,11 +1096,11 @@ function FunnelStrategySection({ data }: { data: NonNullable<StrategyRecommendat
         const value = data[stage.key];
         if (!value) return null;
         return (
-          <div key={stage.key} className="relative pl-6 pb-2 border-l-2 border-white/10 last:pb-0">
+          <div key={stage.key} className="relative pl-6 pb-2 border-l-2 border-border last:pb-0">
             <div className={`absolute -left-2 top-0 w-4 h-4 rounded-full bg-gradient-to-br ${stage.color} flex items-center justify-center`}>
               <span className="text-white">{stage.icon}</span>
             </div>
-            <div className="bg-white/5 rounded-lg p-3">
+            <div className="bg-muted/50 rounded-lg p-3">
               <h5 className="font-medium text-white text-sm mb-1">{stage.label}</h5>
               <p className="text-gray-400 text-sm">{value}</p>
             </div>
@@ -1119,7 +1119,7 @@ function PlatformsSection({ data, hashtags }: { data: NonNullable<StrategyRecomm
   return (
     <div className="space-y-4">
       {data.map((platform, i) => (
-        <div key={i} className="p-3 bg-white/5 rounded-lg">
+        <div key={i} className="p-3 bg-muted/50 rounded-lg">
           <div className="flex items-center justify-between mb-1">
             <h5 className="font-medium text-white text-sm">{platform.name}</h5>
             {platform.priority && (
@@ -1267,13 +1267,13 @@ function InlineTextarea({
   placeholder?: string;
   className?: string;
 }) {
-  if (!isEditing) return <p className={`text-gray-300 leading-relaxed ${className}`}>{value}</p>;
+  if (!isEditing) return <p className={`text-foreground/80 leading-relaxed ${className}`}>{value}</p>;
   return (
     <textarea
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className={`w-full bg-white/10 border border-white/20 rounded-lg p-3 text-gray-200 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-purple-500/50 resize-y min-h-[80px] ${className}`}
+      className={`w-full bg-muted border border-border rounded-lg p-3 text-foreground text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-purple-500/50 resize-y min-h-[80px] ${className}`}
     />
   );
 }
@@ -1283,7 +1283,7 @@ function InlineChipList({
   items,
   onChange,
   isEditing,
-  color = 'bg-white/10 text-gray-300',
+  color = 'bg-muted text-foreground/80',
 }: {
   items: string[];
   onChange: (v: string[]) => void;
@@ -1326,7 +1326,7 @@ function InlineChipList({
             }
           }}
           placeholder="Agregar..."
-          className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+          className="flex-1 bg-muted border border-border rounded-lg px-3 py-1.5 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
         />
         <button
           onClick={() => {
@@ -1335,9 +1335,9 @@ function InlineChipList({
               setNewItem('');
             }
           }}
-          className="p-1.5 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+          className="p-1.5 bg-muted rounded-lg hover:bg-muted transition-colors"
         >
-          <Plus className="w-4 h-4 text-gray-300" />
+          <Plus className="w-4 h-4 text-foreground/80" />
         </button>
       </div>
     </div>
@@ -1415,7 +1415,7 @@ function EditableStrategySection({
           </div>
         )}
         {(local.pricing_strategy || isEditing) && (
-          <div className="p-4 bg-white/5 rounded-lg">
+          <div className="p-4 bg-muted/50 rounded-lg">
             <p className="text-xs text-gray-400 uppercase font-semibold mb-1 flex items-center gap-1">
               <DollarSign className="w-3 h-3" /> Estrategia de Precio
             </p>
@@ -1649,7 +1649,7 @@ function EditableContentBriefSection({
               items={local.key_messages || []}
               onChange={(v) => setLocal({ ...local, key_messages: v })}
               isEditing={true}
-              color="bg-white/10 text-gray-300"
+              color="bg-muted text-foreground/80"
             />
           </div>
           <div>
@@ -1703,8 +1703,8 @@ function ActionButton({
   disabled?: boolean;
 }) {
   const variants = {
-    ghost: 'bg-white/5 hover:bg-white/10 text-gray-300',
-    secondary: 'bg-white/10 hover:bg-white/20 text-white',
+    ghost: 'bg-muted/50 hover:bg-muted text-foreground/80',
+    secondary: 'bg-muted hover:bg-muted text-white',
     primary: 'bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 text-white'
   };
 
@@ -1724,7 +1724,7 @@ function CopyButton({ onClick, copied }: { onClick: () => void; copied: boolean 
   return (
     <button
       onClick={onClick}
-      className="absolute top-2 right-2 p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+      className="absolute top-2 right-2 p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
     >
       {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4 text-gray-400" />}
     </button>

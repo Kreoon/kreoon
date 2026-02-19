@@ -105,7 +105,7 @@ export function UserAssignmentSection({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 text-xs border-[#8b5cf6]/40 text-[#a78bfa] hover:bg-[#a855f7]/10 hover:border-[#a855f7]/60 hover:shadow-[0_0_12px_rgba(168,85,247,0.2)]"
+                className="h-7 text-xs border-primary/40 text-primary hover:bg-[#a855f7]/10 hover:border-[#a855f7]/60 hover:shadow-[0_0_12px_rgba(168,85,247,0.2)]"
                 onClick={(e) => e.stopPropagation()}
               >
                 + Asignar
@@ -158,7 +158,7 @@ export function UserAssignmentSection({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 text-xs border-[#8b5cf6]/40 text-[#a78bfa] hover:bg-[#a855f7]/10 hover:border-[#a855f7]/60 hover:shadow-[0_0_12px_rgba(168,85,247,0.2)]"
+                className="h-7 text-xs border-primary/40 text-primary hover:bg-[#a855f7]/10 hover:border-[#a855f7]/60 hover:shadow-[0_0_12px_rgba(168,85,247,0.2)]"
                 onClick={(e) => e.stopPropagation()}
               >
                 + Asignar

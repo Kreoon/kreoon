@@ -21,15 +21,15 @@ export default function TalentListsPage() {
   }
 
   return (
-    <div className="min-h-full bg-[#0a0a0f]">
+    <div className="min-h-full bg-background">
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-white">Listas de Talento</h1>
+            <h1 className="text-2xl font-bold text-foreground">Listas de Talento</h1>
             <p className="text-sm text-gray-500 mt-1">Organiza y guarda creadores para tus proyectos</p>
           </div>
-          <Button onClick={() => setShowCreate(true)} className="bg-purple-600 hover:bg-purple-500 text-white">
+          <Button onClick={() => setShowCreate(true)} className="bg-purple-600 hover:bg-purple-500 text-foreground">
             <Plus className="h-4 w-4 mr-2" />
             Nueva Lista
           </Button>
@@ -39,9 +39,9 @@ export default function TalentListsPage() {
         {lists.length === 0 ? (
           <div className="text-center py-20">
             <Users className="h-16 w-16 mx-auto text-gray-600 mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-1">No tienes listas aún</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-1">No tienes listas aún</h3>
             <p className="text-sm text-gray-500 mb-6">Crea tu primera lista para empezar a organizar talento</p>
-            <Button onClick={() => setShowCreate(true)} className="bg-purple-600 hover:bg-purple-500 text-white">
+            <Button onClick={() => setShowCreate(true)} className="bg-purple-600 hover:bg-purple-500 text-foreground">
               <Plus className="h-4 w-4 mr-2" />
               Crear Lista
             </Button>

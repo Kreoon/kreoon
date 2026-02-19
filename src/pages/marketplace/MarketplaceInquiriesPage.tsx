@@ -23,11 +23,11 @@ export default function MarketplaceInquiriesPage() {
   const { inquiries, loading } = useOrgInquiries(orgId, statusFilter === 'all' ? undefined : statusFilter);
 
   return (
-    <div className="min-h-full bg-[#0a0a0f]">
+    <div className="min-h-full bg-background">
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <MessageSquare className="h-6 w-6 text-purple-400" />
             Consultas
           </h1>
@@ -44,7 +44,7 @@ export default function MarketplaceInquiriesPage() {
                 'px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all',
                 statusFilter === tab.value
                   ? 'bg-purple-500/15 text-purple-400'
-                  : 'bg-white/5 text-gray-500 hover:text-gray-300'
+                  : 'bg-muted/50 text-gray-500 hover:text-foreground'
               )}
             >
               {tab.label}
@@ -71,7 +71,7 @@ export default function MarketplaceInquiriesPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-white">{inquiry.sender_name}</p>
+                        <p className="text-sm font-medium text-foreground">{inquiry.sender_name}</p>
                         <Badge className={cn('text-[10px]', statusInfo.color)}>{statusInfo.label}</Badge>
                       </div>
                       <p className="text-xs text-gray-500 mt-0.5">{inquiry.sender_email}</p>
@@ -88,7 +88,7 @@ export default function MarketplaceInquiriesPage() {
                       </p>
                     </div>
                   </div>
-                  <p className="text-sm font-medium text-gray-300 mt-2">{inquiry.subject}</p>
+                  <p className="text-sm font-medium text-foreground/80 mt-2">{inquiry.subject}</p>
                   <p className="text-sm text-gray-400 mt-1 line-clamp-2">{inquiry.message}</p>
                 </div>
               );

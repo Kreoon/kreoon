@@ -34,7 +34,7 @@ export function AboutSection({ creator }: AboutSectionProps) {
 
       <div className="relative">
         <p
-          className={`text-gray-300 text-base leading-relaxed whitespace-pre-line ${
+          className={`text-foreground/80 text-base leading-relaxed whitespace-pre-line ${
             !expanded && isLong ? 'line-clamp-4' : ''
           }`}
         >

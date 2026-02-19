@@ -636,13 +636,13 @@ export default function ContentBoard() {
           action={
             <div className="flex items-center gap-2">
               <div className="relative hidden sm:block">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[hsl(270,30%,50%)]" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <input
                   type="text"
                   placeholder="Buscar producción..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="h-9 md:h-10 w-40 md:w-64 rounded-xl border border-[hsl(270,100%,60%,0.15)] bg-[hsl(250,20%,6%)] pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(270,100%,60%,0.3)] focus:border-[hsl(270,100%,60%,0.3)] transition-all placeholder:text-[hsl(270,30%,45%)]"
+                  className="h-9 md:h-10 w-40 md:w-64 rounded-xl border border-border bg-card pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-[hsl(270,100%,60%,0.3)] transition-all placeholder:text-[hsl(270,30%,45%)]"
                 />
               </div>
             </div>
@@ -652,26 +652,26 @@ export default function ContentBoard() {
         {/* Mobile search */}
         <div className="sm:hidden">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[hsl(270,30%,50%)]" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
               placeholder="Buscar producción..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-9 w-full rounded-xl border border-[hsl(270,100%,60%,0.15)] bg-[hsl(250,20%,6%)] pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(270,100%,60%,0.3)] transition-all placeholder:text-[hsl(270,30%,45%)]"
+              className="h-9 w-full rounded-xl border border-border bg-card pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all placeholder:text-[hsl(270,30%,45%)]"
             />
           </div>
         </div>
 
         {/* Board Mode Toggle: Contenido | Marketplace */}
-        <div className="flex items-center gap-1 bg-[hsl(250,20%,8%)] rounded-xl p-1 w-fit border border-white/5">
+        <div className="flex items-center gap-1 bg-muted rounded-xl p-1 w-fit border border-white/5">
           <button
             onClick={() => setBoardMode('content')}
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
               boardMode === 'content'
                 ? "bg-purple-600/20 text-purple-300 border border-purple-500/30"
-                : "text-gray-500 hover:text-gray-300"
+                : "text-gray-500 hover:text-foreground"
             )}
           >
             <Scroll className="h-4 w-4" />
@@ -683,7 +683,7 @@ export default function ContentBoard() {
               "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
               boardMode === 'marketplace'
                 ? "bg-purple-600/20 text-purple-300 border border-purple-500/30"
-                : "text-gray-500 hover:text-gray-300"
+                : "text-gray-500 hover:text-foreground"
             )}
           >
             <ShoppingBag className="h-4 w-4" />

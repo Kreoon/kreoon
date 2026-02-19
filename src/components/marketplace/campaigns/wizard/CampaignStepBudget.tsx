@@ -60,7 +60,7 @@ export function CampaignStepBudget({ data, onChange, contentCount }: CampaignSte
 
       {/* Campaign type selection */}
       <div className="space-y-3">
-        <label className="text-gray-300 text-sm font-medium">Tipo de Compensacion</label>
+        <label className="text-foreground/80 text-sm font-medium">Tipo de Compensacion</label>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {TYPE_OPTIONS.map(opt => {
             const Icon = opt.icon;
@@ -88,7 +88,7 @@ export function CampaignStepBudget({ data, onChange, contentCount }: CampaignSte
       {/* Pricing mode (only for paid/hybrid) */}
       {showPaymentFields && (
         <div className="space-y-3">
-          <label className="text-gray-300 text-sm font-medium">Modo de Precio</label>
+          <label className="text-foreground/80 text-sm font-medium">Modo de Precio</label>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {PRICING_OPTIONS.map(opt => {
               const Icon = opt.icon;
@@ -160,7 +160,7 @@ export function CampaignStepBudget({ data, onChange, contentCount }: CampaignSte
             </div>
           </div>
           {(data.budget_per_video > 0 || data.total_budget > 0) && (
-            <div className="bg-[#0a0a0f] rounded-lg p-4 space-y-2">
+            <div className="bg-background rounded-lg p-4 space-y-2">
               <h4 className="text-gray-400 text-xs font-semibold uppercase">Resumen Financiero</h4>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Pago a creadores</span>
@@ -265,7 +265,7 @@ export function CampaignStepBudget({ data, onChange, contentCount }: CampaignSte
             </div>
           </div>
           {data.min_bid > 0 && data.max_bid > 0 && data.max_bid >= data.min_bid && (
-            <div className="bg-[#0a0a0f] rounded-lg p-4 space-y-2">
+            <div className="bg-background rounded-lg p-4 space-y-2">
               <h4 className="text-gray-400 text-xs font-semibold uppercase">Estimacion de Costos</h4>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Rango por video</span>
@@ -273,7 +273,7 @@ export function CampaignStepBudget({ data, onChange, contentCount }: CampaignSte
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Costo min estimado</span>
-                <span className="text-gray-300">${Math.round(data.min_bid * contentCount * data.max_creators * (1 + PLATFORM_FEE_PCT / 100)).toLocaleString()} COP</span>
+                <span className="text-foreground/80">${Math.round(data.min_bid * contentCount * data.max_creators * (1 + PLATFORM_FEE_PCT / 100)).toLocaleString()} COP</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Costo max estimado</span>

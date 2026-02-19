@@ -75,7 +75,7 @@ export function WizardStepExpertise({ data, onChange }: WizardStepExpertiseProps
 
       {/* Categories */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-3">Categorias</label>
+        <label className="block text-sm font-medium text-foreground/80 mb-3">Categorias</label>
         <div className="flex flex-wrap gap-2">
           {MARKETPLACE_CATEGORIES.filter(c => c.id !== 'all').map(cat => (
             <button
@@ -96,7 +96,7 @@ export function WizardStepExpertise({ data, onChange }: WizardStepExpertiseProps
 
       {/* Content types */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-3">Tipos de servicio</label>
+        <label className="block text-sm font-medium text-foreground/80 mb-3">Tipos de servicio</label>
         <div className="flex flex-wrap gap-2">
           {CONTENT_TYPES.map(type => (
             <button
@@ -117,7 +117,7 @@ export function WizardStepExpertise({ data, onChange }: WizardStepExpertiseProps
 
       {/* Platforms */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-3">Plataformas</label>
+        <label className="block text-sm font-medium text-foreground/80 mb-3">Plataformas</label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {PLATFORMS.map(p => (
             <button
@@ -138,7 +138,7 @@ export function WizardStepExpertise({ data, onChange }: WizardStepExpertiseProps
 
       {/* Experience level */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-3">Nivel de experiencia</label>
+        <label className="block text-sm font-medium text-foreground/80 mb-3">Nivel de experiencia</label>
         <div className="grid grid-cols-2 gap-3">
           {EXPERIENCE_LEVELS.map(level => (
             <button
@@ -160,7 +160,7 @@ export function WizardStepExpertise({ data, onChange }: WizardStepExpertiseProps
 
       {/* Languages */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-3">Idiomas</label>
+        <label className="block text-sm font-medium text-foreground/80 mb-3">Idiomas</label>
         <div className="flex flex-wrap gap-2">
           {LANGUAGES.map(lang => (
             <button
@@ -181,7 +181,7 @@ export function WizardStepExpertise({ data, onChange }: WizardStepExpertiseProps
 
       {/* Custom tags */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-3">Etiquetas personalizadas</label>
+        <label className="block text-sm font-medium text-foreground/80 mb-3">Etiquetas personalizadas</label>
         {data.custom_tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
             {data.custom_tags.map(tag => (
@@ -207,7 +207,7 @@ export function WizardStepExpertise({ data, onChange }: WizardStepExpertiseProps
           <button
             onClick={addCustomTag}
             disabled={!customTag.trim()}
-            className="px-4 py-2.5 bg-white/10 hover:bg-white/15 text-gray-300 rounded-xl text-sm transition-colors disabled:opacity-50"
+            className="px-4 py-2.5 bg-white/10 hover:bg-white/15 text-foreground/80 rounded-xl text-sm transition-colors disabled:opacity-50"
           >
             <Plus className="h-4 w-4" />
           </button>

@@ -73,11 +73,11 @@ export default function MarketplaceContent() {
     : 'Contenido recibido de tus proyectos con creadores';
 
   return (
-    <div className="bg-[#0a0a0f] pb-24 lg:pb-8">
+    <div className="bg-background pb-24 lg:pb-8">
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8 space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-white">{pageTitle}</h1>
+          <h1 className="text-2xl font-bold text-foreground">{pageTitle}</h1>
           <p className="text-gray-500 text-sm mt-1">{pageSubtitle}</p>
         </div>
 
@@ -90,7 +90,7 @@ export default function MarketplaceContent() {
               placeholder="Buscar por proyecto, creador o marca..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+              className="w-full bg-muted border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/50"
             />
           </div>
           <div className="flex gap-2 overflow-x-auto scrollbar-none">
@@ -100,8 +100,8 @@ export default function MarketplaceContent() {
                 onClick={() => setFilter(tab.key)}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors whitespace-nowrap ${
                   filter === tab.key
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                    ? 'bg-primary text-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
                 }`}
               >
                 {tab.label} ({tab.count})
@@ -114,7 +114,7 @@ export default function MarketplaceContent() {
         {filteredProjects.length === 0 ? (
           <div className="text-center py-16">
             <FolderOpen className="h-12 w-12 mx-auto text-gray-600 mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">
+            <h3 className="text-lg font-medium text-foreground mb-2">
               {filter === 'all' ? 'Aun no tienes contenido' : 'Sin resultados'}
             </h3>
             <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">
@@ -127,7 +127,7 @@ export default function MarketplaceContent() {
             {filter === 'all' && (
               <button
                 onClick={() => navigate(isCreator ? '/marketplace/campaigns' : '/marketplace')}
-                className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
+                className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-foreground font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
               >
                 {isCreator ? 'Explorar Campanas' : 'Buscar Creadores'}
                 <ArrowRight className="h-4 w-4" />
@@ -152,13 +152,13 @@ export default function MarketplaceContent() {
                   {/* Play button overlay on hover */}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                     <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity scale-90 group-hover:scale-100">
-                      <Play className="h-5 w-5 text-white ml-0.5" />
+                      <Play className="h-5 w-5 text-foreground ml-0.5" />
                     </div>
                   </div>
 
                   {/* Status badge */}
                   <div className="absolute top-2 left-2">
-                    <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${STATUS_COLORS[project.status] || 'bg-gray-500/20 text-gray-300'}`}>
+                    <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${STATUS_COLORS[project.status] || 'bg-gray-500/20 text-foreground/80'}`}>
                       {STATUS_LABELS[project.status] || project.status}
                     </span>
                   </div>
@@ -167,10 +167,10 @@ export default function MarketplaceContent() {
                   {['approved', 'completed'].includes(project.status) && (
                     <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button className="p-1.5 bg-black/60 rounded-lg hover:bg-black/80 transition-colors" onClick={(e) => e.stopPropagation()}>
-                        <Download className="h-3 w-3 text-white" />
+                        <Download className="h-3 w-3 text-foreground" />
                       </button>
                       <button className="p-1.5 bg-black/60 rounded-lg hover:bg-black/80 transition-colors" onClick={(e) => e.stopPropagation()}>
-                        <Eye className="h-3 w-3 text-white" />
+                        <Eye className="h-3 w-3 text-foreground" />
                       </button>
                     </div>
                   )}
@@ -186,13 +186,13 @@ export default function MarketplaceContent() {
                           {(isCreator ? project.brand_name : project.creator.display_name).charAt(0)}
                         </div>
                       )}
-                      <span className="text-white text-[11px] font-medium truncate">
+                      <span className="text-foreground text-[11px] font-medium truncate">
                         {isCreator ? project.brand_name : `@${project.creator.display_name}`}
                       </span>
                     </div>
 
                     {/* Product name */}
-                    <p className="text-white text-xs font-medium leading-tight line-clamp-2">
+                    <p className="text-foreground text-xs font-medium leading-tight line-clamp-2">
                       {project.brief.product_name}
                     </p>
 
@@ -203,7 +203,7 @@ export default function MarketplaceContent() {
                           <Gift className="h-2.5 w-2.5" /> Canje
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                        <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
                           <DollarSign className="h-2.5 w-2.5" />
                           {project.total_price.toLocaleString()}
                           <span className={project.payment_status === 'released' ? 'text-green-400' : 'text-yellow-400'}>

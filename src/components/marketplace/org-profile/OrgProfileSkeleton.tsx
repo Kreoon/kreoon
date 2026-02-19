@@ -1,6 +1,6 @@
 export function OrgProfileSkeleton() {
   return (
-    <div className="min-h-screen bg-[#0a0a0f] animate-pulse">
+    <div className="min-h-screen bg-background animate-pulse">
       {/* Cover skeleton */}
       <div className="h-48 md:h-64 bg-white/5" />
 

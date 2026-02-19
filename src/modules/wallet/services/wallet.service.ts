@@ -21,12 +21,13 @@ export class WalletService {
    */
   static async getWallet(walletId: string): Promise<Wallet | null> {
     const { data, error } = await supabase
-      .from('wallets')
+      .from('unified_wallets')
       .select('*')
       .eq('id', walletId)
-      .single();
+      .limit(1)
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') throw error;
+    if (error) throw error;
     return data as Wallet | null;
   }
 
@@ -35,13 +36,14 @@ export class WalletService {
    */
   static async getUserWallet(userId: string, walletType: WalletType = 'creator'): Promise<Wallet | null> {
     const { data, error } = await supabase
-      .from('wallets')
+      .from('unified_wallets')
       .select('*')
       .eq('user_id', userId)
       .eq('wallet_type', walletType)
-      .single();
+      .limit(1)
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') throw error;
+    if (error) throw error;
     return data as Wallet | null;
   }
 
@@ -50,7 +52,7 @@ export class WalletService {
    */
   static async getUserWallets(userId: string): Promise<Wallet[]> {
     const { data, error } = await supabase
-      .from('wallets')
+      .from('unified_wallets')
       .select('*')
       .eq('user_id', userId)
       .order('wallet_type');
@@ -64,7 +66,7 @@ export class WalletService {
    */
   static async getOrganizationWallets(organizationId: string): Promise<Wallet[]> {
     const { data, error } = await supabase
-      .from('wallets')
+      .from('unified_wallets')
       .select('*')
       .eq('organization_id', organizationId)
       .order('wallet_type');
@@ -81,7 +83,7 @@ export class WalletService {
     settings: Partial<Wallet['settings']>
   ): Promise<Wallet> {
     const { data: current, error: fetchError } = await supabase
-      .from('wallets')
+      .from('unified_wallets')
       .select('settings')
       .eq('id', walletId)
       .single();
@@ -91,7 +93,7 @@ export class WalletService {
     const newSettings = { ...current.settings, ...settings };
 
     const { data, error } = await supabase
-      .from('wallets')
+      .from('unified_wallets')
       .update({ settings: newSettings })
       .eq('id', walletId)
       .select()

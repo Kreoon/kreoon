@@ -201,14 +201,14 @@ const Content = () => {
           />
 
           {/* View Mode Toggle: Portafolio | Marketplace */}
-          <div className="flex items-center gap-1 bg-[hsl(250,20%,8%)] rounded-xl p-1 w-fit border border-white/5">
+          <div className="flex items-center gap-1 bg-muted rounded-xl p-1 w-fit border border-white/5">
             <button
               onClick={() => handleViewChange('portafolio')}
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
                 viewMode === 'portafolio'
                   ? "bg-purple-600/20 text-purple-300 border border-purple-500/30"
-                  : "text-gray-500 hover:text-gray-300"
+                  : "text-gray-500 hover:text-foreground"
               )}
             >
               <Film className="h-4 w-4" />
@@ -220,7 +220,7 @@ const Content = () => {
                 "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
                 viewMode === 'marketplace'
                   ? "bg-purple-600/20 text-purple-300 border border-purple-500/30"
-                  : "text-gray-500 hover:text-gray-300"
+                  : "text-gray-500 hover:text-foreground"
               )}
             >
               <ShoppingBag className="h-4 w-4" />
@@ -320,7 +320,7 @@ const Content = () => {
                       </div>
 
                       <div className="absolute top-2 left-2">
-                        <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${MKT_STATUS_COLORS[project.status] || 'bg-gray-500/20 text-gray-300'}`}>
+                        <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${MKT_STATUS_COLORS[project.status] || 'bg-gray-500/20 text-foreground/80'}`}>
                           {MKT_STATUS_LABELS[project.status] || project.status}
                         </span>
                       </div>

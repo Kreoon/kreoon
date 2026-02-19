@@ -142,7 +142,7 @@ export function RejectWithdrawalModal({
               {/* Preview */}
               {selectedReason && (
                 <div className="p-3 rounded-lg bg-[hsl(270,100%,60%,0.05)]">
-                  <p className="text-xs text-[hsl(270,30%,60%)] mb-1">
+                  <p className="text-xs text-muted-foreground mb-1">
                     El usuario verá este mensaje:
                   </p>
                   <p className="text-sm text-white">{finalReason || '...'}</p>

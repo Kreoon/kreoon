@@ -24,7 +24,7 @@ export function MetaConfigForm({ data, onChange, hasExistingToken }: MetaConfigF
   return (
     <div className="space-y-4">
       <div className="space-y-1.5">
-        <Label htmlFor="meta-pixel" className="text-gray-300">
+        <Label htmlFor="meta-pixel" className="text-foreground/80">
           Pixel ID <span className="text-red-400">*</span>
         </Label>
         <Input
@@ -40,7 +40,7 @@ export function MetaConfigForm({ data, onChange, hasExistingToken }: MetaConfigF
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="meta-token" className="text-gray-300">
+        <Label htmlFor="meta-token" className="text-foreground/80">
           Access Token <span className="text-red-400">*</span>
         </Label>
         <Input
@@ -57,7 +57,7 @@ export function MetaConfigForm({ data, onChange, hasExistingToken }: MetaConfigF
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="meta-dataset" className="text-gray-300">Dataset ID</Label>
+        <Label htmlFor="meta-dataset" className="text-foreground/80">Dataset ID</Label>
         <Input
           id="meta-dataset"
           value={data.dataset_id}
@@ -72,7 +72,7 @@ export function MetaConfigForm({ data, onChange, hasExistingToken }: MetaConfigF
 
       <div className="flex items-center justify-between p-3 rounded-lg bg-gray-800/30 border border-gray-700/30">
         <div>
-          <Label className="text-gray-300">Modo Test</Label>
+          <Label className="text-foreground/80">Modo Test</Label>
           <p className="text-xs text-gray-500 mt-0.5">
             Los eventos se envían con test_event_code y aparecen en Test Events de Meta
           </p>
@@ -85,7 +85,7 @@ export function MetaConfigForm({ data, onChange, hasExistingToken }: MetaConfigF
 
       {data.test_mode && (
         <div className="space-y-1.5">
-          <Label htmlFor="meta-test-code" className="text-gray-300">Test Event Code</Label>
+          <Label htmlFor="meta-test-code" className="text-foreground/80">Test Event Code</Label>
           <Input
             id="meta-test-code"
             value={data.test_event_code}

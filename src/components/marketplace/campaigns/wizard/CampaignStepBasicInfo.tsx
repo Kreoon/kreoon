@@ -39,7 +39,7 @@ export function CampaignStepBasicInfo({ data, onChange }: CampaignStepBasicInfoP
 
       {/* Title */}
       <div>
-        <label className="text-gray-300 text-sm font-medium block mb-1.5">
+        <label className="text-foreground/80 text-sm font-medium block mb-1.5">
           Titulo de la Campana <span className="text-red-400">*</span>
         </label>
         <input
@@ -52,7 +52,7 @@ export function CampaignStepBasicInfo({ data, onChange }: CampaignStepBasicInfoP
 
       {/* Description */}
       <div>
-        <label className="text-gray-300 text-sm font-medium block mb-1.5">
+        <label className="text-foreground/80 text-sm font-medium block mb-1.5">
           Descripcion <span className="text-red-400">*</span>
         </label>
         <textarea
@@ -67,7 +67,7 @@ export function CampaignStepBasicInfo({ data, onChange }: CampaignStepBasicInfoP
 
       {/* Category */}
       <div>
-        <label className="text-gray-300 text-sm font-medium block mb-1.5">
+        <label className="text-foreground/80 text-sm font-medium block mb-1.5">
           Categoria <span className="text-red-400">*</span>
         </label>
         <select
@@ -75,16 +75,16 @@ export function CampaignStepBasicInfo({ data, onChange }: CampaignStepBasicInfoP
           onChange={e => onChange('category', e.target.value)}
           className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 appearance-none cursor-pointer"
         >
-          <option value="" className="bg-[#1a1a2e]">Selecciona una categoria</option>
+          <option value="" className="bg-card">Selecciona una categoria</option>
           {MARKETPLACE_CATEGORIES.filter(c => c.id !== 'all').map(cat => (
-            <option key={cat.id} value={cat.id} className="bg-[#1a1a2e]">{cat.label}</option>
+            <option key={cat.id} value={cat.id} className="bg-card">{cat.label}</option>
           ))}
         </select>
       </div>
 
       {/* Deadline */}
       <div>
-        <label className="text-gray-300 text-sm font-medium block mb-1.5">Fecha Limite</label>
+        <label className="text-foreground/80 text-sm font-medium block mb-1.5">Fecha Limite</label>
         <input
           type="date"
           value={data.deadline}
@@ -96,7 +96,7 @@ export function CampaignStepBasicInfo({ data, onChange }: CampaignStepBasicInfoP
 
       {/* Tags */}
       <div>
-        <label className="text-gray-300 text-sm font-medium block mb-1.5">Tags</label>
+        <label className="text-foreground/80 text-sm font-medium block mb-1.5">Tags</label>
         <div className="flex gap-2">
           <input
             value={tagInput}

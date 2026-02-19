@@ -400,7 +400,7 @@ export function CreateLeadModal({ open, onOpenChange }: CreateLeadModalProps) {
                     <SelectTrigger className="bg-white/5 border-white/10 text-white">
                       <SelectValue placeholder="Seleccionar intencion" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#0a0118] border-[#8b5cf6]/30">
+                    <SelectContent className="bg-popover border-[#8b5cf6]/30">
                       {REGISTRATION_INTENTS.map((i) => (
                         <SelectItem key={i} value={i} className="text-white focus:bg-white/10">
                           {REGISTRATION_INTENT_LABELS[i]}
@@ -421,7 +421,7 @@ export function CreateLeadModal({ open, onOpenChange }: CreateLeadModalProps) {
                       <SelectTrigger className="bg-white/5 border-white/10 text-white">
                         <SelectValue placeholder="Seleccionar subtipo" />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#0a0118] border-[#8b5cf6]/30">
+                      <SelectContent className="bg-popover border-[#8b5cf6]/30">
                         {TALENT_SUBTYPES.map((s) => (
                           <SelectItem key={s} value={s} className="text-white focus:bg-white/10">
                             {TALENT_SUBTYPE_LABELS[s]}
@@ -479,7 +479,7 @@ export function CreateLeadModal({ open, onOpenChange }: CreateLeadModalProps) {
                     <SelectTrigger className="bg-white/5 border-white/10 text-white">
                       <SelectValue placeholder="Seleccionar rol" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#0a0118] border-[#8b5cf6]/30 max-h-[240px]">
+                    <SelectContent className="bg-popover border-[#8b5cf6]/30 max-h-[240px]">
                       {availableRoles.map((r) => (
                         <SelectItem key={r} value={r} className="text-white focus:bg-white/10">
                           {SPECIFIC_ROLE_LABELS[r]}
@@ -499,7 +499,7 @@ export function CreateLeadModal({ open, onOpenChange }: CreateLeadModalProps) {
                     <SelectTrigger className="bg-white/5 border-white/10 text-white">
                       <SelectValue placeholder="Seleccionar nivel" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#0a0118] border-[#8b5cf6]/30">
+                    <SelectContent className="bg-popover border-[#8b5cf6]/30">
                       {EXPERIENCE_LEVELS.map((l) => (
                         <SelectItem key={l} value={l} className="text-white focus:bg-white/10">
                           {EXPERIENCE_LEVEL_LABELS[l]}
@@ -560,7 +560,7 @@ export function CreateLeadModal({ open, onOpenChange }: CreateLeadModalProps) {
                       <SelectTrigger className="bg-white/5 border-white/10 text-white">
                         <SelectValue placeholder="Seleccionar fuente" />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#0a0118] border-[#8b5cf6]/30">
+                      <SelectContent className="bg-popover border-[#8b5cf6]/30">
                         {LEAD_SOURCES.map((s) => (
                           <SelectItem key={s} value={s} className="text-white focus:bg-white/10">
                             {LEAD_SOURCE_LABELS[s]}
@@ -591,7 +591,7 @@ export function CreateLeadModal({ open, onOpenChange }: CreateLeadModalProps) {
                         <Globe className="h-3.5 w-3.5 mr-1.5 text-white/40" />
                         <SelectValue placeholder="Pais" />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#0a0118] border-[#8b5cf6]/30 max-h-[240px]">
+                      <SelectContent className="bg-popover border-[#8b5cf6]/30 max-h-[240px]">
                         {LATAM_COUNTRIES.map((c) => (
                           <SelectItem key={c.code} value={c.code} className="text-white focus:bg-white/10">
                             {c.flag} {c.name}

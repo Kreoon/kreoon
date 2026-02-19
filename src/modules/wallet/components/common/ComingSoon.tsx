@@ -169,10 +169,10 @@ export function ComingSoonBanner({
                   {config.estimatedLaunch}
                 </Badge>
               </div>
-              <p className="text-lg font-medium text-[hsl(270,100%,80%)]">
+              <p className="text-lg font-medium text-primary">
                 {config.subtitle}
               </p>
-              <p className="text-sm text-[hsl(270,30%,60%)] mt-2 max-w-md">
+              <p className="text-sm text-muted-foreground mt-2 max-w-md">
                 {config.description}
               </p>
             </div>
@@ -180,7 +180,7 @@ export function ComingSoonBanner({
 
           {/* Features list */}
           <div className="flex-1 lg:border-l lg:border-[hsl(270,100%,60%,0.1)] lg:pl-6">
-            <p className="text-xs text-[hsl(270,30%,50%)] uppercase tracking-wide mb-3">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">
               Características incluidas
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -236,7 +236,7 @@ export function ComingSoonOverlay({
             <Construction className="h-4 w-4 text-amber-400" />
             <span className="text-sm font-medium text-amber-400">Próximamente</span>
           </div>
-          <p className="text-xs text-[hsl(270,30%,60%)] mt-2 max-w-xs">{message}</p>
+          <p className="text-xs text-muted-foreground mt-2 max-w-xs">{message}</p>
         </div>
       </div>
     </div>

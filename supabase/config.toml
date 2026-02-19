@@ -292,3 +292,12 @@ verify_jwt = false
 
 [functions.resend-domain-management]
 verify_jwt = true
+
+[functions.wallet-connect]
+verify_jwt = false
+
+[functions.wallet-process-withdrawal]
+verify_jwt = true
+
+[functions.wallet-mercury-payout]
+verify_jwt = true

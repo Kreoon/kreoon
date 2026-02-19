@@ -16,7 +16,7 @@ interface CreatorHeaderProps {
 const LEVEL_STYLES: Record<string, string> = {
   elite: 'bg-gradient-to-r from-purple-600 to-pink-500 text-white',
   gold: 'bg-gradient-to-r from-yellow-600 to-amber-500 text-white',
-  silver: 'bg-gray-500/30 text-gray-300 border border-gray-500/50',
+  silver: 'bg-gray-500/30 text-foreground/80 border border-gray-500/50',
   bronze: 'bg-amber-900/30 text-amber-400 border border-amber-700/50',
 };
 
@@ -223,7 +223,7 @@ export function CreatorHeader({ creator, hasPaidPlan = false }: CreatorHeaderPro
                   {/* Tooltip for non-paid users */}
                   {!hasPaidPlan && (
                     <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-50">
-                      <div className="bg-[#1a1a2e] border border-white/10 rounded-lg shadow-xl px-3 py-2 text-xs text-gray-300 w-56">
+                      <div className="bg-card border border-white/10 rounded-lg shadow-xl px-3 py-2 text-xs text-foreground/80 w-56">
                         Actualiza tu plan para acceder al canje de producto y ahorrar en campañas.
                       </div>
                     </div>
@@ -245,16 +245,16 @@ export function CreatorHeader({ creator, hasPaidPlan = false }: CreatorHeaderPro
               Compartir
             </button>
             {showShareMenu && (
-              <div className="absolute right-0 top-full mt-2 bg-[#1a1a2e] border border-white/10 rounded-xl shadow-xl p-2 z-50 min-w-[180px] animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="absolute right-0 top-full mt-2 bg-card border border-white/10 rounded-xl shadow-xl p-2 z-50 min-w-[180px] animate-in fade-in slide-in-from-top-2 duration-200">
                 <button
                   onClick={() => handleShare('copy')}
-                  className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-white/5"
+                  className="w-full text-left px-3 py-2 rounded-lg text-sm text-foreground/80 hover:bg-white/5"
                 >
                   Copiar enlace
                 </button>
                 <button
                   onClick={() => handleShare('whatsapp')}
-                  className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-white/5"
+                  className="w-full text-left px-3 py-2 rounded-lg text-sm text-foreground/80 hover:bg-white/5"
                 >
                   WhatsApp
                 </button>

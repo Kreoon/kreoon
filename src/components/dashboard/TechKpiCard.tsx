@@ -278,7 +278,7 @@ export function TechKpiCard({
       onClick={onClick}
       className={cn(
         "group relative overflow-hidden rounded-2xl",
-        "bg-gradient-to-br from-[hsl(250,20%,6%)] via-[hsl(250,20%,5%)] to-[hsl(250,20%,4%)]",
+        "bg-gradient-to-br from-card via-card to-background",
         "border border-[hsl(270,100%,60%,0.15)]",
         "transition-all duration-500 ease-out",
         sizeConf.padding,
@@ -437,7 +437,7 @@ export function TechKpiCard({
               {Math.round(Math.min((value / goalValue) * 100, 100))}%
             </span>
           </div>
-          <div className="h-2 bg-[hsl(250,20%,10%)] rounded-full overflow-hidden border" style={{ borderColor: `${colorValue}20` }}>
+          <div className="h-2 bg-muted rounded-full overflow-hidden border" style={{ borderColor: `${colorValue}20` }}>
             <motion.div 
               className="h-full rounded-full relative overflow-hidden"
               style={{ 

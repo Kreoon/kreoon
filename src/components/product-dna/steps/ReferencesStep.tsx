@@ -129,7 +129,7 @@ function LinkSection({
           onChange={(e) => setInputUrl(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10
+          className="flex-1 px-3 py-2 rounded-lg bg-muted/50 border border-border
                      text-sm text-white placeholder:text-gray-500
                      focus:outline-none focus:border-purple-500/50"
         />
@@ -151,10 +151,10 @@ function LinkSection({
           {links.map((link, index) => (
             <div
               key={index}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/5"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border"
             >
               <LinkIcon className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
-              <span className="text-xs text-gray-300 truncate flex-1">
+              <span className="text-xs text-foreground/80 truncate flex-1">
                 {link.url}
               </span>
               <button

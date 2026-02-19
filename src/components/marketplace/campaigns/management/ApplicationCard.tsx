@@ -32,7 +32,7 @@ export function ApplicationCard({ application, onApprove, onReject, showActions,
   const priceValue = hasBid ? application.bid_amount : application.proposed_price;
 
   return (
-    <div className="bg-[#1a1a2e]/80 border border-white/5 rounded-xl p-5 space-y-4">
+    <div className="bg-card/80 border border-white/5 rounded-xl p-5 space-y-4">
       {/* Creator info */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
@@ -76,7 +76,7 @@ export function ApplicationCard({ application, onApprove, onReject, showActions,
       {/* Cover letter */}
       <div>
         <p className="text-gray-500 text-xs mb-1">Carta de presentacion</p>
-        <p className="text-gray-300 text-sm leading-relaxed">{application.cover_letter}</p>
+        <p className="text-foreground/80 text-sm leading-relaxed">{application.cover_letter}</p>
       </div>
 
       {/* Bid message (auction/range) */}
@@ -86,7 +86,7 @@ export function ApplicationCard({ application, onApprove, onReject, showActions,
             <Gavel className="h-3 w-3" />
             Mensaje de oferta
           </p>
-          <p className="text-gray-300 text-sm leading-relaxed">{application.bid_message}</p>
+          <p className="text-foreground/80 text-sm leading-relaxed">{application.bid_message}</p>
         </div>
       )}
 

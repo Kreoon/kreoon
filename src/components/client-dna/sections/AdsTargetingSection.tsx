@@ -323,7 +323,7 @@ function HookItem({ hook, index }: { hook: string; index: number }) {
                       text-xs font-bold text-amber-400 flex-shrink-0">
         {index + 1}
       </span>
-      <p className="text-sm text-gray-300 flex-1">"{hook}"</p>
+      <p className="text-sm text-foreground/80 flex-1">"{hook}"</p>
       <button
         onClick={copyHook}
         className="p-1.5 rounded-lg bg-white/5 opacity-0 group-hover:opacity-100
@@ -468,7 +468,7 @@ function CopyableField({
           )}
         </button>
       </div>
-      <p className="text-sm text-gray-300">{value}</p>
+      <p className="text-sm text-foreground/80">{value}</p>
     </div>
   );
 }

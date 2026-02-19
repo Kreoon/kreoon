@@ -106,11 +106,11 @@ export function EscrowDetailDrawer({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
-                  <Lock className="h-6 w-6 text-[hsl(270,100%,70%)]" />
+                  <Lock className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <SheetTitle>Detalle del Escrow</SheetTitle>
-                  <p className="text-xs text-[hsl(270,30%,50%)] mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     ID: {escrow.id.slice(0, 8)}...
                   </p>
                 </div>
@@ -125,7 +125,7 @@ export function EscrowDetailDrawer({
             {/* Status */}
             <div className="flex items-center justify-between">
               <EscrowStatusBadge status={escrow.status} size="md" />
-              <span className="text-xs text-[hsl(270,30%,50%)]">
+              <span className="text-xs text-muted-foreground">
                 {new Date(escrow.created_at).toLocaleDateString('es-CO', {
                   year: 'numeric',
                   month: 'long',
@@ -139,13 +139,13 @@ export function EscrowDetailDrawer({
             {/* Financial Summary */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-[hsl(270,100%,70%)]" />
+                <DollarSign className="h-4 w-4 text-primary" />
                 <h3 className="text-sm font-medium text-white">Resumen Financiero</h3>
               </div>
               <div className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)] text-center">
-                <p className="text-sm text-[hsl(270,30%,60%)]">Total bloqueado</p>
+                <p className="text-sm text-muted-foreground">Total bloqueado</p>
                 <p className="text-3xl font-bold text-white mt-1">{escrow.formattedTotal}</p>
-                <p className="text-xs text-[hsl(270,30%,50%)] mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Moneda: {escrow.currency}
                 </p>
               </div>
@@ -159,7 +159,7 @@ export function EscrowDetailDrawer({
             {/* Timeline */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-[hsl(270,100%,70%)]" />
+                <Calendar className="h-4 w-4 text-primary" />
                 <h3 className="text-sm font-medium text-white">Timeline</h3>
               </div>
               {escrow.timelineSteps && (
@@ -176,21 +176,21 @@ export function EscrowDetailDrawer({
             {/* Participants */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-[hsl(270,100%,70%)]" />
+                <Users className="h-4 w-4 text-primary" />
                 <h3 className="text-sm font-medium text-white">Participantes</h3>
               </div>
 
               <div className="space-y-3">
                 {/* Payer (Brand) */}
                 <div className="p-3 rounded-xl bg-[hsl(270,100%,60%,0.03)]">
-                  <p className="text-xs text-[hsl(270,30%,60%)] mb-2">Pagador (Marca)</p>
+                  <p className="text-xs text-muted-foreground mb-2">Pagador (Marca)</p>
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-[hsl(270,100%,60%,0.1)]">
-                      <Building2 className="h-5 w-5 text-[hsl(270,100%,70%)]" />
+                      <Building2 className="h-5 w-5 text-primary" />
                     </div>
                     <div>
                       <p className="font-medium text-white">{payer.name || 'Cliente'}</p>
-                      <p className="text-xs text-[hsl(270,30%,50%)]">
+                      <p className="text-xs text-muted-foreground">
                         Balance después: {formatCurrency(payer.balanceAfter || 0, escrow.currency)}
                       </p>
                     </div>
@@ -213,13 +213,13 @@ export function EscrowDetailDrawer({
                           <p className="font-medium text-white">
                             {creator.full_name || `@${creator.username}`}
                           </p>
-                          <p className="text-xs text-[hsl(270,30%,50%)]">
+                          <p className="text-xs text-muted-foreground">
                             Recibirá: {escrow.formattedCreatorAmount}
                           </p>
                         </div>
                       </>
                     ) : (
-                      <p className="text-sm text-[hsl(270,30%,50%)]">Por asignar</p>
+                      <p className="text-sm text-muted-foreground">Por asignar</p>
                     )}
                   </div>
                 </div>
@@ -241,13 +241,13 @@ export function EscrowDetailDrawer({
                             <p className="font-medium text-white">
                               {editor.full_name || `@${editor.username}`}
                             </p>
-                            <p className="text-xs text-[hsl(270,30%,50%)]">
+                            <p className="text-xs text-muted-foreground">
                               Recibirá: {escrow.formattedEditorAmount}
                             </p>
                           </div>
                         </>
                       ) : (
-                        <p className="text-sm text-[hsl(270,30%,50%)]">Por asignar</p>
+                        <p className="text-sm text-muted-foreground">Por asignar</p>
                       )}
                     </div>
                   </div>
@@ -272,7 +272,7 @@ export function EscrowDetailDrawer({
                 <Separator className="bg-[hsl(270,100%,60%,0.1)]" />
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-[hsl(270,100%,70%)]" />
+                    <FileText className="h-4 w-4 text-primary" />
                     <h3 className="text-sm font-medium text-white">Notas (Admin)</h3>
                   </div>
                   <Textarea
@@ -283,7 +283,7 @@ export function EscrowDetailDrawer({
                   />
                   {escrow.notes && (
                     <div className="p-3 rounded-lg bg-[hsl(270,100%,60%,0.03)]">
-                      <p className="text-xs text-[hsl(270,30%,50%)] mb-1">Notas previas:</p>
+                      <p className="text-xs text-muted-foreground mb-1">Notas previas:</p>
                       <p className="text-sm text-[hsl(270,30%,70%)]">{escrow.notes}</p>
                     </div>
                   )}

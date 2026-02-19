@@ -32,7 +32,7 @@ const ROLE_COLORS: Record<string, string> = {
 
 const LEVEL_COLORS: Record<string, string> = {
   bronze: 'bg-amber-700/20 text-amber-600 border-amber-700/30',
-  silver: 'bg-gray-400/20 text-gray-300 border-gray-400/30',
+  silver: 'bg-gray-400/20 text-muted-foreground border-gray-400/30',
   gold: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
 };
 

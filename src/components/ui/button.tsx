@@ -10,52 +10,47 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: cn(
-          "bg-gradient-to-r from-[hsl(270,100%,55%)] to-[hsl(280,100%,55%)]",
-          "text-white",
-          "shadow-[0_0_25px_-5px_hsl(270,100%,60%,0.5)]",
-          "hover:shadow-[0_0_35px_-5px_hsl(270,100%,60%,0.7)]",
-          "hover:from-[hsl(270,100%,58%)] hover:to-[hsl(280,100%,58%)]",
+          "bg-primary text-primary-foreground",
+          "shadow-sm",
+          "hover:bg-primary/90",
           "active:scale-[0.98]",
-          "border border-[hsl(270,100%,60%,0.3)]"
+          "border border-primary/30"
         ),
-        destructive: "bg-[hsl(350,80%,50%)] text-white hover:bg-[hsl(350,80%,55%)] shadow-[0_0_20px_-5px_hsl(350,80%,50%,0.4)]",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm",
         outline: cn(
-          "border border-[hsl(270,100%,60%,0.3)] bg-transparent",
-          "text-[hsl(270,100%,70%)]",
-          "hover:bg-[hsl(270,100%,60%,0.1)]",
-          "hover:border-[hsl(270,100%,60%,0.5)]",
-          "hover:shadow-[0_0_20px_-5px_hsl(270,100%,60%,0.3)]"
+          "border border-input bg-transparent",
+          "text-foreground",
+          "hover:bg-accent",
+          "hover:text-accent-foreground",
+          "hover:border-primary/40"
         ),
         secondary: cn(
-          "bg-[hsl(250,20%,8%)]",
-          "text-[hsl(270,60%,75%)]",
-          "border border-[hsl(270,100%,60%,0.15)]",
-          "hover:bg-[hsl(250,20%,10%)]",
-          "hover:border-[hsl(270,100%,60%,0.25)]"
+          "bg-secondary",
+          "text-secondary-foreground",
+          "border border-border",
+          "hover:bg-secondary/80"
         ),
         ghost: cn(
-          "text-[hsl(270,30%,65%)]",
-          "hover:bg-[hsl(270,100%,60%,0.08)]",
-          "hover:text-[hsl(270,100%,75%)]"
+          "text-muted-foreground",
+          "hover:bg-accent",
+          "hover:text-accent-foreground"
         ),
-        link: "text-[hsl(270,100%,70%)] underline-offset-4 hover:underline",
+        link: "text-primary underline-offset-4 hover:underline",
         glow: cn(
-          "bg-gradient-to-r from-[hsl(270,100%,55%)] via-[hsl(275,100%,55%)] to-[hsl(280,100%,55%)]",
-          "text-white",
-          "shadow-[0_0_40px_-5px_hsl(270,100%,60%,0.6)]",
-          "hover:shadow-[0_0_60px_-5px_hsl(270,100%,60%,0.8)]",
+          "bg-primary text-primary-foreground",
+          "shadow-md dark:shadow-[0_0_40px_-5px_hsl(270,100%,60%,0.6)]",
+          "hover:bg-primary/90",
+          "hover:shadow-lg dark:hover:shadow-[0_0_60px_-5px_hsl(270,100%,60%,0.8)]",
           "active:scale-[0.98]",
-          "border border-[hsl(270,100%,60%,0.4)]"
+          "border border-primary/40"
         ),
-        success: "bg-[hsl(270,80%,55%)] text-white hover:bg-[hsl(270,80%,60%)] shadow-[0_0_20px_-5px_hsl(270,80%,55%,0.4)]",
+        success: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm",
         tech: cn(
-          "bg-[hsl(250,20%,6%)]",
-          "text-[hsl(270,60%,75%)]",
-          "border border-[hsl(270,100%,60%,0.15)]",
-          "hover:bg-[hsl(250,20%,8%)]",
-          "hover:border-[hsl(270,100%,60%,0.3)]",
-          "hover:shadow-[0_0_20px_-8px_hsl(270,100%,60%,0.3)]",
-          "backdrop-blur-xl"
+          "bg-card",
+          "text-secondary-foreground",
+          "border border-border",
+          "hover:bg-muted",
+          "hover:border-primary/20"
         ),
       },
       size: {

@@ -26,13 +26,13 @@ const STATUS_LABELS: Record<ProjectStatus, string> = {
 
 function KpiCard({ icon: Icon, label, value, color }: { icon: React.ElementType; label: string; value: string | number; color: string }) {
   return (
-    <div className="bg-[#1a1a2e]/80 backdrop-blur-xl border border-white/10 rounded-xl p-5">
+    <div className="bg-card/80 backdrop-blur-xl border border-white/10 rounded-xl p-5">
       <div className="flex items-center gap-3">
         <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${color}`}>
           <Icon className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-2xl font-bold text-white">{value}</p>
+          <p className="text-2xl font-bold text-foreground">{value}</p>
           <p className="text-gray-500 text-xs">{label}</p>
         </div>
       </div>
@@ -56,11 +56,11 @@ export function CreatorMarketDashboard() {
   }
 
   return (
-    <div className="bg-[#0a0a0f] pb-24 lg:pb-8">
+    <div className="bg-background pb-24 lg:pb-8">
       <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-8 space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-white">Dashboard Creador</h1>
+          <h1 className="text-2xl font-bold text-foreground">Dashboard Creador</h1>
           <p className="text-gray-500 text-sm mt-1">Gestiona tus proyectos del marketplace</p>
         </div>
 
@@ -77,28 +77,28 @@ export function CreatorMarketDashboard() {
         <div className="flex gap-3 flex-wrap">
           <button
             onClick={() => navigate('/board?view=marketplace')}
-            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
+            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-foreground font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
           >
             <FolderKanban className="h-4 w-4" />
             Ver Ofertas
           </button>
           <button
             onClick={() => navigate('/marketplace/campaigns')}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-foreground font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
           >
             <Search className="h-4 w-4" />
             Explorar Campanas
           </button>
           <button
             onClick={() => navigate('/marketplace/creator-campaigns')}
-            className="flex items-center gap-2 border border-white/20 text-white font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-white/5 transition-colors"
+            className="flex items-center gap-2 border border-white/20 text-foreground font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-white/5 transition-colors"
           >
             <Megaphone className="h-4 w-4" />
             Mis Aplicaciones
           </button>
           <button
             onClick={() => navigate('/settings?section=marketplace')}
-            className="flex items-center gap-2 border border-white/20 text-white font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-white/5 transition-colors"
+            className="flex items-center gap-2 border border-white/20 text-foreground font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-white/5 transition-colors"
           >
             <User className="h-4 w-4" />
             Config Marketplace
@@ -108,7 +108,7 @@ export function CreatorMarketDashboard() {
         {/* Recent projects */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">Proyectos recientes</h2>
+            <h2 className="text-lg font-semibold text-foreground">Proyectos recientes</h2>
             <button
               onClick={() => navigate('/board?view=marketplace')}
               className="text-purple-400 hover:text-purple-300 text-sm flex items-center gap-1 transition-colors"
@@ -121,14 +121,14 @@ export function CreatorMarketDashboard() {
               <div
                 key={project.id}
                 onClick={() => navigate('/board?view=marketplace')}
-                className="w-full bg-[#1a1a2e]/60 border border-white/5 rounded-xl p-4 flex items-center gap-4 hover:border-purple-500/30 transition-all cursor-pointer"
+                className="w-full bg-card/60 border border-white/5 rounded-xl p-4 flex items-center gap-4 hover:border-purple-500/30 transition-all cursor-pointer"
               >
                 <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-300 flex-shrink-0">
                   <Clapperboard className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-white text-sm font-medium truncate">{project.brief.product_name}</span>
+                    <span className="text-foreground text-sm font-medium truncate">{project.brief.product_name}</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_COLORS[project.status]}`}>
                       {STATUS_LABELS[project.status]}
                     </span>
@@ -139,7 +139,7 @@ export function CreatorMarketDashboard() {
                 </div>
                 <div className="text-right flex-shrink-0">
                   {project.payment_method === 'payment' ? (
-                    <p className="text-white text-sm font-semibold">${project.total_price.toLocaleString()}</p>
+                    <p className="text-foreground text-sm font-semibold">${project.total_price.toLocaleString()}</p>
                   ) : (
                     <span className="text-green-400 text-xs font-medium">Canje</span>
                   )}

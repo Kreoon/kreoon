@@ -10,17 +10,17 @@ export const WALLET_CONFIG = {
    * When false, wallet features are in "Coming Soon" mode
    * Users can see the UI but cannot perform actual transactions
    */
-  WALLET_ENABLED: false,
+  WALLET_ENABLED: true,
 
   /**
    * When false, withdrawal requests are disabled
    */
-  WITHDRAWALS_ENABLED: false,
+  WITHDRAWALS_ENABLED: true,
 
   /**
    * When false, escrow releases are disabled
    */
-  ESCROW_ENABLED: false,
+  ESCROW_ENABLED: true,
 
   /**
    * Minimum withdrawal amount in COP

@@ -23,7 +23,7 @@ export function TikTokConfigForm({ data, onChange, hasExistingToken }: TikTokCon
   return (
     <div className="space-y-4">
       <div className="space-y-1.5">
-        <Label htmlFor="tt-pixel" className="text-gray-300">
+        <Label htmlFor="tt-pixel" className="text-foreground/80">
           Pixel Code <span className="text-red-400">*</span>
         </Label>
         <Input
@@ -39,7 +39,7 @@ export function TikTokConfigForm({ data, onChange, hasExistingToken }: TikTokCon
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="tt-token" className="text-gray-300">
+        <Label htmlFor="tt-token" className="text-foreground/80">
           Access Token <span className="text-red-400">*</span>
         </Label>
         <Input
@@ -57,7 +57,7 @@ export function TikTokConfigForm({ data, onChange, hasExistingToken }: TikTokCon
 
       <div className="flex items-center justify-between p-3 rounded-lg bg-gray-800/30 border border-gray-700/30">
         <div>
-          <Label className="text-gray-300">Modo Test</Label>
+          <Label className="text-foreground/80">Modo Test</Label>
           <p className="text-xs text-gray-500 mt-0.5">
             Los eventos se envían con test_event_code para debugging
           </p>
@@ -70,7 +70,7 @@ export function TikTokConfigForm({ data, onChange, hasExistingToken }: TikTokCon
 
       {data.test_mode && (
         <div className="space-y-1.5">
-          <Label htmlFor="tt-test-code" className="text-gray-300">Test Event Code</Label>
+          <Label htmlFor="tt-test-code" className="text-foreground/80">Test Event Code</Label>
           <Input
             id="tt-test-code"
             value={data.test_event_code}

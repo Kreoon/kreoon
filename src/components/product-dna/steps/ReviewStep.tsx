@@ -25,7 +25,7 @@ export function ReviewStep({ state, onEdit }: ReviewStepProps) {
                 const Icon = s.icon;
                 return (
                   <span key={s.id} className="flex items-center gap-1.5 px-2.5 py-1 rounded-full
-                                               bg-white/5 border border-white/10 text-xs text-gray-300">
+                                               bg-muted/50 border border-border text-xs text-foreground/80">
                     <Icon className="w-3 h-3" />
                     {s.name}
                   </span>
@@ -39,7 +39,7 @@ export function ReviewStep({ state, onEdit }: ReviewStepProps) {
       {/* Goals */}
       {state.responses.primary_goal && (
         <ReviewCard title="Objetivo" onEdit={() => onEdit('goal_selection')}>
-          <p className="text-sm text-gray-300 capitalize">
+          <p className="text-sm text-foreground/80 capitalize">
             {formatGoal(state.responses.primary_goal)}
           </p>
           {state.responses.goal_description && (
@@ -66,7 +66,7 @@ export function ReviewStep({ state, onEdit }: ReviewStepProps) {
           {Array.isArray(state.responses.target_interests) && state.responses.target_interests.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
               {state.responses.target_interests.map((interest: string) => (
-                <span key={interest} className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-xs text-gray-400">
+                <span key={interest} className="px-2 py-0.5 rounded-full bg-muted/50 border border-border text-xs text-gray-400">
                   {interest}
                 </span>
               ))}
@@ -123,7 +123,7 @@ function ReviewCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+    <div className="rounded-xl border border-border bg-muted/50 p-4">
       <div className="flex items-center justify-between mb-3">
         <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">{title}</h4>
         <button

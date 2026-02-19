@@ -20,23 +20,40 @@ serve(async (req) => {
   }
 
   try {
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const url = new URL(req.url);
+    const action = url.pathname.split("/").pop();
+    const body = req.method === "GET" ? {} : await req.json();
+
+    // Public actions that don't require authentication (for landing pages)
+    const PUBLIC_ACTIONS = ["validate-code", "track-click"];
+
+    if (PUBLIC_ACTIONS.includes(action || "")) {
+      let result;
+      if (action === "validate-code") {
+        result = await validateReferralCode(supabase, body.code);
+      } else {
+        result = await trackClick(supabase, body.code);
+      }
+      return new Response(
+        JSON.stringify(result),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // All other actions require authentication
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       throw new Error("No authorization header");
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    
+
     if (authError || !user) {
       throw new Error("Invalid token");
     }
-
-    const url = new URL(req.url);
-    const action = url.pathname.split("/").pop();
-    const body = req.method === "GET" ? {} : await req.json();
 
     let result;
 
@@ -53,20 +70,17 @@ serve(async (req) => {
       case "get-my-earnings":
         result = await getMyEarnings(supabase, user.id);
         break;
-      case "validate-code":
-        result = await validateReferralCode(supabase, body.code);
-        break;
       case "apply-code":
         result = await applyReferralCode(supabase, user.id, body.code);
-        break;
-      case "track-click":
-        result = await trackClick(supabase, body.code);
         break;
       case "get-dashboard":
         result = await getReferralDashboard(supabase, user.id);
         break;
       case "withdraw-earnings":
         result = await withdrawEarnings(supabase, user.id, body);
+        break;
+      case "update-slug":
+        result = await updateSlug(supabase, user.id, body);
         break;
       default:
         throw new Error(`Unknown action: ${action}`);
@@ -190,6 +204,7 @@ async function getMyReferralCodes(supabase: any, userId: string) {
 // ============================================================================
 
 async function getMyReferrals(supabase: any, userId: string) {
+  // Step 1: Get referral relationships
   const { data: referrals, error } = await supabase
     .from("referral_relationships")
     .select(`
@@ -200,17 +215,30 @@ async function getMyReferrals(supabase: any, userId: string) {
       total_subscription_earned,
       total_transaction_earned,
       total_earned,
-      created_at,
-      referred:profiles!referral_relationships_referred_id_fkey(
-        full_name,
-        avatar_url
-      )
+      created_at
     `)
     .eq("referrer_id", userId)
     .order("created_at", { ascending: false });
 
   if (error) {
     throw new Error(`Failed to get referrals: ${error.message}`);
+  }
+
+  // Step 2: Enrich with profile data (separate query — FK goes to auth.users, not profiles)
+  const referredIds = (referrals || []).map((r: any) => r.referred_id).filter(Boolean);
+  let profileMap: Record<string, any> = {};
+  if (referredIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name, avatar_url")
+      .in("id", referredIds);
+    for (const p of profiles || []) {
+      profileMap[p.id] = { full_name: p.full_name, avatar_url: p.avatar_url };
+    }
+  }
+  // Attach profile info to each referral
+  for (const r of referrals || []) {
+    r.referred = profileMap[r.referred_id] || { full_name: null, avatar_url: null };
   }
 
   // Calcular estadísticas
@@ -237,13 +265,13 @@ async function getMyReferrals(supabase: any, userId: string) {
 // ============================================================================
 
 async function getMyEarnings(supabase: any, userId: string) {
-  // Obtener todas las ganancias
+  // Step 1: Get earnings with relationship data (no nested profile join — FK goes to auth.users)
   const { data: earnings, error } = await supabase
     .from("referral_earnings")
     .select(`
       *,
       relationship:referral_relationships(
-        referred:profiles!referral_relationships_referred_id_fkey(full_name)
+        referred_id
       )
     `)
     .eq("referrer_id", userId)
@@ -251,6 +279,29 @@ async function getMyEarnings(supabase: any, userId: string) {
 
   if (error) {
     throw new Error(`Failed to get earnings: ${error.message}`);
+  }
+
+  // Step 2: Enrich with profile names
+  const referredIds = (earnings || [])
+    .map((e: any) => e.relationship?.referred_id)
+    .filter(Boolean);
+  if (referredIds.length > 0) {
+    const uniqueIds = [...new Set(referredIds)] as string[];
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", uniqueIds);
+    const profileMap: Record<string, string> = {};
+    for (const p of profiles || []) {
+      profileMap[p.id] = p.full_name;
+    }
+    for (const e of earnings || []) {
+      if (e.relationship) {
+        e.relationship.referred = {
+          full_name: profileMap[e.relationship.referred_id] || null,
+        };
+      }
+    }
   }
 
   // Calcular totales
@@ -277,15 +328,16 @@ async function getMyEarnings(supabase: any, userId: string) {
   // Obtener balance disponible para retiro
   const { data: wallet } = await supabase
     .from("unified_wallets")
-    .select("balance_available")
+    .select("available_balance")
     .eq("user_id", userId)
-    .single();
+    .limit(1)
+    .maybeSingle();
 
   return {
     success: true,
     earnings,
     totals,
-    available_for_withdrawal: wallet?.balance_available || 0,
+    available_for_withdrawal: wallet?.available_balance || 0,
   };
 }
 
@@ -298,21 +350,10 @@ async function validateReferralCode(supabase: any, code: string) {
     return { success: false, valid: false, error: "No code provided" };
   }
 
+  // Query code without FK join (FK points to auth.users, not profiles)
   const { data: referralCode } = await supabase
     .from("referral_codes")
-    .select(`
-      id,
-      code,
-      target_type,
-      is_active,
-      expires_at,
-      max_uses,
-      conversions,
-      user:profiles!referral_codes_user_id_fkey(
-        full_name,
-        avatar_url
-      )
-    `)
+    .select("id, code, target_type, is_active, expires_at, max_uses, conversions, user_id")
     .eq("code", code.toUpperCase())
     .single();
 
@@ -335,14 +376,27 @@ async function validateReferralCode(supabase: any, code: string) {
     return { success: true, valid: false, error: "Code usage limit reached" };
   }
 
+  // Fetch referrer profile separately
+  let referrerName = null;
+  let referrerAvatar = null;
+  if (referralCode.user_id) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, avatar_url")
+      .eq("id", referralCode.user_id)
+      .single();
+    referrerName = profile?.full_name || null;
+    referrerAvatar = profile?.avatar_url || null;
+  }
+
   return {
     success: true,
     valid: true,
     code: referralCode.code,
     target_type: referralCode.target_type,
     referrer: {
-      name: referralCode.user?.full_name,
-      avatar: referralCode.user?.avatar_url,
+      name: referrerName,
+      avatar: referrerAvatar,
     },
   };
 }
@@ -351,13 +405,34 @@ async function validateReferralCode(supabase: any, code: string) {
 // APLICAR CÓDIGO (Durante registro)
 // ============================================================================
 
+async function ensureUserWallet(supabase: any, userId: string): Promise<string | null> {
+  const { data: existing } = await supabase
+    .from("unified_wallets")
+    .select("id")
+    .eq("user_id", userId)
+    .limit(1)
+    .maybeSingle();
+
+  if (existing) return existing.id;
+
+  // Auto-create wallet if missing
+  const { data: created } = await supabase
+    .from("unified_wallets")
+    .insert({ user_id: userId, wallet_type: "personal" })
+    .select("id")
+    .single();
+
+  return created?.id || null;
+}
+
 async function applyReferralCode(supabase: any, userId: string, code: string) {
   // Verificar que el usuario no ya tiene un referidor
   const { data: existingRelation } = await supabase
     .from("referral_relationships")
     .select("id")
     .eq("referred_id", userId)
-    .single();
+    .limit(1)
+    .maybeSingle();
 
   if (existingRelation) {
     throw new Error("User already has a referrer");
@@ -366,10 +441,11 @@ async function applyReferralCode(supabase: any, userId: string, code: string) {
   // Validar código
   const { data: referralCode } = await supabase
     .from("referral_codes")
-    .select("user_id, is_active")
+    .select("id, user_id, is_active, conversions, max_uses")
     .eq("code", code.toUpperCase())
     .eq("is_active", true)
-    .single();
+    .limit(1)
+    .maybeSingle();
 
   if (!referralCode) {
     throw new Error("Invalid referral code");
@@ -380,26 +456,22 @@ async function applyReferralCode(supabase: any, userId: string, code: string) {
     throw new Error("Cannot use your own referral code");
   }
 
-  // Obtener wallet del referidor
-  const { data: referrerWallet } = await supabase
-    .from("unified_wallets")
-    .select("id")
-    .eq("user_id", referralCode.user_id)
-    .single();
+  // Verificar max_uses
+  if (referralCode.max_uses && referralCode.conversions >= referralCode.max_uses) {
+    throw new Error("Referral code has reached its maximum uses");
+  }
 
-  // Obtener wallet del referido
-  const { data: referredWallet } = await supabase
-    .from("unified_wallets")
-    .select("id")
-    .eq("user_id", userId)
-    .single();
+  // Ensure wallets exist for both parties
+  const referrerWalletId = await ensureUserWallet(supabase, referralCode.user_id);
+  const referredWalletId = await ensureUserWallet(supabase, userId);
 
   // Obtener tipo del usuario
   const { data: profile } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", userId)
-    .single();
+    .limit(1)
+    .maybeSingle();
 
   const referredType = profile?.role === "brand" ? "brand" : "creator";
 
@@ -408,9 +480,9 @@ async function applyReferralCode(supabase: any, userId: string, code: string) {
     .from("referral_relationships")
     .insert({
       referrer_id: referralCode.user_id,
-      referrer_wallet_id: referrerWallet?.id,
+      referrer_wallet_id: referrerWalletId,
       referred_id: userId,
-      referred_wallet_id: referredWallet?.id,
+      referred_wallet_id: referredWalletId,
       referral_code: code.toUpperCase(),
       referred_type: referredType,
       status: "active",
@@ -422,21 +494,19 @@ async function applyReferralCode(supabase: any, userId: string, code: string) {
     throw new Error(`Failed to apply code: ${error.message}`);
   }
 
-  // Incrementar registrations en el código atómicamente
-  const { data: codeRow } = await supabase
-    .from("referral_codes")
-    .select("id")
-    .eq("code", code.toUpperCase())
-    .single();
-
-  if (codeRow) {
-    await supabase.rpc("increment_column", {
-      p_table: "referral_codes",
-      p_column: "registrations",
-      p_amount: 1,
-      p_id: codeRow.id,
-    });
-  }
+  // Incrementar registrations Y conversions en el código atómicamente
+  await supabase.rpc("increment_column", {
+    p_table: "referral_codes",
+    p_column: "registrations",
+    p_amount: 1,
+    p_id: referralCode.id,
+  });
+  await supabase.rpc("increment_column", {
+    p_table: "referral_codes",
+    p_column: "conversions",
+    p_amount: 1,
+    p_id: referralCode.id,
+  });
 
   return {
     success: true,
@@ -537,7 +607,7 @@ async function withdrawEarnings(supabase: any, userId: string, body: any) {
   // Verificar balance disponible
   const { data: wallet } = await supabase
     .from("unified_wallets")
-    .select("id, balance_available")
+    .select("id, available_balance")
     .eq("user_id", userId)
     .single();
 
@@ -545,8 +615,8 @@ async function withdrawEarnings(supabase: any, userId: string, body: any) {
     throw new Error("Wallet not found");
   }
 
-  if (wallet.balance_available < amount) {
-    throw new Error(`Insufficient balance. Available: $${wallet.balance_available}`);
+  if (wallet.available_balance < amount) {
+    throw new Error(`Insufficient balance. Available: $${wallet.available_balance}`);
   }
 
   // Obtener fees del método
@@ -582,9 +652,9 @@ async function withdrawEarnings(supabase: any, userId: string, body: any) {
       currency: "USD",
       fee_fixed: feeFixed,
       fee_percentage: feePercentage,
-      fee_total: feeTotal,
+      fee: feeTotal,
       net_amount: netAmount,
-      method,
+      payment_method: method,
       payment_details,
       status: "pending",
     })
@@ -621,5 +691,65 @@ async function withdrawEarnings(supabase: any, userId: string, body: any) {
     method,
     status: "pending",
     message: "Withdrawal request submitted. Processing time: 1-3 business days.",
+  };
+}
+
+// ============================================================================
+// ACTUALIZAR SLUG PERSONALIZADO
+// ============================================================================
+
+async function updateSlug(supabase: any, userId: string, body: any) {
+  const { code_id, new_slug } = body;
+
+  if (!code_id || !new_slug) {
+    throw new Error("code_id and new_slug are required");
+  }
+
+  // Verify ownership of the code
+  const { data: code } = await supabase
+    .from("referral_codes")
+    .select("id, user_id, code")
+    .eq("id", code_id)
+    .single();
+
+  if (!code) {
+    throw new Error("Referral code not found");
+  }
+
+  if (code.user_id !== userId) {
+    throw new Error("You don't own this referral code");
+  }
+
+  // Validate the new slug via RPC
+  const { data: validation, error: valError } = await supabase.rpc("validate_referral_slug", {
+    p_slug: new_slug,
+  });
+
+  if (valError) {
+    throw new Error(`Validation error: ${valError.message}`);
+  }
+
+  if (!validation.valid) {
+    throw new Error(validation.error || "Slug no valido");
+  }
+
+  const normalized = validation.normalized;
+
+  // Update the code
+  const { error: updateError } = await supabase
+    .from("referral_codes")
+    .update({ code: normalized })
+    .eq("id", code_id);
+
+  if (updateError) {
+    throw new Error(`Failed to update slug: ${updateError.message}`);
+  }
+
+  const baseUrl = Deno.env.get("FRONTEND_URL") || "https://kreoon.com";
+
+  return {
+    success: true,
+    code: normalized,
+    referral_url: `${baseUrl}/r/${normalized}`,
   };
 }

@@ -179,7 +179,7 @@ export function LeadKanban({
             <Filter className="h-3.5 w-3.5 mr-2 text-white/40" />
             <SelectValue placeholder="Fuente" />
           </SelectTrigger>
-          <SelectContent className="bg-[#0a0118] border-[#8b5cf6]/30">
+          <SelectContent className="bg-popover border-[#8b5cf6]/30">
             <SelectItem value="all" className="text-white focus:bg-white/10">Todas</SelectItem>
             {SOURCES.map((s) => (
               <SelectItem key={s} value={s} className="text-white focus:bg-white/10">
@@ -193,7 +193,7 @@ export function LeadKanban({
             <Filter className="h-3.5 w-3.5 mr-2 text-white/40" />
             <SelectValue placeholder="Tipo" />
           </SelectTrigger>
-          <SelectContent className="bg-[#0a0118] border-[#8b5cf6]/30">
+          <SelectContent className="bg-popover border-[#8b5cf6]/30">
             <SelectItem value="all" className="text-white focus:bg-white/10">Todos</SelectItem>
             {LEAD_TYPES.map((t) => (
               <SelectItem key={t} value={t} className="text-white focus:bg-white/10">
@@ -221,7 +221,7 @@ export function LeadKanban({
             <Filter className="h-3.5 w-3.5 mr-2 text-white/40" />
             <SelectValue placeholder="Categoría" />
           </SelectTrigger>
-          <SelectContent className="bg-[#0a0118] border-[#8b5cf6]/30">
+          <SelectContent className="bg-popover border-[#8b5cf6]/30">
             <SelectItem value="all" className="text-white focus:bg-white/10">Todas las categorías</SelectItem>
             {TALENT_CATEGORIES.map((c) => (
               <SelectItem key={c} value={c} className="text-white focus:bg-white/10">
@@ -235,7 +235,7 @@ export function LeadKanban({
             <Filter className="h-3.5 w-3.5 mr-2 text-white/40" />
             <SelectValue placeholder="Rol" />
           </SelectTrigger>
-          <SelectContent className="bg-[#0a0118] border-[#8b5cf6]/30 max-h-[300px]">
+          <SelectContent className="bg-popover border-[#8b5cf6]/30 max-h-[300px]">
             <SelectItem value="all" className="text-white focus:bg-white/10">Todos los roles</SelectItem>
             {availableRoles.map((r) => (
               <SelectItem key={r} value={r} className="text-white focus:bg-white/10">
@@ -249,7 +249,7 @@ export function LeadKanban({
             <Filter className="h-3.5 w-3.5 mr-2 text-white/40" />
             <SelectValue placeholder="Intent" />
           </SelectTrigger>
-          <SelectContent className="bg-[#0a0118] border-[#8b5cf6]/30">
+          <SelectContent className="bg-popover border-[#8b5cf6]/30">
             <SelectItem value="all" className="text-white focus:bg-white/10">Todos</SelectItem>
             {REGISTRATION_INTENTS.map((i) => (
               <SelectItem key={i} value={i} className="text-white focus:bg-white/10">

@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, CreditCard } from 'lucide-react';
+import { Plus, CreditCard, ExternalLink, CheckCircle2, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { PaymentMethodCard } from './PaymentMethodCard';
 import { PaymentMethodDrawer } from './PaymentMethodDrawer';
 import { usePaymentMethods, usePaymentMethodMutations, type PaymentMethodDisplay } from '../../hooks/usePaymentMethods';
+import { useStripeConnect } from '../../hooks/useStripeConnect';
+import { useWallet } from '../../hooks/useWallet';
 import { NoPaymentMethodsState } from '../common';
 
 interface PaymentMethodListProps {
@@ -24,6 +27,16 @@ export function PaymentMethodList({ className }: PaymentMethodListProps) {
     isSettingDefault,
     isDeleting,
   } = usePaymentMethodMutations();
+
+  const { wallet } = useWallet();
+  const {
+    connectStatus,
+    startOnboarding,
+    isStartingOnboarding,
+    getLoginLink,
+    isGettingLoginLink,
+    refreshOnboarding,
+  } = useStripeConnect(wallet?.id || null);
 
   const handleEdit = (method: PaymentMethodDisplay) => {
     setEditingMethod(method);
@@ -46,7 +59,7 @@ export function PaymentMethodList({ className }: PaymentMethodListProps) {
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
-              <CreditCard className="h-5 w-5 text-[hsl(270,100%,70%)]" />
+              <CreditCard className="h-5 w-5 text-primary" />
             </div>
             <CardTitle>Métodos de Pago</CardTitle>
           </div>
@@ -75,16 +88,85 @@ export function PaymentMethodList({ className }: PaymentMethodListProps) {
 
   return (
     <>
+      {/* Stripe Connect Section — only show when wallet exists */}
+      {wallet && (
+        <Card className={cn('mb-4', className)}>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/10">
+                  <CreditCard className="h-5 w-5 text-indigo-400" />
+                </div>
+                <div>
+                  <p className="font-medium text-white">Stripe Connect</p>
+                  <p className="text-xs text-muted-foreground">
+                    {connectStatus === 'active'
+                      ? 'Recibe pagos directos a tu cuenta Stripe'
+                      : 'Conecta tu cuenta para retiros instantáneos'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {connectStatus === 'active' && (
+                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                    Conectado
+                  </Badge>
+                )}
+                {connectStatus === 'pending' && (
+                  <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/30">
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    Pendiente
+                  </Badge>
+                )}
+                {connectStatus === 'active' ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => getLoginLink()}
+                    disabled={isGettingLoginLink}
+                  >
+                    <ExternalLink className="h-3 w-3 mr-1" />
+                    Dashboard
+                  </Button>
+                ) : connectStatus === 'pending' ? (
+                  <Button
+                    size="sm"
+                    onClick={() => refreshOnboarding()}
+                    className="bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    Completar configuración
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={() => startOnboarding()}
+                    disabled={isStartingOnboarding}
+                    className="bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    {isStartingOnboarding ? (
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    ) : null}
+                    Conectar Stripe
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Payment Methods */}
       <Card className={cn('', className)}>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
-                <CreditCard className="h-5 w-5 text-[hsl(270,100%,70%)]" />
+                <CreditCard className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <CardTitle>Métodos de Pago</CardTitle>
-                <p className="text-xs text-[hsl(270,30%,60%)] mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {methods.length} método{methods.length !== 1 ? 's' : ''} configurado{methods.length !== 1 ? 's' : ''}
                 </p>
               </div>

@@ -71,8 +71,8 @@ export function EscrowTimeline({ steps, className }: EscrowTimelineProps) {
                 <Icon
                   className={cn(
                     'h-5 w-5',
-                    step.status === 'current' && 'text-[hsl(270,100%,70%)]',
-                    step.status === 'pending' && 'text-[hsl(270,30%,50%)]',
+                    step.status === 'current' && 'text-primary',
+                    step.status === 'pending' && 'text-muted-foreground',
                     step.status === 'skipped' && 'text-gray-500'
                   )}
                 />
@@ -87,7 +87,7 @@ export function EscrowTimeline({ steps, className }: EscrowTimelineProps) {
                     'font-medium',
                     step.status === 'completed' && 'text-emerald-400',
                     step.status === 'current' && 'text-white',
-                    step.status === 'pending' && 'text-[hsl(270,30%,60%)]',
+                    step.status === 'pending' && 'text-muted-foreground',
                     step.status === 'skipped' && 'text-gray-500 line-through'
                   )}
                 >
@@ -101,7 +101,7 @@ export function EscrowTimeline({ steps, className }: EscrowTimelineProps) {
                 )}
               </div>
               {step.description && (
-                <p className="text-sm text-[hsl(270,30%,50%)] mt-0.5">
+                <p className="text-sm text-muted-foreground mt-0.5">
                   {step.description}
                 </p>
               )}

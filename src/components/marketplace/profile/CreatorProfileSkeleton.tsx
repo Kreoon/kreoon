@@ -1,6 +1,6 @@
 export function CreatorProfileSkeleton() {
   return (
-    <div className="min-h-screen bg-[#0a0a0f] animate-pulse">
+    <div className="min-h-screen bg-background animate-pulse">
       {/* Breadcrumb */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-6 pb-4">
         <div className="h-4 w-60 rounded bg-white/5" />

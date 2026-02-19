@@ -79,7 +79,7 @@ export function KiroProgressBar({
       <div
         className={cn(
           'flex items-center gap-2 px-3 py-1.5',
-          'bg-[#0a0a12]/50 border-b border-violet-500/10'
+          'bg-card/50 border-b border-violet-500/10'
         )}
         style={{ height: '32px' }}
       >
@@ -135,7 +135,7 @@ export function KiroProgressBar({
               className={cn(
                 'absolute bottom-full left-1/2 -translate-x-1/2 mb-2',
                 'px-2 py-1 rounded-md',
-                'bg-[#1a1a2e] border border-violet-500/30',
+                'bg-card border border-violet-500/30',
                 'text-[10px] text-violet-200 whitespace-nowrap',
                 'shadow-lg z-50',
                 'animate-in fade-in duration-150'

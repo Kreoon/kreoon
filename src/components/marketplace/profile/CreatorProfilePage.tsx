@@ -175,7 +175,7 @@ export default function CreatorProfilePage() {
 
   if (!creator) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <h2 className="text-2xl font-bold text-white">Creador no encontrado</h2>
           <p className="text-gray-400">El perfil que buscas no existe o fue removido.</p>
@@ -191,7 +191,7 @@ export default function CreatorProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] pb-24 lg:pb-8">
+    <div className="min-h-screen bg-background pb-24 lg:pb-8">
       {/* Hero banner */}
       {creator.banner_url ? (
         <div className="relative w-full h-48 md:h-64 overflow-hidden">
@@ -235,7 +235,7 @@ export default function CreatorProfilePage() {
             <CreatorHeader creator={creator} />
 
             {/* Mobile: Pricing card inline (tablet/mobile) */}
-            <div className="lg:hidden bg-[#1a1a2e]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-4">
+            <div className="lg:hidden bg-card/80 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-4">
               {creator.base_price != null && (
                 <div>
                   <span className="text-gray-400 text-sm">Desde </span>

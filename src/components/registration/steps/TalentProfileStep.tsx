@@ -70,7 +70,7 @@ export function TalentProfileStep({ data, onChange, onNext, onBack, mode }: Step
     >
       <button
         onClick={onBack}
-        className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors mb-5"
+        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-5"
       >
         <ArrowLeft className="h-4 w-4" /> Atrás
       </button>
@@ -78,11 +78,11 @@ export function TalentProfileStep({ data, onChange, onNext, onBack, mode }: Step
       <h2 className={cn('font-bold text-white mb-1', isCompact ? 'text-lg' : 'text-xl')}>
         Tu perfil de talento
       </h2>
-      <p className="text-sm text-gray-400 mb-5">Define tu especialización para que las marcas te encuentren</p>
+      <p className="text-sm text-muted-foreground mb-5">Define tu especialización para que las marcas te encuentren</p>
 
       {/* Talent type */}
       <div className="mb-5">
-        <label className="block text-xs font-medium text-gray-300 mb-2">¿Qué haces?</label>
+        <label className="block text-xs font-medium text-foreground/80 mb-2">¿Qué haces?</label>
         <div className="flex gap-2">
           {TALENT_TYPES.map(t => {
             const Icon = t.icon;
@@ -95,7 +95,7 @@ export function TalentProfileStep({ data, onChange, onNext, onBack, mode }: Step
                   'flex-1 flex flex-col items-center gap-1 rounded-lg border p-3 text-xs transition-all',
                   selected
                     ? 'border-purple-500/60 bg-purple-500/15 text-purple-300'
-                    : 'border-white/10 bg-white/[0.02] text-gray-400 hover:border-white/20',
+                    : 'border-border bg-muted/20 text-muted-foreground hover:border-border',
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -109,7 +109,7 @@ export function TalentProfileStep({ data, onChange, onNext, onBack, mode }: Step
       {/* Marketplace roles */}
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2">
-          <label className="text-xs font-medium text-gray-300">Roles de especialización</label>
+          <label className="text-xs font-medium text-foreground/80">Roles de especialización</label>
           <span className="text-[10px] text-gray-500">
             {data.marketplaceRoles.length}/{MAX_ROLES_PER_CREATOR} seleccionados
           </span>
@@ -152,7 +152,7 @@ export function TalentProfileStep({ data, onChange, onNext, onBack, mode }: Step
                               ? 'border-purple-500/50 bg-purple-500/20 text-purple-300'
                               : disabled
                               ? 'border-white/5 bg-white/[0.01] text-gray-600 cursor-not-allowed'
-                              : 'border-white/10 bg-white/[0.02] text-gray-400 hover:border-white/20 hover:text-gray-300',
+                              : 'border-border bg-muted/20 text-muted-foreground hover:border-border hover:text-foreground',
                           )}
                         >
                           {selected && <Check className="h-3 w-3" />}
@@ -170,7 +170,7 @@ export function TalentProfileStep({ data, onChange, onNext, onBack, mode }: Step
 
       {/* Platforms */}
       <div className="mb-5">
-        <label className="block text-xs font-medium text-gray-300 mb-2">Plataformas principales</label>
+        <label className="block text-xs font-medium text-foreground/80 mb-2">Plataformas principales</label>
         <div className="flex flex-wrap gap-2">
           {PLATFORMS.map(p => {
             const selected = data.platforms.includes(p.id);
@@ -182,7 +182,7 @@ export function TalentProfileStep({ data, onChange, onNext, onBack, mode }: Step
                   'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs border transition-all',
                   selected
                     ? 'border-purple-500/50 bg-purple-500/15 text-purple-300'
-                    : 'border-white/10 bg-white/[0.02] text-gray-400 hover:border-white/20',
+                    : 'border-border bg-muted/20 text-muted-foreground hover:border-border',
                 )}
               >
                 {selected && <Check className="h-3 w-3" />}
@@ -195,7 +195,7 @@ export function TalentProfileStep({ data, onChange, onNext, onBack, mode }: Step
 
       {/* Categories (optional) */}
       <div className="mb-5">
-        <label className="block text-xs font-medium text-gray-300 mb-2">
+        <label className="block text-xs font-medium text-foreground/80 mb-2">
           Categorías <span className="text-gray-500">(opcional)</span>
         </label>
         <div className="flex flex-wrap gap-1.5">
@@ -209,7 +209,7 @@ export function TalentProfileStep({ data, onChange, onNext, onBack, mode }: Step
                   'rounded-full px-2.5 py-1 text-[11px] border transition-all',
                   selected
                     ? 'border-purple-500/50 bg-purple-500/15 text-purple-300'
-                    : 'border-white/10 bg-white/[0.02] text-gray-400 hover:border-white/20',
+                    : 'border-border bg-muted/20 text-muted-foreground hover:border-border',
                 )}
               >
                 {cat}

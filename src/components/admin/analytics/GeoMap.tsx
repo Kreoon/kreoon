@@ -33,7 +33,7 @@ export function GeoMap({ data }: GeoMapProps) {
                     <span className="text-xs text-gray-500 w-4 text-right">
                       {index + 1}
                     </span>
-                    <span className="text-sm text-gray-300">{geo.country}</span>
+                    <span className="text-sm text-foreground/80">{geo.country}</span>
                   </div>
                   <span className="text-sm text-white font-medium tabular-nums">
                     {geo.visitors.toLocaleString()}

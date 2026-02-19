@@ -55,7 +55,7 @@ function AnonymousMarketplaceShell({ children }: { children: ReactNode }) {
             variant="ghost"
             size="sm"
             onClick={() => navigate('/auth')}
-            className="text-gray-300 hover:text-white hover:bg-white/10"
+            className="text-foreground/80 hover:text-foreground hover:bg-white/10"
           >
             <LogIn className="h-4 w-4 mr-1.5" />
             Iniciar sesión

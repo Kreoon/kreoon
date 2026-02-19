@@ -49,7 +49,7 @@ export function AssignUserDropdown({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"
-        className="w-64 bg-[#0a0118] border-[#8b5cf6]/30"
+        className="w-64 bg-popover border-[#8b5cf6]/30"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-2 border-b border-white/10">
@@ -73,12 +73,12 @@ export function AssignUserDropdown({
                 className={cn(
                   "w-full flex items-center gap-2 px-2 py-2 rounded-lg text-left transition-colors",
                   "hover:bg-white/10 text-[#f8fafc]",
-                  currentUserId === user.id && "bg-[#8b5cf6]/20"
+                  currentUserId === user.id && "bg-primary/20"
                 )}
               >
                 <Avatar className="h-8 w-8 shrink-0">
                   <AvatarImage src={user.avatar_url || undefined} />
-                  <AvatarFallback className="text-xs bg-[#8b5cf6]/30 text-[#a78bfa]">
+                  <AvatarFallback className="text-xs bg-primary/30 text-primary">
                     {(user.full_name || "?").charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>

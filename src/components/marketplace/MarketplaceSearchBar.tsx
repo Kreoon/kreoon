@@ -82,7 +82,7 @@ export function MarketplaceSearchBar({
         >
           <Search className="h-4 w-4 text-gray-400 flex-shrink-0" />
           <div className="text-left min-w-0">
-            <p className="text-xs font-medium text-gray-300">¿Qué buscas?</p>
+            <p className="text-xs font-medium text-foreground/80">¿Qué buscas?</p>
             {activeSection === 'search' ? (
               <input
                 autoFocus
@@ -112,7 +112,7 @@ export function MarketplaceSearchBar({
         >
           <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
           <div className="text-left min-w-0">
-            <p className="text-xs font-medium text-gray-300">País/Ciudad</p>
+            <p className="text-xs font-medium text-foreground/80">País/Ciudad</p>
             <p className="text-sm text-gray-500 truncate">
               {selectedCountry ? `${selectedCountry.flag} ${selectedCountry.label}` : 'Cualquier lugar'}
             </p>
@@ -131,7 +131,7 @@ export function MarketplaceSearchBar({
         >
           <Film className="h-4 w-4 text-gray-400 flex-shrink-0" />
           <div className="text-left min-w-0">
-            <p className="text-xs font-medium text-gray-300">Tipo contenido</p>
+            <p className="text-xs font-medium text-foreground/80">Tipo contenido</p>
             <p className="text-sm text-gray-500 truncate">
               {contentTypes.length > 0
                 ? contentTypes.slice(0, 2).join(', ') + (contentTypes.length > 2 ? '...' : '')
@@ -156,7 +156,7 @@ export function MarketplaceSearchBar({
 
       {/* Dropdowns */}
       {activeSection === 'country' && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a2e] border border-white/10 rounded-2xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-white/10 rounded-2xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="space-y-1">
             <button
               onClick={() => {
@@ -167,7 +167,7 @@ export function MarketplaceSearchBar({
                 'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm',
                 country === null
                   ? 'bg-purple-500/20 text-purple-300'
-                  : 'text-gray-300 hover:bg-white/5',
+                  : 'text-foreground/80 hover:bg-white/5',
               )}
             >
               🌎 Todos los países
@@ -183,7 +183,7 @@ export function MarketplaceSearchBar({
                   'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm',
                   country === c.code
                     ? 'bg-purple-500/20 text-purple-300'
-                    : 'text-gray-300 hover:bg-white/5',
+                    : 'text-foreground/80 hover:bg-white/5',
                 )}
               >
                 {c.flag} {c.label}
@@ -194,7 +194,7 @@ export function MarketplaceSearchBar({
       )}
 
       {activeSection === 'content' && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a2e] border border-white/10 rounded-2xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-white/10 rounded-2xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="grid grid-cols-2 gap-2">
             {CONTENT_TYPES.map(ct => (
               <button
@@ -204,7 +204,7 @@ export function MarketplaceSearchBar({
                   'flex items-center gap-2 px-3 py-2.5 rounded-lg transition-colors text-sm',
                   contentTypes.includes(ct)
                     ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                    : 'text-gray-300 hover:bg-white/5 border border-transparent',
+                    : 'text-foreground/80 hover:bg-white/5 border border-transparent',
                 )}
               >
                 {contentTypes.includes(ct) && <X className="h-3 w-3" />}

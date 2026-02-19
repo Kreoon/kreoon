@@ -31,7 +31,7 @@ interface MarketplaceSectionProps {
 
 const LEVEL_COLORS: Record<string, string> = {
   bronze: 'bg-amber-700/20 text-amber-400 border-amber-600/30',
-  silver: 'bg-gray-400/20 text-gray-300 border-gray-400/30',
+  silver: 'bg-gray-400/20 text-muted-foreground border-gray-400/30',
   gold: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
   elite: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
 };

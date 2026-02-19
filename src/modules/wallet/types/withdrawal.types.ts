@@ -7,11 +7,13 @@ export type WithdrawalStatus =
   | 'processing'   // En proceso de pago
   | 'completed'    // Pagado
   | 'rejected'     // Rechazado
-  | 'cancelled';   // Cancelado por el usuario
+  | 'cancelled'    // Cancelado por el usuario
+  | 'failed';      // Fallo en el procesamiento
 
 export type PaymentMethodType =
   | 'bank_transfer_colombia'
   | 'bank_transfer_international'
+  | 'stripe_connect'
   | 'paypal'
   | 'payoneer'
   | 'nequi'
@@ -125,6 +127,7 @@ export const WITHDRAWAL_STATUS_LABELS: Record<WithdrawalStatus, string> = {
   completed: 'Completado',
   rejected: 'Rechazado',
   cancelled: 'Cancelado',
+  failed: 'Fallido',
 };
 
 export const WITHDRAWAL_STATUS_COLORS: Record<WithdrawalStatus, string> = {
@@ -133,6 +136,7 @@ export const WITHDRAWAL_STATUS_COLORS: Record<WithdrawalStatus, string> = {
   completed: 'bg-success/10 text-success',
   rejected: 'bg-destructive/10 text-destructive',
   cancelled: 'bg-muted text-muted-foreground',
+  failed: 'bg-destructive/10 text-destructive',
 };
 
 export const WITHDRAWAL_STATUS_ICONS: Record<WithdrawalStatus, string> = {
@@ -141,11 +145,13 @@ export const WITHDRAWAL_STATUS_ICONS: Record<WithdrawalStatus, string> = {
   completed: 'CheckCircle',
   rejected: 'XCircle',
   cancelled: 'Ban',
+  failed: 'AlertTriangle',
 };
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethodType, string> = {
   bank_transfer_colombia: 'Transferencia Bancaria (Colombia)',
   bank_transfer_international: 'Transferencia Internacional',
+  stripe_connect: 'Stripe Connect',
   paypal: 'PayPal',
   payoneer: 'Payoneer',
   nequi: 'Nequi',
@@ -158,6 +164,7 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethodType, string> = {
 export const PAYMENT_METHOD_ICONS: Record<PaymentMethodType, string> = {
   bank_transfer_colombia: 'Building2',
   bank_transfer_international: 'Globe',
+  stripe_connect: 'CreditCard',
   paypal: 'CreditCard',
   payoneer: 'Wallet',
   nequi: 'Smartphone',
@@ -171,6 +178,7 @@ export const PAYMENT_METHOD_ICONS: Record<PaymentMethodType, string> = {
 export const WITHDRAWAL_FEES: Record<PaymentMethodType, { fixed: number; percentage: number; min: number }> = {
   bank_transfer_colombia: { fixed: 0, percentage: 0, min: 50000 }, // COP
   bank_transfer_international: { fixed: 25, percentage: 0, min: 100 }, // USD
+  stripe_connect: { fixed: 0, percentage: 0.25, min: 10 }, // Stripe fees
   paypal: { fixed: 0, percentage: 2.5, min: 10 },
   payoneer: { fixed: 3, percentage: 0, min: 50 },
   nequi: { fixed: 0, percentage: 0, min: 10000 }, // COP
@@ -192,6 +200,8 @@ export function getPaymentSummary(method: PaymentMethodType, details: PaymentDet
       const d = details as BankTransferInternationalDetails;
       return `${d.bank_name} - ${d.country}`;
     }
+    case 'stripe_connect':
+      return 'Stripe Connect';
     case 'paypal':
     case 'payoneer': {
       const d = details as PaypalDetails;

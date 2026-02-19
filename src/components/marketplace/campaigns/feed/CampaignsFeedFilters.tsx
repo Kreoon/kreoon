@@ -55,7 +55,7 @@ export function CampaignsFeedFilters({ filters, onFiltersChange, isOpen, onToggl
         )}
       >
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-300">Filtros</h3>
+          <h3 className="text-sm font-semibold text-foreground/80">Filtros</h3>
           {hasActiveFilters && (
             <button onClick={clearFilters} className="text-purple-400 text-xs hover:text-purple-300">
               Limpiar filtros

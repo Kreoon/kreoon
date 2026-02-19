@@ -26,13 +26,13 @@ const STATUS_LABELS: Record<ProjectStatus, string> = {
 
 function KpiCard({ icon: Icon, label, value, color }: { icon: React.ElementType; label: string; value: string | number; color: string }) {
   return (
-    <div className="bg-[#1a1a2e]/80 backdrop-blur-xl border border-white/10 rounded-xl p-5">
+    <div className="bg-card/80 backdrop-blur-xl border border-white/10 rounded-xl p-5">
       <div className="flex items-center gap-3">
         <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${color}`}>
           <Icon className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-2xl font-bold text-white">{value}</p>
+          <p className="text-2xl font-bold text-foreground">{value}</p>
           <p className="text-gray-500 text-xs">{label}</p>
         </div>
       </div>
@@ -56,11 +56,11 @@ export function EditorMarketDashboard() {
   const editorProjects = projects;
 
   return (
-    <div className="bg-[#0a0a0f] pb-24 lg:pb-8">
+    <div className="bg-background pb-24 lg:pb-8">
       <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-8 space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-white">Dashboard Editor</h1>
+          <h1 className="text-2xl font-bold text-foreground">Dashboard Editor</h1>
           <p className="text-gray-500 text-sm mt-1">Proyectos de edicion del marketplace</p>
         </div>
 
@@ -76,7 +76,7 @@ export function EditorMarketDashboard() {
         <div className="flex gap-3">
           <button
             onClick={() => navigate('/board?view=marketplace')}
-            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
+            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-foreground font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
           >
             <FolderKanban className="h-4 w-4" />
             Proyectos por Editar
@@ -86,7 +86,7 @@ export function EditorMarketDashboard() {
         {/* Recent projects */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">Proyectos asignados</h2>
+            <h2 className="text-lg font-semibold text-foreground">Proyectos asignados</h2>
             <button
               onClick={() => navigate('/board?view=marketplace')}
               className="text-purple-400 hover:text-purple-300 text-sm flex items-center gap-1 transition-colors"
@@ -99,14 +99,14 @@ export function EditorMarketDashboard() {
               <div
                 key={project.id}
                 onClick={() => navigate('/board?view=marketplace')}
-                className="w-full bg-[#1a1a2e]/60 border border-white/5 rounded-xl p-4 flex items-center gap-4 hover:border-purple-500/30 transition-all cursor-pointer"
+                className="w-full bg-card/60 border border-white/5 rounded-xl p-4 flex items-center gap-4 hover:border-purple-500/30 transition-all cursor-pointer"
               >
                 <div className="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-300 flex-shrink-0">
                   <Film className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-white text-sm font-medium truncate">{project.brief.product_name}</span>
+                    <span className="text-foreground text-sm font-medium truncate">{project.brief.product_name}</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_COLORS[project.status]}`}>
                       {STATUS_LABELS[project.status]}
                     </span>

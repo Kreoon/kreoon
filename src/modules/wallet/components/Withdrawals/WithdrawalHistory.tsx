@@ -95,7 +95,7 @@ export function WithdrawalHistory({ walletId, className }: WithdrawalHistoryProp
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
-              <ArrowUpCircle className="h-5 w-5 text-[hsl(270,100%,70%)]" />
+              <ArrowUpCircle className="h-5 w-5 text-primary" />
             </div>
             <CardTitle>Mis Solicitudes de Retiro</CardTitle>
           </div>
@@ -210,14 +210,14 @@ export function WithdrawalHistory({ walletId, className }: WithdrawalHistoryProp
                           {withdrawal.statusLabel}
                         </Badge>
                       </div>
-                      <p className="text-sm text-[hsl(270,30%,60%)] truncate">
+                      <p className="text-sm text-muted-foreground truncate">
                         {withdrawal.methodLabel} • {withdrawal.paymentSummary}
                       </p>
                     </div>
 
                     {/* Date & actions */}
                     <div className="text-right flex-shrink-0">
-                      <p className="text-xs text-[hsl(270,30%,50%)]">
+                      <p className="text-xs text-muted-foreground">
                         {withdrawal.formattedDate}
                       </p>
                       {withdrawal.payment_proof_url && (

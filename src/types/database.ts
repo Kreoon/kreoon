@@ -76,6 +76,7 @@ export interface Profile {
   organization_status?: string;
   active_role?: AppRole | string | null;
   active_brand_id?: string | null;
+  platform_access_unlocked?: boolean;
   created_at: string;
   updated_at: string;
 }

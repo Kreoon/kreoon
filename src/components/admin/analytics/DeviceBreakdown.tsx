@@ -31,7 +31,7 @@ export function DeviceBreakdown({ data }: DeviceBreakdownProps) {
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
                     <Icon className="h-4 w-4" style={{ color: config.color }} />
-                    <span className="text-sm text-gray-300 capitalize">{d.device}</span>
+                    <span className="text-sm text-foreground/80 capitalize">{d.device}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-white font-medium tabular-nums">

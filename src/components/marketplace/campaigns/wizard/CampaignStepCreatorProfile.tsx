@@ -42,7 +42,7 @@ export function CampaignStepCreatorProfile({ data, onChange }: CampaignStepCreat
 
       {/* Min rating */}
       <div>
-        <label className="text-gray-300 text-sm font-medium block mb-2">Rating Minimo</label>
+        <label className="text-foreground/80 text-sm font-medium block mb-2">Rating Minimo</label>
         <div className="flex gap-2">
           {RATING_OPTIONS.map(rating => (
             <button
@@ -63,7 +63,7 @@ export function CampaignStepCreatorProfile({ data, onChange }: CampaignStepCreat
 
       {/* Min completed projects */}
       <div>
-        <label className="text-gray-300 text-sm font-medium block mb-1.5">Proyectos Completados Minimos</label>
+        <label className="text-foreground/80 text-sm font-medium block mb-1.5">Proyectos Completados Minimos</label>
         <input
           type="number"
           min="0"
@@ -75,7 +75,7 @@ export function CampaignStepCreatorProfile({ data, onChange }: CampaignStepCreat
 
       {/* Min followers (optional) */}
       <div>
-        <label className="text-gray-300 text-sm font-medium block mb-1.5">Seguidores Minimos <span className="text-gray-600">(opcional)</span></label>
+        <label className="text-foreground/80 text-sm font-medium block mb-1.5">Seguidores Minimos <span className="text-gray-600">(opcional)</span></label>
         <input
           type="number"
           min="0"
@@ -88,7 +88,7 @@ export function CampaignStepCreatorProfile({ data, onChange }: CampaignStepCreat
 
       {/* Categories */}
       <div>
-        <label className="text-gray-300 text-sm font-medium block mb-2">Categorias</label>
+        <label className="text-foreground/80 text-sm font-medium block mb-2">Categorias</label>
         <div className="flex flex-wrap gap-2">
           {MARKETPLACE_CATEGORIES.filter(c => c.id !== 'all').map(cat => (
             <button
@@ -109,7 +109,7 @@ export function CampaignStepCreatorProfile({ data, onChange }: CampaignStepCreat
 
       {/* Countries */}
       <div>
-        <label className="text-gray-300 text-sm font-medium block mb-2">Paises</label>
+        <label className="text-foreground/80 text-sm font-medium block mb-2">Paises</label>
         <div className="flex flex-wrap gap-2">
           {COUNTRIES.map(country => (
             <button
@@ -131,7 +131,7 @@ export function CampaignStepCreatorProfile({ data, onChange }: CampaignStepCreat
 
       {/* Languages */}
       <div>
-        <label className="text-gray-300 text-sm font-medium block mb-2">Idiomas</label>
+        <label className="text-foreground/80 text-sm font-medium block mb-2">Idiomas</label>
         <div className="flex flex-wrap gap-2">
           {LANGUAGES.map(lang => (
             <button
@@ -152,7 +152,7 @@ export function CampaignStepCreatorProfile({ data, onChange }: CampaignStepCreat
 
       {/* Content types */}
       <div>
-        <label className="text-gray-300 text-sm font-medium block mb-2">Tipos de Contenido</label>
+        <label className="text-foreground/80 text-sm font-medium block mb-2">Tipos de Contenido</label>
         <div className="flex flex-wrap gap-2">
           {CONTENT_TYPES.map(ct => (
             <button

@@ -63,12 +63,12 @@ const ICON_CONFIG: Record<TransactionType, { icon: LucideIcon; color: string; bg
   },
   platform_fee: {
     icon: Percent,
-    color: 'text-[hsl(270,30%,60%)]',
+    color: 'text-muted-foreground',
     bgColor: 'bg-[hsl(270,100%,60%,0.1)]',
   },
   adjustment: {
     icon: Settings,
-    color: 'text-[hsl(270,30%,60%)]',
+    color: 'text-muted-foreground',
     bgColor: 'bg-[hsl(270,100%,60%,0.1)]',
   },
 };

@@ -352,7 +352,7 @@ export function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailPanelProp
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44 bg-[#0a0118] border-[#8b5cf6]/30">
+              <DropdownMenuContent align="end" className="w-44 bg-popover border-[#8b5cf6]/30">
                 <DropdownMenuItem className="gap-2 text-white focus:bg-white/10">
                   <Edit className="h-4 w-4 text-[#a855f7]" />
                   Editar
@@ -549,7 +549,7 @@ export function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailPanelProp
                 <SelectTrigger className="bg-white/5 border-white/10 text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0a0118] border-[#8b5cf6]/30">
+                <SelectContent className="bg-popover border-[#8b5cf6]/30">
                   {STAGES.map((s) => (
                     <SelectItem key={s} value={s} className="text-white focus:bg-white/10">
                       <span className="flex items-center gap-2">

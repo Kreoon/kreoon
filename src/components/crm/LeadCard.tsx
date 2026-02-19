@@ -136,7 +136,7 @@ export function LeadCard({
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-48 bg-[#0a0118] border-[#8b5cf6]/30"
+              className="w-48 bg-popover border-[#8b5cf6]/30"
               onClick={(e) => e.stopPropagation()}
             >
               <DropdownMenuItem
@@ -151,7 +151,7 @@ export function LeadCard({
                   <ArrowRight className="h-4 w-4 text-[#60a5fa]" />
                   Cambiar etapa
                 </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent className="bg-[#0a0118] border-[#8b5cf6]/30">
+                <DropdownMenuSubContent className="bg-popover border-[#8b5cf6]/30">
                   {STAGES.map((stage) => (
                     <DropdownMenuItem
                       key={stage}

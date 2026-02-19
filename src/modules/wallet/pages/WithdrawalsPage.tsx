@@ -12,13 +12,7 @@ import {
   WithdrawalStatusTimeline,
 } from '../components/Withdrawals';
 import { PaymentMethodList, PaymentMethodDrawer } from '../components/PaymentMethods';
-import {
-  ComingSoonBanner,
-  ComingSoonTooltip,
-  DemoModeIndicator,
-} from '../components/common';
 import { useWallet, useWithdrawals, usePaymentMethods } from '../hooks';
-import { isWalletEnabled, isWithdrawalsEnabled } from '../config';
 
 type TabValue = 'history' | 'payment-methods';
 
@@ -36,11 +30,7 @@ export function WithdrawalsPage() {
   const { withdrawals, isLoading: isWithdrawalsLoading } = useWithdrawals({
     walletId: walletDisplay?.id,
   });
-  const { paymentMethods, isLoading: isPaymentMethodsLoading } = usePaymentMethods();
-
-  // Feature flags
-  const walletEnabled = isWalletEnabled();
-  const withdrawalsEnabled = isWithdrawalsEnabled();
+  const { methods: paymentMethods, isLoading: isPaymentMethodsLoading } = usePaymentMethods();
 
   const handleTabChange = (value: string) => {
     setActiveTab(value as TabValue);
@@ -57,8 +47,7 @@ export function WithdrawalsPage() {
     walletDisplay &&
     walletDisplay.available_balance >= 50000 &&
     paymentMethods &&
-    paymentMethods.length > 0 &&
-    withdrawalsEnabled;
+    paymentMethods.length > 0;
 
   if (isWalletLoading) {
     return (
@@ -80,7 +69,7 @@ export function WithdrawalsPage() {
     return (
       <div className="container mx-auto py-6 px-4 max-w-5xl">
         <div className="text-center py-12">
-          <p className="text-[hsl(270,30%,60%)]">No tienes un wallet activo</p>
+          <p className="text-muted-foreground">No tienes un wallet activo</p>
           <Button className="mt-4" onClick={() => navigate('/wallet')}>
             Ir a Wallet
           </Button>
@@ -91,7 +80,7 @@ export function WithdrawalsPage() {
 
   const withdrawButton = (
     <Button
-      onClick={() => withdrawalsEnabled && setWithdrawalDrawerOpen(true)}
+      onClick={() => setWithdrawalDrawerOpen(true)}
       disabled={!canWithdraw}
       className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800"
     >
@@ -102,9 +91,6 @@ export function WithdrawalsPage() {
 
   return (
     <div className="container mx-auto py-6 px-4 max-w-5xl">
-      {/* Coming Soon Banner */}
-      {!walletEnabled && <ComingSoonBanner variant="compact" className="mb-6" />}
-
       {/* Header */}
       <div className="mb-6">
         <Button
@@ -126,17 +112,13 @@ export function WithdrawalsPage() {
               <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-[hsl(270,100%,85%)] to-[hsl(270,100%,70%)] bg-clip-text text-transparent">
                 Retiros
               </h1>
-              <p className="text-[hsl(270,30%,60%)] mt-1">
+              <p className="text-muted-foreground mt-1">
                 Gestiona tus retiros y métodos de pago
               </p>
             </div>
           </div>
 
-          {withdrawalsEnabled ? (
-            withdrawButton
-          ) : (
-            <ComingSoonTooltip>{withdrawButton}</ComingSoonTooltip>
-          )}
+          {withdrawButton}
         </div>
       </div>
 
@@ -159,7 +141,7 @@ export function WithdrawalsPage() {
         </Alert>
       ) : walletDisplay.available_balance < 50000 ? (
         <Alert className="mb-6 bg-[hsl(270,100%,60%,0.05)] border-[hsl(270,100%,60%,0.2)]">
-          <AlertCircle className="h-4 w-4 text-[hsl(270,100%,70%)]" />
+          <AlertCircle className="h-4 w-4 text-primary" />
           <AlertDescription>
             El monto mínimo de retiro es $50.000 COP. Tu balance disponible actual es{' '}
             <span className="font-medium text-white">{walletDisplay.formattedAvailable}</span>
@@ -171,7 +153,7 @@ export function WithdrawalsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <Card className="bg-[hsl(270,100%,60%,0.03)] border-[hsl(270,100%,60%,0.1)]">
           <CardContent className="p-4">
-            <p className="text-sm text-[hsl(270,30%,60%)]">Balance Disponible</p>
+            <p className="text-sm text-muted-foreground">Balance Disponible</p>
             <p className="text-2xl font-bold text-emerald-400 mt-1">
               {walletDisplay.formattedAvailable}
             </p>
@@ -179,7 +161,7 @@ export function WithdrawalsPage() {
         </Card>
         <Card className="bg-[hsl(270,100%,60%,0.03)] border-[hsl(270,100%,60%,0.1)]">
           <CardContent className="p-4">
-            <p className="text-sm text-[hsl(270,30%,60%)]">Pendiente de Retiro</p>
+            <p className="text-sm text-muted-foreground">Pendiente de Retiro</p>
             <p className="text-2xl font-bold text-amber-400 mt-1">
               {walletDisplay.formattedPending}
             </p>
@@ -187,7 +169,7 @@ export function WithdrawalsPage() {
         </Card>
         <Card className="bg-[hsl(270,100%,60%,0.03)] border-[hsl(270,100%,60%,0.1)]">
           <CardContent className="p-4">
-            <p className="text-sm text-[hsl(270,30%,60%)]">Métodos de Pago</p>
+            <p className="text-sm text-muted-foreground">Métodos de Pago</p>
             <p className="text-2xl font-bold text-white mt-1">
               {paymentMethods?.length || 0}
             </p>
@@ -199,24 +181,24 @@ export function WithdrawalsPage() {
       {activeWithdrawal && (
         <Card className="mb-6 bg-[hsl(270,100%,60%,0.03)] border-[hsl(270,100%,60%,0.1)]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-[hsl(270,30%,60%)]">
+            <CardTitle className="text-sm text-muted-foreground">
               Retiro Activo
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <WithdrawalStatusTimeline status={activeWithdrawal.status} />
+            <WithdrawalStatusTimeline withdrawal={activeWithdrawal} />
             <div className="mt-4 flex items-center justify-between">
               <div>
                 <p className="text-xl font-bold text-white">
                   {activeWithdrawal.formattedNetAmount || activeWithdrawal.formattedAmount}
                 </p>
-                <p className="text-xs text-[hsl(270,30%,50%)]">
+                <p className="text-xs text-muted-foreground">
                   Solicitado: {new Date(activeWithdrawal.created_at).toLocaleDateString('es-CO')}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-[hsl(270,30%,60%)]">
-                  {activeWithdrawal.payment_method_type}
+                <p className="text-sm text-muted-foreground">
+                  {activeWithdrawal.methodLabel}
                 </p>
               </div>
             </div>
@@ -231,7 +213,7 @@ export function WithdrawalsPage() {
             value="history"
             className={cn(
               'flex items-center gap-2 px-4 py-2.5 data-[state=active]:bg-[hsl(270,100%,60%,0.15)] data-[state=active]:text-white',
-              'text-[hsl(270,30%,60%)] hover:text-white transition-colors'
+              'text-muted-foreground hover:text-white transition-colors'
             )}
           >
             <History className="h-4 w-4" />
@@ -241,7 +223,7 @@ export function WithdrawalsPage() {
             value="payment-methods"
             className={cn(
               'flex items-center gap-2 px-4 py-2.5 data-[state=active]:bg-[hsl(270,100%,60%,0.15)] data-[state=active]:text-white',
-              'text-[hsl(270,30%,60%)] hover:text-white transition-colors'
+              'text-muted-foreground hover:text-white transition-colors'
             )}
           >
             <CreditCard className="h-4 w-4" />
@@ -262,41 +244,22 @@ export function WithdrawalsPage() {
 
         {/* Payment Methods Tab */}
         <TabsContent value="payment-methods" className="mt-6">
-          <PaymentMethodList
-            paymentMethods={paymentMethods || []}
-            isLoading={isPaymentMethodsLoading}
-            onAddNew={() => walletEnabled && setPaymentMethodDrawerOpen(true)}
-          />
+          <PaymentMethodList />
         </TabsContent>
       </Tabs>
 
-      {/* Withdrawal Drawer - Only open if enabled */}
-      {withdrawalsEnabled && (
-        <WithdrawalFormDrawer
-          wallet={walletDisplay}
-          open={withdrawalDrawerOpen}
-          onClose={() => setWithdrawalDrawerOpen(false)}
-          onSuccess={() => {
-            setWithdrawalDrawerOpen(false);
-          }}
-        />
-      )}
+      {/* Withdrawal Drawer */}
+      <WithdrawalFormDrawer
+        wallet={walletDisplay}
+        open={withdrawalDrawerOpen}
+        onClose={() => setWithdrawalDrawerOpen(false)}
+      />
 
-      {/* Payment Method Drawer - Only open if enabled */}
-      {walletEnabled && (
-        <PaymentMethodDrawer
-          open={paymentMethodDrawerOpen}
-          onClose={() => setPaymentMethodDrawerOpen(false)}
-          onSuccess={() => {
-            setPaymentMethodDrawerOpen(false);
-            setActiveTab('payment-methods');
-            setSearchParams({ tab: 'payment-methods' });
-          }}
-        />
-      )}
-
-      {/* Demo Mode Indicator */}
-      {!walletEnabled && <DemoModeIndicator />}
+      {/* Payment Method Drawer */}
+      <PaymentMethodDrawer
+        open={paymentMethodDrawerOpen}
+        onClose={() => setPaymentMethodDrawerOpen(false)}
+      />
     </div>
   );
 }

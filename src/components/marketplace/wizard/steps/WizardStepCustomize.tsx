@@ -140,7 +140,7 @@ export function WizardStepCustomize({ customization, onChange }: WizardStepCusto
 
       {/* Theme selector */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-3">
+        <label className="block text-sm font-medium text-foreground/80 mb-3">
           <Palette className="inline h-4 w-4 mr-1.5" />
           Tema visual
         </label>
@@ -174,7 +174,7 @@ export function WizardStepCustomize({ customization, onChange }: WizardStepCusto
 
       {/* Card style */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-3">Estilo de tarjetas</label>
+        <label className="block text-sm font-medium text-foreground/80 mb-3">Estilo de tarjetas</label>
         <div className="grid grid-cols-3 gap-3">
           {CARD_STYLES.map(style => (
             <button
@@ -196,7 +196,7 @@ export function WizardStepCustomize({ customization, onChange }: WizardStepCusto
 
       {/* Cover style */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-3">Estilo de portada</label>
+        <label className="block text-sm font-medium text-foreground/80 mb-3">Estilo de portada</label>
         <div className="grid grid-cols-3 gap-3">
           {COVER_STYLES.map(style => (
             <button
@@ -219,7 +219,7 @@ export function WizardStepCustomize({ customization, onChange }: WizardStepCusto
       {/* Section reorder */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <label className="text-sm font-medium text-gray-300">Orden de secciones</label>
+          <label className="text-sm font-medium text-foreground/80">Orden de secciones</label>
           <span className="text-gray-500 text-xs">Arrastra para reordenar</span>
         </div>
 

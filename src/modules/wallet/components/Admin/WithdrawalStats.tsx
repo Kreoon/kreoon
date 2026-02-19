@@ -78,7 +78,7 @@ function StatCard({
       <CardContent className="pt-6">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-sm text-[hsl(270,30%,60%)]">{title}</p>
+            <p className="text-sm text-muted-foreground">{title}</p>
             <p className="text-2xl font-bold text-white mt-1">{value}</p>
             {change !== undefined && (
               <div className="flex items-center gap-1 mt-2">
@@ -97,7 +97,7 @@ function StatCard({
                   {change}%
                 </span>
                 {changeLabel && (
-                  <span className="text-xs text-[hsl(270,30%,50%)]">
+                  <span className="text-xs text-muted-foreground">
                     {changeLabel}
                   </span>
                 )}
@@ -257,7 +257,7 @@ export function WithdrawalStats({ className }: WithdrawalStatsProps) {
         value={formatCurrency(stats?.total_pending_amount ?? 0, 'USD')}
         icon={DollarSign}
         iconBg="bg-[hsl(270,100%,60%,0.1)]"
-        iconColor="text-[hsl(270,100%,70%)]"
+        iconColor="text-primary"
         isLoading={isLoading}
       />
       <StatCard

@@ -112,7 +112,7 @@ export default function EditorDashboard() {
             <Loader2 className="w-10 h-10 text-[hsl(270,100%,60%)]" />
           </motion.div>
           <motion.span
-            className="text-[hsl(270,100%,70%)] text-sm font-medium"
+            className="text-primary text-sm font-medium"
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           >
@@ -309,7 +309,7 @@ export default function EditorDashboard() {
           >
             <RoleUPWidget userId={targetUserId} role="editor" />
             <div className="lg:col-span-2">
-              <Card className="border-[hsl(270,100%,60%,0.15)] bg-gradient-to-br from-[hsl(250,20%,6%)] to-[hsl(250,20%,4%)] h-full overflow-hidden relative">
+              <Card className="border-[hsl(270,100%,60%,0.15)] bg-gradient-to-br from-card to-background h-full overflow-hidden relative">
                 {/* Card glow effect */}
                 <motion.div
                   className="absolute inset-0 opacity-30"
@@ -337,15 +337,15 @@ export default function EditorDashboard() {
                       >
                         <TrendingUp className="w-4 h-4 text-[hsl(270,100%,60%)]" />
                       </motion.div>
-                      <h3 className="font-semibold text-sm text-[hsl(270,100%,70%)]">Progreso General</h3>
+                      <h3 className="font-semibold text-sm text-primary">Progreso General</h3>
                     </div>
-                    <span className="text-xs text-[hsl(270,30%,60%)]">
+                    <span className="text-xs text-muted-foreground">
                       {completedCount} de {totalAssigned} completados
                     </span>
                   </div>
                   
                   {/* Custom Tech Progress Bar */}
-                  <div className="h-3 bg-[hsl(250,20%,10%)] rounded-full overflow-hidden border border-[hsl(270,100%,60%,0.2)]">
+                  <div className="h-3 bg-muted rounded-full overflow-hidden border border-[hsl(270,100%,60%,0.2)]">
                     <motion.div
                       className="h-full relative overflow-hidden"
                       style={{
@@ -364,8 +364,8 @@ export default function EditorDashboard() {
                     </motion.div>
                   </div>
                   
-                  <p className="text-xs text-[hsl(270,30%,60%)] mt-3">
-                    <span className="text-[hsl(270,100%,70%)] font-bold">{progressPercent.toFixed(0)}%</span> de tu contenido ha sido aprobado o entregado
+                  <p className="text-xs text-muted-foreground mt-3">
+                    <span className="text-primary font-bold">{progressPercent.toFixed(0)}%</span> de tu contenido ha sido aprobado o entregado
                   </p>
                 </CardContent>
               </Card>
@@ -433,12 +433,12 @@ export default function EditorDashboard() {
           transition={{ delay: 0.4 }}
         >
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-[hsl(270,100%,70%)]">Contenido Reciente</h3>
+            <h3 className="font-semibold text-primary">Contenido Reciente</h3>
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={() => navigate('/board')}
-              className="text-[hsl(270,100%,60%)] hover:text-[hsl(270,100%,70%)] hover:bg-[hsl(270,100%,60%,0.1)]"
+              className="text-[hsl(270,100%,60%)] hover:text-primary hover:bg-[hsl(270,100%,60%,0.1)]"
             >
               Ver todo
             </Button>
@@ -456,7 +456,7 @@ export default function EditorDashboard() {
                   onClick={() => setSelectedContent(item)}
                 >
                   <CardContent className="p-3 flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-[hsl(250,20%,10%)] flex items-center justify-center flex-shrink-0 overflow-hidden border border-[hsl(270,100%,60%,0.2)]">
+                    <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden border border-[hsl(270,100%,60%,0.2)]">
                       {item.thumbnail_url ? (
                         <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover" />
                       ) : (
@@ -464,8 +464,8 @@ export default function EditorDashboard() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate text-white group-hover:text-[hsl(270,100%,70%)] transition-colors">{item.title}</p>
-                      <p className="text-xs text-[hsl(270,30%,50%)]">{item.creator?.full_name || 'Sin creador'}</p>
+                      <p className="font-medium text-sm truncate text-white group-hover:text-primary transition-colors">{item.title}</p>
+                      <p className="text-xs text-muted-foreground">{item.creator?.full_name || 'Sin creador'}</p>
                     </div>
                     <Badge className={cn("text-xs", STATUS_COLORS[item.status])} variant="secondary">
                       {STATUS_LABELS[item.status]}
@@ -486,7 +486,7 @@ export default function EditorDashboard() {
                     <Scissors className="w-12 h-12 mx-auto text-[hsl(270,100%,60%)] mb-4" />
                   </motion.div>
                   <h4 className="font-semibold mb-2 text-white">Sin proyectos asignados</h4>
-                  <p className="text-sm text-[hsl(270,30%,60%)]">Cuando te asignen proyectos aparecerán aquí</p>
+                  <p className="text-sm text-muted-foreground">Cuando te asignen proyectos aparecerán aquí</p>
                 </CardContent>
               </Card>
             )}

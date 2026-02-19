@@ -79,7 +79,7 @@ function OrgGridComponent({ orgs, hasMore, totalCount, onLoadMore, onOrgClick, l
 
 function OrgCardSkeleton() {
   return (
-    <div className="rounded-2xl border border-white/5 bg-[#12121a] overflow-hidden animate-pulse">
+    <div className="rounded-2xl border border-white/5 bg-card overflow-hidden animate-pulse">
       <div className="h-28 bg-white/5" />
       <div className="px-4 pb-4 -mt-8 relative z-10">
         <div className="h-14 w-14 rounded-xl bg-white/10 mb-3" />

@@ -52,7 +52,7 @@ export function MarketplaceRoleSelector({
     <div className="space-y-3">
       {label && (
         <div className="flex items-center justify-between">
-          <label className="text-gray-300 text-sm font-medium">{label}</label>
+          <label className="text-foreground/80 text-sm font-medium">{label}</label>
           <span className={cn('text-xs', atLimit ? 'text-orange-400' : 'text-gray-500')}>
             {selectedRoles.length}/{maxRoles}
           </span>
@@ -119,7 +119,7 @@ export function MarketplaceRoleSelector({
                               : 'border-white/10 bg-white/5 hover:border-white/20',
                           )}
                         >
-                          <p className={cn('text-xs font-medium', isSelected ? 'text-white' : 'text-gray-300')}>
+                          <p className={cn('text-xs font-medium', isSelected ? 'text-white' : 'text-foreground/80')}>
                             {role.label}
                           </p>
                           <p className="text-gray-500 text-[10px] mt-0.5">{role.description}</p>

@@ -64,7 +64,7 @@ export function DetailPanelShell({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="w-44 bg-[#0a0118] border-[#8b5cf6]/30"
+                className="w-44 bg-popover border-[#8b5cf6]/30"
               >
                 {menuItems}
               </DropdownMenuContent>

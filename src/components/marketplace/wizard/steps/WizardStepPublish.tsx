@@ -83,7 +83,7 @@ export function WizardStepPublish({
               )}
               <span className={cn(
                 'text-sm',
-                item.completed ? 'text-gray-300' : 'text-gray-500'
+                item.completed ? 'text-foreground/80' : 'text-gray-500'
               )}>
                 {item.label}
                 {item.required && <span className="text-red-400 ml-1">*</span>}
@@ -101,7 +101,7 @@ export function WizardStepPublish({
         </h3>
 
         <div className="flex items-start gap-4">
-          <div className="w-16 h-16 rounded-full bg-[#1a1a2e] overflow-hidden flex-shrink-0">
+          <div className="w-16 h-16 rounded-full bg-card overflow-hidden flex-shrink-0">
             {avatarUrl ? (
               <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
             ) : (
@@ -177,7 +177,7 @@ export function WizardStepPublish({
         <button
           onClick={onSaveDraft}
           disabled={saving}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 text-gray-300 rounded-xl text-sm font-medium transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 text-foreground/80 rounded-xl text-sm font-medium transition-colors"
         >
           <Save className="h-4 w-4" />
           Guardar como borrador

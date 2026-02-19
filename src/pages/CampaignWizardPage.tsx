@@ -8,7 +8,7 @@ export default function CampaignWizardPage() {
     <MembershipGate>
       <Suspense
         fallback={
-          <div className="min-h-screen flex items-center justify-center bg-[#0a0a0f]">
+          <div className="min-h-screen flex items-center justify-center bg-background">
             <div className="animate-spin h-8 w-8 border-2 border-purple-500 border-t-transparent rounded-full" />
           </div>
         }

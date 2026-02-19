@@ -81,16 +81,16 @@ export function PlatformCard({ config, onConfigure, onToggle, onTest, testing, s
         <div className="bg-gray-800/40 rounded-lg p-3 mb-4 space-y-1">
           <div className="flex items-center justify-between text-xs">
             <span className="text-gray-500">Pixel/ID:</span>
-            <span className="text-gray-300 font-mono">{config.pixel_id}</span>
+            <span className="text-foreground/80 font-mono">{config.pixel_id}</span>
           </div>
           <div className="flex items-center justify-between text-xs">
             <span className="text-gray-500">Token:</span>
-            <span className="text-gray-300 font-mono">{maskToken(config.access_token)}</span>
+            <span className="text-foreground/80 font-mono">{maskToken(config.access_token)}</span>
           </div>
           {config.dataset_id && (
             <div className="flex items-center justify-between text-xs">
               <span className="text-gray-500">Dataset:</span>
-              <span className="text-gray-300 font-mono">{config.dataset_id}</span>
+              <span className="text-foreground/80 font-mono">{config.dataset_id}</span>
             </div>
           )}
         </div>
@@ -101,7 +101,7 @@ export function PlatformCard({ config, onConfigure, onToggle, onTest, testing, s
         <Button
           size="sm"
           variant="outline"
-          className="flex-1 bg-gray-800/50 border-gray-700 hover:bg-gray-700/50 text-gray-200"
+          className="flex-1 bg-muted border-border hover:bg-muted/80 text-foreground"
           onClick={() => onConfigure(config.platform)}
         >
           <Settings2 className="h-3.5 w-3.5 mr-1.5" />
@@ -111,7 +111,7 @@ export function PlatformCard({ config, onConfigure, onToggle, onTest, testing, s
           <Button
             size="sm"
             variant="outline"
-            className="bg-gray-800/50 border-gray-700 hover:bg-gray-700/50 text-gray-200"
+            className="bg-muted border-border hover:bg-muted/80 text-foreground"
             onClick={() => onTest(config.platform)}
             disabled={testing}
           >
@@ -126,7 +126,7 @@ export function PlatformCard({ config, onConfigure, onToggle, onTest, testing, s
           href={info.docsUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center justify-center h-9 w-9 rounded-md border border-gray-700 bg-gray-800/50 hover:bg-gray-700/50 text-gray-400 hover:text-white transition-colors"
+          className="inline-flex items-center justify-center h-9 w-9 rounded-md border border-border bg-muted hover:bg-muted/80 text-gray-400 hover:text-white transition-colors"
         >
           <ExternalLink className="h-3.5 w-3.5" />
         </a>

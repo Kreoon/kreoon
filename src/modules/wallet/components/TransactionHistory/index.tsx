@@ -100,7 +100,7 @@ export function TransactionHistory({
                 <TrendingUp className="h-5 w-5 text-emerald-400" />
               </div>
               <div>
-                <p className="text-xs text-[hsl(270,30%,60%)]">Ingresos</p>
+                <p className="text-xs text-muted-foreground">Ingresos</p>
                 <p className="text-lg font-semibold text-emerald-400">
                   +{formatCurrency(summary.income, currency)}
                 </p>
@@ -113,7 +113,7 @@ export function TransactionHistory({
                 <TrendingDown className="h-5 w-5 text-red-400" />
               </div>
               <div>
-                <p className="text-xs text-[hsl(270,30%,60%)]">Egresos</p>
+                <p className="text-xs text-muted-foreground">Egresos</p>
                 <p className="text-lg font-semibold text-red-400">
                   -{formatCurrency(summary.expenses, currency)}
                 </p>
@@ -123,10 +123,10 @@ export function TransactionHistory({
           <Card className="bg-[hsl(270,100%,60%,0.05)] border-[hsl(270,100%,60%,0.1)]">
             <CardContent className="p-4 flex items-center gap-3">
               <div className="p-2 rounded-lg bg-[hsl(270,100%,60%,0.1)]">
-                <ArrowLeftRight className="h-5 w-5 text-[hsl(270,100%,70%)]" />
+                <ArrowLeftRight className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-[hsl(270,30%,60%)]">Balance Neto</p>
+                <p className="text-xs text-muted-foreground">Balance Neto</p>
                 <p
                   className={cn(
                     'text-lg font-semibold',
@@ -161,7 +161,7 @@ export function TransactionHistory({
               </div>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(270,30%,50%)]" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Buscar transacciones..."
                     value={searchQuery}

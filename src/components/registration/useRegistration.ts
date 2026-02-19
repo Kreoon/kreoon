@@ -40,10 +40,14 @@ interface UseRegistrationOptions {
 }
 
 export function useRegistration(options?: UseRegistrationOptions) {
-  const [data, setData] = useState<UnifiedRegistrationData>(() => ({
-    ...INITIAL_DATA,
-    intent: options?.initialIntent ?? null,
-  }));
+  const [data, setData] = useState<UnifiedRegistrationData>(() => {
+    const urlRef = new URLSearchParams(window.location.search).get('ref');
+    return {
+      ...INITIAL_DATA,
+      intent: options?.initialIntent ?? null,
+      referralCode: urlRef || localStorage.getItem('kreoon_referral_code') || '',
+    };
+  });
 
   const [stepIndex, setStepIndex] = useState(() =>
     options?.initialIntent ? 1 : 0,
@@ -75,7 +79,7 @@ export function useRegistration(options?: UseRegistrationOptions) {
   }, [stepIndex]);
 
   const selectIntent = useCallback((intent: RegistrationIntent) => {
-    setData(prev => ({ ...INITIAL_DATA, intent }));
+    setData(prev => ({ ...INITIAL_DATA, intent, referralCode: prev.referralCode }));
     // Intent step is index 0, move to 1
     setStepIndex(1);
   }, []);

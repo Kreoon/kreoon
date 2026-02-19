@@ -48,7 +48,7 @@ function MarketplaceProjectCard({
     <div
       draggable
       onDragStart={(e) => onDragStart(e, project)}
-      className={`bg-[#1a1a2e]/80 border border-white/10 rounded-xl p-4 cursor-grab active:cursor-grabbing transition-all hover:border-purple-500/30 ${
+      className={`bg-card/80 border border-white/10 rounded-xl p-4 cursor-grab active:cursor-grabbing transition-all hover:border-purple-500/30 ${
         isDragging ? 'opacity-40 scale-95' : ''
       }`}
     >
@@ -217,7 +217,7 @@ export function MarketplaceBoardView() {
             placeholder="Buscar proyecto..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="h-9 w-full rounded-xl border border-white/10 bg-[hsl(250,20%,6%)] pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all placeholder:text-gray-500"
+            className="h-9 w-full rounded-xl border border-white/10 bg-card pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all placeholder:text-gray-500"
           />
         </div>
         <Badge variant="outline" className="text-xs whitespace-nowrap">

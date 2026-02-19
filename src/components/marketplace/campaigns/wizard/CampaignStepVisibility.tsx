@@ -193,7 +193,7 @@ export function CampaignStepVisibility({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className={cn('font-semibold text-sm', isSelected ? 'text-white' : 'text-gray-300')}>
+                    <span className={cn('font-semibold text-sm', isSelected ? 'text-white' : 'text-foreground/80')}>
                       {config.label}
                     </span>
                     {opt.value === 'internal' && teamCount > 0 && (
@@ -361,7 +361,7 @@ export function CampaignStepVisibility({
       {/* Capacity settings */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="text-gray-300 text-sm font-medium block mb-1.5">Max. creadores</label>
+          <label className="text-foreground/80 text-sm font-medium block mb-1.5">Max. creadores</label>
           <input
             type="number"
             min="1"
@@ -371,7 +371,7 @@ export function CampaignStepVisibility({
           />
         </div>
         <div>
-          <label className="text-gray-300 text-sm font-medium block mb-1.5">
+          <label className="text-foreground/80 text-sm font-medium block mb-1.5">
             Max. aplicaciones <span className="text-gray-600">(vacio = sin limite)</span>
           </label>
           <input
@@ -388,7 +388,7 @@ export function CampaignStepVisibility({
       {/* Toggles */}
       <div className="space-y-3">
         <label className="flex items-center justify-between">
-          <span className="text-sm text-gray-300">Aprobar aplicaciones automaticamente</span>
+          <span className="text-sm text-foreground/80">Aprobar aplicaciones automaticamente</span>
           <button
             onClick={() => onChange('auto_approve_applications', !data.auto_approve_applications)}
             className={cn(
@@ -403,7 +403,7 @@ export function CampaignStepVisibility({
           </button>
         </label>
         <label className="flex items-center justify-between">
-          <span className="text-sm text-gray-300">Requiere portafolio para aplicar</span>
+          <span className="text-sm text-foreground/80">Requiere portafolio para aplicar</span>
           <button
             onClick={() => onChange('requires_portfolio', !data.requires_portfolio)}
             className={cn(
@@ -448,7 +448,7 @@ export function CampaignStepVisibility({
 
               {/* Min rating */}
               <div>
-                <label className="text-gray-300 text-sm font-medium block mb-2">Rating Minimo</label>
+                <label className="text-foreground/80 text-sm font-medium block mb-2">Rating Minimo</label>
                 <div className="flex gap-2">
                   {RATING_OPTIONS.map(rating => (
                     <button
@@ -469,7 +469,7 @@ export function CampaignStepVisibility({
 
               {/* Min projects */}
               <div>
-                <label className="text-gray-300 text-sm font-medium block mb-1.5">Proyectos Completados Min.</label>
+                <label className="text-foreground/80 text-sm font-medium block mb-1.5">Proyectos Completados Min.</label>
                 <input
                   type="number"
                   min="0"
@@ -481,7 +481,7 @@ export function CampaignStepVisibility({
 
               {/* Categories */}
               <div>
-                <label className="text-gray-300 text-sm font-medium block mb-2">Categorias</label>
+                <label className="text-foreground/80 text-sm font-medium block mb-2">Categorias</label>
                 <div className="flex flex-wrap gap-1.5">
                   {MARKETPLACE_CATEGORIES.filter(c => c.id !== 'all').map(cat => (
                     <button
@@ -502,7 +502,7 @@ export function CampaignStepVisibility({
 
               {/* Countries */}
               <div>
-                <label className="text-gray-300 text-sm font-medium block mb-2">Paises</label>
+                <label className="text-foreground/80 text-sm font-medium block mb-2">Paises</label>
                 <div className="flex flex-wrap gap-1.5">
                   {COUNTRIES.map(country => (
                     <button
@@ -524,7 +524,7 @@ export function CampaignStepVisibility({
 
               {/* Languages */}
               <div>
-                <label className="text-gray-300 text-sm font-medium block mb-2">Idiomas</label>
+                <label className="text-foreground/80 text-sm font-medium block mb-2">Idiomas</label>
                 <div className="flex flex-wrap gap-1.5">
                   {LANGUAGES.map(lang => (
                     <button
@@ -545,7 +545,7 @@ export function CampaignStepVisibility({
 
               {/* Content types */}
               <div>
-                <label className="text-gray-300 text-sm font-medium block mb-2">Tipos de Contenido</label>
+                <label className="text-foreground/80 text-sm font-medium block mb-2">Tipos de Contenido</label>
                 <div className="flex flex-wrap gap-1.5">
                   {CONTENT_TYPES.map(ct => (
                     <button

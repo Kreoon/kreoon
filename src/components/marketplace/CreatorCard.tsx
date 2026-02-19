@@ -81,7 +81,7 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
     >
       {/* Media area — 9:16 aspect ratio, click opens profile */}
       <div
-        className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-[#1a1a2e]"
+        className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-card"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >

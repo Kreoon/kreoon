@@ -249,7 +249,7 @@ function FileUploadZone({
           <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center">
             <Upload className="w-6 h-6 text-purple-400" />
           </div>
-          <p className="text-gray-300 text-sm font-medium">Arrastra tu archivo aqui</p>
+          <p className="text-foreground/80 text-sm font-medium">Arrastra tu archivo aqui</p>
           <p className="text-gray-600 text-xs">o haz clic para seleccionar</p>
         </div>
       )}
@@ -604,7 +604,7 @@ export function ProjectDetailModal({
   return (
     <div className="fixed inset-0 z-[100]">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="absolute inset-y-0 right-0 w-full max-w-2xl bg-[#0f0f1a] border-l border-white/10 overflow-hidden flex flex-col animate-in slide-in-from-right duration-300">
+      <div className="absolute inset-y-0 right-0 w-full max-w-2xl bg-card border-l border-white/10 overflow-hidden flex flex-col animate-in slide-in-from-right duration-300">
         {/* ========== HEADER ========== */}
         <div className="relative bg-gradient-to-br from-purple-600/80 via-purple-700/80 to-pink-600/80 text-white p-5 flex-shrink-0">
           {/* Close button */}
@@ -620,7 +620,7 @@ export function ProjectDetailModal({
             <div className="shrink-0">
               <div className="relative">
                 <ProgressRing progress={progress} size={64} strokeWidth={4} />
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#0f0f1a] border border-white/10 flex items-center justify-center">
+                <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-card border border-white/10 flex items-center justify-center">
                   <StatusIcon className={cn('w-3.5 h-3.5', statusConfig.color)} />
                 </div>
               </div>
@@ -684,7 +684,7 @@ export function ProjectDetailModal({
         </div>
 
         {/* ========== TABS ========== */}
-        <div className="px-4 py-2 bg-[#0f0f1a] border-b border-white/10 flex gap-1 flex-shrink-0">
+        <div className="px-4 py-2 bg-card border-b border-white/10 flex gap-1 flex-shrink-0">
           {TAB_ITEMS.map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -696,7 +696,7 @@ export function ProjectDetailModal({
                   'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all',
                   isActive
                     ? 'bg-purple-500/20 text-purple-300'
-                    : 'text-gray-500 hover:text-gray-300',
+                    : 'text-gray-500 hover:text-foreground',
                 )}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -836,7 +836,7 @@ export function ProjectDetailModal({
                 <div className="bg-white/5 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Scissors className="h-4 w-4 text-cyan-400" />
-                    <span className="text-sm font-semibold text-gray-300">Editor Asignado</span>
+                    <span className="text-sm font-semibold text-foreground/80">Editor Asignado</span>
                   </div>
                   {project.editor_id ? (
                     <div className="flex items-center gap-2">
@@ -940,7 +940,7 @@ export function ProjectDetailModal({
 
               {/* Timeline */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-300 mb-3">Historial</h3>
+                <h3 className="text-sm font-semibold text-foreground/80 mb-3">Historial</h3>
                 <div className="space-y-2">
                   <div className="flex items-center gap-3 text-sm">
                     <div className="w-7 h-7 rounded-full bg-purple-500/15 flex items-center justify-center">
@@ -1025,7 +1025,7 @@ export function ProjectDetailModal({
                     <span className="text-gray-500 block mb-1">Que SI hacer:</span>
                     <ul className="space-y-1">
                       {brief.dos.map((item, i) => (
-                        <li key={i} className="flex items-start gap-1.5 text-gray-300 text-xs">
+                        <li key={i} className="flex items-start gap-1.5 text-foreground/80 text-xs">
                           <CheckCircle2 className="h-3.5 w-3.5 text-green-400 mt-0.5 flex-shrink-0" />
                           {item}
                         </li>
@@ -1038,7 +1038,7 @@ export function ProjectDetailModal({
                     <span className="text-gray-500 block mb-1">Que NO hacer:</span>
                     <ul className="space-y-1">
                       {brief.donts.map((item, i) => (
-                        <li key={i} className="flex items-start gap-1.5 text-gray-300 text-xs">
+                        <li key={i} className="flex items-start gap-1.5 text-foreground/80 text-xs">
                           <X className="h-3.5 w-3.5 text-red-400 mt-0.5 flex-shrink-0" />
                           {item}
                         </li>
@@ -1056,7 +1056,7 @@ export function ProjectDetailModal({
                 {brief.notes && (
                   <div>
                     <span className="text-gray-500 block mb-1">Notas:</span>
-                    <p className="text-gray-300 text-xs">{brief.notes}</p>
+                    <p className="text-foreground/80 text-xs">{brief.notes}</p>
                   </div>
                 )}
               </div>
@@ -1078,7 +1078,7 @@ export function ProjectDetailModal({
               {viewRole === 'creator' &&
                ['pending', 'briefing', 'in_progress', 'revision'].includes(project.status) && (
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-300 mb-3">Subir Entregable</h3>
+                  <h3 className="text-sm font-semibold text-foreground/80 mb-3">Subir Entregable</h3>
                   <FileUploadZone
                     onFileSelect={handleFileUpload}
                     isUploading={isUploading}
@@ -1094,7 +1094,7 @@ export function ProjectDetailModal({
                 </div>
               ) : deliverables.length > 0 ? (
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-300 mb-3">
+                  <h3 className="text-sm font-semibold text-foreground/80 mb-3">
                     Entregables ({deliverables.length})
                   </h3>
                   <div className="grid grid-cols-2 gap-3">
@@ -1127,7 +1127,7 @@ export function ProjectDetailModal({
         </div>
 
         {/* ========== FOOTER ========== */}
-        <div className="px-5 py-3 bg-[#0f0f1a] border-t border-white/10 flex items-center justify-between flex-shrink-0">
+        <div className="px-5 py-3 bg-card border-t border-white/10 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3 text-[10px] text-gray-600">
             <span>ID: {project.id.slice(0, 8)}</span>
             <span>Creado: {formatDate(project.created_at)}</span>

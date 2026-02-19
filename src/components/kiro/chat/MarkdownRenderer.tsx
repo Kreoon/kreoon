@@ -60,7 +60,7 @@ function CodeBlock({ code, language }: CodeBlockProps) {
         className={cn(
           'flex items-center justify-between',
           'px-3 py-1.5 rounded-t-lg',
-          'bg-[#0f0f1e] border-b border-violet-500/20'
+          'bg-muted border-b border-violet-500/20'
         )}
       >
         <span className="text-[10px] text-violet-400 font-mono uppercase">
@@ -73,7 +73,7 @@ function CodeBlock({ code, language }: CodeBlockProps) {
             'text-[10px] font-medium transition-all duration-150',
             copied
               ? 'text-green-400 bg-green-500/10'
-              : 'text-gray-400 hover:text-gray-200 hover:bg-violet-500/10'
+              : 'text-muted-foreground hover:text-foreground hover:bg-violet-500/10'
           )}
           aria-label={copied ? 'Copiado' : 'Copiar código'}
         >
@@ -95,10 +95,10 @@ function CodeBlock({ code, language }: CodeBlockProps) {
       <pre
         className={cn(
           'overflow-x-auto p-3 rounded-b-lg',
-          'bg-[rgba(15,15,30,0.8)]',
+          'bg-muted/80',
           'border-l-[3px] border-l-violet-600',
           'text-[12px] leading-relaxed',
-          'font-mono text-gray-300'
+          'font-mono text-foreground/80'
         )}
         style={{ fontFamily: "'Space Mono', monospace" }}
       >
@@ -271,7 +271,7 @@ function parseInlineFormatting(text: string, keyPrefix: string): ReactNode[] {
 
       case 'bold':
         nodes.push(
-          <strong key={key} className="font-semibold text-violet-100">
+          <strong key={key} className="font-semibold text-foreground">
             {match[1]}
           </strong>
         );
@@ -279,7 +279,7 @@ function parseInlineFormatting(text: string, keyPrefix: string): ReactNode[] {
 
       case 'italic':
         nodes.push(
-          <em key={key} className="italic text-violet-200">
+          <em key={key} className="italic text-foreground/80">
             {match[1]}
           </em>
         );
@@ -384,7 +384,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
                 'my-2 pl-3 py-1',
                 'border-l-2 border-violet-500/50',
                 'bg-violet-500/5 rounded-r',
-                'text-gray-400 italic text-[12px]'
+                'text-muted-foreground italic text-[12px]'
               )}
             >
               {parseInlineFormatting(token.content, key)}
@@ -405,7 +405,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
         case 'orderedListItem':
           isInOrderedList = true;
           orderedItems.push(
-            <li key={key} className="text-[12px] text-gray-300">
+            <li key={key} className="text-[12px] text-foreground/80">
               {parseInlineFormatting(token.content, key)}
             </li>
           );
@@ -418,7 +418,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
         case 'text':
         default:
           elements.push(
-            <p key={key} className="text-[12px] leading-relaxed text-gray-300">
+            <p key={key} className="text-[12px] leading-relaxed text-foreground/80">
               {parseInlineFormatting(token.content, key)}
             </p>
           );

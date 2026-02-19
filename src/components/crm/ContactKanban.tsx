@@ -462,7 +462,7 @@ export function ContactKanban({ organizationId, onContactClick }: ContactKanbanP
           <SelectTrigger className="w-52 bg-white/5 border-white/10 text-white h-9">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-[#0a0118] border-[#8b5cf6]/30">
+          <SelectContent className="bg-popover border-[#8b5cf6]/30">
             {pipelines.map((p) => (
               <SelectItem key={p.id} value={p.id} className="text-white focus:bg-white/10">
                 <span className="flex items-center gap-2">
@@ -524,7 +524,7 @@ export function ContactKanban({ organizationId, onContactClick }: ContactKanbanP
               <SelectTrigger className="w-36 bg-white/5 border-white/10 text-white h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#0a0118] border-[#8b5cf6]/30">
+              <SelectContent className="bg-popover border-[#8b5cf6]/30">
                 <SelectItem value="all" className="text-white focus:bg-white/10 text-xs">
                   Todos los tipos
                 </SelectItem>
@@ -543,7 +543,7 @@ export function ContactKanban({ organizationId, onContactClick }: ContactKanbanP
               <SelectTrigger className="w-36 bg-white/5 border-white/10 text-white h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#0a0118] border-[#8b5cf6]/30">
+              <SelectContent className="bg-popover border-[#8b5cf6]/30">
                 <SelectItem value="all" className="text-white focus:bg-white/10 text-xs">
                   Todas
                 </SelectItem>

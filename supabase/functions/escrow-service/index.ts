@@ -142,23 +142,21 @@ async function createEscrow(supabase: any, userId: string, request: CreateEscrow
   const platformFeeAmount = request.total_amount * platformFeeRate;
   const amountAfterFee = request.total_amount - platformFeeAmount;
 
-  // Verificar referido
+  // Auto-detectar relación de referido del usuario (no requiere referral_code explícito)
   let referralId = null;
   let referralRate = 0;
 
-  if (request.referral_code) {
-    // Buscar relación de referido del cliente
-    const { data: referral } = await supabase
-      .from("referral_relationships")
-      .select("id, transaction_rate, status")
-      .eq("referred_id", userId)
-      .eq("status", "active")
-      .single();
+  const { data: referral } = await supabase
+    .from("referral_relationships")
+    .select("id, transaction_rate, status")
+    .eq("referred_id", userId)
+    .eq("status", "active")
+    .limit(1)
+    .maybeSingle();
 
-    if (referral) {
-      referralId = referral.id;
-      referralRate = referral.transaction_rate;
-    }
+  if (referral) {
+    referralId = referral.id;
+    referralRate = referral.transaction_rate;
   }
 
   // Construir distribuciones con montos calculados

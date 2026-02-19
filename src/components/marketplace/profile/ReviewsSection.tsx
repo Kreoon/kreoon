@@ -67,7 +67,7 @@ export function ReviewsSection({ reviews, ratingAvg, ratingCount }: ReviewsSecti
                 </div>
 
                 {/* Text */}
-                <p className="text-gray-300 text-sm leading-relaxed italic">
+                <p className="text-foreground/80 text-sm leading-relaxed italic">
                   "{review.text}"
                 </p>
 

@@ -74,14 +74,14 @@ export function CurrencyConverter({
             className="p-1.5 rounded-lg hover:bg-[hsl(270,30%,15%)] transition-colors"
             title="Actualizar tasa"
           >
-            <RefreshCw className={cn('h-4 w-4 text-[hsl(270,30%,60%)]', isLoading && 'animate-spin')} />
+            <RefreshCw className={cn('h-4 w-4 text-muted-foreground', isLoading && 'animate-spin')} />
           </button>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Monto origen */}
         <div className="space-y-2">
-          <Label className="text-xs text-[hsl(270,30%,60%)]">De</Label>
+          <Label className="text-xs text-muted-foreground">De</Label>
           <div className="flex gap-2">
             {showFromInput ? (
               <div className="flex-1">
@@ -125,7 +125,7 @@ export function CurrencyConverter({
 
         {/* Monto destino */}
         <div className="space-y-2">
-          <Label className="text-xs text-[hsl(270,30%,60%)]">A</Label>
+          <Label className="text-xs text-muted-foreground">A</Label>
           <div className="flex gap-2">
             <div className="flex-1 flex items-center px-3 py-2 bg-[hsl(270,30%,12%)] border border-[hsl(270,30%,20%)] rounded-md min-h-[42px]">
               {isLoading ? (
@@ -139,7 +139,7 @@ export function CurrencyConverter({
                   {fromAmount ? formatAmount(fromAmount, toCurrency) : '-'}
                 </span>
               ) : (
-                <span className="text-[hsl(270,30%,50%)]">-</span>
+                <span className="text-muted-foreground">-</span>
               )}
             </div>
             <div className="w-[140px]">
@@ -156,13 +156,13 @@ export function CurrencyConverter({
         {/* Detalles de la conversión */}
         {quote && fromCurrency !== toCurrency && (
           <div className="pt-3 border-t border-[hsl(270,30%,15%)] space-y-2 text-sm">
-            <div className="flex justify-between text-[hsl(270,30%,60%)]">
+            <div className="flex justify-between text-muted-foreground">
               <span>Tasa de cambio</span>
               <span>
                 1 {fromCurrency} = {formatCurrencyAmount(quote.rate, toCurrency)} {toCurrency}
               </span>
             </div>
-            <div className="flex justify-between text-[hsl(270,30%,60%)]">
+            <div className="flex justify-between text-muted-foreground">
               <span>Spread ({(quote.spread * 100).toFixed(1)}%)</span>
               <span className="text-amber-400">
                 -{formatCurrencyAmount(quote.spreadAmount, toCurrency)}

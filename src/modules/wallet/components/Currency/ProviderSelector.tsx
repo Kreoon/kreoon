@@ -65,10 +65,10 @@ export function ProviderSelector({
       <Card className={cn('bg-[hsl(270,40%,6%)] border-[hsl(270,30%,18%)]', className)}>
         <CardContent className="py-8 text-center">
           <Globe className="h-12 w-12 mx-auto text-[hsl(270,30%,40%)] mb-3" />
-          <p className="text-[hsl(270,30%,60%)]">
+          <p className="text-muted-foreground">
             No hay métodos de retiro disponibles para {currency} en tu país.
           </p>
-          <p className="text-sm text-[hsl(270,30%,50%)] mt-2">
+          <p className="text-sm text-muted-foreground mt-2">
             Contacta a soporte para más opciones.
           </p>
         </CardContent>
@@ -80,7 +80,7 @@ export function ProviderSelector({
     <div className={cn('space-y-6', className)}>
       {categories.map((category) => (
         <div key={category}>
-          <h4 className="text-sm font-medium text-[hsl(270,30%,60%)] mb-3 flex items-center gap-2">
+          <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
             {CATEGORY_ICONS[category]}
             {categoryLabels[category]}
           </h4>
@@ -119,8 +119,8 @@ export function ProviderSelector({
                           )}
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <Clock className="h-3 w-3 text-[hsl(270,30%,50%)]" />
-                          <span className="text-xs text-[hsl(270,30%,50%)]">
+                          <Clock className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">
                             {provider.processing_time}
                           </span>
                         </div>
@@ -141,7 +141,7 @@ export function ProviderSelector({
                       </Badge>
 
                       {amount > 0 && fee > 0 && (
-                        <p className="text-xs text-[hsl(270,30%,50%)] mt-1">
+                        <p className="text-xs text-muted-foreground mt-1">
                           -${fee.toFixed(2)} fee
                         </p>
                       )}
@@ -150,7 +150,7 @@ export function ProviderSelector({
 
                   {/* Descripción */}
                   {provider.description && (
-                    <p className="text-xs text-[hsl(270,30%,50%)] mt-2 pl-13">
+                    <p className="text-xs text-muted-foreground mt-2 pl-13">
                       {provider.description}
                     </p>
                   )}
@@ -158,7 +158,7 @@ export function ProviderSelector({
                   {/* Monto neto si hay amount */}
                   {amount > 0 && isSelected && (
                     <div className="mt-3 pt-3 border-t border-[hsl(270,30%,15%)] flex justify-between items-center">
-                      <span className="text-sm text-[hsl(270,30%,60%)]">Recibirás:</span>
+                      <span className="text-sm text-muted-foreground">Recibirás:</span>
                       <span className="font-semibold text-[hsl(150,60%,50%)]">
                         ${netAmount.toFixed(2)} {currency}
                       </span>

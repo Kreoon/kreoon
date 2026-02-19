@@ -54,7 +54,10 @@ export function useUnifiedReferrals() {
     refetch: refetchCodes,
   } = useQuery({
     queryKey: ['unified-referral-codes', user?.id],
-    queryFn: () => invokeReferralService<ReferralCode[]>('get-my-codes'),
+    queryFn: async () => {
+      const res = await invokeReferralService<{ codes: ReferralCode[] }>('get-my-codes');
+      return res?.codes || [];
+    },
     enabled: !!user?.id,
     staleTime: 10 * 60 * 1000,
   });
@@ -65,7 +68,10 @@ export function useUnifiedReferrals() {
     isLoading: referralsLoading,
   } = useQuery({
     queryKey: ['unified-referrals-list', user?.id],
-    queryFn: () => invokeReferralService<ReferralRelationship[]>('get-my-referrals'),
+    queryFn: async () => {
+      const res = await invokeReferralService<{ referrals: ReferralRelationship[] }>('get-my-referrals');
+      return res?.referrals || [];
+    },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
   });
@@ -76,7 +82,10 @@ export function useUnifiedReferrals() {
     isLoading: earningsLoading,
   } = useQuery({
     queryKey: ['unified-referral-earnings', user?.id],
-    queryFn: () => invokeReferralService<ReferralEarning[]>('get-my-earnings'),
+    queryFn: async () => {
+      const res = await invokeReferralService<{ earnings: ReferralEarning[] }>('get-my-earnings');
+      return res?.earnings || [];
+    },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
   });
@@ -117,6 +126,21 @@ export function useUnifiedReferrals() {
   const trackClickMutation = useMutation({
     mutationFn: (code: string) =>
       invokeReferralService('track-click', { code }),
+  });
+
+  // ─── Update Slug ───
+  const updateSlugMutation = useMutation({
+    mutationFn: (params: { code_id: string; new_slug: string }) =>
+      invokeReferralService<{ success: boolean; code: string; referral_url: string }>('update-slug', params),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['unified-referral-codes'] });
+      queryClient.invalidateQueries({ queryKey: ['unified-referral-dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['referral-gate-status'] });
+      toast.success('Slug de referido actualizado');
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Error al actualizar slug');
+    },
   });
 
   // ─── Withdraw Earnings ───
@@ -172,6 +196,9 @@ export function useUnifiedReferrals() {
     isApplying: applyCodeMutation.isPending,
 
     trackClick: trackClickMutation.mutate,
+
+    updateSlug: updateSlugMutation.mutateAsync,
+    isUpdatingSlug: updateSlugMutation.isPending,
 
     withdrawEarnings: withdrawMutation.mutateAsync,
     isWithdrawing: withdrawMutation.isPending,

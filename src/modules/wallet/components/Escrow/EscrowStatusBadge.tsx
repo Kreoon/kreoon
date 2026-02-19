@@ -46,7 +46,7 @@ const STATUS_CONFIG: Record<
     icon: Eye,
     label: 'En Revisión',
     description: 'El contenido fue entregado y está esperando aprobación del cliente.',
-    color: 'text-[hsl(270,100%,70%)] border-[hsl(270,100%,60%,0.3)]',
+    color: 'text-primary border-[hsl(270,100%,60%,0.3)]',
     bgColor: 'bg-[hsl(270,100%,60%,0.1)]',
   },
   released: {

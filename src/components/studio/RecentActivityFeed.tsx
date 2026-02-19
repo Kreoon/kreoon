@@ -124,7 +124,7 @@ function formatActividadTexto(actividad: Actividad): React.ReactNode {
           {metadata?.produccion && (
             <>
               {' en '}
-              <span className="text-zinc-300">{metadata.produccion}</span>
+              <span className="text-foreground/80">{metadata.produccion}</span>
             </>
           )}
         </>
@@ -138,7 +138,7 @@ function formatActividadTexto(actividad: Actividad): React.ReactNode {
           {metadata?.produccion && (
             <>
               {' para '}
-              <span className="text-zinc-300">{metadata.produccion}</span>
+              <span className="text-foreground/80">{metadata.produccion}</span>
             </>
           )}
         </>
@@ -190,7 +190,7 @@ function formatActividadTexto(actividad: Actividad): React.ReactNode {
           {metadata?.pieza && (
             <>
               {' en '}
-              <span className="text-zinc-300">{metadata.pieza}</span>
+              <span className="text-foreground/80">{metadata.pieza}</span>
             </>
           )}
         </>
