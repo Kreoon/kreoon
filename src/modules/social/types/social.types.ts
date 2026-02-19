@@ -58,6 +58,7 @@ export interface SocialAccount {
   brand_id: string | null;
   client_id: string | null;
   account_type: SocialAccountType;
+  connection_method: 'default' | 'facebook' | 'direct';
   settings: Record<string, unknown>;
   platform_metadata: Record<string, unknown>;
   // Populated by RPC

@@ -2,12 +2,15 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Plus, RefreshCw, Unlink, AlertTriangle, CheckCircle2,
-  Building2, User, Globe, Building,
+  Building2, User, Globe, Building, Facebook,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,6 +26,11 @@ const OWNER_TYPE_LABELS: Record<SocialAccountOwnerType, { label: string; icon: t
   brand: { label: 'Marca', icon: Building2 },
   client: { label: 'Empresa', icon: Building },
   organization: { label: 'Organización', icon: Globe },
+};
+
+const CONNECTION_METHOD_LABELS: Record<string, string> = {
+  facebook: 'via Facebook',
+  direct: 'Directo',
 };
 
 export function AccountsManager() {
@@ -44,6 +52,7 @@ export function AccountsManager() {
   const [connecting, setConnecting] = useState<SocialPlatform | null>(null);
   const [connectOwnerType, setConnectOwnerType] = useState<SocialAccountOwnerType>('user');
   const [selectedClientId, setSelectedClientId] = useState<string>('');
+  const [showIgMethodDialog, setShowIgMethodDialog] = useState(false);
 
   // Fetch clients (empresas) for the org
   const { data: orgClients = [] } = useQuery({
@@ -62,7 +71,7 @@ export function AccountsManager() {
     staleTime: 10 * 60 * 1000,
   });
 
-  const handleConnect = async (platform: SocialPlatform) => {
+  const doConnect = async (platform: SocialPlatform, method?: 'facebook' | 'direct') => {
     if (connectOwnerType === 'client' && !selectedClientId) {
       toast.error('Selecciona una empresa primero');
       return;
@@ -73,6 +82,7 @@ export function AccountsManager() {
         platform,
         owner_type: connectOwnerType,
         client_id: connectOwnerType === 'client' ? selectedClientId : undefined,
+        method,
       });
       if (result.url) {
         window.open(result.url, '_blank', 'width=600,height=700');
@@ -82,6 +92,20 @@ export function AccountsManager() {
     } finally {
       setConnecting(null);
     }
+  };
+
+  const handleConnect = (platform: SocialPlatform) => {
+    // Show method selection dialog for Instagram
+    if (platform === 'instagram') {
+      setShowIgMethodDialog(true);
+      return;
+    }
+    doConnect(platform);
+  };
+
+  const handleInstagramConnect = (method: 'facebook' | 'direct') => {
+    setShowIgMethodDialog(false);
+    doConnect('instagram', method);
   };
 
   const handleDisconnect = async (account: SocialAccount) => {
@@ -123,6 +147,9 @@ export function AccountsManager() {
             {accounts.map((account) => {
               const ownerInfo = OWNER_TYPE_LABELS[account.owner_type || 'user'];
               const OwnerIcon = ownerInfo.icon;
+              const methodLabel = account.platform === 'instagram' && account.connection_method
+                ? CONNECTION_METHOD_LABELS[account.connection_method]
+                : null;
               return (
                 <Card key={account.id} className="bg-card/50">
                   <CardContent className="flex items-center gap-4 py-4">
@@ -146,6 +173,14 @@ export function AccountsManager() {
                           <Badge variant="outline" className="text-[10px] gap-1 border-blue-500/30 text-blue-400">
                             <Building className="w-2.5 h-2.5" />
                             {account.client_name}
+                          </Badge>
+                        )}
+                        {methodLabel && (
+                          <Badge variant="outline" className="text-[10px] gap-1 border-purple-500/30 text-purple-400">
+                            {account.connection_method === 'facebook' ? (
+                              <Facebook className="w-2.5 h-2.5" />
+                            ) : null}
+                            {methodLabel}
                           </Badge>
                         )}
                       </div>
@@ -313,6 +348,70 @@ export function AccountsManager() {
           })}
         </div>
       </div>
+
+      {/* Instagram Connection Method Dialog */}
+      <Dialog open={showIgMethodDialog} onOpenChange={setShowIgMethodDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PlatformIcon platform="instagram" size="md" showBg />
+              Conectar Instagram
+            </DialogTitle>
+            <DialogDescription>
+              Elige cómo quieres conectar tu cuenta de Instagram
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 pt-2">
+            {/* Method 1: Facebook + Instagram */}
+            <button
+              onClick={() => handleInstagramConnect('facebook')}
+              className="w-full p-4 border border-border rounded-xl hover:bg-purple-500/10 hover:border-purple-500/30 text-left transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex -space-x-2">
+                  <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center z-10 ring-2 ring-background">
+                    <Facebook className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex items-center justify-center ring-2 ring-background">
+                    <PlatformIcon platform="instagram" size="sm" />
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm">Instagram + Facebook Page</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Más métricas, stories insights, gestión completa
+                  </p>
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground/70 mt-2 ml-[60px]">
+                Requiere página de Facebook vinculada a Instagram
+              </p>
+            </button>
+
+            {/* Method 2: Direct Instagram */}
+            <button
+              onClick={() => handleInstagramConnect('direct')}
+              className="w-full p-4 border border-border rounded-xl hover:bg-purple-500/10 hover:border-purple-500/30 text-left transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex items-center justify-center">
+                  <PlatformIcon platform="instagram" size="sm" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm">Solo Instagram</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Conexión directa, publicar posts y reels
+                  </p>
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground/70 mt-2 ml-[48px]">
+                No requiere página de Facebook
+              </p>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

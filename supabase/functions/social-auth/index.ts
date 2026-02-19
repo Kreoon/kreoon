@@ -59,6 +59,7 @@ async function getUserFromRequest(req: Request) {
 
 type PlatformKey =
   | "meta"
+  | "instagram_direct"
   | "tiktok"
   | "youtube"
   | "twitter"
@@ -82,13 +83,26 @@ interface PlatformOAuthConfig {
 
 const PLATFORM_CONFIGS: Record<PlatformKey, PlatformOAuthConfig> = {
   meta: {
-    authUrl: "https://www.facebook.com/v21.0/dialog/oauth",
-    tokenUrl: "https://graph.facebook.com/v21.0/oauth/access_token",
+    authUrl: "https://www.facebook.com/v19.0/dialog/oauth",
+    tokenUrl: "https://graph.facebook.com/v19.0/oauth/access_token",
     scopes:
-      "pages_manage_posts,pages_read_engagement,instagram_basic,instagram_content_publish,pages_show_list,business_management",
+      "pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish,instagram_manage_comments,instagram_manage_insights",
     scopeSeparator: ",",
-    clientIdEnvKey: "SOCIAL_META_CLIENT_ID",
-    clientSecretEnvKey: "SOCIAL_META_CLIENT_SECRET",
+    clientIdEnvKey: "SOCIAL_META_FB_CLIENT_ID",
+    clientSecretEnvKey: "SOCIAL_META_FB_CLIENT_SECRET",
+    clientIdParamName: "client_id",
+    usesPKCE: false,
+    responseType: "code",
+    tokenAuthMethod: "body",
+  },
+  instagram_direct: {
+    authUrl: "https://api.instagram.com/oauth/authorize",
+    tokenUrl: "https://api.instagram.com/oauth/access_token",
+    scopes:
+      "instagram_business_basic,instagram_business_content_publish,instagram_business_manage_messages,instagram_business_manage_comments",
+    scopeSeparator: ",",
+    clientIdEnvKey: "SOCIAL_META_IG_CLIENT_ID",
+    clientSecretEnvKey: "SOCIAL_META_IG_CLIENT_SECRET",
     clientIdParamName: "client_id",
     usesPKCE: false,
     responseType: "code",
@@ -204,6 +218,7 @@ function platformToDbEnum(
   if (platform === "meta") {
     return subType === "instagram" ? "instagram" : "facebook";
   }
+  if (platform === "instagram_direct") return "instagram";
   if (platform === "youtube") return "youtube";
   if (platform === "twitter") return "twitter";
   return platform;
@@ -221,6 +236,7 @@ async function handleConnect(req: Request): Promise<Response> {
   let ownerType = url.searchParams.get("owner_type") || "user";
   let brandId = url.searchParams.get("brand_id");
   let stateClientId = url.searchParams.get("client_id");
+  let method = url.searchParams.get("method"); // 'facebook' or 'direct' for Instagram
 
   // Also support JSON body (from supabase.functions.invoke)
   if (req.method === "POST") {
@@ -231,14 +247,19 @@ async function handleConnect(req: Request): Promise<Response> {
       if (body.owner_type) ownerType = body.owner_type;
       if (body.brand_id) brandId = body.brand_id;
       if (body.client_id) stateClientId = body.client_id;
+      if (body.method) method = body.method;
     } catch {
       // not JSON body, use URL params
     }
   }
 
-  // Map instagram/facebook to meta (same OAuth flow)
-  if (platform === "instagram" || platform === "facebook") {
-    platform = "meta" as PlatformKey;
+  // Map instagram/facebook to the correct platform config
+  if (platform === "instagram" as unknown || platform === "facebook" as unknown) {
+    if (platform === "instagram" as unknown && method === "direct") {
+      platform = "instagram_direct" as PlatformKey;
+    } else {
+      platform = "meta" as PlatformKey;
+    }
   }
 
   if (!platform || !PLATFORM_CONFIGS[platform]) {
@@ -395,6 +416,19 @@ async function handleCallback(req: Request): Promise<Response> {
     switch (platform) {
       case "meta":
         await handleMetaCallback(
+          supabase,
+          tokenData,
+          user_id,
+          org_id,
+          clientId,
+          clientSecret,
+          owner_type,
+          brand_id,
+          client_id,
+        );
+        break;
+      case "instagram_direct":
+        await handleInstagramDirectCallback(
           supabase,
           tokenData,
           user_id,
@@ -565,7 +599,7 @@ async function handleMetaCallback(
   if (oauthClientId && oauthClientSecret) {
     try {
       const llResponse = await fetch(
-        `https://graph.facebook.com/v21.0/oauth/access_token?` +
+        `https://graph.facebook.com/v19.0/oauth/access_token?` +
           `grant_type=fb_exchange_token&client_id=${oauthClientId}&client_secret=${oauthClientSecret}&fb_exchange_token=${accessToken}`,
       );
       if (llResponse.ok) {
@@ -596,7 +630,7 @@ async function handleMetaCallback(
 
   // Fetch user info
   const meResponse = await fetch(
-    `https://graph.facebook.com/v21.0/me?fields=id,name,picture&access_token=${accessToken}`,
+    `https://graph.facebook.com/v19.0/me?fields=id,name,picture&access_token=${accessToken}`,
   );
   if (!meResponse.ok) {
     throw new Error(
@@ -636,11 +670,12 @@ async function handleMetaCallback(
     owner_type: ownerType || "user",
     brand_id: brandId || null,
     client_id: clientId || null,
+    connection_method: "facebook",
   });
 
   // Fetch pages
   const pagesResponse = await fetch(
-    `https://graph.facebook.com/v21.0/me/accounts?fields=id,name,access_token,picture,instagram_business_account&access_token=${accessToken}`,
+    `https://graph.facebook.com/v19.0/me/accounts?fields=id,name,access_token,picture,instagram_business_account&access_token=${accessToken}`,
   );
 
   if (!pagesResponse.ok) {
@@ -687,6 +722,7 @@ async function handleMetaCallback(
       brand_id: brandId || null,
       client_id: clientId || null,
       account_type: "page",
+      connection_method: "facebook",
     });
 
     // Check for Instagram Business Account linked to this page
@@ -699,7 +735,7 @@ async function handleMetaCallback(
 
       try {
         const igResponse = await fetch(
-          `https://graph.facebook.com/v21.0/${igId}?fields=id,username,name,profile_picture_url&access_token=${pageToken}`,
+          `https://graph.facebook.com/v19.0/${igId}?fields=id,username,name,profile_picture_url&access_token=${pageToken}`,
         );
         if (igResponse.ok) {
           const igData = await igResponse.json();
@@ -739,9 +775,130 @@ async function handleMetaCallback(
         brand_id: brandId || null,
         client_id: clientId || null,
         account_type: "business",
+        connection_method: "facebook",
       });
     }
   }
+}
+
+// ─── Instagram Direct Callback ───────────────────────────────────────────────
+
+async function handleInstagramDirectCallback(
+  supabase: ReturnType<typeof createClient>,
+  tokenData: TokenResponse,
+  userId: string,
+  orgId?: string,
+  oauthClientId?: string,
+  oauthClientSecret?: string,
+  ownerType?: string,
+  brandId?: string,
+  clientId?: string,
+): Promise<void> {
+  // Instagram API returns a short-lived token — exchange for long-lived
+  let accessToken = tokenData.access_token;
+  let tokenExpiresAt: string | null = null;
+
+  // Instagram token response includes user_id
+  const igUserId = String(tokenData.user_id || "");
+
+  // Exchange short-lived token for long-lived token (60 days)
+  if (oauthClientSecret) {
+    try {
+      const llResponse = await fetch(
+        `https://graph.instagram.com/access_token?` +
+          `grant_type=ig_exchange_token&client_secret=${oauthClientSecret}&access_token=${accessToken}`,
+      );
+      if (llResponse.ok) {
+        const llData = await llResponse.json();
+        if (llData.access_token) {
+          accessToken = llData.access_token;
+          if (llData.expires_in) {
+            tokenExpiresAt = new Date(
+              Date.now() + llData.expires_in * 1000,
+            ).toISOString();
+          }
+        }
+      } else {
+        console.warn(
+          `[social-auth] Failed to get long-lived IG token: ${llResponse.status} ${await llResponse.text()}`,
+        );
+        if (tokenData.expires_in) {
+          tokenExpiresAt = new Date(
+            Date.now() + tokenData.expires_in * 1000,
+          ).toISOString();
+        }
+      }
+    } catch (err) {
+      console.warn("[social-auth] Failed to exchange IG token:", err);
+      if (tokenData.expires_in) {
+        tokenExpiresAt = new Date(
+          Date.now() + tokenData.expires_in * 1000,
+        ).toISOString();
+      }
+    }
+  }
+
+  // Fetch user profile from Instagram Graph API
+  let igUsername = "";
+  let igDisplayName = "";
+  let igAvatarUrl: string | null = null;
+  let igAccountType = "";
+  let resolvedUserId = igUserId;
+
+  try {
+    const meResponse = await fetch(
+      `https://graph.instagram.com/v21.0/me?fields=user_id,username,name,account_type,profile_picture_url&access_token=${accessToken}`,
+    );
+    if (meResponse.ok) {
+      const meData = await meResponse.json();
+      resolvedUserId = String(meData.user_id || meData.id || igUserId);
+      igUsername = meData.username || "";
+      igDisplayName = meData.name || meData.username || "";
+      igAvatarUrl = meData.profile_picture_url || null;
+      igAccountType = meData.account_type || "";
+    } else {
+      const errText = await meResponse.text();
+      console.warn(`[social-auth] Failed to fetch IG profile: ${meResponse.status} ${errText}`);
+    }
+  } catch (err) {
+    console.warn("[social-auth] Failed to fetch IG profile:", err);
+  }
+
+  if (!resolvedUserId) {
+    throw new Error("Could not determine Instagram user ID");
+  }
+
+  await upsertSocialAccount(supabase, {
+    user_id: userId,
+    organization_id: orgId || null,
+    platform: "instagram",
+    platform_user_id: resolvedUserId,
+    platform_username: igUsername,
+    platform_display_name: igDisplayName || igUsername,
+    platform_avatar_url: igAvatarUrl,
+    platform_page_id: null,
+    platform_page_name: null,
+    access_token: accessToken,
+    refresh_token: null,
+    token_expires_at: tokenExpiresAt,
+    scopes: [
+      "instagram_business_basic",
+      "instagram_business_content_publish",
+      "instagram_business_manage_messages",
+      "instagram_business_manage_comments",
+    ],
+    metadata: {
+      token_type: "long_lived",
+      ig_user_id: resolvedUserId,
+      account_type: igAccountType,
+    },
+    owner_type: ownerType || "user",
+    brand_id: brandId || null,
+    client_id: clientId || null,
+    connection_method: "direct",
+  });
+
+  console.log(`[social-auth] Saved Instagram Direct account for user ${userId} (ig: ${igUsername})`);
 }
 
 // ─── TikTok Callback ─────────────────────────────────────────────────────────
@@ -1165,6 +1322,7 @@ interface SocialAccountData {
   brand_id?: string | null;
   client_id?: string | null;
   account_type?: string;
+  connection_method?: string;
 }
 
 async function upsertSocialAccount(
@@ -1215,6 +1373,7 @@ async function upsertSocialAccount(
       if (data.brand_id) updatePayload.brand_id = data.brand_id;
       if (data.client_id !== undefined) updatePayload.client_id = data.client_id;
       if (data.account_type) updatePayload.account_type = data.account_type;
+      if (data.connection_method) updatePayload.connection_method = data.connection_method;
       const { error: updateError } = await supabase
         .from("social_accounts")
         .update(updatePayload)
@@ -1260,6 +1419,7 @@ async function upsertSocialAccount(
       if (data.brand_id) updatePayload2.brand_id = data.brand_id;
       if (data.client_id !== undefined) updatePayload2.client_id = data.client_id;
       if (data.account_type) updatePayload2.account_type = data.account_type;
+      if (data.connection_method) updatePayload2.connection_method = data.connection_method;
       const { error: updateError } = await supabase
         .from("social_accounts")
         .update(updatePayload2)
@@ -1303,6 +1463,7 @@ async function upsertSocialAccount(
   if (data.brand_id) insertPayload.brand_id = data.brand_id;
   if (data.client_id) insertPayload.client_id = data.client_id;
   if (data.account_type) insertPayload.account_type = data.account_type;
+  if (data.connection_method) insertPayload.connection_method = data.connection_method;
 
   const { error: insertError } = await supabase
     .from("social_accounts")
@@ -1434,7 +1595,7 @@ async function revokeTokenForPlatform(
     case "meta": {
       // Facebook token revocation
       await fetch(
-        `https://graph.facebook.com/v21.0/me/permissions?access_token=${accessToken}`,
+        `https://graph.facebook.com/v19.0/me/permissions?access_token=${accessToken}`,
         { method: "DELETE" },
       );
       break;
@@ -1601,17 +1762,44 @@ async function refreshTokenForPlatform(
   switch (platform) {
     case "facebook":
     case "instagram": {
-      // Facebook page tokens (from long-lived user tokens) don't expire
-      // For user tokens, exchange for a new long-lived token
-      const clientId = Deno.env.get("SOCIAL_META_CLIENT_ID");
-      const clientSecret = Deno.env.get("SOCIAL_META_CLIENT_SECRET");
-      if (!clientId || !clientSecret) {
-        throw new Error("Meta OAuth not configured");
+      const connectionMethod = (account.connection_method as string) || "facebook";
+
+      if (connectionMethod === "direct") {
+        // Instagram Direct: refresh long-lived token via Instagram Graph API
+        const igClientSecret = Deno.env.get("SOCIAL_META_IG_CLIENT_SECRET");
+        if (!igClientSecret) {
+          throw new Error("Instagram Direct OAuth not configured");
+        }
+
+        const response = await fetch(
+          `https://graph.instagram.com/refresh_access_token?` +
+            `grant_type=ig_refresh_token&access_token=${account.access_token}`,
+        );
+
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`Instagram token refresh failed: ${response.status} ${text}`);
+        }
+
+        const data = await response.json();
+        return {
+          access_token: data.access_token,
+          token_expires_at: data.expires_in
+            ? new Date(Date.now() + data.expires_in * 1000).toISOString()
+            : null,
+        };
+      }
+
+      // Facebook method: exchange for new long-lived token via Facebook Graph API
+      const fbClientId = Deno.env.get("SOCIAL_META_FB_CLIENT_ID");
+      const fbClientSecret = Deno.env.get("SOCIAL_META_FB_CLIENT_SECRET");
+      if (!fbClientId || !fbClientSecret) {
+        throw new Error("Meta Facebook OAuth not configured");
       }
 
       const response = await fetch(
-        `https://graph.facebook.com/v21.0/oauth/access_token?` +
-          `grant_type=fb_exchange_token&client_id=${clientId}&client_secret=${clientSecret}&fb_exchange_token=${account.access_token}`,
+        `https://graph.facebook.com/v19.0/oauth/access_token?` +
+          `grant_type=fb_exchange_token&client_id=${fbClientId}&client_secret=${fbClientSecret}&fb_exchange_token=${account.access_token}`,
       );
 
       if (!response.ok) {

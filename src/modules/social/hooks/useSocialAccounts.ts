@@ -79,6 +79,7 @@ export function useSocialAccounts(options?: UseSocialAccountsOptions) {
       owner_type?: SocialAccountOwnerType;
       brand_id?: string;
       client_id?: string;
+      method?: 'facebook' | 'direct';
     }) => {
       const { data, error } = await supabase.functions.invoke('social-auth/connect', {
         body: {
@@ -87,6 +88,7 @@ export function useSocialAccounts(options?: UseSocialAccountsOptions) {
           owner_type: input.owner_type || 'user',
           brand_id: input.brand_id || null,
           client_id: input.client_id || null,
+          method: input.method || undefined,
         },
       });
       if (error) throw error;
