@@ -129,9 +129,9 @@ export function MarketplaceKanbanBoard({ columns, viewRole }: MarketplaceKanbanB
   const roleLabel = viewRole === 'brand' ? 'Marca' : viewRole === 'creator' ? 'Creador' : 'Editor';
 
   return (
-    <div className="bg-[#0a0a0f] min-h-[calc(100vh-3.5rem)]">
+    <div className="bg-background min-h-[calc(100vh-3.5rem)]">
       {/* Header */}
-      <div className="border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur-sm sticky top-0 z-10">
+      <div className="border-b border-white/10 bg-background/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-[1600px] mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -142,7 +142,7 @@ export function MarketplaceKanbanBoard({ columns, viewRole }: MarketplaceKanbanB
                 <ArrowLeft className="h-4 w-4 text-gray-400" />
               </button>
               <div>
-                <h1 className="text-lg font-bold text-white">Mis Proyectos</h1>
+                <h1 className="text-lg font-bold text-foreground">Mis Proyectos</h1>
                 <p className="text-gray-500 text-xs">Vista {roleLabel}</p>
               </div>
             </div>
@@ -152,7 +152,7 @@ export function MarketplaceKanbanBoard({ columns, viewRole }: MarketplaceKanbanB
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Buscar proyectos..."
-                className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
+                className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-foreground text-sm placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
               />
             </div>
           </div>
@@ -180,7 +180,7 @@ export function MarketplaceKanbanBoard({ columns, viewRole }: MarketplaceKanbanB
                 {/* Column header */}
                 <div className="flex items-center gap-2 px-3 py-3">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: column.color }} />
-                  <h3 className="text-sm font-semibold text-gray-300">{column.label}</h3>
+                  <h3 className="text-sm font-semibold text-foreground/80">{column.label}</h3>
                   <span className="bg-white/10 text-gray-400 text-xs px-1.5 py-0.5 rounded-full">
                     {colProjects.length}
                   </span>
@@ -194,14 +194,14 @@ export function MarketplaceKanbanBoard({ columns, viewRole }: MarketplaceKanbanB
                       draggable
                       onDragStart={e => handleDragStart(e, project.id)}
                       onClick={() => setSelectedProjectId(project.id)}
-                      className="bg-[#1a1a2e]/80 backdrop-blur border border-white/5 rounded-xl overflow-hidden cursor-pointer hover:border-purple-500/30 transition-all group"
+                      className="bg-card/80 backdrop-blur border border-white/5 rounded-xl overflow-hidden cursor-pointer hover:border-purple-500/30 transition-all group"
                     >
                       {/* Vertical thumbnail preview */}
                       <div className="flex gap-3 p-3">
                         <div className="w-16 flex-shrink-0 aspect-[9/16] rounded-lg bg-gradient-to-br from-purple-900/40 to-blue-900/40 flex items-center justify-center relative overflow-hidden">
                           <Film className="h-4 w-4 text-gray-600" />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                            <Play className="h-3.5 w-3.5 text-white opacity-0 group-hover:opacity-100 transition-opacity ml-0.5" />
+                            <Play className="h-3.5 w-3.5 text-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-0.5" />
                           </div>
                         </div>
 
@@ -219,7 +219,7 @@ export function MarketplaceKanbanBoard({ columns, viewRole }: MarketplaceKanbanB
                                   {(viewRole === 'brand' ? project.creator.display_name : project.brand_name).charAt(0)}
                                 </div>
                               )}
-                              <span className="text-white text-xs font-medium truncate">
+                              <span className="text-foreground text-xs font-medium truncate">
                                 {viewRole === 'brand' ? project.creator.display_name : project.brand_name}
                               </span>
                             </div>

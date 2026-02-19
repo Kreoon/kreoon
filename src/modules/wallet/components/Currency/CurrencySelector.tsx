@@ -60,10 +60,10 @@ export function CurrencySelector({
               <span className="flex items-center gap-2">
                 <span className="text-lg">{CURRENCY_FLAGS[value] || '💱'}</span>
                 <span className="font-medium">{selectedCurrency.code}</span>
-                <span className="text-[hsl(270,30%,60%)]">- {selectedCurrency.name}</span>
+                <span className="text-muted-foreground">- {selectedCurrency.name}</span>
               </span>
             ) : (
-              <span className="text-[hsl(270,30%,50%)]">{placeholder}</span>
+              <span className="text-muted-foreground">{placeholder}</span>
             )}
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -94,14 +94,14 @@ export function CurrencySelector({
                           <span className="text-lg">{currency.flag_emoji}</span>
                           <div>
                             <span className="font-medium">{currency.code}</span>
-                            <span className="text-xs text-[hsl(270,30%,60%)] ml-2">
+                            <span className="text-xs text-muted-foreground ml-2">
                               {currency.name}
                             </span>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           {rate && baseCurrency === 'USD' && currency.code !== 'USD' && (
-                            <span className="text-xs text-[hsl(270,30%,50%)]">
+                            <span className="text-xs text-muted-foreground">
                               {currency.symbol}{Math.round(rate.rate).toLocaleString('es-CO')}
                             </span>
                           )}
@@ -123,7 +123,7 @@ export function CurrencySelector({
       </Popover>
 
       {showRate && selectedRate && value !== baseCurrency && (
-        <p className="text-xs text-[hsl(270,30%,50%)] pl-1">
+        <p className="text-xs text-muted-foreground pl-1">
           Tasa: {formatExchangeRate(selectedRate.rate, baseCurrency, value)}
         </p>
       )}

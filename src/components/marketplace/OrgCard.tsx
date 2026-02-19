@@ -24,7 +24,7 @@ function OrgCardComponent({ org, onClick, className }: OrgCardProps) {
   return (
     <div
       className={cn(
-        'group relative cursor-pointer rounded-2xl border border-white/5 bg-[#12121a] overflow-hidden transition-all duration-200 hover:border-white/10 hover:shadow-lg hover:scale-[1.02]',
+        'group relative cursor-pointer rounded-2xl border border-white/5 bg-card overflow-hidden transition-all duration-200 hover:border-white/10 hover:shadow-lg hover:scale-[1.02]',
         className
       )}
       onClick={onClick}

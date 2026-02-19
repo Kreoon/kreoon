@@ -23,16 +23,16 @@ export default function TalentListDetailPage() {
   }
 
   return (
-    <div className="min-h-full bg-[#0a0a0f]">
+    <div className="min-h-full bg-background">
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm mb-6">
           <button onClick={() => navigate(-1)} className="md:hidden w-8 h-8 rounded-full bg-white/10 flex items-center justify-center mr-1">
-            <ArrowLeft className="h-4 w-4 text-white" />
+            <ArrowLeft className="h-4 w-4 text-foreground" />
           </button>
-          <Link to="/marketplace/talent-lists" className="text-gray-500 hover:text-gray-300">Listas de Talento</Link>
+          <Link to="/marketplace/talent-lists" className="text-gray-500 hover:text-foreground">Listas de Talento</Link>
           <ChevronRight className="h-3.5 w-3.5 text-gray-600" />
-          <span className="text-white">{list?.name || 'Lista'}</span>
+          <span className="text-foreground">{list?.name || 'Lista'}</span>
         </div>
 
         {/* Header */}
@@ -40,7 +40,7 @@ export default function TalentListDetailPage() {
           {list?.color && (
             <div className="h-4 w-4 rounded-full" style={{ backgroundColor: list.color }} />
           )}
-          <h1 className="text-2xl font-bold text-white">{list?.name || 'Lista'}</h1>
+          <h1 className="text-2xl font-bold text-foreground">{list?.name || 'Lista'}</h1>
           <span className="text-sm text-gray-500">({members.length} creadores)</span>
         </div>
 
@@ -64,7 +64,7 @@ export default function TalentListDetailPage() {
                     <AvatarFallback className="text-xs bg-purple-500/20 text-purple-400">{initials}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{member.creator?.full_name || 'Creador'}</p>
+                    <p className="text-sm font-medium text-foreground truncate">{member.creator?.full_name || 'Creador'}</p>
                     {member.notes && <p className="text-xs text-gray-500 truncate">{member.notes}</p>}
                   </div>
                 </div>

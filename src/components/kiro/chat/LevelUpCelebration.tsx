@@ -186,7 +186,7 @@ export function LevelUpCelebration({
           </div>
 
           {/* Mensaje de KIRO */}
-          <p className="text-sm text-gray-300 mb-4 max-w-[250px] mx-auto leading-relaxed">
+          <p className="text-sm text-foreground/80 mb-4 max-w-[250px] mx-auto leading-relaxed">
             {level.kiroMessage}
           </p>
 

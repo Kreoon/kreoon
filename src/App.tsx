@@ -19,12 +19,13 @@ import { BrandingProvider } from "@/contexts/BrandingContext";
 import { StrategistClientProvider } from "@/contexts/StrategistClientContext";
 import { KiroProvider } from "@/contexts/KiroContext";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
+import { ThemeProvider } from "next-themes";
 import { MainLayout } from "./components/layout/MainLayout";
 import { MarketplaceLayout } from "./components/layout/MarketplacePublicLayout";
 
 // Loading fallback component
 const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-black">
+  <div className="min-h-screen flex items-center justify-center bg-background">
     <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
   </div>
 );
@@ -101,6 +102,8 @@ const UnifiedClientsPage = lazy(() => import("./pages/UnifiedClientsPage"));
 const KAEAnalyticsDashboard = lazy(() => import("./components/admin/analytics/KAEDashboard"));
 
 // Subscription pages
+const ReferralLanding = lazy(() => import("./pages/ReferralLanding"));
+const UnlockAccess = lazy(() => import("./pages/UnlockAccess"));
 const SubscriptionSuccess = lazy(() => import("./pages/subscription/SubscriptionSuccess"));
 const SubscriptionCancel = lazy(() => import("./pages/subscription/SubscriptionCancel"));
 const PlanesPage = lazy(() => import("./pages/PlanesPage"));
@@ -163,19 +166,19 @@ queryClient.getQueryCache().subscribe(() => {
   }, 3000);
 });
 
-// Component to redirect /profile to social
+// Component to redirect /profile to settings profile
 function ProfileRedirect() {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center bg-black"><div className="animate-spin h-8 w-8 border-2 border-white border-t-transparent rounded-full" /></div>;
   }
-  
+
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
-  
-  return <Navigate to="/settings?section=marketplace" replace />;
+
+  return <Navigate to="/settings?section=profile" replace />;
 }
 
 function AppRoutes() {
@@ -219,11 +222,13 @@ function AppRoutes() {
         <Route path="/no-company" element={<NoCompany />} />
         <Route path="/no-organization" element={<NoOrganization />} />
         <Route path="/pending-access" element={<PendingAccess />} />
+        <Route path="/unlock-access" element={<UnlockAccess />} />
         <Route path="/welcome" element={<WelcomeNewMember />} />
         <Route path="/up-documentation" element={<UPDocumentation />} />
         <Route path="/org/:slug/talento" element={<OrgPortfolioPage />} />
         <Route path="/org/:slug" element={<OrgAuth />} />
         <Route path="/auth/org/:slug" element={<OrgRegister />} />
+        <Route path="/r/:code" element={<ReferralLanding />} />
         <Route path="/register" element={<Register />} />
         <Route path="/register/:slug" element={<Register />} />
         <Route path="/subscription/success" element={<SubscriptionSuccess />} />
@@ -263,6 +268,8 @@ function AppRoutes() {
         <Route path="/wallet" element={<ProtectedRoute allowNoRoles><MainLayout><WalletPage /></MainLayout></ProtectedRoute>} />
         <Route path="/wallet/transactions" element={<ProtectedRoute allowNoRoles><MainLayout><TransactionsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/wallet/withdrawals" element={<ProtectedRoute allowNoRoles><MainLayout><WithdrawalsPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/wallet/payment-methods" element={<Navigate to="/wallet?tab=payment-methods" replace />} />
+        <Route path="/wallet/settings" element={<Navigate to="/wallet" replace />} />
         <Route path="/admin/wallets" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><AdminWalletsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><KAEAnalyticsDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute allowNoRoles><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
@@ -316,7 +323,9 @@ function AppContent() {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AppContent />
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem storageKey="kreoon-theme">
+      <AppContent />
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

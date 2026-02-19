@@ -314,7 +314,7 @@ export function EnhancedContentCard({
                 <MoreVertical className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48 bg-[#0a0118] border-[#8b5cf6]/30">
+            <DropdownMenuContent align="start" className="w-48 bg-popover border-[#8b5cf6]/30">
               {onShowMarketingInfo && (
                 <DropdownMenuItem onClick={handleMarketingClick} className="gap-2 text-[#f8fafc] focus:bg-white/10">
                   <Megaphone className="h-4 w-4 text-[#60a5fa]" />

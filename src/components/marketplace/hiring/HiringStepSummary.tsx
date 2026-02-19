@@ -53,7 +53,7 @@ export function HiringStepSummary({
       {/* Brief summary */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-300">Brief del proyecto</h3>
+          <h3 className="text-sm font-semibold text-foreground/80">Brief del proyecto</h3>
           <button
             type="button"
             onClick={() => onEditStep(0)}
@@ -108,7 +108,7 @@ export function HiringStepSummary({
       {/* Package summary */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-300">Paquete seleccionado</h3>
+          <h3 className="text-sm font-semibold text-foreground/80">Paquete seleccionado</h3>
           <button
             type="button"
             onClick={() => onEditStep(1)}

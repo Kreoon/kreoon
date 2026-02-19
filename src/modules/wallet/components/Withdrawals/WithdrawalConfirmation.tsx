@@ -68,7 +68,7 @@ export function WithdrawalConfirmation({
       <Card className="bg-[hsl(270,100%,60%,0.05)] border-[hsl(270,100%,60%,0.1)]">
         <CardContent className="pt-6 space-y-4">
           <div className="text-center pb-4 border-b border-[hsl(270,100%,60%,0.1)]">
-            <p className="text-sm text-[hsl(270,30%,60%)] mb-1">Monto a recibir</p>
+            <p className="text-sm text-muted-foreground mb-1">Monto a recibir</p>
             <p className="text-4xl font-bold text-emerald-400">
               {formatCurrency(netAmount, currency)}
             </p>
@@ -76,11 +76,11 @@ export function WithdrawalConfirmation({
 
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-[hsl(270,30%,60%)]">Monto solicitado</span>
+              <span className="text-sm text-muted-foreground">Monto solicitado</span>
               <span className="text-sm text-white">{formatCurrency(amount, currency)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-[hsl(270,30%,60%)]">Comisión</span>
+              <span className="text-sm text-muted-foreground">Comisión</span>
               <span className="text-sm text-amber-400">-{formatCurrency(fee, currency)}</span>
             </div>
             <div className="h-px bg-[hsl(270,100%,60%,0.1)]" />
@@ -96,17 +96,17 @@ export function WithdrawalConfirmation({
 
       {/* Payment method details */}
       <div className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.03)] border border-[hsl(270,100%,60%,0.1)]">
-        <p className="text-xs text-[hsl(270,30%,60%)] mb-3">Destino del pago:</p>
+        <p className="text-xs text-muted-foreground mb-3">Destino del pago:</p>
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-[hsl(270,100%,60%,0.1)]">
-            <Icon className="h-5 w-5 text-[hsl(270,100%,70%)]" />
+            <Icon className="h-5 w-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-medium text-white">{paymentMethod.label}</p>
-            <p className="text-sm text-[hsl(270,30%,60%)] truncate">
+            <p className="text-sm text-muted-foreground truncate">
               {paymentMethod.summary}
             </p>
-            <p className="text-xs text-[hsl(270,30%,50%)]">
+            <p className="text-xs text-muted-foreground">
               {paymentMethod.typeLabel}
             </p>
           </div>
@@ -115,10 +115,10 @@ export function WithdrawalConfirmation({
 
       {/* Processing time */}
       <div className="flex items-center gap-3 p-3 rounded-lg bg-[hsl(270,100%,60%,0.03)]">
-        <Clock className="h-4 w-4 text-[hsl(270,100%,70%)]" />
+        <Clock className="h-4 w-4 text-primary" />
         <div>
           <p className="text-sm text-white">Tiempo estimado</p>
-          <p className="text-xs text-[hsl(270,30%,60%)]">{processingTime}</p>
+          <p className="text-xs text-muted-foreground">{processingTime}</p>
         </div>
       </div>
 

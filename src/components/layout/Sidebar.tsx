@@ -461,43 +461,42 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     <aside 
       className={cn(
         "fixed left-0 top-0 z-40 h-screen",
-        "border-r border-[hsl(270,100%,60%,0.08)]",
+        "border-r border-border",
         "transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-        "bg-gradient-to-b from-[hsl(250,20%,4%)] via-[hsl(250,20%,3%)] to-[hsl(250,20%,2%)]",
+        "bg-gradient-to-b from-background via-background to-background",
         "backdrop-blur-xl",
         collapsed ? "w-20" : "w-64"
       )}
     >
       {/* Ambient glow effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-32 -left-32 w-80 h-80 bg-[hsl(270,100%,60%,0.06)] rounded-full blur-[120px]" />
-        <div className="absolute bottom-20 -right-20 w-60 h-60 bg-[hsl(270,100%,60%,0.04)] rounded-full blur-[100px]" />
+        <div className="absolute -top-32 -left-32 w-80 h-80 bg-primary/[0.06] rounded-full blur-[120px] hidden dark:block" />
+        <div className="absolute bottom-20 -right-20 w-60 h-60 bg-primary/[0.04] rounded-full blur-[100px] hidden dark:block" />
       </div>
 
       <div className="relative flex h-full flex-col z-10">
         {/* Logo with neon glow */}
         <div className={cn(
-          "flex h-16 items-center border-b border-[hsl(270,100%,60%,0.08)] px-4",
+          "flex h-16 items-center border-b border-border px-4",
           collapsed ? "justify-center" : "justify-between"
         )}>
           {!collapsed && (
             <div className="flex items-center gap-3">
-              <div className="relative flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(270,100%,60%,0.05)] border border-[hsl(270,100%,60%,0.25)] shadow-[0_0_20px_-5px_hsl(270,100%,60%,0.4)]">
+              <div className="relative flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden bg-primary/10 border border-primary/20 shadow-sm">
                 <img src={effectiveLogoUrl} alt={effectivePlatformName} className="h-8 w-8 object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[hsl(270,100%,60%,0.1)] to-transparent" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-base font-bold bg-gradient-to-r from-white to-[hsl(270,100%,80%)] bg-clip-text text-transparent">{effectivePlatformName}</h1>
+                <h1 className="text-base font-bold text-foreground">{effectivePlatformName}</h1>
                 {currentOrgName && !isWhiteLabelActive ? (
-                  <p className="text-xs text-[hsl(270,100%,70%)] truncate font-medium">{currentOrgName}</p>
+                  <p className="text-xs text-primary truncate font-medium">{currentOrgName}</p>
                 ) : isWhiteLabelActive ? null : (
-                  <p className="text-[10px] uppercase tracking-widest text-[hsl(270,40%,45%)]">AI Content Platform</p>
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">AI Content Platform</p>
                 )}
               </div>
             </div>
           )}
           {collapsed && (
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(270,100%,60%,0.05)] border border-[hsl(270,100%,60%,0.25)] shadow-[0_0_20px_-5px_hsl(270,100%,60%,0.4)]">
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden bg-primary/10 border border-primary/20 shadow-sm">
               <img src={effectiveLogoUrl} alt={effectivePlatformName} className="h-8 w-8 object-cover" />
             </div>
           )}
@@ -505,7 +504,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
 
         {/* Root Admin Organization Switcher */}
         {isPlatformRoot && !collapsed && (
-          <div className="px-3 py-2 border-b border-[hsl(270,100%,60%,0.08)]">
+          <div className="px-3 py-2 border-b border-border">
             <RootOrgSwitcher />
           </div>
         )}
@@ -522,11 +521,11 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
                     onClick={() => toggleSection(section.label)}
                     className="w-full flex items-center justify-between px-3 mb-1.5 group/section cursor-pointer"
                   >
-                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[hsl(270,100%,65%,0.6)] group-hover/section:text-[hsl(270,100%,65%,0.9)] transition-colors">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 group-hover/section:text-muted-foreground transition-colors">
                       {section.label}
                     </span>
                     <ChevronDown className={cn(
-                      "h-3 w-3 text-[hsl(270,100%,65%,0.4)] group-hover/section:text-[hsl(270,100%,65%,0.8)] transition-all duration-200",
+                      "h-3 w-3 text-muted-foreground/40 group-hover/section:text-muted-foreground transition-all duration-200",
                       isSectionCollapsed && "-rotate-90"
                     )} />
                   </button>
@@ -567,23 +566,23 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
                         className={cn(
                           "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300",
                           isActive
-                            ? "bg-gradient-to-r from-[hsl(270,100%,60%,0.15)] to-[hsl(270,100%,60%,0.05)] text-white border border-[hsl(270,100%,60%,0.3)] shadow-[0_0_20px_-5px_hsl(270,100%,60%,0.3)]"
-                            : "text-[hsl(270,30%,65%)] hover:bg-[hsl(270,100%,60%,0.05)] hover:text-white border border-transparent hover:border-[hsl(270,100%,60%,0.1)]",
+                            ? "bg-primary/10 text-foreground border border-primary/25 shadow-sm"
+                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground border border-transparent hover:border-primary/10",
                           collapsed && "justify-center px-2"
                         )}
                       >
                         {/* Active indicator neon line */}
                         {isActive && (
-                          <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 w-1 h-6 bg-[hsl(270,100%,60%)] rounded-full shadow-[0_0_10px_hsl(270,100%,60%,0.8)]" />
+                          <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-full shadow-sm" />
                         )}
                         <item.icon className={cn(
                           "h-5 w-5 shrink-0 transition-all duration-300",
-                          isActive ? "text-[hsl(270,100%,70%)]" : "text-[hsl(270,40%,50%)] group-hover:text-[hsl(270,100%,70%)]"
+                          isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary"
                         )} />
                         {!collapsed && (
                           <span className={cn(
                             "transition-colors duration-300",
-                            isActive && "text-white"
+                            isActive && "text-foreground"
                           )}>{item.name}</span>
                         )}
                       </NavLink>
@@ -597,7 +596,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
 
         {/* AI Tokens - solo si tiene org y no es cliente */}
         {profile?.current_organization_id && !activeIsClient && (
-          <div className="border-t border-[hsl(270,100%,60%,0.08)] px-3 py-2">
+          <div className="border-t border-border px-3 py-2">
             <AITokensPanelTrigger
               organizationId={profile.current_organization_id}
               variant={collapsed ? "compact" : "header"}
@@ -606,14 +605,14 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         )}
 
         {/* Achievements Widget */}
-        <div className="border-t border-[hsl(270,100%,60%,0.08)]">
+        <div className="border-t border-border">
           <SidebarAchievementsWidget collapsed={collapsed} />
         </div>
 
         {/* User & Actions */}
-        <div className="border-t border-[hsl(270,100%,60%,0.08)] p-3 space-y-2 bg-gradient-to-t from-[hsl(250,20%,2%)] to-transparent">
+        <div className="border-t border-border p-3 space-y-2 bg-gradient-to-t from-muted/50 to-transparent">
           {!collapsed && profile && (
-            <div className="px-3 py-2 text-xs text-[hsl(270,30%,50%)] truncate font-mono">
+            <div className="px-3 py-2 text-xs text-muted-foreground truncate font-mono">
               {profile.email}
             </div>
           )}
@@ -627,11 +626,11 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           {activeIsClient && (
             <div className="space-y-1">
               {!collapsed && currentClientName && (
-                <div className="px-3 py-1 text-xs text-[hsl(270,30%,55%)] truncate flex items-center gap-2">
-                  <Building2 className="h-3 w-3 text-[hsl(270,100%,60%,0.6)]" />
+                <div className="px-3 py-1 text-xs text-muted-foreground truncate flex items-center gap-2">
+                  <Building2 className="h-3 w-3 text-primary/60" />
                   {currentClientName}
                   {clientCount > 1 && (
-                    <span className="text-[10px] bg-[hsl(270,100%,60%,0.15)] text-[hsl(270,100%,70%)] px-1.5 py-0.5 rounded-full border border-[hsl(270,100%,60%,0.25)]">
+                    <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full border border-primary/25">
                       +{clientCount - 1}
                     </span>
                   )}
@@ -643,7 +642,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
                   size="sm"
                   onClick={() => setShowClientSelector(true)}
                   className={cn(
-                    "w-full text-[hsl(270,30%,60%)] hover:bg-[hsl(270,100%,60%,0.1)] hover:text-[hsl(270,100%,70%)] border border-transparent hover:border-[hsl(270,100%,60%,0.2)] rounded-xl transition-all",
+                    "w-full text-muted-foreground hover:bg-accent hover:text-primary border border-transparent hover:border-primary/20 rounded-xl transition-all",
                     collapsed && "px-2"
                   )}
                   title={collapsed ? `${currentClientName || 'Cambiar Empresa'}` : undefined}
@@ -660,7 +659,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             size="sm"
             onClick={handleSignOut}
             className={cn(
-              "w-full text-[hsl(270,30%,60%)] hover:bg-[hsl(350,80%,50%,0.1)] hover:text-[hsl(350,80%,60%)] border border-transparent hover:border-[hsl(350,80%,50%,0.2)] rounded-xl transition-all",
+              "w-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive border border-transparent hover:border-destructive/20 rounded-xl transition-all",
               collapsed && "px-2"
             )}
           >
@@ -673,7 +672,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             size="sm"
             onClick={() => onCollapsedChange(!collapsed)}
             className={cn(
-              "w-full text-[hsl(270,30%,45%)] hover:bg-[hsl(270,100%,60%,0.05)] hover:text-[hsl(270,30%,65%)] rounded-xl transition-all",
+              "w-full text-muted-foreground/70 hover:bg-accent hover:text-muted-foreground rounded-xl transition-all",
               collapsed && "px-2"
             )}
           >

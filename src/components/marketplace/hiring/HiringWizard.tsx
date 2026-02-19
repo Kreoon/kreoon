@@ -143,7 +143,7 @@ export default function HiringWizard({ creatorId, onClose }: HiringWizardProps) 
 
   if (creatorLoading) {
     return (
-      <div className="fixed inset-0 z-[100] bg-[#0a0a0f] flex items-center justify-center">
+      <div className="fixed inset-0 z-[100] bg-background flex items-center justify-center">
         <p className="text-gray-400">Cargando creador...</p>
       </div>
     );
@@ -151,7 +151,7 @@ export default function HiringWizard({ creatorId, onClose }: HiringWizardProps) 
 
   if (!creator) {
     return (
-      <div className="fixed inset-0 z-[100] bg-[#0a0a0f] flex items-center justify-center">
+      <div className="fixed inset-0 z-[100] bg-background flex items-center justify-center">
         <p className="text-gray-400">Creador no encontrado</p>
       </div>
     );
@@ -187,7 +187,7 @@ export default function HiringWizard({ creatorId, onClose }: HiringWizardProps) 
 
   if (isComplete) {
     return (
-      <div className="fixed inset-0 z-[100] bg-[#0a0a0f] overflow-y-auto">
+      <div className="fixed inset-0 z-[100] bg-background overflow-y-auto">
         <div className="max-w-lg mx-auto px-4 py-8">
           <HiringSuccess
             creatorName={creator.display_name}
@@ -199,9 +199,9 @@ export default function HiringWizard({ creatorId, onClose }: HiringWizardProps) 
   }
 
   return (
-    <div className="fixed inset-0 z-[100] bg-[#0a0a0f] overflow-y-auto">
+    <div className="fixed inset-0 z-[100] bg-background overflow-y-auto">
       {/* Header */}
-      <div className="sticky top-0 bg-[#0a0a0f]/95 backdrop-blur-sm border-b border-white/10 z-10">
+      <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-white/10 z-10">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-lg font-bold text-white">Contratar a {creator.display_name}</h1>
@@ -238,7 +238,7 @@ export default function HiringWizard({ creatorId, onClose }: HiringWizardProps) 
                     isActive
                       ? 'bg-purple-500/20 text-purple-300'
                       : isDone
-                        ? 'text-gray-400 hover:text-gray-300 cursor-pointer'
+                        ? 'text-gray-400 hover:text-foreground cursor-pointer'
                         : 'text-gray-600 cursor-default',
                   )}
                 >
@@ -291,7 +291,7 @@ export default function HiringWizard({ creatorId, onClose }: HiringWizardProps) 
 
       {/* Bottom navigation */}
       {currentStep < 3 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-[#0a0a0f] border-t border-white/10 z-10 safe-area-bottom">
+        <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-white/10 z-10 safe-area-bottom">
           <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
             <button
               onClick={() => {

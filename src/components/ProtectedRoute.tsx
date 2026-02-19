@@ -194,6 +194,21 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     return <Navigate to="/pending-access" replace />;
   }
 
+  // Referral gate: users must have platform_access_unlocked = true
+  // Bypass: platform root/admin, social/marketplace routes, org members, clients
+  const hasOrganization = !!(currentOrgId || profile?.current_organization_id);
+  if (
+    !isPlatformRoot &&
+    !isPlatformAdmin &&
+    !requirePlatformAdmin &&
+    !isSocialRoute &&
+    !hasOrganization &&
+    !isClient &&
+    profile?.platform_access_unlocked !== true
+  ) {
+    return <Navigate to="/unlock-access" replace />;
+  }
+
   // Client users without an associated company can only access social routes
   if (isClient && !clientHasCompany) {
     if (isSocialRoute) {

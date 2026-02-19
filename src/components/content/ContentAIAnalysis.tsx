@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sparkles, Brain, Copy, Check, Target, Zap, TrendingUp, Lightbulb, AlertCircle, Users, Globe, UserCheck, UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { invokeAIWithTokens } from '@/lib/ai/token-gate';
 
 interface AdCopy {
   framework?: string;
@@ -167,20 +168,17 @@ export function ContentAIAnalysis({
     setLoading(true);
     setIsSaved(false);
     try {
-      const { data, error } = await supabase.functions.invoke('analyze-video-content', {
-        body: {
-          organizationId,
-          contentId,
-          videoUrl,
-          product,
-          client,
-          script,
-          spherePhase,
-          guidelines,
-        },
-      });
+      const data = await invokeAIWithTokens('analyze-video-content', 'content.analyze', {
+        organizationId,
+        contentId,
+        videoUrl,
+        product,
+        client,
+        script,
+        spherePhase,
+        guidelines,
+      }, organizationId);
 
-      if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
       setResult(data);

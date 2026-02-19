@@ -86,7 +86,7 @@ export function EscrowStatusCard({
         {/* Progress */}
         <div>
           <div className="flex items-center justify-between text-sm mb-2">
-            <span className="text-[hsl(270,30%,60%)]">Progreso</span>
+            <span className="text-muted-foreground">Progreso</span>
             <span className="text-white">{escrow.progress}%</span>
           </div>
           <Progress value={escrow.progress} className="h-2" />
@@ -95,22 +95,22 @@ export function EscrowStatusCard({
         {/* Amount breakdown */}
         <div className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)] space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[hsl(270,30%,60%)]">Total en Escrow</span>
+            <span className="text-muted-foreground">Total en Escrow</span>
             <span className="text-lg font-bold text-white">{escrow.formattedTotal}</span>
           </div>
           <Separator className="bg-[hsl(270,100%,60%,0.1)]" />
           <div className="grid grid-cols-3 gap-2 text-center">
             <div>
-              <p className="text-xs text-[hsl(270,30%,50%)]">Creador ({escrow.creator_percentage}%)</p>
+              <p className="text-xs text-muted-foreground">Creador ({escrow.creator_percentage}%)</p>
               <p className="text-sm font-medium text-emerald-400">{escrow.formattedCreatorAmount}</p>
             </div>
             <div>
-              <p className="text-xs text-[hsl(270,30%,50%)]">Editor ({escrow.editor_percentage}%)</p>
+              <p className="text-xs text-muted-foreground">Editor ({escrow.editor_percentage}%)</p>
               <p className="text-sm font-medium text-blue-400">{escrow.formattedEditorAmount}</p>
             </div>
             <div>
-              <p className="text-xs text-[hsl(270,30%,50%)]">Plataforma ({escrow.platform_percentage}%)</p>
-              <p className="text-sm font-medium text-[hsl(270,100%,70%)]">{escrow.formattedPlatformFee}</p>
+              <p className="text-xs text-muted-foreground">Plataforma ({escrow.platform_percentage}%)</p>
+              <p className="text-sm font-medium text-primary">{escrow.formattedPlatformFee}</p>
             </div>
           </div>
         </div>
@@ -161,7 +161,7 @@ export function EscrowStatusCard({
         {/* Notes */}
         {escrow.notes && (
           <div className="p-3 rounded-lg bg-[hsl(270,100%,60%,0.05)]">
-            <p className="text-xs text-[hsl(270,30%,50%)] mb-1">Notas:</p>
+            <p className="text-xs text-muted-foreground mb-1">Notas:</p>
             <p className="text-sm text-[hsl(270,30%,70%)]">{escrow.notes}</p>
           </div>
         )}
@@ -205,13 +205,13 @@ export function EscrowListItem({ escrow, onClick, className }: EscrowListItemPro
               {escrow.statusLabel}
             </Badge>
           </div>
-          <p className="text-xs text-[hsl(270,30%,60%)]">
+          <p className="text-xs text-muted-foreground">
             ID: {escrow.id.slice(0, 8)}... • {new Date(escrow.created_at).toLocaleDateString('es-CO')}
           </p>
         </div>
         <div className="text-right">
           <Progress value={escrow.progress} className="w-16 h-1.5" />
-          <p className="text-xs text-[hsl(270,30%,50%)] mt-1">{escrow.progress}%</p>
+          <p className="text-xs text-muted-foreground mt-1">{escrow.progress}%</p>
         </div>
       </div>
     </motion.div>

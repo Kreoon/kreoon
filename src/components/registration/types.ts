@@ -32,6 +32,9 @@ export interface UnifiedRegistrationData {
   inviteCode: string;
   foundOrg: { id: string; name: string; slug: string; logo_url: string | null } | null;
 
+  // Referral
+  referralCode: string;
+
   // Terms (shared)
   bio: string;
   locationCountry: string;
@@ -58,6 +61,7 @@ export const INITIAL_DATA: UnifiedRegistrationData = {
   joinLink: '',
   inviteCode: '',
   foundOrg: null,
+  referralCode: '',
   bio: '',
   locationCountry: 'CO',
   acceptTerms: false,

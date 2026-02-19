@@ -224,54 +224,60 @@ async function createCheckoutSession(supabase: any, userId: string, request: Sub
   if (referral_code) {
     const { data: referralCode } = await supabase
       .from("referral_codes")
-      .select("user_id, is_active")
+      .select("id, user_id, is_active, conversions, max_uses")
       .eq("code", referral_code)
       .eq("is_active", true)
-      .single();
+      .limit(1)
+      .maybeSingle();
 
     if (referralCode && referralCode.user_id !== userId) {
-      // Crear relación de referido si no existe
-      const { data: existingRelation } = await supabase
-        .from("referral_relationships")
-        .select("id")
-        .eq("referred_id", userId)
-        .single();
-
-      if (!existingRelation) {
-        const { data: referrerWallet } = await supabase
-          .from("unified_wallets")
-          .select("id")
-          .eq("user_id", referralCode.user_id)
-          .single();
-
-        const { data: newRelation } = await supabase
+      // Verificar max_uses antes de crear relación
+      if (referralCode.max_uses && referralCode.conversions >= referralCode.max_uses) {
+        console.log(`Referral code ${referral_code} has reached max_uses (${referralCode.max_uses})`);
+      } else {
+        // Crear relación de referido si no existe
+        const { data: existingRelation } = await supabase
           .from("referral_relationships")
-          .insert({
-            referrer_id: referralCode.user_id,
-            referrer_wallet_id: referrerWallet?.id,
-            referred_id: userId,
-            referred_wallet_id: wallet.id,
-            referral_code: referral_code,
-            referred_type: tier.startsWith("brand_") ? "brand" : tier.startsWith("creator_") ? "creator" : "organization",
-          })
-          .select()
-          .single();
-
-        referralRelationshipId = newRelation?.id;
-
-        // Incrementar conversiones del código atómicamente
-        const { data: refCodeRow } = await supabase
-          .from("referral_codes")
           .select("id")
-          .eq("code", referral_code)
-          .single();
+          .eq("referred_id", userId)
+          .limit(1)
+          .maybeSingle();
 
-        if (refCodeRow) {
+        if (!existingRelation) {
+          const { data: referrerWallet } = await supabase
+            .from("unified_wallets")
+            .select("id")
+            .eq("user_id", referralCode.user_id)
+            .limit(1)
+            .maybeSingle();
+
+          const { data: newRelation } = await supabase
+            .from("referral_relationships")
+            .insert({
+              referrer_id: referralCode.user_id,
+              referrer_wallet_id: referrerWallet?.id,
+              referred_id: userId,
+              referred_wallet_id: wallet.id,
+              referral_code: referral_code,
+              referred_type: tier.startsWith("brand_") ? "brand" : tier.startsWith("creator_") ? "creator" : "organization",
+            })
+            .select()
+            .single();
+
+          referralRelationshipId = newRelation?.id;
+
+          // Incrementar registrations Y conversions del código atómicamente
           await supabase.rpc("increment_column", {
             p_table: "referral_codes",
             p_column: "registrations",
             p_amount: 1,
-            p_id: refCodeRow.id,
+            p_id: referralCode.id,
+          });
+          await supabase.rpc("increment_column", {
+            p_table: "referral_codes",
+            p_column: "conversions",
+            p_amount: 1,
+            p_id: referralCode.id,
           });
         }
       }
@@ -350,7 +356,7 @@ async function createPortalSession(supabase: any, userId: string, organizationId
 
   const session = await stripe.billingPortal.sessions.create({
     customer: wallet.stripe_customer_id,
-    return_url: `${baseUrl}/settings/billing`,
+    return_url: `${baseUrl}/planes`,
   });
 
   return {
@@ -521,7 +527,7 @@ async function getSubscriptionStatus(supabase: any, userId: string, organization
     .from("platform_subscriptions")
     .select(`
       *,
-      wallet:unified_wallets(balance_available, stripe_connect_status)
+      wallet:unified_wallets(available_balance, stripe_connect_status)
     `)
     .match(query)
     .order("created_at", { ascending: false })

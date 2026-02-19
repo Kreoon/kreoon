@@ -126,7 +126,7 @@ export default function WhiteLabelPreviewTab() {
               <CardDescription>Vista previa de un email enviado desde tu organización</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-xl border bg-[#1a1a2e] overflow-hidden max-w-md mx-auto">
+              <div className="rounded-xl border bg-card overflow-hidden max-w-md mx-auto">
                 {/* Email header */}
                 <div className="p-4 text-center border-b border-white/10">
                   <div className="inline-block h-12 w-12 rounded-xl overflow-hidden mb-2">

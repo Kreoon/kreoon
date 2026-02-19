@@ -96,6 +96,15 @@ const SettingsPage = memo(() => {
     sectionFromUrl && sectionFromUrl !== 'organization_plans' && permissions.canAccess(sectionFromUrl) ? sectionFromUrl : null
   );
 
+  // Normalize legacy 'marketplace' section key → 'profile'
+  useEffect(() => {
+    if (sectionFromUrl === 'marketplace') {
+      setSearchParams({ section: 'profile' }, { replace: true });
+      setActiveSection('profile');
+      return;
+    }
+  }, [sectionFromUrl, setSearchParams]);
+
   // If the page booted before permissions finished loading (common on refresh),
   // re-apply the URL section once permissions are available.
   useEffect(() => {

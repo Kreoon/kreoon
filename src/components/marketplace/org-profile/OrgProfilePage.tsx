@@ -228,7 +228,7 @@ export default function OrgProfilePage() {
 
   if (notFound || !org) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <h2 className="text-2xl font-bold text-white">Organización no encontrada</h2>
           <p className="text-gray-400">El perfil que buscas no existe o no está disponible.</p>
@@ -247,7 +247,7 @@ export default function OrgProfilePage() {
   const displayName = org.org_display_name || org.name;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] pb-24 lg:pb-8">
+    <div className="min-h-screen bg-background pb-24 lg:pb-8">
       {/* Breadcrumb */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-6 pb-4">
         <div className="flex items-center gap-2 text-sm">
@@ -257,7 +257,7 @@ export default function OrgProfilePage() {
           >
             <ArrowLeft className="h-4 w-4 text-white" />
           </button>
-          <Link to="/marketplace" className="text-gray-500 hover:text-gray-300 transition-colors">
+          <Link to="/marketplace" className="text-gray-500 hover:text-foreground transition-colors">
             Marketplace
           </Link>
           <ChevronRight className="h-3.5 w-3.5 text-gray-600" />
@@ -281,7 +281,7 @@ export default function OrgProfilePage() {
                 'px-4 py-3 text-sm font-medium whitespace-nowrap transition-all border-b-2',
                 activeTab === tab.id
                   ? 'text-white border-purple-500'
-                  : 'text-gray-500 border-transparent hover:text-gray-300'
+                  : 'text-gray-500 border-transparent hover:text-foreground'
               )}
             >
               {tab.label}

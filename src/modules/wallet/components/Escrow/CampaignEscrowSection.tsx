@@ -43,7 +43,7 @@ export function CampaignEscrowSection({
       <Card className={cn('', className)}>
         <CardContent className="py-8 text-center">
           <AlertTriangle className="h-10 w-10 mx-auto text-amber-400/50 mb-3" />
-          <p className="text-[hsl(270,30%,60%)]">
+          <p className="text-muted-foreground">
             No hay información de escrow disponible
           </p>
         </CardContent>
@@ -59,7 +59,7 @@ export function CampaignEscrowSection({
           <CardHeader className="pb-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
-                <DollarSign className="h-5 w-5 text-[hsl(270,100%,70%)]" />
+                <DollarSign className="h-5 w-5 text-primary" />
               </div>
               <CardTitle>Estado del Pago</CardTitle>
             </div>
@@ -107,7 +107,7 @@ export function CampaignEscrowSection({
         <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-[hsl(270,30%,60%)]">
+              <p className="text-sm text-muted-foreground">
                 {escrow.status === 'released' ? 'Recibiste' : 'Recibirás'}
               </p>
               <p className="text-2xl font-bold text-emerald-400">
@@ -128,17 +128,17 @@ export function CampaignEscrowSection({
               <CheckCircle className="h-5 w-5 text-emerald-400 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-emerald-400">Pago completado</p>
-                <p className="text-xs text-[hsl(270,30%,60%)]">
+                <p className="text-xs text-muted-foreground">
                   Los fondos han sido transferidos a tu wallet
                 </p>
               </div>
             </>
           ) : escrow.status === 'pending_approval' ? (
             <>
-              <Clock className="h-5 w-5 text-[hsl(270,100%,70%)] flex-shrink-0 mt-0.5" />
+              <Clock className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-white">Esperando aprobación</p>
-                <p className="text-xs text-[hsl(270,30%,60%)]">
+                <p className="text-xs text-muted-foreground">
                   El cliente está revisando tu entrega
                 </p>
               </div>
@@ -148,7 +148,7 @@ export function CampaignEscrowSection({
               <AlertTriangle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-red-400">Disputa abierta</p>
-                <p className="text-xs text-[hsl(270,30%,60%)]">
+                <p className="text-xs text-muted-foreground">
                   El pago está congelado mientras se resuelve
                 </p>
               </div>
@@ -158,7 +158,7 @@ export function CampaignEscrowSection({
               <Clock className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-amber-400">Fondos en garantía</p>
-                <p className="text-xs text-[hsl(270,30%,60%)]">
+                <p className="text-xs text-muted-foreground">
                   Se liberarán cuando la campaña sea completada
                 </p>
               </div>

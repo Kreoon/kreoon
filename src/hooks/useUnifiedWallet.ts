@@ -71,7 +71,7 @@ export function useUnifiedWallet(organizationId?: string) {
 
   // ─── Derived state ───
   const totalBalance = wallet
-    ? wallet.balance_available + wallet.balance_pending
+    ? wallet.available_balance + wallet.pending_balance
     : 0;
 
   return {
@@ -82,9 +82,9 @@ export function useUnifiedWallet(organizationId?: string) {
     transactionsLoading,
 
     totalBalance,
-    availableBalance: wallet?.balance_available ?? 0,
-    pendingBalance: wallet?.balance_pending ?? 0,
-    reservedBalance: wallet?.balance_reserved ?? 0,
+    availableBalance: wallet?.available_balance ?? 0,
+    pendingBalance: wallet?.pending_balance ?? 0,
+    reservedBalance: wallet?.reserved_balance ?? 0,
 
     refetchWallet,
     refetchTransactions,

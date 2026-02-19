@@ -173,7 +173,7 @@ export function GlowBorder({ children, className }: { children: ReactNode; class
           ease: "linear",
         }}
       />
-      <div className="relative bg-[hsl(250,20%,5%)] rounded-2xl">
+      <div className="relative bg-card rounded-2xl">
         {children}
       </div>
     </div>
@@ -296,7 +296,7 @@ export function AIProcessing({ className }: { className?: string }) {
         />
       </div>
       <motion.span
-        className="text-xs text-[hsl(270,100%,70%)]"
+        className="text-xs text-primary"
         animate={{ opacity: [0.5, 1, 0.5] }}
         transition={{ duration: 1.5, repeat: Infinity }}
       >
@@ -310,7 +310,7 @@ export function AIProcessing({ className }: { className?: string }) {
 export function NeonText({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <motion.span
-      className={`text-[hsl(270,100%,70%)] ${className}`}
+      className={`text-primary ${className}`}
       style={{
         textShadow: "0 0 10px hsl(270 100% 60% / 0.5), 0 0 20px hsl(270 100% 60% / 0.3)",
       }}

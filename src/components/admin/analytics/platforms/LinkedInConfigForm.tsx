@@ -24,7 +24,7 @@ export function LinkedInConfigForm({ data, onChange, hasExistingToken }: LinkedI
   return (
     <div className="space-y-4">
       <div className="space-y-1.5">
-        <Label htmlFor="li-partner" className="text-gray-300">
+        <Label htmlFor="li-partner" className="text-foreground/80">
           Partner ID <span className="text-red-400">*</span>
         </Label>
         <Input
@@ -40,7 +40,7 @@ export function LinkedInConfigForm({ data, onChange, hasExistingToken }: LinkedI
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="li-token" className="text-gray-300">
+        <Label htmlFor="li-token" className="text-foreground/80">
           Access Token <span className="text-red-400">*</span>
         </Label>
         <Input
@@ -71,7 +71,7 @@ export function LinkedInConfigForm({ data, onChange, hasExistingToken }: LinkedI
 
       <div className="flex items-center justify-between p-3 rounded-lg bg-gray-800/30 border border-gray-700/30">
         <div>
-          <Label className="text-gray-300">Modo Test</Label>
+          <Label className="text-foreground/80">Modo Test</Label>
           <p className="text-xs text-gray-500 mt-0.5">
             Los eventos no se envían a producción de LinkedIn
           </p>
@@ -84,7 +84,7 @@ export function LinkedInConfigForm({ data, onChange, hasExistingToken }: LinkedI
 
       {data.test_mode && (
         <div className="space-y-1.5">
-          <Label htmlFor="li-test-code" className="text-gray-300">Test Event Code</Label>
+          <Label htmlFor="li-test-code" className="text-foreground/80">Test Event Code</Label>
           <Input
             id="li-test-code"
             value={data.test_event_code}

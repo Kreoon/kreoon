@@ -287,7 +287,7 @@ export const ActionSuggestions = memo(function ActionSuggestions({
 
         {/* Explicación */}
         <div className="px-4 py-2 bg-white/5">
-          <p className="text-xs text-gray-300">{explanation}</p>
+          <p className="text-xs text-foreground/80">{explanation}</p>
         </div>
 
         {/* Acciones */}

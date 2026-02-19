@@ -119,11 +119,11 @@ export function ProcessWithdrawalDialog({
             </Avatar>
             <div className="flex-1">
               <p className="font-medium text-white text-lg">{profile?.full_name || 'Usuario'}</p>
-              <p className="text-sm text-[hsl(270,30%,60%)]">{profile?.email}</p>
+              <p className="text-sm text-muted-foreground">{profile?.email}</p>
             </div>
             <div className="text-right">
               <p className="text-2xl font-bold text-emerald-400">{withdrawal.formattedNetAmount}</p>
-              <p className="text-xs text-[hsl(270,30%,50%)]">
+              <p className="text-xs text-muted-foreground">
                 Solicitado: {withdrawal.formattedAmount} (Fee: {withdrawal.formattedFee})
               </p>
             </div>
@@ -132,7 +132,7 @@ export function ProcessWithdrawalDialog({
           {/* Payment details */}
           <div className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)] space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[hsl(270,30%,60%)]">Método de Pago</span>
+              <span className="text-sm text-muted-foreground">Método de Pago</span>
               <Badge variant="outline">{withdrawal.methodLabel}</Badge>
             </div>
             <Separator className="bg-[hsl(270,100%,60%,0.1)]" />
@@ -140,7 +140,7 @@ export function ProcessWithdrawalDialog({
             {/* Payment details based on method */}
             {Object.entries(withdrawal.payment_details).map(([key, value]) => (
               <div key={key} className="flex items-center justify-between">
-                <span className="text-sm text-[hsl(270,30%,60%)] capitalize">
+                <span className="text-sm text-muted-foreground capitalize">
                   {key.replace(/_/g, ' ')}
                 </span>
                 <div className="flex items-center gap-2">
@@ -205,7 +205,7 @@ export function ProcessWithdrawalDialog({
                     {...approveForm.register('payment_proof_url')}
                     placeholder="https://..."
                   />
-                  <p className="text-xs text-[hsl(270,30%,50%)]">
+                  <p className="text-xs text-muted-foreground">
                     URL de imagen o PDF del comprobante de pago
                   </p>
                 </div>
@@ -237,7 +237,7 @@ export function ProcessWithdrawalDialog({
                       {rejectForm.formState.errors.rejection_reason.message}
                     </p>
                   )}
-                  <p className="text-xs text-[hsl(270,30%,50%)]">
+                  <p className="text-xs text-muted-foreground">
                     El usuario recibirá este mensaje. Los fondos serán devueltos a su wallet.
                   </p>
                 </div>
@@ -255,7 +255,7 @@ export function ProcessWithdrawalDialog({
           </Tabs>
 
           {/* Request info */}
-          <div className="text-xs text-[hsl(270,30%,50%)] space-y-1">
+          <div className="text-xs text-muted-foreground space-y-1">
             <p>ID: {withdrawal.id}</p>
             <p>Solicitado: {withdrawal.formattedDate}</p>
           </div>

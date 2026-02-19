@@ -56,7 +56,7 @@ export function EventMappingEditor({ platform, mapping, onChange }: EventMapping
             className="grid grid-cols-[1fr,auto,1fr] items-center gap-3 p-3 rounded-lg bg-gray-800/30 border border-gray-700/30"
           >
             <div>
-              <Label className="text-sm text-gray-300">{label}</Label>
+              <Label className="text-sm text-foreground/80">{label}</Label>
               <p className="text-xs text-gray-500">{description}</p>
             </div>
             <span className="text-gray-600 text-xs">→</span>

@@ -184,7 +184,7 @@ export function EditableList({
       {items.map((item, i) => (
         <div key={i} className="flex items-start gap-2 group">
           <div className={`w-1.5 h-1.5 rounded-full ${dotClass} mt-2 flex-shrink-0`} />
-          <span className="text-sm text-gray-300 flex-1">{item}</span>
+          <span className="text-sm text-foreground/80 flex-1">{item}</span>
           <button
             onClick={() => removeItem(i)}
             className="p-0.5 rounded text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100

@@ -75,7 +75,7 @@ export function BalanceBreakdown({ wallet, className }: BalanceBreakdownProps) {
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <div className="p-1.5 rounded-lg bg-[hsl(270,100%,60%,0.1)]">
-            <Info className="h-4 w-4 text-[hsl(270,100%,70%)]" />
+            <Info className="h-4 w-4 text-primary" />
           </div>
           Desglose de Fondos
         </CardTitle>
@@ -136,7 +136,7 @@ export function BalanceBreakdown({ wallet, className }: BalanceBreakdownProps) {
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Info className="h-3 w-3 text-[hsl(270,30%,50%)] cursor-help" />
+                            <Info className="h-3 w-3 text-muted-foreground cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent side="right" className="max-w-xs">
                             <p className="text-xs">{segment.tooltip}</p>
@@ -144,7 +144,7 @@ export function BalanceBreakdown({ wallet, className }: BalanceBreakdownProps) {
                         </Tooltip>
                       </TooltipProvider>
                     </div>
-                    <span className="text-xs text-[hsl(270,30%,60%)]">
+                    <span className="text-xs text-muted-foreground">
                       {segment.percentage.toFixed(1)}% del total
                     </span>
                   </div>
@@ -158,7 +158,7 @@ export function BalanceBreakdown({ wallet, className }: BalanceBreakdownProps) {
         {/* Total */}
         <div className="pt-3 border-t border-[hsl(270,100%,60%,0.1)]">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-[hsl(270,30%,60%)]">Balance Total</span>
+            <span className="text-sm text-muted-foreground">Balance Total</span>
             <span className="text-lg font-bold bg-gradient-to-r from-white to-[hsl(270,100%,80%)] bg-clip-text text-transparent">
               {wallet.formattedTotal}
             </span>

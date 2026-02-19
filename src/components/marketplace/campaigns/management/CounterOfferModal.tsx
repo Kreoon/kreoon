@@ -22,7 +22,7 @@ export function CounterOfferModal({ application, onClose, onSubmit }: CounterOff
     <div className="fixed inset-0 z-[100]">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="absolute inset-0 flex items-center justify-center p-4">
-        <div className="relative bg-[#0f0f1a] border border-white/10 rounded-2xl w-full max-w-md">
+        <div className="relative bg-card border border-white/10 rounded-2xl w-full max-w-md">
           {/* Header */}
           <div className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
             <div>
@@ -44,7 +44,7 @@ export function CounterOfferModal({ application, onClose, onSubmit }: CounterOff
             )}
 
             <div>
-              <label className="text-gray-300 text-sm font-medium block mb-1.5">
+              <label className="text-foreground/80 text-sm font-medium block mb-1.5">
                 Tu contraoferta (COP) <span className="text-red-400">*</span>
               </label>
               <div className="relative">
@@ -60,7 +60,7 @@ export function CounterOfferModal({ application, onClose, onSubmit }: CounterOff
             </div>
 
             <div>
-              <label className="text-gray-300 text-sm font-medium block mb-1.5">
+              <label className="text-foreground/80 text-sm font-medium block mb-1.5">
                 Mensaje (opcional)
               </label>
               <textarea

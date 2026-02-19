@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Briefcase, Eye, Building2, Shield, User, Sparkles, Zap } from "lucide-react";
+import { Briefcase, Eye, Building2, Shield, User, Sparkles, Zap, Sun, Moon, Monitor } from "lucide-react";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { RootOrgSwitcher } from "@/components/layout/RootOrgSwitcher";
 import {
@@ -241,6 +242,7 @@ export function IntegratedNotificationHeader({
   const { user, profile } = useAuth();
   const { isRootAdmin, isImpersonating } = useImpersonation();
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
 
   if (!user) return null;
 
@@ -248,18 +250,15 @@ export function IntegratedNotificationHeader({
     <div
       className={cn(
         "fixed top-0 right-0 z-40 h-14 flex items-center gap-3 px-4",
-        "border-b border-[hsl(270,100%,60%,0.1)]",
-        "bg-gradient-to-r from-[hsl(250,20%,4%,0.95)] via-[hsl(250,20%,3%,0.98)] to-[hsl(250,20%,4%,0.95)]",
+        "border-b border-border",
+        "bg-background/95",
         "backdrop-blur-xl",
         "transition-all duration-300",
         sidebarCollapsed ? "left-20" : "left-64"
       )}
     >
       {/* Subtle gradient line at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[hsl(270,100%,60%,0.2)] to-transparent" />
-
-      {/* Ambient glow */}
-      <div className="absolute top-0 right-1/4 w-40 h-20 bg-[hsl(270,100%,60%,0.03)] rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
 
       {/* Spacer to push buttons to the right */}
       <div className="flex-1" />
@@ -269,23 +268,23 @@ export function IntegratedNotificationHeader({
         onClick={() => navigate('/settings?section=marketplace')}
         className={cn(
           "flex items-center gap-2 px-3 py-1.5 rounded-xl",
-          "bg-[hsl(270,100%,60%,0.05)] hover:bg-[hsl(270,100%,60%,0.1)]",
-          "border border-[hsl(270,100%,60%,0.1)] hover:border-[hsl(270,100%,60%,0.2)]",
+          "bg-primary/5 hover:bg-primary/10",
+          "border border-border hover:border-primary/20",
           "transition-all duration-300 group"
         )}
         aria-label="Ver mi perfil"
       >
-        <Avatar className="h-8 w-8 ring-2 ring-[hsl(270,100%,60%,0.2)] group-hover:ring-[hsl(270,100%,60%,0.4)] transition-all">
+        <Avatar className="h-8 w-8 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
           <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
-          <AvatarFallback className="text-xs bg-[hsl(270,100%,60%,0.2)] text-[hsl(270,100%,80%)]">
+          <AvatarFallback className="text-xs bg-primary/20 text-primary">
             {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
           </AvatarFallback>
         </Avatar>
         <div className="hidden sm:flex flex-col items-start">
-          <span className="text-sm font-medium text-white truncate max-w-[120px]">
+          <span className="text-sm font-medium text-foreground truncate max-w-[120px]">
             {profile?.full_name || 'Usuario'}
           </span>
-          <span className="text-[10px] text-[hsl(270,100%,70%,0.6)]">
+          <span className="text-[10px] text-muted-foreground">
             Mi Perfil
           </span>
         </div>
@@ -303,23 +302,30 @@ export function IntegratedNotificationHeader({
 
       {/* Marketplace Button */}
       <Button
-        variant="ghost"
+        variant="outline"
         size="sm"
         onClick={() => navigate('/marketplace')}
         className={cn(
           "gap-2 rounded-xl relative overflow-hidden group",
-          "bg-gradient-to-r from-[hsl(270,100%,60%,0.15)] to-[hsl(280,100%,55%,0.1)]",
-          "hover:from-[hsl(270,100%,60%,0.25)] hover:to-[hsl(280,100%,55%,0.2)]",
-          "border border-[hsl(270,100%,60%,0.3)] hover:border-[hsl(270,100%,60%,0.5)]",
-          "text-white hover:text-white",
-          "shadow-[0_0_20px_-5px_hsl(270,100%,60%,0.3)]",
-          "hover:shadow-[0_0_30px_-5px_hsl(270,100%,60%,0.5)]",
+          "bg-primary/10 hover:bg-primary/20",
+          "border-primary/30 hover:border-primary/50",
+          "text-foreground",
           "transition-all duration-300"
         )}
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-[hsl(270,100%,60%,0.1)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        <Briefcase className="h-4 w-4 text-[hsl(270,100%,70%)] group-hover:text-white transition-colors" />
+        <Briefcase className="h-4 w-4 text-primary" />
         <span className="hidden sm:inline font-medium">Marketplace</span>
+      </Button>
+
+      {/* Theme Toggle */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setTheme(theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark')}
+        className="h-9 w-9 rounded-xl text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all"
+        title={theme === 'dark' ? 'Cambiar a Claro' : theme === 'light' ? 'Cambiar a Sistema' : 'Cambiar a Oscuro'}
+      >
+        {theme === 'dark' ? <Moon className="h-4 w-4" /> : theme === 'light' ? <Sun className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
       </Button>
     </div>
   );

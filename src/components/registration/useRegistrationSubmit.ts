@@ -51,6 +51,7 @@ export function useRegistrationSubmit() {
           selectedPlan: data.selectedPlan,
           bio: data.bio,
           locationCountry: data.locationCountry,
+          referralCode: data.referralCode,
         }));
         toast.success('Confirma tu correo', {
           description: 'Te enviamos un email de verificación. Confírmalo y luego inicia sesión.',
@@ -74,6 +75,17 @@ export function useRegistrationSubmit() {
         case 'join':
           await handleJoinSubmit(userId, data);
           break;
+      }
+
+      // Apply referral code if present (needs auth — user just signed up)
+      if (data.referralCode && authData.session) {
+        try {
+          await supabase.functions.invoke('referral-service/apply-code', {
+            body: { code: data.referralCode },
+            headers: { Authorization: `Bearer ${authData.session.access_token}` },
+          });
+          localStorage.removeItem('kreoon_referral_code');
+        } catch { /* non-critical */ }
       }
 
       trackSignupCompleted(userId, {

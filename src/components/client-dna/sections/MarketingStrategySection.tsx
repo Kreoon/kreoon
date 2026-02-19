@@ -193,7 +193,7 @@ export function MarketingStrategySection({ data, isEditing, onFieldChange }: Pro
               {engagementTactics.map((tactic, i) => (
                 <div key={i} className="flex items-start gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
-                  <p className="text-sm text-gray-300">{tactic}</p>
+                  <p className="text-sm text-foreground/80">{tactic}</p>
                 </div>
               ))}
             </div>
@@ -269,7 +269,7 @@ export function MarketingStrategySection({ data, isEditing, onFieldChange }: Pro
           {isEditing ? (
             <EditableText value={data.funnel_strategy} onChange={change('funnel_strategy') as (v: string) => void} multiline placeholder="Estrategia de embudo..." />
           ) : (
-            <p className="text-sm text-gray-300 leading-relaxed">{data.funnel_strategy}</p>
+            <p className="text-sm text-foreground/80 leading-relaxed">{data.funnel_strategy}</p>
           )}
         </div>
       )}
@@ -359,7 +359,7 @@ function ContentPillarCard({
                 {pillar.content_ideas.map((idea, i) => (
                   <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-white/5">
                     <Lightbulb className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-gray-300">{idea}</p>
+                    <p className="text-sm text-foreground/80">{idea}</p>
                   </div>
                 ))}
               </div>

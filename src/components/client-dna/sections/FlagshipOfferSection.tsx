@@ -45,7 +45,7 @@ export function FlagshipOfferSection({ data, isEditing, onFieldChange }: Props) 
           {isEditing ? (
             <EditableText value={data.description} onChange={change('description') as (v: string) => void} multiline placeholder="Descripción..." />
           ) : (
-            <p className="text-sm text-gray-300">{data.description}</p>
+            <p className="text-sm text-foreground/80">{data.description}</p>
           )}
         </div>
       )}
@@ -72,7 +72,7 @@ export function FlagshipOfferSection({ data, isEditing, onFieldChange }: Props) 
           {isEditing ? (
             <EditableText value={data.price_justification} onChange={change('price_justification') as (v: string) => void} multiline placeholder="Justificación..." />
           ) : (
-            <p className="text-sm text-gray-300">{data.price_justification}</p>
+            <p className="text-sm text-foreground/80">{data.price_justification}</p>
           )}
         </div>
       )}
@@ -88,7 +88,7 @@ export function FlagshipOfferSection({ data, isEditing, onFieldChange }: Props) 
               {data.included_features?.map((feature, i) => (
                 <div key={i} className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-sm text-gray-300">{feature}</span>
+                  <span className="text-sm text-foreground/80">{feature}</span>
                 </div>
               ))}
             </div>
@@ -110,7 +110,7 @@ export function FlagshipOfferSection({ data, isEditing, onFieldChange }: Props) 
               ) : (
                 <ul className="space-y-2">
                   {data.guarantees?.map((g, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                    <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5" />
                       {g}
                     </li>
@@ -131,7 +131,7 @@ export function FlagshipOfferSection({ data, isEditing, onFieldChange }: Props) 
               ) : (
                 <ul className="space-y-2">
                   {data.urgency_elements?.map((u, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                    <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
                       <div className="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5" />
                       {u}
                     </li>
@@ -150,7 +150,7 @@ export function FlagshipOfferSection({ data, isEditing, onFieldChange }: Props) 
           {isEditing ? (
             <EditableText value={data.funnel_role} onChange={change('funnel_role') as (v: string) => void} placeholder="Rol en embudo..." />
           ) : (
-            <p className="text-sm text-gray-300">{data.funnel_role}</p>
+            <p className="text-sm text-foreground/80">{data.funnel_role}</p>
           )}
         </div>
       )}

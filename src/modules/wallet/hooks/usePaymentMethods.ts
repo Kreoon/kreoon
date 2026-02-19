@@ -3,12 +3,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import type {
-  PaymentMethodType,
-  PaymentDetails,
+import {
   PAYMENT_METHOD_LABELS,
   PAYMENT_METHOD_ICONS,
   getPaymentSummary,
+} from '../types';
+import type {
+  PaymentMethodType,
+  PaymentDetails,
 } from '../types';
 
 export interface PaymentMethod {

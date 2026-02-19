@@ -115,7 +115,7 @@ export function TransactionFilters({
 
           {/* Transaction Types */}
           <div className="space-y-2">
-            <Label className="text-xs text-[hsl(270,30%,60%)]">Tipo de Transacción</Label>
+            <Label className="text-xs text-muted-foreground">Tipo de Transacción</Label>
             <div className="flex flex-wrap gap-1.5">
               {TRANSACTION_TYPES.map(type => (
                 <Badge
@@ -132,7 +132,7 @@ export function TransactionFilters({
 
           {/* Status */}
           <div className="space-y-2">
-            <Label className="text-xs text-[hsl(270,30%,60%)]">Estado</Label>
+            <Label className="text-xs text-muted-foreground">Estado</Label>
             <Select
               value={filters.status || ''}
               onValueChange={(value) =>
@@ -159,9 +159,9 @@ export function TransactionFilters({
           {/* Date Range */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label className="text-xs text-[hsl(270,30%,60%)]">Desde</Label>
+              <Label className="text-xs text-muted-foreground">Desde</Label>
               <div className="relative">
-                <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(270,30%,50%)]" />
+                <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="date"
                   value={filters.dateFrom || ''}
@@ -176,9 +176,9 @@ export function TransactionFilters({
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-xs text-[hsl(270,30%,60%)]">Hasta</Label>
+              <Label className="text-xs text-muted-foreground">Hasta</Label>
               <div className="relative">
-                <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(270,30%,50%)]" />
+                <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="date"
                   value={filters.dateTo || ''}
@@ -197,9 +197,9 @@ export function TransactionFilters({
           {/* Amount Range */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label className="text-xs text-[hsl(270,30%,60%)]">Monto Mín</Label>
+              <Label className="text-xs text-muted-foreground">Monto Mín</Label>
               <div className="relative">
-                <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(270,30%,50%)]" />
+                <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="number"
                   min="0"
@@ -216,9 +216,9 @@ export function TransactionFilters({
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-xs text-[hsl(270,30%,60%)]">Monto Máx</Label>
+              <Label className="text-xs text-muted-foreground">Monto Máx</Label>
               <div className="relative">
-                <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(270,30%,50%)]" />
+                <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="number"
                   min="0"

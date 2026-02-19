@@ -166,7 +166,7 @@ export function MainLayout({
             "md:pt-14"
           )}
         >
-          <div className={cn("min-h-screen", isMarketplaceRoute ? "bg-[#0a0a0f]" : "p-4 md:p-6")}>
+          <div className={cn("min-h-screen", isMarketplaceRoute ? "bg-background" : "p-4 md:p-6")}>
             <PageWrapper locationKey={location.pathname}>
               {children}
             </PageWrapper>
@@ -246,7 +246,7 @@ export function MainLayout({
             "md:pt-14"
           )}
         >
-          <div className={cn("min-h-screen", isMarketplaceRoute ? "bg-[#0a0a0f]" : "p-4 md:p-6")}>
+          <div className={cn("min-h-screen", isMarketplaceRoute ? "bg-background" : "p-4 md:p-6")}>
             <PageWrapper locationKey={location.pathname}>
               {children}
             </PageWrapper>
@@ -335,7 +335,7 @@ export function MainLayout({
           "md:pt-14"
         )}
       >
-        <div className={cn("min-h-screen", isMarketplaceRoute ? "bg-[#0a0a0f]" : "p-4 md:p-6")}>
+        <div className={cn("min-h-screen", isMarketplaceRoute ? "bg-background" : "p-4 md:p-6")}>
           <PageWrapper locationKey={location.pathname}>
             {children}
           </PageWrapper>

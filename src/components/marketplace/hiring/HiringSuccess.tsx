@@ -34,7 +34,7 @@ export function HiringSuccess({ creatorName, packageName }: HiringSuccessProps) 
 
       {/* Timeline */}
       <div className="w-full max-w-sm space-y-4 text-left">
-        <h3 className="text-sm font-semibold text-gray-300 text-center">Proximos pasos</h3>
+        <h3 className="text-sm font-semibold text-foreground/80 text-center">Proximos pasos</h3>
         <div className="space-y-3">
           <div className="flex items-start gap-3">
             <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -50,7 +50,7 @@ export function HiringSuccess({ creatorName, packageName }: HiringSuccessProps) 
               <span className="text-purple-300 text-xs font-bold">2</span>
             </div>
             <div>
-              <p className="text-gray-300 text-sm font-medium">Produccion</p>
+              <p className="text-foreground/80 text-sm font-medium">Produccion</p>
               <p className="text-gray-500 text-xs">El creador graba y edita tu contenido</p>
             </div>
           </div>
@@ -59,7 +59,7 @@ export function HiringSuccess({ creatorName, packageName }: HiringSuccessProps) 
               <span className="text-purple-300 text-xs font-bold">3</span>
             </div>
             <div>
-              <p className="text-gray-300 text-sm font-medium">Entrega y revision</p>
+              <p className="text-foreground/80 text-sm font-medium">Entrega y revision</p>
               <p className="text-gray-500 text-xs">Revisa, aprueba o pide cambios</p>
             </div>
           </div>

@@ -307,9 +307,9 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
   const progress = ((currentStep) / (STEPS.length - 1)) * 100;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0a0a0f] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex-shrink-0 border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur-xl">
+      <div className="flex-shrink-0 border-b border-white/10 bg-background/95 backdrop-blur-xl">
         <div className="max-w-5xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
@@ -330,7 +330,7 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
 
           <button
             onClick={handleSaveAndExit}
-            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-sm text-gray-300 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-sm text-foreground/80 transition-colors"
           >
             <Save className="h-4 w-4" />
             <span className="hidden sm:inline">Guardar y salir</span>
@@ -449,7 +449,7 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
       </div>
 
       {/* Footer navigation */}
-      <div className="flex-shrink-0 border-t border-white/10 bg-[#0a0a0f]/95 backdrop-blur-xl">
+      <div className="flex-shrink-0 border-t border-white/10 bg-background/95 backdrop-blur-xl">
         <div className="max-w-4xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
           <button
             onClick={goBack}
@@ -458,7 +458,7 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
               'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-colors',
               currentStep === 0
                 ? 'text-gray-600 cursor-not-allowed'
-                : 'text-gray-300 hover:bg-white/10'
+                : 'text-foreground/80 hover:bg-white/10'
             )}
           >
             <ChevronLeft className="h-4 w-4" />

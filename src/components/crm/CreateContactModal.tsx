@@ -263,7 +263,7 @@ export function CreateContactModal({
                   <SelectTrigger className="bg-white/5 border-white/10 text-white">
                     <SelectValue placeholder="Seleccionar tipo" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#0a0118] border-[#8b5cf6]/30">
+                  <SelectContent className="bg-popover border-[#8b5cf6]/30">
                     {CONTACT_TYPES.map((t) => (
                       <SelectItem key={t} value={t} className="text-white focus:bg-white/10">
                         {CONTACT_TYPE_LABELS[t]}
@@ -319,7 +319,7 @@ export function CreateContactModal({
                       <SelectTrigger className="bg-white/5 border-white/10 text-white">
                         <SelectValue placeholder="Etapa" />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#0a0118] border-[#8b5cf6]/30">
+                      <SelectContent className="bg-popover border-[#8b5cf6]/30">
                         {pipelineStages
                           .sort((a, b) => a.order - b.order)
                           .map((s) => (

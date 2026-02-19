@@ -106,7 +106,7 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
           {isEditing ? (
             <EditableText value={data.color_psychology || data.color_meaning} onChange={change('color_psychology') as (v: string) => void} multiline placeholder="Psicología del color..." />
           ) : (
-            <p className="text-sm text-gray-300">{colorPsychology}</p>
+            <p className="text-sm text-foreground/80">{colorPsychology}</p>
           )}
         </div>
       )}

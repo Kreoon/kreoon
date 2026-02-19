@@ -31,7 +31,7 @@ function TabBarComponent({ activeTab, onTabChange, creatorsCount, agenciesCount,
               'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
               isActive
                 ? 'bg-purple-500/15 text-purple-400'
-                : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                : 'text-gray-500 hover:text-foreground hover:bg-white/5'
             )}
           >
             <tab.icon className="h-4 w-4" />

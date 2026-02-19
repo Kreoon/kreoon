@@ -137,7 +137,7 @@ export function ChatInput({
       className={cn(
         'flex items-end gap-2',
         'p-2 rounded-xl',
-        'bg-[#0a0a12]/80 border border-violet-500/15',
+        'bg-card/80 border border-violet-500/15',
         'transition-colors duration-150',
         'focus-within:border-violet-500/30'
       )}
@@ -150,8 +150,8 @@ export function ChatInput({
           disabled={isLoading || disabled}
           className={cn(
             'p-2 rounded-lg transition-all duration-150',
-            'text-gray-500 opacity-50',
-            'hover:bg-violet-500/10 hover:text-gray-400',
+            'text-muted-foreground opacity-50',
+            'hover:bg-primary/10 hover:text-muted-foreground',
             'disabled:cursor-not-allowed'
           )}
           aria-label="Adjuntar archivo (próximamente)"
@@ -165,7 +165,7 @@ export function ChatInput({
             className={cn(
               'absolute bottom-full left-0 mb-2',
               'px-2 py-1 rounded-md',
-              'bg-[#1a1a2e] border border-violet-500/30',
+              'bg-card border border-violet-500/30',
               'text-[10px] text-violet-300 whitespace-nowrap',
               'shadow-lg animate-fade-in'
             )}
@@ -187,7 +187,7 @@ export function ChatInput({
         className={cn(
           'flex-1 resize-none',
           'bg-transparent border-0 outline-none',
-          'text-sm text-gray-200 placeholder:text-gray-500',
+          'text-sm text-foreground placeholder:text-muted-foreground',
           'disabled:opacity-50 disabled:cursor-not-allowed',
           'scrollbar-thin scrollbar-thumb-violet-500/20 scrollbar-track-transparent'
         )}
@@ -207,7 +207,7 @@ export function ChatInput({
           'p-2 rounded-lg transition-all duration-150',
           text.trim() && !isLoading && !disabled
             ? 'bg-violet-500/20 text-violet-300 hover:bg-violet-500/30'
-            : 'text-gray-600 cursor-not-allowed',
+            : 'text-muted-foreground/50 cursor-not-allowed',
           'active:scale-95'
         )}
         aria-label="Enviar mensaje"

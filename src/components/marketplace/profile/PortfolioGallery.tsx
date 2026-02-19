@@ -76,7 +76,7 @@ export function PortfolioGallery({
         <button
           onClick={() => openLightbox(0)}
           className={cn(
-            'relative h-full flex-shrink-0 overflow-hidden group bg-[#1a1a2e]',
+            'relative h-full flex-shrink-0 overflow-hidden group bg-card',
             isSingle ? 'w-full rounded-2xl' : 'rounded-l-2xl',
           )}
           style={isSingle ? undefined : { aspectRatio: heroAR }}
@@ -111,7 +111,7 @@ export function PortfolioGallery({
                     key={item.id}
                     onClick={() => openLightbox(origIdx)}
                     className={cn(
-                      'relative overflow-hidden group bg-[#1a1a2e] min-h-0',
+                      'relative overflow-hidden group bg-card min-h-0',
                       !hasColB && 'rounded-r-2xl',
                     )}
                     style={{ flex: `${1 / ar(origIdx)} 1 0%` }}
@@ -153,7 +153,7 @@ export function PortfolioGallery({
                       key={item.id}
                       onClick={() => openLightbox(origIdx)}
                       className={cn(
-                        'relative overflow-hidden group bg-[#1a1a2e] min-h-0',
+                        'relative overflow-hidden group bg-card min-h-0',
                         isLastInCol && 'rounded-br-2xl',
                         ci === 0 && 'rounded-tr-2xl',
                       )}
@@ -198,7 +198,7 @@ export function PortfolioGallery({
           <button
             key={item.id}
             onClick={() => openLightbox(i)}
-            className="snap-start flex-shrink-0 rounded-xl overflow-hidden relative group bg-[#1a1a2e] h-full"
+            className="snap-start flex-shrink-0 rounded-xl overflow-hidden relative group bg-card h-full"
             style={{ aspectRatio: ar(i) }}
           >
             <img

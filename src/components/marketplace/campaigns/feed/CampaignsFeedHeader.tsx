@@ -64,7 +64,7 @@ export function CampaignsFeedHeader({
           className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500 appearance-none cursor-pointer"
         >
           {SORT_OPTIONS.map(opt => (
-            <option key={opt.value} value={opt.value} className="bg-[#1a1a2e] text-white">
+            <option key={opt.value} value={opt.value} className="bg-card text-white">
               {opt.label}
             </option>
           ))}

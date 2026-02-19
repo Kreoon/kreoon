@@ -111,7 +111,7 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
 
   return (
     <>
-      <Card className="border-[hsl(270,100%,60%,0.15)] bg-gradient-to-br from-[hsl(250,20%,6%)] to-[hsl(250,20%,4%)] overflow-hidden relative">
+      <Card className="border-[hsl(270,100%,60%,0.15)] bg-gradient-to-br from-card to-background overflow-hidden relative">
         <motion.div
           className="absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl pointer-events-none"
           style={{ background: 'radial-gradient(circle, hsl(270 100% 60% / 0.15), transparent 70%)' }}
@@ -121,13 +121,13 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Calendar className="w-5 h-5 text-[hsl(270,100%,60%)]" />
-              <span className="text-[hsl(270,100%,70%)]">Temporadas UP</span>
+              <span className="text-primary">Temporadas UP</span>
             </div>
             {showCreateButton && (
               <Button 
                 size="sm" 
                 onClick={handleQuickCreateNextMonth}
-                className="bg-[hsl(270,100%,60%,0.2)] hover:bg-[hsl(270,100%,60%,0.3)] text-[hsl(270,100%,70%)] border border-[hsl(270,100%,60%,0.3)]"
+                className="bg-[hsl(270,100%,60%,0.2)] hover:bg-[hsl(270,100%,60%,0.3)] text-primary border border-[hsl(270,100%,60%,0.3)]"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Nueva
@@ -175,20 +175,20 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
               
               {/* Season Stats */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-lg bg-[hsl(250,20%,8%)] border border-[hsl(270,100%,60%,0.1)]">
+                <div className="p-3 rounded-lg bg-muted border border-[hsl(270,100%,60%,0.1)]">
                   <div className="flex items-center gap-2 mb-1">
                     <Users className="w-4 h-4 text-[hsl(270,100%,60%)]" />
-                    <span className="text-xs text-[hsl(270,30%,60%)]">Participantes</span>
+                    <span className="text-xs text-muted-foreground">Participantes</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-white">{creatorLeaderboard.length} creadores</span>
                     <span className="text-white">{editorLeaderboard.length} editores</span>
                   </div>
                 </div>
-                <div className="p-3 rounded-lg bg-[hsl(250,20%,8%)] border border-[hsl(270,100%,60%,0.1)]">
+                <div className="p-3 rounded-lg bg-muted border border-[hsl(270,100%,60%,0.1)]">
                   <div className="flex items-center gap-2 mb-1">
                     <Zap className="w-4 h-4 text-amber-400" />
-                    <span className="text-xs text-[hsl(270,30%,60%)]">Puntos Totales</span>
+                    <span className="text-xs text-muted-foreground">Puntos Totales</span>
                   </div>
                   <span className="text-lg font-bold text-white">
                     {(creatorLeaderboard.reduce((sum, c) => sum + (c.total_points || 0), 0) + 
@@ -200,23 +200,23 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
               {/* Top Performers */}
               {(topCreator || topEditor) && (
                 <div className="mt-3 pt-3 border-t border-[hsl(270,100%,60%,0.1)]">
-                  <p className="text-xs text-[hsl(270,30%,60%)] mb-2">Líderes Actuales</p>
+                  <p className="text-xs text-muted-foreground mb-2">Líderes Actuales</p>
                   <div className="grid grid-cols-2 gap-2">
                     {topCreator && (
-                      <div className="flex items-center gap-2 p-2 rounded-lg bg-[hsl(250,20%,10%)]">
+                      <div className="flex items-center gap-2 p-2 rounded-lg bg-muted">
                         <Crown className="w-4 h-4 text-yellow-500" />
                         <div className="min-w-0">
                           <p className="text-xs font-medium text-white truncate">{topCreator.profile?.full_name}</p>
-                          <p className="text-xs text-[hsl(270,30%,60%)]">{topCreator.total_points} UP</p>
+                          <p className="text-xs text-muted-foreground">{topCreator.total_points} UP</p>
                         </div>
                       </div>
                     )}
                     {topEditor && (
-                      <div className="flex items-center gap-2 p-2 rounded-lg bg-[hsl(250,20%,10%)]">
+                      <div className="flex items-center gap-2 p-2 rounded-lg bg-muted">
                         <Crown className="w-4 h-4 text-yellow-500" />
                         <div className="min-w-0">
                           <p className="text-xs font-medium text-white truncate">{topEditor.profile?.full_name}</p>
-                          <p className="text-xs text-[hsl(270,30%,60%)]">{topEditor.total_points} UP</p>
+                          <p className="text-xs text-muted-foreground">{topEditor.total_points} UP</p>
                         </div>
                       </div>
                     )}
@@ -228,7 +228,7 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
             <div className="p-6 text-center">
               <AlertTriangle className="w-10 h-10 mx-auto text-amber-400 mb-3" />
               <h4 className="font-semibold text-white mb-1">Sin Temporada Activa</h4>
-              <p className="text-sm text-[hsl(270,30%,60%)] mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 Crea una nueva temporada para comenzar a trackear puntos UP
               </p>
               <Button onClick={handleQuickCreateNextMonth} className="bg-[hsl(270,100%,60%)] hover:bg-[hsl(270,100%,50%)]">
@@ -241,16 +241,16 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
           {/* Past Seasons */}
           {seasons.filter(s => !s.is_active).length > 0 && (
             <div>
-              <p className="text-xs text-[hsl(270,30%,60%)] mb-2">Temporadas Anteriores</p>
+              <p className="text-xs text-muted-foreground mb-2">Temporadas Anteriores</p>
               <ScrollArea className="max-h-40">
                 <div className="space-y-2">
                   {seasons.filter(s => !s.is_active).map(season => (
                     <div 
                       key={season.id}
-                      className="flex items-center justify-between p-2 rounded-lg bg-[hsl(250,20%,8%)] border border-[hsl(270,100%,60%,0.1)]"
+                      className="flex items-center justify-between p-2 rounded-lg bg-muted border border-[hsl(270,100%,60%,0.1)]"
                     >
                       <div className="flex items-center gap-2">
-                        <Trophy className="w-4 h-4 text-[hsl(270,30%,50%)]" />
+                        <Trophy className="w-4 h-4 text-muted-foreground" />
                         <span className="text-sm text-white">{season.name}</span>
                       </div>
                       <Badge variant="secondary" className="text-xs">
@@ -268,9 +268,9 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
 
       {/* Create Season Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="bg-[hsl(250,20%,5%)] border-[hsl(270,100%,60%,0.2)]">
+        <DialogContent className="bg-card border-[hsl(270,100%,60%,0.2)]">
           <DialogHeader>
-            <DialogTitle className="text-[hsl(270,100%,70%)]">Crear Nueva Temporada</DialogTitle>
+            <DialogTitle className="text-primary">Crear Nueva Temporada</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
@@ -280,7 +280,7 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
                 value={newSeasonName}
                 onChange={(e) => setNewSeasonName(e.target.value)}
                 placeholder="Ej: Temporada Febrero 2026"
-                className="bg-[hsl(250,20%,8%)] border-[hsl(270,100%,60%,0.2)]"
+                className="bg-muted border-[hsl(270,100%,60%,0.2)]"
               />
             </div>
             
@@ -291,7 +291,7 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
                   type="date"
                   value={newSeasonStartDate}
                   onChange={(e) => setNewSeasonStartDate(e.target.value)}
-                  className="bg-[hsl(250,20%,8%)] border-[hsl(270,100%,60%,0.2)]"
+                  className="bg-muted border-[hsl(270,100%,60%,0.2)]"
                 />
               </div>
               <div className="space-y-2">
@@ -300,7 +300,7 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
                   type="date"
                   value={newSeasonEndDate}
                   onChange={(e) => setNewSeasonEndDate(e.target.value)}
-                  className="bg-[hsl(250,20%,8%)] border-[hsl(270,100%,60%,0.2)]"
+                  className="bg-muted border-[hsl(270,100%,60%,0.2)]"
                 />
               </div>
             </div>
@@ -308,7 +308,7 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
             <div className="space-y-2">
               <Label className="text-[hsl(270,30%,70%)]">Modo</Label>
               <Select value={newSeasonMode} onValueChange={(v) => setNewSeasonMode(v as any)}>
-                <SelectTrigger className="bg-[hsl(250,20%,8%)] border-[hsl(270,100%,60%,0.2)]">
+                <SelectTrigger className="bg-muted border-[hsl(270,100%,60%,0.2)]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -351,7 +351,7 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
 
       {/* Close Season Confirmation Dialog */}
       <Dialog open={showCloseDialog} onOpenChange={setShowCloseDialog}>
-        <DialogContent className="bg-[hsl(250,20%,5%)] border-[hsl(270,100%,60%,0.2)]">
+        <DialogContent className="bg-card border-[hsl(270,100%,60%,0.2)]">
           <DialogHeader>
             <DialogTitle className="text-amber-400">Cerrar Temporada</DialogTitle>
           </DialogHeader>
@@ -360,7 +360,7 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
             <p className="text-[hsl(270,30%,70%)]">
               ¿Estás seguro de que deseas cerrar la temporada <strong className="text-white">{activeSeason?.name}</strong>?
             </p>
-            <p className="text-sm text-[hsl(270,30%,50%)] mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               Se guardará un snapshot de los rankings actuales y la temporada quedará como finalizada.
             </p>
           </div>

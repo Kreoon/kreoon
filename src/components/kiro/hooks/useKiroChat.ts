@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { invokeAIWithTokens } from '@/lib/ai/token-gate';
 import { useKiro, ZONE_INFO } from '@/contexts/KiroContext';
 import type { KiroVoiceEmotion } from '../utils/textToSpeechUtils';
 
@@ -153,18 +154,12 @@ export function useKiroChat(speak?: (text: string, emotion?: KiroVoiceEmotion) =
       try {
         const context = buildContext();
 
-        const { data, error } = await supabase.functions.invoke('kiro-chat', {
-          body: {
-            message: text,
-            organizationId: orgId,
-            sessionId,
-            context,
-          },
-        });
-
-        if (error) {
-          throw error;
-        }
+        const data = await invokeAIWithTokens('kiro-chat', 'script_chat', {
+          message: text,
+          organizationId: orgId,
+          sessionId,
+          context,
+        }, orgId);
 
         const reply = data?.reply || 'No pude procesar eso, intenta de nuevo.';
         const emotion: KiroVoiceEmotion = data?.emotion || 'neutral';

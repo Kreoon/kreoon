@@ -207,7 +207,7 @@ export function ProductionCard({
             ))}
             {produccion.asignados.length > 3 && (
               <div className="w-7 h-7 rounded-full bg-zinc-700 border-2 border-zinc-900 flex items-center justify-center">
-                <span className="text-xs text-zinc-300">+{produccion.asignados.length - 3}</span>
+                <span className="text-xs text-foreground/80">+{produccion.asignados.length - 3}</span>
               </div>
             )}
           </div>
@@ -360,7 +360,7 @@ export function ProductionCard({
               ))}
               {produccion.asignados.length > 3 && (
                 <div className="w-7 h-7 rounded-full bg-zinc-700 border-2 border-zinc-900 flex items-center justify-center">
-                  <span className="text-xs text-zinc-300">+{produccion.asignados.length - 3}</span>
+                  <span className="text-xs text-foreground/80">+{produccion.asignados.length - 3}</span>
                 </div>
               )}
             </div>

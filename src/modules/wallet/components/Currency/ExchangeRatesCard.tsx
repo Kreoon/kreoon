@@ -30,7 +30,7 @@ export function ExchangeRatesCard({
   if (compact) {
     return (
       <div className={cn('flex items-center gap-4 text-sm', className)}>
-        <span className="text-[hsl(270,30%,60%)]">Tasas USD:</span>
+        <span className="text-muted-foreground">Tasas USD:</span>
         {isLoading ? (
           <Skeleton className="h-4 w-40" />
         ) : (
@@ -66,11 +66,11 @@ export function ExchangeRatesCard({
               className="p-1.5 rounded-lg hover:bg-[hsl(270,30%,15%)] transition-colors"
               title="Actualizar tasas"
             >
-              <RefreshCw className={cn('h-4 w-4 text-[hsl(270,30%,60%)]', isLoading && 'animate-spin')} />
+              <RefreshCw className={cn('h-4 w-4 text-muted-foreground', isLoading && 'animate-spin')} />
             </button>
           </div>
         </div>
-        <p className="text-xs text-[hsl(270,30%,50%)]">
+        <p className="text-xs text-muted-foreground">
           Base: 1 {baseCurrency} {CURRENCY_FLAGS[baseCurrency]}
         </p>
       </CardHeader>
@@ -96,7 +96,7 @@ export function ExchangeRatesCard({
                     <span className="text-2xl">{CURRENCY_FLAGS[currency]}</span>
                     <div>
                       <p className="font-medium">{currency}</p>
-                      <p className="text-xs text-[hsl(270,30%,50%)]">
+                      <p className="text-xs text-muted-foreground">
                         Spread: {spreadPercent}%
                       </p>
                     </div>
@@ -105,7 +105,7 @@ export function ExchangeRatesCard({
                     <p className="font-semibold text-lg">
                       {formatCurrencyAmount(rate.rate, currency)}
                     </p>
-                    <p className="text-xs text-[hsl(270,30%,50%)]">
+                    <p className="text-xs text-muted-foreground">
                       Neto: {formatCurrencyAmount(rate.rate * (1 - rate.spread), currency)}
                     </p>
                   </div>

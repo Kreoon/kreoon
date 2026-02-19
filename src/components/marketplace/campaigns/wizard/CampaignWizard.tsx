@@ -382,7 +382,7 @@ export default function CampaignWizard() {
 
   if (isComplete) {
     return (
-      <div className="fixed inset-0 z-[100] bg-[#0a0a0f] overflow-y-auto">
+      <div className="fixed inset-0 z-[100] bg-background overflow-y-auto">
         <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-6">
           <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto">
             <CheckCircle2 className="h-8 w-8 text-green-400" />
@@ -398,7 +398,7 @@ export default function CampaignWizard() {
               : ' Recibiras notificaciones cuando los creadores apliquen.'}
           </p>
           <div className="bg-white/5 rounded-xl p-4 text-left space-y-3">
-            <h3 className="text-gray-300 text-sm font-semibold">Proximos pasos</h3>
+            <h3 className="text-foreground/80 text-sm font-semibold">Proximos pasos</h3>
             <div className="flex items-start gap-2">
               <div className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 text-xs flex-shrink-0 mt-0.5">1</div>
               <p className="text-gray-400 text-xs">Los creadores encontraran tu campana y aplicaran</p>
@@ -432,9 +432,9 @@ export default function CampaignWizard() {
   }
 
   return (
-    <div className="fixed inset-0 z-[100] bg-[#0a0a0f] overflow-y-auto">
+    <div className="fixed inset-0 z-[100] bg-background overflow-y-auto">
       {/* Header */}
-      <div className="sticky top-0 bg-[#0a0a0f]/95 backdrop-blur-sm border-b border-white/10 z-10">
+      <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-white/10 z-10">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-lg font-bold text-white">Crear Campana</h1>
@@ -469,7 +469,7 @@ export default function CampaignWizard() {
                     isActive
                       ? 'bg-purple-500/20 text-purple-300'
                       : isDone
-                        ? 'text-gray-400 hover:text-gray-300 cursor-pointer'
+                        ? 'text-gray-400 hover:text-foreground cursor-pointer'
                         : 'text-gray-600 cursor-default',
                   )}
                 >
@@ -646,7 +646,7 @@ export default function CampaignWizard() {
       </div>
 
       {/* Bottom navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#0a0a0f] border-t border-white/10 z-10 safe-area-bottom">
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-white/10 z-10 safe-area-bottom">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <button
             onClick={() => {

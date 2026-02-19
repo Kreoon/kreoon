@@ -244,7 +244,7 @@ export function PaymentMethodDrawer({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
-                <CreditCard className="h-5 w-5 text-[hsl(270,100%,70%)]" />
+                <CreditCard className="h-5 w-5 text-primary" />
               </div>
               <SheetTitle>
                 {editingMethod ? 'Editar Método' : 'Agregar Método'}
@@ -282,10 +282,10 @@ export function PaymentMethodDrawer({
                       <Icon
                         className={cn(
                           'h-5 w-5 mx-auto mb-1',
-                          isSelected ? 'text-[hsl(270,100%,70%)]' : 'text-[hsl(270,30%,60%)]'
+                          isSelected ? 'text-primary' : 'text-muted-foreground'
                         )}
                       />
-                      <p className="text-[10px] text-[hsl(270,30%,60%)] truncate">
+                      <p className="text-[10px] text-muted-foreground truncate">
                         {method === 'bank_transfer_colombia'
                           ? 'Banco Col'
                           : method === 'bank_transfer_international'
@@ -510,7 +510,7 @@ export function PaymentMethodDrawer({
               <div className="flex items-center justify-between p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)]">
                 <div>
                   <Label>Establecer como predeterminado</Label>
-                  <p className="text-xs text-[hsl(270,30%,60%)]">
+                  <p className="text-xs text-muted-foreground">
                     Se usará automáticamente para retiros
                   </p>
                 </div>

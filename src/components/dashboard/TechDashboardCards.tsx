@@ -33,7 +33,7 @@ export function DashboardKpiCard({
       onClick={onClick}
       className={cn(
         "group relative overflow-hidden rounded-xl p-4",
-        "bg-gradient-to-br from-[hsl(250,20%,7%)] to-[hsl(250,20%,5%)]",
+        "bg-gradient-to-br from-card to-card",
         "border transition-all duration-500",
         onClick && "cursor-pointer",
         className
@@ -75,7 +75,7 @@ export function DashboardKpiCard({
           >
             <Icon className="h-5 w-5" style={{ color: iconColor }} />
           </motion.div>
-          <span className="text-sm text-[hsl(270,30%,60%)]">{title}</span>
+          <span className="text-sm text-muted-foreground">{title}</span>
         </div>
         
         <div className="text-3xl font-bold text-white mb-1" style={{ textShadow: `0 0 20px ${iconColor}30` }}>
@@ -83,7 +83,7 @@ export function DashboardKpiCard({
         </div>
         
         {subtitle && (
-          <div className="text-sm text-[hsl(270,30%,55%)]">{subtitle}</div>
+          <div className="text-sm text-muted-foreground">{subtitle}</div>
         )}
 
         {trend !== undefined && trend !== 0 && (
@@ -144,14 +144,14 @@ export function TechProgress({
   return (
     <div className="mt-2 space-y-1">
       <div className="flex justify-between text-xs">
-        <span className="text-[hsl(270,30%,55%)]">{label || 'Meta'}: {max.toLocaleString()}</span>
+        <span className="text-muted-foreground">{label || 'Meta'}: {max.toLocaleString()}</span>
         {showPercent && (
           <span style={{ color }} className="font-medium">
             {Math.round(percent)}%
           </span>
         )}
       </div>
-      <div className="h-2 bg-[hsl(250,20%,10%)] rounded-full overflow-hidden border" style={{ borderColor: `${color}20` }}>
+      <div className="h-2 bg-muted rounded-full overflow-hidden border" style={{ borderColor: `${color}20` }}>
         <motion.div 
           className="h-full rounded-full relative overflow-hidden"
           style={{ 
@@ -216,7 +216,7 @@ export function PipelineItem({
       >
         {value}
       </motion.p>
-      <p className="text-[10px] text-[hsl(270,30%,55%)]">{label}</p>
+      <p className="text-[10px] text-muted-foreground">{label}</p>
     </motion.div>
   );
 }
@@ -243,11 +243,11 @@ export function TechSectionHeader({
             ]
           }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="p-1.5 rounded-lg bg-[hsl(270,100%,60%,0.1)]"
+          className="p-1.5 rounded-lg bg-primary/10"
         >
-          <Icon className="h-4 w-4 text-[hsl(270,100%,70%)]" />
+          <Icon className="h-4 w-4 text-primary" />
         </motion.div>
-        <span className="text-[hsl(270,100%,75%)]" style={{ textShadow: "0 0 10px hsl(270 100% 60% / 0.3)" }}>
+        <span className="text-primary">
           {title}
         </span>
       </h3>

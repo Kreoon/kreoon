@@ -206,7 +206,7 @@ const UnifiedClientsPage = () => {
       <div className="min-h-screen p-4 md:p-6">
         <PageHeader icon={Castle} title="Clientes" subtitle="Gestión de empresas, contactos y usuarios" />
         <div className="text-center py-16">
-          <p className="text-sm text-white/40">Selecciona una organización</p>
+          <p className="text-sm text-muted-foreground">Selecciona una organización</p>
         </div>
       </div>
     );
@@ -273,8 +273,8 @@ const UnifiedClientsPage = () => {
                 className={cn(
                   'px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
                   filter === tab.key
-                    ? 'bg-[#8b5cf6] text-white shadow-sm'
-                    : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/70',
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground',
                 )}
               >
                 {tab.label}
@@ -289,7 +289,7 @@ const UnifiedClientsPage = () => {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Buscar..."
-                className="pl-8 h-8 w-48 bg-white/5 border-white/10 text-white placeholder:text-white/30 text-xs"
+                className="pl-8 h-8 w-48 bg-muted border-border text-white placeholder:text-muted-foreground text-xs"
               />
             </div>
             <ViewModeToggle value={viewMode} onChange={setViewMode} />
@@ -297,7 +297,7 @@ const UnifiedClientsPage = () => {
             {canSeeInternal && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" className="h-8 gap-1 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white text-xs">
+                  <Button size="sm" className="h-8 gap-1 bg-primary hover:bg-primary/90 text-white text-xs">
                     <Plus className="h-3.5 w-3.5" />
                     Nuevo
                     <ChevronDown className="h-3 w-3" />
@@ -327,7 +327,7 @@ const UnifiedClientsPage = () => {
                     <p className="text-xs text-amber-400">
                       <strong>{unassignedMembers.length}</strong> usuario{unassignedMembers.length !== 1 ? 's' : ''} con rol cliente sin empresa asignada
                       {unassignedMembers.length <= 5 && (
-                        <span className="text-white/40 ml-1">
+                        <span className="text-muted-foreground ml-1">
                           ({unassignedMembers.map(u => u.full_name || u.email).join(', ')})
                         </span>
                       )}
@@ -338,13 +338,13 @@ const UnifiedClientsPage = () => {
                 {clientUsersLoading ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {Array.from({ length: 6 }).map((_, i) => (
-                      <Skeleton key={i} className="h-40 rounded-xl bg-white/5" />
+                      <Skeleton key={i} className="h-40 rounded-xl bg-muted" />
                     ))}
                   </div>
                 ) : filteredClientUsers.length === 0 ? (
-                  <div className="text-center py-16 border border-dashed border-white/10 rounded-xl">
+                  <div className="text-center py-16 border border-dashed border-border rounded-xl">
                     <UsersIcon className="h-8 w-8 text-white/20 mx-auto mb-3" />
-                    <p className="text-sm text-white/40">
+                    <p className="text-sm text-muted-foreground">
                       {search ? 'No se encontraron usuarios' : 'No hay usuarios cliente vinculados a empresas'}
                     </p>
                     {search && (
@@ -369,12 +369,12 @@ const UnifiedClientsPage = () => {
                   <div className="rounded-xl border border-border overflow-hidden">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="bg-white/5 border-b border-border">
-                          <th className="text-left p-3 text-white/50 font-medium">Nombre</th>
-                          <th className="text-left p-3 text-white/50 font-medium">Email</th>
-                          <th className="text-left p-3 text-white/50 font-medium">Empresas</th>
-                          <th className="text-left p-3 text-white/50 font-medium">Teléfono</th>
-                          <th className="text-left p-3 text-white/50 font-medium">Ciudad</th>
+                        <tr className="bg-muted border-b border-border">
+                          <th className="text-left p-3 text-muted-foreground font-medium">Nombre</th>
+                          <th className="text-left p-3 text-muted-foreground font-medium">Email</th>
+                          <th className="text-left p-3 text-muted-foreground font-medium">Empresas</th>
+                          <th className="text-left p-3 text-muted-foreground font-medium">Teléfono</th>
+                          <th className="text-left p-3 text-muted-foreground font-medium">Ciudad</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -383,8 +383,8 @@ const UnifiedClientsPage = () => {
                             key={u.user_id}
                             onClick={() => handleClientUserClick(u)}
                             className={cn(
-                              'border-b border-border hover:bg-white/5 cursor-pointer transition-colors',
-                              selectedClientUser?.user_id === u.user_id && 'bg-[#8b5cf6]/10',
+                              'border-b border-border hover:bg-muted cursor-pointer transition-colors',
+                              selectedClientUser?.user_id === u.user_id && 'bg-primary/10',
                             )}
                           >
                             <td className="p-3">
@@ -396,10 +396,10 @@ const UnifiedClientsPage = () => {
                                     <UsersIcon className="h-3.5 w-3.5 text-emerald-400" />
                                   </div>
                                 )}
-                                <span className="text-white/80 font-medium truncate max-w-[150px]">{u.full_name}</span>
+                                <span className="text-foreground font-medium truncate max-w-[150px]">{u.full_name}</span>
                               </div>
                             </td>
-                            <td className="p-3 text-white/50 truncate max-w-[160px]">{u.email}</td>
+                            <td className="p-3 text-muted-foreground truncate max-w-[160px]">{u.email}</td>
                             <td className="p-3">
                               {u.linked_companies.length > 0 ? (
                                 <div className="flex gap-1 flex-wrap">
@@ -412,7 +412,7 @@ const UnifiedClientsPage = () => {
                                     </span>
                                   ))}
                                   {u.linked_companies.length > 2 && (
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-white/50">
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted/80 text-muted-foreground">
                                       +{u.linked_companies.length - 2}
                                     </span>
                                   )}
@@ -421,8 +421,8 @@ const UnifiedClientsPage = () => {
                                 <span className="text-[10px] text-amber-400">Sin empresa</span>
                               )}
                             </td>
-                            <td className="p-3 text-white/50">{u.phone || '—'}</td>
-                            <td className="p-3 text-white/50">{u.city || '—'}</td>
+                            <td className="p-3 text-muted-foreground">{u.phone || '—'}</td>
+                            <td className="p-3 text-muted-foreground">{u.city || '—'}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -436,13 +436,13 @@ const UnifiedClientsPage = () => {
                 {isLoading ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {Array.from({ length: 6 }).map((_, i) => (
-                      <Skeleton key={i} className="h-40 rounded-xl bg-white/5" />
+                      <Skeleton key={i} className="h-40 rounded-xl bg-muted" />
                     ))}
                   </div>
                 ) : filtered.length === 0 ? (
-                  <div className="text-center py-16 border border-dashed border-white/10 rounded-xl">
+                  <div className="text-center py-16 border border-dashed border-border rounded-xl">
                     <Castle className="h-8 w-8 text-white/20 mx-auto mb-3" />
-                    <p className="text-sm text-white/40">No se encontraron clientes</p>
+                    <p className="text-sm text-muted-foreground">No se encontraron clientes</p>
                     {search && (
                       <button onClick={() => setSearch('')} className="text-xs text-[#8b5cf6] hover:underline mt-1">
                         Limpiar búsqueda
@@ -465,12 +465,12 @@ const UnifiedClientsPage = () => {
                   <div className="rounded-xl border border-border overflow-hidden">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="bg-white/5 border-b border-border">
-                          <th className="text-left p-3 text-white/50 font-medium">Nombre</th>
-                          <th className="text-left p-3 text-white/50 font-medium">Tipo</th>
-                          <th className="text-left p-3 text-white/50 font-medium">Email</th>
-                          <th className="text-center p-3 text-white/50 font-medium">Contenido</th>
-                          <th className="text-right p-3 text-white/50 font-medium">Valor</th>
+                        <tr className="bg-muted border-b border-border">
+                          <th className="text-left p-3 text-muted-foreground font-medium">Nombre</th>
+                          <th className="text-left p-3 text-muted-foreground font-medium">Tipo</th>
+                          <th className="text-left p-3 text-muted-foreground font-medium">Email</th>
+                          <th className="text-center p-3 text-muted-foreground font-medium">Contenido</th>
+                          <th className="text-right p-3 text-muted-foreground font-medium">Valor</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -479,8 +479,8 @@ const UnifiedClientsPage = () => {
                             key={`${e.entity_type}-${e.id}`}
                             onClick={() => handleEntityClick(e)}
                             className={cn(
-                              'border-b border-border hover:bg-white/5 cursor-pointer transition-colors',
-                              selectedEntity?.id === e.id && 'bg-[#8b5cf6]/10',
+                              'border-b border-border hover:bg-muted cursor-pointer transition-colors',
+                              selectedEntity?.id === e.id && 'bg-primary/10',
                             )}
                           >
                             <td className="p-3">
@@ -503,9 +503,9 @@ const UnifiedClientsPage = () => {
                                   )
                                 )}
                                 <div className="min-w-0">
-                                  <span className="text-white/80 font-medium truncate block max-w-[150px]">{e.name}</span>
+                                  <span className="text-foreground font-medium truncate block max-w-[150px]">{e.name}</span>
                                   {e.entity_type === 'contacto' && e.company && (
-                                    <span className="text-[10px] text-white/40">{e.company}</span>
+                                    <span className="text-[10px] text-muted-foreground">{e.company}</span>
                                   )}
                                 </div>
                               </div>
@@ -520,11 +520,11 @@ const UnifiedClientsPage = () => {
                                 {e.entity_type === 'empresa' ? 'Empresa' : 'Contacto'}
                               </span>
                             </td>
-                            <td className="p-3 text-white/50 truncate max-w-[160px]">{e.email || '—'}</td>
-                            <td className="p-3 text-center text-white/60">
+                            <td className="p-3 text-muted-foreground truncate max-w-[160px]">{e.email || '—'}</td>
+                            <td className="p-3 text-center text-muted-foreground">
                               {e.entity_type === 'empresa' ? e.content_count : '—'}
                             </td>
-                            <td className="p-3 text-right text-white/60">
+                            <td className="p-3 text-right text-muted-foreground">
                               {e.entity_type === 'contacto' && e.deal_value
                                 ? formatCurrency(e.deal_value)
                                 : '—'}

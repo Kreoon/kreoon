@@ -201,7 +201,7 @@ export function MessageFeedback({
           'p-1 rounded transition-all duration-150',
           copied
             ? 'text-green-400 bg-green-500/20'
-            : 'text-gray-500 hover:text-gray-300 hover:bg-violet-500/10'
+            : 'text-gray-500 hover:text-foreground hover:bg-violet-500/10'
         )}
         aria-label={copied ? 'Copiado' : 'Copiar mensaje'}
       >

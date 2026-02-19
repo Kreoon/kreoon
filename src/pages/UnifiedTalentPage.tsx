@@ -174,7 +174,7 @@ const UnifiedTalentPage = () => {
       <div className="min-h-screen p-4 md:p-6">
         <PageHeader icon={Sword} title="Talento" subtitle="Gesti\u00f3n de equipo interno y talento externo" />
         <div className="text-center py-16">
-          <p className="text-sm text-white/40">Selecciona una organizaci\u00f3n</p>
+          <p className="text-sm text-muted-foreground">Selecciona una organizaci\u00f3n</p>
         </div>
       </div>
     );
@@ -193,7 +193,7 @@ const UnifiedTalentPage = () => {
                 <DialogTrigger asChild>
                   <Button
                     size="sm"
-                    className="gap-1.5 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white text-xs"
+                    className="gap-1.5 bg-primary hover:bg-primary/90 text-white text-xs"
                     onClick={(e) => {
                       if (isReadOnly) { e.preventDefault(); guardAction(() => {}); }
                     }}
@@ -297,8 +297,8 @@ const UnifiedTalentPage = () => {
                 className={cn(
                   'px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
                   filter === tab.key
-                    ? 'bg-[#8b5cf6] text-white shadow-sm'
-                    : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/70',
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground',
                 )}
               >
                 {tab.key === 'ranking' && <Trophy className="h-3 w-3 inline mr-1" />}
@@ -316,7 +316,7 @@ const UnifiedTalentPage = () => {
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                     placeholder="Buscar talento..."
-                    className="pl-8 h-8 w-48 bg-white/5 border-white/10 text-white placeholder:text-white/30 text-xs"
+                    className="pl-8 h-8 w-48 bg-muted border-border text-white placeholder:text-muted-foreground text-xs"
                   />
                 </div>
                 <ViewModeToggle value={viewMode} onChange={setViewMode} />
@@ -335,13 +335,13 @@ const UnifiedTalentPage = () => {
               {isLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <Skeleton key={i} className="h-48 rounded-xl bg-white/5" />
+                    <Skeleton key={i} className="h-48 rounded-xl bg-muted" />
                   ))}
                 </div>
               ) : filtered.length === 0 ? (
-                <div className="text-center py-16 border border-dashed border-white/10 rounded-xl">
+                <div className="text-center py-16 border border-dashed border-border rounded-xl">
                   <Sword className="h-8 w-8 text-white/20 mx-auto mb-3" />
-                  <p className="text-sm text-white/40">No se encontr\u00f3 talento</p>
+                  <p className="text-sm text-muted-foreground">No se encontr\u00f3 talento</p>
                   {search && (
                     <button onClick={() => setSearch('')} className="text-xs text-[#8b5cf6] hover:underline mt-1">
                       Limpiar b\u00fasqueda
@@ -371,13 +371,13 @@ const UnifiedTalentPage = () => {
                 <div className="rounded-xl border border-border overflow-hidden">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="bg-white/5 border-b border-border">
-                        <th className="text-left p-3 text-white/50 font-medium">Nombre</th>
-                        <th className="text-left p-3 text-white/50 font-medium">Origen</th>
-                        <th className="text-left p-3 text-white/50 font-medium">Rol</th>
-                        <th className="text-center p-3 text-white/50 font-medium">Contenido</th>
-                        <th className="text-center p-3 text-white/50 font-medium">Rating</th>
-                        <th className="text-right p-3 text-white/50 font-medium">Pagado</th>
+                      <tr className="bg-muted border-b border-border">
+                        <th className="text-left p-3 text-muted-foreground font-medium">Nombre</th>
+                        <th className="text-left p-3 text-muted-foreground font-medium">Origen</th>
+                        <th className="text-left p-3 text-muted-foreground font-medium">Rol</th>
+                        <th className="text-center p-3 text-muted-foreground font-medium">Contenido</th>
+                        <th className="text-center p-3 text-muted-foreground font-medium">Rating</th>
+                        <th className="text-right p-3 text-muted-foreground font-medium">Pagado</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -386,8 +386,8 @@ const UnifiedTalentPage = () => {
                           key={m.id}
                           onClick={() => setSelectedMember(m)}
                           className={cn(
-                            'border-b border-border hover:bg-white/5 cursor-pointer transition-colors',
-                            activeMember?.id === m.id && 'bg-[#8b5cf6]/10',
+                            'border-b border-border hover:bg-muted cursor-pointer transition-colors',
+                            activeMember?.id === m.id && 'bg-primary/10',
                           )}
                         >
                           <td className="p-3">
@@ -399,7 +399,7 @@ const UnifiedTalentPage = () => {
                                   {m.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
                                 </div>
                               )}
-                              <span className="text-white/80 font-medium truncate max-w-[150px]">{m.full_name}</span>
+                              <span className="text-foreground font-medium truncate max-w-[150px]">{m.full_name}</span>
                             </div>
                           </td>
                           <td className="p-3">
@@ -412,14 +412,14 @@ const UnifiedTalentPage = () => {
                               {m.source === 'internal' ? 'Equipo' : m.source === 'external' ? 'Externo' : 'Ambos'}
                             </span>
                           </td>
-                          <td className="p-3 text-white/60">
+                          <td className="p-3 text-muted-foreground">
                             {m.org_role ? getRoleLabel(m.org_role) : '\u2014'}
                           </td>
-                          <td className="p-3 text-center text-white/60">{m.content_count || '\u2014'}</td>
-                          <td className="p-3 text-center text-white/60">
+                          <td className="p-3 text-center text-muted-foreground">{m.content_count || '\u2014'}</td>
+                          <td className="p-3 text-center text-muted-foreground">
                             {m.avg_star_rating ? m.avg_star_rating.toFixed(1) : m.average_rating_given ? m.average_rating_given.toFixed(1) : '\u2014'}
                           </td>
-                          <td className="p-3 text-right text-white/60">
+                          <td className="p-3 text-right text-muted-foreground">
                             {m.total_paid > 0 ? formatCurrency(m.total_paid) : '\u2014'}
                           </td>
                         </tr>

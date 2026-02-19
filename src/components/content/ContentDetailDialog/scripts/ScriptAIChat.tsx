@@ -5,6 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { invokeAIWithTokens } from '@/lib/ai/token-gate';
 import { 
   Send, 
   Loader2, 
@@ -87,26 +88,17 @@ export function ScriptAIChat({
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('script-chat', {
-        body: {
-          messages: [
-            ...messages.map(m => ({ role: m.role, content: m.content })),
-            { role: 'user', content: messageText }
-          ],
-          currentScript,
-          productName,
-          spherePhase,
-          organizationId,
-          use_perplexity: usePerplexity,
-        }
-      });
-
-      if (error) {
-        const err = error as any;
-        err.status = err.context?.status;
-        err.responseBody = err.context?.body;
-        throw err;
-      }
+      const data = await invokeAIWithTokens('script-chat', 'script_chat', {
+        messages: [
+          ...messages.map(m => ({ role: m.role, content: m.content })),
+          { role: 'user', content: messageText }
+        ],
+        currentScript,
+        productName,
+        spherePhase,
+        organizationId,
+        use_perplexity: usePerplexity,
+      }, organizationId);
 
       if (data?.error) {
         const err = new Error(typeof data.error === 'string' ? data.error : data.error?.message || 'Error') as any;

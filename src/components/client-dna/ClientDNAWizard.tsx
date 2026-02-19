@@ -299,7 +299,7 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
                                    border border-white/10 flex items-center justify-center text-[10px] font-bold text-purple-300">
                     {q.id}
                   </span>
-                  <p className="text-xs text-gray-300 leading-relaxed group-hover:text-white transition-colors">
+                  <p className="text-xs text-foreground/80 leading-relaxed group-hover:text-foreground transition-colors">
                     {q.question}
                   </p>
                 </div>

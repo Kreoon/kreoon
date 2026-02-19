@@ -173,7 +173,7 @@ export function PaymentMethodForm({
           )}
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
-              <CreditCard className="h-5 w-5 text-[hsl(270,100%,70%)]" />
+              <CreditCard className="h-5 w-5 text-primary" />
             </div>
             <div>
               <CardTitle>Agregar Método de Pago</CardTitle>
@@ -405,7 +405,7 @@ export function PaymentMethodForm({
           <div className="flex items-center justify-between p-4 rounded-lg bg-[hsl(270,100%,60%,0.05)]">
             <div>
               <Label>Establecer como predeterminado</Label>
-              <p className="text-xs text-[hsl(270,30%,60%)]">
+              <p className="text-xs text-muted-foreground">
                 Se usará automáticamente para retiros
               </p>
             </div>

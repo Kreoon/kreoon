@@ -30,7 +30,7 @@ export function HiringStepPackage({
       {/* Exchange option */}
       {acceptsExchange && (
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-gray-300">Metodo de pago</h3>
+          <h3 className="text-sm font-semibold text-foreground/80">Metodo de pago</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
               type="button"
@@ -106,7 +106,7 @@ export function HiringStepPackage({
 
       {/* Package selection */}
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-gray-300">Elige un paquete</h3>
+        <h3 className="text-sm font-semibold text-foreground/80">Elige un paquete</h3>
         {packages.map(pkg => (
           <button
             key={pkg.id}
@@ -160,7 +160,7 @@ export function HiringStepPackage({
         <div className="bg-white/5 rounded-lg p-4 space-y-2">
           <p className="text-gray-400 text-xs font-medium">Incluye:</p>
           {selected.includes.map((item, i) => (
-            <div key={i} className="flex items-start gap-2 text-gray-300 text-xs">
+            <div key={i} className="flex items-start gap-2 text-foreground/80 text-xs">
               <CheckCircle className="h-3.5 w-3.5 text-green-400 mt-0.5 flex-shrink-0" />
               <span>{item}</span>
             </div>

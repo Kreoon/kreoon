@@ -112,7 +112,7 @@ export function TransactionDetail({
                   'h-7 w-7',
                   transaction.isCredit
                     ? 'text-emerald-400'
-                    : 'text-[hsl(270,100%,70%)]'
+                    : 'text-primary'
                 )}
               />
             </div>
@@ -144,7 +144,7 @@ export function TransactionDetail({
               : 'bg-[hsl(270,100%,60%,0.05)]'
           )}
         >
-          <p className="text-sm text-[hsl(270,30%,60%)] mb-1">Monto</p>
+          <p className="text-sm text-muted-foreground mb-1">Monto</p>
           <p
             className={cn(
               'text-3xl font-bold',
@@ -159,7 +159,7 @@ export function TransactionDetail({
         {/* Description */}
         {transaction.description && (
           <div>
-            <p className="text-sm text-[hsl(270,30%,60%)] mb-1">Descripción</p>
+            <p className="text-sm text-muted-foreground mb-1">Descripción</p>
             <p className="text-white">{transaction.description}</p>
           </div>
         )}
@@ -176,7 +176,7 @@ export function TransactionDetail({
               transition={{ delay: index * 0.03 }}
               className="flex items-center justify-between"
             >
-              <span className="text-sm text-[hsl(270,30%,60%)]">{row.label}</span>
+              <span className="text-sm text-muted-foreground">{row.label}</span>
               <div className="flex items-center gap-2">
                 {row.badge ? (
                   <Badge variant="outline" className={transaction.statusColor}>
@@ -207,7 +207,7 @@ export function TransactionDetail({
           <>
             <Separator className="bg-[hsl(270,100%,60%,0.1)]" />
             <div>
-              <p className="text-sm text-[hsl(270,30%,60%)] mb-2">Información Adicional</p>
+              <p className="text-sm text-muted-foreground mb-2">Información Adicional</p>
               <div className="p-3 rounded-lg bg-[hsl(270,100%,60%,0.05)] text-xs font-mono text-[hsl(270,30%,70%)] overflow-auto">
                 <pre>{JSON.stringify(transaction.metadata, null, 2)}</pre>
               </div>

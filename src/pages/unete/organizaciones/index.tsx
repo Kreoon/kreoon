@@ -312,14 +312,14 @@ export default function OrganizacionesLanding() {
                     {...form.register('organization_type')}
                     className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-white"
                   >
-                    <option value="" className="bg-[#1a1a2e]">
+                    <option value="" className="bg-card">
                       Seleccionar...
                     </option>
                     {ORG_TYPES.map((type) => (
                       <option
                         key={type.value}
                         value={type.value}
-                        className="bg-[#1a1a2e]"
+                        className="bg-card"
                       >
                         {type.label}
                       </option>
@@ -342,14 +342,14 @@ export default function OrganizacionesLanding() {
                     {...form.register('team_size')}
                     className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-white"
                   >
-                    <option value="" className="bg-[#1a1a2e]">
+                    <option value="" className="bg-card">
                       Seleccionar...
                     </option>
                     {TEAM_SIZES.map((size) => (
                       <option
                         key={size.value}
                         value={size.value}
-                        className="bg-[#1a1a2e]"
+                        className="bg-card"
                       >
                         {size.label}
                       </option>

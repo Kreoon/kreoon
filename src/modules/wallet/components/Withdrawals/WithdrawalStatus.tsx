@@ -94,7 +94,7 @@ export function WithdrawalStatusCard({
             <p className={cn('font-semibold', config.color)}>
               {withdrawal.statusLabel}
             </p>
-            <p className="text-xs text-[hsl(270,30%,60%)]">{config.label}</p>
+            <p className="text-xs text-muted-foreground">{config.label}</p>
           </div>
         </div>
       </div>
@@ -102,9 +102,9 @@ export function WithdrawalStatusCard({
       <CardContent className="pt-6 space-y-6">
         {/* Amount summary */}
         <div className="text-center">
-          <p className="text-sm text-[hsl(270,30%,60%)] mb-1">Monto a recibir</p>
+          <p className="text-sm text-muted-foreground mb-1">Monto a recibir</p>
           <p className="text-3xl font-bold text-white">{withdrawal.formattedNetAmount}</p>
-          <p className="text-xs text-[hsl(270,30%,50%)] mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Solicitado: {withdrawal.formattedAmount} (Fee: {withdrawal.formattedFee})
           </p>
         </div>
@@ -185,7 +185,7 @@ function DetailRow({
 }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-sm text-[hsl(270,30%,60%)]">{label}</span>
+      <span className="text-sm text-muted-foreground">{label}</span>
       <div className="flex items-center gap-2">
         <span className="text-sm text-white">{value}</span>
         {copyValue && onCopy && (
@@ -242,7 +242,7 @@ export function WithdrawalList({
     return (
       <div className={cn('flex flex-col items-center justify-center py-12', className)}>
         <Clock className="h-10 w-10 text-[hsl(270,100%,60%,0.2)] mb-3" />
-        <p className="text-[hsl(270,30%,60%)]">No hay solicitudes de retiro</p>
+        <p className="text-muted-foreground">No hay solicitudes de retiro</p>
       </div>
     );
   }
@@ -282,11 +282,11 @@ export function WithdrawalList({
                     {withdrawal.statusLabel}
                   </Badge>
                 </div>
-                <p className="text-xs text-[hsl(270,30%,60%)] truncate">
+                <p className="text-xs text-muted-foreground truncate">
                   {withdrawal.methodLabel} • {withdrawal.paymentSummary}
                 </p>
               </div>
-              <p className="text-xs text-[hsl(270,30%,50%)]">{withdrawal.formattedDate}</p>
+              <p className="text-xs text-muted-foreground">{withdrawal.formattedDate}</p>
             </div>
           </motion.div>
         );

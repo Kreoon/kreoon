@@ -106,7 +106,7 @@ export function CreatorSocialStatsForm() {
         </div>
         <button
           onClick={loadStats}
-          className="p-2 text-gray-500 hover:text-gray-300 hover:bg-white/5 rounded-lg transition-colors"
+          className="p-2 text-gray-500 hover:text-foreground hover:bg-white/5 rounded-lg transition-colors"
         >
           <RefreshCw className="w-5 h-5" />
         </button>
@@ -136,7 +136,7 @@ export function CreatorSocialStatsForm() {
                     <span className="text-white font-bold">{info.label.charAt(0)}</span>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-200">{info.label}</h3>
+                    <h3 className="font-semibold text-foreground">{info.label}</h3>
                     {stat?.username && (
                       <a
                         href={stat.profile_url || '#'}
@@ -231,19 +231,19 @@ export function CreatorSocialStatsForm() {
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-500">Seguidores</span>
-                        <span className="font-semibold text-gray-200">
+                        <span className="font-semibold text-foreground">
                           {stat.followers_count?.toLocaleString() || '-'}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-500">Avg. likes</span>
-                        <span className="font-semibold text-gray-200">
+                        <span className="font-semibold text-foreground">
                           {stat.avg_likes_per_post?.toLocaleString() || '-'}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-500">Engagement</span>
-                        <span className="font-semibold text-gray-200">
+                        <span className="font-semibold text-foreground">
                           {stat.engagement_rate ? `${stat.engagement_rate}%` : '-'}
                         </span>
                       </div>

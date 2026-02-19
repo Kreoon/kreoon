@@ -90,7 +90,7 @@ export default function OrgPortfolioPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[hsl(250,20%,2%)] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
       </div>
     );
@@ -98,7 +98,7 @@ export default function OrgPortfolioPage() {
 
   if (notFound || !org) {
     return (
-      <div className="min-h-screen bg-[hsl(250,20%,2%)] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <Building2 className="h-16 w-16 mx-auto text-gray-500" />
           <h1 className="text-xl font-semibold text-white">Portafolio no encontrado</h1>
@@ -106,7 +106,7 @@ export default function OrgPortfolioPage() {
           <Button
             variant="outline"
             onClick={() => window.location.href = '/'}
-            className="border-gray-700 text-gray-300 hover:bg-gray-800"
+            className="border-border text-foreground/80 hover:bg-muted"
           >
             Ir al inicio
           </Button>
@@ -118,7 +118,7 @@ export default function OrgPortfolioPage() {
   const accentColor = org.portfolio_color || org.primary_color || '#8B5CF6';
 
   return (
-    <div className="min-h-screen bg-[hsl(250,20%,2%)]">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         {/* Cover image or gradient */}
@@ -129,7 +129,7 @@ export default function OrgPortfolioPage() {
               alt=""
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[hsl(250,20%,2%)]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
           </div>
         ) : (
           <div
@@ -147,11 +147,11 @@ export default function OrgPortfolioPage() {
               <img
                 src={org.logo_url}
                 alt={org.name}
-                className="h-20 w-20 md:h-24 md:w-24 rounded-2xl border-4 border-[hsl(250,20%,4%)] object-cover shadow-xl"
+                className="h-20 w-20 md:h-24 md:w-24 rounded-2xl border-4 border-border object-cover shadow-xl"
               />
             ) : (
               <div
-                className="h-20 w-20 md:h-24 md:w-24 rounded-2xl border-4 border-[hsl(250,20%,4%)] flex items-center justify-center shadow-xl"
+                className="h-20 w-20 md:h-24 md:w-24 rounded-2xl border-4 border-border flex items-center justify-center shadow-xl"
                 style={{ backgroundColor: `${accentColor}30` }}
               >
                 <Building2 className="h-10 w-10" style={{ color: accentColor }} />
@@ -228,7 +228,7 @@ export default function OrgPortfolioPage() {
           </div>
           <a
             href="/"
-            className="text-sm text-gray-500 hover:text-gray-300 flex items-center gap-1"
+            className="text-sm text-gray-500 hover:text-foreground flex items-center gap-1"
           >
             kreoon.com <ExternalLink className="h-3 w-3" />
           </a>
@@ -258,7 +258,7 @@ function CreatorCard({ creator, accentColor }: { creator: PortfolioCreator; acce
     .toUpperCase() || '?';
 
   return (
-    <div className="group rounded-xl border border-gray-800 bg-[hsl(250,20%,4%)] p-4 hover:border-gray-700 transition-all hover:shadow-lg">
+    <div className="group rounded-xl border border-gray-800 bg-background p-4 hover:border-border transition-all hover:shadow-lg">
       <div className="flex flex-col items-center text-center">
         <Avatar className="h-20 w-20 mb-3 ring-2 ring-gray-800 group-hover:ring-gray-700 transition-all">
           <AvatarImage src={creator.avatar_url || ''} alt={creator.full_name} />

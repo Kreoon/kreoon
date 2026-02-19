@@ -35,7 +35,7 @@ function StatsPanel({ content }: { content: Content[] }) {
       {stats.map((stat, index) => (
         <motion.div
           key={stat.label}
-          className="p-3 rounded-xl bg-[hsl(250,20%,8%)] border border-[hsl(270,100%,60%,0.15)] text-center"
+          className="p-3 rounded-xl bg-muted border border-[hsl(270,100%,60%,0.15)] text-center"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.1 }}
@@ -46,7 +46,7 @@ function StatsPanel({ content }: { content: Content[] }) {
         >
           <stat.icon className="w-4 h-4 mx-auto mb-1" style={{ color: stat.color }} />
           <p className="text-lg font-bold text-white">{stat.value}</p>
-          <p className="text-[10px] text-[hsl(270,30%,55%)] uppercase tracking-wider">{stat.label}</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{stat.label}</p>
         </motion.div>
       ))}
     </div>
@@ -76,7 +76,7 @@ function DistributionChart({ content }: { content: Content[] }) {
   if (entries.length === 0) return null;
 
   return (
-    <div className="mb-4 p-4 rounded-xl bg-[hsl(250,20%,6%)] border border-[hsl(270,100%,60%,0.1)]">
+    <div className="mb-4 p-4 rounded-xl bg-card border border-[hsl(270,100%,60%,0.1)]">
       <p className="text-xs text-[hsl(270,60%,60%)] uppercase tracking-wider mb-3 font-semibold">
         Distribución por Estado
       </p>
@@ -89,10 +89,10 @@ function DistributionChart({ content }: { content: Content[] }) {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.1 }}
           >
-            <span className="text-xs w-20 text-[hsl(270,30%,55%)] capitalize">
+            <span className="text-xs w-20 text-muted-foreground capitalize">
               {STATUS_LABELS[status as keyof typeof STATUS_LABELS] || status}
             </span>
-            <div className="flex-1 h-2 bg-[hsl(250,20%,10%)] rounded-full overflow-hidden">
+            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
               <motion.div
                 className="h-full rounded-full"
                 style={{ 
@@ -131,7 +131,7 @@ export function TechKpiDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] bg-[hsl(250,20%,4%)] border-[hsl(270,100%,60%,0.2)] overflow-hidden">
+      <DialogContent className="max-w-2xl max-h-[85vh] bg-background border-[hsl(270,100%,60%,0.2)] overflow-hidden">
         {/* Background effects */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <motion.div
@@ -161,7 +161,7 @@ export function TechKpiDialog({
         <DialogHeader className="relative z-10">
           <DialogTitle className="flex items-center gap-3">
             <motion.div
-              className="p-2 rounded-lg bg-[hsl(270,100%,60%,0.15)] border border-[hsl(270,100%,60%,0.3)]"
+              className="p-2 rounded-lg bg-primary/15 border border-primary/30"
               animate={{
                 boxShadow: [
                   "0 0 0 0 hsl(270 100% 60% / 0)",
@@ -171,7 +171,7 @@ export function TechKpiDialog({
               }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              <Play className="w-5 h-5 text-[hsl(270,100%,70%)]" />
+              <Play className="w-5 h-5 text-primary" />
             </motion.div>
             <NeonText className="text-xl font-bold">{title}</NeonText>
             <motion.div
@@ -180,7 +180,7 @@ export function TechKpiDialog({
               transition={{ type: "spring", stiffness: 200 }}
             >
               <Badge 
-                className="bg-[hsl(270,100%,60%,0.2)] text-[hsl(270,100%,70%)] border-[hsl(270,100%,60%,0.3)]"
+                className="bg-primary/20 text-primary border-primary/30"
               >
                 {content.length} videos
               </Badge>
@@ -199,12 +199,12 @@ export function TechKpiDialog({
             <AnimatePresence>
               {content.length === 0 ? (
                 <motion.div 
-                  className="flex flex-col items-center justify-center h-32 text-[hsl(270,30%,55%)]"
+                  className="flex flex-col items-center justify-center h-32 text-muted-foreground"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                 >
                   <motion.div
-                    className="w-16 h-16 rounded-2xl bg-[hsl(250,20%,10%)] border border-[hsl(270,100%,60%,0.2)] flex items-center justify-center mb-4"
+                    className="w-16 h-16 rounded-2xl bg-muted border border-[hsl(270,100%,60%,0.2)] flex items-center justify-center mb-4"
                     animate={{ 
                       boxShadow: [
                         "0 0 0 0 hsl(270 100% 60% / 0)",
@@ -229,8 +229,8 @@ export function TechKpiDialog({
                       }}
                       className={cn(
                         "p-4 rounded-xl cursor-pointer transition-all",
-                        "bg-[hsl(250,20%,7%)] border border-[hsl(270,100%,60%,0.1)]",
-                        "hover:border-[hsl(270,100%,60%,0.3)] hover:bg-[hsl(250,20%,8%)]"
+                        "bg-card border border-[hsl(270,100%,60%,0.1)]",
+                        "hover:border-[hsl(270,100%,60%,0.3)] hover:bg-muted"
                       )}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -243,18 +243,18 @@ export function TechKpiDialog({
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
                           <motion.div 
-                            className="h-10 w-10 rounded-lg bg-[hsl(250,20%,10%)] border border-[hsl(270,100%,60%,0.2)] flex items-center justify-center overflow-hidden"
+                            className="h-10 w-10 rounded-lg bg-muted border border-[hsl(270,100%,60%,0.2)] flex items-center justify-center overflow-hidden"
                             whileHover={{ borderColor: "hsl(270 100% 60% / 0.5)" }}
                           >
                             {item.thumbnail_url ? (
                               <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover" />
                             ) : (
-                              <Play className="h-4 w-4 text-[hsl(270,100%,70%)]" />
+                              <Play className="h-4 w-4 text-primary" />
                             )}
                           </motion.div>
                           <div className="min-w-0">
                             <h4 className="font-medium text-sm truncate text-white">{item.title}</h4>
-                            <p className="text-xs text-[hsl(270,30%,55%)] mt-0.5">
+                            <p className="text-xs text-muted-foreground mt-0.5">
                               {item.client?.name || 'Sin cliente'}
                             </p>
                           </div>
@@ -274,7 +274,7 @@ export function TechKpiDialog({
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-3 mt-3 text-xs text-[hsl(270,30%,55%)]">
+                      <div className="flex flex-wrap items-center gap-3 mt-3 text-xs text-muted-foreground">
                         {item.creator?.full_name && (
                           <div className="flex items-center gap-1">
                             <User className="h-3 w-3 text-[hsl(270,100%,60%)]" />

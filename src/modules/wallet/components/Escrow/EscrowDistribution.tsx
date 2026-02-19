@@ -106,7 +106,7 @@ function CompactDistribution({
               'font-medium',
               r.type === 'creator' && 'text-emerald-400',
               r.type === 'editor' && 'text-blue-400',
-              r.type === 'platform' && 'text-[hsl(270,100%,70%)]'
+              r.type === 'platform' && 'text-primary'
             )}
           >
             {r.type === 'creator' ? 'Creador' : r.type === 'editor' ? 'Editor' : 'Fee'}:
@@ -114,7 +114,7 @@ function CompactDistribution({
           <span className="text-white">
             {formatCurrency(r.amount, currency)}
           </span>
-          <span className="text-[hsl(270,30%,50%)]">({r.percentage}%)</span>
+          <span className="text-muted-foreground">({r.percentage}%)</span>
           {index < recipients.length - 1 && (
             <span className="text-[hsl(270,30%,40%)] mx-1">│</span>
           )}
@@ -178,7 +178,7 @@ function FullDistribution({
       case 'editor':
         return 'text-blue-400';
       case 'platform':
-        return 'text-[hsl(270,100%,70%)]';
+        return 'text-primary';
     }
   };
 
@@ -201,7 +201,7 @@ function FullDistribution({
             />
           ))}
         </div>
-        <div className="flex justify-between text-xs text-[hsl(270,30%,50%)]">
+        <div className="flex justify-between text-xs text-muted-foreground">
           {recipients.map(r => (
             <span key={r.type}>{r.percentage}%</span>
           ))}
@@ -222,11 +222,11 @@ function FullDistribution({
                 {/* Avatar/Icon */}
                 {r.type === 'platform' ? (
                   <div className="p-2 rounded-lg bg-[hsl(270,100%,60%,0.1)]">
-                    <Building2 className="h-5 w-5 text-[hsl(270,100%,70%)]" />
+                    <Building2 className="h-5 w-5 text-primary" />
                   </div>
                 ) : r.status === 'unassigned' ? (
                   <div className="p-2 rounded-lg bg-[hsl(270,100%,60%,0.05)]">
-                    <HelpCircle className="h-5 w-5 text-[hsl(270,30%,50%)]" />
+                    <HelpCircle className="h-5 w-5 text-muted-foreground" />
                   </div>
                 ) : (
                   <Avatar className="h-10 w-10">
@@ -259,7 +259,7 @@ function FullDistribution({
                   <p className={cn('font-semibold', getTextColor(r.type))}>
                     {formatCurrency(r.amount, currency)}
                   </p>
-                  <p className="text-xs text-[hsl(270,30%,50%)]">{r.percentage}%</p>
+                  <p className="text-xs text-muted-foreground">{r.percentage}%</p>
                 </div>
               </div>
             </div>
@@ -269,7 +269,7 @@ function FullDistribution({
 
       {/* Total */}
       <div className="flex items-center justify-between pt-3 border-t border-[hsl(270,100%,60%,0.1)]">
-        <span className="text-sm text-[hsl(270,30%,60%)]">Total en Escrow</span>
+        <span className="text-sm text-muted-foreground">Total en Escrow</span>
         <span className="text-lg font-bold text-white">
           {formatCurrency(totalAmount, currency)}
         </span>
@@ -289,7 +289,7 @@ function StatusBadge({ status }: { status: Recipient['status'] }) {
   }
   if (status === 'unassigned') {
     return (
-      <Badge variant="outline" className="text-[10px] border-[hsl(270,30%,40%)] text-[hsl(270,30%,50%)] gap-1">
+      <Badge variant="outline" className="text-[10px] border-[hsl(270,30%,40%)] text-muted-foreground gap-1">
         <HelpCircle className="h-2.5 w-2.5" />
         Sin asignar
       </Badge>

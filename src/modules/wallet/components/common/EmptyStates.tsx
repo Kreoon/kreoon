@@ -30,13 +30,13 @@ export function NoWalletState({ className, onAction }: EmptyStateProps) {
       <div className="relative mb-6">
         <div className="absolute inset-0 bg-[hsl(270,100%,60%,0.2)] rounded-full blur-xl" />
         <div className="relative p-4 rounded-full bg-[hsl(270,100%,60%,0.1)] border border-[hsl(270,100%,60%,0.2)]">
-          <Wallet className="h-12 w-12 text-[hsl(270,100%,70%)]" />
+          <Wallet className="h-12 w-12 text-primary" />
         </div>
       </div>
       <h3 className="text-lg font-semibold text-white mb-2">
         Tu billetera está siendo creada
       </h3>
-      <p className="text-sm text-[hsl(270,30%,60%)] max-w-xs mb-6">
+      <p className="text-sm text-muted-foreground max-w-xs mb-6">
         Estamos configurando tu billetera. Esto solo toma un momento.
       </p>
       {onAction && (
@@ -70,7 +70,7 @@ export function NoTransactionsState({ className }: EmptyStateProps) {
       <h3 className="text-lg font-semibold text-white mb-2">
         Sin movimientos todavía
       </h3>
-      <p className="text-sm text-[hsl(270,30%,60%)] max-w-xs">
+      <p className="text-sm text-muted-foreground max-w-xs">
         Cuando realices transacciones, aparecerán aquí para que puedas
         llevar un control de tu actividad.
       </p>
@@ -95,7 +95,7 @@ export function NoWithdrawalsState({ className, onAction }: EmptyStateProps) {
       <h3 className="text-lg font-semibold text-white mb-2">
         Sin solicitudes de retiro
       </h3>
-      <p className="text-sm text-[hsl(270,30%,60%)] max-w-xs mb-6">
+      <p className="text-sm text-muted-foreground max-w-xs mb-6">
         Aún no has solicitado ningún retiro. Cuando tengas fondos disponibles,
         podrás retirarlos a tu cuenta bancaria o método de pago preferido.
       </p>
@@ -126,7 +126,7 @@ export function NoEscrowsState({ className }: EmptyStateProps) {
       <h3 className="text-lg font-semibold text-white mb-2">
         Sin escrows activos
       </h3>
-      <p className="text-sm text-[hsl(270,30%,60%)] max-w-xs">
+      <p className="text-sm text-muted-foreground max-w-xs">
         Los escrows se crean automáticamente cuando se asignan campañas o
         contenido. Protegen los pagos hasta que el trabajo sea aprobado.
       </p>
@@ -151,7 +151,7 @@ export function NoPaymentMethodsState({ className, onAction }: EmptyStateProps) 
       <h3 className="text-lg font-semibold text-white mb-2">
         Sin métodos de pago
       </h3>
-      <p className="text-sm text-[hsl(270,30%,60%)] max-w-xs mb-6">
+      <p className="text-sm text-muted-foreground max-w-xs mb-6">
         Agrega un método de pago para poder retirar tus fondos de forma rápida
         y segura.
       </p>
@@ -186,7 +186,7 @@ export function WalletErrorState({
       <h3 className="text-lg font-semibold text-white mb-2">
         Algo salió mal
       </h3>
-      <p className="text-sm text-[hsl(270,30%,60%)] max-w-xs mb-6">{message}</p>
+      <p className="text-sm text-muted-foreground max-w-xs mb-6">{message}</p>
       {onAction && (
         <Button
           variant="outline"
@@ -222,7 +222,7 @@ export function InsufficientBalanceState({
       <h3 className="text-base font-semibold text-white mb-2">
         Fondos insuficientes
       </h3>
-      <p className="text-sm text-[hsl(270,30%,60%)] max-w-xs">
+      <p className="text-sm text-muted-foreground max-w-xs">
         {requiredAmount && availableAmount ? (
           <>
             Necesitas <span className="text-white font-medium">{requiredAmount}</span>{' '}

@@ -43,11 +43,11 @@ export function AdminWithdrawalsPage({ className }: AdminWithdrawalsPageProps) {
       {/* Header */}
       <div className="flex items-center gap-4">
         <div className="p-3 rounded-2xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
-          <Shield className="h-8 w-8 text-[hsl(270,100%,70%)]" />
+          <Shield className="h-8 w-8 text-primary" />
         </div>
         <div>
           <h1 className="text-2xl font-bold text-white">Panel de Retiros</h1>
-          <p className="text-[hsl(270,30%,60%)]">
+          <p className="text-muted-foreground">
             Administración de solicitudes de retiro
           </p>
         </div>

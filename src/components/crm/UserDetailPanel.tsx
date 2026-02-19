@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { AlertTriangle, RefreshCw, Settings, ShieldCheck, KeyRound, Ban, Trash2 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { DetailPanelShell } from './DetailPanelShell';
 import { DetailSection } from './DetailSection';
 import { useRecalculateHealthScore, useFullUserDetail } from '@/hooks/useCrm';
+import { supabase } from '@/integrations/supabase/client';
 import { useCrmCustomFieldDefs, useUpdateUserCustomFields, useUpdateUserProfileFields } from '@/hooks/useCrmCustomFields';
 import { useAuth } from '@/hooks/useAuth';
 import type { UserWithHealth } from '@/services/crm/platformCrmService';
@@ -64,6 +65,20 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
 
   const recalculate = useRecalculateHealthScore();
   const { data: full, isLoading: fullLoading } = useFullUserDetail(user.id);
+
+  // Lightweight query for platform_access_unlocked (not in the full detail RPC)
+  const [platformAccessUnlocked, setPlatformAccessUnlocked] = useState<boolean | undefined>(undefined);
+  useEffect(() => {
+    supabase
+      .from('profiles')
+      .select('platform_access_unlocked')
+      .eq('id', user.id)
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        setPlatformAccessUnlocked(data?.platform_access_unlocked ?? undefined);
+      });
+  }, [user.id]);
 
   const handleActionComplete = useCallback(() => {
     // Invalidate the detail query so the panel refreshes with updated data
@@ -317,7 +332,7 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
               background: `conic-gradient(${healthColor} ${user.health_score * 3.6}deg, rgba(255,255,255,0.05) 0deg)`,
             }}
           >
-            <div className="absolute inset-1 rounded-full bg-[#0a0118] flex items-center justify-center">
+            <div className="absolute inset-1 rounded-full bg-popover flex items-center justify-center">
               <span className="text-lg font-bold" style={{ color: healthColor }}>
                 {user.health_score}
               </span>
@@ -424,6 +439,7 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
           isOwner={full?.is_owner ?? false}
           activeRole={full?.active_role || null}
           currentUserEmail={currentUserEmail}
+          platformAccessUnlocked={platformAccessUnlocked}
           onActionComplete={handleActionComplete}
         />
       )}

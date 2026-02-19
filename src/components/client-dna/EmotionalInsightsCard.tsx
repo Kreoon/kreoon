@@ -139,7 +139,7 @@ export function EmotionalInsightsCard({ analysis }: EmotionalInsightsCardProps) 
               </div>
               <span className="text-sm font-medium text-purple-400">Recomendaciones de KIRO</span>
             </div>
-            <p className="text-sm text-gray-300 mb-3">
+            <p className="text-sm text-foreground/80 mb-3">
               <span className="text-purple-400 font-medium">Tono sugerido:</span>{' '}
               {analysis.content_recommendations.suggested_tone}
             </p>

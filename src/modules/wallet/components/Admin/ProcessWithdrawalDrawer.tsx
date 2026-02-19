@@ -151,8 +151,8 @@ ${details}
                 <p className="font-medium text-white text-lg truncate">
                   {profile?.full_name || 'Usuario'}
                 </p>
-                <p className="text-sm text-[hsl(270,30%,60%)] truncate">{profile?.email}</p>
-                <div className="flex items-center gap-1 text-xs text-[hsl(270,30%,50%)] mt-1">
+                <p className="text-sm text-muted-foreground truncate">{profile?.email}</p>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
                   <Calendar className="h-3 w-3" />
                   Solicitado: {withdrawal.formattedDate}
                 </div>
@@ -162,11 +162,11 @@ ${details}
             {/* Amount summary */}
             <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
               <div className="text-center">
-                <p className="text-sm text-[hsl(270,30%,60%)]">Monto a pagar</p>
+                <p className="text-sm text-muted-foreground">Monto a pagar</p>
                 <p className="text-3xl font-bold text-emerald-400 mt-1">
                   {withdrawal.formattedNetAmount}
                 </p>
-                <p className="text-xs text-[hsl(270,30%,50%)] mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Solicitado: {withdrawal.formattedAmount} • Fee: {withdrawal.formattedFee}
                 </p>
               </div>
@@ -176,7 +176,7 @@ ${details}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-[hsl(270,100%,70%)]" />
+                  <Building2 className="h-4 w-4 text-primary" />
                   <span className="text-sm font-medium text-white">Destino del pago</span>
                 </div>
                 <Button variant="ghost" size="sm" onClick={copyAllDetails}>
@@ -187,14 +187,14 @@ ${details}
 
               <div className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)] space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-[hsl(270,30%,60%)]">Método</span>
+                  <span className="text-sm text-muted-foreground">Método</span>
                   <Badge variant="outline">{withdrawal.methodLabel}</Badge>
                 </div>
                 <Separator className="bg-[hsl(270,100%,60%,0.1)]" />
 
                 {Object.entries(withdrawal.payment_details).map(([key, value]) => (
                   <div key={key} className="flex items-center justify-between group">
-                    <span className="text-sm text-[hsl(270,30%,60%)] capitalize">
+                    <span className="text-sm text-muted-foreground capitalize">
                       {key.replace(/_/g, ' ')}
                     </span>
                     <div className="flex items-center gap-2">
@@ -249,7 +249,7 @@ ${details}
                   {...register('payment_proof_url')}
                   placeholder="https://... (opcional)"
                 />
-                <p className="text-xs text-[hsl(270,30%,50%)]">
+                <p className="text-xs text-muted-foreground">
                   URL de imagen o PDF del comprobante de pago
                 </p>
               </div>
@@ -297,7 +297,7 @@ ${details}
             </form>
 
             {/* Request info */}
-            <div className="text-xs text-[hsl(270,30%,50%)] space-y-1 pt-4">
+            <div className="text-xs text-muted-foreground space-y-1 pt-4">
               <p>ID: {withdrawal.id}</p>
               <p>Status: {withdrawal.statusLabel}</p>
             </div>

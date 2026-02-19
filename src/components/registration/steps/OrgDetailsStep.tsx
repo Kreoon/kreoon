@@ -75,7 +75,7 @@ export function OrgDetailsStep({ data, onChange, onNext, onBack, mode }: StepCom
     >
       <button
         onClick={onBack}
-        className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors mb-5"
+        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-5"
       >
         <ArrowLeft className="h-4 w-4" /> Atrás
       </button>
@@ -83,11 +83,11 @@ export function OrgDetailsStep({ data, onChange, onNext, onBack, mode }: StepCom
       <h2 className={cn('font-bold text-white mb-1', isCompact ? 'text-lg' : 'text-xl')}>
         Detalles de tu organización
       </h2>
-      <p className="text-sm text-gray-400 mb-5">Configura tu espacio de trabajo</p>
+      <p className="text-sm text-muted-foreground mb-5">Configura tu espacio de trabajo</p>
 
       {/* Org type */}
       <div className="mb-4">
-        <label className="block text-xs font-medium text-gray-300 mb-2">Tipo</label>
+        <label className="block text-xs font-medium text-foreground/80 mb-2">Tipo</label>
         <div className="grid grid-cols-2 gap-2">
           {ORG_TYPES.map(t => {
             const Icon = t.icon;
@@ -100,7 +100,7 @@ export function OrgDetailsStep({ data, onChange, onNext, onBack, mode }: StepCom
                   'flex flex-col items-center gap-1 rounded-lg border p-3 text-xs transition-all',
                   selected
                     ? 'border-amber-500/50 bg-amber-500/15 text-amber-300'
-                    : 'border-white/10 bg-white/[0.02] text-gray-400 hover:border-white/20',
+                    : 'border-border bg-muted/20 text-muted-foreground hover:border-border',
                 )}
               >
                 <Icon className="h-5 w-5" />
@@ -114,21 +114,21 @@ export function OrgDetailsStep({ data, onChange, onNext, onBack, mode }: StepCom
 
       {/* Name */}
       <div className="mb-4">
-        <label className="block text-xs font-medium text-gray-300 mb-1">Nombre</label>
+        <label className="block text-xs font-medium text-foreground/80 mb-1">Nombre</label>
         <input
           type="text"
           value={data.orgName}
           onChange={e => onChange({ orgName: e.target.value })}
           placeholder="Mi Organización"
-          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
+          className="w-full rounded-lg border border-border bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
         />
       </div>
 
       {/* Slug */}
       <div className="mb-4">
-        <label className="block text-xs font-medium text-gray-300 mb-1">URL de tu organización</label>
-        <div className="flex items-center rounded-lg border border-white/10 bg-white/5 overflow-hidden">
-          <span className="px-3 text-xs text-gray-500 border-r border-white/10">kreoon.com/org/</span>
+        <label className="block text-xs font-medium text-foreground/80 mb-1">URL de tu organización</label>
+        <div className="flex items-center rounded-lg border border-border bg-white/5 overflow-hidden">
+          <span className="px-3 text-xs text-gray-500 border-r border-border">kreoon.com/org/</span>
           <input
             type="text"
             value={data.orgSlug}
@@ -146,7 +146,7 @@ export function OrgDetailsStep({ data, onChange, onNext, onBack, mode }: StepCom
 
       {/* Plan selection */}
       <div className="mb-4">
-        <label className="block text-xs font-medium text-gray-300 mb-2">Plan (30 días gratis)</label>
+        <label className="block text-xs font-medium text-foreground/80 mb-2">Plan (30 días gratis)</label>
         <div className="space-y-2">
           {PLAN_OPTIONS.map(plan => {
             const selected = data.selectedPlan === plan.id;
@@ -158,7 +158,7 @@ export function OrgDetailsStep({ data, onChange, onNext, onBack, mode }: StepCom
                   'w-full text-left rounded-lg border p-3 transition-all',
                   selected
                     ? 'border-amber-500/50 bg-amber-500/10'
-                    : 'border-white/10 bg-white/[0.02] hover:border-white/20',
+                    : 'border-border bg-muted/20 hover:border-border',
                 )}
               >
                 <div className="flex items-center justify-between mb-1">
@@ -167,7 +167,7 @@ export function OrgDetailsStep({ data, onChange, onNext, onBack, mode }: StepCom
                   </span>
                   {selected && <Check className="h-4 w-4 text-amber-400" />}
                 </div>
-                <p className="text-[11px] text-gray-400">{plan.description}</p>
+                <p className="text-[11px] text-muted-foreground">{plan.description}</p>
                 <div className="flex flex-wrap gap-x-3 mt-1.5">
                   {plan.features.map(f => (
                     <span key={f} className="text-[10px] text-gray-500">{f}</span>

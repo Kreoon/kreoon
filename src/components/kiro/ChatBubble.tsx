@@ -105,7 +105,7 @@ export function ChatBubble({
             <MarkdownRenderer content={message} />
           ) : (
             // Mensajes del usuario: texto plano
-            <span className="text-[13px] text-gray-300 whitespace-pre-wrap leading-relaxed">
+            <span className="text-[13px] text-foreground/80 whitespace-pre-wrap leading-relaxed">
               {message}
             </span>
           )}

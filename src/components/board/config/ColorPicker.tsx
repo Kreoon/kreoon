@@ -44,7 +44,7 @@ export function ColorPicker({ value, onChange, className }: ColorPickerProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-72 p-4 bg-[#0a0118] border-[#8b5cf6]/30"
+        className="w-72 p-4 bg-popover border-[#8b5cf6]/30"
         align="start"
       >
         <div className="space-y-3">

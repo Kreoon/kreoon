@@ -28,7 +28,7 @@ export const UserChip = forwardRef<HTMLDivElement, UserChipProps>(
         }}
       >
         <AvatarImage src={avatarUrl || undefined} />
-        <AvatarFallback className="text-[10px] font-semibold bg-white/10 text-white">
+        <AvatarFallback className="text-[10px] font-semibold bg-primary/20 text-primary">
           {(name || "?").charAt(0).toUpperCase()}
         </AvatarFallback>
       </Avatar>

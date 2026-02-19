@@ -124,10 +124,10 @@ export function WithdrawalStatusTimeline({
                   <Check className="h-4 w-4 text-emerald-400" />
                 )}
                 {step.status === 'current' && (
-                  <Loader2 className="h-4 w-4 text-[hsl(270,100%,70%)] animate-spin" />
+                  <Loader2 className="h-4 w-4 text-primary animate-spin" />
                 )}
                 {step.status === 'pending' && (
-                  <Clock className="h-4 w-4 text-[hsl(270,30%,50%)]" />
+                  <Clock className="h-4 w-4 text-muted-foreground" />
                 )}
                 {step.status === 'error' && (
                   <XCircle className="h-4 w-4 text-red-400" />
@@ -156,13 +156,13 @@ export function WithdrawalStatusTimeline({
                   'font-medium',
                   step.status === 'completed' && 'text-emerald-400',
                   step.status === 'current' && 'text-white',
-                  step.status === 'pending' && 'text-[hsl(270,30%,50%)]',
+                  step.status === 'pending' && 'text-muted-foreground',
                   step.status === 'error' && 'text-red-400'
                 )}
               >
                 {step.title}
               </p>
-              <p className="text-sm text-[hsl(270,30%,60%)] mt-0.5">
+              <p className="text-sm text-muted-foreground mt-0.5">
                 {step.description}
               </p>
               {step.timestamp && (

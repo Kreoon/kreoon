@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { invokeProductResearch } from '@/lib/productResearch';
+import { invokeAIWithTokens } from '@/lib/ai/token-gate';
 import { ResearchProgressIndicator } from './ResearchProgressIndicator';
 import { toast } from 'sonner';
 
@@ -812,18 +813,14 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
           ? `Reescribe y mejora este ${fieldLabel}: ${base}`
           : `Crea un ${fieldLabel} impactante para este producto.`;
 
-      const { data, error } = await supabase.functions.invoke('multi-ai', {
-        body: {
-          models: ['gemini'],
-          mode: 'first',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-        }
-      });
-
-      if (error) throw error;
+      const data = await invokeAIWithTokens('multi-ai', 'scripts.generate', {
+        models: ['gemini'],
+        mode: 'first',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+      }, profile?.current_organization_id);
 
       // multi-ai returns response for combined/first mode
       const aiText = (data?.response || data?.responses?.[0]?.content || '').trim();

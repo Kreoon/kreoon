@@ -54,11 +54,11 @@ export default function MarketplaceInvitationsPage() {
   const invitations = tab === 'sent' ? sent : received;
 
   return (
-    <div className="min-h-full bg-[#0a0a0f]">
+    <div className="min-h-full bg-background">
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <UserPlus className="h-6 w-6 text-purple-400" />
             Invitaciones de Reclutamiento
           </h1>
@@ -70,14 +70,14 @@ export default function MarketplaceInvitationsPage() {
           <button
             onClick={() => setTab('sent')}
             className={cn('flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all',
-              tab === 'sent' ? 'text-white border-purple-500' : 'text-gray-500 border-transparent hover:text-gray-300')}
+              tab === 'sent' ? 'text-foreground border-purple-500' : 'text-gray-500 border-transparent hover:text-foreground')}
           >
             <Send className="h-4 w-4" /> Enviadas {sent.length > 0 && `(${sent.length})`}
           </button>
           <button
             onClick={() => setTab('received')}
             className={cn('flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all',
-              tab === 'received' ? 'text-white border-purple-500' : 'text-gray-500 border-transparent hover:text-gray-300')}
+              tab === 'received' ? 'text-foreground border-purple-500' : 'text-gray-500 border-transparent hover:text-foreground')}
           >
             <Inbox className="h-4 w-4" /> Recibidas {received.length > 0 && `(${received.length})`}
           </button>
@@ -113,7 +113,7 @@ export default function MarketplaceInvitationsPage() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white">
+                  <p className="text-sm font-medium text-foreground">
                     {tab === 'sent'
                       ? inv.creator?.full_name || 'Creador'
                       : (inv as any).organization?.name || 'Organización'

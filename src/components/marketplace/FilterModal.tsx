@@ -88,7 +88,7 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
       />
 
       {/* Modal */}
-      <div className="relative bg-[#1a1a2e] border border-white/10 rounded-t-2xl sm:rounded-2xl max-w-lg w-full max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-300 sm:animate-in sm:fade-in sm:zoom-in-95">
+      <div className="relative bg-card border border-white/10 rounded-t-2xl sm:rounded-2xl max-w-lg w-full max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-300 sm:animate-in sm:fade-in sm:zoom-in-95">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
           <div className="w-8" />
@@ -270,7 +270,7 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-white/10 bg-[#1a1a2e]">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-white/10 bg-card">
           <button
             onClick={handleClear}
             className="text-purple-400 underline text-sm hover:text-white transition-colors"

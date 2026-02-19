@@ -76,7 +76,7 @@ export function PendingWithdrawals({ className }: PendingWithdrawalsProps) {
               </div>
               <div>
                 <p className="text-2xl font-bold text-white">{pendingCount}</p>
-                <p className="text-sm text-[hsl(270,30%,60%)]">Pendientes</p>
+                <p className="text-sm text-muted-foreground">Pendientes</p>
               </div>
             </div>
           </CardContent>
@@ -89,7 +89,7 @@ export function PendingWithdrawals({ className }: PendingWithdrawalsProps) {
               </div>
               <div>
                 <p className="text-2xl font-bold text-white">{processingCount}</p>
-                <p className="text-sm text-[hsl(270,30%,60%)]">Procesando</p>
+                <p className="text-sm text-muted-foreground">Procesando</p>
               </div>
             </div>
           </CardContent>
@@ -98,13 +98,13 @@ export function PendingWithdrawals({ className }: PendingWithdrawalsProps) {
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-xl bg-[hsl(270,100%,60%,0.1)]">
-                <AlertCircle className="h-6 w-6 text-[hsl(270,100%,70%)]" />
+                <AlertCircle className="h-6 w-6 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-white">
                   ${totalPendingAmount.toLocaleString()}
                 </p>
-                <p className="text-sm text-[hsl(270,30%,60%)]">Total por procesar</p>
+                <p className="text-sm text-muted-foreground">Total por procesar</p>
               </div>
             </div>
           </CardContent>
@@ -118,7 +118,7 @@ export function PendingWithdrawals({ className }: PendingWithdrawalsProps) {
             <CardTitle>Solicitudes de Retiro</CardTitle>
             <div className="flex items-center gap-2">
               <div className="relative flex-1 sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(270,30%,50%)]" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar..."
                   value={searchQuery}
@@ -168,7 +168,7 @@ export function PendingWithdrawals({ className }: PendingWithdrawalsProps) {
           ) : filteredWithdrawals.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <CheckCircle className="h-12 w-12 text-emerald-400/30 mb-4" />
-              <p className="text-[hsl(270,30%,60%)]">No hay solicitudes pendientes</p>
+              <p className="text-muted-foreground">No hay solicitudes pendientes</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -209,10 +209,10 @@ export function PendingWithdrawals({ className }: PendingWithdrawalsProps) {
                             {withdrawal.statusLabel}
                           </Badge>
                         </div>
-                        <p className="text-sm text-[hsl(270,30%,60%)] truncate">
+                        <p className="text-sm text-muted-foreground truncate">
                           {profile?.email}
                         </p>
-                        <p className="text-xs text-[hsl(270,30%,50%)]">
+                        <p className="text-xs text-muted-foreground">
                           {withdrawal.methodLabel} • {withdrawal.paymentSummary}
                         </p>
                       </div>
@@ -222,10 +222,10 @@ export function PendingWithdrawals({ className }: PendingWithdrawalsProps) {
                         <p className="text-lg font-bold text-white">
                           {withdrawal.formattedNetAmount}
                         </p>
-                        <p className="text-xs text-[hsl(270,30%,50%)]">
+                        <p className="text-xs text-muted-foreground">
                           Solicitado: {withdrawal.formattedAmount}
                         </p>
-                        <p className="text-xs text-[hsl(270,30%,50%)]">
+                        <p className="text-xs text-muted-foreground">
                           {withdrawal.formattedDate}
                         </p>
                       </div>

@@ -57,7 +57,7 @@ export function CampaignDetail({ campaignId }: CampaignDetailProps) {
 
   if (!campaign) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <Megaphone className="h-12 w-12 text-gray-600 mx-auto" />
           <h2 className="text-white font-semibold">Campana no encontrada</h2>
@@ -82,9 +82,9 @@ export function CampaignDetail({ campaignId }: CampaignDetailProps) {
   const canApply = campaign.status === 'active' && isCreator && !myApplication;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f]">
+    <div className="min-h-screen bg-background">
       {/* Top nav */}
-      <div className="border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur-sm sticky top-0 z-10">
+      <div className="border-b border-white/10 bg-background/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center gap-3">
             <button
@@ -134,13 +134,13 @@ export function CampaignDetail({ campaignId }: CampaignDetailProps) {
 
             {/* Description */}
             <div className="bg-white/5 rounded-xl p-5">
-              <h2 className="text-sm font-semibold text-gray-300 mb-3">Descripcion</h2>
-              <p className="text-gray-300 text-sm leading-relaxed">{campaign.description}</p>
+              <h2 className="text-sm font-semibold text-foreground/80 mb-3">Descripcion</h2>
+              <p className="text-foreground/80 text-sm leading-relaxed">{campaign.description}</p>
             </div>
 
             {/* Content requirements */}
             <div className="bg-white/5 rounded-xl p-5">
-              <h2 className="text-sm font-semibold text-gray-300 mb-3">Contenido Requerido</h2>
+              <h2 className="text-sm font-semibold text-foreground/80 mb-3">Contenido Requerido</h2>
               <div className="space-y-3">
                 {campaign.content_requirements.map((req, i) => (
                   <div key={i} className="flex items-start gap-3 bg-white/5 rounded-lg p-3">
@@ -161,7 +161,7 @@ export function CampaignDetail({ campaignId }: CampaignDetailProps) {
 
             {/* Creator requirements */}
             <div className="bg-white/5 rounded-xl p-5">
-              <h2 className="text-sm font-semibold text-gray-300 mb-3">Perfil de Creador Buscado</h2>
+              <h2 className="text-sm font-semibold text-foreground/80 mb-3">Perfil de Creador Buscado</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="flex items-center gap-2">
                   <Star className="h-4 w-4 text-yellow-400" />
@@ -212,7 +212,7 @@ export function CampaignDetail({ campaignId }: CampaignDetailProps) {
           {/* Sidebar */}
           <div className="lg:w-80 space-y-4">
             {/* Budget card */}
-            <div className="bg-[#1a1a2e]/80 border border-white/10 rounded-xl p-5 space-y-4 sticky top-24">
+            <div className="bg-card/80 border border-white/10 rounded-xl p-5 space-y-4 sticky top-24">
               <div className={cn('flex items-center gap-2 px-3 py-2 rounded-lg', typeConfig.bg)}>
                 <TypeIcon className={cn('h-5 w-5', typeConfig.color)} />
                 <span className={cn('text-sm font-medium', typeConfig.color)}>{typeConfig.label}</span>

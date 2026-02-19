@@ -34,19 +34,19 @@ export function HiringStepPayment({
             <div className="space-y-3 pl-9">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 text-xs font-bold">1</div>
-                <span className="text-gray-300 text-sm">Pagas ahora — el dinero queda en escrow</span>
+                <span className="text-foreground/80 text-sm">Pagas ahora — el dinero queda en escrow</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 text-xs font-bold">2</div>
-                <span className="text-gray-300 text-sm">El creador produce el contenido</span>
+                <span className="text-foreground/80 text-sm">El creador produce el contenido</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 text-xs font-bold">3</div>
-                <span className="text-gray-300 text-sm">Revisas y apruebas (o pides cambios)</span>
+                <span className="text-foreground/80 text-sm">Revisas y apruebas (o pides cambios)</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-300 text-xs font-bold">4</div>
-                <span className="text-gray-300 text-sm">Al aprobar, se libera el pago al creador</span>
+                <span className="text-foreground/80 text-sm">Al aprobar, se libera el pago al creador</span>
               </div>
             </div>
           </div>
@@ -77,19 +77,19 @@ export function HiringStepPayment({
             <div className="space-y-3 pl-9">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-300 text-xs font-bold">1</div>
-                <span className="text-gray-300 text-sm">Confirmas el proyecto</span>
+                <span className="text-foreground/80 text-sm">Confirmas el proyecto</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-300 text-xs font-bold">2</div>
-                <span className="text-gray-300 text-sm">Envias el producto a la direccion del creador</span>
+                <span className="text-foreground/80 text-sm">Envias el producto a la direccion del creador</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-300 text-xs font-bold">3</div>
-                <span className="text-gray-300 text-sm">El creador recibe y produce el contenido</span>
+                <span className="text-foreground/80 text-sm">El creador recibe y produce el contenido</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-300 text-xs font-bold">4</div>
-                <span className="text-gray-300 text-sm">Revisas y apruebas el contenido</span>
+                <span className="text-foreground/80 text-sm">Revisas y apruebas el contenido</span>
               </div>
             </div>
           </div>

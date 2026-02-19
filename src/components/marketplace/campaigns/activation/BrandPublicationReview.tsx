@@ -205,7 +205,7 @@ function PublicationCard({
   const showRemoveReport = publication.verification_status === 'verified' && publication.is_still_live;
 
   return (
-    <div className="bg-[#1a1a2e]/80 border border-white/5 rounded-xl p-5 space-y-4">
+    <div className="bg-card/80 border border-white/5 rounded-xl p-5 space-y-4">
       {/* Creator + Platform + Status */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
@@ -313,7 +313,7 @@ function PublicationCard({
 
         <button
           onClick={onViewMetrics}
-          className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-gray-300 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ml-auto"
+          className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-foreground/80 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ml-auto"
         >
           <BarChart3 className="h-4 w-4" />
           Métricas

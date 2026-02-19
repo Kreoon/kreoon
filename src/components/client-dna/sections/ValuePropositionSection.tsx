@@ -28,7 +28,7 @@ export function ValuePropositionSection({ data, isEditing, onFieldChange }: Prop
               {isEditing ? (
                 <EditableText value={data.main_problem_solved} onChange={change('main_problem_solved') as (v: string) => void} multiline placeholder="Problema principal..." />
               ) : (
-                <p className="text-sm text-gray-300">{data.main_problem_solved}</p>
+                <p className="text-sm text-foreground/80">{data.main_problem_solved}</p>
               )}
             </div>
           )}
@@ -44,7 +44,7 @@ export function ValuePropositionSection({ data, isEditing, onFieldChange }: Prop
               {isEditing ? (
                 <EditableText value={data.solution_description} onChange={change('solution_description') as (v: string) => void} multiline placeholder="Tu solución..." />
               ) : (
-                <p className="text-sm text-gray-300">{data.solution_description}</p>
+                <p className="text-sm text-foreground/80">{data.solution_description}</p>
               )}
             </div>
           )}
@@ -62,7 +62,7 @@ export function ValuePropositionSection({ data, isEditing, onFieldChange }: Prop
               {data.key_benefits?.map((benefit, i) => (
                 <div key={i} className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-sm text-gray-300">{benefit}</span>
+                  <span className="text-sm text-foreground/80">{benefit}</span>
                 </div>
               ))}
             </div>
@@ -95,7 +95,7 @@ export function ValuePropositionSection({ data, isEditing, onFieldChange }: Prop
           ) : (
             <div className="space-y-2">
               {data.proof_points?.map((proof, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm text-gray-300">
+                <div key={i} className="flex items-center gap-2 text-sm text-foreground/80">
                   <ArrowRight className="w-3 h-3 text-pink-400" />
                   {proof}
                 </div>
@@ -122,7 +122,7 @@ export function ValuePropositionSection({ data, isEditing, onFieldChange }: Prop
           {isEditing ? (
             <EditableText value={data.brand_promise} onChange={change('brand_promise') as (v: string) => void} multiline placeholder="Promesa de marca..." />
           ) : (
-            <p className="text-sm text-gray-300">{data.brand_promise}</p>
+            <p className="text-sm text-foreground/80">{data.brand_promise}</p>
           )}
         </div>
       )}

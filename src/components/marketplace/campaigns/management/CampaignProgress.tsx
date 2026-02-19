@@ -87,7 +87,7 @@ export function CampaignProgress({ campaignId }: CampaignProgressProps) {
 
       {/* Approved creators list */}
       <div>
-        <h3 className="text-sm font-semibold text-gray-300 mb-3">Creadores Asignados</h3>
+        <h3 className="text-sm font-semibold text-foreground/80 mb-3">Creadores Asignados</h3>
         {approvedApps.length > 0 ? (
           <div className="space-y-3">
             {approvedApps.map(app => (
@@ -104,7 +104,7 @@ export function CampaignProgress({ campaignId }: CampaignProgressProps) {
 
 function KpiCard({ icon: Icon, label, value, color }: { icon: React.ElementType; label: string; value: string | number; color: string }) {
   return (
-    <div className="bg-[#1a1a2e]/80 border border-white/10 rounded-xl p-4">
+    <div className="bg-card/80 border border-white/10 rounded-xl p-4">
       <div className="flex items-center gap-2">
         <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', color)}>
           <Icon className="h-4 w-4" />
@@ -148,7 +148,7 @@ function CreatorProgressRow({ application, projectInfo }: { application: Campaig
       </div>
       <div className="flex items-center gap-2">
         {projectInfo ? (
-          <span className={cn('text-xs px-2 py-0.5 rounded-full flex items-center gap-1', PROJECT_STATUS_COLORS[projectInfo.status] || 'bg-white/10 text-gray-300')}>
+          <span className={cn('text-xs px-2 py-0.5 rounded-full flex items-center gap-1', PROJECT_STATUS_COLORS[projectInfo.status] || 'bg-white/10 text-foreground/80')}>
             <FolderOpen className="h-3 w-3" />
             {PROJECT_STATUS_LABELS[projectInfo.status] || projectInfo.status}
           </span>

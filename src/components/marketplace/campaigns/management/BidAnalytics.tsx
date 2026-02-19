@@ -16,7 +16,7 @@ export function BidAnalytics({ applications, campaign }: BidAnalyticsProps) {
 
   if (bids.length === 0) {
     return (
-      <div className="bg-[#1a1a2e]/80 border border-white/10 rounded-xl p-5 text-center">
+      <div className="bg-card/80 border border-white/10 rounded-xl p-5 text-center">
         <BarChart3 className="h-8 w-8 text-gray-600 mx-auto mb-2" />
         <p className="text-gray-500 text-sm">Aun no hay ofertas para analizar</p>
       </div>
@@ -46,9 +46,9 @@ export function BidAnalytics({ applications, campaign }: BidAnalyticsProps) {
     : null;
 
   return (
-    <div className="bg-[#1a1a2e]/80 border border-white/10 rounded-xl p-5 space-y-5">
+    <div className="bg-card/80 border border-white/10 rounded-xl p-5 space-y-5">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-300 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-foreground/80 flex items-center gap-2">
           <BarChart3 className="h-4 w-4 text-orange-400" />
           Analisis de Ofertas
         </h3>

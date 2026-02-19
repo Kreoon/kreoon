@@ -85,7 +85,7 @@ export function RecentTransactions({
       </CardHeader>
       <CardContent>
         {transactions.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-[hsl(270,30%,60%)]">
+          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
             <DollarSign className="h-10 w-10 mb-3 opacity-30" />
             <p className="text-sm">No hay transacciones todavía</p>
           </div>
@@ -122,7 +122,7 @@ export function RecentTransactions({
                         'h-5 w-5',
                         transaction.isCredit
                           ? 'text-emerald-400'
-                          : 'text-[hsl(270,100%,70%)]'
+                          : 'text-primary'
                       )}
                     />
                   </div>
@@ -143,7 +143,7 @@ export function RecentTransactions({
                         {transaction.statusLabel}
                       </Badge>
                     </div>
-                    <p className="text-xs text-[hsl(270,30%,60%)] truncate">
+                    <p className="text-xs text-muted-foreground truncate">
                       {transaction.description || transaction.formattedDate}
                     </p>
                   </div>
@@ -160,7 +160,7 @@ export function RecentTransactions({
                       {transaction.formattedAmount}
                     </p>
                     {transaction.fee > 0 && (
-                      <p className="text-xs text-[hsl(270,30%,50%)]">
+                      <p className="text-xs text-muted-foreground">
                         Fee: {transaction.formattedFee}
                       </p>
                     )}

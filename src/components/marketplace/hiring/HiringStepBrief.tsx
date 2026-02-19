@@ -97,7 +97,7 @@ export function HiringStepBrief({ data, onChange }: HiringStepBriefProps) {
     <div className="space-y-6">
       {/* Product name */}
       <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-300">
+        <label className="text-sm font-medium text-foreground/80">
           Nombre del producto / marca <span className="text-pink-400">*</span>
         </label>
         <input
@@ -110,7 +110,7 @@ export function HiringStepBrief({ data, onChange }: HiringStepBriefProps) {
 
       {/* Product URL */}
       <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-300">
+        <label className="text-sm font-medium text-foreground/80">
           URL del producto <span className="text-gray-500">(opcional)</span>
         </label>
         <input
@@ -123,13 +123,13 @@ export function HiringStepBrief({ data, onChange }: HiringStepBriefProps) {
 
       {/* Objective */}
       <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-300">
+        <label className="text-sm font-medium text-foreground/80">
           Objetivo del contenido <span className="text-pink-400">*</span>
         </label>
         <select
           value={data.objective}
           onChange={e => onChange('objective', e.target.value)}
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500 [&>option]:bg-[#1a1a2e]"
+          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500 [&>option]:bg-card"
         >
           <option value="">Selecciona un objetivo</option>
           {OBJECTIVES.map(obj => (
@@ -140,7 +140,7 @@ export function HiringStepBrief({ data, onChange }: HiringStepBriefProps) {
 
       {/* Target audience */}
       <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-300">Audiencia objetivo</label>
+        <label className="text-sm font-medium text-foreground/80">Audiencia objetivo</label>
         <input
           value={data.target_audience}
           onChange={e => onChange('target_audience', e.target.value)}
@@ -151,7 +151,7 @@ export function HiringStepBrief({ data, onChange }: HiringStepBriefProps) {
 
       {/* Key messages */}
       <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-300">Mensajes clave</label>
+        <label className="text-sm font-medium text-foreground/80">Mensajes clave</label>
         <TagInput
           value={data.key_messages}
           onChange={v => onChange('key_messages', v)}
@@ -161,11 +161,11 @@ export function HiringStepBrief({ data, onChange }: HiringStepBriefProps) {
 
       {/* Tone */}
       <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-300">Tono del contenido</label>
+        <label className="text-sm font-medium text-foreground/80">Tono del contenido</label>
         <select
           value={data.tone}
           onChange={e => onChange('tone', e.target.value)}
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500 [&>option]:bg-[#1a1a2e]"
+          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500 [&>option]:bg-card"
         >
           <option value="">Selecciona un tono</option>
           {TONES.map(t => (
@@ -176,7 +176,7 @@ export function HiringStepBrief({ data, onChange }: HiringStepBriefProps) {
 
       {/* Dos */}
       <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-300">Que SI hacer</label>
+        <label className="text-sm font-medium text-foreground/80">Que SI hacer</label>
         <TagInput
           value={data.dos}
           onChange={v => onChange('dos', v)}
@@ -186,7 +186,7 @@ export function HiringStepBrief({ data, onChange }: HiringStepBriefProps) {
 
       {/* Don'ts */}
       <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-300">Que NO hacer</label>
+        <label className="text-sm font-medium text-foreground/80">Que NO hacer</label>
         <TagInput
           value={data.donts}
           onChange={v => onChange('donts', v)}
@@ -196,7 +196,7 @@ export function HiringStepBrief({ data, onChange }: HiringStepBriefProps) {
 
       {/* Deadline */}
       <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-300">
+        <label className="text-sm font-medium text-foreground/80">
           Fecha limite <span className="text-gray-500">(opcional)</span>
         </label>
         <input
@@ -209,7 +209,7 @@ export function HiringStepBrief({ data, onChange }: HiringStepBriefProps) {
 
       {/* Notes */}
       <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-300">
+        <label className="text-sm font-medium text-foreground/80">
           Notas adicionales <span className="text-gray-500">(opcional)</span>
         </label>
         <textarea

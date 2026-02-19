@@ -248,7 +248,7 @@ export function KiroGame({
   // Render
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="relative w-full h-[200px] bg-[#0f0f1e]/80 rounded-xl overflow-hidden border border-violet-500/20">
+    <div className="relative w-full h-[200px] bg-card/80 rounded-xl overflow-hidden border border-violet-500/20">
       {/* Confetti canvas */}
       <KiroConfetti
         ref={confettiRef}
@@ -279,7 +279,7 @@ export function KiroGame({
           <div
             className={cn(
               'flex items-center gap-1.5 text-xs mb-3',
-              bonusesRemaining > 0 ? 'text-green-400' : 'text-gray-500'
+              bonusesRemaining > 0 ? 'text-green-400' : 'text-muted-foreground'
             )}
           >
             <Zap className="w-3 h-3" />
@@ -291,7 +291,7 @@ export function KiroGame({
           </div>
 
           {/* Frase motivacional */}
-          <p className="text-sm text-gray-400 mb-4">{motivationPhrase}</p>
+          <p className="text-sm text-muted-foreground mb-4">{motivationPhrase}</p>
 
           {/* Botón jugar */}
           <button
@@ -313,7 +313,7 @@ export function KiroGame({
               kiroSounds.play('action_click');
               onClose();
             }}
-            className="absolute top-2 right-2 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-500 hover:text-gray-300 transition-colors"
+            className="absolute top-2 right-2 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -334,7 +334,7 @@ export function KiroGame({
             <span
               className={cn(
                 'font-mono text-xs',
-                timeLeft <= 5 ? 'text-red-400' : 'text-gray-400'
+                timeLeft <= 5 ? 'text-red-400' : 'text-muted-foreground'
               )}
             >
               {timeLeft}s
@@ -344,7 +344,7 @@ export function KiroGame({
                 kiroSounds.play('action_click');
                 onClose();
               }}
-              className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-500 hover:text-gray-300 transition-colors"
+              className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -377,7 +377,7 @@ export function KiroGame({
 
           {/* Instructions */}
           {timeLeft === GAME_DURATION && (
-            <div className="absolute bottom-2 left-0 right-0 text-center text-xs text-gray-500">
+            <div className="absolute bottom-2 left-0 right-0 text-center text-xs text-muted-foreground">
               ¡Toca los tokens para ganar puntos!
             </div>
           )}
@@ -402,7 +402,7 @@ export function KiroGame({
             </div>
           )}
 
-          <div className="text-sm text-gray-400 mb-2">¡Tokens capturados!</div>
+          <div className="text-sm text-muted-foreground mb-2">¡Tokens capturados!</div>
 
           {/* UP Points ganados */}
           {upPointsEarned > 0 && (
@@ -414,7 +414,7 @@ export function KiroGame({
 
           {/* Razón si no se otorgaron puntos */}
           {bonusReason && upPointsEarned === 0 && (
-            <div className="text-xs text-gray-500 mb-2">
+            <div className="text-xs text-muted-foreground mb-2">
               {bonusReason}
             </div>
           )}

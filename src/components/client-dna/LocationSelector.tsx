@@ -50,7 +50,7 @@ export function LocationSelector({ selectedLocations, onChange }: LocationSelect
             key={preset.id}
             onClick={() => applyPreset(preset.id)}
             className="px-3 py-1.5 text-xs bg-gray-800 hover:bg-gray-700
-                       text-gray-300 rounded-full transition-colors"
+                       text-foreground/80 rounded-full transition-colors"
           >
             {preset.name}
           </button>

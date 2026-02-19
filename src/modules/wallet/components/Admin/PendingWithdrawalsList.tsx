@@ -133,7 +133,7 @@ export function PendingWithdrawalsList({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-2">
           <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(270,30%,50%)]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por usuario, email..."
               value={searchQuery}
@@ -163,7 +163,7 @@ export function PendingWithdrawalsList({
 
         <div className="flex items-center gap-2">
           {selectedIds.size > 0 && (
-            <span className="text-sm text-[hsl(270,30%,60%)]">
+            <span className="text-sm text-muted-foreground">
               {selectedIds.size} seleccionado{selectedIds.size > 1 ? 's' : ''}
             </span>
           )}
@@ -198,7 +198,7 @@ export function PendingWithdrawalsList({
           ) : filteredWithdrawals.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16">
               <CheckCircle className="h-12 w-12 text-emerald-400/30 mb-4" />
-              <p className="text-[hsl(270,30%,60%)]">No hay solicitudes pendientes</p>
+              <p className="text-muted-foreground">No hay solicitudes pendientes</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -254,7 +254,7 @@ export function PendingWithdrawalsList({
                               <p className="font-medium text-white truncate max-w-[150px]">
                                 {profile?.full_name || 'Usuario'}
                               </p>
-                              <p className="text-xs text-[hsl(270,30%,60%)] truncate max-w-[150px]">
+                              <p className="text-xs text-muted-foreground truncate max-w-[150px]">
                                 {profile?.email}
                               </p>
                             </div>
@@ -265,7 +265,7 @@ export function PendingWithdrawalsList({
                             <p className="font-semibold text-white">
                               {withdrawal.formattedNetAmount}
                             </p>
-                            <p className="text-xs text-[hsl(270,30%,50%)]">
+                            <p className="text-xs text-muted-foreground">
                               (Total: {withdrawal.formattedAmount})
                             </p>
                           </div>
@@ -276,12 +276,12 @@ export function PendingWithdrawalsList({
                           </Badge>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
-                          <p className="text-sm text-[hsl(270,30%,60%)] truncate max-w-[150px]">
+                          <p className="text-sm text-muted-foreground truncate max-w-[150px]">
                             {withdrawal.paymentSummary}
                           </p>
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
-                          <p className="text-xs text-[hsl(270,30%,50%)]">
+                          <p className="text-xs text-muted-foreground">
                             {withdrawal.formattedDate}
                           </p>
                         </TableCell>

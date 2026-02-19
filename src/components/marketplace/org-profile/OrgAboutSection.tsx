@@ -47,7 +47,7 @@ export function OrgAboutSection({ org }: OrgAboutSectionProps) {
           <h3 className="text-sm font-semibold text-white mb-2">Especialidades</h3>
           <div className="flex flex-wrap gap-2">
             {org.org_specialties.map(spec => (
-              <span key={spec} className="px-3 py-1.5 rounded-lg text-sm capitalize bg-white/5 text-gray-300 border border-white/5">
+              <span key={spec} className="px-3 py-1.5 rounded-lg text-sm capitalize bg-white/5 text-foreground/80 border border-white/5">
                 {spec}
               </span>
             ))}

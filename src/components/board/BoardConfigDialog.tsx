@@ -316,7 +316,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="w-full max-w-[95vw] sm:max-w-3xl md:max-w-4xl lg:max-w-5xl p-0 gap-0 overflow-hidden flex flex-col bg-[#0a0118]/95 backdrop-blur-xl border-[#8b5cf6]/20"
+        className="w-full max-w-[95vw] sm:max-w-3xl md:max-w-4xl lg:max-w-5xl p-0 gap-0 overflow-hidden flex flex-col bg-popover/95 backdrop-blur-xl border-[#8b5cf6]/20"
         aria-describedby="board-config-description"
       >
         <Tabs defaultValue="statuses" className="flex h-full overflow-hidden">
@@ -339,7 +339,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
                     value={tab.id}
                     className={cn(
                       "w-full justify-start gap-2 h-10 px-4 rounded-none border-l-2 border-transparent mt-0.5",
-                      "data-[state=active]:border-[#a855f7] data-[state=active]:bg-[#a855f7]/10 data-[state=active]:text-[#a78bfa]",
+                      "data-[state=active]:border-primary data-[state=active]:bg-primary/10 data-[state=active]:text-primary",
                       "hover:bg-white/5 text-[#94a3b8]"
                     )}
                   >

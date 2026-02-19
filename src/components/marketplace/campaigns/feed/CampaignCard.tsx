@@ -44,7 +44,7 @@ export function CampaignCard({ campaign, onClick }: CampaignCardProps) {
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-[#1a1a2e]/80 backdrop-blur border border-white/5 rounded-xl p-5 hover:border-purple-500/30 transition-all group"
+      className="w-full text-left bg-card/80 backdrop-blur border border-white/5 rounded-xl p-5 hover:border-purple-500/30 transition-all group"
     >
       {/* Header: Brand + Status */}
       <div className="flex items-start justify-between mb-3">

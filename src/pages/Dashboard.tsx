@@ -705,7 +705,7 @@ export default function Dashboard() {
             transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
           />
           <motion.p
-            className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-[hsl(270,100%,70%)] whitespace-nowrap"
+            className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-primary whitespace-nowrap"
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           >
@@ -1092,7 +1092,7 @@ export default function Dashboard() {
 
             {/* Row 2: Content Status Pipeline - Tech Style */}
             <motion.div 
-              className="rounded-xl border border-[hsl(270,100%,60%,0.15)] bg-gradient-to-br from-[hsl(250,20%,7%)] to-[hsl(250,20%,5%)] p-4"
+              className="rounded-xl border border-[hsl(270,100%,60%,0.15)] bg-gradient-to-br from-card to-card p-4"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}

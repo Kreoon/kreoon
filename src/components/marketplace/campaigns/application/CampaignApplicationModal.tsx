@@ -136,9 +136,9 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
     <div className="fixed inset-0 z-[100]">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="absolute inset-0 flex items-center justify-center p-4">
-        <div className="relative bg-[#0f0f1a] border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="relative bg-card border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
           {/* Header */}
-          <div className="sticky top-0 bg-[#0f0f1a]/95 backdrop-blur-sm border-b border-white/10 px-6 py-4 flex items-center justify-between">
+          <div className="sticky top-0 bg-card/95 backdrop-blur-sm border-b border-white/10 px-6 py-4 flex items-center justify-between">
             <div>
               <h2 className="text-white font-semibold">
                 {isBidMode ? 'Hacer Oferta' : 'Aplicar a Campana'}
@@ -185,7 +185,7 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
 
             {/* Cover letter */}
             <div>
-              <label className="text-gray-300 text-sm font-medium block mb-1.5">
+              <label className="text-foreground/80 text-sm font-medium block mb-1.5">
                 Carta de Presentacion <span className="text-red-400">*</span>
               </label>
               <textarea
@@ -201,7 +201,7 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
             {/* Price / Bid input (only for paid campaigns) */}
             {isPaidCampaign && (
               <div>
-                <label className="text-gray-300 text-sm font-medium block mb-1.5">
+                <label className="text-foreground/80 text-sm font-medium block mb-1.5">
                   {isBidMode ? (
                     <>Tu Oferta ({campaign.currency}) <span className="text-red-400">*</span></>
                   ) : (
@@ -244,7 +244,7 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
             {/* Bid message (auction/range only) */}
             {isBidMode && (
               <div>
-                <label className="text-gray-300 text-sm font-medium block mb-1.5">
+                <label className="text-foreground/80 text-sm font-medium block mb-1.5">
                   Mensaje de Oferta (opcional)
                 </label>
                 <textarea
@@ -282,7 +282,7 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
 
             {/* Estimated delivery days */}
             <div>
-              <label className="text-gray-300 text-sm font-medium block mb-1.5">
+              <label className="text-foreground/80 text-sm font-medium block mb-1.5">
                 <span className="flex items-center gap-1.5">
                   <Clock className="h-3.5 w-3.5 text-gray-500" />
                   Tiempo de entrega estimado
@@ -321,7 +321,7 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
 
             {/* Portfolio links */}
             <div>
-              <label className="text-gray-300 text-sm font-medium block mb-1.5">
+              <label className="text-foreground/80 text-sm font-medium block mb-1.5">
                 Links de Portafolio
               </label>
               <div className="flex gap-2">
@@ -356,7 +356,7 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
 
             {/* Availability date */}
             <div>
-              <label className="text-gray-300 text-sm font-medium block mb-1.5">
+              <label className="text-foreground/80 text-sm font-medium block mb-1.5">
                 Disponibilidad <span className="text-red-400">*</span>
               </label>
               <div className="relative">

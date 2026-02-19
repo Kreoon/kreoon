@@ -47,7 +47,7 @@ export function BusinessIdentitySection({ data, isEditing, onFieldChange }: Prop
           {isEditing ? (
             <EditableText value={data.description} onChange={change('description')} multiline placeholder="Descripción del negocio..." />
           ) : (
-            <p className="text-sm text-gray-300 leading-relaxed">{data.description}</p>
+            <p className="text-sm text-foreground/80 leading-relaxed">{data.description}</p>
           )}
         </div>
       )}
@@ -63,7 +63,7 @@ export function BusinessIdentitySection({ data, isEditing, onFieldChange }: Prop
           {isEditing ? (
             <EditableText value={data.origin_story} onChange={change('origin_story')} multiline placeholder="Historia de origen..." />
           ) : (
-            <p className="text-gray-300 leading-relaxed italic">{data.origin_story}</p>
+            <p className="text-foreground/80 leading-relaxed italic">{data.origin_story}</p>
           )}
         </div>
       )}
@@ -78,7 +78,7 @@ export function BusinessIdentitySection({ data, isEditing, onFieldChange }: Prop
           {isEditing ? (
             <EditableText value={data.mission} onChange={change('mission')} multiline placeholder="Misión del negocio..." />
           ) : (
-            <p className="text-sm text-gray-300 leading-relaxed">{data.mission}</p>
+            <p className="text-sm text-foreground/80 leading-relaxed">{data.mission}</p>
           )}
         </div>
       )}
@@ -106,7 +106,7 @@ export function BusinessIdentitySection({ data, isEditing, onFieldChange }: Prop
           {isEditing ? (
             <EditableText value={data.competitive_landscape} onChange={change('competitive_landscape')} multiline placeholder="Panorama competitivo..." />
           ) : (
-            <p className="text-sm text-gray-300 leading-relaxed">{data.competitive_landscape}</p>
+            <p className="text-sm text-foreground/80 leading-relaxed">{data.competitive_landscape}</p>
           )}
         </div>
       )}

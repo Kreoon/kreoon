@@ -125,7 +125,7 @@ export function WithdrawalForm({
       <CardHeader>
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
-            <ArrowUpCircle className="h-6 w-6 text-[hsl(270,100%,70%)]" />
+            <ArrowUpCircle className="h-6 w-6 text-primary" />
           </div>
           <div>
             <CardTitle>Solicitar Retiro</CardTitle>
@@ -154,7 +154,7 @@ export function WithdrawalForm({
           <div className="space-y-2">
             <Label htmlFor="amount">Monto a retirar</Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(270,30%,60%)]">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                 $
               </span>
               <Input
@@ -200,7 +200,7 @@ export function WithdrawalForm({
               <div className="h-12 bg-[hsl(270,100%,60%,0.05)] rounded-lg animate-pulse" />
             ) : methods.length === 0 ? (
               <div className="p-4 rounded-lg bg-[hsl(270,100%,60%,0.05)] text-center">
-                <p className="text-sm text-[hsl(270,30%,60%)]">
+                <p className="text-sm text-muted-foreground">
                   No tienes métodos de pago configurados
                 </p>
                 <Button
@@ -226,11 +226,11 @@ export function WithdrawalForm({
                     <SelectItem key={method.id} value={method.id}>
                       <div className="flex items-center gap-2">
                         <span>{method.label}</span>
-                        <span className="text-xs text-[hsl(270,30%,50%)]">
+                        <span className="text-xs text-muted-foreground">
                           ({method.typeLabel})
                         </span>
                         {method.is_default && (
-                          <span className="text-xs text-[hsl(270,100%,70%)]">
+                          <span className="text-xs text-primary">
                             • Default
                           </span>
                         )}
@@ -249,16 +249,16 @@ export function WithdrawalForm({
           {selectedMethod && amount > 0 && (
             <div className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)] space-y-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-[hsl(270,30%,60%)]">Monto solicitado</span>
+                <span className="text-muted-foreground">Monto solicitado</span>
                 <span className="text-white">{formatCurrency(amount, wallet.currency)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-[hsl(270,30%,60%)]">Comisión ({selectedMethod.typeLabel})</span>
+                <span className="text-muted-foreground">Comisión ({selectedMethod.typeLabel})</span>
                 <span className="text-amber-400">-{formatCurrency(fee, wallet.currency)}</span>
               </div>
               <div className="h-px bg-[hsl(270,100%,60%,0.1)]" />
               <div className="flex items-center justify-between">
-                <span className="text-[hsl(270,30%,60%)] font-medium">Recibirás</span>
+                <span className="text-muted-foreground font-medium">Recibirás</span>
                 <span className="text-lg font-bold text-emerald-400">
                   {formatCurrency(netAmount, wallet.currency)}
                 </span>

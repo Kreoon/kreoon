@@ -51,10 +51,10 @@ export function WalletDashboard({ className }: WalletDashboardProps) {
         <BalanceBreakdown wallet={walletDisplay} />
         <QuickActions
           wallet={walletDisplay}
-          onWithdraw={() => navigate('/wallet/withdraw')}
-          onHistory={() => navigate('/wallet/transactions')}
-          onPaymentMethods={() => navigate('/wallet/payment-methods')}
-          onSettings={() => navigate('/wallet/settings')}
+          onWithdraw={() => navigate('/wallet?tab=withdrawals')}
+          onHistory={() => navigate('/wallet?tab=transactions')}
+          onPaymentMethods={() => navigate('/wallet?tab=payment-methods')}
+          onSettings={() => navigate('/wallet')}
         />
       </div>
 
@@ -62,8 +62,8 @@ export function WalletDashboard({ className }: WalletDashboardProps) {
       <RecentTransactions
         transactions={transactions}
         isLoading={isTransactionsLoading}
-        onViewAll={() => navigate('/wallet/transactions')}
-        onViewTransaction={(t) => navigate(`/wallet/transactions/${t.id}`)}
+        onViewAll={() => navigate('/wallet?tab=transactions')}
+        onViewTransaction={(t) => navigate('/wallet?tab=transactions')}
       />
     </div>
   );

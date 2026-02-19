@@ -62,7 +62,7 @@ export const RoleCategoryBar = memo(function RoleCategoryBar({ active, onChange 
       {canScrollLeft && (
         <button
           onClick={() => scroll('left')}
-          className="absolute left-0 z-10 h-8 w-8 rounded-full bg-[#0a0a0f]/90 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+          className="absolute left-0 z-10 h-8 w-8 rounded-full bg-background/90 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -99,7 +99,7 @@ export const RoleCategoryBar = memo(function RoleCategoryBar({ active, onChange 
       {canScrollRight && (
         <button
           onClick={() => scroll('right')}
-          className="absolute right-0 z-10 h-8 w-8 rounded-full bg-[#0a0a0f]/90 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+          className="absolute right-0 z-10 h-8 w-8 rounded-full bg-background/90 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
         >
           <ChevronRight className="h-4 w-4" />
         </button>

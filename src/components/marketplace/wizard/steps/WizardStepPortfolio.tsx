@@ -64,7 +64,7 @@ function SortablePortfolioItem({
       )}
     >
       {/* Thumbnail */}
-      <div className="aspect-[9/16] bg-[#1a1a2e] relative">
+      <div className="aspect-[9/16] bg-card relative">
         {item.thumbnail_url || (item.media_type === 'image' && item.media_url) ? (
           <img
             src={item.thumbnail_url || item.media_url}
@@ -218,7 +218,7 @@ export function WizardStepPortfolio({
         {adding ? (
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="h-10 w-10 text-purple-400 animate-spin" />
-            <p className="text-gray-300 text-sm">Subiendo...</p>
+            <p className="text-foreground/80 text-sm">Subiendo...</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3">
@@ -277,7 +277,7 @@ export function WizardStepPortfolio({
       {items.length === 0 && !adding && (
         <div className="p-4 rounded-xl bg-white/5 border border-white/10">
           <p className="text-gray-400 text-sm">
-            <strong className="text-gray-300">Tips:</strong> Sube al menos 3 piezas de tu mejor trabajo.
+            <strong className="text-foreground/80">Tips:</strong> Sube al menos 3 piezas de tu mejor trabajo.
             Los videos verticales (9:16) tienen mejor rendimiento. Puedes destacar hasta 3 items.
           </p>
         </div>

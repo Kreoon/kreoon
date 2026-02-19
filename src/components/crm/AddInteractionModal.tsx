@@ -193,7 +193,7 @@ export function AddInteractionModal({
                 <SelectTrigger className="bg-white/5 border-white/10 text-white">
                   <SelectValue placeholder="Seleccionar resultado" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0a0118] border-[#8b5cf6]/30">
+                <SelectContent className="bg-popover border-[#8b5cf6]/30">
                   {OUTCOMES.map((o) => (
                     <SelectItem key={o} value={o} className="text-white focus:bg-white/10">
                       {INTERACTION_OUTCOME_LABELS[o]}

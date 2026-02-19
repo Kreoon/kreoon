@@ -457,7 +457,7 @@ export function ContactDetailPanel({
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44 bg-[#0a0118] border-[#8b5cf6]/30">
+              <DropdownMenuContent align="end" className="w-44 bg-popover border-[#8b5cf6]/30">
                 <DropdownMenuItem
                   onClick={() => setEditingName(true)}
                   className="gap-2 text-white focus:bg-white/10"
@@ -598,7 +598,7 @@ export function ContactDetailPanel({
                     <SelectTrigger className="bg-white/5 border-white/10 text-white h-9">
                       <SelectValue placeholder="Seleccionar etapa" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#0a0118] border-[#8b5cf6]/30">
+                    <SelectContent className="bg-popover border-[#8b5cf6]/30">
                       {allStages.map((s) => (
                         <SelectItem
                           key={s.name}

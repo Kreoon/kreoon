@@ -43,7 +43,7 @@ export function BalanceCard({ wallet, isLoading, showBreakdown = true, className
       <Card className={cn('relative overflow-hidden', className)}>
         <CardContent className="flex flex-col items-center justify-center py-12">
           <Wallet className="h-12 w-12 text-[hsl(270,100%,60%,0.3)] mb-4" />
-          <p className="text-[hsl(270,30%,60%)]">No tienes un wallet activo</p>
+          <p className="text-muted-foreground">No tienes un wallet activo</p>
         </CardContent>
       </Card>
     );
@@ -58,7 +58,7 @@ export function BalanceCard({ wallet, isLoading, showBreakdown = true, className
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <div className="p-2 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
-              <Wallet className="h-5 w-5 text-[hsl(270,100%,70%)]" />
+              <Wallet className="h-5 w-5 text-primary" />
             </div>
             <span>Mi Wallet</span>
           </CardTitle>
@@ -69,9 +69,9 @@ export function BalanceCard({ wallet, isLoading, showBreakdown = true, className
             className="h-8 w-8"
           >
             {isHidden ? (
-              <EyeOff className="h-4 w-4 text-[hsl(270,30%,60%)]" />
+              <EyeOff className="h-4 w-4 text-muted-foreground" />
             ) : (
-              <Eye className="h-4 w-4 text-[hsl(270,30%,60%)]" />
+              <Eye className="h-4 w-4 text-muted-foreground" />
             )}
           </Button>
         </div>
@@ -81,7 +81,7 @@ export function BalanceCard({ wallet, isLoading, showBreakdown = true, className
         <div className="space-y-6">
           {/* Total Balance */}
           <div>
-            <p className="text-sm text-[hsl(270,30%,60%)] mb-1">Balance Total</p>
+            <p className="text-sm text-muted-foreground mb-1">Balance Total</p>
             <AnimatePresence mode="wait">
               <motion.div
                 key={isHidden ? 'hidden' : 'visible'}
@@ -112,7 +112,7 @@ export function BalanceCard({ wallet, isLoading, showBreakdown = true, className
               <div className="p-3 rounded-xl bg-[hsl(270,100%,60%,0.08)] border border-[hsl(270,100%,60%,0.1)]">
                 <div className="flex items-center gap-1.5 mb-1">
                   <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
-                  <span className="text-xs text-[hsl(270,30%,60%)]">Disponible</span>
+                  <span className="text-xs text-muted-foreground">Disponible</span>
                 </div>
                 <p className="text-lg font-semibold text-emerald-400">
                   {wallet.formattedAvailable}
@@ -123,7 +123,7 @@ export function BalanceCard({ wallet, isLoading, showBreakdown = true, className
               <div className="p-3 rounded-xl bg-[hsl(270,100%,60%,0.08)] border border-[hsl(270,100%,60%,0.1)]">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Clock className="h-3.5 w-3.5 text-amber-400" />
-                  <span className="text-xs text-[hsl(270,30%,60%)]">Pendiente</span>
+                  <span className="text-xs text-muted-foreground">Pendiente</span>
                 </div>
                 <p className="text-lg font-semibold text-amber-400">
                   {wallet.formattedPending}
@@ -133,10 +133,10 @@ export function BalanceCard({ wallet, isLoading, showBreakdown = true, className
               {/* Reserved */}
               <div className="p-3 rounded-xl bg-[hsl(270,100%,60%,0.08)] border border-[hsl(270,100%,60%,0.1)]">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <Lock className="h-3.5 w-3.5 text-[hsl(270,100%,70%)]" />
-                  <span className="text-xs text-[hsl(270,30%,60%)]">Reservado</span>
+                  <Lock className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-xs text-muted-foreground">Reservado</span>
                 </div>
-                <p className="text-lg font-semibold text-[hsl(270,100%,70%)]">
+                <p className="text-lg font-semibold text-primary">
                   {wallet.formattedReserved}
                 </p>
               </div>

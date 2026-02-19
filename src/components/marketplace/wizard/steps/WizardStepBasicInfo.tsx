@@ -53,7 +53,7 @@ export function WizardStepBasicInfo({ data, avatarUrl, bannerUrl, onChange }: Wi
         {/* Avatar overlay */}
         <div className="absolute -bottom-10 left-6">
           <div className="relative">
-            <div className="w-20 h-20 rounded-full bg-[#1a1a2e] border-4 border-[#0a0a0f] overflow-hidden flex items-center justify-center">
+            <div className="w-20 h-20 rounded-full bg-card border-4 border-[#0a0a0f] overflow-hidden flex items-center justify-center">
               {avatarUrl ? (
                 <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
               ) : (
@@ -71,7 +71,7 @@ export function WizardStepBasicInfo({ data, avatarUrl, bannerUrl, onChange }: Wi
       {/* Name & Tagline */}
       <div className="space-y-5">
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">Nombre profesional *</label>
+          <label className="block text-sm font-medium text-foreground/80 mb-2">Nombre profesional *</label>
           <input
             type="text"
             value={data.display_name}
@@ -82,7 +82,7 @@ export function WizardStepBasicInfo({ data, avatarUrl, bannerUrl, onChange }: Wi
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">Tagline profesional</label>
+          <label className="block text-sm font-medium text-foreground/80 mb-2">Tagline profesional</label>
           <input
             type="text"
             value={data.tagline}
@@ -95,7 +95,7 @@ export function WizardStepBasicInfo({ data, avatarUrl, bannerUrl, onChange }: Wi
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">Bio extendida del marketplace</label>
+          <label className="block text-sm font-medium text-foreground/80 mb-2">Bio extendida del marketplace</label>
           <textarea
             value={data.bio_full}
             onChange={(e) => update('bio_full', e.target.value.slice(0, 1000))}
@@ -110,7 +110,7 @@ export function WizardStepBasicInfo({ data, avatarUrl, bannerUrl, onChange }: Wi
         {/* Location */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground/80 mb-2">
               <MapPin className="inline h-3.5 w-3.5 mr-1" />
               Ciudad
             </label>
@@ -123,14 +123,14 @@ export function WizardStepBasicInfo({ data, avatarUrl, bannerUrl, onChange }: Wi
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Pais</label>
+            <label className="block text-sm font-medium text-foreground/80 mb-2">Pais</label>
             <select
               value={data.location_country}
               onChange={(e) => update('location_country', e.target.value)}
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
             >
               {COUNTRIES.map(c => (
-                <option key={c.code} value={c.code} className="bg-[#1a1a2e]">{c.label}</option>
+                <option key={c.code} value={c.code} className="bg-card">{c.label}</option>
               ))}
             </select>
           </div>

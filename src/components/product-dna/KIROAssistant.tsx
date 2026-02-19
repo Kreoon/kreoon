@@ -22,7 +22,7 @@ export function KIROAssistant({ message, onDismiss }: KIROAssistantProps) {
 
         <div className="flex-1 min-w-0">
           <p className="text-xs font-medium text-purple-400 mb-1">KIRO sugiere</p>
-          <p className="text-sm text-gray-300 leading-relaxed">{message}</p>
+          <p className="text-sm text-foreground/80 leading-relaxed">{message}</p>
         </div>
 
         <button

@@ -122,7 +122,7 @@ export function WithdrawalFormDrawer({
           >
             {/* Available balance */}
             <div className="text-center p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)]">
-              <p className="text-sm text-[hsl(270,30%,60%)] mb-1">Disponible para retiro</p>
+              <p className="text-sm text-muted-foreground mb-1">Disponible para retiro</p>
               <p className="text-2xl font-bold text-white">{wallet.formattedAvailable}</p>
             </div>
 
@@ -140,7 +140,7 @@ export function WithdrawalFormDrawer({
             <div className="space-y-2">
               <Label>¿Cuánto deseas retirar?</Label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg text-[hsl(270,30%,60%)]">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg text-muted-foreground">
                   $
                 </span>
                 <Input
@@ -153,7 +153,7 @@ export function WithdrawalFormDrawer({
                   className="pl-8 pr-16 text-xl h-14 text-center font-semibold"
                   placeholder="0.00"
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[hsl(270,30%,60%)]">
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
                   {wallet.currency}
                 </span>
               </div>
@@ -161,7 +161,7 @@ export function WithdrawalFormDrawer({
 
             {/* Quick percentages */}
             <div className="space-y-2">
-              <Label className="text-xs text-[hsl(270,30%,60%)]">Monto rápido:</Label>
+              <Label className="text-xs text-muted-foreground">Monto rápido:</Label>
               <div className="grid grid-cols-4 gap-2">
                 {QUICK_PERCENTAGES.map((pct) => (
                   <Button
@@ -183,7 +183,7 @@ export function WithdrawalFormDrawer({
             </div>
 
             {/* Limits info */}
-            <div className="flex items-center justify-between text-xs text-[hsl(270,30%,60%)]">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>Mínimo: {formatCurrency(minAmount, wallet.currency)}</span>
               <span>Máximo: {wallet.formattedAvailable}</span>
             </div>
@@ -192,11 +192,11 @@ export function WithdrawalFormDrawer({
             {amount > 0 && selectedMethod && (
               <div className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)] space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-[hsl(270,30%,60%)]">Comisión estimada</span>
+                  <span className="text-muted-foreground">Comisión estimada</span>
                   <span className="text-amber-400">-{formatCurrency(fee, wallet.currency)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[hsl(270,30%,60%)]">Recibirás</span>
+                  <span className="text-muted-foreground">Recibirás</span>
                   <span className="font-semibold text-emerald-400">
                     {formatCurrency(netAmount, wallet.currency)}
                   </span>
@@ -325,7 +325,7 @@ export function WithdrawalFormDrawer({
               <h3 className="text-xl font-semibold text-white mb-2">
                 ¡Solicitud Enviada!
               </h3>
-              <p className="text-[hsl(270,30%,60%)]">
+              <p className="text-muted-foreground">
                 Tu solicitud de retiro por{' '}
                 <span className="text-white font-medium">
                   {formatCurrency(netAmount, wallet.currency)}
@@ -335,10 +335,10 @@ export function WithdrawalFormDrawer({
             </div>
 
             <div className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)] text-left space-y-2">
-              <p className="text-sm text-[hsl(270,30%,60%)]">
+              <p className="text-sm text-muted-foreground">
                 <span className="text-white">¿Qué sigue?</span>
               </p>
-              <ul className="text-sm text-[hsl(270,30%,60%)] space-y-1">
+              <ul className="text-sm text-muted-foreground space-y-1">
                 <li>• Nuestro equipo revisará tu solicitud</li>
                 <li>• Tiempo estimado de procesamiento: 1-3 días hábiles</li>
                 <li>• Te notificaremos cuando el pago sea enviado</li>
@@ -359,12 +359,12 @@ export function WithdrawalFormDrawer({
         <SheetHeader className="pb-6">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
-              <ArrowUpCircle className="h-6 w-6 text-[hsl(270,100%,70%)]" />
+              <ArrowUpCircle className="h-6 w-6 text-primary" />
             </div>
             <div>
               <SheetTitle>Solicitar Retiro</SheetTitle>
               {step !== 'success' && (
-                <p className="text-xs text-[hsl(270,30%,60%)] mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Paso {step === 'amount' ? '1' : step === 'method' ? '2' : '3'} de 3
                 </p>
               )}

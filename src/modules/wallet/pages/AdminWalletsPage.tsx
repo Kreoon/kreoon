@@ -18,8 +18,6 @@ import {
   WithdrawalStats,
   WalletOverview,
 } from '../components/Admin';
-import { ComingSoonBanner, DemoModeIndicator } from '../components/common';
-import { isWalletEnabled } from '../config';
 
 type TabValue = 'withdrawals' | 'wallets' | 'stats';
 
@@ -37,9 +35,6 @@ export function AdminWalletsPage() {
   const initialTab = (searchParams.get('tab') as TabValue) || 'withdrawals';
   const [activeTab, setActiveTab] = useState<TabValue>(initialTab);
   const [isRefreshing, setIsRefreshing] = useState(false);
-
-  // Feature flags
-  const walletEnabled = isWalletEnabled();
 
   const handleTabChange = (value: string) => {
     setActiveTab(value as TabValue);
@@ -60,7 +55,7 @@ export function AdminWalletsPage() {
         <div className="flex flex-col items-center justify-center py-16">
           <Shield className="h-16 w-16 text-destructive/30 mb-4" />
           <h2 className="text-xl font-semibold text-white">Acceso Denegado</h2>
-          <p className="text-[hsl(270,30%,60%)] mt-2">
+          <p className="text-muted-foreground mt-2">
             No tienes permisos para acceder a esta sección
           </p>
           <Button className="mt-4" onClick={() => navigate('/')}>
@@ -73,9 +68,6 @@ export function AdminWalletsPage() {
 
   return (
     <div className="container mx-auto py-6 px-4 max-w-7xl">
-      {/* Coming Soon Banner */}
-      {!walletEnabled && <ComingSoonBanner variant="compact" className="mb-6" />}
-
       {/* Header */}
       <div className="mb-6">
         <Button
@@ -91,13 +83,13 @@ export function AdminWalletsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
-              <Wallet className="h-8 w-8 text-[hsl(270,100%,70%)]" />
+              <Wallet className="h-8 w-8 text-primary" />
             </div>
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-[hsl(270,100%,85%)] to-[hsl(270,100%,70%)] bg-clip-text text-transparent">
                 Gestión de Wallets
               </h1>
-              <p className="text-[hsl(270,30%,60%)] mt-1">
+              <p className="text-muted-foreground mt-1">
                 Administra retiros, wallets y transacciones de la plataforma
               </p>
             </div>
@@ -128,7 +120,7 @@ export function AdminWalletsPage() {
                 value={tab.value}
                 className={cn(
                   'flex items-center gap-2 px-4 py-2.5 data-[state=active]:bg-[hsl(270,100%,60%,0.15)] data-[state=active]:text-white',
-                  'text-[hsl(270,30%,60%)] hover:text-white transition-colors'
+                  'text-muted-foreground hover:text-white transition-colors'
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -154,8 +146,6 @@ export function AdminWalletsPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Demo Mode Indicator */}
-      {!walletEnabled && <DemoModeIndicator />}
     </div>
   );
 }

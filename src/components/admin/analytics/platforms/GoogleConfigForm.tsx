@@ -26,7 +26,7 @@ export function GoogleConfigForm({ data, onChange, hasExistingToken }: GoogleCon
   return (
     <div className="space-y-4">
       <div className="space-y-1.5">
-        <Label htmlFor="g-conversion" className="text-gray-300">
+        <Label htmlFor="g-conversion" className="text-foreground/80">
           Conversion ID <span className="text-red-400">*</span>
         </Label>
         <Input
@@ -48,7 +48,7 @@ export function GoogleConfigForm({ data, onChange, hasExistingToken }: GoogleCon
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="g-token" className="text-gray-300">
+        <Label htmlFor="g-token" className="text-foreground/80">
           Conversion Label / API Secret <span className="text-red-400">*</span>
         </Label>
         <Input
@@ -79,7 +79,7 @@ export function GoogleConfigForm({ data, onChange, hasExistingToken }: GoogleCon
 
       <div className="flex items-center justify-between p-3 rounded-lg bg-gray-800/30 border border-gray-700/30">
         <div>
-          <Label className="text-gray-300">Modo Test</Label>
+          <Label className="text-foreground/80">Modo Test</Label>
           <p className="text-xs text-gray-500 mt-0.5">
             Los eventos no se envían a Google hasta que OAuth2 esté configurado
           </p>
@@ -92,7 +92,7 @@ export function GoogleConfigForm({ data, onChange, hasExistingToken }: GoogleCon
 
       {data.test_mode && (
         <div className="space-y-1.5">
-          <Label htmlFor="g-test-code" className="text-gray-300">Test Event Code</Label>
+          <Label htmlFor="g-test-code" className="text-foreground/80">Test Event Code</Label>
           <Input
             id="g-test-code"
             value={data.test_event_code}

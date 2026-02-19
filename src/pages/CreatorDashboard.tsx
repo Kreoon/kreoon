@@ -119,7 +119,7 @@ export default function CreatorDashboard() {
             <Loader2 className="w-12 h-12 text-primary relative z-10" />
           </motion.div>
           <motion.p
-            className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-[hsl(270,100%,70%)] whitespace-nowrap"
+            className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-primary whitespace-nowrap"
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           >
@@ -355,7 +355,7 @@ export default function CreatorDashboard() {
                           {completedCount} de {totalAssigned} completados
                         </motion.span>
                       </div>
-                      <div className="h-3 bg-[hsl(250,20%,10%)] rounded-full overflow-hidden border border-[hsl(270,100%,60%,0.2)]">
+                      <div className="h-3 bg-muted rounded-full overflow-hidden border border-[hsl(270,100%,60%,0.2)]">
                         <motion.div 
                           className="h-full rounded-full relative overflow-hidden"
                           style={{ 
@@ -374,7 +374,7 @@ export default function CreatorDashboard() {
                         </motion.div>
                       </div>
                       <div className="flex items-center justify-between mt-2">
-                        <p className="text-xs text-[hsl(270,30%,55%)]">
+                        <p className="text-xs text-muted-foreground">
                           {progressPercent.toFixed(0)}% de tu contenido ha sido aprobado o entregado
                         </p>
                         <motion.div
@@ -421,13 +421,13 @@ export default function CreatorDashboard() {
                         }}
                         transition={{ duration: 2, repeat: Infinity }}
                       >
-                        <Clock className="h-5 w-5 text-[hsl(270,100%,70%)]" />
+                        <Clock className="h-5 w-5 text-primary" />
                       </motion.div>
                       <div>
                         <p className="font-medium text-sm">
                           Tienes <NeonText>{inProgressContent.length}</NeonText> proyecto(s) en progreso
                         </p>
-                        <p className="text-xs text-[hsl(270,30%,55%)]">Continúa con tus grabaciones</p>
+                        <p className="text-xs text-muted-foreground">Continúa con tus grabaciones</p>
                       </div>
                     </div>
                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -484,7 +484,7 @@ export default function CreatorDashboard() {
                     >
                       <TechCardContent className="p-3 flex items-center gap-3">
                         <motion.div 
-                          className="h-10 w-10 rounded-lg bg-[hsl(250,20%,10%)] border border-[hsl(270,100%,60%,0.2)] flex items-center justify-center flex-shrink-0 overflow-hidden"
+                          className="h-10 w-10 rounded-lg bg-muted border border-[hsl(270,100%,60%,0.2)] flex items-center justify-center flex-shrink-0 overflow-hidden"
                           whileHover={{ borderColor: "hsl(270 100% 60% / 0.5)" }}
                         >
                           {item.thumbnail_url ? (
@@ -494,13 +494,13 @@ export default function CreatorDashboard() {
                               animate={{ scale: [1, 1.1, 1] }}
                               transition={{ duration: 2, repeat: Infinity, delay: index * 0.2 }}
                             >
-                              <Play className="h-4 w-4 text-[hsl(270,100%,70%)]" />
+                              <Play className="h-4 w-4 text-primary" />
                             </motion.div>
                           )}
                         </motion.div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm truncate">{item.title}</p>
-                          <p className="text-xs text-[hsl(270,30%,55%)]">{item.client?.name || 'Sin cliente'}</p>
+                          <p className="text-xs text-muted-foreground">{item.client?.name || 'Sin cliente'}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           {item.is_ambassador_content && (
@@ -529,7 +529,7 @@ export default function CreatorDashboard() {
                   <TechCard variant="glass">
                     <TechCardContent className="p-8 text-center">
                       <motion.div 
-                        className="w-16 h-16 mx-auto rounded-2xl bg-[hsl(250,20%,10%)] border border-[hsl(270,100%,60%,0.2)] flex items-center justify-center mb-4"
+                        className="w-16 h-16 mx-auto rounded-2xl bg-muted border border-[hsl(270,100%,60%,0.2)] flex items-center justify-center mb-4"
                         animate={{ 
                           boxShadow: [
                             "0 0 0 0 hsl(270 100% 60% / 0)",
@@ -539,12 +539,12 @@ export default function CreatorDashboard() {
                         }}
                         transition={{ duration: 3, repeat: Infinity }}
                       >
-                        <Video className="w-8 h-8 text-[hsl(270,100%,70%)]" />
+                        <Video className="w-8 h-8 text-primary" />
                       </motion.div>
                       <h4 className="font-semibold mb-2">
                         <NeonText>Sin proyectos asignados</NeonText>
                       </h4>
-                      <p className="text-sm text-[hsl(270,30%,55%)]">Cuando te asignen proyectos aparecerán aquí</p>
+                      <p className="text-sm text-muted-foreground">Cuando te asignen proyectos aparecerán aquí</p>
                     </TechCardContent>
                   </TechCard>
                 </motion.div>

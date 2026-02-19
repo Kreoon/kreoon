@@ -39,7 +39,7 @@ export function BrandCampaignManager() {
 
   if (viewMode === 'applications' && selectedCampaignId) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f]">
+      <div className="min-h-screen bg-background">
         <div className="max-w-4xl mx-auto px-4 md:px-6 py-6">
           <CampaignApplicationsReview
             campaignId={selectedCampaignId}
@@ -52,7 +52,7 @@ export function BrandCampaignManager() {
 
   if (viewMode === 'progress' && selectedCampaignId) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f]">
+      <div className="min-h-screen bg-background">
         <div className="max-w-4xl mx-auto px-4 md:px-6 py-6">
           <button
             onClick={() => { setViewMode('list'); setSelectedCampaignId(null); }}
@@ -69,7 +69,7 @@ export function BrandCampaignManager() {
 
   if (viewMode === 'activations' && selectedCampaignId) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f]">
+      <div className="min-h-screen bg-background">
         <div className="max-w-4xl mx-auto px-4 md:px-6 py-6">
           <BrandPublicationReview
             campaignId={selectedCampaignId}
@@ -81,9 +81,9 @@ export function BrandCampaignManager() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f]">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur-sm sticky top-0 z-10">
+      <div className="border-b border-white/10 bg-background/95 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -195,7 +195,7 @@ function CampaignRow({
     : 'Canje';
 
   return (
-    <div className="bg-[#1a1a2e]/80 border border-white/5 rounded-xl p-5 hover:border-white/10 transition-all">
+    <div className="bg-card/80 border border-white/5 rounded-xl p-5 hover:border-white/10 transition-all">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -254,13 +254,13 @@ function CampaignRow({
         <div className="flex gap-2 flex-shrink-0">
           <button
             onClick={onViewApplications}
-            className="text-xs bg-white/5 hover:bg-white/10 text-gray-300 px-3 py-2 rounded-lg transition-colors"
+            className="text-xs bg-white/5 hover:bg-white/10 text-foreground/80 px-3 py-2 rounded-lg transition-colors"
           >
             Aplicaciones
           </button>
           <button
             onClick={onViewProgress}
-            className="text-xs bg-white/5 hover:bg-white/10 text-gray-300 px-3 py-2 rounded-lg transition-colors"
+            className="text-xs bg-white/5 hover:bg-white/10 text-foreground/80 px-3 py-2 rounded-lg transition-colors"
           >
             Progreso
           </button>

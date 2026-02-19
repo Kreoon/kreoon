@@ -101,7 +101,7 @@ export function PaymentMethodCard({
             <Icon
               className={cn(
                 'h-6 w-6',
-                method.is_default ? 'text-[hsl(270,100%,70%)]' : 'text-[hsl(270,30%,60%)]'
+                method.is_default ? 'text-primary' : 'text-muted-foreground'
               )}
             />
           </div>
@@ -114,15 +114,15 @@ export function PaymentMethodCard({
                 <Shield className="h-4 w-4 text-emerald-400 flex-shrink-0" />
               )}
             </div>
-            <p className="text-sm text-[hsl(270,30%,60%)]">{method.typeLabel}</p>
-            <p className="text-sm text-[hsl(270,30%,50%)] truncate mt-1">
+            <p className="text-sm text-muted-foreground">{method.typeLabel}</p>
+            <p className="text-sm text-muted-foreground truncate mt-1">
               {method.summary}
             </p>
 
             {/* Badges */}
             <div className="flex items-center gap-2 mt-3">
               {method.is_default && (
-                <Badge className="bg-[hsl(270,100%,60%,0.2)] text-[hsl(270,100%,70%)] border-0">
+                <Badge className="bg-[hsl(270,100%,60%,0.2)] text-primary border-0">
                   <Star className="h-3 w-3 mr-1" />
                   Predeterminado
                 </Badge>

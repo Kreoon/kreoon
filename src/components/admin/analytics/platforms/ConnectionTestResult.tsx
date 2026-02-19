@@ -11,7 +11,7 @@ export function ConnectionTestResultDisplay({ result, testing }: ConnectionTestR
     return (
       <div className="flex items-center gap-2 rounded-lg bg-gray-800/50 border border-gray-700/50 p-3 mt-3">
         <Loader2 className="h-4 w-4 animate-spin text-purple-400 shrink-0" />
-        <span className="text-sm text-gray-300">Probando conexión...</span>
+        <span className="text-sm text-foreground/80">Probando conexión...</span>
       </div>
     );
   }

@@ -3,14 +3,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import {
+  toWithdrawalDisplay,
+  calculateWithdrawalFee,
+} from '../types';
 import type {
   WithdrawalRequest,
   WithdrawalDisplay,
   WithdrawalStatus,
   CreateWithdrawalInput,
   ProcessWithdrawalInput,
-  toWithdrawalDisplay,
-  calculateWithdrawalFee,
 } from '../types';
 
 interface UseWithdrawalsOptions {
@@ -145,49 +147,18 @@ export function useWithdrawalMutations() {
     },
   });
 
-  // Cancelar solicitud de retiro
+  // Cancelar solicitud de retiro (atomic via RPC)
   const cancelWithdrawalMutation = useMutation({
     mutationFn: async (withdrawalId: string): Promise<boolean> => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      // Primero obtener el retiro para verificar propiedad y estado
-      const { data: withdrawal, error: fetchError } = await supabase
-        .from('withdrawal_requests')
-        .select('*')
-        .eq('id', withdrawalId)
-        .eq('user_id', user.id)
-        .eq('status', 'pending')
-        .single();
+      const { data, error } = await supabase.rpc('cancel_withdrawal_request', {
+        p_withdrawal_id: withdrawalId,
+        p_user_id: user.id,
+      });
 
-      if (fetchError || !withdrawal) {
-        throw new Error('No se puede cancelar esta solicitud');
-      }
-
-      // Devolver fondos al wallet
-      const { error: walletError } = await supabase
-        .from('wallets')
-        .update({
-          available_balance: supabase.rpc('increment_balance', {
-            wallet_id: withdrawal.wallet_id,
-            amount: withdrawal.amount
-          }),
-          pending_balance: supabase.rpc('decrement_balance', {
-            wallet_id: withdrawal.wallet_id,
-            amount: withdrawal.amount
-          }),
-        })
-        .eq('id', withdrawal.wallet_id);
-
-      // Alternativa más simple: actualizar directamente
-      const { error: updateError } = await supabase
-        .from('withdrawal_requests')
-        .update({ status: 'cancelled' })
-        .eq('id', withdrawalId);
-
-      if (updateError) throw updateError;
-
-      // La actualización del wallet se maneja via trigger o edge function
-      return true;
+      if (error) throw error;
+      return data as boolean;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['withdrawals'] });
@@ -234,7 +205,7 @@ export function useAdminWithdrawals(options: { status?: WithdrawalStatus[]; limi
             email,
             avatar_url
           ),
-          wallets:wallet_id (
+          unified_wallets:wallet_id (
             id,
             wallet_type,
             available_balance,

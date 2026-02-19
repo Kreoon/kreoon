@@ -116,7 +116,7 @@ export function WizardStepServices({
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
             >
               {CURRENCIES.map(c => (
-                <option key={c} value={c} className="bg-[#1a1a2e]">{c}</option>
+                <option key={c} value={c} className="bg-card">{c}</option>
               ))}
             </select>
           </div>
@@ -257,11 +257,11 @@ export function WizardStepServices({
                 onChange={(e) => setForm(prev => ({ ...prev, service_type: e.target.value }))}
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
               >
-                <option value="" className="bg-[#1a1a2e]">Seleccionar...</option>
+                <option value="" className="bg-card">Seleccionar...</option>
                 {Object.entries(SERVICE_TYPE_CATEGORIES).map(([, category]) => (
                   <optgroup key={category.label} label={category.label}>
                     {category.types.map(type => (
-                      <option key={type} value={type} className="bg-[#1a1a2e]">{SERVICE_TYPE_LABELS[type]}</option>
+                      <option key={type} value={type} className="bg-card">{SERVICE_TYPE_LABELS[type]}</option>
                     ))}
                   </optgroup>
                 ))}
@@ -299,7 +299,7 @@ export function WizardStepServices({
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
               >
                 {CURRENCIES.map(c => (
-                  <option key={c} value={c} className="bg-[#1a1a2e]">{c}</option>
+                  <option key={c} value={c} className="bg-card">{c}</option>
                 ))}
               </select>
             </div>
@@ -337,7 +337,7 @@ export function WizardStepServices({
                 placeholder="Ej: 1 video vertical 15-30s"
                 className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white placeholder:text-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
               />
-              <button onClick={addInclude} className="px-3 py-2 bg-white/10 hover:bg-white/15 rounded-xl text-xs text-gray-300">
+              <button onClick={addInclude} className="px-3 py-2 bg-white/10 hover:bg-white/15 rounded-xl text-xs text-foreground/80">
                 <Plus className="h-3.5 w-3.5" />
               </button>
             </div>

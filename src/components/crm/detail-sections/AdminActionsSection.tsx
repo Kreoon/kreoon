@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Building2, ShieldCheck, ShieldOff, KeyRound, Ban, UserX, UserPlus,
-  Loader2, AlertTriangle, Trash2, UserCog, Crown,
+  Loader2, AlertTriangle, Trash2, UserCog, Crown, Key,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -41,6 +41,7 @@ interface AdminActionsSectionProps {
   isOwner: boolean;
   activeRole: string | null;
   currentUserEmail: string;
+  platformAccessUnlocked?: boolean;
   onActionComplete: () => void;
 }
 
@@ -56,6 +57,7 @@ export function AdminActionsSection({
   isOwner,
   activeRole,
   currentUserEmail,
+  platformAccessUnlocked,
   onActionComplete,
 }: AdminActionsSectionProps) {
   const isRoot = ROOT_EMAILS.includes(currentUserEmail);
@@ -283,6 +285,42 @@ export function AdminActionsSection({
             </Button>
           )}
 
+          {/* Grant Platform Access (Dar Llave) */}
+          {!platformAccessUnlocked && !isSelf && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={async () => {
+                setLoading('grant_access');
+                try {
+                  const { data: { user: currentUser } } = await supabase.auth.getUser();
+                  if (!currentUser) throw new Error('No autenticado');
+                  const { data, error } = await supabase.rpc('grant_platform_access', {
+                    p_admin_id: currentUser.id,
+                    p_target_user_id: userId,
+                  });
+                  if (error) throw error;
+                  if (data && !(data as any).success) throw new Error((data as any).error || 'Error');
+                  toast.success('Acceso a plataforma otorgado');
+                  onActionComplete();
+                } catch (e: any) {
+                  toast.error(`Error: ${e.message}`);
+                } finally {
+                  setLoading(null);
+                }
+              }}
+              disabled={!!loading}
+              className="w-full justify-start gap-2 h-8 text-xs text-white/70 hover:text-white hover:bg-white/10"
+            >
+              {loading === 'grant_access' ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Key className="h-3.5 w-3.5 text-amber-400" />
+              )}
+              Dar Llave (desbloquear plataforma)
+            </Button>
+          )}
+
           {/* Toggle Owner */}
           {orgId && !isSelf && (
             <Button
@@ -463,7 +501,7 @@ export function AdminActionsSection({
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent className="bg-[#0a0118] border-red-500/30">
+        <AlertDialogContent className="bg-popover border-red-500/30">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-red-400">
               <AlertTriangle className="h-5 w-5" />

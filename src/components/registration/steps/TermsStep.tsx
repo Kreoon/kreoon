@@ -37,7 +37,7 @@ export function TermsStep({ data, onChange, onBack, onSubmit, submitting, mode }
     >
       <button
         onClick={onBack}
-        className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors mb-5"
+        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-5"
       >
         <ArrowLeft className="h-4 w-4" /> Atrás
       </button>
@@ -45,20 +45,20 @@ export function TermsStep({ data, onChange, onBack, onSubmit, submitting, mode }
       <h2 className={cn('font-bold text-white mb-1', isCompact ? 'text-lg' : 'text-xl')}>
         Últimos detalles
       </h2>
-      <p className="text-sm text-gray-400 mb-5">Casi listo para crear tu cuenta</p>
+      <p className="text-sm text-muted-foreground mb-5">Casi listo para crear tu cuenta</p>
 
       {/* Country */}
       <div className="mb-4">
-        <label className="block text-xs font-medium text-gray-300 mb-1">País</label>
+        <label className="block text-xs font-medium text-foreground/80 mb-1">País</label>
         <div className="relative">
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
           <select
             value={data.locationCountry}
             onChange={e => onChange({ locationCountry: e.target.value })}
-            className="w-full appearance-none rounded-lg border border-white/10 bg-white/5 pl-10 pr-3 py-2.5 text-sm text-white focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30"
+            className="w-full appearance-none rounded-lg border border-border bg-white/5 pl-10 pr-3 py-2.5 text-sm text-white focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30"
           >
             {COUNTRIES.map(c => (
-              <option key={c.code} value={c.code} className="bg-[#1a1a2e] text-white">
+              <option key={c.code} value={c.code} className="bg-card text-white">
                 {c.flag} {c.label}
               </option>
             ))}
@@ -68,7 +68,7 @@ export function TermsStep({ data, onChange, onBack, onSubmit, submitting, mode }
 
       {/* Bio (optional) */}
       <div className="mb-4">
-        <label className="block text-xs font-medium text-gray-300 mb-1">
+        <label className="block text-xs font-medium text-foreground/80 mb-1">
           Bio corta <span className="text-gray-500">(opcional)</span>
         </label>
         <textarea
@@ -77,7 +77,7 @@ export function TermsStep({ data, onChange, onBack, onSubmit, submitting, mode }
           placeholder="Cuéntanos un poco sobre ti..."
           rows={2}
           maxLength={200}
-          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30 resize-none"
+          className="w-full rounded-lg border border-border bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30 resize-none"
         />
         <p className="text-right text-[10px] text-gray-500 mt-0.5">{data.bio.length}/200</p>
       </div>
@@ -90,7 +90,7 @@ export function TermsStep({ data, onChange, onBack, onSubmit, submitting, mode }
           onChange={e => onChange({ acceptTerms: e.target.checked })}
           className="mt-0.5 h-4 w-4 rounded border-white/20 bg-white/5 text-purple-500 focus:ring-purple-500/30"
         />
-        <span className="text-xs text-gray-400 leading-relaxed">
+        <span className="text-xs text-muted-foreground leading-relaxed">
           Acepto los{' '}
           <a href="/terms" target="_blank" className="text-purple-400 hover:underline">Términos de Servicio</a>
           {' '}y la{' '}

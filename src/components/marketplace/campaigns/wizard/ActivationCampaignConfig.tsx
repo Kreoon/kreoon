@@ -139,7 +139,7 @@ export function ActivationCampaignConfig({ config, onChange }: ActivationCampaig
                     {info.label.charAt(0)}
                   </span>
                 </div>
-                <span className="text-sm font-medium text-gray-200">{info.label}</span>
+                <span className="text-sm font-medium text-foreground">{info.label}</span>
               </button>
             );
           })}
@@ -169,7 +169,7 @@ export function ActivationCampaignConfig({ config, onChange }: ActivationCampaig
                     <span className="text-white text-sm font-bold">{baseName.charAt(0)}</span>
                   </div>
                   <div className="flex-1">
-                    <label className="text-sm font-medium text-gray-300">{baseName}</label>
+                    <label className="text-sm font-medium text-foreground/80">{baseName}</label>
                     <div className="flex items-center gap-2 mt-1">
                       <input
                         type="number"
@@ -363,7 +363,7 @@ export function ActivationCampaignConfig({ config, onChange }: ActivationCampaig
               )}
             >
               <Icon className={cn('w-5 h-5 mx-auto mb-1.5', config.verification_method === value ? 'text-purple-400' : 'text-gray-500')} />
-              <span className="text-xs font-medium text-gray-300">{label}</span>
+              <span className="text-xs font-medium text-foreground/80">{label}</span>
             </button>
           ))}
         </div>
@@ -448,7 +448,7 @@ export function ActivationCampaignConfig({ config, onChange }: ActivationCampaig
               className="w-4 h-4 rounded text-purple-600 bg-white/10 border-white/20"
             />
             <div>
-              <span className="text-sm font-medium text-gray-200">Aprobar contenido antes de publicar</span>
+              <span className="text-sm font-medium text-foreground">Aprobar contenido antes de publicar</span>
               <p className="text-xs text-gray-500">El creador debe enviar el contenido para tu aprobación antes de publicarlo</p>
             </div>
           </label>
@@ -461,7 +461,7 @@ export function ActivationCampaignConfig({ config, onChange }: ActivationCampaig
               className="w-4 h-4 rounded text-purple-600 bg-white/10 border-white/20"
             />
             <div>
-              <span className="text-sm font-medium text-gray-200">Permitir que la marca re-comparta</span>
+              <span className="text-sm font-medium text-foreground">Permitir que la marca re-comparta</span>
               <p className="text-xs text-gray-500">Tu marca podrá republicar el contenido en sus propias redes</p>
             </div>
           </label>
@@ -474,7 +474,7 @@ export function ActivationCampaignConfig({ config, onChange }: ActivationCampaig
               className="w-4 h-4 rounded text-purple-600 bg-white/10 border-white/20"
             />
             <div>
-              <span className="text-sm font-medium text-gray-200">Requerir screenshot de insights</span>
+              <span className="text-sm font-medium text-foreground">Requerir screenshot de insights</span>
               <p className="text-xs text-gray-500">El creador debe enviar captura de las métricas de su publicación</p>
             </div>
           </label>

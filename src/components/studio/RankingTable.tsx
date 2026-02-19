@@ -64,7 +64,7 @@ const getMedalStyle = (position: number) => {
       return {
         bg: 'bg-gradient-to-br from-slate-300/20 to-slate-500/10',
         border: 'border-slate-400/30',
-        text: 'text-slate-300',
+        text: 'text-foreground/80',
         shadow: '0 0 20px rgba(148, 163, 184, 0.15)',
       };
     case 3:

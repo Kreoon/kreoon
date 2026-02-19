@@ -99,7 +99,7 @@ export function WalletOverview({ className }: WalletOverviewProps) {
     queryKey: ['admin', 'wallets', typeFilter, statusFilter],
     queryFn: async (): Promise<WalletWithOwner[]> => {
       let query = supabase
-        .from('wallets')
+        .from('unified_wallets')
         .select(`
           *,
           profiles:user_id (
@@ -113,7 +113,7 @@ export function WalletOverview({ className }: WalletOverviewProps) {
             name
           )
         `)
-        .order('total_balance', { ascending: false })
+        .order('available_balance', { ascending: false })
         .limit(100);
 
       if (typeFilter !== 'all') {
@@ -128,6 +128,7 @@ export function WalletOverview({ className }: WalletOverviewProps) {
 
       return (data || []).map(w => ({
         ...w,
+        total_balance: (w.available_balance || 0) + (w.pending_balance || 0) + (w.reserved_balance || 0),
         owner: w.profiles,
         organization: w.organizations,
       })) as WalletWithOwner[];
@@ -171,7 +172,7 @@ export function WalletOverview({ className }: WalletOverviewProps) {
     const newStatus = freezingWallet.status === 'active' ? 'frozen' : 'active';
 
     const { error } = await supabase
-      .from('wallets')
+      .from('unified_wallets')
       .update({ status: newStatus })
       .eq('id', freezingWallet.id);
 
@@ -204,11 +205,11 @@ export function WalletOverview({ className }: WalletOverviewProps) {
       {/* Header */}
       <div className="flex items-center gap-4">
         <div className="p-3 rounded-2xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
-          <Wallet className="h-8 w-8 text-[hsl(270,100%,70%)]" />
+          <Wallet className="h-8 w-8 text-primary" />
         </div>
         <div>
           <h1 className="text-2xl font-bold text-white">Visión General de Wallets</h1>
-          <p className="text-[hsl(270,30%,60%)]">
+          <p className="text-muted-foreground">
             Administración de todos los wallets del sistema
           </p>
         </div>
@@ -218,25 +219,25 @@ export function WalletOverview({ className }: WalletOverviewProps) {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-[hsl(270,30%,60%)]">Total Wallets</p>
+            <p className="text-sm text-muted-foreground">Total Wallets</p>
             <p className="text-2xl font-bold text-white">{stats.total}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-[hsl(270,30%,60%)]">Activos</p>
+            <p className="text-sm text-muted-foreground">Activos</p>
             <p className="text-2xl font-bold text-emerald-400">{stats.active}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-[hsl(270,30%,60%)]">Congelados</p>
+            <p className="text-sm text-muted-foreground">Congelados</p>
             <p className="text-2xl font-bold text-amber-400">{stats.frozen}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm text-[hsl(270,30%,60%)]">Balance Total</p>
+            <p className="text-sm text-muted-foreground">Balance Total</p>
             <p className="text-2xl font-bold text-white">
               {formatCurrency(stats.totalBalance, 'USD')}
             </p>
@@ -247,7 +248,7 @@ export function WalletOverview({ className }: WalletOverviewProps) {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         <div className="relative flex-1 sm:max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(270,30%,50%)]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar por usuario, email, org..."
             value={searchQuery}
@@ -305,7 +306,7 @@ export function WalletOverview({ className }: WalletOverviewProps) {
           ) : filteredWallets.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16">
               <Wallet className="h-12 w-12 text-[hsl(270,100%,60%,0.2)] mb-4" />
-              <p className="text-[hsl(270,30%,60%)]">No se encontraron wallets</p>
+              <p className="text-muted-foreground">No se encontraron wallets</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -352,7 +353,7 @@ export function WalletOverview({ className }: WalletOverviewProps) {
                               <p className="font-medium text-white truncate max-w-[150px]">
                                 {owner.name}
                               </p>
-                              <p className="text-xs text-[hsl(270,30%,60%)] truncate max-w-[150px]">
+                              <p className="text-xs text-muted-foreground truncate max-w-[150px]">
                                 {owner.email}
                               </p>
                             </div>
@@ -374,7 +375,7 @@ export function WalletOverview({ className }: WalletOverviewProps) {
                           </span>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
-                          <span className="text-[hsl(270,100%,70%)]">
+                          <span className="text-primary">
                             {formatCurrency(wallet.reserved_balance, wallet.currency)}
                           </span>
                         </TableCell>
