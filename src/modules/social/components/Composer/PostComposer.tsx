@@ -1,0 +1,393 @@
+import { useState, useMemo } from 'react';
+import {
+  Send, Clock, Hash, MapPin, MessageSquare, Calendar as CalendarIcon,
+  X, Plus, Sparkles, Eye, ChevronDown,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
+import { useSocialAccounts } from '../../hooks/useSocialAccounts';
+import { useScheduledPosts } from '../../hooks/useScheduledPosts';
+import { useAccountGroups } from '../../hooks/useAccountGroups';
+import { PlatformIcon } from '../common/PlatformIcon';
+import { MediaUploader } from './MediaUploader';
+import { HashtagManager } from './HashtagManager';
+import { PreviewPanel } from './PreviewPanel';
+import { PLATFORMS } from '../../config';
+import type { SocialPostType, ComposerFormData, QuickShareData, CollaborationType, SocialPlatform } from '../../types/social.types';
+import { toast } from 'sonner';
+
+interface PostComposerProps {
+  initialData?: Partial<QuickShareData>;
+  campaignId?: string;
+  brandUsername?: string;
+  onSuccess?: () => void;
+  onClose?: () => void;
+}
+
+export function PostComposer({ initialData, campaignId, brandUsername, onSuccess, onClose }: PostComposerProps) {
+  const { accounts } = useSocialAccounts();
+  const { createPost, publishNow } = useScheduledPosts();
+  const { groups } = useAccountGroups();
+
+  const [caption, setCaption] = useState(initialData?.caption || '');
+  const [hashtags, setHashtags] = useState<string[]>([]);
+  const [mediaUrls, setMediaUrls] = useState<string[]>(
+    initialData?.videoUrl ? [initialData.videoUrl] : []
+  );
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(initialData?.thumbnailUrl || null);
+  const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([]);
+  const [scheduledAt, setScheduledAt] = useState<string>('');
+  const [postType, setPostType] = useState<SocialPostType>('post');
+  const [visibility, setVisibility] = useState('public');
+  const [firstComment, setFirstComment] = useState('');
+  const [locationName, setLocationName] = useState('');
+  const [showAdvanced, setShowAdvanced] = useState(!!campaignId);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [collabType, setCollabType] = useState<CollaborationType>(brandUsername ? 'collab_post' : 'mention');
+  const [collabBrandUser, setCollabBrandUser] = useState(brandUsername || '');
+
+  // Character counts per platform
+  const selectedPlatforms = useMemo(() => {
+    return accounts
+      .filter(a => selectedAccountIds.includes(a.id))
+      .map(a => a.platform);
+  }, [accounts, selectedAccountIds]);
+
+  const minCaptionLimit = useMemo(() => {
+    if (selectedPlatforms.length === 0) return 5000;
+    return Math.min(
+      ...selectedPlatforms.map(p => PLATFORMS[p]?.maxCaptionLength || 5000)
+    );
+  }, [selectedPlatforms]);
+
+  const captionOverLimit = caption.length > minCaptionLimit;
+
+  const toggleAccount = (accountId: string) => {
+    setSelectedAccountIds(prev =>
+      prev.includes(accountId)
+        ? prev.filter(id => id !== accountId)
+        : [...prev, accountId]
+    );
+  };
+
+  const handleSubmit = async (immediate: boolean) => {
+    if (selectedAccountIds.length === 0) {
+      toast.error('Selecciona al menos una cuenta');
+      return;
+    }
+    if (!caption.trim() && mediaUrls.length === 0) {
+      toast.error('Agrega un caption o media');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const formData: ComposerFormData = {
+        caption: caption + (hashtags.length > 0 ? '\n\n' + hashtags.map(t => `#${t}`).join(' ') : ''),
+        hashtags,
+        mediaUrls,
+        thumbnailUrl,
+        scheduledAt: immediate ? null : (scheduledAt ? new Date(scheduledAt) : null),
+        postType,
+        visibility,
+        firstComment,
+        locationName,
+        targetAccountIds: selectedAccountIds,
+        contentId: initialData?.contentId || null,
+        campaignId: campaignId || null,
+        brandCollaboration: collabBrandUser ? {
+          brand_account_id: null,
+          brand_username: collabBrandUser,
+          brand_platform_id: null,
+          collaboration_type: collabType,
+          require_approval: collabType === 'collab_post' || collabType === 'branded_content',
+        } : null,
+      };
+
+      const post = await createPost.mutateAsync(formData);
+
+      if (immediate) {
+        await publishNow.mutateAsync(post.id);
+        toast.success('Publicando en tus redes...');
+      } else if (scheduledAt) {
+        toast.success('Post programado correctamente');
+      } else {
+        toast.success('Borrador guardado');
+      }
+
+      onSuccess?.();
+    } catch (err: any) {
+      toast.error(`Error: ${err.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const fullCaption = caption + (hashtags.length > 0 ? '\n\n' + hashtags.map(t => `#${t}`).join(' ') : '');
+
+  return (
+    <div className="space-y-6">
+      {/* Account selector */}
+      <div className="space-y-3">
+        <Label className="text-sm font-semibold">Publicar en</Label>
+        {accounts.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No tienes cuentas conectadas. Ve a la pestaña "Cuentas" para conectar tus redes.
+          </p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {accounts.map(account => {
+              const selected = selectedAccountIds.includes(account.id);
+              return (
+                <button
+                  key={account.id}
+                  onClick={() => toggleAccount(account.id)}
+                  className={cn(
+                    'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm',
+                    selected
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border bg-card hover:border-primary/30'
+                  )}
+                >
+                  <PlatformIcon platform={account.platform} size="xs" />
+                  <span className="truncate max-w-[120px]">
+                    {account.platform_display_name || account.platform_username}
+                  </span>
+                  {account.platform_page_name && (
+                    <span className="text-[10px] text-muted-foreground truncate max-w-[80px]">
+                      ({account.platform_page_name})
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Caption */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-semibold">Caption</Label>
+          <span className={cn(
+            'text-xs',
+            captionOverLimit ? 'text-red-400' : 'text-muted-foreground'
+          )}>
+            {caption.length}/{minCaptionLimit}
+          </span>
+        </div>
+        <Textarea
+          value={caption}
+          onChange={(e) => setCaption(e.target.value)}
+          placeholder="Escribe tu publicación..."
+          className="min-h-[120px] resize-none"
+        />
+      </div>
+
+      {/* Hashtags (v2 enhanced) */}
+      <HashtagManager hashtags={hashtags} onChange={setHashtags} />
+
+      {/* Media Upload (v2) */}
+      <MediaUploader
+        mediaUrls={mediaUrls}
+        onMediaChange={setMediaUrls}
+        thumbnailUrl={thumbnailUrl}
+        onThumbnailChange={setThumbnailUrl}
+        maxFiles={10}
+      />
+
+      {/* Schedule */}
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold flex items-center gap-1">
+          <Clock className="w-3.5 h-3.5" /> Programar
+        </Label>
+        <Input
+          type="datetime-local"
+          value={scheduledAt}
+          onChange={(e) => setScheduledAt(e.target.value)}
+          min={new Date().toISOString().slice(0, 16)}
+        />
+      </div>
+
+      {/* Post type */}
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold">Tipo de publicación</Label>
+        <Select value={postType} onValueChange={(v) => setPostType(v as SocialPostType)}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="post">Post</SelectItem>
+            <SelectItem value="reel">Reel / Short</SelectItem>
+            <SelectItem value="story">Historia</SelectItem>
+            <SelectItem value="carousel">Carrusel</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Advanced options */}
+      <button
+        onClick={() => setShowAdvanced(!showAdvanced)}
+        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ChevronDown className={cn('w-3 h-3 transition-transform', showAdvanced && 'rotate-180')} />
+        Opciones avanzadas
+      </button>
+
+      {showAdvanced && (
+        <div className="space-y-4 p-4 rounded-lg bg-muted/30 border">
+          <div className="space-y-2">
+            <Label className="text-xs">Primer comentario</Label>
+            <Input
+              value={firstComment}
+              onChange={(e) => setFirstComment(e.target.value)}
+              placeholder="Comentario automático después de publicar..."
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs">Ubicación</Label>
+            <Input
+              value={locationName}
+              onChange={(e) => setLocationName(e.target.value)}
+              placeholder="Nombre del lugar..."
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs">Visibilidad</Label>
+            <Select value={visibility} onValueChange={setVisibility}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="public">Público</SelectItem>
+                <SelectItem value="private">Privado</SelectItem>
+                <SelectItem value="unlisted">No listado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Brand collaboration section */}
+          <Separator />
+          <div className="space-y-3">
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Colaboración con Marca
+            </Label>
+            <div className="space-y-2">
+              <Label className="text-xs">@Usuario de la marca</Label>
+              <Input
+                value={collabBrandUser}
+                onChange={(e) => setCollabBrandUser(e.target.value)}
+                placeholder="@marca (sin @)..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Tipo de colaboración</Label>
+              <Select value={collabType} onValueChange={(v) => setCollabType(v as CollaborationType)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="collab_post">Post colaborativo (Instagram Collab)</SelectItem>
+                  <SelectItem value="branded_content">Contenido de marca (Branded Content)</SelectItem>
+                  <SelectItem value="mention">Mención en caption</SelectItem>
+                  <SelectItem value="tag">Etiqueta en media</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {collabBrandUser && (
+              <p className="text-[10px] text-muted-foreground">
+                Se agregará @{collabBrandUser} como {collabType === 'collab_post' ? 'colaborador' : collabType === 'branded_content' ? 'marca patrocinadora' : 'mención'} en las publicaciones.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Group quick-select (v2) */}
+      {groups.length > 0 && (
+        <div className="space-y-2">
+          <Label className="text-xs text-muted-foreground">Seleccionar por grupo</Label>
+          <div className="flex flex-wrap gap-1.5">
+            {groups.map(group => {
+              const groupAccountIds = group.members?.map(m => m.account_id) || [];
+              const allSelected = groupAccountIds.length > 0 && groupAccountIds.every(id => selectedAccountIds.includes(id));
+              return (
+                <button
+                  key={group.id}
+                  onClick={() => {
+                    if (allSelected) {
+                      setSelectedAccountIds(prev => prev.filter(id => !groupAccountIds.includes(id)));
+                    } else {
+                      setSelectedAccountIds(prev => [...new Set([...prev, ...groupAccountIds])]);
+                    }
+                  }}
+                  className={cn(
+                    'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium border transition-all',
+                    allSelected
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border hover:border-primary/30'
+                  )}
+                >
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: group.color }} />
+                  {group.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <Separator />
+
+      {/* Preview (v2) */}
+      {caption.trim() && (
+        <PreviewPanel
+          caption={caption}
+          hashtags={hashtags}
+          mediaUrls={mediaUrls}
+          thumbnailUrl={thumbnailUrl}
+          platforms={selectedPlatforms as SocialPlatform[]}
+        />
+      )}
+
+      {/* Actions */}
+      <div className="flex gap-3">
+        {onClose && (
+          <Button variant="ghost" onClick={onClose} disabled={isSubmitting}>
+            Cancelar
+          </Button>
+        )}
+        <Button
+          variant="outline"
+          onClick={() => handleSubmit(false)}
+          disabled={isSubmitting || selectedAccountIds.length === 0}
+          className="flex-1"
+        >
+          {scheduledAt ? (
+            <>
+              <Clock className="w-4 h-4 mr-2" />
+              Programar
+            </>
+          ) : (
+            'Guardar borrador'
+          )}
+        </Button>
+        <Button
+          onClick={() => handleSubmit(true)}
+          disabled={isSubmitting || selectedAccountIds.length === 0}
+          className="flex-1"
+        >
+          <Send className="w-4 h-4 mr-2" />
+          Publicar ahora
+        </Button>
+      </div>
+    </div>
+  );
+}

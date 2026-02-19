@@ -1,155 +1,132 @@
+import { useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useCreatorLeaderboard } from '@/hooks/useUPCreadores';
-import { useEditorLeaderboard } from '@/hooks/useUPEditores';
-import { useUPSettings } from '@/hooks/useUPSettings';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
+import {
+  useOrgRanking,
+  useUserReputation,
+  useUserEvents,
+  useReputationSeasons,
+  useRoleArchetypes,
+} from '@/hooks/useUnifiedReputation';
+import { LEVEL_META, ARCHETYPE_META } from '@/lib/reputation/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Medal, Zap, Crown, TrendingUp, Flame, Target, Users, History, Sword, Shield, Castle, Swords, Award, Video, Scissors, Calendar } from 'lucide-react';
+import {
+  Trophy, Medal, Zap, Crown, Flame, Target, Users, History,
+  Award, Calendar, Shield, Castle, TrendingUp,
+} from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { cn } from '@/lib/utils';
-import { UPManualAdjustment } from '@/components/points/UPManualAdjustment';
-import { UPControlCenter } from '@/components/points/UPControlCenter';
 import { UnifiedBadgesShowcase } from '@/components/points/UnifiedBadgesShowcase';
-import { UPLeaderboardTabs } from '@/components/points/UPLeaderboardTabs';
-import { UPUserStats } from '@/components/points/UPUserStats';
-import { UPHistoryTable } from '@/components/points/UPHistoryTable';
-import { UPBadgeHolders } from '@/components/points/UPBadgeHolders';
-import { UPSeasonHistory } from '@/components/points/UPSeasonHistory';
 import { SeasonManager } from '@/components/points/SeasonManager';
-import { useState, useEffect, useMemo } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-
-// Prestige Level Icons & Labels
-const LEVEL_ICONS = {
-  bronze: '🥉',
-  silver: '🥈',
-  gold: '🥇',
-  diamond: '💎'
-};
-
-const LEVEL_LABELS = {
-  bronze: 'Bronce',
-  silver: 'Plata',
-  gold: 'Oro',
-  diamond: 'Diamante'
-};
-
-const LEVEL_COLORS = {
-  bronze: 'text-amber-700',
-  silver: 'text-slate-400',
-  gold: 'text-yellow-600',
-  diamond: 'text-cyan-400'
-};
-
-const LEVEL_BG_COLORS = {
-  bronze: 'bg-amber-700/20 border-amber-700/40',
-  silver: 'bg-slate-400/20 border-slate-400/40',
-  gold: 'bg-yellow-600/20 border-yellow-600/40',
-  diamond: 'bg-cyan-400/20 border-cyan-400/40'
-};
+import type { RankingEntry, UserReputationTotals } from '@/lib/reputation/types';
 
 const RANK_STYLES = [
-  { icon: Crown, color: 'text-yellow-600', bg: 'bg-gradient-to-br from-yellow-600/30 to-yellow-700/10 border-yellow-600/50' },
+  { icon: Crown, color: 'text-yellow-500', bg: 'bg-gradient-to-br from-yellow-500/30 to-yellow-600/10 border-yellow-500/50' },
   { icon: Medal, color: 'text-slate-400', bg: 'bg-gradient-to-br from-slate-400/30 to-slate-500/10 border-slate-400/50' },
-  { icon: Award, color: 'text-amber-700', bg: 'bg-gradient-to-br from-amber-700/30 to-amber-800/10 border-amber-700/50' }
+  { icon: Award, color: 'text-amber-600', bg: 'bg-gradient-to-br from-amber-600/30 to-amber-700/10 border-amber-600/50' },
 ];
 
-interface CombinedLeaderboardEntry {
-  user_id: string;
-  full_name: string;
-  avatar_url: string | null;
-  total_points: number;
-  current_level: 'bronze' | 'silver' | 'gold' | 'diamond';
-  rank: number;
-}
+const ROLE_LABEL: Record<string, string> = {
+  creator: 'Creadores',
+  editor: 'Editores',
+  strategist: 'Estrategas',
+  trafficker: 'Traffickers',
+  community_manager: 'Community',
+  photographer: 'Fotografos',
+  animator_2d: 'Animadores 2D',
+  designer: 'Disenadores',
+  copywriter: 'Copywriters',
+};
+
+const ROLE_ICON: Record<string, string> = {
+  creator: '🎬',
+  editor: '✂️',
+  strategist: '🎯',
+  trafficker: '📊',
+  community_manager: '💬',
+  photographer: '📷',
+  animator_2d: '🎨',
+  designer: '🖌️',
+  copywriter: '✍️',
+};
+
+const EVENT_TYPE_LABELS: Record<string, string> = {
+  delivery: 'Entrega',
+  issue: 'Novedad',
+  recovery: 'Recuperacion',
+  approval: 'Aprobacion',
+  task_completed: 'Tarea completada',
+  manual_adjustment: 'Ajuste manual',
+  streak: 'Racha',
+  bonus: 'Bonus',
+};
+
+const EVENT_SUBTYPE_LABELS: Record<string, string> = {
+  early_delivery: 'Entrega temprana',
+  on_time_delivery: 'A tiempo',
+  delivery_day2: 'Dia 2',
+  delivery_day3: 'Dia 3',
+  slight_delay: 'Ligero retraso',
+  late_delivery: 'Retraso',
+  issue_penalty: 'Penalizacion',
+  issue_recovery: 'Recuperacion',
+  clean_approval_bonus: 'Aprobacion limpia',
+  reassignment_penalty: 'Reasignacion',
+};
+
+type SortKey = 'lifetime' | 'season';
 
 export default function RankingPage() {
   const { user, isAdmin } = useAuth();
-  const { leaderboard: creatorLeaderboard, loading: loadingCreators } = useCreatorLeaderboard();
-  const { leaderboard: editorLeaderboard, loading: loadingEditors } = useEditorLeaderboard();
-  const { getLevelThresholds, isSystemEnabled, loading: loadingSettings } = useUPSettings();
   const { currentOrgId } = useOrgOwner();
+  const [sortBy, setSortBy] = useState<SortKey>('lifetime');
 
-  const thresholds = getLevelThresholds();
-  const loading = loadingCreators || loadingEditors || loadingSettings;
+  // Fetch ALL ranking data once (unfiltered) — we group by role client-side
+  const { ranking: allRanking, loading: loadingRanking } = useOrgRanking(currentOrgId ?? undefined);
+  const { scores: myScores, primaryScore, loading: loadingMyScores } = useUserReputation(user?.id, currentOrgId ?? undefined);
+  const { events: myEvents, loading: loadingEvents } = useUserEvents(user?.id, currentOrgId ?? undefined);
+  const { seasons, activeSeason } = useReputationSeasons(currentOrgId ?? undefined);
+  const { archetypes } = useRoleArchetypes(currentOrgId ?? undefined);
 
-  // Combine creator and editor leaderboards into a unified ranking
-  const leaderboard = useMemo<CombinedLeaderboardEntry[]>(() => {
-    const userPointsMap = new Map<string, { points: number; level: 'bronze' | 'silver' | 'gold' | 'diamond'; name: string; avatar: string | null }>();
+  const loading = loadingRanking || loadingMyScores;
 
-    // Add creator points
-    creatorLeaderboard.forEach(entry => {
-      const existing = userPointsMap.get(entry.user_id);
-      if (existing) {
-        existing.points += entry.total_points;
-      } else {
-        userPointsMap.set(entry.user_id, {
-          points: entry.total_points,
-          level: entry.current_level,
-          name: entry.profile?.full_name || 'Usuario',
-          avatar: entry.profile?.avatar_url || null
-        });
-      }
+  // Group ranking data by role
+  const { roleGroups, roleKeys } = useMemo(() => {
+    const groups: Record<string, RankingEntry[]> = {};
+    allRanking.forEach(entry => {
+      const role = entry.role_key || 'other';
+      if (!groups[role]) groups[role] = [];
+      groups[role].push(entry);
     });
-
-    // Add editor points
-    editorLeaderboard.forEach(entry => {
-      const existing = userPointsMap.get(entry.user_id);
-      if (existing) {
-        existing.points += entry.total_points;
-        // Use higher level
-        const levelOrder = { bronze: 0, silver: 1, gold: 2, diamond: 3 };
-        if (levelOrder[entry.current_level] > levelOrder[existing.level]) {
-          existing.level = entry.current_level;
-        }
-      } else {
-        userPointsMap.set(entry.user_id, {
-          points: entry.total_points,
-          level: entry.current_level,
-          name: entry.profile?.full_name || 'Usuario',
-          avatar: entry.profile?.avatar_url || null
-        });
-      }
+    // Sort each group
+    Object.values(groups).forEach(group => {
+      group.sort((a, b) => {
+        const valA = sortBy === 'season' ? a.season_points : a.lifetime_points;
+        const valB = sortBy === 'season' ? b.season_points : b.lifetime_points;
+        return valB - valA;
+      });
     });
+    const keys = Object.keys(groups).sort((a, b) => {
+      // Sort roles by total points (most active first)
+      const totalA = groups[a].reduce((s, e) => s + e.lifetime_points, 0);
+      const totalB = groups[b].reduce((s, e) => s + e.lifetime_points, 0);
+      return totalB - totalA;
+    });
+    return { roleGroups: groups, roleKeys: keys };
+  }, [allRanking, sortBy]);
 
-    // Calculate level based on combined points
-    const calculateLevel = (points: number): 'bronze' | 'silver' | 'gold' | 'diamond' => {
-      if (points >= thresholds.diamond) return 'diamond';
-      if (points >= thresholds.gold) return 'gold';
-      if (points >= thresholds.silver) return 'silver';
-      return 'bronze';
-    };
+  // Stats
+  const totalPoints = allRanking.reduce((sum, e) => sum + e.lifetime_points, 0);
+  const uniqueUsers = useMemo(() => new Set(allRanking.map(e => e.user_id)).size, [allRanking]);
 
-    // Convert to array, recalculate levels, sort and rank
-    const entries = Array.from(userPointsMap.entries())
-      .map(([user_id, data]) => ({
-        user_id,
-        full_name: data.name,
-        avatar_url: data.avatar,
-        total_points: data.points,
-        current_level: calculateLevel(data.points)
-      }))
-      .sort((a, b) => b.total_points - a.total_points)
-      .map((entry, index) => ({
-        ...entry,
-        rank: index + 1
-      }));
-
-    return entries;
-  }, [creatorLeaderboard, editorLeaderboard, thresholds]);
-
-  // Estadísticas globales
-  const totalPoints = leaderboard.reduce((sum, entry) => sum + entry.total_points, 0);
-  const diamondCount = leaderboard.filter(e => e.current_level === 'diamond').length;
-  const goldCount = leaderboard.filter(e => e.current_level === 'gold').length;
-  const silverCount = leaderboard.filter(e => e.current_level === 'silver').length;
-  const currentUserRank = leaderboard.find(e => e.user_id === user?.id)?.rank;
+  // Default role tab to the first role with data
+  const defaultRoleTab = roleKeys[0] || 'creator';
 
   if (loading) {
     return (
@@ -158,10 +135,8 @@ export default function RankingPage() {
           <Skeleton className="h-8 w-8" />
           <Skeleton className="h-8 w-48" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <Skeleton key={i} className="h-24" />
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-24" />)}
         </div>
         <Skeleton className="h-96" />
       </div>
@@ -170,553 +145,588 @@ export default function RankingPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header - Kreoon Tech */}
       <PageHeader
         icon={Castle}
         title="Kreoon Ranking"
-        subtitle="Sistema de Kreoon Coins, logros y clasificación • Powered by AI"
-        badge={!isSystemEnabled() ? { text: "⚠️ Sistema Suspendido", variant: "destructive" as const } : undefined}
-        action={currentUserRank ? (
-          <Badge className="text-sm px-3 py-1 level-gold" variant="outline">
-            <Sword className="w-3 h-3 mr-1" />
-            #️⃣ {currentUserRank}
-          </Badge>
-        ) : undefined}
+        subtitle="Sistema de Kreoon Coins y clasificacion por rol"
       />
 
-      {/* Tabs for Admin */}
-      {isAdmin ? (
-        <Tabs defaultValue="upv2" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
-            <TabsTrigger value="upv2" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Video className="w-4 h-4" />
-              <span className="hidden sm:inline">UP V2</span>
-            </TabsTrigger>
-            <TabsTrigger value="ranking" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Trophy className="w-4 h-4" />
-              <span className="hidden sm:inline">General</span>
-            </TabsTrigger>
-            <TabsTrigger value="seasons" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Calendar className="w-4 h-4" />
-              <span className="hidden sm:inline">Temporadas</span>
-            </TabsTrigger>
-            <TabsTrigger value="manage" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Swords className="w-4 h-4" />
-              <span className="hidden sm:inline">Comandar</span>
-            </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+      <Tabs defaultValue="ranking" className="space-y-6">
+        <TabsList className={cn(
+          'grid w-full lg:w-auto lg:inline-grid bg-secondary/50 border border-border',
+          isAdmin ? 'grid-cols-5' : 'grid-cols-4',
+        )}>
+          <TabsTrigger value="ranking" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Trophy className="w-4 h-4" />
+            <span className="hidden sm:inline">Ranking</span>
+          </TabsTrigger>
+          <TabsTrigger value="my-stats" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Zap className="w-4 h-4" />
+            <span className="hidden sm:inline">Mis Puntos</span>
+          </TabsTrigger>
+          <TabsTrigger value="seasons" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Calendar className="w-4 h-4" />
+            <span className="hidden sm:inline">Temporadas</span>
+          </TabsTrigger>
+          <TabsTrigger value="achievements" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Award className="w-4 h-4" />
+            <span className="hidden sm:inline">Logros</span>
+          </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="history" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <History className="w-4 h-4" />
-              <span className="hidden sm:inline">Crónicas</span>
+              <span className="hidden sm:inline">Historial</span>
             </TabsTrigger>
-            <TabsTrigger value="control" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Castle className="w-4 h-4" />
-              <span className="hidden sm:inline">Control</span>
-            </TabsTrigger>
-          </TabsList>
+          )}
+        </TabsList>
 
-          {/* New UP V2 Tab - Separate Creator/Editor Rankings */}
-          <TabsContent value="upv2" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <UPLeaderboardTabs />
-              <Card className="border-2 border-border">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Zap className="w-5 h-5 text-yellow-500" />
-                    Sistema UP V2
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="text-sm text-muted-foreground space-y-2">
-                    <p><strong>Creadores:</strong></p>
-                    <ul className="list-disc list-inside ml-2 space-y-1">
-                      <li>+70 UP: Entrega Día 1-2</li>
-                      <li>+50 UP: Entrega Día 3</li>
-                      <li>-30 UP: Retraso Día 4-5</li>
-                      <li>Día 6+: Reasignación automática</li>
-                    </ul>
-                    <p className="mt-3"><strong>Editores:</strong></p>
-                    <ul className="list-disc list-inside ml-2 space-y-1">
-                      <li>+70 UP: Entrega Día 1</li>
-                      <li>+50 UP: Entrega Día 2</li>
-                      <li>-30 UP: Retraso Día 3-4</li>
-                      <li>Día 5+: Reasignación automática</li>
-                    </ul>
-                    <p className="mt-3"><strong>Correcciones (Novedad):</strong></p>
-                    <ul className="list-disc list-inside ml-2 space-y-1">
-                      <li>-10 UP: Por cada novedad</li>
-                      <li>+10 UP: Recuperable si se corrige en 2 días</li>
-                      <li>+10 UP: Bonus aprobación limpia</li>
-                    </ul>
+        {/* ─── Ranking Tab ─── */}
+        <TabsContent value="ranking" className="space-y-6">
+          {/* Stats Overview */}
+          <div className="grid grid-cols-3 gap-4">
+            <Card className="border border-primary/30 bg-primary/5">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+                  <Flame className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{totalPoints.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Kreoon Coins</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border border-green-400/30 bg-green-400/5">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-400/10 border border-green-400/20">
+                  <Users className="w-5 h-5 text-green-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-green-400">{uniqueUsers}</p>
+                  <p className="text-xs text-muted-foreground">Miembros activos</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border border-purple-400/30 bg-purple-400/5">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-purple-400/10 border border-purple-400/20">
+                  <Trophy className="w-5 h-5 text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-purple-400">{roleKeys.length}</p>
+                  <p className="text-xs text-muted-foreground">Roles activos</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sort toggle + Season indicator */}
+          <div className="flex items-center gap-3">
+            <div className="flex gap-1 bg-secondary/50 rounded-lg p-1 border border-border">
+              {[
+                { value: 'lifetime' as SortKey, label: 'Puntos totales' },
+                { value: 'season' as SortKey, label: 'Temporada actual' },
+              ].map(so => (
+                <button
+                  key={so.value}
+                  onClick={() => setSortBy(so.value)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                    sortBy === so.value
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {so.label}
+                </button>
+              ))}
+            </div>
+            {activeSeason && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-xs">
+                <Calendar className="h-3 w-3 text-yellow-500" />
+                <span className="text-yellow-500 font-medium">{activeSeason.name}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Role-separated leaderboards */}
+          {roleKeys.length === 0 ? (
+            <Card>
+              <CardContent className="py-16">
+                <div className="text-center text-muted-foreground">
+                  <Target className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium">Sin datos de ranking</p>
+                  <p className="text-sm">Completa tareas para aparecer en el ranking</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Tabs defaultValue={defaultRoleTab} className="space-y-4">
+              <TabsList className="bg-secondary/50 border border-border inline-flex w-auto">
+                {roleKeys.map(role => (
+                  <TabsTrigger
+                    key={role}
+                    value={role}
+                    className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  >
+                    <span>{ROLE_ICON[role] || '📋'}</span>
+                    <span>{ROLE_LABEL[role] || role}</span>
+                    <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
+                      {roleGroups[role].length}
+                    </Badge>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              {roleKeys.map(role => (
+                <TabsContent key={role} value={role}>
+                  <RoleLeaderboard
+                    entries={roleGroups[role]}
+                    sortBy={sortBy}
+                    currentUserId={user?.id}
+                    roleName={ROLE_LABEL[role] || role}
+                    activeSeason={activeSeason}
+                  />
+                </TabsContent>
+              ))}
+            </Tabs>
+          )}
+        </TabsContent>
+
+        {/* ─── My Stats Tab ─── */}
+        <TabsContent value="my-stats" className="space-y-6">
+          {user && primaryScore ? (
+            <>
+              {/* Primary score card */}
+              <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/10 to-transparent">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center text-3xl">
+                      {LEVEL_META[primaryScore.current_level]?.icon || '🌱'}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-2xl font-bold">{primaryScore.lifetime_points.toLocaleString()} Kreoon Coins</h3>
+                      <p className="text-muted-foreground text-sm">
+                        Nivel: <span className="font-medium text-foreground">{primaryScore.current_level}</span>
+                        {' '} | Progreso: {Math.round(primaryScore.current_level_progress)}%
+                      </p>
+                      <div className="mt-2 w-full bg-muted rounded-full h-2">
+                        <div
+                          className="bg-primary h-full rounded-full transition-all"
+                          style={{ width: `${Math.min(primaryScore.current_level_progress, 100)}%` }}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-            </div>
-          </TabsContent>
 
-          <TabsContent value="ranking" className="space-y-6">
-            <RankingContent 
-              leaderboard={leaderboard}
-              totalPoints={totalPoints}
-              diamondCount={diamondCount}
-              goldCount={goldCount}
-              silverCount={silverCount}
-              currentUserId={user?.id}
-              thresholds={thresholds}
-            />
-          </TabsContent>
-
-          <TabsContent value="seasons" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <SeasonManager showCreateButton={true} />
-              <div className="lg:col-span-2">
-                <UPSeasonHistory />
+              {/* Stats grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <StatCard icon={Flame} label="Temporada" value={primaryScore.season_points} color="text-orange-400" />
+                <StatCard icon={TrendingUp} label="Ultimos 30d" value={primaryScore.rolling_30d_points} color="text-blue-400" />
+                <StatCard icon={Target} label="A tiempo" value={`${Math.round(primaryScore.on_time_rate * 100)}%`} color="text-green-400" />
+                <StatCard icon={Shield} label="Racha" value={`${primaryScore.current_streak_days}d`} color="text-purple-400" />
               </div>
-            </div>
-          </TabsContent>
 
-          <TabsContent value="manage" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <UPManualAdjustment />
-              <Card className="border-2 border-border bg-gradient-parchment">
+              {/* Per-role breakdown */}
+              {myScores.length > 1 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-sm">
+                      <Users className="h-4 w-4" />
+                      Puntos por Rol
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {myScores.map(score => (
+                        <RoleScoreRow key={score.role_key} score={score} />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Recent events */}
+              <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 font-medieval">
-                    <Shield className="w-5 h-5 text-primary" />
-                    Distribución de Rangos
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <History className="h-4 w-4" />
+                    Actividad Reciente
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {(['diamond', 'gold', 'silver', 'bronze'] as const).map(level => {
-                    const count = leaderboard.filter(e => e.current_level === level).length;
-                    const percentage = leaderboard.length > 0 ? (count / leaderboard.length) * 100 : 0;
-                    
-                    return (
-                      <div key={level} className="space-y-1">
-                        <div className="flex items-center justify-between text-sm font-body">
-                          <span className="flex items-center gap-2 font-medieval">
-                            {LEVEL_ICONS[level]} {LEVEL_LABELS[level]}
-                          </span>
-                          <span className="font-medium">{count} caballeros</span>
+                <CardContent>
+                  <EventsList events={myEvents} loading={loadingEvents} />
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            <div className="text-center py-16 text-muted-foreground">
+              <Zap className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-medium">Sin puntos aun</p>
+              <p className="text-sm">Completa tareas para empezar a ganar Kreoon Coins</p>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* ─── Seasons Tab ─── */}
+        <TabsContent value="seasons" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {isAdmin && <SeasonManager showCreateButton />}
+            <div className={cn(isAdmin ? 'lg:col-span-2' : 'lg:col-span-3')}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-yellow-500" />
+                    Temporadas
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {seasons.length === 0 ? (
+                    <p className="text-muted-foreground text-sm text-center py-8">No hay temporadas registradas</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {seasons.map(season => (
+                        <div key={season.id} className={cn(
+                          'flex items-center justify-between p-4 rounded-lg border',
+                          season.is_active ? 'border-yellow-500/30 bg-yellow-500/5' : 'border-border',
+                        )}>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">{season.name}</p>
+                              {season.is_active && (
+                                <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30">Activa</Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {format(new Date(season.start_date), 'd MMM yyyy', { locale: es })} — {format(new Date(season.end_date), 'd MMM yyyy', { locale: es })}
+                            </p>
+                          </div>
                         </div>
-                        <div className="h-3 rounded-sm bg-muted overflow-hidden border border-border">
-                          <div 
-                            className={cn(
-                              "h-full transition-all",
-                              level === 'diamond' && "bg-gradient-to-r from-cyan-500 to-cyan-400",
-                              level === 'gold' && "bg-gradient-to-r from-yellow-600 to-yellow-500",
-                              level === 'silver' && "bg-gradient-to-r from-slate-400 to-slate-300",
-                              level === 'bronze' && "bg-gradient-to-r from-amber-700 to-amber-600"
-                            )}
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Requiere: {thresholds[level]}+ puntos de honor
-                        </p>
-                      </div>
-                    );
-                  })}
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
+          </div>
+        </TabsContent>
 
-          <TabsContent value="history">
-            <Card className="border-2 border-border bg-gradient-parchment">
+        {/* ─── Achievements Tab ─── */}
+        <TabsContent value="achievements" className="space-y-6">
+          {user && <UnifiedBadgesShowcase userId={user.id} variant="full" />}
+        </TabsContent>
+
+        {/* ─── History Tab (Admin) ─── */}
+        {isAdmin && (
+          <TabsContent value="history" className="space-y-6">
+            <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 font-medieval">
-                  <History className="w-5 h-5 text-primary" />
-                  Crónicas del Reino
+                <CardTitle className="flex items-center gap-2">
+                  <History className="h-5 w-5" />
+                  Historial de Actividad Global
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <GlobalPointsHistory />
+                <EventsList events={myEvents} loading={loadingEvents} showUserName />
               </CardContent>
             </Card>
-          </TabsContent>
 
-          <TabsContent value="control">
-            {currentOrgId && <UPControlCenter organizationId={currentOrgId} />}
-          </TabsContent>
-        </Tabs>
-      ) : (
-        <Tabs defaultValue="upv2" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
-            <TabsTrigger value="upv2" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Video className="w-4 h-4" />
-              Mis Puntos
-            </TabsTrigger>
-            <TabsTrigger value="ranking" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Trophy className="w-4 h-4" />
-              Ranking
-            </TabsTrigger>
-            <TabsTrigger value="seasons" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Calendar className="w-4 h-4" />
-              Temporadas
-            </TabsTrigger>
-            <TabsTrigger value="achievements" className="flex items-center gap-2 font-medieval data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Award className="w-4 h-4" />
-              Logros
-            </TabsTrigger>
-          </TabsList>
+            {/* Level distribution */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Distribucion de Niveles
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {Object.entries(LEVEL_META).map(([level, meta]) => {
+                  const count = allRanking.filter(e => e.current_level === level).length;
+                  const pct = allRanking.length > 0 ? (count / allRanking.length) * 100 : 0;
+                  return (
+                    <div key={level} className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-2">
+                          {meta.icon} {level}
+                        </span>
+                        <span className="font-medium">{count} miembros</span>
+                      </div>
+                      <div className="h-3 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{ width: `${pct}%`, backgroundColor: meta.color }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
 
-          <TabsContent value="upv2" className="space-y-6">
-            {user && (
-              <>
-                <UPUserStats userId={user.id} />
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <UPLeaderboardTabs />
-                  <UPHistoryTable userId={user.id} />
-                </div>
-              </>
+            {/* Archetype distribution */}
+            {archetypes.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Roles Activos ({archetypes.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {archetypes.map(arch => {
+                      const meta = ARCHETYPE_META[arch.archetype];
+                      return (
+                        <div key={arch.id} className="p-3 rounded-lg border bg-card">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span>{meta?.icon || '📋'}</span>
+                            <span className="text-sm font-medium truncate">{arch.role_display_name}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{meta?.label || arch.archetype}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Peso: {arch.base_weight} | x{arch.complexity_multiplier}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </TabsContent>
-
-          <TabsContent value="ranking" className="space-y-6">
-            <RankingContent 
-              leaderboard={leaderboard}
-              totalPoints={totalPoints}
-              diamondCount={diamondCount}
-              goldCount={goldCount}
-              silverCount={silverCount}
-              currentUserId={user?.id}
-              thresholds={thresholds}
-            />
-          </TabsContent>
-
-          <TabsContent value="seasons" className="space-y-6">
-            <UPSeasonHistory />
-          </TabsContent>
-
-          <TabsContent value="achievements" className="space-y-6">
-            {user && <UnifiedBadgesShowcase userId={user.id} variant="full" />}
-          </TabsContent>
-        </Tabs>
-      )}
+        )}
+      </Tabs>
     </div>
   );
 }
 
-// Componente separado para el contenido del ranking
-interface RankingContentProps {
-  leaderboard: CombinedLeaderboardEntry[];
-  totalPoints: number;
-  diamondCount: number;
-  goldCount: number;
-  silverCount: number;
-  currentUserId?: string;
-  thresholds: { bronze: number; silver: number; gold: number; diamond: number };
-}
+// ─── Role Leaderboard ────────────────────────────────────
 
-function RankingContent({ 
-  leaderboard, 
-  totalPoints, 
-  diamondCount, 
-  goldCount, 
-  silverCount,
+function RoleLeaderboard({
+  entries,
+  sortBy,
   currentUserId,
-  thresholds
-}: RankingContentProps) {
+  roleName,
+  activeSeason,
+}: {
+  entries: RankingEntry[];
+  sortBy: SortKey;
+  currentUserId?: string;
+  roleName: string;
+  activeSeason?: { name: string; start_date: string; end_date: string } | null;
+}) {
+  const currentUserRank = entries.findIndex(e => e.user_id === currentUserId) + 1;
+  const displayPoints = entries.reduce((s, e) => s + (sortBy === 'season' ? e.season_points : e.lifetime_points), 0);
+  // Detect if season data equals lifetime (system just launched)
+  const seasonEqualsLifetime = sortBy === 'season' && entries.every(e => e.season_points === e.lifetime_points);
+
   return (
-    <>
-      {/* Stats Overview - Medieval Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border border-primary/30 bg-primary/5">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
-              <Flame className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{totalPoints.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Puntos UP</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-cyan-400/30 bg-cyan-400/5">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-cyan-400/10 border border-cyan-400/20">
-              <Castle className="w-5 h-5 text-cyan-400" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-cyan-400">{diamondCount}</p>
-              <p className="text-xs text-muted-foreground">Diamante ({thresholds.diamond}+)</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-yellow-500/30 bg-yellow-500/5">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-              <Crown className="w-5 h-5 text-yellow-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-yellow-500">{goldCount}</p>
-              <p className="text-xs text-muted-foreground">Oro ({thresholds.gold}+)</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-2 border-success/40 bg-gradient-to-br from-success/15 to-success/5 emboss">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-success/25 border border-success/30">
-              <Swords className="w-5 h-5 text-success" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-success font-medieval">{leaderboard.length}</p>
-              <p className="text-xs text-muted-foreground font-body">Miembros de la Orden</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Combined Leaderboard */}
-      <Card className="border-2 border-border">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 font-medieval">
-            <Trophy className="w-5 h-5 text-yellow-500" />
-            Ranking General (Creadores + Editores)
+    <Card className={cn('border-2', sortBy === 'season' ? 'border-yellow-500/30' : 'border-border')}>
+      <CardHeader>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <CardTitle className="flex items-center gap-2">
+            {sortBy === 'season' ? (
+              <Calendar className="w-5 h-5 text-yellow-500" />
+            ) : (
+              <Trophy className="w-5 h-5 text-yellow-500" />
+            )}
+            {sortBy === 'season' ? (
+              <span>{activeSeason?.name || 'Temporada'} — {roleName}</span>
+            ) : (
+              <span>Ranking {roleName}</span>
+            )}
           </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {leaderboard.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Sword className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg font-medium font-medieval">Sin caballeros en la orden</p>
-              <p className="text-sm font-body">Completa misiones para ser nombrado caballero</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {leaderboard.map((entry) => {
-                const isCurrentUser = entry.user_id === currentUserId;
-                const rankStyle = RANK_STYLES[entry.rank - 1];
-                
-                return (
-                  <div
-                    key={entry.user_id}
-                    className={cn(
-                      "flex items-center gap-4 p-3 rounded-lg transition-colors border",
-                      isCurrentUser ? "bg-primary/15 border-primary/40" : "hover:bg-muted/50 border-transparent",
-                      entry.rank <= 3 && "border-2"
-                    )}
-                  >
-                    {/* Rank */}
-                    <div className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 font-medieval",
-                      entry.rank <= 3 ? rankStyle?.bg : "bg-muted border border-border"
-                    )}>
-                      {entry.rank <= 3 && rankStyle ? (
-                        <rankStyle.icon className={cn("w-5 h-5", rankStyle.color)} />
-                      ) : (
-                        <span className="text-muted-foreground">{entry.rank}</span>
-                      )}
-                    </div>
-                    
-                    {/* Avatar */}
-                    <Avatar className="h-10 w-10 flex-shrink-0 border-2 border-border">
-                      <AvatarImage src={entry.avatar_url || undefined} />
-                      <AvatarFallback className="font-medieval">
-                        {entry.full_name.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    
-                    {/* Name & Level */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium truncate font-medieval">{entry.full_name}</p>
-                        {isCurrentUser && (
-                          <Badge variant="outline" className="text-xs font-medieval">Tú</Badge>
-                        )}
-                      </div>
-                      <div className={cn("flex items-center gap-1 text-sm font-body", LEVEL_COLORS[entry.current_level])}>
-                        <span>{LEVEL_ICONS[entry.current_level]}</span>
-                        <span>{LEVEL_LABELS[entry.current_level]}</span>
-                      </div>
-                    </div>
-                    
-                    {/* Points */}
-                    <div className={cn(
-                      "flex items-center gap-2 px-3 py-1.5 rounded-lg border font-medieval",
-                      LEVEL_BG_COLORS[entry.current_level]
-                    )}>
-                      <Flame className={cn("w-4 h-4", LEVEL_COLORS[entry.current_level])} />
-                      <span className={cn("font-bold", LEVEL_COLORS[entry.current_level])}>
-                        {entry.total_points}
-                      </span>
-                    </div>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            {currentUserRank > 0 && (
+              <Badge variant="outline" className="gap-1">
+                <Trophy className="w-3 h-3" /> #{currentUserRank}
+              </Badge>
+            )}
+            <span>{displayPoints.toLocaleString()} coins</span>
+          </div>
+        </div>
+        {sortBy === 'season' && activeSeason && (
+          <p className="text-xs text-muted-foreground mt-1">
+            {format(new Date(activeSeason.start_date), 'd MMM', { locale: es })} — {format(new Date(activeSeason.end_date), 'd MMM yyyy', { locale: es })}
+          </p>
+        )}
+        {seasonEqualsLifetime && (
+          <p className="text-xs text-yellow-500/80 mt-2">
+            El sistema de puntos inicio en esta temporada. Los datos se diferenciaran a partir de la proxima.
+          </p>
+        )}
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          {entries.map((entry, idx) => {
+            const rank = idx + 1;
+            const isCurrentUser = entry.user_id === currentUserId;
+            const rankStyle = RANK_STYLES[rank - 1];
+            const levelMeta = LEVEL_META[entry.current_level] || LEVEL_META['Novato'];
+            const displayPoints = sortBy === 'season' ? entry.season_points : entry.lifetime_points;
+
+            return (
+              <div
+                key={entry.user_id}
+                className={cn(
+                  'flex items-center gap-4 p-3 rounded-lg transition-colors border',
+                  isCurrentUser ? 'bg-primary/15 border-primary/40' : 'hover:bg-muted/50 border-transparent',
+                  rank <= 3 && 'border-2',
+                )}
+              >
+                {/* Rank */}
+                <div className={cn(
+                  'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0',
+                  rank <= 3 ? rankStyle?.bg : 'bg-muted border border-border',
+                )}>
+                  {rank <= 3 && rankStyle ? (
+                    <rankStyle.icon className={cn('w-5 h-5', rankStyle.color)} />
+                  ) : (
+                    <span className="text-muted-foreground">{rank}</span>
+                  )}
+                </div>
+
+                {/* Avatar */}
+                <Avatar className="h-10 w-10 flex-shrink-0 border-2 border-border">
+                  <AvatarImage src={entry.avatar_url || undefined} />
+                  <AvatarFallback className="text-xs">
+                    {(entry.full_name || '??').slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+
+                {/* Name & Level */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium truncate">{entry.full_name || 'Usuario'}</p>
+                    {isCurrentUser && <Badge variant="outline" className="text-xs">Tu</Badge>}
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>{levelMeta.icon} {entry.current_level}</span>
+                    <span className="text-xs">{entry.lifetime_tasks} tareas</span>
+                    {entry.current_streak_days > 0 && (
+                      <span className="text-xs text-orange-400 flex items-center gap-0.5">
+                        <Flame className="h-3 w-3" />{entry.current_streak_days}d
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* On-time rate */}
+                <div className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground">
+                  <Target className="h-3 w-3" />
+                  {Math.round(entry.on_time_rate * 100)}%
+                </div>
+
+                {/* Points */}
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-primary/5 border-primary/20">
+                  <Flame className="w-4 h-4 text-primary" />
+                  <span className="font-bold text-primary">
+                    {Math.round(displayPoints).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
-// Componente para historial global - Medieval Chronicle (V2 only)
-function GlobalPointsHistory() {
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { currentOrgId } = useOrgOwner();
+// ─── Subcomponents ────────────────────────────────────
 
-  useEffect(() => {
-    fetchTransactions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentOrgId]);
+function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: number | string; color: string }) {
+  return (
+    <Card>
+      <CardContent className="p-4 flex items-center gap-3">
+        <div className={cn('p-2 rounded-lg bg-muted border border-border')}>
+          <Icon className={cn('w-5 h-5', color)} />
+        </div>
+        <div>
+          <p className="text-xl font-bold">{typeof value === 'number' ? value.toLocaleString() : value}</p>
+          <p className="text-xs text-muted-foreground">{label}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
-  const fetchTransactions = async () => {
-    try {
-      if (!currentOrgId) {
-        setTransactions([]);
-        return;
-      }
+function RoleScoreRow({ score }: { score: UserReputationTotals }) {
+  const levelMeta = LEVEL_META[score.current_level] || LEVEL_META['Novato'];
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
+      <span className="text-lg">{levelMeta.icon}</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium">{ROLE_LABEL[score.role_key] || score.role_key}</p>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+          <span>{score.lifetime_tasks} tareas</span>
+          <span>{Math.round(score.on_time_rate * 100)}% a tiempo</span>
+          {score.current_streak_days > 0 && (
+            <span className="text-orange-400">{score.current_streak_days}d racha</span>
+          )}
+        </div>
+      </div>
+      <div className="text-right">
+        <p className="font-bold text-primary">{score.lifetime_points.toLocaleString()}</p>
+        <p className="text-xs text-muted-foreground">S: {score.season_points}</p>
+      </div>
+    </div>
+  );
+}
 
-      // Fetch from V2 sources only: up_creadores and up_editores
-      const [creatorsRes, editorsRes] = await Promise.all([
-        supabase
-          .from('up_creadores')
-          .select('id, user_id, event_type, points, description, created_at')
-          .eq('organization_id', currentOrgId)
-          .order('created_at', { ascending: false })
-          .limit(50),
-        supabase
-          .from('up_editores')
-          .select('id, user_id, event_type, points, description, created_at')
-          .eq('organization_id', currentOrgId)
-          .order('created_at', { ascending: false })
-          .limit(50)
-      ]);
-
-      // Combine and normalize all transactions
-      const creatorTx = (creatorsRes.data || []).map(tx => ({
-        ...tx,
-        transaction_type: tx.event_type,
-        source: 'creator' as const
-      }));
-
-      const editorTx = (editorsRes.data || []).map(tx => ({
-        ...tx,
-        transaction_type: tx.event_type,
-        source: 'editor' as const
-      }));
-
-      // Merge all transactions
-      const allTransactions = [...creatorTx, ...editorTx];
-
-      // Sort by date descending
-      allTransactions.sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-
-      // Get unique user IDs
-      const userIds = [...new Set(allTransactions.map(tx => tx.user_id))];
-
-      // Fetch profiles
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name, avatar_url')
-        .in('id', userIds);
-
-      const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
-
-      // Attach profiles and take top 100
-      const enrichedTransactions = allTransactions.slice(0, 100).map(tx => ({
-        ...tx,
-        profiles: profilesMap.get(tx.user_id)
-      }));
-
-      setTransactions(enrichedTransactions);
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const TRANSACTION_LABELS: Record<string, string> = {
-    // V2 events
-    delivery_on_time: 'Entrega a Tiempo',
-    delivery_day2: 'Entrega Día 2',
-    delivery_day3: 'Entrega Día 3',
-    late_day3: 'Retraso Día 3',
-    late_day4: 'Retraso Día 4',
-    late_day5: 'Retraso Día 5',
-    on_time_delivery: 'Entrega a Tiempo',
-    issue_penalty: 'Novedad Reportada',
-    issue_recovery: 'Novedad Resuelta',
-    clean_approval_bonus: 'Aprobación Limpia',
-    reassignment_penalty: 'Reasignación',
-    manual_adjustment: 'Ajuste Manual'
-  };
-
-  const getSourceBadge = (source: string) => {
-    switch (source) {
-      case 'creator':
-        return <Badge variant="outline" className="text-[10px] px-1 py-0 bg-info/10 text-info border-info/30">Creador</Badge>;
-      case 'editor':
-        return <Badge variant="outline" className="text-[10px] px-1 py-0 bg-warning/10 text-warning border-warning/30">Editor</Badge>;
-      default:
-        return null;
-    }
-  };
-
+function EventsList({ events, loading, showUserName }: { events: any[]; loading: boolean; showUserName?: boolean }) {
   if (loading) {
     return (
       <div className="space-y-3">
-        {[1, 2, 3, 4, 5].map(i => (
-          <Skeleton key={i} className="h-16 w-full" />
-        ))}
+        {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-14 w-full" />)}
       </div>
     );
   }
 
-  if (transactions.length === 0) {
+  if (events.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        <History className="w-12 h-12 mx-auto mb-4 opacity-50" />
-        <p className="text-lg font-medium">Sin actividad reciente</p>
-        <p className="text-sm">El historial de actividad aparecerá aquí</p>
+      <div className="text-center py-8 text-muted-foreground">
+        <History className="w-8 h-8 mx-auto mb-2 opacity-50" />
+        <p className="text-sm">Sin actividad reciente</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
-      {transactions.map(tx => (
-        <div
-          key={tx.id}
-          className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-        >
-          <Avatar className="h-10 w-10 border-2 border-border">
-            <AvatarImage src={tx.profiles?.avatar_url || undefined} />
-            <AvatarFallback className="text-xs">
-              {tx.profiles?.full_name?.slice(0, 2).toUpperCase() || '??'}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="font-medium text-sm truncate">{tx.profiles?.full_name || 'Usuario'}</p>
-              {getSourceBadge(tx.source)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {TRANSACTION_LABELS[tx.transaction_type] || tx.transaction_type}
-              {tx.description && ` — ${tx.description}`}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className={cn(
-              "font-bold",
-              tx.points > 0 ? "text-success" : "text-destructive"
+    <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+      {events.map((ev: any, i: number) => {
+        const label = ev.event_subtype
+          ? EVENT_SUBTYPE_LABELS[ev.event_subtype] || ev.event_subtype
+          : EVENT_TYPE_LABELS[ev.event_type] || ev.event_type;
+        const points = ev.final_points ?? ev.base_points ?? 0;
+        const isPositive = points >= 0;
+
+        return (
+          <div key={ev.id || i} className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+            <div className={cn(
+              'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0',
+              isPositive ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500',
             )}>
-              {tx.points > 0 ? '+' : ''}{tx.points} UP
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {format(new Date(tx.created_at), "d MMM HH:mm", { locale: es })}
-            </p>
+              {isPositive ? '+' : '−'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">{label}</p>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>{ROLE_LABEL[ev.role_key] || ev.role_key}</span>
+                {ev.event_date && (
+                  <span>{format(new Date(ev.event_date), 'd MMM HH:mm', { locale: es })}</span>
+                )}
+              </div>
+            </div>
+            <div className="text-right">
+              <p className={cn('font-bold', isPositive ? 'text-green-500' : 'text-red-500')}>
+                {isPositive ? '+' : ''}{points}
+              </p>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

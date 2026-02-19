@@ -1,6 +1,7 @@
-import { Edit3, Globe, Lock, Target, Video, MapPin, Star, Users, CheckCircle2, Flame } from 'lucide-react';
+import { Edit3, Globe, Lock, Target, Video, MapPin, Star, Users, CheckCircle2, Flame, Briefcase, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MARKETPLACE_CATEGORIES, COUNTRIES, VISIBILITY_CONFIG } from '../../types/marketplace';
+import { COMMISSION_RATES } from '@/lib/finance/constants';
 import type {
   CampaignContentRequirement,
   CampaignCreatorRequirements,
@@ -120,6 +121,20 @@ export function CampaignStepReview({
       <ReviewSection title="Compensacion" onEdit={() => onEditStep(3)}>
         <div className="space-y-2 text-sm">
           <div><span className="text-gray-500">Tipo:</span> <span className="text-white">{TYPE_LABELS[budgetData.campaign_type]}</span></div>
+          <div className="flex items-center gap-2">
+            <Briefcase className={cn('h-3.5 w-3.5', budgetData.requires_agency_support ? 'text-amber-400' : 'text-green-400')} />
+            <span className="text-gray-400">
+              {budgetData.requires_agency_support ? 'Con Kreoon Agency' : 'Self-Service'}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Shield className="h-3.5 w-3.5 text-gray-500" />
+            <span className="text-gray-400">
+              Comision: <span className={cn('font-medium', budgetData.requires_agency_support ? 'text-amber-300' : 'text-green-300')}>
+                {budgetData.requires_agency_support ? COMMISSION_RATES.campaigns_managed.max : COMMISSION_RATES.campaigns_managed.base}%
+              </span>
+            </span>
+          </div>
           {(budgetData.campaign_type === 'paid' || budgetData.campaign_type === 'hybrid') && (
             <div>
               <span className="text-gray-500">Presupuesto:</span>{' '}
@@ -142,7 +157,7 @@ export function CampaignStepReview({
           {estimatedBudget > 0 && (
             <div className="mt-2 p-2 bg-white/5 rounded-lg">
               <span className="text-gray-500 text-xs">Presupuesto total estimado:</span>
-              <p className="text-white font-semibold">${estimatedBudget.toLocaleString()} USD</p>
+              <p className="text-white font-semibold">${estimatedBudget.toLocaleString()} COP</p>
               <p className="text-gray-600 text-xs">({visibilityData.max_creators} creadores x {totalVideos} videos)</p>
             </div>
           )}
@@ -189,7 +204,9 @@ export function CampaignStepReview({
           className="mt-1 rounded border-white/20 bg-white/5 text-purple-500 focus:ring-purple-500"
         />
         <span className="text-gray-400 text-sm">
-          Acepto los terminos de servicio de Kreoon y entiendo que se aplicara una comision del 15% sobre los pagos a creadores.
+          Acepto los terminos de servicio de Kreoon y entiendo que se aplicara una comision del{' '}
+          {budgetData.requires_agency_support ? COMMISSION_RATES.campaigns_managed.max : COMMISSION_RATES.campaigns_managed.base}%
+          {' '}sobre los pagos a creadores{budgetData.requires_agency_support ? ' (incluye acompanamiento de Kreoon Agency)' : ''}.
         </span>
       </label>
     </div>

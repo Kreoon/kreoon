@@ -345,3 +345,131 @@ export const ESCROW_AUTO_APPROVAL_HOURS = 72;
 
 /** Minimum payment amount for escrow (USD) */
 export const ESCROW_MIN_PAYMENT_USD = 50;
+
+// ═══════════════════════════════════════════════════════════════
+// 12. REFERRAL TIERS (progressive commission bonus)
+// ═══════════════════════════════════════════════════════════════
+
+export const REFERRAL_TIERS = {
+  starter: {
+    label: "Starter",
+    minReferrals: 0,
+    bonusPercent: 0,
+    effectiveRate: 20,
+    badgeEmoji: "\uD83C\uDF31",
+    badgeColor: "#888888",
+  },
+  ambassador: {
+    label: "Ambassador",
+    minReferrals: 3,
+    bonusPercent: 2,
+    effectiveRate: 22,
+    badgeEmoji: "\uD83C\uDF96\uFE0F",
+    badgeColor: "#9333ea",
+  },
+  champion: {
+    label: "Champion",
+    minReferrals: 10,
+    bonusPercent: 3,
+    effectiveRate: 23,
+    badgeEmoji: "\uD83C\uDFC6",
+    badgeColor: "#f59e0b",
+  },
+  elite: {
+    label: "Elite",
+    minReferrals: 25,
+    bonusPercent: 5,
+    effectiveRate: 25,
+    badgeEmoji: "\uD83D\uDC8E",
+    badgeColor: "#3b82f6",
+  },
+  legend: {
+    label: "Legend",
+    minReferrals: 50,
+    bonusPercent: 7,
+    effectiveRate: 27,
+    badgeEmoji: "\uD83D\uDC51",
+    badgeColor: "#ef4444",
+  },
+} as const;
+
+export type ReferralTierKey = keyof typeof REFERRAL_TIERS;
+
+/** Ordered list of tier keys for progression logic */
+export const REFERRAL_TIER_ORDER: ReferralTierKey[] = [
+  "starter", "ambassador", "champion", "elite", "legend",
+];
+
+// ═══════════════════════════════════════════════════════════════
+// 13. REFERRAL BILATERAL REWARDS
+// ═══════════════════════════════════════════════════════════════
+
+export const REFERRAL_BILATERAL = {
+  /** Kreoon Coins awarded to the referred user on signup */
+  referred_welcome_coins: 25,
+  /** Kreoon Coins awarded to referrer when referral qualifies */
+  referrer_qualification_coins: 50,
+  /** Default discount % for the referred user's first subscription */
+  referred_discount_percent: 30,
+} as const;
+
+// ═══════════════════════════════════════════════════════════════
+// 14. REFERRAL SHARE MESSAGES
+// ═══════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════
+// 15. UGC PRICE MATRIX & CAMPAIGN OPTIMIZATION
+// ═══════════════════════════════════════════════════════════════
+
+/** Per-creator price estimates by content type and creator tier (USD) */
+export const UGC_PRICE_MATRIX = {
+  ugc:      { emergente: 50, establecido: 150, premium: 400 },
+  resena:   { emergente: 30, establecido: 100, premium: 250 },
+  tutorial: { emergente: 80, establecido: 200, premium: 500 },
+  unboxing: { emergente: 60, establecido: 180, premium: 450 },
+  evento:   { emergente: 100, establecido: 300, premium: 800 },
+} as const;
+
+export type UGCContentType = keyof typeof UGC_PRICE_MATRIX;
+export type CreatorTier = keyof (typeof UGC_PRICE_MATRIX)['ugc'];
+
+/** First-campaign promotion: 0% commission for new brands */
+export const FIRST_CAMPAIGN_PROMO = {
+  commission_rate: 0,
+  badge_text: 'Primera Campaña Gratis',
+} as const;
+
+/** B2B brand referral credit reward */
+export const BRAND_REFERRAL_CREDIT = {
+  amount: 50,
+  currency: 'USD',
+} as const;
+
+// ═══════════════════════════════════════════════════════════════
+// 16. REFERRAL SHARE MESSAGES
+// ═══════════════════════════════════════════════════════════════
+
+export const SHARE_MESSAGES = {
+  talent: {
+    whatsapp:
+      "Quiero invitarte a KREOON, la plataforma para creadores de contenido. Usa mi link y recibe 30% OFF + 25 Kreoon Coins: {URL}",
+    twitter:
+      "Si eres creador de contenido, tienes que conocer @kreoon_co. Registrate con mi link y recibe beneficios: {URL}",
+    linkedin:
+      "Si trabajas en creacion de contenido, te recomiendo KREOON. Registrate con mi link para recibir 30% de descuento: {URL}",
+    email_subject: "Te invito a KREOON - beneficios exclusivos",
+    email_body:
+      "Hola,\n\nQuiero invitarte a KREOON, la plataforma todo-en-uno para creadores. Al registrarte con mi link recibiras 30% de descuento en tu primera suscripcion + 25 Kreoon Coins.\n\nRegistrate aqui: {URL}\n\nNos vemos dentro!",
+  },
+  brand: {
+    whatsapp:
+      "Te recomiendo KREOON para gestionar tu contenido y conectar con creadores. Usa mi link y recibe 30% OFF: {URL}",
+    twitter:
+      "Si tu marca necesita creadores de contenido, @kreoon_co es la solucion. 30% OFF con mi link: {URL}",
+    linkedin:
+      "Recomiendo KREOON para marcas que buscan escalar su produccion de contenido. Registrate con descuento: {URL}",
+    email_subject: "KREOON - Plataforma de contenido con descuento",
+    email_body:
+      "Hola,\n\nQuiero recomendarte KREOON para gestionar la creacion de contenido de tu marca. Al registrarte con mi link obtienes 30% de descuento.\n\nRegistrate: {URL}\n\nSaludos!",
+  },
+} as const;

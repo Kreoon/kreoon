@@ -1,6 +1,7 @@
 // ============================================================================
 // KREOON REFERRAL SERVICE
 // Edge Function para gestionar el sistema de referidos perpetuos
+// Enhanced: tiers, bilateral rewards, leaderboard, promos, nurture
 // ============================================================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -27,14 +28,31 @@ serve(async (req) => {
     const body = req.method === "GET" ? {} : await req.json();
 
     // Public actions that don't require authentication (for landing pages)
-    const PUBLIC_ACTIONS = ["validate-code", "track-click"];
+    const PUBLIC_ACTIONS = [
+      "validate-code", "track-click",
+      "get-tiers", "get-leaderboard", "get-promo-campaigns",
+    ];
 
     if (PUBLIC_ACTIONS.includes(action || "")) {
       let result;
-      if (action === "validate-code") {
-        result = await validateReferralCode(supabase, body.code);
-      } else {
-        result = await trackClick(supabase, body.code);
+      switch (action) {
+        case "validate-code":
+          result = await validateReferralCode(supabase, body.code);
+          break;
+        case "track-click":
+          result = await trackClick(supabase, body.code);
+          break;
+        case "get-tiers":
+          result = await getTiers(supabase);
+          break;
+        case "get-leaderboard":
+          result = await getLeaderboard(supabase, body.month);
+          break;
+        case "get-promo-campaigns":
+          result = await getPromoCampaigns(supabase);
+          break;
+        default:
+          result = { error: "Unknown public action" };
       }
       return new Response(
         JSON.stringify(result),
@@ -82,6 +100,9 @@ serve(async (req) => {
       case "update-slug":
         result = await updateSlug(supabase, user.id, body);
         break;
+      case "check-nurture":
+        result = await checkNurture(supabase, user.id);
+        break;
       default:
         throw new Error(`Unknown action: ${action}`);
     }
@@ -99,6 +120,110 @@ serve(async (req) => {
     );
   }
 });
+
+// ============================================================================
+// PUBLIC: GET TIERS
+// ============================================================================
+
+async function getTiers(supabase: any) {
+  const { data: tiers, error } = await supabase
+    .from("referral_tiers")
+    .select("*")
+    .order("sort_order", { ascending: true });
+
+  if (error) throw new Error(`Failed to get tiers: ${error.message}`);
+
+  return { success: true, tiers };
+}
+
+// ============================================================================
+// PUBLIC: GET LEADERBOARD
+// ============================================================================
+
+async function getLeaderboard(supabase: any, month?: string) {
+  const period = month || new Date().toISOString().slice(0, 7);
+
+  const { data: entries, error } = await supabase
+    .from("referral_leaderboard")
+    .select("*")
+    .eq("period_month", period)
+    .order("rank_position", { ascending: true })
+    .limit(50);
+
+  if (error) throw new Error(`Failed to get leaderboard: ${error.message}`);
+
+  // Enrich with profile data
+  const userIds = (entries || []).map((e: any) => e.user_id);
+  let profileMap: Record<string, any> = {};
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name, avatar_url, referral_tier")
+      .in("id", userIds);
+    for (const p of profiles || []) {
+      profileMap[p.id] = p;
+    }
+  }
+
+  const leaderboard = (entries || []).map((e: any) => ({
+    ...e,
+    full_name: profileMap[e.user_id]?.full_name || null,
+    avatar_url: profileMap[e.user_id]?.avatar_url || null,
+    referral_tier: profileMap[e.user_id]?.referral_tier || "starter",
+  }));
+
+  return { success: true, leaderboard };
+}
+
+// ============================================================================
+// PUBLIC: GET ACTIVE PROMO CAMPAIGNS
+// ============================================================================
+
+async function getPromoCampaigns(supabase: any) {
+  const now = new Date().toISOString();
+
+  const { data: campaigns, error } = await supabase
+    .from("promotional_campaigns")
+    .select("*")
+    .eq("is_active", true)
+    .lte("start_date", now)
+    .gte("end_date", now)
+    .order("end_date", { ascending: true });
+
+  if (error) throw new Error(`Failed to get promo campaigns: ${error.message}`);
+
+  // Filter out maxed-out campaigns
+  const available = (campaigns || []).filter(
+    (c: any) => !c.max_redemptions || c.current_redemptions < c.max_redemptions
+  );
+
+  return { success: true, campaigns: available };
+}
+
+// ============================================================================
+// AUTH: CHECK NURTURE STATUS
+// ============================================================================
+
+async function checkNurture(supabase: any, userId: string) {
+  const { data } = await supabase
+    .from("referral_nurture_queue")
+    .select("has_creator_profile, has_avatar, has_portfolio, is_qualified, completed_at")
+    .eq("referred_id", userId)
+    .limit(1)
+    .maybeSingle();
+
+  if (!data) {
+    return {
+      has_creator_profile: false,
+      has_avatar: false,
+      has_portfolio: false,
+      is_qualified: false,
+      completed_at: null,
+    };
+  }
+
+  return data;
+}
 
 // ============================================================================
 // GENERAR CÓDIGO DE REFERIDO
@@ -215,6 +340,8 @@ async function getMyReferrals(supabase: any, userId: string) {
       total_subscription_earned,
       total_transaction_earned,
       total_earned,
+      referrer_coins_awarded,
+      referred_coins_awarded,
       created_at
     `)
     .eq("referrer_id", userId)
@@ -317,7 +444,7 @@ async function getMyEarnings(supabase: any, userId: string) {
   for (const earning of earnings) {
     totals.total += earning.commission_amount;
     totals[earning.status as keyof typeof totals] += earning.commission_amount;
-    
+
     if (earning.source_type === "subscription") {
       totals.from_subscriptions += earning.commission_amount;
     } else {
@@ -353,7 +480,7 @@ async function validateReferralCode(supabase: any, code: string) {
   // Query code without FK join (FK points to auth.users, not profiles)
   const { data: referralCode } = await supabase
     .from("referral_codes")
-    .select("id, code, target_type, is_active, expires_at, max_uses, conversions, user_id")
+    .select("id, code, target_type, is_active, expires_at, max_uses, conversions, user_id, referred_discount_percent, referred_bonus_coins")
     .eq("code", code.toUpperCase())
     .single();
 
@@ -379,15 +506,21 @@ async function validateReferralCode(supabase: any, code: string) {
   // Fetch referrer profile separately
   let referrerName = null;
   let referrerAvatar = null;
+  let referrerTier = "starter";
   if (referralCode.user_id) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("full_name, avatar_url")
+      .select("full_name, avatar_url, referral_tier")
       .eq("id", referralCode.user_id)
       .single();
     referrerName = profile?.full_name || null;
     referrerAvatar = profile?.avatar_url || null;
+    referrerTier = profile?.referral_tier || "starter";
   }
+
+  // Check active promo
+  const promosResult = await getPromoCampaigns(supabase);
+  const activePromo = promosResult.campaigns?.[0] || null;
 
   return {
     success: true,
@@ -397,7 +530,13 @@ async function validateReferralCode(supabase: any, code: string) {
     referrer: {
       name: referrerName,
       avatar: referrerAvatar,
+      tier: referrerTier,
     },
+    rewards: {
+      discount_percent: activePromo?.referred_discount_percent || referralCode.referred_discount_percent || 30,
+      bonus_coins: activePromo?.referred_bonus_coins || referralCode.referred_bonus_coins || 25,
+    },
+    active_promo: activePromo,
   };
 }
 
@@ -441,7 +580,7 @@ async function applyReferralCode(supabase: any, userId: string, code: string) {
   // Validar código
   const { data: referralCode } = await supabase
     .from("referral_codes")
-    .select("id, user_id, is_active, conversions, max_uses")
+    .select("id, user_id, is_active, conversions, max_uses, referred_bonus_coins, referrer_bonus_coins")
     .eq("code", code.toUpperCase())
     .eq("is_active", true)
     .limit(1)
@@ -508,10 +647,69 @@ async function applyReferralCode(supabase: any, userId: string, code: string) {
     p_id: referralCode.id,
   });
 
+  // ─── BILATERAL: Award welcome coins to referred user ───
+  const welcomeCoins = referralCode.referred_bonus_coins || 25;
+  try {
+    await supabase.rpc("award_referral_coins", {
+      p_user_id: userId,
+      p_org_id: null,
+      p_amount: welcomeCoins,
+      p_reason: "referral_welcome",
+    });
+
+    // Track coins on relationship
+    await supabase
+      .from("referral_relationships")
+      .update({ referred_coins_awarded: welcomeCoins })
+      .eq("id", relation.id);
+  } catch (e) {
+    console.error("Error awarding welcome coins:", e);
+  }
+
+  // ─── Check active promo and apply extra bonuses ───
+  try {
+    const promosResult = await getPromoCampaigns(supabase);
+    const activePromo = promosResult.campaigns?.[0];
+    if (activePromo) {
+      // Insert campaign redemption
+      await supabase.from("campaign_redemptions").insert({
+        campaign_id: activePromo.id,
+        user_id: userId,
+        referral_code_used: code.toUpperCase(),
+        free_months_granted: activePromo.referral_extra_free_months || 0,
+        bonus_coins_granted: activePromo.referred_bonus_coins || 0,
+      });
+
+      // Increment campaign redemptions
+      await supabase.rpc("increment_column", {
+        p_table: "promotional_campaigns",
+        p_column: "current_redemptions",
+        p_amount: 1,
+        p_id: activePromo.id,
+      });
+
+      // Award extra promo coins if different from base
+      const promoExtraCoins = (activePromo.referred_bonus_coins || 0) - welcomeCoins;
+      if (promoExtraCoins > 0) {
+        await supabase.rpc("award_referral_coins", {
+          p_user_id: userId,
+          p_org_id: null,
+          p_amount: promoExtraCoins,
+          p_reason: "promo_bonus_" + activePromo.slug,
+        });
+      }
+    }
+  } catch (e) {
+    console.error("Error applying promo:", e);
+  }
+
+  // Note: referrer coins (50) are awarded later when referral QUALIFIES (via DB trigger)
+
   return {
     success: true,
     message: "Referral code applied successfully",
     relationship_id: relation.id,
+    welcome_coins: welcomeCoins,
   };
 }
 
@@ -544,16 +742,16 @@ async function trackClick(supabase: any, code: string) {
 }
 
 // ============================================================================
-// DASHBOARD DE REFERIDOS
+// DASHBOARD DE REFERIDOS (ENHANCED)
 // ============================================================================
 
 async function getReferralDashboard(supabase: any, userId: string) {
   // Obtener códigos
   const codesResult = await getMyReferralCodes(supabase, userId);
-  
+
   // Obtener referidos
   const referralsResult = await getMyReferrals(supabase, userId);
-  
+
   // Obtener ganancias
   const earningsResult = await getMyEarnings(supabase, userId);
 
@@ -568,6 +766,62 @@ async function getReferralDashboard(supabase: any, userId: string) {
   const monthlyEarnings = earningsResult.earnings
     .filter((e: any) => new Date(e.created_at) >= startOfMonth)
     .reduce((sum: number, e: any) => sum + e.commission_amount, 0);
+
+  // ─── Enhanced: Get user tier from profile ───
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("referral_tier")
+    .eq("id", userId)
+    .single();
+
+  const currentTierKey = profile?.referral_tier || "starter";
+
+  // Get tier details
+  const { data: currentTierData } = await supabase
+    .from("referral_tiers")
+    .select("*")
+    .eq("tier_key", currentTierKey)
+    .single();
+
+  // Calculate effective rate
+  const baseRate = 20;
+  const bonusPercent = currentTierData?.bonus_subscription_percent || 0;
+  const effectiveRate = baseRate + bonusPercent;
+
+  // Get next tier
+  const TIER_ORDER = ["starter", "ambassador", "champion", "elite", "legend"];
+  const currentIndex = TIER_ORDER.indexOf(currentTierKey);
+  let nextTier = null;
+  if (currentIndex < TIER_ORDER.length - 1) {
+    const nextKey = TIER_ORDER[currentIndex + 1];
+    const { data: nextTierData } = await supabase
+      .from("referral_tiers")
+      .select("*")
+      .eq("tier_key", nextKey)
+      .single();
+    if (nextTierData) {
+      nextTier = {
+        key: nextKey,
+        label: nextTierData.label,
+        referrals_needed: nextTierData.min_referrals - referralsResult.stats.active_referrals,
+        bonus_percent: nextTierData.bonus_subscription_percent,
+      };
+    }
+  }
+
+  // Get leaderboard rank
+  const period = now.toISOString().slice(0, 7);
+  const { data: rankData } = await supabase
+    .from("referral_leaderboard")
+    .select("rank_position")
+    .eq("user_id", userId)
+    .eq("period_month", period)
+    .limit(1)
+    .maybeSingle();
+
+  // Get active promo
+  const promosResult = await getPromoCampaigns(supabase);
+  const activePromo = promosResult.campaigns?.[0] || null;
 
   return {
     success: true,
@@ -590,10 +844,20 @@ async function getReferralDashboard(supabase: any, userId: string) {
       },
     },
     rates: {
-      subscription: "20%",
+      subscription: `${effectiveRate}%`,
       transaction: "5% (del fee de plataforma)",
-      duration: "Perpetuo mientras ambas cuentas estén activas",
+      duration: "Perpetuo mientras ambas cuentas esten activas",
     },
+    // Enhanced fields
+    tier: {
+      current: currentTierKey,
+      label: currentTierData?.label || "Starter",
+      effective_rate: effectiveRate,
+      bonus_percent: bonusPercent,
+    },
+    next_tier: nextTier,
+    leaderboard_rank: rankData?.rank_position || null,
+    active_promo: activePromo,
   };
 }
 

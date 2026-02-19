@@ -301,3 +301,31 @@ verify_jwt = true
 
 [functions.wallet-mercury-payout]
 verify_jwt = true
+
+# ── Marketing Module ──
+
+[functions.marketing-metrics]
+verify_jwt = true
+
+[functions.marketing-reports]
+verify_jwt = true
+
+# ── Social Hub Module ──
+
+[functions.social-auth]
+verify_jwt = false
+
+[functions.social-publish]
+verify_jwt = false
+
+[functions.social-scheduler]
+verify_jwt = false
+
+[functions.social-metrics]
+verify_jwt = false
+
+[functions.marketing-auth]
+verify_jwt = false
+
+[functions.marketing-campaigns]
+verify_jwt = false

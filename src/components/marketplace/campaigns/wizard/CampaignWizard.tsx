@@ -90,6 +90,7 @@ const DEFAULT_BUDGET: CampaignBudgetData = {
   max_bid: 0,
   bid_deadline: '',
   bid_visibility: 'public',
+  requires_agency_support: false,
 };
 
 const DEFAULT_CREATOR_REQS: CampaignCreatorRequirements = {
@@ -139,7 +140,7 @@ function clearDraft() {
 
 export default function CampaignWizard() {
   const navigate = useNavigate();
-  const { createCampaign, uploadCampaignMedia, sendCampaignNotifications } = useMarketplaceCampaigns();
+  const { createCampaign, uploadCampaignMedia, sendCampaignNotifications, activateCampaign } = useMarketplaceCampaigns();
   const { createBulkInvitations } = useCampaignInvitations();
   const { trackCampaignCreated, trackCampaignPublished } = useCampaignAnalytics();
   const draft = loadDraft();
@@ -267,6 +268,8 @@ export default function CampaignWizard() {
       exchange_product_name: budgetData.exchange_product_name || null,
       exchange_product_value: budgetData.exchange_product_value || null,
       exchange_product_description: budgetData.exchange_product_description || null,
+      // Agency support & commission
+      requires_agency_support: budgetData.requires_agency_support,
       // Creator requirements
       creator_requirements: creatorRequirements,
       desired_roles: creatorRequirements.desired_roles || [],
@@ -298,6 +301,13 @@ export default function CampaignWizard() {
 
       if (!campaignId) {
         throw new Error('No se pudo crear la campana');
+      }
+
+      // Activate campaign (creates escrow hold for budget)
+      try {
+        await activateCampaign(campaignId);
+      } catch (activateErr) {
+        console.warn('[CampaignWizard] Campaign activation (escrow) failed — campaign still published:', activateErr);
       }
 
       // Upload temp media files now that we have a campaignId

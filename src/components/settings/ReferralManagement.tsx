@@ -1,4 +1,4 @@
-import { Loader2, Users, DollarSign, MousePointerClick, TrendingUp, Key } from "lucide-react";
+import { Loader2, Users, DollarSign, MousePointerClick, TrendingUp, Key, Percent } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { useUnifiedReferrals } from "@/hooks/useUnifiedReferrals";
@@ -7,6 +7,10 @@ import { ReferralProgressRing } from "@/components/gate/ReferralProgressRing";
 import { ReferralShareCard } from "@/components/gate/ReferralShareCard";
 import { ReferralDetailList } from "@/components/gate/ReferralDetailList";
 import { CustomSlugInput } from "@/components/gate/CustomSlugInput";
+import { TierProgressCard } from "@/components/referrals/TierProgressCard";
+import { ReferralLeaderboard } from "@/components/referrals/ReferralLeaderboard";
+import { PromoBanner } from "@/components/referrals/PromoBanner";
+import { REFERRAL_BILATERAL } from "@/lib/finance/constants";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -25,6 +29,12 @@ export function ReferralManagement() {
     isGenerating,
     updateSlug,
     isUpdatingSlug,
+    // Enhanced
+    currentTierKey,
+    effectiveRate,
+    activePromo,
+    leaderboard,
+    leaderboardLoading,
   } = useUnifiedReferrals();
 
   const {
@@ -56,6 +66,11 @@ export function ReferralManagement() {
 
   return (
     <div className="space-y-6">
+      {/* 1. Promo Banner (if active) */}
+      {activePromo && (
+        <PromoBanner campaign={activePromo} />
+      )}
+
       {/* Gate progress (only show if not yet unlocked) */}
       {!isUnlocked && (
         <Card className="!bg-purple-500/5 !border-purple-500/20">
@@ -79,7 +94,7 @@ export function ReferralManagement() {
         </Card>
       )}
 
-      {/* Stats */}
+      {/* 2. Stats (with effective commission rate) */}
       <div className="grid gap-4 md:grid-cols-4">
         <StatCard
           title="Total Referidos"
@@ -103,22 +118,30 @@ export function ReferralManagement() {
           color="blue"
         />
         <StatCard
-          title="Tasa Conversion"
-          value={metrics.conversion_rate}
-          subtitle="clicks → registros"
-          icon={TrendingUp}
+          title="Comision Efectiva"
+          value={`${effectiveRate}%`}
+          subtitle="suscripciones"
+          icon={Percent}
           color="orange"
         />
       </div>
 
-      {/* Share Card - Link + Copy + Share */}
+      {/* 3. Tier Progress */}
+      <TierProgressCard
+        currentTierKey={currentTierKey}
+        activeReferrals={metrics.active_referrals}
+        effectiveRate={effectiveRate}
+      />
+
+      {/* 4. Share Card - Enhanced with 5 buttons */}
       <ReferralShareCard
         code={displayCode || null}
         onGenerateCode={async () => { await generateCode(); }}
         isGenerating={isGenerating}
+        activePromo={activePromo}
       />
 
-      {/* Custom Slug */}
+      {/* 5. Custom Slug */}
       {primaryCode && (
         <Card className="p-6">
           <h3 className="text-white font-semibold text-sm mb-3">Personalizar tu Link</h3>
@@ -134,7 +157,14 @@ export function ReferralManagement() {
         </Card>
       )}
 
-      {/* Referral Detail List (gate-style with qualification checks) */}
+      {/* 6. Leaderboard */}
+      <ReferralLeaderboard
+        entries={leaderboard}
+        currentUserId={user?.id}
+        isLoading={leaderboardLoading}
+      />
+
+      {/* 7. Referral Detail List (gate-style with qualification checks) */}
       {gateReferrals.length > 0 && (
         <ReferralDetailList referrals={gateReferrals} />
       )}
@@ -230,27 +260,40 @@ export function ReferralManagement() {
         </Card>
       )}
 
-      {/* Info card */}
+      {/* 8. Info card (updated with bilateral + tier info) */}
       <Card className="p-6">
         <h3 className="text-white font-semibold text-sm mb-3">Como funciona el programa</h3>
-        <div className="grid gap-3 md:grid-cols-2">
-          <div className="space-y-2 text-xs text-white/50">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2.5 text-xs text-white/50">
             <div className="flex items-center gap-2">
               <Key className="w-4 h-4 text-purple-400 shrink-0" />
               <span>3 referidos calificados desbloquean la plataforma</span>
             </div>
             <div className="flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-green-400 shrink-0" />
-              <span>20% de comision por suscripciones de tus referidos</span>
+              <span>{effectiveRate}% de comision por suscripciones (sube con tu nivel)</span>
             </div>
             <div className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-blue-400 shrink-0" />
               <span>5% del fee de plataforma en transacciones</span>
             </div>
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>Sube de nivel: Starter → Ambassador → Champion → Elite → Legend</span>
+            </div>
           </div>
-          <div className="space-y-2 text-xs text-white/50">
-            <p><strong className="text-white/70">Referido calificado:</strong> perfil activo en marketplace + foto de perfil + al menos 1 pieza en portafolio</p>
-            <p><strong className="text-white/70">Duracion:</strong> perpetuo mientras ambas cuentas esten activas</p>
+          <div className="space-y-2.5 text-xs text-white/50">
+            <p>
+              <strong className="text-white/70">Beneficio bilateral:</strong> Quien se registra con tu link recibe{' '}
+              {REFERRAL_BILATERAL.referred_discount_percent}% OFF + {REFERRAL_BILATERAL.referred_welcome_coins} Kreoon Coins.
+              Tu recibes {REFERRAL_BILATERAL.referrer_qualification_coins} Kreoon Coins cuando califican.
+            </p>
+            <p>
+              <strong className="text-white/70">Referido calificado:</strong> perfil activo en marketplace + foto de perfil + al menos 1 pieza en portafolio
+            </p>
+            <p>
+              <strong className="text-white/70">Duracion:</strong> perpetuo mientras ambas cuentas esten activas
+            </p>
           </div>
         </div>
       </Card>

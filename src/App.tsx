@@ -108,11 +108,25 @@ const SubscriptionSuccess = lazy(() => import("./pages/subscription/Subscription
 const SubscriptionCancel = lazy(() => import("./pages/subscription/SubscriptionCancel"));
 const PlanesPage = lazy(() => import("./pages/PlanesPage"));
 
+// Campaign Optimization pages
+const UGCPriceCalculator = lazy(() => import("./components/marketplace/calculator/UGCPriceCalculator"));
+const CaseStudies = lazy(() => import("./pages/CaseStudies"));
+const CaseStudyDetail = lazy(() => import("./pages/CaseStudyDetail"));
+
+// Legal pages
+const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/legal/TermsOfService"));
+const DataDeletion = lazy(() => import("./pages/legal/DataDeletion"));
+
 // Wallet Module Pages
 const WalletPage = lazy(() => import("./modules/wallet/pages/WalletPage").then(m => ({ default: m.WalletPage })));
 const TransactionsPage = lazy(() => import("./modules/wallet/pages/TransactionsPage").then(m => ({ default: m.TransactionsPage })));
 const WithdrawalsPage = lazy(() => import("./modules/wallet/pages/WithdrawalsPage").then(m => ({ default: m.WithdrawalsPage })));
 const AdminWalletsPage = lazy(() => import("./modules/wallet/pages/AdminWalletsPage").then(m => ({ default: m.AdminWalletsPage })));
+
+// Social Hub Module
+const SocialHubPage = lazy(() => import("./modules/social/pages/SocialHubPage"));
+const MarketingAdsPage = lazy(() => import("./modules/marketing/pages/MarketingPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -181,6 +195,16 @@ function ProfileRedirect() {
   return <Navigate to="/settings?section=profile" replace />;
 }
 
+// Brand referral handler: capture ref param and redirect to register
+function BrandReferralRedirect() {
+  const params = new URLSearchParams(window.location.search);
+  const ref = params.get('ref') || '';
+  if (ref) {
+    try { localStorage.setItem('kreoon_brand_referral', ref); } catch {}
+  }
+  return <Navigate to={`/register?intent=brand&ref=${encodeURIComponent(ref)}`} replace />;
+}
+
 function AppRoutes() {
   const { impersonationKey } = useImpersonation();
 
@@ -190,6 +214,15 @@ function AppRoutes() {
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes key={impersonationKey}>
+        {/* Campaign optimization: public pages */}
+        <Route path="/calculadora-ugc" element={<UGCPriceCalculator />} />
+        <Route path="/casos-de-exito" element={<CaseStudies />} />
+        <Route path="/casos-de-exito/:slug" element={<CaseStudyDetail />} />
+        <Route path="/marca-referida" element={<BrandReferralRedirect />} />
+        {/* Legal pages (public, required for Meta app review) */}
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/data-deletion" element={<DataDeletion />} />
         {/* Redirect old /social routes to /marketplace */}
         <Route path="/social" element={<Navigate to="/marketplace" replace />} />
         <Route path="/social/*" element={<Navigate to="/marketplace" replace />} />
@@ -264,6 +297,9 @@ function AppRoutes() {
         <Route path="/org-crm/creadores" element={<Navigate to="/talent?tab=externo" replace />} />
         <Route path="/org-crm/pipelines" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist']}><MainLayout><OrgCRMPipelines /></MainLayout></ProtectedRoute>} />
         <Route path="/org-crm/finanzas" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist']}><MainLayout><OrgCRMFinances /></MainLayout></ProtectedRoute>} />
+        {/* Social Hub Module */}
+        <Route path="/social-hub" element={<ProtectedRoute allowNoRoles><MainLayout><SocialHubPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/marketing-ads" element={<ProtectedRoute allowNoRoles><MainLayout><MarketingAdsPage /></MainLayout></ProtectedRoute>} />
         {/* Wallet Module Routes */}
         <Route path="/wallet" element={<ProtectedRoute allowNoRoles><MainLayout><WalletPage /></MainLayout></ProtectedRoute>} />
         <Route path="/wallet/transactions" element={<ProtectedRoute allowNoRoles><MainLayout><TransactionsPage /></MainLayout></ProtectedRoute>} />

@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Trophy, Zap, TrendingUp, Clock, CheckCircle2, AlertTriangle, Video, Scissors } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
+import { useUserReputation } from '@/hooks/useUnifiedReputation';
+import { LEVEL_META } from '@/lib/reputation/types';
 
 interface RoleUPWidgetProps {
   userId: string;
@@ -12,183 +13,85 @@ interface RoleUPWidgetProps {
   compact?: boolean;
 }
 
-type UPLevel = 'bronze' | 'silver' | 'gold' | 'diamond';
-
-interface RolePoints {
-  total_points: number;
-  current_level: UPLevel;
-  total_deliveries: number;
-  on_time_deliveries: number;
-  late_deliveries: number;
-  clean_approvals: number;
-  total_issues: number;
-}
-
-interface LevelThresholds {
-  bronze: number;
-  silver: number;
-  gold: number;
-  diamond: number;
-}
-
-const LEVEL_ICONS: Record<UPLevel, string> = {
-  bronze: '🥉',
-  silver: '🥈',
-  gold: '🥇',
-  diamond: '💎'
+const LEVEL_THRESHOLDS = {
+  Novato: 0,
+  Pro: 500,
+  Elite: 2000,
+  Master: 5000,
+  Legend: 15000,
 };
 
-const LEVEL_LABELS: Record<UPLevel, string> = {
-  bronze: 'Escudero',
-  silver: 'Caballero',
-  gold: 'Comandante',
-  diamond: 'Gran Maestre'
-};
-
-const LEVEL_COLORS: Record<UPLevel, string> = {
-  bronze: 'text-amber-600',
-  silver: 'text-slate-400',
-  gold: 'text-yellow-500',
-  diamond: 'text-cyan-400'
-};
-
-const LEVEL_BG_COLORS: Record<UPLevel, string> = {
-  bronze: 'bg-amber-600/20 border-amber-600/30',
-  silver: 'bg-slate-400/20 border-slate-400/30',
-  gold: 'bg-yellow-500/20 border-yellow-500/30',
-  diamond: 'bg-cyan-400/20 border-cyan-400/30'
-};
-
-// Default thresholds (fallback if DB not available)
-const DEFAULT_THRESHOLDS: LevelThresholds = {
-  bronze: 0,
-  silver: 500,
-  gold: 800,
-  diamond: 1200
-};
-
-function calculateLevel(points: number, thresholds: LevelThresholds): UPLevel {
-  if (points >= thresholds.diamond) return 'diamond';
-  if (points >= thresholds.gold) return 'gold';
-  if (points >= thresholds.silver) return 'silver';
-  return 'bronze';
-}
+const LEVEL_ORDER = ['Novato', 'Pro', 'Elite', 'Master', 'Legend'] as const;
 
 export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProps) {
-  const [points, setPoints] = useState<RolePoints | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [thresholds, setThresholds] = useState<LevelThresholds>(DEFAULT_THRESHOLDS);
+  const { scores, loading } = useUserReputation(userId);
 
-  const tableName = role === 'creator' ? 'up_creadores_totals' : 'up_editores_totals';
   const RoleIcon = role === 'creator' ? Video : Scissors;
   const roleLabel = role === 'creator' ? 'Creador' : 'Editor';
 
-  // Fetch level thresholds from up_settings
-  useEffect(() => {
-    const fetchThresholds = async () => {
-      try {
-        const { data } = await supabase
-          .from('up_settings')
-          .select('value')
-          .eq('key', 'level_thresholds')
-          .maybeSingle();
-        
-        if (data?.value && typeof data.value === 'object' && !Array.isArray(data.value)) {
-          const val = data.value as Record<string, number>;
-          setThresholds({
-            bronze: val.bronze ?? 0,
-            silver: val.silver ?? 500,
-            gold: val.gold ?? 800,
-            diamond: val.diamond ?? 1200
-          });
-        }
-      } catch (err) {
-        console.error('Error fetching level thresholds:', err);
-      }
-    };
-    fetchThresholds();
-  }, []);
+  // Find the score for the requested role
+  const roleScore = useMemo(() => {
+    return scores.find(s => s.role_key === role) || null;
+  }, [scores, role]);
 
-  const fetchPoints = useCallback(async () => {
-    if (!userId) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      // Fetch V2 data
-      const { data: v2Data, error: v2Error } = await supabase
-        .from(tableName)
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (v2Error) throw v2Error;
-
-      // Use only V2 points
-      const v2Points = v2Data?.total_points || 0;
-
-      const rolePoints: RolePoints = {
-        total_points: v2Points,
-        current_level: calculateLevel(v2Points, thresholds),
-        total_deliveries: v2Data?.total_deliveries || 0,
-        on_time_deliveries: v2Data?.on_time_deliveries || 0,
-        late_deliveries: v2Data?.late_deliveries || 0,
-        clean_approvals: v2Data?.clean_approvals || 0,
-        total_issues: v2Data?.total_issues || 0
+  // Calculate stats from the role score
+  const stats = useMemo(() => {
+    if (!roleScore) {
+      return {
+        totalPoints: 0,
+        totalDeliveries: 0,
+        onTimeDeliveries: 0,
+        lateDeliveries: 0,
+        cleanApprovals: 0,
+        totalIssues: 0,
+        currentLevel: 'Novato',
       };
-
-      setPoints(rolePoints);
-    } catch (err) {
-      console.error(`Error fetching ${role} points:`, err);
-    } finally {
-      setLoading(false);
     }
-  }, [userId, tableName, role, thresholds]);
 
-  useEffect(() => {
-    fetchPoints();
+    const totalDeliveries = roleScore.lifetime_tasks;
+    const onTimeDeliveries = Math.round(roleScore.on_time_rate * totalDeliveries);
+    const lateDeliveries = totalDeliveries - onTimeDeliveries;
+    const cleanApprovals = Math.round(roleScore.approval_rate * totalDeliveries);
+    const totalIssues = Math.round(roleScore.revision_rate * totalDeliveries);
 
-    const channel = supabase
-      .channel(`${tableName}_widget_${userId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: tableName,
-          filter: `user_id=eq.${userId}`
-        },
-        () => fetchPoints()
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
+    return {
+      totalPoints: roleScore.lifetime_points,
+      totalDeliveries,
+      onTimeDeliveries,
+      lateDeliveries,
+      cleanApprovals,
+      totalIssues,
+      currentLevel: roleScore.current_level || 'Novato',
     };
-  }, [fetchPoints, userId, tableName]);
+  }, [roleScore]);
 
-  const getProgressToNextLevel = useCallback(() => {
-    const currentPoints = points?.total_points || 0;
-    const currentLevel = points?.current_level || 'bronze';
+  // Calculate progress to next level
+  const progressData = useMemo(() => {
+    const currentLevel = stats.currentLevel;
+    const currentPoints = stats.totalPoints;
 
-    const levels: UPLevel[] = ['bronze', 'silver', 'gold', 'diamond'];
-    const currentIndex = levels.indexOf(currentLevel);
-    
-    if (currentLevel === 'diamond') {
-      return { progress: 100, nextLevel: 'diamond' as UPLevel, pointsNeeded: 0 };
+    const currentIndex = LEVEL_ORDER.indexOf(currentLevel as any);
+
+    if (currentLevel === 'Legend' || currentIndex === -1) {
+      return { progress: 100, nextLevel: 'Legend', pointsNeeded: 0 };
     }
 
-    const nextLevel = levels[currentIndex + 1] as UPLevel;
-    const currentThreshold = thresholds[currentLevel];
-    const nextThreshold = thresholds[nextLevel];
+    const nextLevel = LEVEL_ORDER[currentIndex + 1];
+    const currentThreshold = LEVEL_THRESHOLDS[currentLevel as keyof typeof LEVEL_THRESHOLDS];
+    const nextThreshold = LEVEL_THRESHOLDS[nextLevel];
     const pointsInLevel = currentPoints - currentThreshold;
     const pointsForLevel = nextThreshold - currentThreshold;
     const progress = Math.min(100, (pointsInLevel / pointsForLevel) * 100);
     const pointsNeeded = nextThreshold - currentPoints;
 
     return { progress, nextLevel, pointsNeeded };
-  }, [points, thresholds]);
+  }, [stats.currentLevel, stats.totalPoints]);
+
+  // Get level metadata
+  const levelMeta = LEVEL_META[stats.currentLevel] || LEVEL_META.Novato;
+  const nextLevelMeta = progressData.nextLevel !== stats.currentLevel
+    ? LEVEL_META[progressData.nextLevel] || null
+    : null;
 
   if (loading) {
     return (
@@ -204,21 +107,23 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
     );
   }
 
-  const { progress, nextLevel, pointsNeeded } = getProgressToNextLevel();
-  const level = points?.current_level || 'bronze';
-  const totalPoints = points?.total_points || 0;
-
   if (compact) {
     return (
-      <div className={cn(
-        "flex items-center gap-2 px-3 py-1.5 rounded-lg border",
-        LEVEL_BG_COLORS[level]
-      )}>
-        <span className="text-lg">{LEVEL_ICONS[level]}</span>
+      <div
+        className={cn(
+          "flex items-center gap-2 px-3 py-1.5 rounded-lg border",
+          "bg-opacity-20 border-opacity-30"
+        )}
+        style={{
+          backgroundColor: levelMeta.bgColor,
+          borderColor: levelMeta.color,
+        }}
+      >
+        <span className="text-lg">{levelMeta.icon}</span>
         <div className="flex items-center gap-1">
-          <Zap className={cn("w-4 h-4", LEVEL_COLORS[level])} />
-          <span className={cn("font-bold text-sm", LEVEL_COLORS[level])}>
-            {totalPoints} UP
+          <Zap className="w-4 h-4" style={{ color: levelMeta.color }} />
+          <span className="font-bold text-sm" style={{ color: levelMeta.color }}>
+            {stats.totalPoints} UP
           </span>
         </div>
         <RoleIcon className="w-3 h-3 text-muted-foreground ml-1" />
@@ -227,30 +132,35 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
   }
 
   return (
-    <Card className={cn(
-      "border-2 bg-gradient-to-br backdrop-blur-xl overflow-hidden",
-      LEVEL_BG_COLORS[level]
-    )}>
+    <Card
+      className="border-2 bg-gradient-to-br backdrop-blur-xl overflow-hidden"
+      style={{
+        backgroundColor: `${levelMeta.bgColor}33`,
+        borderColor: `${levelMeta.color}4D`,
+      }}
+    >
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className={cn(
-              "h-12 w-12 rounded-full flex items-center justify-center text-2xl",
-              "bg-background/50 border",
-              LEVEL_BG_COLORS[level]
-            )}>
-              {LEVEL_ICONS[level]}
+            <div
+              className="h-12 w-12 rounded-full flex items-center justify-center text-2xl bg-background/50 border"
+              style={{
+                backgroundColor: `${levelMeta.bgColor}33`,
+                borderColor: `${levelMeta.color}4D`,
+              }}
+            >
+              {levelMeta.icon}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <Zap className={cn("w-5 h-5", LEVEL_COLORS[level])} />
-                <span className={cn("text-2xl font-bold", LEVEL_COLORS[level])}>
-                  {totalPoints}
+                <Zap className="w-5 h-5" style={{ color: levelMeta.color }} />
+                <span className="text-2xl font-bold" style={{ color: levelMeta.color }}>
+                  {stats.totalPoints}
                 </span>
                 <span className="text-sm text-muted-foreground">UP</span>
               </div>
-              <p className={cn("text-sm font-medium", LEVEL_COLORS[level])}>
-                Nivel {LEVEL_LABELS[level]}
+              <p className="text-sm font-medium" style={{ color: levelMeta.color }}>
+                Nivel {stats.currentLevel}
               </p>
             </div>
           </div>
@@ -260,23 +170,23 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
           </div>
         </div>
 
-        {level !== 'diamond' && (
+        {stats.currentLevel !== 'Legend' && nextLevelMeta && (
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground flex items-center gap-1">
                 <TrendingUp className="w-3 h-3" />
-                Próximo: {LEVEL_LABELS[nextLevel]}
+                Próximo: {progressData.nextLevel}
               </span>
               <span className="text-muted-foreground">
-                {pointsNeeded} UP restantes
+                {progressData.pointsNeeded} UP restantes
               </span>
             </div>
-            <Progress value={progress} className="h-2" />
+            <Progress value={progressData.progress} className="h-2" />
           </div>
         )}
 
-        {level === 'diamond' && (
-          <div className="flex items-center gap-2 text-xs text-cyan-400">
+        {stats.currentLevel === 'Legend' && (
+          <div className="flex items-center gap-2 text-xs" style={{ color: levelMeta.color }}>
             <Trophy className="w-4 h-4" />
             <span>¡Nivel máximo alcanzado!</span>
           </div>
@@ -289,7 +199,7 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
               <CheckCircle2 className="w-4 h-4 text-green-500" />
             </div>
             <div>
-              <p className="text-lg font-bold">{points?.on_time_deliveries || 0}</p>
+              <p className="text-lg font-bold">{stats.onTimeDeliveries}</p>
               <p className="text-xs text-muted-foreground">A tiempo</p>
             </div>
           </div>
@@ -298,7 +208,7 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
               <Clock className="w-4 h-4 text-orange-500" />
             </div>
             <div>
-              <p className="text-lg font-bold">{points?.late_deliveries || 0}</p>
+              <p className="text-lg font-bold">{stats.lateDeliveries}</p>
               <p className="text-xs text-muted-foreground">Tardías</p>
             </div>
           </div>
@@ -310,7 +220,7 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
               <Trophy className="w-4 h-4 text-emerald-500" />
             </div>
             <div>
-              <p className="text-lg font-bold">{points?.clean_approvals || 0}</p>
+              <p className="text-lg font-bold">{stats.cleanApprovals}</p>
               <p className="text-xs text-muted-foreground">Limpias</p>
             </div>
           </div>
@@ -319,7 +229,7 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
               <AlertTriangle className="w-4 h-4 text-red-500" />
             </div>
             <div>
-              <p className="text-lg font-bold">{points?.total_issues || 0}</p>
+              <p className="text-lg font-bold">{stats.totalIssues}</p>
               <p className="text-xs text-muted-foreground">Novedades</p>
             </div>
           </div>
@@ -329,7 +239,7 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
         <div className="mt-3 pt-3 border-t border-border/50">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Total entregas</span>
-            <span className="font-bold">{points?.total_deliveries || 0}</span>
+            <span className="font-bold">{stats.totalDeliveries}</span>
           </div>
         </div>
       </CardContent>

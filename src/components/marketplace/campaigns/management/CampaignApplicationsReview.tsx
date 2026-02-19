@@ -24,7 +24,7 @@ const TABS: { value: ApplicationStatus | 'all'; label: string }[] = [
 ];
 
 export function CampaignApplicationsReview({ campaignId, onBack }: CampaignApplicationsReviewProps) {
-  const { getCampaignById, getApplicationsForCampaign, updateApplicationStatus } = useMarketplaceCampaigns();
+  const { getCampaignById, getApplicationsForCampaign, updateApplicationStatus, approveApplication } = useMarketplaceCampaigns();
   const { createProject, getProjectsByCampaign } = useMarketplaceProjects();
   const { createPublication } = useBrandActivation();
   const { trackCreatorAccepted, trackCreatorRejected } = useCampaignAnalytics();
@@ -67,51 +67,43 @@ export function CampaignApplicationsReview({ campaignId, onBack }: CampaignAppli
   }, [applications, activeTab, isBidMode]);
 
   const handleApprove = async (appId: string) => {
-    const success = await updateApplicationStatus(appId, 'approved');
-    if (success) {
-      const app = applications.find(a => a.id === appId);
+    const app = applications.find(a => a.id === appId);
+    const agreedPrice = app?.bid_amount ?? app?.proposed_price ?? campaign?.budget_per_video ?? undefined;
+
+    // Use the new RPC that auto-creates project + sets agreed_price
+    const result = await approveApplication(appId, agreedPrice);
+    if (result) {
       trackCreatorAccepted({
         campaign_id: campaignId,
         creator_id: app?.creator?.user_id || appId,
         action: 'accepted',
       });
       setApplications(prev =>
-        prev.map(a => (a.id === appId ? { ...a, status: 'approved' as ApplicationStatus, updated_at: new Date().toISOString() } : a)),
+        prev.map(a => (a.id === appId ? { ...a, status: 'approved' as ApplicationStatus, agreed_price: agreedPrice ?? null, updated_at: new Date().toISOString() } : a)),
       );
 
-      // Auto-create a marketplace project for the approved creator
-      if (campaign) {
-        const app = applications.find(a => a.id === appId);
-        if (app) {
-          const price = app.bid_amount ?? app.proposed_price ?? campaign.budget_per_video ?? 0;
-          const projectId = await createProject({
-            campaign_id: campaignId,
-            application_id: appId,
-            creator_id: app.creator.user_id, // auth user UUID, not creator_profiles.id
-            brand_id: campaign.brand_user_id || null,
-            organization_id: campaign.organization_id || null,
-            title: `${campaign.title} - ${app.creator.display_name}`,
-            total_price: price,
-            currency: 'COP',
-            deadline: campaign.deadline,
-            payment_method: campaign.campaign_type === 'exchange' ? 'exchange' : 'payment',
-          });
-          if (projectId) {
-            setProjectsMap(prev => new Map(prev).set(appId, { id: projectId, status: 'pending' }));
-          }
-        }
+      // Track the auto-created project
+      if (result.project_id) {
+        setProjectsMap(prev => new Map(prev).set(appId, { id: result.project_id, status: 'in_progress' }));
+      }
 
-        // Auto-create activation publications for brand activation campaigns
-        if (campaign.is_brand_activation) {
-          const appForActivation = app || applications.find(a => a.id === appId);
-          const config = campaign.activation_requirements as BrandActivationConfig | undefined;
-          const platforms = config?.required_platforms ?? [];
-          if (appForActivation && platforms.length > 0) {
-            for (const platform of platforms) {
-              await createPublication(campaignId, appId, appForActivation.creator_id, platform as SocialPlatform);
-            }
+      // Auto-create activation publications for brand activation campaigns
+      if (campaign?.is_brand_activation && app) {
+        const config = campaign.activation_requirements as BrandActivationConfig | undefined;
+        const platforms = config?.required_platforms ?? [];
+        if (platforms.length > 0) {
+          for (const platform of platforms) {
+            await createPublication(campaignId, appId, app.creator_id, platform as SocialPlatform);
           }
         }
+      }
+    } else {
+      // Fallback to old method
+      const success = await updateApplicationStatus(appId, 'approved');
+      if (success) {
+        setApplications(prev =>
+          prev.map(a => (a.id === appId ? { ...a, status: 'approved' as ApplicationStatus, updated_at: new Date().toISOString() } : a)),
+        );
       }
     }
   };

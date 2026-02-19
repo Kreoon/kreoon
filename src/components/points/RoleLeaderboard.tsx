@@ -5,8 +5,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Medal, Zap, Crown, Video, Scissors } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useCreatorLeaderboard } from '@/hooks/useUPCreadores';
-import { useEditorLeaderboard } from '@/hooks/useUPEditores';
+import { useOrgRanking } from '@/hooks/useUnifiedReputation';
+import { LEVEL_META } from '@/lib/reputation/types';
 
 interface RoleLeaderboardProps {
   role: 'creator' | 'editor';
@@ -15,27 +15,6 @@ interface RoleLeaderboardProps {
   showHeader?: boolean;
 }
 
-const LEVEL_ICONS = {
-  bronze: '🥉',
-  silver: '🥈',
-  gold: '🥇',
-  diamond: '💎'
-};
-
-const LEVEL_LABELS = {
-  bronze: 'Escudero',
-  silver: 'Caballero',
-  gold: 'Comandante',
-  diamond: 'Gran Maestre'
-};
-
-const LEVEL_COLORS = {
-  bronze: 'text-amber-600',
-  silver: 'text-slate-400',
-  gold: 'text-yellow-500',
-  diamond: 'text-cyan-400'
-};
-
 const RANK_ICONS = [
   { icon: Crown, color: 'text-yellow-500', bg: 'bg-yellow-500/20' },
   { icon: Medal, color: 'text-slate-400', bg: 'bg-slate-400/20' },
@@ -43,11 +22,9 @@ const RANK_ICONS = [
 ];
 
 export function RoleLeaderboard({ role, currentUserId, maxItems = 10, showHeader = true }: RoleLeaderboardProps) {
-  const { leaderboard: creatorLeaderboard, loading: loadingCreators } = useCreatorLeaderboard();
-  const { leaderboard: editorLeaderboard, loading: loadingEditors } = useEditorLeaderboard();
+  const { ranking, loading } = useOrgRanking();
 
-  const leaderboard = role === 'creator' ? creatorLeaderboard : editorLeaderboard;
-  const loading = role === 'creator' ? loadingCreators : loadingEditors;
+  const leaderboard = ranking.filter(entry => entry.role_key === role);
 
   const RoleIcon = role === 'creator' ? Video : Scissors;
   const roleLabel = role === 'creator' ? 'Creadores' : 'Editores';
@@ -106,8 +83,9 @@ export function RoleLeaderboard({ role, currentUserId, maxItems = 10, showHeader
                 const isCurrentUser = entry.user_id === currentUserId;
                 const rank = index + 1;
                 const rankStyle = RANK_ICONS[rank - 1];
-                const level = entry.current_level || 'bronze';
-                
+                const levelKey = entry.current_level || 'Novato';
+                const levelMeta = LEVEL_META[levelKey] ?? LEVEL_META['Novato'];
+
                 return (
                   <div
                     key={entry.user_id}
@@ -127,32 +105,32 @@ export function RoleLeaderboard({ role, currentUserId, maxItems = 10, showHeader
                         <span className="text-muted-foreground">{rank}</span>
                       )}
                     </div>
-                    
+
                     {/* Avatar */}
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={entry.profile?.avatar_url || undefined} />
+                      <AvatarImage src={entry.avatar_url || undefined} />
                       <AvatarFallback className="text-xs">
-                        {(entry.profile?.full_name || 'U').slice(0, 2).toUpperCase()}
+                        {(entry.full_name || 'U').slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    
+
                     {/* Name & Level */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium truncate">{entry.profile?.full_name || 'Usuario'}</p>
+                        <p className="text-sm font-medium truncate">{entry.full_name || 'Usuario'}</p>
                         {isCurrentUser && (
                           <Badge variant="outline" className="text-xs py-0 px-1">Tú</Badge>
                         )}
                       </div>
-                      <p className={cn("text-xs", LEVEL_COLORS[level])}>
-                        {LEVEL_ICONS[level]} {LEVEL_LABELS[level]}
+                      <p className="text-xs" style={{ color: levelMeta.color }}>
+                        {levelMeta.icon} {levelKey}
                       </p>
                     </div>
-                    
+
                     {/* Points */}
                     <div className="flex items-center gap-1 text-sm font-bold">
-                      <Zap className={cn("w-4 h-4", LEVEL_COLORS[level])} />
-                      <span>{entry.total_points || 0}</span>
+                      <Zap className="w-4 h-4" style={{ color: levelMeta.color }} />
+                      <span>{entry.lifetime_points || 0}</span>
                     </div>
                   </div>
                 );

@@ -1,293 +1,138 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
+import {
   Trophy, Users, Video, Clock, CheckCircle, AlertTriangle,
   TrendingUp, Zap, Star, Award, Target, Flame
 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { useOrgRanking } from '@/hooks/useUnifiedReputation';
+import { LEVEL_META } from '@/lib/reputation/types';
 
 interface UPSystemKPIsProps {
   organizationId: string;
   className?: string;
 }
 
-interface CreatorStats {
+interface RoleStats {
   totalPoints: number;
-  totalDeliveries: number;
-  onTimeDeliveries: number;
-  lateDeliveries: number;
-  issues: number;
-  cleanApprovals: number;
-  reassignments: number;
-  avgDeliveryDays: number;
+  totalTasks: number;
+  onTimeTasks: number;
+  lateTasks: number;
+  avgOnTimeRate: number;
+  maxStreak: number;
   topPerformers: { name: string; points: number; level: string }[];
 }
-
-interface EditorStats {
-  totalPoints: number;
-  totalDeliveries: number;
-  onTimeDeliveries: number;
-  lateDeliveries: number;
-  issues: number;
-  cleanApprovals: number;
-  reassignments: number;
-  avgDeliveryDays: number;
-  topPerformers: { name: string; points: number; level: string }[];
-}
-
-const LEVEL_COLORS: Record<string, string> = {
-  diamond: 'text-cyan-400 bg-cyan-400/10 border-cyan-400/30',
-  gold: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30',
-  silver: 'text-gray-400 bg-gray-400/10 border-gray-400/30',
-  bronze: 'text-orange-400 bg-orange-400/10 border-orange-400/30',
-};
-
-const LEVEL_ICONS: Record<string, typeof Trophy> = {
-  diamond: Star,
-  gold: Trophy,
-  silver: Award,
-  bronze: Target,
-};
 
 export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
-  const [loading, setLoading] = useState(true);
-  const [creatorStats, setCreatorStats] = useState<CreatorStats>({
-    totalPoints: 0,
-    totalDeliveries: 0,
-    onTimeDeliveries: 0,
-    lateDeliveries: 0,
-    issues: 0,
-    cleanApprovals: 0,
-    reassignments: 0,
-    avgDeliveryDays: 0,
-    topPerformers: [],
-  });
-  const [editorStats, setEditorStats] = useState<EditorStats>({
-    totalPoints: 0,
-    totalDeliveries: 0,
-    onTimeDeliveries: 0,
-    lateDeliveries: 0,
-    issues: 0,
-    cleanApprovals: 0,
-    reassignments: 0,
-    avgDeliveryDays: 0,
-    topPerformers: [],
-  });
+  const { ranking, loading } = useOrgRanking(organizationId);
 
-  useEffect(() => {
-    if (!organizationId) return;
-    fetchStats();
-
-    // Realtime subscription for UP tables
-    const channel = supabase
-      .channel('up-kpis-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'up_creadores_totals',
-          filter: `organization_id=eq.${organizationId}`
-        },
-        () => {
-          console.log('[Realtime] UP Creators totals changed');
-          fetchStats();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'up_editores_totals',
-          filter: `organization_id=eq.${organizationId}`
-        },
-        () => {
-          console.log('[Realtime] UP Editors totals changed');
-          fetchStats();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [organizationId]);
-
-  const fetchStats = async () => {
-    setLoading(true);
-    try {
-      // Fetch creator totals from V2 system only (without embedded joins for Kreoon compatibility)
-      const { data: creatorTotalsRaw, error: creatorError } = await supabase
-        .from('up_creadores_totals')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .order('total_points', { ascending: false });
-
-      // Fetch editor totals
-      const { data: editorTotalsRaw, error: editorError } = await supabase
-        .from('up_editores_totals')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .order('total_points', { ascending: false });
-
-      // Log errors if any (helpful for debugging RLS issues)
-      if (creatorError || editorError) {
-        console.warn('[UPSystemKPIs] Error fetching data:', { creatorError, editorError });
-      }
-      // Fetch recent creator events for avg delivery days
-      const { data: creatorEvents } = await supabase
-        .from('up_creadores')
-        .select('days_to_deliver')
-        .eq('organization_id', organizationId)
-        .not('days_to_deliver', 'is', null);
-
-      // Fetch recent editor events for avg delivery days
-      const { data: editorEvents } = await supabase
-        .from('up_editores')
-        .select('days_to_deliver')
-        .eq('organization_id', organizationId)
-        .not('days_to_deliver', 'is', null);
-
-      // Fetch profiles separately for Kreoon compatibility (no FK relations)
-      const allUserIds = [
-        ...(creatorTotalsRaw || []).map(c => c.user_id),
-        ...(editorTotalsRaw || []).map(e => e.user_id)
-      ].filter(Boolean);
-
-      let profilesMap = new Map<string, { full_name: string }>();
-      if (allUserIds.length > 0) {
-        const { data: profilesData } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', allUserIds);
-
-        profilesMap = new Map((profilesData || []).map(p => [p.id, { full_name: p.full_name }]));
-      }
-
-      // Merge profiles into totals
-      const creatorTotals = (creatorTotalsRaw || []).map(c => ({
-        ...c,
-        profiles: profilesMap.get(c.user_id) || null
-      }));
-
-      const editorTotals = (editorTotalsRaw || []).map(e => ({
-        ...e,
-        profiles: profilesMap.get(e.user_id) || null
-      }));
-
-      // Calculate creator stats from V2 only
-      if (creatorTotals.length > 0) {
-        const totals = creatorTotals.reduce((acc, ct) => ({
-          totalPoints: acc.totalPoints + (ct.total_points || 0),
-          totalDeliveries: acc.totalDeliveries + (ct.total_deliveries || 0),
-          onTimeDeliveries: acc.onTimeDeliveries + (ct.on_time_deliveries || 0),
-          lateDeliveries: acc.lateDeliveries + (ct.late_deliveries || 0),
-          issues: acc.issues + (ct.total_issues || 0),
-          cleanApprovals: acc.cleanApprovals + (ct.clean_approvals || 0),
-          reassignments: acc.reassignments + (ct.reassignments || 0),
-        }), {
-          totalPoints: 0, totalDeliveries: 0, onTimeDeliveries: 0,
-          lateDeliveries: 0, issues: 0, cleanApprovals: 0, reassignments: 0
-        });
-
-        const avgDays = creatorEvents?.length 
-          ? creatorEvents.reduce((sum, e) => sum + (e.days_to_deliver || 0), 0) / creatorEvents.length
-          : 0;
-
-        setCreatorStats({
-          ...totals,
-          avgDeliveryDays: Math.round(avgDays * 10) / 10,
-          topPerformers: creatorTotals.slice(0, 5).map(ct => ({
-            name: ct.profiles?.full_name || 'Sin nombre',
-            points: ct.total_points || 0,
-            level: ct.current_level || 'bronze',
-          })),
-        });
-      }
-
-      // Calculate editor stats
-      if (editorTotals.length > 0) {
-        const totals = editorTotals.reduce((acc, et) => ({
-          totalPoints: acc.totalPoints + (et.total_points || 0),
-          totalDeliveries: acc.totalDeliveries + (et.total_deliveries || 0),
-          onTimeDeliveries: acc.onTimeDeliveries + (et.on_time_deliveries || 0),
-          lateDeliveries: acc.lateDeliveries + (et.late_deliveries || 0),
-          issues: acc.issues + (et.total_issues || 0),
-          cleanApprovals: acc.cleanApprovals + (et.clean_approvals || 0),
-          reassignments: acc.reassignments + (et.reassignments || 0),
-        }), {
-          totalPoints: 0, totalDeliveries: 0, onTimeDeliveries: 0,
-          lateDeliveries: 0, issues: 0, cleanApprovals: 0, reassignments: 0
-        });
-
-        const avgDays = editorEvents?.length 
-          ? editorEvents.reduce((sum, e) => sum + (e.days_to_deliver || 0), 0) / editorEvents.length
-          : 0;
-
-        setEditorStats({
-          ...totals,
-          avgDeliveryDays: Math.round(avgDays * 10) / 10,
-          topPerformers: editorTotals.slice(0, 5).map(et => ({
-            name: et.profiles?.full_name || 'Sin nombre',
-            points: et.total_points || 0,
-            level: et.current_level || 'bronze',
-          })),
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching UP stats:', error);
-    } finally {
-      setLoading(false);
+  // Split ranking by role and compute aggregate stats
+  const { creatorStats, editorStats } = useMemo(() => {
+    if (!ranking || ranking.length === 0) {
+      const emptyStats: RoleStats = {
+        totalPoints: 0,
+        totalTasks: 0,
+        onTimeTasks: 0,
+        lateTasks: 0,
+        avgOnTimeRate: 0,
+        maxStreak: 0,
+        topPerformers: [],
+      };
+      return { creatorStats: emptyStats, editorStats: emptyStats };
     }
-  };
 
-  const onTimeRate = (onTime: number, total: number) => 
-    total > 0 ? Math.round((onTime / total) * 100) : 0;
+    const creators = ranking.filter(r => r.role_key === 'creator');
+    const editors = ranking.filter(r => r.role_key === 'editor');
 
-  const renderStatsGrid = (stats: CreatorStats | EditorStats, type: 'creator' | 'editor') => {
-    const rate = onTimeRate(stats.onTimeDeliveries, stats.totalDeliveries);
+    const computeStats = (entries: typeof ranking): RoleStats => {
+      if (entries.length === 0) {
+        return {
+          totalPoints: 0,
+          totalTasks: 0,
+          onTimeTasks: 0,
+          lateTasks: 0,
+          avgOnTimeRate: 0,
+          maxStreak: 0,
+          topPerformers: [],
+        };
+      }
+
+      const totalPoints = entries.reduce((sum, e) => sum + (e.lifetime_points || 0), 0);
+      const totalTasks = entries.reduce((sum, e) => sum + (e.lifetime_tasks || 0), 0);
+      const onTimeTasks = entries.reduce(
+        (sum, e) => sum + Math.round((e.on_time_rate || 0) * (e.lifetime_tasks || 0)),
+        0
+      );
+      const lateTasks = totalTasks - onTimeTasks;
+      const avgOnTimeRate = totalTasks > 0 ? Math.round((onTimeTasks / totalTasks) * 100) : 0;
+      const maxStreak = Math.max(...entries.map(e => e.current_streak_days || 0), 0);
+
+      const topPerformers = entries
+        .slice(0, 5)
+        .map(e => ({
+          name: e.full_name || 'Sin nombre',
+          points: e.lifetime_points || 0,
+          level: e.current_level || 'Novato',
+        }));
+
+      return {
+        totalPoints,
+        totalTasks,
+        onTimeTasks,
+        lateTasks,
+        avgOnTimeRate,
+        maxStreak,
+        topPerformers,
+      };
+    };
+
+    return {
+      creatorStats: computeStats(creators),
+      editorStats: computeStats(editors),
+    };
+  }, [ranking]);
+
+  const renderStatsGrid = (stats: RoleStats, type: 'creator' | 'editor') => {
     const color = type === 'creator' ? 'info' : 'warning';
 
     return (
       <div className="space-y-4">
         {/* Main KPIs */}
         <div className="grid grid-cols-4 gap-2">
-          <div className={cn("p-3 rounded-lg border bg-gradient-to-br", `from-${color}/10 to-transparent border-${color}/20`)}>
+          <div className={cn("p-3 rounded-lg border bg-gradient-to-br from-blue-500/10 to-transparent border-blue-500/20")}>
             <div className="flex items-center gap-1 mb-1">
-              <Zap className={cn("h-3 w-3", `text-${color}`)} />
+              <Zap className="h-3 w-3 text-blue-500" />
               <span className="text-[10px] text-muted-foreground">Puntos</span>
             </div>
-            <p className={cn("text-xl font-bold", `text-${color}`)}>{stats.totalPoints.toLocaleString()}</p>
+            <p className="text-xl font-bold text-blue-500">{stats.totalPoints.toLocaleString()}</p>
           </div>
-          
-          <div className="p-3 rounded-lg border bg-gradient-to-br from-success/10 to-transparent border-success/20">
+
+          <div className="p-3 rounded-lg border bg-gradient-to-br from-green-500/10 to-transparent border-green-500/20">
             <div className="flex items-center gap-1 mb-1">
-              <CheckCircle className="h-3 w-3 text-success" />
+              <CheckCircle className="h-3 w-3 text-green-500" />
               <span className="text-[10px] text-muted-foreground">A tiempo</span>
             </div>
-            <p className="text-xl font-bold text-success">{stats.onTimeDeliveries}</p>
+            <p className="text-xl font-bold text-green-500">{stats.onTimeTasks}</p>
           </div>
-          
-          <div className="p-3 rounded-lg border bg-gradient-to-br from-warning/10 to-transparent border-warning/20">
+
+          <div className="p-3 rounded-lg border bg-gradient-to-br from-yellow-500/10 to-transparent border-yellow-500/20">
             <div className="flex items-center gap-1 mb-1">
-              <Clock className="h-3 w-3 text-warning" />
+              <Clock className="h-3 w-3 text-yellow-500" />
               <span className="text-[10px] text-muted-foreground">Tardías</span>
             </div>
-            <p className="text-xl font-bold text-warning">{stats.lateDeliveries}</p>
+            <p className="text-xl font-bold text-yellow-500">{stats.lateTasks}</p>
           </div>
-          
-          <div className="p-3 rounded-lg border bg-gradient-to-br from-destructive/10 to-transparent border-destructive/20">
+
+          <div className="p-3 rounded-lg border bg-gradient-to-br from-orange-500/10 to-transparent border-orange-500/20">
             <div className="flex items-center gap-1 mb-1">
-              <AlertTriangle className="h-3 w-3 text-destructive" />
-              <span className="text-[10px] text-muted-foreground">Novedades</span>
+              <Flame className="h-3 w-3 text-orange-500" />
+              <span className="text-[10px] text-muted-foreground">Racha Max</span>
             </div>
-            <p className="text-xl font-bold text-destructive">{stats.issues}</p>
+            <p className="text-xl font-bold text-orange-500">{stats.maxStreak}d</p>
           </div>
         </div>
 
@@ -298,20 +143,20 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
               <span className="text-xs text-muted-foreground">Tasa de Puntualidad</span>
               <span className={cn(
                 "text-sm font-bold",
-                rate >= 80 ? "text-success" : rate >= 60 ? "text-warning" : "text-destructive"
-              )}>{rate}%</span>
+                stats.avgOnTimeRate >= 80 ? "text-green-500" : stats.avgOnTimeRate >= 60 ? "text-yellow-500" : "text-red-500"
+              )}>{stats.avgOnTimeRate}%</span>
             </div>
-            <Progress value={rate} className="h-2" />
+            <Progress value={stats.avgOnTimeRate} className="h-2" />
           </div>
-          
+
           <div className="p-3 rounded-lg border bg-card">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-xs text-muted-foreground">Promedio Entrega</span>
-              <span className="text-sm font-bold text-foreground">{stats.avgDeliveryDays} días</span>
+              <span className="text-xs text-muted-foreground">Tareas Totales</span>
+              <span className="text-sm font-bold text-foreground">{stats.totalTasks}</span>
             </div>
             <div className="flex gap-2 text-[10px] text-muted-foreground">
-              <span>✨ Aprobaciones limpias: {stats.cleanApprovals}</span>
-              <span>🔄 Reasignaciones: {stats.reassignments}</span>
+              <span>✅ Completadas: {stats.onTimeTasks}</span>
+              <span>⏰ Tardías: {stats.lateTasks}</span>
             </div>
           </div>
         </div>
@@ -325,7 +170,7 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
             </h4>
             <div className="space-y-1.5">
               {stats.topPerformers.map((performer, idx) => {
-                const LevelIcon = LEVEL_ICONS[performer.level] || Target;
+                const levelMeta = LEVEL_META[performer.level] || LEVEL_META.Novato;
                 return (
                   <div key={idx} className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
@@ -341,11 +186,19 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
                       <span className="font-medium truncate max-w-[120px]">{performer.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", LEVEL_COLORS[performer.level])}>
-                        <LevelIcon className="h-2.5 w-2.5 mr-0.5" />
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-[10px] px-1.5 py-0 border",
+                          levelMeta.color,
+                          levelMeta.bgColor,
+                          `border-${levelMeta.color.replace('text-', '')}/30`
+                        )}
+                      >
+                        <span className="mr-0.5">{levelMeta.icon}</span>
                         {performer.level}
                       </Badge>
-                      <span className="font-bold text-primary">{performer.points} UP</span>
+                      <span className="font-bold text-primary">{performer.points} pts</span>
                     </div>
                   </div>
                 );
@@ -391,12 +244,12 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
             </TabsTrigger>
           </TabsList>
         </div>
-        
+
         <div className="p-3">
           <TabsContent value="creators" className="m-0">
             {renderStatsGrid(creatorStats, 'creator')}
           </TabsContent>
-          
+
           <TabsContent value="editors" className="m-0">
             {renderStatsGrid(editorStats, 'editor')}
           </TabsContent>

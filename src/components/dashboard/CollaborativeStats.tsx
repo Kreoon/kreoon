@@ -249,7 +249,7 @@ export const CollaborativeStats = memo(function CollaborativeStats({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/feed?tab=collaborations')}
+              onClick={() => navigate('/marketplace')}
               className="gap-1"
             >
               Ver más
@@ -274,7 +274,7 @@ export const CollaborativeStats = memo(function CollaborativeStats({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/feed?tab=collaborations')}
+            onClick={() => navigate('/marketplace')}
             className="gap-1 text-xs"
           >
             Ver todo

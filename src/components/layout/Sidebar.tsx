@@ -19,6 +19,7 @@ import {
   Video,
   TrendingUp,
   Megaphone,
+  BarChart3,
   Wallet,
   Store,
   Play,
@@ -34,6 +35,7 @@ import {
   Star,
   DollarSign,
   Crown,
+  Share2,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -77,6 +79,8 @@ const adminSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
       { name: "Marketing", href: "/marketing", icon: TrendingUp, tourId: "sidebar-marketing", requiresOrg: true },
+      { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
+      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
       { name: "Ranking", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
       { name: "Live", href: "/live", icon: Video, tourId: "sidebar-live", requiresOrg: true },
     ]
@@ -121,6 +125,8 @@ const strategistSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
       { name: "Marketing", href: "/marketing", icon: TrendingUp, tourId: "sidebar-marketing", requiresOrg: true },
+      { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
+      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
       { name: "Ranking", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
       { name: "Live", href: "/live", icon: Video, tourId: "sidebar-live", requiresOrg: true },
     ]
@@ -153,6 +159,8 @@ const editorSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+      { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
+      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
     ]
   },
   {
@@ -173,6 +181,8 @@ const creatorSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+      { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
+      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
     ]
   },
   {
@@ -191,6 +201,8 @@ const clientSections: NavSection[] = [
     items: [
       { name: "Client Portal", href: "/client-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
       { name: "Producciones", href: "/client-board", icon: Kanban, tourId: "sidebar-board" },
+      { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
+      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
     ]
   },
   {

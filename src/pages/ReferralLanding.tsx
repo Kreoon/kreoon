@@ -1,13 +1,24 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, Building2, Briefcase, Loader2, AlertCircle } from "lucide-react";
+import { Sparkles, Building2, Briefcase, Loader2, AlertCircle, Gift } from "lucide-react";
+import { PromoBanner } from "@/components/referrals/PromoBanner";
+import { TierBadge } from "@/components/referrals/TierBadge";
+import type { PromotionalCampaign } from "@/types/unified-finance.types";
+import type { ReferralTierKey } from "@/lib/finance/constants";
+import { REFERRAL_TIERS } from "@/lib/finance/constants";
 
 const REFERRAL_STORAGE_KEY = "kreoon_referral_code";
 
 interface ReferrerInfo {
   name: string | null;
   avatar: string | null;
+  tier: string;
+}
+
+interface ReferralRewards {
+  discount_percent: number;
+  bonus_coins: number;
 }
 
 export default function ReferralLanding() {
@@ -17,12 +28,14 @@ export default function ReferralLanding() {
   const [loading, setLoading] = useState(true);
   const [valid, setValid] = useState(false);
   const [referrer, setReferrer] = useState<ReferrerInfo | null>(null);
+  const [rewards, setRewards] = useState<ReferralRewards | null>(null);
+  const [activePromo, setActivePromo] = useState<PromotionalCampaign | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (!code) {
       setLoading(false);
-      setErrorMsg("No se proporcionó un código de referido.");
+      setErrorMsg("No se proporciono un codigo de referido.");
       return;
     }
 
@@ -47,19 +60,21 @@ export default function ReferralLanding() {
           setValid(false);
           setErrorMsg(
             data?.error === "Code not found"
-              ? "Este enlace de referido no es válido o ha expirado."
-              : "No pudimos verificar el código. Intenta de nuevo.",
+              ? "Este enlace de referido no es valido o ha expirado."
+              : "No pudimos verificar el codigo. Intenta de nuevo.",
           );
         } else {
           setValid(true);
           setReferrer(data.referrer ?? null);
+          setRewards(data.rewards ?? null);
+          setActivePromo(data.active_promo ?? null);
           // Persist code for registration flow
           localStorage.setItem(REFERRAL_STORAGE_KEY, code.toUpperCase());
         }
       } catch {
         if (!cancelled) {
           setValid(false);
-          setErrorMsg("Error de conexión. Intenta de nuevo.");
+          setErrorMsg("Error de conexion. Intenta de nuevo.");
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -102,6 +117,13 @@ export default function ReferralLanding() {
 
         {valid && referrer ? (
           <>
+            {/* Active promo banner */}
+            {activePromo && (
+              <div className="w-full max-w-sm">
+                <PromoBanner campaign={activePromo} />
+              </div>
+            )}
+
             {/* Referrer card */}
             <div className="flex flex-col items-center gap-3">
               {referrer.avatar ? (
@@ -115,16 +137,48 @@ export default function ReferralLanding() {
                   {(referrer.name ?? "?")[0]?.toUpperCase()}
                 </div>
               )}
-              <p className="text-white/70 text-sm">
-                <span className="font-semibold text-white">{referrer.name ?? "Alguien"}</span>{" "}
-                te invitó a unirte a KREOON
-              </p>
+              <div className="flex flex-col items-center gap-1">
+                <p className="text-white/70 text-sm">
+                  <span className="font-semibold text-white">{referrer.name ?? "Alguien"}</span>{" "}
+                  te invito a unirte a KREOON
+                </p>
+                {referrer.tier && referrer.tier !== "starter" && REFERRAL_TIERS[referrer.tier as ReferralTierKey] && (
+                  <TierBadge tierKey={referrer.tier as ReferralTierKey} size="sm" />
+                )}
+              </div>
             </div>
+
+            {/* Bilateral rewards */}
+            {rewards && (
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-green-500/10 border border-white/10">
+                <Gift className="w-8 h-8 text-purple-400 shrink-0" />
+                <div className="text-left">
+                  <p className="text-white text-sm font-semibold">Al registrarte recibes:</p>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {rewards.discount_percent > 0 && (
+                      <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-xs font-medium">
+                        {rewards.discount_percent}% OFF
+                      </span>
+                    )}
+                    {rewards.bonus_coins > 0 && (
+                      <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-xs font-medium">
+                        +{rewards.bonus_coins} Kreoon Coins
+                      </span>
+                    )}
+                    {activePromo?.referral_extra_free_months ? (
+                      <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-xs font-medium">
+                        +{activePromo.referral_extra_free_months} {activePromo.referral_extra_free_months === 1 ? 'mes' : 'meses'} gratis
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Value prop */}
             <p className="text-white/60 text-sm max-w-md leading-relaxed">
               La plataforma todo-en-uno para creadores, editores, marcas y agencias.
-              Gestiona contenido, conecta con talento y escala tu operación creativa.
+              Gestiona contenido, conecta con talento y escala tu operacion creativa.
             </p>
 
             {/* CTA buttons */}
@@ -166,7 +220,7 @@ export default function ReferralLanding() {
                 <AlertCircle className="h-8 w-8 text-red-400" />
               </div>
               <p className="text-white/70 text-sm">
-                {errorMsg ?? "Este enlace de referido no es válido."}
+                {errorMsg ?? "Este enlace de referido no es valido."}
               </p>
             </div>
 
