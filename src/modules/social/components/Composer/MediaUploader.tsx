@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { Upload, X, Image, Film, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 import { SUPPORTED_MEDIA_TYPES, SUPPORTED_IMAGE_TYPES, MAX_MEDIA_UPLOAD_SIZE_MB } from '../../config/constants';
 import { toast } from 'sonner';
 
@@ -21,8 +21,42 @@ export function MediaUploader({
   maxFiles = 10,
 }: MediaUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const uploadToBunny = async (file: File): Promise<string> => {
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'bin';
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substring(2, 10);
+    const storagePath = `social/${timestamp}-${randomId}.${ext}`;
+
+    // Step 1: Get upload credentials from edge function
+    const { data: creds, error: credsError } = await supabase.functions.invoke(
+      'bunny-raw-upload',
+      { body: { storagePath } }
+    );
+
+    if (credsError || !creds?.success) {
+      throw new Error(creds?.error || credsError?.message || 'Error obteniendo credenciales de subida');
+    }
+
+    // Step 2: Upload directly to Bunny CDN
+    const uploadRes = await fetch(creds.uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'AccessKey': creds.accessKey,
+        'Content-Type': file.type || 'application/octet-stream',
+      },
+      body: file,
+    });
+
+    if (!uploadRes.ok) {
+      throw new Error(`Error subiendo a CDN: ${uploadRes.status}`);
+    }
+
+    return creds.cdnUrl;
+  };
 
   const handleFiles = useCallback(async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -33,9 +67,8 @@ export function MediaUploader({
       return;
     }
 
-    const filesToProcess = Array.from(files).slice(0, remaining);
-
-    for (const file of filesToProcess) {
+    const validFiles: File[] = [];
+    for (const file of Array.from(files).slice(0, remaining)) {
       if (!SUPPORTED_MEDIA_TYPES.includes(file.type)) {
         toast.error(`Formato no soportado: ${file.name}`);
         continue;
@@ -44,25 +77,35 @@ export function MediaUploader({
         toast.error(`Archivo muy grande: ${file.name} (máx ${MAX_MEDIA_UPLOAD_SIZE_MB}MB)`);
         continue;
       }
+      validFiles.push(file);
     }
+
+    if (validFiles.length === 0) return;
 
     setIsUploading(true);
     try {
-      // Create local preview URLs for now (actual upload happens on submit via edge function)
       const newUrls: string[] = [];
-      for (const file of filesToProcess) {
-        const url = URL.createObjectURL(file);
-        newUrls.push(url);
+
+      for (let i = 0; i < validFiles.length; i++) {
+        const file = validFiles[i];
+        setUploadProgress(`Subiendo ${i + 1}/${validFiles.length}...`);
+
+        const cdnUrl = await uploadToBunny(file);
+        newUrls.push(cdnUrl);
 
         // Use first image as thumbnail if none set
         if (!thumbnailUrl && SUPPORTED_IMAGE_TYPES.includes(file.type)) {
-          onThumbnailChange(url);
+          onThumbnailChange(cdnUrl);
         }
       }
 
       onMediaChange([...mediaUrls, ...newUrls]);
+      toast.success(`${newUrls.length} archivo${newUrls.length > 1 ? 's' : ''} subido${newUrls.length > 1 ? 's' : ''}`);
+    } catch (err: any) {
+      toast.error(err.message || 'Error al subir archivos');
     } finally {
       setIsUploading(false);
+      setUploadProgress('');
     }
   }, [mediaUrls, maxFiles, thumbnailUrl, onMediaChange, onThumbnailChange]);
 
@@ -75,11 +118,6 @@ export function MediaUploader({
     if (removed === thumbnailUrl) {
       onThumbnailChange(newUrls.length > 0 ? newUrls[0] : null);
     }
-
-    // Revoke object URL to free memory
-    if (removed.startsWith('blob:')) {
-      URL.revokeObjectURL(removed);
-    }
   };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -88,6 +126,8 @@ export function MediaUploader({
     handleFiles(e.dataTransfer.files);
   }, [handleFiles]);
 
+  const isVideoUrl = (url: string) => /\.(mp4|mov|webm|avi|m4v)/i.test(url);
+
   return (
     <div className="space-y-3">
       {/* Upload zone */}
@@ -95,16 +135,20 @@ export function MediaUploader({
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => !isUploading && fileInputRef.current?.click()}
         className={cn(
-          'border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all',
+          'border-2 border-dashed rounded-lg p-6 text-center transition-all',
+          isUploading ? 'cursor-wait' : 'cursor-pointer',
           dragOver
             ? 'border-primary bg-primary/5'
             : 'border-border hover:border-primary/30 hover:bg-muted/20'
         )}
       >
         {isUploading ? (
-          <Loader2 className="w-8 h-8 mx-auto text-muted-foreground animate-spin" />
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
+            <p className="text-xs text-muted-foreground">{uploadProgress}</p>
+          </div>
         ) : (
           <>
             <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
@@ -130,32 +174,38 @@ export function MediaUploader({
       {/* Media previews */}
       {mediaUrls.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-2">
-          {mediaUrls.map((url, idx) => {
-            const isVideo = url.match(/\.(mp4|mov|webm)/i) || url.startsWith('blob:');
-            return (
-              <div key={idx} className="relative shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-muted group">
-                {isVideo && !url.match(/\.(jpg|jpeg|png|gif|webp)/i) ? (
-                  <div className="w-full h-full flex items-center justify-center bg-muted/50">
-                    <Film className="w-6 h-6 text-muted-foreground" />
-                  </div>
-                ) : (
-                  <img src={url} alt="" className="w-full h-full object-cover" />
-                )}
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleRemove(idx); }}
-                  className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X className="w-3 h-3 text-white" />
-                </button>
-                {url === thumbnailUrl && (
-                  <div className="absolute bottom-0 inset-x-0 bg-primary/80 text-[8px] text-center text-white py-0.5">
-                    Cover
-                  </div>
-                )}
-              </div>
-            );
-          })}
-          {mediaUrls.length < maxFiles && (
+          {mediaUrls.map((url, idx) => (
+            <div key={idx} className="relative shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-muted group">
+              {isVideoUrl(url) ? (
+                <video
+                  src={url}
+                  className="w-full h-full object-cover"
+                  muted
+                  playsInline
+                  preload="metadata"
+                />
+              ) : (
+                <img
+                  src={url}
+                  alt=""
+                  className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              )}
+              <button
+                onClick={(e) => { e.stopPropagation(); handleRemove(idx); }}
+                className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X className="w-3 h-3 text-white" />
+              </button>
+              {url === thumbnailUrl && (
+                <div className="absolute bottom-0 inset-x-0 bg-primary/80 text-[8px] text-center text-white py-0.5">
+                  Cover
+                </div>
+              )}
+            </div>
+          ))}
+          {mediaUrls.length < maxFiles && !isUploading && (
             <button
               onClick={() => fileInputRef.current?.click()}
               className="shrink-0 w-20 h-20 rounded-lg border-2 border-dashed border-border flex items-center justify-center hover:border-primary/30 transition-colors"

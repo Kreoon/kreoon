@@ -112,6 +112,17 @@ export function useScheduledPosts(filters?: {
 
   const publishNow = useMutation({
     mutationFn: async (postId: string) => {
+      // Validate media URLs before publishing - reject blob URLs
+      const { data: post } = await supabase
+        .from('scheduled_posts')
+        .select('media_urls')
+        .eq('id', postId)
+        .single();
+
+      if (post?.media_urls?.some((url: string) => url.startsWith('blob:'))) {
+        throw new Error('Los archivos de media no se subieron correctamente. Elimina el post y crea uno nuevo.');
+      }
+
       const { data, error } = await supabase.functions.invoke(
         'social-scheduler/publish-now',
         { body: { post_id: postId } }
