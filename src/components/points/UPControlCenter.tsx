@@ -112,7 +112,7 @@ export function UPControlCenter({ organizationId }: UPControlCenterProps) {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-8 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
+        <TabsList className="grid w-full grid-cols-4 sm:grid-cols-8 lg:w-auto lg:inline-grid bg-secondary/50 border border-border">
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             <span className="hidden sm:inline">Analytics</span>

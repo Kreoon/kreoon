@@ -85,7 +85,7 @@ export function ContactsContent({ orgId }: { orgId: string }) {
       <div
         className={cn(
           "flex-1 min-w-0 transition-all duration-300 ease-in-out",
-          selectedContact && "mr-[440px]",
+          selectedContact && "md:mr-[440px]",
         )}
       >
         <div className="space-y-6">
@@ -304,9 +304,14 @@ export function ContactsContent({ orgId }: { orgId: string }) {
         </div>
       </div>
 
+      {/* Mobile backdrop */}
+      {selectedContact && (
+        <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setSelectedContact(null)} />
+      )}
+
       {/* Contact Detail Side Panel */}
       {selectedContact && (
-        <div className="fixed inset-y-0 right-0 z-40 animate-in slide-in-from-right duration-300">
+        <div className="fixed inset-y-0 right-0 w-full md:w-auto z-40 animate-in slide-in-from-right duration-300">
           <ContactDetailPanel
             contact={selectedContact}
             organizationId={orgId}

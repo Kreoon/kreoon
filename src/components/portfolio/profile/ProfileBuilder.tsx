@@ -99,7 +99,7 @@ export function ProfileBuilder({ onClose }: ProfileBuilderProps) {
         {/* Editor */}
         <div className="flex-1 overflow-y-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-            <TabsList className="mx-4 mt-4 grid grid-cols-5 w-auto">
+            <TabsList className="mx-4 mt-4 grid grid-cols-3 sm:grid-cols-5 w-auto">
               <TabsTrigger value="basic">Básico</TabsTrigger>
               <TabsTrigger value="about">Sobre mí</TabsTrigger>
               <TabsTrigger value="skills">Skills</TabsTrigger>

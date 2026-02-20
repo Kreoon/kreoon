@@ -131,7 +131,7 @@ export function TalentContent({ orgId }: { orgId: string }) {
       <div
         className={cn(
           "flex-1 space-y-6 transition-[margin] duration-300",
-          selectedCreator && "mr-[440px]"
+          selectedCreator && "md:mr-[440px]"
         )}
       >
         {/* Stats Row */}
@@ -342,9 +342,14 @@ export function TalentContent({ orgId }: { orgId: string }) {
         )}
       </div>
 
+      {/* Mobile backdrop */}
+      {selectedCreator && (
+        <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setSelectedCreator(null)} />
+      )}
+
       {/* ========== DETAIL PANEL ========== */}
       {selectedCreator && (
-        <div className="fixed top-0 right-0 h-full z-40">
+        <div className="fixed inset-y-0 right-0 w-full md:w-auto z-40">
           <OrgTalentDetailPanel
             creator={selectedCreator}
             organizationId={orgId}

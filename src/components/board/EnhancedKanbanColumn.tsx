@@ -29,7 +29,7 @@ export function EnhancedKanbanColumn({
   return (
     <div
       className={cn(
-        "flex flex-col shrink-0 w-[350px] h-full rounded-xl",
+        "flex flex-col shrink-0 w-[280px] sm:w-[350px] h-full rounded-xl",
         "transition-all duration-300 ease-out",
         "backdrop-blur-xl border",
         isDropTarget && canDrop && "ring-2 ring-[#a855f7]/60 shadow-[0_0_30px_rgba(168,85,247,0.15)]",

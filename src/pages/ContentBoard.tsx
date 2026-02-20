@@ -929,10 +929,11 @@ export default function ContentBoard() {
           {/* Kanban View - Tech/IA aesthetic - Hierarchical layout */}
           {currentView === 'kanban' && (
             <div 
-              className="flex overflow-x-auto gap-4 p-5 rounded-xl"
-              style={{ 
+              className="flex overflow-x-auto gap-4 p-3 md:p-5 rounded-xl"
+              style={{
                 background: "linear-gradient(180deg, #0a0118 0%, #0d0220 100%)",
-                height: "calc(100vh - 180px)",
+                height: "calc(100vh - 200px)",
+                minHeight: "400px",
               }}
             >
               {allBoardColumns.map(column => {

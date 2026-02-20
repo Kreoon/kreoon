@@ -81,7 +81,7 @@ export function LaunchStrategyTab({ launchStrategy }: LaunchStrategyTabProps) {
       </div>
 
       <Tabs defaultValue="pre" className="w-full">
-        <TabsList className="grid grid-cols-5 h-auto gap-1">
+        <TabsList className="grid grid-cols-3 sm:grid-cols-5 h-auto gap-1">
           <TabsTrigger value="pre" className="text-xs py-2">Pre-launch</TabsTrigger>
           <TabsTrigger value="launch" className="text-xs py-2">Lanzamiento</TabsTrigger>
           <TabsTrigger value="post" className="text-xs py-2">Post-launch</TabsTrigger>

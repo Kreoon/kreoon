@@ -143,7 +143,7 @@ function CreatorSettingsTabs() {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto p-1">
           {[
             { value: 'profile', icon: User, label: 'Perfil' },
             { value: 'expertise', icon: Briefcase, label: 'Expertise' },

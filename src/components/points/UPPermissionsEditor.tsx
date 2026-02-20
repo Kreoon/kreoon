@@ -182,7 +182,7 @@ export function UPPermissionsEditor({ organizationId }: UPPermissionsEditorProps
       </div>
 
       <Tabs value={activeRole} onValueChange={setActiveRole}>
-        <TabsList className="grid grid-cols-7 w-full">
+        <TabsList className="grid grid-cols-4 sm:grid-cols-7 w-full">
           {ROLES.map(role => (
             <TabsTrigger 
               key={role} 

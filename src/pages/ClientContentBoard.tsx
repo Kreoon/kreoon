@@ -608,10 +608,11 @@ export default function ClientContentBoard() {
 
             {/* Kanban Board */}
             <div
-              className="p-5 rounded-xl flex overflow-x-auto gap-4"
+              className="p-3 md:p-5 rounded-xl flex overflow-x-auto gap-4"
               style={{
                 background: "linear-gradient(180deg, #0a0118 0%, #0d0220 100%)",
                 height: "calc(100vh - 320px)",
+                minHeight: "400px",
               }}
             >
               {clientColumns.map((col) => {

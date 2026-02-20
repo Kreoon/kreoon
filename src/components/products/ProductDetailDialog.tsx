@@ -400,7 +400,7 @@ export function ProductDetailDialog({
           {/* Tabs en dos filas */}
           <div className="px-6 pt-4 shrink-0 space-y-1">
             {/* Row 1: ADN + steps 1-6 (in research invocation order) */}
-            <TabsList className="grid grid-cols-7 h-auto gap-1">
+            <TabsList className="grid grid-cols-4 sm:grid-cols-7 h-auto gap-1">
               <TabsTrigger value="brief" className="gap-1 text-xs py-2">
                 {dnaRecord ? <Check className="h-3 w-3 text-emerald-400" /> : <Dna className="h-3 w-3" />}
                 ADN
@@ -431,7 +431,7 @@ export function ProductDetailDialog({
               </TabsTrigger>
             </TabsList>
             {/* Row 2: steps 7-12 + utilities */}
-            <TabsList className="grid grid-cols-8 h-auto gap-1">
+            <TabsList className="grid grid-cols-4 sm:grid-cols-8 h-auto gap-1">
               <TabsTrigger value="summary" className="gap-1 text-xs py-2">
                 {product?.content_strategy?.executiveSummary ? <Check className="h-3 w-3 text-emerald-400" /> : <FileText className="h-3 w-3" />}
                 Conclusión

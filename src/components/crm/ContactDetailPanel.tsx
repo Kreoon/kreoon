@@ -367,7 +367,7 @@ export function ContactDetailPanel({
   return (
     <>
       <div
-        className="w-[440px] h-full flex flex-col overflow-hidden border-l"
+        className="w-full md:w-[440px] h-full flex flex-col overflow-hidden border-l"
         style={{
           background: 'rgba(10, 1, 24, 0.95)',
           backdropFilter: 'blur(24px) saturate(180%)',

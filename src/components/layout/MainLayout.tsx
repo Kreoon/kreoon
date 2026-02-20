@@ -91,23 +91,23 @@ export function MainLayout({
         </div>
         
         {/* Editor Mobile Header */}
-        <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background px-4 md:hidden">
-          <div className="flex-1 flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500">
+        <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background px-3 md:hidden">
+          <div className="flex-1 flex items-center gap-2 min-w-0">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500 flex-shrink-0">
               <Scissors className="h-4 w-4 text-white" />
             </div>
-            <span className="text-sm font-bold">Panel Editor</span>
+            <span className="text-sm font-bold truncate">Panel Editor</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 flex-shrink-0">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate(user?.id ? `/p/${user.id}` : '/marketplace')}
-              className="h-9 w-9 rounded-full p-0"
+              className="h-8 w-8 rounded-full p-0"
             >
-              <Avatar className="h-8 w-8">
+              <Avatar className="h-7 w-7">
                 <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
-                <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">
                   {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
@@ -116,12 +116,9 @@ export function MainLayout({
               variant="ghost"
               size="icon"
               onClick={() => navigate('/marketplace')}
-              className="h-9 w-9 rounded-full"
+              className="h-8 w-8 rounded-full"
             >
               <Briefcase className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={signOut}>
-              <LogOut className="h-4 w-4" />
             </Button>
           </div>
         </header>
@@ -192,26 +189,26 @@ export function MainLayout({
         </div>
 
         {/* Client Mobile Header */}
-        <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background px-4 md:hidden">
+        <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background px-3 md:hidden">
           <MobileNav />
-          <div className="flex-1 flex justify-center">
+          <div className="flex-1 flex justify-center min-w-0">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg overflow-hidden">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg overflow-hidden flex-shrink-0">
                 <img src="/favicon.png" alt="KREOON" className="h-7 w-7 object-cover" loading="lazy" />
               </div>
-              <span className="text-sm font-bold">Portal Cliente</span>
+              <span className="text-sm font-bold truncate">Portal Cliente</span>
             </div>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 flex-shrink-0">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate(user?.id ? `/p/${user.id}` : '/marketplace')}
-              className="h-9 w-9 rounded-full p-0"
+              className="h-8 w-8 rounded-full p-0"
             >
-              <Avatar className="h-8 w-8">
+              <Avatar className="h-7 w-7">
                 <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
-                <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">
                   {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
@@ -220,12 +217,9 @@ export function MainLayout({
               variant="ghost"
               size="icon"
               onClick={() => navigate('/marketplace')}
-              className="h-9 w-9 rounded-full"
+              className="h-8 w-8 rounded-full"
             >
               <Briefcase className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={signOut}>
-              <LogOut className="h-4 w-4" />
             </Button>
           </div>
         </header>
@@ -284,26 +278,26 @@ export function MainLayout({
       </div>
       
       {/* Mobile Header */}
-      <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background px-4 md:hidden">
+      <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background px-3 md:hidden">
         <MobileNav />
-        <div className="flex-1 flex justify-center">
+        <div className="flex-1 flex justify-center min-w-0">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg overflow-hidden">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg overflow-hidden flex-shrink-0">
               <img src="/favicon.png" alt="KREOON" className="h-7 w-7 object-cover" loading="lazy" />
             </div>
-            <span className="text-sm font-bold">KREOON</span>
+            <span className="text-sm font-bold truncate">KREOON</span>
           </div>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 flex-shrink-0">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate(user?.id ? `/p/${user.id}` : '/marketplace')}
-            className="h-9 w-9 rounded-full p-0"
+            className="h-8 w-8 rounded-full p-0"
           >
-            <Avatar className="h-8 w-8">
+            <Avatar className="h-7 w-7">
               <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
-              <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+              <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">
                 {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
               </AvatarFallback>
             </Avatar>
@@ -311,10 +305,10 @@ export function MainLayout({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/marketplace')}
-            className="h-9 w-9 rounded-full"
+            onClick={() => navigate('/settings')}
+            className="h-8 w-8 rounded-full"
           >
-            <Briefcase className="h-4 w-4" />
+            <Settings className="h-4 w-4" />
           </Button>
         </div>
       </header>

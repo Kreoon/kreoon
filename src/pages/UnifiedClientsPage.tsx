@@ -316,7 +316,7 @@ const UnifiedClientsPage = () => {
 
         {/* Content */}
         <div className="flex gap-4">
-          <div className={cn('flex-1 min-w-0', hasSidePanel && 'mr-[440px]')}>
+          <div className={cn('flex-1 min-w-0', hasSidePanel && 'md:mr-[440px]')}>
             {showUsuarios ? (
               /* ===== USUARIOS CLIENTE TAB ===== */
               <>
@@ -366,15 +366,15 @@ const UnifiedClientsPage = () => {
                   </div>
                 ) : (
                   /* Table view for client users */
-                  <div className="rounded-xl border border-border overflow-hidden">
-                    <table className="w-full text-xs">
+                  <div className="rounded-xl border border-border overflow-hidden overflow-x-auto">
+                    <table className="w-full text-xs min-w-[600px]">
                       <thead>
                         <tr className="bg-muted border-b border-border">
                           <th className="text-left p-3 text-muted-foreground font-medium">Nombre</th>
-                          <th className="text-left p-3 text-muted-foreground font-medium">Email</th>
+                          <th className="text-left p-3 text-muted-foreground font-medium hidden sm:table-cell">Email</th>
                           <th className="text-left p-3 text-muted-foreground font-medium">Empresas</th>
-                          <th className="text-left p-3 text-muted-foreground font-medium">Teléfono</th>
-                          <th className="text-left p-3 text-muted-foreground font-medium">Ciudad</th>
+                          <th className="text-left p-3 text-muted-foreground font-medium hidden sm:table-cell">Teléfono</th>
+                          <th className="text-left p-3 text-muted-foreground font-medium hidden md:table-cell">Ciudad</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -399,7 +399,7 @@ const UnifiedClientsPage = () => {
                                 <span className="text-foreground font-medium truncate max-w-[150px]">{u.full_name}</span>
                               </div>
                             </td>
-                            <td className="p-3 text-muted-foreground truncate max-w-[160px]">{u.email}</td>
+                            <td className="p-3 text-muted-foreground truncate max-w-[160px] hidden sm:table-cell">{u.email}</td>
                             <td className="p-3">
                               {u.linked_companies.length > 0 ? (
                                 <div className="flex gap-1 flex-wrap">
@@ -421,8 +421,8 @@ const UnifiedClientsPage = () => {
                                 <span className="text-[10px] text-amber-400">Sin empresa</span>
                               )}
                             </td>
-                            <td className="p-3 text-muted-foreground">{u.phone || '—'}</td>
-                            <td className="p-3 text-muted-foreground">{u.city || '—'}</td>
+                            <td className="p-3 text-muted-foreground hidden sm:table-cell">{u.phone || '—'}</td>
+                            <td className="p-3 text-muted-foreground hidden md:table-cell">{u.city || '—'}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -462,13 +462,13 @@ const UnifiedClientsPage = () => {
                   </div>
                 ) : (
                   /* Table view */
-                  <div className="rounded-xl border border-border overflow-hidden">
-                    <table className="w-full text-xs">
+                  <div className="rounded-xl border border-border overflow-hidden overflow-x-auto">
+                    <table className="w-full text-xs min-w-[500px]">
                       <thead>
                         <tr className="bg-muted border-b border-border">
                           <th className="text-left p-3 text-muted-foreground font-medium">Nombre</th>
-                          <th className="text-left p-3 text-muted-foreground font-medium">Tipo</th>
-                          <th className="text-left p-3 text-muted-foreground font-medium">Email</th>
+                          <th className="text-left p-3 text-muted-foreground font-medium hidden sm:table-cell">Tipo</th>
+                          <th className="text-left p-3 text-muted-foreground font-medium hidden sm:table-cell">Email</th>
                           <th className="text-center p-3 text-muted-foreground font-medium">Contenido</th>
                           <th className="text-right p-3 text-muted-foreground font-medium">Valor</th>
                         </tr>
@@ -510,7 +510,7 @@ const UnifiedClientsPage = () => {
                                 </div>
                               </div>
                             </td>
-                            <td className="p-3">
+                            <td className="p-3 hidden sm:table-cell">
                               <span className={cn(
                                 'px-2 py-0.5 rounded-full text-[10px] font-medium',
                                 e.entity_type === 'empresa'
@@ -520,7 +520,7 @@ const UnifiedClientsPage = () => {
                                 {e.entity_type === 'empresa' ? 'Empresa' : 'Contacto'}
                               </span>
                             </td>
-                            <td className="p-3 text-muted-foreground truncate max-w-[160px]">{e.email || '—'}</td>
+                            <td className="p-3 text-muted-foreground truncate max-w-[160px] hidden sm:table-cell">{e.email || '—'}</td>
                             <td className="p-3 text-center text-muted-foreground">
                               {e.entity_type === 'empresa' ? e.content_count : '—'}
                             </td>
@@ -539,9 +539,17 @@ const UnifiedClientsPage = () => {
             )}
           </div>
 
+          {/* Mobile backdrop */}
+          {hasSidePanel && (
+            <div
+              className="fixed inset-0 bg-black/50 z-30 md:hidden"
+              onClick={() => { setSelectedEntity(null); setSelectedClientUser(null); }}
+            />
+          )}
+
           {/* Contact Side Panel */}
           {activeContact && currentOrgId && (
-            <div className="fixed top-0 right-0 h-full z-40">
+            <div className="fixed inset-y-0 right-0 w-full md:w-auto z-40">
               <ContactDetailPanel
                 contact={entityToOrgContact(activeContact, currentOrgId)}
                 organizationId={currentOrgId}
@@ -553,7 +561,7 @@ const UnifiedClientsPage = () => {
 
           {/* Client User Side Panel */}
           {activeClientUser && currentOrgId && (
-            <div className="fixed top-0 right-0 h-full z-40">
+            <div className="fixed inset-y-0 right-0 w-full md:w-auto z-40">
               <ClientUserDetailPanel
                 user={activeClientUser}
                 organizationId={currentOrgId}

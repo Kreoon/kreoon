@@ -73,7 +73,7 @@ export default function AISettingsSection() {
 
       {/* Tabs principales */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-auto p-1">
           <TabsTrigger 
             value="providers" 
             className="flex flex-col sm:flex-row items-center gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"

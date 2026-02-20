@@ -460,7 +460,7 @@ export function PlatformSecurityPanel() {
       </div>
 
       <Tabs defaultValue="policies" className="space-y-4">
-        <TabsList className="grid grid-cols-5 w-full max-w-3xl">
+        <TabsList className="grid grid-cols-3 sm:grid-cols-5 w-full max-w-3xl">
           <TabsTrigger value="policies" className="flex items-center gap-2">
             <Settings2 className="h-4 w-4" />
             <span className="hidden sm:inline">Políticas</span>

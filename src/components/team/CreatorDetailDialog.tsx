@@ -171,7 +171,7 @@ export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: C
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -211,7 +211,7 @@ export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: C
           </DialogHeader>
 
           <Tabs defaultValue="info" className="mt-4">
-            <TabsList className={`grid w-full ${profile?.is_ambassador ? 'grid-cols-5' : 'grid-cols-4'}`}>
+            <TabsList className={`grid w-full ${profile?.is_ambassador ? 'grid-cols-3 sm:grid-cols-5' : 'grid-cols-2 sm:grid-cols-4'}`}>
               <TabsTrigger value="info">Información</TabsTrigger>
               <TabsTrigger value="content">Contenido ({assignedContent.length})</TabsTrigger>
               <TabsTrigger value="stats">Estadísticas</TabsTrigger>

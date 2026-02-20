@@ -268,7 +268,7 @@ export default function CreatorProfilePage() {
           </div>
 
           {/* Desktop sidebar */}
-          <div className="w-[380px] flex-shrink-0">
+          <div className="hidden lg:block w-[380px] flex-shrink-0">
             <PricingSidebar
               creatorId={creator.id}
               creatorUserId={creator.user_id}

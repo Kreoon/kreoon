@@ -231,7 +231,7 @@ const PlatformCRMUsers = () => {
 
   return (
     <div className="min-h-screen flex">
-      <div className={cn("flex-1 transition-all duration-300", selectedUser && "mr-[440px]")}>
+      <div className={cn("flex-1 transition-all duration-300", selectedUser && "md:mr-[440px]")}>
         <div className="p-4 md:p-6 space-y-8">
           {/* ========== HEADER ========== */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -570,9 +570,14 @@ const PlatformCRMUsers = () => {
         </div>
       </div>
 
+      {/* Mobile backdrop */}
+      {selectedUser && (
+        <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setSelectedUser(null)} />
+      )}
+
       {/* ========== DETAIL PANEL ========== */}
       {selectedUser && (
-        <div className="fixed top-0 right-0 h-full z-40">
+        <div className="fixed inset-y-0 right-0 w-full md:w-auto z-40">
           <UserDetailPanel
             user={selectedUser}
             onClose={() => setSelectedUser(null)}

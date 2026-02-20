@@ -137,8 +137,8 @@ export function BoardTableView({
   const visibleColumns = visibleFields.filter(f => f in COLUMN_CONFIG);
 
   return (
-    <div className="border rounded-xl overflow-hidden bg-card">
-      <Table>
+    <div className="border rounded-xl overflow-hidden bg-card overflow-x-auto">
+      <Table className="min-w-[700px]">
         <TableHeader>
           <TableRow className="bg-muted/50 hover:bg-muted/50">
             {onSelectionChange && (

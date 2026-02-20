@@ -321,7 +321,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-4">
             {client.logo_url ? (
@@ -359,7 +359,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
         </DialogHeader>
 
         <Tabs defaultValue="info" className="mt-4">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7">
             <TabsTrigger value="info">Info</TabsTrigger>
             <TabsTrigger value="dna" className="gap-1">
               <Dna className="h-3 w-3" />

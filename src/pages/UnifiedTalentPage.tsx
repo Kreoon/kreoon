@@ -331,7 +331,7 @@ const UnifiedTalentPage = () => {
         ) : (
           <div className="flex gap-4">
             {/* Grid / Table */}
-            <div className={cn('flex-1 min-w-0', activeMember && 'mr-[440px]')}>
+            <div className={cn('flex-1 min-w-0', activeMember && 'md:mr-[440px]')}>
               {isLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {Array.from({ length: 6 }).map((_, i) => (
@@ -368,15 +368,15 @@ const UnifiedTalentPage = () => {
                 </div>
               ) : (
                 /* Table view */
-                <div className="rounded-xl border border-border overflow-hidden">
-                  <table className="w-full text-xs">
+                <div className="rounded-xl border border-border overflow-hidden overflow-x-auto">
+                  <table className="w-full text-xs min-w-[550px]">
                     <thead>
                       <tr className="bg-muted border-b border-border">
                         <th className="text-left p-3 text-muted-foreground font-medium">Nombre</th>
                         <th className="text-left p-3 text-muted-foreground font-medium">Origen</th>
-                        <th className="text-left p-3 text-muted-foreground font-medium">Rol</th>
-                        <th className="text-center p-3 text-muted-foreground font-medium">Contenido</th>
-                        <th className="text-center p-3 text-muted-foreground font-medium">Rating</th>
+                        <th className="text-left p-3 text-muted-foreground font-medium hidden sm:table-cell">Rol</th>
+                        <th className="text-center p-3 text-muted-foreground font-medium hidden sm:table-cell">Contenido</th>
+                        <th className="text-center p-3 text-muted-foreground font-medium hidden md:table-cell">Rating</th>
                         <th className="text-right p-3 text-muted-foreground font-medium">Pagado</th>
                       </tr>
                     </thead>
@@ -412,11 +412,11 @@ const UnifiedTalentPage = () => {
                               {m.source === 'internal' ? 'Equipo' : m.source === 'external' ? 'Externo' : 'Ambos'}
                             </span>
                           </td>
-                          <td className="p-3 text-muted-foreground">
+                          <td className="p-3 text-muted-foreground hidden sm:table-cell">
                             {m.org_role ? getRoleLabel(m.org_role) : '\u2014'}
                           </td>
-                          <td className="p-3 text-center text-muted-foreground">{m.content_count || '\u2014'}</td>
-                          <td className="p-3 text-center text-muted-foreground">
+                          <td className="p-3 text-center text-muted-foreground hidden sm:table-cell">{m.content_count || '\u2014'}</td>
+                          <td className="p-3 text-center text-muted-foreground hidden md:table-cell">
                             {m.avg_star_rating ? m.avg_star_rating.toFixed(1) : m.average_rating_given ? m.average_rating_given.toFixed(1) : '\u2014'}
                           </td>
                           <td className="p-3 text-right text-muted-foreground">
@@ -430,9 +430,17 @@ const UnifiedTalentPage = () => {
               )}
             </div>
 
+            {/* Mobile backdrop */}
+            {activeMember && (
+              <div
+                className="fixed inset-0 bg-black/50 z-30 md:hidden"
+                onClick={() => setSelectedMember(null)}
+              />
+            )}
+
             {/* Detail Side Panel */}
             {activeMember && currentOrgId && (
-              <div className="fixed top-0 right-0 h-full z-40">
+              <div className="fixed inset-y-0 right-0 w-full md:w-auto z-40">
                 <UnifiedTalentDetailPanel
                   member={activeMember}
                   organizationId={currentOrgId}

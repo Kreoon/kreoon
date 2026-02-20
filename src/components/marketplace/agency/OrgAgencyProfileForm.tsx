@@ -259,7 +259,7 @@ export function OrgAgencyProfileForm() {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5">
           <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="specialties">Especialidades</TabsTrigger>
           <TabsTrigger value="services">Servicios</TabsTrigger>

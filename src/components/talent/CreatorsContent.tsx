@@ -412,7 +412,7 @@ export function CreatorsContent() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <TabsList className="grid grid-cols-5 w-full sm:w-auto">
+          <TabsList className="grid grid-cols-3 sm:grid-cols-5 w-full sm:w-auto">
             <TabsTrigger value="all" className="gap-1.5">
               <Users className="h-4 w-4" />
               <span className="hidden sm:inline">Todos</span>

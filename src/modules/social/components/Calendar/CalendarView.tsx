@@ -90,12 +90,12 @@ export function CalendarView({ onCreatePost, onViewPost }: CalendarViewProps) {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Button size="icon" variant="ghost" onClick={prevMonth}>
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <h2 className="text-lg font-bold min-w-[180px] text-center">
+          <h2 className="text-base sm:text-lg font-bold min-w-[140px] sm:min-w-[180px] text-center">
             {MONTH_NAMES[month]} {year}
           </h2>
           <Button size="icon" variant="ghost" onClick={nextMonth}>
@@ -114,7 +114,8 @@ export function CalendarView({ onCreatePost, onViewPost }: CalendarViewProps) {
       </div>
 
       {/* Calendar grid */}
-      <div className="border rounded-lg overflow-hidden">
+      <div className="border rounded-lg overflow-x-auto">
+        <div className="min-w-[700px]">
         {/* Day names header */}
         <div className="grid grid-cols-7 bg-muted/30">
           {DAY_NAMES.map(name => (
@@ -196,6 +197,7 @@ export function CalendarView({ onCreatePost, onViewPost }: CalendarViewProps) {
               </div>
             );
           })}
+        </div>
         </div>
       </div>
     </div>

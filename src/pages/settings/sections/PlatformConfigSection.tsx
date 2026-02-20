@@ -20,7 +20,7 @@ export default function PlatformConfigSection() {
       </div>
 
       <Tabs defaultValue="settings" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7">
           <TabsTrigger value="settings" className="gap-2">
             <Settings2 className="h-4 w-4" />
             <span className="hidden sm:inline">Ajustes</span>
