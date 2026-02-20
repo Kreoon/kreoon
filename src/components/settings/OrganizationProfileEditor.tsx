@@ -72,14 +72,19 @@ const ORG_TYPES = [
 
 const TIMEZONES = [
   { value: 'America/Bogota', label: 'Colombia (GMT-5)' },
-  { value: 'America/Mexico_City', label: 'México (GMT-6)' },
+  { value: 'America/Mexico_City', label: 'México Central (GMT-6)' },
   { value: 'America/Lima', label: 'Perú (GMT-5)' },
   { value: 'America/Santiago', label: 'Chile (GMT-4)' },
   { value: 'America/Buenos_Aires', label: 'Argentina (GMT-3)' },
   { value: 'America/Sao_Paulo', label: 'Brasil (GMT-3)' },
+  { value: 'America/Guayaquil', label: 'Ecuador (GMT-5)' },
+  { value: 'America/Caracas', label: 'Venezuela (GMT-4)' },
+  { value: 'America/Panama', label: 'Panamá (GMT-5)' },
+  { value: 'America/Costa_Rica', label: 'Costa Rica (GMT-6)' },
+  { value: 'America/Chicago', label: 'US Central (GMT-6)' },
   { value: 'Europe/Madrid', label: 'España (GMT+1)' },
-  { value: 'America/New_York', label: 'Eastern US (GMT-5)' },
-  { value: 'America/Los_Angeles', label: 'Pacific US (GMT-8)' },
+  { value: 'America/New_York', label: 'US Eastern (GMT-5)' },
+  { value: 'America/Los_Angeles', label: 'US Pacific (GMT-8)' },
 ];
 
 export function OrganizationProfileEditor({ organizationId, isRootAdmin = false, onUpdate }: Props) {
@@ -106,7 +111,16 @@ export function OrganizationProfileEditor({ organizationId, isRootAdmin = false,
       toast.error('Error al cargar perfil de organización');
       console.error(error);
     } else {
-      setProfile(data as OrganizationProfile);
+      const org = data as OrganizationProfile;
+      // Auto-detect timezone from browser if not set
+      if (!org.timezone) {
+        try {
+          org.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        } catch {
+          org.timezone = 'America/Bogota';
+        }
+      }
+      setProfile(org);
     }
     setLoading(false);
   };
@@ -509,6 +523,12 @@ export function OrganizationProfileEditor({ organizationId, isRootAdmin = false,
                     {tz.label}
                   </SelectItem>
                 ))}
+                {/* If current timezone isn't in the preset list, show it as detected */}
+                {profile.timezone && !TIMEZONES.some(tz => tz.value === profile.timezone) && (
+                  <SelectItem value={profile.timezone}>
+                    {profile.timezone} (detectado)
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>

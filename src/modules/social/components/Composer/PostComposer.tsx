@@ -26,6 +26,8 @@ import { getBunnyThumbnailUrl, getBunnyVideoUrls, findBestBunnyMp4 } from '@/hoo
 import { PLATFORMS } from '../../config';
 import type { SocialPostType, ComposerFormData, QuickShareData, CollaborationType, SocialPlatform, SocialAccount } from '../../types/social.types';
 import { toast } from 'sonner';
+import { fromZonedTime } from 'date-fns-tz';
+import { useTimezone } from '@/hooks/useTimezone';
 
 interface PostComposerProps {
   initialData?: Partial<QuickShareData>;
@@ -36,6 +38,7 @@ interface PostComposerProps {
 }
 
 export function PostComposer({ initialData, campaignId, brandUsername, onSuccess, onClose }: PostComposerProps) {
+  const { timezone } = useTimezone();
   const { accounts, personalAccounts, clientAccounts, orgAccounts, accountsByClient } = useSocialAccounts();
   const { createPost, publishNow } = useScheduledPosts();
   const { groups } = useAccountGroups();
@@ -163,7 +166,7 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
         hashtags,
         mediaUrls,
         thumbnailUrl,
-        scheduledAt: immediate ? null : (scheduledAt ? new Date(scheduledAt) : null),
+        scheduledAt: immediate ? null : (scheduledAt ? fromZonedTime(scheduledAt, timezone) : null),
         postType,
         visibility,
         firstComment,
@@ -405,6 +408,9 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
           onChange={(e) => setScheduledAt(e.target.value)}
           min={new Date().toISOString().slice(0, 16)}
         />
+        <p className="text-[10px] text-muted-foreground">
+          Zona horaria: {timezone}
+        </p>
       </div>
 
       {/* Post type */}

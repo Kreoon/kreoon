@@ -1,5 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import { formatInTimeZone } from "date-fns-tz";
 
 // ─── Formateo de fechas ─────────────────────────────────────────────────────
 
@@ -8,15 +9,25 @@ import { es } from "date-fns/locale";
  * - 'short': DD/MM/AAAA
  * - 'long': D de mes de AAAA
  * - 'relative': hace X minutos/horas/días
+ *
+ * @param timezone — IANA timezone (optional, defaults to browser TZ)
  */
 export function formatDate(
   date: Date | string,
-  format: "short" | "long" | "relative" = "short"
+  format: "short" | "long" | "relative" = "short",
+  timezone?: string
 ): string {
   const d = new Date(date);
 
   if (format === "relative") {
     return formatDistanceToNow(d, { addSuffix: true, locale: es });
+  }
+
+  if (timezone) {
+    if (format === "long") {
+      return formatInTimeZone(d, timezone, "d 'de' MMMM 'de' yyyy", { locale: es });
+    }
+    return formatInTimeZone(d, timezone, "dd/MM/yyyy", { locale: es });
   }
 
   if (format === "long") {
@@ -33,9 +44,16 @@ export function formatDate(
 /**
  * Formatea fecha y hora en formato español.
  * Ej: "15 ene 2026, 14:30"
+ *
+ * @param timezone — IANA timezone (optional, defaults to browser TZ)
  */
-export function formatDateTime(date: Date | string): string {
+export function formatDateTime(date: Date | string, timezone?: string): string {
   const d = new Date(date);
+
+  if (timezone) {
+    return formatInTimeZone(d, timezone, "d MMM yyyy, HH:mm", { locale: es });
+  }
+
   return d.toLocaleString("es-ES", {
     year: "numeric",
     month: "short",
@@ -43,6 +61,21 @@ export function formatDateTime(date: Date | string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+/**
+ * Formatea solo la hora en formato HH:mm.
+ *
+ * @param timezone — IANA timezone (optional, defaults to browser TZ)
+ */
+export function formatTime(date: Date | string, timezone?: string): string {
+  const d = new Date(date);
+
+  if (timezone) {
+    return formatInTimeZone(d, timezone, "HH:mm", { locale: es });
+  }
+
+  return d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 }
 
 // ─── Formateo de números ────────────────────────────────────────────────────

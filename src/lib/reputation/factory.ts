@@ -7,6 +7,8 @@ import { CreativeRoleCalculator } from './creative';
 import { PerformanceRoleCalculator } from './performance';
 import { TrustRoleCalculator } from './trust';
 import type { RoleArchetype, UnifiedReputationConfig, EffortArchetype, PointActions } from './types';
+import { formatInTimeZone } from 'date-fns-tz';
+import { getEffectiveTimezone } from '@/hooks/useTimezone';
 
 /**
  * Get the appropriate calculator for a role's archetype.
@@ -133,18 +135,20 @@ export function getReassignmentThreshold(roleKey: string): number {
 }
 
 /**
- * Calculate days between two dates in Colombia timezone (UTC-5).
+ * Calculate days between two dates in the org timezone.
  * Day 1 is the start date itself.
+ * Falls back to 'America/Bogota' for backward compat.
  * @param pausedHours — hours to subtract (e.g. client review delays)
+ * @param timezone — IANA timezone string
  */
-export function calculateDaysInColombia(startDate: Date, endDate: Date, pausedHours = 0): number {
-  const colombiaOffset = -5 * 60;
+export function calculateDaysInColombia(startDate: Date, endDate: Date, pausedHours = 0, timezone?: string): number {
+  const tz = getEffectiveTimezone(timezone);
 
-  const startColombia = new Date(startDate.getTime() + (startDate.getTimezoneOffset() + colombiaOffset) * 60000);
-  const endColombia = new Date(endDate.getTime() + (endDate.getTimezoneOffset() + colombiaOffset) * 60000);
+  const startStr = formatInTimeZone(startDate, tz, 'yyyy-MM-dd');
+  const endStr = formatInTimeZone(endDate, tz, 'yyyy-MM-dd');
 
-  const startDay = new Date(startColombia.getFullYear(), startColombia.getMonth(), startColombia.getDate());
-  const endDay = new Date(endColombia.getFullYear(), endColombia.getMonth(), endColombia.getDate());
+  const startDay = new Date(startStr + 'T00:00:00');
+  const endDay = new Date(endStr + 'T00:00:00');
 
   const diffTime = endDay.getTime() - startDay.getTime();
   const adjustedTime = diffTime - (pausedHours * 3600000);
