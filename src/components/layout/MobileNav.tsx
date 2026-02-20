@@ -1,16 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuthAnalytics } from "@/analytics";
 import {
   LayoutDashboard,
-  Video,
   Users,
   Sparkles,
   Building2,
   Settings,
-  UsersRound,
   LogOut,
   Menu,
-  Package,
   Kanban,
   RefreshCw,
   Trophy,
@@ -26,6 +23,14 @@ import {
   MessageSquare,
   ListChecks,
   ContactRound,
+  Video,
+  TrendingUp,
+  BarChart3,
+  GitBranch,
+  DollarSign,
+  Crown,
+  Share2,
+  ChevronDown,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -39,13 +44,20 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ClientSelectorDialog } from "@/components/clients/ClientSelectorDialog";
+import { RootOrgSwitcher } from "@/components/layout/RootOrgSwitcher";
+import { RoleSwitcher } from "@/components/layout/RoleSwitcher";
+import { AITokensPanelTrigger } from "@/components/ai/AITokensPanel";
+import { SidebarAchievementsWidget } from "@/components/points/SidebarAchievementsWidget";
 import { supabase } from "@/integrations/supabase/client";
 import { useWhiteLabel } from "@/hooks/useWhiteLabel";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 
 interface NavItem {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  platformRootOnly?: boolean;
+  requiresOrg?: boolean;
 }
 
 interface NavSection {
@@ -53,144 +65,170 @@ interface NavSection {
   items: NavItem[];
 }
 
+// ── Navigation sections — MUST mirror Sidebar.tsx exactly ──
+
 const adminSections: NavSection[] = [
   {
-    label: "PRINCIPAL",
+    label: "KREOON STUDIO",
     items: [
-      { name: "Board", href: "/dashboard", icon: LayoutDashboard },
-      { name: "Projects", href: "/board", icon: Kanban },
-      { name: "IA", href: "/scripts", icon: Sparkles },
-      { name: "UP", href: "/ranking", icon: Trophy },
-      { name: "Marketplace", href: "/marketplace", icon: Store },
+      { name: "Control Center", href: "/dashboard", icon: LayoutDashboard, requiresOrg: true },
+      { name: "Producciones", href: "/board", icon: Kanban, requiresOrg: true },
+      { name: "Kreoon IA", href: "/scripts", icon: Sparkles, requiresOrg: true },
+      { name: "Marketing", href: "/marketing", icon: TrendingUp, requiresOrg: true },
+      { name: "Social Hub", href: "/social-hub", icon: Share2 },
+      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3 },
+      { name: "Ranking", href: "/ranking", icon: Trophy, requiresOrg: true },
+      { name: "Live", href: "/live", icon: Video, requiresOrg: true },
     ]
   },
   {
     label: "GESTIÓN",
     items: [
-      { name: "Portafolio", href: "/content", icon: FileText },
-      { name: "Talento", href: "/talent", icon: Users },
-      { name: "Clientes", href: "/clients-hub", icon: Building2 },
-      { name: "Equipo", href: "/team", icon: UsersRound },
-      { name: "Live", href: "/live", icon: Video },
-      { name: "CRM", href: "/org-crm", icon: ContactRound },
-      { name: "Pipelines", href: "/org-crm/pipelines", icon: Building2 },
-      { name: "Finanzas", href: "/org-crm/finanzas", icon: Building2 },
+      { name: "Portafolio", href: "/content", icon: FileText, requiresOrg: true },
+      { name: "Talento", href: "/talent", icon: Users, requiresOrg: true },
+      { name: "Clientes", href: "/clients-hub", icon: Building2, requiresOrg: true },
+      { name: "Pipelines", href: "/org-crm/pipelines", icon: GitBranch, requiresOrg: true },
+      { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, requiresOrg: true },
     ]
   },
   {
     label: "CRM PLATAFORMA",
     items: [
-      { name: "Platform CRM", href: "/crm", icon: ContactRound },
+      { name: "Dashboard", href: "/crm", icon: LayoutDashboard },
+      { name: "Leads", href: "/crm/leads", icon: UserPlus },
+      { name: "Organizaciones", href: "/crm/organizaciones", icon: Building2 },
+      { name: "Talento", href: "/crm/creadores", icon: Video },
+      { name: "Usuarios", href: "/crm/usuarios", icon: Users },
+      { name: "Finanzas", href: "/crm/finanzas", icon: DollarSign },
+      { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone },
     ]
   },
   {
-    label: "CUENTA",
+    label: "CONFIG",
     items: [
       { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
-      { name: "Configuración", href: "/settings", icon: Settings },
+      { name: "Plan", href: "/planes", icon: Crown },
+      { name: "Settings", href: "/settings", icon: Settings },
     ]
   }
 ];
 
 const strategistSections: NavSection[] = [
   {
-    label: "PRINCIPAL",
+    label: "KREOON STUDIO",
     items: [
-      { name: "Board", href: "/strategist-dashboard", icon: LayoutDashboard },
-      { name: "IA", href: "/scripts", icon: Sparkles },
-      { name: "Marketplace", href: "/marketplace", icon: Store },
+      { name: "Control Center", href: "/strategist-dashboard", icon: LayoutDashboard, requiresOrg: true },
+      { name: "Producciones", href: "/board", icon: Kanban, requiresOrg: true },
+      { name: "Kreoon IA", href: "/scripts", icon: Sparkles, requiresOrg: true },
+      { name: "Marketing", href: "/marketing", icon: TrendingUp, requiresOrg: true },
+      { name: "Social Hub", href: "/social-hub", icon: Share2 },
+      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3 },
+      { name: "Ranking", href: "/ranking", icon: Trophy, requiresOrg: true },
+      { name: "Live", href: "/live", icon: Video, requiresOrg: true },
     ]
   },
   {
     label: "GESTIÓN",
     items: [
-      { name: "Portafolio", href: "/content", icon: FileText },
-      { name: "Talento", href: "/talent", icon: Users },
-      { name: "Clientes", href: "/clients-hub", icon: Building2 },
-      { name: "Pipelines", href: "/org-crm/pipelines", icon: Building2 },
-      { name: "Finanzas", href: "/org-crm/finanzas", icon: Building2 },
+      { name: "Portafolio", href: "/content", icon: FileText, requiresOrg: true },
+      { name: "Talento", href: "/talent", icon: Users, requiresOrg: true },
+      { name: "Clientes", href: "/clients-hub", icon: Building2, requiresOrg: true },
+      { name: "Pipelines", href: "/org-crm/pipelines", icon: GitBranch, requiresOrg: true },
+      { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, requiresOrg: true },
     ]
   },
   {
-    label: "CUENTA",
+    label: "CONFIG",
     items: [
       { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
-      { name: "Configuración", href: "/settings", icon: Settings },
-    ]
-  }
-];
-
-const creatorSections: NavSection[] = [
-  {
-    label: "PRINCIPAL",
-    items: [
-      { name: "Board", href: "/creator-dashboard", icon: LayoutDashboard },
-      { name: "Projects", href: "/board", icon: Kanban },
-      { name: "Portafolio", href: "/content", icon: FileText },
-      { name: "IA", href: "/scripts", icon: Sparkles },
-      { name: "Marketplace", href: "/marketplace", icon: Store },
-    ]
-  },
-  {
-    label: "CUENTA",
-    items: [
-      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
-      { name: "Configuración", href: "/settings", icon: Settings },
+      { name: "Plan", href: "/planes", icon: Crown },
+      { name: "Settings", href: "/settings", icon: Settings },
     ]
   }
 ];
 
 const editorSections: NavSection[] = [
   {
-    label: "PRINCIPAL",
+    label: "KREOON STUDIO",
     items: [
-      { name: "Board", href: "/editor-dashboard", icon: LayoutDashboard },
-      { name: "Projects", href: "/board", icon: Kanban },
+      { name: "Editor Hub", href: "/editor-dashboard", icon: LayoutDashboard },
+      { name: "Producciones", href: "/board", icon: Kanban },
       { name: "Portafolio", href: "/content", icon: FileText },
-      { name: "IA", href: "/scripts", icon: Sparkles },
-      { name: "Marketplace", href: "/marketplace", icon: Store },
+      { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
+      { name: "Social Hub", href: "/social-hub", icon: Share2 },
+      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3 },
     ]
   },
   {
-    label: "CUENTA",
+    label: "CONFIG",
     items: [
       { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
-      { name: "Configuración", href: "/settings", icon: Settings },
+      { name: "Plan", href: "/planes", icon: Crown },
+      { name: "Settings", href: "/settings", icon: Settings },
+    ]
+  }
+];
+
+const creatorSections: NavSection[] = [
+  {
+    label: "KREOON STUDIO",
+    items: [
+      { name: "Creator Hub", href: "/creator-dashboard", icon: LayoutDashboard },
+      { name: "Producciones", href: "/board", icon: Kanban },
+      { name: "Portafolio", href: "/content", icon: FileText },
+      { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
+      { name: "Social Hub", href: "/social-hub", icon: Share2 },
+      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3 },
+    ]
+  },
+  {
+    label: "CONFIG",
+    items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
+      { name: "Plan", href: "/planes", icon: Crown },
+      { name: "Settings", href: "/settings", icon: Settings },
     ]
   }
 ];
 
 const clientSections: NavSection[] = [
   {
-    label: "PRINCIPAL",
+    label: "KREOON STUDIO",
     items: [
-      { name: "Dashboard", href: "/client-dashboard", icon: Package },
-      { name: "Portafolio", href: "/content", icon: FileText },
-      { name: "Marketplace", href: "/marketplace", icon: Store },
+      { name: "Client Portal", href: "/client-dashboard", icon: LayoutDashboard },
+      { name: "Producciones", href: "/client-board", icon: Kanban },
+      { name: "Social Hub", href: "/social-hub", icon: Share2 },
+      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3 },
     ]
   },
   {
-    label: "CUENTA",
+    label: "CONFIG",
     items: [
       { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
-      { name: "Configuración", href: "/settings", icon: Settings },
+      { name: "Settings", href: "/settings", icon: Settings },
     ]
   }
 ];
 
+// Marketplace sections — mirrors Sidebar.tsx
 function getMarketplaceSections(activeGroup: PermissionGroup | null): NavSection[] {
   const items: NavItem[] = [
     { name: "Marketplace", href: "/marketplace", icon: Store },
     { name: "Videos", href: "/marketplace/videos", icon: Play },
   ];
 
-  if (activeGroup === 'client' || activeGroup === 'admin' || activeGroup === 'strategist') {
-    items.push({ name: "Mis Campanas", href: "/marketplace/my-campaigns", icon: Megaphone });
-  } else if (activeGroup !== 'editor') {
-    items.push({ name: "Campanas", href: "/marketplace/campaigns", icon: Megaphone });
+  if (activeGroup !== 'editor' && activeGroup !== 'client') {
+    items.push({ name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone });
+  }
+  if (activeGroup === 'admin' || activeGroup === 'strategist' || activeGroup === 'client') {
+    items.push({ name: "Mis Campañas", href: "/marketplace/my-campaigns", icon: Megaphone });
   }
 
   items.push({ name: "Wallet", href: "/wallet", icon: Wallet });
+
+  if (activeGroup === 'client') {
+    return [{ label: "KREOON MARKETPLACE", items }];
+  }
 
   const savedItems: NavItem[] = [
     { name: "Guardados", href: "/marketplace/guardados", icon: Bookmark },
@@ -213,19 +251,37 @@ export function MobileNav() {
   const [showClientSelector, setShowClientSelector] = useState(false);
   const [currentClientName, setCurrentClientName] = useState<string | null>(null);
   const [clientCount, setClientCount] = useState(0);
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, profile, user, isAdmin, isCreator, isEditor, isClient, isStrategist, roles } = useAuth();
+  const { signOut, profile, user, activeRole, roles, isPlatformAdmin } = useAuth();
   const { trackLogout } = useAuthAnalytics();
-  const { currentOrgName } = useOrgOwner();
+  const { isPlatformRoot, currentOrgName } = useOrgOwner();
   const { marketplaceEnabled } = useOrgMarketplace();
-  const { effectivePlatformName, effectiveMarketplaceLabel, effectiveLogoUrl, isWhiteLabelActive } = useWhiteLabel();
+  const { effectivePlatformName, effectiveStudioLabel, effectiveMarketplaceLabel, effectiveLogoUrl, isWhiteLabelActive } = useWhiteLabel();
+  const { isImpersonating, effectiveRoles, impersonationTarget } = useImpersonation();
+
+  // Resolve permission group — same logic as Sidebar
+  const activeGroup: PermissionGroup | null = isImpersonating
+    ? (effectiveRoles.length > 0 ? getPermissionGroup(effectiveRoles[0]) : null)
+    : (activeRole ? getPermissionGroup(activeRole) : null);
+
+  const activeIsAdmin = activeGroup === 'admin';
+  const activeIsStrategist = activeGroup === 'strategist';
+  const activeIsEditor = activeGroup === 'editor';
+  const activeIsCreator = activeGroup === 'creator';
+  const activeIsClient = activeGroup === 'client';
 
   // Fetch current client name and count for client users (with brand fallback)
   useEffect(() => {
-    if (isClient && user) {
+    if (isImpersonating && activeIsClient && impersonationTarget.clientId) {
+      setCurrentClientName(impersonationTarget.clientName);
+      setClientCount(1);
+      return;
+    }
+
+    if (activeIsClient && user) {
       const fetchCurrentClient = async () => {
-        // Get all client associations to determine count
         const { data: associations } = await supabase
           .from('client_users')
           .select('client_id')
@@ -249,7 +305,6 @@ export function MobileNav() {
           }
         }
 
-        // Get first client from associations
         if (associations && associations.length > 0) {
           const { data: client } = await supabase
             .from('clients')
@@ -263,7 +318,6 @@ export function MobileNav() {
           }
         }
 
-        // Fallback: check brand_members for independent brands
         if (totalClients === 0) {
           const { data: brandMembers } = await (supabase as any)
             .from('brand_members')
@@ -295,7 +349,7 @@ export function MobileNav() {
 
       fetchCurrentClient();
     }
-  }, [isClient, user]);
+  }, [activeIsClient, user, isImpersonating, impersonationTarget]);
 
   const handleSignOut = async () => {
     trackLogout();
@@ -304,53 +358,83 @@ export function MobileNav() {
     navigate('/auth');
   };
 
-  // Get navigation sections based on role (with marketplace sections)
-  const getSections = (): NavSection[] => {
-    let baseSections: NavSection[];
-    let roleStr: string | null;
+  // Filter navigation sections — same logic as Sidebar
+  const filteredSections = useMemo(() => {
+    let baseSections = activeIsAdmin
+      ? adminSections
+      : activeIsStrategist
+      ? strategistSections
+      : activeIsEditor
+      ? editorSections
+      : activeIsCreator
+      ? creatorSections
+      : activeIsClient
+      ? clientSections
+      : adminSections;
 
-    // Use permission groups from useAuth (isAdmin, isCreator, etc. already resolve via groups)
-    if (isAdmin) { baseSections = adminSections; }
-    else if (isStrategist) { baseSections = strategistSections; }
-    else if (isEditor) { baseSections = editorSections; }
-    else if (isCreator) { baseSections = creatorSections; }
-    else if (isClient) { baseSections = clientSections; }
-    else { baseSections = []; }
+    const labelMap: Record<string, string> = {
+      'KREOON STUDIO': effectiveStudioLabel,
+      'KREOON MARKETPLACE': effectiveMarketplaceLabel,
+    };
 
-    const activeGroup: PermissionGroup | null = roles.length > 0 ? getPermissionGroup(roles[0]) : null;
-    // White-label label replacement map
-    const labelMap: Record<string, string> = { 'KREOON MARKETPLACE': effectiveMarketplaceLabel };
+    const filtered = baseSections
+      .filter(section => {
+        if (section.label === 'CRM PLATAFORMA' && !isPlatformAdmin) return false;
+        return true;
+      })
+      .map(section => ({
+        ...section,
+        label: labelMap[section.label] || section.label,
+        items: section.items.filter(item => {
+          if (!isPlatformRoot && item.platformRootOnly) return false;
+          if (isPlatformRoot && !profile?.current_organization_id && item.requiresOrg) return false;
+          if (!marketplaceEnabled && item.href === '/marketplace') return false;
+          return true;
+        })
+      })).filter(section => section.items.length > 0);
+
     const mktSections = marketplaceEnabled
       ? getMarketplaceSections(activeGroup).map(s => ({ ...s, label: labelMap[s.label] || s.label }))
       : [];
 
-    // "Buscar Talento" section - always visible for recruitment
     const recruitSection: NavSection = {
       label: "RECLUTAMIENTO",
       items: [{ name: "Buscar Talento", href: "/marketplace", icon: Search }],
     };
 
-    // Filter marketplace link from role sections when org has marketplace disabled
-    const filteredBase = baseSections.map(section => ({
-      ...section,
-      items: section.items.filter(item => {
-        if (!marketplaceEnabled && item.href === '/marketplace') return false;
-        return true;
-      })
-    })).filter(section => section.items.length > 0);
-
-    const cuentaSection = filteredBase.find(s => s.label === 'CUENTA');
-    const otherSections = filteredBase.filter(s => s.label !== 'CUENTA');
+    const configSection = filtered.find(s => s.label === 'CONFIG');
+    const nonConfigSections = filtered.filter(s => s.label !== 'CONFIG');
 
     return [
-      ...otherSections,
+      ...nonConfigSections,
       ...mktSections,
       ...(!marketplaceEnabled ? [recruitSection] : []),
-      ...(cuentaSection ? [cuentaSection] : [{ label: "CUENTA", items: [{ name: "Configuración", href: "/settings", icon: Settings }] }]),
+      ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Settings", href: "/settings", icon: Settings }] }]),
     ];
+  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, profile?.current_organization_id, marketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, activeGroup]);
+
+  // Auto-expand section with active route
+  const pathname = location.pathname;
+  useEffect(() => {
+    for (const section of filteredSections) {
+      const hasActiveItem = section.items.some(item => {
+        const hrefPath = item.href.split('?')[0];
+        if (item.href === '/marketplace') return pathname === '/marketplace';
+        if (hrefPath.startsWith('/marketplace/') || item.href === '/wallet') return pathname.startsWith(hrefPath);
+        return pathname === hrefPath;
+      });
+      if (hasActiveItem) {
+        setCollapsedSections(prev =>
+          prev[section.label] === false ? prev : { ...prev, [section.label]: false }
+        );
+      }
+    }
+  }, [pathname, filteredSections]);
+
+  const toggleSection = (label: string) => {
+    setCollapsedSections(prev => ({ ...prev, [label]: !prev[label] }));
   };
 
-  const sections = getSections();
   const roleBadge = getRoleBadgeInfo(roles);
 
   return (
@@ -366,19 +450,26 @@ export function MobileNav() {
           {/* Logo */}
           <div className="flex h-16 items-center border-b border-sidebar-border px-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg overflow-hidden">
-                <img src={effectiveLogoUrl} alt={effectivePlatformName} className="h-9 w-9 object-cover" />
+              <div className="relative flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden bg-primary/10 border border-primary/20 shadow-sm">
+                <img src={effectiveLogoUrl} alt={effectivePlatformName} className="h-8 w-8 object-cover" />
               </div>
               <div className="min-w-0">
                 <h1 className="text-sm font-bold text-sidebar-foreground">{effectivePlatformName}</h1>
                 {currentOrgName && !isWhiteLabelActive ? (
                   <p className="text-xs text-primary/80 truncate font-medium">{currentOrgName}</p>
                 ) : isWhiteLabelActive ? null : (
-                  <p className="text-xs text-sidebar-foreground/60">Content Platform</p>
+                  <p className="text-[10px] uppercase tracking-widest text-sidebar-foreground/60">AI Content Platform</p>
                 )}
               </div>
             </div>
           </div>
+
+          {/* Root Admin Organization Switcher */}
+          {isPlatformRoot && (
+            <div className="px-3 py-2 border-b border-sidebar-border">
+              <RootOrgSwitcher />
+            </div>
+          )}
 
           {/* User Info */}
           {profile && (
@@ -407,74 +498,114 @@ export function MobileNav() {
             </div>
           )}
 
-          {/* Navigation with Sections */}
+          {/* Navigation with Collapsible Sections */}
           <nav className="flex-1 overflow-y-auto p-3">
-            {sections.map((section, sectionIndex) => (
-              <div key={section.label} className={cn(sectionIndex > 0 && "mt-6")}>
-                {/* Section Label */}
-                <div className="px-3 mb-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
-                    {section.label}
-                  </span>
+            {filteredSections.map((section, sectionIndex) => {
+              const isSectionCollapsed = !!collapsedSections[section.label];
+              return (
+                <div key={section.label} className={cn(sectionIndex > 0 && "mt-4")}>
+                  {/* Section Label — clickable to toggle */}
+                  <button
+                    onClick={() => toggleSection(section.label)}
+                    className="w-full flex items-center justify-between px-3 mb-1.5 group/section cursor-pointer"
+                  >
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-sidebar-foreground/40 group-hover/section:text-sidebar-foreground/70 transition-colors">
+                      {section.label}
+                    </span>
+                    <ChevronDown className={cn(
+                      "h-3 w-3 text-sidebar-foreground/40 group-hover/section:text-sidebar-foreground/70 transition-all duration-200",
+                      isSectionCollapsed && "-rotate-90"
+                    )} />
+                  </button>
+
+                  {/* Section Items — collapsible */}
+                  <div className={cn(
+                    "space-y-1 overflow-hidden transition-all duration-200",
+                    isSectionCollapsed && "max-h-0 opacity-0",
+                    !isSectionCollapsed && "max-h-[500px] opacity-100"
+                  )}>
+                    {section.items.map((item) => {
+                      const itemPath = item.href.split('?')[0];
+                      const itemSearch = item.href.includes('?') ? item.href.slice(item.href.indexOf('?')) : '';
+                      const siblingHasFullMatch = !itemSearch && location.search && section.items.some(sib => {
+                        if (sib === item) return false;
+                        const sibPath = sib.href.split('?')[0];
+                        const sibSearch = sib.href.includes('?') ? sib.href.slice(sib.href.indexOf('?')) : '';
+                        return sibSearch && location.pathname === sibPath && location.search === sibSearch;
+                      });
+                      const isActive = item.href === '/marketplace'
+                        ? location.pathname === '/marketplace'
+                        : (itemPath.startsWith('/marketplace/') || item.href === '/wallet')
+                        ? location.pathname.startsWith(itemPath)
+                        : itemSearch
+                        ? location.pathname === itemPath && location.search === itemSearch
+                        : location.pathname === item.href && !siblingHasFullMatch;
+                      return (
+                        <NavLink
+                          key={item.name}
+                          to={item.href}
+                          onClick={() => setOpen(false)}
+                          className={cn(
+                            "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                            isActive
+                              ? "bg-primary/10 text-sidebar-foreground border border-primary/25 shadow-sm"
+                              : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground border border-transparent"
+                          )}
+                        >
+                          {isActive && (
+                            <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-full shadow-sm" />
+                          )}
+                          <item.icon className={cn(
+                            "h-5 w-5 shrink-0 transition-colors",
+                            isActive ? "text-primary" : "text-sidebar-foreground/50 group-hover:text-primary"
+                          )} />
+                          <span>{item.name}</span>
+                        </NavLink>
+                      );
+                    })}
+                  </div>
                 </div>
-                
-                {/* Section Items */}
-                <div className="space-y-1">
-                  {section.items.map((item) => {
-                    const itemPath = item.href.split('?')[0];
-                    const itemSearch = item.href.includes('?') ? item.href.slice(item.href.indexOf('?')) : '';
-                    // When an item has no query string, check if a sibling with a more specific match exists
-                    const siblingHasFullMatch = !itemSearch && location.search && section.items.some(sib => {
-                      if (sib === item) return false;
-                      const sibPath = sib.href.split('?')[0];
-                      const sibSearch = sib.href.includes('?') ? sib.href.slice(sib.href.indexOf('?')) : '';
-                      return sibSearch && location.pathname === sibPath && location.search === sibSearch;
-                    });
-                    const isActive = item.href === '/marketplace'
-                      ? location.pathname === '/marketplace'
-                      : (itemPath.startsWith('/marketplace/') || item.href === '/wallet')
-                      ? location.pathname.startsWith(itemPath)
-                      : itemSearch
-                      ? location.pathname === itemPath && location.search === itemSearch
-                      : location.pathname === item.href && !siblingHasFullMatch;
-                    return (
-                      <NavLink
-                        key={item.name}
-                        to={item.href}
-                        onClick={() => setOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200",
-                          isActive 
-                            ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md" 
-                            : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                        )}
-                      >
-                        <item.icon className={cn("h-5 w-5 shrink-0", isActive && "text-sidebar-primary-foreground")} />
-                        <span>{item.name}</span>
-                      </NavLink>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </nav>
 
-          {/* Client Company Switcher & Sign Out */}
-          <div className="border-t border-sidebar-border p-3 space-y-2">
-            {isClient && (
+          {/* AI Tokens — only if has org and not client */}
+          {profile?.current_organization_id && !activeIsClient && (
+            <div className="border-t border-sidebar-border px-3 py-2">
+              <AITokensPanelTrigger
+                organizationId={profile.current_organization_id}
+                variant="header"
+              />
+            </div>
+          )}
+
+          {/* Achievements Widget */}
+          <div className="border-t border-sidebar-border">
+            <SidebarAchievementsWidget collapsed={false} />
+          </div>
+
+          {/* User & Actions */}
+          <div className="border-t border-sidebar-border p-3 space-y-2 bg-gradient-to-t from-muted/50 to-transparent">
+            {/* Role Switcher */}
+            {!isImpersonating && (
+              <RoleSwitcher collapsed={false} />
+            )}
+
+            {/* Client company switcher */}
+            {activeIsClient && (
               <div className="space-y-1">
                 {currentClientName && (
                   <div className="px-3 py-1 text-xs text-sidebar-foreground/60 truncate flex items-center gap-2">
-                    <Building2 className="h-3 w-3" />
+                    <Building2 className="h-3 w-3 text-primary/60" />
                     {currentClientName}
                     {clientCount > 1 && (
-                      <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
+                      <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full border border-primary/25">
                         +{clientCount - 1}
                       </span>
                     )}
                   </div>
                 )}
-                {clientCount > 1 && (
+                {!isImpersonating && clientCount > 1 && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -482,21 +613,22 @@ export function MobileNav() {
                       setOpen(false);
                       setShowClientSelector(true);
                     }}
-                    className="w-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground justify-start py-3"
+                    className="w-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground justify-start rounded-xl"
                   >
-                    <RefreshCw className="h-5 w-5 mr-3" />
+                    <RefreshCw className="h-4 w-4 mr-2" />
                     Cambiar Empresa
                   </Button>
                 )}
               </div>
             )}
+
             <Button
               variant="ghost"
               size="sm"
               onClick={handleSignOut}
-              className="w-full text-sidebar-foreground/70 hover:bg-destructive/20 hover:text-destructive justify-start py-3"
+              className="w-full text-sidebar-foreground/70 hover:bg-destructive/10 hover:text-destructive justify-start rounded-xl"
             >
-              <LogOut className="h-5 w-5 mr-3" />
+              <LogOut className="h-4 w-4 mr-2" />
               Cerrar sesión
             </Button>
           </div>
