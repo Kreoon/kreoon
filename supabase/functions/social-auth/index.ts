@@ -195,7 +195,7 @@ const PLATFORM_CONFIGS: Record<PlatformKey, PlatformOAuthConfig> = {
   tiktok: {
     authUrl: "https://www.tiktok.com/v2/auth/authorize/",
     tokenUrl: "https://open.tiktokapis.com/v2/oauth/token/",
-    scopes: "user.info.basic,video.publish,video.upload,video.list",
+    scopes: "user.info.basic,user.info.profile,user.info.stats,video.publish,video.upload,video.list",
     scopeSeparator: ",",
     clientIdEnvKey: "SOCIAL_TIKTOK_CLIENT_ID",
     clientSecretEnvKey: "SOCIAL_TIKTOK_CLIENT_SECRET",
@@ -1110,10 +1110,11 @@ async function handleTikTokCallback(
   let tikTokDisplayName = "";
   let tikTokAvatarUrl = "";
   let tikTokUserId = openId || "";
+  let tikTokUserInfo: Record<string, unknown> | null = null;
 
   try {
     const userResponse = await fetch(
-      "https://open.tiktokapis.com/v2/user/info/?fields=open_id,display_name,avatar_url,username",
+      "https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,display_name,avatar_url,username,bio_description,profile_deep_link,is_verified,follower_count,following_count,likes_count,video_count",
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -1122,11 +1123,12 @@ async function handleTikTokCallback(
     );
     if (userResponse.ok) {
       const userData = await userResponse.json();
-      const userInfo = userData.data?.user || {};
-      tikTokUserId = userInfo.open_id || openId || "";
-      tikTokUsername = userInfo.username || "";
-      tikTokDisplayName = userInfo.display_name || userInfo.username || "";
-      tikTokAvatarUrl = userInfo.avatar_url || "";
+      tikTokUserInfo = userData.data?.user || {};
+      tikTokUserId = (tikTokUserInfo.open_id as string) || openId || "";
+      tikTokUsername = (tikTokUserInfo.username as string) || "";
+      tikTokDisplayName = (tikTokUserInfo.display_name as string) || tikTokUsername || "";
+      tikTokAvatarUrl = (tikTokUserInfo.avatar_url as string) || "";
+      console.log(`[social-auth] TikTok user: @${tikTokUsername} (${tikTokUserId}), followers: ${tikTokUserInfo.follower_count}, videos: ${tikTokUserInfo.video_count}`);
     }
   } catch (err) {
     console.warn("[social-auth] Failed to fetch TikTok user info:", err);
@@ -1155,6 +1157,13 @@ async function handleTikTokCallback(
     metadata: {
       open_id: openId,
       refresh_expires_in: tokenData.refresh_expires_in || null,
+      bio: tikTokUserInfo?.bio_description || null,
+      profile_url: tikTokUserInfo?.profile_deep_link || null,
+      is_verified: tikTokUserInfo?.is_verified || false,
+      follower_count: tikTokUserInfo?.follower_count || 0,
+      following_count: tikTokUserInfo?.following_count || 0,
+      likes_count: tikTokUserInfo?.likes_count || 0,
+      video_count: tikTokUserInfo?.video_count || 0,
     },
     owner_type: ownerType || "user",
     brand_id: brandId || null,
