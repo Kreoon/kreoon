@@ -38,7 +38,10 @@ export function BunnyMultiVideoUploader({
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
   const pollIntervals = useRef<{ [key: string]: NodeJS.Timeout }>({});
 
-  // Initialize uploads array based on hooksCount and currentUrls
+  // Initialize uploads array based on hooksCount and currentUrls.
+  // CRITICAL: include currentUrls in deps to avoid stale closure when switching content.
+  // Without this, switching from content A to B could initialize B's uploads with A's URLs.
+  const currentUrlsKey = JSON.stringify(currentUrls);
   useEffect(() => {
     const initialUploads: VideoUpload[] = Array.from({ length: hooksCount }, (_, index) => ({
       id: `video-${index}`,
@@ -48,7 +51,8 @@ export function BunnyMultiVideoUploader({
       videoId: null
     }));
     setUploads(initialUploads);
-  }, [hooksCount, contentId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hooksCount, contentId, currentUrlsKey]);
 
   // Update uploads when currentUrls change, but don't overwrite active uploads
   useEffect(() => {

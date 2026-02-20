@@ -71,18 +71,29 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
   const [formData, setFormData] = useState<ContentFormData>(initialFormData);
   const originalFormDataRef = useRef<ContentFormData>(initialFormData);
   const skipNextContentResetRef = useRef(false);
+  // Track content ID to detect when we switch to a DIFFERENT content item
+  const prevContentIdRef = useRef<string | null>(null);
 
   // Initialize form data from content
   useEffect(() => {
     if (content) {
+      const contentIdChanged = prevContentIdRef.current !== null && prevContentIdRef.current !== content.id;
+      prevContentIdRef.current = content.id;
+
       // Skip reset if we just saved (onUpdate refetch should not overwrite local state)
       if (skipNextContentResetRef.current) {
         skipNextContentResetRef.current = false;
         return;
       }
-      // Don't reset formData while in edit mode - prevents losing changes on Realtime refetch
-      if (editMode) {
+      // Don't reset formData while in edit mode - prevents losing changes on Realtime refetch.
+      // CRITICAL: BUT always reset if the content ID changed (switching between different items)
+      // to prevent stale data from one content being saved to another.
+      if (editMode && !contentIdChanged) {
         return;
+      }
+      // If content ID changed while in edit mode, exit edit mode to prevent stale writes
+      if (contentIdChanged && editMode) {
+        setEditMode(false);
       }
       const existingVideoUrls = (content as any).video_urls || [];
       const hooksCount = (content as any).hooks_count || Math.max(existingVideoUrls.length, 1);
@@ -367,10 +378,22 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
   }, [isAdmin, isCreator, isEditor, content?.creator_id, content?.editor_id, user?.id]);
 
   // AutoSave integration
+  // SAFETY: capture content.id in a ref so the onSave callback always targets the correct record.
+  const autoSaveContentIdRef = useRef<string | null>(content?.id ?? null);
+  useEffect(() => {
+    autoSaveContentIdRef.current = content?.id ?? null;
+  }, [content?.id]);
+
   const { status: autoSaveStatus, lastSaved, forceSave } = useAutoSave({
     data: formData,
     onSave: async (data) => {
       if (!editMode || !content) return;
+      // CRITICAL GUARD: ensure we're saving to the content that was open when edit mode started.
+      // This prevents stale data from a previous content being written to the current one.
+      if (autoSaveContentIdRef.current !== content.id) {
+        console.warn('[autoSave] Content ID mismatch — skipping save to prevent data corruption');
+        return;
+      }
       // Use diff-only updates: only send fields that actually changed
       const updates = buildRoleBasedUpdates(data, originalFormDataRef.current);
       if (!updates) return; // Nothing changed, skip DB update
