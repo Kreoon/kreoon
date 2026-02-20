@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -162,6 +163,7 @@ export function EnhancedContentCard({
 }: EnhancedContentCardProps) {
   const sizeConfig = SIZE_CONFIG[cardSize] || SIZE_CONFIG.normal;
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [showShareDialog, setShowShareDialog] = useState(false);
 
   const currentStatusConfig = useMemo(
@@ -643,17 +645,54 @@ export function EnhancedContentCard({
           <DialogHeader>
             <DialogTitle>Compartir en Redes Sociales</DialogTitle>
           </DialogHeader>
-          <PostComposer
-            initialData={{
-              contentId: content.id,
-              title: content.title || "",
-              videoUrl: primaryVideoUrl,
-              thumbnailUrl: content.thumbnail_url || null,
-              caption: content.title || "",
+          {/* Navigate to Social Hub option */}
+          <button
+            onClick={() => {
+              setShowShareDialog(false);
+              navigate('/social-hub', {
+                state: {
+                  shareContent: {
+                    contentId: content.id,
+                    title: content.title || "",
+                    videoUrl: primaryVideoUrl,
+                    thumbnailUrl: content.thumbnail_url || null,
+                    caption: content.title || "",
+                  },
+                },
+              });
             }}
-            onSuccess={() => setShowShareDialog(false)}
-            onClose={() => setShowShareDialog(false)}
-          />
+            className="w-full flex items-center gap-3 p-3 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors text-left mb-4"
+          >
+            <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
+              <Share2 className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Crear publicación en Social Hub</p>
+              <p className="text-xs text-muted-foreground">
+                Ir al Social Hub con este contenido precargado
+              </p>
+            </div>
+          </button>
+          <div className="relative">
+            <div className="absolute inset-x-0 top-0 flex items-center gap-2">
+              <div className="flex-1 border-t border-border" />
+              <span className="text-[10px] text-muted-foreground uppercase">o publicar rápido</span>
+              <div className="flex-1 border-t border-border" />
+            </div>
+          </div>
+          <div className="pt-4">
+            <PostComposer
+              initialData={{
+                contentId: content.id,
+                title: content.title || "",
+                videoUrl: primaryVideoUrl,
+                thumbnailUrl: content.thumbnail_url || null,
+                caption: content.title || "",
+              }}
+              onSuccess={() => setShowShareDialog(false)}
+              onClose={() => setShowShareDialog(false)}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </>

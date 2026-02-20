@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   Send, Clock, Hash, MapPin, MessageSquare, Calendar as CalendarIcon,
-  X, Plus, Sparkles, Eye, ChevronDown, User, Building, Globe,
+  X, Plus, Sparkles, Eye, ChevronDown, User, Building, Globe, FolderOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +19,9 @@ import { PlatformIcon } from '../common/PlatformIcon';
 import { MediaUploader } from './MediaUploader';
 import { HashtagManager } from './HashtagManager';
 import { PreviewPanel } from './PreviewPanel';
+import { ContentSelector } from './ContentSelector';
+import type { ApprovedContent } from '../../hooks/useApprovedContent';
+import { getBunnyThumbnailUrl, getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
 import { PLATFORMS } from '../../config';
 import type { SocialPostType, ComposerFormData, QuickShareData, CollaborationType, SocialPlatform, SocialAccount } from '../../types/social.types';
 import { toast } from 'sonner';
@@ -38,10 +41,18 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
 
   const [caption, setCaption] = useState(initialData?.caption || '');
   const [hashtags, setHashtags] = useState<string[]>([]);
-  const [mediaUrls, setMediaUrls] = useState<string[]>(
-    initialData?.videoUrl ? [initialData.videoUrl] : []
-  );
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(initialData?.thumbnailUrl || null);
+  const [mediaUrls, setMediaUrls] = useState<string[]>(() => {
+    if (!initialData?.videoUrl) return [];
+    // Convert Bunny embed/CDN URLs to direct MP4 for preview playback
+    const bunny = getBunnyVideoUrls(initialData.videoUrl);
+    return [bunny?.mp4 || initialData.videoUrl];
+  });
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(() => {
+    if (initialData?.thumbnailUrl) return initialData.thumbnailUrl;
+    // Generate thumbnail from Bunny video URL if available
+    if (initialData?.videoUrl) return getBunnyThumbnailUrl(initialData.videoUrl);
+    return null;
+  });
   const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([]);
   const [scheduledAt, setScheduledAt] = useState<string>('');
   const [postType, setPostType] = useState<SocialPostType>('post');
@@ -52,6 +63,8 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [collabType, setCollabType] = useState<CollaborationType>(brandUsername ? 'collab_post' : 'mention');
   const [collabBrandUser, setCollabBrandUser] = useState(brandUsername || '');
+  const [showContentSelector, setShowContentSelector] = useState(false);
+  const [selectedContent, setSelectedContent] = useState<ApprovedContent | null>(null);
 
   // Character counts per platform
   const selectedPlatforms = useMemo(() => {
@@ -92,6 +105,39 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
     );
   };
 
+  const handleContentSelect = (content: ApprovedContent, selectedVideoUrl: string | null) => {
+    setSelectedContent(content);
+    // Fill caption with title + description
+    const parts: string[] = [];
+    if (content.title) parts.push(content.title);
+    if (content.description) parts.push(content.description);
+    if (content.hook) parts.push(content.hook);
+    if (content.cta) parts.push(`\n${content.cta}`);
+    setCaption(parts.join('\n\n'));
+    // Use the explicitly selected video URL, fallback to first available
+    const rawVideoUrl = selectedVideoUrl || content.video_urls?.[0] || content.video_url || content.bunny_embed_url;
+    if (rawVideoUrl) {
+      // Convert Bunny embed/CDN URL to direct MP4 for preview playback
+      const bunnyUrls = getBunnyVideoUrls(rawVideoUrl);
+      const playableUrl = bunnyUrls?.mp4 || rawVideoUrl;
+      setMediaUrls([playableUrl]);
+      setPostType('reel');
+    }
+    // Resolve thumbnail: explicit > generated from Bunny
+    const thumb = content.thumbnail_url || (rawVideoUrl ? getBunnyThumbnailUrl(rawVideoUrl) : null);
+    if (thumb) {
+      setThumbnailUrl(thumb);
+      if (!rawVideoUrl) {
+        setMediaUrls([thumb]);
+        setPostType('post');
+      }
+    }
+  };
+
+  const clearSelectedContent = () => {
+    setSelectedContent(null);
+  };
+
   const handleSubmit = async (immediate: boolean) => {
     if (selectedAccountIds.length === 0) {
       toast.error('Selecciona al menos una cuenta');
@@ -115,7 +161,7 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
         firstComment,
         locationName,
         targetAccountIds: selectedAccountIds,
-        contentId: initialData?.contentId || null,
+        contentId: selectedContent?.id || initialData?.contentId || null,
         campaignId: campaignId || null,
         brandCollaboration: collabBrandUser ? {
           brand_account_id: null,
@@ -250,6 +296,44 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
               </div>
             )}
           </div>
+        )}
+      </div>
+
+      {/* Content selector */}
+      <div className="space-y-2">
+        {selectedContent ? (
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+            {selectedContent.thumbnail_url && (
+              <img
+                src={selectedContent.thumbnail_url}
+                alt=""
+                className="w-12 h-12 rounded-md object-cover"
+              />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{selectedContent.title}</p>
+              <p className="text-xs text-muted-foreground truncate">
+                {selectedContent.client_name || selectedContent.creator_name || 'Contenido aprobado'}
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 shrink-0"
+              onClick={clearSelectedContent}
+            >
+              <X className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        ) : (
+          <Button
+            variant="outline"
+            className="w-full gap-2 border-dashed"
+            onClick={() => setShowContentSelector(true)}
+          >
+            <FolderOpen className="w-4 h-4" />
+            Seleccionar contenido aprobado
+          </Button>
         )}
       </div>
 
@@ -470,6 +554,13 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
           Publicar ahora
         </Button>
       </div>
+
+      {/* Content selector dialog */}
+      <ContentSelector
+        open={showContentSelector}
+        onClose={() => setShowContentSelector(false)}
+        onSelect={handleContentSelect}
+      />
     </div>
   );
 }

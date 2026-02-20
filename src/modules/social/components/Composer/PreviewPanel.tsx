@@ -16,7 +16,10 @@ interface PreviewPanelProps {
   username?: string;
 }
 
-const isVideoUrl = (url: string) => /\.(mp4|mov|webm|avi|m4v|mkv)/i.test(url);
+const isVideoUrl = (url: string) =>
+  /\.(mp4|mov|webm|avi|m4v|mkv)/i.test(url) ||
+  /b-cdn\.net\/[a-f0-9-]+\/play_/i.test(url) ||
+  /mediadelivery\.net/i.test(url);
 
 function VideoPlayer({ src, aspectClass }: { src: string; aspectClass: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);

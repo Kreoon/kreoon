@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
+import type { QuickShareData } from '../types/social.types';
 import {
   LayoutDashboard, LinkIcon, PenSquare, Calendar, BarChart3,
   Plus, FolderOpen, Clock, Shield,
@@ -37,9 +38,22 @@ export default function SocialHubPage() {
   const [composerOpen, setComposerOpen] = useState(false);
   const [viewingPost, setViewingPost] = useState<ScheduledPost | null>(null);
   const [accountSelection, setAccountSelection] = useState<AccountSelection>({ type: 'all' });
+  const [sharedContent, setSharedContent] = useState<Partial<QuickShareData> | undefined>(undefined);
   const { accounts, isLoading: accountsLoading } = useSocialAccounts();
   const { stats } = useScheduledPosts();
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+
+  // Handle content shared from content board via navigate state
+  useEffect(() => {
+    const state = location.state as { shareContent?: QuickShareData } | null;
+    if (state?.shareContent) {
+      setSharedContent(state.shareContent);
+      setActiveTab('composer');
+      // Clear the state so it doesn't persist on page refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Handle OAuth callback redirect (fallback when popup doesn't have opener)
   useEffect(() => {
@@ -152,7 +166,13 @@ export default function SocialHubPage() {
 
           <TabsContent value="composer" className="mt-0">
             <div className="max-w-2xl">
-              <PostComposer onSuccess={() => setActiveTab('dashboard')} />
+              <PostComposer
+                initialData={sharedContent}
+                onSuccess={() => {
+                  setActiveTab('dashboard');
+                  setSharedContent(undefined);
+                }}
+              />
             </div>
           </TabsContent>
 
