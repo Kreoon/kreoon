@@ -9,15 +9,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { 
-  Building2, 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Globe, 
-  Instagram, 
-  Facebook, 
+import {
+  Building2,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Globe,
+  Instagram,
+  Facebook,
   Linkedin,
   Save,
   Ban,
@@ -25,8 +25,10 @@ import {
   Clock,
   Link2,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Crosshair
 } from 'lucide-react';
+import { detectBrowserTimezone } from '@/hooks/useOrgTimezone';
 
 interface OrganizationProfile {
   id: string;
@@ -496,21 +498,41 @@ export function OrganizationProfileEditor({ organizationId, isRootAdmin = false,
               <Clock className="h-4 w-4" />
               Zona Horaria
             </Label>
-            <Select
-              value={profile.timezone || 'America/Bogota'}
-              onValueChange={(v) => updateField('timezone', v)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TIMEZONES.map((tz) => (
-                  <SelectItem key={tz.value} value={tz.value}>
-                    {tz.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2">
+              <Select
+                value={profile.timezone || 'America/Bogota'}
+                onValueChange={(v) => updateField('timezone', v)}
+              >
+                <SelectTrigger className="flex-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIMEZONES.map((tz) => (
+                    <SelectItem key={tz.value} value={tz.value}>
+                      {tz.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                title="Detectar zona horaria del navegador"
+                onClick={() => {
+                  const detected = detectBrowserTimezone();
+                  const match = TIMEZONES.find(tz => tz.value === detected);
+                  if (match) {
+                    updateField('timezone', detected);
+                    toast.success(`Zona horaria detectada: ${match.label}`);
+                  } else {
+                    toast.info(`Tu zona (${detected}) no está en la lista. Selecciona la más cercana.`);
+                  }
+                }}
+              >
+                <Crosshair className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -6,6 +6,7 @@ import { BasePointCalculator } from './base';
 import { CreativeRoleCalculator } from './creative';
 import { PerformanceRoleCalculator } from './performance';
 import { TrustRoleCalculator } from './trust';
+import { calculateDaysInTimezone } from '@/lib/utils/timezone';
 import type { RoleArchetype, UnifiedReputationConfig, EffortArchetype, PointActions } from './types';
 
 /**
@@ -136,19 +137,8 @@ export function getReassignmentThreshold(roleKey: string): number {
  * Calculate days between two dates in Colombia timezone (UTC-5).
  * Day 1 is the start date itself.
  * @param pausedHours — hours to subtract (e.g. client review delays)
+ * @deprecated Use calculateDaysInTimezone from '@/lib/utils/timezone' directly
  */
 export function calculateDaysInColombia(startDate: Date, endDate: Date, pausedHours = 0): number {
-  const colombiaOffset = -5 * 60;
-
-  const startColombia = new Date(startDate.getTime() + (startDate.getTimezoneOffset() + colombiaOffset) * 60000);
-  const endColombia = new Date(endDate.getTime() + (endDate.getTimezoneOffset() + colombiaOffset) * 60000);
-
-  const startDay = new Date(startColombia.getFullYear(), startColombia.getMonth(), startColombia.getDate());
-  const endDay = new Date(endColombia.getFullYear(), endColombia.getMonth(), endColombia.getDate());
-
-  const diffTime = endDay.getTime() - startDay.getTime();
-  const adjustedTime = diffTime - (pausedHours * 3600000);
-  const diffDays = Math.floor(Math.max(0, adjustedTime) / (1000 * 60 * 60 * 24)) + 1;
-
-  return diffDays;
+  return calculateDaysInTimezone(startDate, endDate, 'America/Bogota', pausedHours);
 }

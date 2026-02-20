@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
+import { calculateDaysInTimezone } from '@/lib/utils/timezone';
 
 // Types for UP Creadores system
 export interface UPCreadorRecord {
@@ -61,22 +62,10 @@ export const CREATOR_POINTS_CONFIG = {
 
 /**
  * Calculate days between two dates in Colombia timezone (UTC-5)
+ * @deprecated Use calculateDaysInTimezone from '@/lib/utils/timezone' instead
  */
 export function calculateDaysInColombia(startDate: Date, endDate: Date): number {
-  // Convert to Colombia timezone
-  const colombiaOffset = -5 * 60; // UTC-5 in minutes
-  
-  const startColombia = new Date(startDate.getTime() + (startDate.getTimezoneOffset() + colombiaOffset) * 60000);
-  const endColombia = new Date(endDate.getTime() + (endDate.getTimezoneOffset() + colombiaOffset) * 60000);
-  
-  // Calculate calendar days
-  const startDay = new Date(startColombia.getFullYear(), startColombia.getMonth(), startColombia.getDate());
-  const endDay = new Date(endColombia.getFullYear(), endColombia.getMonth(), endColombia.getDate());
-  
-  const diffTime = endDay.getTime() - startDay.getTime();
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 porque el primer día cuenta
-  
-  return diffDays;
+  return calculateDaysInTimezone(startDate, endDate, 'America/Bogota');
 }
 
 /**

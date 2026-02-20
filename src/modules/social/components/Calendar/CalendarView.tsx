@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { toDateKeyInTz } from '@/lib/utils/timezone';
+import { formatInTimeZone } from 'date-fns-tz';
+import { useOrgTimezone } from '@/hooks/useOrgTimezone';
 import { useScheduledPosts } from '../../hooks/useScheduledPosts';
 import { PlatformIcon } from '../common/PlatformIcon';
 import { PostStatusBadge } from '../common/PostStatusBadge';
@@ -24,6 +27,7 @@ const MONTH_NAMES = [
 export function CalendarView({ onCreatePost, onViewPost }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const { posts } = useScheduledPosts();
+  const orgTz = useOrgTimezone();
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -73,15 +77,15 @@ export function CalendarView({ onCreatePost, onViewPost }: CalendarViewProps) {
     const map = new Map<string, ScheduledPost[]>();
     for (const post of posts) {
       const dateStr = post.scheduled_at
-        ? new Date(post.scheduled_at).toISOString().slice(0, 10)
-        : post.created_at.slice(0, 10);
+        ? toDateKeyInTz(post.scheduled_at, orgTz)
+        : toDateKeyInTz(post.created_at, orgTz);
       if (!map.has(dateStr)) map.set(dateStr, []);
       map.get(dateStr)!.push(post);
     }
     return map;
-  }, [posts]);
+  }, [posts, orgTz]);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = toDateKeyInTz(new Date(), orgTz);
 
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
@@ -128,7 +132,7 @@ export function CalendarView({ onCreatePost, onViewPost }: CalendarViewProps) {
         {/* Calendar days */}
         <div className="grid grid-cols-7">
           {calendarDays.map((day, idx) => {
-            const dateStr = day.dateObj.toISOString().slice(0, 10);
+            const dateStr = toDateKeyInTz(day.dateObj, orgTz);
             const dayPosts = postsByDate.get(dateStr) || [];
             const isToday = dateStr === today;
 
@@ -180,7 +184,7 @@ export function CalendarView({ onCreatePost, onViewPost }: CalendarViewProps) {
                         <div className="flex items-center gap-1">
                           {post.scheduled_at && (
                             <span className="opacity-60">
-                              {new Date(post.scheduled_at).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
+                              {formatInTimeZone(new Date(post.scheduled_at), orgTz, 'HH:mm')}
                             </span>
                           )}
                           <span className="truncate">{post.caption?.slice(0, 30) || 'Sin caption'}</span>

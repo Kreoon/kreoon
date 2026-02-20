@@ -24,6 +24,9 @@ import { AICaptionSelector } from './AICaptionSelector';
 import type { ApprovedContent } from '../../hooks/useApprovedContent';
 import { getBunnyThumbnailUrl, getBunnyVideoUrls, findBestBunnyMp4 } from '@/hooks/useHLSPlayer';
 import { PLATFORMS } from '../../config';
+import { useOrgTimezone } from '@/hooks/useOrgTimezone';
+import { formatInTimeZone } from 'date-fns-tz';
+import { fromZoned } from '@/lib/utils/timezone';
 import type { SocialPostType, ComposerFormData, QuickShareData, CollaborationType, SocialPlatform, SocialAccount } from '../../types/social.types';
 import { toast } from 'sonner';
 
@@ -39,6 +42,7 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
   const { accounts, personalAccounts, clientAccounts, orgAccounts, accountsByClient } = useSocialAccounts();
   const { createPost, publishNow } = useScheduledPosts();
   const { groups } = useAccountGroups();
+  const orgTz = useOrgTimezone();
 
   const [caption, setCaption] = useState(initialData?.caption || '');
   const [hashtags, setHashtags] = useState<string[]>([]);
@@ -163,7 +167,7 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
         hashtags,
         mediaUrls,
         thumbnailUrl,
-        scheduledAt: immediate ? null : (scheduledAt ? new Date(scheduledAt) : null),
+        scheduledAt: immediate ? null : (scheduledAt ? fromZoned(scheduledAt, orgTz) : null),
         postType,
         visibility,
         firstComment,
@@ -403,8 +407,11 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
           type="datetime-local"
           value={scheduledAt}
           onChange={(e) => setScheduledAt(e.target.value)}
-          min={new Date().toISOString().slice(0, 16)}
+          min={formatInTimeZone(new Date(), orgTz, "yyyy-MM-dd'T'HH:mm")}
         />
+        <p className="text-[10px] text-muted-foreground">
+          Zona horaria: {orgTz.replace(/_/g, ' ')}
+        </p>
       </div>
 
       {/* Post type */}

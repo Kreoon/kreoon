@@ -1,5 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import { formatInTimeZone } from "date-fns-tz";
 
 // ─── Formateo de fechas ─────────────────────────────────────────────────────
 
@@ -11,12 +12,20 @@ import { es } from "date-fns/locale";
  */
 export function formatDate(
   date: Date | string,
-  format: "short" | "long" | "relative" = "short"
+  format: "short" | "long" | "relative" = "short",
+  tz?: string
 ): string {
   const d = new Date(date);
 
   if (format === "relative") {
     return formatDistanceToNow(d, { addSuffix: true, locale: es });
+  }
+
+  if (tz) {
+    if (format === "long") {
+      return formatInTimeZone(d, tz, "d 'de' MMMM 'de' yyyy", { locale: es });
+    }
+    return formatInTimeZone(d, tz, "dd/MM/yyyy");
   }
 
   if (format === "long") {
@@ -34,8 +43,11 @@ export function formatDate(
  * Formatea fecha y hora en formato español.
  * Ej: "15 ene 2026, 14:30"
  */
-export function formatDateTime(date: Date | string): string {
+export function formatDateTime(date: Date | string, tz?: string): string {
   const d = new Date(date);
+  if (tz) {
+    return formatInTimeZone(d, tz, "d MMM yyyy, HH:mm", { locale: es });
+  }
   return d.toLocaleString("es-ES", {
     year: "numeric",
     month: "short",

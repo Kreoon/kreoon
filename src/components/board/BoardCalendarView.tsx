@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday } from "date-fns";
 import { es } from "date-fns/locale";
+import { useOrgTimezone } from "@/hooks/useOrgTimezone";
+import { toDateKeyInTz } from "@/lib/utils/timezone";
 import { ChevronLeft, ChevronRight, Star, Video, FileText, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +32,7 @@ export function BoardCalendarView({
   organizationStatuses = [],
   ambassadorIds = new Set()
 }: BoardCalendarViewProps) {
+  const orgTz = useOrgTimezone();
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
@@ -41,7 +44,7 @@ export function BoardCalendarView({
     const map = new Map<string, Content[]>();
     content.forEach(c => {
       if (c.deadline) {
-        const dateKey = format(new Date(c.deadline), 'yyyy-MM-dd');
+        const dateKey = toDateKeyInTz(c.deadline, orgTz);
         if (!map.has(dateKey)) map.set(dateKey, []);
         map.get(dateKey)!.push(c);
       }
@@ -106,7 +109,7 @@ export function BoardCalendarView({
           ))}
 
           {days.map(day => {
-            const dateKey = format(day, 'yyyy-MM-dd');
+            const dateKey = toDateKeyInTz(day, orgTz);
             const dayContent = contentByDate.get(dateKey) || [];
             const isCurrentMonth = isSameMonth(day, currentDate);
             const isTodayDate = isToday(day);
