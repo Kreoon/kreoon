@@ -10,6 +10,12 @@ import { useTrialGuard } from '@/hooks/useTrialGuard';
 import { updateContentStatusWithUP } from '@/hooks/useContentStatusWithUP';
 import { markLocalUpdate } from '@/hooks/useContent';
 
+// Video-related fields protected from stale overwrites in admin updates.
+// These fields are NEVER included unless the admin explicitly modified them.
+const VIDEO_FIELDS = new Set<keyof ContentFormData>([
+  'video_url', 'video_urls', 'raw_video_urls', 'hooks_count'
+]);
+
 interface UseContentDetailOptions {
   content: Content | null;
   onUpdate?: () => void;
@@ -137,6 +143,17 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
     }
   }, [formData, editMode, markAsChanged]);
 
+  // Capture formData snapshot when ENTERING edit mode (not when dialog opens).
+  // This is the baseline for diff-only updates - only changed fields are sent to DB.
+  const prevEditModeRef = useRef(false);
+  useEffect(() => {
+    if (editMode && !prevEditModeRef.current) {
+      originalFormDataRef.current = JSON.parse(JSON.stringify(formData));
+    }
+    prevEditModeRef.current = editMode;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editMode]);
+
   // Register save handler
   useEffect(() => {
     const saveHandler = async () => {
@@ -225,79 +242,36 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
     markLocalUpdate(content.id);
 
     try {
-      let updates: any = {};
+      // Use diff-only updates: only send fields that actually changed
+      const diffUpdates = buildRoleBasedUpdates(formData, originalFormDataRef.current);
+      const finalUpdates: Record<string, any> = diffUpdates ? { ...diffUpdates } : {};
 
-      const isAssignedCreatorCheck = isCreator && content.creator_id === user?.id && !isAdmin;
-      const isAssignedEditorCheck = isEditor && content.editor_id === user?.id && !isAdmin;
-
-      if (isAssignedCreatorCheck) {
-        updates = {
-          drive_url: formData.drive_url || null,
-          notes: formData.notes || null
-        };
-      } else if (isAssignedEditorCheck) {
-        updates = {
-          video_url: formData.video_url || null,
-          video_urls: formData.video_urls.filter(url => url.trim() !== ''),
-          hooks_count: formData.hooks_count,
-          notes: formData.notes || null
-        };
-      } else if (isAdmin) {
-        updates = {
-          title: formData.title,
-          product: formData.product || null,
-          product_id: formData.product_id || null,
-          sales_angle: formData.sales_angle || null,
-          client_id: formData.client_id || null,
-          creator_id: formData.creator_id || null,
-          editor_id: formData.editor_id || null,
-          strategist_id: formData.strategist_id || null,
-          deadline: formData.deadline ? new Date(formData.deadline).toISOString() : null,
-          start_date: formData.start_date ? new Date(formData.start_date).toISOString() : null,
-          campaign_week: formData.campaign_week || null,
-          reference_url: formData.reference_url || null,
-          video_url: formData.video_url || null,
-          video_urls: formData.video_urls.filter(url => url.trim() !== ''),
-          hooks_count: formData.hooks_count,
-          drive_url: formData.drive_url || null,
-          script: formData.script || null,
-          description: formData.description || null,
-          notes: formData.notes || null,
-          creator_payment: formData.creator_payment,
-          editor_payment: formData.editor_payment,
-          creator_paid: formData.creator_paid,
-          editor_paid: formData.editor_paid,
-          invoiced: formData.invoiced,
-          is_published: formData.is_published,
-          editor_guidelines: formData.editor_guidelines || null,
-          strategist_guidelines: formData.strategist_guidelines || null,
-          trafficker_guidelines: formData.trafficker_guidelines || null,
-          designer_guidelines: formData.designer_guidelines || null,
-          admin_guidelines: formData.admin_guidelines || null,
-          sphere_phase: formData.sphere_phase || null
-        };
-
+      // Admin-specific side effects (assignment timestamps, paid status)
+      if (isAdmin) {
         if (formData.creator_id && !content.creator_id) {
-          updates.creator_assigned_at = new Date().toISOString();
+          finalUpdates.creator_assigned_at = new Date().toISOString();
         }
         if (formData.editor_id && !content.editor_id) {
-          updates.editor_assigned_at = new Date().toISOString();
+          finalUpdates.editor_assigned_at = new Date().toISOString();
         }
 
         const bothPaid = formData.creator_paid && formData.editor_paid;
         const wasNotBothPaid = !content.creator_paid || !content.editor_paid;
         if (bothPaid && wasNotBothPaid && content.status === 'approved') {
-          updates.status = 'paid';
-          updates.paid_at = new Date().toISOString();
+          finalUpdates.status = 'paid';
+          finalUpdates.paid_at = new Date().toISOString();
         }
       }
 
-      const { error } = await supabase
-        .from('content')
-        .update(updates)
-        .eq('id', content.id);
+      // Only hit the DB if there are actual updates
+      if (Object.keys(finalUpdates).length > 0) {
+        const { error } = await supabase
+          .from('content')
+          .update(finalUpdates)
+          .eq('id', content.id);
 
-      if (error) throw error;
+        if (error) throw error;
+      }
 
       // Notify drive upload if changed
       const driveUrlChanged = formData.drive_url && formData.drive_url !== content.drive_url;
@@ -311,7 +285,7 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
         }
       }
 
-      originalFormDataRef.current = formData;
+      originalFormDataRef.current = JSON.parse(JSON.stringify(formData));
       markAsSaved('content-detail');
       toast({ title: 'Cambios guardados' });
       setEditMode(false);
@@ -325,57 +299,69 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
     }
   };
 
-  // Helper to build role-based updates
-  const buildRoleBasedUpdates = useCallback((data: ContentFormData) => {
+  // Helper to build role-based updates using diff-only logic.
+  // Compares current data against original snapshot and only returns changed fields.
+  // Video fields (VIDEO_FIELDS) are NEVER included unless explicitly modified.
+  const buildRoleBasedUpdates = useCallback((data: ContentFormData, original: ContentFormData) => {
     const isAssignedCreatorCheck = isCreator && content?.creator_id === user?.id && !isAdmin;
     const isAssignedEditorCheck = isEditor && content?.editor_id === user?.id && !isAdmin;
 
+    // Deep comparison per field
+    const changed = (field: keyof ContentFormData): boolean => {
+      return JSON.stringify(data[field]) !== JSON.stringify(original[field]);
+    };
+
     if (isAssignedCreatorCheck) {
-      return {
-        drive_url: data.drive_url || null,
-        notes: data.notes || null
-      };
+      const updates: Record<string, any> = {};
+      if (changed('drive_url')) updates.drive_url = data.drive_url || null;
+      if (changed('notes')) updates.notes = data.notes || null;
+      return Object.keys(updates).length > 0 ? updates : null;
     } else if (isAssignedEditorCheck) {
-      return {
-        video_url: data.video_url || null,
-        video_urls: data.video_urls.filter(url => url.trim() !== ''),
-        hooks_count: data.hooks_count,
-        notes: data.notes || null
-      };
+      const updates: Record<string, any> = {};
+      if (changed('video_url')) updates.video_url = data.video_url || null;
+      if (changed('video_urls')) updates.video_urls = data.video_urls.filter(url => url.trim() !== '');
+      if (changed('hooks_count')) updates.hooks_count = data.hooks_count;
+      if (changed('notes')) updates.notes = data.notes || null;
+      return Object.keys(updates).length > 0 ? updates : null;
     } else if (isAdmin) {
-      return {
-        title: data.title,
-        product: data.product || null,
-        product_id: data.product_id || null,
-        sales_angle: data.sales_angle || null,
-        client_id: data.client_id || null,
-        creator_id: data.creator_id || null,
-        editor_id: data.editor_id || null,
-        strategist_id: data.strategist_id || null,
-        deadline: data.deadline ? new Date(data.deadline).toISOString() : null,
-        start_date: data.start_date ? new Date(data.start_date).toISOString() : null,
-        campaign_week: data.campaign_week || null,
-        reference_url: data.reference_url || null,
-        video_url: data.video_url || null,
-        video_urls: data.video_urls.filter(url => url.trim() !== ''),
-        hooks_count: data.hooks_count,
-        drive_url: data.drive_url || null,
-        script: data.script || null,
-        description: data.description || null,
-        notes: data.notes || null,
-        creator_payment: data.creator_payment,
-        editor_payment: data.editor_payment,
-        creator_paid: data.creator_paid,
-        editor_paid: data.editor_paid,
-        invoiced: data.invoiced,
-        is_published: data.is_published,
-        editor_guidelines: data.editor_guidelines || null,
-        strategist_guidelines: data.strategist_guidelines || null,
-        trafficker_guidelines: data.trafficker_guidelines || null,
-        designer_guidelines: data.designer_guidelines || null,
-        admin_guidelines: data.admin_guidelines || null,
-        sphere_phase: data.sphere_phase || null
-      };
+      const updates: Record<string, any> = {};
+
+      // Non-video fields
+      if (changed('title')) updates.title = data.title;
+      if (changed('product')) updates.product = data.product || null;
+      if (changed('product_id')) updates.product_id = data.product_id || null;
+      if (changed('sales_angle')) updates.sales_angle = data.sales_angle || null;
+      if (changed('client_id')) updates.client_id = data.client_id || null;
+      if (changed('creator_id')) updates.creator_id = data.creator_id || null;
+      if (changed('editor_id')) updates.editor_id = data.editor_id || null;
+      if (changed('strategist_id')) updates.strategist_id = data.strategist_id || null;
+      if (changed('deadline')) updates.deadline = data.deadline ? new Date(data.deadline).toISOString() : null;
+      if (changed('start_date')) updates.start_date = data.start_date ? new Date(data.start_date).toISOString() : null;
+      if (changed('campaign_week')) updates.campaign_week = data.campaign_week || null;
+      if (changed('reference_url')) updates.reference_url = data.reference_url || null;
+      if (changed('drive_url')) updates.drive_url = data.drive_url || null;
+      if (changed('script')) updates.script = data.script || null;
+      if (changed('description')) updates.description = data.description || null;
+      if (changed('notes')) updates.notes = data.notes || null;
+      if (changed('creator_payment')) updates.creator_payment = data.creator_payment;
+      if (changed('editor_payment')) updates.editor_payment = data.editor_payment;
+      if (changed('creator_paid')) updates.creator_paid = data.creator_paid;
+      if (changed('editor_paid')) updates.editor_paid = data.editor_paid;
+      if (changed('invoiced')) updates.invoiced = data.invoiced;
+      if (changed('is_published')) updates.is_published = data.is_published;
+      if (changed('editor_guidelines')) updates.editor_guidelines = data.editor_guidelines || null;
+      if (changed('strategist_guidelines')) updates.strategist_guidelines = data.strategist_guidelines || null;
+      if (changed('trafficker_guidelines')) updates.trafficker_guidelines = data.trafficker_guidelines || null;
+      if (changed('designer_guidelines')) updates.designer_guidelines = data.designer_guidelines || null;
+      if (changed('admin_guidelines')) updates.admin_guidelines = data.admin_guidelines || null;
+      if (changed('sphere_phase')) updates.sphere_phase = data.sphere_phase || null;
+
+      // Video fields: ONLY include if explicitly modified by admin (protected by VIDEO_FIELDS set)
+      if (changed('video_url')) updates.video_url = data.video_url || null;
+      if (changed('video_urls')) updates.video_urls = data.video_urls.filter(url => url.trim() !== '');
+      if (changed('hooks_count')) updates.hooks_count = data.hooks_count;
+
+      return Object.keys(updates).length > 0 ? updates : null;
     }
     return null;
   }, [isAdmin, isCreator, isEditor, content?.creator_id, content?.editor_id, user?.id]);
@@ -385,9 +371,9 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
     data: formData,
     onSave: async (data) => {
       if (!editMode || !content) return;
-      // Use role-based updates (same logic as handleSave)
-      const updates = buildRoleBasedUpdates(data);
-      if (!updates) return;
+      // Use diff-only updates: only send fields that actually changed
+      const updates = buildRoleBasedUpdates(data, originalFormDataRef.current);
+      if (!updates) return; // Nothing changed, skip DB update
       // Mark as local update to prevent realtime refetch from closing the dialog
       markLocalUpdate(content.id);
       await supabase.from('content').update(updates).eq('id', content.id);

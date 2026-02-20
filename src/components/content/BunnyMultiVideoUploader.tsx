@@ -48,7 +48,7 @@ export function BunnyMultiVideoUploader({
       videoId: null
     }));
     setUploads(initialUploads);
-  }, [hooksCount]);
+  }, [hooksCount, contentId]);
 
   // Update uploads when currentUrls change, but don't overwrite active uploads
   useEffect(() => {
