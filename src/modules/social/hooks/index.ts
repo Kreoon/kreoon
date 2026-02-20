@@ -8,3 +8,5 @@ export { useContentQueue } from './useContentQueue';
 export { usePostMetrics } from './usePostMetrics';
 export { useContentSocialStatus } from './useContentSocialStatus';
 export type { ContentSocialStatus } from './useContentSocialStatus';
+export { useAIContentGenerator, CAPTION_STYLE_LABELS } from './useAIContentGenerator';
+export type { AICaption, AIGenerationResult } from './useAIContentGenerator';

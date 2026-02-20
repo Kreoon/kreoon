@@ -75,6 +75,20 @@ function getMediaType(
   url: string
 ): "image" | "video" | "unknown" {
   const lower = url.toLowerCase();
+
+  // Bunny CDN video patterns (play_720p.mp4, embed URLs)
+  if (
+    /b-cdn\.net\/[a-f0-9-]+\/play_/i.test(url) ||
+    /mediadelivery\.net\/embed\//i.test(url)
+  ) {
+    return "video";
+  }
+
+  // Bunny CDN thumbnail patterns
+  if (/b-cdn\.net\/[a-f0-9-]+\/thumbnail/i.test(url)) {
+    return "image";
+  }
+
   if (
     lower.includes(".jpg") ||
     lower.includes(".jpeg") ||
@@ -102,7 +116,132 @@ async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// ── Instagram media re-hosting (download from CDN → Supabase Storage) ───────
+// ── Bunny CDN URL detection & download ──────────────────────────────────────
+
+function isBunnyCdnUrl(url: string): boolean {
+  return /b-cdn\.net\//i.test(url) || /iframe\.mediadelivery\.net\//i.test(url);
+}
+
+function isSupabaseStorageUrl(url: string): boolean {
+  return url.includes(".supabase.co/storage/") || url.includes(".supabase.in/storage/");
+}
+
+/**
+ * Extract video ID from a Bunny CDN or embed URL.
+ */
+function extractBunnyVideoId(url: string): string | null {
+  // CDN: https://vz-xxx.b-cdn.net/{videoId}/play_720p.mp4
+  const cdnMatch = url.match(/b-cdn\.net\/([a-f0-9-]+)/i);
+  if (cdnMatch) return cdnMatch[1];
+
+  // Embed: https://iframe.mediadelivery.net/embed/{libraryId}/{videoId}
+  const embedMatch = url.match(/mediadelivery\.net\/(?:embed|play)\/[^/]+\/([a-f0-9-]+)/i);
+  if (embedMatch) return embedMatch[1];
+
+  return null;
+}
+
+/**
+ * Find the best available quality for a Bunny CDN video.
+ * Probes from highest to lowest: original → 2160p → 1440p → 1080p → 720p → 480p.
+ * Returns the URL of the best quality available.
+ */
+async function findBestBunnyQuality(url: string): Promise<string> {
+  const videoId = extractBunnyVideoId(url);
+  if (!videoId) return url;
+
+  // Extract CDN host from URL, or use default
+  const hostMatch = url.match(/(vz-[a-f0-9-]+\.b-cdn\.net)/i);
+  const cdnHost =
+    hostMatch?.[1] ||
+    Deno.env.get("BUNNY_CDN_HOSTNAME") ||
+    "vz-78fcd769-050.b-cdn.net";
+
+  const frontendUrl =
+    Deno.env.get("FRONTEND_URL") ||
+    Deno.env.get("SITE_URL") ||
+    "https://app.kreoon.com";
+
+  // Probe from highest to lowest quality (transcoded MP4s only - guaranteed compatible)
+  // Bunny only creates transcodes up to the source resolution, so the first hit = upload quality
+  const qualities = ["play_2160p.mp4", "play_1440p.mp4", "play_1080p.mp4", "play_720p.mp4", "play_480p.mp4"];
+
+  for (const quality of qualities) {
+    const candidate = `https://${cdnHost}/${videoId}/${quality}`;
+    try {
+      const head = await fetch(candidate, {
+        method: "HEAD",
+        headers: { Referer: frontendUrl },
+      });
+      if (head.ok) {
+        const contentLength = head.headers.get("content-length");
+        const sizeKB = contentLength ? Math.round(parseInt(contentLength) / 1024) : 0;
+        console.log(
+          `[findBestBunnyQuality] Best quality: ${quality} (${sizeKB} KB) for video ${videoId}`
+        );
+        return candidate;
+      }
+    } catch {
+      // ignore and keep trying
+    }
+  }
+
+  console.warn(`[findBestBunnyQuality] No quality probes succeeded, using original URL`);
+  return url;
+}
+
+/**
+ * Download media with Bunny CDN hotlink protection handling.
+ * Bunny CDN blocks server-side fetches (403) due to hotlink protection.
+ * We add a Referer header matching the configured frontend domain.
+ */
+async function downloadMedia(url: string): Promise<Blob> {
+  if (isBunnyCdnUrl(url)) {
+    const frontendUrl =
+      Deno.env.get("FRONTEND_URL") ||
+      Deno.env.get("SITE_URL") ||
+      "https://app.kreoon.com";
+    console.log(
+      `[downloadMedia] Bunny CDN URL detected, trying with Referer: ${frontendUrl}`
+    );
+
+    const res = await fetch(url, {
+      headers: {
+        Referer: frontendUrl,
+        "User-Agent": "Mozilla/5.0 KreoonSocialPublish/1.0",
+      },
+    });
+
+    if (res.ok) {
+      return await res.blob();
+    }
+
+    console.warn(
+      `[downloadMedia] Referer approach returned ${res.status}, trying direct fetch...`
+    );
+
+    // Fallback: try without extra headers (empty referer may pass)
+    const res2 = await fetch(url);
+    if (res2.ok) {
+      return await res2.blob();
+    }
+
+    throw new Error(
+      `Failed to download Bunny CDN media from ${url}: ${res2.status} ${res2.statusText}`
+    );
+  }
+
+  // Non-Bunny URLs: fetch normally
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(
+      `Failed to download media from ${url}: ${res.status} ${res.statusText}`
+    );
+  }
+  return await res.blob();
+}
+
+// ── Media re-hosting (download from CDN → Supabase Storage) ─────────────────
 
 const IG_TEMP_BUCKET = "social-temp";
 
@@ -123,15 +262,9 @@ async function rehostMediaForIG(
   supabase: ReturnType<typeof createClient>,
   mediaUrl: string
 ): Promise<{ publicUrl: string; storagePath: string }> {
-  console.log(`[IG rehost] Downloading media from: ${mediaUrl}`);
-  const res = await fetch(mediaUrl);
-  if (!res.ok) {
-    throw new Error(
-      `Failed to download media from ${mediaUrl}: ${res.status} ${res.statusText}`
-    );
-  }
-  const blob = await res.blob();
-  console.log(`[IG rehost] Downloaded ${blob.size} bytes, type: ${blob.type}`);
+  console.log(`[rehost] Downloading media from: ${mediaUrl}`);
+  const blob = await downloadMedia(mediaUrl);
+  console.log(`[rehost] Downloaded ${blob.size} bytes, type: ${blob.type}`);
 
   // Extract extension from URL
   const urlPath = new URL(mediaUrl).pathname;
@@ -188,6 +321,69 @@ async function cleanupTempMedia(
   } catch (err) {
     console.warn("[IG rehost] Cleanup error:", err);
   }
+}
+
+// ── Pre-resolve Bunny CDN URLs to public Supabase Storage URLs ──────────────
+
+async function resolveMediaUrls(
+  supabase: ReturnType<typeof createClient>,
+  post: ScheduledPost
+): Promise<{ resolvedPost: ScheduledPost; tempPaths: string[] }> {
+  const tempPaths: string[] = [];
+  const hasBunnyMedia = post.media_urls?.some((url) => isBunnyCdnUrl(url));
+  const hasBunnyThumb =
+    post.thumbnail_url != null && isBunnyCdnUrl(post.thumbnail_url);
+
+  if (!hasBunnyMedia && !hasBunnyThumb) {
+    return { resolvedPost: post, tempPaths };
+  }
+
+  console.log(
+    `[resolveMediaUrls] Resolving ${post.media_urls?.length || 0} media URLs + thumbnail`
+  );
+  await ensureTempBucket(supabase);
+
+  const resolvedMediaUrls: string[] = [];
+
+  if (post.media_urls && post.media_urls.length > 0) {
+    for (const url of post.media_urls) {
+      if (isBunnyCdnUrl(url)) {
+        // Find best available quality before downloading
+        const bestUrl = await findBestBunnyQuality(url);
+        const { publicUrl, storagePath } = await rehostMediaForIG(
+          supabase,
+          bestUrl
+        );
+        resolvedMediaUrls.push(publicUrl);
+        tempPaths.push(storagePath);
+      } else {
+        resolvedMediaUrls.push(url);
+      }
+    }
+  }
+
+  let resolvedThumbnailUrl = post.thumbnail_url;
+  if (hasBunnyThumb && post.thumbnail_url) {
+    const { publicUrl, storagePath } = await rehostMediaForIG(
+      supabase,
+      post.thumbnail_url
+    );
+    resolvedThumbnailUrl = publicUrl;
+    tempPaths.push(storagePath);
+  }
+
+  console.log(
+    `[resolveMediaUrls] Resolved ${tempPaths.length} Bunny CDN URLs to Supabase Storage`
+  );
+
+  return {
+    resolvedPost: {
+      ...post,
+      media_urls: resolvedMediaUrls,
+      thumbnail_url: resolvedThumbnailUrl,
+    },
+    tempPaths,
+  };
 }
 
 // ── Facebook Publish ─────────────────────────────────────────────────────────
@@ -410,6 +606,7 @@ async function publishToInstagram(
   // ── Re-host all media to publicly accessible Supabase Storage URLs ──
   // Instagram's servers need to fetch media from the URL, but CDN URLs
   // (e.g. Bunny CDN) may not be accessible from Meta's servers.
+  // If URLs are already Supabase Storage URLs (pre-resolved), skip re-hosting.
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
   await ensureTempBucket(supabase);
 
@@ -418,17 +615,26 @@ async function publishToInstagram(
 
   try {
     for (const url of post.media_urls) {
-      const rehosted = await rehostMediaForIG(supabase, url);
-      rehostedMedia.push(rehosted);
-      tempPaths.push(rehosted.storagePath);
+      if (isSupabaseStorageUrl(url)) {
+        // Already a public Supabase Storage URL (pre-resolved by resolveMediaUrls)
+        rehostedMedia.push({ publicUrl: url, storagePath: "" });
+      } else {
+        const rehosted = await rehostMediaForIG(supabase, url);
+        rehostedMedia.push(rehosted);
+        tempPaths.push(rehosted.storagePath);
+      }
     }
 
     // Also rehost thumbnail if present
     let rehostedThumbnailUrl: string | null = null;
     if (post.thumbnail_url) {
-      const thumbRehosted = await rehostMediaForIG(supabase, post.thumbnail_url);
-      rehostedThumbnailUrl = thumbRehosted.publicUrl;
-      tempPaths.push(thumbRehosted.storagePath);
+      if (isSupabaseStorageUrl(post.thumbnail_url)) {
+        rehostedThumbnailUrl = post.thumbnail_url;
+      } else {
+        const thumbRehosted = await rehostMediaForIG(supabase, post.thumbnail_url);
+        rehostedThumbnailUrl = thumbRehosted.publicUrl;
+        tempPaths.push(thumbRehosted.storagePath);
+      }
     }
 
     const isCarousel =
@@ -1825,10 +2031,18 @@ async function handlePublish(
     .update({ status: "publishing" })
     .eq("id", post_id);
 
+  // Pre-resolve Bunny CDN URLs to publicly accessible Supabase Storage URLs
+  // This must happen before platform dispatch so all handlers get working URLs
+  const { resolvedPost, tempPaths: mediaTempPaths } = await resolveMediaUrls(
+    supabase,
+    scheduledPost
+  );
+
   const results: PublishResult[] = [];
 
-  // Publish to each target account
-  for (const target of scheduledPost.target_accounts) {
+  try {
+    // Publish to each target account
+    for (const target of resolvedPost.target_accounts) {
     const startTime = Date.now();
     let result: PublishResult;
 
@@ -1848,7 +2062,7 @@ async function handlePublish(
       const account = accountData[0] as SocialAccount;
 
       // Publish
-      const publishResult = await publishToPlatform(account, scheduledPost);
+      const publishResult = await publishToPlatform(account, resolvedPost);
       const durationMs = Date.now() - startTime;
 
       result = {
@@ -1943,6 +2157,10 @@ async function handlePublish(
     .eq("id", post_id);
 
   return { post: { ...scheduledPost, ...updatePayload }, results };
+  } finally {
+    // Always clean up pre-resolved temp media files
+    await cleanupTempMedia(supabase, mediaTempPaths);
+  }
 }
 
 // ── Route: Publish Single (retry one account) ────────────────────────────────
@@ -1972,6 +2190,12 @@ async function handlePublishSingle(
   const scheduledPost = post as ScheduledPost;
   const startTime = Date.now();
 
+  // Pre-resolve Bunny CDN URLs
+  const { resolvedPost, tempPaths: mediaTempPaths } = await resolveMediaUrls(
+    supabase,
+    scheduledPost
+  );
+
   // Fetch the social account
   const { data: accountData, error: accountError } = await supabase
     .rpc("get_social_account_token", {
@@ -1979,6 +2203,8 @@ async function handlePublishSingle(
     });
 
   if (accountError || !accountData || accountData.length === 0) {
+    // Clean up temp files before throwing
+    await cleanupTempMedia(supabase, mediaTempPaths);
     throw new Error(
       `Social account not found or inactive: ${accountError?.message || account_id}`
     );
@@ -1989,7 +2215,7 @@ async function handlePublishSingle(
   let result: PublishResult;
 
   try {
-    const publishResult = await publishToPlatform(account, scheduledPost);
+    const publishResult = await publishToPlatform(account, resolvedPost);
     const durationMs = Date.now() - startTime;
 
     result = {
@@ -2073,6 +2299,9 @@ async function handlePublishSingle(
     .from("scheduled_posts")
     .update(updatePayload)
     .eq("id", post_id);
+
+  // Clean up pre-resolved temp media files
+  await cleanupTempMedia(supabase, mediaTempPaths);
 
   return { result };
 }

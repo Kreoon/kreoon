@@ -21,6 +21,8 @@ interface BunnyVideoUrls {
   mp4_480p: string;
   mp4_720p: string;
   mp4_1080p: string;
+  mp4_1440p: string;
+  mp4_2160p: string;
 }
 
 // Network quality detection
@@ -165,53 +167,64 @@ export function getBunnyVideoUrls(url: string): BunnyVideoUrls | null {
 
   const BUNNY_CDN_HOST = 'vz-78fcd769-050.b-cdn.net';
 
+  // Helper to build all quality URLs for a given host and videoId
+  const buildUrls = (host: string, videoId: string): BunnyVideoUrls => ({
+    hls: `https://${host}/${videoId}/playlist.m3u8`,
+    mp4: `https://${host}/${videoId}/play_1080p.mp4`,
+    mp4_360p: `https://${host}/${videoId}/play_360p.mp4`,
+    mp4_480p: `https://${host}/${videoId}/play_480p.mp4`,
+    mp4_720p: `https://${host}/${videoId}/play_720p.mp4`,
+    mp4_1080p: `https://${host}/${videoId}/play_1080p.mp4`,
+    mp4_1440p: `https://${host}/${videoId}/play_1440p.mp4`,
+    mp4_2160p: `https://${host}/${videoId}/play_2160p.mp4`,
+    thumbnail: `https://${host}/${videoId}/thumbnail.jpg`,
+  });
+
   // 1) CDN URL
   const cdnMatch = url.match(/https?:\/\/(vz-[a-f0-9-]+\.b-cdn\.net)\/([a-f0-9-]+)(?:\/|$)/i);
   if (cdnMatch) {
-    const host = cdnMatch[1];
-    const videoId = cdnMatch[2];
-    return {
-      hls: `https://${host}/${videoId}/playlist.m3u8`,
-      mp4: `https://${host}/${videoId}/play_720p.mp4`,
-      mp4_360p: `https://${host}/${videoId}/play_360p.mp4`,
-      mp4_480p: `https://${host}/${videoId}/play_480p.mp4`,
-      mp4_720p: `https://${host}/${videoId}/play_720p.mp4`,
-      mp4_1080p: `https://${host}/${videoId}/play_1080p.mp4`,
-      thumbnail: `https://${host}/${videoId}/thumbnail.jpg`,
-    };
+    return buildUrls(cdnMatch[1], cdnMatch[2]);
   }
 
   // 2) Iframe embed/play URL
   const embedMatch = url.match(/iframe\.mediadelivery\.net\/(?:embed|play)\/(\d+)\/([a-f0-9-]+)/i);
   if (embedMatch) {
-    const videoId = embedMatch[2];
-    return {
-      hls: `https://${BUNNY_CDN_HOST}/${videoId}/playlist.m3u8`,
-      mp4: `https://${BUNNY_CDN_HOST}/${videoId}/play_720p.mp4`,
-      mp4_360p: `https://${BUNNY_CDN_HOST}/${videoId}/play_360p.mp4`,
-      mp4_480p: `https://${BUNNY_CDN_HOST}/${videoId}/play_480p.mp4`,
-      mp4_720p: `https://${BUNNY_CDN_HOST}/${videoId}/play_720p.mp4`,
-      mp4_1080p: `https://${BUNNY_CDN_HOST}/${videoId}/play_1080p.mp4`,
-      thumbnail: `https://${BUNNY_CDN_HOST}/${videoId}/thumbnail.jpg`,
-    };
+    return buildUrls(BUNNY_CDN_HOST, embedMatch[2]);
   }
 
   // 3) Direct mediadelivery.net URL
   const directMatch = url.match(/(\d+)\.mediadelivery\.net\/([a-f0-9-]+)/i);
   if (directMatch) {
-    const videoId = directMatch[2];
-    return {
-      hls: `https://${BUNNY_CDN_HOST}/${videoId}/playlist.m3u8`,
-      mp4: `https://${BUNNY_CDN_HOST}/${videoId}/play_720p.mp4`,
-      mp4_360p: `https://${BUNNY_CDN_HOST}/${videoId}/play_360p.mp4`,
-      mp4_480p: `https://${BUNNY_CDN_HOST}/${videoId}/play_480p.mp4`,
-      mp4_720p: `https://${BUNNY_CDN_HOST}/${videoId}/play_720p.mp4`,
-      mp4_1080p: `https://${BUNNY_CDN_HOST}/${videoId}/play_1080p.mp4`,
-      thumbnail: `https://${BUNNY_CDN_HOST}/${videoId}/thumbnail.jpg`,
-    };
+    return buildUrls(BUNNY_CDN_HOST, directMatch[2]);
   }
 
   return null;
+}
+
+/**
+ * Async: probe Bunny CDN from highest to lowest quality and return the best available MP4 URL.
+ * Falls back to 720p (guaranteed) if no higher quality exists.
+ */
+export async function findBestBunnyMp4(url: string): Promise<string> {
+  const urls = getBunnyVideoUrls(url);
+  if (!urls) return url;
+
+  const qualities: Array<keyof BunnyVideoUrls> = [
+    'mp4_2160p', 'mp4_1440p', 'mp4_1080p', 'mp4_720p',
+  ];
+
+  for (const q of qualities) {
+    const candidate = urls[q];
+    try {
+      const res = await fetch(candidate, { method: 'HEAD' });
+      if (res.ok) return candidate;
+    } catch {
+      // probe failed, try next
+    }
+  }
+
+  // 720p is always available as absolute fallback
+  return urls.mp4_720p;
 }
 
 /**
@@ -235,11 +248,13 @@ export function getBunnyVideoUrlCandidates(url: string): BunnyVideoUrls[] {
   const uniqueHosts = Array.from(new Set(candidateHosts));
   return uniqueHosts.map((host) => ({
     hls: `https://${host}/${videoId}/playlist.m3u8`,
-    mp4: `https://${host}/${videoId}/play_720p.mp4`,
+    mp4: `https://${host}/${videoId}/play_1080p.mp4`,
     mp4_360p: `https://${host}/${videoId}/play_360p.mp4`,
     mp4_480p: `https://${host}/${videoId}/play_480p.mp4`,
     mp4_720p: `https://${host}/${videoId}/play_720p.mp4`,
     mp4_1080p: `https://${host}/${videoId}/play_1080p.mp4`,
+    mp4_1440p: `https://${host}/${videoId}/play_1440p.mp4`,
+    mp4_2160p: `https://${host}/${videoId}/play_2160p.mp4`,
     thumbnail: `https://${host}/${videoId}/thumbnail.jpg`,
   }));
 }

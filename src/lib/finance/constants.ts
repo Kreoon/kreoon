@@ -73,6 +73,7 @@ export const AI_TOKEN_COSTS = {
   "content.analyze": 40,
   "board.suggestions": 40,
   "board.prioritize": 40,
+  "social_ai.generate_captions": 60,
   "portfolio.caption": 25,
   "script_chat": 20,
   "transcription": 15,

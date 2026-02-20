@@ -20,8 +20,9 @@ import { MediaUploader } from './MediaUploader';
 import { HashtagManager } from './HashtagManager';
 import { PreviewPanel } from './PreviewPanel';
 import { ContentSelector } from './ContentSelector';
+import { AICaptionSelector } from './AICaptionSelector';
 import type { ApprovedContent } from '../../hooks/useApprovedContent';
-import { getBunnyThumbnailUrl, getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
+import { getBunnyThumbnailUrl, getBunnyVideoUrls, findBestBunnyMp4 } from '@/hooks/useHLSPlayer';
 import { PLATFORMS } from '../../config';
 import type { SocialPostType, ComposerFormData, QuickShareData, CollaborationType, SocialPlatform, SocialAccount } from '../../types/social.types';
 import { toast } from 'sonner';
@@ -82,6 +83,14 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
 
   const captionOverLimit = caption.length > minCaptionLimit;
 
+  // Derive client_id from the first selected client-owned account (for AI context)
+  const accountClientId = useMemo(() => {
+    const clientAccount = accounts.find(
+      a => selectedAccountIds.includes(a.id) && a.owner_type === 'client' && a.client_id
+    );
+    return clientAccount?.client_id || null;
+  }, [accounts, selectedAccountIds]);
+
   // Check if selecting an account would violate the 1-per-platform-per-entity rule
   const isAccountDisabled = (account: SocialAccount) => {
     if (selectedAccountIds.includes(account.id)) return false; // Already selected, allow deselect
@@ -105,7 +114,7 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
     );
   };
 
-  const handleContentSelect = (content: ApprovedContent, selectedVideoUrl: string | null) => {
+  const handleContentSelect = async (content: ApprovedContent, selectedVideoUrl: string | null) => {
     setSelectedContent(content);
     // Fill caption with title + description
     const parts: string[] = [];
@@ -117,10 +126,9 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
     // Use the explicitly selected video URL, fallback to first available
     const rawVideoUrl = selectedVideoUrl || content.video_urls?.[0] || content.video_url || content.bunny_embed_url;
     if (rawVideoUrl) {
-      // Convert Bunny embed/CDN URL to direct MP4 for preview playback
-      const bunnyUrls = getBunnyVideoUrls(rawVideoUrl);
-      const playableUrl = bunnyUrls?.mp4 || rawVideoUrl;
-      setMediaUrls([playableUrl]);
+      // Probe Bunny CDN for highest available quality (2160p → 720p)
+      const bestMp4 = await findBestBunnyMp4(rawVideoUrl);
+      setMediaUrls([bestMp4]);
       setPostType('reel');
     }
     // Resolve thumbnail: explicit > generated from Bunny
@@ -336,6 +344,24 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
           </Button>
         )}
       </div>
+
+      {/* AI Caption Generator - only when content is selected */}
+      {selectedContent?.id && (
+        <AICaptionSelector
+          contentId={selectedContent.id}
+          targetPlatform={selectedPlatforms[0] as SocialPlatform || 'instagram'}
+          postType={postType}
+          accountClientId={accountClientId}
+          onSelect={(aiCaption, aiHashtags, aiFirstComment) => {
+            setCaption(aiCaption);
+            setHashtags(aiHashtags);
+            if (aiFirstComment) {
+              setFirstComment(aiFirstComment);
+              setShowAdvanced(true);
+            }
+          }}
+        />
+      )}
 
       {/* Caption */}
       <div className="space-y-2">

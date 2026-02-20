@@ -324,6 +324,9 @@ verify_jwt = false
 [functions.social-metrics]
 verify_jwt = false
 
+[functions.social-ai-generator]
+verify_jwt = false
+
 [functions.marketing-auth]
 verify_jwt = false
 
