@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Users, DollarSign, CheckCircle, Clock, CreditCard, User, Gift } from "lucide-react";
+import { Users, DollarSign, CheckCircle, Clock, CreditCard, User, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,8 +15,7 @@ export function ReferralStats() {
     paidCommissions: 0,
     totalUsers: 0,
     freeUsers: 0,
-    basicUsers: 0,
-    proUsers: 0
+    subscribedUsers: 0
   });
 
   useEffect(() => {
@@ -25,31 +24,41 @@ export function ReferralStats() {
 
   const fetchData = async () => {
     try {
-      // Fetch user subscription stats only
-      const { data: subsData } = await supabase
-        .from('user_subscriptions')
-        .select('*');
-
-      // Fetch total profiles count
+      // 1. Fetch total profiles count
       const { count: profilesCount } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true });
 
-      if (subsData) {
-        const freeUsers = subsData.filter(s => s.plan === 'free').length;
-        const basicUsers = subsData.filter(s => s.plan === 'basic').length;
-        const proUsers = subsData.filter(s => s.plan === 'pro').length;
+      // 2. Fetch active non-free platform subscriptions → get org IDs
+      const { data: orgSubs } = await (supabase as any)
+        .from('platform_subscriptions')
+        .select('organization_id')
+        .not('tier', 'ilike', '%free%')
+        .eq('status', 'active');
 
-        setStats(prev => ({
-          ...prev,
-          totalUsers: profilesCount || subsData.length,
-          freeUsers,
-          basicUsers,
-          proUsers
-        }));
+      const subscribedOrgIds = (orgSubs || []).map((s: any) => s.organization_id).filter(Boolean);
+
+      // 3. Count members of those orgs
+      let subscribedUsers = 0;
+      if (subscribedOrgIds.length > 0) {
+        const { count } = await (supabase as any)
+          .from('organization_members')
+          .select('user_id', { count: 'exact', head: true })
+          .in('organization_id', subscribedOrgIds);
+        subscribedUsers = count || 0;
       }
 
-      // Fetch referral stats
+      const totalUsers = profilesCount || 0;
+      const freeUsers = Math.max(0, totalUsers - subscribedUsers);
+
+      setStats(prev => ({
+        ...prev,
+        totalUsers,
+        freeUsers,
+        subscribedUsers,
+      }));
+
+      // 4. Fetch referral stats
       const { data: referralsData } = await supabase
         .from('referrals')
         .select('status');
@@ -67,7 +76,7 @@ export function ReferralStats() {
         }));
       }
 
-      // Fetch commission stats
+      // 5. Fetch commission stats
       const { data: commissionsData } = await supabase
         .from('referral_commissions')
         .select('amount, status');
@@ -125,7 +134,21 @@ export function ReferralStats() {
             </div>
             <div>
               <p className="text-2xl font-bold">{stats.freeUsers}</p>
-              <p className="text-xs text-muted-foreground">Plan Free</p>
+              <p className="text-xs text-muted-foreground">Sin Plan</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/20">
+              <Building2 className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.subscribedUsers}</p>
+              <p className="text-xs text-muted-foreground">Con Plan</p>
             </div>
           </div>
         </CardContent>
@@ -138,22 +161,8 @@ export function ReferralStats() {
               <CreditCard className="h-5 w-5 text-info" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{stats.basicUsers}</p>
-              <p className="text-xs text-muted-foreground">Plan Básico</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/20">
-              <Gift className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{stats.proUsers}</p>
-              <p className="text-xs text-muted-foreground">Plan Pro</p>
+              <p className="text-2xl font-bold">{stats.totalReferrals}</p>
+              <p className="text-xs text-muted-foreground">Referidos</p>
             </div>
           </div>
         </CardContent>

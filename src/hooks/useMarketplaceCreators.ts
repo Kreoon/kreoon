@@ -90,16 +90,27 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
     try {
       // ── 0. Fetch exclusions & subscriptions ──────────────────────────
       // Use SECURITY DEFINER RPC to get client user_ids (works for anon + authenticated)
-      const [{ data: excludedRows }, { data: subRows }] = await Promise.all([
+      // Fetch exclusions + active org subscriptions (platform_subscriptions)
+      const [{ data: excludedRows }, { data: subOrgRows }] = await Promise.all([
         (supabase as any).rpc('get_marketplace_excluded_user_ids'),
         (supabase as any)
-          .from('user_subscriptions')
-          .select('user_id, plan, status')
-          .neq('plan', 'free')
+          .from('platform_subscriptions')
+          .select('organization_id, tier, status')
+          .not('tier', 'ilike', '%free%')
           .eq('status', 'active'),
       ]);
       const clientUserIds = new Set((excludedRows || []).map((r: any) => r.user_id));
-      const subscribedUserIds = new Set((subRows || []).map((r: any) => r.user_id));
+
+      // Resolve subscribed user_ids from org memberships
+      const subscribedOrgIds = (subOrgRows || []).map((r: any) => r.organization_id).filter(Boolean);
+      let subscribedUserIds = new Set<string>();
+      if (subscribedOrgIds.length > 0) {
+        const { data: memberRows } = await (supabase as any)
+          .from('organization_members')
+          .select('user_id')
+          .in('organization_id', subscribedOrgIds);
+        subscribedUserIds = new Set((memberRows || []).map((r: any) => r.user_id));
+      }
 
       // ── 1. Fetch from creator_profiles (marketplace-native) ──────────
       const { data: rows, error: err } = await (supabase as any)
