@@ -18,6 +18,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName: string, role: AppRole, companyName?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
+  refetchUserData: () => Promise<void>;
   isPlatformAdmin: boolean;
   isAdmin: boolean;
   isCreator: boolean;
@@ -623,6 +624,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hasRole = (role: AppRole) => roles.includes(role);
 
+  // Exposed refetch for external triggers (e.g., after org registration RPC)
+  const refetchUserData = async () => {
+    const userId = user?.id;
+    if (!userId) return;
+    // Clear dedup guard so the fetch actually runs
+    fetchInProgressRef.current = null;
+    await fetchUserData(userId);
+  };
+
   // Permission group for current active role
   const permissionGroup = activeRole ? getPermissionGroup(activeRole) : null;
 
@@ -651,6 +661,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signOut,
       hasRole,
+      refetchUserData,
       isPlatformAdmin,
       isAdmin,
       isCreator,

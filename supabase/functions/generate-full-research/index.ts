@@ -711,7 +711,12 @@ async function readColumnFromDB(
       console.warn(`[full-research] readColumnFromDB(${column}) failed:`, error?.message);
       return null; // Return null so caller knows the read failed
     }
-    return data[column] || {};
+    let val = data[column];
+    // Safety: if column returned as string (text type), parse it as JSON
+    if (typeof val === "string") {
+      try { val = JSON.parse(val); } catch { val = {}; }
+    }
+    return val || {};
   } catch (err: any) {
     console.warn(`[full-research] readColumnFromDB(${column}) exception:`, err.message);
     return null;
@@ -746,7 +751,9 @@ async function reconstructPrevResults(
   }
 
   const stepResults: Record<string, any> = {};
-  const mr = p.market_research || {};
+  // Safety: parse string columns that might not be JSONB yet
+  const rawMr = p.market_research;
+  const mr = (typeof rawMr === "string" ? (() => { try { return JSON.parse(rawMr); } catch { return {}; } })() : rawMr) || {};
   const ca = p.competitor_analysis || {};
   const ap = p.avatar_profiles || {};
   const sa = p.sales_angles_data || {};
@@ -822,6 +829,9 @@ Deno.serve(async (req) => {
     const body = await req.json();
     productId = body.product_id;
     const startStep: number = body.start_step || 0;
+    const userId: string | null = body.user_id || null;
+    const organizationId: string | null = body.organization_id || null;
+    const isClientUser: boolean = body.is_client_user || false;
 
     if (!productId) {
       return new Response(
@@ -835,6 +845,41 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // ── Token consumption (only on first batch, step 0) ─────────────
+    if (startStep === 0 && (userId || organizationId)) {
+      const TOKEN_COST = 600; // AI_TOKEN_COSTS["research.full"]
+      console.log(`[full-research] Consuming ${TOKEN_COST} tokens — user: ${userId}, org: ${organizationId}, isClient: ${isClientUser}`);
+
+      const { data: tokenResult, error: tokenError } = await supabase.rpc('consume_ai_tokens', {
+        p_user_id: isClientUser ? userId : null,
+        p_org_id: isClientUser ? null : organizationId,
+        p_action_type: 'research.full',
+        p_tokens: TOKEN_COST,
+        p_metadata: { product_id: productId },
+      });
+
+      if (tokenError || !tokenResult?.success) {
+        const reason = tokenError?.message || tokenResult?.error || 'insufficient_tokens';
+        console.warn(`[full-research] Token consumption failed: ${reason}`);
+
+        await supabase.from('products').update({
+          research_progress: {
+            step: 0,
+            total: 12,
+            label: 'Tokens insuficientes',
+            error: true,
+          },
+        }).eq('id', productId);
+
+        return new Response(
+          JSON.stringify({ success: false, error: 'insufficient_tokens' }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      console.log(`[full-research] Tokens consumed successfully`);
+    }
 
     // ── 1. Fetch ONLY lightweight product columns (avoid 3MB+ rows) ───
     const { data: product, error: productErr } = await supabase
@@ -1113,6 +1158,9 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           product_id: productId,
           start_step: endStep,
+          user_id: userId,
+          organization_id: organizationId,
+          is_client_user: isClientUser,
         }),
       })
         .then((res) => {

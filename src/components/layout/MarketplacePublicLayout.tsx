@@ -1,6 +1,8 @@
 import { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useOrgMarketplace } from '@/hooks/useOrgMarketplace';
+import { getPermissionGroup, getDashboardForRole } from '@/lib/permissionGroups';
 import { MainLayout } from './MainLayout';
 import { Button } from '@/components/ui/button';
 import { LogIn, UserPlus, Sparkles } from 'lucide-react';
@@ -14,9 +16,11 @@ interface MarketplaceLayoutProps {
  * Layout wrapper for marketplace routes.
  * - Authenticated users get the full MainLayout (sidebar, header, etc.)
  * - Anonymous visitors get a minimal header with logo + login/register buttons.
+ * - Client users with marketplace disabled get redirected to their dashboard.
  */
 export function MarketplaceLayout({ children }: MarketplaceLayoutProps) {
-  const { user, loading } = useAuth();
+  const { user, loading, activeRole, roles } = useAuth();
+  const { clientMarketplaceEnabled, loading: mktLoading } = useOrgMarketplace();
 
   // While auth is loading, show the children (marketplace pages handle their own skeleton)
   if (loading) {
@@ -24,6 +28,14 @@ export function MarketplaceLayout({ children }: MarketplaceLayoutProps) {
   }
 
   if (user) {
+    const isClient = roles.some(r => getPermissionGroup(r) === 'client');
+
+    // Block clients when clientMarketplaceEnabled is false
+    if (isClient && !mktLoading && !clientMarketplaceEnabled) {
+      const dashboard = getDashboardForRole(activeRole || roles[0]);
+      return <Navigate to={dashboard} replace />;
+    }
+
     return <MainLayout>{children}</MainLayout>;
   }
 

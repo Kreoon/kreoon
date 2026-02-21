@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, ArrowLeft, Users, Calendar, DollarSign, Gift, Layers, Megaphone, Gavel, ArrowUpDown, Loader2, Radio, UserSearch, Shield, Briefcase, CreditCard, Star, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { useMarketplaceCampaigns, CAMPAIGN_STATUS_COLORS, CAMPAIGN_STATUS_LABELS } from '@/hooks/useMarketplaceCampaigns';
 import { CampaignApplicationsReview } from './CampaignApplicationsReview';
 import { CampaignProgress } from './CampaignProgress';
@@ -33,7 +34,11 @@ export function BrandCampaignManager() {
   const [viewMode, setViewMode] = useState<'list' | 'applications' | 'progress' | 'activations' | 'smart_match'>('list');
 
   const { toast } = useToast();
-  const { campaigns, loading, activateCampaign } = useMarketplaceCampaigns();
+  const { user } = useAuth();
+  // Only show campaigns created by the current user
+  const { campaigns, loading, activateCampaign } = useMarketplaceCampaigns({
+    createdBy: user?.id,
+  });
 
   const handleActivate = async (campaignId: string) => {
     const result = await activateCampaign(campaignId);

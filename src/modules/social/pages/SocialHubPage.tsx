@@ -21,17 +21,17 @@ import { useSocialAccounts } from '../hooks/useSocialAccounts';
 import { useScheduledPosts } from '../hooks/useScheduledPosts';
 import type { ScheduledPost } from '../types/social.types';
 
-const TABS = [
-  { id: 'analytics', label: 'Métricas', icon: BarChart3 },
-  { id: 'dashboard', label: 'Publicaciones', icon: LayoutDashboard },
-  { id: 'composer', label: 'Crear Post', icon: PenSquare },
-  { id: 'calendar', label: 'Calendario', icon: Calendar },
-  { id: 'queue', label: 'Cola', icon: Clock },
-  { id: 'groups', label: 'Grupos', icon: FolderOpen },
-  { id: 'accounts', label: 'Cuentas', icon: LinkIcon },
+const ALL_TABS = [
+  { id: 'analytics', label: 'Métricas', icon: BarChart3, managerOnly: false },
+  { id: 'dashboard', label: 'Publicaciones', icon: LayoutDashboard, managerOnly: false },
+  { id: 'composer', label: 'Crear Post', icon: PenSquare, managerOnly: false },
+  { id: 'calendar', label: 'Calendario', icon: Calendar, managerOnly: false },
+  { id: 'queue', label: 'Cola', icon: Clock, managerOnly: true },
+  { id: 'groups', label: 'Grupos', icon: FolderOpen, managerOnly: true },
+  { id: 'accounts', label: 'Cuentas', icon: LinkIcon, managerOnly: false },
 ] as const;
 
-type TabId = (typeof TABS)[number]['id'];
+type TabId = (typeof ALL_TABS)[number]['id'];
 
 export default function SocialHubPage() {
   const [activeTab, setActiveTab] = useState<TabId>('analytics');
@@ -39,8 +39,11 @@ export default function SocialHubPage() {
   const [viewingPost, setViewingPost] = useState<ScheduledPost | null>(null);
   const [accountSelection, setAccountSelection] = useState<AccountSelection>({ type: 'all' });
   const [sharedContent, setSharedContent] = useState<Partial<QuickShareData> | undefined>(undefined);
-  const { accounts, isLoading: accountsLoading } = useSocialAccounts();
+  const { accounts, isLoading: accountsLoading, isManagerRole } = useSocialAccounts();
   const { stats } = useScheduledPosts();
+
+  // Filter tabs based on role
+  const TABS = ALL_TABS.filter(tab => !tab.managerOnly || isManagerRole);
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
 

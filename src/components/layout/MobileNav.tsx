@@ -205,6 +205,7 @@ const clientSections: NavSection[] = [
     label: "CONFIG",
     items: [
       { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
+      { name: "Plan", href: "/planes", icon: Crown },
       { name: "Settings", href: "/settings", icon: Settings },
     ]
   }
@@ -254,10 +255,10 @@ export function MobileNav() {
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, profile, user, activeRole, roles, isPlatformAdmin } = useAuth();
+  const { signOut, profile, user, activeRole, roles, rolesLoaded, isPlatformAdmin } = useAuth();
   const { trackLogout } = useAuthAnalytics();
   const { isPlatformRoot, currentOrgName } = useOrgOwner();
-  const { marketplaceEnabled } = useOrgMarketplace();
+  const { marketplaceEnabled, clientMarketplaceEnabled } = useOrgMarketplace();
   const { effectivePlatformName, effectiveStudioLabel, effectiveMarketplaceLabel, effectiveLogoUrl, isWhiteLabelActive } = useWhiteLabel();
   const { isImpersonating, effectiveRoles, impersonationTarget } = useImpersonation();
 
@@ -360,6 +361,7 @@ export function MobileNav() {
 
   // Filter navigation sections — same logic as Sidebar
   const filteredSections = useMemo(() => {
+    // When roles haven't loaded yet, show minimal nav to avoid flashing admin menu
     let baseSections = activeIsAdmin
       ? adminSections
       : activeIsStrategist
@@ -370,7 +372,7 @@ export function MobileNav() {
       ? creatorSections
       : activeIsClient
       ? clientSections
-      : adminSections;
+      : (isPlatformAdmin ? adminSections : creatorSections);
 
     const labelMap: Record<string, string> = {
       'KREOON STUDIO': effectiveStudioLabel,
@@ -388,12 +390,16 @@ export function MobileNav() {
         items: section.items.filter(item => {
           if (!isPlatformRoot && item.platformRootOnly) return false;
           if (isPlatformRoot && !profile?.current_organization_id && item.requiresOrg) return false;
-          if (!marketplaceEnabled && item.href === '/marketplace') return false;
+          const effectiveMkt = activeIsClient ? clientMarketplaceEnabled : marketplaceEnabled;
+          if (!effectiveMkt && item.href === '/marketplace') return false;
           return true;
         })
       })).filter(section => section.items.length > 0);
 
-    const mktSections = marketplaceEnabled
+    // For clients, marketplace visibility depends on org's client_marketplace_enabled flag
+    const effectiveMktEnabled = activeIsClient ? clientMarketplaceEnabled : marketplaceEnabled;
+
+    const mktSections = effectiveMktEnabled
       ? getMarketplaceSections(activeGroup).map(s => ({ ...s, label: labelMap[s.label] || s.label }))
       : [];
 
@@ -408,10 +414,10 @@ export function MobileNav() {
     return [
       ...nonConfigSections,
       ...mktSections,
-      ...(!marketplaceEnabled ? [recruitSection] : []),
+      ...(!effectiveMktEnabled && !activeIsClient ? [recruitSection] : []),
       ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Settings", href: "/settings", icon: Settings }] }]),
     ];
-  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, profile?.current_organization_id, marketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, activeGroup]);
+  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, activeGroup]);
 
   // Auto-expand section with active route
   const pathname = location.pathname;

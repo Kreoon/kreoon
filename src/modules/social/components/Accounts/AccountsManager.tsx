@@ -34,7 +34,7 @@ const CONNECTION_METHOD_LABELS: Record<string, string> = {
 };
 
 export function AccountsManager() {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const orgId = profile?.current_organization_id;
   const queryClient = useQueryClient();
 
@@ -47,13 +47,27 @@ export function AccountsManager() {
     refreshToken,
     assignAccountToClient,
     isTokenExpiring,
+    isManagerRole,
+    permissionGroup,
+    userClientIds,
   } = useSocialAccounts();
   const { groups, addAccountToGroup, removeAccountFromGroup } = useAccountGroups();
 
   const [connecting, setConnecting] = useState<SocialPlatform | null>(null);
-  const [connectOwnerType, setConnectOwnerType] = useState<SocialAccountOwnerType>('user');
-  const [selectedClientId, setSelectedClientId] = useState<string>('');
+  const [connectOwnerType, setConnectOwnerType] = useState<SocialAccountOwnerType>(
+    permissionGroup === 'client' ? 'client' : 'user'
+  );
+  const [selectedClientId, setSelectedClientId] = useState<string>(
+    permissionGroup === 'client' && userClientIds.length > 0 ? userClientIds[0] : ''
+  );
   const [showIgMethodDialog, setShowIgMethodDialog] = useState(false);
+
+  // Sync selectedClientId when userClientIds loads
+  useEffect(() => {
+    if (permissionGroup === 'client' && userClientIds.length > 0 && !selectedClientId) {
+      setSelectedClientId(userClientIds[0]);
+    }
+  }, [permissionGroup, userClientIds, selectedClientId]);
 
   // Listen for OAuth popup result via postMessage
   const handleOAuthMessage = useCallback((event: MessageEvent) => {
@@ -229,8 +243,8 @@ export function AccountsManager() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {/* Assign to client dropdown */}
-                      {orgClients.length > 0 && account.owner_type !== 'organization' && (
+                      {/* Assign to client dropdown — only visible to managers */}
+                      {isManagerRole && orgClients.length > 0 && account.owner_type !== 'organization' && (
                         <Select
                           value={account.client_id || '__none__'}
                           onValueChange={(v) => handleAssignToClient(account.id, v === '__none__' ? null : v)}
@@ -270,15 +284,18 @@ export function AccountsManager() {
                         <RefreshCw className={cn('w-4 h-4', refreshToken.isPending && 'animate-spin')} />
                       </Button>
 
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 text-red-400 hover:text-red-300"
-                        onClick={() => handleDisconnect(account)}
-                        disabled={disconnectAccount.isPending}
-                      >
-                        <Unlink className="w-4 h-4" />
-                      </Button>
+                      {/* Disconnect: managers always, others only their own accounts */}
+                      {(isManagerRole || account.user_id === user?.id) && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-red-400 hover:text-red-300"
+                          onClick={() => handleDisconnect(account)}
+                          disabled={disconnectAccount.isPending}
+                        >
+                          <Unlink className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -295,19 +312,39 @@ export function AccountsManager() {
             {accounts.length > 0 ? 'Conectar Más Redes' : 'Conecta tus Redes Sociales'}
           </h3>
           <div className="flex items-center gap-2">
-            <Select value={connectOwnerType} onValueChange={(v) => setConnectOwnerType(v as SocialAccountOwnerType)}>
-              <SelectTrigger className="w-[140px] h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="user">Personal</SelectItem>
-                <SelectItem value="brand">Marca</SelectItem>
-                <SelectItem value="client">Empresa</SelectItem>
-                <SelectItem value="organization">Organización</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Manager: full owner_type selector */}
+            {isManagerRole && (
+              <Select value={connectOwnerType} onValueChange={(v) => setConnectOwnerType(v as SocialAccountOwnerType)}>
+                <SelectTrigger className="w-[140px] h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">Personal</SelectItem>
+                  <SelectItem value="brand">Marca</SelectItem>
+                  <SelectItem value="client">Empresa</SelectItem>
+                  <SelectItem value="organization">Organización</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
 
-            {connectOwnerType === 'client' && (
+            {/* Talent: fixed label, no selector */}
+            {!isManagerRole && permissionGroup !== 'client' && (
+              <Badge variant="secondary" className="h-8 px-3 text-xs gap-1">
+                <User className="w-3 h-3" />
+                Personal
+              </Badge>
+            )}
+
+            {/* Client: fixed label */}
+            {!isManagerRole && permissionGroup === 'client' && (
+              <Badge variant="secondary" className="h-8 px-3 text-xs gap-1">
+                <Building className="w-3 h-3" />
+                Empresa
+              </Badge>
+            )}
+
+            {/* Client selector: only for managers or client users with multiple companies */}
+            {connectOwnerType === 'client' && isManagerRole && (
               <Select value={selectedClientId} onValueChange={setSelectedClientId}>
                 <SelectTrigger className="w-[180px] h-8 text-xs">
                   <SelectValue placeholder="Seleccionar empresa..." />

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Store, Globe, Palette, FileText, Save, Loader2 } from 'lucide-react';
+import { Store, Globe, Palette, FileText, Save, Loader2, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface OrgSettings {
   marketplace_enabled: boolean;
+  client_marketplace_enabled: boolean;
   portfolio_enabled: boolean;
   portfolio_title: string;
   portfolio_description: string;
@@ -28,6 +29,7 @@ export default function OrgMarketplaceSection() {
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<OrgSettings>({
     marketplace_enabled: true,
+    client_marketplace_enabled: false,
     portfolio_enabled: false,
     portfolio_title: '',
     portfolio_description: '',
@@ -45,13 +47,14 @@ export default function OrgMarketplaceSection() {
       setLoading(true);
       const { data, error } = await (supabase as any)
         .from('organizations')
-        .select('marketplace_enabled, portfolio_enabled, portfolio_title, portfolio_description, portfolio_cover, portfolio_color, slug')
+        .select('marketplace_enabled, client_marketplace_enabled, portfolio_enabled, portfolio_title, portfolio_description, portfolio_cover, portfolio_color, slug')
         .eq('id', orgId)
         .maybeSingle();
 
       if (!error && data) {
         setSettings({
           marketplace_enabled: data.marketplace_enabled !== false,
+          client_marketplace_enabled: data.client_marketplace_enabled === true,
           portfolio_enabled: data.portfolio_enabled === true,
           portfolio_title: data.portfolio_title || '',
           portfolio_description: data.portfolio_description || '',
@@ -74,6 +77,7 @@ export default function OrgMarketplaceSection() {
       .from('organizations')
       .update({
         marketplace_enabled: settings.marketplace_enabled,
+        client_marketplace_enabled: settings.client_marketplace_enabled,
         portfolio_enabled: settings.portfolio_enabled,
         portfolio_title: settings.portfolio_title || null,
         portfolio_description: settings.portfolio_description || null,
@@ -137,6 +141,24 @@ export default function OrgMarketplaceSection() {
             <Switch
               checked={settings.marketplace_enabled}
               onCheckedChange={(checked) => setSettings(prev => ({ ...prev, marketplace_enabled: checked }))}
+            />
+          </div>
+
+          <Separator className="my-4" />
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Label className="text-sm font-medium flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5" />
+                Marketplace para clientes
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Permite que los clientes de tu organización accedan al marketplace para buscar talento y crear campañas
+              </p>
+            </div>
+            <Switch
+              checked={settings.client_marketplace_enabled}
+              onCheckedChange={(checked) => setSettings(prev => ({ ...prev, client_marketplace_enabled: checked }))}
             />
           </div>
         </CardContent>

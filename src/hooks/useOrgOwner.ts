@@ -32,6 +32,7 @@ export interface OrgOwnerStatus {
   currentOrgId: string | null;
   currentOrgName: string | null;
   marketplaceEnabled: boolean;
+  clientMarketplaceEnabled: boolean;
   orgBranding: OrgBrandingData | null;
   orgTimezone: string;
   loading: boolean;
@@ -41,6 +42,7 @@ interface CachedOrgContext {
   is_owner: boolean;
   org_name: string | null;
   marketplace_enabled: boolean;
+  client_marketplace_enabled: boolean;
   // White-label fields
   org_slug: string | null;
   org_logo_url: string | null;
@@ -101,6 +103,7 @@ async function fetchOrgContextCached(orgId: string): Promise<CachedOrgContext | 
         is_owner: row.is_owner || false,
         org_name: row.org_name || null,
         marketplace_enabled: row.marketplace_enabled !== false,
+        client_marketplace_enabled: row.client_marketplace_enabled === true,
         // White-label fields (gracefully handle missing fields for backward compat)
         org_slug: row.org_slug || null,
         org_logo_url: row.org_logo_url || null,
@@ -177,6 +180,7 @@ export function useOrgOwner(): OrgOwnerStatus {
   const [currentOrgId, setCurrentOrgId] = useState<string | null>(null);
   const [currentOrgName, setCurrentOrgName] = useState<string | null>(null);
   const [marketplaceEnabled, setMarketplaceEnabled] = useState(true);
+  const [clientMarketplaceEnabled, setClientMarketplaceEnabled] = useState(false);
   const [orgBranding, setOrgBranding] = useState<OrgBrandingData | null>(null);
   const [orgTimezone, setOrgTimezone] = useState<string>('America/Bogota');
   const [loading, setLoading] = useState(true);
@@ -195,6 +199,7 @@ export function useOrgOwner(): OrgOwnerStatus {
         setCurrentOrgId(null);
         setCurrentOrgName(null);
         setMarketplaceEnabled(true);
+        setClientMarketplaceEnabled(false);
         setOrgBranding(null);
         setOrgTimezone('America/Bogota');
         setLoading(false);
@@ -213,6 +218,7 @@ export function useOrgOwner(): OrgOwnerStatus {
           setCurrentOrgId(orgId);
           setCurrentOrgName(result.org_name);
           setMarketplaceEnabled(result.marketplace_enabled);
+          setClientMarketplaceEnabled(result.client_marketplace_enabled);
           setOrgBranding(toBrandingData(result));
           setOrgTimezone(result.org_timezone || 'America/Bogota');
         } else {
@@ -220,6 +226,7 @@ export function useOrgOwner(): OrgOwnerStatus {
           setCurrentOrgId(orgId);
           setCurrentOrgName(null);
           setMarketplaceEnabled(true);
+          setClientMarketplaceEnabled(false);
           setOrgBranding(null);
           setOrgTimezone('America/Bogota');
         }
@@ -231,6 +238,7 @@ export function useOrgOwner(): OrgOwnerStatus {
         setCurrentOrgId(orgId);
         setCurrentOrgName(null);
         setMarketplaceEnabled(true);
+        setClientMarketplaceEnabled(false);
         setOrgBranding(null);
         setOrgTimezone('America/Bogota');
       } finally {
@@ -252,6 +260,7 @@ export function useOrgOwner(): OrgOwnerStatus {
     currentOrgId,
     currentOrgName,
     marketplaceEnabled,
+    clientMarketplaceEnabled,
     orgBranding,
     orgTimezone,
     loading,

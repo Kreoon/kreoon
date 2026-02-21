@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ChevronDown, Users, Building2, User, FolderOpen } from 'lucide-react';
+import { ChevronDown, Users, Building2, Building, User, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuTrigger,
@@ -28,7 +28,7 @@ interface AccountSwitcherProps {
 
 export function AccountSwitcher({ value, onChange, className }: AccountSwitcherProps) {
   const [open, setOpen] = useState(false);
-  const { accounts, personalAccounts, brandAccounts, orgAccounts } = useSocialAccounts();
+  const { accounts, personalAccounts, brandAccounts, clientAccounts, orgAccounts, accountsByClient, isManagerRole, permissionGroup } = useSocialAccounts();
   const { groups } = useAccountGroups();
 
   const selectedLabel = useMemo(() => {
@@ -82,12 +82,12 @@ export function AccountSwitcher({ value, onChange, className }: AccountSwitcherP
         {/* All accounts */}
         <DropdownMenuItem onClick={() => handleSelect({ type: 'all' })}>
           <Users className="w-4 h-4 mr-2 text-muted-foreground" />
-          Todas las cuentas
+          {permissionGroup === 'client' ? 'Todas las cuentas de mi empresa' : 'Todas las cuentas'}
           <Badge variant="secondary" className="ml-auto text-[10px]">{accounts.length}</Badge>
         </DropdownMenuItem>
 
-        {/* Groups */}
-        {groups.length > 0 && (
+        {/* Groups — only for managers */}
+        {isManagerRole && groups.length > 0 && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -110,8 +110,8 @@ export function AccountSwitcher({ value, onChange, className }: AccountSwitcherP
           </>
         )}
 
-        {/* Personal accounts */}
-        {personalAccounts.length > 0 && (
+        {/* Personal accounts — for managers and talent */}
+        {permissionGroup !== 'client' && personalAccounts.length > 0 && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -138,8 +138,37 @@ export function AccountSwitcher({ value, onChange, className }: AccountSwitcherP
           </>
         )}
 
-        {/* Brand accounts */}
-        {brandAccounts.length > 0 && (
+        {/* Client (empresa) accounts — for managers and client users */}
+        {(isManagerRole || permissionGroup === 'client') && Object.keys(accountsByClient).length > 0 && (
+          <>
+            {Object.values(accountsByClient).map(group => (
+              <div key={group.clientId}>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                  <Building className="w-3 h-3" />
+                  {group.clientName}
+                </DropdownMenuLabel>
+                <DropdownMenuGroup>
+                  {group.accounts.map(account => (
+                    <DropdownMenuItem
+                      key={account.id}
+                      onClick={() => handleSelect({ type: 'account', accountId: account.id })}
+                    >
+                      <PlatformIcon platform={account.platform} size="xs" className="mr-2" />
+                      <span className="truncate">
+                        {account.platform_display_name || account.platform_username}
+                      </span>
+                      <Building className="w-3 h-3 ml-auto text-muted-foreground" />
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuGroup>
+              </div>
+            ))}
+          </>
+        )}
+
+        {/* Brand accounts — only for managers */}
+        {isManagerRole && brandAccounts.length > 0 && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -162,8 +191,8 @@ export function AccountSwitcher({ value, onChange, className }: AccountSwitcherP
           </>
         )}
 
-        {/* Org accounts */}
-        {orgAccounts.length > 0 && (
+        {/* Org accounts — only for managers */}
+        {isManagerRole && orgAccounts.length > 0 && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">

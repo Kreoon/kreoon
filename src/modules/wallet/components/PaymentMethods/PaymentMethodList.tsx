@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, CreditCard, ExternalLink, CheckCircle2, Loader2 } from 'lucide-react';
+import { Plus, CreditCard, ExternalLink, CheckCircle2, Loader2, Construction } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -88,9 +88,9 @@ export function PaymentMethodList({ className }: PaymentMethodListProps) {
 
   return (
     <>
-      {/* Stripe Connect Section — only show when wallet exists */}
+      {/* Stripe Connect Section — development mode */}
       {wallet && (
-        <Card className={cn('mb-4', className)}>
+        <Card className={cn('mb-4 opacity-75', className)}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -98,58 +98,17 @@ export function PaymentMethodList({ className }: PaymentMethodListProps) {
                   <CreditCard className="h-5 w-5 text-indigo-400" />
                 </div>
                 <div>
-                  <p className="font-medium text-white">Stripe Connect</p>
+                  <p className="font-medium">Stripe Connect</p>
                   <p className="text-xs text-muted-foreground">
-                    {connectStatus === 'active'
-                      ? 'Recibe pagos directos a tu cuenta Stripe'
-                      : 'Conecta tu cuenta para retiros instantáneos'}
+                    Conecta tu cuenta para retiros instantaneos
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {connectStatus === 'active' && (
-                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
-                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                    Conectado
-                  </Badge>
-                )}
-                {connectStatus === 'pending' && (
-                  <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/30">
-                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                    Pendiente
-                  </Badge>
-                )}
-                {connectStatus === 'active' ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => getLoginLink()}
-                    disabled={isGettingLoginLink}
-                  >
-                    <ExternalLink className="h-3 w-3 mr-1" />
-                    Dashboard
-                  </Button>
-                ) : connectStatus === 'pending' ? (
-                  <Button
-                    size="sm"
-                    onClick={() => refreshOnboarding()}
-                    className="bg-indigo-600 hover:bg-indigo-700"
-                  >
-                    Completar configuración
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    onClick={() => startOnboarding()}
-                    disabled={isStartingOnboarding}
-                    className="bg-indigo-600 hover:bg-indigo-700"
-                  >
-                    {isStartingOnboarding ? (
-                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                    ) : null}
-                    Conectar Stripe
-                  </Button>
-                )}
+                <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/30">
+                  <Construction className="h-3 w-3 mr-1" />
+                  En desarrollo
+                </Badge>
               </div>
             </div>
           </CardContent>

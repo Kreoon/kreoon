@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Building2,
   Lock,
@@ -111,6 +112,7 @@ export default function OrgRegister() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isConfirmed = searchParams.get("confirmed") === "true";
+  const { refetchUserData } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [completingRegistration, setCompletingRegistration] = useState(false);
@@ -236,6 +238,9 @@ export default function OrgRegister() {
           } else {
             // Clear pending registration
             localStorage.removeItem("pendingOrgRegistration");
+
+            // Refetch user data so useAuth picks up the new role
+            await refetchUserData();
 
             // Notify about new member
             supabase.functions
@@ -477,6 +482,9 @@ export default function OrgRegister() {
         toast.error("Error al asignar tu rol. Por favor contacta soporte.");
         return;
       }
+
+      // Refetch user data so useAuth picks up the new role before navigation
+      await refetchUserData();
 
       supabase.functions
         .invoke("notify-new-member", {

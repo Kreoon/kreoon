@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { getPermissionGroup } from '@/lib/permissionGroups';
 import type { SocialAccount, SocialPlatform, SocialAccountOwnerType } from '../types/social.types';
 
 interface UseSocialAccountsOptions {
@@ -18,9 +19,25 @@ export interface ClientAccountGroup {
 }
 
 export function useSocialAccounts(options?: UseSocialAccountsOptions) {
-  const { user, profile } = useAuth();
+  const { user, profile, activeRole } = useAuth();
   const queryClient = useQueryClient();
   const orgId = profile?.current_organization_id;
+  const permissionGroup = activeRole ? getPermissionGroup(activeRole) : null;
+  const isManagerRole = permissionGroup === 'admin' || permissionGroup === 'team_leader';
+
+  // For client users, fetch their associated client_id(s)
+  const { data: userClientIds } = useQuery({
+    queryKey: ['user-client-ids', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('client_users')
+        .select('client_id')
+        .eq('user_id', user!.id);
+      return data?.map(d => d.client_id) || [];
+    },
+    enabled: !!user?.id && permissionGroup === 'client',
+    staleTime: 10 * 60 * 1000,
+  });
 
   const {
     data: accounts = [],
@@ -54,6 +71,17 @@ export function useSocialAccounts(options?: UseSocialAccountsOptions) {
           result = result.filter(a =>
             a.groups?.some(g => g.group_id === options.groupId)
           );
+        }
+
+        // Role-based isolation: non-manager users see only their own accounts
+        if (!isManagerRole) {
+          if (permissionGroup === 'client') {
+            // Client: only accounts assigned to their company
+            result = result.filter(a => a.client_id && userClientIds?.includes(a.client_id));
+          } else {
+            // Talent (creator, editor, strategist, etc.): only their own personal accounts
+            result = result.filter(a => a.user_id === user?.id);
+          }
         }
 
         return result;
@@ -204,5 +232,9 @@ export function useSocialAccounts(options?: UseSocialAccountsOptions) {
     refreshToken,
     assignAccountToClient,
     isTokenExpiring,
+    // Role isolation info for UI components
+    isManagerRole,
+    permissionGroup,
+    userClientIds: userClientIds || [],
   };
 }

@@ -8,6 +8,7 @@ import { TourProvider } from "@/components/tour/TourProvider";
 import { AmbassadorCelebration } from "@/components/AmbassadorCelebration";
 import { KiroWidget } from "@/components/kiro/KiroWidget";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrgMarketplace } from "@/hooks/useOrgMarketplace";
 import { usePresence } from "@/hooks/usePresence";
 import { useClientRealtimeNotifications } from "@/hooks/useClientRealtimeNotifications";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
@@ -69,6 +70,7 @@ export function MainLayout({
 }: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { isClient, isEditor, isAdmin, isCreator, signOut, profile, user } = useAuth();
+  const { marketplaceEnabled, clientMarketplaceEnabled } = useOrgMarketplace();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -102,7 +104,7 @@ export function MainLayout({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(user?.id ? `/p/${user.id}` : '/marketplace')}
+              onClick={() => navigate(user?.id ? `/p/${user.id}` : '/editor-dashboard')}
               className="h-8 w-8 rounded-full p-0"
             >
               <Avatar className="h-7 w-7">
@@ -112,21 +114,23 @@ export function MainLayout({
                 </AvatarFallback>
               </Avatar>
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('/marketplace')}
-              className="h-8 w-8 rounded-full"
-            >
-              <Briefcase className="h-4 w-4" />
-            </Button>
+            {marketplaceEnabled && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/marketplace')}
+                className="h-8 w-8 rounded-full"
+              >
+                <Briefcase className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </header>
 
         {/* Editor Mobile Bottom Navigation */}
         <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden">
           <div className="flex justify-around py-2">
-            {editorMobileNavigation.map((item) => {
+            {editorMobileNavigation.filter(item => item.href !== '/marketplace' || marketplaceEnabled).map((item) => {
               const isActive = item.href.startsWith('/marketplace')
                 ? location.pathname.startsWith(item.href)
                 : location.pathname === item.href;
@@ -203,7 +207,7 @@ export function MainLayout({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(user?.id ? `/p/${user.id}` : '/marketplace')}
+              onClick={() => navigate(user?.id ? `/p/${user.id}` : '/client-dashboard')}
               className="h-8 w-8 rounded-full p-0"
             >
               <Avatar className="h-7 w-7">
@@ -213,14 +217,16 @@ export function MainLayout({
                 </AvatarFallback>
               </Avatar>
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('/marketplace')}
-              className="h-8 w-8 rounded-full"
-            >
-              <Briefcase className="h-4 w-4" />
-            </Button>
+            {clientMarketplaceEnabled && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/marketplace')}
+                className="h-8 w-8 rounded-full"
+              >
+                <Briefcase className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </header>
 

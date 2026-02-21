@@ -350,13 +350,20 @@ export function pollProductDNAStatus(
 // GENERATE FULL RESEARCH (ADN Recargado)
 // ============================================
 
+export interface TokenContext {
+  userId: string;
+  organizationId?: string;
+  isClientUser: boolean;
+}
+
 /**
  * Invokes the generate-full-research edge function (fire-and-forget).
  * The function runs all 12 steps sequentially (5-10 min total),
  * so we don't await the response — polling tracks progress instead.
  */
 export async function generateFullResearch(
-  productId: string
+  productId: string,
+  tokenContext?: TokenContext
 ): Promise<ServiceResult> {
   try {
     // Fire-and-forget: invoke but don't await the full response.
@@ -364,7 +371,12 @@ export async function generateFullResearch(
     // The browser will timeout, but the server keeps running.
     // Polling via pollResearchProgress() tracks real-time progress.
     supabase.functions.invoke('generate-full-research', {
-      body: { product_id: productId },
+      body: {
+        product_id: productId,
+        user_id: tokenContext?.userId,
+        organization_id: tokenContext?.organizationId,
+        is_client_user: tokenContext?.isClientUser ?? false,
+      },
     }).then(({ error }) => {
       if (error) {
         console.warn('[generateFullResearch] Edge function response (may be timeout):', error.message);

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { getPermissionGroup } from '@/lib/permissionGroups';
 import type { ScheduledPost, ComposerFormData, ScheduledPostStatus } from '../types/social.types';
 
 export function useScheduledPosts(filters?: {
@@ -8,8 +9,34 @@ export function useScheduledPosts(filters?: {
   from?: string;
   to?: string;
 }) {
-  const { user } = useAuth();
+  const { user, activeRole } = useAuth();
   const queryClient = useQueryClient();
+  const permissionGroup = activeRole ? getPermissionGroup(activeRole) : null;
+  const isManagerRole = permissionGroup === 'admin' || permissionGroup === 'team_leader';
+
+  // For client users, fetch their visible account IDs
+  const { data: clientAccountIds } = useQuery({
+    queryKey: ['client-social-account-ids', user?.id],
+    queryFn: async () => {
+      // Get client associations
+      const { data: associations } = await supabase
+        .from('client_users')
+        .select('client_id')
+        .eq('user_id', user!.id);
+      const clientIds = associations?.map(a => a.client_id) || [];
+      if (clientIds.length === 0) return [];
+
+      // Get social accounts for those clients
+      const { data: accounts } = await supabase
+        .from('social_accounts')
+        .select('id')
+        .in('client_id', clientIds)
+        .eq('is_active', true);
+      return accounts?.map(a => a.id) || [];
+    },
+    enabled: !!user?.id && permissionGroup === 'client',
+    staleTime: 10 * 60 * 1000,
+  });
 
   const {
     data: posts = [],
@@ -17,12 +44,17 @@ export function useScheduledPosts(filters?: {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['scheduled-posts', user?.id, filters],
+    queryKey: ['scheduled-posts', user?.id, filters, permissionGroup],
     queryFn: async () => {
       let query = supabase
         .from('scheduled_posts')
         .select('*')
         .order('scheduled_at', { ascending: true });
+
+      // Talent: only their own posts
+      if (!isManagerRole && permissionGroup !== 'client') {
+        query = query.eq('user_id', user!.id);
+      }
 
       if (filters?.status) {
         query = query.eq('status', filters.status);
@@ -36,7 +68,17 @@ export function useScheduledPosts(filters?: {
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []) as unknown as ScheduledPost[];
+      let result = (data || []) as unknown as ScheduledPost[];
+
+      // Client: filter to posts targeting their company's accounts
+      if (!isManagerRole && permissionGroup === 'client' && clientAccountIds) {
+        const ids = new Set(clientAccountIds);
+        result = result.filter(post =>
+          post.target_accounts?.some((ta: any) => ids.has(ta.account_id))
+        );
+      }
+
+      return result;
     },
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000,

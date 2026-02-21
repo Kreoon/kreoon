@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { BarChart3, Target, Megaphone, FileText, Settings, Sparkles } from 'lucide-react';
+import { BarChart3, Target, Megaphone, FileText, Settings, Sparkles, Construction } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
 import { MarketingDashboard } from '../components/Dashboard/MarketingDashboard';
 import { CampaignList } from '../components/Campaigns/CampaignList';
 import { CampaignCreator } from '../components/Campaigns/CampaignCreator';
@@ -29,8 +30,30 @@ function fmtCurrency(n: number): string {
 
 export default function MarketingPage() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const { isPlatformAdmin } = useAuth();
   const { campaigns, activeCampaigns, totalSpend } = useAdCampaigns();
   const { unreadInsightsCount } = useAdMetrics();
+
+  // Non-platform-admin users see a "coming soon" overlay
+  if (!isPlatformAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6">
+        <div className="p-4 rounded-full bg-amber-500/10">
+          <Construction className="h-12 w-12 text-amber-500" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold">Marketing Ads</h2>
+          <Badge variant="secondary" className="text-sm px-3 py-1">
+            En desarrollo
+          </Badge>
+        </div>
+        <p className="text-muted-foreground max-w-md">
+          Este modulo esta actualmente en desarrollo. Pronto podras crear y gestionar
+          campanas publicitarias directamente desde Kreoon.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

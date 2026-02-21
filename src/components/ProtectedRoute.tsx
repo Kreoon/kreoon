@@ -64,7 +64,7 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
   const { user, profile, roles: realRoles, activeRole, loading, rolesLoaded, isPlatformAdmin } = useAuth();
   const { isImpersonating, effectiveRoles, isRootAdmin } = useImpersonation();
   const { isPlatformRoot, currentOrgId, loading: orgLoading } = useOrgOwner();
-  const { marketplaceEnabled, loading: mktLoading } = useOrgMarketplace();
+  const { marketplaceEnabled, clientMarketplaceEnabled, loading: mktLoading } = useOrgMarketplace();
   const location = useLocation();
 
   const [clientHasCompany, setClientHasCompany] = useState<boolean | null>(null);
@@ -220,18 +220,26 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     return <Navigate to="/no-company" replace />;
   }
 
-  // Block marketplace routes for users whose org has marketplace disabled
-  // BUT allow browse-only routes (/marketplace, /marketplace/org/*, /marketplace/creator/*) for talent recruitment
+  // Block marketplace routes based on org settings and user role
   const isMarketplaceRoute = location.pathname.startsWith('/marketplace');
-  const isMarketplaceBrowseRoute = location.pathname === '/marketplace'
-    || location.pathname.startsWith('/marketplace/org/')
-    || location.pathname.startsWith('/marketplace/creator/')
-    || location.pathname.startsWith('/marketplace/talent-lists')
-    || location.pathname.startsWith('/marketplace/invitations')
-    || location.pathname.startsWith('/marketplace/inquiries');
-  if (isMarketplaceRoute && !marketplaceEnabled && !isMarketplaceBrowseRoute && realRoles.length > 0 && !isPlatformRoot) {
-    const correctDashboard = getDashboardPath(rolesToCheck, activeRole);
-    return <Navigate to={correctDashboard} replace />;
+  if (isMarketplaceRoute && realRoles.length > 0 && !isPlatformRoot) {
+    // Client users: block ALL marketplace routes when clientMarketplaceEnabled is false
+    if (isClient && !clientMarketplaceEnabled) {
+      const correctDashboard = getDashboardPath(rolesToCheck, activeRole);
+      return <Navigate to={correctDashboard} replace />;
+    }
+    // Internal team: block action routes when marketplaceEnabled is false
+    // BUT allow browse-only routes for talent recruitment
+    const isMarketplaceBrowseRoute = location.pathname === '/marketplace'
+      || location.pathname.startsWith('/marketplace/org/')
+      || location.pathname.startsWith('/marketplace/creator/')
+      || location.pathname.startsWith('/marketplace/talent-lists')
+      || location.pathname.startsWith('/marketplace/invitations')
+      || location.pathname.startsWith('/marketplace/inquiries');
+    if (!isClient && !marketplaceEnabled && !isMarketplaceBrowseRoute) {
+      const correctDashboard = getDashboardPath(rolesToCheck, activeRole);
+      return <Navigate to={correctDashboard} replace />;
+    }
   }
 
   // Check if user has the required role (allowedRoles are treated as permission groups)

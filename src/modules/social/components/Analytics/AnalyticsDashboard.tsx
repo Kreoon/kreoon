@@ -400,8 +400,8 @@ export function AnalyticsDashboard() {
   const [dateRange, setDateRange] = useState<string>('30');
   const days = parseInt(dateRange, 10);
 
-  const { accountSummaries, totals, isLoading, syncMetrics } = useSocialMetrics();
-  const { data: snapshots = [], isLoading: snapshotsLoading } = useOrgSnapshots(days);
+  const { accountSummaries, totals, isLoading, syncMetrics, visibleAccountIds } = useSocialMetrics();
+  const { data: snapshots = [], isLoading: snapshotsLoading } = useOrgSnapshots(days, visibleAccountIds);
 
   // Group snapshots by account_id
   const snapshotsByAccount = useMemo(() => {

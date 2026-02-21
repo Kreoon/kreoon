@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { getPermissionGroup } from '@/lib/permissionGroups';
 import type { SocialAccount } from '../types/social.types';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -107,19 +108,27 @@ export function useSyncMetrics() {
 
 // ── Hook: Fetch snapshots for org (historical data for charts) ─────────────
 
-export function useOrgSnapshots(days = 30) {
+export function useOrgSnapshots(days = 30, visibleAccountIds?: string[]) {
   const { profile } = useAuth();
   const orgId = profile?.current_organization_id;
 
   return useQuery({
-    queryKey: ['social-snapshots', orgId, days],
+    queryKey: ['social-snapshots', orgId, days, visibleAccountIds],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_org_account_snapshots', {
         p_org_id: orgId!,
         p_days: days,
       });
       if (error) throw error;
-      return (data || []) as AccountSnapshot[];
+      let result = (data || []) as AccountSnapshot[];
+
+      // Filter to only visible accounts if specified
+      if (visibleAccountIds) {
+        const ids = new Set(visibleAccountIds);
+        result = result.filter(s => ids.has(s.account_id));
+      }
+
+      return result;
     },
     enabled: !!orgId,
     staleTime: 5 * 60 * 1000,
@@ -129,9 +138,25 @@ export function useOrgSnapshots(days = 30) {
 // ── Hook: Full metrics hook (backward-compatible + enhanced) ───────────────
 
 export function useSocialMetrics() {
-  const { user, profile } = useAuth();
+  const { user, profile, activeRole } = useAuth();
   const queryClient = useQueryClient();
   const orgId = profile?.current_organization_id;
+  const permissionGroup = activeRole ? getPermissionGroup(activeRole) : null;
+  const isManagerRole = permissionGroup === 'admin' || permissionGroup === 'team_leader';
+
+  // For client users, fetch their associated client_id(s)
+  const { data: userClientIds } = useQuery({
+    queryKey: ['user-client-ids-metrics', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('client_users')
+        .select('client_id')
+        .eq('user_id', user!.id);
+      return data?.map(d => d.client_id) || [];
+    },
+    enabled: !!user?.id && permissionGroup === 'client',
+    staleTime: 10 * 60 * 1000,
+  });
 
   // Fetch latest snapshots as summaries (one per account for today or most recent)
   const {
@@ -152,19 +177,30 @@ export function useSocialMetrics() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Also fetch accounts for display info
+  // Also fetch accounts for display info (role-filtered)
   const {
     data: accounts = [],
     isLoading: accountsLoading,
   } = useQuery({
-    queryKey: ['social-accounts-for-metrics', orgId],
+    queryKey: ['social-accounts-for-metrics', orgId, permissionGroup, user?.id],
     queryFn: async () => {
       if (orgId) {
         const { data, error } = await supabase.rpc('get_org_social_accounts', {
           p_org_id: orgId,
         });
         if (error) throw error;
-        return (data || []) as unknown as SocialAccount[];
+        let result = (data || []) as unknown as SocialAccount[];
+
+        // Role-based isolation
+        if (!isManagerRole) {
+          if (permissionGroup === 'client') {
+            result = result.filter(a => a.client_id && userClientIds?.includes(a.client_id));
+          } else {
+            result = result.filter(a => a.user_id === user?.id);
+          }
+        }
+
+        return result;
       }
       const { data, error } = await supabase
         .from('social_accounts')
@@ -177,9 +213,13 @@ export function useSocialMetrics() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Filter snapshots to only visible accounts
+  const visibleAccountIds = new Set(accounts.map(a => a.id));
+  const filteredSnapshots = snapshotSummaries.filter(s => visibleAccountIds.has(s.account_id));
+
   // Build per-account summaries from snapshots
   const accountSummaries = accounts.map(account => {
-    const snapshot = snapshotSummaries.find(s => s.account_id === account.id);
+    const snapshot = filteredSnapshots.find(s => s.account_id === account.id);
     const likes = Number(snapshot?.total_likes ?? 0);
     const comments = Number(snapshot?.total_comments ?? 0);
     const shares = Number(snapshot?.total_shares ?? 0);
@@ -269,5 +309,6 @@ export function useSocialMetrics() {
     error: null,
     syncMetrics,
     fetchPostMetrics,
+    visibleAccountIds: accounts.map(a => a.id),
   };
 }

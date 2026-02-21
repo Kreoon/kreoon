@@ -209,6 +209,7 @@ const clientSections: NavSection[] = [
     label: "CONFIG",
     items: [
       { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
+      { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
       { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
   }
@@ -262,11 +263,11 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, profile, user, activeRole, roles: realRoles, isPlatformAdmin } = useAuth();
+  const { signOut, profile, user, activeRole, roles: realRoles, rolesLoaded, isPlatformAdmin } = useAuth();
   const { trackLogout } = useAuthAnalytics();
   const { isImpersonating, effectiveRoles, isRootAdmin, impersonationTarget } = useImpersonation();
   const { isPlatformRoot, currentOrgName } = useOrgOwner();
-  const { marketplaceEnabled } = useOrgMarketplace();
+  const { marketplaceEnabled, clientMarketplaceEnabled } = useOrgMarketplace();
   const { effectivePlatformName, effectiveStudioLabel, effectiveMarketplaceLabel, effectiveLogoUrl, isWhiteLabelActive } = useWhiteLabel();
   const [showClientSelector, setShowClientSelector] = useState(false);
   const [currentClientName, setCurrentClientName] = useState<string | null>(null);
@@ -369,17 +370,18 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
 
   // Filter navigation sections based on platform root vs org owner and org selection
   const filteredSections = useMemo(() => {
-    let baseSections = activeIsAdmin 
-      ? adminSections 
-      : activeIsStrategist 
-      ? strategistSections 
-      : activeIsEditor 
-      ? editorSections 
-      : activeIsCreator 
-      ? creatorSections 
-      : activeIsClient 
-      ? clientSections 
-      : adminSections;
+    // When roles haven't loaded yet, show minimal nav to avoid flashing admin menu
+    let baseSections = activeIsAdmin
+      ? adminSections
+      : activeIsStrategist
+      ? strategistSections
+      : activeIsEditor
+      ? editorSections
+      : activeIsCreator
+      ? creatorSections
+      : activeIsClient
+      ? clientSections
+      : (isPlatformAdmin ? adminSections : creatorSections);
 
     // White-label label replacement map
     const labelMap: Record<string, string> = {
@@ -401,17 +403,21 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           if (!isPlatformRoot && item.platformRootOnly) return false;
           if (isPlatformRoot && !profile?.current_organization_id && item.requiresOrg) return false;
           // Hide marketplace link from role sections when org has it disabled
-          if (!marketplaceEnabled && item.href === '/marketplace') return false;
+          const effectiveMkt = activeIsClient ? clientMarketplaceEnabled : marketplaceEnabled;
+          if (!effectiveMkt && item.href === '/marketplace') return false;
           return true;
         })
       })).filter(section => section.items.length > 0);
 
+    // For clients, marketplace visibility depends on org's client_marketplace_enabled flag
+    const effectiveMktEnabled = activeIsClient ? clientMarketplaceEnabled : marketplaceEnabled;
+
     // Use permission group for marketplace sections (apply label map)
-    const mktSections = marketplaceEnabled
+    const mktSections = effectiveMktEnabled
       ? getMarketplaceSections(activeGroup).map(s => ({ ...s, label: labelMap[s.label] || s.label }))
       : [];
 
-    // "Buscar Talento" section - ALWAYS visible for recruitment, even when marketplace is disabled
+    // "Buscar Talento" section - ALWAYS visible for recruitment, even when marketplace is disabled (not for clients)
     const recruitSection: NavSection = {
       label: "RECLUTAMIENTO",
       items: [
@@ -427,10 +433,11 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       ...nonConfigSections,
       ...mktSections,
       // Only add recruit section when marketplace is disabled (when enabled, /marketplace is already in mktSections)
-      ...(!marketplaceEnabled ? [recruitSection] : []),
+      // Clients don't get the fallback recruit section either
+      ...(!effectiveMktEnabled && !activeIsClient ? [recruitSection] : []),
       ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" }] }]),
     ];
-  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, profile?.current_organization_id, marketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel]);
+  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel]);
 
   // Collapsible sections state — auto-expand section containing active route
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});

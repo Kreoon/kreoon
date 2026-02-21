@@ -11,14 +11,17 @@ export default function PlanesPage() {
   const group = activeRole ? getPermissionGroup(activeRole) : null;
 
   let segment: Segment;
-  if (!organizationId) {
-    // Freelance users without org: talent → creadores, brand/client → marcas
-    segment = group === 'client' ? 'marcas' : 'creadores';
+  if (group === 'client') {
+    // Client users always see brand/client plans, whether in org or not
+    segment = 'marcas';
+  } else if (!organizationId) {
+    // Freelance users without org: talent → creadores
+    segment = 'creadores';
   } else if (group === 'creator' || group === 'editor' || group === 'strategist') {
     // Org members with talent-type roles always see creadores
     segment = 'creadores';
   } else {
-    // Any org member (admin, team_leader, client, etc.) → agencias plans
+    // Any org member (admin, team_leader, etc.) → agencias plans
     segment = 'agencias';
   }
 

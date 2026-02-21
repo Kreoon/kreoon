@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { ProductDocumentUploader } from "./ProductDocumentUploader";
 import ProductDNADisplay from "@/components/product-dna/ProductDNADisplay";
@@ -32,11 +34,14 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useUnifiedTokens } from "@/hooks/useUnifiedTokens";
+import { useSubscription } from "@/hooks/useSubscription";
+import { AI_TOKEN_COSTS, getPlanById } from "@/lib/finance/constants";
 import {
   Package, FileText, Users, Target, Save,
   File, FolderOpen, Plus, X, Sparkles, Dna,
   Globe, Swords, Lightbulb, Brain, Trophy, Gift, Download, Calendar, Rocket, ExternalLink,
-  RefreshCw, Mic, Check
+  RefreshCw, Mic, Check, Coins, AlertTriangle
 } from "lucide-react";
 import { generateProductResearchPdf } from "./productResearchPdfGenerator";
 import { CreateContentFromResearchDialog } from "./CreateContentFromResearchDialog";
@@ -90,10 +95,52 @@ export function ProductDetailDialog({
   readOnly = false
 }: ProductDetailDialogProps) {
   const { toast } = useToast();
-  const { isAdmin } = useAuth();
+  const { user, profile, isAdmin, isClient } = useAuth();
   const canEdit = isAdmin && !readOnly;
   const [loading, setLoading] = useState(false);
   const [newAngle, setNewAngle] = useState("");
+
+  // ── Token access control for ADN Recargado ──
+  const orgId = profile?.current_organization_id;
+  const { balance, checkCanConsume, balanceLoading } = useUnifiedTokens(
+    isClient ? undefined : orgId || undefined
+  );
+  const { subscription } = useSubscription(orgId || undefined);
+  const RESEARCH_COST = AI_TOKEN_COSTS["research.full"]; // 600
+
+  // Monthly usage count for clients (count research.full transactions this month)
+  const { data: monthlyUsageCount } = useQuery({
+    queryKey: ['adn-monthly-usage', user?.id],
+    queryFn: async () => {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const { count } = await supabase
+        .from('unified_transactions')
+        .select('id', { count: 'exact', head: true })
+        .eq('action_type', 'research.full')
+        .eq('executed_by', user!.id)
+        .gte('created_at', startOfMonth.toISOString());
+
+      return count || 0;
+    },
+    enabled: !!user?.id && isClient,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Determine plan limits for clients
+  const planDef = getPlanById(subscription?.tier || 'marcas-free');
+  const monthlyLimit = planDef?.adnRecargadosPerMonth;
+  const limitReached = isClient && monthlyLimit !== null && monthlyLimit !== undefined
+    && (monthlyUsageCount || 0) >= monthlyLimit;
+  const planDisabled = isClient && monthlyLimit === 0;
+
+  // Token sufficiency check
+  const totalTokens = balance
+    ? (balance.subscription_tokens ?? 0) + (balance.purchased_tokens ?? 0) + (balance.bonus_tokens ?? 0)
+    : 0;
+  const hasEnoughTokens = totalTokens >= RESEARCH_COST;
   
   const [formData, setFormData] = useState({
     name: "",
@@ -174,7 +221,27 @@ export function ProductDetailDialog({
   }, [open]);
 
   const handleGenerateResearch = async () => {
-    if (!product?.id) return;
+    if (!product?.id || !user?.id) return;
+
+    // Pre-validation: check tokens
+    if (!hasEnoughTokens) {
+      toast({ title: 'Tokens insuficientes', description: `Necesitas ${RESEARCH_COST} tokens para ADN Recargado.`, variant: 'destructive' });
+      return;
+    }
+
+    // Pre-validation: check monthly limit for clients
+    if (limitReached || planDisabled) {
+      toast({ title: 'Límite alcanzado', description: 'Has alcanzado el límite mensual de ADN Recargado de tu plan.', variant: 'destructive' });
+      return;
+    }
+
+    // Double-check via server
+    const canConsume = await checkCanConsume('research.full', isClient ? undefined : orgId || undefined);
+    if (!canConsume) {
+      toast({ title: 'Tokens insuficientes', description: 'No hay tokens disponibles para esta acción.', variant: 'destructive' });
+      return;
+    }
+
     setResearchGenerating(true);
     setResearchProgress(null);
     setResearchStartTime(Date.now());
@@ -232,8 +299,12 @@ export function ProductDetailDialog({
       200,
     );
 
-    // Fire the edge function (non-blocking — progress is tracked by polling)
-    const result = await generateFullResearch(product.id);
+    // Fire the edge function with token context
+    const result = await generateFullResearch(product.id, {
+      userId: user.id,
+      organizationId: orgId || undefined,
+      isClientUser: isClient,
+    });
     if (!result.success) {
       toast({ title: 'Error al generar investigación', description: result.error, variant: 'destructive' });
       setResearchGenerating(false);
@@ -487,7 +558,16 @@ export function ProductDetailDialog({
                         elapsed={researchElapsed}
                       />
                     ) : (
-                      <KiroResearchButton onClick={handleGenerateResearch} />
+                      <KiroResearchButton
+                        onClick={handleGenerateResearch}
+                        tokenCost={RESEARCH_COST}
+                        hasEnoughTokens={hasEnoughTokens}
+                        balanceLoading={balanceLoading}
+                        isClient={isClient}
+                        monthlyUsageCount={monthlyUsageCount || 0}
+                        monthlyLimit={monthlyLimit}
+                        limitReached={limitReached || planDisabled}
+                      />
                     )
                   )}
                 </>
@@ -810,7 +890,37 @@ const KIRO_STEPS = [
 // KIRO Research Button — Idle state with KIRO eye CTA
 // ════════════════════════════════════════════════════════════════════
 
-function KiroResearchButton({ onClick }: { onClick: () => void }) {
+function KiroResearchButton({
+  onClick,
+  tokenCost,
+  hasEnoughTokens,
+  balanceLoading,
+  isClient,
+  monthlyUsageCount,
+  monthlyLimit,
+  limitReached,
+}: {
+  onClick: () => void;
+  tokenCost: number;
+  hasEnoughTokens: boolean;
+  balanceLoading: boolean;
+  isClient: boolean;
+  monthlyUsageCount: number;
+  monthlyLimit?: number | null;
+  limitReached: boolean;
+}) {
+  const disabled = !hasEnoughTokens || limitReached || balanceLoading;
+
+  const tooltipMessage = balanceLoading
+    ? 'Verificando tokens...'
+    : limitReached
+      ? monthlyLimit === 0
+        ? 'Tu plan no incluye ADN Recargado'
+        : `Límite mensual alcanzado (${monthlyUsageCount}/${monthlyLimit})`
+      : !hasEnoughTokens
+        ? `Tokens insuficientes (necesitas ${tokenCost})`
+        : '';
+
   return (
     <div className="relative overflow-hidden rounded-2xl border border-purple-500/20 bg-gradient-to-br from-purple-950/60 via-black/40 to-pink-950/60 p-6">
       {/* Background ambient glow */}
@@ -840,18 +950,55 @@ function KiroResearchButton({ onClick }: { onClick: () => void }) {
           <p className="text-xs text-gray-400 mt-1 leading-relaxed">
             KIRO combina ADN de Marca + ADN de Producto para generar la investigación completa de 12 pasos.
           </p>
+          {/* Token cost + monthly usage info */}
+          <div className="flex items-center gap-3 mt-2">
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-purple-300/80 bg-purple-500/10 px-2 py-0.5 rounded-full">
+              <Coins className="w-3 h-3" />
+              {tokenCost} tokens
+            </span>
+            {isClient && monthlyLimit !== null && monthlyLimit !== undefined && (
+              <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                limitReached
+                  ? 'text-red-300 bg-red-500/10'
+                  : 'text-emerald-300/80 bg-emerald-500/10'
+              }`}>
+                {monthlyUsageCount}/{monthlyLimit === 0 ? 0 : monthlyLimit} este mes
+              </span>
+            )}
+          </div>
         </div>
 
         {/* CTA Button */}
-        <button
-          onClick={onClick}
-          className="relative group flex-shrink-0 px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white text-sm font-medium
-                     shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)]
-                     hover:scale-105 transition-all duration-300 flex items-center gap-2"
-        >
-          <Rocket className="w-4 h-4 group-hover:animate-bounce" />
-          Activar
-        </button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <button
+                  onClick={disabled ? undefined : onClick}
+                  disabled={disabled}
+                  className={`relative group flex-shrink-0 px-5 py-2.5 rounded-xl text-sm font-medium
+                    transition-all duration-300 flex items-center gap-2
+                    ${disabled
+                      ? 'bg-gray-700/50 text-gray-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] hover:scale-105'
+                    }`}
+                >
+                  {disabled ? (
+                    <AlertTriangle className="w-4 h-4" />
+                  ) : (
+                    <Rocket className="w-4 h-4 group-hover:animate-bounce" />
+                  )}
+                  Activar
+                </button>
+              </div>
+            </TooltipTrigger>
+            {disabled && tooltipMessage && (
+              <TooltipContent side="top" className="bg-gray-900 text-gray-200 border-gray-700">
+                <p>{tooltipMessage}</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* Step preview dots */}

@@ -1,14 +1,16 @@
 {
   "permissions": {
+    "defaultMode": "bypassPermissions",
     "allow": [
-      "Bash(npm run lint)",
-      "Bash(npm install)",
-      "Bash(npx eslint .)",
-      "Bash(npm run build:*)",
-      "Bash(npm audit:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(npx tsc:*)"
-    ]
-  }
+      "mcp__vibe-kanban__*",
+      "mcp__*",
+      "Bash(*)",
+      "Read",
+      "Edit",
+      "Write",
+      "WebFetch"
+    ],
+    "deny": []
+  },
+  "enableAllProjectMcpServers": true
 }

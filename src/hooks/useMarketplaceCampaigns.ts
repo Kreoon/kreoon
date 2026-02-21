@@ -270,6 +270,7 @@ const defaultCreator: MarketplaceCreator = {
 interface UseMarketplaceCampaignsOptions {
   brandId?: string;
   organizationId?: string;
+  createdBy?: string;
   status?: CampaignStatus | CampaignStatus[];
 }
 
@@ -295,6 +296,10 @@ export function useMarketplaceCampaigns(options: UseMarketplaceCampaignsOptions 
 
       if (options.organizationId) {
         query = query.eq('organization_id', options.organizationId);
+      }
+
+      if (options.createdBy) {
+        query = query.eq('created_by', options.createdBy);
       }
 
       if (options.status) {
