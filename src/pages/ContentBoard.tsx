@@ -1,11 +1,9 @@
 import { useState, useCallback, useEffect, useMemo, lazy, Suspense } from "react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanColumn";
 import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
 import { ContentDetailDialog } from "@/components/content/ContentDetailDialog/index";
 import { ProjectTypeSelector } from "@/components/projects/ProjectTypeSelector";
-import { Search, Plus, Filter, CalendarIcon, X, Settings2, Scroll, RotateCcw, Brain, ShoppingBag } from "lucide-react";
+import { Search, Plus, Filter, X, Settings2, Scroll, RotateCcw, Brain, ShoppingBag } from "lucide-react";
 import type { ProjectType } from "@/types/unifiedProject.types";
 
 const UnifiedProjectModal = lazy(() => import('@/components/projects/UnifiedProjectModal'));
@@ -21,15 +19,15 @@ import { useInternalOrgContent } from "@/hooks/useInternalOrgContent";
 import { Content, ContentStatus, KANBAN_COLUMNS, STATUS_ORDER, STATUS_LABELS, Product } from "@/types/database";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SearchableSelect, type SearchableSelectOption } from "@/components/ui/searchable-select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { updateContentStatusWithUP } from "@/hooks/useContentStatusWithUP";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { DateRangePresetPicker } from "@/components/ui/date-range-preset-picker";
+import { resolvePreset, type DateRangeValue } from "@/lib/date-presets";
 import { 
   BoardViewSwitcher, 
   BoardView, 
@@ -190,12 +188,13 @@ export default function ContentBoard() {
   const [filterProductId, setFilterProductId] = useState<string>(persistence.filters.productId);
   const [filterCampaignWeek, setFilterCampaignWeek] = useState<string>(persistence.filters.campaignWeek);
   const [searchTerm, setSearchTerm] = useState(persistence.filters.searchTerm);
-  const [startDateFilter, setStartDateFilter] = useState<Date | undefined>(
-    persistence.filters.startDate ? new Date(persistence.filters.startDate) : undefined
+  const [dateRangeFilter, setDateRangeFilter] = useState<DateRangeValue | null>(
+    persistence.filters.startDate && persistence.filters.deadline
+      ? { preset: 'custom' as const, from: new Date(persistence.filters.startDate), to: new Date(persistence.filters.deadline) }
+      : null
   );
-  const [deadlineFilter, setDeadlineFilter] = useState<Date | undefined>(
-    persistence.filters.deadline ? new Date(persistence.filters.deadline) : undefined
-  );
+  const startDateFilter = dateRangeFilter?.from;
+  const deadlineFilter = dateRangeFilter?.to;
   
   // Sync filters to persistence
   useEffect(() => {
@@ -206,17 +205,35 @@ export default function ContentBoard() {
       productId: filterProductId,
       campaignWeek: filterCampaignWeek,
       searchTerm: searchTerm,
-      startDate: startDateFilter?.toISOString(),
-      deadline: deadlineFilter?.toISOString(),
+      startDate: dateRangeFilter?.from?.toISOString(),
+      deadline: dateRangeFilter?.to?.toISOString(),
     });
-  }, [filterCreatorId, filterEditorId, filterClientId, filterProductId, filterCampaignWeek, searchTerm, startDateFilter, deadlineFilter]);
+  }, [filterCreatorId, filterEditorId, filterClientId, filterProductId, filterCampaignWeek, searchTerm, dateRangeFilter]);
   
   // Listas para filtros
   const [creators, setCreators] = useState<{id: string; name: string}[]>([]);
   const [editors, setEditors] = useState<{id: string; name: string}[]>([]);
   const [clients, setClients] = useState<{id: string; name: string}[]>([]);
   const [products, setProducts] = useState<{id: string; name: string; client_name?: string}[]>([]);
-  
+
+  // Memoized options for SearchableSelect
+  const creatorOptions = useMemo<SearchableSelectOption[]>(() => [
+    { value: 'all', label: 'Todos los creadores' },
+    ...creators.map(c => ({ value: c.id, label: c.name })),
+  ], [creators]);
+  const editorOptions = useMemo<SearchableSelectOption[]>(() => [
+    { value: 'all', label: 'Todos los editores' },
+    ...editors.map(e => ({ value: e.id, label: e.name })),
+  ], [editors]);
+  const clientOptions = useMemo<SearchableSelectOption[]>(() => [
+    { value: 'all', label: 'Todos los clientes' },
+    ...clients.map(c => ({ value: c.id, label: c.name })),
+  ], [clients]);
+  const productOptions = useMemo<SearchableSelectOption[]>(() => [
+    { value: 'all', label: 'Todos los productos' },
+    ...products.map(p => ({ value: p.id, label: p.name, hint: p.client_name })),
+  ], [products]);
+
   // Limit visible cards per column to reduce DOM/network load (240+ cards → ~80 visible)
   const CARDS_PER_COLUMN = 8;
   const [expandedColumns, setExpandedColumns] = useState<Set<string>>(new Set());
@@ -289,8 +306,7 @@ export default function ContentBoard() {
     setFilterProductId('all');
     setFilterCampaignWeek('');
     setSearchTerm('');
-    setStartDateFilter(undefined);
-    setDeadlineFilter(undefined);
+    setDateRangeFilter(null);
     persistence.resetFilters();
     toast({
       title: "Filtros restablecidos",
@@ -300,15 +316,14 @@ export default function ContentBoard() {
   
   // Check if any filter is active
   const hasActiveFilters = useMemo(() => {
-    return filterCreatorId !== 'all' || 
-           filterEditorId !== 'all' || 
-           filterClientId !== 'all' || 
-           filterProductId !== 'all' || 
-           filterCampaignWeek !== '' || 
+    return filterCreatorId !== 'all' ||
+           filterEditorId !== 'all' ||
+           filterClientId !== 'all' ||
+           filterProductId !== 'all' ||
+           filterCampaignWeek !== '' ||
            searchTerm !== '' ||
-           startDateFilter !== undefined ||
-           deadlineFilter !== undefined;
-  }, [filterCreatorId, filterEditorId, filterClientId, filterProductId, filterCampaignWeek, searchTerm, startDateFilter, deadlineFilter]);
+           dateRangeFilter !== null;
+  }, [filterCreatorId, filterEditorId, filterClientId, filterProductId, filterCampaignWeek, searchTerm, dateRangeFilter]);
   
   // Board settings hook
   const { settings, statuses: orgStatuses, rules, loading: settingsLoading, refetch: refetchSettings } = useBoardSettings(currentOrgId);
@@ -435,14 +450,11 @@ export default function ContentBoard() {
       if (!matchesSearch) return false;
     }
     
-    if (startDateFilter) {
-      const contentStartDate = c.start_date ? new Date(c.start_date) : null;
-      if (!contentStartDate || contentStartDate < startDateFilter) return false;
-    }
-    
-    if (deadlineFilter) {
-      const contentDeadline = c.deadline ? new Date(c.deadline) : null;
-      if (!contentDeadline || contentDeadline > deadlineFilter) return false;
+    if (startDateFilter || deadlineFilter) {
+      const contentDate = c.created_at ? new Date(c.created_at) : null;
+      if (!contentDate) return false;
+      if (startDateFilter && contentDate < startDateFilter) return false;
+      if (deadlineFilter && contentDate > deadlineFilter) return false;
     }
 
     // Filtro por producto
@@ -456,7 +468,7 @@ export default function ContentBoard() {
     }
     
     return true;
-  }), [content, searchTerm, startDateFilter, deadlineFilter, filterProductId, filterCampaignWeek]);
+  }), [content, searchTerm, dateRangeFilter, filterProductId, filterCampaignWeek]);
 
   // Agrupar contenido por estado (soporta status personalizados)
   const getContentByStatus = (status: ContentStatus | string) => {
@@ -705,120 +717,58 @@ export default function ContentBoard() {
         {showAdminControls && (
           <div className="flex flex-wrap items-center gap-2 md:gap-3 px-4 md:px-6 pb-4 overflow-x-auto">
             <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={cn(
-                    "w-[140px] md:w-[180px] justify-start text-left font-normal text-xs md:text-sm",
-                    !startDateFilter && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
-                  {startDateFilter ? format(startDateFilter, "dd/MM/yy", { locale: es }) : "Fecha inicial"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={startDateFilter}
-                  onSelect={setStartDateFilter}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                />
-              </PopoverContent>
-            </Popover>
-            {startDateFilter && (
-              <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8 flex-shrink-0" onClick={() => setStartDateFilter(undefined)}>
-                <X className="h-3 w-3 md:h-4 md:w-4" />
-              </Button>
-            )}
 
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={cn(
-                    "w-[140px] md:w-[180px] justify-start text-left font-normal text-xs md:text-sm",
-                    !deadlineFilter && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
-                  {deadlineFilter ? format(deadlineFilter, "dd/MM/yy", { locale: es }) : "Fecha entrega"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={deadlineFilter}
-                  onSelect={setDeadlineFilter}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                />
-              </PopoverContent>
-            </Popover>
-            {deadlineFilter && (
-              <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8 flex-shrink-0" onClick={() => setDeadlineFilter(undefined)}>
+            <DateRangePresetPicker
+              value={dateRangeFilter ?? { preset: 'last_30', ...resolvePreset('last_30') }}
+              onChange={setDateRangeFilter}
+              presets={['today', 'yesterday', 'last_7', 'last_15', 'last_30', 'this_week', 'this_month', 'last_month', 'custom']}
+              align="start"
+            />
+            {dateRangeFilter && (
+              <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8 flex-shrink-0" onClick={() => setDateRangeFilter(null)}>
                 <X className="h-3 w-3 md:h-4 md:w-4" />
               </Button>
             )}
 
             <div className="h-6 w-px bg-border hidden md:block" />
 
-            <Select value={filterCreatorId} onValueChange={setFilterCreatorId}>
-              <SelectTrigger className="w-[130px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm">
-                <SelectValue placeholder="Creadores" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los creadores</SelectItem>
-                {creators.map(c => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              value={filterCreatorId}
+              onValueChange={setFilterCreatorId}
+              options={creatorOptions}
+              placeholder="Creadores"
+              searchPlaceholder="Buscar creador..."
+              triggerClassName="w-[130px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm"
+            />
 
-            <Select value={filterEditorId} onValueChange={setFilterEditorId}>
-              <SelectTrigger className="w-[130px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm">
-                <SelectValue placeholder="Editores" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los editores</SelectItem>
-                {editors.map(e => (
-                  <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              value={filterEditorId}
+              onValueChange={setFilterEditorId}
+              options={editorOptions}
+              placeholder="Editores"
+              searchPlaceholder="Buscar editor..."
+              triggerClassName="w-[130px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm"
+            />
 
-            <Select value={filterClientId} onValueChange={setFilterClientId}>
-              <SelectTrigger className="w-[130px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm">
-                <SelectValue placeholder="Clientes" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los clientes</SelectItem>
-                {clients.map(c => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              value={filterClientId}
+              onValueChange={setFilterClientId}
+              options={clientOptions}
+              placeholder="Clientes"
+              searchPlaceholder="Buscar cliente..."
+              triggerClassName="w-[130px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm"
+            />
 
             <div className="h-6 w-px bg-border hidden md:block" />
 
-            <Select value={filterProductId} onValueChange={setFilterProductId}>
-              <SelectTrigger className="w-[130px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm">
-                <SelectValue placeholder="Productos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los productos</SelectItem>
-                {products.map(p => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name} {p.client_name && <span className="text-muted-foreground">({p.client_name})</span>}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              value={filterProductId}
+              onValueChange={setFilterProductId}
+              options={productOptions}
+              placeholder="Productos"
+              searchPlaceholder="Buscar producto..."
+              triggerClassName="w-[130px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm"
+            />
 
             <Input
               type="text"
@@ -1016,7 +966,7 @@ export default function ContentBoard() {
                               onAssignCreator={showAdminControls || primaryRole === "strategist" || primaryRole === "team_leader" ? handleAssignCreator : undefined}
                               onAssignEditor={showAdminControls || primaryRole === "strategist" || primaryRole === "team_leader" ? handleAssignEditor : undefined}
                               onUpdate={refetch}
-                              socialStatus={socialStatusMap?.get(item.id)}
+                              socialStatus={socialStatusMap?.[item.id]}
                             />
                           ))}
                           {!isExpanded && hiddenCount > 0 && (

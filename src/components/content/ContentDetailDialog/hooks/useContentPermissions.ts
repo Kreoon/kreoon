@@ -111,10 +111,10 @@ const PERMISSION_MATRIX: Record<string, Partial<Record<ContentResource, ContentA
  * Tab visibility by role
  */
 const TAB_VISIBILITY: Record<string, TabKey[]> = {
-  admin: ['scripts', 'video', 'material', 'general', 'team', 'dates', 'payments'],
+  admin: ['scripts', 'video', 'material', 'thumbnail', 'general', 'team', 'dates', 'payments'],
   creator: ['scripts', 'video', 'material', 'general'],
-  editor: ['scripts', 'video', 'material', 'general'],
-  strategist: ['scripts', 'video', 'material', 'general', 'team', 'dates'], // Strategist can see team and dates tabs
+  editor: ['scripts', 'video', 'material', 'thumbnail', 'general'],
+  strategist: ['scripts', 'video', 'material', 'thumbnail', 'general', 'team', 'dates'],
   client: ['scripts', 'video'],
 };
 

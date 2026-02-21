@@ -5,7 +5,7 @@
 import { RefreshCw, BarChart3 } from 'lucide-react';
 import { useAnalyticsDashboard } from '@/analytics/hooks/useAnalyticsDashboard';
 import { KPICard } from './KPICard';
-import { DateRangePicker } from './DateRangePicker';
+import { DateRangePresetPicker } from '@/components/ui/date-range-preset-picker';
 import { ConversionFunnel } from './ConversionFunnel';
 import { SourceDistribution } from './SourceDistribution';
 import { TrendChart } from './TrendChart';
@@ -19,10 +19,8 @@ export function KAEDashboard() {
     data,
     loading,
     error,
-    dateRange,
-    preset,
-    changePreset,
-    changeCustomRange,
+    dateRangeValue,
+    changeDateRange,
     refresh,
   } = useAnalyticsDashboard();
 
@@ -70,11 +68,9 @@ export function KAEDashboard() {
         </div>
 
         <div className="flex items-center gap-3">
-          <DateRangePicker
-            preset={preset}
-            dateRange={dateRange}
-            onPresetChange={changePreset}
-            onCustomRange={changeCustomRange}
+          <DateRangePresetPicker
+            value={dateRangeValue}
+            onChange={changeDateRange}
           />
           <button
             onClick={refresh}

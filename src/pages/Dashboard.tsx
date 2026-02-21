@@ -6,9 +6,10 @@ import {
   Play, UserCheck, Calendar, Banknote, Filter, X, Settings,
   Building2, Scissors, Zap, Trophy, Crown, Store
 } from "lucide-react";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { format, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
-import { ThisMonthFilter } from "@/components/dashboard/ThisMonthFilter";
+import { DateRangePresetPicker } from "@/components/ui/date-range-preset-picker";
+import { resolvePreset, type DateRangeValue } from "@/lib/date-presets";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useContentWithFilters } from "@/hooks/useContent";
@@ -28,7 +29,6 @@ import { TechGrid, TechParticles, TechOrb, StaggerContainer, StaggerItem } from 
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AmbassadorBadge } from "@/components/ui/ambassador-badge";
@@ -282,8 +282,9 @@ export default function Dashboard() {
   const [filterClientId, setFilterClientId] = useState<string>('all');
   const [filterCreatorId, setFilterCreatorId] = useState<string>('all');
   const [filterEditorId, setFilterEditorId] = useState<string>('all');
-  const [startDateFilter, setStartDateFilter] = useState<Date | undefined>(undefined);
-  const [endDateFilter, setEndDateFilter] = useState<Date | undefined>(undefined);
+  const [dateRangeFilter, setDateRangeFilter] = useState<DateRangeValue | null>(null);
+  const startDateFilter = dateRangeFilter?.from;
+  const endDateFilter = dateRangeFilter?.to;
   
   // Filter options
   const [clients, setClients] = useState<{id: string; name: string}[]>([]);
@@ -664,31 +665,10 @@ export default function Dashboard() {
     setFilterClientId('all');
     setFilterCreatorId('all');
     setFilterEditorId('all');
-    setStartDateFilter(undefined);
-    setEndDateFilter(undefined);
+    setDateRangeFilter(null);
   };
 
-  const setThisMonth = (active: boolean) => {
-    if (active) {
-      const now = new Date();
-      setStartDateFilter(startOfMonth(now));
-      setEndDateFilter(endOfMonth(now));
-    } else {
-      setStartDateFilter(undefined);
-      setEndDateFilter(undefined);
-    }
-  };
-
-  const isThisMonthActive = useMemo(() => {
-    if (!startDateFilter || !endDateFilter) return false;
-    const now = new Date();
-    const monthStart = startOfMonth(now);
-    const monthEnd = endOfMonth(now);
-    return startDateFilter.getTime() === monthStart.getTime() && 
-           endDateFilter.getTime() === monthEnd.getTime();
-  }, [startDateFilter, endDateFilter]);
-
-  const hasActiveFilters = filterClientId !== 'all' || filterCreatorId !== 'all' || filterEditorId !== 'all' || startDateFilter || endDateFilter;
+  const hasActiveFilters = filterClientId !== 'all' || filterCreatorId !== 'all' || filterEditorId !== 'all' || dateRangeFilter;
 
   if (loading) {
     return (
@@ -733,7 +713,11 @@ export default function Dashboard() {
           subtitle="Centro de comando y métricas"
           action={
             <div className="flex items-center gap-2">
-              <ThisMonthFilter isActive={isThisMonthActive} onToggle={setThisMonth} />
+              <DateRangePresetPicker
+                value={dateRangeFilter ?? { preset: 'last_30', ...resolvePreset('last_30') }}
+                onChange={setDateRangeFilter}
+                presets={['today', 'last_7', 'last_30', 'this_month', 'last_month', 'this_quarter', 'custom']}
+              />
               {profile?.is_ambassador && (
                 <AmbassadorBadge size="sm" variant="glow" />
               )}
@@ -791,57 +775,13 @@ export default function Dashboard() {
                     )}
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-2">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className={cn(
-                            "w-full justify-start text-left font-normal text-xs h-9",
-                            !startDateFilter && "text-muted-foreground"
-                          )}
-                        >
-                          <Calendar className="mr-1 h-3 w-3" />
-                          {startDateFilter ? format(startDateFilter, "dd/MM/yy", { locale: es }) : "Desde"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <CalendarComponent
-                          mode="single"
-                          selected={startDateFilter}
-                          onSelect={setStartDateFilter}
-                          initialFocus
-                          className="p-3 pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className={cn(
-                            "w-full justify-start text-left font-normal text-xs h-9",
-                            !endDateFilter && "text-muted-foreground"
-                          )}
-                        >
-                          <Calendar className="mr-1 h-3 w-3" />
-                          {endDateFilter ? format(endDateFilter, "dd/MM/yy", { locale: es }) : "Hasta"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <CalendarComponent
-                          mode="single"
-                          selected={endDateFilter}
-                          onSelect={setEndDateFilter}
-                          initialFocus
-                          className="p-3 pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
+                  <DateRangePresetPicker
+                    value={dateRangeFilter ?? { preset: 'last_30', ...resolvePreset('last_30') }}
+                    onChange={setDateRangeFilter}
+                    presets={['today', 'last_7', 'last_30', 'this_month', 'last_month', 'custom']}
+                    numberOfMonths={1}
+                    align="start"
+                  />
 
                   <Select value={filterClientId} onValueChange={setFilterClientId}>
                     <SelectTrigger className="w-full h-9 text-xs">
@@ -887,56 +827,13 @@ export default function Dashboard() {
             {/* Desktop: Inline filters */}
             <div className="hidden md:flex flex-wrap items-center gap-2 md:gap-3">
               <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={cn(
-                      "w-[120px] justify-start text-left font-normal text-xs h-8",
-                      !startDateFilter && "text-muted-foreground"
-                    )}
-                  >
-                    <Calendar className="mr-1 h-3 w-3" />
-                    {startDateFilter ? format(startDateFilter, "dd/MM/yy", { locale: es }) : "Desde"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <CalendarComponent
-                    mode="single"
-                    selected={startDateFilter}
-                    onSelect={setStartDateFilter}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
 
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={cn(
-                      "w-[120px] justify-start text-left font-normal text-xs h-8",
-                      !endDateFilter && "text-muted-foreground"
-                    )}
-                  >
-                    <Calendar className="mr-1 h-3 w-3" />
-                    {endDateFilter ? format(endDateFilter, "dd/MM/yy", { locale: es }) : "Hasta"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <CalendarComponent
-                    mode="single"
-                    selected={endDateFilter}
-                    onSelect={setEndDateFilter}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
+              <DateRangePresetPicker
+                value={dateRangeFilter ?? { preset: 'last_30', ...resolvePreset('last_30') }}
+                onChange={setDateRangeFilter}
+                presets={['today', 'last_7', 'last_30', 'this_month', 'last_month', 'this_quarter', 'custom']}
+                align="start"
+              />
 
               <Select value={filterClientId} onValueChange={setFilterClientId}>
                 <SelectTrigger className="w-[130px] h-8 text-xs">

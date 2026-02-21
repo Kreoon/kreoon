@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Users, UserPlus, X, ChevronRight } from 'lucide-react';
 import type { UnifiedTabProps } from '../types';
 import type { ProjectAssignment, AssignmentStatus } from '@/types/unifiedProject.types';
@@ -226,21 +226,13 @@ function AssignmentCard({
       {/* Actions */}
       {canEdit && transitions.length > 0 && (
         <div className="flex items-center gap-1 shrink-0">
-          <Select
+          <SearchableSelect
             value=""
             onValueChange={(val) => onStatusChange(val as AssignmentStatus)}
-          >
-            <SelectTrigger className="h-7 w-auto min-w-[100px] text-xs">
-              <SelectValue placeholder="Accion..." />
-            </SelectTrigger>
-            <SelectContent>
-              {transitions.map(t => (
-                <SelectItem key={t} value={t} className="text-xs">
-                  {ASSIGNMENT_STATUS_LABELS[t]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={transitions.map(t => ({ value: t, label: ASSIGNMENT_STATUS_LABELS[t] }))}
+            placeholder="Accion..."
+            triggerClassName="h-7 min-w-[100px] text-xs"
+          />
           {assignment.status !== 'paid' && assignment.status !== 'approved' && (
             <Button
               variant="ghost"

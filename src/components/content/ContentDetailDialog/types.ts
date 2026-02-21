@@ -69,7 +69,7 @@ export type ContentResource =
 
 export type ContentAction = 'view' | 'edit' | 'approve';
 
-export type TabKey = 'scripts' | 'video' | 'material' | 'general' | 'team' | 'dates' | 'payments';
+export type TabKey = 'scripts' | 'video' | 'material' | 'thumbnail' | 'general' | 'team' | 'dates' | 'payments';
 
 export interface ContentPermissions {
   can: (resource: ContentResource, action: ContentAction) => boolean;

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { AutoSaveIndicator } from '@/components/ui/autosave-indicator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -22,6 +22,7 @@ const WorkspaceTab = lazy(() => import('./tabs/WorkspaceTab'));
 const BriefTab = lazy(() => import('./tabs/BriefTab'));
 const DeliverablesTab = lazy(() => import('./tabs/DeliverablesTab'));
 const TeamTab = lazy(() => import('./tabs/TeamTab'));
+const ThumbnailTab = lazy(() => import('./tabs/ThumbnailTab'));
 const DatesTab = lazy(() => import('./tabs/DatesTab'));
 const PaymentsTab = lazy(() => import('./tabs/PaymentsTab'));
 // Map section keys to lazy components
@@ -31,6 +32,7 @@ const TAB_COMPONENTS: Record<UnifiedSectionKey, React.LazyExoticComponent<any>> 
   deliverables: DeliverablesTab,
   materials: DeliverablesTab,
   review: DeliverablesTab, // Review integrated into deliverables view
+  thumbnail: ThumbnailTab,
   team: TeamTab,
   dates: DatesTab,
   payments: PaymentsTab,
@@ -156,22 +158,13 @@ export function UnifiedProjectModal({
                     Nuevo Proyecto
                   </Badge>
                 ) : permissions.can('project.status', 'edit') ? (
-                  <Select
+                  <SearchableSelect
                     value={project?.status || ''}
                     onValueChange={handleStatusChange}
-                    disabled={loading}
-                  >
-                    <SelectTrigger className="w-auto min-w-[140px] text-sm font-medium">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statusOptions.map(state => (
-                        <SelectItem key={state.key} value={state.key}>
-                          {state.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    options={statusOptions.map(state => ({ value: state.key, label: state.label }))}
+                    placeholder="Estado..."
+                    triggerClassName="min-w-[140px] h-9 text-sm font-medium"
+                  />
                 ) : (
                   <Badge variant="secondary" className="text-sm px-3 py-1">
                     {statusOptions.find(s => s.key === project?.status)?.label || project?.status?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}

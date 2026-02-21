@@ -26,6 +26,7 @@ export type UnifiedSectionKey =
   | 'deliverables'
   | 'materials'
   | 'review'
+  | 'thumbnail'
   | 'team'
   | 'dates'
   | 'payments';
@@ -271,7 +272,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
       support: ['video_editor', 'motion_graphics', 'sound_designer'],
       reviewer: ['content_strategist', 'brand_ambassador'],
     },
-    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'team', 'dates', 'payments'],
+    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'thumbnail', 'team', 'dates', 'payments'],
   },
 
   // -------------------------------------------------------
@@ -357,7 +358,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
       support: ['sound_designer', 'colorist'],
       reviewer: ['director', 'producer'],
     },
-    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'team', 'dates', 'payments'],
+    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'thumbnail', 'team', 'dates', 'payments'],
   },
 
   // -------------------------------------------------------
@@ -443,7 +444,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
       support: ['community_manager', 'trafficker', 'seo_specialist', 'email_marketer', 'crm_specialist', 'conversion_optimizer'],
       reviewer: ['digital_strategist', 'content_strategist'],
     },
-    visibleTabs: ['workspace', 'brief', 'materials', 'review', 'team', 'dates', 'payments'],
+    visibleTabs: ['workspace', 'brief', 'materials', 'review', 'thumbnail', 'team', 'dates', 'payments'],
   },
 
   // -------------------------------------------------------
@@ -529,7 +530,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
       support: [],
       reviewer: [],
     },
-    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'team', 'dates', 'payments'],
+    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'thumbnail', 'team', 'dates', 'payments'],
   },
 
   // -------------------------------------------------------
@@ -614,7 +615,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
       support: [],
       reviewer: [],
     },
-    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'team', 'dates', 'payments'],
+    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'thumbnail', 'team', 'dates', 'payments'],
   },
 };
 
@@ -1037,6 +1038,7 @@ export const SECTION_TAB_CONFIG: Record<UnifiedSectionKey, UnifiedTabConfig> = {
   deliverables: { key: 'deliverables', label: 'Entregables', icon: 'Package' },
   materials: { key: 'materials', label: 'Material', icon: 'FolderOpen' },
   review: { key: 'review', label: 'Revision', icon: 'CheckSquare' },
+  thumbnail: { key: 'thumbnail', label: 'Miniatura', icon: 'Image' },
   team: { key: 'team', label: 'Equipo', icon: 'Users' },
   dates: { key: 'dates', label: 'Fechas', icon: 'Calendar' },
   payments: { key: 'payments', label: 'Finanzas', icon: 'DollarSign' },

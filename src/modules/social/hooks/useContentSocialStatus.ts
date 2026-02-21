@@ -7,15 +7,18 @@ export interface ContentSocialStatus {
   hasScheduled: boolean;
 }
 
+/** Record-based return type (JSON-safe, survives React Query dehydration). */
+export type ContentSocialStatusMap = Record<string, ContentSocialStatus>;
+
 /**
  * Batch-fetches social publishing status for a list of content IDs.
- * Returns a Map<contentId, { count, hasPublished, hasScheduled }>.
+ * Returns a plain object keyed by contentId (JSON-safe for RQ cache persistence).
  */
 export function useContentSocialStatus(contentIds: string[]) {
   return useQuery({
     queryKey: ['content-social-status', contentIds.sort().join(',')],
-    queryFn: async (): Promise<Map<string, ContentSocialStatus>> => {
-      if (contentIds.length === 0) return new Map();
+    queryFn: async (): Promise<ContentSocialStatusMap> => {
+      if (contentIds.length === 0) return {};
 
       // Query scheduled_posts for the given content IDs
       const { data, error } = await supabase
@@ -26,14 +29,14 @@ export function useContentSocialStatus(contentIds: string[]) {
 
       if (error) {
         console.error('Error fetching content social status:', error);
-        return new Map();
+        return {};
       }
 
       // Group by content_id
-      const statusMap = new Map<string, ContentSocialStatus>();
+      const statusMap: ContentSocialStatusMap = {};
       for (const row of data || []) {
         if (!row.content_id) continue;
-        const existing = statusMap.get(row.content_id) || {
+        const existing = statusMap[row.content_id] || {
           count: 0,
           hasPublished: false,
           hasScheduled: false,
@@ -41,7 +44,7 @@ export function useContentSocialStatus(contentIds: string[]) {
         existing.count++;
         if (row.status === 'published') existing.hasPublished = true;
         if (row.status === 'scheduled') existing.hasScheduled = true;
-        statusMap.set(row.content_id, existing);
+        statusMap[row.content_id] = existing;
       }
 
       return statusMap;

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { AutoSaveIndicator } from '@/components/ui/autosave-indicator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -43,12 +43,14 @@ const TeamTab = lazy(() => import('./tabs/TeamTab').then(m => ({ default: m.Team
 const DatesTab = lazy(() => import('./tabs/DatesTab').then(m => ({ default: m.DatesTab })));
 const PaymentsTab = lazy(() => import('./tabs/PaymentsTab').then(m => ({ default: m.PaymentsTab })));
 const MaterialTab = lazy(() => import('./tabs/MaterialTab').then(m => ({ default: m.MaterialTab })));
+const ThumbnailTab = lazy(() => import('./tabs/ThumbnailTab'));
 
 // Map tab keys to block keys
 const TAB_TO_BLOCK: Record<string, BlockKey> = {
   scripts: 'script',
   video: 'video',
   material: 'material',
+  thumbnail: 'video',
   general: 'script',
   team: 'team',
   dates: 'dates',
@@ -153,7 +155,7 @@ export function ContentDetailDialog({
   // Combine permissions with block config for effective visible tabs
   const effectiveVisibleTabs = useMemo(() => {
     if (isCreateMode) {
-      return ['scripts', 'general', 'team', 'dates', 'payments'] as const;
+      return ['scripts', 'general', 'team', 'dates', 'payments'] as const; // No thumbnail in create mode
     }
     return permissions.visibleTabs.filter(tabKey => {
       const blockKey = TAB_TO_BLOCK[tabKey];
@@ -224,6 +226,7 @@ export function ContentDetailDialog({
     scripts: { label: 'Guion', icon: '📝', component: <ScriptsTab {...tabProps} selectedProduct={selectedProduct} onProductChange={handleProductChange} /> },
     video: { label: 'Video', icon: '🎬', component: <VideoTab {...tabProps} selectedProduct={selectedProduct} /> },
     material: { label: 'Material', icon: '📁', component: <MaterialTab {...tabProps} /> },
+    thumbnail: { label: 'Miniatura', icon: '🖼️', component: <ThumbnailTab {...tabProps} selectedProduct={selectedProduct} /> },
     general: { label: 'General', icon: '⚙️', component: <GeneralTab {...tabProps} selectedProduct={selectedProduct} onProductChange={handleProductChange} /> },
     team: { label: 'Equipo', icon: '👥', component: <TeamTab {...tabProps} /> },
     dates: { label: 'Fechas', icon: '📅', component: <DatesTab {...tabProps} /> },
@@ -271,22 +274,13 @@ export function ContentDetailDialog({
                     Nuevo Proyecto
                   </Badge>
                 ) : effectivePermissions.can('content.status', 'edit') ? (
-                  <Select 
-                    value={viewHooks.currentStatus || content?.status} 
+                  <SearchableSelect
+                    value={viewHooks.currentStatus || content?.status || ''}
                     onValueChange={(v) => viewHooks.handleStatusChange(v as ContentStatus)}
-                    disabled={loading}
-                  >
-                    <SelectTrigger className={`w-auto min-w-[140px] text-sm font-medium ${STATUS_COLORS[viewHooks.currentStatus || content?.status || 'draft']}`}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STATUS_ORDER.map(status => (
-                        <SelectItem key={status} value={status}>
-                          {STATUS_LABELS[status]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    options={STATUS_ORDER.map(status => ({ value: status, label: STATUS_LABELS[status] }))}
+                    placeholder="Estado..."
+                    triggerClassName={`min-w-[140px] h-9 text-sm font-medium ${STATUS_COLORS[viewHooks.currentStatus || content?.status || 'draft']}`}
+                  />
                 ) : (
                   <Badge className={`text-sm px-3 py-1 ${STATUS_COLORS[content?.status || 'draft']}`}>
                     {STATUS_LABELS[content?.status || 'draft']}
@@ -381,24 +375,21 @@ export function ContentDetailDialog({
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                     <span className="text-xs font-medium text-muted-foreground">Cliente</span>
                   </div>
-                  <Select value={formData.client_id || ''} onValueChange={handleClientChange}>
-                    <SelectTrigger className="border-0 bg-transparent h-8 min-w-[140px] text-sm focus:ring-0">
-                      <SelectValue placeholder="Seleccionar..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clients.map(c => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.is_internal_brand ? (
-                            <span className="text-amber-600 dark:text-amber-400 font-medium">
-                              🏅 {c.name} (Marca Interna)
-                            </span>
-                          ) : (
-                            c.name
-                          )}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="px-1">
+                    <SearchableSelect
+                      value={formData.client_id || ''}
+                      onValueChange={handleClientChange}
+                      options={[
+                        { value: '', label: 'Sin cliente' },
+                        ...clients.map(c => ({
+                          value: c.id,
+                          label: c.is_internal_brand ? `🏅 ${c.name} (Marca Interna)` : c.name,
+                        })),
+                      ]}
+                      placeholder="Seleccionar..."
+                      triggerClassName="border-0 bg-transparent h-8 min-w-[140px] text-sm"
+                    />
+                  </div>
                 </div>
               ) : getClientName() ? (
                 <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full">
@@ -449,7 +440,7 @@ export function ContentDetailDialog({
                     value={formData.start_date ? format(new Date(formData.start_date), 'yyyy-MM-dd') : ''}
                     onChange={(e) => setFormData((prev: ContentFormData) => ({ 
                       ...prev, 
-                      start_date: e.target.value ? new Date(e.target.value).toISOString() : null 
+                      start_date: e.target.value || null
                     }))}
                     className="border-0 bg-transparent h-8 w-auto text-sm focus-visible:ring-0"
                   />
@@ -468,30 +459,21 @@ export function ContentDetailDialog({
                     <Zap className="h-4 w-4 text-muted-foreground" />
                     <span className="text-xs font-medium text-muted-foreground">Fase Esfera</span>
                   </div>
-                  <Select
-                    value={formData.sphere_phase || ''}
-                    onValueChange={(v) => setFormData((prev: ContentFormData) => ({ 
-                      ...prev, 
-                      sphere_phase: v as 'engage' | 'solution' | 'remarketing' | 'fidelize' | null
-                    }))}
-                  >
-                    <SelectTrigger className="border-0 bg-transparent h-8 w-auto min-w-[130px] text-sm focus-visible:ring-0">
-                      <SelectValue placeholder="Seleccionar..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SPHERE_PHASES_CONFIG.map(phase => {
-                        const Icon = phase.icon;
-                        return (
-                          <SelectItem key={phase.value} value={phase.value}>
-                            <div className="flex items-center gap-2">
-                              <Icon className={cn("h-4 w-4", phase.color)} />
-                              <span>{phase.label}</span>
-                            </div>
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
+                  <div className="px-1">
+                    <SearchableSelect
+                      value={formData.sphere_phase || ''}
+                      onValueChange={(v) => setFormData((prev: ContentFormData) => ({
+                        ...prev,
+                        sphere_phase: v as 'engage' | 'solution' | 'remarketing' | 'fidelize' | '' | null
+                      }))}
+                      options={[
+                        { value: '', label: 'Sin fase' },
+                        ...SPHERE_PHASES_CONFIG.map(phase => ({ value: phase.value, label: phase.label })),
+                      ]}
+                      placeholder="Seleccionar..."
+                      triggerClassName="border-0 bg-transparent h-8 min-w-[130px] text-sm"
+                    />
+                  </div>
                 </div>
               ) : (() => {
                 const phase = SPHERE_PHASES_CONFIG.find(p => p.value === formData.sphere_phase);

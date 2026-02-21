@@ -5,9 +5,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { subDays, startOfDay, endOfDay, format } from 'date-fns';
+import { resolvePreset, type DateRangeValue } from '@/lib/date-presets';
 import type {
-  DateRange,
-  DatePreset,
   KPIData,
   FunnelStage,
   SourceMetrics,
@@ -20,20 +19,11 @@ import type {
 
 const FUNNEL_COLORS = ['#8b5cf6', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b'];
 
-function getPresetRange(preset: DatePreset): DateRange {
-  const to = new Date();
-  switch (preset) {
-    case '7d':  return { from: subDays(to, 7), to };
-    case '14d': return { from: subDays(to, 14), to };
-    case '30d': return { from: subDays(to, 30), to };
-    case '90d': return { from: subDays(to, 90), to };
-    default:    return { from: subDays(to, 30), to };
-  }
-}
-
 export function useAnalyticsDashboard() {
-  const [preset, setPreset] = useState<DatePreset>('30d');
-  const [dateRange, setDateRange] = useState<DateRange>(getPresetRange('30d'));
+  const [dateRangeValue, setDateRangeValue] = useState<DateRangeValue>(() => {
+    const { from, to } = resolvePreset('last_30');
+    return { preset: 'last_30', from, to };
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,27 +31,19 @@ export function useAnalyticsDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
 
   // Computed date strings
-  const fromISO = useMemo(() => startOfDay(dateRange.from).toISOString(), [dateRange.from]);
-  const toISO = useMemo(() => endOfDay(dateRange.to).toISOString(), [dateRange.to]);
+  const fromISO = useMemo(() => startOfDay(dateRangeValue.from).toISOString(), [dateRangeValue.from]);
+  const toISO = useMemo(() => endOfDay(dateRangeValue.to).toISOString(), [dateRangeValue.to]);
 
   // Previous period for comparison
   const daysDiff = useMemo(() => {
-    return Math.round((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24));
-  }, [dateRange]);
+    return Math.round((dateRangeValue.to.getTime() - dateRangeValue.from.getTime()) / (1000 * 60 * 60 * 24));
+  }, [dateRangeValue]);
 
-  const prevFromISO = useMemo(() => startOfDay(subDays(dateRange.from, daysDiff)).toISOString(), [dateRange.from, daysDiff]);
-  const prevToISO = useMemo(() => endOfDay(subDays(dateRange.from, 1)).toISOString(), [dateRange.from]);
+  const prevFromISO = useMemo(() => startOfDay(subDays(dateRangeValue.from, daysDiff)).toISOString(), [dateRangeValue.from, daysDiff]);
+  const prevToISO = useMemo(() => endOfDay(subDays(dateRangeValue.from, 1)).toISOString(), [dateRangeValue.from]);
 
-  const changePreset = useCallback((p: DatePreset) => {
-    setPreset(p);
-    if (p !== 'custom') {
-      setDateRange(getPresetRange(p));
-    }
-  }, []);
-
-  const changeCustomRange = useCallback((range: DateRange) => {
-    setPreset('custom');
-    setDateRange(range);
+  const changeDateRange = useCallback((v: DateRangeValue) => {
+    setDateRangeValue(v);
   }, []);
 
   // ── Main data loader ──
@@ -336,7 +318,7 @@ export function useAnalyticsDashboard() {
       const dailyMap = new Map<string, DailyMetrics>();
 
       // Initialize all days in range
-      for (let d = new Date(dateRange.from); d <= dateRange.to; d = new Date(d.getTime() + 86400000)) {
+      for (let d = new Date(dateRangeValue.from); d <= dateRangeValue.to; d = new Date(d.getTime() + 86400000)) {
         const dateKey = format(d, 'yyyy-MM-dd');
         dailyMap.set(dateKey, { date: dateKey, visitors: 0, signups: 0, trials: 0, subscriptions: 0, revenue: 0 });
       }
@@ -372,7 +354,7 @@ export function useAnalyticsDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [fromISO, toISO, prevFromISO, prevToISO, dateRange]);
+  }, [fromISO, toISO, prevFromISO, prevToISO, dateRangeValue]);
 
   useEffect(() => {
     loadData();
@@ -382,10 +364,8 @@ export function useAnalyticsDashboard() {
     data,
     loading,
     error,
-    dateRange,
-    preset,
-    changePreset,
-    changeCustomRange,
+    dateRangeValue,
+    changeDateRange,
     refresh: loadData,
   };
 }

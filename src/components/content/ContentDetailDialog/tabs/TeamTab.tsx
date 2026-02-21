@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { CollaboratorSelector } from '@/components/content/CollaboratorSelector';
 import { FieldRow } from '../components/SectionCard';
 import { EditableField } from '../components/PermissionsGate';
@@ -160,34 +160,20 @@ export function TeamTab({
             editMode={effectiveEditMode}
             readOnly={readOnly}
             editComponent={
-              <Select 
-                value={formData.creator_id || ''} 
+              <SearchableSelect
+                value={formData.creator_id || ''}
                 onValueChange={(v) => setFormData(prev => ({ ...prev, creator_id: v }))}
-              >
-                <SelectTrigger className={!currentCreatorValid ? 'border-destructive' : ''}>
-                  <SelectValue placeholder={isInternalOrgContent ? "Asignar embajador" : "Asignar creador"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {ambassadorsLoading && isInternalOrgContent ? (
-                    <div className="p-2 text-sm text-muted-foreground text-center">
-                      Cargando embajadores...
-                    </div>
-                  ) : availableCreators.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground text-center">
-                      {isInternalOrgContent 
-                        ? "No hay embajadores disponibles. Asigna la insignia de Embajador a usuarios primero." 
-                        : "No hay creadores disponibles"}
-                    </div>
-                  ) : (
-                    availableCreators.map(c => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {isInternalOrgContent && <Medal className="h-3 w-3 inline mr-2 text-amber-500" />}
-                        {c.name}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: '', label: isInternalOrgContent ? 'Sin embajador' : 'Sin creador' },
+                  ...availableCreators.map(c => ({
+                    value: c.id,
+                    label: isInternalOrgContent ? `🏅 ${c.name}` : c.name,
+                  })),
+                ]}
+                placeholder={isInternalOrgContent ? "Asignar embajador" : "Asignar creador"}
+                emptyMessage={isInternalOrgContent ? "No hay embajadores disponibles" : "No hay creadores disponibles"}
+                triggerClassName={`w-full h-9 ${!currentCreatorValid ? 'border-destructive' : ''}`}
+              />
             }
             viewComponent={
               <div className="flex items-center gap-2">
@@ -211,34 +197,20 @@ export function TeamTab({
             editMode={effectiveEditMode}
             readOnly={readOnly}
             editComponent={
-              <Select 
-                value={formData.editor_id || ''} 
+              <SearchableSelect
+                value={formData.editor_id || ''}
                 onValueChange={(v) => setFormData(prev => ({ ...prev, editor_id: v }))}
-              >
-                <SelectTrigger className={!currentEditorValid ? 'border-destructive' : ''}>
-                  <SelectValue placeholder={isInternalOrgContent ? "Asignar editor embajador" : "Asignar editor"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {ambassadorsLoading && isInternalOrgContent ? (
-                    <div className="p-2 text-sm text-muted-foreground text-center">
-                      Cargando embajadores...
-                    </div>
-                  ) : availableEditors.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground text-center">
-                      {isInternalOrgContent 
-                        ? "No hay embajadores disponibles" 
-                        : "No hay editores disponibles"}
-                    </div>
-                  ) : (
-                    availableEditors.map(e => (
-                      <SelectItem key={e.id} value={e.id}>
-                        {isInternalOrgContent && <Medal className="h-3 w-3 inline mr-2 text-amber-500" />}
-                        {e.name}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: '', label: isInternalOrgContent ? 'Sin editor embajador' : 'Sin editor' },
+                  ...availableEditors.map(e => ({
+                    value: e.id,
+                    label: isInternalOrgContent ? `🏅 ${e.name}` : e.name,
+                  })),
+                ]}
+                placeholder={isInternalOrgContent ? "Asignar editor embajador" : "Asignar editor"}
+                emptyMessage={isInternalOrgContent ? "No hay embajadores disponibles" : "No hay editores disponibles"}
+                triggerClassName={`w-full h-9 ${!currentEditorValid ? 'border-destructive' : ''}`}
+              />
             }
             viewComponent={
               <div className="flex items-center gap-2">
@@ -262,12 +234,17 @@ export function TeamTab({
             editMode={effectiveEditMode}
             readOnly={readOnly}
             editComponent={
-              <Select value={formData.strategist_id || ''} onValueChange={(v) => setFormData(prev => ({ ...prev, strategist_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="Asignar estratega" /></SelectTrigger>
-                <SelectContent>
-                  {strategists.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                value={formData.strategist_id || ''}
+                onValueChange={(v) => setFormData(prev => ({ ...prev, strategist_id: v }))}
+                options={[
+                  { value: '', label: 'Sin estratega' },
+                  ...strategists.map(s => ({ value: s.id, label: s.name })),
+                ]}
+                placeholder="Asignar estratega"
+                emptyMessage="No hay estrategas disponibles"
+                triggerClassName="w-full h-9"
+              />
             }
             viewComponent={<p className="font-medium">{getStrategistName() || '—'}</p>}
           />

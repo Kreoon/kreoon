@@ -1,12 +1,13 @@
+import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { FieldRow } from '../components/SectionCard';
 import { EditableField } from '../components/PermissionsGate';
 import { TabProps } from '../types';
-import { Calendar, Clock, CheckCircle, AlertCircle, Play, Edit3, Eye, Send, CreditCard, Sparkles } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, AlertCircle, Play, Edit3, Eye, Send, CreditCard, Sparkles, User } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
-import { STATUS_LABELS } from '@/types/database';
+import { supabase } from '@/integrations/supabase/client';
 
 interface StatusTimestamp {
   status: string;
@@ -32,6 +33,20 @@ const STATUS_TIMESTAMPS: StatusTimestamp[] = [
   { status: 'paid', label: 'Pagado', field: 'paid_at_v2', icon: CreditCard, color: 'text-emerald-600' },
 ];
 
+// Map status to its config for lookup
+const STATUS_CONFIG = Object.fromEntries(
+  STATUS_TIMESTAMPS.map(st => [st.status, st])
+);
+
+interface HistoryRecord {
+  id: string;
+  old_status: string | null;
+  new_status: string;
+  user_id: string | null;
+  created_at: string;
+  userName?: string;
+}
+
 export function DatesTab({
   content,
   formData,
@@ -42,6 +57,49 @@ export function DatesTab({
 }: TabProps) {
   const canEditDates = permissions.can('content.dates', 'edit') && !readOnly;
   const effectiveEditMode = editMode && !readOnly;
+  const [historyRecords, setHistoryRecords] = useState<HistoryRecord[]>([]);
+
+  // Fetch content_history with user profiles
+  useEffect(() => {
+    if (!content?.id) return;
+
+    const fetchHistory = async () => {
+      const { data: history } = await supabase
+        .from('content_history')
+        .select('id, old_status, new_status, user_id, created_at')
+        .eq('content_id', content.id)
+        .order('created_at', { ascending: true });
+
+      if (!history?.length) {
+        setHistoryRecords([]);
+        return;
+      }
+
+      // Collect unique user IDs
+      const userIds = [...new Set(history.map(h => h.user_id).filter(Boolean))] as string[];
+
+      // Fetch profiles for those user IDs
+      let profileMap: Record<string, string> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', userIds);
+        if (profiles) {
+          profileMap = Object.fromEntries(profiles.map(p => [p.id, p.full_name || 'Usuario']));
+        }
+      }
+
+      setHistoryRecords(
+        history.map(h => ({
+          ...h,
+          userName: h.user_id ? profileMap[h.user_id] || 'Usuario' : undefined,
+        }))
+      );
+    };
+
+    fetchHistory();
+  }, [content?.id]);
 
   const formatDate = (date: string | null | undefined) => {
     if (!date) return 'Sin fecha';
@@ -58,30 +116,57 @@ export function DatesTab({
     return formatDistanceToNow(new Date(date), { locale: es, addSuffix: true });
   };
 
-  // Get status timestamps from content
-  const getStatusTimestamps = () => {
-    return STATUS_TIMESTAMPS.map(st => ({
-      ...st,
-      timestamp: (content as any)?.[st.field] || null
-    })).filter(st => st.timestamp);
+  // Build timeline from content_history records (preferred) with fallback to timestamp fields
+  const getTimelineEntries = () => {
+    if (historyRecords.length > 0) {
+      // Use content_history records — they have user info
+      return historyRecords.map(record => {
+        const config = STATUS_CONFIG[record.new_status];
+        return {
+          status: record.new_status,
+          label: config?.label || record.new_status.replace(/_/g, ' '),
+          icon: config?.icon || Edit3,
+          color: config?.color || 'text-gray-500',
+          timestamp: record.created_at,
+          userName: record.userName,
+          oldStatus: record.old_status,
+        };
+      });
+    }
+
+    // Fallback: use timestamp fields from content (no user info)
+    return STATUS_TIMESTAMPS
+      .map(st => ({
+        status: st.status,
+        label: st.label,
+        icon: st.icon,
+        color: st.color,
+        timestamp: (content as any)?.[st.field] || null,
+        userName: undefined as string | undefined,
+        oldStatus: null as string | null,
+      }))
+      .filter(st => st.timestamp);
   };
 
-  const statusTimestamps = getStatusTimestamps();
+  const timelineEntries = getTimelineEntries();
 
-  // Calculate time between states
+  // Calculate time between two timestamps
+  const calculateDurationBetween = (start: string, end: string) => {
+    const diffMs = new Date(end).getTime() - new Date(start).getTime();
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const days = Math.floor(hours / 24);
+    if (days > 0) return `${days}d ${hours % 24}h`;
+    const minutes = Math.floor(diffMs / (1000 * 60));
+    if (hours > 0) return `${hours}h ${minutes % 60}m`;
+    return `${minutes}m`;
+  };
+
+  // Calculate time between states using content fields
   const calculateDuration = (startField: string, endField: string) => {
     const startDate = (content as any)?.[startField];
     const endDate = (content as any)?.[endField];
     if (!startDate || !endDate) return null;
-    
-    const diffMs = new Date(endDate).getTime() - new Date(startDate).getTime();
-    const hours = Math.floor(diffMs / (1000 * 60 * 60));
-    const days = Math.floor(hours / 24);
-    
-    if (days > 0) {
-      return `${days}d ${hours % 24}h`;
-    }
-    return `${hours}h`;
+    return calculateDurationBetween(startDate, endDate);
   };
 
   return (
@@ -113,37 +198,37 @@ export function DatesTab({
       </div>
 
       {/* Status Timeline */}
-      {statusTimestamps.length > 0 && (
+      {timelineEntries.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
             <Clock className="h-4 w-4" />
             Historial de Estados
           </h3>
-          
+
           <div className="relative">
             {/* Timeline line */}
             <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
-            
+
             <div className="space-y-3">
-              {statusTimestamps.map((st, index) => {
-                const Icon = st.icon;
-                const isLast = index === statusTimestamps.length - 1;
-                const prevTimestamp = index > 0 ? statusTimestamps[index - 1] : null;
-                const duration = prevTimestamp 
-                  ? calculateDuration(prevTimestamp.field, st.field)
+              {timelineEntries.map((entry, index) => {
+                const Icon = entry.icon;
+                const isLast = index === timelineEntries.length - 1;
+                const prevEntry = index > 0 ? timelineEntries[index - 1] : null;
+                const duration = prevEntry
+                  ? calculateDurationBetween(prevEntry.timestamp, entry.timestamp)
                   : null;
 
                 return (
-                  <div key={st.field} className="relative flex items-start gap-3 pl-1">
+                  <div key={`${entry.status}-${index}`} className="relative flex items-start gap-3 pl-1">
                     {/* Timeline dot */}
                     <div className={`relative z-10 flex items-center justify-center w-7 h-7 rounded-full bg-background border-2 ${isLast ? 'border-primary' : 'border-border'}`}>
-                      <Icon className={`h-3.5 w-3.5 ${st.color}`} />
+                      <Icon className={`h-3.5 w-3.5 ${entry.color}`} />
                     </div>
-                    
+
                     <div className="flex-1 min-w-0 pb-3">
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge variant={isLast ? 'default' : 'secondary'} className="text-xs">
-                          {st.label}
+                          {entry.label}
                         </Badge>
                         {duration && (
                           <span className="text-xs text-muted-foreground">
@@ -151,14 +236,23 @@ export function DatesTab({
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <span className="text-sm text-muted-foreground">
-                          {formatDateShort(st.timestamp)}
+                          {formatDateShort(entry.timestamp)}
                         </span>
                         <span className="text-xs text-muted-foreground/60">
-                          ({getRelativeTime(st.timestamp)})
+                          ({getRelativeTime(entry.timestamp)})
                         </span>
                       </div>
+                      {/* User who made the change */}
+                      {entry.userName && (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <User className="h-3 w-3 text-muted-foreground/70" />
+                          <span className="text-xs text-muted-foreground">
+                            {entry.userName}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -179,7 +273,7 @@ export function DatesTab({
               </p>
             </div>
           )}
-          
+
           {content?.recorded_at && (content as any)?.delivered_at && (
             <div className="bg-muted/50 rounded-lg p-3 text-center">
               <p className="text-xs text-muted-foreground mb-1">Tiempo de Edición</p>

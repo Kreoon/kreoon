@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  FileText, Download, Plus, Trash2, Calendar, BarChart3, Loader2,
+  FileText, Download, Plus, Trash2, BarChart3, Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,8 @@ import {
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { useAdReports } from '../../hooks/useAdReports';
+import { DateRangePresetPicker } from '@/components/ui/date-range-preset-picker';
+import { useDateRangePreset } from '@/hooks/useDateRangePreset';
 import type { ReportConfig } from '../../types/marketing.types';
 import { toast } from 'sonner';
 
@@ -21,10 +23,7 @@ export function ReportsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [reportName, setReportName] = useState('');
   const [reportType, setReportType] = useState('campaign');
-  const [dateFrom, setDateFrom] = useState(
-    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-  );
-  const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
+  const dateRange = useDateRangePreset({ defaultPreset: 'last_30' });
 
   const handleGenerate = async () => {
     if (!reportName.trim()) {
@@ -35,7 +34,7 @@ export function ReportsPage() {
       await generateReport.mutateAsync({
         name: reportName,
         report_type: reportType,
-        config: { date_from: dateFrom, date_to: dateTo } as ReportConfig,
+        config: { date_from: dateRange.fromDateStr, date_to: dateRange.toDateStr } as ReportConfig,
       });
       toast.success('Reporte generado');
       setShowCreate(false);
@@ -118,15 +117,14 @@ export function ReportsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-xs">Desde</Label>
-                  <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Hasta</Label>
-                  <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
-                </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Rango de fechas</Label>
+                <DateRangePresetPicker
+                  value={dateRange.value}
+                  onChange={dateRange.setValue}
+                  align="start"
+                  presets={['last_7', 'last_15', 'last_30', 'last_90', 'this_month', 'last_month', 'custom']}
+                />
               </div>
               <Button onClick={handleGenerate} disabled={generateReport.isPending} className="w-full">
                 {generateReport.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <BarChart3 className="w-4 h-4 mr-2" />}

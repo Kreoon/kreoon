@@ -1,15 +1,15 @@
 import { useState, useMemo } from 'react';
 import {
   DollarSign, Eye, MousePointerClick, Target, TrendingUp,
-  RefreshCw, Sparkles, BarChart3, Calendar,
+  RefreshCw, Sparkles, BarChart3,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { DateRangePresetPicker } from '@/components/ui/date-range-preset-picker';
+import { useDateRangePreset } from '@/hooks/useDateRangePreset';
 import { useAdMetrics } from '../../hooks/useAdMetrics';
 import { useAdCampaigns } from '../../hooks/useAdCampaigns';
 import { MetricCard } from '../common/MetricCard';
@@ -32,14 +32,9 @@ function fmtCurrency(n: number): string {
 }
 
 export function MarketingDashboard() {
-  const [dateFrom, setDateFrom] = useState(
-    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-  );
-  const [dateTo, setDateTo] = useState(
-    new Date().toISOString().split('T')[0]
-  );
+  const dateRange = useDateRangePreset({ defaultPreset: 'last_30' });
 
-  const { dashboard, insights, isDashboardLoading, syncAllMetrics, generateInsights } = useAdMetrics({ from: dateFrom, to: dateTo });
+  const { dashboard, insights, isDashboardLoading, syncAllMetrics, generateInsights } = useAdMetrics({ from: dateRange.fromDateStr, to: dateRange.toDateStr });
   const { campaigns } = useAdCampaigns();
 
   const handleSync = async () => {
@@ -78,23 +73,11 @@ export function MarketingDashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex gap-2 items-center">
-            <Input
-              type="date"
-              value={dateFrom}
-              onChange={e => setDateFrom(e.target.value)}
-              className="w-36 text-xs"
-            />
-            <span className="text-xs text-muted-foreground">a</span>
-            <Input
-              type="date"
-              value={dateTo}
-              onChange={e => setDateTo(e.target.value)}
-              className="w-36 text-xs"
-            />
-          </div>
-        </div>
+        <DateRangePresetPicker
+          value={dateRange.value}
+          onChange={dateRange.setValue}
+          align="start"
+        />
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={handleAIInsights} disabled={generateInsights.isPending}>
             <Sparkles className={cn('w-3.5 h-3.5 mr-1', generateInsights.isPending && 'animate-spin')} />

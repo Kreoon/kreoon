@@ -2,17 +2,15 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Activity, 
-  TrendingUp, 
+import {
+  Activity,
+  TrendingUp,
   TrendingDown,
-  DollarSign, 
-  Zap, 
-  Clock, 
-  CheckCircle2, 
+  DollarSign,
+  Zap,
+  Clock,
+  CheckCircle2,
   XCircle,
   BarChart3,
   PieChart,
@@ -24,6 +22,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { DateRangePresetPicker } from '@/components/ui/date-range-preset-picker';
+import { useDateRangePreset } from '@/hooks/useDateRangePreset';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPie, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
 
 interface UsageStats {
@@ -74,7 +74,7 @@ const MODULE_LABELS: Record<string, string> = {
 
 export function AIUsageDashboard({ organizationId }: { organizationId: string }) {
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState('7');
+  const dateRange = useDateRangePreset({ defaultPreset: 'last_7' });
   const [stats, setStats] = useState<UsageStats | null>(null);
   const [moduleUsage, setModuleUsage] = useState<ModuleUsage[]>([]);
   const [dailyUsage, setDailyUsage] = useState<DailyUsage[]>([]);
@@ -82,14 +82,13 @@ export function AIUsageDashboard({ organizationId }: { organizationId: string })
 
   useEffect(() => {
     fetchUsageData();
-  }, [organizationId, period]);
+  }, [organizationId, dateRange.fromISO, dateRange.toISO]);
 
   const fetchUsageData = async () => {
     setLoading(true);
     try {
-      const days = parseInt(period);
-      const startDate = startOfDay(subDays(new Date(), days)).toISOString();
-      const endDate = endOfDay(new Date()).toISOString();
+      const startDate = dateRange.fromISO;
+      const endDate = dateRange.toISO;
 
       // Fetch usage logs
       const { data: logs } = await supabase
@@ -211,17 +210,11 @@ export function AIUsageDashboard({ organizationId }: { organizationId: string })
             Monitorea el consumo y costos de IA en tu organización
           </p>
         </div>
-        <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="7">Últimos 7 días</SelectItem>
-            <SelectItem value="14">Últimos 14 días</SelectItem>
-            <SelectItem value="30">Últimos 30 días</SelectItem>
-            <SelectItem value="90">Últimos 90 días</SelectItem>
-          </SelectContent>
-        </Select>
+        <DateRangePresetPicker
+          value={dateRange.value}
+          onChange={dateRange.setValue}
+          presets={['last_7', 'last_15', 'last_30', 'last_90', 'this_month', 'custom']}
+        />
       </div>
 
       {/* KPI Cards */}

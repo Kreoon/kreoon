@@ -3,17 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { BunnyMultiVideoUploader } from '@/components/content/BunnyMultiVideoUploader';
 import { AutoPauseVideo } from '@/components/content/AutoPauseVideo';
-import { ThumbnailSelector } from '@/components/content/ThumbnailSelector';
-import { AIThumbnailGenerator } from '@/components/content/AIThumbnailGenerator';
 import { CommentsSection } from '@/components/content/CommentsSection';
 import { PermissionsGate, EditableField } from '../components/PermissionsGate';
 import { SectionCard } from '../components/SectionCard';
 import { TabProps } from '../types';
 import { useToast } from '@/hooks/use-toast';
-import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { supabase } from '@/integrations/supabase/client';
 import { markLocalUpdate } from '@/hooks/useContent';
 import { Video, Share2, Lock, ExternalLink } from 'lucide-react';
@@ -33,7 +30,6 @@ export function VideoTab({
   selectedProduct,
   readOnly = false,
 }: VideoTabProps) {
-  const { currentOrgId } = useOrgOwner();
   // Combine permissions with readOnly prop for effective edit capability
   const canEditVideo = permissions.can('content.video', 'edit') && !readOnly;
   const effectiveEditMode = editMode && !readOnly;
@@ -66,34 +62,6 @@ export function VideoTab({
         </div>
       </PermissionsGate>
 
-      {/* Thumbnail Section */}
-      <PermissionsGate permissions={permissions} resource="content.video.thumbnail" action="edit" showLockOnReadOnly={false}>
-        <div className="space-y-4">
-          <AIThumbnailGenerator
-            contentId={content?.id || ''}
-            organizationId={currentOrgId || ''}
-            currentThumbnail={content?.thumbnail_url}
-            scriptContext={{
-              script: content?.script,
-              salesAngle: content?.sales_angle,
-              idealAvatar: selectedProduct?.ideal_avatar,
-              hooksCount: formData.hooks_count,
-              productName: selectedProduct?.name || content?.product,
-              clientName: content?.client?.name,
-            }}
-            onThumbnailGenerated={() => onUpdate?.()}
-          />
-          <SectionCard title="Subir Miniatura Manual" iconEmoji="🖼️">
-            <ThumbnailSelector
-              contentId={content?.id || ''}
-              currentThumbnail={content?.thumbnail_url}
-              onThumbnailChange={() => onUpdate?.()}
-              disabled={false}
-            />
-          </SectionCard>
-        </div>
-      </PermissionsGate>
-
       {/* Read-only notice */}
       {(!canEditVideo || readOnly) && effectiveEditMode && (
         <div className="flex items-center gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg text-sm">
@@ -113,19 +81,16 @@ export function VideoTab({
             {effectiveEditMode && canEditVideo && (
               <div className="flex items-center gap-2">
                 <Label className="text-sm text-muted-foreground">Cantidad:</Label>
-                <Select
+                <SearchableSelect
                   value={String(formData.hooks_count)}
                   onValueChange={(v) => {
                     const newCount = parseInt(v);
                     const newUrls = Array.from({ length: newCount }, (_, i) => formData.video_urls[i] || '');
                     setFormData(prev => ({ ...prev, hooks_count: newCount, video_urls: newUrls }));
                   }}
-                >
-                  <SelectTrigger className="w-20"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {[1,2,3,4,5,6,7,8,9,10].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                  options={[1,2,3,4,5,6,7,8,9,10].map(n => ({ value: String(n), label: String(n) }))}
+                  triggerClassName="w-20 h-9"
+                />
               </div>
             )}
           </div>

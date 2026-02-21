@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Filter, X, Calendar, DollarSign } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Filter, X, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +17,9 @@ import {
 } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { DateRangePresetPicker } from '@/components/ui/date-range-preset-picker';
+import { resolvePreset, type DateRangeValue, type DateRangePresetKey } from '@/lib/date-presets';
+import { format } from 'date-fns';
 import type {
   TransactionFilters as TFilters,
   TransactionType,
@@ -57,6 +60,27 @@ export function TransactionFilters({
   className,
 }: TransactionFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
+
+  // Derive DateRangeValue from filter strings
+  const dateRangeValue = useMemo<DateRangeValue>(() => {
+    if (filters.dateFrom && filters.dateTo) {
+      return {
+        preset: 'custom' as DateRangePresetKey,
+        from: new Date(filters.dateFrom + 'T00:00:00'),
+        to: new Date(filters.dateTo + 'T23:59:59'),
+      };
+    }
+    const { from, to } = resolvePreset('last_30');
+    return { preset: 'last_30', from, to };
+  }, [filters.dateFrom, filters.dateTo]);
+
+  const handleDateRangeChange = (v: DateRangeValue) => {
+    onFiltersChange({
+      ...filters,
+      dateFrom: format(v.from, 'yyyy-MM-dd'),
+      dateTo: format(v.to, 'yyyy-MM-dd'),
+    });
+  };
 
   const activeFilterCount = [
     filters.types?.length,
@@ -157,41 +181,14 @@ export function TransactionFilters({
           </div>
 
           {/* Date Range */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Desde</Label>
-              <div className="relative">
-                <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="date"
-                  value={filters.dateFrom || ''}
-                  onChange={(e) =>
-                    onFiltersChange({
-                      ...filters,
-                      dateFrom: e.target.value || undefined,
-                    })
-                  }
-                  className="h-9 pl-9"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Hasta</Label>
-              <div className="relative">
-                <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="date"
-                  value={filters.dateTo || ''}
-                  onChange={(e) =>
-                    onFiltersChange({
-                      ...filters,
-                      dateTo: e.target.value || undefined,
-                    })
-                  }
-                  className="h-9 pl-9"
-                />
-              </div>
-            </div>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Rango de fechas</Label>
+            <DateRangePresetPicker
+              value={dateRangeValue}
+              onChange={handleDateRangeChange}
+              presets={['last_7', 'last_30', 'last_90', 'this_month', 'last_month', 'custom']}
+              align="start"
+            />
           </div>
 
           {/* Amount Range */}
