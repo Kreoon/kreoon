@@ -96,7 +96,7 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
         (supabase as any)
           .from('platform_subscriptions')
           .select('organization_id, tier, status')
-          .not('tier', 'ilike', '%free%')
+          .not('tier', 'in', '(brand_free,creator_free)')
           .eq('status', 'active'),
       ]);
       const clientUserIds = new Set((excludedRows || []).map((r: any) => r.user_id));

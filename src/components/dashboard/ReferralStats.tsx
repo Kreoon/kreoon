@@ -33,7 +33,7 @@ export function ReferralStats() {
       const { data: orgSubs } = await (supabase as any)
         .from('platform_subscriptions')
         .select('organization_id')
-        .not('tier', 'ilike', '%free%')
+        .not('tier', 'in', '(brand_free,creator_free)')
         .eq('status', 'active');
 
       const subscribedOrgIds = (orgSubs || []).map((s: any) => s.organization_id).filter(Boolean);
