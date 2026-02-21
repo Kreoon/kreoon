@@ -25,14 +25,14 @@ export function SectionCard({
     <div
       className={cn(
         'rounded-lg border bg-card',
-        variant === 'compact' && 'p-3',
-        variant === 'default' && 'p-4',
-        variant === 'highlight' && 'p-4 bg-gradient-to-r from-primary/5 to-primary/10',
+        variant === 'compact' && 'p-2.5 sm:p-3',
+        variant === 'default' && 'p-3 sm:p-4',
+        variant === 'highlight' && 'p-3 sm:p-4 bg-gradient-to-r from-primary/5 to-primary/10',
         className
       )}
     >
-      <div className="flex items-center justify-between mb-3">
-        <h4 className="font-medium flex items-center gap-2">
+      <div className="flex items-center justify-between mb-2 sm:mb-3">
+        <h4 className="font-medium text-sm sm:text-base flex items-center gap-1.5 sm:gap-2">
           {iconEmoji && <span>{iconEmoji}</span>}
           {Icon && <Icon className="h-4 w-4 text-primary" />}
           {title}

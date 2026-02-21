@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Content, ContentStatus, STATUS_LABELS, STATUS_COLORS, Product } from '@/types/database';
-import { ContentDetailDialog } from '@/components/content/ContentDetailDialog/index';
+import { UnifiedProjectModal } from '@/components/projects/UnifiedProjectModal';
 import { TechKpiDialog } from '@/components/dashboard/TechKpiDialog';
 import { TechKpiCard } from '@/components/dashboard/TechKpiCard';
 import { ThisMonthFilter, useThisMonthFilter } from '@/components/dashboard/ThisMonthFilter';
@@ -556,8 +556,9 @@ export default function StrategistDashboard() {
         </motion.div>
 
         {/* Content Detail Dialog */}
-        <ContentDetailDialog
-          content={selectedContent}
+        <UnifiedProjectModal
+          source="content"
+          projectId={selectedContent?.id}
           open={!!selectedContent}
           onOpenChange={(open) => !open && setSelectedContent(null)}
           onUpdate={() => {

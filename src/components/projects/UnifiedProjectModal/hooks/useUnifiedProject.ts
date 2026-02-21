@@ -19,6 +19,7 @@ import type {
 import { adaptContentPermissions, buildMarketplacePermissions } from '@/lib/unifiedPermissions';
 import { useContentPermissions } from '@/components/content/ContentDetailDialog/hooks/useContentPermissions';
 import { useBlockConfig } from '@/components/content/ContentDetailDialog/hooks/useBlockConfig';
+import { updateContentStatusWithUP } from '@/hooks/useContentStatusWithUP';
 import type { UseUnifiedProjectReturn } from '../types';
 
 interface UseUnifiedProjectOptions {
@@ -165,37 +166,54 @@ export function useUnifiedProject({
     fetchProject();
   }, [source, projectId, preloaded]);
 
-  // ---- Auto-save (content source only, when editing) ----
+  // ---- Auto-save (content and marketplace sources, when editing) ----
   const handleAutoSave = useCallback(async (data: Record<string, any>) => {
-    if (!project || source !== 'content') return;
+    if (!project) return;
 
-    const updatePayload = ProjectAdapter.toContentUpdate({
-      ...project,
-      title: data.title || project.title,
-      brief: { ...project.brief, ...data.brief },
-      clientId: data.client_id,
-      creatorId: data.creator_id,
-      editorId: data.editor_id,
-      strategistId: data.strategist_id,
-      deadline: data.deadline,
-      startDate: data.start_date,
-      creatorPayment: data.creator_payment,
-      editorPayment: data.editor_payment,
-    });
+    if (source === 'content') {
+      const updatePayload = ProjectAdapter.toContentUpdate({
+        ...project,
+        title: data.title || project.title,
+        brief: { ...project.brief, ...data.brief },
+        clientId: data.client_id,
+        creatorId: data.creator_id,
+        editorId: data.editor_id,
+        strategistId: data.strategist_id,
+        deadline: data.deadline,
+        startDate: data.start_date,
+        creatorPayment: data.creator_payment,
+        editorPayment: data.editor_payment,
+      });
 
-    const { error } = await supabase.rpc('update_content_by_id', {
-      p_content_id: project.id,
-      p_updates: updatePayload,
-    });
+      const { error } = await supabase.rpc('update_content_by_id', {
+        p_content_id: project.id,
+        p_updates: updatePayload,
+      });
 
-    if (error) throw error;
+      if (error) throw error;
+    } else {
+      const payload = ProjectAdapter.toMarketplaceUpdate({
+        ...project,
+        title: data.title || project.title,
+        brief: data.brief || project.brief,
+        status: data.status || project.status,
+      });
+
+      const { error } = await (supabase as any)
+        .from('marketplace_projects')
+        .update(payload)
+        .eq('id', project.id);
+
+      if (error) throw error;
+    }
+
     pendingRefreshRef.current = true;
   }, [project, source]);
 
   const autoSave = useAutoSave({
     data: formData,
     onSave: handleAutoSave,
-    enabled: editMode && source === 'content' && !!project,
+    enabled: editMode && !!project,
     debounceMs: 3000,
     intervalMs: 30000,
   });
@@ -244,11 +262,12 @@ export function useUnifiedProject({
 
     try {
       if (source === 'content') {
-        const { error } = await supabase.rpc('update_content_by_id', {
-          p_content_id: project.id,
-          p_updates: { status: newStatus },
+        // Use updateContentStatusWithUP for content source to record UP points
+        await updateContentStatusWithUP({
+          contentId: project.id,
+          oldStatus: project.status as any,
+          newStatus: newStatus as any,
         });
-        if (error) throw error;
       } else {
         const { error } = await (supabase as any)
           .from('marketplace_projects')

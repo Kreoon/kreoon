@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, useMemo, lazy, Suspense } from "react";
 import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanColumn";
 import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
-import { ContentDetailDialog } from "@/components/content/ContentDetailDialog/index";
 import { ProjectTypeSelector } from "@/components/projects/ProjectTypeSelector";
 import { Search, Plus, Filter, X, Settings2, Scroll, RotateCcw, Brain, ShoppingBag } from "lucide-react";
 import type { ProjectType } from "@/types/unifiedProject.types";
@@ -1052,21 +1051,26 @@ export default function ContentBoard() {
         />
       )}
 
-      <ContentDetailDialog
-        content={selectedContent}
-        open={!!selectedContent}
-        onOpenChange={(open) => !open && setSelectedContent(null)}
-        onUpdate={refetch}
-        onDelete={handleDeleteContent}
-      />
+      <Suspense fallback={null}>
+        <UnifiedProjectModal
+          source="content"
+          projectId={selectedContent?.id}
+          open={!!selectedContent}
+          onOpenChange={(open) => !open && setSelectedContent(null)}
+          onUpdate={refetch}
+          onDelete={handleDeleteContent}
+        />
+      </Suspense>
 
-      <ContentDetailDialog
-        content={null}
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
-        onUpdate={refetch}
-        mode="create"
-      />
+      <Suspense fallback={null}>
+        <UnifiedProjectModal
+          source="content"
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
+          onUpdate={refetch}
+          mode="create"
+        />
+      </Suspense>
 
       {/* Project type selector */}
       <ProjectTypeSelector

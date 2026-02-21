@@ -5,6 +5,7 @@ import { getModuleAIConfig } from "../_shared/get-module-ai-config.ts";
 import { callAIWithFallback, corsHeaders } from "../_shared/ai-providers.ts";
 import { PerplexitySearches, searchWithPerplexity } from "../_shared/perplexity-client.ts";
 import { MASTER_SCRIPT_PROMPT } from "../_shared/prompts/scripts.ts";
+import { checkAndDeductTokens, insufficientTokensResponse } from "../_shared/ai-token-guard.ts";
 
 interface ContentAIRequest {
   action: "generate_script" | "analyze_content" | "chat" | "improve_script" | "research_and_generate";
@@ -447,6 +448,19 @@ serve(async (req) => {
     switch (action) {
       case "research_and_generate":
       case "generate_script": {
+        // Token guard: deduct tokens per block when generation_type is specified
+        if (generation_type && organizationId) {
+          const actionKey = `scripts.block.${generation_type}`;
+          const tokenCheck = await checkAndDeductTokens(supabase, organizationId, actionKey, undefined, {
+            ai_provider: body.ai_provider,
+            ai_model: body.ai_model,
+            description: `Script block: ${generation_type}`,
+          });
+          if (!tokenCheck.allowed) {
+            return insufficientTokensResponse(tokenCheck);
+          }
+        }
+
         if (prompt && product) {
           // Check if Perplexity research is requested
           const usePerplexity = body.use_perplexity === true;

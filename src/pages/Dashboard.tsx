@@ -19,7 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { ContentDetailDialog } from "@/components/content/ContentDetailDialog/index";
+import { UnifiedProjectModal } from "@/components/projects/UnifiedProjectModal";
 import { TechKpiDialog } from "@/components/dashboard/TechKpiDialog";
 import { KpiListDialog } from "@/components/dashboard/KpiListDialog";
 import { GoalsDialog } from "@/components/dashboard/GoalsDialog";
@@ -1633,8 +1633,9 @@ export default function Dashboard() {
       </div>
 
       {/* Dialogs */}
-      <ContentDetailDialog
-        content={selectedContent}
+      <UnifiedProjectModal
+        source="content"
+        projectId={selectedContent?.id}
         open={!!selectedContent}
         onOpenChange={(open) => !open && setSelectedContent(null)}
         onUpdate={refetch}

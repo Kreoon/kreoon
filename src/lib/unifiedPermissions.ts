@@ -39,6 +39,7 @@ const FULL_ROLE_PERMISSIONS: RolePermissions = {
   header: { status: 'edit', title: 'edit', dates: 'edit' },
   brief: { view: 'view', edit: 'edit' },
   workspace: { own_block: 'edit', other_blocks: 'edit' },
+  video: { view: 'view', upload: 'edit', comments: 'edit', publish: 'edit' },
   materials: { view: 'view', upload: 'edit' },
   deliverables: { view: 'view', upload: 'edit', approve: 'approve' },
   team: 'edit',
@@ -86,7 +87,9 @@ export function adaptContentPermissions(
     'content.title': 'project.title',
     'content.status': 'project.status',
     'content.scripts': 'project.workspace',
-    'content.video': 'project.deliverables',
+    'content.video': 'project.video',
+    'content.video.upload': 'project.video.upload',
+    'content.video.thumbnail': 'project.video.publish',
     'content.material': 'project.materials',
     'content.general': 'project.brief',
     'content.team': 'project.team',
@@ -98,7 +101,7 @@ export function adaptContentPermissions(
   // Map content tab keys to unified section keys
   const tabToSection: Record<string, UnifiedSectionKey> = {
     scripts: 'workspace',
-    video: 'deliverables',
+    video: 'video',
     material: 'materials',
     general: 'brief',
     team: 'team',
@@ -169,6 +172,7 @@ export function buildMarketplacePermissions(
     switch (section) {
       case 'workspace': return permissionSatisfies(rp.workspace.own_block, 'view') || permissionSatisfies(rp.workspace.other_blocks, 'view');
       case 'brief': return permissionSatisfies(rp.brief.view, 'view');
+      case 'video': return permissionSatisfies(rp.video.view, 'view');
       case 'deliverables': return permissionSatisfies(rp.deliverables.view, 'view');
       case 'materials': return permissionSatisfies(rp.materials.view, 'view');
       case 'review': return permissionSatisfies(rp.deliverables.approve, 'view') || permissionSatisfies(rp.deliverables.view, 'view');
@@ -196,6 +200,10 @@ export function buildMarketplacePermissions(
         case 'project.workspace': return permissionSatisfies(rp.workspace.own_block, action) || permissionSatisfies(rp.workspace.other_blocks, action);
         case 'project.workspace.own_block': return permissionSatisfies(rp.workspace.own_block, action);
         case 'project.workspace.other_blocks': return permissionSatisfies(rp.workspace.other_blocks, action);
+        case 'project.video': return action === 'view' ? permissionSatisfies(rp.video.view, action) : permissionSatisfies(rp.video.upload, action);
+        case 'project.video.upload': return permissionSatisfies(rp.video.upload, action);
+        case 'project.video.comments': return permissionSatisfies(rp.video.comments, action);
+        case 'project.video.publish': return permissionSatisfies(rp.video.publish, action);
         case 'project.materials': return action === 'view' ? permissionSatisfies(rp.materials.view, action) : permissionSatisfies(rp.materials.upload, action);
         case 'project.materials.upload': return permissionSatisfies(rp.materials.upload, action);
         case 'project.deliverables': return action === 'approve' ? permissionSatisfies(rp.deliverables.approve, action) : action === 'view' ? permissionSatisfies(rp.deliverables.view, action) : permissionSatisfies(rp.deliverables.upload, action);
@@ -213,6 +221,7 @@ export function buildMarketplacePermissions(
       switch (resource) {
         case 'project.workspace': return !permissionSatisfies(rp.workspace.own_block, 'edit');
         case 'project.brief': return !permissionSatisfies(rp.brief.edit, 'edit');
+        case 'project.video': return !permissionSatisfies(rp.video.upload, 'edit');
         case 'project.deliverables': return !permissionSatisfies(rp.deliverables.upload, 'edit');
         case 'project.materials': return !permissionSatisfies(rp.materials.upload, 'edit');
         case 'project.team': return !permissionSatisfies(rp.team, 'edit');

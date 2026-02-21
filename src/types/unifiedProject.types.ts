@@ -23,13 +23,15 @@ export type WorkspaceType = 'script' | 'checklist' | 'document' | 'technical' | 
 export type UnifiedSectionKey =
   | 'workspace'
   | 'brief'
+  | 'video'
   | 'deliverables'
   | 'materials'
   | 'review'
   | 'thumbnail'
   | 'team'
   | 'dates'
-  | 'payments';
+  | 'payments'
+  | 'reference';
 
 // ============================================================
 // BRIEF CONFIG
@@ -272,7 +274,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
       support: ['video_editor', 'motion_graphics', 'sound_designer'],
       reviewer: ['content_strategist', 'brand_ambassador'],
     },
-    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'thumbnail', 'team', 'dates', 'payments'],
+    visibleTabs: ['workspace', 'brief', 'video', 'materials', 'review', 'thumbnail', 'team', 'dates'],
   },
 
   // -------------------------------------------------------
@@ -358,7 +360,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
       support: ['sound_designer', 'colorist'],
       reviewer: ['director', 'producer'],
     },
-    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'thumbnail', 'team', 'dates', 'payments'],
+    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'thumbnail', 'team', 'dates'],
   },
 
   // -------------------------------------------------------
@@ -444,7 +446,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
       support: ['community_manager', 'trafficker', 'seo_specialist', 'email_marketer', 'crm_specialist', 'conversion_optimizer'],
       reviewer: ['digital_strategist', 'content_strategist'],
     },
-    visibleTabs: ['workspace', 'brief', 'materials', 'review', 'thumbnail', 'team', 'dates', 'payments'],
+    visibleTabs: ['workspace', 'brief', 'materials', 'review', 'thumbnail', 'team', 'dates'],
   },
 
   // -------------------------------------------------------
@@ -530,7 +532,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
       support: [],
       reviewer: [],
     },
-    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'thumbnail', 'team', 'dates', 'payments'],
+    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'thumbnail', 'team', 'dates'],
   },
 
   // -------------------------------------------------------
@@ -615,7 +617,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
       support: [],
       reviewer: [],
     },
-    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'thumbnail', 'team', 'dates', 'payments'],
+    visibleTabs: ['workspace', 'brief', 'deliverables', 'materials', 'review', 'thumbnail', 'team', 'dates'],
   },
 };
 
@@ -680,6 +682,12 @@ export interface RolePermissions {
     own_block: Permission;
     other_blocks: Permission;
   };
+  video: {
+    view: Permission;
+    upload: Permission;
+    comments: Permission;
+    publish: Permission;
+  };
   materials: {
     view: Permission;
     upload: Permission;
@@ -710,6 +718,7 @@ const FULL_ACCESS: RolePermissions = {
   header: { status: 'edit', title: 'edit', dates: 'edit' },
   brief: { view: 'view', edit: 'edit' },
   workspace: { own_block: 'edit', other_blocks: 'edit' },
+  video: { view: 'view', upload: 'edit', comments: 'edit', publish: 'edit' },
   materials: { view: 'view', upload: 'edit' },
   deliverables: { view: 'view', upload: 'edit', approve: 'approve' },
   team: 'edit',
@@ -722,6 +731,7 @@ const TALENT_ACCESS: RolePermissions = {
   header: { status: 'view', title: 'view', dates: 'view' },
   brief: { view: 'view', edit: 'none' },
   workspace: { own_block: 'edit', other_blocks: 'none' },
+  video: { view: 'view', upload: 'none', comments: 'edit', publish: 'none' },
   materials: { view: 'view', upload: 'edit' },
   deliverables: { view: 'view', upload: 'edit', approve: 'none' },
   team: 'none',
@@ -734,6 +744,7 @@ const VIEWER_ACCESS: RolePermissions = {
   header: { status: 'view', title: 'view', dates: 'view' },
   brief: { view: 'view', edit: 'none' },
   workspace: { own_block: 'view', other_blocks: 'view' },
+  video: { view: 'view', upload: 'none', comments: 'view', publish: 'none' },
   materials: { view: 'view', upload: 'none' },
   deliverables: { view: 'view', upload: 'none', approve: 'none' },
   team: 'view',
@@ -754,9 +765,9 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       header: { status: 'view', title: 'view', dates: 'view' },
       brief: { view: 'view', edit: 'none' },
       workspace: { own_block: 'edit', other_blocks: 'none' },
+      video: { view: 'view', upload: 'edit', comments: 'edit', publish: 'none' },
       materials: { view: 'view', upload: 'edit' },
       deliverables: { view: 'view', upload: 'edit', approve: 'none' },
-
       team: 'none',
       payments: { view_own: true, view_all: false, edit: false },
       delete: 'none',
@@ -765,9 +776,9 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       header: { status: 'view', title: 'view', dates: 'view' },
       brief: { view: 'view', edit: 'none' },
       workspace: { own_block: 'edit', other_blocks: 'none' },
+      video: { view: 'view', upload: 'edit', comments: 'edit', publish: 'none' },
       materials: { view: 'view', upload: 'edit' },
       deliverables: { view: 'view', upload: 'edit', approve: 'none' },
-
       team: 'none',
       payments: { view_own: true, view_all: false, edit: false },
       delete: 'none',
@@ -776,9 +787,9 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       header: { status: 'view', title: 'view', dates: 'view' },
       brief: { view: 'view', edit: 'edit' },
       workspace: { own_block: 'edit', other_blocks: 'view' },
+      video: { view: 'view', upload: 'none', comments: 'edit', publish: 'none' },
       materials: { view: 'view', upload: 'none' },
       deliverables: { view: 'view', upload: 'none', approve: 'none' },
-
       team: 'view',
       payments: { view_own: false, view_all: false, edit: false },
       delete: 'none',
@@ -788,9 +799,9 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       header: { status: 'view', title: 'view', dates: 'view' },
       brief: { view: 'view', edit: 'none' },
       workspace: { own_block: 'view', other_blocks: 'view' },
+      video: { view: 'view', upload: 'none', comments: 'view', publish: 'none' },
       materials: { view: 'view', upload: 'none' },
       deliverables: { view: 'view', upload: 'none', approve: 'approve' },
-
       team: 'view',
       payments: { view_own: false, view_all: false, edit: false },
       delete: 'none',
@@ -806,9 +817,9 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       header: { status: 'view', title: 'view', dates: 'view' },
       brief: { view: 'view', edit: 'none' },
       workspace: { own_block: 'view', other_blocks: 'none' },
+      video: { view: 'none', upload: 'none', comments: 'none', publish: 'none' },
       materials: { view: 'view', upload: 'edit' },
       deliverables: { view: 'view', upload: 'none', approve: 'none' },
-
       team: 'none',
       payments: { view_own: true, view_all: false, edit: false },
       delete: 'none',
@@ -817,9 +828,9 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       header: { status: 'view', title: 'view', dates: 'view' },
       brief: { view: 'view', edit: 'none' },
       workspace: { own_block: 'edit', other_blocks: 'view' },
+      video: { view: 'none', upload: 'none', comments: 'none', publish: 'none' },
       materials: { view: 'view', upload: 'edit' },
       deliverables: { view: 'view', upload: 'edit', approve: 'none' },
-
       team: 'none',
       payments: { view_own: true, view_all: false, edit: false },
       delete: 'none',
@@ -830,9 +841,9 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       header: { status: 'view', title: 'view', dates: 'view' },
       brief: { view: 'view', edit: 'none' },
       workspace: { own_block: 'view', other_blocks: 'view' },
+      video: { view: 'none', upload: 'none', comments: 'none', publish: 'none' },
       materials: { view: 'view', upload: 'none' },
       deliverables: { view: 'view', upload: 'none', approve: 'approve' },
-
       team: 'view',
       payments: { view_own: false, view_all: false, edit: false },
       delete: 'none',
@@ -848,9 +859,9 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       header: { status: 'view', title: 'view', dates: 'view' },
       brief: { view: 'view', edit: 'none' },
       workspace: { own_block: 'edit', other_blocks: 'view' },
+      video: { view: 'none', upload: 'none', comments: 'none', publish: 'none' },
       materials: { view: 'view', upload: 'edit' },
       deliverables: { view: 'view', upload: 'edit', approve: 'none' },
-
       team: 'none',
       payments: { view_own: true, view_all: false, edit: false },
       delete: 'none',
@@ -860,9 +871,9 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       header: { status: 'view', title: 'view', dates: 'view' },
       brief: { view: 'view', edit: 'edit' },
       workspace: { own_block: 'edit', other_blocks: 'edit' },
+      video: { view: 'none', upload: 'none', comments: 'none', publish: 'none' },
       materials: { view: 'view', upload: 'edit' },
       deliverables: { view: 'view', upload: 'edit', approve: 'none' },
-
       team: 'view',
       payments: { view_own: true, view_all: false, edit: false },
       delete: 'none',
@@ -872,9 +883,9 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       header: { status: 'view', title: 'view', dates: 'view' },
       brief: { view: 'view', edit: 'none' },
       workspace: { own_block: 'view', other_blocks: 'view' },
+      video: { view: 'none', upload: 'none', comments: 'none', publish: 'none' },
       materials: { view: 'view', upload: 'none' },
       deliverables: { view: 'view', upload: 'none', approve: 'approve' },
-
       team: 'view',
       payments: { view_own: false, view_all: false, edit: false },
       delete: 'none',
@@ -890,9 +901,9 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       header: { status: 'view', title: 'view', dates: 'view' },
       brief: { view: 'view', edit: 'none' },
       workspace: { own_block: 'edit', other_blocks: 'view' },
+      video: { view: 'none', upload: 'none', comments: 'none', publish: 'none' },
       materials: { view: 'view', upload: 'edit' },
       deliverables: { view: 'view', upload: 'edit', approve: 'none' },
-
       team: 'none',
       payments: { view_own: true, view_all: false, edit: false },
       delete: 'none',
@@ -904,9 +915,9 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       header: { status: 'view', title: 'view', dates: 'view' },
       brief: { view: 'view', edit: 'none' },
       workspace: { own_block: 'view', other_blocks: 'view' },
+      video: { view: 'none', upload: 'none', comments: 'none', publish: 'none' },
       materials: { view: 'view', upload: 'none' },
       deliverables: { view: 'view', upload: 'none', approve: 'approve' },
-
       team: 'view',
       payments: { view_own: false, view_all: false, edit: false },
       delete: 'none',
@@ -922,9 +933,9 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       header: { status: 'view', title: 'view', dates: 'view' },
       brief: { view: 'view', edit: 'edit' },
       workspace: { own_block: 'edit', other_blocks: 'view' },
+      video: { view: 'none', upload: 'none', comments: 'none', publish: 'none' },
       materials: { view: 'view', upload: 'edit' },
       deliverables: { view: 'view', upload: 'edit', approve: 'none' },
-
       team: 'none',
       payments: { view_own: true, view_all: false, edit: false },
       delete: 'none',
@@ -936,9 +947,9 @@ export const ROLE_PERMISSION_PRESETS: Record<ProjectType, Record<ProjectParticip
       header: { status: 'view', title: 'view', dates: 'view' },
       brief: { view: 'view', edit: 'none' },
       workspace: { own_block: 'view', other_blocks: 'view' },
+      video: { view: 'none', upload: 'none', comments: 'none', publish: 'none' },
       materials: { view: 'view', upload: 'none' },
       deliverables: { view: 'view', upload: 'none', approve: 'approve' },
-
       team: 'view',
       payments: { view_own: false, view_all: false, edit: false },
       delete: 'none',
@@ -998,6 +1009,10 @@ export type UnifiedResource =
   | 'project.workspace.own_block'
   | 'project.workspace.other_blocks'
   | 'project.brief'
+  | 'project.video'
+  | 'project.video.upload'
+  | 'project.video.comments'
+  | 'project.video.publish'
   | 'project.deliverables'
   | 'project.deliverables.upload'
   | 'project.deliverables.approve'
@@ -1035,13 +1050,15 @@ export interface UnifiedTabConfig {
 export const SECTION_TAB_CONFIG: Record<UnifiedSectionKey, UnifiedTabConfig> = {
   workspace: { key: 'workspace', label: 'Workspace', icon: 'PenTool' },
   brief: { key: 'brief', label: 'Brief', icon: 'FileText' },
+  video: { key: 'video', label: 'Video', icon: 'Video' },
   deliverables: { key: 'deliverables', label: 'Entregables', icon: 'Package' },
   materials: { key: 'materials', label: 'Material', icon: 'FolderOpen' },
   review: { key: 'review', label: 'Revision', icon: 'CheckSquare' },
   thumbnail: { key: 'thumbnail', label: 'Miniatura', icon: 'Image' },
   team: { key: 'team', label: 'Equipo', icon: 'Users' },
   dates: { key: 'dates', label: 'Fechas', icon: 'Calendar' },
-  payments: { key: 'payments', label: 'Finanzas', icon: 'DollarSign' },
+  payments: { key: 'payments', label: 'Finanzas', icon: 'DollarSign' }, // Merged into team tab; kept for backward compat
+  reference: { key: 'reference', label: 'Referencia', icon: 'Video' },
 };
 
 // ============================================================

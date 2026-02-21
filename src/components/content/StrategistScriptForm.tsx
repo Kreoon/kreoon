@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useScriptPrompts } from "@/hooks/useScriptPrompts";
 import { useOrganizationAI } from "@/hooks/useOrganizationAI";
+import { useUnifiedTokens } from "@/hooks/useUnifiedTokens";
+import { AI_TOKEN_COSTS } from "@/lib/finance/constants";
 import { 
   Sparkles, Loader2, Target, Users, Globe, FileText, 
   MessageSquare, ListOrdered, Plus, X, Wand2, Settings2,
@@ -245,6 +247,24 @@ const SPHERE_PHASE_INFO: Record<string, {
 function getSpherePhaseInfo(phase: string) {
   return SPHERE_PHASE_INFO[phase] || null;
 }
+
+const BLOCK_ACTION_KEYS: Record<string, string> = {
+  script: "scripts.block.script",
+  editor: "scripts.block.editor",
+  trafficker: "scripts.block.trafficker",
+  strategist: "scripts.block.strategist",
+  designer: "scripts.block.designer",
+  admin: "scripts.block.admin",
+};
+
+const BLOCK_LABELS: Record<string, { emoji: string; short: string }> = {
+  script: { emoji: "\uD83E\uDDCD", short: "Guion" },
+  editor: { emoji: "\uD83C\uDFAC", short: "Editor" },
+  trafficker: { emoji: "\uD83D\uDCB0", short: "Trafico" },
+  strategist: { emoji: "\uD83E\uDDE0", short: "Estrategia" },
+  designer: { emoji: "\uD83C\uDFA8", short: "Diseno" },
+  admin: { emoji: "\uD83D\uDCCB", short: "Admin" },
+};
 
 const CONTENT_AI_FUNCTION = "content-ai";
 
@@ -1135,6 +1155,30 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   const [loading, setLoading] = useState(false);
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [newHook, setNewHook] = useState("");
+
+  // Block selection state
+  const [selectedBlocks, setSelectedBlocks] = useState<Record<string, boolean>>({
+    script: true, editor: true, trafficker: true,
+    strategist: true, designer: true, admin: true,
+  });
+
+  // Token balance
+  const { balance, getTokenCost, refetchBalance } = useUnifiedTokens(organizationId);
+
+  const totalCost = useMemo(() =>
+    Object.entries(selectedBlocks)
+      .filter(([, sel]) => sel)
+      .reduce((sum, [key]) => sum + getTokenCost(BLOCK_ACTION_KEYS[key]), 0),
+    [selectedBlocks, getTokenCost]
+  );
+
+  const selectedCount = useMemo(() =>
+    Object.values(selectedBlocks).filter(Boolean).length,
+    [selectedBlocks]
+  );
+
+  const totalAvailable = balance?.total_available ?? Infinity;
+  const insufficientTokens = totalAvailable < totalCost && totalAvailable !== Infinity;
   const [promptsOpen, setPromptsOpen] = useState(false);
   
   // Load custom prompts from organization settings
@@ -1899,6 +1943,25 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       return;
     }
 
+    if (selectedCount === 0) {
+      toast({
+        title: "Selecciona al menos un bloque",
+        description: "Debes seleccionar al menos un bloque para generar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Pre-check token balance
+    if (insufficientTokens) {
+      toast({
+        title: "Tokens insuficientes",
+        description: `Necesitas ${totalCost} tokens pero tienes ${totalAvailable}. Compra mas tokens o selecciona menos bloques.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     resetSteps();
 
@@ -1923,46 +1986,68 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       onScriptGenerated({ ...generatedContent, ...patch });
     };
 
+    // Determine script context: generate new or use existing
+    let scriptContext = "";
+
     try {
-      // Step 1: Generate Script (Bloque Creador)
-      updateStepStatus("script", "generating");
-      generatedContent.script = await generateContent("script", formData.script_prompt);
-      updateStepStatus("script", "done");
-      emitProgress({ script: generatedContent.script });
+      // Step 1: Script block (generate or use existing as context)
+      if (selectedBlocks.script) {
+        updateStepStatus("script", "generating");
+        try {
+          generatedContent.script = await generateContent("script", formData.script_prompt);
+          updateStepStatus("script", "done");
+          emitProgress({ script: generatedContent.script });
+          scriptContext = generatedContent.script;
+        } catch (error: any) {
+          updateStepStatus("script", "error");
+          if (error?.message?.includes("insufficient_tokens") || error?.message?.includes("402")) {
+            toast({ title: "Tokens insuficientes", description: "No hay tokens suficientes para continuar.", variant: "destructive" });
+            refetchBalance();
+            return;
+          }
+          throw error;
+        }
+      } else {
+        // Use existing script from form data as context for other blocks
+        scriptContext = formData.script_prompt;
+      }
 
-      // Step 2: Generate Editor Guidelines
-      updateStepStatus("editor", "generating");
-      generatedContent.editor_guidelines = await generateContent("editor", formData.editor_prompt, generatedContent.script);
-      updateStepStatus("editor", "done");
-      emitProgress({ editor_guidelines: generatedContent.editor_guidelines });
+      // Step 2-6: Other blocks (only selected ones)
+      const otherBlocks: Array<{
+        key: "editor" | "strategist" | "trafficker" | "designer" | "admin";
+        field: keyof GeneratedContent;
+        prompt: string;
+      }> = [
+        { key: "editor", field: "editor_guidelines", prompt: formData.editor_prompt },
+        { key: "trafficker", field: "trafficker_guidelines", prompt: formData.trafficker_prompt },
+        { key: "strategist", field: "strategist_guidelines", prompt: formData.strategist_prompt },
+        { key: "designer", field: "designer_guidelines", prompt: formData.designer_prompt },
+        { key: "admin", field: "admin_guidelines", prompt: formData.admin_prompt },
+      ];
 
-      // Step 3: Generate Trafficker Guidelines
-      updateStepStatus("trafficker", "generating");
-      generatedContent.trafficker_guidelines = await generateContent("trafficker", formData.trafficker_prompt, generatedContent.script);
-      updateStepStatus("trafficker", "done");
-      emitProgress({ trafficker_guidelines: generatedContent.trafficker_guidelines });
+      for (const block of otherBlocks) {
+        if (!selectedBlocks[block.key]) continue;
 
-      // Step 4: Generate Strategist Guidelines
-      updateStepStatus("strategist", "generating");
-      generatedContent.strategist_guidelines = await generateContent("strategist", formData.strategist_prompt, generatedContent.script);
-      updateStepStatus("strategist", "done");
-      emitProgress({ strategist_guidelines: generatedContent.strategist_guidelines });
-
-      // Step 5: Generate Designer Guidelines
-      updateStepStatus("designer", "generating");
-      generatedContent.designer_guidelines = await generateContent("designer", formData.designer_prompt, generatedContent.script);
-      updateStepStatus("designer", "done");
-      emitProgress({ designer_guidelines: generatedContent.designer_guidelines });
-
-      // Step 6: Generate Admin/PM Guidelines
-      updateStepStatus("admin", "generating");
-      generatedContent.admin_guidelines = await generateContent("admin", formData.admin_prompt, generatedContent.script);
-      updateStepStatus("admin", "done");
-      emitProgress({ admin_guidelines: generatedContent.admin_guidelines });
+        updateStepStatus(block.key, "generating");
+        try {
+          const result = await generateContent(block.key, block.prompt, scriptContext);
+          (generatedContent as any)[block.field] = result;
+          updateStepStatus(block.key, "done");
+          emitProgress({ [block.field]: result });
+        } catch (error: any) {
+          updateStepStatus(block.key, "error");
+          if (error?.message?.includes("insufficient_tokens") || error?.message?.includes("402")) {
+            toast({ title: "Tokens insuficientes", description: "Se agotaron los tokens. Los bloques anteriores se conservaron.", variant: "destructive" });
+            refetchBalance();
+            return;
+          }
+          throw error;
+        }
+      }
 
       toast({
         title: "Contenido generado exitosamente",
-        description: "Guión y pautas generados con IA",
+        description: `${selectedCount} bloque${selectedCount > 1 ? 's' : ''} generado${selectedCount > 1 ? 's' : ''} con IA`,
       });
     } catch (error) {
       console.error("Error:", error);
@@ -1977,15 +2062,16 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       });
     } finally {
       setLoading(false);
+      refetchBalance();
     }
   };
 
   if (!product) {
     return (
-      <div className="p-6 border rounded-lg bg-muted/50 text-center">
-        <FileText className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">
-          Selecciona un producto para poder crear el brief del guión
+      <div className="p-4 sm:p-6 border rounded-lg bg-muted/50 text-center">
+        <FileText className="h-8 w-8 sm:h-10 sm:w-10 mx-auto mb-2 sm:mb-3 text-muted-foreground" />
+        <p className="text-xs sm:text-sm text-muted-foreground">
+          Selecciona un producto para crear el brief del guión
         </p>
       </div>
     );
@@ -1994,35 +2080,35 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
   const hasDocumentUrls = product.brief_url || product.onboarding_url || product.research_url;
 
   return (
-    <div className="space-y-6 p-6 border rounded-lg bg-gradient-to-br from-primary/5 to-primary/10">
-      <div className="flex items-center justify-between">
-        <h4 className="font-semibold flex items-center gap-2 text-lg">
-          <Wand2 className="h-5 w-5 text-primary" />
+    <div className="space-y-3 sm:space-y-6 p-3 sm:p-6 border rounded-lg bg-gradient-to-br from-primary/5 to-primary/10">
+      <div className="flex items-center justify-between gap-2">
+        <h4 className="font-semibold flex items-center gap-1.5 sm:gap-2 text-sm sm:text-lg">
+          <Wand2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           Formulario de Guión
         </h4>
-        <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
+        <Badge variant="secondary" className="text-[10px] sm:text-xs bg-primary/10 text-primary border-primary/20 truncate max-w-[140px] sm:max-w-none">
           {AI_MODELS.find(m => m.value === formData.ai_model)?.label || "IA"}
         </Badge>
       </div>
 
       {/* AI Prefill Banner */}
       {prefillStatus.isPrefilled && (
-        <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
-          <div className="flex items-center gap-2">
-            <Bot className="h-5 w-5 text-green-600 dark:text-green-400" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                Formulario pre-llenado con IA
+        <div className="p-2 sm:p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+          <div className="flex items-start sm:items-center gap-2">
+            <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5 sm:mt-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-green-800 dark:text-green-200">
+                Pre-llenado con IA
               </p>
-              <p className="text-xs text-green-600 dark:text-green-400">
-                Los campos fueron sugeridos automáticamente basándose en la investigación de mercado.
+              <p className="text-[10px] sm:text-xs text-green-600 dark:text-green-400">
+                Campos sugeridos desde la investigación.
                 {prefillStatus.fieldsLoaded.length > 0 && (
-                  <> Campos: {prefillStatus.fieldsLoaded.join(', ')}.</>
+                  <span className="hidden sm:inline"> Campos: {prefillStatus.fieldsLoaded.join(', ')}.</span>
                 )}
               </p>
             </div>
             {prefillStatus.prefilledAt && (
-              <Badge variant="outline" className="text-xs text-green-600 border-green-600 shrink-0">
+              <Badge variant="outline" className="text-[10px] sm:text-xs text-green-600 border-green-600 shrink-0">
                 {new Date(prefillStatus.prefilledAt).toLocaleDateString()}
               </Badge>
             )}
@@ -2030,17 +2116,77 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
       )}
 
+      {/* Block Selection */}
+      <div className="p-2.5 sm:p-4 rounded-lg bg-muted/50 border space-y-2 sm:space-y-3">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
+          <Label className="text-xs sm:text-sm font-medium">Bloques a generar</Label>
+        </div>
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+          {Object.entries(BLOCK_LABELS).map(([key, { emoji, short }]) => {
+            const cost = getTokenCost(BLOCK_ACTION_KEYS[key]);
+            const isSelected = selectedBlocks[key];
+            return (
+              <Badge
+                key={key}
+                variant={isSelected ? "default" : "outline"}
+                className={`cursor-pointer select-none transition-all text-[10px] sm:text-xs px-2 py-1 ${
+                  isSelected ? "" : "opacity-50"
+                }`}
+                onClick={() =>
+                  setSelectedBlocks((prev) => ({ ...prev, [key]: !prev[key] }))
+                }
+              >
+                {emoji} {short} <span className="ml-1 font-mono">{cost}</span>
+              </Badge>
+            );
+          })}
+        </div>
+        <div className="flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
+          <span>
+            Total: <span className="font-semibold text-foreground">{totalCost} tokens</span>
+            {balance && (
+              <span className="ml-2">
+                Saldo: <span className={`font-semibold ${insufficientTokens ? "text-destructive" : "text-foreground"}`}>
+                  {totalAvailable.toLocaleString()}
+                </span>
+              </span>
+            )}
+          </span>
+          {selectedCount < 6 && (
+            <button
+              type="button"
+              className="text-primary hover:underline"
+              onClick={() =>
+                setSelectedBlocks({ script: true, editor: true, trafficker: true, strategist: true, designer: true, admin: true })
+              }
+            >
+              Seleccionar todos
+            </button>
+          )}
+        </div>
+        {insufficientTokens && (
+          <p className="text-[10px] sm:text-xs text-destructive flex items-center gap-1">
+            <AlertCircle className="h-3 w-3 shrink-0" />
+            Tokens insuficientes. Selecciona menos bloques o compra mas tokens.
+          </p>
+        )}
+      </div>
+
       {/* Document Loading Section */}
       {hasDocumentUrls && (
-        <div className="p-4 rounded-lg bg-muted/50 border space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <FileSearch className="h-5 w-5 text-primary" />
-              <Label className="text-sm font-medium">Documentos del Producto</Label>
-            </div>
-            <div className="flex items-center gap-2">
+        <div className="p-2.5 sm:p-4 rounded-lg bg-muted/50 border space-y-2 sm:space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+              <FileSearch className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
+              <Label className="text-xs sm:text-sm font-medium truncate">Documentos</Label>
               {docsLoaded && (
-                <Badge variant="outline" className="text-xs text-green-600 border-green-600">
+                <CheckCircle2 className="h-3.5 w-3.5 text-green-600 shrink-0 sm:hidden" />
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {docsLoaded && (
+                <Badge variant="outline" className="text-xs text-green-600 border-green-600 hidden sm:flex">
                   <CheckCircle2 className="h-3 w-3 mr-1" />
                   Cargados
                 </Badge>
@@ -2050,17 +2196,18 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
                 size="sm"
                 onClick={loadProductDocuments}
                 disabled={loadingDocs}
+                className="h-7 sm:h-8 px-2 sm:px-3 text-xs"
               >
                 {loadingDocs ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <RefreshCw className="h-4 w-4" />
+                  <RefreshCw className="h-3.5 w-3.5" />
                 )}
-                <span className="ml-2">{docsLoaded ? "Recargar" : "Cargar Docs"}</span>
+                <span className="ml-1.5 hidden sm:inline">{docsLoaded ? "Recargar" : "Cargar Docs"}</span>
               </Button>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 text-xs">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2 text-xs">
             {product.brief_url && (
               <Badge variant={documentContent.brief ? "default" : "secondary"}>
                 Brief {documentContent.brief ? `(${Math.round(documentContent.brief.length / 100)}kb)` : ""}
@@ -2081,10 +2228,10 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       )}
 
       {/* AI Provider Selection */}
-      <div className="p-4 rounded-lg bg-muted/50 border space-y-4">
-        <div className="flex items-center gap-2">
-          <Bot className="h-5 w-5 text-primary" />
-          <Label className="text-sm font-medium">Modelo IA</Label>
+      <div className="p-2.5 sm:p-4 rounded-lg bg-muted/50 border space-y-2 sm:space-y-4">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+          <Label className="text-xs sm:text-sm font-medium">Modelo IA</Label>
         </div>
         
         <Select 
@@ -2104,23 +2251,24 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {/* CTA */}
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2">
-            <Target className="h-4 w-4" /> CTA (Llamado a la acción) *
+        <div className="space-y-1.5 sm:space-y-2">
+          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+            <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> CTA *
           </Label>
           <Input
             value={formData.cta}
             onChange={(e) => setFormData({ ...formData, cta: e.target.value })}
             placeholder="Ej: Haz clic en el link de la bio"
+            className="text-sm"
           />
         </div>
 
         {/* Ángulo de Venta */}
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4" /> Ángulo de Venta *
+        <div className="space-y-1.5 sm:space-y-2">
+          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+            <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Ángulo de Venta *
           </Label>
 
           <Collapsible>
@@ -2166,9 +2314,9 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
         {/* Número de Hooks */}
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2">
-            <ListOrdered className="h-4 w-4" /> Cantidad de Hooks
+        <div className="space-y-1.5 sm:space-y-2">
+          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+            <ListOrdered className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Hooks
           </Label>
           <Select 
             value={formData.hooks_count} 
@@ -2184,9 +2332,9 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
         {/* País Objetivo */}
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2">
-            <Globe className="h-4 w-4" /> País Objetivo
+        <div className="space-y-1.5 sm:space-y-2">
+          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+            <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> País
           </Label>
           <Select 
             value={formData.target_country} 
@@ -2202,9 +2350,9 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
         {/* Duración del Video */}
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2">
-            <Video className="h-4 w-4" /> Duración del Video
+        <div className="space-y-1.5 sm:space-y-2">
+          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+            <Video className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Duración
           </Label>
           <Select 
             value={formData.video_duration} 
@@ -2220,9 +2368,9 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
         {/* Plataforma Destino */}
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2">
-            <Target className="h-4 w-4" /> Plataforma Destino
+        <div className="space-y-1.5 sm:space-y-2">
+          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+            <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Plataforma
           </Label>
           <Select 
             value={formData.target_platform} 
@@ -2238,15 +2386,15 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
         {/* Toggle Perplexity Research */}
-        <div className="space-y-4 md:col-span-2">
-          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg border border-purple-500/20">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500/20 rounded-lg">
-                <Search className="h-5 w-5 text-purple-400" />
+        <div className="space-y-4 sm:col-span-2">
+          <div className="flex items-center justify-between p-2.5 sm:p-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg border border-purple-500/20 gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="p-1.5 sm:p-2 bg-purple-500/20 rounded-lg shrink-0">
+                <Search className="h-4 w-4 sm:h-5 sm:w-5 text-purple-400" />
               </div>
-              <div>
-                <Label className="text-sm font-medium">Investigación en tiempo real</Label>
-                <p className="text-xs text-muted-foreground">
+              <div className="min-w-0">
+                <Label className="text-xs sm:text-sm font-medium">Investigación en tiempo real</Label>
+                <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">
                   Usa Perplexity para buscar tendencias y hooks actuales
                 </p>
               </div>
@@ -2310,9 +2458,9 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
         {/* Estructura Narrativa */}
-        <div className="space-y-2 md:col-span-2">
-          <Label className="flex items-center gap-2">
-            <MessageSquare className="h-4 w-4" /> Estructura Narrativa *
+        <div className="space-y-1.5 sm:space-y-2 sm:col-span-2">
+          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+            <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Estructura Narrativa *
           </Label>
           <Select 
             value={formData.narrative_structure} 
@@ -2328,9 +2476,9 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
         {/* Avatar Ideal */}
-        <div className="space-y-2 md:col-span-2">
-          <Label className="flex items-center gap-2">
-            <Users className="h-4 w-4" /> Avatar / Cliente Ideal
+        <div className="space-y-1.5 sm:space-y-2 sm:col-span-2">
+          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+            <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Avatar / Cliente Ideal
           </Label>
           <Textarea
             value={formData.ideal_avatar}
@@ -2387,27 +2535,27 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
         {/* Dolores */}
-        <div className="space-y-2 md:col-span-2">
-          <Label className="flex items-center gap-2">
+        <div className="space-y-2 sm:col-span-2">
+          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             💔 Dolor Seleccionado
           </Label>
           <div className="flex gap-2">
             <Input
               value={formData.selected_pain}
               onChange={(e) => setFormData({ ...formData, selected_pain: e.target.value })}
-              placeholder="Selecciona un dolor de la investigación..."
-              className="flex-1"
+              placeholder="Selecciona un dolor..."
+              className="flex-1 text-sm"
             />
             <Collapsible>
               <CollapsibleTrigger asChild>
-                <Button type="button" variant="outline" size="sm">
+                <Button type="button" variant="outline" size="sm" className="shrink-0 text-xs sm:text-sm h-9">
                   <span className="flex items-center gap-1">
-                    Dolores ({researchPains.length})
+                    <span className="hidden sm:inline">Dolores</span> ({researchPains.length})
                   </span>
-                  <ChevronDown className="h-4 w-4 ml-1" />
+                  <ChevronDown className="h-3.5 w-3.5 ml-1" />
                 </Button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="absolute mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-80 shadow-lg">
+              <CollapsibleContent className="absolute right-0 mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-[calc(100vw-3rem)] sm:w-80 shadow-lg">
                 {researchPains.map((pain: any, idx: number) => {
                   const painText = typeof pain === 'string' ? pain : (pain?.pain || pain?.description || pain?.text || `Dolor ${idx + 1}`);
                   const category = typeof pain === 'object' ? (pain?.category || pain?.type) : null;
@@ -2440,27 +2588,27 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
         {/* Deseos */}
-        <div className="space-y-2 md:col-span-2">
-          <Label className="flex items-center gap-2">
+        <div className="space-y-2 sm:col-span-2">
+          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             ✨ Deseo Seleccionado
           </Label>
           <div className="flex gap-2">
             <Input
               value={formData.selected_desire}
               onChange={(e) => setFormData({ ...formData, selected_desire: e.target.value })}
-              placeholder="Selecciona un deseo de la investigación..."
-              className="flex-1"
+              placeholder="Selecciona un deseo..."
+              className="flex-1 text-sm"
             />
             <Collapsible>
               <CollapsibleTrigger asChild>
-                <Button type="button" variant="outline" size="sm">
+                <Button type="button" variant="outline" size="sm" className="shrink-0 text-xs sm:text-sm h-9">
                   <span className="flex items-center gap-1">
-                    Deseos ({researchDesires.length})
+                    <span className="hidden sm:inline">Deseos</span> ({researchDesires.length})
                   </span>
-                  <ChevronDown className="h-4 w-4 ml-1" />
+                  <ChevronDown className="h-3.5 w-3.5 ml-1" />
                 </Button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="absolute mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-80 shadow-lg">
+              <CollapsibleContent className="absolute right-0 mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-[calc(100vw-3rem)] sm:w-80 shadow-lg">
                 {researchDesires.map((desire: any, idx: number) => {
                   const desireText = typeof desire === 'string' ? desire : (desire?.desire || desire?.description || desire?.text || `Deseo ${idx + 1}`);
                   const category = typeof desire === 'object' ? (desire?.category || desire?.type) : null;
@@ -2493,27 +2641,27 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
         {/* Objeciones */}
-        <div className="space-y-2 md:col-span-2">
-          <Label className="flex items-center gap-2">
+        <div className="space-y-2 sm:col-span-2">
+          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             🚫 Objeción Seleccionada
           </Label>
           <div className="flex gap-2">
             <Input
               value={formData.selected_objection}
               onChange={(e) => setFormData({ ...formData, selected_objection: e.target.value })}
-              placeholder="Selecciona una objeción de la investigación..."
-              className="flex-1"
+              placeholder="Selecciona una objeción..."
+              className="flex-1 text-sm"
             />
             <Collapsible>
               <CollapsibleTrigger asChild>
-                <Button type="button" variant="outline" size="sm">
+                <Button type="button" variant="outline" size="sm" className="shrink-0 text-xs sm:text-sm h-9">
                   <span className="flex items-center gap-1">
-                    Objeciones ({researchObjections.length})
+                    <span className="hidden sm:inline">Objeciones</span> ({researchObjections.length})
                   </span>
-                  <ChevronDown className="h-4 w-4 ml-1" />
+                  <ChevronDown className="h-3.5 w-3.5 ml-1" />
                 </Button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="absolute mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-80 shadow-lg">
+              <CollapsibleContent className="absolute right-0 mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-[calc(100vw-3rem)] sm:w-80 shadow-lg">
                 {researchObjections.map((objection: any, idx: number) => {
                   const objectionText = typeof objection === 'string' ? objection : (objection?.objection || objection?.description || objection?.text || `Objeción ${idx + 1}`);
                   const category = typeof objection === 'object' ? (objection?.category || objection?.type) : null;
@@ -2547,9 +2695,9 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       </div>
 
       {/* Video Strategies */}
-      <div className="space-y-2 pt-4 border-t">
-        <Label className="flex items-center gap-2">
-          <Video className="h-4 w-4" /> Estrategias / Estructuras de Video
+      <div className="space-y-1.5 sm:space-y-2 pt-3 sm:pt-4 border-t">
+        <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+          <Video className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Estrategias de Video
         </Label>
         <Textarea
           value={formData.video_strategies}
@@ -2560,9 +2708,9 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       </div>
 
       {/* Reference Transcription */}
-      <div className="space-y-2">
-        <Label className="flex items-center gap-2">
-          <FileText className="h-4 w-4" /> Transcripción Video de Referencia (opcional)
+      <div className="space-y-1.5 sm:space-y-2">
+        <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+          <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Transcripción de Referencia <span className="text-muted-foreground font-normal hidden sm:inline">(opcional)</span>
         </Label>
         <Textarea
           value={formData.reference_transcription}
@@ -2573,9 +2721,9 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       </div>
 
       {/* Hooks personalizados */}
-      <div className="space-y-3 pt-4 border-t">
-        <Label className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4" /> Hooks Sugeridos (opcional)
+      <div className="space-y-2 sm:space-y-3 pt-3 sm:pt-4 border-t">
+        <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+          <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Hooks Sugeridos <span className="text-muted-foreground font-normal hidden sm:inline">(opcional)</span>
         </Label>
         
         <div className="flex gap-2">
@@ -2607,8 +2755,8 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       </div>
 
       {/* Instrucciones adicionales */}
-      <div className="space-y-2">
-        <Label>Instrucciones adicionales</Label>
+      <div className="space-y-1.5 sm:space-y-2">
+        <Label className="text-xs sm:text-sm">Instrucciones adicionales</Label>
         <Textarea
           value={formData.additional_instructions}
           onChange={(e) => setFormData({ ...formData, additional_instructions: e.target.value })}
@@ -2709,24 +2857,31 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
       {/* Generation Progress */}
       {loading && (
-        <div className="space-y-2 p-4 bg-muted/50 rounded-lg">
-          <p className="text-sm font-medium mb-3">Progreso (IA):</p>
-          {generationSteps.map((step) => (
-            <div key={step.key} className="flex items-center gap-3">
-              {step.status === "pending" && <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />}
-              {step.status === "generating" && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
-              {step.status === "done" && <CheckCircle2 className="h-5 w-5 text-green-500" />}
-              {step.status === "error" && <X className="h-5 w-5 text-destructive" />}
-              <span className={`text-sm ${step.status === "generating" ? "text-primary font-medium" : ""}`}>
-                {step.label}
-              </span>
-            </div>
-          ))}
+        <div className="space-y-1.5 sm:space-y-2 p-2.5 sm:p-4 bg-muted/50 rounded-lg">
+          <p className="text-xs sm:text-sm font-medium mb-2 sm:mb-3">Progreso:</p>
+          <div className="grid grid-cols-2 sm:grid-cols-1 gap-1.5 sm:gap-2">
+            {generationSteps.filter((step) => selectedBlocks[step.key]).map((step) => (
+              <div key={step.key} className="flex items-center gap-1.5 sm:gap-3">
+                {step.status === "pending" && <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 border-muted-foreground/30 shrink-0" />}
+                {step.status === "generating" && <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-primary shrink-0" />}
+                {step.status === "done" && <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 shrink-0" />}
+                {step.status === "error" && <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive shrink-0" />}
+                <span className={`text-xs sm:text-sm truncate ${step.status === "generating" ? "text-primary font-medium" : ""}`}>
+                  {step.label}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
       {/* Generate Button */}
-      <Button onClick={handleGenerate} disabled={loading} className="w-full" size="lg">
+      <Button
+        onClick={handleGenerate}
+        disabled={loading || insufficientTokens || selectedCount === 0}
+        className="w-full"
+        size="lg"
+      >
         {loading ? (
           <>
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -2735,7 +2890,8 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         ) : (
           <>
             <Wand2 className="h-4 w-4 mr-2" />
-            Generar Todo con IA
+            Generar {selectedCount === 6 ? "Todo" : `${selectedCount} bloque${selectedCount !== 1 ? "s" : ""}`} con IA
+            <span className="ml-1.5 opacity-75 font-mono text-xs">({totalCost})</span>
           </>
         )}
       </Button>

@@ -234,20 +234,19 @@ export default function CreatorProfilePage() {
           <div className="flex-1 min-w-0 space-y-8">
             <CreatorHeader creator={creator} />
 
-            {/* Mobile: Pricing card inline (tablet/mobile) */}
-            <div className="lg:hidden bg-card/80 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-4">
-              {creator.base_price != null && (
-                <div>
-                  <span className="text-gray-400 text-sm">Desde </span>
-                  <span className="text-2xl font-bold text-white">
-                    ${creator.base_price.toLocaleString()}
-                  </span>
-                  <span className="text-gray-400 text-sm"> {creator.currency} / video</span>
-                </div>
-              )}
-              <div className="text-gray-500 text-xs">
-                {creator.packages.length} paquetes disponibles — ver opciones abajo
-              </div>
+            {/* Mobile: Full pricing section inline */}
+            <div className="lg:hidden">
+              <PricingSidebar
+                creatorId={creator.id}
+                creatorUserId={creator.user_id}
+                basePrice={creator.base_price}
+                currency={creator.currency}
+                packages={creator.packages}
+                creatorName={creator.display_name}
+                acceptsExchange={creator.accepts_product_exchange}
+                exchangeConditions={creator.exchange_conditions}
+                mobileInline
+              />
             </div>
 
             <AboutSection creator={creator} />

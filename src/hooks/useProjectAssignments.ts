@@ -61,16 +61,34 @@ export function useProjectAssignments({ projectSource, projectId }: UseProjectAs
     if (!projectId) return;
     setLoading(true);
     try {
+      // Fetch assignments without profile join (no direct FK to profiles)
       const { data, error } = await (supabase as any)
         .from('project_assignments')
-        .select('*, user:profiles(full_name, avatar_url)')
+        .select('*')
         .eq(fkColumn, projectId)
         .neq('status', 'cancelled')
         .order('phase', { ascending: true })
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setAssignments((data || []).map(mapRow));
+
+      const rows = data || [];
+      // Batch-fetch user profiles for all assigned users
+      const userIds = [...new Set(rows.map((r: any) => r.user_id).filter(Boolean))] as string[];
+      let profileMap: Record<string, { full_name: string; avatar_url: string | null }> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', userIds);
+        if (profiles) {
+          for (const p of profiles) {
+            profileMap[p.id] = { full_name: p.full_name || '', avatar_url: p.avatar_url };
+          }
+        }
+      }
+
+      setAssignments(rows.map((row: any) => mapRow({ ...row, user: profileMap[row.user_id] || undefined })));
     } catch (err) {
       console.error('[useProjectAssignments] fetch error:', err);
     } finally {
@@ -110,12 +128,25 @@ export function useProjectAssignments({ projectSource, projectId }: UseProjectAs
       const { data, error } = await (supabase as any)
         .from('project_assignments')
         .insert(payload)
-        .select('*, user:profiles(full_name, avatar_url)')
+        .select('*')
         .single();
 
       if (error) throw error;
 
-      setAssignments(prev => [...prev, mapRow(data)]);
+      // Fetch the user profile for the newly created assignment
+      let userProfile: { full_name: string; avatar_url: string | null } | undefined;
+      if (params.userId) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .eq('id', params.userId)
+          .single();
+        if (profile) {
+          userProfile = { full_name: profile.full_name || '', avatar_url: profile.avatar_url };
+        }
+      }
+
+      setAssignments(prev => [...prev, mapRow({ ...data, user: userProfile })]);
       toast({ title: 'Asignacion creada' });
       return data?.id || null;
     } catch (err: any) {

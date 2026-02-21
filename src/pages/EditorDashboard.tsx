@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Content, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
 import { TechKpiDialog } from '@/components/dashboard/TechKpiDialog';
-import { ContentDetailDialog } from '@/components/content/ContentDetailDialog/index';
+import { UnifiedProjectModal } from '@/components/projects/UnifiedProjectModal';
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
 import { RoleUPWidget } from '@/components/points/RoleUPWidget';
@@ -509,8 +509,9 @@ export default function EditorDashboard() {
         )}
 
         {/* Content Detail Dialog */}
-        <ContentDetailDialog
-          content={selectedContent}
+        <UnifiedProjectModal
+          source="content"
+          projectId={selectedContent?.id}
           open={!!selectedContent}
           onOpenChange={(open) => !open && setSelectedContent(null)}
           onUpdate={() => {

@@ -49,7 +49,7 @@ export function IASubTab({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Product Selection */}
       <SectionCard title="Producto Base" iconEmoji="📦">
         <FieldRow label="Producto para el guión" icon={Package}>
@@ -65,12 +65,12 @@ export function IASubTab({
             </span>
           )}
         </FieldRow>
-        <div className="p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
-          <p className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4" />
+        <div className="p-2 sm:p-3 bg-muted/50 rounded-lg text-xs sm:text-sm text-muted-foreground">
+          <p className="flex items-center gap-1.5 sm:gap-2">
+            <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
             <span>
-              Personaliza los prompts en{' '}
-              <strong>Configuración → IA & Modelos → Guiones</strong>
+              Personaliza prompts en{' '}
+              <strong>Configuración → IA → Guiones</strong>
             </span>
           </p>
         </div>
@@ -91,9 +91,9 @@ export function IASubTab({
 
       {/* Generation History (placeholder) */}
       <SectionCard title="Historial de Generaciones" iconEmoji="📜">
-        <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
-          <History className="h-8 w-8 mb-2 opacity-50" />
-          <p className="text-sm">El historial de generaciones estará disponible próximamente</p>
+        <div className="flex flex-col items-center justify-center py-4 sm:py-8 text-center text-muted-foreground">
+          <History className="h-6 w-6 sm:h-8 sm:w-8 mb-2 opacity-50" />
+          <p className="text-xs sm:text-sm">El historial de generaciones estará disponible próximamente</p>
         </div>
       </SectionCard>
 

@@ -67,6 +67,10 @@ function TabSkeleton() {
   );
 }
 
+/**
+ * @deprecated Use UnifiedProjectModal with source="content" instead.
+ * Kept for backward compatibility with ClientContentDetailDialog and client-facing pages.
+ */
 export function ContentDetailDialog({
   content,
   open,
