@@ -53,9 +53,12 @@ async function invokeTokenService<T = any>(action: string, body?: Record<string,
   return data as T;
 }
 
-export function useAITokens(organizationId?: string) {
+export function useAITokens(organizationId?: string | null) {
   const { profile, user } = useAuth();
-  const orgId = organizationId ?? profile?.current_organization_id ?? null;
+  // null = explicitly user-level (no org fallback), undefined = use org fallback
+  const orgId = organizationId === null
+    ? null
+    : (organizationId ?? profile?.current_organization_id ?? null);
   const [balance, setBalance] = useState<AITokenBalance | null>(null);
   const [transactions, setTransactions] = useState<AITokenTransaction[]>([]);
   const [loading, setLoading] = useState(true);

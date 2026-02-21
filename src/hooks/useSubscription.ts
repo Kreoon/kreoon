@@ -41,10 +41,12 @@ async function invokeSubscriptionService<T = any>(
  * Hook for managing platform subscriptions.
  * Connects to the subscription-service edge function.
  */
-export function useSubscription(organizationId?: string) {
+export function useSubscription(organizationId?: string | null) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const queryKey = ['subscription', user?.id, organizationId];
+  // null = explicitly user-level (no org), undefined = default
+  const orgId = organizationId === null ? undefined : organizationId;
+  const queryKey = ['subscription', user?.id, orgId];
 
   // ─── Get current subscription status ───
   const {
@@ -55,7 +57,7 @@ export function useSubscription(organizationId?: string) {
     queryKey,
     queryFn: async (): Promise<PlatformSubscription | null> => {
       const res = await invokeSubscriptionService<any>('get-status', {
-        organization_id: organizationId,
+        organization_id: orgId,
       });
       // Edge function returns { has_subscription, subscription?: {...}, tier?, ... }
       if (res?.has_subscription && res.subscription) {
@@ -94,7 +96,7 @@ export function useSubscription(organizationId?: string) {
   const portalMutation = useMutation({
     mutationFn: () =>
       invokeSubscriptionService<{ portal_url: string }>('create-portal', {
-        organization_id: organizationId,
+        organization_id: orgId,
       }),
     onSuccess: (data) => {
       if (data.portal_url) {
@@ -144,7 +146,7 @@ export function useSubscription(organizationId?: string) {
       invokeSubscriptionService('change-plan', {
         tier: params.tier,
         billing_cycle: params.billingCycle,
-        organization_id: organizationId,
+        organization_id: orgId,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
@@ -184,7 +186,7 @@ export function useSubscription(organizationId?: string) {
       checkoutMutation.mutateAsync({
         tier,
         billing_cycle: billingCycle,
-        organization_id: organizationId,
+        organization_id: orgId,
         referral_code: referralCode,
       }),
     isCheckingOut: checkoutMutation.isPending,

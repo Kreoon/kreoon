@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { getPermissionGroup } from '@/lib/permissionGroups';
 import { useOrganizationTrial } from '@/hooks/useOrganizationTrial';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -22,6 +23,7 @@ import { useBillingAnalytics } from '@/analytics';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { PLANS as PLAN_DEFS, type PlanDef } from '@/lib/finance/constants';
+import { useAITokens } from '@/hooks/useAITokens';
 import type { SubscriptionTier, BillingCycle } from '@/types/unified-finance.types';
 
 type Segment = PlanDef['segment'];
@@ -152,11 +154,18 @@ interface OrganizationPlansPageProps {
 }
 
 export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPageProps = {}) {
-  const { profile } = useAuth();
+  const { profile, activeRole } = useAuth();
   const { trackPlanSelected, trackPlanViewed } = useBillingAnalytics();
   const organizationId = profile?.current_organization_id;
 
+  // Client users have their OWN subscription (not the org's)
+  const permissionGroup = activeRole ? getPermissionGroup(activeRole) : null;
+  const isClientUser = permissionGroup === 'client';
+  // null = user-level tokens (no org fallback), string = org-level tokens
+  const subscriptionScopeId = isClientUser ? null : organizationId;
+
   const trialStatus = useOrganizationTrial(organizationId || null);
+  const { totalAvailable: kreoonCoins, loading: tokensLoading } = useAITokens(subscriptionScopeId);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const [segment, setSegment] = useState<Segment>(fixedSegment || 'marcas');
 
@@ -174,9 +183,9 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
     isOpeningPortal,
     cancelSubscription,
     isLoading: subLoading,
-  } = useSubscription(organizationId);
+  } = useSubscription(subscriptionScopeId);
 
-  // Fetch current organization data
+  // Fetch current organization data (skip for client users — they have personal subscriptions)
   const { data: organization, isLoading } = useQuery({
     queryKey: ['organization-plan', organizationId],
     queryFn: async () => {
@@ -189,7 +198,7 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
       if (error) throw error;
       return data;
     },
-    enabled: !!organizationId,
+    enabled: !!organizationId && !isClientUser,
   });
 
   // Get plans for the selected segment
@@ -246,11 +255,13 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <Building2 className="h-5 w-5" />
+                {isClientUser ? <UserCircle className="h-5 w-5" /> : <Building2 className="h-5 w-5" />}
                 Estado de tu Suscripcion
               </CardTitle>
               <CardDescription>
-                {organization?.name || 'Tu organizacion'}
+                {isClientUser
+                  ? (profile?.full_name || 'Tu cuenta')
+                  : (organization?.name || 'Tu organizacion')}
               </CardDescription>
             </div>
             <Badge
@@ -318,6 +329,25 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
               </div>
             </div>
           )}
+
+          {/* Kreoon Coins Balance */}
+          <Separator />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-amber-500" />
+              <span className="text-sm font-medium">Kreoon Coins</span>
+            </div>
+            <div className="text-right">
+              {tokensLoading ? (
+                <span className="text-sm text-muted-foreground">Cargando...</span>
+              ) : (
+                <span className="text-lg font-bold text-amber-500">
+                  {kreoonCoins.toLocaleString()}
+                </span>
+              )}
+              <p className="text-[10px] text-muted-foreground">disponibles</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

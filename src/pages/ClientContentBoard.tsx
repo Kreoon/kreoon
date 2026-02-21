@@ -1,9 +1,11 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
   Search, Eye, AlertCircle, CheckCircle2, Package, FileText, RefreshCw,
-  FileCheck, Scroll, Maximize2, Download, Share2, Presentation, Bell
+  FileCheck, Scroll, Maximize2, Download, Share2, Presentation, Bell,
+  Crown
 } from "lucide-react";
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from "@/components/ui/button";
@@ -13,6 +15,8 @@ import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { Content, ContentStatus, STATUS_LABELS } from "@/types/database";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { useBoardSettings } from "@/hooks/useBoardSettings";
+import { useSubscription } from "@/hooks/useSubscription";
+import { getPlanById } from "@/lib/finance/constants";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -80,13 +84,30 @@ interface ClientInfo {
 
 type FilterTab = 'all' | 'pending' | 'approved' | 'published';
 
+// Map subscription tier → plan ID to get contentPerMonth limits
+const TIER_TO_PLAN: Record<string, string> = {
+  brand_free: 'marcas-free',
+  brand_starter: 'marcas-starter',
+  brand_pro: 'marcas-pro',
+  brand_business: 'marcas-business',
+};
+
 export default function ClientContentBoard() {
+  const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { isImpersonating, effectiveClientId, effectiveUserId } = useImpersonation();
   const { toast } = useToast();
   const { currentOrgId } = useOrgOwner();
   const { statuses: orgStatuses, rules, statePermissions } = useBoardSettings(currentOrgId);
   const { download, canDownload, isDownloading } = useDownload();
+
+  // Subscription check for plan gating — client users have personal subscriptions (not org)
+  const { currentTier, isLoading: subLoading } = useSubscription();
+  const currentPlan = useMemo(() => {
+    const planId = TIER_TO_PLAN[currentTier] || 'marcas-free';
+    return getPlanById(planId);
+  }, [currentTier]);
+  const contentLimit = currentPlan?.contentPerMonth;
 
   const [content, setContent] = useState<Content[]>([]);
   const [loading, setLoading] = useState(true);
@@ -535,6 +556,12 @@ export default function ClientContentBoard() {
             <Share2 className="h-3 w-3" />
             {publishedCount} publicados
           </Badge>
+          {contentLimit != null && (
+            <Badge variant="outline" className="gap-1.5 px-2 py-1 text-xs border-amber-500/50 text-amber-500">
+              <Crown className="h-3 w-3" />
+              {content.length}/{contentLimit} del plan
+            </Badge>
+          )}
         </div>
 
         {/* Actions */}
