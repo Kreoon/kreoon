@@ -160,8 +160,7 @@ export function ClientsContent() {
         }
       }
 
-      setClientUsers(clientUsersList);
-
+      // Include org members with role=client who aren't linked to any company
       if (currentOrgId) {
         const { data: orgMembers } = await supabase
           .from('organization_members')
@@ -179,14 +178,33 @@ export function ClientsContent() {
           if (unassignedUserIds.length > 0) {
             const { data: unassignedProfiles } = await supabase
               .from('profiles')
-              .select('id, full_name, email, avatar_url')
+              .select('id, full_name, email, avatar_url, phone, city, created_at')
               .in('id', unassignedUserIds)
               .order('full_name');
+
+            if (unassignedProfiles) {
+              for (const p of unassignedProfiles) {
+                clientUsersList.push({
+                  id: p.id,
+                  full_name: p.full_name,
+                  email: p.email,
+                  avatar_url: p.avatar_url,
+                  phone: p.phone,
+                  city: p.city,
+                  created_at: p.created_at || '',
+                  linked_clients: [],
+                });
+              }
+            }
 
             setUnassignedClientUsers(unassignedProfiles || []);
           }
         }
       }
+
+      // Sort combined list alphabetically
+      clientUsersList.sort((a, b) => a.full_name.localeCompare(b.full_name));
+      setClientUsers(clientUsersList);
 
       if (!clientsData?.length) {
         setClients([]);
