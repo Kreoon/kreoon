@@ -28,8 +28,34 @@ const RESEARCH_STEPS = [
   { id: "launch_strategy", name: "Estrategia de Lanzamiento" },
 ];
 
-// ── Batch size: steps per invocation (stay within 150s edge function limit) ──
-const BATCH_SIZE = 1; // 1 step per invocation → auto-invokes next immediately
+// ── Execution phases: groups of parallel steps per invocation ─────────────
+// Each phase is an array of groups. Each group is an array of step IDs.
+// Steps within a group run in parallel (Promise.all).
+// Groups within a phase run sequentially (dependency order).
+// Self-invocation chains phases (3 invocations instead of 12).
+const EXECUTION_PHASES: string[][][] = [
+  // Phase 0: Foundation (~100s)
+  [["market_overview", "jtbd", "competitors"], ["pains_desires"], ["avatars"]],
+  // Phase 1: Strategy (~90s)
+  [["differentiation"], ["sales_angles"], ["puv_transformation", "lead_magnets"]],
+  // Phase 2: Content & Launch (~70s)
+  [["video_creatives", "content_calendar"], ["launch_strategy"]],
+];
+
+// Step index map for progress tracking (0-11)
+const STEP_INDEX: Record<string, number> = {};
+RESEARCH_STEPS.forEach((s, i) => { STEP_INDEX[s.id] = i; });
+
+function getStepName(stepId: string): string {
+  return RESEARCH_STEPS.find(s => s.id === stepId)?.name || stepId;
+}
+
+// Convert legacy start_step parameter to phase number
+function startStepToPhase(startStep: number): number {
+  if (startStep <= 4) return 0;
+  if (startStep <= 8) return 1;
+  return 2;
+}
 
 // ── Token limits per step ──────────────────────────────────────────────────
 const TOKEN_MAP: Record<string, number> = {
@@ -815,9 +841,31 @@ async function reconstructPrevResults(
   };
 }
 
-// ── MAIN HANDLER — runs steps in batches with self-invocation ────────────────
-// Each batch processes BATCH_SIZE steps, then triggers the next batch.
-// Key optimization: minimal SELECT to avoid 3MB+ product rows hitting CPU limit.
+// ── Run a single AI step (no DB write) ──────────────────────────────────────
+async function runStep(
+  stepId: string,
+  systemPrompt: string,
+  baseContext: string,
+  targetMarket: string,
+  prevResults: Record<string, any>,
+): Promise<{ stepId: string; result: any }> {
+  console.log(`[full-research] Running step: ${stepId}`);
+  const prompt = getStepPrompt(stepId, baseContext, targetMarket, prevResults);
+  const schema = SCHEMAS[stepId];
+  const maxTokens = TOKEN_MAP[stepId] || 6000;
+  try {
+    const result = await callAI(systemPrompt, prompt, schema, stepId, maxTokens);
+    console.log(`[full-research] Step ${stepId} OK`);
+    return { stepId, result };
+  } catch (err: any) {
+    console.error(`[full-research] Step ${stepId} AI failed:`, err.message);
+    return { stepId, result: null };
+  }
+}
+
+// ── MAIN HANDLER — runs steps in phases with parallel groups ─────────────────
+// Each phase processes groups sequentially; steps within a group run in parallel.
+// 3 self-invocations (one per phase) instead of 12 sequential invocations.
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -828,10 +876,12 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     productId = body.product_id;
-    const startStep: number = body.start_step || 0;
     const userId: string | null = body.user_id || null;
     const organizationId: string | null = body.organization_id || null;
     const isClientUser: boolean = body.is_client_user || false;
+
+    // Support both new "phase" param and legacy "start_step" param
+    const phase: number = body.phase ?? (body.start_step != null ? startStepToPhase(body.start_step) : 0);
 
     if (!productId) {
       return new Response(
@@ -840,14 +890,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[full-research] Product ${productId} — starting from step ${startStep} of 12`);
+    console.log(`[full-research] Product ${productId} — phase ${phase} of ${EXECUTION_PHASES.length}`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // ── Token consumption (only on first batch, step 0) ─────────────
-    if (startStep === 0 && (userId || organizationId)) {
+    // ── Token consumption (only on phase 0) ─────────────────────────
+    if (phase === 0 && (userId || organizationId)) {
       const TOKEN_COST = 600; // AI_TOKEN_COSTS["research.full"]
       console.log(`[full-research] Consuming ${TOKEN_COST} tokens — user: ${userId}, org: ${organizationId}, isClient: ${isClientUser}`);
 
@@ -922,16 +972,12 @@ Deno.serve(async (req) => {
     const systemPrompt =
       "Eres un experto en investigacion de mercado. Responde SOLO en espanol. Devuelve UNICAMENTE JSON valido, sin explicaciones, sin markdown, sin texto adicional.";
 
-    // ── 3. Run batch of steps ────────────────────────────────────────
+    // ── 3. Reconstruct previous results from DB ──────────────────────
     let stepResults: Record<string, any> = {};
-    const completedSteps: string[] = [];
-
-    // In-memory column accumulators
     let marketResearch: any = {};
     let competitorAnalysis: any = {};
     let salesAnglesData: any = {};
 
-    // Always reconstruct from DB to detect already-completed steps
     const restored = await reconstructPrevResults(supabase, productId);
     stepResults = restored.stepResults;
     marketResearch = restored.marketResearch;
@@ -942,271 +988,241 @@ Deno.serve(async (req) => {
       console.log(`[full-research] Restored ${restoredCount} previous results from DB`);
     }
 
-    // Fast-forward past already-completed steps
-    let actualStart = startStep;
-    while (actualStart < RESEARCH_STEPS.length && stepResults[RESEARCH_STEPS[actualStart].id]) {
-      console.log(`[full-research] Skipping step ${actualStart + 1} (${RESEARCH_STEPS[actualStart].id}) — already generated`);
-      actualStart++;
+    // ── 4. Process current phase ─────────────────────────────────────
+    const phaseGroups = EXECUTION_PHASES[phase];
+    if (!phaseGroups) {
+      console.warn(`[full-research] Invalid phase ${phase}, skipping to finalize`);
     }
 
-    // If we skipped steps, update progress so the frontend sees the jump
-    if (actualStart > startStep) {
-      console.log(`[full-research] Fast-forwarded from step ${startStep + 1} to ${actualStart + 1}`);
-      await supabase
-        .from("products")
-        .update({
-          research_progress: {
-            step: actualStart,
-            total: 12,
-            label: actualStart < RESEARCH_STEPS.length
-              ? RESEARCH_STEPS[actualStart].name
-              : "Completado",
-            stepId: actualStart < RESEARCH_STEPS.length
-              ? RESEARCH_STEPS[actualStart].id
-              : "done",
-          },
-        })
-        .eq("id", productId);
-    }
+    const phaseCompletedSteps: string[] = [];
 
-    // If all steps already done, go straight to finalize
-    const endStep = Math.min(actualStart + BATCH_SIZE, RESEARCH_STEPS.length);
+    if (phaseGroups) {
+      for (let gi = 0; gi < phaseGroups.length; gi++) {
+        const group = phaseGroups[gi];
 
-    for (let i = actualStart; i < endStep; i++) {
-      const step = RESEARCH_STEPS[i];
-
-      console.log(`[full-research] === Step ${i + 1}/12: ${step.name} ===`);
-
-      // Update progress (starting this step)
-      await supabase
-        .from("products")
-        .update({
-          research_progress: {
-            step: i,
-            total: 12,
-            label: step.name,
-            stepId: step.id,
-          },
-        })
-        .eq("id", productId);
-
-      // Build prompt using in-memory previous results
-      const prompt = getStepPrompt(step.id, baseContext, targetMarket, stepResults);
-      const schema = SCHEMAS[step.id];
-      const maxTokens = TOKEN_MAP[step.id] || 6000;
-
-      let result: any = null;
-      try {
-        result = await callAI(systemPrompt, prompt, schema, step.id, maxTokens);
-        console.log(`[full-research] Step ${i + 1} OK`);
-      } catch (err: any) {
-        console.error(`[full-research] Step ${i + 1} (${step.id}) AI failed:`, err.message);
-      }
-
-      // Save results incrementally
-      if (result) {
-        stepResults[step.id] = result;
-        completedSteps.push(step.id);
-
-        const now = new Date().toISOString();
-        const update: Record<string, any> = {
-          updated_at: now,
-          research_progress: {
-            step: i + 1,
-            total: 12,
-            label: step.name,
-            stepId: step.id,
-          },
-        };
-
-        switch (step.id) {
-          case "market_overview":
-            marketResearch = { market_overview: result.market_overview, generatedAt: now };
-            update.market_research = marketResearch;
-            break;
-
-          case "jtbd": {
-            // Read-before-write: ensure we don't lose market_overview
-            const mrForJtbd = await readColumnFromDB(supabase, productId, "market_research");
-            if (mrForJtbd !== null) marketResearch = mrForJtbd;
-            marketResearch = { ...marketResearch, jtbd: result.jtbd, generatedAt: now };
-            update.market_research = marketResearch;
-            update.ideal_avatar = JSON.stringify({
-              jtbd: result.jtbd,
-              summary: result.jtbd?.functional,
-            });
-            break;
-          }
-
-          case "pains_desires": {
-            // Read-before-write: ensure we don't lose market_overview or jtbd
-            const mrForPains = await readColumnFromDB(supabase, productId, "market_research");
-            if (mrForPains !== null) marketResearch = mrForPains;
-            marketResearch = {
-              ...marketResearch,
-              jtbd: { ...(marketResearch.jtbd || {}), ...result },
-              generatedAt: now,
-            };
-            update.market_research = marketResearch;
-            break;
-          }
-
-          case "competitors":
-            competitorAnalysis = { competitors: result.competitors, generatedAt: now };
-            update.competitor_analysis = competitorAnalysis;
-            break;
-
-          case "avatars":
-            update.avatar_profiles = { profiles: result.avatars, generatedAt: now };
-            break;
-
-          case "differentiation": {
-            // Read-before-write: ensure we don't lose competitors data
-            const caForDiff = await readColumnFromDB(supabase, productId, "competitor_analysis");
-            if (caForDiff !== null) competitorAnalysis = caForDiff;
-            competitorAnalysis = { ...competitorAnalysis, differentiation: result.differentiation, generatedAt: now };
-            update.competitor_analysis = competitorAnalysis;
-            update.content_strategy = {
-              esferaInsights: result.esferaInsights || {},
-              executiveSummary: result.executiveSummary || {},
-              generatedAt: now,
-            };
-            break;
-          }
-
-          case "sales_angles":
-            salesAnglesData = { angles: result.salesAngles, generatedAt: now };
-            update.sales_angles_data = salesAnglesData;
-            update.sales_angles = (result.salesAngles || [])
-              .map((a: any) => a.hookExample || a.angle?.substring(0, 80))
-              .filter(Boolean)
-              .slice(0, 20);
-            break;
-
-          case "puv_transformation": {
-            // Read-before-write: ensure we don't lose angles data
-            const saForPuv = await readColumnFromDB(supabase, productId, "sales_angles_data");
-            if (saForPuv !== null) salesAnglesData = saForPuv;
-            salesAnglesData = { ...salesAnglesData, puv: result.puv, transformation: result.transformation, generatedAt: now };
-            update.sales_angles_data = salesAnglesData;
-            break;
-          }
-
-          case "lead_magnets": {
-            const saForLM = await readColumnFromDB(supabase, productId, "sales_angles_data");
-            if (saForLM !== null) salesAnglesData = saForLM;
-            salesAnglesData = { ...salesAnglesData, leadMagnets: result.leadMagnets, generatedAt: now };
-            update.sales_angles_data = salesAnglesData;
-            break;
-          }
-
-          case "video_creatives": {
-            const saForVC = await readColumnFromDB(supabase, productId, "sales_angles_data");
-            if (saForVC !== null) salesAnglesData = saForVC;
-            salesAnglesData = { ...salesAnglesData, videoCreatives: result.creatives, generatedAt: now };
-            update.sales_angles_data = salesAnglesData;
-            break;
-          }
-
-          case "content_calendar":
-            update.content_calendar = { ...result, generatedAt: now };
-            break;
-
-          case "launch_strategy":
-            update.launch_strategy = { ...result, generatedAt: now };
-            break;
+        // Filter out already-completed steps
+        const pending = group.filter((id) => !stepResults[id]);
+        if (pending.length === 0) {
+          console.log(`[full-research] Skipping group [${group.join(", ")}] — all completed`);
+          continue;
         }
 
+        // Update progress (starting this group)
+        const groupLabel = pending.length > 1
+          ? pending.map((id) => getStepName(id)).join(" + ")
+          : getStepName(pending[0]);
+        const groupStartIdx = Math.min(...pending.map((id) => STEP_INDEX[id]));
+
+        await supabase.from("products").update({
+          research_progress: {
+            step: groupStartIdx,
+            total: 12,
+            label: groupLabel,
+            stepId: pending[0],
+          },
+        }).eq("id", productId);
+
+        console.log(`[full-research] === Phase ${phase} Group ${gi + 1}/${phaseGroups.length}: [${pending.join(", ")}] ===`);
+
+        // Run AI calls — parallel if multiple steps, sequential if single
+        const results = pending.length === 1
+          ? [await runStep(pending[0], systemPrompt, baseContext, targetMarket, stepResults)]
+          : await Promise.all(
+              pending.map((id) =>
+                runStep(id, systemPrompt, baseContext, targetMarket, stepResults)
+              ),
+            );
+
+        // Process results: update in-memory accumulators + build DB update
+        const now = new Date().toISOString();
+        const update: Record<string, any> = { updated_at: now };
+        let mrDirty = false;
+        let caDirty = false;
+        let saDirty = false;
+
+        for (const { stepId, result } of results) {
+          if (!result) {
+            console.warn(`[full-research] Step ${stepId} produced no result, skipping`);
+            continue;
+          }
+
+          stepResults[stepId] = result;
+          phaseCompletedSteps.push(stepId);
+
+          switch (stepId) {
+            case "market_overview":
+              marketResearch = { ...marketResearch, market_overview: result.market_overview, generatedAt: now };
+              mrDirty = true;
+              break;
+
+            case "jtbd":
+              marketResearch = { ...marketResearch, jtbd: result.jtbd, generatedAt: now };
+              mrDirty = true;
+              update.ideal_avatar = JSON.stringify({
+                jtbd: result.jtbd,
+                summary: result.jtbd?.functional,
+              });
+              break;
+
+            case "pains_desires":
+              marketResearch = {
+                ...marketResearch,
+                jtbd: { ...(marketResearch.jtbd || {}), ...result },
+                generatedAt: now,
+              };
+              mrDirty = true;
+              break;
+
+            case "competitors":
+              competitorAnalysis = { ...competitorAnalysis, competitors: result.competitors, generatedAt: now };
+              caDirty = true;
+              break;
+
+            case "avatars":
+              update.avatar_profiles = { profiles: result.avatars, generatedAt: now };
+              break;
+
+            case "differentiation":
+              competitorAnalysis = { ...competitorAnalysis, differentiation: result.differentiation, generatedAt: now };
+              caDirty = true;
+              update.content_strategy = {
+                esferaInsights: result.esferaInsights || {},
+                executiveSummary: result.executiveSummary || {},
+                generatedAt: now,
+              };
+              break;
+
+            case "sales_angles":
+              salesAnglesData = { ...salesAnglesData, angles: result.salesAngles, generatedAt: now };
+              saDirty = true;
+              update.sales_angles = (result.salesAngles || [])
+                .map((a: any) => a.hookExample || a.angle?.substring(0, 80))
+                .filter(Boolean)
+                .slice(0, 20);
+              break;
+
+            case "puv_transformation":
+              salesAnglesData = { ...salesAnglesData, puv: result.puv, transformation: result.transformation, generatedAt: now };
+              saDirty = true;
+              break;
+
+            case "lead_magnets":
+              salesAnglesData = { ...salesAnglesData, leadMagnets: result.leadMagnets, generatedAt: now };
+              saDirty = true;
+              break;
+
+            case "video_creatives":
+              salesAnglesData = { ...salesAnglesData, videoCreatives: result.creatives, generatedAt: now };
+              saDirty = true;
+              break;
+
+            case "content_calendar":
+              update.content_calendar = { ...result, generatedAt: now };
+              break;
+
+            case "launch_strategy":
+              update.launch_strategy = { ...result, generatedAt: now };
+              break;
+          }
+        }
+
+        // Add dirty accumulators to the update
+        if (mrDirty) update.market_research = marketResearch;
+        if (caDirty) update.competitor_analysis = competitorAnalysis;
+        if (saDirty) update.sales_angles_data = salesAnglesData;
+
+        // Update progress after group completes
+        const groupEndIdx = Math.max(...group.map((id) => STEP_INDEX[id]));
+        update.research_progress = {
+          step: groupEndIdx + 1,
+          total: 12,
+          label: groupLabel,
+          stepId: group[group.length - 1],
+        };
+
+        // Single DB write for the entire group
         const { error: updateErr } = await supabase
           .from("products")
           .update(update)
           .eq("id", productId);
 
         if (updateErr) {
-          console.error(`[full-research] Save error step ${i + 1}:`, updateErr.message);
+          console.error(`[full-research] Save error for group [${group.join(", ")}]:`, updateErr.message);
         }
-      } else {
-        // Step failed — update progress and continue
-        await supabase
-          .from("products")
-          .update({
-            research_progress: {
-              step: i + 1,
-              total: 12,
-              label: `${step.name} (omitido)`,
-              stepId: step.id,
-            },
-          })
-          .eq("id", productId);
-      }
 
-      // Small delay between API calls to avoid rate limiting
-      if (i < endStep - 1) {
-        await new Promise((r) => setTimeout(r, 1000));
+        // Small delay between groups to avoid rate limiting
+        if (gi < phaseGroups.length - 1) {
+          await new Promise((r) => setTimeout(r, 500));
+        }
       }
     }
 
-    // ── 4. If more steps remain → self-invoke next batch ─────────────
-    if (endStep < RESEARCH_STEPS.length) {
-      const selfUrl = `${supabaseUrl}/functions/v1/generate-full-research`;
-      fetch(selfUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${supabaseKey}`,
-        },
-        body: JSON.stringify({
-          product_id: productId,
-          start_step: endStep,
-          user_id: userId,
-          organization_id: organizationId,
-          is_client_user: isClientUser,
-        }),
-      })
-        .then((res) => {
-          console.log(
-            `[full-research] Next batch (step ${endStep}) triggered, HTTP ${res.status}`,
-          );
+    // ── 5. Self-invoke next phase or finalize ────────────────────────
+    const nextPhase = phase + 1;
+    if (nextPhase < EXECUTION_PHASES.length) {
+      // Check if any steps in remaining phases are still pending
+      const remainingSteps = EXECUTION_PHASES.slice(nextPhase).flat().flat();
+      const hasPending = remainingSteps.some((id) => !stepResults[id]);
+
+      if (hasPending) {
+        const selfUrl = `${supabaseUrl}/functions/v1/generate-full-research`;
+        fetch(selfUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify({
+            product_id: productId,
+            phase: nextPhase,
+            user_id: userId,
+            organization_id: organizationId,
+            is_client_user: isClientUser,
+          }),
         })
-        .catch((err: any) => {
-          console.error(
-            `[full-research] Self-invoke for step ${endStep} failed:`,
-            err.message,
-          );
-          // Mark progress as error so frontend stops polling
-          supabase
-            .from("products")
-            .update({
-              research_progress: {
-                step: endStep,
-                total: 12,
-                label: `Error al continuar (paso ${endStep + 1})`,
-                error: true,
-              },
-            })
-            .eq("id", productId)
-            .then(() => {});
-        });
+          .then((res) => {
+            console.log(
+              `[full-research] Phase ${nextPhase} triggered, HTTP ${res.status}`,
+            );
+          })
+          .catch((err: any) => {
+            console.error(
+              `[full-research] Self-invoke phase ${nextPhase} failed:`,
+              err.message,
+            );
+            supabase
+              .from("products")
+              .update({
+                research_progress: {
+                  step: STEP_INDEX[EXECUTION_PHASES[nextPhase][0][0]],
+                  total: 12,
+                  label: `Error al continuar (fase ${nextPhase + 1})`,
+                  error: true,
+                },
+              })
+              .eq("id", productId)
+              .then(() => {});
+          });
 
-      // Small delay to ensure fetch is dispatched before returning
-      await new Promise((r) => setTimeout(r, 500));
+        await new Promise((r) => setTimeout(r, 500));
 
-      console.log(
-        `[full-research] Batch ${startStep}-${endStep - 1} done. Next batch: step ${endStep}.`,
-      );
+        console.log(
+          `[full-research] Phase ${phase} done (${phaseCompletedSteps.length} steps). Next: phase ${nextPhase}.`,
+        );
 
-      return new Response(
-        JSON.stringify({
-          success: true,
-          batch: `${startStep}-${endStep - 1}`,
-          nextBatch: endStep,
-          completedSteps,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+        return new Response(
+          JSON.stringify({
+            success: true,
+            phase,
+            nextPhase,
+            completedSteps: phaseCompletedSteps,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
     }
 
-    // ── 5. All 12 steps done → Finalize ──────────────────────────────
+    // ── 6. All 12 steps done → Finalize ──────────────────────────────
     const briefData = {
       ...(product.brief_data || {}),
       product_dna_id: productDnaId,
@@ -1232,11 +1248,11 @@ Deno.serve(async (req) => {
       .eq("id", productId);
 
     console.log(
-      `[full-research] All 12 steps complete for product ${productId}. Completed: ${completedSteps.join(", ")}`,
+      `[full-research] All 12 steps complete for product ${productId}. Phase ${phase} completed: ${phaseCompletedSteps.join(", ")}`,
     );
 
     return new Response(
-      JSON.stringify({ success: true, completedSteps, totalSteps: 12 }),
+      JSON.stringify({ success: true, completedSteps: phaseCompletedSteps, totalSteps: 12 }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error: unknown) {
