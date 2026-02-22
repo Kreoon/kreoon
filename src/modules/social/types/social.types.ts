@@ -175,6 +175,7 @@ export interface PlatformConfig {
   maxVideoSizeMB: number;
   maxImageSizeMB: number;
   supportedPostTypes: SocialPostType[];
+  comingSoon?: boolean;
 }
 
 // ── Composer Form Data ──────────────────────────────────────────────────

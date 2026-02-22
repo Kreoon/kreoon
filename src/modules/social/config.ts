@@ -72,6 +72,7 @@ export const PLATFORMS: Record<SocialPlatform, PlatformConfig> = {
     maxVideoSizeMB: 12288,
     maxImageSizeMB: 0,
     supportedPostTypes: ['post', 'short'],
+    comingSoon: true,
   },
   twitter: {
     id: 'twitter',
@@ -90,6 +91,7 @@ export const PLATFORMS: Record<SocialPlatform, PlatformConfig> = {
     maxVideoSizeMB: 512,
     maxImageSizeMB: 5,
     supportedPostTypes: ['post', 'thread'],
+    comingSoon: true,
   },
   linkedin: {
     id: 'linkedin',
@@ -108,6 +110,7 @@ export const PLATFORMS: Record<SocialPlatform, PlatformConfig> = {
     maxVideoSizeMB: 200,
     maxImageSizeMB: 10,
     supportedPostTypes: ['post', 'carousel'],
+    comingSoon: true,
   },
   pinterest: {
     id: 'pinterest',
@@ -126,6 +129,7 @@ export const PLATFORMS: Record<SocialPlatform, PlatformConfig> = {
     maxVideoSizeMB: 2048,
     maxImageSizeMB: 20,
     supportedPostTypes: ['pin'],
+    comingSoon: true,
   },
   threads: {
     id: 'threads',
@@ -144,6 +148,7 @@ export const PLATFORMS: Record<SocialPlatform, PlatformConfig> = {
     maxVideoSizeMB: 250,
     maxImageSizeMB: 8,
     supportedPostTypes: ['post', 'carousel'],
+    comingSoon: true,
   },
 };
 

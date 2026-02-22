@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Plus, RefreshCw, Unlink, AlertTriangle, CheckCircle2,
-  Building2, User, Globe, Building, Facebook,
+  Building2, User, Globe, Building, Facebook, Clock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -365,39 +365,52 @@ export function AccountsManager() {
           {PLATFORM_LIST.map((platform) => {
             const connected = accountsByPlatform[platform.id]?.length || 0;
             const isConnecting = connecting === platform.id;
+            const isSoon = platform.comingSoon;
 
             return (
               <Card
                 key={platform.id}
                 className={cn(
-                  'cursor-pointer transition-all hover:shadow-md hover:border-primary/30',
-                  connected > 0 && 'border-green-500/20'
+                  'transition-all relative',
+                  isSoon
+                    ? 'opacity-60 cursor-default'
+                    : 'cursor-pointer hover:shadow-md hover:border-primary/30',
+                  connected > 0 && !isSoon && 'border-green-500/20'
                 )}
-                onClick={() => handleConnect(platform.id)}
+                onClick={() => !isSoon && handleConnect(platform.id)}
               >
                 <CardContent className="flex flex-col items-center gap-3 py-5">
                   <PlatformIcon platform={platform.id} size="lg" showBg />
                   <div className="text-center">
                     <p className="text-sm font-medium">{platform.name}</p>
-                    {connected > 0 ? (
+                    {isSoon ? (
+                      <p className="text-xs text-amber-400/80">Muy Pronto</p>
+                    ) : connected > 0 ? (
                       <p className="text-xs text-green-400">{connected} conectada{connected > 1 ? 's' : ''}</p>
                     ) : (
                       <p className="text-xs text-muted-foreground">No conectada</p>
                     )}
                   </div>
-                  <Button
-                    size="sm"
-                    variant={connected > 0 ? 'outline' : 'default'}
-                    className="w-full text-xs"
-                    disabled={isConnecting}
-                  >
-                    {isConnecting ? (
-                      <RefreshCw className="w-3 h-3 animate-spin mr-1" />
-                    ) : (
-                      <Plus className="w-3 h-3 mr-1" />
-                    )}
-                    {connected > 0 ? 'Agregar otra' : 'Conectar'}
-                  </Button>
+                  {isSoon ? (
+                    <Badge variant="outline" className="w-full justify-center text-xs border-amber-500/30 text-amber-400 gap-1.5">
+                      <Clock className="w-3 h-3" />
+                      Muy Pronto
+                    </Badge>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant={connected > 0 ? 'outline' : 'default'}
+                      className="w-full text-xs"
+                      disabled={isConnecting}
+                    >
+                      {isConnecting ? (
+                        <RefreshCw className="w-3 h-3 animate-spin mr-1" />
+                      ) : (
+                        <Plus className="w-3 h-3 mr-1" />
+                      )}
+                      {connected > 0 ? 'Agregar otra' : 'Conectar'}
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             );
