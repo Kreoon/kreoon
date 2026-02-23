@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -20,8 +20,11 @@ import {
 } from '@/types/crm.types';
 import { FADE_IN_UP, useScrollAnimation, withDelay } from '@/lib/animations';
 
-// ─── Derive talent_subtype from category ──────────────────
-const CATEGORY_TO_SUBTYPE: Record<TalentCategory, 'creator' | 'editor' | 'both'> = {
+// ─── Constants ────────────────────────────────────────────
+const MAX_CATEGORIES = 2;
+const MAX_ROLES = 4;
+
+const CATEGORY_TO_SUBTYPE: Record<TalentCategory, 'creator' | 'editor'> = {
   content_creation: 'creator',
   post_production: 'editor',
   strategy_marketing: 'creator',
@@ -30,26 +33,6 @@ const CATEGORY_TO_SUBTYPE: Record<TalentCategory, 'creator' | 'editor' | 'both'>
   client: 'creator',
 };
 
-// ─── Validation schemas (2 steps) ─────────────────────────
-const step1Schema = z.object({
-  talent_category: z.string().min(1, 'Selecciona una categoría'),
-  experience_level: z.enum(['beginner', 'intermediate', 'advanced', 'expert']),
-});
-
-const step2Schema = z.object({
-  specific_role: z.string().min(1, 'Selecciona tu rol principal'),
-  full_name: z.string().min(2, 'Nombre muy corto'),
-  email: z.string().email('Email inválido'),
-  phone: z.string().optional(),
-  city: z.string().optional(),
-  portfolio_url: z.string().url('URL inválida').optional().or(z.literal('')),
-  instagram: z.string().optional(),
-  tiktok: z.string().optional(),
-});
-
-type FormData = z.infer<typeof step1Schema> & z.infer<typeof step2Schema>;
-
-// ─── Category config ──────────────────────────────────────
 const CATEGORIES: {
   key: TalentCategory;
   icon: React.ElementType;
@@ -72,7 +55,21 @@ const EXPERIENCE_OPTIONS = [
 
 const TOTAL_STEPS = 2;
 
-// ─── Types ────────────────────────────────────────────────
+// ─── Form schema (contact fields only — categories/roles managed via state) ──
+const formSchema = z.object({
+  experience_level: z.enum(['beginner', 'intermediate', 'advanced', 'expert']),
+  full_name: z.string().min(2, 'Nombre muy corto'),
+  email: z.string().email('Email inválido'),
+  phone: z.string().optional(),
+  city: z.string().optional(),
+  portfolio_url: z.string().url('URL inválida').optional().or(z.literal('')),
+  instagram: z.string().optional(),
+  tiktok: z.string().optional(),
+});
+
+type FormData = z.infer<typeof formSchema>;
+
+// ─── Component ────────────────────────────────────────────
 interface TalentFormSectionProps {
   id?: string;
   onSuccess?: () => void;
@@ -84,6 +81,10 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Multi-select state
+  const [selectedCategories, setSelectedCategories] = useState<TalentCategory[]>([]);
+  const [selectedRoles, setSelectedRoles] = useState<SpecificRole[]>([]);
+
   const { getTrackingParams, clearUTMParams } = useUTMTracking();
   const { trackEvent } = useTrackEvent();
   const scrollAnim = useScrollAnimation();
@@ -91,9 +92,7 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
   const form = useForm<FormData>({
     mode: 'onChange',
     defaultValues: {
-      talent_category: '',
       experience_level: undefined,
-      specific_role: '',
       full_name: '',
       email: '',
       phone: '',
@@ -105,26 +104,56 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
   });
 
   const { watch, trigger } = form;
-  const talentCategory = watch('talent_category') as TalentCategory | '';
-
-  // Reset specific_role when category changes
-  useEffect(() => {
-    if (talentCategory) {
-      form.setValue('specific_role', '');
-    }
-  }, [talentCategory]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     trackEvent('form_step_view', { step: currentStep, page: 'talento_landing' });
   }, [currentStep]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // When categories change, remove roles that no longer belong to any selected category
+  useEffect(() => {
+    const validRoles = new Set(selectedCategories.flatMap((cat) => CATEGORY_ROLES[cat] || []));
+    setSelectedRoles((prev) => prev.filter((r) => validRoles.has(r)));
+  }, [selectedCategories]);
+
+  // Compute available roles as union of all selected categories (deduplicated, preserving order)
+  const availableRoles = useMemo(() => {
+    const seen = new Set<SpecificRole>();
+    const roles: { role: SpecificRole; category: TalentCategory }[] = [];
+    for (const cat of selectedCategories) {
+      for (const role of CATEGORY_ROLES[cat] || []) {
+        if (!seen.has(role)) {
+          seen.add(role);
+          roles.push({ role, category: cat });
+        }
+      }
+    }
+    return roles;
+  }, [selectedCategories]);
+
+  // ─── Toggle handlers ────────────────────────────────────
+  const toggleCategory = (cat: TalentCategory) => {
+    setSelectedCategories((prev) => {
+      if (prev.includes(cat)) return prev.filter((c) => c !== cat);
+      if (prev.length >= MAX_CATEGORIES) return prev;
+      return [...prev, cat];
+    });
+  };
+
+  const toggleRole = (role: SpecificRole) => {
+    setSelectedRoles((prev) => {
+      if (prev.includes(role)) return prev.filter((r) => r !== role);
+      if (prev.length >= MAX_ROLES) return prev;
+      return [...prev, role];
+    });
+  };
+
+  // ─── Step navigation ────────────────────────────────────
   const handleNextStep = async () => {
     if (currentStep === 1) {
-      const isValid = await trigger(['talent_category', 'experience_level']);
-      if (isValid) {
-        trackEvent('form_step_complete', { step: currentStep });
-        setCurrentStep(2);
-      }
+      const experienceValid = await trigger('experience_level');
+      if (selectedCategories.length === 0 || !experienceValid) return;
+      trackEvent('form_step_complete', { step: currentStep });
+      setCurrentStep(2);
     }
   };
 
@@ -132,13 +161,18 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
     setCurrentStep(1);
   };
 
+  // ─── Submit ─────────────────────────────────────────────
   const handleSubmit = async (data: FormData) => {
+    if (selectedRoles.length === 0) return;
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
       const trackingParams = getTrackingParams();
-      const derivedSubtype = CATEGORY_TO_SUBTYPE[data.talent_category as TalentCategory] || 'creator';
+
+      // Derive subtype: if mixed creator+editor categories → 'both'
+      const subtypes = new Set(selectedCategories.map((c) => CATEGORY_TO_SUBTYPE[c]));
+      const derivedSubtype = subtypes.size > 1 ? 'both' : (subtypes.values().next().value || 'creator');
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/capture-lead`,
@@ -151,10 +185,14 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
             phone: data.phone || undefined,
             city: data.city || undefined,
             portfolio_url: data.portfolio_url || undefined,
-            talent_category: data.talent_category,
-            specific_role: data.specific_role,
+            // Primary values (backward compat)
+            talent_category: selectedCategories[0],
+            specific_role: selectedRoles[0],
             talent_subtype: derivedSubtype,
             experience_level: data.experience_level,
+            // Full multi-select arrays
+            talent_categories: selectedCategories,
+            specific_roles: selectedRoles,
             lead_type: 'talent',
             registration_intent: 'talent',
             social_profiles: {
@@ -172,8 +210,8 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
         trackEvent('lead_captured', {
           lead_id: result.lead_id,
           score: result.score,
-          category: data.talent_category,
-          role: data.specific_role,
+          categories: selectedCategories,
+          roles: selectedRoles,
         });
 
         clearUTMParams();
@@ -190,9 +228,6 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
       setIsSubmitting(false);
     }
   };
-
-  // Available roles for the selected category
-  const availableRoles = talentCategory ? (CATEGORY_ROLES[talentCategory as TalentCategory] || []) : [];
 
   // ─── Success screen ─────────────────────────────────────
   if (submitSuccess) {
@@ -303,7 +338,7 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
             {/* Form steps */}
             <form onSubmit={form.handleSubmit(handleSubmit)}>
               <AnimatePresence mode="wait">
-                {/* ── Step 1: Category + Experience ── */}
+                {/* ── Step 1: Categories + Experience ── */}
                 {currentStep === 1 && (
                   <motion.div
                     key="step1"
@@ -314,37 +349,54 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
                   >
                     <div className="text-center mb-4">
                       <h3 className="text-xl font-bold text-kreoon-text-primary mb-1">
-                        ¿En qué área te especializas?
+                        ¿En qué áreas te especializas?
                       </h3>
-                      <p className="text-sm text-kreoon-text-secondary">Selecciona tu nicho principal</p>
+                      <p className="text-sm text-kreoon-text-secondary">
+                        Selecciona hasta {MAX_CATEGORIES} nichos
+                        <span className="ml-2 text-kreoon-purple-400 font-medium">
+                          ({selectedCategories.length}/{MAX_CATEGORIES})
+                        </span>
+                      </p>
                     </div>
 
-                    {/* Categories — all 5 shown */}
+                    {/* Categories — multi-select */}
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {CATEGORIES.map((cat) => {
                         const Icon = cat.icon;
-                        const isSelected = talentCategory === cat.key;
+                        const isSelected = selectedCategories.includes(cat.key);
+                        const isDisabled = !isSelected && selectedCategories.length >= MAX_CATEGORIES;
 
                         return (
-                          <label
+                          <button
+                            type="button"
                             key={cat.key}
-                            className={`p-4 rounded-xl cursor-pointer text-center border-2 transition-all ${
-                              isSelected ? 'border-purple-500 bg-purple-500/10' : 'border-white/10 bg-white/5 hover:border-white/20'
+                            onClick={() => toggleCategory(cat.key)}
+                            disabled={isDisabled}
+                            className={`relative p-4 rounded-xl text-center border-2 transition-all ${
+                              isSelected
+                                ? 'border-purple-500 bg-purple-500/10'
+                                : isDisabled
+                                  ? 'border-white/5 bg-white/[0.02] opacity-40 cursor-not-allowed'
+                                  : 'border-white/10 bg-white/5 hover:border-white/20 cursor-pointer'
                             }`}
                           >
-                            <input type="radio" value={cat.key} {...form.register('talent_category')} className="sr-only" />
+                            {isSelected && (
+                              <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center">
+                                <Check className="w-3 h-3 text-white" />
+                              </div>
+                            )}
                             <div className={`w-12 h-12 mx-auto mb-2 rounded-lg bg-gradient-to-br ${cat.color} flex items-center justify-center`}>
                               <Icon className="w-6 h-6 text-white" />
                             </div>
                             <p className="font-medium text-sm text-kreoon-text-primary">{TALENT_CATEGORY_LABELS[cat.key]}</p>
                             <p className="text-xs text-kreoon-text-muted mt-0.5">{cat.description}</p>
-                          </label>
+                          </button>
                         );
                       })}
                     </div>
 
-                    {/* Experience — shown after category selection */}
-                    {talentCategory && (
+                    {/* Experience */}
+                    {selectedCategories.length > 0 && (
                       <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} transition={{ duration: 0.2 }}>
                         <label className="block text-sm text-kreoon-text-secondary mb-3">Nivel de experiencia</label>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -370,7 +422,7 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
                     <Button
                       type="button"
                       onClick={handleNextStep}
-                      disabled={!talentCategory || !watch('experience_level')}
+                      disabled={selectedCategories.length === 0 || !watch('experience_level')}
                       className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50"
                     >
                       Continuar <ArrowRight className="w-4 h-4 ml-2" />
@@ -378,7 +430,7 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
                   </motion.div>
                 )}
 
-                {/* ── Step 2: Role + Contact info ── */}
+                {/* ── Step 2: Roles + Contact info ── */}
                 {currentStep === 2 && (
                   <motion.div
                     key="step2"
@@ -389,36 +441,61 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
                   >
                     <div className="text-center mb-4">
                       <h3 className="text-xl font-bold text-kreoon-text-primary mb-1">
-                        Tu especialidad en {talentCategory ? TALENT_CATEGORY_LABELS[talentCategory as TalentCategory] : ''}
+                        ¿Qué haces específicamente?
                       </h3>
-                      <p className="text-sm text-kreoon-text-secondary">Selecciona tu rol y completa tus datos</p>
+                      <p className="text-sm text-kreoon-text-secondary">
+                        Selecciona hasta {MAX_ROLES} roles
+                        <span className="ml-2 text-kreoon-purple-400 font-medium">
+                          ({selectedRoles.length}/{MAX_ROLES})
+                        </span>
+                      </p>
                     </div>
 
-                    {/* Specific roles for the selected category */}
-                    <div>
-                      <label className="block text-sm text-kreoon-text-secondary mb-3">¿Qué haces específicamente?</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {availableRoles.map((role: SpecificRole) => {
-                          const isSelected = watch('specific_role') === role;
-                          return (
-                            <label
-                              key={role}
-                              className={`p-3 rounded-lg cursor-pointer text-sm border transition-all ${
-                                isSelected
-                                  ? 'border-purple-500 bg-purple-500/20 text-white'
-                                  : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20'
-                              }`}
-                            >
-                              <input type="radio" value={role} {...form.register('specific_role')} className="sr-only" />
-                              {SPECIFIC_ROLE_LABELS[role]}
-                            </label>
-                          );
-                        })}
-                      </div>
+                    {/* Roles grouped by category */}
+                    <div className="space-y-4">
+                      {selectedCategories.map((cat) => {
+                        const catRoles = (CATEGORY_ROLES[cat] || []);
+                        if (catRoles.length === 0) return null;
+
+                        return (
+                          <div key={cat}>
+                            <p className="text-xs font-medium text-kreoon-text-muted uppercase tracking-wider mb-2">
+                              {TALENT_CATEGORY_LABELS[cat]}
+                            </p>
+                            <div className="grid grid-cols-2 gap-2">
+                              {catRoles.map((role: SpecificRole) => {
+                                const isSelected = selectedRoles.includes(role);
+                                const isDisabled = !isSelected && selectedRoles.length >= MAX_ROLES;
+
+                                return (
+                                  <button
+                                    type="button"
+                                    key={role}
+                                    onClick={() => toggleRole(role)}
+                                    disabled={isDisabled}
+                                    className={`p-3 rounded-lg text-sm text-left border transition-all ${
+                                      isSelected
+                                        ? 'border-purple-500 bg-purple-500/20 text-white'
+                                        : isDisabled
+                                          ? 'border-white/5 bg-white/[0.02] text-white/30 cursor-not-allowed'
+                                          : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20 cursor-pointer'
+                                    }`}
+                                  >
+                                    <span className="flex items-center gap-2">
+                                      {isSelected && <Check className="w-3.5 h-3.5 text-purple-400 shrink-0" />}
+                                      {SPECIFIC_ROLE_LABELS[role]}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
 
-                    {/* Contact info — shown after role selection */}
-                    {watch('specific_role') && (
+                    {/* Contact info — shown after at least 1 role selected */}
+                    {selectedRoles.length > 0 && (
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
@@ -496,7 +573,7 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
                       </Button>
                       <Button
                         type="submit"
-                        disabled={isSubmitting || !watch('specific_role')}
+                        disabled={isSubmitting || selectedRoles.length === 0}
                         className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50"
                       >
                         {isSubmitting ? (
