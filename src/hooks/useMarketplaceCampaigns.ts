@@ -798,20 +798,22 @@ export function useMarketplaceCampaigns(options: UseMarketplaceCampaignsOptions 
     campaignId: string,
     checkoutType: 'create-publish-checkout' | 'create-bid-checkout',
   ): Promise<string | null> => {
-    try {
-      const { data, error } = await supabase.functions.invoke(
-        `campaign-checkout/${checkoutType}`,
-        { body: { campaign_id: campaignId } },
-      );
-      if (error || data?.error) {
-        console.error('[useMarketplaceCampaigns] Checkout error:', error?.message || data?.error);
-        return null;
-      }
-      return data?.checkout_url || null;
-    } catch (err) {
-      console.error('[useMarketplaceCampaigns] Checkout error:', err);
-      return null;
+    const { data, error } = await supabase.functions.invoke(
+      `campaign-checkout/${checkoutType}`,
+      { body: { campaign_id: campaignId } },
+    );
+    if (error) {
+      console.error('[useMarketplaceCampaigns] Checkout invoke error:', error);
+      throw new Error(error.message || 'Error invoking checkout function');
     }
+    if (data?.error) {
+      console.error('[useMarketplaceCampaigns] Checkout API error:', data.error);
+      throw new Error(data.error);
+    }
+    if (!data?.checkout_url) {
+      throw new Error('No checkout URL returned');
+    }
+    return data.checkout_url;
   }, []);
 
   // ── Campaign activation (payment + escrow) ─────────────────────
