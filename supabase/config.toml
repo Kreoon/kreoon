@@ -1,5 +1,8 @@
 project_id = "wjkbqcrxwsmvtxmqgiqc"
 
+[functions.generate-ad-banner]
+verify_jwt = false
+
 [functions.campaign-notifications]
 verify_jwt = true
 

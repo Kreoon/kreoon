@@ -238,10 +238,13 @@ export default function OrganizacionesLanding() {
         </div>
 
         {/* Video carousel */}
-        <PhoneMockupCarousel
-          title="Contenido gestionado en Kreoon"
-          subtitle="Tu equipo puede crear contenido así"
-        />
+        <div className="max-w-5xl mx-auto">
+          <PhoneMockupCarousel
+            title="Contenido gestionado en Kreoon"
+            subtitle="Tu equipo puede crear contenido así"
+            maxVideos={10}
+          />
+        </div>
 
         {/* Form */}
         <motion.div

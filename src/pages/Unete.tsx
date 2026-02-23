@@ -63,12 +63,7 @@ const USER_TYPE_CARDS: UserTypeCard[] = [
   },
 ];
 
-const SOCIAL_PROOF_STATS = [
-  { label: 'Creadores activos', value: '2,500+' },
-  { label: 'Marcas conectadas', value: '400+' },
-  { label: 'Proyectos completados', value: '8,000+' },
-  { label: 'Países', value: '12' },
-];
+// Removed inflated stats — keeping it honest
 
 // ─── Kiro Mascot ──────────────────────────────────────────
 function KiroMascot({ hoveredType }: { hoveredType: UserType | null }) {
@@ -269,6 +264,13 @@ export default function Unete() {
           </motion.div>
         </section>
 
+        {/* Video carousel — right after hero */}
+        <section className="px-6 md:px-12">
+          <div className="max-w-5xl mx-auto">
+            <PhoneMockupCarousel maxVideos={10} />
+          </div>
+        </section>
+
         {/* Cards */}
         <section className="px-6 md:px-12 pb-16">
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -284,28 +286,16 @@ export default function Unete() {
           </div>
         </section>
 
-        {/* Video carousel */}
-        <PhoneMockupCarousel />
-
-        {/* Social proof */}
+        {/* Trust line */}
         <section className="px-6 md:px-12 pb-20">
-          <div className="max-w-4xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
-              className="grid grid-cols-2 md:grid-cols-4 gap-6 p-6 md:p-8 rounded-2xl bg-white/5 border border-white/10"
-            >
-              {SOCIAL_PROOF_STATS.map((stat) => (
-                <div key={stat.label} className="text-center">
-                  <p className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                    {stat.value}
-                  </p>
-                  <p className="text-sm text-white/40 mt-1">{stat.label}</p>
-                </div>
-              ))}
-            </motion.div>
-          </div>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="text-center text-white/40 text-sm"
+          >
+            Creadores y marcas de toda LATAM ya confían en Kreoon
+          </motion.p>
         </section>
 
         {/* Footer */}

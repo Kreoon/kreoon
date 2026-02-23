@@ -32,6 +32,7 @@ import {
   Share2,
   ChevronDown,
   Radar,
+  ImagePlus,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -78,6 +79,7 @@ const adminSections: NavSection[] = [
       { name: "Marketing", href: "/marketing", icon: TrendingUp, requiresOrg: true },
       { name: "Social Hub", href: "/social-hub", icon: Share2 },
       { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3 },
+      { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus, requiresOrg: true },
       { name: "Ranking", href: "/ranking", icon: Trophy, requiresOrg: true },
       { name: "Live", href: "/live", icon: Video, requiresOrg: true },
     ]
@@ -126,6 +128,7 @@ const strategistSections: NavSection[] = [
       { name: "Marketing", href: "/marketing", icon: TrendingUp, requiresOrg: true },
       { name: "Social Hub", href: "/social-hub", icon: Share2 },
       { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3 },
+      { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus, requiresOrg: true },
       { name: "Ranking", href: "/ranking", icon: Trophy, requiresOrg: true },
       { name: "Live", href: "/live", icon: Video, requiresOrg: true },
     ]
@@ -160,6 +163,7 @@ const editorSections: NavSection[] = [
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
       { name: "Social Hub", href: "/social-hub", icon: Share2 },
       { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3 },
+      { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus },
     ]
   },
   {
@@ -182,6 +186,7 @@ const creatorSections: NavSection[] = [
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
       { name: "Social Hub", href: "/social-hub", icon: Share2 },
       { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3 },
+      { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus },
     ]
   },
   {

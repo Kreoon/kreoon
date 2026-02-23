@@ -30,6 +30,8 @@ function getEnvApiKey(provider: string): string {
       return Deno.env.get("ANTHROPIC_API_KEY") || "";
     case "perplexity":
       return Deno.env.get("PERPLEXITY_API_KEY") || "";
+    case "fal":
+      return Deno.env.get("FAL_KEY") || "";
     default:
       return Deno.env.get("GOOGLE_AI_API_KEY") || "";
   }

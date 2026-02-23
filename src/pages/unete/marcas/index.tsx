@@ -228,10 +228,13 @@ export default function MarcasLanding() {
         </div>
 
         {/* Video carousel */}
-        <PhoneMockupCarousel
-          title="Contenido creado por nuestra red"
-          subtitle="Talento verificado disponible para tu marca"
-        />
+        <div className="max-w-5xl mx-auto">
+          <PhoneMockupCarousel
+            title="Contenido creado por nuestra red"
+            subtitle="Talento verificado disponible para tu marca"
+            maxVideos={10}
+          />
+        </div>
 
         {/* Form */}
         <motion.div
