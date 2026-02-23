@@ -1,6 +1,10 @@
+import { useState } from 'react';
 import { Building2, Contact, Crown, Video, Users as UsersIcon, Briefcase, DollarSign } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import type { UnifiedClientEntity } from '@/types/unifiedClient.types';
 import { CONTACT_TYPE_LABELS, RELATIONSHIP_STRENGTH_LABELS, RELATIONSHIP_STRENGTH_COLORS } from '@/types/crm.types';
 
@@ -8,6 +12,8 @@ interface UnifiedClientCardProps {
   entity: UnifiedClientEntity;
   onClick: () => void;
   isSelected?: boolean;
+  canEdit?: boolean;
+  onUpdate?: () => void;
 }
 
 function formatCurrency(n: number): string {
@@ -18,8 +24,32 @@ function formatCurrency(n: number): string {
   }).format(n);
 }
 
-export function UnifiedClientCard({ entity, onClick, isSelected }: UnifiedClientCardProps) {
+export function UnifiedClientCard({ entity, onClick, isSelected, canEdit, onUpdate }: UnifiedClientCardProps) {
   const isEmpresa = entity.entity_type === 'empresa';
+  const [toggling, setToggling] = useState(false);
+  const { toast } = useToast();
+
+  const handleToggleInternalBrand = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (toggling) return;
+    setToggling(true);
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .update({ is_internal_brand: !entity.is_internal_brand })
+        .eq('id', entity.id);
+      if (error) throw error;
+      toast({
+        title: entity.is_internal_brand ? 'Marca interna desactivada' : 'Marca interna activada',
+        description: entity.name,
+      });
+      onUpdate?.();
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'No se pudo actualizar', variant: 'destructive' });
+    } finally {
+      setToggling(false);
+    }
+  };
 
   return (
     <div
@@ -140,6 +170,29 @@ export function UnifiedClientCard({ entity, onClick, isSelected }: UnifiedClient
                 <span className="text-xs font-medium">{entity.users_count}</span>
               </div>
             </div>
+            {canEdit && (
+              <div
+                className="flex items-center gap-1.5 cursor-pointer"
+                onClick={handleToggleInternalBrand}
+                title={entity.is_internal_brand ? 'Desmarcar como marca interna' : 'Marcar como marca interna'}
+              >
+                <Checkbox
+                  checked={entity.is_internal_brand}
+                  disabled={toggling}
+                  className={cn(
+                    'h-3.5 w-3.5 border-amber-500/50',
+                    entity.is_internal_brand && 'bg-amber-500 border-amber-500 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500',
+                  )}
+                  tabIndex={-1}
+                />
+                <span className={cn(
+                  'text-[10px] select-none',
+                  entity.is_internal_brand ? 'text-amber-400' : 'text-muted-foreground',
+                )}>
+                  Marca interna
+                </span>
+              </div>
+            )}
           </>
         ) : (
           <>
