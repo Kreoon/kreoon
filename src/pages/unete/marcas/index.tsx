@@ -47,7 +47,7 @@ const BUDGET_OPTIONS = [
 ];
 
 const BENEFITS = [
-  { icon: Video, title: '500+ creadores', description: 'Talento verificado y categorizado' },
+  { icon: Video, title: 'Red de creadores', description: 'Talento verificado y categorizado' },
   { icon: Clock, title: 'Contenido en días', description: 'No semanas ni meses' },
   { icon: Shield, title: 'Calidad garantizada', description: 'Sistema de revisión y ajustes' },
   { icon: Zap, title: 'Sin complicaciones', description: 'Gestión centralizada y pagos simples' },

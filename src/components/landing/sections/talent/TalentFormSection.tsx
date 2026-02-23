@@ -294,14 +294,10 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
             Únete ahora y empieza a monetizar
           </h2>
 
-          {/* Social proof */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-kreoon-border bg-kreoon-bg-card/50 px-4 py-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
-            </span>
-            <span className="text-sm text-kreoon-text-secondary">
-              127 creadores se unieron esta semana
+          {/* Early bird badge */}
+          <div className="inline-flex items-center gap-2 rounded-full border border-kreoon-purple-500/30 bg-kreoon-purple-500/10 px-4 py-2">
+            <span className="text-sm text-kreoon-purple-400 font-medium">
+              Early Bird — Registro gratuito y acceso anticipado
             </span>
           </div>
         </motion.div>
