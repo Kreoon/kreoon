@@ -40,7 +40,7 @@ export interface AnalyticsEvent {
   value_usd?: number;
 }
 
-export type ConversionType = 'page_view' | 'signup' | 'trial_start' | 'subscription' | 'content_created';
+export type ConversionType = 'page_view' | 'signup' | 'trial_start' | 'subscription' | 'content_created' | 'lead_captured';
 
 export interface ConversionEvent {
   type: ConversionType;

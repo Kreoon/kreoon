@@ -12,6 +12,7 @@ interface UTMParams {
 }
 
 const UTM_STORAGE_KEY = 'kreoon_utm_params';
+const REFERRAL_CODE_KEY = 'kreoon_referral_code';
 const UTM_EXPIRY_HOURS = 24;
 
 export function useUTMTracking() {
@@ -30,6 +31,12 @@ export function useUTMTracking() {
     if (typeof window === 'undefined') return;
 
     const urlParams = new URLSearchParams(window.location.search);
+
+    // Capture referral code from ?ref= param
+    const refCode = urlParams.get('ref');
+    if (refCode) {
+      localStorage.setItem(REFERRAL_CODE_KEY, refCode);
+    }
 
     const newUtmSource = urlParams.get('utm_source');
     const newUtmMedium = urlParams.get('utm_medium');
@@ -106,6 +113,14 @@ export function useUTMTracking() {
     return 'direct';
   };
 
+  const getReferralCode = (): string | null => {
+    try {
+      return localStorage.getItem(REFERRAL_CODE_KEY);
+    } catch {
+      return null;
+    }
+  };
+
   const getTrackingParams = () => ({
     lead_source: getInferredSource(),
     utm_source: utmParams.utm_source,
@@ -114,7 +129,8 @@ export function useUTMTracking() {
     utm_content: utmParams.utm_content,
     utm_term: utmParams.utm_term,
     referrer_url: utmParams.referrer_url,
-    landing_page: utmParams.landing_page
+    landing_page: utmParams.landing_page,
+    referral_code: getReferralCode(),
   });
 
   const clearUTMParams = () => {

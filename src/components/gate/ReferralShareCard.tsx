@@ -7,12 +7,29 @@ import { SHARE_MESSAGES, REFERRAL_BILATERAL } from '@/lib/finance/constants';
 import { PromoBanner } from '@/components/referrals/PromoBanner';
 import type { PromotionalCampaign } from '@/types/unified-finance.types';
 
+type TargetPage = 'default' | 'talento' | 'marcas' | 'organizaciones';
+
+const TARGET_PAGE_PATHS: Record<TargetPage, string> = {
+  default: '/r',
+  talento: '/unete/talento',
+  marcas: '/unete/marcas',
+  organizaciones: '/unete/organizaciones',
+};
+
+const TARGET_PAGE_LABELS: Record<TargetPage, string> = {
+  default: 'Link general',
+  talento: 'Para talento',
+  marcas: 'Para marcas',
+  organizaciones: 'Para organizaciones',
+};
+
 interface ReferralShareCardProps {
   code: string | null;
   onGenerateCode?: () => Promise<void>;
   isGenerating?: boolean;
   audience?: 'talent' | 'brand';
   activePromo?: PromotionalCampaign | null;
+  showTargetSelector?: boolean;
 }
 
 export function ReferralShareCard({
@@ -21,11 +38,20 @@ export function ReferralShareCard({
   isGenerating,
   audience = 'talent',
   activePromo,
+  showTargetSelector = false,
 }: ReferralShareCardProps) {
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
+  const [targetPage, setTargetPage] = useState<TargetPage>('default');
 
-  const referralUrl = code ? `https://kreoon.com/r/${code}` : '';
+  const buildReferralUrl = (target: TargetPage) => {
+    if (!code) return '';
+    const base = 'https://kreoon.com';
+    if (target === 'default') return `${base}/r/${code}`;
+    return `${base}${TARGET_PAGE_PATHS[target]}?ref=${code}`;
+  };
+
+  const referralUrl = buildReferralUrl(targetPage);
   const messages = SHARE_MESSAGES[audience];
 
   const fillTemplate = (template: string) =>
@@ -116,6 +142,26 @@ export function ReferralShareCard({
           {copiedCode ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
         </Button>
       </div>
+
+      {/* Target page selector */}
+      {showTargetSelector && (
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {(Object.keys(TARGET_PAGE_PATHS) as TargetPage[]).map((page) => (
+            <button
+              key={page}
+              type="button"
+              onClick={() => setTargetPage(page)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                targetPage === page
+                  ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                  : 'bg-white/5 text-white/50 border border-white/10 hover:border-white/20'
+              }`}
+            >
+              {TARGET_PAGE_LABELS[page]}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* URL display */}
       <div className="flex items-center gap-2 mb-4">

@@ -7,6 +7,7 @@ import {
 } from '@/components/landing/sections/talent';
 import { TestimonialsSection } from '@/components/landing/sections';
 import type { Testimonial } from '@/components/landing/sections';
+import PhoneMockupCarousel from '@/components/landing/PhoneMockupCarousel';
 import { useUTMTracking } from '@/hooks/useUTMTracking';
 
 // Testimonials filtered to creator/editor roles
@@ -83,6 +84,9 @@ export default function TalentoLanding() {
 
       {/* D — DESIRE */}
       <TalentBenefitsSection />
+
+      {/* Portfolio showcase */}
+      <PhoneMockupCarousel />
 
       {/* Social Proof — Testimonials */}
       <TestimonialsSection testimonials={TALENT_TESTIMONIALS} />

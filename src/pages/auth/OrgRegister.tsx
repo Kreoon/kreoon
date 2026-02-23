@@ -26,6 +26,7 @@ import {
 import { toast } from "sonner";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
+import { useUTMTracking } from "@/hooks/useUTMTracking";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import {
   KreoonCard,
@@ -113,6 +114,7 @@ export default function OrgRegister() {
   const [searchParams] = useSearchParams();
   const isConfirmed = searchParams.get("confirmed") === "true";
   const { refetchUserData } = useAuth();
+  useUTMTracking();
 
   const [loading, setLoading] = useState(true);
   const [completingRegistration, setCompletingRegistration] = useState(false);
