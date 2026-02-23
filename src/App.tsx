@@ -128,6 +128,12 @@ const AdminWalletsPage = lazy(() => import("./modules/wallet/pages/AdminWalletsP
 const SocialHubPage = lazy(() => import("./modules/social/pages/SocialHubPage"));
 const MarketingAdsPage = lazy(() => import("./modules/marketing/pages/MarketingPage"));
 
+// Ad Intelligence Module
+const AdIntelligencePage = lazy(() => import("./modules/ad-intelligence/pages/AdIntelligencePage"));
+
+// Social Scraper Module
+const SocialScraperPage = lazy(() => import("./modules/social-scraper/pages/SocialScraperPage"));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -308,6 +314,8 @@ function AppRoutes() {
         <Route path="/wallet/settings" element={<Navigate to="/wallet" replace />} />
         <Route path="/admin/wallets" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><AdminWalletsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><KAEAnalyticsDashboard /></MainLayout></ProtectedRoute>} />
+        <Route path="/admin/ad-intelligence" element={<ProtectedRoute requirePlatformAdmin><MainLayout><AdIntelligencePage /></MainLayout></ProtectedRoute>} />
+        <Route path="/admin/social-scraper" element={<ProtectedRoute requirePlatformAdmin><MainLayout><SocialScraperPage /></MainLayout></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute allowNoRoles><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
         <Route path="/planes" element={<ProtectedRoute allowNoRoles><MainLayout><PlanesPage /></MainLayout></ProtectedRoute>} />
         <Route path="/creator-dashboard" element={<ProtectedRoute allowedRoles={['creator']}><MainLayout><CreatorDashboard /></MainLayout></ProtectedRoute>} />
