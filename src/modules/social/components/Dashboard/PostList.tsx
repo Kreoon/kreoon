@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { MoreHorizontal, Trash2, Play, XCircle, RotateCw, Clock, Film, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,6 +34,42 @@ export function PostList({ onViewPost }: PostListProps) {
   );
 
   const { data: metricsMap } = useBatchPostMetrics(publishedPostIds);
+
+  // Auto-fetch metrics for published posts that have no metrics yet (one-time on load)
+  const autoFetchedRef = useRef(false);
+  useEffect(() => {
+    if (autoFetchedRef.current || !metricsMap || publishedPostIds.length === 0) return;
+    autoFetchedRef.current = true;
+
+    const postsWithoutMetrics = posts.filter(p => {
+      if (p.status !== 'published' && p.status !== 'partially_published') return false;
+      const metrics = metricsMap.get(p.id);
+      return !metrics || metrics.length === 0;
+    });
+
+    if (postsWithoutMetrics.length === 0) return;
+
+    // Fetch metrics in background for posts missing them
+    (async () => {
+      const promises: Promise<unknown>[] = [];
+      for (const post of postsWithoutMetrics) {
+        const results = (post.publish_results || []) as Array<{ account_id: string; platform_post_id?: string; status: string }>;
+        for (const pr of results) {
+          if (pr.status === 'success' && pr.platform_post_id) {
+            promises.push(
+              supabase.functions.invoke('social-metrics/fetch-post-metrics', {
+                body: { post_id: pr.platform_post_id, account_id: pr.account_id, scheduled_post_id: post.id },
+              }).catch(() => null)
+            );
+          }
+        }
+      }
+      if (promises.length > 0) {
+        await Promise.allSettled(promises);
+        queryClient.invalidateQueries({ queryKey: ['batch-post-metrics'] });
+      }
+    })();
+  }, [metricsMap, publishedPostIds, posts, queryClient]);
 
   const handlePublish = async (post: ScheduledPost) => {
     try {
