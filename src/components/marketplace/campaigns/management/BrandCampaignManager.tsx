@@ -36,7 +36,7 @@ export function BrandCampaignManager() {
   const { toast } = useToast();
   const { user } = useAuth();
   // Only show campaigns created by the current user
-  const { campaigns, loading, activateCampaign } = useMarketplaceCampaigns({
+  const { campaigns, loading, activateCampaign, createCampaignCheckout } = useMarketplaceCampaigns({
     createdBy: user?.id,
   });
 
@@ -46,6 +46,15 @@ export function BrandCampaignManager() {
       toast({ title: 'Campana activada exitosamente' });
     } else {
       toast({ title: result?.error || 'Error al activar la campana', variant: 'destructive' });
+    }
+  };
+
+  const handleCompletePayment = async (campaignId: string) => {
+    const url = await createCampaignCheckout(campaignId, 'create-publish-checkout');
+    if (url) {
+      window.location.href = url;
+    } else {
+      toast({ title: 'Error al crear la sesion de pago', variant: 'destructive' });
     }
   };
 
@@ -183,6 +192,7 @@ export function BrandCampaignManager() {
                 onViewSmartMatch={() => { setSelectedCampaignId(campaign.id); setViewMode('smart_match'); }}
                 onViewDetail={() => navigate(`/marketplace/campaigns/${campaign.id}`)}
                 onActivate={() => handleActivate(campaign.id)}
+                onCompletePayment={() => handleCompletePayment(campaign.id)}
               />
             ))}
           </div>
@@ -214,6 +224,7 @@ function CampaignRow({
   onViewSmartMatch,
   onViewDetail,
   onActivate,
+  onCompletePayment,
 }: {
   campaign: Campaign;
   onViewApplications: () => void;
@@ -222,6 +233,7 @@ function CampaignRow({
   onViewSmartMatch: () => void;
   onViewDetail: () => void;
   onActivate: () => void;
+  onCompletePayment: () => void;
 }) {
   const TypeIcon = TYPE_ICONS[campaign.campaign_type];
   const pricingMode = campaign.pricing_mode ?? 'fixed';
@@ -323,7 +335,16 @@ function CampaignRow({
         </div>
 
         <div className="flex gap-2 flex-shrink-0">
-          {campaign.status === 'draft' && (
+          {campaign.status === 'draft' && campaign.payment_status === 'pending_payment' && (
+            <button
+              onClick={onCompletePayment}
+              className="text-xs bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 px-3 py-2 rounded-lg transition-colors font-medium flex items-center gap-1"
+            >
+              <CreditCard className="h-3 w-3" />
+              Completar pago
+            </button>
+          )}
+          {campaign.status === 'draft' && campaign.payment_status !== 'pending_payment' && (
             <button
               onClick={onActivate}
               className="text-xs bg-green-600/20 hover:bg-green-600/30 text-green-300 px-3 py-2 rounded-lg transition-colors font-medium"

@@ -140,7 +140,7 @@ function clearDraft() {
 
 export default function CampaignWizard() {
   const navigate = useNavigate();
-  const { createCampaign, uploadCampaignMedia, sendCampaignNotifications, activateCampaign } = useMarketplaceCampaigns();
+  const { createCampaign, uploadCampaignMedia, sendCampaignNotifications, activateCampaign, createCampaignCheckout } = useMarketplaceCampaigns();
   const { createBulkInvitations } = useCampaignInvitations();
   const { trackCampaignCreated, trackCampaignPublished } = useCampaignAnalytics();
   const draft = loadDraft();
@@ -291,11 +291,88 @@ export default function CampaignWizard() {
     return payload;
   };
 
+  // Check if this campaign needs immediate Stripe payment (fixed price + paid/hybrid)
+  const needsImmediatePayment = (): boolean => {
+    const isPaid = budgetData.campaign_type === 'paid' || budgetData.campaign_type === 'hybrid';
+    return isPaid && budgetData.pricing_mode === 'fixed';
+  };
+
+  const uploadMediaFiles = async (campaignId: string) => {
+    const mediaUploads: Promise<any>[] = [];
+
+    if (coverFileRef.current) {
+      mediaUploads.push(
+        uploadCampaignMedia({
+          campaign_id: campaignId,
+          media_type: 'cover_image' as CampaignMediaType,
+          file: coverFileRef.current,
+        })
+      );
+    }
+
+    if (videoBriefFileRef.current) {
+      mediaUploads.push(
+        uploadCampaignMedia({
+          campaign_id: campaignId,
+          media_type: 'video_brief' as CampaignMediaType,
+          file: videoBriefFileRef.current,
+        })
+      );
+    }
+
+    if (mediaUploads.length > 0) {
+      const results = await Promise.allSettled(mediaUploads);
+      results.forEach((r, i) => {
+        if (r.status === 'rejected' || (r.status === 'fulfilled' && !r.value)) {
+          console.warn(`[CampaignWizard] Media upload ${i} failed (non-blocking)`);
+        }
+      });
+    }
+  };
+
   const handlePublish = async () => {
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
+      if (needsImmediatePayment()) {
+        // ── FIXED PRICE PAID: create as draft → redirect to Stripe ──
+        const payload = buildCampaignPayload('draft');
+        payload.payment_status = 'pending_payment';
+        const campaignId = await createCampaign(payload);
+
+        if (!campaignId) {
+          throw new Error('No se pudo crear la campana');
+        }
+
+        // Upload media (non-blocking, campaign already saved)
+        await uploadMediaFiles(campaignId);
+
+        // Create invitations for selective campaigns
+        if (visibilityData.visibility === 'selective' && visibilityData.invited_profiles.length > 0) {
+          await createBulkInvitations(campaignId, visibilityData.invited_profiles);
+        }
+
+        trackCampaignCreated({
+          campaign_type: basicInfo.campaign_type || 'standard',
+          content_types_required: contentRequirements.map(r => r.content_type),
+          platforms_targeted: [],
+        });
+
+        // Redirect to Stripe Checkout
+        const checkoutUrl = await createCampaignCheckout(campaignId, 'create-publish-checkout');
+        if (!checkoutUrl) {
+          throw new Error('Error al crear la sesion de pago');
+        }
+
+        clearDraft();
+        coverFileRef.current = null;
+        videoBriefFileRef.current = null;
+        window.location.href = checkoutUrl;
+        return; // User leaves the app → Stripe handles the rest
+      }
+
+      // ── AUCTION/RANGE/EXCHANGE: current flow (no immediate payment) ──
       const payload = buildCampaignPayload('active');
       const campaignId = await createCampaign(payload);
 
@@ -303,45 +380,16 @@ export default function CampaignWizard() {
         throw new Error('No se pudo crear la campana');
       }
 
-      // Activate campaign (creates escrow hold for budget)
-      try {
-        await activateCampaign(campaignId);
-      } catch (activateErr) {
-        console.warn('[CampaignWizard] Campaign activation (escrow) failed — campaign still published:', activateErr);
+      // Only activate escrow for exchange campaigns (auction/range pay later)
+      if (budgetData.campaign_type === 'exchange') {
+        try {
+          await activateCampaign(campaignId);
+        } catch (activateErr) {
+          console.warn('[CampaignWizard] Campaign activation (escrow) failed — campaign still published:', activateErr);
+        }
       }
 
-      // Upload temp media files now that we have a campaignId
-      const mediaUploads: Promise<any>[] = [];
-
-      if (coverFileRef.current) {
-        mediaUploads.push(
-          uploadCampaignMedia({
-            campaign_id: campaignId,
-            media_type: 'cover_image' as CampaignMediaType,
-            file: coverFileRef.current,
-          })
-        );
-      }
-
-      if (videoBriefFileRef.current) {
-        mediaUploads.push(
-          uploadCampaignMedia({
-            campaign_id: campaignId,
-            media_type: 'video_brief' as CampaignMediaType,
-            file: videoBriefFileRef.current,
-          })
-        );
-      }
-
-      // Upload media in parallel (non-blocking — campaign is already created)
-      if (mediaUploads.length > 0) {
-        const results = await Promise.allSettled(mediaUploads);
-        results.forEach((r, i) => {
-          if (r.status === 'rejected' || (r.status === 'fulfilled' && !r.value)) {
-            console.warn(`[CampaignWizard] Media upload ${i} failed (non-blocking)`);
-          }
-        });
-      }
+      await uploadMediaFiles(campaignId);
 
       // Create invitations for selective campaigns
       if (visibilityData.visibility === 'selective' && visibilityData.invited_profiles.length > 0) {
@@ -687,7 +735,7 @@ export default function CampaignWizard() {
                   disabled={!isStepValid(5) || isSubmitting}
                   className="bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-all flex items-center gap-1.5"
                 >
-                  {isSubmitting ? 'Publicando...' : 'Publicar Campana'}
+                  {isSubmitting ? 'Procesando...' : needsImmediatePayment() ? 'Publicar y Pagar' : 'Publicar Campana'}
                 </button>
               </>
             ) : (

@@ -77,6 +77,8 @@ const TalentListsPage = lazy(() => import("./pages/marketplace/TalentListsPage")
 const TalentListDetailPage = lazy(() => import("./pages/marketplace/TalentListDetailPage"));
 const MarketplaceInvitationsPage = lazy(() => import("./pages/marketplace/MarketplaceInvitationsPage"));
 const MarketplaceInquiriesPage = lazy(() => import("./pages/marketplace/MarketplaceInquiriesPage"));
+const CampaignPaymentSuccessPage = lazy(() => import("./pages/marketplace/CampaignPaymentSuccess"));
+const CampaignPaymentCancelPage = lazy(() => import("./pages/marketplace/CampaignPaymentCancel"));
 const CreatorProfileSetup = lazy(() => import("./pages/CreatorProfileSetup"));
 const Unete = lazy(() => import("./pages/Unete"));
 const UneteTalento = lazy(() => import("./pages/unete/talento"));
@@ -258,6 +260,8 @@ function AppRoutes() {
         <Route path="/marketplace/talent-lists/:id" element={<ProtectedRoute allowNoRoles><MainLayout><TalentListDetailPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/invitations" element={<ProtectedRoute allowNoRoles><MainLayout><MarketplaceInvitationsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/inquiries" element={<ProtectedRoute allowNoRoles><MainLayout><MarketplaceInquiriesPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/marketplace/campaign-payment/success" element={<ProtectedRoute allowNoRoles><CampaignPaymentSuccessPage /></ProtectedRoute>} />
+        <Route path="/marketplace/campaign-payment/cancel" element={<ProtectedRoute allowNoRoles><CampaignPaymentCancelPage /></ProtectedRoute>} />
         <Route path="/company/:username" element={<CompanyProfilePage />} />
         <Route path="/profile/:userId" element={<PublicProfilePage />} />
         <Route path="/profile" element={<ProfileRedirect />} />

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { ArrowLeft, Users } from 'lucide-react';
+import { ArrowLeft, Users, CreditCard, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMarketplaceCampaigns, CAMPAIGN_STATUS_LABELS } from '@/hooks/useMarketplaceCampaigns';
 import { useCampaignAnalytics } from '@/analytics';
@@ -24,7 +24,7 @@ const TABS: { value: ApplicationStatus | 'all'; label: string }[] = [
 ];
 
 export function CampaignApplicationsReview({ campaignId, onBack }: CampaignApplicationsReviewProps) {
-  const { getCampaignById, getApplicationsForCampaign, updateApplicationStatus, approveApplication } = useMarketplaceCampaigns();
+  const { getCampaignById, getApplicationsForCampaign, updateApplicationStatus, approveApplication, createCampaignCheckout } = useMarketplaceCampaigns();
   const { createProject, getProjectsByCampaign } = useMarketplaceProjects();
   const { createPublication } = useBrandActivation();
   const { trackCreatorAccepted, trackCreatorRejected } = useCampaignAnalytics();
@@ -142,8 +142,38 @@ export function CampaignApplicationsReview({ campaignId, onBack }: CampaignAppli
     ? applications.find(a => a.id === counterOfferTargetId)
     : null;
 
+  const [isPayingBid, setIsPayingBid] = useState(false);
+
   const pendingCount = applications.filter(a => a.status === 'pending').length;
   const approvedCount = applications.filter(a => a.status === 'approved').length;
+
+  // Payment summary for auction/range
+  const approvedApps = useMemo(
+    () => applications.filter(a => a.status === 'approved' || a.status === 'assigned'),
+    [applications],
+  );
+  const totalAgreedPrice = useMemo(
+    () => approvedApps.reduce((sum, a) => sum + (a.bid_amount ?? a.proposed_price ?? 0), 0),
+    [approvedApps],
+  );
+  const commissionRate = campaign?.commission_rate ?? 30;
+  const platformFee = totalAgreedPrice * commissionRate / 100;
+  const grandTotal = totalAgreedPrice + platformFee;
+
+  const handlePayAndStart = async () => {
+    if (!campaignId) return;
+    setIsPayingBid(true);
+    try {
+      const url = await createCampaignCheckout(campaignId, 'create-bid-checkout');
+      if (url) {
+        window.location.href = url;
+        return;
+      }
+    } catch {
+      // ignore
+    }
+    setIsPayingBid(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -219,6 +249,48 @@ export function CampaignApplicationsReview({ campaignId, onBack }: CampaignAppli
         <div className="text-center py-12">
           <Users className="h-10 w-10 text-gray-600 mx-auto mb-3" />
           <p className="text-gray-500 text-sm">No hay aplicaciones {activeTab !== 'all' ? 'en esta categoria' : ''}</p>
+        </div>
+      )}
+
+      {/* Payment Summary for Auction/Range */}
+      {isBidMode && campaign?.payment_status !== 'in_escrow' && approvedApps.length > 0 && (
+        <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-5 space-y-3">
+          <h3 className="text-white font-semibold flex items-center gap-2">
+            <CreditCard className="h-4 w-4 text-green-400" />
+            Resumen de Pago
+          </h3>
+          <div className="space-y-1.5 text-sm">
+            <div className="flex justify-between text-gray-400">
+              <span>Creadores aprobados</span>
+              <span className="text-white">{approvedApps.length}</span>
+            </div>
+            <div className="flex justify-between text-gray-400">
+              <span>Total creadores</span>
+              <span className="text-white">${totalAgreedPrice.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-gray-400">
+              <span>Comision plataforma ({commissionRate}%)</span>
+              <span className="text-white">${platformFee.toLocaleString()}</span>
+            </div>
+            <div className="border-t border-white/10 pt-1.5 flex justify-between font-semibold">
+              <span className="text-white">Total a pagar</span>
+              <span className="text-green-400">${grandTotal.toLocaleString()}</span>
+            </div>
+          </div>
+          <button
+            onClick={handlePayAndStart}
+            disabled={isPayingBid}
+            className="w-full bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+          >
+            {isPayingBid ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Redirigiendo a pago...
+              </>
+            ) : (
+              'Pagar y comenzar proyectos'
+            )}
+          </button>
         </div>
       )}
 

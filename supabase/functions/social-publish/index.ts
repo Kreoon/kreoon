@@ -2593,6 +2593,30 @@ async function handlePublishSingle(
     .update(updatePayload)
     .eq("id", post_id);
 
+  // Auto-fetch metrics for successful publishes so the UI doesn't show "sin metricas".
+  // Platforms need a few seconds to process, so initial fetch might return zeros for very
+  // new posts — but for most cases (stories, reels, etc.) this gets real data immediately.
+  const successResults = updatedResults.filter(r => r.status === "success" && r.platform_post_id);
+  for (const r of successResults) {
+    try {
+      const metricsUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/social-metrics/fetch-post-metrics`;
+      await fetch(metricsUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: JSON.stringify({
+          post_id: r.platform_post_id,
+          account_id: r.account_id,
+          scheduled_post_id: post_id,
+        }),
+      });
+    } catch (fetchErr) {
+      console.warn(`[social-publish] Auto-fetch metrics failed for ${r.account_id}:`, fetchErr);
+    }
+  }
+
   // Clean up pre-resolved temp media files
   await cleanupTempMedia(supabase, mediaTempPaths);
 
