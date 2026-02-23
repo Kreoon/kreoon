@@ -397,7 +397,9 @@ async function publishToFacebook(
   const caption = buildCaption(post);
   const baseUrl = "https://graph.facebook.com/v21.0";
 
-  // No media - text post
+  const isStory = post.post_type === "story";
+
+  // No media - text post (stories require media)
   if (!post.media_urls || post.media_urls.length === 0) {
     const res = await fetch(`${baseUrl}/${pageId}/feed`, {
       method: "POST",
@@ -418,6 +420,98 @@ async function publishToFacebook(
 
   const firstMedia = post.media_urls[0];
   const mediaType = getMediaType(firstMedia);
+
+  // ── Facebook Story ──
+  if (isStory) {
+    console.log(`[FB publish] Publishing as Story, mediaType=${mediaType}`);
+    if (mediaType === "video") {
+      const res = await fetch(`${baseUrl}/${pageId}/video_stories`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          upload_phase: "start",
+          access_token: token,
+        }),
+      });
+      const startData = await res.json();
+      if (startData.error) {
+        throw new Error(`Facebook Story video start error: ${startData.error.message || JSON.stringify(startData.error)}`);
+      }
+      const videoId = startData.video_id;
+      // Upload video
+      const uploadRes = await fetch(`${baseUrl}/${videoId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          upload_phase: "transfer",
+          file_url: firstMedia,
+          access_token: token,
+        }),
+      });
+      const uploadData = await uploadRes.json();
+      if (uploadData.error) {
+        throw new Error(`Facebook Story video upload error: ${uploadData.error.message || JSON.stringify(uploadData.error)}`);
+      }
+      // Finish
+      const finishRes = await fetch(`${baseUrl}/${pageId}/video_stories`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          video_id: videoId,
+          upload_phase: "finish",
+          access_token: token,
+        }),
+      });
+      const finishData = await finishRes.json();
+      if (finishData.error) {
+        throw new Error(`Facebook Story video finish error: ${finishData.error.message || JSON.stringify(finishData.error)}`);
+      }
+      return { platform_post_id: finishData.id || String(videoId) };
+    } else {
+      // Image story
+      const res = await fetch(`${baseUrl}/${pageId}/photo_stories`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          photo_id: firstMedia,
+          url: firstMedia,
+          access_token: token,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        // Fallback: upload photo first, then use photo_id
+        console.log("[FB Story] Direct URL failed, trying with uploaded photo...");
+        const photoRes = await fetch(`${baseUrl}/${pageId}/photos`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            url: firstMedia,
+            published: false,
+            access_token: token,
+          }),
+        });
+        const photoData = await photoRes.json();
+        if (photoData.error) {
+          throw new Error(`Facebook Story photo upload error: ${photoData.error.message || JSON.stringify(photoData.error)}`);
+        }
+        const storyRes = await fetch(`${baseUrl}/${pageId}/photo_stories`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            photo_id: photoData.id,
+            access_token: token,
+          }),
+        });
+        const storyData = await storyRes.json();
+        if (storyData.error) {
+          throw new Error(`Facebook Story publish error: ${storyData.error.message || JSON.stringify(storyData.error)}`);
+        }
+        return { platform_post_id: storyData.id || storyData.post_id };
+      }
+      return { platform_post_id: data.id || data.post_id };
+    }
+  }
 
   // Single image
   if (mediaType === "image" && post.media_urls.length === 1) {
@@ -489,9 +583,65 @@ async function publishToFacebook(
     return { platform_post_id: data.id };
   }
 
-  // Video
+  // Video (Reel or regular video)
   if (mediaType === "video") {
-    const res = await fetch(`${baseUrl}/${pageId}/videos`, {
+    const isReel = post.post_type === "reel" || post.post_type === "short";
+    const endpoint = isReel ? `${baseUrl}/${pageId}/video_reels` : `${baseUrl}/${pageId}/videos`;
+
+    console.log(`[FB publish] Publishing video as ${isReel ? 'Reel' : 'Video'}`);
+    const videoBody: Record<string, unknown> = {
+      file_url: firstMedia,
+      description: caption,
+      access_token: token,
+    };
+    if (isReel) {
+      videoBody.upload_phase = "start";
+    }
+
+    if (isReel) {
+      // Facebook Reels: start → transfer → finish
+      const startRes = await fetch(`${baseUrl}/${pageId}/video_reels`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ upload_phase: "start", access_token: token }),
+      });
+      const startData = await startRes.json();
+      if (startData.error) {
+        // Fallback to regular video upload if Reels API fails
+        console.log("[FB Reel] Reels API failed, falling back to /videos:", startData.error.message);
+        const fallbackRes = await fetch(`${baseUrl}/${pageId}/videos`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ file_url: firstMedia, description: caption, access_token: token }),
+        });
+        const fallbackData = await fallbackRes.json();
+        if (fallbackData.error) {
+          throw new Error(`Facebook Video API error: ${fallbackData.error.message || JSON.stringify(fallbackData.error)}`);
+        }
+        return { platform_post_id: fallbackData.id };
+      }
+      const videoId = startData.video_id;
+      // Transfer
+      await fetch(`${baseUrl}/${videoId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ upload_phase: "transfer", file_url: firstMedia, access_token: token }),
+      });
+      // Finish
+      const finishRes = await fetch(`${baseUrl}/${pageId}/video_reels`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ upload_phase: "finish", video_id: videoId, description: caption, access_token: token }),
+      });
+      const finishData = await finishRes.json();
+      if (finishData.error) {
+        throw new Error(`Facebook Reel finish error: ${finishData.error.message || JSON.stringify(finishData.error)}`);
+      }
+      return { platform_post_id: finishData.id || String(videoId) };
+    }
+
+    // Regular video
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -637,8 +787,64 @@ async function publishToInstagram(
       }
     }
 
+    const isStory = post.post_type === "story";
     const isCarousel =
-      post.post_type === "carousel" || post.media_urls.length > 1;
+      post.post_type === "carousel" || (!isStory && post.media_urls.length > 1);
+
+    // ── Instagram Story ──
+    if (isStory) {
+      const publicUrl = rehostedMedia[0].publicUrl;
+      const mType = getMediaType(post.media_urls[0]);
+      console.log(`[IG publish] Publishing as Story, mediaType=${mType}`);
+
+      const storyBody: Record<string, string> = {
+        media_type: "STORIES",
+        access_token: token,
+      };
+
+      if (mType === "video") {
+        storyBody.video_url = publicUrl;
+      } else {
+        storyBody.image_url = publicUrl;
+      }
+
+      // Create story container
+      const containerRes = await fetch(`${baseUrl}/${igUserId}/media`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(storyBody),
+      });
+      const containerData = await containerRes.json();
+      if (containerData.error) {
+        throw new Error(
+          `Instagram Story container error: ${containerData.error.message || JSON.stringify(containerData.error)}`
+        );
+      }
+      console.log(`[IG publish] Story container created: ${containerData.id}`);
+
+      // For video stories, poll until processing is complete
+      if (mType === "video") {
+        await pollInstagramMediaStatus(containerData.id, token);
+      }
+
+      // Publish story
+      const publishRes = await fetch(`${baseUrl}/${igUserId}/media_publish`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          creation_id: containerData.id,
+          access_token: token,
+        }),
+      });
+      const publishData = await publishRes.json();
+      if (publishData.error) {
+        throw new Error(
+          `Instagram Story publish error: ${publishData.error.message || JSON.stringify(publishData.error)}`
+        );
+      }
+      console.log(`[IG publish] Story published successfully: ${publishData.id}`);
+      return { platform_post_id: publishData.id };
+    }
 
     // ── Carousel ──
     if (isCarousel) {
