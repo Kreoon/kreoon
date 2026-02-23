@@ -3,12 +3,17 @@ import { useSearchParams } from 'react-router-dom';
 import {
   Castle, Contact, Building2, DollarSign, Search, Plus,
   ChevronDown, Crown, Users as UsersIcon, AlertTriangle,
-  Phone, MapPin,
+  Phone, MapPin, Loader2,
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -99,6 +104,10 @@ const UnifiedClientsPage = () => {
   const [selectedClientUser, setSelectedClientUser] = useState<ClientUser | null>(null);
   const [clientDialogOpen, setClientDialogOpen] = useState(false);
   const [createContactOpen, setCreateContactOpen] = useState(false);
+  const [createCompanyOpen, setCreateCompanyOpen] = useState(false);
+  const [newCompanyData, setNewCompanyData] = useState({ name: '', contact_email: '', contact_phone: '', notes: '' });
+  const [creatingCompany, setCreatingCompany] = useState(false);
+  const { toast } = useToast();
 
   // Handle tab change with URL sync
   const handleFilterChange = (tab: FilterTab) => {
@@ -175,6 +184,32 @@ const UnifiedClientsPage = () => {
   const handleClientUserClick = (user: ClientUser) => {
     setSelectedEntity(null); // Clear entity selection
     setSelectedClientUser(user);
+  };
+
+  const handleCreateCompany = async () => {
+    if (!newCompanyData.name.trim()) {
+      toast({ title: 'Error', description: 'El nombre de la empresa es requerido', variant: 'destructive' });
+      return;
+    }
+    setCreatingCompany(true);
+    try {
+      const { error } = await supabase.from('clients').insert({
+        name: newCompanyData.name.trim(),
+        contact_email: newCompanyData.contact_email || null,
+        contact_phone: newCompanyData.contact_phone || null,
+        notes: newCompanyData.notes || null,
+        organization_id: currentOrgId,
+      });
+      if (error) throw error;
+      toast({ title: 'Empresa creada', description: `${newCompanyData.name} ha sido creada exitosamente` });
+      setCreateCompanyOpen(false);
+      setNewCompanyData({ name: '', contact_email: '', contact_phone: '', notes: '' });
+      refetch();
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'No se pudo crear la empresa', variant: 'destructive' });
+    } finally {
+      setCreatingCompany(false);
+    }
   };
 
   // Active contact for side panel (only contactos)
@@ -304,6 +339,10 @@ const UnifiedClientsPage = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setCreateCompanyOpen(true)}>
+                    <Building2 className="h-4 w-4 mr-2" />
+                    Nueva Empresa
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setCreateContactOpen(true)}>
                     <Contact className="h-4 w-4 mr-2" />
                     Nuevo Contacto
@@ -598,6 +637,62 @@ const UnifiedClientsPage = () => {
             onUpdate={() => refetch()}
           />
         )}
+
+        {/* Create Company Dialog */}
+        <Dialog open={createCompanyOpen} onOpenChange={setCreateCompanyOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Crear Nueva Empresa</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="company-name">Nombre de la empresa *</Label>
+                <Input
+                  id="company-name"
+                  placeholder="Ej: Empresa XYZ"
+                  value={newCompanyData.name}
+                  onChange={(e) => setNewCompanyData(prev => ({ ...prev, name: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-email">Email de contacto</Label>
+                <Input
+                  id="company-email"
+                  type="email"
+                  placeholder="contacto@empresa.com"
+                  value={newCompanyData.contact_email}
+                  onChange={(e) => setNewCompanyData(prev => ({ ...prev, contact_email: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-phone">Teléfono de contacto</Label>
+                <Input
+                  id="company-phone"
+                  placeholder="+57 300 123 4567"
+                  value={newCompanyData.contact_phone}
+                  onChange={(e) => setNewCompanyData(prev => ({ ...prev, contact_phone: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-notes">Notas</Label>
+                <Textarea
+                  id="company-notes"
+                  placeholder="Notas adicionales sobre la empresa..."
+                  value={newCompanyData.notes}
+                  onChange={(e) => setNewCompanyData(prev => ({ ...prev, notes: e.target.value }))}
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={() => setCreateCompanyOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleCreateCompany} disabled={creatingCompany}>
+                  {creatingCompany ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Creando...</> : 'Crear Empresa'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Create Contact Modal */}
         <CreateContactModal
