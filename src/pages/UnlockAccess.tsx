@@ -76,6 +76,7 @@ const UnlockAccess = () => {
           code={referralCode}
           onGenerateCode={async () => { await generateCode(); }}
           isGenerating={isGenerating}
+          showTargetSelector
         />
 
         {/* Custom Slug */}

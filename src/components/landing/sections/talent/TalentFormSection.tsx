@@ -10,7 +10,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { KreoonGlassCard } from '@/components/ui/kreoon/KreoonGlassCard';
-import { useUTMTracking, useTrackEvent } from '@/hooks/useUTMTracking';
+import { useUTMTracking } from '@/hooks/useUTMTracking';
+import { useAnalyticsContext } from '@/contexts/AnalyticsContext';
 import {
   TALENT_CATEGORY_LABELS,
   SPECIFIC_ROLE_LABELS,
@@ -86,7 +87,7 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
   const [selectedRoles, setSelectedRoles] = useState<SpecificRole[]>([]);
 
   const { getTrackingParams, clearUTMParams } = useUTMTracking();
-  const { trackEvent } = useTrackEvent();
+  const analytics = useAnalyticsContext();
   const scrollAnim = useScrollAnimation();
 
   const form = useForm<FormData>({
@@ -106,7 +107,7 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
   const { watch, trigger } = form;
 
   useEffect(() => {
-    trackEvent('form_step_view', { step: currentStep, page: 'talento_landing' });
+    analytics.track({ event_name: 'form_step_view', event_category: 'engagement', properties: { step: currentStep, page: 'talento_landing' } });
   }, [currentStep]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // When categories change, remove roles that no longer belong to any selected category
@@ -152,7 +153,7 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
     if (currentStep === 1) {
       const experienceValid = await trigger('experience_level');
       if (selectedCategories.length === 0 || !experienceValid) return;
-      trackEvent('form_step_complete', { step: currentStep });
+      analytics.track({ event_name: 'form_step_complete', event_category: 'engagement', properties: { step: currentStep } });
       setCurrentStep(2);
     }
   };
@@ -207,11 +208,10 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
       const result = await response.json();
 
       if (result.success) {
-        trackEvent('lead_captured', {
+        analytics.trackLeadCaptured({
           lead_id: result.lead_id,
           score: result.score,
-          categories: selectedCategories,
-          roles: selectedRoles,
+          lead_type: 'talent',
         });
 
         clearUTMParams();
@@ -223,7 +223,7 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
     } catch (error) {
       console.error('Error submitting form:', error);
       setSubmitError((error as Error).message);
-      trackEvent('form_error', { error: (error as Error).message });
+      analytics.track({ event_name: 'form_error', event_category: 'engagement', properties: { error: (error as Error).message } });
     } finally {
       setIsSubmitting(false);
     }

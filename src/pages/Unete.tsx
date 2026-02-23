@@ -6,7 +6,9 @@ import {
   ArrowRight, Star, ChevronDown,
 } from 'lucide-react';
 import { Kiro3D } from '@/components/kiro/Kiro3D';
-import { useUTMTracking, useTrackEvent } from '@/hooks/useUTMTracking';
+import PhoneMockupCarousel from '@/components/landing/PhoneMockupCarousel';
+import { useUTMTracking } from '@/hooks/useUTMTracking';
+import { useAnalyticsContext } from '@/contexts/AnalyticsContext';
 import type { KiroState } from '@/components/kiro/Kiro3D';
 
 // ─── Types ────────────────────────────────────────────────
@@ -147,11 +149,11 @@ function UserTypeCardComponent({
   onLeave: () => void;
 }) {
   const navigate = useNavigate();
-  const { trackEvent } = useTrackEvent();
+  const analytics = useAnalyticsContext();
   const Icon = card.icon;
 
   const handleClick = () => {
-    trackEvent('unete_card_click', { user_type: card.type });
+    analytics.trackButtonClick('unete_card', card.type);
     navigate(card.route);
   };
 
@@ -202,12 +204,7 @@ function UserTypeCardComponent({
 // ─── Main Page ────────────────────────────────────────────
 export default function Unete() {
   const [hoveredType, setHoveredType] = useState<UserType | null>(null);
-  const { hasUTMs } = useUTMTracking();
-  const { trackEvent } = useTrackEvent();
-
-  useEffect(() => {
-    trackEvent('unete_page_view', { has_utms: hasUTMs });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useUTMTracking();
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden">
@@ -286,6 +283,9 @@ export default function Unete() {
             ))}
           </div>
         </section>
+
+        {/* Video carousel */}
+        <PhoneMockupCarousel />
 
         {/* Social proof */}
         <section className="px-6 md:px-12 pb-20">

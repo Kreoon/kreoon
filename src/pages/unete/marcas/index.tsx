@@ -10,7 +10,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useUTMTracking, useTrackEvent } from '@/hooks/useUTMTracking';
+import { useUTMTracking } from '@/hooks/useUTMTracking';
+import { useAnalyticsContext } from '@/contexts/AnalyticsContext';
+import PhoneMockupCarousel from '@/components/landing/PhoneMockupCarousel';
 
 // ─── Validation ───────────────────────────────────────────
 const formSchema = z.object({
@@ -58,7 +60,7 @@ export default function MarcasLanding() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const { getTrackingParams, clearUTMParams } = useUTMTracking();
-  const { trackEvent } = useTrackEvent();
+  const analytics = useAnalyticsContext();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -75,7 +77,7 @@ export default function MarcasLanding() {
   });
 
   useEffect(() => {
-    trackEvent('landing_view', { page: 'marcas_landing' });
+    analytics.track({ event_name: 'landing_view', event_category: 'engagement', properties: { page: 'marcas_landing' } });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = async (data: FormData) => {
@@ -112,10 +114,9 @@ export default function MarcasLanding() {
       const result = await response.json();
 
       if (result.success) {
-        trackEvent('lead_captured', {
+        analytics.trackLeadCaptured({
           lead_id: result.lead_id,
           lead_type: 'brand',
-          content_needs: data.content_needs,
         });
 
         clearUTMParams();
@@ -126,7 +127,7 @@ export default function MarcasLanding() {
     } catch (error) {
       console.error('Error:', error);
       setSubmitError((error as Error).message);
-      trackEvent('form_error', { error: (error as Error).message });
+      analytics.track({ event_name: 'form_error', event_category: 'engagement', properties: { error: (error as Error).message } });
     } finally {
       setIsSubmitting(false);
     }
@@ -225,6 +226,12 @@ export default function MarcasLanding() {
             );
           })}
         </div>
+
+        {/* Video carousel */}
+        <PhoneMockupCarousel
+          title="Contenido creado por nuestra red"
+          subtitle="Talento verificado disponible para tu marca"
+        />
 
         {/* Form */}
         <motion.div

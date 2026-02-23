@@ -139,6 +139,7 @@ export function ReferralManagement() {
         onGenerateCode={async () => { await generateCode(); }}
         isGenerating={isGenerating}
         activePromo={activePromo}
+        showTargetSelector
       />
 
       {/* 5. Custom Slug */}

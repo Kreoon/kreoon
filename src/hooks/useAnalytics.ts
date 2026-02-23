@@ -122,6 +122,11 @@ const getBrowserInfo = (): { browser: string; os: string } => {
   return { browser, os };
 };
 
+// ── Time-on-page tracking (module-level) ────────────────────
+
+let pageEnterTime = Date.now();
+let currentPagePath = typeof window !== 'undefined' ? window.location.pathname : '';
+
 // ── Return type (exported for AnalyticsContext) ─────────────
 
 export interface AnalyticsReturnType {
@@ -133,6 +138,7 @@ export interface AnalyticsReturnType {
   trackTrialStart: (properties?: Record<string, unknown>) => void;
   trackSubscription: (valueUsd: number, properties?: Record<string, unknown>) => void;
   trackContentCreated: (properties?: Record<string, unknown>) => void;
+  trackLeadCaptured: (properties?: Record<string, unknown>) => void;
   trackButtonClick: (buttonId: string, buttonText?: string) => void;
   trackFormSubmit: (formId: string, formName?: string) => void;
   trackSearch: (query: string, resultsCount?: number) => void;
@@ -261,8 +267,36 @@ export function useAnalytics(): AnalyticsReturnType {
     });
   }, [initializeContext, queueEvent]);
 
-  // Track page view
+  // Track page view (with time-on-page for previous page)
   const trackPageView = useCallback((additionalProps?: Record<string, unknown>) => {
+    // Emit page_exit for previous page
+    const now = Date.now();
+    if (currentPagePath && pageEnterTime) {
+      const durationMs = now - pageEnterTime;
+      if (durationMs > 500) { // ignore sub-500ms bounces
+        queueEvent({
+          event_name: 'page_exit',
+          event_category: 'page',
+          properties: {
+            page_path: currentPagePath,
+            duration_ms: durationMs,
+          },
+          page_url: window.location.href,
+          page_path: currentPagePath,
+          page_title: document.title,
+          page_referrer: document.referrer,
+          device_type: getDeviceType(),
+          ...getBrowserInfo(),
+          screen_width: window.screen.width,
+          screen_height: window.screen.height,
+        });
+      }
+    }
+
+    // Reset for new page
+    pageEnterTime = now;
+    currentPagePath = window.location.pathname;
+
     track({
       event_name: 'page_view',
       event_category: 'page',
@@ -272,7 +306,7 @@ export function useAnalytics(): AnalyticsReturnType {
         ...additionalProps,
       },
     });
-  }, [track]);
+  }, [track, queueEvent]);
 
   // Track conversión (eventos de alto valor, envío inmediato)
   const trackConversion = useCallback((conversion: ConversionEvent) => {
@@ -345,6 +379,10 @@ export function useAnalytics(): AnalyticsReturnType {
     trackConversion({ type: 'content_created', properties });
   }, [trackConversion]);
 
+  const trackLeadCaptured = useCallback((properties?: Record<string, unknown>) => {
+    trackConversion({ type: 'lead_captured', properties });
+  }, [trackConversion]);
+
   // === MÉTODOS DE ENGAGEMENT ===
 
   const trackButtonClick = useCallback((buttonId: string, buttonText?: string) => {
@@ -413,6 +451,26 @@ export function useAnalytics(): AnalyticsReturnType {
 
     // Use fetch+keepalive for reliable send on page close
     const handleBeforeUnload = () => {
+      // Emit final page_exit for current page
+      if (currentPagePath && pageEnterTime) {
+        const durationMs = Date.now() - pageEnterTime;
+        if (durationMs > 500) {
+          eventQueue.current.push({
+            event_name: 'page_exit',
+            event_category: 'page',
+            properties: { page_path: currentPagePath, duration_ms: durationMs },
+            page_url: window.location.href,
+            page_path: currentPagePath,
+            page_title: document.title,
+            device_type: getDeviceType(),
+            ...getBrowserInfo(),
+            screen_width: window.screen.width,
+            screen_height: window.screen.height,
+            client_timestamp: new Date().toISOString(),
+          });
+        }
+      }
+
       if (eventQueue.current.length > 0 && contextRef.current) {
         const eventsToSend = eventQueue.current.splice(0, MAX_BATCH_SIZE);
         const url = `${import.meta.env.VITE_SUPABASE_URL || 'https://wjkbqcrxwsmvtxmqgiqc.supabase.co'}/functions/v1/kae-track`;
@@ -465,6 +523,7 @@ export function useAnalytics(): AnalyticsReturnType {
     trackTrialStart,
     trackSubscription,
     trackContentCreated,
+    trackLeadCaptured,
     trackButtonClick,
     trackFormSubmit,
     trackSearch,
