@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   Video, Wand2, Megaphone, Code, GraduationCap,
@@ -21,18 +20,15 @@ import {
 } from '@/types/crm.types';
 import { FADE_IN_UP, useScrollAnimation, withDelay } from '@/lib/animations';
 
-// ─── Validation schemas ───────────────────────────────────
+// ─── Validation schemas (2 steps) ────────────────────────
 const step1Schema = z.object({
   talent_subtype: z.enum(['creator', 'editor', 'both']),
-});
-
-const step2Schema = z.object({
   talent_category: z.string().min(1, 'Selecciona una categoría'),
   specific_role: z.string().min(1, 'Selecciona tu rol principal'),
   experience_level: z.enum(['beginner', 'intermediate', 'advanced', 'expert']),
 });
 
-const step3Schema = z.object({
+const step2Schema = z.object({
   full_name: z.string().min(2, 'Nombre muy corto'),
   email: z.string().email('Email inválido'),
   phone: z.string().optional(),
@@ -42,44 +38,48 @@ const step3Schema = z.object({
   tiktok: z.string().optional(),
 });
 
-type FormData = z.infer<typeof step1Schema> &
-  z.infer<typeof step2Schema> &
-  z.infer<typeof step3Schema>;
+type FormData = z.infer<typeof step1Schema> & z.infer<typeof step2Schema>;
 
 // ─── Category config ──────────────────────────────────────
 const CATEGORY_CONFIG: Record<
   TalentCategory,
-  { icon: React.ElementType; color: string; description: string }
+  { icon: React.ElementType; color: string; description: string; subtypes: string[] }
 > = {
   content_creation: {
     icon: Video,
     color: 'from-pink-500 to-rose-500',
     description: 'Crear contenido original para redes',
+    subtypes: ['creator', 'both'],
   },
   post_production: {
     icon: Wand2,
     color: 'from-purple-500 to-violet-500',
     description: 'Editar y pulir contenido visual',
+    subtypes: ['editor', 'both'],
   },
   strategy_marketing: {
     icon: Megaphone,
     color: 'from-blue-500 to-cyan-500',
     description: 'Estrategias digitales y growth',
+    subtypes: ['creator', 'both'],
   },
   technology: {
     icon: Code,
     color: 'from-green-500 to-emerald-500',
     description: 'Desarrollo web, apps e IA',
+    subtypes: ['editor', 'both'],
   },
   education: {
     icon: GraduationCap,
     color: 'from-yellow-500 to-orange-500',
     description: 'Enseñar y facilitar aprendizaje',
+    subtypes: ['creator', 'both'],
   },
   client: {
     icon: Megaphone,
     color: 'from-slate-500 to-slate-600',
     description: 'Gestión de marcas',
+    subtypes: [],
   },
 };
 
@@ -89,6 +89,8 @@ const EXPERIENCE_OPTIONS = [
   { value: 'advanced', label: 'Avanzado', description: '3-5 años' },
   { value: 'expert', label: 'Experto', description: '+5 años' },
 ];
+
+const TOTAL_STEPS = 2;
 
 // ─── Types ────────────────────────────────────────────────
 interface TalentFormSectionProps {
@@ -128,10 +130,25 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
   const talentSubtype = watch('talent_subtype');
   const talentCategory = watch('talent_category');
 
+  // When subtype changes, reset category & role if the current category doesn't match the new subtype
+  useEffect(() => {
+    if (talentSubtype && talentCategory) {
+      const config = CATEGORY_CONFIG[talentCategory as TalentCategory];
+      if (config && !config.subtypes.includes(talentSubtype)) {
+        form.setValue('talent_category', '');
+        form.setValue('specific_role', '');
+        setSelectedCategory(null);
+      }
+    }
+  }, [talentSubtype]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When category changes, update selectedCategory and reset role
   useEffect(() => {
     if (talentCategory) {
       setSelectedCategory(talentCategory as TalentCategory);
       form.setValue('specific_role', '');
+    } else {
+      setSelectedCategory(null);
     }
   }, [talentCategory]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -139,23 +156,26 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
     trackEvent('form_step_view', { step: currentStep, page: 'talento_landing' });
   }, [currentStep]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Filter categories based on selected talent_subtype
+  const filteredCategories = (Object.keys(CATEGORY_CONFIG) as TalentCategory[]).filter((cat) => {
+    if (cat === 'client') return false;
+    if (!talentSubtype) return false;
+    if (talentSubtype === 'both') return true;
+    return CATEGORY_CONFIG[cat].subtypes.includes(talentSubtype);
+  });
+
   const handleNextStep = async () => {
-    let isValid = false;
-
     if (currentStep === 1) {
-      isValid = await trigger('talent_subtype');
-    } else if (currentStep === 2) {
-      isValid = await trigger(['talent_category', 'specific_role', 'experience_level']);
-    }
-
-    if (isValid) {
-      trackEvent('form_step_complete', { step: currentStep });
-      setCurrentStep((prev) => prev + 1);
+      const isValid = await trigger(['talent_subtype', 'talent_category', 'specific_role', 'experience_level']);
+      if (isValid) {
+        trackEvent('form_step_complete', { step: currentStep });
+        setCurrentStep(2);
+      }
     }
   };
 
   const handlePrevStep = () => {
-    setCurrentStep((prev) => prev - 1);
+    setCurrentStep(1);
   };
 
   const handleSubmit = async (data: FormData) => {
@@ -296,10 +316,10 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
         {/* Form card */}
         <motion.div variants={withDelay(FADE_IN_UP, 0.15)} {...scrollAnim}>
           <KreoonGlassCard intensity="strong" className="p-6 md:p-8">
-            {/* Progress bar */}
+            {/* Progress bar — 2 steps */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-2">
-                {[1, 2, 3].map((step) => (
+                {[1, 2].map((step) => (
                   <div
                     key={step}
                     className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-colors ${
@@ -316,7 +336,7 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
                 <motion.div
                   className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
                   initial={{ width: '0%' }}
-                  animate={{ width: `${((currentStep - 1) / 2) * 100}%` }}
+                  animate={{ width: `${((currentStep - 1) / (TOTAL_STEPS - 1)) * 100}%` }}
                   transition={{ duration: 0.3 }}
                 />
               </div>
@@ -325,7 +345,7 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
             {/* Form steps */}
             <form onSubmit={form.handleSubmit(handleSubmit)}>
               <AnimatePresence mode="wait">
-                {/* ── Step 1: Talent type ── */}
+                {/* ── Step 1: Type + Specialty (merged) ── */}
                 {currentStep === 1 && (
                   <motion.div
                     key="step1"
@@ -334,71 +354,46 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
                     exit={{ opacity: 0, x: -20 }}
                     className="space-y-6"
                   >
-                    <div className="text-center mb-6">
+                    <div className="text-center mb-4">
                       <h3 className="text-xl font-bold text-kreoon-text-primary mb-1">
-                        ¿Qué tipo de talento eres?
+                        Cuéntanos sobre ti
                       </h3>
-                      <p className="text-sm text-kreoon-text-secondary">Selecciona lo que mejor te describe</p>
+                      <p className="text-sm text-kreoon-text-secondary">Tu tipo de talento y especialidad</p>
                     </div>
 
-                    <div className="grid gap-3">
-                      {([
-                        { value: 'creator', label: 'Creador de Contenido', description: 'Creo contenido original (UGC, videos, fotos)', icon: Video },
-                        { value: 'editor', label: 'Editor / Post-Producción', description: 'Edito, animo o mejoro contenido de otros', icon: Wand2 },
-                        { value: 'both', label: 'Ambos', description: 'Creo y también edito contenido', icon: Sparkles },
-                      ] as const).map((option) => (
-                        <label
-                          key={option.value}
-                          className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer border-2 transition-all ${
-                            talentSubtype === option.value
-                              ? 'border-purple-500 bg-purple-500/10'
-                              : 'border-white/10 bg-white/5 hover:border-white/20'
-                          }`}
-                        >
-                          <input type="radio" value={option.value} {...form.register('talent_subtype')} className="sr-only" />
-                          <div className={`p-3 rounded-lg ${talentSubtype === option.value ? 'bg-purple-500' : 'bg-white/10'}`}>
-                            <option.icon className="w-6 h-6" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium text-kreoon-text-primary">{option.label}</p>
-                            <p className="text-sm text-kreoon-text-muted">{option.description}</p>
-                          </div>
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                            talentSubtype === option.value ? 'border-purple-500 bg-purple-500' : 'border-white/30'
-                          }`}>
-                            {talentSubtype === option.value && <Check className="w-3 h-3 text-white" />}
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-
-                    <Button type="button" onClick={handleNextStep} disabled={!talentSubtype} className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50">
-                      Continuar <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </motion.div>
-                )}
-
-                {/* ── Step 2: Category & role ── */}
-                {currentStep === 2 && (
-                  <motion.div
-                    key="step2"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="space-y-6"
-                  >
-                    <div className="text-center mb-6">
-                      <h3 className="text-xl font-bold text-kreoon-text-primary mb-1">Tu especialidad</h3>
-                      <p className="text-sm text-kreoon-text-secondary">Cuéntanos más sobre lo que haces</p>
-                    </div>
-
-                    {/* Categories */}
+                    {/* Talent type — compact toggle */}
                     <div>
-                      <label className="block text-sm text-kreoon-text-secondary mb-3">Área principal</label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        {(Object.keys(CATEGORY_CONFIG) as TalentCategory[])
-                          .filter((cat) => cat !== 'client')
-                          .map((category) => {
+                      <label className="block text-sm text-kreoon-text-secondary mb-3">¿Qué haces?</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {([
+                          { value: 'creator', label: 'Creo contenido', icon: Video },
+                          { value: 'editor', label: 'Edito contenido', icon: Wand2 },
+                          { value: 'both', label: 'Ambos', icon: Sparkles },
+                        ] as const).map((option) => (
+                          <label
+                            key={option.value}
+                            className={`flex flex-col items-center gap-2 p-3 rounded-xl cursor-pointer border-2 transition-all text-center ${
+                              talentSubtype === option.value
+                                ? 'border-purple-500 bg-purple-500/10'
+                                : 'border-white/10 bg-white/5 hover:border-white/20'
+                            }`}
+                          >
+                            <input type="radio" value={option.value} {...form.register('talent_subtype')} className="sr-only" />
+                            <div className={`p-2 rounded-lg ${talentSubtype === option.value ? 'bg-purple-500' : 'bg-white/10'}`}>
+                              <option.icon className="w-5 h-5" />
+                            </div>
+                            <span className="text-xs font-medium text-kreoon-text-primary">{option.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Categories — filtered by subtype */}
+                    {talentSubtype && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} transition={{ duration: 0.2 }}>
+                        <label className="block text-sm text-kreoon-text-secondary mb-3">Área principal</label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {filteredCategories.map((category) => {
                             const config = CATEGORY_CONFIG[category];
                             const Icon = config.icon;
                             const isSelected = talentCategory === category;
@@ -406,24 +401,25 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
                             return (
                               <label
                                 key={category}
-                                className={`p-4 rounded-xl cursor-pointer text-center border-2 transition-all ${
+                                className={`p-3 rounded-xl cursor-pointer text-center border-2 transition-all ${
                                   isSelected ? 'border-purple-500 bg-purple-500/10' : 'border-white/10 bg-white/5 hover:border-white/20'
                                 }`}
                               >
                                 <input type="radio" value={category} {...form.register('talent_category')} className="sr-only" />
-                                <div className={`w-12 h-12 mx-auto mb-2 rounded-lg bg-gradient-to-br ${config.color} flex items-center justify-center`}>
-                                  <Icon className="w-6 h-6 text-white" />
+                                <div className={`w-10 h-10 mx-auto mb-2 rounded-lg bg-gradient-to-br ${config.color} flex items-center justify-center`}>
+                                  <Icon className="w-5 h-5 text-white" />
                                 </div>
-                                <p className="font-medium text-sm text-kreoon-text-primary">{TALENT_CATEGORY_LABELS[category]}</p>
+                                <p className="font-medium text-xs text-kreoon-text-primary">{TALENT_CATEGORY_LABELS[category]}</p>
                               </label>
                             );
                           })}
-                      </div>
-                    </div>
+                        </div>
+                      </motion.div>
+                    )}
 
-                    {/* Roles */}
+                    {/* Roles — filtered by category */}
                     {selectedCategory && (
-                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} transition={{ duration: 0.2 }}>
                         <label className="block text-sm text-kreoon-text-secondary mb-3">Rol específico</label>
                         <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1">
                           {(CATEGORY_ROLES[selectedCategory] || []).map((role: SpecificRole) => {
@@ -447,47 +443,44 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
                     )}
 
                     {/* Experience */}
-                    <div>
-                      <label className="block text-sm text-kreoon-text-secondary mb-3">Nivel de experiencia</label>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {EXPERIENCE_OPTIONS.map((option) => {
-                          const isSelected = watch('experience_level') === option.value;
-                          return (
-                            <label
-                              key={option.value}
-                              className={`p-3 rounded-lg cursor-pointer text-center border transition-all ${
-                                isSelected ? 'border-purple-500 bg-purple-500/20' : 'border-white/10 bg-white/5 hover:border-white/20'
-                              }`}
-                            >
-                              <input type="radio" value={option.value} {...form.register('experience_level')} className="sr-only" />
-                              <p className="font-medium text-sm text-kreoon-text-primary">{option.label}</p>
-                              <p className="text-xs text-kreoon-text-muted">{option.description}</p>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
+                    {selectedCategory && watch('specific_role') && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} transition={{ duration: 0.2 }}>
+                        <label className="block text-sm text-kreoon-text-secondary mb-3">Nivel de experiencia</label>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          {EXPERIENCE_OPTIONS.map((option) => {
+                            const isSelected = watch('experience_level') === option.value;
+                            return (
+                              <label
+                                key={option.value}
+                                className={`p-3 rounded-lg cursor-pointer text-center border transition-all ${
+                                  isSelected ? 'border-purple-500 bg-purple-500/20' : 'border-white/10 bg-white/5 hover:border-white/20'
+                                }`}
+                              >
+                                <input type="radio" value={option.value} {...form.register('experience_level')} className="sr-only" />
+                                <p className="font-medium text-sm text-kreoon-text-primary">{option.label}</p>
+                                <p className="text-xs text-kreoon-text-muted">{option.description}</p>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </motion.div>
+                    )}
 
-                    <div className="flex gap-3">
-                      <Button type="button" onClick={handlePrevStep} variant="outline" className="flex-1 border-white/20">
-                        <ArrowLeft className="w-4 h-4 mr-2" /> Atrás
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={handleNextStep}
-                        disabled={!talentCategory || !watch('specific_role') || !watch('experience_level')}
-                        className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:opacity-50"
-                      >
-                        Continuar <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </div>
+                    <Button
+                      type="button"
+                      onClick={handleNextStep}
+                      disabled={!talentSubtype || !talentCategory || !watch('specific_role') || !watch('experience_level')}
+                      className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50"
+                    >
+                      Continuar <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
                   </motion.div>
                 )}
 
-                {/* ── Step 3: Contact info ── */}
-                {currentStep === 3 && (
+                {/* ── Step 2: Contact info ── */}
+                {currentStep === 2 && (
                   <motion.div
-                    key="step3"
+                    key="step2"
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
