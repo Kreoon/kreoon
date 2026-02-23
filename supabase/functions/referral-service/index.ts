@@ -103,6 +103,15 @@ serve(async (req) => {
       case "check-nurture":
         result = await checkNurture(supabase, user.id);
         break;
+      case "generate-org-code":
+        result = await generateOrgReferralCode(supabase, user.id, body);
+        break;
+      case "get-org-codes":
+        result = await getOrgReferralCodes(supabase, user.id, body);
+        break;
+      case "get-org-dashboard":
+        result = await getOrgReferralDashboard(supabase, user.id, body);
+        break;
       default:
         throw new Error(`Unknown action: ${action}`);
     }
@@ -1015,5 +1024,200 @@ async function updateSlug(supabase: any, userId: string, body: any) {
     success: true,
     code: normalized,
     referral_url: `${baseUrl}/r/${normalized}`,
+  };
+}
+
+// ============================================================================
+// ORG-LEVEL: VERIFY ORG ADMIN/OWNER
+// ============================================================================
+
+async function verifyOrgAdmin(supabase: any, userId: string, organizationId: string) {
+  const { data: member } = await supabase
+    .from("organization_members")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("organization_id", organizationId)
+    .limit(1)
+    .maybeSingle();
+
+  if (!member) throw new Error("Not a member of this organization");
+  if (!["admin", "owner"].includes(member.role)) {
+    throw new Error("Only org admins/owners can manage org referral codes");
+  }
+  return member.role;
+}
+
+// ============================================================================
+// ORG-LEVEL: GENERATE ORG REFERRAL CODE
+// ============================================================================
+
+async function generateOrgReferralCode(supabase: any, userId: string, body: any) {
+  const { organization_id, target_type = "all" } = body;
+  if (!organization_id) throw new Error("organization_id is required");
+
+  await verifyOrgAdmin(supabase, userId, organization_id);
+
+  // Max 5 codes per org
+  const { count } = await supabase
+    .from("referral_codes")
+    .select("id", { count: "exact" })
+    .eq("organization_id", organization_id)
+    .eq("is_active", true);
+
+  if (count >= 5) {
+    throw new Error("Maximum org referral codes reached (5)");
+  }
+
+  // Generate code based on org name
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("name")
+    .eq("id", organization_id)
+    .single();
+
+  const baseName = (org?.name || "").slice(0, 8).toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const randomSuffix = Math.random().toString(36).substring(2, 5).toUpperCase();
+  let code = `${baseName || "ORG"}${randomSuffix}`;
+
+  // Check uniqueness
+  const { data: existing } = await supabase
+    .from("referral_codes")
+    .select("id")
+    .eq("code", code)
+    .limit(1)
+    .maybeSingle();
+
+  if (existing) {
+    code = `${code}${Math.random().toString(36).substring(2, 4).toUpperCase()}`;
+  }
+
+  // Insert with organization_id — user_id is the admin who created it
+  const { data: newCode, error } = await supabase
+    .from("referral_codes")
+    .insert({
+      user_id: userId,
+      organization_id,
+      code,
+      target_type,
+      is_active: true,
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(`Failed to create org code: ${error.message}`);
+
+  const baseUrl = Deno.env.get("FRONTEND_URL") || "https://kreoon.com";
+
+  return {
+    success: true,
+    code: newCode.code,
+    referral_url: `${baseUrl}/r/${code}`,
+    organization_id,
+  };
+}
+
+// ============================================================================
+// ORG-LEVEL: GET ORG REFERRAL CODES
+// ============================================================================
+
+async function getOrgReferralCodes(supabase: any, userId: string, body: any) {
+  const { organization_id } = body;
+  if (!organization_id) throw new Error("organization_id is required");
+
+  await verifyOrgAdmin(supabase, userId, organization_id);
+
+  const { data: codes, error } = await supabase
+    .from("referral_codes")
+    .select("*")
+    .eq("organization_id", organization_id)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(`Failed to get org codes: ${error.message}`);
+
+  const baseUrl = Deno.env.get("FRONTEND_URL") || "https://kreoon.com";
+
+  return {
+    success: true,
+    codes: (codes || []).map((c: any) => ({
+      ...c,
+      referral_url: `${baseUrl}/r/${c.code}`,
+    })),
+  };
+}
+
+// ============================================================================
+// ORG-LEVEL: GET ORG REFERRAL DASHBOARD
+// ============================================================================
+
+async function getOrgReferralDashboard(supabase: any, userId: string, body: any) {
+  const { organization_id } = body;
+  if (!organization_id) throw new Error("organization_id is required");
+
+  await verifyOrgAdmin(supabase, userId, organization_id);
+
+  // Get org codes
+  const codesResult = await getOrgReferralCodes(supabase, userId, body);
+  const codes = codesResult.codes || [];
+
+  // Aggregate metrics from codes
+  const totalClicks = codes.reduce((sum: number, c: any) => sum + (c.clicks || 0), 0);
+  const totalRegistrations = codes.reduce((sum: number, c: any) => sum + (c.registrations || 0), 0);
+  const totalConversions = codes.reduce((sum: number, c: any) => sum + (c.conversions || 0), 0);
+  const conversionRate = totalClicks > 0 ? (totalRegistrations / totalClicks * 100).toFixed(1) : "0";
+
+  // Get referral relationships from org codes
+  const orgCodeValues = codes.map((c: any) => c.code);
+  let referrals: any[] = [];
+
+  if (orgCodeValues.length > 0) {
+    const { data } = await supabase
+      .from("referral_relationships")
+      .select("id, referred_id, referred_type, status, total_earned, created_at")
+      .in("referral_code", orgCodeValues)
+      .order("created_at", { ascending: false });
+    referrals = data || [];
+  }
+
+  // Enrich referrals with profile names
+  const referredIds = referrals.map((r: any) => r.referred_id).filter(Boolean);
+  if (referredIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name, avatar_url")
+      .in("id", referredIds);
+    const profileMap: Record<string, any> = {};
+    for (const p of profiles || []) profileMap[p.id] = p;
+    for (const r of referrals) {
+      r.referred = profileMap[r.referred_id] || { full_name: null, avatar_url: null };
+    }
+  }
+
+  const totalEarned = referrals.reduce((sum: number, r: any) => sum + (r.total_earned || 0), 0);
+
+  // Get org name
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("name")
+    .eq("id", organization_id)
+    .single();
+
+  return {
+    success: true,
+    org_name: org?.name || "Organización",
+    codes,
+    referrals,
+    metrics: {
+      total_codes: codes.length,
+      total_clicks: totalClicks,
+      total_registrations: totalRegistrations,
+      total_conversions: totalConversions,
+      conversion_rate: `${conversionRate}%`,
+      total_earned: totalEarned,
+      by_type: {
+        brand: referrals.filter((r: any) => r.referred_type === "brand").length,
+        creator: referrals.filter((r: any) => r.referred_type === "creator").length,
+        organization: referrals.filter((r: any) => r.referred_type === "organization").length,
+      },
+    },
   };
 }

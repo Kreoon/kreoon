@@ -22,6 +22,7 @@ export type SettingsSectionKey =
   | 'org_agency_profile' // Public agency profile for marketplace
   | 'live_streaming_org' // KREOON Live - Organization level config
   | 'white_label'        // White-label branding, domain, email config
+  | 'org_referrals'      // Organization-level referral codes
   // Platform level (Root only)
   | 'organization_registrations'
   | 'referrals'

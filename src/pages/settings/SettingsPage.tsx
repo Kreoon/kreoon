@@ -35,6 +35,7 @@ const AITokenizationSection = lazy(() => import('@/pages/admin/AITokenizationPag
 const LiveStreamingSection = lazy(() => import('./sections/LiveStreamingPlatformSection'));
 const LiveStreamingOrgSection = lazy(() => import('./sections/LiveStreamingOrgSection'));
 const WhiteLabelSection = lazy(() => import('./sections/WhiteLabelSection'));
+const OrgReferralsSection = lazy(() => import('./sections/OrgReferralsSection'));
 
 // Loading fallback
 const SectionLoader = memo(() => (
@@ -64,6 +65,7 @@ const SECTION_COMPONENTS: Record<SettingsSectionKey, React.LazyExoticComponent<R
   org_agency_profile: OrgAgencyProfileSection,
   live_streaming_org: LiveStreamingOrgSection,
   white_label: WhiteLabelSection,
+  org_referrals: OrgReferralsSection,
   // Platform level
   organization_registrations: OrganizationRegistrationsSection,
 referrals: ReferralSection,
