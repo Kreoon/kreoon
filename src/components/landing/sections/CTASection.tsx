@@ -12,10 +12,10 @@ export interface CTASectionProps {
 }
 
 const TRUST_ITEMS = [
-  { icon: "🏢", label: "+100 agencias activas" },
-  { icon: "👤", label: "+500 creadores verificados" },
-  { icon: "📦", label: "+1,000 proyectos completados" },
-  { icon: "⭐", label: "4.9 rating promedio" },
+  { icon: "🏢", label: "Agencias y marcas" },
+  { icon: "👤", label: "Creadores verificados" },
+  { icon: "🔒", label: "Pagos con escrow" },
+  { icon: "🤖", label: "Herramientas IA incluidas" },
 ];
 
 const SEGMENT_CARDS = [
@@ -142,7 +142,7 @@ export function CTASection({
 
             {/* Subtítulo */}
             <p className="mx-auto mb-10 max-w-3xl text-lg text-kreoon-text-secondary sm:text-xl">
-              Más de 500 marcas, creadores y agencias ya confían en Kreoon. Ya sea que 
+              Marcas, creadores y agencias de toda LATAM ya confían en Kreoon. Ya sea que
               crees contenido, lo necesites, o gestiones equipos creativos, hay un lugar para ti.
             </p>
 
