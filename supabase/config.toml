@@ -332,3 +332,11 @@ verify_jwt = false
 
 [functions.marketing-campaigns]
 verify_jwt = false
+
+# ── Ad Intelligence Module ──
+
+[functions.ad-intelligence]
+verify_jwt = true
+
+[functions.social-scraper]
+verify_jwt = true

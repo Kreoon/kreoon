@@ -31,6 +31,7 @@ import {
   Crown,
   Share2,
   ChevronDown,
+  Radar,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -101,6 +102,8 @@ const adminSections: NavSection[] = [
       { name: "Usuarios", href: "/crm/usuarios", icon: Users },
       { name: "Finanzas", href: "/crm/finanzas", icon: DollarSign },
       { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone },
+      { name: "Ad Intelligence", href: "/admin/ad-intelligence", icon: Search },
+      { name: "Social Scraper", href: "/admin/social-scraper", icon: Radar },
     ]
   },
   {

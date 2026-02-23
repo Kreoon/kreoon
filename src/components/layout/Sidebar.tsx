@@ -36,6 +36,7 @@ import {
   DollarSign,
   Crown,
   Share2,
+  Radar,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -105,6 +106,8 @@ const adminSections: NavSection[] = [
       { name: "Usuarios", href: "/crm/usuarios", icon: Users, tourId: "sidebar-crm-users" },
       { name: "Finanzas", href: "/crm/finanzas", icon: DollarSign, tourId: "sidebar-crm-finances" },
       { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone, tourId: "sidebar-crm-email" },
+      { name: "Ad Intelligence", href: "/admin/ad-intelligence", icon: Search, tourId: "sidebar-ad-intel" },
+      { name: "Social Scraper", href: "/admin/social-scraper", icon: Radar, tourId: "sidebar-social-scraper" },
     ]
   },
   {
