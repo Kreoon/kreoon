@@ -7,7 +7,9 @@ const corsHeaders = {
 };
 
 const FETCH_TIMEOUT_MS = 30_000;
+const AI_FETCH_TIMEOUT_MS = 60_000;
 const APIFY_BASE = "https://api.apify.com/v2";
+const APIFY_ACTOR_TIMEOUT = 180; // seconds — consistent with social-scraper
 const BATCH_SIZE = 50;
 
 // ── Helpers ─────────────────────────────────────────────────
@@ -59,7 +61,7 @@ function getApifyToken(): string {
   return token;
 }
 
-async function runApifyActor(actorId: string, input: Record<string, unknown>, timeoutSecs = 120): Promise<unknown[]> {
+async function runApifyActor(actorId: string, input: Record<string, unknown>, timeoutSecs = APIFY_ACTOR_TIMEOUT): Promise<unknown[]> {
   const token = getApifyToken();
   const url = new URL(`${APIFY_BASE}/acts/${actorId}/run-sync-get-dataset-items`);
   url.searchParams.set("format", "json");
@@ -73,20 +75,23 @@ async function runApifyActor(actorId: string, input: Record<string, unknown>, ti
       "Content-Type": "application/json",
     },
     body: JSON.stringify(input),
-  }, (timeoutSecs + 30) * 1000); // fetch timeout slightly longer than actor timeout
+  }, (timeoutSecs + 30) * 1000);
 
   if (resp.status === 408) throw new Error(`Apify actor ${actorId} timed out (>${timeoutSecs}s)`);
-  if (resp.status === 400) {
-    const err = await resp.text();
-    throw new Error(`Apify actor ${actorId} failed: ${err.slice(0, 300)}`);
-  }
   if (!resp.ok) {
     const err = await resp.text();
-    throw new Error(`Apify error ${resp.status}: ${err.slice(0, 300)}`);
+    throw new Error(`Apify ${resp.status}: ${err.slice(0, 300)}`);
   }
 
-  // run-sync-get-dataset-items returns array directly (no wrapper)
-  return await resp.json() as unknown[];
+  const data = await resp.json();
+
+  // Validate response is an array (Apify may return object on error)
+  if (!Array.isArray(data)) {
+    console.error(`Apify ${actorId} returned non-array:`, JSON.stringify(data).slice(0, 200));
+    throw new Error(`Apify ${actorId} devolvió respuesta inesperada (no es array)`);
+  }
+
+  return data;
 }
 
 // ── Normalized ad type ──────────────────────────────────────
@@ -179,17 +184,21 @@ async function searchMetaAdLibrary(params: MetaSearchParams, accessToken: string
     if (!resp.ok) {
       const errBody = await resp.text();
       if (pages === 0) throw new Error(`Meta API ${resp.status}: ${errBody.slice(0, 200)}`);
+      console.error(`Meta API pagination error at page ${pages + 1}: ${resp.status}`);
       break;
     }
     const data = await resp.json();
     if (data.error) {
       if (pages === 0) throw new Error(`Meta API: ${data.error.message}`);
+      console.error(`Meta API error at page ${pages + 1}:`, data.error.message);
       break;
     }
     if (data.data) rawAds.push(...data.data);
     nextUrl = data.paging?.next || null;
     pages++;
   }
+
+  console.log(`Meta Ad Library: ${pages} pages fetched, ${rawAds.length} ads found`);
 
   return rawAds.slice(0, limit).map((raw: any): NormalizedAd => ({
     platform: "meta",
@@ -247,9 +256,9 @@ async function searchTikTokViaApify(params: TikTokSearchParams): Promise<Normali
 
   const items = await runApifyActor("codebyte~tiktok-creative-center-top-ads", input);
 
-  return (items as any[]).slice(0, limit).map((raw: any): NormalizedAd => ({
+  return (items as any[]).slice(0, limit).map((raw: any, idx: number): NormalizedAd => ({
     platform: "tiktok",
-    platform_ad_id: raw.adId || raw.videoId || raw.material_id || `tt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    platform_ad_id: raw.adId || raw.videoId || raw.material_id || `tt_${Date.now()}_${idx}`,
     page_id: raw.advertiserId || null,
     page_name: raw.brandName || raw.creatorUsername || null,
     ad_creative_bodies: raw.caption ? [raw.caption] : raw.adTitle ? [raw.adTitle] : [],
@@ -309,11 +318,11 @@ async function searchGoogleViaApify(params: GoogleSearchParams): Promise<Normali
   if (date_min) input.fromDate = date_min;
   if (date_max) input.toDate = date_max;
 
-  const items = await runApifyActor("xtech~google-ad-transparency-scraper", input, 180);
+  const items = await runApifyActor("xtech~google-ad-transparency-scraper", input);
 
-  return (items as any[]).slice(0, limit).map((raw: any): NormalizedAd => ({
+  return (items as any[]).slice(0, limit).map((raw: any, idx: number): NormalizedAd => ({
     platform: "google",
-    platform_ad_id: raw.adId || raw.creative_id || `goog_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    platform_ad_id: raw.adId || raw.creative_id || `goog_${Date.now()}_${idx}`,
     page_id: raw.advertiserId ? String(raw.advertiserId) : null,
     page_name: raw.advertiserName || raw.name || null,
     ad_creative_bodies: raw.adText ? [raw.adText] : [],
@@ -355,11 +364,9 @@ async function searchPlatform(platform: Platform, searchParams: Record<string, u
   }
 }
 
-// ── DB upsert (batched) ─────────────────────────────────────
+// ── Shared DB operations (DRY — used by search and sync) ────
 
-interface UpsertResult { total: number; errors: number }
-
-async function upsertAds(supabase: SupabaseClient, ads: NormalizedAd[]): Promise<UpsertResult> {
+async function upsertAds(supabase: SupabaseClient, ads: NormalizedAd[]): Promise<{ total: number; errors: number }> {
   let total = 0;
   let errors = 0;
 
@@ -375,7 +382,7 @@ async function upsertAds(supabase: SupabaseClient, ads: NormalizedAd[]): Promise
       .select("id");
 
     if (error) {
-      console.error("Upsert batch error:", error.message);
+      console.error(`Upsert batch ${Math.floor(i / BATCH_SIZE) + 1} error:`, error.message);
       errors += batch.length;
     } else {
       total += data?.length || 0;
@@ -385,39 +392,57 @@ async function upsertAds(supabase: SupabaseClient, ads: NormalizedAd[]): Promise
   return { total, errors };
 }
 
+async function updateSearchStats(supabase: SupabaseClient, searchId: string, fallbackCount: number): Promise<void> {
+  const { count } = await supabase
+    .from("ad_library_ads")
+    .select("id", { count: "exact", head: true })
+    .eq("search_id", searchId);
+
+  const { error } = await supabase.from("ad_library_searches").update({
+    last_synced_at: new Date().toISOString(),
+    total_ads_found: count ?? fallbackCount,
+    updated_at: new Date().toISOString(),
+  }).eq("id", searchId);
+
+  if (error) console.error("Error updating search stats:", error.message);
+}
+
 // ── AI Analysis ─────────────────────────────────────────────
 
 async function analyzeAdWithAI(ad: Record<string, any>): Promise<Record<string, unknown>> {
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+  const truncate = (text: string, max = 1500) => text.length > max ? text.slice(0, max) + "..." : text;
+
   const adContext = [
     `PLATAFORMA: ${ad.platform}`,
     `ANUNCIANTE: ${ad.page_name || "Desconocido"}`,
-    `COPY: ${(ad.ad_creative_bodies || []).join("\n")}`,
-    `HEADLINES: ${(ad.ad_creative_link_titles || []).join(", ")}`,
-    `DESCRIPCIONES: ${(ad.ad_creative_link_descriptions || []).join(", ")}`,
+    `COPY: ${truncate((ad.ad_creative_bodies || []).join("\n"))}`,
+    `HEADLINES: ${truncate((ad.ad_creative_link_titles || []).join(", "))}`,
+    `DESCRIPCIONES: ${truncate((ad.ad_creative_link_descriptions || []).join(", "))}`,
     `PLATAFORMAS: ${(ad.publisher_platforms || []).join(", ")}`,
     `TIPO DE MEDIA: ${ad.media_type || "desconocido"}`,
+    `IDIOMAS: ${(ad.languages || []).join(", ") || "N/A"}`,
     `ACTIVO DESDE: ${ad.ad_delivery_start || "N/A"}`,
     `ACTIVO: ${ad.is_active ? "Sí" : `No (terminado: ${ad.ad_delivery_stop})`}`,
     ad.spend_lower != null ? `GASTO: $${ad.spend_lower}-$${ad.spend_upper} ${ad.currency || ""}` : "GASTO: N/A",
-    ad.impressions_lower != null ? `IMPRESIONES: ${ad.impressions_lower}-${ad.impressions_upper}` : "IMPRESIONES: N/A",
+    ad.impressions_lower != null ? `IMPRESIONES: ${ad.impressions_lower.toLocaleString()}-${ad.impressions_upper?.toLocaleString() || "?"}` : "IMPRESIONES: N/A",
   ].join("\n");
 
-  const analysisPrompt = `Eres un experto en marketing digital y copywriting. Analiza este anuncio publicitario y responde SOLO con JSON válido (sin markdown, sin texto extra) con esta estructura:
-{"hook_type":"tipo de gancho","hook_text":"primeras palabras","cta_type":"tipo CTA","emotion_primary":"emoción","format_notes":"notas","target_audience":"audiencia","strengths":["..."],"weaknesses":["..."],"effectiveness_score":7,"why_it_works":"explicación"}
+  const analysisPrompt = `Eres un experto en marketing digital y copywriting. Analiza este anuncio publicitario y responde SOLO con JSON válido (sin markdown, sin texto extra):
+{"hook_type":"tipo de gancho","hook_text":"primeras palabras del copy","cta_type":"tipo CTA","emotion_primary":"emoción principal","format_notes":"notas de formato y estructura","target_audience":"audiencia objetivo","strengths":["fortaleza 1","fortaleza 2"],"weaknesses":["debilidad 1"],"effectiveness_score":7,"why_it_works":"explicación detallada"}
 
 ANUNCIO:
 ${adContext}`;
 
-  const replicatePrompt = `Eres un copywriter experto. Genera 3 versiones adaptadas en español latino. SOLO JSON:
-{"versions":[{"title":"...","body":"...","cta":"...","adaptation_notes":"..."},{"title":"...","body":"...","cta":"...","adaptation_notes":"..."},{"title":"...","body":"...","cta":"...","adaptation_notes":"..."}]}
+  const replicatePrompt = `Eres un copywriter experto. Genera 3 versiones adaptadas en español latino del siguiente anuncio. SOLO JSON válido (sin markdown):
+{"versions":[{"title":"headline adaptado","body":"copy adaptado","cta":"call to action","adaptation_notes":"qué se cambió y por qué"},{"title":"...","body":"...","cta":"...","adaptation_notes":"..."},{"title":"...","body":"...","cta":"...","adaptation_notes":"..."}]}
 
 REFERENCIA:
 ${adContext}`;
 
-  const callMultiAI = async (prompt: string): Promise<Record<string, unknown> | null> => {
+  const callMultiAI = async (prompt: string, label: string): Promise<Record<string, unknown> | null> => {
     try {
       const resp = await fetchWithTimeout(`${SUPABASE_URL}/functions/v1/multi-ai`, {
         method: "POST",
@@ -426,17 +451,31 @@ ${adContext}`;
           "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
         },
         body: JSON.stringify({ messages: [{ role: "user", content: prompt }], models: ["gemini"], mode: "first" }),
-      }, 60_000);
-      if (!resp.ok) return null;
+      }, AI_FETCH_TIMEOUT_MS);
+
+      if (!resp.ok) {
+        const errBody = await resp.text().catch(() => "no body");
+        console.error(`multi-ai [${label}] returned ${resp.status}:`, errBody.slice(0, 300));
+        return null;
+      }
+
       const data = await resp.json();
-      return extractJSON(data.response || "");
+      const parsed = extractJSON(data.response || "");
+      if (!parsed) {
+        console.error(`multi-ai [${label}] returned unparseable response:`, (data.response || "").slice(0, 200));
+      }
+      return parsed;
     } catch (err) {
-      console.error("multi-ai failed:", err);
+      console.error(`multi-ai [${label}] exception:`, err instanceof Error ? err.message : err);
       return null;
     }
   };
 
-  const [analysis, replicated] = await Promise.all([callMultiAI(analysisPrompt), callMultiAI(replicatePrompt)]);
+  const [analysis, replicated] = await Promise.all([
+    callMultiAI(analysisPrompt, "analysis"),
+    callMultiAI(replicatePrompt, "replicate"),
+  ]);
+
   return { analysis: analysis || {}, replicated: replicated || {}, analyzed_at: new Date().toISOString() };
 }
 
@@ -478,15 +517,7 @@ serve(async (req: Request) => {
       if (search_id) ads = ads.map(ad => ({ ...ad, search_id }));
 
       const result = await upsertAds(supabase, ads);
-
-      if (search_id) {
-        const { count } = await supabase.from("ad_library_ads").select("id", { count: "exact", head: true }).eq("search_id", search_id);
-        await supabase.from("ad_library_searches").update({
-          last_synced_at: new Date().toISOString(),
-          total_ads_found: count || ads.length,
-          updated_at: new Date().toISOString(),
-        }).eq("id", search_id);
-      }
+      if (search_id) await updateSearchStats(supabase, search_id, ads.length);
 
       return json({ ads_found: ads.length, saved: result.total, errors: result.errors, ads });
     }
@@ -502,13 +533,7 @@ serve(async (req: Request) => {
       let ads = await searchPlatform((search.platform || "meta") as Platform, search.search_config || {});
       ads = ads.map(ad => ({ ...ad, search_id }));
       const result = await upsertAds(supabase, ads);
-
-      const { count } = await supabase.from("ad_library_ads").select("id", { count: "exact", head: true }).eq("search_id", search_id);
-      await supabase.from("ad_library_searches").update({
-        last_synced_at: new Date().toISOString(),
-        total_ads_found: count || ads.length,
-        updated_at: new Date().toISOString(),
-      }).eq("id", search_id);
+      await updateSearchStats(supabase, search_id, ads.length);
 
       return json({ ads_found: ads.length, saved: result.total, errors: result.errors });
     }
