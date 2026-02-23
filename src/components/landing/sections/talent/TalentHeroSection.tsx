@@ -4,10 +4,10 @@ import { KreoonBadge } from '@/components/ui/kreoon/KreoonBadge';
 import { FADE_IN_UP, useScrollAnimation, withDelay } from '@/lib/animations';
 
 const STATS = [
-  { icon: Users, value: '+500', label: 'Creadores activos' },
-  { icon: Building2, value: '+100', label: 'Marcas conectadas' },
-  { icon: Briefcase, value: '+1,200', label: 'Proyectos completados' },
-  { icon: Star, value: '4.9', label: 'Rating promedio' },
+  { icon: Users, value: 'Early Bird', label: 'Acceso anticipado' },
+  { icon: Building2, value: 'Gratis', label: 'Sin costo para talento' },
+  { icon: Briefcase, value: 'Escrow', label: 'Pagos protegidos' },
+  { icon: Star, value: 'IA', label: 'Herramientas incluidas' },
 ];
 
 interface TalentHeroSectionProps {
@@ -102,7 +102,7 @@ export default function TalentHeroSection({ onScrollToForm, onScrollToInterest }
               {...scrollAnim}
               className="mt-6 text-sm text-kreoon-text-muted"
             >
-              +500 creadores activos &middot; +100 marcas &middot; Gratis para siempre
+              Acceso Early Bird &middot; Gratis para siempre &middot; Plataforma en crecimiento
             </motion.p>
           </div>
 

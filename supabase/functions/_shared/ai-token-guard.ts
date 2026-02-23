@@ -38,6 +38,8 @@ const AI_TOKEN_COSTS: Record<string, number> = {
   "portfolio.caption": 25,
   "script_chat": 20,
   "transcription": 15,
+  "ads.generate_banner": 200,
+  "ads.generate_copy": 40,
 };
 
 export interface TokenCheckResult {

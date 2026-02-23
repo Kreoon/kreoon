@@ -237,6 +237,9 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
 
 export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) {
   const list = testimonials?.length ? testimonials : MOCK_TESTIMONIALS;
+
+  // Don't render if no testimonials provided and we shouldn't show mocks
+  if (testimonials && testimonials.length === 0) return null;
   const sectionRef = React.useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-80px" });
   const {
@@ -377,7 +380,7 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
           className="mt-12 flex justify-center"
         >
           <KreoonButton variant="secondary" size="lg">
-            Únete a +500 marcas, creadores y agencias
+            Únete a la comunidad creativa
           </KreoonButton>
         </motion.div>
       </div>

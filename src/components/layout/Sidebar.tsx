@@ -37,6 +37,7 @@ import {
   Crown,
   Share2,
   Radar,
+  ImagePlus,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -82,6 +83,7 @@ const adminSections: NavSection[] = [
       { name: "Marketing", href: "/marketing", icon: TrendingUp, tourId: "sidebar-marketing", requiresOrg: true },
       { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
       { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
+      { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus, tourId: "sidebar-ad-generator", requiresOrg: true },
       { name: "Ranking", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
       { name: "Live", href: "/live", icon: Video, tourId: "sidebar-live", requiresOrg: true },
     ]
@@ -130,6 +132,7 @@ const strategistSections: NavSection[] = [
       { name: "Marketing", href: "/marketing", icon: TrendingUp, tourId: "sidebar-marketing", requiresOrg: true },
       { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
       { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
+      { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus, tourId: "sidebar-ad-generator", requiresOrg: true },
       { name: "Ranking", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
       { name: "Live", href: "/live", icon: Video, tourId: "sidebar-live", requiresOrg: true },
     ]
@@ -164,6 +167,7 @@ const editorSections: NavSection[] = [
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
       { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
       { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
+      { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus, tourId: "sidebar-ad-generator" },
     ]
   },
   {
@@ -186,6 +190,7 @@ const creatorSections: NavSection[] = [
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
       { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
       { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
+      { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus, tourId: "sidebar-ad-generator" },
     ]
   },
   {

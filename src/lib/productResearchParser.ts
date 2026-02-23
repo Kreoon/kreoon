@@ -8,7 +8,7 @@ export interface ParsedResearchData {
   pains: string[];
   desires: string[];
   objections: string[];
-  
+
   // Avatar Profiles
   avatars: Array<{
     name: string;
@@ -16,14 +16,17 @@ export interface ParsedResearchData {
     demographics?: string;
     psychographics?: string;
   }>;
-  
+
   // Sales Angles
   salesAngles: Array<{
     name: string;
     description: string;
     angle_type?: string;
   }>;
-  
+
+  // Hooks (extracted from sales angles hookExamples)
+  hooks: string[];
+
   // Competitors
   competitors: Array<{
     name: string;
@@ -31,10 +34,10 @@ export interface ParsedResearchData {
     strengths?: string;
     weaknesses?: string;
   }>;
-  
+
   // Executive Summary
   executiveSummary: string;
-  
+
   // JTBD (Jobs To Be Done)
   jtbd: {
     functional?: string[];
@@ -60,20 +63,46 @@ function safeParseJson(data: unknown): Record<string, unknown> | null {
 }
 
 /**
- * Extract array from various possible structures
+ * Stringify an item from a research array — handles both strings and objects
+ */
+function stringifyItem(item: unknown): string {
+  if (typeof item === 'string') return item;
+  if (!item || typeof item !== 'object') return '';
+  const o = item as Record<string, unknown>;
+  // Try common object shapes from research data
+  return String(
+    o.pain || o.desire || o.objection || // jtbd nested objects
+    o.name || o.nombre || o.description || o.descripcion || o.title || o.titulo ||
+    o.text || o.label || o.value || ''
+  );
+}
+
+/**
+ * Extract array from various possible structures, including nested paths
  */
 function extractArray(data: unknown, ...keys: string[]): string[] {
   const parsed = safeParseJson(data);
   if (!parsed) return [];
-  
+
+  // 1. Check top-level keys
   for (const key of keys) {
     const value = parsed[key];
     if (Array.isArray(value)) {
-      return value.map(item => 
-        typeof item === 'string' ? item : (item?.name || item?.description || item?.title || JSON.stringify(item))
-      );
+      return value.map(stringifyItem).filter(Boolean);
     }
   }
+
+  // 2. Check nested under jtbd (actual research structure)
+  const jtbd = safeParseJson(parsed.jtbd || parsed.jobs_to_be_done || null);
+  if (jtbd) {
+    for (const key of keys) {
+      const value = jtbd[key];
+      if (Array.isArray(value)) {
+        return value.map(stringifyItem).filter(Boolean);
+      }
+    }
+  }
+
   return [];
 }
 
@@ -126,12 +155,16 @@ function extractSalesAngles(salesAnglesData: unknown, salesAnglesArray?: string[
             angles.push({ name: angle, description: '' });
           }
         } else {
-          const name = String(angle.nombre || angle.name || angle.title || angle.angulo || '');
-          if (name && !angles.some(a => a.name === name)) {
+          const name = String(angle.nombre || angle.name || angle.title || angle.angulo || angle.angle || '');
+          // Use hookExample as a short label if the angle text is too long
+          const shortName = name.length > 80
+            ? String(angle.hookExample || angle.hook_example || angle.hook || name.slice(0, 80) + '…')
+            : name;
+          if (shortName && !angles.some(a => a.name === shortName)) {
             angles.push({
-              name,
-              description: String(angle.descripcion || angle.description || angle.explicacion || ''),
-              angle_type: String(angle.tipo || angle.type || angle.category || ''),
+              name: shortName,
+              description: String(angle.descripcion || angle.description || angle.explicacion || angle.angle || ''),
+              angle_type: String(angle.tipo || angle.type || angle.category || angle.funnelPhase || ''),
             });
           }
         }
@@ -174,13 +207,36 @@ function extractExecutiveSummary(marketResearch: unknown): string {
     return '';
   }
   
+  // Check top-level first, then nested under market_overview
+  const overview = safeParseJson(parsed.market_overview || null);
   return String(
-    parsed.executive_summary || 
-    parsed.resumen_ejecutivo || 
-    parsed.summary || 
-    parsed.resumen || 
+    parsed.executive_summary ||
+    parsed.resumen_ejecutivo ||
+    parsed.summary ||
+    parsed.resumen ||
+    overview?.summary ||
+    overview?.resumen ||
     ''
   );
+}
+
+/**
+ * Flatten a JTBD sub-category that might be an array of strings,
+ * an object with nested arrays, or an object with string values.
+ */
+function flattenJTBDCategory(raw: unknown): string[] | undefined {
+  if (!raw) return undefined;
+  if (Array.isArray(raw)) return raw.map(stringifyItem).filter(Boolean);
+  if (typeof raw === 'object') {
+    // Might be { goals: [...], needs: [...] } or { before: "...", after: "..." }
+    const items: string[] = [];
+    for (const val of Object.values(raw as Record<string, unknown>)) {
+      if (Array.isArray(val)) items.push(...val.map(stringifyItem).filter(Boolean));
+      else if (typeof val === 'string' && val.length > 5) items.push(val);
+    }
+    return items.length ? items : undefined;
+  }
+  return undefined;
 }
 
 /**
@@ -189,18 +245,14 @@ function extractExecutiveSummary(marketResearch: unknown): string {
 function extractJTBD(marketResearch: unknown): ParsedResearchData['jtbd'] {
   const parsed = safeParseJson(marketResearch);
   if (!parsed) return {};
-  
+
   const jtbdData = safeParseJson(parsed.jtbd || parsed.jobs_to_be_done || {});
   if (!jtbdData) return {};
-  
-  const getFunctional = jtbdData.functional || jtbdData.funcionales;
-  const getEmotional = jtbdData.emotional || jtbdData.emocionales;
-  const getSocial = jtbdData.social || jtbdData.sociales;
-  
+
   return {
-    functional: Array.isArray(getFunctional) ? getFunctional as string[] : undefined,
-    emotional: Array.isArray(getEmotional) ? getEmotional as string[] : undefined,
-    social: Array.isArray(getSocial) ? getSocial as string[] : undefined,
+    functional: flattenJTBDCategory(jtbdData.functional || jtbdData.funcionales),
+    emotional: flattenJTBDCategory(jtbdData.emotional || jtbdData.emocionales),
+    social: flattenJTBDCategory(jtbdData.social || jtbdData.sociales),
   };
 }
 
@@ -217,12 +269,28 @@ export function parseProductResearch(product: {
 }): ParsedResearchData {
   const marketResearch = safeParseJson(product.market_research);
   
+  const salesAngles = extractSalesAngles(product.sales_angles_data, product.sales_angles);
+
+  // Extract hooks from sales_angles_data
+  const hooks: string[] = [];
+  const sadParsed = safeParseJson(product.sales_angles_data);
+  if (sadParsed) {
+    const anglesArr = sadParsed.angles || sadParsed.sales_angles || sadParsed.angulos;
+    if (Array.isArray(anglesArr)) {
+      anglesArr.forEach((a: Record<string, unknown>) => {
+        const hook = String(a.hookExample || a.hook_example || a.hook || '');
+        if (hook && hook !== 'undefined') hooks.push(hook);
+      });
+    }
+  }
+
   return {
-    pains: extractArray(product.market_research, 'dolores', 'pains', 'problems', 'pain_points'),
-    desires: extractArray(product.market_research, 'deseos', 'desires', 'wants', 'aspirations'),
-    objections: extractArray(product.market_research, 'objeciones', 'objections', 'barriers', 'blockers'),
+    pains: extractArray(product.market_research, 'pains', 'dolores', 'problems', 'pain_points'),
+    desires: extractArray(product.market_research, 'desires', 'deseos', 'wants', 'aspirations'),
+    objections: extractArray(product.market_research, 'objections', 'objeciones', 'barriers', 'blockers'),
     avatars: extractAvatars(product.avatar_profiles),
-    salesAngles: extractSalesAngles(product.sales_angles_data, product.sales_angles),
+    salesAngles,
+    hooks,
     competitors: extractCompetitors(product.competitor_analysis),
     executiveSummary: extractExecutiveSummary(product.market_research),
     jtbd: extractJTBD(product.market_research),

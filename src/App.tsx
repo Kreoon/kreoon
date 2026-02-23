@@ -134,6 +134,10 @@ const AdIntelligencePage = lazy(() => import("./modules/ad-intelligence/pages/Ad
 // Social Scraper Module
 const SocialScraperPage = lazy(() => import("./modules/social-scraper/pages/SocialScraperPage"));
 
+// Ad Generator Module
+const AdGeneratorPage = lazy(() => import("./modules/ad-generator/pages/AdGeneratorPage"));
+const ProductBannersPage = lazy(() => import("./modules/ad-generator/pages/ProductBannersPage"));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -316,6 +320,9 @@ function AppRoutes() {
         <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><KAEAnalyticsDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/admin/ad-intelligence" element={<ProtectedRoute requirePlatformAdmin><MainLayout><AdIntelligencePage /></MainLayout></ProtectedRoute>} />
         <Route path="/admin/social-scraper" element={<ProtectedRoute requirePlatformAdmin><MainLayout><SocialScraperPage /></MainLayout></ProtectedRoute>} />
+        {/* Ad Generator Module */}
+        <Route path="/ad-generator" element={<ProtectedRoute allowedRoles={['admin','team_leader','strategist','trafficker','creator','editor']}><MainLayout><AdGeneratorPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/ad-generator/:productId" element={<ProtectedRoute allowedRoles={['admin','team_leader','strategist','trafficker','creator','editor']}><MainLayout><ProductBannersPage /></MainLayout></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute allowNoRoles><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
         <Route path="/planes" element={<ProtectedRoute allowNoRoles><MainLayout><PlanesPage /></MainLayout></ProtectedRoute>} />
         <Route path="/creator-dashboard" element={<ProtectedRoute allowedRoles={['creator']}><MainLayout><CreatorDashboard /></MainLayout></ProtectedRoute>} />

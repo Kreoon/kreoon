@@ -83,6 +83,8 @@ export const AI_TOKEN_COSTS = {
   "portfolio.caption": 25,
   "script_chat": 20,
   "transcription": 15,
+  "ads.generate_banner": 200,
+  "ads.generate_copy": 40,
 } as const;
 
 export type AIActionKey = keyof typeof AI_TOKEN_COSTS;
