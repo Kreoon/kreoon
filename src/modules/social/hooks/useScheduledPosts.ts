@@ -9,7 +9,7 @@ export function useScheduledPosts(filters?: {
   from?: string;
   to?: string;
 }) {
-  const { user, activeRole } = useAuth();
+  const { user, profile, activeRole } = useAuth();
   const queryClient = useQueryClient();
   const permissionGroup = activeRole ? getPermissionGroup(activeRole) : null;
   const isManagerRole = permissionGroup === 'admin' || permissionGroup === 'team_leader';
@@ -38,22 +38,71 @@ export function useScheduledPosts(filters?: {
     staleTime: 10 * 60 * 1000,
   });
 
+  // For talent users, fetch all org account IDs so they see posts from teammates on shared accounts
+  const orgId = profile?.current_organization_id;
+  const { data: talentAccountIds } = useQuery({
+    queryKey: ['talent-social-account-ids', user?.id, orgId],
+    queryFn: async () => {
+      const ids = new Set<string>();
+
+      // 1. Accounts the user owns directly
+      const { data: ownedAccounts } = await supabase
+        .from('social_accounts')
+        .select('id')
+        .eq('user_id', user!.id)
+        .eq('is_active', true);
+      ownedAccounts?.forEach(a => ids.add(a.id));
+
+      // 2. Accounts with explicit permissions (can_view)
+      const { data: permAccounts } = await supabase
+        .from('social_account_permissions')
+        .select('account_id')
+        .eq('user_id', user!.id)
+        .eq('can_view', true);
+      permAccounts?.forEach(p => ids.add(p.account_id));
+
+      // 3. All active org accounts (any org member can see posts for org accounts)
+      if (orgId) {
+        const { data: orgAccounts } = await supabase
+          .from('social_accounts')
+          .select('id')
+          .eq('organization_id', orgId)
+          .eq('is_active', true);
+        orgAccounts?.forEach(a => ids.add(a.id));
+      }
+
+      return Array.from(ids);
+    },
+    enabled: !!user?.id && !isManagerRole && permissionGroup !== 'client',
+    staleTime: 10 * 60 * 1000,
+  });
+
   const {
     data: posts = [],
     isLoading,
     error,
     refetch,
   } = useQuery({
-    queryKey: ['scheduled-posts', user?.id, filters, permissionGroup],
+    queryKey: ['scheduled-posts', user?.id, orgId, filters, permissionGroup, talentAccountIds],
     queryFn: async () => {
       let query = supabase
         .from('scheduled_posts')
         .select('*')
         .order('scheduled_at', { ascending: true });
 
-      // Talent: only their own posts
+      // Always filter by current organization (multi-tenant isolation)
+      if (orgId) {
+        query = query.eq('organization_id', orgId);
+      }
+
+      // Talent with no specific account access: only their own posts
+      // Talent with account access: see all posts (filtered client-side by accounts)
       if (!isManagerRole && permissionGroup !== 'client') {
-        query = query.eq('user_id', user!.id);
+        if (!talentAccountIds || talentAccountIds.length === 0) {
+          // No specific account access — show only own posts
+          query = query.eq('user_id', user!.id);
+        }
+        // If they have account access, don't filter by user_id — we'll filter client-side
       }
 
       if (filters?.status) {
@@ -78,6 +127,15 @@ export function useScheduledPosts(filters?: {
         );
       }
 
+      // Talent: filter to own posts + posts targeting accounts they have access to
+      if (!isManagerRole && permissionGroup !== 'client' && talentAccountIds && talentAccountIds.length > 0) {
+        const accessibleIds = new Set(talentAccountIds);
+        result = result.filter(post =>
+          post.user_id === user!.id ||
+          post.target_accounts?.some((ta: any) => accessibleIds.has(ta.account_id))
+        );
+      }
+
       return result;
     },
     enabled: !!user?.id,
@@ -88,6 +146,7 @@ export function useScheduledPosts(filters?: {
     mutationFn: async (form: ComposerFormData) => {
       const insertData: Record<string, unknown> = {
         user_id: user!.id,
+        organization_id: orgId || null,
         content_id: form.contentId || null,
         caption: form.caption,
         hashtags: form.hashtags,

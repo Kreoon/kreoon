@@ -56,6 +56,7 @@ const ALL_SECTIONS: SectionGroup[] = [
       { key: 'org_agency_profile', icon: Building2, title: 'Perfil de Agencia', description: 'Perfil público marketplace' },
       { key: 'live_streaming_org', icon: Video, title: 'KREOON Live', description: 'Paquetes y clientes' },
       { key: 'white_label', icon: Paintbrush, title: 'Marca Blanca', description: 'Dominio y branding' },
+      { key: 'org_referrals', icon: Share2, title: 'Referidos Org', description: 'Links y comisiones' },
     ],
   },
   {
