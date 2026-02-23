@@ -72,8 +72,8 @@ export default function TalentHeroSection({ onScrollToForm, onScrollToInterest }
               {...scrollAnim}
               className="mt-6 text-lg text-kreoon-text-secondary md:text-xl max-w-xl mx-auto lg:mx-0"
             >
-              Conecta con marcas que buscan creadores como tú. Publica tu portafolio,
-              aplica a campañas y cobra de forma segura — todo en un solo lugar.
+              Aplica a campañas pagadas, publica en todas tus redes desde un solo lugar,
+              genera guiones con IA y cobra seguro con escrow. Si no editas, nosotros lo hacemos por ti.
             </motion.p>
 
             {/* CTAs */}
