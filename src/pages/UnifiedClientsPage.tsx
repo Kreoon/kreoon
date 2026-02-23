@@ -496,6 +496,8 @@ const UnifiedClientsPage = () => {
                         entity={e}
                         onClick={() => handleEntityClick(e)}
                         isSelected={selectedEntity?.id === e.id}
+                        canEdit={canSeeInternal}
+                        onUpdate={() => refetch()}
                       />
                     ))}
                   </div>
