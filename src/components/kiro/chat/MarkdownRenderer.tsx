@@ -1,6 +1,7 @@
 import { useMemo, useCallback, useState, type ReactNode } from 'react';
 import { Check, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import DOMPurify from 'dompurify';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TIPOS
@@ -322,12 +323,11 @@ function parseInlineFormatting(text: string, keyPrefix: string): ReactNode[] {
 export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
   // Memoizar el parsing para evitar re-parsear en cada render
   const renderedContent = useMemo(() => {
-    // Sanitizar el contenido (remover HTML tags potencialmente peligrosos)
-    const sanitized = content
-      .replace(/<script[^>]*>.*?<\/script>/gi, '')
-      .replace(/<style[^>]*>.*?<\/style>/gi, '')
-      .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
-      .replace(/on\w+="[^"]*"/gi, '');
+    // Sanitizar el contenido con DOMPurify (protección completa contra XSS)
+    const sanitized = DOMPurify.sanitize(content, {
+      ALLOWED_TAGS: [],
+      KEEP_CONTENT: true,
+    });
 
     const tokens = parseMarkdown(sanitized);
     const elements: ReactNode[] = [];
