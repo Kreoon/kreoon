@@ -110,7 +110,7 @@ export default function TalentBenefitsSection() {
   const scrollAnim = useScrollAnimation();
 
   return (
-    <section className="relative bg-kreoon-bg-primary py-20 md:py-28">
+    <section className="relative overflow-hidden bg-kreoon-bg-primary py-20 md:py-28">
       {/* Subtle background glow */}
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
         <div
