@@ -172,7 +172,7 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.admin-users]
-verify_jwt = false
+verify_jwt = true
 
 [functions.admin-reset-password]
 verify_jwt = true
@@ -196,10 +196,10 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.bulk-password-reset]
-verify_jwt = false
+verify_jwt = true
 
 [functions.emergency-password-reset]
-verify_jwt = false
+verify_jwt = true
 
 [functions.kreoon-sql]
 verify_jwt = false
@@ -261,16 +261,16 @@ verify_jwt = false
 # ── Unified Financial System ──
 
 [functions.ai-tokens-service]
-verify_jwt = false
+verify_jwt = true
 
 [functions.escrow-service]
-verify_jwt = false
+verify_jwt = true
 
 [functions.referral-service]
-verify_jwt = false
+verify_jwt = true
 
 [functions.subscription-service]
-verify_jwt = false
+verify_jwt = true
 
 [functions.stripe-webhook]
 verify_jwt = false
@@ -339,7 +339,7 @@ verify_jwt = false
 # ── Campaign Checkout ──
 
 [functions.campaign-checkout]
-verify_jwt = false
+verify_jwt = true
 
 # ── Ad Intelligence Module ──
 

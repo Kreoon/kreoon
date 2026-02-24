@@ -50,10 +50,18 @@ export function RootAdminPanel() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: EntityType; id: string; name: string } | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  const getAuthHeaders = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('No autenticado');
+    return { Authorization: `Bearer ${session.access_token}` };
+  };
+
   const fetchEntities = async () => {
     setLoading(true);
     try {
+      const headers = await getAuthHeaders();
       const { data, error } = await supabase.functions.invoke("admin-users", {
+        headers,
         body: { action: "list_all_entities" }
       });
 
@@ -88,7 +96,9 @@ export function RootAdminPanel() {
     setActionLoading(deleteConfirm.id);
 
     try {
+      const headers = await getAuthHeaders();
       const { error } = await supabase.functions.invoke("admin-users", {
+        headers,
         body: { action: config.action, [config.idKey]: deleteConfirm.id }
       });
 

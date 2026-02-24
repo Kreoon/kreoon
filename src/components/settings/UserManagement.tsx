@@ -74,8 +74,12 @@ export function UserManagement() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No autenticado');
+
       const { data, error } = await supabase.functions.invoke("admin-users", {
-        body: { action: "list_users" }
+        body: { action: "list_users" },
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
       if (error) throw error;
@@ -97,8 +101,12 @@ export function UserManagement() {
   const handleSendPasswordReset = async (email: string) => {
     setActionLoading(`reset-${email}`);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No autenticado');
+
       const { error } = await supabase.functions.invoke("admin-users", {
-        body: { action: "send_password_reset", email }
+        body: { action: "send_password_reset", email },
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
       if (error) throw error;
@@ -113,8 +121,12 @@ export function UserManagement() {
   const handleToggleBan = async (userId: string, currentlyBanned: boolean) => {
     setActionLoading(`ban-${userId}`);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No autenticado');
+
       const { data, error } = await supabase.functions.invoke("admin-users", {
-        body: { action: "toggle_ban", userId }
+        body: { action: "toggle_ban", userId },
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
       if (error) throw error;
@@ -134,8 +146,12 @@ export function UserManagement() {
   const handleToggleRole = async (userId: string, role: AppRole) => {
     setActionLoading(`role-${userId}-${role}`);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No autenticado');
+
       const { data, error } = await supabase.functions.invoke("admin-users", {
-        body: { action: "update_role", userId, role }
+        body: { action: "update_role", userId, role },
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
       if (error) throw error;

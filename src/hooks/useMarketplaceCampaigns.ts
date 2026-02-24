@@ -816,9 +816,15 @@ export function useMarketplaceCampaigns(options: UseMarketplaceCampaignsOptions 
     campaignId: string,
     checkoutType: 'create-publish-checkout' | 'create-bid-checkout',
   ): Promise<string | null> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('No autenticado');
+
     const { data, error } = await supabase.functions.invoke(
       `campaign-checkout/${checkoutType}`,
-      { body: { campaign_id: campaignId } },
+      {
+        body: { campaign_id: campaignId },
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      },
     );
     if (error) {
       console.error('[useMarketplaceCampaigns] Checkout invoke error:', error);
