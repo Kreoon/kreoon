@@ -24,8 +24,26 @@ serve(async (req) => {
 
     const { secret, sql } = await req.json();
 
-    const EXPECTED_SECRET = Deno.env.get("KREOON_SQL_EXEC_SECRET") || 'kreoon-sql-exec-2026';
-    if (secret !== EXPECTED_SECRET) {
+    const EXPECTED_SECRET = Deno.env.get("KREOON_SQL_EXEC_SECRET");
+    if (!EXPECTED_SECRET) {
+      console.error("KREOON_SQL_EXEC_SECRET no está configurado en las variables de entorno");
+      return new Response(
+        JSON.stringify({ error: "Configuración de servidor incompleta" }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Comparación de tiempo constante para evitar timing attacks
+    function secureCompare(a: string, b: string): boolean {
+      if (a.length !== b.length) return false;
+      let result = 0;
+      for (let i = 0; i < a.length; i++) {
+        result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+      }
+      return result === 0;
+    }
+
+    if (!secret || !secureCompare(secret, EXPECTED_SECRET)) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
