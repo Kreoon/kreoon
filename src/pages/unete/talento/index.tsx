@@ -1,4 +1,6 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import {
   TalentHeroSection,
   TalentPainPointsSection,
@@ -14,15 +16,14 @@ import { useUTMTracking } from '@/hooks/useUTMTracking';
 const TALENT_TESTIMONIALS: Testimonial[] = [];
 
 export default function TalentoLanding() {
-  const formRef = useRef<HTMLDivElement>(null);
+  const [formOpen, setFormOpen] = useState(false);
   const interestRef = useRef<HTMLDivElement>(null);
 
   // Initialize UTM tracking on mount
   useUTMTracking();
 
-  const scrollToForm = () => {
-    formRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const openForm = () => setFormOpen(true);
+  const closeForm = () => setFormOpen(false);
 
   const scrollToInterest = () => {
     interestRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -32,7 +33,7 @@ export default function TalentoLanding() {
     <div className="min-h-screen bg-kreoon-bg-primary text-kreoon-text-primary">
       {/* A — ATTENTION */}
       <TalentHeroSection
-        onScrollToForm={scrollToForm}
+        onScrollToForm={openForm}
         onScrollToInterest={scrollToInterest}
       />
 
@@ -54,10 +55,41 @@ export default function TalentoLanding() {
       {/* Social Proof — Testimonials (hidden until we have real ones) */}
       <TestimonialsSection testimonials={TALENT_TESTIMONIALS} />
 
-      {/* A — ACTION */}
-      <div ref={formRef}>
-        <TalentFormSection id="talent-form" />
-      </div>
+      {/* Bottom CTA — opens the registration popup */}
+      <section className="py-20 md:py-28">
+        <div className="mx-auto max-w-3xl px-4 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="mb-6 flex h-16 w-16 mx-auto items-center justify-center rounded-full border border-kreoon-purple-500/30 bg-kreoon-purple-500/10 shadow-kreoon-glow-sm">
+              <Sparkles className="h-7 w-7 text-kreoon-purple-400" />
+            </div>
+            <h2 className="text-3xl font-bold tracking-tight text-kreoon-text-primary md:text-4xl mb-4">
+              ¿Listo para empezar?
+            </h2>
+            <p className="text-kreoon-text-secondary text-lg mb-8 max-w-xl mx-auto">
+              Regístrate gratis, accede a campañas pagadas y herramientas de IA.
+              Tu talento merece ser visto.
+            </p>
+            <button
+              onClick={openForm}
+              className="inline-flex items-center gap-2 rounded-xl bg-kreoon-gradient px-8 py-4 font-semibold text-white shadow-kreoon-glow-sm transition-all hover:shadow-kreoon-glow hover:scale-[1.02] text-lg"
+            >
+              Quiero unirme <ArrowRight className="h-5 w-5" />
+            </button>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Registration modal */}
+      <AnimatePresence>
+        {formOpen && (
+          <TalentFormSection open={formOpen} onClose={closeForm} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

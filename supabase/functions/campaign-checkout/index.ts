@@ -30,7 +30,9 @@ serve(async (req) => {
       throw new Error("No authorization header");
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
 
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
@@ -79,13 +81,18 @@ async function createPublishCheckout(supabase: any, userId: string, body: { camp
   if (!campaign_id) throw new Error("campaign_id is required");
 
   // Load campaign
+  console.log(`[campaign-checkout] Looking up campaign: ${campaign_id} for user: ${userId}`);
   const { data: campaign, error: campErr } = await supabase
     .from("marketplace_campaigns")
     .select("*")
     .eq("id", campaign_id)
     .single();
 
-  if (campErr || !campaign) throw new Error("Campaign not found");
+  if (campErr) {
+    console.error(`[campaign-checkout] DB error loading campaign ${campaign_id}:`, campErr.message, campErr.code, campErr.details);
+    throw new Error(`Campaign query failed: ${campErr.message} (code: ${campErr.code})`);
+  }
+  if (!campaign) throw new Error("Campaign not found (null data, no error)");
   if (campaign.created_by !== userId) throw new Error("Not authorized");
   if (campaign.pricing_mode !== "fixed") throw new Error("Only fixed pricing campaigns use publish checkout");
   if (campaign.payment_status === "in_escrow") throw new Error("Campaign already paid");
@@ -166,13 +173,18 @@ async function createBidCheckout(supabase: any, userId: string, body: { campaign
   if (!campaign_id) throw new Error("campaign_id is required");
 
   // Load campaign
+  console.log(`[campaign-checkout] Looking up campaign (bid): ${campaign_id} for user: ${userId}`);
   const { data: campaign, error: campErr } = await supabase
     .from("marketplace_campaigns")
     .select("*")
     .eq("id", campaign_id)
     .single();
 
-  if (campErr || !campaign) throw new Error("Campaign not found");
+  if (campErr) {
+    console.error(`[campaign-checkout] DB error loading campaign ${campaign_id}:`, campErr.message, campErr.code, campErr.details);
+    throw new Error(`Campaign query failed: ${campErr.message} (code: ${campErr.code})`);
+  }
+  if (!campaign) throw new Error("Campaign not found (null data, no error)");
   if (campaign.created_by !== userId) throw new Error("Not authorized");
   if (!["auction", "range"].includes(campaign.pricing_mode)) {
     throw new Error("Only auction/range campaigns use bid checkout");

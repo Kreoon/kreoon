@@ -361,9 +361,6 @@ export default function CampaignWizard() {
 
         // Redirect to Stripe Checkout
         const checkoutUrl = await createCampaignCheckout(campaignId, 'create-publish-checkout');
-        if (!checkoutUrl) {
-          throw new Error('Error al crear la sesion de pago');
-        }
 
         clearDraft();
         coverFileRef.current = null;
@@ -413,9 +410,9 @@ export default function CampaignWizard() {
       coverFileRef.current = null;
       videoBriefFileRef.current = null;
       setIsComplete(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error('[CampaignWizard] Publish error:', err);
-      setSubmitError('Error al publicar la campana. Intenta de nuevo.');
+      setSubmitError(err?.message || 'Error al publicar la campana. Intenta de nuevo.');
     } finally {
       setIsSubmitting(false);
     }

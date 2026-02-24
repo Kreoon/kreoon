@@ -114,7 +114,7 @@ export default function PhoneMockupCarousel({
     <section className={`py-12 md:py-20 ${className}`}>
       <motion.div variants={FADE_IN_UP} {...scrollAnim} className="text-center mb-8 px-4">
         <p className="text-sm font-medium text-purple-400 uppercase tracking-wider mb-3">
-          Portfolio
+          Portafolio
         </p>
         <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
           {title}
@@ -125,12 +125,12 @@ export default function PhoneMockupCarousel({
       </motion.div>
 
       {/* Embla carousel — 5 visible on lg, 3 on md, 2 on sm */}
-      <div ref={emblaRef} className="overflow-hidden">
+      <div ref={emblaRef} className="overflow-hidden px-4 lg:px-0">
         <div className="flex gap-3 md:gap-4">
           {displayed.map((video) => (
             <div
               key={video.bunny_video_id}
-              className="flex-[0_0_45%] sm:flex-[0_0_30%] md:flex-[0_0_22%] lg:flex-[0_0_18.5%] min-w-0"
+              className="flex-[0_0_42%] sm:flex-[0_0_30%] md:flex-[0_0_22%] lg:flex-[0_0_18.5%] min-w-0"
             >
               <PhoneFrame video={video} />
             </div>
