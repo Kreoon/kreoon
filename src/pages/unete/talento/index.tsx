@@ -30,7 +30,7 @@ export default function TalentoLanding() {
   };
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary text-kreoon-text-primary">
+    <div className="min-h-screen overflow-x-hidden bg-kreoon-bg-primary text-kreoon-text-primary">
       {/* A — ATTENTION */}
       <TalentHeroSection
         onScrollToForm={openForm}
@@ -38,11 +38,9 @@ export default function TalentoLanding() {
       />
 
       {/* Portfolio showcase — right after hero */}
-      <section className="px-4 lg:px-8">
-        <div className="mx-auto max-w-5xl">
-          <PhoneMockupCarousel maxVideos={10} />
-        </div>
-      </section>
+      <div className="mx-auto max-w-5xl">
+        <PhoneMockupCarousel maxVideos={10} />
+      </div>
 
       {/* I — INTEREST */}
       <div ref={interestRef}>

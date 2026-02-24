@@ -171,7 +171,7 @@ export default function MarcasLanding() {
 
   // ─── Form ───────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
+    <div className="min-h-screen overflow-x-hidden bg-[#0a0a0f] text-white">
       {/* Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-3xl" />

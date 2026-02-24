@@ -179,7 +179,7 @@ export default function OrganizacionesLanding() {
 
   // ─── Form ───────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
+    <div className="min-h-screen overflow-x-hidden bg-[#0a0a0f] text-white">
       {/* Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-green-500/10 rounded-full blur-3xl" />
