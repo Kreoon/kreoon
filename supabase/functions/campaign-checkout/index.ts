@@ -80,25 +80,34 @@ serve(async (req) => {
 async function convertToUsd(supabase: any, amount: number, fromCurrency: string): Promise<number> {
   if (fromCurrency === "USD") return amount;
 
-  // Use the DB convert_currency function (no spread for checkout)
-  const { data, error } = await supabase.rpc("convert_currency", {
-    p_amount: amount,
-    p_from_currency: fromCurrency,
-    p_to_currency: "USD",
-    p_apply_spread: false,
-  });
+  // Query exchange_rates table directly for the rate
+  const { data: rateRow, error } = await supabase
+    .from("exchange_rates")
+    .select("rate")
+    .eq("from_currency", fromCurrency)
+    .eq("to_currency", "USD")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   if (error) {
-    console.error(`[campaign-checkout] Currency conversion error:`, error.message);
-    throw new Error(`No se pudo convertir ${fromCurrency} a USD. Verifica que las tasas de cambio estén actualizadas.`);
+    console.error(`[campaign-checkout] Exchange rate query error:`, error.message);
+    throw new Error(`No se pudo obtener la tasa de cambio ${fromCurrency} → USD.`);
   }
 
-  const converted = Number(data);
-  if (!converted || converted <= 0) {
-    throw new Error(`Conversión inválida: ${amount} ${fromCurrency} → ${converted} USD`);
+  if (!rateRow?.rate) {
+    throw new Error(`No hay tasa de cambio activa para ${fromCurrency} → USD. Contacta al administrador.`);
   }
 
-  console.log(`[campaign-checkout] Converted ${amount} ${fromCurrency} → ${converted.toFixed(2)} USD`);
+  const rate = Number(rateRow.rate);
+  const converted = Math.round(amount * rate * 100) / 100; // Round to 2 decimals
+
+  if (converted <= 0) {
+    throw new Error(`Conversión inválida: ${amount} ${fromCurrency} × ${rate} = ${converted} USD`);
+  }
+
+  console.log(`[campaign-checkout] Converted ${amount} ${fromCurrency} × ${rate} = ${converted.toFixed(2)} USD`);
   return converted;
 }
 
