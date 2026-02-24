@@ -259,7 +259,7 @@ export default function CampaignWizard() {
       budget_mode: budgetData.budget_mode,
       budget_per_video: budgetData.budget_per_video || null,
       total_budget: budgetData.total_budget || null,
-      currency: 'USD',
+      currency: 'COP',
       pricing_mode: budgetData.pricing_mode,
       min_bid: budgetData.min_bid || null,
       max_bid: budgetData.max_bid || null,

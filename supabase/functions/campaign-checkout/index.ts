@@ -1,6 +1,7 @@
 // ============================================================================
 // KREOON CAMPAIGN CHECKOUT SERVICE
 // Edge Function para crear Stripe Checkout Sessions para campañas del marketplace
+// Handles currency conversion (COP → USD) using exchange_rates table
 // ============================================================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -73,6 +74,35 @@ serve(async (req) => {
 });
 
 // ============================================================================
+// CURRENCY CONVERSION HELPER
+// ============================================================================
+
+async function convertToUsd(supabase: any, amount: number, fromCurrency: string): Promise<number> {
+  if (fromCurrency === "USD") return amount;
+
+  // Use the DB convert_currency function (no spread for checkout)
+  const { data, error } = await supabase.rpc("convert_currency", {
+    p_amount: amount,
+    p_from_currency: fromCurrency,
+    p_to_currency: "USD",
+    p_apply_spread: false,
+  });
+
+  if (error) {
+    console.error(`[campaign-checkout] Currency conversion error:`, error.message);
+    throw new Error(`No se pudo convertir ${fromCurrency} a USD. Verifica que las tasas de cambio estén actualizadas.`);
+  }
+
+  const converted = Number(data);
+  if (!converted || converted <= 0) {
+    throw new Error(`Conversión inválida: ${amount} ${fromCurrency} → ${converted} USD`);
+  }
+
+  console.log(`[campaign-checkout] Converted ${amount} ${fromCurrency} → ${converted.toFixed(2)} USD`);
+  return converted;
+}
+
+// ============================================================================
 // PUBLISH CHECKOUT (Fixed Price campaigns)
 // ============================================================================
 
@@ -97,7 +127,7 @@ async function createPublishCheckout(supabase: any, userId: string, body: { camp
   if (campaign.pricing_mode !== "fixed") throw new Error("Only fixed pricing campaigns use publish checkout");
   if (campaign.payment_status === "in_escrow") throw new Error("Campaign already paid");
 
-  // Calculate amount
+  // Calculate amount in campaign currency
   const contentCount = (campaign.content_requirements || []).reduce(
     (sum: number, r: any) => sum + (r.quantity || 1), 0
   ) || 1;
@@ -113,14 +143,20 @@ async function createPublishCheckout(supabase: any, userId: string, body: { camp
 
   const commissionRate = campaign.commission_rate || 30;
   const platformFee = totalCreator * commissionRate / 100;
-  const chargeAmount = totalCreator + platformFee;
+  const chargeAmountLocal = totalCreator + platformFee;
+  const campaignCurrency = (campaign.currency || "COP").toUpperCase();
+
+  // Convert to USD for Stripe
+  const chargeAmountUsd = await convertToUsd(supabase, chargeAmountLocal, campaignCurrency);
+  const totalCreatorUsd = await convertToUsd(supabase, totalCreator, campaignCurrency);
+  const platformFeeUsd = chargeAmountUsd - totalCreatorUsd;
 
   // Get or create wallet + Stripe customer
   const { customerId, walletId } = await getOrCreateCustomer(supabase, userId);
 
   const baseUrl = Deno.env.get("FRONTEND_URL") || "https://kreoon.com";
 
-  // Create Stripe Checkout Session
+  // Create Stripe Checkout Session (always in USD)
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: "payment",
@@ -129,10 +165,12 @@ async function createPublishCheckout(supabase: any, userId: string, body: { camp
       {
         price_data: {
           currency: "usd",
-          unit_amount: Math.round(chargeAmount * 100),
+          unit_amount: Math.round(chargeAmountUsd * 100),
           product_data: {
             name: `Campaña: ${campaign.title}`,
-            description: `Presupuesto creadores: $${totalCreator.toFixed(2)} + Comisión plataforma (${commissionRate}%): $${platformFee.toFixed(2)}`,
+            description: campaignCurrency !== "USD"
+              ? `${campaignCurrency} ${chargeAmountLocal.toLocaleString()} → USD $${chargeAmountUsd.toFixed(2)} (Creadores: $${totalCreatorUsd.toFixed(2)} + Comisión ${commissionRate}%: $${platformFeeUsd.toFixed(2)})`
+              : `Creadores: $${totalCreatorUsd.toFixed(2)} + Comisión plataforma (${commissionRate}%): $${platformFeeUsd.toFixed(2)}`,
           },
         },
         quantity: 1,
@@ -144,8 +182,10 @@ async function createPublishCheckout(supabase: any, userId: string, body: { camp
       user_id: userId,
       wallet_id: walletId,
       commission_rate: String(commissionRate),
-      total_creator_payment: String(totalCreator),
-      platform_fee: String(platformFee),
+      total_creator_payment: String(totalCreatorUsd),
+      platform_fee: String(platformFeeUsd),
+      original_currency: campaignCurrency,
+      original_amount: String(chargeAmountLocal),
     },
     success_url: `${baseUrl}/marketplace/campaign-payment/success?session_id={CHECKOUT_SESSION_ID}&campaign_id=${campaign_id}`,
     cancel_url: `${baseUrl}/marketplace/campaign-payment/cancel?campaign_id=${campaign_id}`,
@@ -201,7 +241,7 @@ async function createBidCheckout(supabase: any, userId: string, body: { campaign
   if (appsErr) throw new Error("Error loading applications");
   if (!approvedApps || approvedApps.length === 0) throw new Error("No approved applications found");
 
-  // Sum agreed prices (fallback to bid_amount or proposed_price)
+  // Sum agreed prices (in campaign currency)
   const totalCreator = approvedApps.reduce((sum: number, app: any) => {
     const price = app.agreed_price ?? app.bid_amount ?? app.proposed_price ?? 0;
     return sum + Number(price);
@@ -211,14 +251,20 @@ async function createBidCheckout(supabase: any, userId: string, body: { campaign
 
   const commissionRate = campaign.commission_rate || 30;
   const platformFee = totalCreator * commissionRate / 100;
-  const chargeAmount = totalCreator + platformFee;
+  const chargeAmountLocal = totalCreator + platformFee;
+  const campaignCurrency = (campaign.currency || "COP").toUpperCase();
+
+  // Convert to USD for Stripe
+  const chargeAmountUsd = await convertToUsd(supabase, chargeAmountLocal, campaignCurrency);
+  const totalCreatorUsd = await convertToUsd(supabase, totalCreator, campaignCurrency);
+  const platformFeeUsd = chargeAmountUsd - totalCreatorUsd;
 
   // Get or create wallet + Stripe customer
   const { customerId, walletId } = await getOrCreateCustomer(supabase, userId);
 
   const baseUrl = Deno.env.get("FRONTEND_URL") || "https://kreoon.com";
 
-  // Create Stripe Checkout Session
+  // Create Stripe Checkout Session (always in USD)
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: "payment",
@@ -227,10 +273,12 @@ async function createBidCheckout(supabase: any, userId: string, body: { campaign
       {
         price_data: {
           currency: "usd",
-          unit_amount: Math.round(chargeAmount * 100),
+          unit_amount: Math.round(chargeAmountUsd * 100),
           product_data: {
             name: `Campaña: ${campaign.title}`,
-            description: `${approvedApps.length} creadores: $${totalCreator.toFixed(2)} + Comisión (${commissionRate}%): $${platformFee.toFixed(2)}`,
+            description: campaignCurrency !== "USD"
+              ? `${campaignCurrency} ${chargeAmountLocal.toLocaleString()} → USD $${chargeAmountUsd.toFixed(2)} (${approvedApps.length} creadores: $${totalCreatorUsd.toFixed(2)} + Comisión ${commissionRate}%: $${platformFeeUsd.toFixed(2)})`
+              : `${approvedApps.length} creadores: $${totalCreatorUsd.toFixed(2)} + Comisión (${commissionRate}%): $${platformFeeUsd.toFixed(2)}`,
           },
         },
         quantity: 1,
@@ -242,9 +290,11 @@ async function createBidCheckout(supabase: any, userId: string, body: { campaign
       user_id: userId,
       wallet_id: walletId,
       commission_rate: String(commissionRate),
-      total_creator_payment: String(totalCreator),
-      platform_fee: String(platformFee),
+      total_creator_payment: String(totalCreatorUsd),
+      platform_fee: String(platformFeeUsd),
       approved_count: String(approvedApps.length),
+      original_currency: campaignCurrency,
+      original_amount: String(chargeAmountLocal),
     },
     success_url: `${baseUrl}/marketplace/campaign-payment/success?session_id={CHECKOUT_SESSION_ID}&campaign_id=${campaign_id}`,
     cancel_url: `${baseUrl}/marketplace/campaign-payment/cancel?campaign_id=${campaign_id}`,
