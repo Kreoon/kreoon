@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import {
   Video, Wand2, Megaphone, Code, GraduationCap,
   ArrowRight, ArrowLeft, Check, Loader2, Sparkles,
-  Instagram, Music2, ShieldCheck, Clock, DollarSign,
+  Instagram, Music2, ShieldCheck, Clock, DollarSign, X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,10 +73,12 @@ type FormData = z.infer<typeof formSchema>;
 // ─── Component ────────────────────────────────────────────
 interface TalentFormSectionProps {
   id?: string;
+  open?: boolean;
+  onClose?: () => void;
   onSuccess?: () => void;
 }
 
-export default function TalentFormSection({ id, onSuccess }: TalentFormSectionProps) {
+export default function TalentFormSection({ id, open = true, onClose, onSuccess }: TalentFormSectionProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -104,7 +106,27 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
     },
   });
 
+  const isModal = onClose != null;
+
   const { watch, trigger } = form;
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (!isModal || !open) return;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, [isModal, open]);
+
+  // ESC to close
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') onClose?.();
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!isModal || !open) return;
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isModal, open, handleKeyDown]);
 
   useEffect(() => {
     analytics.track({ event_name: 'form_step_view', event_category: 'engagement', properties: { step: currentStep, page: 'talento_landing' } });
@@ -229,82 +251,101 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
     }
   };
 
+  // Don't render anything if modal mode and not open
+  if (isModal && !open) return null;
+
   // ─── Success screen ─────────────────────────────────────
   if (submitSuccess) {
-    return (
-      <section id={id} className="bg-kreoon-bg-primary py-20 md:py-28">
-        <div className="mx-auto max-w-md px-4">
+    const successContent = (
+      <div className="mx-auto max-w-md px-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-center"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: 'spring' }}
+            className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-500/20 flex items-center justify-center"
           >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: 'spring' }}
-              className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-500/20 flex items-center justify-center"
-            >
-              <Check className="w-10 h-10 text-green-400" />
-            </motion.div>
+            <Check className="w-10 h-10 text-green-400" />
+          </motion.div>
 
-            <h2 className="text-3xl font-bold text-kreoon-text-primary mb-4">
-              ¡Bienvenido a Kreoon!
-            </h2>
-            <p className="text-kreoon-text-secondary mb-8">
-              Te enviamos un mensaje a tu email con los próximos pasos para activar
-              tu cuenta.
-            </p>
+          <h2 className="text-3xl font-bold text-kreoon-text-primary mb-4">
+            ¡Bienvenido a Kreoon!
+          </h2>
+          <p className="text-kreoon-text-secondary mb-8">
+            Te enviamos un mensaje a tu email con los próximos pasos para activar
+            tu cuenta.
+          </p>
 
-            <div className="space-y-4">
-              <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
-                <a href="/register">Crear mi cuenta ahora</a>
+          <div className="space-y-4">
+            <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
+              <a href="/register">Crear mi cuenta ahora</a>
+            </Button>
+            {isModal && (
+              <Button variant="outline" className="w-full border-white/20" onClick={onClose}>
+                Cerrar
               </Button>
-              <p className="text-kreoon-text-muted text-sm">
-                O revisa tu email para más información
-              </p>
-            </div>
+            )}
+            <p className="text-kreoon-text-muted text-sm">
+              O revisa tu email para más información
+            </p>
+          </div>
+        </motion.div>
+      </div>
+    );
+
+    if (isModal) {
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="relative w-full max-w-md rounded-2xl border border-kreoon-border bg-kreoon-bg-primary p-8"
+          >
+            {successContent}
           </motion.div>
         </div>
+      );
+    }
+
+    return (
+      <section id={id} className="bg-kreoon-bg-primary py-20 md:py-28">
+        {successContent}
       </section>
     );
   }
 
-  // ─── Form section ───────────────────────────────────────
-  return (
-    <section id={id} className="relative bg-kreoon-bg-primary py-20 md:py-28">
-      {/* Glow behind form */}
-      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        <div
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full opacity-25"
-          style={{
-            background: 'radial-gradient(circle, rgba(124,58,237,0.35) 0%, transparent 70%)',
-            filter: 'blur(80px)',
-          }}
-        />
+  // ─── Form content (shared between inline & modal) ──────
+  const formContent = (
+    <>
+      {/* Section header */}
+      <div className="text-center mb-8">
+        <p className="text-sm font-medium text-kreoon-purple-400 uppercase tracking-wider mb-3">
+          Registro gratuito
+        </p>
+        <h2 className={`font-bold tracking-tight text-kreoon-text-primary mb-4 ${isModal ? 'text-2xl' : 'text-3xl md:text-4xl'}`}>
+          Únete ahora y empieza a monetizar
+        </h2>
+        <div className="inline-flex items-center gap-2 rounded-full border border-kreoon-purple-500/30 bg-kreoon-purple-500/10 px-4 py-2">
+          <span className="text-sm text-kreoon-purple-400 font-medium">
+            Early Bird — Registro gratuito y acceso anticipado
+          </span>
+        </div>
       </div>
 
-      <div className="relative mx-auto max-w-2xl px-4 lg:px-8">
-        {/* Section header */}
-        <motion.div variants={FADE_IN_UP} {...scrollAnim} className="text-center mb-10">
-          <p className="text-sm font-medium text-kreoon-purple-400 uppercase tracking-wider mb-3">
-            Registro gratuito
-          </p>
-          <h2 className="text-3xl font-bold tracking-tight text-kreoon-text-primary md:text-4xl mb-4">
-            Únete ahora y empieza a monetizar
-          </h2>
-
-          {/* Early bird badge */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-kreoon-purple-500/30 bg-kreoon-purple-500/10 px-4 py-2">
-            <span className="text-sm text-kreoon-purple-400 font-medium">
-              Early Bird — Registro gratuito y acceso anticipado
-            </span>
-          </div>
-        </motion.div>
-
-        {/* Form card */}
-        <motion.div variants={withDelay(FADE_IN_UP, 0.15)} {...scrollAnim}>
-          <KreoonGlassCard intensity="strong" className="p-6 md:p-8">
+      {/* Form card */}
+      <KreoonGlassCard intensity="strong" className="p-6 md:p-8">
             {/* Progress bar — 2 steps */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-2">
@@ -532,7 +573,7 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
                           </div>
 
                           <div>
-                            <label className="block text-sm text-kreoon-text-secondary mb-2">Portfolio / Website (opcional)</label>
+                            <label className="block text-sm text-kreoon-text-secondary mb-2">Portafolio / Website (opcional)</label>
                             <Input {...form.register('portfolio_url')} placeholder="https://tuportfolio.com" className="bg-white/5 border-white/10" />
                             {form.formState.errors.portfolio_url && (
                               <p className="text-red-400 text-xs mt-1">{form.formState.errors.portfolio_url.message}</p>
@@ -590,24 +631,70 @@ export default function TalentFormSection({ id, onSuccess }: TalentFormSectionPr
               </AnimatePresence>
             </form>
           </KreoonGlassCard>
-        </motion.div>
 
-        {/* Trust elements */}
+      {/* Trust elements */}
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-sm text-kreoon-text-muted">
+        <span className="inline-flex items-center gap-1.5">
+          <DollarSign className="h-4 w-4 text-emerald-400" /> 100% gratuito
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <ShieldCheck className="h-4 w-4 text-kreoon-purple-400" /> Datos protegidos
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <Clock className="h-4 w-4 text-amber-400" /> 2 min para completar
+        </span>
+      </div>
+    </>
+  );
+
+  // ─── Modal mode ────────────────────────────────────────
+  if (isModal) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
+        {/* Backdrop */}
         <motion.div
-          variants={withDelay(FADE_IN_UP, 0.25)}
-          {...scrollAnim}
-          className="mt-6 flex flex-wrap items-center justify-center gap-6 text-sm text-kreoon-text-muted"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+          onClick={onClose}
+        />
+        {/* Modal panel — slides up on mobile, centered on desktop */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 40 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
+          className="relative w-full sm:max-w-2xl max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-kreoon-border bg-kreoon-bg-primary p-5 sm:p-6 md:p-8 shadow-kreoon-glow-sm"
         >
-          <span className="inline-flex items-center gap-1.5">
-            <DollarSign className="h-4 w-4 text-emerald-400" /> 100% gratuito
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <ShieldCheck className="h-4 w-4 text-kreoon-purple-400" /> Datos protegidos
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Clock className="h-4 w-4 text-amber-400" /> 2 min para completar
-          </span>
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 z-10 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+
+          {formContent}
         </motion.div>
+      </div>
+    );
+  }
+
+  // ─── Inline section mode ───────────────────────────────
+  return (
+    <section id={id} className="relative bg-kreoon-bg-primary py-20 md:py-28">
+      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+        <div
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full opacity-25"
+          style={{
+            background: 'radial-gradient(circle, rgba(124,58,237,0.35) 0%, transparent 70%)',
+            filter: 'blur(80px)',
+          }}
+        />
+      </div>
+      <div className="relative mx-auto max-w-2xl px-4 lg:px-8">
+        {formContent}
       </div>
     </section>
   );
