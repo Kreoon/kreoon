@@ -6,6 +6,7 @@ import {
   Video, Wand2, Megaphone, Code, GraduationCap,
   ArrowRight, ArrowLeft, Check, Loader2, Sparkles,
   Instagram, Music2, ShieldCheck, Clock, DollarSign, X,
+  User, Mail, Phone,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,11 +20,11 @@ import {
   type TalentCategory,
   type SpecificRole,
 } from '@/types/crm.types';
-import { FADE_IN_UP, useScrollAnimation, withDelay } from '@/lib/animations';
 
 // ─── Constants ────────────────────────────────────────────
 const MAX_CATEGORIES = 2;
 const MAX_ROLES = 4;
+const TOTAL_STEPS = 2;
 
 const CATEGORY_TO_SUBTYPE: Record<TalentCategory, 'creator' | 'editor'> = {
   content_creation: 'creator',
@@ -48,27 +49,29 @@ const CATEGORIES: {
 ];
 
 const EXPERIENCE_OPTIONS = [
-  { value: 'beginner', label: 'Principiante', description: 'Menos de 1 año' },
+  { value: 'beginner', label: 'Principiante', description: '< 1 año' },
   { value: 'intermediate', label: 'Intermedio', description: '1-3 años' },
   { value: 'advanced', label: 'Avanzado', description: '3-5 años' },
   { value: 'expert', label: 'Experto', description: '+5 años' },
 ];
 
-const TOTAL_STEPS = 2;
-
-// ─── Form schema (contact fields only — categories/roles managed via state) ──
-const formSchema = z.object({
-  experience_level: z.enum(['beginner', 'intermediate', 'advanced', 'expert']),
+// ─── Schemas ──────────────────────────────────────────────
+const step1Schema = z.object({
   full_name: z.string().min(2, 'Nombre muy corto'),
   email: z.string().email('Email inválido'),
   phone: z.string().optional(),
+});
+
+const step2Schema = z.object({
+  experience_level: z.enum(['beginner', 'intermediate', 'advanced', 'expert']).optional(),
   city: z.string().optional(),
   portfolio_url: z.string().url('URL inválida').optional().or(z.literal('')),
   instagram: z.string().optional(),
   tiktok: z.string().optional(),
 });
 
-type FormData = z.infer<typeof formSchema>;
+type Step1Data = z.infer<typeof step1Schema>;
+type Step2Data = z.infer<typeof step2Schema>;
 
 // ─── Component ────────────────────────────────────────────
 interface TalentFormSectionProps {
@@ -83,32 +86,26 @@ export default function TalentFormSection({ id, open = true, onClose, onSuccess 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [leadId, setLeadId] = useState<string | null>(null);
 
-  // Multi-select state
+  // Multi-select state (step 2)
   const [selectedCategories, setSelectedCategories] = useState<TalentCategory[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<SpecificRole[]>([]);
 
   const { getTrackingParams, clearUTMParams } = useUTMTracking();
   const analytics = useAnalyticsContext();
-  const scrollAnim = useScrollAnimation();
-
-  const form = useForm<FormData>({
-    mode: 'onChange',
-    defaultValues: {
-      experience_level: undefined,
-      full_name: '',
-      email: '',
-      phone: '',
-      city: '',
-      portfolio_url: '',
-      instagram: '',
-      tiktok: '',
-    },
-  });
 
   const isModal = onClose != null;
 
-  const { watch, trigger } = form;
+  const step1Form = useForm<Step1Data>({
+    mode: 'onChange',
+    defaultValues: { full_name: '', email: '', phone: '' },
+  });
+
+  const step2Form = useForm<Step2Data>({
+    mode: 'onChange',
+    defaultValues: { experience_level: undefined, city: '', portfolio_url: '', instagram: '', tiktok: '' },
+  });
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -132,13 +129,12 @@ export default function TalentFormSection({ id, open = true, onClose, onSuccess 
     analytics.track({ event_name: 'form_step_view', event_category: 'engagement', properties: { step: currentStep, page: 'talento_landing' } });
   }, [currentStep]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // When categories change, remove roles that no longer belong to any selected category
+  // When categories change, prune orphan roles
   useEffect(() => {
     const validRoles = new Set(selectedCategories.flatMap((cat) => CATEGORY_ROLES[cat] || []));
     setSelectedRoles((prev) => prev.filter((r) => validRoles.has(r)));
   }, [selectedCategories]);
 
-  // Compute available roles as union of all selected categories (deduplicated, preserving order)
   const availableRoles = useMemo(() => {
     const seen = new Set<SpecificRole>();
     const roles: { role: SpecificRole; category: TalentCategory }[] = [];
@@ -153,7 +149,6 @@ export default function TalentFormSection({ id, open = true, onClose, onSuccess 
     return roles;
   }, [selectedCategories]);
 
-  // ─── Toggle handlers ────────────────────────────────────
   const toggleCategory = (cat: TalentCategory) => {
     setSelectedCategories((prev) => {
       if (prev.includes(cat)) return prev.filter((c) => c !== cat);
@@ -170,32 +165,13 @@ export default function TalentFormSection({ id, open = true, onClose, onSuccess 
     });
   };
 
-  // ─── Step navigation ────────────────────────────────────
-  const handleNextStep = async () => {
-    if (currentStep === 1) {
-      const experienceValid = await trigger('experience_level');
-      if (selectedCategories.length === 0 || !experienceValid) return;
-      analytics.track({ event_name: 'form_step_complete', event_category: 'engagement', properties: { step: currentStep } });
-      setCurrentStep(2);
-    }
-  };
-
-  const handlePrevStep = () => {
-    setCurrentStep(1);
-  };
-
-  // ─── Submit ─────────────────────────────────────────────
-  const handleSubmit = async (data: FormData) => {
-    if (selectedRoles.length === 0) return;
+  // ─── Step 1: Submit basic data → create lead immediately ──
+  const handleStep1Submit = async (data: Step1Data) => {
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
       const trackingParams = getTrackingParams();
-
-      // Derive subtype: if mixed creator+editor categories → 'both'
-      const subtypes = new Set(selectedCategories.map((c) => CATEGORY_TO_SUBTYPE[c]));
-      const derivedSubtype = subtypes.size > 1 ? 'both' : (subtypes.values().next().value || 'creator');
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/capture-lead`,
@@ -206,22 +182,8 @@ export default function TalentFormSection({ id, open = true, onClose, onSuccess 
             full_name: data.full_name,
             email: data.email,
             phone: data.phone || undefined,
-            city: data.city || undefined,
-            portfolio_url: data.portfolio_url || undefined,
-            // Primary values (backward compat)
-            talent_category: selectedCategories[0],
-            specific_role: selectedRoles[0],
-            talent_subtype: derivedSubtype,
-            experience_level: data.experience_level,
-            // Full multi-select arrays
-            talent_categories: selectedCategories,
-            specific_roles: selectedRoles,
             lead_type: 'talent',
             registration_intent: 'talent',
-            social_profiles: {
-              instagram: data.instagram || null,
-              tiktok: data.tiktok || null,
-            },
             ...trackingParams,
           }),
         }
@@ -235,34 +197,94 @@ export default function TalentFormSection({ id, open = true, onClose, onSuccess 
           score: result.score,
           lead_type: 'talent',
         });
+        analytics.track({ event_name: 'form_step_complete', event_category: 'engagement', properties: { step: 1 } });
 
+        setLeadId(result.lead_id);
         clearUTMParams();
-        setSubmitSuccess(true);
-        onSuccess?.();
+        setCurrentStep(2);
       } else {
         throw new Error(result.error || 'Error al registrar');
       }
     } catch (error) {
-      console.error('Error submitting form:', error);
+      console.error('Error submitting step 1:', error);
       setSubmitError((error as Error).message);
-      analytics.track({ event_name: 'form_error', event_category: 'engagement', properties: { error: (error as Error).message } });
+      analytics.track({ event_name: 'form_error', event_category: 'engagement', properties: { error: (error as Error).message, step: 1 } });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Don't render anything if modal mode and not open
+  // ─── Step 2: Enrich lead with profile data ────────────────
+  const handleStep2Submit = async (data: Step2Data) => {
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const subtypes = new Set(selectedCategories.map((c) => CATEGORY_TO_SUBTYPE[c]));
+      const derivedSubtype = subtypes.size > 1 ? 'both' : (subtypes.values().next().value || 'creator');
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/capture-lead`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            // Re-send identity so the edge function can upsert
+            full_name: step1Form.getValues('full_name'),
+            email: step1Form.getValues('email'),
+            phone: step1Form.getValues('phone') || undefined,
+            city: data.city || undefined,
+            portfolio_url: data.portfolio_url || undefined,
+            talent_category: selectedCategories[0] || undefined,
+            specific_role: selectedRoles[0] || undefined,
+            talent_subtype: derivedSubtype,
+            experience_level: data.experience_level || undefined,
+            talent_categories: selectedCategories.length > 0 ? selectedCategories : undefined,
+            specific_roles: selectedRoles.length > 0 ? selectedRoles : undefined,
+            lead_type: 'talent',
+            registration_intent: 'talent',
+            social_profiles: {
+              instagram: data.instagram || null,
+              tiktok: data.tiktok || null,
+            },
+            lead_id: leadId,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.success) {
+        analytics.track({ event_name: 'form_step_complete', event_category: 'engagement', properties: { step: 2 } });
+        setSubmitSuccess(true);
+        onSuccess?.();
+      } else {
+        throw new Error(result.error || 'Error al actualizar perfil');
+      }
+    } catch (error) {
+      console.error('Error submitting step 2:', error);
+      // Still show success — the lead is already saved from step 1
+      setSubmitSuccess(true);
+      onSuccess?.();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSkipStep2 = () => {
+    analytics.track({ event_name: 'form_step_skipped', event_category: 'engagement', properties: { step: 2 } });
+    setSubmitSuccess(true);
+    onSuccess?.();
+  };
+
+  // Don't render if modal mode and not open
   if (isModal && !open) return null;
 
   // ─── Success screen ─────────────────────────────────────
   if (submitSuccess) {
     const successContent = (
-      <div className="mx-auto max-w-md px-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center"
-        >
+      <div className="mx-auto max-w-md text-center">
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -272,15 +294,14 @@ export default function TalentFormSection({ id, open = true, onClose, onSuccess 
             <Check className="w-10 h-10 text-green-400" />
           </motion.div>
 
-          <h2 className="text-3xl font-bold text-kreoon-text-primary mb-4">
+          <h2 className="text-2xl font-bold text-kreoon-text-primary mb-3">
             ¡Bienvenido a Kreoon!
           </h2>
-          <p className="text-kreoon-text-secondary mb-8">
-            Te enviamos un mensaje a tu email con los próximos pasos para activar
-            tu cuenta.
+          <p className="text-kreoon-text-secondary mb-6">
+            Te enviamos un email con los próximos pasos para activar tu cuenta.
           </p>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
               <a href="/register">Crear mi cuenta ahora</a>
             </Button>
@@ -289,9 +310,6 @@ export default function TalentFormSection({ id, open = true, onClose, onSuccess 
                 Cerrar
               </Button>
             )}
-            <p className="text-kreoon-text-muted text-sm">
-              O revisa tu email para más información
-            </p>
           </div>
         </motion.div>
       </div>
@@ -299,20 +317,20 @@ export default function TalentFormSection({ id, open = true, onClose, onSuccess 
 
     if (isModal) {
       return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={onClose}
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-md rounded-2xl border border-kreoon-border bg-kreoon-bg-primary p-8"
+            initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="relative w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl border border-kreoon-border bg-kreoon-bg-primary p-6 sm:p-8"
           >
+            <button onClick={onClose} className="absolute top-4 right-4 z-10 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-colors">
+              <X className="h-5 w-5" />
+            </button>
             {successContent}
           </motion.div>
         </div>
@@ -321,329 +339,312 @@ export default function TalentFormSection({ id, open = true, onClose, onSuccess 
 
     return (
       <section id={id} className="bg-kreoon-bg-primary py-20 md:py-28">
-        {successContent}
+        <div className="mx-auto max-w-md px-4">{successContent}</div>
       </section>
     );
   }
 
-  // ─── Form content (shared between inline & modal) ──────
+  // ─── Form content ─────────────────────────────────────────
   const formContent = (
     <>
-      {/* Section header */}
-      <div className="text-center mb-8">
-        <p className="text-sm font-medium text-kreoon-purple-400 uppercase tracking-wider mb-3">
-          Registro gratuito
-        </p>
-        <h2 className={`font-bold tracking-tight text-kreoon-text-primary mb-4 ${isModal ? 'text-2xl' : 'text-3xl md:text-4xl'}`}>
-          Únete ahora y empieza a monetizar
+      {/* Header */}
+      <div className="text-center mb-6">
+        <h2 className={`font-bold tracking-tight text-kreoon-text-primary ${isModal ? 'text-xl sm:text-2xl' : 'text-2xl md:text-3xl'}`}>
+          {currentStep === 1 ? 'Únete a Kreoon gratis' : 'Cuéntanos más sobre ti'}
         </h2>
-        <div className="inline-flex items-center gap-2 rounded-full border border-kreoon-purple-500/30 bg-kreoon-purple-500/10 px-4 py-2">
-          <span className="text-sm text-kreoon-purple-400 font-medium">
-            Early Bird — Registro gratuito y acceso anticipado
-          </span>
+        <p className="text-sm text-kreoon-text-secondary mt-2">
+          {currentStep === 1
+            ? 'Acceso anticipado Early Bird — sin costo, sin compromisos'
+            : 'Esto nos ayuda a conectarte con las mejores oportunidades (opcional)'}
+        </p>
+      </div>
+
+      {/* Progress */}
+      <div className="mb-6">
+        <div className="flex gap-2">
+          {[1, 2].map((step) => (
+            <div key={step} className="flex-1">
+              <div className={`h-1.5 rounded-full transition-colors ${currentStep >= step ? 'bg-purple-500' : 'bg-white/10'}`} />
+              <p className={`text-[11px] mt-1.5 ${currentStep >= step ? 'text-purple-400' : 'text-white/30'}`}>
+                {step === 1 ? 'Datos básicos' : 'Tu perfil'}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Form card */}
-      <KreoonGlassCard intensity="strong" className="p-6 md:p-8">
-            {/* Progress bar — 2 steps */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-2">
-                {[1, 2].map((step) => (
-                  <div
-                    key={step}
-                    className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-colors ${
-                      currentStep >= step
-                        ? 'bg-purple-500 text-white'
-                        : 'bg-white/10 text-white/50'
-                    }`}
-                  >
-                    {currentStep > step ? <Check className="w-4 h-4" /> : step}
-                  </div>
-                ))}
+      {/* Steps */}
+      <AnimatePresence mode="wait">
+        {/* ── Step 1: Basic contact ── */}
+        {currentStep === 1 && (
+          <motion.div
+            key="step1"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <form onSubmit={step1Form.handleSubmit(handleStep1Submit)} className="space-y-4">
+              <div>
+                <label className="flex items-center gap-2 text-sm text-kreoon-text-secondary mb-1.5">
+                  <User className="w-3.5 h-3.5" /> Nombre completo
+                </label>
+                <Input
+                  {...step1Form.register('full_name', { required: 'Nombre requerido', minLength: { value: 2, message: 'Muy corto' } })}
+                  placeholder="Tu nombre completo"
+                  className="bg-white/5 border-white/10 h-11"
+                  autoFocus
+                />
+                {step1Form.formState.errors.full_name && (
+                  <p className="text-red-400 text-xs mt-1">{step1Form.formState.errors.full_name.message}</p>
+                )}
               </div>
-              <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
-                  initial={{ width: '0%' }}
-                  animate={{ width: `${((currentStep - 1) / (TOTAL_STEPS - 1)) * 100}%` }}
-                  transition={{ duration: 0.3 }}
+
+              <div>
+                <label className="flex items-center gap-2 text-sm text-kreoon-text-secondary mb-1.5">
+                  <Phone className="w-3.5 h-3.5" /> WhatsApp
+                </label>
+                <Input
+                  {...step1Form.register('phone')}
+                  placeholder="+57 300 123 4567"
+                  className="bg-white/5 border-white/10 h-11"
                 />
               </div>
-            </div>
 
-            {/* Form steps */}
-            <form onSubmit={form.handleSubmit(handleSubmit)}>
-              <AnimatePresence mode="wait">
-                {/* ── Step 1: Categories + Experience ── */}
-                {currentStep === 1 && (
-                  <motion.div
-                    key="step1"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="space-y-6"
-                  >
-                    <div className="text-center mb-4">
-                      <h3 className="text-xl font-bold text-kreoon-text-primary mb-1">
-                        ¿En qué áreas te especializas?
-                      </h3>
-                      <p className="text-sm text-kreoon-text-secondary">
-                        Selecciona hasta {MAX_CATEGORIES} nichos
-                        <span className="ml-2 text-kreoon-purple-400 font-medium">
-                          ({selectedCategories.length}/{MAX_CATEGORIES})
-                        </span>
-                      </p>
-                    </div>
+              <div>
+                <label className="flex items-center gap-2 text-sm text-kreoon-text-secondary mb-1.5">
+                  <Mail className="w-3.5 h-3.5" /> Email
+                </label>
+                <Input
+                  {...step1Form.register('email', { required: 'Email requerido', pattern: { value: /^\S+@\S+\.\S+$/, message: 'Email inválido' } })}
+                  type="email"
+                  placeholder="tu@email.com"
+                  className="bg-white/5 border-white/10 h-11"
+                />
+                {step1Form.formState.errors.email && (
+                  <p className="text-red-400 text-xs mt-1">{step1Form.formState.errors.email.message}</p>
+                )}
+              </div>
 
-                    {/* Categories — multi-select */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {CATEGORIES.map((cat) => {
-                        const Icon = cat.icon;
-                        const isSelected = selectedCategories.includes(cat.key);
-                        const isDisabled = !isSelected && selectedCategories.length >= MAX_CATEGORIES;
+              {submitError && (
+                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                  {submitError}
+                </div>
+              )}
 
-                        return (
-                          <button
-                            type="button"
-                            key={cat.key}
-                            onClick={() => toggleCategory(cat.key)}
-                            disabled={isDisabled}
-                            className={`relative p-4 rounded-xl text-center border-2 transition-all ${
-                              isSelected
-                                ? 'border-purple-500 bg-purple-500/10'
-                                : isDisabled
-                                  ? 'border-white/5 bg-white/[0.02] opacity-40 cursor-not-allowed'
-                                  : 'border-white/10 bg-white/5 hover:border-white/20 cursor-pointer'
-                            }`}
-                          >
-                            {isSelected && (
-                              <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center">
-                                <Check className="w-3 h-3 text-white" />
-                              </div>
-                            )}
-                            <div className={`w-12 h-12 mx-auto mb-2 rounded-lg bg-gradient-to-br ${cat.color} flex items-center justify-center`}>
-                              <Icon className="w-6 h-6 text-white" />
-                            </div>
-                            <p className="font-medium text-sm text-kreoon-text-primary">{TALENT_CATEGORY_LABELS[cat.key]}</p>
-                            <p className="text-xs text-kreoon-text-muted mt-0.5">{cat.description}</p>
-                          </button>
-                        );
-                      })}
-                    </div>
+              <Button
+                type="submit"
+                disabled={isSubmitting || !step1Form.formState.isValid}
+                className="w-full h-12 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 text-base font-semibold"
+              >
+                {isSubmitting ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Registrando...</>
+                ) : (
+                  <>Quiero unirme <ArrowRight className="w-4 h-4 ml-2" /></>
+                )}
+              </Button>
 
-                    {/* Experience */}
-                    {selectedCategories.length > 0 && (
-                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} transition={{ duration: 0.2 }}>
-                        <label className="block text-sm text-kreoon-text-secondary mb-3">Nivel de experiencia</label>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                          {EXPERIENCE_OPTIONS.map((option) => {
-                            const isSelected = watch('experience_level') === option.value;
+              <div className="flex items-center justify-center gap-4 text-xs text-kreoon-text-muted pt-1">
+                <span className="inline-flex items-center gap-1">
+                  <DollarSign className="h-3 w-3 text-emerald-400" /> Gratis
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <ShieldCheck className="h-3 w-3 text-kreoon-purple-400" /> Datos protegidos
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <Clock className="h-3 w-3 text-amber-400" /> 30 seg
+                </span>
+              </div>
+
+              <p className="text-center text-kreoon-text-muted text-[11px]">
+                Al registrarte aceptas nuestros{' '}
+                <a href="/terminos" className="underline">Términos</a> y{' '}
+                <a href="/privacidad" className="underline">Política de Privacidad</a>
+              </p>
+            </form>
+          </motion.div>
+        )}
+
+        {/* ── Step 2: Profile enrichment ── */}
+        {currentStep === 2 && (
+          <motion.div
+            key="step2"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <form onSubmit={step2Form.handleSubmit(handleStep2Submit)} className="space-y-5">
+              {/* Categories */}
+              <div>
+                <p className="text-sm text-kreoon-text-secondary mb-2">
+                  ¿En qué áreas te especializas?
+                  <span className="ml-1 text-kreoon-purple-400 text-xs">
+                    (hasta {MAX_CATEGORIES})
+                  </span>
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {CATEGORIES.map((cat) => {
+                    const Icon = cat.icon;
+                    const isSelected = selectedCategories.includes(cat.key);
+                    const isDisabled = !isSelected && selectedCategories.length >= MAX_CATEGORIES;
+
+                    return (
+                      <button
+                        type="button"
+                        key={cat.key}
+                        onClick={() => toggleCategory(cat.key)}
+                        disabled={isDisabled}
+                        className={`relative p-3 rounded-xl text-center border transition-all ${
+                          isSelected
+                            ? 'border-purple-500 bg-purple-500/10'
+                            : isDisabled
+                              ? 'border-white/5 bg-white/[0.02] opacity-40 cursor-not-allowed'
+                              : 'border-white/10 bg-white/5 hover:border-white/20 cursor-pointer'
+                        }`}
+                      >
+                        {isSelected && (
+                          <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-purple-500 flex items-center justify-center">
+                            <Check className="w-2.5 h-2.5 text-white" />
+                          </div>
+                        )}
+                        <div className={`w-9 h-9 mx-auto mb-1.5 rounded-lg bg-gradient-to-br ${cat.color} flex items-center justify-center`}>
+                          <Icon className="w-4 h-4 text-white" />
+                        </div>
+                        <p className="font-medium text-xs text-kreoon-text-primary leading-tight">{TALENT_CATEGORY_LABELS[cat.key]}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Roles */}
+              {selectedCategories.length > 0 && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} transition={{ duration: 0.2 }}>
+                  <p className="text-sm text-kreoon-text-secondary mb-2">
+                    Roles específicos
+                    <span className="ml-1 text-kreoon-purple-400 text-xs">
+                      (hasta {MAX_ROLES})
+                    </span>
+                  </p>
+                  {selectedCategories.map((cat) => {
+                    const catRoles = CATEGORY_ROLES[cat] || [];
+                    if (catRoles.length === 0) return null;
+                    return (
+                      <div key={cat} className="mb-2">
+                        <p className="text-[11px] font-medium text-kreoon-text-muted uppercase tracking-wider mb-1.5">
+                          {TALENT_CATEGORY_LABELS[cat]}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {catRoles.map((role: SpecificRole) => {
+                            const isSelected = selectedRoles.includes(role);
+                            const isDisabled = !isSelected && selectedRoles.length >= MAX_ROLES;
                             return (
-                              <label
-                                key={option.value}
-                                className={`p-3 rounded-lg cursor-pointer text-center border transition-all ${
-                                  isSelected ? 'border-purple-500 bg-purple-500/20' : 'border-white/10 bg-white/5 hover:border-white/20'
+                              <button
+                                type="button"
+                                key={role}
+                                onClick={() => toggleRole(role)}
+                                disabled={isDisabled}
+                                className={`px-3 py-1.5 rounded-full text-xs border transition-all ${
+                                  isSelected
+                                    ? 'border-purple-500 bg-purple-500/20 text-white'
+                                    : isDisabled
+                                      ? 'border-white/5 text-white/30 cursor-not-allowed'
+                                      : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20 cursor-pointer'
                                 }`}
                               >
-                                <input type="radio" value={option.value} {...form.register('experience_level')} className="sr-only" />
-                                <p className="font-medium text-sm text-kreoon-text-primary">{option.label}</p>
-                                <p className="text-xs text-kreoon-text-muted">{option.description}</p>
-                              </label>
+                                {isSelected && <Check className="w-3 h-3 inline mr-1 text-purple-400" />}
+                                {SPECIFIC_ROLE_LABELS[role]}
+                              </button>
                             );
                           })}
                         </div>
-                      </motion.div>
-                    )}
-
-                    <Button
-                      type="button"
-                      onClick={handleNextStep}
-                      disabled={selectedCategories.length === 0 || !watch('experience_level')}
-                      className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50"
-                    >
-                      Continuar <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </motion.div>
-                )}
-
-                {/* ── Step 2: Roles + Contact info ── */}
-                {currentStep === 2 && (
-                  <motion.div
-                    key="step2"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="space-y-6"
-                  >
-                    <div className="text-center mb-4">
-                      <h3 className="text-xl font-bold text-kreoon-text-primary mb-1">
-                        ¿Qué haces específicamente?
-                      </h3>
-                      <p className="text-sm text-kreoon-text-secondary">
-                        Selecciona hasta {MAX_ROLES} roles
-                        <span className="ml-2 text-kreoon-purple-400 font-medium">
-                          ({selectedRoles.length}/{MAX_ROLES})
-                        </span>
-                      </p>
-                    </div>
-
-                    {/* Roles grouped by category */}
-                    <div className="space-y-4">
-                      {selectedCategories.map((cat) => {
-                        const catRoles = (CATEGORY_ROLES[cat] || []);
-                        if (catRoles.length === 0) return null;
-
-                        return (
-                          <div key={cat}>
-                            <p className="text-xs font-medium text-kreoon-text-muted uppercase tracking-wider mb-2">
-                              {TALENT_CATEGORY_LABELS[cat]}
-                            </p>
-                            <div className="grid grid-cols-2 gap-2">
-                              {catRoles.map((role: SpecificRole) => {
-                                const isSelected = selectedRoles.includes(role);
-                                const isDisabled = !isSelected && selectedRoles.length >= MAX_ROLES;
-
-                                return (
-                                  <button
-                                    type="button"
-                                    key={role}
-                                    onClick={() => toggleRole(role)}
-                                    disabled={isDisabled}
-                                    className={`p-3 rounded-lg text-sm text-left border transition-all ${
-                                      isSelected
-                                        ? 'border-purple-500 bg-purple-500/20 text-white'
-                                        : isDisabled
-                                          ? 'border-white/5 bg-white/[0.02] text-white/30 cursor-not-allowed'
-                                          : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20 cursor-pointer'
-                                    }`}
-                                  >
-                                    <span className="flex items-center gap-2">
-                                      {isSelected && <Check className="w-3.5 h-3.5 text-purple-400 shrink-0" />}
-                                      {SPECIFIC_ROLE_LABELS[role]}
-                                    </span>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Contact info — shown after at least 1 role selected */}
-                    {selectedRoles.length > 0 && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        transition={{ duration: 0.2 }}
-                        className="space-y-4"
-                      >
-                        <div className="h-px bg-kreoon-border" />
-
-                        <p className="text-sm text-kreoon-text-secondary">Datos de contacto</p>
-
-                        <div className="grid gap-4">
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-sm text-kreoon-text-secondary mb-2">Nombre completo *</label>
-                              <Input {...form.register('full_name')} placeholder="Tu nombre" className="bg-white/5 border-white/10" />
-                              {form.formState.errors.full_name && (
-                                <p className="text-red-400 text-xs mt-1">{form.formState.errors.full_name.message}</p>
-                              )}
-                            </div>
-                            <div>
-                              <label className="block text-sm text-kreoon-text-secondary mb-2">Email *</label>
-                              <Input {...form.register('email')} type="email" placeholder="tu@email.com" className="bg-white/5 border-white/10" />
-                              {form.formState.errors.email && (
-                                <p className="text-red-400 text-xs mt-1">{form.formState.errors.email.message}</p>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-sm text-kreoon-text-secondary mb-2">WhatsApp (opcional)</label>
-                              <Input {...form.register('phone')} placeholder="+57 300 123 4567" className="bg-white/5 border-white/10" />
-                            </div>
-                            <div>
-                              <label className="block text-sm text-kreoon-text-secondary mb-2">Ciudad (opcional)</label>
-                              <Input {...form.register('city')} placeholder="Medellín" className="bg-white/5 border-white/10" />
-                            </div>
-                          </div>
-
-                          <div>
-                            <label className="block text-sm text-kreoon-text-secondary mb-2">Portafolio / Website (opcional)</label>
-                            <Input {...form.register('portfolio_url')} placeholder="https://tuportfolio.com" className="bg-white/5 border-white/10" />
-                            {form.formState.errors.portfolio_url && (
-                              <p className="text-red-400 text-xs mt-1">{form.formState.errors.portfolio_url.message}</p>
-                            )}
-                          </div>
-
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-sm text-kreoon-text-secondary mb-2 flex items-center gap-2">
-                                <Instagram className="w-4 h-4" /> Instagram (opcional)
-                              </label>
-                              <Input {...form.register('instagram')} placeholder="@tuusuario" className="bg-white/5 border-white/10" />
-                            </div>
-                            <div>
-                              <label className="block text-sm text-kreoon-text-secondary mb-2 flex items-center gap-2">
-                                <Music2 className="w-4 h-4" /> TikTok (opcional)
-                              </label>
-                              <Input {...form.register('tiktok')} placeholder="@tuusuario" className="bg-white/5 border-white/10" />
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {submitError && (
-                      <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-                        {submitError}
                       </div>
-                    )}
+                    );
+                  })}
+                </motion.div>
+              )}
 
-                    <div className="flex gap-3">
-                      <Button type="button" onClick={handlePrevStep} variant="outline" className="flex-1 border-white/20">
-                        <ArrowLeft className="w-4 h-4 mr-2" /> Atrás
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={isSubmitting || selectedRoles.length === 0}
-                        className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50"
-                      >
-                        {isSubmitting ? (
-                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enviando...</>
-                        ) : (
-                          <>Unirme a Kreoon <Sparkles className="w-4 h-4 ml-2" /></>
-                        )}
-                      </Button>
-                    </div>
+              {/* Experience */}
+              {selectedCategories.length > 0 && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} transition={{ duration: 0.2 }}>
+                  <p className="text-sm text-kreoon-text-secondary mb-2">Experiencia</p>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {EXPERIENCE_OPTIONS.map((option) => {
+                      const isSelected = step2Form.watch('experience_level') === option.value;
+                      return (
+                        <label
+                          key={option.value}
+                          className={`p-2 rounded-lg cursor-pointer text-center border transition-all ${
+                            isSelected ? 'border-purple-500 bg-purple-500/20' : 'border-white/10 bg-white/5 hover:border-white/20'
+                          }`}
+                        >
+                          <input type="radio" value={option.value} {...step2Form.register('experience_level')} className="sr-only" />
+                          <p className="font-medium text-xs text-kreoon-text-primary">{option.label}</p>
+                          <p className="text-[10px] text-kreoon-text-muted">{option.description}</p>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
 
-                    <p className="text-center text-kreoon-text-muted text-xs">
-                      Al registrarte aceptas nuestros{' '}
-                      <a href="/terminos" className="underline">Términos</a> y{' '}
-                      <a href="/privacidad" className="underline">Política de Privacidad</a>
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {/* Social + extras */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="flex items-center gap-1.5 text-xs text-kreoon-text-secondary mb-1.5">
+                    <Instagram className="w-3 h-3" /> Instagram
+                  </label>
+                  <Input {...step2Form.register('instagram')} placeholder="@usuario" className="bg-white/5 border-white/10 h-9 text-sm" />
+                </div>
+                <div>
+                  <label className="flex items-center gap-1.5 text-xs text-kreoon-text-secondary mb-1.5">
+                    <Music2 className="w-3 h-3" /> TikTok
+                  </label>
+                  <Input {...step2Form.register('tiktok')} placeholder="@usuario" className="bg-white/5 border-white/10 h-9 text-sm" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-kreoon-text-secondary mb-1.5 block">Ciudad</label>
+                  <Input {...step2Form.register('city')} placeholder="Tu ciudad" className="bg-white/5 border-white/10 h-9 text-sm" />
+                </div>
+                <div>
+                  <label className="text-xs text-kreoon-text-secondary mb-1.5 block">Portafolio</label>
+                  <Input {...step2Form.register('portfolio_url')} placeholder="https://..." className="bg-white/5 border-white/10 h-9 text-sm" />
+                </div>
+              </div>
+
+              {submitError && (
+                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                  {submitError}
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSkipStep2}
+                  className="flex-1 border-white/20 text-sm"
+                >
+                  Omitir
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-[2] bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 text-sm font-semibold"
+                >
+                  {isSubmitting ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Guardando...</>
+                  ) : (
+                    <>Completar perfil <Sparkles className="w-4 h-4 ml-2" /></>
+                  )}
+                </Button>
+              </div>
             </form>
-          </KreoonGlassCard>
-
-      {/* Trust elements */}
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-sm text-kreoon-text-muted">
-        <span className="inline-flex items-center gap-1.5">
-          <DollarSign className="h-4 w-4 text-emerald-400" /> 100% gratuito
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <ShieldCheck className="h-4 w-4 text-kreoon-purple-400" /> Datos protegidos
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <Clock className="h-4 w-4 text-amber-400" /> 2 min para completar
-        </span>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 
@@ -651,30 +652,24 @@ export default function TalentFormSection({ id, open = true, onClose, onSuccess 
   if (isModal) {
     return (
       <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
-        {/* Backdrop */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
           className="absolute inset-0 bg-black/70 backdrop-blur-sm"
           onClick={onClose}
         />
-        {/* Modal panel — slides up on mobile, centered on desktop */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 40 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="relative w-full sm:max-w-2xl max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-kreoon-border bg-kreoon-bg-primary p-5 sm:p-6 md:p-8 shadow-kreoon-glow-sm"
+          className="relative w-full sm:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-kreoon-border bg-kreoon-bg-primary p-5 sm:p-6 shadow-kreoon-glow-sm"
         >
-          {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-10 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-colors"
+            className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
-
           {formContent}
         </motion.div>
       </div>
@@ -693,8 +688,10 @@ export default function TalentFormSection({ id, open = true, onClose, onSuccess 
           }}
         />
       </div>
-      <div className="relative mx-auto max-w-2xl px-4 lg:px-8">
-        {formContent}
+      <div className="relative mx-auto max-w-lg px-4 lg:px-8">
+        <KreoonGlassCard intensity="strong" className="p-6 md:p-8">
+          {formContent}
+        </KreoonGlassCard>
       </div>
     </section>
   );
