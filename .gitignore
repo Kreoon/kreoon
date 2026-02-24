@@ -27,6 +27,12 @@ dist-ssr
 # Supabase local files
 supabase/.temp/
 
+# Vibe Kanban data
+.kanban/
+
+# Reportes generados
+reports/
+
 # Environment variables (nunca commitear secretos)
 .env
 .env.local

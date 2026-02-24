@@ -1,0 +1,32 @@
+{
+  "recommendations": [
+    // IA
+    "saoudrizwan.claude-dev",
+    "github.copilot",
+    "github.copilot-chat",
+    "continue.continue",
+    "codeium.codeium",
+
+    // Desarrollo
+    "bradlc.vscode-tailwindcss",
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "ms-vscode.vscode-typescript-next",
+    "formulahendry.auto-rename-tag",
+    "christian-kohler.path-intellisense",
+
+    // Base de datos
+    "cweijan.vscode-postgresql-client2",
+
+    // Git
+    "eamodio.gitlens",
+    "mhutchie.git-graph",
+
+    // Productividad
+    "usernamehw.errorlens",
+    "wayou.vscode-todo-highlight",
+    "gruntfuggly.todo-tree",
+    "streetsidesoftware.code-spell-checker-spanish"
+  ],
+  "unwantedRecommendations": []
+}
