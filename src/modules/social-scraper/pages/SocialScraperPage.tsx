@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Search, Target, Brain } from "lucide-react";
+import { UnderConstructionGuard } from "@/components/layout/UnderConstructionGuard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,6 +66,7 @@ export default function SocialScraperPage() {
   const pendingCount = (itemsData?.items || []).filter((i) => !i.ai_analysis).length;
 
   return (
+    <UnderConstructionGuard moduleName="Social Scraper" description="Scraping organico de contenido en Instagram, TikTok, Facebook, YouTube y X. Este modulo estara disponible pronto para todos los usuarios.">
     <div className="space-y-6 p-6">
       {/* Header */}
       <div>
@@ -204,5 +206,6 @@ export default function SocialScraperPage() {
         isAnalyzing={analyzingItemId === selectedItem?.id}
       />
     </div>
+    </UnderConstructionGuard>
   );
 }

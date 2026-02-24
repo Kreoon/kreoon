@@ -410,6 +410,24 @@ export function useMarketplaceCampaigns(options: UseMarketplaceCampaignsOptions 
     return updateCampaign(id, { status: 'active', published_at: new Date().toISOString() });
   }, [updateCampaign]);
 
+  const deleteCampaign = useCallback(async (id: string): Promise<boolean> => {
+    try {
+      // Only allow deleting draft campaigns
+      const { error: err } = await (supabase as any)
+        .from('marketplace_campaigns')
+        .delete()
+        .eq('id', id)
+        .eq('status', 'draft');
+
+      if (err) throw err;
+      setCampaigns(prev => prev.filter(c => c.id !== id));
+      return true;
+    } catch (err) {
+      console.error('[useMarketplaceCampaigns] Delete error:', err);
+      return false;
+    }
+  }, []);
+
   const submitApplication = useCallback(async (data: {
     campaign_id: string;
     creator_id: string;
@@ -897,6 +915,7 @@ export function useMarketplaceCampaigns(options: UseMarketplaceCampaignsOptions 
     createCampaign,
     updateCampaign,
     publishCampaign,
+    deleteCampaign,
     submitApplication,
     updateApplicationStatus,
     // Media operations

@@ -7,6 +7,7 @@ import { ProductGrid } from '../components/ProductGrid';
 import { CreateProductDialog } from '../components/CreateProductDialog';
 import { useToast } from '@/hooks/use-toast';
 import { AD_GENERATOR_TOKEN_COST } from '../config';
+import { UnderConstructionGuard } from '@/components/layout/UnderConstructionGuard';
 
 export default function AdGeneratorPage() {
   const [showCreate, setShowCreate] = useState(false);
@@ -26,6 +27,7 @@ export default function AdGeneratorPage() {
   };
 
   return (
+    <UnderConstructionGuard moduleName="Generador de Anuncios" description="Crea banners profesionales con IA. Este modulo estara disponible pronto para todos los usuarios.">
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -79,5 +81,6 @@ export default function AdGeneratorPage() {
 
       <CreateProductDialog open={showCreate} onOpenChange={setShowCreate} />
     </div>
+    </UnderConstructionGuard>
   );
 }

@@ -4,6 +4,8 @@ import {
   Eye, Camera, FileCheck, UserCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { PriceInput } from '@/components/ui/PriceInput';
 import type { BrandActivationConfig, SocialPlatform, VerificationMethod } from '@/components/marketplace/types/brandActivation';
 import { SOCIAL_PLATFORMS } from '@/components/marketplace/types/brandActivation';
 
@@ -400,37 +402,22 @@ export function ActivationCampaignConfig({ config, onChange }: ActivationCampaig
                 ['per_1k_shares', 'Por cada 1K shares'],
                 ['per_1k_views', 'Por cada 1K views'],
               ] as const).map(([key, label]) => (
-                <div key={key}>
-                  <label className="text-xs font-medium text-green-300">{label}</label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-gray-500 text-sm">$</span>
-                    <input
-                      type="number"
-                      min={0}
-                      value={bonus[key] || 0}
-                      onChange={e => updateBonus({ [key]: parseInt(e.target.value) || 0 })}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-green-500"
-                    />
-                    <span className="text-gray-500 text-xs shrink-0">COP</span>
-                  </div>
-                </div>
+                <PriceInput
+                  key={key}
+                  label={label}
+                  valueUsd={bonus[key] || 0}
+                  onChangeUsd={v => updateBonus({ [key]: v })}
+                  inputClassName="focus:border-green-500"
+                />
               ))}
             </div>
 
-            <div>
-              <label className="text-xs font-medium text-green-300">Bonus máximo por creador</label>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-gray-500 text-sm">$</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={bonus.max_bonus}
-                  onChange={e => updateBonus({ max_bonus: parseInt(e.target.value) || 500000 })}
-                  className="w-40 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-green-500"
-                />
-                <span className="text-gray-500 text-xs">COP</span>
-              </div>
-            </div>
+            <PriceInput
+              label="Bonus máximo por creador"
+              valueUsd={bonus.max_bonus}
+              onChangeUsd={v => updateBonus({ max_bonus: v })}
+              inputClassName="focus:border-green-500 w-40"
+            />
           </div>
         )}
       </section>

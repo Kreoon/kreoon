@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Video, Calendar, Users, Activity, Loader2 } from 'lucide-react';
+import { UnderConstructionGuard } from '@/components/layout/UnderConstructionGuard';
 
 // Hooks
 import { useKreoonLive } from '@/hooks/useKreoonLive';
@@ -93,6 +94,7 @@ export default function Live() {
   }
 
   return (
+    <UnderConstructionGuard moduleName="Kreoon Live" description="Gestiona transmisiones en vivo con Kreoon. Este modulo estara disponible pronto para todos los usuarios.">
     <div className="min-h-screen">
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Page Header - Kreoon Tech */}
@@ -170,5 +172,6 @@ export default function Live() {
       </Tabs>
       </div>
     </div>
+    </UnderConstructionGuard>
   );
 }

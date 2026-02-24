@@ -1,5 +1,8 @@
 import { DollarSign, Gift, Layers, Shield, Gavel, ArrowUpDown, Eye, EyeOff, Calendar, Briefcase } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PriceInput } from '@/components/ui/PriceInput';
+import { InlinePrice } from '@/components/ui/Price';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import type { CampaignType, CampaignBudgetMode, CampaignPricingMode, BidVisibility } from '../../types/marketplace';
 
 export interface CampaignBudgetData {
@@ -40,6 +43,7 @@ const PRICING_OPTIONS: { value: CampaignPricingMode; label: string; description:
 import { COMMISSION_RATES } from '@/lib/finance/constants';
 
 export function CampaignStepBudget({ data, onChange, contentCount }: CampaignStepBudgetProps) {
+  const { formatPrice } = useCurrency();
   const showPaymentFields = data.campaign_type === 'paid' || data.campaign_type === 'hybrid';
   const showExchangeFields = data.campaign_type === 'exchange' || data.campaign_type === 'hybrid';
 
@@ -48,7 +52,7 @@ export function CampaignStepBudget({ data, onChange, contentCount }: CampaignSte
     ? COMMISSION_RATES.campaigns_managed.max   // 40%
     : COMMISSION_RATES.campaigns_managed.base;  // 30%
 
-  // Financial summary
+  // Financial summary (all values in USD)
   const totalCreatorPayment = data.budget_mode === 'per_video'
     ? data.budget_per_video * contentCount * data.max_creators
     : data.total_budget;
@@ -189,15 +193,19 @@ export function CampaignStepBudget({ data, onChange, contentCount }: CampaignSte
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {data.budget_mode === 'per_video' ? (
-              <div>
-                <label className="text-gray-500 text-xs block mb-1">Precio por video (COP)</label>
-                <input type="number" value={data.budget_per_video || ''} onChange={e => onChange('budget_per_video', Number(e.target.value) || 0)} placeholder="300000" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500" />
-              </div>
+              <PriceInput
+                label="Precio por video"
+                valueUsd={data.budget_per_video}
+                onChangeUsd={(v) => onChange('budget_per_video', v)}
+                placeholder="75"
+              />
             ) : (
-              <div>
-                <label className="text-gray-500 text-xs block mb-1">Presupuesto total (COP)</label>
-                <input type="number" value={data.total_budget || ''} onChange={e => onChange('total_budget', Number(e.target.value) || 0)} placeholder="3000000" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500" />
-              </div>
+              <PriceInput
+                label="Presupuesto total"
+                valueUsd={data.total_budget}
+                onChangeUsd={(v) => onChange('total_budget', v)}
+                placeholder="750"
+              />
             )}
             <div>
               <label className="text-gray-500 text-xs block mb-1">Maximo de creadores</label>
@@ -209,15 +217,15 @@ export function CampaignStepBudget({ data, onChange, contentCount }: CampaignSte
               <h4 className="text-gray-400 text-xs font-semibold uppercase">Resumen Financiero</h4>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Pago a creadores</span>
-                <span className="text-white">${totalCreatorPayment.toLocaleString()} COP</span>
+                <span className="text-white"><InlinePrice amount={totalCreatorPayment} /></span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400 flex items-center gap-1"><Shield className="h-3 w-3" />Comision Kreoon ({commissionPct}%)</span>
-                <span className="text-gray-400">${platformFee.toLocaleString()} COP</span>
+                <span className="text-gray-400"><InlinePrice amount={platformFee} /></span>
               </div>
               <div className="flex justify-between text-sm pt-2 border-t border-white/5">
                 <span className="text-white font-semibold">Costo total estimado</span>
-                <span className="text-purple-300 font-bold">${totalCost.toLocaleString()} COP</span>
+                <span className="text-purple-300 font-bold"><InlinePrice amount={totalCost} /></span>
               </div>
               {data.budget_mode === 'per_video' && (
                 <p className="text-gray-600 text-xs">Basado en {contentCount} videos x {data.max_creators} creadores</p>
@@ -228,13 +236,26 @@ export function CampaignStepBudget({ data, onChange, contentCount }: CampaignSte
       )}
 
       {/* Auction mode fields */}
-      {showPaymentFields && data.pricing_mode === 'auction' && (
+      {showPaymentFields && data.pricing_mode === 'auction' && (() => {
+        const auctionMaxTotal = data.budget_per_video * contentCount * data.max_creators;
+        const auctionMaxFee = Math.round(auctionMaxTotal * commissionPct / 100);
+        const auctionMaxCost = auctionMaxTotal + auctionMaxFee;
+        const auctionDepositPct = 0.7;
+        const auctionDeposit = Math.round(auctionMaxCost * auctionDepositPct);
+        return (
         <div className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-4">
           <div className="flex items-center gap-2">
             <Gavel className="h-5 w-5 text-orange-400" />
             <h3 className="text-white text-sm font-semibold">Configuracion de Subasta</h3>
           </div>
           <p className="text-gray-500 text-xs">Los creadores enviaran ofertas libremente. Tu seleccionas las mejores.</p>
+          <PriceInput
+            label="Presupuesto maximo por video"
+            valueUsd={data.budget_per_video}
+            onChangeUsd={(v) => onChange('budget_per_video', v)}
+            placeholder="100"
+          />
+          <p className="text-gray-600 text-[10px]">Este es el monto maximo que estas dispuesto a pagar por video. Se cobra el 70% como deposito al publicar.</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-gray-500 text-xs block mb-1">Maximo de creadores</label>
@@ -259,13 +280,36 @@ export function CampaignStepBudget({ data, onChange, contentCount }: CampaignSte
               {data.bid_visibility === 'public' ? 'Los creadores pueden ver las ofertas de otros participantes' : 'Las ofertas son privadas — solo tu puedes verlas'}
             </p>
           </div>
-          <div>
-            <label className="text-gray-500 text-xs block mb-1">Presupuesto referencia por video (opcional, COP)</label>
-            <input type="number" value={data.budget_per_video || ''} onChange={e => onChange('budget_per_video', Number(e.target.value) || 0)} placeholder="No se muestra a creadores" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500" />
-            <p className="text-gray-600 text-[10px] mt-1">Solo para tu referencia interna. No se muestra a los creadores.</p>
-          </div>
+          {data.budget_per_video > 0 && (
+            <div className="bg-background rounded-lg p-4 space-y-2">
+              <h4 className="text-gray-400 text-xs font-semibold uppercase">Resumen de Costos</h4>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Pago max a creadores</span>
+                <span className="text-white"><InlinePrice amount={auctionMaxTotal} /></span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400 flex items-center gap-1"><Shield className="h-3 w-3" />Comision Kreoon ({commissionPct}%)</span>
+                <span className="text-gray-400"><InlinePrice amount={auctionMaxFee} /></span>
+              </div>
+              <div className="flex justify-between text-sm text-gray-500">
+                <span>Costo max total</span>
+                <span><InlinePrice amount={auctionMaxCost} /></span>
+              </div>
+              <div className="flex justify-between text-sm pt-2 border-t border-white/5">
+                <span className="text-white font-semibold">Deposito inicial (70%)</span>
+                <span className="text-orange-300 font-bold"><InlinePrice amount={auctionDeposit} /></span>
+              </div>
+              <p className="text-gray-600 text-xs">Basado en {contentCount} videos x {data.max_creators} creadores</p>
+              <div className="mt-2 p-2.5 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                <p className="text-orange-300 text-[11px] leading-relaxed">
+                  La campana se publica sin cobro. Al aprobar creadores, se cobra el 70% como deposito. El 30% restante se cobra al cerrar la subasta.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+        );
+      })()}
 
       {/* Range mode fields */}
       {showPaymentFields && data.pricing_mode === 'range' && (
@@ -276,14 +320,18 @@ export function CampaignStepBudget({ data, onChange, contentCount }: CampaignSte
           </div>
           <p className="text-gray-500 text-xs">Define un rango de precio. Los creadores haran ofertas dentro de estos limites.</p>
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-gray-500 text-xs block mb-1">Oferta minima (COP)</label>
-              <input type="number" value={data.min_bid || ''} onChange={e => onChange('min_bid', Number(e.target.value) || 0)} placeholder="150000" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500" />
-            </div>
-            <div>
-              <label className="text-gray-500 text-xs block mb-1">Oferta maxima (COP)</label>
-              <input type="number" value={data.max_bid || ''} onChange={e => onChange('max_bid', Number(e.target.value) || 0)} placeholder="500000" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500" />
-            </div>
+            <PriceInput
+              label="Oferta minima"
+              valueUsd={data.min_bid}
+              onChangeUsd={(v) => onChange('min_bid', v)}
+              placeholder="40"
+            />
+            <PriceInput
+              label="Oferta maxima"
+              valueUsd={data.max_bid}
+              onChangeUsd={(v) => onChange('max_bid', v)}
+              placeholder="125"
+            />
           </div>
           {data.min_bid > 0 && data.max_bid > 0 && data.min_bid > data.max_bid && (
             <p className="text-red-400 text-xs">La oferta minima no puede ser mayor a la maxima</p>
@@ -309,24 +357,37 @@ export function CampaignStepBudget({ data, onChange, contentCount }: CampaignSte
               </button>
             </div>
           </div>
-          {data.min_bid > 0 && data.max_bid > 0 && data.max_bid >= data.min_bid && (
+          {data.min_bid > 0 && data.max_bid > 0 && data.max_bid >= data.min_bid && (() => {
+            const rangeMinCreator = data.min_bid * contentCount * data.max_creators;
+            const rangeMinFee = Math.round(rangeMinCreator * commissionPct / 100);
+            const rangeDeposit = rangeMinCreator + rangeMinFee;
+            const rangeMaxCreator = data.max_bid * contentCount * data.max_creators;
+            const rangeMaxFee = Math.round(rangeMaxCreator * commissionPct / 100);
+            const rangeMaxTotal = rangeMaxCreator + rangeMaxFee;
+            return (
             <div className="bg-background rounded-lg p-4 space-y-2">
-              <h4 className="text-gray-400 text-xs font-semibold uppercase">Estimacion de Costos</h4>
+              <h4 className="text-gray-400 text-xs font-semibold uppercase">Resumen de Costos</h4>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Rango por video</span>
-                <span className="text-white">${data.min_bid.toLocaleString()} - ${data.max_bid.toLocaleString()} COP</span>
+                <span className="text-white"><InlinePrice amount={data.min_bid} /> - <InlinePrice amount={data.max_bid} /></span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Costo min estimado</span>
-                <span className="text-foreground/80">${Math.round(data.min_bid * contentCount * data.max_creators * (1 + commissionPct / 100)).toLocaleString()} COP</span>
+              <div className="flex justify-between text-sm text-gray-500">
+                <span>Costo max total (incl. {commissionPct}%)</span>
+                <span><InlinePrice amount={rangeMaxTotal} /></span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Costo max estimado</span>
-                <span className="text-purple-300 font-bold">${Math.round(data.max_bid * contentCount * data.max_creators * (1 + commissionPct / 100)).toLocaleString()} COP</span>
+              <div className="flex justify-between text-sm pt-2 border-t border-white/5">
+                <span className="text-white font-semibold">Deposito inicial (oferta min)</span>
+                <span className="text-blue-300 font-bold"><InlinePrice amount={rangeDeposit} /></span>
               </div>
-              <p className="text-gray-600 text-xs">Incluye {commissionPct}% comision | {contentCount} videos x {data.max_creators} creadores</p>
+              <p className="text-gray-600 text-xs">{contentCount} videos x {data.max_creators} creadores x <InlinePrice amount={data.min_bid} /> + {commissionPct}%</p>
+              <div className="mt-2 p-2.5 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <p className="text-blue-300 text-[11px] leading-relaxed">
+                  La campana se publica sin cobro. Al aprobar creadores, se cobra el deposito basado en la oferta minima. Si las ofertas aceptadas lo superan, se cobra la diferencia.
+                </p>
+              </div>
             </div>
-          )}
+            );
+          })()}
         </div>
       )}
 
@@ -341,10 +402,12 @@ export function CampaignStepBudget({ data, onChange, contentCount }: CampaignSte
             <label className="text-gray-500 text-xs block mb-1">Nombre del producto</label>
             <input value={data.exchange_product_name} onChange={e => onChange('exchange_product_name', e.target.value)} placeholder="Ej: Audifonos Bluetooth TG-500" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500" />
           </div>
-          <div>
-            <label className="text-gray-500 text-xs block mb-1">Valor estimado (COP)</label>
-            <input type="number" value={data.exchange_product_value || ''} onChange={e => onChange('exchange_product_value', Number(e.target.value) || 0)} placeholder="180000" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500" />
-          </div>
+          <PriceInput
+            label="Valor estimado"
+            valueUsd={data.exchange_product_value}
+            onChangeUsd={(v) => onChange('exchange_product_value', v)}
+            placeholder="45"
+          />
           <div>
             <label className="text-gray-500 text-xs block mb-1">Descripcion del producto</label>
             <textarea value={data.exchange_product_description} onChange={e => onChange('exchange_product_description', e.target.value)} placeholder="Describe el producto que recibiran los creadores..." rows={3} className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500 resize-none" />

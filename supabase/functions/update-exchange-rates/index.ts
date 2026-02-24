@@ -16,20 +16,12 @@ const EXCHANGE_RATE_API = 'https://api.exchangerate-api.com/v4/latest/USD';
 // Monedas que nos interesan
 const TARGET_CURRENCIES = ['COP', 'MXN', 'PEN', 'CLP', 'ARS', 'BRL', 'EUR'];
 
-// Spread por defecto (2%)
-const DEFAULT_SPREAD = 0.02;
-
-// Tiempo de expiración (2 horas)
-const EXPIRATION_HOURS = 2;
-
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    // Crear cliente Supabase con service role
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -37,9 +29,11 @@ serve(async (req) => {
       throw new Error('Missing Supabase environment variables');
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
 
-    // Fetch tasas desde API externa
+    // Fetch rates from external API
     console.log('Fetching exchange rates from API...');
     const response = await fetch(EXCHANGE_RATE_API);
 
@@ -50,117 +44,70 @@ serve(async (req) => {
     const data = await response.json();
     console.log('Received rates for:', Object.keys(data.rates).length, 'currencies');
 
-    // Preparar tasas para insertar
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + EXPIRATION_HOURS * 60 * 60 * 1000);
-
-    const rates: Array<{
-      from_currency: string;
-      to_currency: string;
-      rate: number;
-      spread: number;
-      source: string;
-      expires_at: string;
-    }> = [];
+    // Update rates using UPSERT (matches actual table schema: from_currency, to_currency, rate, is_active)
+    let updatedCount = 0;
 
     for (const currency of TARGET_CURRENCIES) {
       const rate = data.rates[currency];
-
       if (!rate) {
         console.warn(`No rate found for ${currency}`);
         continue;
       }
 
-      // USD -> Moneda local
-      rates.push({
-        from_currency: 'USD',
-        to_currency: currency,
-        rate: rate,
-        spread: DEFAULT_SPREAD,
-        source: 'exchangerate-api',
-        expires_at: expiresAt.toISOString(),
-      });
+      // USD → Local currency
+      const { error: e1 } = await supabase
+        .from('exchange_rates')
+        .update({ rate, created_at: new Date().toISOString() })
+        .eq('from_currency', 'USD')
+        .eq('to_currency', currency)
+        .eq('is_active', true);
 
-      // Moneda local -> USD (inverso)
-      rates.push({
-        from_currency: currency,
-        to_currency: 'USD',
-        rate: 1 / rate,
-        spread: DEFAULT_SPREAD,
-        source: 'exchangerate-api',
-        expires_at: expiresAt.toISOString(),
-      });
-    }
-
-    // También agregar EUR <-> otras monedas importantes
-    const eurRate = data.rates['EUR'];
-    if (eurRate) {
-      for (const currency of ['COP', 'MXN']) {
-        const localRate = data.rates[currency];
-        if (localRate) {
-          // EUR -> Local (a través de USD)
-          rates.push({
-            from_currency: 'EUR',
-            to_currency: currency,
-            rate: localRate / eurRate,
-            spread: DEFAULT_SPREAD,
-            source: 'exchangerate-api',
-            expires_at: expiresAt.toISOString(),
-          });
-
-          // Local -> EUR
-          rates.push({
-            from_currency: currency,
-            to_currency: 'EUR',
-            rate: eurRate / localRate,
-            spread: DEFAULT_SPREAD,
-            source: 'exchangerate-api',
-            expires_at: expiresAt.toISOString(),
-          });
-        }
+      if (e1) {
+        // Row doesn't exist yet, insert it
+        await supabase.from('exchange_rates').insert({
+          from_currency: 'USD',
+          to_currency: currency,
+          rate,
+          is_active: true,
+        });
       }
+
+      // Local currency → USD (inverse)
+      const inverseRate = 1 / rate;
+      const { error: e2 } = await supabase
+        .from('exchange_rates')
+        .update({ rate: inverseRate, created_at: new Date().toISOString() })
+        .eq('from_currency', currency)
+        .eq('to_currency', 'USD')
+        .eq('is_active', true);
+
+      if (e2) {
+        await supabase.from('exchange_rates').insert({
+          from_currency: currency,
+          to_currency: 'USD',
+          rate: inverseRate,
+          is_active: true,
+        });
+      }
+
+      updatedCount += 2;
     }
 
-    console.log('Inserting', rates.length, 'exchange rates...');
+    // Log main rates
+    const mainRates = TARGET_CURRENCIES
+      .map(c => `${c}: ${data.rates[c]?.toFixed(2) || 'N/A'}`)
+      .join(', ');
 
-    // Insertar tasas en la base de datos
-    const { error } = await supabase
-      .from('exchange_rates')
-      .insert(rates);
-
-    if (error) {
-      throw error;
-    }
-
-    // Limpiar tasas antiguas (más de 24 horas)
-    const cleanupDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const { error: cleanupError } = await supabase
-      .from('exchange_rates')
-      .delete()
-      .lt('expires_at', cleanupDate.toISOString());
-
-    if (cleanupError) {
-      console.warn('Error cleaning up old rates:', cleanupError.message);
-    }
-
-    // Log de tasas principales
-    const mainRates = rates
-      .filter(r => r.from_currency === 'USD')
-      .map(r => `${r.to_currency}: ${r.rate.toFixed(2)}`);
-
-    console.log('Updated rates:', mainRates.join(', '));
+    console.log(`Updated ${updatedCount} rates: ${mainRates}`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        rates_updated: rates.length,
-        expires_at: expiresAt.toISOString(),
-        rates: rates
-          .filter(r => r.from_currency === 'USD')
-          .reduce((acc, r) => {
-            acc[r.to_currency] = r.rate;
-            return acc;
-          }, {} as Record<string, number>),
+        rates_updated: updatedCount,
+        rates: TARGET_CURRENCIES.reduce((acc, c) => {
+          if (data.rates[c]) acc[c] = data.rates[c];
+          return acc;
+        }, {} as Record<string, number>),
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

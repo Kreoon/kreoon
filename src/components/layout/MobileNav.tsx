@@ -22,7 +22,6 @@ import {
   UserPlus,
   MessageSquare,
   ListChecks,
-  ContactRound,
   Video,
   TrendingUp,
   BarChart3,
@@ -69,25 +68,40 @@ interface NavSection {
 
 // ── Navigation sections — MUST mirror Sidebar.tsx exactly ──
 
+const MARKETING_ITEMS: NavItem[] = [
+  { name: "Marketing", href: "/marketing", icon: TrendingUp, requiresOrg: true },
+  { name: "Social Hub", href: "/social-hub", icon: Share2 },
+  { name: "Live", href: "/live", icon: Video },
+  { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3 },
+  { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus },
+  { name: "Ad Intelligence", href: "/admin/ad-intelligence", icon: Search },
+  { name: "Social Scraper", href: "/admin/social-scraper", icon: Radar },
+];
+
+const CONFIG_ITEMS: NavItem[] = [
+  { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
+  { name: "Plan", href: "/planes", icon: Crown },
+  { name: "Settings", href: "/settings", icon: Settings },
+];
+
 const adminSections: NavSection[] = [
   {
     label: "KREOON STUDIO",
     items: [
       { name: "Control Center", href: "/dashboard", icon: LayoutDashboard, requiresOrg: true },
       { name: "Producciones", href: "/board", icon: Kanban, requiresOrg: true },
+      { name: "Portafolio", href: "/content", icon: FileText, requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, requiresOrg: true },
-      { name: "Marketing", href: "/marketing", icon: TrendingUp, requiresOrg: true },
-      { name: "Social Hub", href: "/social-hub", icon: Share2 },
-      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3 },
-      { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus, requiresOrg: true },
       { name: "Ranking", href: "/ranking", icon: Trophy, requiresOrg: true },
-      { name: "Live", href: "/live", icon: Video, requiresOrg: true },
     ]
+  },
+  {
+    label: "MARKETING & MEDIA",
+    items: MARKETING_ITEMS,
   },
   {
     label: "GESTIÓN",
     items: [
-      { name: "Portafolio", href: "/content", icon: FileText, requiresOrg: true },
       { name: "Talento", href: "/talent", icon: Users, requiresOrg: true },
       { name: "Clientes", href: "/clients-hub", icon: Building2, requiresOrg: true },
       { name: "Pipelines", href: "/org-crm/pipelines", icon: GitBranch, requiresOrg: true },
@@ -104,18 +118,9 @@ const adminSections: NavSection[] = [
       { name: "Usuarios", href: "/crm/usuarios", icon: Users },
       { name: "Finanzas", href: "/crm/finanzas", icon: DollarSign },
       { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone },
-      { name: "Ad Intelligence", href: "/admin/ad-intelligence", icon: Search },
-      { name: "Social Scraper", href: "/admin/social-scraper", icon: Radar },
     ]
   },
-  {
-    label: "CONFIG",
-    items: [
-      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
-      { name: "Plan", href: "/planes", icon: Crown },
-      { name: "Settings", href: "/settings", icon: Settings },
-    ]
-  }
+  { label: "CONFIG", items: CONFIG_ITEMS }
 ];
 
 const strategistSections: NavSection[] = [
@@ -124,33 +129,25 @@ const strategistSections: NavSection[] = [
     items: [
       { name: "Control Center", href: "/strategist-dashboard", icon: LayoutDashboard, requiresOrg: true },
       { name: "Producciones", href: "/board", icon: Kanban, requiresOrg: true },
+      { name: "Portafolio", href: "/content", icon: FileText, requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, requiresOrg: true },
-      { name: "Marketing", href: "/marketing", icon: TrendingUp, requiresOrg: true },
-      { name: "Social Hub", href: "/social-hub", icon: Share2 },
-      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3 },
-      { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus, requiresOrg: true },
       { name: "Ranking", href: "/ranking", icon: Trophy, requiresOrg: true },
-      { name: "Live", href: "/live", icon: Video, requiresOrg: true },
     ]
+  },
+  {
+    label: "MARKETING & MEDIA",
+    items: MARKETING_ITEMS,
   },
   {
     label: "GESTIÓN",
     items: [
-      { name: "Portafolio", href: "/content", icon: FileText, requiresOrg: true },
       { name: "Talento", href: "/talent", icon: Users, requiresOrg: true },
       { name: "Clientes", href: "/clients-hub", icon: Building2, requiresOrg: true },
       { name: "Pipelines", href: "/org-crm/pipelines", icon: GitBranch, requiresOrg: true },
       { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, requiresOrg: true },
     ]
   },
-  {
-    label: "CONFIG",
-    items: [
-      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
-      { name: "Plan", href: "/planes", icon: Crown },
-      { name: "Settings", href: "/settings", icon: Settings },
-    ]
-  }
+  { label: "CONFIG", items: CONFIG_ITEMS }
 ];
 
 const editorSections: NavSection[] = [
@@ -161,19 +158,13 @@ const editorSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban },
       { name: "Portafolio", href: "/content", icon: FileText },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
-      { name: "Social Hub", href: "/social-hub", icon: Share2 },
-      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3 },
-      { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus },
     ]
   },
   {
-    label: "CONFIG",
-    items: [
-      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
-      { name: "Plan", href: "/planes", icon: Crown },
-      { name: "Settings", href: "/settings", icon: Settings },
-    ]
-  }
+    label: "MARKETING & MEDIA",
+    items: MARKETING_ITEMS.filter(i => i.href !== '/marketing'),
+  },
+  { label: "CONFIG", items: CONFIG_ITEMS }
 ];
 
 const creatorSections: NavSection[] = [
@@ -184,19 +175,13 @@ const creatorSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban },
       { name: "Portafolio", href: "/content", icon: FileText },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
-      { name: "Social Hub", href: "/social-hub", icon: Share2 },
-      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3 },
-      { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus },
     ]
   },
   {
-    label: "CONFIG",
-    items: [
-      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
-      { name: "Plan", href: "/planes", icon: Crown },
-      { name: "Settings", href: "/settings", icon: Settings },
-    ]
-  }
+    label: "MARKETING & MEDIA",
+    items: MARKETING_ITEMS.filter(i => i.href !== '/marketing'),
+  },
+  { label: "CONFIG", items: CONFIG_ITEMS }
 ];
 
 const clientSections: NavSection[] = [
@@ -205,18 +190,20 @@ const clientSections: NavSection[] = [
     items: [
       { name: "Client Portal", href: "/client-dashboard", icon: LayoutDashboard },
       { name: "Producciones", href: "/client-board", icon: Kanban },
-      { name: "Social Hub", href: "/social-hub", icon: Share2 },
-      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3 },
     ]
   },
   {
-    label: "CONFIG",
+    label: "MARKETING & MEDIA",
     items: [
-      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
-      { name: "Plan", href: "/planes", icon: Crown },
-      { name: "Settings", href: "/settings", icon: Settings },
+      { name: "Social Hub", href: "/social-hub", icon: Share2 },
+      { name: "Live", href: "/live", icon: Video },
+      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3 },
+      { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus },
+      { name: "Ad Intelligence", href: "/admin/ad-intelligence", icon: Search },
+      { name: "Social Scraper", href: "/admin/social-scraper", icon: Radar },
     ]
-  }
+  },
+  { label: "CONFIG", items: CONFIG_ITEMS }
 ];
 
 // Marketplace sections — mirrors Sidebar.tsx

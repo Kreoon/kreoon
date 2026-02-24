@@ -7,7 +7,7 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.verify-campaign-access]
-verify_jwt = true
+verify_jwt = false
 
 [functions.upload-campaign-media]
 verify_jwt = true

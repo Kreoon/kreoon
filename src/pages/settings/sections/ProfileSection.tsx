@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
+import { CURRENCY_FLAGS, CURRENCY_LABELS, type CurrencyCode } from '@/contexts/CurrencyContext';
 import { useCreatorProfile } from '@/hooks/useCreatorProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -343,6 +344,28 @@ function PersonalInfoTab() {
               onChange={(e) => updateField('address', e.target.value)}
               placeholder="Tu dirección"
             />
+          </div>
+
+          <div className="md:col-span-2 space-y-2">
+            <Label htmlFor="display_currency">Moneda de visualización</Label>
+            <Select
+              value={profile.display_currency || 'USD'}
+              onValueChange={(val) => updateField('display_currency', val)}
+            >
+              <SelectTrigger id="display_currency">
+                <SelectValue placeholder="Selecciona moneda" />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(CURRENCY_LABELS) as CurrencyCode[]).map((code) => (
+                  <SelectItem key={code} value={code}>
+                    {CURRENCY_FLAGS[code]} {code} — {CURRENCY_LABELS[code]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Los precios en la plataforma se mostrarán en esta moneda. Los valores se almacenan internamente en USD.
+            </p>
           </div>
         </div>
 

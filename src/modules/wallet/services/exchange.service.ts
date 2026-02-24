@@ -30,17 +30,27 @@ export const exchangeService = {
     }
 
     const { data, error } = await supabase
-      .rpc('get_current_exchange_rate', {
-        p_from_currency: fromCurrency,
-        p_to_currency: toCurrency,
-      });
+      .from('exchange_rates')
+      .select('id, rate, is_active, created_at')
+      .eq('from_currency', fromCurrency)
+      .eq('to_currency', toCurrency)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    if (error) {
-      console.error('Error fetching exchange rate:', error);
+    if (error || !data) {
+      if (error) console.error('Error fetching exchange rate:', error);
       return null;
     }
 
-    return data?.[0] || null;
+    return {
+      rate: data.rate,
+      rate_with_spread: data.rate,
+      spread: 0,
+      expires_at: null,
+      rate_id: data.id,
+    };
   },
 
   /**
@@ -51,8 +61,8 @@ export const exchangeService = {
       .from('exchange_rates')
       .select('*')
       .eq('from_currency', 'USD')
-      .gt('expires_at', new Date().toISOString())
-      .order('fetched_at', { ascending: false });
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching rates:', error);
@@ -204,11 +214,13 @@ export const exchangeService = {
    * Verificar si las tasas están actualizadas
    */
   async areRatesStale(): Promise<boolean> {
+    const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
     const { data, error } = await supabase
       .from('exchange_rates')
-      .select('expires_at')
+      .select('created_at')
       .eq('from_currency', 'USD')
-      .gt('expires_at', new Date().toISOString())
+      .eq('is_active', true)
+      .gt('created_at', sixHoursAgo)
       .limit(1);
 
     if (error || !data || data.length === 0) {

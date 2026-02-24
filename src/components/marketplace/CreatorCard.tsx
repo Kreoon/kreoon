@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, memo } from 'react';
 import { Heart, ChevronLeft, ChevronRight, Star, MapPin, CheckCircle2, Play, Gift, Percent } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import type { MarketplaceCreator, PortfolioMedia } from './types/marketplace';
 import { getBunnyThumbnailUrl } from '@/hooks/useHLSPlayer';
 
@@ -22,6 +23,7 @@ interface CreatorCardProps {
 }
 
 function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps) {
+  const { formatPrice } = useCurrency();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [imgLoaded, setImgLoaded] = useState<Record<number, boolean>>({});
@@ -255,7 +257,7 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
             </div>
             {creator.base_price != null && (
               <span className="text-white/70 text-xs drop-shadow-sm">
-                · Desde <span className="text-white font-semibold">${creator.base_price.toLocaleString()}</span>
+                · Desde <span className="text-white font-semibold">{formatPrice(creator.base_price)}</span>
               </span>
             )}
             {creator.accepts_product_exchange && (

@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ArrowLeft, Users, Calendar, DollarSign, Gift, Layers, Megaphone, Gavel, ArrowUpDown, Loader2, Radio, UserSearch, Shield, Briefcase, CreditCard, Star, Trophy } from 'lucide-react';
+import { Plus, ArrowLeft, Users, Calendar, DollarSign, Gift, Layers, Megaphone, Gavel, ArrowUpDown, Loader2, Radio, UserSearch, Shield, Briefcase, CreditCard, Star, Trophy, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { useMarketplaceCampaigns, CAMPAIGN_STATUS_COLORS, CAMPAIGN_STATUS_LABELS } from '@/hooks/useMarketplaceCampaigns';
 import { CampaignApplicationsReview } from './CampaignApplicationsReview';
 import { CampaignProgress } from './CampaignProgress';
@@ -35,8 +36,9 @@ export function BrandCampaignManager() {
 
   const { toast } = useToast();
   const { user } = useAuth();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   // Only show campaigns created by the current user
-  const { campaigns, loading, activateCampaign, createCampaignCheckout } = useMarketplaceCampaigns({
+  const { campaigns, loading, activateCampaign, createCampaignCheckout, deleteCampaign } = useMarketplaceCampaigns({
     createdBy: user?.id,
   });
 
@@ -55,6 +57,20 @@ export function BrandCampaignManager() {
       window.location.href = url;
     } else {
       toast({ title: 'Error al crear la sesion de pago', variant: 'destructive' });
+    }
+  };
+
+  const handleEdit = (campaignId: string) => {
+    navigate(`/marketplace/campaigns/${campaignId}/edit`);
+  };
+
+  const handleDelete = async (campaignId: string) => {
+    const ok = await deleteCampaign(campaignId);
+    if (ok) {
+      toast({ title: 'Borrador eliminado exitosamente' });
+      setDeletingId(null);
+    } else {
+      toast({ title: 'Error al eliminar el borrador', variant: 'destructive' });
     }
   };
 
@@ -193,6 +209,11 @@ export function BrandCampaignManager() {
                 onViewDetail={() => navigate(`/marketplace/campaigns/${campaign.id}`)}
                 onActivate={() => handleActivate(campaign.id)}
                 onCompletePayment={() => handleCompletePayment(campaign.id)}
+                onEdit={() => handleEdit(campaign.id)}
+                onDelete={() => setDeletingId(campaign.id)}
+                isDeleting={deletingId === campaign.id}
+                onConfirmDelete={() => handleDelete(campaign.id)}
+                onCancelDelete={() => setDeletingId(null)}
               />
             ))}
           </div>
@@ -225,6 +246,11 @@ function CampaignRow({
   onViewDetail,
   onActivate,
   onCompletePayment,
+  onEdit,
+  onDelete,
+  isDeleting,
+  onConfirmDelete,
+  onCancelDelete,
 }: {
   campaign: Campaign;
   onViewApplications: () => void;
@@ -234,7 +260,13 @@ function CampaignRow({
   onViewDetail: () => void;
   onActivate: () => void;
   onCompletePayment: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  isDeleting: boolean;
+  onConfirmDelete: () => void;
+  onCancelDelete: () => void;
 }) {
+  const { formatPrice } = useCurrency();
   const TypeIcon = TYPE_ICONS[campaign.campaign_type];
   const pricingMode = campaign.pricing_mode ?? 'fixed';
   const isBidMode = pricingMode === 'auction' || pricingMode === 'range';
@@ -246,8 +278,8 @@ function CampaignRow({
     ? isBidMode
       ? pricingMode === 'auction'
         ? 'Subasta'
-        : `$${(campaign.min_bid ?? 0).toLocaleString()}-${(campaign.max_bid ?? 0).toLocaleString()}`
-      : `$${(campaign.budget_per_video ?? campaign.total_budget ?? 0).toLocaleString()}`
+        : `${formatPrice(campaign.min_bid ?? 0)}-${formatPrice(campaign.max_bid ?? 0)}`
+      : formatPrice(campaign.budget_per_video ?? campaign.total_budget ?? 0)
     : 'Canje';
 
   return (
@@ -334,7 +366,7 @@ function CampaignRow({
           </div>
         </div>
 
-        <div className="flex gap-2 flex-shrink-0">
+        <div className="flex gap-2 flex-shrink-0 flex-wrap">
           {campaign.status === 'draft' && campaign.payment_status === 'pending_payment' && (
             <button
               onClick={onCompletePayment}
@@ -351,6 +383,41 @@ function CampaignRow({
             >
               Activar
             </button>
+          )}
+          {campaign.status === 'draft' && (
+            <>
+              <button
+                onClick={onEdit}
+                className="text-xs bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 px-3 py-2 rounded-lg transition-colors flex items-center gap-1"
+              >
+                <Pencil className="h-3 w-3" />
+                Editar
+              </button>
+              {isDeleting ? (
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={onConfirmDelete}
+                    className="text-xs bg-red-600/20 hover:bg-red-600/30 text-red-300 px-3 py-2 rounded-lg transition-colors font-medium"
+                  >
+                    Confirmar
+                  </button>
+                  <button
+                    onClick={onCancelDelete}
+                    className="text-xs bg-white/5 hover:bg-white/10 text-gray-400 px-3 py-2 rounded-lg transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={onDelete}
+                  className="text-xs bg-red-600/10 hover:bg-red-600/20 text-red-400 px-3 py-2 rounded-lg transition-colors flex items-center gap-1"
+                >
+                  <Trash2 className="h-3 w-3" />
+                  Eliminar
+                </button>
+              )}
+            </>
           )}
           <button
             onClick={onViewApplications}
