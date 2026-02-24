@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 
 type ConnectStatus = 'not_connected' | 'pending' | 'active' | 'restricted';
 
@@ -43,24 +44,11 @@ export function useStripeConnect(walletId: string | null) {
 
   const startOnboardingMutation = useMutation({
     mutationFn: async (): Promise<string> => {
-      const { data, error } = await supabase.functions.invoke('wallet-connect', {
-        body: {
-          action: 'create-account',
-          wallet_id: walletId,
-        },
+      const data = await invokeEdgeFunction<{ url?: string }>('wallet-connect', undefined, {
+        action: 'create-account',
+        wallet_id: walletId,
       });
 
-      if (error) {
-        // Extract actual error message from FunctionsHttpError context
-        let msg = error.message;
-        try {
-          if ('context' in error && (error as any).context?.body) {
-            const body = await new Response((error as any).context.body).json();
-            msg = body?.error || msg;
-          }
-        } catch { /* ignore parse errors */ }
-        throw new Error(msg);
-      }
       if (!data?.url) throw new Error('No onboarding URL returned');
       return data.url as string;
     },
@@ -76,14 +64,11 @@ export function useStripeConnect(walletId: string | null) {
 
   const getLoginLinkMutation = useMutation({
     mutationFn: async (): Promise<string> => {
-      const { data, error } = await supabase.functions.invoke('wallet-connect', {
-        body: {
-          action: 'get-login-link',
-          wallet_id: walletId,
-        },
+      const data = await invokeEdgeFunction<{ url?: string }>('wallet-connect', undefined, {
+        action: 'get-login-link',
+        wallet_id: walletId,
       });
 
-      if (error) throw error;
       if (!data?.url) throw new Error('No login URL returned');
       return data.url as string;
     },
@@ -98,14 +83,11 @@ export function useStripeConnect(walletId: string | null) {
 
   const refreshOnboardingMutation = useMutation({
     mutationFn: async (): Promise<string> => {
-      const { data, error } = await supabase.functions.invoke('wallet-connect', {
-        body: {
-          action: 'refresh-onboarding',
-          wallet_id: walletId,
-        },
+      const data = await invokeEdgeFunction<{ url?: string }>('wallet-connect', undefined, {
+        action: 'refresh-onboarding',
+        wallet_id: walletId,
       });
 
-      if (error) throw error;
       if (!data?.url) throw new Error('No onboarding URL returned');
       return data.url as string;
     },

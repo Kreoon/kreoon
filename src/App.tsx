@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider, dehydrate, hydrate } from "@tanstack/
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
+import { ErrorBoundary } from "@/components/error";
 import { useNewContentNotifications } from "@/hooks/useNewContentNotifications";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AchievementNotificationProvider } from "@/components/points/AchievementNotificationProvider";
@@ -363,7 +364,9 @@ function AppContent() {
                               <Toaster />
                               <Sonner />
                               <UpdatePrompt />
-                              <AppRoutes />
+                              <ErrorBoundary>
+                                <AppRoutes />
+                              </ErrorBoundary>
                             </TooltipProvider>
                           </KiroProvider>
                         </AICopilotProvider>

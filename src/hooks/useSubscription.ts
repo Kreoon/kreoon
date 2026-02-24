@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import type {
@@ -10,31 +9,11 @@ import type {
   CheckoutResponse,
 } from '@/types/unified-finance.types';
 import { PLANS } from '@/lib/finance/constants';
+import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 
-// ─── Helper: invoke edge function with auth ───
-async function invokeSubscriptionService<T = any>(
-  action: string,
-  body?: Record<string, any>
-): Promise<T> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error('No autenticado');
-
-  const { data, error } = await supabase.functions.invoke(`subscription-service/${action}`, {
-    body: body || {},
-    headers: { Authorization: `Bearer ${session.access_token}` },
-  });
-
-  if (error) {
-    // Try to extract actual error from FunctionsHttpError context
-    const ctx = (error as any)?.context;
-    let msg = error.message;
-    if (ctx && typeof ctx.json === 'function') {
-      try { const body = await ctx.json(); msg = body?.error || msg; } catch {}
-    }
-    throw new Error(msg || `Error en ${action}`);
-  }
-  if (data?.error) throw new Error(data.error);
-  return data as T;
+// ─── Helper: invoke subscription-service ───
+function invokeSubscriptionService<T = unknown>(action: string, body?: Record<string, unknown>) {
+  return invokeEdgeFunction<T>('subscription-service', action, body);
 }
 
 /**

@@ -300,7 +300,7 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.wallet-connect]
-verify_jwt = false
+verify_jwt = true
 
 [functions.wallet-process-withdrawal]
 verify_jwt = true

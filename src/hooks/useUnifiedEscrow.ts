@@ -8,23 +8,11 @@ import type {
   CreateEscrowResponse,
   FundEscrowResponse,
 } from '@/types/unified-finance.types';
+import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 
-// ─── Helper: invoke edge function with auth ───
-async function invokeEscrowService<T = any>(
-  action: string,
-  body?: Record<string, any>
-): Promise<T> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error('No autenticado');
-
-  const { data, error } = await supabase.functions.invoke(`escrow-service/${action}`, {
-    body: body || {},
-    headers: { Authorization: `Bearer ${session.access_token}` },
-  });
-
-  if (error) throw new Error(error.message || `Error en ${action}`);
-  if (data?.error) throw new Error(data.error);
-  return data as T;
+// ─── Helper: invoke escrow-service ───
+function invokeEscrowService<T = unknown>(action: string, body?: Record<string, unknown>) {
+  return invokeEdgeFunction<T>('escrow-service', action, body);
 }
 
 /**
