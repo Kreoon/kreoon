@@ -1,9 +1,12 @@
 import { lazy, Suspense } from 'react';
+import { useParams } from 'react-router-dom';
 import { MembershipGate } from '@/components/marketplace/MembershipGate';
 
 const CampaignWizard = lazy(() => import('@/components/marketplace/campaigns/wizard/CampaignWizard'));
 
 export default function CampaignWizardPage() {
+  const { id } = useParams<{ id?: string }>();
+
   return (
     <MembershipGate>
       <Suspense
@@ -13,7 +16,7 @@ export default function CampaignWizardPage() {
           </div>
         }
       >
-        <CampaignWizard />
+        <CampaignWizard editCampaignId={id} />
       </Suspense>
     </MembershipGate>
   );

@@ -46,6 +46,8 @@ export interface ProfileData {
   portfolio_url: string;
   // Settings
   is_public: boolean;
+  // Currency
+  display_currency: string;
   // Organization
   current_organization_id: string | null;
   // Timestamps
@@ -85,6 +87,7 @@ export const DEFAULT_PROFILE: Omit<ProfileData, 'id' | 'email' | 'created_at' | 
   social_twitter: '',
   portfolio_url: '',
   is_public: true,
+  display_currency: 'USD',
   current_organization_id: null,
 };
 
@@ -155,6 +158,7 @@ function toProfileData(raw: any): ProfileData {
     social_twitter: raw.social_twitter || '',
     portfolio_url: raw.portfolio_url || '',
     is_public: raw.is_public ?? true,
+    display_currency: raw.display_currency || 'USD',
     current_organization_id: raw.current_organization_id || null,
     created_at: raw.created_at || '',
     updated_at: raw.updated_at || '',
@@ -394,6 +398,7 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
           social_twitter: profile.social_twitter,
           portfolio_url: profile.portfolio_url,
           is_public: profile.is_public,
+          display_currency: profile.display_currency,
           updated_at: new Date().toISOString(),
         })
         // Use loaded profile id (can differ from auth id in migration scenarios)

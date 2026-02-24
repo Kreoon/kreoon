@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, ChevronLeft, ChevronRight, FileText, Eye, Video, ImageIcon, DollarSign, ClipboardList, CheckCircle2, Radio, Clapperboard, UserSearch } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 import { useMarketplaceCampaigns } from '@/hooks/useMarketplaceCampaigns';
 import type { CampaignMediaType } from '@/hooks/useMarketplaceCampaigns';
 import { useCampaignAnalytics } from '@/analytics';
@@ -19,6 +20,7 @@ import type { CampaignContentRequirement, CampaignCreatorRequirements, CampaignV
 import { MarketplaceRoleSelector } from '../../roles/MarketplaceRoleSelector';
 import { ActivationCampaignConfig } from './ActivationCampaignConfig';
 import type { BrandActivationConfig } from '../../types/brandActivation';
+import { COMMISSION_RATES } from '@/lib/finance/constants';
 
 type CampaignPurpose = 'content' | 'activation' | 'talent';
 
@@ -138,12 +140,13 @@ function clearDraft() {
   localStorage.removeItem(DRAFT_KEY);
 }
 
-export default function CampaignWizard() {
+export default function CampaignWizard({ editCampaignId }: { editCampaignId?: string } = {}) {
   const navigate = useNavigate();
-  const { createCampaign, uploadCampaignMedia, sendCampaignNotifications, activateCampaign, createCampaignCheckout } = useMarketplaceCampaigns();
+  const { createCampaign, updateCampaign, uploadCampaignMedia, sendCampaignNotifications, activateCampaign, createCampaignCheckout } = useMarketplaceCampaigns();
   const { createBulkInvitations } = useCampaignInvitations();
   const { trackCampaignCreated, trackCampaignPublished } = useCampaignAnalytics();
-  const draft = loadDraft();
+  const isEditMode = !!editCampaignId;
+  const draft = isEditMode ? null : loadDraft();
 
   const [currentStep, setCurrentStep] = useState(draft?.step ?? 0);
   const [basicInfo, setBasicInfo] = useState<CampaignBasicInfo>(draft?.basicInfo ?? DEFAULT_BASIC_INFO);
@@ -165,9 +168,73 @@ export default function CampaignWizard() {
   const coverFileRef = useRef<File | null>(null);
   const videoBriefFileRef = useRef<File | null>(null);
 
-  // Auto-save draft (debounced 1s) — File refs are NOT serializable, only URLs/IDs persist
+  // Load existing campaign data for edit mode
   useEffect(() => {
-    if (isComplete) return;
+    if (!editCampaignId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await (supabase as any)
+          .from('marketplace_campaigns')
+          .select('*')
+          .eq('id', editCampaignId)
+          .single();
+        if (error || !data || cancelled) return;
+
+        setBasicInfo({
+          title: data.title || '',
+          description: data.description || '',
+          category: data.category || '',
+          deadline: data.deadline ? data.deadline.slice(0, 10) : '',
+          tags: data.tags || [],
+        });
+        setVisibilityData({
+          visibility: data.visibility || 'public',
+          organization_id: data.organization_id || undefined,
+          max_creators: data.max_creators || 5,
+          max_applications: data.max_applications || undefined,
+          auto_approve_applications: data.auto_approve_applications || false,
+          requires_portfolio: data.requires_portfolio ?? true,
+          invited_profiles: [],
+        });
+        setContentRequirements(data.content_requirements?.length ? data.content_requirements : DEFAULT_CONTENT);
+        setMediaData({
+          coverImageUrl: data.cover_image_url || '',
+          coverMediaId: data.cover_image_url ? 'existing' : '',
+          videoBriefUrl: '',
+          videoBriefMediaId: '',
+          videoBriefThumbnailUrl: '',
+        });
+        setBudgetData({
+          campaign_type: data.campaign_type || 'paid',
+          budget_mode: data.budget_mode || 'per_video',
+          budget_per_video: data.budget_per_video || 0,
+          total_budget: data.total_budget || 0,
+          max_creators: data.max_creators || 5,
+          exchange_product_name: data.exchange_product_name || '',
+          exchange_product_value: data.exchange_product_value || 0,
+          exchange_product_description: data.exchange_product_description || '',
+          pricing_mode: data.pricing_mode || 'fixed',
+          min_bid: data.min_bid || 0,
+          max_bid: data.max_bid || 0,
+          bid_deadline: data.bid_deadline ? data.bid_deadline.slice(0, 10) : '',
+          bid_visibility: data.bid_visibility || 'public',
+          requires_agency_support: data.requires_agency_support || false,
+        });
+        setCreatorRequirements(data.creator_requirements || DEFAULT_CREATOR_REQS);
+        setCampaignPurpose(data.campaign_purpose || 'content');
+        if (data.activation_config) setActivationConfig(data.activation_config);
+      } catch (err) {
+        console.error('[CampaignWizard] Error loading campaign for edit:', err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [editCampaignId]);
+
+  // Auto-save draft (debounced 1s) — File refs are NOT serializable, only URLs/IDs persist
+  // Skip auto-save in edit mode (data lives in DB, not localStorage)
+  useEffect(() => {
+    if (isComplete || isEditMode) return;
     const timeout = setTimeout(() => {
       saveDraftToStorage({ basicInfo, visibilityData, contentRequirements, mediaData, budgetData, creatorRequirements, isBrandActivation, activationConfig, campaignPurpose, step: currentStep });
     }, 1000);
@@ -220,7 +287,7 @@ export default function CampaignWizard() {
 
         // Payment validation depends on pricing mode
         const hasPaidAmount = budgetData.pricing_mode === 'auction'
-          ? true // auction mode doesn't require a fixed amount
+          ? budgetData.budget_per_video > 0 // auction requires max budget for escrow
           : budgetData.pricing_mode === 'range'
             ? budgetData.min_bid > 0 && budgetData.max_bid > 0 && budgetData.max_bid >= budgetData.min_bid
             : budgetData.budget_per_video > 0 || budgetData.total_budget > 0; // fixed
@@ -259,7 +326,7 @@ export default function CampaignWizard() {
       budget_mode: budgetData.budget_mode,
       budget_per_video: budgetData.budget_per_video || null,
       total_budget: budgetData.total_budget || null,
-      currency: 'COP',
+      currency: 'USD',
       pricing_mode: budgetData.pricing_mode,
       min_bid: budgetData.min_bid || null,
       max_bid: budgetData.max_bid || null,
@@ -270,6 +337,9 @@ export default function CampaignWizard() {
       exchange_product_description: budgetData.exchange_product_description || null,
       // Agency support & commission
       requires_agency_support: budgetData.requires_agency_support,
+      commission_rate: budgetData.requires_agency_support
+        ? COMMISSION_RATES.campaigns_managed.max   // 40% Kreoon Agency
+        : COMMISSION_RATES.campaigns_managed.base, // 30% Self-service
       // Creator requirements
       creator_requirements: creatorRequirements,
       desired_roles: creatorRequirements.desired_roles || [],
@@ -291,10 +361,9 @@ export default function CampaignWizard() {
     return payload;
   };
 
-  // Check if this campaign needs immediate Stripe payment (fixed price + paid/hybrid)
+  // All paid/hybrid campaigns require upfront payment to publish
   const needsImmediatePayment = (): boolean => {
-    const isPaid = budgetData.campaign_type === 'paid' || budgetData.campaign_type === 'hybrid';
-    return isPaid && budgetData.pricing_mode === 'fixed';
+    return budgetData.campaign_type === 'paid' || budgetData.campaign_type === 'hybrid';
   };
 
   const uploadMediaFiles = async (campaignId: string) => {
@@ -339,7 +408,14 @@ export default function CampaignWizard() {
         // ── FIXED PRICE PAID: create as draft → redirect to Stripe ──
         const payload = buildCampaignPayload('draft');
         payload.payment_status = 'pending_payment';
-        const campaignId = await createCampaign(payload);
+
+        let campaignId: string | null;
+        if (isEditMode) {
+          const ok = await updateCampaign(editCampaignId!, payload);
+          campaignId = ok ? editCampaignId! : null;
+        } else {
+          campaignId = await createCampaign(payload);
+        }
 
         if (!campaignId) {
           throw new Error('No se pudo crear la campana');
@@ -353,11 +429,13 @@ export default function CampaignWizard() {
           await createBulkInvitations(campaignId, visibilityData.invited_profiles);
         }
 
-        trackCampaignCreated({
-          campaign_type: basicInfo.campaign_type || 'standard',
-          content_types_required: contentRequirements.map(r => r.content_type),
-          platforms_targeted: [],
-        });
+        if (!isEditMode) {
+          trackCampaignCreated({
+            campaign_type: basicInfo.campaign_type || 'standard',
+            content_types_required: contentRequirements.map(r => r.content_type),
+            platforms_targeted: [],
+          });
+        }
 
         // Redirect to Stripe Checkout
         const checkoutUrl = await createCampaignCheckout(campaignId, 'create-publish-checkout');
@@ -371,7 +449,14 @@ export default function CampaignWizard() {
 
       // ── AUCTION/RANGE/EXCHANGE: current flow (no immediate payment) ──
       const payload = buildCampaignPayload('active');
-      const campaignId = await createCampaign(payload);
+
+      let campaignId: string | null;
+      if (isEditMode) {
+        const ok = await updateCampaign(editCampaignId!, payload);
+        campaignId = ok ? editCampaignId! : null;
+      } else {
+        campaignId = await createCampaign(payload);
+      }
 
       if (!campaignId) {
         throw new Error('No se pudo crear la campana');
@@ -399,11 +484,13 @@ export default function CampaignWizard() {
         setNotificationsSent(notifResult.notifications_sent);
       }
 
-      trackCampaignCreated({
-        campaign_type: basicInfo.campaign_type || 'standard',
-        content_types_required: contentRequirements.map(r => r.content_type),
-        platforms_targeted: [],
-      });
+      if (!isEditMode) {
+        trackCampaignCreated({
+          campaign_type: basicInfo.campaign_type || 'standard',
+          content_types_required: contentRequirements.map(r => r.content_type),
+          platforms_targeted: [],
+        });
+      }
       trackCampaignPublished({ campaign_id: campaignId });
 
       clearDraft();
@@ -422,7 +509,11 @@ export default function CampaignWizard() {
     setIsSubmitting(true);
     try {
       const payload = buildCampaignPayload('draft');
-      await createCampaign(payload);
+      if (isEditMode) {
+        await updateCampaign(editCampaignId!, payload);
+      } else {
+        await createCampaign(payload);
+      }
       clearDraft();
       navigate('/marketplace/my-campaigns');
     } catch (err) {
@@ -492,7 +583,7 @@ export default function CampaignWizard() {
       <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-white/10 z-10">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-lg font-bold text-white">Crear Campana</h1>
+            <h1 className="text-lg font-bold text-white">{isEditMode ? 'Editar Campana' : 'Crear Campana'}</h1>
             <button
               onClick={onClose}
               className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"

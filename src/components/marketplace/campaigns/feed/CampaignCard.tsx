@@ -1,6 +1,7 @@
 import { DollarSign, Gift, Layers, Calendar, Users, Clock, Gavel, ArrowUpDown, Globe, Lock, Target, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CAMPAIGN_STATUS_COLORS, CAMPAIGN_STATUS_LABELS } from '@/hooks/useMarketplaceCampaigns';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import type { Campaign } from '../../types/marketplace';
 
 const VISIBILITY_BADGE = {
@@ -21,6 +22,7 @@ const TYPE_CONFIG = {
 } as const;
 
 export function CampaignCard({ campaign, onClick }: CampaignCardProps) {
+  const { formatPrice } = useCurrency();
   const typeConfig = TYPE_CONFIG[campaign.campaign_type];
   const TypeIcon = typeConfig.icon;
   const pricingMode = campaign.pricing_mode ?? 'fixed';
@@ -34,10 +36,10 @@ export function CampaignCard({ campaign, onClick }: CampaignCardProps) {
     : isBidMode
       ? pricingMode === 'auction'
         ? 'Subasta abierta'
-        : `$${(campaign.min_bid ?? 0).toLocaleString()} - $${(campaign.max_bid ?? 0).toLocaleString()}`
+        : `${formatPrice(campaign.min_bid ?? 0)} - ${formatPrice(campaign.max_bid ?? 0)}`
       : campaign.budget_mode === 'per_video'
-        ? `$${(campaign.budget_per_video ?? 0).toLocaleString()}/video`
-        : `$${(campaign.total_budget ?? 0).toLocaleString()} total`;
+        ? `${formatPrice(campaign.budget_per_video ?? 0)}/video`
+        : `${formatPrice(campaign.total_budget ?? 0)} total`;
 
   const daysLeft = Math.max(0, Math.ceil((new Date(campaign.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
 

@@ -7,6 +7,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useMarketplaceCampaigns, CAMPAIGN_STATUS_COLORS, CAMPAIGN_STATUS_LABELS } from '@/hooks/useMarketplaceCampaigns';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { MARKETPLACE_CATEGORIES, COUNTRIES } from '../../types/marketplace';
 import { CampaignApplicationModal } from '../application/CampaignApplicationModal';
 import type { Campaign, CampaignApplication } from '../../types/marketplace';
@@ -72,6 +73,7 @@ export function CampaignDetail({ campaignId }: CampaignDetailProps) {
     );
   }
 
+  const { formatPrice } = useCurrency();
   const typeConfig = TYPE_CONFIG[campaign.campaign_type];
   const TypeIcon = typeConfig.icon;
   const categoryLabel = MARKETPLACE_CATEGORIES.find(c => c.id === campaign.category)?.label ?? campaign.category;
@@ -246,9 +248,8 @@ export function CampaignDetail({ campaignId }: CampaignDetailProps) {
                     <>
                       <span className="text-gray-500 text-xs">Rango de presupuesto</span>
                       <p className="text-blue-300 text-lg font-bold mt-1">
-                        ${(campaign.min_bid ?? 0).toLocaleString()} – ${(campaign.max_bid ?? 0).toLocaleString()}
+                        {formatPrice(campaign.min_bid ?? 0)} – {formatPrice(campaign.max_bid ?? 0)}
                       </p>
-                      <p className="text-gray-600 text-xs">{campaign.currency}</p>
                       {campaign.bid_deadline && (
                         <p className="text-gray-400 text-xs mt-1.5">
                           Ofertas hasta: {new Date(campaign.bid_deadline).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })}
@@ -267,10 +268,9 @@ export function CampaignDetail({ campaignId }: CampaignDetailProps) {
                       <span className="text-gray-500 text-xs">Presupuesto</span>
                       <p className="text-white text-xl font-bold">
                         {campaign.budget_mode === 'per_video'
-                          ? `$${(campaign.budget_per_video ?? 0).toLocaleString()} /video`
-                          : `$${(campaign.total_budget ?? 0).toLocaleString()} total`}
+                          ? `${formatPrice(campaign.budget_per_video ?? 0)} /video`
+                          : `${formatPrice(campaign.total_budget ?? 0)} total`}
                       </p>
-                      <p className="text-gray-600 text-xs mt-0.5">{campaign.currency}</p>
                     </>
                   )}
                 </div>
@@ -284,7 +284,7 @@ export function CampaignDetail({ campaignId }: CampaignDetailProps) {
                     <span className="text-white text-sm font-medium">{campaign.exchange_product_name}</span>
                   </div>
                   {campaign.exchange_product_value && (
-                    <p className="text-gray-400 text-xs">Valor: ${campaign.exchange_product_value.toLocaleString()} {campaign.currency}</p>
+                    <p className="text-gray-400 text-xs">Valor: {formatPrice(campaign.exchange_product_value)}</p>
                   )}
                   {campaign.exchange_product_description && (
                     <p className="text-gray-500 text-xs mt-1">{campaign.exchange_product_description}</p>

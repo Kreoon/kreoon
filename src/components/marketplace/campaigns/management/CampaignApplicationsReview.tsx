@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { ArrowLeft, Users, CreditCard, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMarketplaceCampaigns, CAMPAIGN_STATUS_LABELS } from '@/hooks/useMarketplaceCampaigns';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { useCampaignAnalytics } from '@/analytics';
 import { useMarketplaceProjects } from '@/hooks/useMarketplaceProjects';
 import { useBrandActivation } from '@/hooks/useBrandActivation';
@@ -24,6 +25,7 @@ const TABS: { value: ApplicationStatus | 'all'; label: string }[] = [
 ];
 
 export function CampaignApplicationsReview({ campaignId, onBack }: CampaignApplicationsReviewProps) {
+  const { formatPrice } = useCurrency();
   const { getCampaignById, getApplicationsForCampaign, updateApplicationStatus, approveApplication, createCampaignCheckout } = useMarketplaceCampaigns();
   const { createProject, getProjectsByCampaign } = useMarketplaceProjects();
   const { createPublication } = useBrandActivation();
@@ -266,15 +268,15 @@ export function CampaignApplicationsReview({ campaignId, onBack }: CampaignAppli
             </div>
             <div className="flex justify-between text-gray-400">
               <span>Total creadores</span>
-              <span className="text-white">${totalAgreedPrice.toLocaleString()}</span>
+              <span className="text-white">{formatPrice(totalAgreedPrice)}</span>
             </div>
             <div className="flex justify-between text-gray-400">
               <span>Comision plataforma ({commissionRate}%)</span>
-              <span className="text-white">${platformFee.toLocaleString()}</span>
+              <span className="text-white">{formatPrice(platformFee)}</span>
             </div>
             <div className="border-t border-white/10 pt-1.5 flex justify-between font-semibold">
               <span className="text-white">Total a pagar</span>
-              <span className="text-green-400">${grandTotal.toLocaleString()}</span>
+              <span className="text-green-400">{formatPrice(grandTotal)}</span>
             </div>
           </div>
           <button

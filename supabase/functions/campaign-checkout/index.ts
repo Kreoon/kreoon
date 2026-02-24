@@ -1,7 +1,8 @@
 // ============================================================================
 // KREOON CAMPAIGN CHECKOUT SERVICE
 // Edge Function para crear Stripe Checkout Sessions para campañas del marketplace
-// Handles currency conversion (COP → USD) using exchange_rates table
+// Supports all pricing modes: fixed (100%), auction (70% deposit), range (min_bid deposit)
+// All amounts stored in USD; converts from display currency if needed
 // ============================================================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -112,7 +113,10 @@ async function convertToUsd(supabase: any, amount: number, fromCurrency: string)
 }
 
 // ============================================================================
-// PUBLISH CHECKOUT (Fixed Price campaigns)
+// PUBLISH CHECKOUT (All paid campaigns: fixed, auction, range)
+// - Fixed: 100% of total (creator payment + commission)
+// - Auction: 70% deposit of max estimated total
+// - Range: deposit based on min_bid (min creator payment + commission)
 // ============================================================================
 
 async function createPublishCheckout(supabase: any, userId: string, body: { campaign_id: string }) {
@@ -133,37 +137,78 @@ async function createPublishCheckout(supabase: any, userId: string, body: { camp
   }
   if (!campaign) throw new Error("Campaign not found (null data, no error)");
   if (campaign.created_by !== userId) throw new Error("Not authorized");
-  if (campaign.pricing_mode !== "fixed") throw new Error("Only fixed pricing campaigns use publish checkout");
   if (campaign.payment_status === "in_escrow") throw new Error("Campaign already paid");
 
-  // Calculate amount in campaign currency
+  const pricingMode = campaign.pricing_mode || "fixed";
   const contentCount = (campaign.content_requirements || []).reduce(
     (sum: number, r: any) => sum + (r.quantity || 1), 0
   ) || 1;
+  const maxCreators = campaign.max_creators || 1;
+  const commissionRate = campaign.commission_rate || 30;
+  const campaignCurrency = (campaign.currency || "USD").toUpperCase();
 
-  let totalCreator: number;
-  if (campaign.budget_mode === "per_video" && campaign.budget_per_video) {
-    totalCreator = campaign.budget_per_video * contentCount * (campaign.max_creators || 1);
+  // ---- Calculate total and deposit based on pricing mode ----
+
+  let totalCreator: number;   // Full max creator payment
+  let depositCreator: number; // What we actually charge now (creator portion)
+  let depositLabel: string;   // Human-readable description
+
+  if (pricingMode === "fixed") {
+    // Fixed: charge 100%
+    if (campaign.budget_mode === "per_video" && campaign.budget_per_video) {
+      totalCreator = campaign.budget_per_video * contentCount * maxCreators;
+    } else {
+      totalCreator = campaign.total_budget || 0;
+    }
+    depositCreator = totalCreator;
+    depositLabel = "Pago total (100%)";
+
+  } else if (pricingMode === "auction") {
+    // Auction: 70% deposit based on max budget per video
+    const maxBudget = campaign.budget_per_video || 0;
+    if (maxBudget <= 0) throw new Error("Auction campaign requires budget_per_video (max budget)");
+    totalCreator = maxBudget * contentCount * maxCreators;
+    depositCreator = Math.round(totalCreator * 0.7 * 100) / 100;
+    depositLabel = "Depósito subasta (70%)";
+
+  } else if (pricingMode === "range") {
+    // Range: deposit based on min_bid
+    const minBid = campaign.min_bid || 0;
+    const maxBid = campaign.max_bid || 0;
+    if (minBid <= 0 || maxBid <= 0) throw new Error("Range campaign requires min_bid and max_bid");
+    totalCreator = maxBid * contentCount * maxCreators;
+    depositCreator = minBid * contentCount * maxCreators;
+    depositLabel = "Depósito rango (oferta mín.)";
+
   } else {
-    totalCreator = campaign.total_budget || 0;
+    throw new Error(`Unsupported pricing mode: ${pricingMode}`);
   }
 
-  if (totalCreator <= 0) throw new Error("Invalid budget amount");
+  if (depositCreator <= 0) throw new Error("Invalid deposit amount");
 
-  const commissionRate = campaign.commission_rate || 30;
-  const platformFee = totalCreator * commissionRate / 100;
-  const chargeAmountLocal = totalCreator + platformFee;
-  const campaignCurrency = (campaign.currency || "COP").toUpperCase();
+  // Add commission to the deposit portion
+  const depositFee = depositCreator * commissionRate / 100;
+  const chargeAmountLocal = depositCreator + depositFee;
+
+  console.log(`[campaign-checkout] Mode: ${pricingMode}, Creator deposit: ${depositCreator}, Fee: ${depositFee}, Total charge: ${chargeAmountLocal} ${campaignCurrency}`);
 
   // Convert to USD for Stripe
   const chargeAmountUsd = await convertToUsd(supabase, chargeAmountLocal, campaignCurrency);
-  const totalCreatorUsd = await convertToUsd(supabase, totalCreator, campaignCurrency);
-  const platformFeeUsd = chargeAmountUsd - totalCreatorUsd;
+  const depositCreatorUsd = await convertToUsd(supabase, depositCreator, campaignCurrency);
+  const depositFeeUsd = chargeAmountUsd - depositCreatorUsd;
 
   // Get or create wallet + Stripe customer
   const { customerId, walletId } = await getOrCreateCustomer(supabase, userId);
 
   const baseUrl = Deno.env.get("FRONTEND_URL") || "https://kreoon.com";
+
+  // Build description
+  let description: string;
+  if (campaignCurrency !== "USD") {
+    description = `${campaignCurrency} ${chargeAmountLocal.toLocaleString()} → USD $${chargeAmountUsd.toFixed(2)} — ${depositLabel} (Creadores: $${depositCreatorUsd.toFixed(2)} + Comisión ${commissionRate}%: $${depositFeeUsd.toFixed(2)})`;
+  } else {
+    description = `${depositLabel} — Creadores: $${depositCreatorUsd.toFixed(2)} + Comisión (${commissionRate}%): $${depositFeeUsd.toFixed(2)}`;
+  }
 
   // Create Stripe Checkout Session (always in USD)
   const session = await stripe.checkout.sessions.create({
@@ -177,9 +222,7 @@ async function createPublishCheckout(supabase: any, userId: string, body: { camp
           unit_amount: Math.round(chargeAmountUsd * 100),
           product_data: {
             name: `Campaña: ${campaign.title}`,
-            description: campaignCurrency !== "USD"
-              ? `${campaignCurrency} ${chargeAmountLocal.toLocaleString()} → USD $${chargeAmountUsd.toFixed(2)} (Creadores: $${totalCreatorUsd.toFixed(2)} + Comisión ${commissionRate}%: $${platformFeeUsd.toFixed(2)})`
-              : `Creadores: $${totalCreatorUsd.toFixed(2)} + Comisión plataforma (${commissionRate}%): $${platformFeeUsd.toFixed(2)}`,
+            description,
           },
         },
         quantity: 1,
@@ -190,9 +233,12 @@ async function createPublishCheckout(supabase: any, userId: string, body: { camp
       campaign_id,
       user_id: userId,
       wallet_id: walletId,
+      pricing_mode: pricingMode,
       commission_rate: String(commissionRate),
-      total_creator_payment: String(totalCreatorUsd),
-      platform_fee: String(platformFeeUsd),
+      total_creator_payment: String(depositCreatorUsd),
+      platform_fee: String(depositFeeUsd),
+      deposit_percentage: pricingMode === "auction" ? "70" : pricingMode === "range" ? "min_bid" : "100",
+      full_max_creator_total: String(await convertToUsd(supabase, totalCreator, campaignCurrency)),
       original_currency: campaignCurrency,
       original_amount: String(chargeAmountLocal),
     },
@@ -261,7 +307,7 @@ async function createBidCheckout(supabase: any, userId: string, body: { campaign
   const commissionRate = campaign.commission_rate || 30;
   const platformFee = totalCreator * commissionRate / 100;
   const chargeAmountLocal = totalCreator + platformFee;
-  const campaignCurrency = (campaign.currency || "COP").toUpperCase();
+  const campaignCurrency = (campaign.currency || "USD").toUpperCase();
 
   // Convert to USD for Stripe
   const chargeAmountUsd = await convertToUsd(supabase, chargeAmountLocal, campaignCurrency);

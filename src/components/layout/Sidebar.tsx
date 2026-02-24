@@ -15,7 +15,6 @@ import {
   Kanban,
   RefreshCw,
   Trophy,
-  Eye,
   Video,
   TrendingUp,
   Megaphone,
@@ -29,10 +28,7 @@ import {
   UserPlus,
   MessageSquare,
   ListChecks,
-  ContactRound,
-  Contact,
   GitBranch,
-  Star,
   DollarSign,
   Crown,
   Share2,
@@ -72,6 +68,24 @@ interface NavSection {
   items: NavItem[];
 }
 
+// ── Shared section definitions ──
+
+const MARKETING_ITEMS: NavItem[] = [
+  { name: "Marketing", href: "/marketing", icon: TrendingUp, tourId: "sidebar-marketing", requiresOrg: true },
+  { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
+  { name: "Live", href: "/live", icon: Video, tourId: "sidebar-live" },
+  { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
+  { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus, tourId: "sidebar-ad-generator" },
+  { name: "Ad Intelligence", href: "/admin/ad-intelligence", icon: Search, tourId: "sidebar-ad-intel" },
+  { name: "Social Scraper", href: "/admin/social-scraper", icon: Radar, tourId: "sidebar-social-scraper" },
+];
+
+const CONFIG_ITEMS: NavItem[] = [
+  { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
+  { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
+  { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+];
+
 // Admin navigation organized in sections - KREOON TECH theme
 const adminSections: NavSection[] = [
   {
@@ -79,19 +93,18 @@ const adminSections: NavSection[] = [
     items: [
       { name: "Control Center", href: "/dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard", requiresOrg: true },
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
+      { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
-      { name: "Marketing", href: "/marketing", icon: TrendingUp, tourId: "sidebar-marketing", requiresOrg: true },
-      { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
-      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
-      { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus, tourId: "sidebar-ad-generator", requiresOrg: true },
       { name: "Ranking", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
-      { name: "Live", href: "/live", icon: Video, tourId: "sidebar-live", requiresOrg: true },
     ]
+  },
+  {
+    label: "MARKETING & MEDIA",
+    items: MARKETING_ITEMS,
   },
   {
     label: "GESTIÓN",
     items: [
-      { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
       { name: "Talento", href: "/talent", icon: Users, tourId: "sidebar-talent", requiresOrg: true },
       { name: "Clientes", href: "/clients-hub", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
       { name: "Pipelines", href: "/org-crm/pipelines", icon: GitBranch, tourId: "sidebar-org-pipelines", requiresOrg: true },
@@ -108,18 +121,9 @@ const adminSections: NavSection[] = [
       { name: "Usuarios", href: "/crm/usuarios", icon: Users, tourId: "sidebar-crm-users" },
       { name: "Finanzas", href: "/crm/finanzas", icon: DollarSign, tourId: "sidebar-crm-finances" },
       { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone, tourId: "sidebar-crm-email" },
-      { name: "Ad Intelligence", href: "/admin/ad-intelligence", icon: Search, tourId: "sidebar-ad-intel" },
-      { name: "Social Scraper", href: "/admin/social-scraper", icon: Radar, tourId: "sidebar-social-scraper" },
     ]
   },
-  {
-    label: "CONFIG",
-    items: [
-      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
-      { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
-      { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
-    ]
-  }
+  { label: "CONFIG", items: CONFIG_ITEMS }
 ];
 
 const strategistSections: NavSection[] = [
@@ -128,33 +132,25 @@ const strategistSections: NavSection[] = [
     items: [
       { name: "Control Center", href: "/strategist-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard", requiresOrg: true },
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
+      { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
-      { name: "Marketing", href: "/marketing", icon: TrendingUp, tourId: "sidebar-marketing", requiresOrg: true },
-      { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
-      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
-      { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus, tourId: "sidebar-ad-generator", requiresOrg: true },
       { name: "Ranking", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
-      { name: "Live", href: "/live", icon: Video, tourId: "sidebar-live", requiresOrg: true },
     ]
+  },
+  {
+    label: "MARKETING & MEDIA",
+    items: MARKETING_ITEMS,
   },
   {
     label: "GESTIÓN",
     items: [
-      { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
       { name: "Talento", href: "/talent", icon: Users, tourId: "sidebar-talent", requiresOrg: true },
       { name: "Clientes", href: "/clients-hub", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
       { name: "Pipelines", href: "/org-crm/pipelines", icon: GitBranch, tourId: "sidebar-org-pipelines", requiresOrg: true },
       { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, tourId: "sidebar-org-finances", requiresOrg: true },
     ]
   },
-  {
-    label: "CONFIG",
-    items: [
-      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
-      { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
-      { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
-    ]
-  }
+  { label: "CONFIG", items: CONFIG_ITEMS }
 ];
 
 const editorSections: NavSection[] = [
@@ -165,19 +161,13 @@ const editorSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
-      { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
-      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
-      { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus, tourId: "sidebar-ad-generator" },
     ]
   },
   {
-    label: "CONFIG",
-    items: [
-      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
-      { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
-      { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
-    ]
-  }
+    label: "MARKETING & MEDIA",
+    items: MARKETING_ITEMS.filter(i => i.href !== '/marketing'), // Marketing strategy not for editors
+  },
+  { label: "CONFIG", items: CONFIG_ITEMS }
 ];
 
 const creatorSections: NavSection[] = [
@@ -188,19 +178,13 @@ const creatorSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
-      { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
-      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
-      { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus, tourId: "sidebar-ad-generator" },
     ]
   },
   {
-    label: "CONFIG",
-    items: [
-      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
-      { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
-      { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
-    ]
-  }
+    label: "MARKETING & MEDIA",
+    items: MARKETING_ITEMS.filter(i => i.href !== '/marketing'), // Marketing strategy not for creators
+  },
+  { label: "CONFIG", items: CONFIG_ITEMS }
 ];
 
 const clientSections: NavSection[] = [
@@ -209,18 +193,20 @@ const clientSections: NavSection[] = [
     items: [
       { name: "Client Portal", href: "/client-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
       { name: "Producciones", href: "/client-board", icon: Kanban, tourId: "sidebar-board" },
-      { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
-      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
     ]
   },
   {
-    label: "CONFIG",
+    label: "MARKETING & MEDIA",
     items: [
-      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
-      { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
-      { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+      { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
+      { name: "Live", href: "/live", icon: Video, tourId: "sidebar-live" },
+      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
+      { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus, tourId: "sidebar-ad-generator" },
+      { name: "Ad Intelligence", href: "/admin/ad-intelligence", icon: Search, tourId: "sidebar-ad-intel" },
+      { name: "Social Scraper", href: "/admin/social-scraper", icon: Radar, tourId: "sidebar-social-scraper" },
     ]
-  }
+  },
+  { label: "CONFIG", items: CONFIG_ITEMS }
 ];
 
 // Marketplace navigation sections — available to ALL users

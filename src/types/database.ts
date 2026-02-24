@@ -77,6 +77,8 @@ export interface Profile {
   active_role?: AppRole | string | null;
   active_brand_id?: string | null;
   platform_access_unlocked?: boolean;
+  display_currency?: string | null;
+  country?: string | null;
   created_at: string;
   updated_at: string;
 }

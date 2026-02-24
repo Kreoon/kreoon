@@ -16,6 +16,7 @@ import { AICopilotProvider } from "@/contexts/AICopilotContext";
 import { TrialProvider } from "@/contexts/TrialContext";
 import { AnalyticsProvider } from "@/contexts/AnalyticsContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { StrategistClientProvider } from "@/contexts/StrategistClientContext";
 import { KiroProvider } from "@/contexts/KiroContext";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
@@ -254,6 +255,7 @@ function AppRoutes() {
         <Route path="/marketplace/projects" element={<Navigate to="/board?view=marketplace" replace />} />
         <Route path="/marketplace/content" element={<Navigate to="/content?view=marketplace" replace />} />
         <Route path="/marketplace/campaigns/create" element={<ProtectedRoute allowNoRoles><MainLayout><CampaignWizardPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/marketplace/campaigns/:id/edit" element={<ProtectedRoute allowNoRoles><MainLayout><CampaignWizardPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/my-campaigns" element={<ProtectedRoute allowNoRoles><MainLayout><BrandCampaignsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/creator-campaigns" element={<ProtectedRoute allowNoRoles><MainLayout><CreatorCampaignsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/talent-lists" element={<ProtectedRoute allowNoRoles><MainLayout><TalentListsPage /></MainLayout></ProtectedRoute>} />
@@ -295,7 +297,7 @@ function AppRoutes() {
         <Route path="/clients" element={<Navigate to="/clients-hub" replace />} />
         <Route path="/scripts" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'strategist']}><MainLayout><Scripts /></MainLayout></ProtectedRoute>} />
         <Route path="/team" element={<Navigate to="/talent" replace />} />
-        <Route path="/live" element={<ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Live /></MainLayout></ProtectedRoute>} />
+        <Route path="/live" element={<ProtectedRoute allowNoRoles><MainLayout><Live /></MainLayout></ProtectedRoute>} />
         <Route path="/marketing" element={<ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Marketing /></MainLayout></ProtectedRoute>} />
         {/* CRM Plataforma */}
         <Route path="/crm" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMDashboard /></MainLayout></ProtectedRoute>} />
@@ -322,11 +324,11 @@ function AppRoutes() {
         <Route path="/wallet/settings" element={<Navigate to="/wallet" replace />} />
         <Route path="/admin/wallets" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><AdminWalletsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><KAEAnalyticsDashboard /></MainLayout></ProtectedRoute>} />
-        <Route path="/admin/ad-intelligence" element={<ProtectedRoute requirePlatformAdmin><MainLayout><AdIntelligencePage /></MainLayout></ProtectedRoute>} />
-        <Route path="/admin/social-scraper" element={<ProtectedRoute requirePlatformAdmin><MainLayout><SocialScraperPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/admin/ad-intelligence" element={<ProtectedRoute allowNoRoles><MainLayout><AdIntelligencePage /></MainLayout></ProtectedRoute>} />
+        <Route path="/admin/social-scraper" element={<ProtectedRoute allowNoRoles><MainLayout><SocialScraperPage /></MainLayout></ProtectedRoute>} />
         {/* Ad Generator Module */}
-        <Route path="/ad-generator" element={<ProtectedRoute allowedRoles={['admin','team_leader','strategist','trafficker','creator','editor']}><MainLayout><AdGeneratorPage /></MainLayout></ProtectedRoute>} />
-        <Route path="/ad-generator/:productId" element={<ProtectedRoute allowedRoles={['admin','team_leader','strategist','trafficker','creator','editor']}><MainLayout><ProductBannersPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/ad-generator" element={<ProtectedRoute allowNoRoles><MainLayout><AdGeneratorPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/ad-generator/:productId" element={<ProtectedRoute allowNoRoles><MainLayout><ProductBannersPage /></MainLayout></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute allowNoRoles><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
         <Route path="/planes" element={<ProtectedRoute allowNoRoles><MainLayout><PlanesPage /></MainLayout></ProtectedRoute>} />
         <Route path="/creator-dashboard" element={<ProtectedRoute allowedRoles={['creator']}><MainLayout><CreatorDashboard /></MainLayout></ProtectedRoute>} />
@@ -347,29 +349,31 @@ function AppContent() {
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <BrandingProvider>
         <AuthProvider>
-          <AnalyticsProvider>
-            <ImpersonationProvider>
-              <TrialProvider>
-                <UnsavedChangesProvider>
-                  <AchievementNotificationProvider>
-                    <StrategistClientProvider>
-                      <AICopilotProvider>
-                        <KiroProvider>
-                          <TooltipProvider delayDuration={0}>
-                            <ImpersonationBanner />
-                            <Toaster />
-                            <Sonner />
-                            <UpdatePrompt />
-                            <AppRoutes />
-                          </TooltipProvider>
-                        </KiroProvider>
-                      </AICopilotProvider>
-                    </StrategistClientProvider>
-                  </AchievementNotificationProvider>
-                </UnsavedChangesProvider>
-              </TrialProvider>
-            </ImpersonationProvider>
-          </AnalyticsProvider>
+          <CurrencyProvider>
+            <AnalyticsProvider>
+              <ImpersonationProvider>
+                <TrialProvider>
+                  <UnsavedChangesProvider>
+                    <AchievementNotificationProvider>
+                      <StrategistClientProvider>
+                        <AICopilotProvider>
+                          <KiroProvider>
+                            <TooltipProvider delayDuration={0}>
+                              <ImpersonationBanner />
+                              <Toaster />
+                              <Sonner />
+                              <UpdatePrompt />
+                              <AppRoutes />
+                            </TooltipProvider>
+                          </KiroProvider>
+                        </AICopilotProvider>
+                      </StrategistClientProvider>
+                    </AchievementNotificationProvider>
+                  </UnsavedChangesProvider>
+                </TrialProvider>
+              </ImpersonationProvider>
+            </AnalyticsProvider>
+          </CurrencyProvider>
         </AuthProvider>
       </BrandingProvider>
     </BrowserRouter>

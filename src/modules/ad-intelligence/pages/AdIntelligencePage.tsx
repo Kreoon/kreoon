@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Search, Bookmark, FolderOpen, Brain, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { UnderConstructionGuard } from "@/components/layout/UnderConstructionGuard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -87,6 +88,7 @@ export default function AdIntelligencePage() {
   };
 
   return (
+    <UnderConstructionGuard moduleName="Ad Intelligence" description="Inteligencia competitiva de anuncios en Meta, TikTok y Google. Este modulo estara disponible pronto para todos los usuarios.">
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-start justify-between">
@@ -265,5 +267,6 @@ export default function AdIntelligencePage() {
         isAnalyzing={analyzingAdId === selectedAd?.id}
       />
     </div>
+    </UnderConstructionGuard>
   );
 }
