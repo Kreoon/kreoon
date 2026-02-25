@@ -152,6 +152,12 @@ const OnboardingProfile = () => {
       // Update or create creator_profile
       const validPortfolioUrls = portfolioUrls.filter(url => url.trim());
 
+      // Merge social links with portfolio URLs
+      const mergedSocialLinks = {
+        ...socialLinks,
+        portfolio: validPortfolioUrls,
+      };
+
       const creatorData = {
         user_id: user.id,
         display_name: profile?.full_name || '',
@@ -160,8 +166,7 @@ const OnboardingProfile = () => {
         categories: selectedAreas,
         marketplace_roles: selectedRoles,
         platforms: selectedPlatforms,
-        social_links: socialLinks,
-        portfolio_urls: validPortfolioUrls,
+        social_links: mergedSocialLinks,
         is_active: true,
       };
 
