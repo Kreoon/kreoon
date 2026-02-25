@@ -33,7 +33,9 @@ export function PostList({ onViewPost }: PostListProps) {
     [posts]
   );
 
-  const { data: metricsMap } = useBatchPostMetrics(publishedPostIds);
+  const { data: metricsMapData } = useBatchPostMetrics(publishedPostIds);
+  // Ensure metricsMap is always a Map to avoid "c.get is not a function" error
+  const metricsMap = metricsMapData ?? new Map<string, any[]>();
 
   // Auto-fetch metrics for published posts that have no metrics yet (one-time on load)
   const autoFetchedRef = useRef(false);

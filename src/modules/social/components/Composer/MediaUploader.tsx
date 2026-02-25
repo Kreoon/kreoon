@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { Upload, X, Image, Film, Loader2 } from 'lucide-react';
+import { Upload, X, Image, Film, Loader2, ChevronLeft, ChevronRight, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { SUPPORTED_MEDIA_TYPES, SUPPORTED_IMAGE_TYPES, MAX_MEDIA_UPLOAD_SIZE_MB } from '../../config/constants';
@@ -23,7 +23,45 @@ export function MediaUploader({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
   const [dragOver, setDragOver] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Reorder media: move item from one index to another
+  const moveMedia = useCallback((fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    const newUrls = [...mediaUrls];
+    const [moved] = newUrls.splice(fromIndex, 1);
+    newUrls.splice(toIndex, 0, moved);
+    onMediaChange(newUrls);
+  }, [mediaUrls, onMediaChange]);
+
+  const handleMediaDragStart = (e: React.DragEvent, index: number) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+    setDraggedIndex(index);
+  };
+
+  const handleMediaDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverIndex(index);
+  };
+
+  const handleMediaDrop = (e: React.DragEvent, toIndex: number) => {
+    e.preventDefault();
+    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+    if (!isNaN(fromIndex)) {
+      moveMedia(fromIndex, toIndex);
+    }
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleMediaDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
 
   const uploadToBunny = async (file: File): Promise<string> => {
     const ext = file.name.split('.').pop()?.toLowerCase() || 'bin';
@@ -171,48 +209,102 @@ export function MediaUploader({
         className="hidden"
       />
 
-      {/* Media previews */}
+      {/* Media previews with order numbers and drag-to-reorder */}
       {mediaUrls.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {mediaUrls.map((url, idx) => (
-            <div key={idx} className="relative shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-muted group">
-              {isVideoUrl(url) ? (
-                <video
-                  src={url}
-                  className="w-full h-full object-cover"
-                  muted
-                  playsInline
-                  preload="metadata"
-                />
-              ) : (
-                <img
-                  src={url}
-                  alt=""
-                  className="w-full h-full object-cover"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
-              )}
-              <button
-                onClick={(e) => { e.stopPropagation(); handleRemove(idx); }}
-                className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <X className="w-3 h-3 text-white" />
-              </button>
-              {url === thumbnailUrl && (
-                <div className="absolute bottom-0 inset-x-0 bg-primary/80 text-[8px] text-center text-white py-0.5">
-                  Cover
-                </div>
-              )}
-            </div>
-          ))}
-          {mediaUrls.length < maxFiles && !isUploading && (
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="shrink-0 w-20 h-20 rounded-lg border-2 border-dashed border-border flex items-center justify-center hover:border-primary/30 transition-colors"
-            >
-              <Image className="w-5 h-5 text-muted-foreground" />
-            </button>
+        <div className="space-y-2">
+          {mediaUrls.length > 1 && (
+            <p className="text-[10px] text-muted-foreground">
+              Arrastra para reordenar o usa las flechas. El orden se mantiene al publicar.
+            </p>
           )}
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {mediaUrls.map((url, idx) => (
+              <div
+                key={`${url}-${idx}`}
+                draggable
+                onDragStart={(e) => handleMediaDragStart(e, idx)}
+                onDragOver={(e) => handleMediaDragOver(e, idx)}
+                onDrop={(e) => handleMediaDrop(e, idx)}
+                onDragEnd={handleMediaDragEnd}
+                className={cn(
+                  'relative shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-muted group cursor-grab active:cursor-grabbing transition-all',
+                  draggedIndex === idx && 'opacity-50 scale-95',
+                  dragOverIndex === idx && draggedIndex !== idx && 'ring-2 ring-primary ring-offset-1'
+                )}
+              >
+                {isVideoUrl(url) ? (
+                  <video
+                    src={url}
+                    className="w-full h-full object-cover pointer-events-none"
+                    muted
+                    playsInline
+                    preload="metadata"
+                  />
+                ) : (
+                  <img
+                    src={url}
+                    alt=""
+                    className="w-full h-full object-cover pointer-events-none"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                )}
+
+                {/* Order number badge */}
+                <div className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center shadow-sm">
+                  {idx + 1}
+                </div>
+
+                {/* Remove button */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleRemove(idx); }}
+                  className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="w-3 h-3 text-white" />
+                </button>
+
+                {/* Reorder buttons - show on hover when multiple items */}
+                {mediaUrls.length > 1 && (
+                  <div className="absolute bottom-0.5 inset-x-0 flex justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); if (idx > 0) moveMedia(idx, idx - 1); }}
+                      disabled={idx === 0}
+                      className={cn(
+                        'w-5 h-5 rounded-full bg-black/70 flex items-center justify-center',
+                        idx === 0 ? 'opacity-30' : 'hover:bg-black/90'
+                      )}
+                    >
+                      <ChevronLeft className="w-3 h-3 text-white" />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); if (idx < mediaUrls.length - 1) moveMedia(idx, idx + 1); }}
+                      disabled={idx === mediaUrls.length - 1}
+                      className={cn(
+                        'w-5 h-5 rounded-full bg-black/70 flex items-center justify-center',
+                        idx === mediaUrls.length - 1 ? 'opacity-30' : 'hover:bg-black/90'
+                      )}
+                    >
+                      <ChevronRight className="w-3 h-3 text-white" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Cover label */}
+                {url === thumbnailUrl && mediaUrls.length === 1 && (
+                  <div className="absolute bottom-0 inset-x-0 bg-primary/80 text-[8px] text-center text-white py-0.5">
+                    Cover
+                  </div>
+                )}
+              </div>
+            ))}
+            {mediaUrls.length < maxFiles && !isUploading && (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="shrink-0 w-20 h-20 rounded-lg border-2 border-dashed border-border flex items-center justify-center hover:border-primary/30 transition-colors"
+              >
+                <Image className="w-5 h-5 text-muted-foreground" />
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

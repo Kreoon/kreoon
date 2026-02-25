@@ -119,7 +119,11 @@ async function sleep(ms: number): Promise<void> {
 // ── Bunny CDN URL detection & download ──────────────────────────────────────
 
 function isBunnyCdnUrl(url: string): boolean {
-  return /b-cdn\.net\//i.test(url) || /iframe\.mediadelivery\.net\//i.test(url);
+  return (
+    /b-cdn\.net\//i.test(url) ||
+    /iframe\.mediadelivery\.net\//i.test(url) ||
+    /cdn\.kreoon\.com\//i.test(url) // Custom Bunny CDN domain for Kreoon
+  );
 }
 
 function isSupabaseStorageUrl(url: string): boolean {
@@ -258,6 +262,30 @@ async function ensureTempBucket(
   }
 }
 
+/**
+ * Verify that a URL is publicly accessible (returns HTTP 200).
+ * This is important because Instagram needs to fetch media from the URL.
+ */
+async function verifyUrlAccessible(url: string, maxRetries = 3): Promise<boolean> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const res = await fetch(url, { method: "HEAD" });
+      if (res.ok) {
+        console.log(`[verifyUrl] URL accessible: ${url} (status ${res.status})`);
+        return true;
+      }
+      console.warn(`[verifyUrl] Attempt ${attempt + 1}: URL returned ${res.status}`);
+    } catch (err) {
+      console.warn(`[verifyUrl] Attempt ${attempt + 1}: Error checking URL:`, err);
+    }
+    // Wait before retry
+    if (attempt < maxRetries - 1) {
+      await sleep(1000);
+    }
+  }
+  return false;
+}
+
 async function rehostMediaForIG(
   supabase: ReturnType<typeof createClient>,
   mediaUrl: string
@@ -265,6 +293,10 @@ async function rehostMediaForIG(
   console.log(`[rehost] Downloading media from: ${mediaUrl}`);
   const blob = await downloadMedia(mediaUrl);
   console.log(`[rehost] Downloaded ${blob.size} bytes, type: ${blob.type}`);
+
+  if (blob.size === 0) {
+    throw new Error(`Downloaded media is empty (0 bytes): ${mediaUrl}`);
+  }
 
   // Extract extension from URL
   const urlPath = new URL(mediaUrl).pathname;
@@ -300,8 +332,16 @@ async function rehostMediaForIG(
     .from(IG_TEMP_BUCKET)
     .getPublicUrl(fileName);
 
-  console.log(`[IG rehost] Rehosted to: ${urlData.publicUrl}`);
-  return { publicUrl: urlData.publicUrl, storagePath: fileName };
+  const publicUrl = urlData.publicUrl;
+  console.log(`[IG rehost] Rehosted to: ${publicUrl}`);
+
+  // Verify the URL is accessible before returning
+  const isAccessible = await verifyUrlAccessible(publicUrl);
+  if (!isAccessible) {
+    throw new Error(`Rehosted URL is not accessible: ${publicUrl}`);
+  }
+
+  return { publicUrl, storagePath: fileName };
 }
 
 async function cleanupTempMedia(
@@ -792,58 +832,96 @@ async function publishToInstagram(
       post.post_type === "carousel" || (!isStory && post.media_urls.length > 1);
 
     // ── Instagram Story ──
+    // Instagram Stories only allow 1 media per story, so we publish each as a separate story
+    // IMPORTANT: Stories must be published one at a time with delays between them
     if (isStory) {
-      const publicUrl = rehostedMedia[0].publicUrl;
-      const mType = getMediaType(post.media_urls[0]);
-      console.log(`[IG publish] Publishing as Story, mediaType=${mType}`);
+      const publishedIds: string[] = [];
+      console.log(`[IG Story] Starting to publish ${rehostedMedia.length} stories one by one`);
 
-      const storyBody: Record<string, string> = {
-        media_type: "STORIES",
-        access_token: token,
-      };
+      for (let i = 0; i < rehostedMedia.length; i++) {
+        const publicUrl = rehostedMedia[i].publicUrl;
+        const originalUrl = post.media_urls[i];
+        const mType = getMediaType(originalUrl);
 
-      if (mType === "video") {
-        storyBody.video_url = publicUrl;
-      } else {
-        storyBody.image_url = publicUrl;
-      }
+        console.log(`[IG Story] Processing story ${i + 1}/${rehostedMedia.length}`);
+        console.log(`[IG Story] Original URL: ${originalUrl}`);
+        console.log(`[IG Story] Public URL: ${publicUrl}`);
+        console.log(`[IG Story] Media type: ${mType}`);
 
-      // Create story container
-      const containerRes = await fetch(`${baseUrl}/${igUserId}/media`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(storyBody),
-      });
-      const containerData = await containerRes.json();
-      if (containerData.error) {
-        throw new Error(
-          `Instagram Story container error: ${containerData.error.message || JSON.stringify(containerData.error)}`
-        );
-      }
-      console.log(`[IG publish] Story container created: ${containerData.id}`);
-
-      // For video stories, poll until processing is complete
-      if (mType === "video") {
-        await pollInstagramMediaStatus(containerData.id, token);
-      }
-
-      // Publish story
-      const publishRes = await fetch(`${baseUrl}/${igUserId}/media_publish`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          creation_id: containerData.id,
+        const storyBody: Record<string, string> = {
+          media_type: "STORIES",
           access_token: token,
-        }),
-      });
-      const publishData = await publishRes.json();
-      if (publishData.error) {
-        throw new Error(
-          `Instagram Story publish error: ${publishData.error.message || JSON.stringify(publishData.error)}`
-        );
+        };
+
+        if (mType === "video") {
+          storyBody.video_url = publicUrl;
+        } else {
+          storyBody.image_url = publicUrl;
+        }
+
+        // Create story container
+        const containerRes = await fetch(`${baseUrl}/${igUserId}/media`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(storyBody),
+        });
+        const containerData = await containerRes.json();
+
+        if (containerData.error) {
+          console.error(`[IG Story] Container creation failed for item ${i + 1}:`, JSON.stringify(containerData.error));
+          // Continue with other stories if one fails
+          continue;
+        }
+        console.log(`[IG publish] Story container created: ${containerData.id}`);
+
+        // Poll until processing is complete (for both images and videos)
+        // Instagram needs time to process media before publishing
+        try {
+          console.log(`[IG Story] Polling container status for ${containerData.id}...`);
+          await pollInstagramMediaStatus(containerData.id, token, 20, 3000);
+          console.log(`[IG Story] Container ${containerData.id} is ready`);
+        } catch (pollErr) {
+          console.error(`[IG Story] Media processing failed for item ${i + 1}:`, pollErr);
+          continue;
+        }
+
+        // Wait a moment before publishing to ensure processing is complete
+        await sleep(2000);
+
+        // Publish story
+        console.log(`[IG Story] Publishing story ${i + 1}...`);
+        const publishRes = await fetch(`${baseUrl}/${igUserId}/media_publish`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            creation_id: containerData.id,
+            access_token: token,
+          }),
+        });
+        const publishData = await publishRes.json();
+
+        if (publishData.error) {
+          console.error(`[IG Story] Publish failed for item ${i + 1}:`, JSON.stringify(publishData.error));
+          continue;
+        }
+
+        console.log(`[IG Story] Story ${i + 1} published successfully: ${publishData.id}`);
+        publishedIds.push(publishData.id);
+
+        // Wait 45 seconds between stories to avoid rate limits
+        // Instagram has strict rate limits for story publishing (up to 1 min recommended)
+        if (i < rehostedMedia.length - 1) {
+          console.log(`[IG Story] Waiting 45 seconds before next story (${i + 2}/${rehostedMedia.length})...`);
+          await sleep(45000);
+        }
       }
-      console.log(`[IG publish] Story published successfully: ${publishData.id}`);
-      return { platform_post_id: publishData.id };
+
+      if (publishedIds.length === 0) {
+        throw new Error("Instagram Story publish failed: No stories could be published");
+      }
+
+      // Return the first published story ID (or all IDs joined)
+      return { platform_post_id: publishedIds.join(",") };
     }
 
     // ── Carousel ──
@@ -852,7 +930,13 @@ async function publishToInstagram(
 
       for (let i = 0; i < rehostedMedia.length; i++) {
         const publicUrl = rehostedMedia[i].publicUrl;
-        const mType = getMediaType(post.media_urls[i]);
+        const originalUrl = post.media_urls[i];
+        const mType = getMediaType(originalUrl);
+
+        console.log(`[IG Carousel] Creating item ${i + 1}/${rehostedMedia.length}, type=${mType}`);
+        console.log(`[IG Carousel] Original URL: ${originalUrl}`);
+        console.log(`[IG Carousel] Public URL: ${publicUrl}`);
+
         const childBody: Record<string, string> = {
           is_carousel_item: "true",
           access_token: token,
@@ -872,19 +956,58 @@ async function publishToInstagram(
           body: JSON.stringify(childBody),
         });
         const childData = await childRes.json();
+
         if (childData.error) {
+          const errorDetails = {
+            item: i + 1,
+            total: rehostedMedia.length,
+            mediaType: mType,
+            publicUrl: publicUrl,
+            originalUrl: originalUrl,
+            error: childData.error,
+          };
+          console.error(`[IG Carousel] Item ${i + 1} failed:`, JSON.stringify(errorDetails));
+
+          // Check for specific error codes
+          const errorCode = childData.error.code;
+          const errorSubcode = childData.error.error_subcode;
+
+          if (errorCode === 190 || errorSubcode === 463) {
+            throw new Error(
+              `Instagram access token expired or invalid. Please reconnect the Instagram account.`
+            );
+          }
+
           throw new Error(
-            `Instagram carousel item error: ${childData.error.message || JSON.stringify(childData.error)}`
+            `Instagram carousel item ${i + 1}/${rehostedMedia.length} error: ${childData.error.message || JSON.stringify(childData.error)}`
           );
         }
 
-        // Poll video items until ready
-        if (mType === "video") {
-          await pollInstagramMediaStatus(childData.id, token);
+        console.log(`[IG Carousel] Item ${i + 1} container created: ${childData.id}`);
+
+        // Poll all items until ready (Instagram processes both images and videos)
+        try {
+          console.log(`[IG Carousel] Polling item ${i + 1} status...`);
+          await pollInstagramMediaStatus(childData.id, token, 20, 3000);
+          console.log(`[IG Carousel] Item ${i + 1} is ready`);
+        } catch (pollErr) {
+          console.error(`[IG Carousel] Item ${i + 1} processing failed:`, pollErr);
+          throw new Error(`Instagram carousel item ${i + 1} processing failed: ${pollErr}`);
         }
 
         childIds.push(childData.id);
+
+        // Wait 5 seconds between carousel items to avoid rate limits
+        if (i < rehostedMedia.length - 1) {
+          console.log(`[IG Carousel] Waiting 5 seconds before next item (${i + 2}/${rehostedMedia.length})...`);
+          await sleep(5000);
+        }
       }
+
+      console.log(`[IG Carousel] All ${childIds.length} items created. Creating carousel container...`);
+
+      // Wait before creating carousel container
+      await sleep(2000);
 
       // Create carousel container
       const containerRes = await fetch(`${baseUrl}/${igUserId}/media`, {
@@ -899,12 +1022,19 @@ async function publishToInstagram(
       });
       const containerData = await containerRes.json();
       if (containerData.error) {
+        console.error(`[IG Carousel] Container creation failed:`, JSON.stringify(containerData.error));
         throw new Error(
           `Instagram carousel container error: ${containerData.error.message || JSON.stringify(containerData.error)}`
         );
       }
 
+      console.log(`[IG Carousel] Carousel container created: ${containerData.id}`);
+
+      // Wait before publishing
+      await sleep(2000);
+
       // Publish carousel
+      console.log(`[IG Carousel] Publishing carousel...`);
       const publishRes = await fetch(
         `${baseUrl}/${igUserId}/media_publish`,
         {
@@ -2333,9 +2463,30 @@ async function handlePublish(
 
   const results: PublishResult[] = [];
 
+  // Get existing successful results to avoid re-publishing
+  const existingResults: PublishResult[] = (scheduledPost.publish_results as PublishResult[]) || [];
+  const alreadyPublishedAccountIds = new Set(
+    existingResults
+      .filter((r) => r.status === "success" && r.platform_post_id)
+      .map((r) => r.account_id)
+  );
+
+  // Preserve existing successful results
+  for (const existing of existingResults) {
+    if (existing.status === "success" && existing.platform_post_id) {
+      results.push(existing);
+    }
+  }
+
   try {
-    // Publish to each target account
+    // Publish to each target account (skip already successful ones)
     for (const target of resolvedPost.target_accounts) {
+    // Skip if already published successfully
+    if (alreadyPublishedAccountIds.has(target.account_id)) {
+      console.log(`[social-publish] Skipping ${target.account_id} - already published successfully`);
+      continue;
+    }
+
     const startTime = Date.now();
     let result: PublishResult;
 
