@@ -1,6 +1,6 @@
 import { useState, useEffect, memo } from 'react';
 import { useParams } from 'react-router-dom';
-import { Building2, Loader2, ExternalLink, Play, Eye, Heart, Film, MapPin, Users, Calendar, Globe, Instagram, Star } from 'lucide-react';
+import { Building2, Loader2, ExternalLink, Play, Eye, Heart, Film, MapPin, Users, Calendar, Globe, Instagram, Star, Scissors, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -399,10 +399,11 @@ export default function OrgContentShowcase() {
       {stats && (
         <section className="border-b border-white/[0.06]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
               <StatCard value={`+${formatNumber(stats.total_videos_produced)}`} label="Videos producidos" icon={Film} />
               <StatCard value={`+${stats.total_clients}`} label="Empresas" icon={Building2} />
-              <StatCard value={`+${stats.total_creators}`} label="Creadores" icon={Users} />
+              <StatCard value={`+${stats.total_creators}`} label="Creadores verificados" icon={Users} />
+              <StatCard value="5" label="Editores de planta" icon={Scissors} />
             </div>
           </div>
         </section>
@@ -411,7 +412,7 @@ export default function OrgContentShowcase() {
       {/* ═══ SPECIALTIES ═══ */}
       {specialties.length > 0 && (
         <section className="border-b border-white/[0.06]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
               <Star className="h-3.5 w-3.5 text-white/30 mr-1" />
               {specialties.map((s) => (
@@ -422,6 +423,10 @@ export default function OrgContentShowcase() {
                   {SPECIALTY_LABELS[s] || s}
                 </span>
               ))}
+            </div>
+            <div className="flex items-center gap-2 text-white/40">
+              <Lightbulb className="h-3.5 w-3.5 shrink-0" style={{ color: accent }} />
+              <p className="text-xs font-medium">Estrategas digitales y de contenido</p>
             </div>
           </div>
         </section>
