@@ -209,6 +209,17 @@ const clientSections: NavSection[] = [
   { label: "CONFIG", items: CONFIG_ITEMS }
 ];
 
+// Freelance users (no org, no plan) - minimal navigation
+const freelanceSections: NavSection[] = [
+  {
+    label: "CONFIG",
+    items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
+      { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+    ]
+  }
+];
+
 // Marketplace navigation sections — available to ALL users
 function getMarketplaceSections(activeGroup: PermissionGroup | null): NavSection[] {
   const items: NavItem[] = [
@@ -362,8 +373,21 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     }
   }, [activeIsClient, user, isImpersonating, impersonationTarget]);
 
+  // Detect freelance user: has no org and is not a platform admin
+  const isFreelanceUser = !profile?.current_organization_id && !isPlatformAdmin && !isPlatformRoot;
+
   // Filter navigation sections based on platform root vs org owner and org selection
   const filteredSections = useMemo(() => {
+    // Freelance users (no org, no plan) only see marketplace + profile config
+    if (isFreelanceUser) {
+      // Return minimal navigation for freelancers
+      const mktSections = getMarketplaceSections(activeGroup);
+      return [
+        ...mktSections,
+        ...freelanceSections,
+      ];
+    }
+
     // When roles haven't loaded yet, show minimal nav to avoid flashing admin menu
     let baseSections = activeIsAdmin
       ? adminSections
@@ -431,7 +455,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       ...(!effectiveMktEnabled && !activeIsClient ? [recruitSection] : []),
       ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" }] }]),
     ];
-  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel]);
+  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, isFreelanceUser, activeGroup]);
 
   // Collapsible sections state — auto-expand section containing active route
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
@@ -607,8 +631,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           })}
         </nav>
 
-        {/* AI Tokens - solo si tiene org y no es cliente */}
-        {profile?.current_organization_id && !activeIsClient && (
+        {/* AI Tokens - solo si tiene org y no es cliente ni freelance */}
+        {profile?.current_organization_id && !activeIsClient && !isFreelanceUser && (
           <div className="border-t border-border px-3 py-2">
             <AITokensPanelTrigger
               organizationId={profile.current_organization_id}
@@ -617,10 +641,12 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           </div>
         )}
 
-        {/* Achievements Widget */}
-        <div className="border-t border-border">
-          <SidebarAchievementsWidget collapsed={collapsed} />
-        </div>
+        {/* Achievements Widget - hide for freelancers */}
+        {!isFreelanceUser && (
+          <div className="border-t border-border">
+            <SidebarAchievementsWidget collapsed={collapsed} />
+          </div>
+        )}
 
         {/* User & Actions */}
         <div className="border-t border-border p-3 space-y-2 bg-gradient-to-t from-muted/50 to-transparent">
@@ -630,8 +656,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             </div>
           )}
 
-          {/* Role Switcher */}
-          {!isImpersonating && (
+          {/* Role Switcher - hide for freelancers with single role */}
+          {!isImpersonating && !isFreelanceUser && (
             <RoleSwitcher collapsed={collapsed} />
           )}
 
