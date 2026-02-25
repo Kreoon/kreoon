@@ -28,6 +28,8 @@ export function useBatchPostMetrics(postIds: string[]) {
       }
       return map;
     },
+    // Always return empty Map as initialData to avoid undefined
+    initialData: () => new Map<string, PostMetrics[]>(),
     enabled: postIds.length > 0,
     staleTime: 5 * 60 * 1000,
   });
