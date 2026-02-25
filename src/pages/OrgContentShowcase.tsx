@@ -41,13 +41,14 @@ interface OrgInfo {
   org_team_size_range: string | null;
   favicon_url: string | null;
   og_image_url: string | null;
+  registration_banner_url: string | null;
 }
 
 interface OrgStats {
-  total_content: number;
+  total_videos_produced: number;
+  total_clients: number;
+  total_projects: number;
   total_creators: number;
-  total_views: number;
-  total_likes: number;
 }
 
 interface PublicContent {
@@ -285,7 +286,7 @@ export default function OrgContentShowcase() {
   const accent = org.portfolio_color || org.primary_color || '#ffd500';
   const displayName = org.org_display_name || org.name;
   const tagline = org.org_tagline || org.portfolio_description || org.description || '';
-  const coverUrl = org.org_cover_url || org.portfolio_cover;
+  const coverUrl = org.registration_banner_url || org.org_cover_url || org.portfolio_cover;
   const specialties = org.org_specialties || [];
   const igHandle = org.instagram || org.org_instagram;
   const tkHandle = org.tiktok || org.org_tiktok;
@@ -325,13 +326,11 @@ export default function OrgContentShowcase() {
               </a>
             )}
           </div>
-          {webUrl && (
-            <a href={ensureUrl(webUrl)} target="_blank" rel="noopener noreferrer">
-              <Button size="sm" className="h-8 text-xs font-semibold text-black" style={{ backgroundColor: accent }}>
-                Visitar web
-              </Button>
-            </a>
-          )}
+          <a href={`/org/${slug}`}>
+            <Button size="sm" className="h-8 text-xs font-semibold text-black" style={{ backgroundColor: accent }}>
+              Trabajemos juntos
+            </Button>
+          </a>
         </div>
       </nav>
 
@@ -400,11 +399,10 @@ export default function OrgContentShowcase() {
       {stats && (
         <section className="border-b border-white/[0.06]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-              <StatCard value={formatNumber(stats.total_content)} label="Videos" icon={Film} />
-              <StatCard value={formatNumber(stats.total_creators)} label="Creadores" icon={Users} />
-              <StatCard value={formatNumber(stats.total_views)} label="Vistas" icon={Eye} />
-              <StatCard value={formatNumber(stats.total_likes)} label="Likes" icon={Heart} />
+            <div className="grid grid-cols-3 gap-6">
+              <StatCard value={`+${formatNumber(stats.total_videos_produced)}`} label="Videos producidos" icon={Film} />
+              <StatCard value={`+${stats.total_clients}`} label="Empresas" icon={Building2} />
+              <StatCard value={`+${stats.total_creators}`} label="Creadores" icon={Users} />
             </div>
           </div>
         </section>
@@ -495,32 +493,29 @@ export default function OrgContentShowcase() {
       </section>
 
       {/* ═══ CTA SECTION ═══ */}
-      {webUrl && (
-        <section className="border-t border-white/[0.06]">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 text-center">
-            <h2 className="text-2xl md:text-3xl font-bold mb-3">Crea contenido con nosotros</h2>
-            <p className="text-white/50 mb-6 max-w-lg mx-auto">
-              {tagline || `Conecta con ${displayName} para impulsar tu marca con contenido autentico y creativo.`}
-            </p>
-            <div className="flex items-center justify-center gap-3">
-              <a href={ensureUrl(webUrl)} target="_blank" rel="noopener noreferrer">
-                <Button size="lg" className="h-12 px-8 text-sm font-bold text-black" style={{ backgroundColor: accent }}>
-                  <Globe className="h-4 w-4 mr-2" />
-                  Visitar {displayName}
+      <section className="border-t border-white/[0.06]">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 text-center">
+          <h2 className="text-2xl md:text-3xl font-bold mb-3">Crea contenido con nosotros</h2>
+          <p className="text-white/50 mb-6 max-w-lg mx-auto">
+            {tagline || `Conecta con ${displayName} para impulsar tu marca con contenido autentico y creativo.`}
+          </p>
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            <a href={`/org/${slug}`}>
+              <Button size="lg" className="h-12 px-8 text-sm font-bold text-black" style={{ backgroundColor: accent }}>
+                Trabajemos juntos
+              </Button>
+            </a>
+            {igHandle && (
+              <a href={`https://instagram.com/${igHandle}`} target="_blank" rel="noopener noreferrer">
+                <Button size="lg" variant="outline" className="h-12 px-6 text-sm font-bold border-white/10 text-white/70 hover:bg-white/5">
+                  <Instagram className="h-4 w-4 mr-2" />
+                  @{igHandle}
                 </Button>
               </a>
-              {igHandle && (
-                <a href={`https://instagram.com/${igHandle}`} target="_blank" rel="noopener noreferrer">
-                  <Button size="lg" variant="outline" className="h-12 px-6 text-sm font-bold border-white/10 text-white/70 hover:bg-white/5">
-                    <Instagram className="h-4 w-4 mr-2" />
-                    @{igHandle}
-                  </Button>
-                </a>
-              )}
-            </div>
+            )}
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       {/* ═══ FOOTER ═══ */}
       <footer className="border-t border-white/[0.06] py-8">

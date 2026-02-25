@@ -73,7 +73,8 @@ BEGIN
     'facebook', o.facebook, 'linkedin', o.linkedin, 'website', o.website,
     'city', o.city, 'country', o.country,
     'org_year_founded', o.org_year_founded, 'org_team_size_range', o.org_team_size_range,
-    'favicon_url', o.favicon_url, 'og_image_url', o.og_image_url
+    'favicon_url', o.favicon_url, 'og_image_url', o.og_image_url,
+    'registration_banner_url', o.registration_page_config->>'banner_url'
   ), o.id
   INTO v_org, v_org_id
   FROM public.organizations o
@@ -83,12 +84,12 @@ BEGIN
 
   IF v_org IS NULL THEN RETURN NULL; END IF;
 
-  -- Aggregate stats
+  -- Stats: videos produced (all content + 1000 legacy), clients, projects, creators
   SELECT jsonb_build_object(
-    'total_content', (SELECT count(*) FROM content WHERE organization_id = v_org_id AND approved_at IS NOT NULL AND (video_url IS NOT NULL OR bunny_embed_url IS NOT NULL)),
-    'total_creators', (SELECT count(*) FROM organization_members WHERE organization_id = v_org_id AND role IN ('creator','editor','strategist')),
-    'total_views', (SELECT COALESCE(sum(views_count),0) FROM content WHERE organization_id = v_org_id AND approved_at IS NOT NULL),
-    'total_likes', (SELECT COALESCE(sum(likes_count),0) FROM content WHERE organization_id = v_org_id AND approved_at IS NOT NULL)
+    'total_videos_produced', (SELECT count(*) FROM content WHERE organization_id = v_org_id) + 1000,
+    'total_clients', (SELECT count(*) FROM clients WHERE organization_id = v_org_id),
+    'total_projects', (SELECT count(*) FROM client_packages cp JOIN clients cl ON cl.id = cp.client_id WHERE cl.organization_id = v_org_id),
+    'total_creators', (SELECT count(*) FROM organization_members WHERE organization_id = v_org_id AND role IN ('creator','editor','strategist'))
   ) INTO v_stats;
 
   -- Fetch random approved content with video
