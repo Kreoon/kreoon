@@ -1,8 +1,8 @@
 import { useState, useEffect, memo } from 'react';
 import { useParams } from 'react-router-dom';
-import { Building2, Loader2, Play, Eye, Heart, Film, MapPin, Users, Calendar, Globe, Instagram, Star, Scissors, Lightbulb } from 'lucide-react';
+import { Building2, Loader2, Play, Film, MapPin, Users, Calendar, Globe, Instagram, Star, Scissors, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { BunnyVideoPlayer } from '@/components/video/BunnyVideoPlayer';
@@ -522,7 +522,7 @@ export default function OrgContentShowcase() {
 
       {/* ═══ VIDEO LIGHTBOX ═══ */}
       {selectedItem && (
-        <VideoLightbox item={selectedItem} accentColor={accent} onClose={() => setSelectedItem(null)} />
+        <VideoLightbox item={selectedItem} onClose={() => setSelectedItem(null)} />
       )}
     </div>
   );
@@ -530,16 +530,15 @@ export default function OrgContentShowcase() {
 
 // ── Video Lightbox ──
 
-function VideoLightbox({ item, accentColor, onClose }: { item: PublicContent; accentColor: string; onClose: () => void }) {
-  const videoSrc = getVideoSrc(item);
-  const initials = item.creator_name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || '';
+function VideoLightbox({ item, onClose }: { item: PublicContent; onClose: () => void }) {
+  const videoSrc = item.bunny_embed_url || item.video_url;
 
   return (
     <Dialog open onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-lg w-[95vw] max-h-[95vh] p-0 overflow-hidden bg-[#111113] border-white/[0.08] gap-0">
-        <DialogTitle className="sr-only">{item.title || 'Video'}</DialogTitle>
+      <DialogContent className="max-w-lg w-[95vw] max-h-[95vh] p-0 overflow-hidden bg-black border-white/[0.08] gap-0">
+        <DialogTitle className="sr-only">Video</DialogTitle>
 
-        <div className="relative bg-black aspect-[9/16] max-h-[70vh]">
+        <div className="relative bg-black aspect-[9/16] max-h-[95vh]">
           {videoSrc ? (
             <BunnyVideoPlayer
               src={videoSrc}
@@ -556,32 +555,6 @@ function VideoLightbox({ item, accentColor, onClose }: { item: PublicContent; ac
           ) : (
             <div className="w-full h-full flex items-center justify-center"><Film className="h-10 w-10 text-white/20" /></div>
           )}
-        </div>
-
-        <div className="p-4 space-y-3">
-          <h3 className="font-bold text-white line-clamp-2">{item.title || 'Sin titulo'}</h3>
-          {item.description && <p className="text-sm text-white/50 line-clamp-3">{item.description}</p>}
-
-          <div className="flex items-center justify-between">
-            {item.creator_name && (
-              <div className="flex items-center gap-2">
-                <Avatar className="h-6 w-6">
-                  <AvatarImage src={item.creator_avatar || ''} alt={item.creator_name} />
-                  <AvatarFallback className="text-[9px] bg-white/10 text-white/60">{initials}</AvatarFallback>
-                </Avatar>
-                <span className="text-sm text-white/60">{item.creator_name}</span>
-              </div>
-            )}
-            <div className="flex items-center gap-3 text-xs text-white/40">
-              {item.views_count > 0 && <span className="flex items-center gap-1"><Eye className="h-3.5 w-3.5" /> {formatNumber(item.views_count)}</span>}
-              {item.likes_count > 0 && <span className="flex items-center gap-1"><Heart className="h-3.5 w-3.5" /> {formatNumber(item.likes_count)}</span>}
-              {item.sphere_phase && PHASE_LABELS[item.sphere_phase] && (
-                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium border ${PHASE_COLORS[item.sphere_phase] || ''}`}>
-                  {PHASE_LABELS[item.sphere_phase]}
-                </span>
-              )}
-            </div>
-          </div>
         </div>
       </DialogContent>
     </Dialog>
