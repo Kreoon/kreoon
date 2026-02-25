@@ -180,34 +180,28 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
 
   // Check if current route is a social route (accessible without roles)
   const isSocialRoute = SOCIAL_ROUTES.some(route => location.pathname.startsWith(route)) || allowNoRoles;
-  
-  // Users without any roles can only access social routes
-  if (realRoles.length === 0 && !isPlatformRoot) {
-    if (!isSocialRoute) {
-      return <Navigate to="/marketplace" replace />;
-    }
-    // Allow access to social routes for users without roles
-    return <>{children}</>;
-  }
 
   // Users with pending_assignment status are blocked from app
   if (profile?.organization_status === 'pending_assignment') {
     return <Navigate to="/pending-access" replace />;
   }
 
-  // Referral gate: talents (users with creator_profile but no org) need platform_access_unlocked
+  // ─── REFERRAL GATE: Must check BEFORE allowing social routes ───
+  // Talents (users with creator_profile but no org) need platform_access_unlocked
   // They MUST complete 3 referral keys before accessing ANY route including marketplace
-  // Bypass ONLY: platform root/admin, org members, clients, unlock-access page itself, settings/profile
+  // Bypass ONLY: platform root/admin, org members, clients, unlock-access page itself, settings/profile, onboarding
   const hasOrganization = !!(currentOrgId || profile?.current_organization_id);
   const isTalentRole = rolesToCheck.length > 0 && rolesToCheck.every(r => {
     const pg = getPermissionGroup(r);
     return pg === 'creator' || pg === 'editor';
   });
-  // Talents without org AND without keys can ONLY access: /unlock-access, /settings, /profile
+  // Routes that talents without keys CAN access (onboarding flow)
   const isGateBypassRoute = location.pathname === '/unlock-access'
     || location.pathname.startsWith('/settings')
-    || location.pathname.startsWith('/profile/');
-  // Also check for users without roles who have a creator_profile (pure talents)
+    || location.pathname.startsWith('/profile/')
+    || location.pathname === '/welcome-talent'
+    || location.pathname.startsWith('/onboarding');
+  // Pure talents = users without org roles who need to complete referral gate
   const isPureTalentWithoutKeys =
     realRoles.length === 0 &&
     !hasOrganization &&
@@ -215,6 +209,7 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     !isPlatformAdmin &&
     profile?.platform_access_unlocked !== true;
 
+  // Block talents without keys from ALL routes except gate bypass routes
   if (
     (isTalentRole || isPureTalentWithoutKeys) &&
     !isPlatformRoot &&
@@ -224,6 +219,15 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     profile?.platform_access_unlocked !== true
   ) {
     return <Navigate to="/unlock-access" replace />;
+  }
+
+  // Users without any roles can only access social routes (AFTER referral gate check)
+  if (realRoles.length === 0 && !isPlatformRoot) {
+    if (!isSocialRoute) {
+      return <Navigate to="/marketplace" replace />;
+    }
+    // Allow access to social routes for users without roles (brands, unlocked talents)
+    return <>{children}</>;
   }
 
   // Client users without an associated company can only access social routes
