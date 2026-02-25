@@ -361,8 +361,8 @@ const Creators = () => {
 
   // Filter talents based on search and active tab
   const filteredTalents = talents.filter(t => {
-    const matchesSearch = t.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (t.full_name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (t.email ?? '').toLowerCase().includes(searchTerm.toLowerCase());
     
     if (!matchesSearch) return false;
 

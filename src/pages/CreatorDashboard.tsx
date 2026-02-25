@@ -143,7 +143,7 @@ export default function CreatorDashboard() {
         <TechPageHeader
           icon={Clapperboard}
           title={VOCABULARIO_ROL.creator.dashboard}
-          subtitle={VOCABULARIO_ROL.creator.bienvenida.replace('tu Camerino', `tu Camerino, ${profile?.full_name}`)}
+          subtitle={VOCABULARIO_ROL.creator.bienvenida.replace('tu Camerino', `tu Camerino, ${profile?.full_name ?? ''}`)}
           badge={
             <div className="flex items-center gap-3">
               {showAmbassadorBadge && <AmbassadorBadge size="md" variant="glow" />}

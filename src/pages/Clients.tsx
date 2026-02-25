@@ -264,7 +264,7 @@ const Clients = () => {
       clientsList.sort((a, b) => {
         if (a.is_internal_brand && !b.is_internal_brand) return -1;
         if (!a.is_internal_brand && b.is_internal_brand) return 1;
-        return a.name.localeCompare(b.name);
+        return (a.name ?? '').localeCompare(b.name ?? '');
       });
 
       setClients(clientsList);
@@ -419,14 +419,14 @@ const Clients = () => {
     }
   };
 
-  const filteredClients = clients.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredClients = clients.filter(c =>
+    (c.name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.contact_email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const filteredClientUsers = clientUsers.filter(u =>
-    u.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (u.full_name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (u.email ?? '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const formatDate = (date: string) => {

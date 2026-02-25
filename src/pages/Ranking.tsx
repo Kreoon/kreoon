@@ -515,7 +515,7 @@ function RankingContent({
                     <Avatar className="h-10 w-10 flex-shrink-0 border-2 border-border">
                       <AvatarImage src={entry.avatar_url || undefined} />
                       <AvatarFallback className="font-medieval">
-                        {entry.full_name.slice(0, 2).toUpperCase()}
+                        {(entry.full_name ?? '').slice(0, 2).toUpperCase() || '??'}
                       </AvatarFallback>
                     </Avatar>
                     

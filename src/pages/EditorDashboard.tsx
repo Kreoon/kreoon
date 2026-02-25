@@ -135,7 +135,7 @@ export default function EditorDashboard() {
         <PageHeader
           icon={Film}
           title={VOCABULARIO_ROL.editor.dashboard}
-          subtitle={VOCABULARIO_ROL.editor.bienvenida.replace('la Sala de Edición', `la Sala de Edición, ${profile?.full_name}`)}
+          subtitle={VOCABULARIO_ROL.editor.bienvenida.replace('la Sala de Edición', `la Sala de Edición, ${profile?.full_name ?? ''}`)}
           action={
             <div className="flex flex-wrap items-center gap-3">
               <ThisMonthFilter isActive={thisMonthActive} onToggle={setThisMonthActive} />

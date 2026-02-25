@@ -266,7 +266,7 @@ export default function ClientContentBoard() {
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(c =>
-        c.title.toLowerCase().includes(term) ||
+        (c.title ?? '').toLowerCase().includes(term) ||
         c.description?.toLowerCase().includes(term)
       );
     }
