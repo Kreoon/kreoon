@@ -58,6 +58,7 @@ const OnboardingProfile = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [creatorProfileId, setCreatorProfileId] = useState<string | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
   const creatingProfileRef = useRef(false);
 
   // Form state
@@ -92,15 +93,20 @@ const OnboardingProfile = () => {
   const fetchOrCreateCreatorProfile = async () => {
     if (!user || creatingProfileRef.current) return;
     creatingProfileRef.current = true;
+    setProfileError(null);
 
     try {
       // Check if creator profile exists
-      const { data: existing } = await (supabase as any)
+      const { data: existing, error: fetchError } = await (supabase as any)
         .from('creator_profiles')
         .select('id')
         .eq('user_id', user.id)
         .limit(1)
         .maybeSingle();
+
+      if (fetchError) {
+        console.error('Error fetching creator profile:', fetchError);
+      }
 
       if (existing?.id) {
         setCreatorProfileId(existing.id);
@@ -123,12 +129,31 @@ const OnboardingProfile = () => {
         .select('id')
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // If unique constraint error, try to fetch existing
+        if (error.code === '23505') {
+          const { data: retry } = await (supabase as any)
+            .from('creator_profiles')
+            .select('id')
+            .eq('user_id', user.id)
+            .limit(1)
+            .maybeSingle();
+          if (retry?.id) {
+            setCreatorProfileId(retry.id);
+            return;
+          }
+        }
+        throw error;
+      }
       if (created?.id) {
         setCreatorProfileId(created.id);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating creator profile:', err);
+      setProfileError(err?.message || 'Error al preparar el perfil');
+      toast.error('Error al preparar el portafolio', {
+        description: 'Intenta recargar la página',
+      });
     } finally {
       creatingProfileRef.current = false;
     }
@@ -426,10 +451,6 @@ const OnboardingProfile = () => {
     }
   };
 
-  const handleSkip = () => {
-    navigate('/unlock-access');
-  };
-
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -676,17 +697,36 @@ const OnboardingProfile = () => {
                   {/* Dropzone */}
                   {portfolioFiles.length < MAX_PORTFOLIO_FILES && (
                     <div
-                      {...getRootProps()}
+                      {...(creatorProfileId ? getRootProps() : {})}
                       className={cn(
-                        'flex flex-col items-center justify-center rounded-xl border-2 border-dashed cursor-pointer transition-all p-8',
-                        isDragActive
+                        'flex flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all p-8',
+                        profileError
+                          ? 'border-red-500/50 bg-red-500/10'
+                          : isDragActive
                           ? 'border-purple-500 bg-purple-500/10'
-                          : 'border-white/20 hover:border-purple-500/50 bg-white/[0.02]',
-                        !creatorProfileId && 'opacity-50 cursor-wait'
+                          : creatorProfileId
+                          ? 'border-white/20 hover:border-purple-500/50 bg-white/[0.02] cursor-pointer'
+                          : 'border-white/20 bg-white/[0.02] cursor-wait opacity-50'
                       )}
                     >
-                      <input {...getInputProps()} />
-                      {!creatorProfileId ? (
+                      {creatorProfileId && <input {...getInputProps()} />}
+                      {profileError ? (
+                        <>
+                          <AlertCircle className="w-10 h-10 text-red-400 mb-3" />
+                          <p className="text-sm text-red-300 mb-2">{profileError}</p>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              creatingProfileRef.current = false;
+                              fetchOrCreateCreatorProfile();
+                            }}
+                            className="border-red-500/50 text-red-300 hover:bg-red-500/20"
+                          >
+                            Reintentar
+                          </Button>
+                        </>
+                      ) : !creatorProfileId ? (
                         <>
                           <Loader2 className="w-10 h-10 text-white/40 mb-3 animate-spin" />
                           <p className="text-sm text-white/60">Preparando tu perfil...</p>
@@ -892,18 +932,6 @@ const OnboardingProfile = () => {
             )}
           </Button>
         </div>
-
-        {/* Skip option - only show on optional steps */}
-        {currentStep !== 2 && (
-          <div className="text-center mt-4">
-            <button
-              onClick={handleSkip}
-              className="text-sm text-white/40 hover:text-white/60 underline"
-            >
-              Completar después
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
