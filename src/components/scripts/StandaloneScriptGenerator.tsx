@@ -893,7 +893,7 @@ export function StandaloneScriptGenerator() {
                       <SelectValue placeholder="Seleccionar un dolor..." />
                     </SelectTrigger>
                     <SelectContent className="z-[100] bg-popover max-h-[300px]" position="popper" sideOffset={4}>
-                      {parsedResearch.pains.map((pain, idx) => (
+                      {parsedResearch.pains.filter(p => p && p.trim()).map((pain, idx) => (
                         <SelectItem key={idx} value={pain} className="py-2">
                           <span className="line-clamp-2">{pain}</span>
                         </SelectItem>
@@ -923,7 +923,7 @@ export function StandaloneScriptGenerator() {
                       <SelectValue placeholder="Seleccionar un deseo..." />
                     </SelectTrigger>
                     <SelectContent className="z-[100] bg-popover max-h-[300px]" position="popper" sideOffset={4}>
-                      {parsedResearch.desires.map((desire, idx) => (
+                      {parsedResearch.desires.filter(d => d && d.trim()).map((desire, idx) => (
                         <SelectItem key={idx} value={desire} className="py-2">
                           <span className="line-clamp-2">{desire}</span>
                         </SelectItem>
@@ -953,7 +953,7 @@ export function StandaloneScriptGenerator() {
                       <SelectValue placeholder="Seleccionar una objeción..." />
                     </SelectTrigger>
                     <SelectContent className="z-[100] bg-popover max-h-[300px]" position="popper" sideOffset={4}>
-                      {parsedResearch.objections.map((objection, idx) => (
+                      {parsedResearch.objections.filter(o => o && o.trim()).map((objection, idx) => (
                         <SelectItem key={idx} value={objection} className="py-2">
                           <span className="line-clamp-2">{objection}</span>
                         </SelectItem>

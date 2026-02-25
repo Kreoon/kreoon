@@ -65,13 +65,15 @@ function safeParseJson(data: unknown): Record<string, unknown> | null {
 function extractArray(data: unknown, ...keys: string[]): string[] {
   const parsed = safeParseJson(data);
   if (!parsed) return [];
-  
+
   for (const key of keys) {
     const value = parsed[key];
     if (Array.isArray(value)) {
-      return value.map(item => 
-        typeof item === 'string' ? item : (item?.name || item?.description || item?.title || JSON.stringify(item))
-      );
+      return value
+        .map(item =>
+          typeof item === 'string' ? item : (item?.name || item?.description || item?.title || JSON.stringify(item))
+        )
+        .filter((s): s is string => typeof s === 'string' && s.trim().length > 0);
     }
   }
   return [];
