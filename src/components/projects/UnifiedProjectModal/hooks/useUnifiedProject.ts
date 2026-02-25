@@ -183,7 +183,7 @@ export function useUnifiedProject({
         startDate: data.start_date,
         creatorPayment: data.creator_payment,
         editorPayment: data.editor_payment,
-      });
+      }, data);
 
       const { error } = await supabase.rpc('update_content_by_id', {
         p_content_id: project.id,

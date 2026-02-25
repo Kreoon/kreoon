@@ -99,8 +99,8 @@ export class ProjectAdapter {
    * Convert UnifiedProject changes back to a content table update payload.
    * Used with the update_content_by_id RPC.
    */
-  static toContentUpdate(project: UnifiedProject): Record<string, any> {
-    return {
+  static toContentUpdate(project: UnifiedProject, formData?: Record<string, any>): Record<string, any> {
+    const base: Record<string, any> = {
       title: project.title,
       description: project.brief.objective || null,
       product: project.brief.product_name || null,
@@ -115,6 +115,24 @@ export class ProjectAdapter {
       creator_payment: project.creatorPayment ?? 0,
       editor_payment: project.editorPayment ?? 0,
     };
+
+    // Pass through editable fields from formData that aren't in UnifiedProject
+    if (formData) {
+      const passthroughFields = [
+        'script', 'video_url', 'video_urls', 'raw_video_urls', 'hooks_count',
+        'drive_url', 'notes', 'campaign_week', 'sphere_phase', 'is_published',
+        'creator_paid', 'editor_paid', 'invoiced', 'product_id',
+        'editor_guidelines', 'strategist_guidelines', 'trafficker_guidelines',
+        'designer_guidelines', 'admin_guidelines',
+      ];
+      for (const field of passthroughFields) {
+        if (field in formData && formData[field] !== undefined) {
+          base[field] = formData[field] === '' ? null : formData[field];
+        }
+      }
+    }
+
+    return base;
   }
 
   /**
