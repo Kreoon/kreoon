@@ -172,7 +172,7 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.admin-users]
-verify_jwt = false
+verify_jwt = true
 
 [functions.admin-reset-password]
 verify_jwt = true
@@ -196,10 +196,10 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.bulk-password-reset]
-verify_jwt = false
+verify_jwt = true
 
 [functions.emergency-password-reset]
-verify_jwt = false
+verify_jwt = true
 
 [functions.kreoon-sql]
 verify_jwt = false
@@ -261,16 +261,21 @@ verify_jwt = false
 # ── Unified Financial System ──
 
 [functions.ai-tokens-service]
+# JWT verification handled internally by the function (supabase.auth.getUser)
+# Gateway verify_jwt caused 401 because supabase.functions.invoke header merging is inconsistent
 verify_jwt = false
 
 [functions.escrow-service]
-verify_jwt = false
+verify_jwt = true
 
+# verify_jwt=false porque tiene rutas públicas (validate-code, track-click,
+# get-tiers, get-leaderboard, get-promo-campaigns). Rutas autenticadas
+# validan JWT internamente en el código de la función.
 [functions.referral-service]
 verify_jwt = false
 
 [functions.subscription-service]
-verify_jwt = false
+verify_jwt = true
 
 [functions.stripe-webhook]
 verify_jwt = false
@@ -297,7 +302,7 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.wallet-connect]
-verify_jwt = false
+verify_jwt = true
 
 [functions.wallet-process-withdrawal]
 verify_jwt = true
@@ -339,7 +344,7 @@ verify_jwt = false
 # ── Campaign Checkout ──
 
 [functions.campaign-checkout]
-verify_jwt = false
+verify_jwt = true
 
 # ── Ad Intelligence Module ──
 

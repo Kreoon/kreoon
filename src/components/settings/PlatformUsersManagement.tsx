@@ -99,6 +99,13 @@ export function PlatformUsersManagement() {
 
   const isRoot = profile?.email === ROOT_EMAIL;
 
+  const getAuthHeaders = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('No autenticado');
+    return { Authorization: `Bearer ${session.access_token}` };
+  };
+
+
   useEffect(() => {
     if (isRoot) {
       fetchData();
@@ -109,8 +116,10 @@ export function PlatformUsersManagement() {
     setLoading(true);
     try {
       // Fetch ALL users from Supabase Auth via admin edge function
+      const headers = await getAuthHeaders();
       const { data: authResult, error: authError } = await supabase.functions.invoke("admin-users", {
-        body: { action: "list_users" }
+        body: { action: "list_users" },
+        headers,
       });
 
       if (authError) {
@@ -212,13 +221,15 @@ export function PlatformUsersManagement() {
       });
 
       // Use admin edge function to bypass RLS
+      const headers = await getAuthHeaders();
       const { data, error } = await supabase.functions.invoke("admin-users", {
         body: {
           action: "assign_to_org",
           userId: assignDialog.id,
           organizationId: selectedOrgId,
           assignRole: selectedRole,
-        }
+        },
+        headers,
       });
 
       console.log("Response:", { data, error });
@@ -248,11 +259,13 @@ export function PlatformUsersManagement() {
     setActionLoading(user.id);
     try {
       // Use admin edge function to bypass RLS
+      const headers = await getAuthHeaders();
       const { data, error } = await supabase.functions.invoke("admin-users", {
         body: {
           action: "remove_from_org",
           userId: user.id,
-        }
+        },
+        headers,
       });
 
       if (error) throw error;
@@ -271,8 +284,10 @@ export function PlatformUsersManagement() {
   const handleToggleRole = async (userId: string, role: AppRole) => {
     setActionLoading(userId);
     try {
+      const headers = await getAuthHeaders();
       const { data, error } = await supabase.functions.invoke("admin-users", {
-        body: { action: "toggle_role", userId, role }
+        body: { action: "toggle_role", userId, role },
+        headers,
       });
       if (error) throw error;
       toast.success(data.added ? `Rol ${ROLE_LABELS[role]} agregado` : `Rol ${ROLE_LABELS[role]} removido`);
@@ -314,8 +329,10 @@ export function PlatformUsersManagement() {
   const handleResetPassword = async (user: UserData) => {
     setActionLoading(user.id);
     try {
+      const headers = await getAuthHeaders();
       const { data, error } = await supabase.functions.invoke("admin-users", {
-        body: { action: "send_password_reset", email: user.email }
+        body: { action: "send_password_reset", email: user.email },
+        headers,
       });
       if (error) throw error;
       toast.success(`Email de restablecimiento enviado a ${user.email}`);
@@ -330,13 +347,15 @@ export function PlatformUsersManagement() {
     setActionLoading(user.id);
     try {
       // Create profile via admin edge function (bypasses RLS)
+      const headers = await getAuthHeaders();
       const { data, error } = await supabase.functions.invoke("admin-users", {
         body: {
           action: "create_profile",
           userId: user.id,
           email: user.email,
           fullName: user.full_name || user.email.split('@')[0],
-        }
+        },
+        headers,
       });
 
       if (error) throw error;
@@ -355,8 +374,10 @@ export function PlatformUsersManagement() {
     if (!deleteConfirm) return;
     setActionLoading(deleteConfirm.id);
     try {
+      const headers = await getAuthHeaders();
       const { error } = await supabase.functions.invoke("admin-users", {
-        body: { action: "delete_user", userId: deleteConfirm.id }
+        body: { action: "delete_user", userId: deleteConfirm.id },
+        headers,
       });
       if (error) throw error;
       toast.success(`Usuario ${deleteConfirm.email} eliminado`);

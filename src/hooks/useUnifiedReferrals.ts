@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { REFERRAL_TIERS, REFERRAL_TIER_ORDER, type ReferralTierKey } from '@/lib/finance/constants';
@@ -13,37 +12,15 @@ import type {
   PromotionalCampaign,
   NurtureStatus,
 } from '@/types/unified-finance.types';
+import { invokeEdgeFunction, invokeEdgeFunctionPublic } from '@/lib/invokeEdgeFunction';
 
-// ─── Helper: invoke edge function with auth ───
-async function invokeReferralService<T = any>(
-  action: string,
-  body?: Record<string, any>
-): Promise<T> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error('No autenticado');
-
-  const { data, error } = await supabase.functions.invoke(`referral-service/${action}`, {
-    body: body || {},
-    headers: { Authorization: `Bearer ${session.access_token}` },
-  });
-
-  if (error) throw new Error(error.message || `Error en ${action}`);
-  if (data?.error) throw new Error(data.error);
-  return data as T;
+// ─── Helpers: invoke referral-service ───
+function invokeReferralService<T = unknown>(action: string, body?: Record<string, unknown>) {
+  return invokeEdgeFunction<T>('referral-service', action, body);
 }
 
-// ─── Helper: invoke edge function without auth (public) ───
-async function invokeReferralServicePublic<T = any>(
-  action: string,
-  body?: Record<string, any>
-): Promise<T> {
-  const { data, error } = await supabase.functions.invoke(`referral-service/${action}`, {
-    body: body || {},
-  });
-
-  if (error) throw new Error(error.message || `Error en ${action}`);
-  if (data?.error) throw new Error(data.error);
-  return data as T;
+function invokeReferralServicePublic<T = unknown>(action: string, body?: Record<string, unknown>) {
+  return invokeEdgeFunctionPublic<T>('referral-service', action, body);
 }
 
 /**

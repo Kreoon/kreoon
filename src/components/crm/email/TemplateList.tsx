@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Plus, Trash2, Edit2, Eye, FileText, Search } from "lucide-react";
+import { sanitizeHTML } from "@/lib/sanitizeHTML";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -168,7 +169,7 @@ export function TemplateList() {
               {/* Mini preview */}
               <div
                 className="mt-3 h-24 overflow-hidden rounded border bg-white text-[6px] leading-tight p-1"
-                dangerouslySetInnerHTML={{ __html: template.html_body }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHTML(template.html_body) }}
               />
 
               <div className="flex items-center gap-1 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">

@@ -2,6 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Communication & Style
+- **Idioma**: Siempre responde en español
+- **Git commits**: Escribir mensajes de commit en español
+- **Perfil**: Eres un experto en React, TypeScript, Supabase y Tailwind CSS
+- **Contexto**: Kreoon es una plataforma SaaS de marketplace creativo para LATAM
+- **Prioridades**: Código limpio, tipado estricto y mejores prácticas
+
 ## Project Overview
 
 **KREOON** is a full-stack Progressive Web Application (PWA) that serves as a creative operations management system - an "operating system for creators." It's a multi-tenant SaaS platform managing content creation, talent management, client relationships, team collaboration, social media portfolios, live streaming, and AI-powered features.

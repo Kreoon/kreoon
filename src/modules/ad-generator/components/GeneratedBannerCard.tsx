@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Download, Trash2, Clock, AlertCircle, Loader2, Copy, Zap, Eye, EyeOff, X, Globe, ThumbsUp, MessageCircle, Share2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -89,7 +89,7 @@ export function GeneratedBannerCard({ banner, onDelete }: GeneratedBannerCardPro
   const primaryText = parsedCopy?.primary_text || parsedCopy?.body || parsedCopy?.subheadline || '';
   const metaHeadline = parsedCopy?.meta_headline || parsedCopy?.headline || '';
   const metaDescription = parsedCopy?.meta_description || parsedCopy?.subheadline || '';
-  const metaCTA = parsedCopy?.meta_cta || parsedCopy?.cta || 'Mas informacion';
+  const metaCTA = parsedCopy?.meta_cta || 'Más información';
 
   return (
     <>
@@ -268,6 +268,7 @@ export function GeneratedBannerCard({ banner, onDelete }: GeneratedBannerCardPro
       {/* Lightbox popup */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className="max-w-4xl w-[95vw] max-h-[95vh] p-0 overflow-hidden bg-black/95 border-none [&>button]:hidden">
+          <DialogTitle className="sr-only">Vista previa del banner</DialogTitle>
           <div className="relative w-full h-full flex items-center justify-center">
             <button
               onClick={() => setLightboxOpen(false)}

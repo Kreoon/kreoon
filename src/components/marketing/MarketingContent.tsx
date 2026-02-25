@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { sanitizeHTML } from "@/lib/sanitizeHTML";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -668,7 +669,7 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
               {assignData.strategist_guidelines ? (
                 <div 
                   className="prose prose-sm dark:prose-invert max-w-none p-3 border rounded-md bg-muted/50"
-                  dangerouslySetInnerHTML={{ __html: assignData.strategist_guidelines }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHTML(assignData.strategist_guidelines) }}
                 />
               ) : (
                 <Textarea
@@ -689,7 +690,7 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
               {assignData.trafficker_guidelines ? (
                 <div 
                   className="prose prose-sm dark:prose-invert max-w-none p-3 border rounded-md bg-muted/50"
-                  dangerouslySetInnerHTML={{ __html: assignData.trafficker_guidelines }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHTML(assignData.trafficker_guidelines) }}
                 />
               ) : (
                 <Textarea
