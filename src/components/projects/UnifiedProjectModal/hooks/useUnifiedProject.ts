@@ -244,6 +244,7 @@ export function useUnifiedProject({
 
       toast({ title: 'Guardado', description: 'Proyecto actualizado correctamente.' });
       pendingRefreshRef.current = true;
+      setEditMode(false);
     } catch (err) {
       console.error('[useUnifiedProject] Save error:', err);
       toast({
