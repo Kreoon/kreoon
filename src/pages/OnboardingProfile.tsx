@@ -113,8 +113,8 @@ const OnboardingProfile = () => {
 
   const canProceed = () => {
     switch (currentStep) {
-      case 0: return avatarUrl && bio.length >= 10;
-      case 1: return selectedAreas.length > 0 && selectedRoles.length > 0;
+      case 0: return bio.length >= 10; // Avatar is optional, bio required
+      case 1: return selectedAreas.length > 0; // Areas required, roles optional
       case 2: return true; // Portfolio is optional
       case 3: return true; // Social links are optional
       default: return false;
@@ -264,12 +264,17 @@ const OnboardingProfile = () => {
                     Foto de perfil
                   </label>
                   <div className="flex justify-center">
-                    <BunnyImageUploader
-                      currentUrl={avatarUrl}
-                      onUpload={setAvatarUrl}
-                      folder="avatars"
-                      className="w-32 h-32 rounded-full"
-                    />
+                    <div className="w-32">
+                      <BunnyImageUploader
+                        mode="single"
+                        value={avatarUrl || ''}
+                        onChange={(url) => setAvatarUrl(url || null)}
+                        getStoragePath={(file) => `avatars/${user?.id || 'unknown'}/${Date.now()}-${file.name}`}
+                        aspectRatio="square"
+                        height="h-32"
+                        maxSizeMB={5}
+                      />
+                    </div>
                   </div>
                   <p className="text-xs text-white/40 text-center mt-2">
                     Una buena foto aumenta tus oportunidades
