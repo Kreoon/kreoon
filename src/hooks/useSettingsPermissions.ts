@@ -4,9 +4,10 @@ import { useOrgOwner } from './useOrgOwner';
 import { supabase } from '@/integrations/supabase/client';
 
 // Section keys for settings module (CONSOLIDATED - reduced from 25 to 17)
-export type SettingsSectionKey = 
+export type SettingsSectionKey =
   // User level
   | 'profile'
+  | 'creator_profile'    // Creator marketplace profile (creator_profiles table)
   | 'notifications'      // Merged: personal notifications + org preferences + chat RBAC
   | 'security'
   | 'tour'
@@ -57,6 +58,7 @@ export interface SettingsPermissions {
 const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'platform'> = {
   // User level - everyone can access their own
   profile: 'user',
+  creator_profile: 'user',
   notifications: 'user',
   security: 'user',
   tour: 'user',
