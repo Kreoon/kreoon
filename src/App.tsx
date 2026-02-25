@@ -109,6 +109,8 @@ const KAEAnalyticsDashboard = lazy(() => import("./components/admin/analytics/KA
 // Subscription pages
 const ReferralLanding = lazy(() => import("./pages/ReferralLanding"));
 const UnlockAccess = lazy(() => import("./pages/UnlockAccess"));
+const WelcomeTalent = lazy(() => import("./pages/WelcomeTalent"));
+const OnboardingProfile = lazy(() => import("./pages/OnboardingProfile"));
 const SubscriptionSuccess = lazy(() => import("./pages/subscription/SubscriptionSuccess"));
 const SubscriptionCancel = lazy(() => import("./pages/subscription/SubscriptionCancel"));
 const PlanesPage = lazy(() => import("./pages/PlanesPage"));
@@ -274,6 +276,8 @@ function AppRoutes() {
         <Route path="/no-organization" element={<NoOrganization />} />
         <Route path="/pending-access" element={<PendingAccess />} />
         <Route path="/unlock-access" element={<UnlockAccess />} />
+        <Route path="/welcome-talent" element={<WelcomeTalent />} />
+        <Route path="/onboarding/profile" element={<OnboardingProfile />} />
         <Route path="/welcome" element={<WelcomeNewMember />} />
         <Route path="/up-documentation" element={<UPDocumentation />} />
         <Route path="/org/:slug/talento" element={<OrgPortfolioPage />} />

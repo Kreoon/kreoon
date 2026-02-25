@@ -290,11 +290,11 @@ export default function TalentFormSection({ id, open = true, onClose, onSuccess 
               </>
             ) : (
               <Button
-                onClick={() => navigate('/unlock-access', { replace: true })}
+                onClick={() => navigate('/welcome-talent', { replace: true })}
                 className="w-full bg-purple-600 hover:bg-purple-700"
               >
-                Obtener mis llaves
-                <Key className="h-4 w-4 ml-2" />
+                Continuar
+                <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             )}
             {isModal && (
