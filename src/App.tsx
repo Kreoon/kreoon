@@ -65,6 +65,7 @@ const Live = lazy(() => import("./pages/Live"));
 const Marketing = lazy(() => import("./pages/Marketing"));
 const ResearchLanding = lazy(() => import("./pages/ResearchLanding"));
 const OrgPortfolioPage = lazy(() => import("./pages/OrgPortfolioPage"));
+const OrgContentShowcase = lazy(() => import("./pages/OrgContentShowcase"));
 const CreatorProfilePage_Marketplace = lazy(() => import("./components/marketplace/profile/CreatorProfilePage"));
 const HiringWizardPage = lazy(() => import("./pages/HiringWizardPage"));
 const MarketplaceDashboard = lazy(() => import("./pages/MarketplaceDashboard"));
@@ -276,6 +277,7 @@ function AppRoutes() {
         <Route path="/welcome" element={<WelcomeNewMember />} />
         <Route path="/up-documentation" element={<UPDocumentation />} />
         <Route path="/org/:slug/talento" element={<OrgPortfolioPage />} />
+        <Route path="/org/:slug/contenido" element={<OrgContentShowcase />} />
         <Route path="/org/:slug" element={<OrgAuth />} />
         <Route path="/auth/org/:slug" element={<OrgRegister />} />
         <Route path="/r/:code" element={<ReferralLanding />} />

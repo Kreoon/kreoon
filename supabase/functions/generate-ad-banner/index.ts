@@ -167,54 +167,73 @@ function resolveAspectRatio(input: string): string {
 
 /** Mode-specific context for Nano Banana Pro prompt generation */
 const MODE_CONTEXT: Record<string, string> = {
-  product_only: `MODO DE GENERACIÓN: Crear imagen publicitaria desde cero CON EL PRODUCTO VISIBLE.
+  product_only: `MODO: PRODUCTO VISIBLE — creativos con las fotos del producto.
 
-IMÁGENES DE ENTRADA (image_urls): Fotos del producto/logo proporcionadas por el usuario.
-INSTRUCCIONES OBLIGATORIAS PARA EL MODELO:
-- El producto/logo de las fotos DEBE APARECER VISIBLE Y RECONOCIBLE en cada banner generado.
-- Mantener la forma exacta, colores, empaque, logo y etiquetas del producto original.
-- El producto debe ser el ELEMENTO HÉROE de la composición — protagonista visual.
-- Si es un logo: integrarlo como marca de agua premium, en la esquina superior o como elemento central.
-- Si es un producto físico: mostrarlo con iluminación profesional, ángulo atractivo, escala correcta.
-- Si son varios productos: composición grupal armónica o destacar uno como principal.
-El modelo RENDERIZA TEXTO directamente en la imagen — incluir instrucciones de tipografía.`,
+IMÁGENES DE ENTRADA (image_urls): Fotos del producto/logo del usuario.
+REGLAS:
+- El producto de las fotos DEBE APARECER VISIBLE e IDÉNTICO en cada variación (misma forma, colores, empaque).
+- Mezclar estilos: producto hero, UGC con persona real usando el producto, lifestyle, before/after.
+- El producto se integra en escenas naturales — NO flotando sobre fondos vacíos.
+El modelo RENDERIZA TEXTO en la imagen — cada fal_prompt DEBE incluir instrucciones de tipografía exactas.`,
 
-  reference_and_product: `MODO DE GENERACIÓN: Crear banner inspirado en referencia visual + PRODUCTO VISIBLE.
+  reference_and_product: `MODO: REFERENCIA + PRODUCTO — La imagen de referencia es INSPIRACIÓN visual.
 
-IMÁGENES DE ENTRADA (image_urls):
-[0] = Imagen de REFERENCIA — define el estilo visual, layout, composición y atmósfera a seguir.
-[1-3] = Fotos del PRODUCTO/LOGO — DEBEN aparecer visibles en el banner final.
+⚠️ IMPORTANTÍSIMO — ESTÁS VIENDO LA REFERENCIA:
+Te estoy mostrando la imagen de referencia real. ANALÍZALA DETALLADAMENTE y describe en cada fal_prompt:
+1. Los COLORES EXACTOS que ves (paleta, tonos dominantes, contraste)
+2. El ESTILO FOTOGRÁFICO (UGC/casual, editorial, minimalista, dark/premium, lifestyle, etc.)
+3. La COMPOSICIÓN (centrada, rule-of-thirds, diagonal, split, etc.)
+4. La ILUMINACIÓN (natural, ring light, golden hour, studio, etc.)
+5. El MOOD/ENERGÍA (relajado, urgente, aspiracional, divertido, serio, etc.)
+6. Si hay PERSONA: describe su apariencia CONCRETA (complexión, tono de piel, tipo de cabello, género, edad aprox, expresión facial)
 
-INSTRUCCIONES OBLIGATORIAS PARA EL MODELO:
-- COPIAR el estilo, paleta de colores, composición, iluminación y atmósfera de la imagen de referencia [0].
-- INCORPORAR VISIBLEMENTE el producto/logo de las imágenes [1-3] en el banner.
-- El producto debe verse IDÉNTICO a las fotos: misma forma, empaque, colores, etiquetas.
-- Adaptar el producto al estilo/ambiente de la referencia (misma iluminación, ángulo compatible).
-- Si la referencia tiene un layout específico (split, centrado, diagonal), replicarlo con el nuevo producto.
-El modelo RENDERIZA TEXTO directamente en la imagen — incluir instrucciones de tipografía.`,
+CÓMO TRADUCIR LA REFERENCIA A CADA fal_prompt:
+- NO digas "use the reference image" — el modelo de generación NO puede ver la referencia.
+- EN SU LUGAR, describe TEXTUALMENTE todos los elementos visuales que captaste de la referencia.
+- Ejemplo: en vez de "match the reference style", escribe "warm golden hour lighting, desaturated earth tones, casual bohemian aesthetic, iPhone selfie quality, natural skin texture"
+- CADA fal_prompt debe INCORPORAR estos detalles visuales CONCRETOS basados en lo que VES.
 
-  reference_only: `MODO DE GENERACIÓN: Crear banner inspirado en referencia visual (sin fotos de producto).
+REFERENCIA COMO INSPIRACIÓN (NO COPIA):
+- Capturar la vibra general, paleta, mood y nivel de calidad.
+- VARIAR libremente: layout, composición, ángulos y fondos cambian según cada ángulo de venta.
+- La referencia marca la ESTÉTICA GENERAL, no la composición exacta.
 
-IMÁGENES DE ENTRADA (image_urls):
-[0] = Imagen de REFERENCIA — define el estilo visual, layout, composición y atmósfera a seguir.
+SI LA REFERENCIA TIENE UNA PERSONA:
+- Describe su apariencia CONCRETA en cada fal_prompt (ej: "a latina woman in her late 20s, medium brown skin, dark wavy shoulder-length hair, athletic build")
+- MANTENER: rostro, complexión, tono de piel, género y rango de edad.
+- VARIAR: ropa, entorno, pose y expresión se ADAPTAN al ángulo de venta de cada variación.
+- El personaje es CONSISTENTE en apariencia física, el contexto es VARIABLE.
 
-INSTRUCCIONES OBLIGATORIAS PARA EL MODELO:
-- COPIAR el estilo, paleta de colores, composición, iluminación y atmósfera de la referencia.
-- Como no hay fotos del producto, GENERAR una representación visual del producto descrito.
-- Mantener coherencia con la descripción textual del producto.
-- El layout, proporciones de texto y espaciado deben seguir la referencia.
-El modelo RENDERIZA TEXTO directamente en la imagen — incluir instrucciones de tipografía.`,
+PRODUCTO: Las fotos del producto también se te muestran — describe el producto exactamente (forma, colores, empaque) en cada fal_prompt.
+El modelo RENDERIZA TEXTO en la imagen — cada fal_prompt DEBE incluir instrucciones de tipografía exactas.`,
 
-  no_images: `MODO DE GENERACIÓN: Crear banner publicitario desde cero SIN fotos de entrada.
+  reference_only: `MODO: SOLO REFERENCIA — Inspiración visual sin fotos de producto.
 
-SIN IMÁGENES DE ENTRADA — el modelo genera todo desde la descripción textual.
-INSTRUCCIONES OBLIGATORIAS PARA EL MODELO:
-- Generar una composición publicitaria completa basada en la descripción del producto.
-- Crear representación visual del producto/servicio basada en el nombre y descripción.
-- Usar stock imagery conceptual, ilustraciones, fondos abstractos o escenas lifestyle según el estilo.
-- La tipografía y composición de texto son el PROTAGONISTA del banner.
-- El diseño debe ser profesional y atractivo aunque no haya fotos reales del producto.
-El modelo RENDERIZA TEXTO directamente en la imagen — incluir instrucciones de tipografía.`,
+⚠️ IMPORTANTÍSIMO — ESTÁS VIENDO LA REFERENCIA:
+Te estoy mostrando la imagen de referencia real. ANALÍZALA y describe CONCRETAMENTE en cada fal_prompt:
+- Colores exactos, estilo fotográfico, composición, iluminación, mood/energía
+- Si hay persona: describe su apariencia CONCRETA (complexión, tono de piel, cabello, género, edad, expresión)
+
+NO digas "use the reference" — el modelo de generación NO puede verla. Traduce TODO a instrucciones textuales.
+
+REFERENCIA COMO INSPIRACIÓN: Capturar vibra, paleta, mood y nivel de calidad. Variar composición y layout según cada ángulo de venta.
+
+SI HAY PERSONA:
+- Describe su apariencia CONCRETA en cada fal_prompt.
+- MANTENER: rostro, complexión, tono de piel. VARIAR: ropa, entorno, pose y expresión según cada variación.
+
+Como no hay fotos del producto, GENERAR una representación visual que encaje con la estética descrita.
+El modelo RENDERIZA TEXTO en la imagen — cada fal_prompt DEBE incluir instrucciones de tipografía exactas.`,
+
+  no_images: `MODO: SIN IMÁGENES — Crear creativos desde cero basándose en la descripción.
+
+SIN IMÁGENES DE ENTRADA — generar todo desde el texto.
+REGLAS:
+- Crear representación visual del producto/servicio basada en nombre y descripción.
+- Mezclar estilos: UGC con persona real, lifestyle candid, tipográfico bold, urgencia visual.
+- Las personas deben verse AUTÉNTICAS y representar al buyer persona del producto.
+- Look de contenido orgánico de redes sociales, NO publicidad corporativa.
+El modelo RENDERIZA TEXTO en la imagen — cada fal_prompt DEBE incluir instrucciones de tipografía exactas.`,
 };
 
 interface ImageDirectorResult {
@@ -236,7 +255,150 @@ interface ImageDirectorResult {
 }
 
 /**
- * Builds the complete Gemini prompt to generate 3 Nano Banana Pro prompts
+ * All available variation strategies.
+ * Intercala variaciones product-centric y person-centric para máxima diversidad.
+ * Orden: 1=producto, 2=persona UGC, 3=producto+persona, 4=producto, 5=persona lifestyle
+ */
+const VARIATION_POOL = [
+  {
+    name: "Scroll-Stopper UGC",
+    framework: "PAS",
+    frameworkDesc: "Problem → Agitate → Solution",
+    personRequired: true,
+    layout: "ugc_raw — Persona REAL filmándose tipo selfie/TikTok sosteniendo o usando el producto. Look 100% orgánico, cero producción.",
+    headline: "PROVOCADOR y disruptivo — una frase corta tipo meme/tweet que genere curiosidad inmediata. Ejemplo: 'Nadie te dice esto', 'Lo que NO quieren que sepas', 'Dejé de [dolor] en 7 días'",
+    badge: 'tipo "Probado ✓", "Real ★★★★★", "Funciona" o null — look orgánico, NO corporativo',
+    arrow: "flecha ↓ apuntando hacia abajo con texto como 'Info aquí ↓' o 'Ver más ↓' — posición bottom-center",
+    bestFor: "cold audience, scroll-stopping, romper el patrón del feed, generar curiosidad",
+    personInstructions: `PERSONA 100% NATURAL — ANTI-MODELO:
+   - Persona COMÚN, REAL, que parezca un usuario GENUINO — NO modelos, NO stock photos, NO gente perfecta.
+   - Piel real con textura, ropa casual del día a día, cabello normal sin peinar perfectamente.
+   - Pose: selfie sosteniendo el producto, foto tipo espejo, tomándose video con el celular.
+   - Expresión: sorpresa genuina, emoción real, como si estuviera contándole a un amigo.
+   - ILUMINACIÓN: Ring light casero, luz de ventana, flash de celular — NADA de estudio.
+   - Fondo: cuarto desordenado, baño, cocina, auto, oficina real — IMPERFECTO y AUTÉNTICO.
+   - El look debe parecer un screenshot de un TikTok/Story/Reel REAL, no una producción.
+   - CRÍTICO: La imperfección ES el atractivo — una imagen demasiado producida mata la conversión.`,
+    example: '"😤 Probé LITERALMENTE todo 💸 $500+ tirados a la basura hasta que encontré esto 🤯 Mi vida cambió en 2 semanas ⬇️ Info abajo"',
+  },
+  {
+    name: "Problema-Solución Directo",
+    framework: "AIDA",
+    frameworkDesc: "Attention → Interest → Desire → Action",
+    personRequired: false,
+    layout: "dynamic_impact — Producto como héroe visual con texto GIGANTE y disruptivo que ocupe 40%+ del frame. Composición diagonal o asimétrica con energía visual.",
+    headline: "DIRECTO AL DOLOR — frase corta que golpee emocionalmente al avatar. Tipo: '¿Todavía con [problema]?', '[Resultado] garantizado', 'Deja de [dolor]'",
+    badge: 'de prueba social: "+10K vendidos", "98% lo recomiendan", "Agotado 3 veces" o de oferta: "-40% HOY"',
+    arrow: "flecha grande ↓ o ▼ vibrante apuntando abajo con micro-texto 'Descúbrelo ↓' — bottom-center, color que contraste",
+    bestFor: "retargeting, conversión directa, decisión rápida",
+    personInstructions: "",
+    example: '"🔥 ¿Sigues aguantando [dolor]? 💡 Existe una solución que ya usan +10,000 personas ✨ Resultados desde el día 1 ⬇️ Descúbrelo"',
+  },
+  {
+    name: "Lifestyle Real",
+    framework: "PASTOR",
+    frameworkDesc: "Problem → Amplify → Story → Transformation → Offer → Response",
+    personRequired: true,
+    layout: "lifestyle_candid — Persona REAL en su ambiente natural usando el producto de forma orgánica. Foto tipo 'me la tomó un amigo'. NO editorial.",
+    headline: "ASPIRACIONAL pero ALCANZABLE — no 'perfección de revista' sino 'la mejor versión de tu día a día'. Tipo: 'Tu rutina mejorada', 'Así se siente [resultado]', 'Mi secreto de cada día'",
+    badge: 'sutil tipo handwritten: "Mi favorito", "Game changer", "Worth it" o null',
+    arrow: "indicador visual ↓ sutil y elegante apuntando abajo — puede ser texto pequeño 'Más info ↓' o icono flecha",
+    bestFor: "brand awareness, crear deseo, identificación aspiracional, TOFU",
+    personInstructions: `PERSONA REAL EN CONTEXTO NATURAL:
+   - Persona atractiva pero NATURAL — no modelo de agencia, sino alguien que podrías seguir en Instagram.
+   - Escena REAL pero aspiracional: desayunando en su depto, trabajando en un café, haciendo ejercicio al aire libre, caminando por la calle.
+   - El producto aparece INTEGRADO naturalmente — en la mano, sobre la mesa, en uso.
+   - Iluminación: golden hour natural, luz de ventana, exterior con sol — NUNCA flash directo.
+   - Ropa actual y trendy pero accesible — no haute couture sino fast fashion o streetwear.
+   - La persona transmite BIENESTAR y CONFIANZA, no perfección artificial.
+   - Color grading: tonos cálidos, ligeramente desaturados, estilo VSCO/Instagram feed real.
+   - La foto debe parecer sacada de un feed de Instagram real, NO de una campaña de marca.`,
+    example: '"😩 Estaba harta de [problema] 📉 Cada día era igual hasta que probé [producto] 💫 30 días después no puedo creer el cambio ✅ 100% real ⬇️ Te cuento"',
+  },
+  {
+    name: "Urgencia Cruda",
+    framework: "FAB",
+    frameworkDesc: "Feature → Advantage → Benefit con escasez",
+    personRequired: false,
+    layout: "bold_urgency — Texto DOMINANTE ocupando 50%+ del frame. Colores de alto contraste (rojo/amarillo/negro). Elementos de urgencia visual: timer, starburst, líneas de movimiento.",
+    headline: "URGENTE y ESCASO — tipo: 'ÚLTIMO DÍA', '70% OFF solo hoy', 'Se acaba en horas', 'Ya casi no quedan' — texto GRANDE y ROJO/BOLD que genere FOMO",
+    badge: 'OBLIGATORIO de escasez agresiva: "⚡FLASH SALE", "Últimas 23 unidades", "SOLO HOY -50%", countdown visual',
+    arrow: "flecha ↓ GRANDE y llamativa tipo 'APROVECHA ↓' o '👇 AHORA' — colores de alto contraste, bottom-center",
+    bestFor: "flash sales, cierre de ventas, retargeting caliente, FOMO, decisión inmediata",
+    personInstructions: "",
+    example: '"⏰ ÚLTIMAS HORAS 🔥 [Producto] con -50% que NUNCA se repite 🚨 Solo quedan 23 unidades ⚡ No lo pienses más ⬇️ Aprovecha YA"',
+  },
+  {
+    name: "Antes / Después Raw",
+    framework: "BAB",
+    frameworkDesc: "Before → After → Bridge",
+    personRequired: true,
+    layout: "split_transformation — Dividido en dos: izquierda = ANTES (problema, frustración), derecha = DESPUÉS (resultado, felicidad). Estilo screenshot de review/reseña real.",
+    headline: "TRANSFORMACIÓN EMOCIONAL — tipo: 'De [antes] a [después]', '30 días después...', 'El antes y después que nadie esperaba', 'Mira la diferencia'",
+    badge: 'de resultado: "30 días", "Resultado real", "Sin filtros" — look orgánico y creíble',
+    arrow: "flecha ↓ con texto 'Conoce el secreto ↓' o 'Cómo lo logré ↓' — bottom-center",
+    bestFor: "awareness emocional, demostración de resultados, prueba social visual, storytelling",
+    personInstructions: `PERSONA REAL MOSTRANDO TRANSFORMACIÓN AUTÉNTICA:
+   - La MISMA persona en dos estados: ANTES frustrada/cansada/insatisfecha → DESPUÉS feliz/segura/radiante.
+   - ANTES: iluminación fría, expresión desanimada, ropa descuidada, fondo más oscuro/apagado.
+   - DESPUÉS: iluminación cálida, sonrisa genuina, arreglada pero natural, fondo más brillante.
+   - El cambio debe ser CREÍBLE — no de "persona destruida" a "supermodelo". Sutil pero notorio.
+   - El producto visible en el lado "DESPUÉS" como el puente entre ambos estados.
+   - Puede ser formato de screenshot de story/post con la típica barra de "ANTES | DESPUÉS".
+   - PROHIBIDO: transformaciones irreales, photoshop obvio, cambios exagerados.
+   - La autenticidad de la transformación ES lo que vende — debe parecer una review real.`,
+    example: '"😔 ANTES: frustración total, nada funcionaba ✨ DESPUÉS: resultados increíbles en 30 días 🌟 El secreto fue [producto] 💫 Mi historia es real ⬇️ Descúbrela"',
+  },
+];
+
+/** Build the variation instructions section of the prompt dynamically based on count */
+function buildVariationInstructions(count: number): string {
+  const variations = VARIATION_POOL.slice(0, count);
+  const personCount = variations.filter(v => v.personRequired).length;
+
+  let instructions = variations.map((v, i) => {
+    let text = `${i + 1}. ${v.name} (${v.framework}) — Framework ${v.frameworkDesc} para primary_text:
+   - Layout: ${v.layout}
+   - Headline: ${v.headline}
+   - Badge: ${v.badge}
+   - ⬇️ FLECHA ABAJO (reemplaza CTA): ${v.arrow}
+   - Mejor para: ${v.bestFor}
+   ${v.personRequired ? `- ⚠️ PERSONA REAL OBLIGATORIA en esta variación (ver instrucciones abajo)` : `- Persona: no requerida pero el texto y diseño deben compensar con IMPACTO VISUAL`}
+   - primary_text: Usar framework ${v.framework} (${v.frameworkDesc})
+     Ejemplo: ${v.example}`;
+    if (v.personInstructions) {
+      text += `\n   ${v.personInstructions}`;
+    }
+    return text;
+  }).join('\n\n');
+
+  instructions += `\n\n⚠️ REGLAS CRÍTICAS PARA TODAS LAS VARIACIONES:
+
+🚫 PROHIBIDO: Botones CTA tipo "Comprar ahora" en la imagen. El botón real está DEBAJO de la imagen en Meta Ads.
+✅ REEMPLAZAR CTA CON: Flechas ↓ ▼ ⬇️ apuntando hacia abajo con micro-texto invitando a ver más.
+   La flecha debe ser visualmente llamativa, posicionada bottom-center, e invitar a clickear.
+   Ejemplos: "Info aquí ↓", "Ver más ↓", "Descúbrelo ⬇️", "👇 Aprovecha", "↓ Más detalles"
+
+📸 ESTÉTICA ANTI-PRODUCCIÓN (aplica a TODAS las variaciones):
+- PRIORIZAR look natural, orgánico, tipo contenido de redes sociales reales.
+- EVITAR: fotos de stock genéricas, iluminación de estudio perfecta, fondos blancos puros, poses de catálogo.
+- Las imágenes con personas deben parecer tomadas con celular, NO con cámara profesional.
+- Los textos deben verse BOLD, DISRUPTIVOS, como memes/tweets virales — NO como publicidad corporativa.
+- El objetivo es DETENER EL SCROLL — la imagen debe generar curiosidad inmediata.`;
+
+  if (personCount > 0) {
+    instructions += `\n\n👤 REGLA DE PERSONAS (${personCount} de ${count} variaciones):
+- Las personas deben verse como GENTE COMÚN que usa el producto — NO modelos perfectos.
+- Piel real con textura, ropa casual, cabello natural — la imperfección genera CONFIANZA.
+- Expresiones GENUINAS: sorpresa, emoción, satisfacción real — no sonrisas de stock.
+- Diversidad natural en edad, tono de piel y estilo coherente con el buyer persona.`;
+  }
+
+  return instructions;
+}
+
+/**
+ * Builds the complete Gemini prompt to generate N Nano Banana Pro prompts
  * with text rendering instructions (headline, subheadline, CTA, badges).
  */
 function buildImageDirectorPrompt(params: {
@@ -248,21 +410,35 @@ function buildImageDirectorPrompt(params: {
   language: string;
   hasReferenceImage: boolean;
   numProductImages: number;
+  numVariations: number;
   customization?: string;
   brandDNA?: Record<string, unknown>;
   researchVariables?: Record<string, string | undefined>;
   researchContext?: string;
   briefData?: Record<string, unknown>;
 }): string {
-  const { name, description, stylePreset, aspectRatio, mode, language, hasReferenceImage, numProductImages, customization, brandDNA, researchVariables, researchContext, briefData } = params;
+  const { name, description, stylePreset, aspectRatio, mode, language, hasReferenceImage, numProductImages, numVariations, customization, brandDNA, researchVariables, researchContext, briefData } = params;
   const langMap: Record<string, string> = { es: "español", en: "inglés", pt: "portugués" };
   const lang = langMap[language] || "español";
 
-  let prompt = `Eres un director creativo experto en publicidad digital y especialista en prompts para generación de imágenes con IA (Nano Banana Pro / Gemini 3 Pro Image).
+  let prompt = `Eres un growth hacker creativo experto en performance marketing y ads que VENDEN. Especialista en contenido UGC, scroll-stopping y conversión directa en Meta Ads, TikTok Ads e Instagram.
 
-Tu tarea: Generar 3 prompts distintos y optimizados para crear imágenes publicitarias de ALTA CONVERSIÓN con TEXTO RENDERIZADO directamente en la imagen.
+Tu tarea: Generar ${numVariations} prompts distintos para crear CREATIVOS PUBLICITARIOS de ALTA CONVERSIÓN que parezcan contenido ORGÁNICO/UGC en el feed, NO publicidad tradicional.
 
-IMPORTANTE: Nano Banana Pro RENDERIZA TEXTO PERFECTO en la imagen. Cada prompt DEBE incluir instrucciones exactas de tipografía para headline, subheadline, CTA y badges.
+IMPORTANTE: Nano Banana Pro RENDERIZA TEXTO PERFECTO en la imagen. Cada prompt DEBE incluir instrucciones exactas de tipografía.
+
+🚫 PROHIBIDO EN TODAS LAS VARIACIONES:
+- Botones CTA tipo "Comprar ahora", "Shop now", etc. — El botón REAL está DEBAJO de la imagen en Meta Ads.
+- Look de stock photo o catálogo corporativo.
+- Fondos blancos puros y estériles.
+- Modelos perfectos tipo agencia o fotos de banco de imágenes.
+- Composiciones que griten "esto es un anuncio" — el usuario debe confundirlo con contenido real.
+
+✅ REEMPLAZAR CTA CON FLECHAS ↓:
+- En lugar de un botón CTA, poner una FLECHA VISUAL ↓ ▼ ⬇️ apuntando hacia abajo.
+- La flecha debe estar en la parte inferior central de la imagen.
+- Con micro-texto tipo: "Info ↓", "Ver más ↓", "Descúbrelo ⬇️", "👇 Aquí", "↓ Detalles"
+- La flecha debe ser llamativa y contrastar con el fondo — es lo que invita al click.
 
 ${MODE_CONTEXT[mode] || MODE_CONTEXT.product_only}
 
@@ -273,111 +449,86 @@ SECCIONES OBLIGATORIAS EN CADA PROMPT:
 ═══════════════════════════════════════════════════════════
 
 1. TECHNICAL SPECS:
-   - Resolution: 2K high-resolution advertising image
+   - Resolution: 2K high-resolution image
    - Aspect ratio: ${aspectRatio}
-   - Output format: PNG, commercial grade quality
+   - Output format: PNG
    - Anti-artifacts: No AI distortions, anatomically correct if humans present
 
-2. COMPOSITION & LAYOUT — usar una de estas 5 estrategias:
-   • hero_impact: Producto centrado grande (40-50% del frame), headline arriba, CTA abajo
-   • editorial_split: Imagen dividida en mitades (producto | copy), estilo editorial
-   • minimal_elegant: Fondo limpio, producto pequeño-mediano, tipografía como protagonista
-   • dynamic_diagonal: Composición diagonal, elementos en movimiento, energía visual
-   • social_proof: Producto con elementos de prueba social (estrellas, badges, testimonial visual)
+2. COMPOSITION & LAYOUT (VARIAR entre variaciones):
+   • ugc_raw: Selfie/TikTok — persona filmándose con celular, ring light, look casual. Texto superpuesto tipo story.
+   • dynamic_impact: Producto como héroe con texto GIGANTE y BOLD ocupando 40%+ del frame. Composición diagonal.
+   • lifestyle_candid: Persona real en contexto natural usando el producto. Foto tipo "amigo te tomó la foto".
+   • bold_urgency: Texto DOMINA la imagen (50%+). Colores alto contraste. Urgencia visual.
+   • split_transformation: Dividido antes/después. Contraste visual entre problema y solución.
+   • social_native: Parece un post orgánico con engagement (likes, comments) superpuestos.
 
-3. BACKGROUND:
-   - Especificar tipo (gradiente, sólido, ambiente, textura, fotográfico)
-   - Integrar colores de marca como acentos sutiles (NUNCA monocolor de marca completo)
+3. BACKGROUND & SCENE — SIEMPRE REAL Y NATURAL:
+   - Ambientes REALES: habitaciones, cafés, calles, oficinas, cocinas, gimnasios, parques.
+   - NUNCA fondos de estudio puros. Si no hay personas, usar texturas, gradientes urbanos o ambientales.
+   - Colores de marca como acentos SUTILES integrados en la escena, NO como fondo monocolor.
+   - El escenario debe coincidir con el ESTILO DE VIDA del buyer persona/avatar.
 
-4. PRODUCT POSITIONING + LIGHTING:
-   - Posición exacta del producto en el frame
-   - Tipo de iluminación (studio 3-point, golden hour, dramatic, flat, etc.)
-   - Ángulo del producto y efectos de sombra
+4. PRODUCTO + PERSONAS + ILUMINACIÓN:
+   - Producto integrado naturalmente (en mano, sobre mesa, en uso) — NO flotando en el vacío.
+   - Si hay personas: GENTE REAL, no modelos. Piel con textura, ropa casual, expresiones genuinas.
+   - Iluminación NATURAL: luz de ventana, golden hour, ring light casero, luz de exterior.
+   - PROHIBIDO: flash de estudio, iluminación 3-point perfecta, soft boxes visibles.
+   - Las personas deben parecer CONTENT CREATORS comunes, no influencers de alto perfil.
 
-5. HEADLINE TEXT — INSTRUCCIONES EXACTAS:
-   - El texto EXACTO del headline (máx 8 palabras, en ${lang})
-   - Font style: bold, condensed, serif, sans-serif, handwritten, etc.
-   - Tamaño relativo: large/xlarge/xxlarge
-   - Color: hex code específico que contraste con el fondo
-   - Posición: top-center, top-left, center, etc.
-   - Efectos: shadow, outline, gradient fill, 3D, glow, etc.
+5. HEADLINE — TEXTO DISRUPTIVO Y SCROLL-STOPPING:
+   - Máx 6 palabras, en ${lang}. IMPACTO INMEDIATO.
+   - Debe provocar curiosidad, sorpresa o emoción — como un tweet viral o meme.
+   - Font style: BOLD, condensed, impactante. Puede ser handwritten para look UGC.
+   - Tamaño: GRANDE — debe leerse en thumbnail del celular.
+   - Color: alto contraste con el fondo (blanco sobre oscuro, negro sobre claro, color vibrante).
+   - Posición: donde genere más impacto (top-center, center, overlapping la imagen).
+   - Efectos: drop shadow fuerte para legibilidad, outline, o highlight/subrayado tipo marker.
+   - ESTILO: Como si alguien lo escribiera en un story de Instagram — no como headline corporativo.
 
-6. SUBHEADLINE TEXT — INSTRUCCIONES EXACTAS:
-   - El texto EXACTO del subheadline (máx 15 palabras, en ${lang})
-   - Font style: lighter/thinner que el headline
-   - Tamaño: medium/small relativo al headline
-   - Color: hex code (usualmente más sutil que headline)
-   - Posición: debajo del headline
+6. SUBHEADLINE — COMPLEMENTO BREVE:
+   - Máx 10 palabras, en ${lang}. Complementa el headline con contexto.
+   - Font: más delgada/ligera que el headline.
+   - Tamaño: medium, legible pero secundario.
+   - Posición: debajo del headline.
 
-7. BADGES (opcional pero recomendado para conversión):
-   - Tipo: starburst, ribbon, seal, shield, tag, pill
-   - Texto del badge (ej: "-30%", "Nuevo", "Best Seller", "Edición Limitada")
-   - Color y posición
-   - Usar solo cuando el producto/contexto lo amerite
+7. BADGES — PRUEBA SOCIAL Y URGENCIA:
+   - RECOMENDADO en toda variación. Tipo: pill, tag, sticker, handwritten circle.
+   - Textos: "★★★★★", "+10K clientes", "Probado ✓", "Agotado 2 veces", "-40%", "Real", "Funciona"
+   - Look: orgánico como sticker puesto a mano, NO corporativo.
+   - Posición: esquina o sobre la imagen de forma natural.
 
-8. CTA BUTTON — INSTRUCCIONES EXACTAS:
-   - Texto del CTA (máx 4 palabras, en ${lang})
-   - Shape: rounded pill, rectangle, rounded rectangle
-   - Colores: background hex + text hex
-   - Posición: bottom-center, bottom-right, etc.
-   - Tamaño relativo
+8. FLECHA ↓ HACIA ABAJO (REEMPLAZA EL CTA):
+   - En lugar de botón CTA, incluir una FLECHA VISUAL apuntando hacia abajo.
+   - Puede ser: ↓ ▼ ⬇️ 👇 o flecha gráfica diseñada.
+   - Con micro-texto invitando a clickear: "Ver más ↓", "Info aquí ↓", "Descúbrelo ⬇️"
+   - Color: vibrante, que contraste. Puede tener glow o animación visual.
+   - Posición: BOTTOM-CENTER siempre.
+   - Tamaño: mediano — visible pero no dominante.
 
-9. TRUST ELEMENTS (opcionales):
-   - Estrellas de rating (★★★★★)
-   - Checkmarks de verificación
-   - Certificaciones, sellos de garantía
-   - Números ("+10K clientes", "98% satisfacción")
+9. TRUST ELEMENTS (opcionales pero potentes):
+   - Estrellas ★★★★★, checkmarks ✓, sellos de garantía
+   - Números reales: "+10K vendidos", "98% satisfacción", "3 años de garantía"
+   - Screenshots de reviews/testimonios tipo overlay
 
-10. DESIGN ACCENTS:
-   - Bordes decorativos, líneas, shapes geométricos
-   - Glows, brillos, partículas
-   - Elementos gráficos de apoyo
+10. MOOD & CONVERSIÓN:
+   - Cada imagen debe generar UNA emoción dominante: curiosidad, FOMO, deseo, identificación, sorpresa.
+   - La imagen debe hacer que el usuario piense "esto me habla a MÍ" — no "esto es un anuncio".
+   - PRIORIZAR autenticidad sobre producción. La imperfección VENDE en redes sociales.
 
-11. MOOD & BRAND ARCHETYPE:
-   - Atmósfera general de la imagen
-   - Traducir el arquetipo de marca a elementos visuales
-
-12. TECHNICAL QUALITY:
-   - Especificar: commercial photography quality, no AI artifacts, sharp product detail
-   - Anti-text-artifacts: text must be perfectly legible, no blurred or distorted letters
+11. CALIDAD TÉCNICA:
+   - Texto 100% legible, sin artefactos, letras nítidas.
+   - Si hay personas: anatomía correcta, expresiones naturales, sin distorsiones.
+   - Calidad de imagen: smartphone de gama alta (iPhone 15 Pro), NO cámara DSLR de estudio.
 
 ═══════════════════════════════════════════════════════════
-LAS 3 VARIACIONES OBLIGATORIAS:
+LAS ${numVariations} VARIACIONES OBLIGATORIAS:
 ═══════════════════════════════════════════════════════════
 
-1. IMPACTO DIRECTO (Conversión) — Framework AIDA para primary_text:
-   - Layout: hero_impact o dynamic_diagonal
-   - Headline agresivo enfocado en beneficio o urgencia
-   - Badge de oferta/descuento si aplica
-   - CTA directo y urgente
-   - Mejor para: retargeting, lanzamientos, conversión directa
-   - primary_text: Usar framework AIDA (Attention → Interest → Desire → Action)
-     Formato: emoji + frase de ATENCIÓN → emoji + generar INTERÉS → emoji + activar DESEO → emoji + llamada a ACCIÓN
-     Ejemplo: "🔥 ¿Cansado de [dolor]? 💡 Descubre cómo [beneficio] en solo [tiempo]. ✨ Imagina [resultado deseado]. 👉 [CTA urgente]"
-
-2. PREMIUM ELEGANTE (Branding) — Framework PASTOR para primary_text:
-   - Layout: minimal_elegant o editorial_split
-   - Headline sofisticado enfocado en aspiración/valor
-   - Sin badge (o badge premium sutil: "Exclusivo", "Premium")
-   - CTA elegante
-   - Mejor para: brand awareness, posicionamiento premium, top of funnel
-   - primary_text: Usar framework PASTOR (Problem → Amplify → Story → Transformation → Offer → Response)
-     Formato: emoji + PROBLEMA → emoji + AMPLIFICAR consecuencias → emoji + mini HISTORIA/testimonio → emoji + TRANSFORMACIÓN → emoji + OFERTA → emoji + RESPUESTA/CTA
-     Ejemplo: "😩 [Problema del avatar] 📉 Si no actúas, [consecuencia]. 💫 [Mini historia de éxito]. ✅ Ahora puedes [transformación]. 🎁 [Oferta]. 👇 [CTA]"
-
-3. SOCIAL PROOF (Testimonial) — Framework PAS para primary_text:
-   - Layout: social_proof
-   - Headline que incluya prueba social o resultado
-   - Badge tipo "Best Seller", "★★★★★", "+10K clientes"
-   - Trust elements prominentes
-   - Mejor para: audiencia skeptical, comparación, consideration phase
-   - primary_text: Usar framework PAS (Problem → Agitate → Solution)
-     Formato: emoji + PROBLEMA claro → emoji + AGITAR el dolor/frustración → emoji + SOLUCIÓN con prueba social
-     Ejemplo: "😤 [Problema común] 💸 [Agitar: lo que pierdes/sufres si no lo resuelves]. 🏆 +[número] personas ya lo resolvieron con [producto]. ⭐ [Prueba social]"
+${buildVariationInstructions(numVariations)}
 
 REGLAS PARA primary_text (Meta Ads):
 - OBLIGATORIO: Incluir 3-5 emojis relevantes distribuidos en el texto
-- OBLIGATORIO: Cada variación usa su framework correspondiente (AIDA, PASTOR, PAS)
+- OBLIGATORIO: Cada variación usa su framework correspondiente
 - Enfoque 100% en VENTA y CONVERSIÓN
 - Máximo 125 caracteres
 - Los emojis deben ser relevantes al contexto (🔥💡✨👉🎁⭐🏆💪❤️🚀💰✅ etc.)
@@ -676,78 +827,94 @@ CÓMO USAR ESTA INVESTIGACIÓN EN LAS IMÁGENES:
   // ═══════════════════════════════════════
   prompt += `\n\n📸 INSTRUCCIONES SOBRE IMÁGENES DE ENTRADA:`;
   if (hasReferenceImage) {
-    prompt += `\n⚡ HAY IMAGEN DE REFERENCIA: La primera image_url [0] es una imagen de referencia del usuario.
-- COPIAR el estilo visual, paleta de colores, composición, layout, iluminación y mood de esta referencia.
-- Mantener proporciones similares de texto vs imagen.
-- Adaptar el contenido (producto + copy) al esquema visual de la referencia.`;
+    prompt += `\n
+⚡ IMAGEN DE REFERENCIA PROPORCIONADA — LA ESTÁS VIENDO ⚡
+Te estoy mostrando la imagen de referencia real en esta conversación.
+
+TU TAREA CRÍTICA: ANALIZA visualmente la referencia y TRADUCE lo que ves en INSTRUCCIONES TEXTUALES DETALLADAS dentro de cada fal_prompt.
+
+⚠️ EL MODELO DE GENERACIÓN (Nano Banana Pro) NO PUEDE "VER" LA REFERENCIA DIRECTAMENTE.
+Por eso, TÚ debes describir CONCRETAMENTE en cada fal_prompt:
+1. PALETA DE COLORES exacta que observas (ej: "warm earth tones with terracotta orange, deep brown, cream white")
+2. ESTILO FOTOGRÁFICO (ej: "iPhone selfie quality", "editorial magazine", "Instagram feed aesthetic", "TikTok screenshot")
+3. ILUMINACIÓN (ej: "soft natural window light from the left", "golden hour backlight", "ring light frontal")
+4. COMPOSICIÓN y ENCUADRE (ej: "centered portrait, rule-of-thirds", "close-up from chest up", "full body environmental")
+5. MOOD/ENERGÍA (ej: "casual and relaxed", "energetic and bold", "intimate and warm")
+6. Si hay PERSONA: DESCRIBE su apariencia EXACTA — género, edad aprox, tono de piel, tipo/color de cabello, complexión corporal, rasgos faciales distintivos
+
+NO escribas "use the reference image" ni "match the reference style" — eso NO funciona.
+EN SU LUGAR, describe textualmente TODO lo que ves para que el modelo lo replique.
+
+CADA VARIACIÓN usa la misma estética base pero VARÍA composición, layout y contexto según su ángulo de venta.`;
   }
   if (numProductImages > 0) {
-    prompt += `\n⚡ HAY ${numProductImages} FOTO(S) DE PRODUCTO: ${hasReferenceImage ? `Las image_urls [1-${numProductImages}]` : `Las image_urls [0-${numProductImages - 1}]`} son fotos del producto/logo subidas por el usuario.
-- Las imágenes subidas DEBEN INTEGRARSE en el diseño del banner tal como son.
-- Mantener fidelidad total al producto original: forma, colores, empaque, logo, etiquetas.
-- Si es un PRODUCTO FÍSICO: mostrarlo con iluminación profesional integrado en la composición.
-- Si es un LOGO: integrarlo como branding visible en el diseño.
-- Si son VARIOS productos: uno como protagonista, los demás como apoyo.
-- NUNCA inventar ni generar logos o productos que no estén en las fotos.
-- USAR las fotos tal como son — son el elemento visual más importante del banner.`;
+    prompt += `\n⚡ HAY ${numProductImages} FOTO(S) DE PRODUCTO: ${hasReferenceImage ? `image_urls[1-${numProductImages}]` : `image_urls[0-${numProductImages - 1}]`} = fotos del producto/logo.
+- INTEGRAR el producto visiblemente en cada variación — idéntico a las fotos (forma, colores, empaque).
+- Si hay referencia: el producto REEMPLAZA al producto de la referencia, manteniendo la misma posición y proporción.
+- NUNCA inventar productos o logos que no estén en las fotos.`;
   }
   if (!hasReferenceImage && numProductImages === 0) {
-    prompt += `\n⚡ SIN IMÁGENES: No se han subido fotos de producto ni referencia.
-- NO inventar logos, marcas ni productos visuales que no existan.
-- Crear un diseño basado en tipografía, composición gráfica y elementos abstractos.
-- El texto y la composición son los protagonistas.
-- Usar fondos, gradientes, texturas y formas geométricas para crear impacto visual.`;
+    prompt += `\n⚡ SIN IMÁGENES — crear todo desde la descripción textual.
+- NO inventar logos ni marcas visuales.
+- Diseño basado en tipografía, composición gráfica y personas reales.`;
   }
 
   if (customization) prompt += `\n\nINSTRUCCIONES ADICIONALES DEL USUARIO: ${customization}`;
 
   prompt += `\n\n${"═".repeat(50)}
-Genera los 3 prompts ahora. Cada fal_prompt debe ser un párrafo completo y detallado con TODAS las instrucciones de texto/tipografía incluidas.
-CRÍTICO: Si hay fotos de producto/logo subidas, DEBEN integrarse visiblemente en cada imagen — incluir instrucción "integrate the uploaded product/logo photos into the design" en cada fal_prompt. Si NO hay fotos subidas, NO inventar logos ni productos — usar diseño tipográfico y gráfico.
+Genera los ${numVariations} prompts ahora. Cada fal_prompt debe ser un párrafo completo y detallado.
+${hasReferenceImage ? `
+⚡ REFERENCIA — RECORDATORIO FINAL:
+Has VISTO la imagen de referencia. Cada fal_prompt DEBE incluir una DESCRIPCIÓN TEXTUAL CONCRETA de:
+- La paleta de colores, iluminación, estilo fotográfico y mood que observaste
+- Si hay persona: su apariencia física concreta (género, edad, tono de piel, cabello, complexión)
+- NO escribas "use the reference" — el modelo NO puede verla. Describe TEXTUALMENTE lo que viste.
+- La persona (si existe) debe mantener su apariencia pero variar ropa/entorno/pose por variación.
+` : ''}
+CRÍTICO: Si hay fotos de producto/logo subidas, DEBEN integrarse visiblemente — incluir "integrate the uploaded product/logo photos" en cada fal_prompt. Si NO hay fotos, NO inventar logos — usar diseño tipográfico.
 
 IMPORTANTE: copy_used tiene DOS bloques separados:
 
 A) TEXTOS EN LA IMAGEN (renderizados por Nano Banana Pro dentro del banner):
-   - headline: Título principal visible en la imagen (máx 8 palabras)
-   - subheadline: Subtítulo visible en la imagen (máx 15 palabras)
-   - badge: Badge visible en la imagen (ej: "-30%", "Nuevo") o null
-   - cta: Botón CTA visible en la imagen (máx 4 palabras)
+   - headline: Texto DISRUPTIVO visible en la imagen (máx 6 palabras, scroll-stopping, tipo meme/tweet viral)
+   - subheadline: Complemento breve visible (máx 10 palabras)
+   - badge: Badge/sticker visible tipo "★★★★★", "+10K", "-40%" o null — look orgánico
+   - cta: Texto de la FLECHA ↓ en la parte inferior (NO es un botón, es flecha + micro-texto tipo "Ver más ↓", "Info aquí ↓", "Descúbrelo ⬇️")
 
 B) COPY PARA META ADS (texto que acompaña el anuncio en Meta Ads Manager, NO va en la imagen):
-   - primary_text: Texto principal del anuncio CON EMOJIS usando el framework asignado:
-     * Variación 1 (Impacto Directo) → AIDA: Attention → Interest → Desire → Action, con emojis
-     * Variación 2 (Premium Elegante) → PASTOR: Problem → Amplify → Story → Transformation → Offer → Response, con emojis
-     * Variación 3 (Social Proof) → PAS: Problem → Agitate → Solution, con emojis
-     Máx 125 chars, enfocado en VENTA, 3-5 emojis relevantes obligatorios.
+   - primary_text: Texto principal del anuncio CON EMOJIS usando el framework asignado.
+     Máx 125 chars, VENTA DIRECTA, 3-5 emojis relevantes, tono conversacional tipo chat.
    - meta_headline: Título del anuncio debajo de la imagen (corto, directo, máx 40 chars)
    - meta_description: Descripción breve complementaria (máx 30 chars)
-   - meta_cta: Botón CTA de Meta (ej: "Comprar", "Más información", "Registrarse", "Descargar", "Ver oferta")
+   - meta_cta: Botón CTA de Meta (ej: "Comprar", "Más información", "Ver oferta")
 
-Los textos de Meta Ads (B) deben ser DIFERENTES a los textos de la imagen (A). Los de Meta son copy publicitario persuasivo enfocado en conversión, mientras los de la imagen son titulares visuales de impacto.
-CRÍTICO: primary_text SIEMPRE debe incluir emojis y seguir el framework (AIDA/PASTOR/PAS) de cada variación.
+REGLAS:
+- Los textos de la imagen (A) son VISUALES y DISRUPTIVOS — como contenido viral.
+- Los textos de Meta (B) son COPY PUBLICITARIO persuasivo para vender.
+- El campo "cta" en copy_used es el TEXTO DE LA FLECHA ↓, NO un botón.
+- primary_text SIEMPRE con emojis y framework de cada variación.
+- EXACTAMENTE ${numVariations} variaciones.
 
 Responde SOLO con JSON (sin markdown, sin backticks):
 {
   "prompts": [
     {
       "variation_id": 1,
-      "variation_name": "Impacto Directo",
-      "variation_strategy": "string breve explicando el approach",
-      "fal_prompt": "string — el prompt COMPLETO para Nano Banana Pro con instrucciones de texto",
+      "variation_name": "Nombre de la variación",
+      "variation_strategy": "string breve",
+      "fal_prompt": "string — prompt COMPLETO para Nano Banana Pro con instrucciones de texto y flecha ↓",
       "copy_used": {
-        "headline": "Título visual en la imagen",
-        "subheadline": "Subtítulo visual en la imagen",
-        "badge": "Badge en la imagen o null",
-        "cta": "CTA visual en la imagen",
-        "primary_text": "Texto principal persuasivo para Meta Ads enfocado en el dolor/deseo",
+        "headline": "Texto disruptivo en la imagen",
+        "subheadline": "Complemento breve",
+        "badge": "Badge/sticker o null",
+        "cta": "Texto de la flecha ↓ (ej: 'Ver más ↓')",
+        "primary_text": "Copy persuasivo con emojis para Meta Ads",
         "meta_headline": "Título del anuncio en Meta",
-        "meta_description": "Descripción breve en Meta",
+        "meta_description": "Descripción breve",
         "meta_cta": "Botón CTA de Meta"
       },
-      "recommended_for": "string — mejor caso de uso"
-    },
-    { "variation_id": 2, "variation_name": "Premium Elegante", ... },
-    { "variation_id": 3, "variation_name": "Social Proof", ... }
+      "recommended_for": "mejor caso de uso"
+    }
   ]
 }`;
 
@@ -755,7 +922,7 @@ Responde SOLO con JSON (sin markdown, sin backticks):
 }
 
 /**
- * Calls Gemini as creative director to generate 3 Nano Banana Pro prompts with copy_used.
+ * Calls Gemini as creative director to generate N Nano Banana Pro prompts with copy_used.
  * Falls back to basic prompts if Gemini fails.
  */
 async function generateImagePrompts(params: {
@@ -769,23 +936,74 @@ async function generateImagePrompts(params: {
   language: string;
   hasReferenceImage: boolean;
   numProductImages: number;
+  numVariations: number;
   customization?: string;
   brandDNA?: Record<string, unknown>;
   researchVariables?: Record<string, string | undefined>;
   researchContext?: string;
   briefData?: Record<string, unknown>;
+  referenceImageUrl?: string;
+  productImageUrls?: string[];
 }): Promise<ImageDirectorResult[]> {
-  const { apiKey, model, name, description, stylePreset, aspectRatio, mode, language, hasReferenceImage, numProductImages, customization, brandDNA, researchVariables, researchContext, briefData } = params;
+  const { apiKey, model, name, description, stylePreset, aspectRatio, mode, language, hasReferenceImage, numProductImages, numVariations, customization, brandDNA, researchVariables, researchContext, briefData, referenceImageUrl, productImageUrls } = params;
 
   const directorPrompt = buildImageDirectorPrompt({
-    name, description: description || undefined, stylePreset, aspectRatio, mode, language, hasReferenceImage, numProductImages, customization, brandDNA, researchVariables, researchContext, briefData,
+    name, description: description || undefined, stylePreset, aspectRatio, mode, language, hasReferenceImage, numProductImages, numVariations, customization, brandDNA, researchVariables, researchContext, briefData,
   });
 
   const geminiModel = model.startsWith("gemini") ? model : "gemini-2.0-flash";
 
-  console.log(`[image-director] Calling Gemini model=${geminiModel} for 3 Nano Banana Pro prompts, product="${name}"`);
+  console.log(`[image-director] Calling Gemini model=${geminiModel} for ${numVariations} Nano Banana Pro prompts, product="${name}", refImage=${!!referenceImageUrl}, productImages=${productImageUrls?.length || 0}`);
 
   try {
+    // Build multimodal message content: text + reference image + product images
+    // This lets Gemini ACTUALLY SEE the images and describe them concretely in each fal_prompt
+    const messageContent: Array<Record<string, unknown>> = [];
+
+    // Text prompt first
+    messageContent.push({ type: "text", text: directorPrompt });
+
+    // Add reference image so Gemini can ANALYZE it
+    if (referenceImageUrl) {
+      messageContent.push({
+        type: "text",
+        text: "\n\n📷 IMAGEN DE REFERENCIA (analízala detalladamente — estilo, colores, composición, personas, iluminación, mood):",
+      });
+      messageContent.push({
+        type: "image_url",
+        image_url: { url: referenceImageUrl },
+      });
+    }
+
+    // Add product images so Gemini can see the actual product
+    if (productImageUrls && productImageUrls.length > 0) {
+      messageContent.push({
+        type: "text",
+        text: `\n\n📦 FOTOS DEL PRODUCTO (${productImageUrls.length} imagen(es) — describe el producto exactamente como aparece):`,
+      });
+      for (const pUrl of productImageUrls) {
+        messageContent.push({
+          type: "image_url",
+          image_url: { url: pUrl },
+        });
+      }
+    }
+
+    // If we have images, add a final reminder to describe what was seen
+    if (referenceImageUrl || (productImageUrls && productImageUrls.length > 0)) {
+      messageContent.push({
+        type: "text",
+        text: `\n\n⚠️ INSTRUCCIÓN CRÍTICA PARA CADA fal_prompt:
+${referenceImageUrl ? `- DESCRIBE CONCRETAMENTE lo que VES en la imagen de referencia: los colores exactos, el estilo fotográfico, la composición, la iluminación, la paleta, el mood. Si hay una persona, describe su apariencia física (complexión, tono de piel, género, edad aproximada, tipo de cabello). Cada fal_prompt debe INCORPORAR estos detalles visuales concretos, NO decir genéricamente "use the reference". El modelo de generación de imágenes NO puede "ver" la referencia — TÚ debes traducir lo que ves en INSTRUCCIONES TEXTUALES DETALLADAS.` : ''}
+${productImageUrls?.length ? `- DESCRIBE el producto exactamente como lo ves: forma, colores, empaque, logo, tamaño aparente. Cada fal_prompt debe incluir esta descripción para que el modelo genere el producto IDÉNTICO.` : ''}`,
+      });
+    }
+
+    // Use multimodal content format when we have images, plain text otherwise
+    const messages = (referenceImageUrl || (productImageUrls && productImageUrls.length > 0))
+      ? [{ role: "user", content: messageContent }]
+      : [{ role: "user", content: directorPrompt }];
+
     const response = await fetch(
       "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
       {
@@ -796,7 +1014,7 @@ async function generateImagePrompts(params: {
         },
         body: JSON.stringify({
           model: geminiModel,
-          messages: [{ role: "user", content: directorPrompt }],
+          messages,
           temperature: 0.8,
         }),
       },
@@ -819,11 +1037,11 @@ async function generateImagePrompts(params: {
     const parsed = JSON.parse(content);
     const prompts = parsed.prompts;
 
-    if (!Array.isArray(prompts) || prompts.length < 3) {
-      throw new Error(`Invalid structure: expected 3 prompts, got ${prompts?.length || 0}`);
+    if (!Array.isArray(prompts) || prompts.length < numVariations) {
+      throw new Error(`Invalid structure: expected ${numVariations} prompts, got ${prompts?.length || 0}`);
     }
 
-    const results: ImageDirectorResult[] = prompts.slice(0, 3).map((p: Record<string, unknown>) => {
+    const results: ImageDirectorResult[] = prompts.slice(0, numVariations).map((p: Record<string, unknown>) => {
       const fp = (p.fal_prompt || p.prompt || "") as string;
       const copyUsed = p.copy_used as Record<string, unknown> | undefined;
 
@@ -854,7 +1072,7 @@ async function generateImagePrompts(params: {
     return results;
   } catch (e) {
     console.error("[image-director] Failed, using fallback prompts:", e);
-    return buildFallbackPrompts({ name, description, stylePreset, aspectRatio, mode, language });
+    return buildFallbackPrompts({ name, description, stylePreset, aspectRatio, mode, language, numVariations });
   }
 }
 
@@ -866,8 +1084,9 @@ function buildFallbackPrompts(params: {
   aspectRatio: string;
   mode: string;
   language: string;
+  numVariations: number;
 }): ImageDirectorResult[] {
-  const { name, description, stylePreset, aspectRatio, mode, language } = params;
+  const { name, description, stylePreset, aspectRatio, mode, language, numVariations } = params;
   const desc = description ? ` ${description}.` : "";
   const styleMap: Record<string, string> = {
     professional: "Clean studio lighting, soft shadows, neutral background. Trust and credibility atmosphere.",
@@ -880,62 +1099,74 @@ function buildFallbackPrompts(params: {
 
   const isSpanish = language === "es" || language === "español";
   const headlines = isSpanish
-    ? [`Descubre ${name}`, `${name} Premium`, `Todos Aman ${name}`]
-    : [`Discover ${name}`, `${name} Premium`, `Everyone Loves ${name}`];
+    ? [`Nadie te dice esto`, `Lo probé y WOW`, `Esto lo cambia todo`, `ÚLTIMO DÍA -50%`, `30 días después...`]
+    : [`Nobody tells you this`, `I tried it and WOW`, `This changes everything`, `LAST DAY -50%`, `30 days later...`];
   const subheadlines = isSpanish
-    ? ["La solución que estabas buscando", "Calidad que se nota en cada detalle", "Miles de clientes satisfechos"]
-    : ["The solution you've been looking for", "Quality you can feel in every detail", "Thousands of happy customers"];
-  const ctas = isSpanish ? ["Comprar Ahora", "Descubrir Más", "Ver Más"] : ["Buy Now", "Learn More", "Shop Now"];
-  const badges = [isSpanish ? "-30% HOY" : "-30% TODAY", null, isSpanish ? "★★★★★ Best Seller" : "★★★★★ Best Seller"];
+    ? ["El secreto que necesitabas", "Mi rutina nunca fue igual", "+10K personas ya lo usan", "No se va a repetir", "Mira la diferencia"]
+    : ["The secret you needed", "My routine was never the same", "+10K people already use it", "This won't happen again", "Look at the difference"];
+  const arrows = isSpanish ? ["Info aquí ↓", "Ver más ↓", "Descúbrelo ⬇️", "Aprovecha ↓", "Mi secreto ↓"] : ["Info here ↓", "See more ↓", "Discover ⬇️", "Grab it ↓", "My secret ↓"];
+  const badges = [isSpanish ? "Probado ✓" : "Tested ✓", isSpanish ? "★★★★★ Real" : "★★★★★ Real", isSpanish ? "+10K vendidos" : "+10K sold", isSpanish ? "⚡ SOLO HOY" : "⚡ TODAY ONLY", isSpanish ? "Resultado real" : "Real result"];
 
   const modeBase = mode === "reference_and_product" || mode === "reference_only"
-    ? `Professional advertising image inspired by the reference banner style. Product: "${name}".${desc}`
-    : `Professional advertising photography, 2K resolution, aspect ratio ${aspectRatio}. Product: "${name}".${desc} Product must look exactly as in the provided photos.`;
+    ? `UGC-style advertising image inspired by the reference style. Natural lighting, authentic feel. Product: "${name}".${desc}`
+    : `UGC-style advertising photo, smartphone quality (iPhone 15 Pro), natural lighting, 2K resolution, aspect ratio ${aspectRatio}. Product: "${name}".${desc}`;
 
   const variations: { variationName: string; strategy: string; recommended: string; layout: string }[] = [
     {
-      variationName: "Impacto Directo",
-      strategy: "Conversión directa con headline agresivo y CTA urgente",
-      recommended: "Retargeting, lanzamientos, conversión directa",
-      layout: `Product centered in lower two-thirds (40-50% of frame). HEADLINE TEXT: "${headlines[0]}" in bold white sans-serif font, large size, positioned top-center with drop shadow. SUBHEADLINE: "${subheadlines[0]}" in light white font, medium size, below headline.${badges[0] ? ` BADGE: Red starburst in top-right corner with white bold text "${badges[0]}".` : ""} CTA BUTTON: Rounded white pill at bottom-center with bold black text "${ctas[0]}".`,
+      variationName: "Scroll-Stopper UGC",
+      strategy: "Contenido UGC auténtico — persona real tipo selfie/TikTok con producto",
+      recommended: "Cold audience, scroll-stopping, confianza",
+      layout: `UGC selfie-style photo: a REAL-LOOKING ordinary person (NOT a model, natural skin texture, casual clothes, messy hair ok) holding the product "${name}" like taking a selfie or TikTok video. Ring light or window natural lighting. Authentic room/bathroom/kitchen background. HEADLINE TEXT: "${headlines[0]}" in bold white handwritten/rounded font, large size, top-center with strong drop shadow. SUBHEADLINE: "${subheadlines[0]}" in light white font, small, below headline. BADGE: Small organic pill sticker "${badges[0]}" in top-right. ARROW: Large white arrow ↓ pointing down at bottom-center with text "${arrows[0]}" in small bold font. NO CTA BUTTON.`,
     },
     {
-      variationName: "Premium Elegante",
-      strategy: "Branding sofisticado y aspiracional",
-      recommended: "Brand awareness, posicionamiento premium",
-      layout: `Editorial split layout: product on right third, clean space on left for text. HEADLINE TEXT: "${headlines[1]}" in elegant thin serif font, large size, positioned left-center with subtle gold color. SUBHEADLINE: "${subheadlines[1]}" in light gray thin font, small size, below headline. CTA BUTTON: Minimal rounded rectangle at bottom-left with thin border and elegant text "${ctas[1]}".`,
+      variationName: "Problema-Solución",
+      strategy: "Headline gigante disruptivo + producto como héroe visual",
+      recommended: "Retargeting, conversión directa",
+      layout: `Dynamic diagonal composition with product "${name}" as visual hero (40% of frame). HEADLINE TEXT: "${headlines[1]}" in EXTRA BOLD condensed white sans-serif font, VERY LARGE size occupying 30% of frame, positioned top-center with heavy drop shadow and slight rotation for energy. SUBHEADLINE: "${subheadlines[1]}" in light font, medium, below headline. BADGE: Red/orange starburst "${badges[1]}" in top-right corner. ARROW: Vibrant colored arrow ▼ pointing down at bottom-center with text "${arrows[1]}". Natural ambient lighting, textured urban background. NO CTA BUTTON.`,
     },
     {
-      variationName: "Social Proof",
-      strategy: "Prueba social y testimonial visual",
-      recommended: "Audiencia skeptical, consideration phase",
-      layout: `Product with social proof elements. HEADLINE TEXT: "${headlines[2]}" in bold white condensed font, positioned top-center. SUBHEADLINE: "${subheadlines[2]}" in white font, medium size, below headline.${badges[2] ? ` BADGE: Gold shield badge at top-left with text "${badges[2]}".` : ""} Five gold stars (★★★★★) below subheadline. CTA BUTTON: Bold rounded pill at bottom-center with text "${ctas[2]}".`,
+      variationName: "Lifestyle Real",
+      strategy: "Persona real en contexto natural tipo Instagram feed",
+      recommended: "Brand awareness, deseo, TOFU",
+      layout: `Candid lifestyle photo: an attractive but NATURAL person (not a model) confidently using "${name}" in a real setting (trendy cafe, modern apartment, outdoor walk). Golden hour natural lighting, warm tones, VSCO-style color grading. HEADLINE TEXT: "${headlines[2]}" in elegant but accessible sans-serif font, large, positioned top or center-left with warm glow effect. SUBHEADLINE: "${subheadlines[2]}" in thin font below headline. BADGE: Subtle handwritten-style pill "${badges[2]}". ARROW: Elegant small arrow ↓ at bottom-center with "${arrows[2]}". Looks like an Instagram post, NOT a produced ad. NO CTA BUTTON.`,
+    },
+    {
+      variationName: "Urgencia Cruda",
+      strategy: "Texto DOMINANTE con urgencia/escasez — FOMO máximo",
+      recommended: "Flash sales, cierre, retargeting caliente",
+      layout: `BOLD urgency composition: text DOMINATES 50%+ of the frame. HEADLINE TEXT: "${headlines[3]}" in EXTRA BOLD red/white condensed font, MASSIVE size, centered, with black outline for max contrast. SUBHEADLINE: "${subheadlines[3]}" in white bold font, medium. BADGE: LARGE red flash badge "${badges[3]}" with lightning bolt. Dynamic diagonal lines and urgency visual elements. High contrast dark background. ARROW: LARGE bright arrow ⬇️ at bottom-center with bold "${arrows[3]}". Product visible but text is the STAR. NO CTA BUTTON.`,
+    },
+    {
+      variationName: "Antes / Después Raw",
+      strategy: "Transformación visual auténtica — tipo review/reseña real",
+      recommended: "Awareness, demostración de resultados, storytelling",
+      layout: `Split before/after composition: LEFT side shows a real person looking tired/frustrated (cool/dark lighting, desaturated), RIGHT side shows the SAME person looking happy/confident with "${name}" (warm bright lighting, saturated). Looks like a real Instagram story screenshot. HEADLINE TEXT: "${headlines[4]}" in bold handwritten/marker font, warm color, centered across both halves. SUBHEADLINE: "${subheadlines[4]}" in light font below. BADGE: Authentic pill "${badges[4]}" in corner. ARROW: Arrow ↓ at bottom-center with "${arrows[4]}". Transformation must be SUBTLE and BELIEVABLE, not exaggerated. NO CTA BUTTON.`,
     },
   ];
 
-  // Fallback primary_text with AIDA/PASTOR/PAS frameworks and emojis
   const metaPrimaryTexts = isSpanish
     ? [
-        // AIDA: Attention → Interest → Desire → Action
-        `🔥 ¿Buscas resultados reales? 💡 ${name} lo hace posible. ✨ Imagina lograrlo hoy. 👉 ¡No esperes más!`,
-        // PASTOR: Problem → Amplify → Story → Transformation → Offer → Response
-        `😩 ¿Frustrado con opciones mediocres? 💫 ${name} cambió todo para miles. ✅ Transforma tu experiencia. 👇 Descúbrelo`,
-        // PAS: Problem → Agitate → Solution
-        `😤 Mereces algo mejor. 💸 No sigas perdiendo tiempo. 🏆 +10K personas eligieron ${name}. ⭐ ¡Únete hoy!`,
+        `😤 Probé LITERALMENTE todo 💸 Nada funcionaba hasta que encontré ${name} 🤯 Mi vida cambió en 2 semanas ⬇️ Info abajo`,
+        `🔥 ¿Sigues aguantando [el problema]? 💡 +10,000 personas ya encontraron la solución ✨ Resultados desde el día 1 ⬇️ Descúbrelo`,
+        `😩 Estaba harta de conformarme 📉 Probé ${name} sin esperanzas 💫 30 días después NO PUEDO CREERLO ✅ 100% real ⬇️`,
+        `⏰ ÚLTIMAS HORAS 🔥 ${name} con -50% que NUNCA se repite 🚨 Solo quedan pocas unidades ⚡ No lo pienses más ⬇️`,
+        `😔 ANTES: frustración total, nada servía ✨ DESPUÉS: ${name} cambió todo en 30 días 🌟 Mi historia es real ⬇️ Descúbrela`,
       ]
     : [
-        `🔥 Looking for real results? 💡 ${name} makes it possible. ✨ Imagine achieving it today. 👉 Don't wait!`,
-        `😩 Frustrated with mediocre options? 💫 ${name} changed everything. ✅ Transform your experience. 👇 Discover it`,
-        `😤 You deserve better. 💸 Stop wasting time. 🏆 10K+ people chose ${name}. ⭐ Join today!`,
+        `😤 I literally tried EVERYTHING 💸 Nothing worked until I found ${name} 🤯 My life changed in 2 weeks ⬇️ Info below`,
+        `🔥 Still dealing with [the problem]? 💡 +10,000 people found the solution ✨ Results from day 1 ⬇️ Discover it`,
+        `😩 I was done settling 📉 Tried ${name} with zero expectations 💫 30 days later I CAN'T BELIEVE IT ✅ 100% real ⬇️`,
+        `⏰ LAST HOURS 🔥 ${name} -50% that will NEVER repeat 🚨 Few units left ⚡ Don't think twice ⬇️`,
+        `😔 BEFORE: total frustration ✨ AFTER: ${name} changed everything in 30 days 🌟 My story is real ⬇️ Discover it`,
       ];
 
-  return variations.map((v, i) => ({
-    fal_prompt: `${modeBase} COMPOSITION: ${v.layout} ${style} All text must be perfectly legible, sharp, no AI artifacts or distorted letters. Commercial photography quality. No blurred text. Aspect ratio: ${aspectRatio}.`,
+  return variations.slice(0, numVariations).map((v, i) => ({
+    fal_prompt: `${modeBase} COMPOSITION: ${v.layout} All text must be perfectly legible, sharp, no AI artifacts. Smartphone camera quality (iPhone 15 Pro). Natural imperfect lighting preferred. NO CTA BUTTONS — use arrows pointing down instead. Aspect ratio: ${aspectRatio}.`,
     copy_used: {
       headline: headlines[i],
       subheadline: subheadlines[i],
       badge: badges[i],
-      cta: ctas[i],
+      cta: arrows[i],
       primary_text: metaPrimaryTexts[i],
       meta_headline: headlines[i],
       meta_description: subheadlines[i],
@@ -948,6 +1179,9 @@ function buildFallbackPrompts(params: {
 }
 
 /** Single Nano Banana Pro call via fal.ai */
+/** Max prompt length for fal.ai — overly long prompts cause 500 errors */
+const MAX_FAL_PROMPT_LENGTH = 3000;
+
 async function callNanoBanana(params: {
   falKey: string;
   prompt: string;
@@ -955,7 +1189,11 @@ async function callNanoBanana(params: {
   aspectRatio: string;
   seed?: number;
 }): Promise<string> {
-  const { falKey, prompt, imageUrls, aspectRatio, seed } = params;
+  const { falKey, imageUrls, aspectRatio, seed } = params;
+  // Truncate prompt if too long (fal.ai /edit can choke on very long prompts)
+  const prompt = params.prompt.length > MAX_FAL_PROMPT_LENGTH
+    ? params.prompt.slice(0, MAX_FAL_PROMPT_LENGTH) + "... Commercial photography quality. Aspect ratio: " + aspectRatio + "."
+    : params.prompt;
 
   const falBody: Record<string, unknown> = {
     prompt,
@@ -972,7 +1210,7 @@ async function callNanoBanana(params: {
   const endpoint = imageUrls.length > 0
     ? "https://fal.run/fal-ai/nano-banana-pro/edit"
     : "https://fal.run/fal-ai/nano-banana-pro";
-  console.log(`[nano-banana] endpoint=${endpoint}, images=${imageUrls.length}`);
+  console.log(`[nano-banana] endpoint=${endpoint}, images=${imageUrls.length}, promptLen=${prompt.length}`);
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -984,6 +1222,29 @@ async function callNanoBanana(params: {
 
   if (!response.ok) {
     const errorText = await response.text();
+    console.error(`[nano-banana] Error ${response.status}: ${errorText.slice(0, 300)}`);
+    // If /edit fails with 500, try text-only endpoint as fallback (drop images)
+    if (response.status === 500 && imageUrls.length > 0) {
+      console.log(`[nano-banana] Fallback: retrying without images on base endpoint`);
+      const fallbackBody = { ...falBody };
+      delete fallbackBody.image_urls;
+      const fallbackResp = await fetch("https://fal.run/fal-ai/nano-banana-pro", {
+        method: "POST",
+        headers: {
+          Authorization: `Key ${falKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(fallbackBody),
+      });
+      if (fallbackResp.ok) {
+        const fbData = await fallbackResp.json();
+        const fbUrl = fbData.images?.[0]?.url;
+        if (fbUrl) {
+          console.log(`[nano-banana] Fallback succeeded (text-only)`);
+          return fbUrl;
+        }
+      }
+    }
     throw new Error(`Fal.ai ${response.status}: ${errorText.slice(0, 200)}`);
   }
 
@@ -991,6 +1252,116 @@ async function callNanoBanana(params: {
   const url = data.images?.[0]?.url;
   if (!url) throw new Error("Fal.ai no retornó imagen");
   return url;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Quick Market Research — auto-generates research context for manual products
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Calls Gemini to perform a quick market research based on product name, description,
+ * and optional suggested angle. Returns a structured research context string that gets
+ * injected into the image director prompt (same format as CRM research).
+ */
+async function quickMarketResearch(params: {
+  apiKey: string;
+  model: string;
+  productName: string;
+  productDescription?: string;
+  suggestedAngle?: string;
+  language: string;
+}): Promise<{ researchContext: string; researchVariables: Record<string, string> }> {
+  const { apiKey, model, productName, productDescription, suggestedAngle, language } = params;
+  const langMap: Record<string, string> = { es: "español", en: "inglés", pt: "portugués" };
+  const lang = langMap[language] || "español";
+
+  const prompt = `Eres un estratega de marketing digital experto. Analiza este producto y genera una investigación de mercado rápida para crear anuncios publicitarios de alta conversión.
+
+PRODUCTO: "${productName}"
+${productDescription ? `DESCRIPCIÓN: "${productDescription}"` : "Sin descripción detallada — analiza por el nombre del producto."}
+${suggestedAngle ? `ÁNGULO DE VENTA SUGERIDO POR EL USUARIO: "${suggestedAngle}" — Úsalo como guía principal para orientar toda la investigación.` : ""}
+IDIOMA: ${lang}
+
+Genera una investigación de mercado completa en ${lang}. Sé específico y práctico — esto se usará para generar anuncios visuales.
+
+Responde SOLO con JSON (sin markdown, sin backticks):
+{
+  "avatar": "Descripción detallada del cliente ideal (demografía, estilo de vida, comportamiento)",
+  "pains": ["Dolor/problema 1", "Dolor/problema 2", "Dolor/problema 3"],
+  "desires": ["Deseo/resultado 1", "Deseo/resultado 2", "Deseo/resultado 3"],
+  "hooks": ["Hook publicitario 1", "Hook publicitario 2", "Hook publicitario 3"],
+  "objections": ["Objeción principal 1", "Objeción principal 2"],
+  "jtbd": "Job to be done — qué trabajo funcional/emocional cumple el producto",
+  "key_benefit": "El beneficio #1 más poderoso para usar en anuncios",
+  "emotional_trigger": "El disparador emocional más efectivo para este producto"
+}`;
+
+  const geminiModel = model.startsWith("gemini") ? model : "gemini-2.0-flash";
+  console.log(`[quick-research] Calling Gemini for product="${productName}"`);
+
+  try {
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: geminiModel,
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.7,
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error(`[quick-research] Gemini error ${response.status}:`, errText.slice(0, 300));
+      throw new Error(`Gemini ${response.status}`);
+    }
+
+    const data = await response.json();
+    let content = data.choices?.[0]?.message?.content || "";
+    content = content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim();
+
+    const parsed = JSON.parse(content);
+    console.log(`[quick-research] Success: avatar=${!!parsed.avatar}, pains=${parsed.pains?.length}, hooks=${parsed.hooks?.length}`);
+
+    // Build research context string (same format used by CRM research)
+    const parts: string[] = [];
+    if (parsed.avatar) parts.push(`AVATAR / CLIENTE IDEAL:\n${parsed.avatar}`);
+    if (parsed.pains?.length) parts.push(`DOLORES / PROBLEMAS:\n${parsed.pains.map((p: string, i: number) => `${i + 1}. ${p}`).join('\n')}`);
+    if (parsed.desires?.length) parts.push(`DESEOS / RESULTADOS:\n${parsed.desires.map((d: string, i: number) => `${i + 1}. ${d}`).join('\n')}`);
+    if (parsed.hooks?.length) parts.push(`HOOKS PUBLICITARIOS:\n${parsed.hooks.map((h: string, i: number) => `${i + 1}. ${h}`).join('\n')}`);
+    if (parsed.objections?.length) parts.push(`OBJECIONES PRINCIPALES:\n${parsed.objections.map((o: string, i: number) => `${i + 1}. ${o}`).join('\n')}`);
+    if (parsed.jtbd) parts.push(`JOB TO BE DONE:\n${parsed.jtbd}`);
+    if (parsed.key_benefit) parts.push(`BENEFICIO CLAVE:\n${parsed.key_benefit}`);
+    if (parsed.emotional_trigger) parts.push(`DISPARADOR EMOCIONAL:\n${parsed.emotional_trigger}`);
+
+    const researchContext = parts.join('\n\n');
+
+    // Build research variables for the director prompt
+    const researchVariables: Record<string, string> = {};
+    if (parsed.avatar) researchVariables.selectedAvatar = parsed.avatar;
+    if (parsed.pains?.[0]) researchVariables.selectedPain = parsed.pains[0];
+    if (parsed.desires?.[0]) researchVariables.selectedDesire = parsed.desires[0];
+    if (parsed.hooks?.[0]) researchVariables.selectedAngleOrHook = suggestedAngle || parsed.hooks[0];
+    if (parsed.objections?.[0]) researchVariables.selectedObjection = parsed.objections[0];
+    if (parsed.jtbd) researchVariables.selectedJTBD = parsed.jtbd;
+
+    return { researchContext, researchVariables };
+  } catch (e) {
+    console.error("[quick-research] Failed, proceeding without research:", e);
+    // Return minimal context so generation can continue
+    const fallbackContext = suggestedAngle
+      ? `ÁNGULO DE VENTA: ${suggestedAngle}`
+      : "";
+    const fallbackVars: Record<string, string> = {};
+    if (suggestedAngle) fallbackVars.selectedAngleOrHook = suggestedAngle;
+    return { researchContext: fallbackContext, researchVariables: fallbackVars };
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1042,6 +1413,8 @@ serve(async (req) => {
       research_context: researchContext,
       research_variables: researchVariables,
       brand_dna: brandDNA,
+      suggested_angle: suggestedAngle,
+      num_variations: numVariationsRaw,
     } = body;
 
     if (!orgId) {
@@ -1124,7 +1497,7 @@ serve(async (req) => {
     const startTime = Date.now();
     // Resolve aspect ratio: prefer explicit aspect_ratio, fallback to output_size (may be legacy pixel format)
     const aspectRatio = resolveAspectRatio(aspectRatioRaw || outputSizeRaw);
-    const NUM_VARIATIONS = 3;
+    const NUM_VARIATIONS = Math.max(1, Math.min(5, Number(numVariationsRaw) || 3));
 
     // Create records
     const bannerIds = Array.from({ length: NUM_VARIATIONS }, () => crypto.randomUUID());
@@ -1165,7 +1538,32 @@ serve(async (req) => {
       console.log(`[ad-banner] Mode=${mode}, refImage=${hasReference}, productImages=${validProductUrls.length}, totalUrls=${imageUrls.length}, aspectRatio=${aspectRatio}`);
 
       // ══════════════════════════════════════════════════════════
-      // STEP 1: Gemini creative director — generates 3 prompts + copy_used
+      // STEP 0.5: Quick market research for manual products
+      // ══════════════════════════════════════════════════════════
+      let effectiveResearchContext = researchContext || undefined;
+      let effectiveResearchVars = researchVariables || undefined;
+
+      const isManualProduct = !product.crm_product_id && !researchContext && !brandDNA;
+      if (isManualProduct) {
+        console.log(`[ad-banner] Manual product detected — running quick market research`);
+        const qr = await quickMarketResearch({
+          apiKey: aiConfig.apiKey,
+          model: aiConfig.model,
+          productName: product.name,
+          productDescription: product.description || undefined,
+          suggestedAngle: suggestedAngle || undefined,
+          language: copyLanguage,
+        });
+        effectiveResearchContext = qr.researchContext || undefined;
+        effectiveResearchVars = qr.researchVariables || undefined;
+        console.log(`[ad-banner] Quick research done. Context=${effectiveResearchContext?.length || 0} chars`);
+      } else if (suggestedAngle && !researchVariables?.selectedAngleOrHook) {
+        // CRM product but user provided a suggested angle — merge it
+        effectiveResearchVars = { ...(researchVariables || {}), selectedAngleOrHook: suggestedAngle };
+      }
+
+      // ══════════════════════════════════════════════════════════
+      // STEP 1: Gemini creative director — generates N prompts + copy_used
       // ══════════════════════════════════════════════════════════
       const baseSeed = Math.floor(Math.random() * 1000000);
 
@@ -1180,23 +1578,37 @@ serve(async (req) => {
         language: copyLanguage,
         hasReferenceImage: hasReference,
         numProductImages: validProductUrls.length,
+        numVariations: NUM_VARIATIONS,
         customization,
         brandDNA: brandDNA || undefined,
-        researchVariables: researchVariables || undefined,
-        researchContext: researchContext || undefined,
+        researchVariables: effectiveResearchVars,
+        researchContext: effectiveResearchContext,
         briefData: briefData || undefined,
+        referenceImageUrl: hasReference ? referenceImageUrl : undefined,
+        productImageUrls: validProductUrls.length > 0 ? validProductUrls : undefined,
       });
 
       console.log(`[ad-banner] Step 1 done. Director results: ${directorResults.length} prompts`);
 
       // ══════════════════════════════════════════════════════════
-      // STEP 2: Send 3 prompts to Nano Banana Pro in parallel
+      // STEP 2: Send N prompts to Nano Banana Pro with staggered starts + retry
       // ══════════════════════════════════════════════════════════
-      const imagePromises = directorResults.slice(0, NUM_VARIATIONS).map((dr, i) => {
-        console.log(`[ad-banner] NanoBanana variation ${i} "${dr.variation_name}": seed=${baseSeed + i}, prompt=${dr.fal_prompt.length} chars`);
+      const STAGGER_DELAY_MS = 800; // Stagger requests to avoid fal.ai rate limits
 
-        return callNanoBanana({ falKey, prompt: dr.fal_prompt, imageUrls, aspectRatio, seed: baseSeed + i })
-          .then(async (generatedUrl) => {
+      async function generateAndUploadVariation(dr: typeof directorResults[0], i: number): Promise<string | null> {
+        const MAX_RETRIES = 2;
+        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+          try {
+            if (attempt > 0) {
+              console.log(`[ad-banner] Retry ${attempt}/${MAX_RETRIES} for variation ${i} "${dr.variation_name}"`);
+              await new Promise(r => setTimeout(r, 2000 * attempt));
+            }
+
+            const generatedUrl = await callNanoBanana({
+              falKey, prompt: dr.fal_prompt, imageUrls, aspectRatio,
+              seed: baseSeed + i + (attempt * 100),
+            });
+
             const imgResp = await fetch(generatedUrl);
             if (!imgResp.ok) throw new Error(`Download failed: ${imgResp.status}`);
             const bytes = new Uint8Array(await imgResp.arrayBuffer());
@@ -1209,11 +1621,20 @@ serve(async (req) => {
 
             const { data: urlData } = supabase.storage.from("ad-generator").getPublicUrl(fileName);
             return urlData.publicUrl;
-          })
-          .catch((e) => {
-            console.error(`[ad-banner] Image ${i} failed:`, e);
-            return null;
-          });
+          } catch (e) {
+            console.error(`[ad-banner] Image ${i} attempt ${attempt} failed:`, e);
+            if (attempt === MAX_RETRIES) return null;
+          }
+        }
+        return null;
+      }
+
+      const imagePromises = directorResults.slice(0, NUM_VARIATIONS).map((dr, i) => {
+        console.log(`[ad-banner] NanoBanana variation ${i} "${dr.variation_name}": seed=${baseSeed + i}, prompt=${dr.fal_prompt.length} chars`);
+        // Stagger starts to avoid concurrent rate limits
+        return new Promise<string | null>(resolve => {
+          setTimeout(() => resolve(generateAndUploadVariation(dr, i)), i * STAGGER_DELAY_MS);
+        });
       });
 
       const imageResults = await Promise.all(imagePromises);

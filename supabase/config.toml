@@ -261,7 +261,9 @@ verify_jwt = false
 # ── Unified Financial System ──
 
 [functions.ai-tokens-service]
-verify_jwt = true
+# JWT verification handled internally by the function (supabase.auth.getUser)
+# Gateway verify_jwt caused 401 because supabase.functions.invoke header merging is inconsistent
+verify_jwt = false
 
 [functions.escrow-service]
 verify_jwt = true

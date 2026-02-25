@@ -6,13 +6,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Link2, PenLine, FlaskConical, Building2 } from 'lucide-react';
+import { Loader2, Link2, PenLine, FlaskConical, Building2, Globe, Tag } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useUnifiedClients } from '@/hooks/useUnifiedClients';
 import { useAdProducts } from '../hooks/useAdProducts';
 import { useToast } from '@/hooks/use-toast';
+import { TEMPLATE_CATEGORIES } from '../config';
 
 interface CreateProductDialogProps {
   open: boolean;
@@ -27,6 +28,8 @@ export function CreateProductDialog({ open, onOpenChange }: CreateProductDialogP
   const [description, setDescription] = useState('');
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [selectedProductId, setSelectedProductId] = useState<string>('');
+  const [manualCategory, setManualCategory] = useState<string>('');
+  const [manualUrl, setManualUrl] = useState('');
   const { createProduct } = useAdProducts();
   const { toast } = useToast();
   const { profile } = useAuth();
@@ -70,6 +73,8 @@ export function CreateProductDialog({ open, onOpenChange }: CreateProductDialogP
       setDescription('');
       setSelectedClientId('');
       setSelectedProductId('');
+      setManualCategory('');
+      setManualUrl('');
     }
   }, [open]);
 
@@ -81,10 +86,26 @@ export function CreateProductDialog({ open, onOpenChange }: CreateProductDialogP
   const handleCreate = async () => {
     if (!name.trim()) return;
 
+    // Build enriched description for manual products
+    let finalDescription = description.trim();
+    if (mode === 'manual') {
+      const meta: string[] = [];
+      if (manualCategory) {
+        const catLabel = TEMPLATE_CATEGORIES.find(c => c.value === manualCategory)?.label;
+        if (catLabel) meta.push(`Categoría: ${catLabel}`);
+      }
+      if (manualUrl.trim()) meta.push(`URL: ${manualUrl.trim()}`);
+      if (meta.length > 0 && finalDescription) {
+        finalDescription = `${finalDescription}\n\n${meta.join(' | ')}`;
+      } else if (meta.length > 0) {
+        finalDescription = meta.join(' | ');
+      }
+    }
+
     try {
       await createProduct.mutateAsync({
         name: name.trim(),
-        description: description.trim() || undefined,
+        description: finalDescription || undefined,
         client_id: mode === 'crm' && selectedClientId ? selectedClientId : null,
         crm_product_id: mode === 'crm' && selectedProductId ? selectedProductId : null,
       });
@@ -214,27 +235,71 @@ export function CreateProductDialog({ open, onOpenChange }: CreateProductDialogP
             </>
           ) : (
             <>
-              {/* Manual mode */}
-              <div className="space-y-2">
-                <Label htmlFor="product-name">Nombre del producto *</Label>
-                <Input
-                  id="product-name"
-                  placeholder="Ej: Crema Hidratante Premium"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  maxLength={100}
-                />
+              {/* Manual mode — enriched form */}
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="product-name" className="text-xs font-medium">Nombre del producto *</Label>
+                  <Input
+                    id="product-name"
+                    placeholder="Ej: Crema Hidratante Premium"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    maxLength={100}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="product-desc" className="text-xs font-medium">
+                    Descripción del producto
+                    <span className="text-muted-foreground font-normal ml-1">(mejora la calidad de los anuncios)</span>
+                  </Label>
+                  <Textarea
+                    id="product-desc"
+                    placeholder="¿Qué es? ¿Para quién es? ¿Qué problema resuelve? ¿Qué lo hace especial?"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={3}
+                    maxLength={10000}
+                    className="text-sm"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium flex items-center gap-1.5">
+                      <Tag className="h-3 w-3 text-muted-foreground" />
+                      Categoría
+                    </Label>
+                    <Select value={manualCategory} onValueChange={setManualCategory}>
+                      <SelectTrigger className="text-sm">
+                        <SelectValue placeholder="Seleccionar..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TEMPLATE_CATEGORIES.filter(c => c.value !== 'all').map(cat => (
+                          <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="product-url" className="text-xs font-medium flex items-center gap-1.5">
+                      <Globe className="h-3 w-3 text-muted-foreground" />
+                      URL del producto
+                    </Label>
+                    <Input
+                      id="product-url"
+                      placeholder="https://..."
+                      value={manualUrl}
+                      onChange={(e) => setManualUrl(e.target.value)}
+                      maxLength={300}
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="product-desc">Descripción (opcional)</Label>
-                <Textarea
-                  id="product-desc"
-                  placeholder="Describe tu producto para mejores resultados de IA..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={3}
-                  maxLength={500}
-                />
+              <div className="rounded-md border border-primary/20 bg-primary/5 p-3">
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  <PenLine className="h-3 w-3 inline-block mr-1 text-primary" />
+                  Al crear el producto podrás agregar fotos, definir tu público objetivo, dolores, deseos y más en el formulario de generación.
+                </p>
               </div>
             </>
           )}

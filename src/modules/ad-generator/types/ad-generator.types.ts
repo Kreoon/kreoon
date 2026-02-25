@@ -79,6 +79,8 @@ export interface GenerateBannerParams {
   copyLanguage?: string;
   stylePreset?: VisualStyle;
   customization?: string;
+  suggestedAngle?: string;
+  numVariations?: number;
   researchContext?: string;
   researchVariables?: ResearchVariables;
   brandDNA?: {

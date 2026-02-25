@@ -24,6 +24,8 @@ export function useGenerateBanner() {
           copy_language: params.copyLanguage || 'es',
           style_preset: params.stylePreset || 'professional',
           customization: params.customization || null,
+          suggested_angle: params.suggestedAngle || null,
+          num_variations: params.numVariations || 3,
           research_context: params.researchContext || null,
           research_variables: params.researchVariables || null,
           brand_dna: params.brandDNA || null,
