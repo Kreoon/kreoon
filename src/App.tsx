@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, ComponentType } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,6 +20,41 @@ import { StrategistClientProvider } from "@/contexts/StrategistClientContext";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import { MainLayout } from "./components/layout/MainLayout";
 
+// Helper: detect chunk/module load failures (stale hashes after deploy)
+function isChunkLoadError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const msg = error.message;
+  return (
+    msg.includes('Failed to fetch dynamically imported module') ||
+    msg.includes('Importing a module script failed') ||
+    msg.includes('error loading dynamically imported module') ||
+    msg.includes('Loading chunk') ||
+    msg.includes('Loading CSS chunk')
+  );
+}
+
+// Lazy import wrapper that auto-reloads on stale chunk errors after deploy.
+// Prevents users from seeing "Failed to fetch dynamically imported module" errors
+// when old JS chunk hashes no longer exist on the server.
+function lazyWithRetry<T extends ComponentType<any>>(
+  importFn: () => Promise<{ default: T }>
+) {
+  return lazy(() =>
+    importFn().catch((error) => {
+      if (isChunkLoadError(error)) {
+        // Prevent infinite reload loop: only reload once per 10 seconds
+        const lastReload = sessionStorage.getItem('last-chunk-reload');
+        const now = Date.now();
+        if (!lastReload || now - parseInt(lastReload) > 10000) {
+          sessionStorage.setItem('last-chunk-reload', now.toString());
+          window.location.reload();
+        }
+      }
+      throw error;
+    })
+  );
+}
+
 // Loading fallback component
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-black">
@@ -27,45 +62,45 @@ const PageLoader = () => (
   </div>
 );
 
-// Lazy load all pages for code splitting
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const ContentBoard = lazy(() => import("./pages/ContentBoard"));
-const Auth = lazy(() => import("./pages/Auth"));
-const Content = lazy(() => import("./pages/Content"));
-const Creators = lazy(() => import("./pages/Creators"));
-const Scripts = lazy(() => import("./pages/Scripts"));
-const Clients = lazy(() => import("./pages/Clients"));
-const Settings = lazy(() => import("./pages/Settings"));
-const Team = lazy(() => import("./pages/Team"));
-const CreatorDashboard = lazy(() => import("./pages/CreatorDashboard"));
-const EditorDashboard = lazy(() => import("./pages/EditorDashboard"));
-const StrategistDashboard = lazy(() => import("./pages/StrategistDashboard"));
-const ClientDashboard = lazy(() => import("./pages/ClientDashboard"));
-const ClientContentBoard = lazy(() => import("./pages/ClientContentBoard"));
-const PortfolioShell = lazy(() => import("./pages/portfolio/PortfolioShell"));
-const ExplorePage = lazy(() => import("./pages/portfolio/ExplorePage"));
-const CompanyProfilePage = lazy(() => import("./pages/portfolio/CompanyProfilePage"));
-const PublicProfilePage = lazy(() => import("./pages/portfolio/PublicProfilePage"));
-const Ranking = lazy(() => import("./pages/Ranking"));
-const Unauthorized = lazy(() => import("./pages/Unauthorized"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const NoCompany = lazy(() => import("./pages/NoCompany"));
-const NoOrganization = lazy(() => import("./pages/NoOrganization"));
-const PendingAccess = lazy(() => import("./pages/PendingAccess"));
-const WelcomeNewMember = lazy(() => import("./pages/WelcomeNewMember"));
-const UPDocumentation = lazy(() => import("./pages/UPDocumentation"));
-const OrgAuth = lazy(() => import("./pages/OrgAuth"));
-const HomePage = lazy(() => import("./pages/HomePage"));
-const Register = lazy(() => import("./pages/Register"));
-const OrgRegister = lazy(() => import("./pages/auth/OrgRegister"));
-const Live = lazy(() => import("./pages/Live"));
-const Marketing = lazy(() => import("./pages/Marketing"));
+// Lazy load all pages for code splitting (with auto-retry on stale chunks)
+const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
+const ContentBoard = lazyWithRetry(() => import("./pages/ContentBoard"));
+const Auth = lazyWithRetry(() => import("./pages/Auth"));
+const Content = lazyWithRetry(() => import("./pages/Content"));
+const Creators = lazyWithRetry(() => import("./pages/Creators"));
+const Scripts = lazyWithRetry(() => import("./pages/Scripts"));
+const Clients = lazyWithRetry(() => import("./pages/Clients"));
+const Settings = lazyWithRetry(() => import("./pages/Settings"));
+const Team = lazyWithRetry(() => import("./pages/Team"));
+const CreatorDashboard = lazyWithRetry(() => import("./pages/CreatorDashboard"));
+const EditorDashboard = lazyWithRetry(() => import("./pages/EditorDashboard"));
+const StrategistDashboard = lazyWithRetry(() => import("./pages/StrategistDashboard"));
+const ClientDashboard = lazyWithRetry(() => import("./pages/ClientDashboard"));
+const ClientContentBoard = lazyWithRetry(() => import("./pages/ClientContentBoard"));
+const PortfolioShell = lazyWithRetry(() => import("./pages/portfolio/PortfolioShell"));
+const ExplorePage = lazyWithRetry(() => import("./pages/portfolio/ExplorePage"));
+const CompanyProfilePage = lazyWithRetry(() => import("./pages/portfolio/CompanyProfilePage"));
+const PublicProfilePage = lazyWithRetry(() => import("./pages/portfolio/PublicProfilePage"));
+const Ranking = lazyWithRetry(() => import("./pages/Ranking"));
+const Unauthorized = lazyWithRetry(() => import("./pages/Unauthorized"));
+const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
+const NoCompany = lazyWithRetry(() => import("./pages/NoCompany"));
+const NoOrganization = lazyWithRetry(() => import("./pages/NoOrganization"));
+const PendingAccess = lazyWithRetry(() => import("./pages/PendingAccess"));
+const WelcomeNewMember = lazyWithRetry(() => import("./pages/WelcomeNewMember"));
+const UPDocumentation = lazyWithRetry(() => import("./pages/UPDocumentation"));
+const OrgAuth = lazyWithRetry(() => import("./pages/OrgAuth"));
+const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
+const Register = lazyWithRetry(() => import("./pages/Register"));
+const OrgRegister = lazyWithRetry(() => import("./pages/auth/OrgRegister"));
+const Live = lazyWithRetry(() => import("./pages/Live"));
+const Marketing = lazyWithRetry(() => import("./pages/Marketing"));
 
 // Wallet Module Pages
-const WalletPage = lazy(() => import("./modules/wallet/pages/WalletPage").then(m => ({ default: m.WalletPage })));
-const TransactionsPage = lazy(() => import("./modules/wallet/pages/TransactionsPage").then(m => ({ default: m.TransactionsPage })));
-const WithdrawalsPage = lazy(() => import("./modules/wallet/pages/WithdrawalsPage").then(m => ({ default: m.WithdrawalsPage })));
-const AdminWalletsPage = lazy(() => import("./modules/wallet/pages/AdminWalletsPage").then(m => ({ default: m.AdminWalletsPage })));
+const WalletPage = lazyWithRetry(() => import("./modules/wallet/pages/WalletPage").then(m => ({ default: m.WalletPage })));
+const TransactionsPage = lazyWithRetry(() => import("./modules/wallet/pages/TransactionsPage").then(m => ({ default: m.TransactionsPage })));
+const WithdrawalsPage = lazyWithRetry(() => import("./modules/wallet/pages/WithdrawalsPage").then(m => ({ default: m.WithdrawalsPage })));
+const AdminWalletsPage = lazyWithRetry(() => import("./modules/wallet/pages/AdminWalletsPage").then(m => ({ default: m.AdminWalletsPage })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
