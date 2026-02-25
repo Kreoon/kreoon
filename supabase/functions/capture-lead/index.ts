@@ -31,6 +31,7 @@ interface LeadData {
   utm_term?: string;
   referrer_url?: string;
   landing_page?: string;
+  referral_code?: string;
 
   // Adicionales
   portfolio_url?: string;
@@ -204,6 +205,7 @@ serve(async (req) => {
         landing_page: data.landing_page,
         interests: data.interests,
         initial_message: data.message,
+        referral_code: data.referral_code,
         captured_at: new Date().toISOString()
       }
     };

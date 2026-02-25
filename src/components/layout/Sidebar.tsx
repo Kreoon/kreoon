@@ -52,6 +52,8 @@ import { SidebarAchievementsWidget } from "@/components/points/SidebarAchievemen
 import { AITokensPanelTrigger } from "@/components/ai/AITokensPanel";
 import { Badge } from "@/components/ui/badge";
 import { useWhiteLabel } from "@/hooks/useWhiteLabel";
+import { useReferralGate } from "@/hooks/useReferralGate";
+import { Key } from "lucide-react";
 
 interface NavItem {
   name: string;
@@ -209,6 +211,33 @@ const clientSections: NavSection[] = [
   { label: "CONFIG", items: CONFIG_ITEMS }
 ];
 
+// Freelance users (no org, no plan) - minimal navigation
+const freelanceSections: NavSection[] = [
+  {
+    label: "CONFIG",
+    items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
+      { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+    ]
+  }
+];
+
+// Locked users (haven't completed referral gate) - only unlock access + profile
+const lockedUserSections: NavSection[] = [
+  {
+    label: "BIENVENIDA",
+    items: [
+      { name: "Obtener Llaves", href: "/unlock-access", icon: Key, tourId: "sidebar-unlock" },
+    ]
+  },
+  {
+    label: "CONFIG",
+    items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
+    ]
+  }
+];
+
 // Marketplace navigation sections — available to ALL users
 function getMarketplaceSections(activeGroup: PermissionGroup | null): NavSection[] {
   const items: NavItem[] = [
@@ -263,6 +292,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const { isPlatformRoot, currentOrgName } = useOrgOwner();
   const { marketplaceEnabled, clientMarketplaceEnabled } = useOrgMarketplace();
   const { effectivePlatformName, effectiveStudioLabel, effectiveMarketplaceLabel, effectiveLogoUrl, isWhiteLabelActive } = useWhiteLabel();
+  const { isUnlocked, isGateLoading } = useReferralGate();
   const [showClientSelector, setShowClientSelector] = useState(false);
   const [currentClientName, setCurrentClientName] = useState<string | null>(null);
   const [clientCount, setClientCount] = useState(0);
@@ -362,8 +392,27 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     }
   }, [activeIsClient, user, isImpersonating, impersonationTarget]);
 
+  // Detect freelance user: has no org and is not a platform admin
+  const isFreelanceUser = !profile?.current_organization_id && !isPlatformAdmin && !isPlatformRoot;
+
   // Filter navigation sections based on platform root vs org owner and org selection
   const filteredSections = useMemo(() => {
+    // Users who haven't unlocked via referral gate only see unlock page + profile
+    // Skip this check while loading gate status or for users who bypass the gate
+    if (!isGateLoading && !isUnlocked && isFreelanceUser) {
+      return lockedUserSections;
+    }
+
+    // Freelance users (no org, no plan) only see marketplace + profile config
+    if (isFreelanceUser) {
+      // Return minimal navigation for freelancers
+      const mktSections = getMarketplaceSections(activeGroup);
+      return [
+        ...mktSections,
+        ...freelanceSections,
+      ];
+    }
+
     // When roles haven't loaded yet, show minimal nav to avoid flashing admin menu
     let baseSections = activeIsAdmin
       ? adminSections
@@ -431,7 +480,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       ...(!effectiveMktEnabled && !activeIsClient ? [recruitSection] : []),
       ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" }] }]),
     ];
-  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel]);
+  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, isFreelanceUser, activeGroup, isUnlocked, isGateLoading]);
 
   // Collapsible sections state — auto-expand section containing active route
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
@@ -607,8 +656,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           })}
         </nav>
 
-        {/* AI Tokens - solo si tiene org y no es cliente */}
-        {profile?.current_organization_id && !activeIsClient && (
+        {/* AI Tokens - solo si tiene org y no es cliente ni freelance */}
+        {profile?.current_organization_id && !activeIsClient && !isFreelanceUser && (
           <div className="border-t border-border px-3 py-2">
             <AITokensPanelTrigger
               organizationId={profile.current_organization_id}
@@ -617,10 +666,12 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           </div>
         )}
 
-        {/* Achievements Widget */}
-        <div className="border-t border-border">
-          <SidebarAchievementsWidget collapsed={collapsed} />
-        </div>
+        {/* Achievements Widget - hide for freelancers */}
+        {!isFreelanceUser && (
+          <div className="border-t border-border">
+            <SidebarAchievementsWidget collapsed={collapsed} />
+          </div>
+        )}
 
         {/* User & Actions */}
         <div className="border-t border-border p-3 space-y-2 bg-gradient-to-t from-muted/50 to-transparent">
@@ -630,8 +681,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             </div>
           )}
 
-          {/* Role Switcher */}
-          {!isImpersonating && (
+          {/* Role Switcher - hide for freelancers with single role */}
+          {!isImpersonating && !isFreelanceUser && (
             <RoleSwitcher collapsed={collapsed} />
           )}
 

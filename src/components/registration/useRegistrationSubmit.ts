@@ -34,9 +34,10 @@ export function useRegistrationSubmit() {
       if (authError) throw authError;
       if (!authData.user) throw new Error('No se pudo crear el usuario');
 
-      // If no session (email confirmation required), save pending data
+      // If no session (email confirmation required), save pending data including email for resend
       if (!authData.session) {
         localStorage.setItem(PENDING_REG_KEY, JSON.stringify({
+          email: data.email, // Save email for resend functionality
           intent: data.intent,
           marketplaceRoles: data.marketplaceRoles,
           platforms: data.platforms,
@@ -53,8 +54,8 @@ export function useRegistrationSubmit() {
           locationCountry: data.locationCountry,
           referralCode: data.referralCode,
         }));
-        toast.success('Confirma tu correo', {
-          description: 'Te enviamos un email de verificación. Confírmalo y luego inicia sesión.',
+        toast.success('Revisa tu correo', {
+          description: 'Te enviamos un email de verificación. Revisa también la carpeta de spam.',
         });
         return true;
       }
