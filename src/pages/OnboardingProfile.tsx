@@ -393,7 +393,7 @@ const OnboardingProfile = () => {
     filesToAdd.forEach(file => uploadFile(file));
   }, [uploadingFiles.length, uploadedCount, creatorProfileId]);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open: openFileDialog } = useDropzone({
     onDrop,
     accept: {
       'video/*': ['.mp4', '.mov', '.webm', '.avi'],
@@ -401,6 +401,8 @@ const OnboardingProfile = () => {
     },
     maxFiles: MAX_PORTFOLIO_FILES,
     disabled: !creatorProfileId || (uploadingFiles.length + uploadedCount) >= MAX_PORTFOLIO_FILES,
+    noClick: false,
+    noKeyboard: false,
   });
 
   const isUploading = uploadingFiles.some(f => f.status === 'uploading');
@@ -760,11 +762,23 @@ const OnboardingProfile = () => {
                         <>
                           <Upload className="w-10 h-10 text-white/40 mb-3" />
                           <p className="text-sm text-white/80 mb-1">
-                            {isDragActive ? 'Suelta los archivos aquí' : 'Arrastra o haz clic para subir'}
+                            {isDragActive ? 'Suelta los archivos aquí' : 'Toca para seleccionar archivos'}
                           </p>
-                          <p className="text-xs text-white/40">
-                            Videos (MP4, MOV) o Imágenes (JPG, PNG) — máx. 100MB
+                          <p className="text-xs text-white/40 mb-3">
+                            Videos (MP4, MOV) o Imágenes (JPG, PNG)
                           </p>
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openFileDialog();
+                            }}
+                            className="bg-purple-600 hover:bg-purple-700"
+                          >
+                            <Upload className="w-4 h-4 mr-2" />
+                            Seleccionar archivos
+                          </Button>
                         </>
                       )}
                     </div>
