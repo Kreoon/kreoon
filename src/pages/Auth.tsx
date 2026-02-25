@@ -70,31 +70,76 @@ export default function Auth() {
 
   useEffect(() => {
     if (!user || authLoading || !rolesLoaded) return;
-    if (roles.length === 0) {
-      navigate("/pending-access", { replace: true });
-      return;
+
+    // User has roles in an organization - navigate to their dashboard
+    if (roles.length > 0) {
+      if (roles.includes("admin")) {
+        navigate("/dashboard", { replace: true });
+        return;
+      }
+      if (roles.includes("strategist")) {
+        navigate("/strategist-dashboard", { replace: true });
+        return;
+      }
+      if (roles.includes("creator") || roles.includes("ambassador")) {
+        navigate("/creator-dashboard", { replace: true });
+        return;
+      }
+      if (roles.includes("editor")) {
+        navigate("/editor-dashboard", { replace: true });
+        return;
+      }
+      if (roles.includes("client")) {
+        navigate("/client-dashboard", { replace: true });
+        return;
+      }
     }
-    if (roles.includes("admin")) {
-      navigate("/dashboard", { replace: true });
-      return;
-    }
-    if (roles.includes("strategist")) {
-      navigate("/strategist-dashboard", { replace: true });
-      return;
-    }
-    if (roles.includes("creator") || roles.includes("ambassador")) {
-      navigate("/creator-dashboard", { replace: true });
-      return;
-    }
-    if (roles.includes("editor")) {
-      navigate("/editor-dashboard", { replace: true });
-      return;
-    }
-    if (roles.includes("client")) {
-      navigate("/client-dashboard", { replace: true });
-      return;
-    }
-    navigate("/pending-access", { replace: true });
+
+    // User has no roles - check if they're a talent or brand
+    const checkUserType = async () => {
+      try {
+        // Check if user has a creator_profile (talent)
+        const { data: creatorProfile } = await supabase
+          .from('creator_profiles')
+          .select('id, is_active, bio, avatar_url')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
+
+        if (creatorProfile) {
+          // User is a talent - check if they completed onboarding
+          const hasCompletedProfile = creatorProfile.bio && creatorProfile.avatar_url;
+          if (hasCompletedProfile) {
+            navigate("/unlock-access", { replace: true });
+          } else {
+            navigate("/welcome-talent", { replace: true });
+          }
+          return;
+        }
+
+        // Check if user is a brand member
+        const { data: brandMember } = await supabase
+          .from('brand_members')
+          .select('id')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
+
+        if (brandMember) {
+          // User is a brand - go to marketplace
+          navigate("/marketplace", { replace: true });
+          return;
+        }
+
+        // User has no profile type yet - default to talent flow
+        navigate("/welcome-talent", { replace: true });
+      } catch (error) {
+        console.error('Error checking user type:', error);
+        navigate("/welcome-talent", { replace: true });
+      }
+    };
+
+    checkUserType();
   }, [user, authLoading, rolesLoaded, roles, navigate]);
 
   const setViewAndSyncUrl = useCallback(

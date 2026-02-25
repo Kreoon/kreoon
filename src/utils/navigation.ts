@@ -6,7 +6,8 @@ export function getDashboardPath(
   roles: string[],
   activeRole?: string | null
 ): string {
-  if (roles.length === 0) return "/pending-access";
+  // Users without roles go to marketplace (talents/brands without org)
+  if (roles.length === 0) return "/marketplace";
 
   if (activeRole && roles.includes(activeRole)) {
     switch (activeRole) {
@@ -36,5 +37,5 @@ export function getDashboardPath(
   if (roles.includes("editor")) return "/editor-dashboard";
   if (roles.includes("client")) return "/client-dashboard";
 
-  return "/pending-access";
+  return "/marketplace";
 }
