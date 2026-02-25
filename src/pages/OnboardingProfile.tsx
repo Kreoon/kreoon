@@ -2,10 +2,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  User, Camera, FileText, Briefcase, ArrowRight, ArrowLeft,
-  Check, Loader2, Instagram, Youtube, Globe, Plus, X,
+  Camera, FileText, Briefcase, ArrowRight, ArrowLeft,
+  Check, Loader2, Instagram, Youtube, Globe,
   Video, Wand2, Megaphone, Code, GraduationCap, Sparkles,
-  Upload, Image as ImageIcon, Film, AlertCircle,
+  Upload, Image as ImageIcon, Film, AlertCircle, X, CheckCircle2,
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { useAuth } from '@/hooks/useAuth';
@@ -38,17 +38,14 @@ const PLATFORMS = [
 const MAX_ROLES = 5;
 const MAX_PORTFOLIO_FILES = 5;
 
-interface PortfolioFile {
+interface UploadingFile {
   id: string;
-  file?: File;
+  file: File;
   type: 'video' | 'image';
   preview?: string;
-  uploading?: boolean;
-  uploaded?: boolean;
-  progress?: number;
+  status: 'uploading' | 'success' | 'error';
+  progress: number;
   error?: string;
-  cdnUrl?: string;
-  bunnyVideoId?: string;
 }
 
 // ─── Component ─────────────────────────────────────────────
@@ -67,7 +64,8 @@ const OnboardingProfile = () => {
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
-  const [portfolioFiles, setPortfolioFiles] = useState<PortfolioFile[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
+  const [uploadedCount, setUploadedCount] = useState(0);
   const [socialLinks, setSocialLinks] = useState({
     instagram: '',
     tiktok: '',
@@ -110,6 +108,12 @@ const OnboardingProfile = () => {
 
       if (existing?.id) {
         setCreatorProfileId(existing.id);
+        // Count existing portfolio items
+        const { count } = await (supabase as any)
+          .from('portfolio_items')
+          .select('id', { count: 'exact', head: true })
+          .eq('creator_id', existing.id);
+        setUploadedCount(count || 0);
         return;
       }
 
@@ -191,50 +195,56 @@ const OnboardingProfile = () => {
   };
 
   // ─── Portfolio Upload Logic ─────────────────────────────
-  const onDropPortfolio = useCallback(async (acceptedFiles: File[]) => {
+  const uploadFile = async (file: File) => {
     if (!creatorProfileId) {
-      toast.error('Espera un momento, preparando tu perfil...');
+      toast.error('Perfil no listo, intenta de nuevo');
       return;
     }
 
-    const remainingSlots = MAX_PORTFOLIO_FILES - portfolioFiles.length;
-    const filesToAdd = acceptedFiles.slice(0, remainingSlots);
-
-    for (const file of filesToAdd) {
-      const isVideo = file.type.startsWith('video/');
-      const isImage = file.type.startsWith('image/');
-
-      if (!isVideo && !isImage) continue;
-
-      const newFile: PortfolioFile = {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        file,
-        type: isVideo ? 'video' : 'image',
-        preview: isImage ? URL.createObjectURL(file) : undefined,
-        uploading: true,
-        progress: 0,
-      };
-
-      setPortfolioFiles(prev => [...prev, newFile]);
-
-      // Upload file
-      try {
-        if (isVideo) {
-          await uploadVideoFile(newFile, file);
-        } else {
-          await uploadImageFile(newFile, file);
-        }
-      } catch (err) {
-        console.error('Upload error:', err);
-        setPortfolioFiles(prev =>
-          prev.map(f => f.id === newFile.id ? { ...f, uploading: false, error: 'Error al subir' } : f)
-        );
-      }
+    const isVideo = file.type.startsWith('video/');
+    const isImage = file.type.startsWith('image/');
+    if (!isVideo && !isImage) {
+      toast.error('Solo se permiten videos o imágenes');
+      return;
     }
-  }, [creatorProfileId, portfolioFiles.length]);
 
-  const uploadVideoFile = async (portfolioFile: PortfolioFile, file: File) => {
-    if (!creatorProfileId) return;
+    const fileId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const newFile: UploadingFile = {
+      id: fileId,
+      file,
+      type: isVideo ? 'video' : 'image',
+      preview: isImage ? URL.createObjectURL(file) : undefined,
+      status: 'uploading',
+      progress: 10,
+    };
+
+    setUploadingFiles(prev => [...prev, newFile]);
+
+    try {
+      if (isVideo) {
+        await uploadVideoToBunny(fileId, file);
+      } else {
+        await uploadImageToBunny(fileId, file);
+      }
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      setUploadingFiles(prev =>
+        prev.map(f => f.id === fileId ? { ...f, status: 'error', error: err.message || 'Error al subir' } : f)
+      );
+    }
+  };
+
+  const uploadVideoToBunny = async (fileId: string, file: File) => {
+    if (!creatorProfileId) throw new Error('No creator profile');
+
+    // Update progress
+    const updateProgress = (progress: number) => {
+      setUploadingFiles(prev =>
+        prev.map(f => f.id === fileId ? { ...f, progress } : f)
+      );
+    };
+
+    updateProgress(20);
 
     // Step 1: Create video slot
     const { data: slotData, error: slotError } = await supabase.functions.invoke('bunny-marketplace-upload', {
@@ -246,17 +256,17 @@ const OnboardingProfile = () => {
       },
     });
 
-    if (slotError || !slotData?.success) {
-      throw new Error(slotError?.message || 'Failed to create video slot');
+    if (slotError) {
+      throw new Error(slotError.message || 'Error creando slot de video');
+    }
+    if (!slotData?.success) {
+      throw new Error(slotData?.error || 'Error creando slot de video');
     }
 
     const { upload_url, access_key, video_id, embed_url, media_id } = slotData;
+    updateProgress(40);
 
-    // Step 2: Upload to Bunny
-    setPortfolioFiles(prev =>
-      prev.map(f => f.id === portfolioFile.id ? { ...f, progress: 30 } : f)
-    );
-
+    // Step 2: Upload to Bunny CDN
     const uploadResponse = await fetch(upload_url, {
       method: 'PUT',
       headers: {
@@ -267,15 +277,13 @@ const OnboardingProfile = () => {
     });
 
     if (!uploadResponse.ok) {
-      throw new Error('Upload failed');
+      throw new Error(`Error en upload: ${uploadResponse.status}`);
     }
 
-    setPortfolioFiles(prev =>
-      prev.map(f => f.id === portfolioFile.id ? { ...f, progress: 70 } : f)
-    );
+    updateProgress(70);
 
-    // Step 3: Confirm upload
-    await supabase.functions.invoke('bunny-marketplace-upload', {
+    // Step 3: Confirm upload and create portfolio item
+    const { error: confirmError } = await supabase.functions.invoke('bunny-marketplace-upload', {
       method: 'PUT',
       body: {
         upload_type: 'portfolio',
@@ -287,41 +295,50 @@ const OnboardingProfile = () => {
       },
     });
 
-    setPortfolioFiles(prev =>
-      prev.map(f => f.id === portfolioFile.id ? {
-        ...f,
-        uploading: false,
-        uploaded: true,
-        progress: 100,
-        cdnUrl: embed_url,
-        bunnyVideoId: video_id,
-      } : f)
-    );
+    if (confirmError) {
+      console.warn('Confirm warning:', confirmError);
+    }
 
+    updateProgress(100);
+
+    // Mark as success
+    setUploadingFiles(prev =>
+      prev.map(f => f.id === fileId ? { ...f, status: 'success', progress: 100 } : f)
+    );
+    setUploadedCount(prev => prev + 1);
     toast.success('Video subido correctamente');
   };
 
-  const uploadImageFile = async (portfolioFile: PortfolioFile, file: File) => {
-    if (!creatorProfileId) return;
+  const uploadImageToBunny = async (fileId: string, file: File) => {
+    if (!creatorProfileId) throw new Error('No creator profile');
+
+    const updateProgress = (progress: number) => {
+      setUploadingFiles(prev =>
+        prev.map(f => f.id === fileId ? { ...f, progress } : f)
+      );
+    };
+
+    updateProgress(20);
 
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     const uniqueSuffix = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const storagePath = `marketplace/portfolio/${creatorProfileId}/${uniqueSuffix}.${ext}`;
 
-    // Get upload credentials
+    // Step 1: Get upload credentials
     const { data: creds, error: credsError } = await supabase.functions.invoke('bunny-raw-upload', {
       body: { storagePath },
     });
 
-    if (credsError || !creds?.success) {
-      throw new Error('Error al obtener credenciales');
+    if (credsError) {
+      throw new Error(credsError.message || 'Error obteniendo credenciales');
+    }
+    if (!creds?.success) {
+      throw new Error(creds?.error || 'Error obteniendo credenciales');
     }
 
-    setPortfolioFiles(prev =>
-      prev.map(f => f.id === portfolioFile.id ? { ...f, progress: 50 } : f)
-    );
+    updateProgress(40);
 
-    // Upload to Bunny Storage
+    // Step 2: Upload to Bunny Storage
     const uploadResponse = await fetch(creds.uploadUrl, {
       method: 'PUT',
       headers: {
@@ -332,10 +349,12 @@ const OnboardingProfile = () => {
     });
 
     if (!uploadResponse.ok) {
-      throw new Error('Upload failed');
+      throw new Error(`Error en upload: ${uploadResponse.status}`);
     }
 
-    // Create portfolio item record
+    updateProgress(70);
+
+    // Step 3: Create portfolio item in database
     const { error: insertError } = await (supabase as any)
       .from('portfolio_items')
       .insert({
@@ -349,43 +368,49 @@ const OnboardingProfile = () => {
 
     if (insertError) {
       console.error('Error inserting portfolio item:', insertError);
+      throw new Error('Error guardando en base de datos');
     }
 
-    setPortfolioFiles(prev =>
-      prev.map(f => f.id === portfolioFile.id ? {
-        ...f,
-        uploading: false,
-        uploaded: true,
-        progress: 100,
-        cdnUrl: creds.cdnUrl,
-      } : f)
-    );
+    updateProgress(100);
 
+    // Mark as success
+    setUploadingFiles(prev =>
+      prev.map(f => f.id === fileId ? { ...f, status: 'success', progress: 100 } : f)
+    );
+    setUploadedCount(prev => prev + 1);
     toast.success('Imagen subida correctamente');
   };
 
-  const removePortfolioFile = (id: string) => {
-    setPortfolioFiles(prev => prev.filter(f => f.id !== id));
+  const removeFile = (fileId: string) => {
+    setUploadingFiles(prev => prev.filter(f => f.id !== fileId));
   };
 
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const currentTotal = uploadingFiles.length + uploadedCount;
+    const remainingSlots = MAX_PORTFOLIO_FILES - currentTotal;
+    const filesToAdd = acceptedFiles.slice(0, remainingSlots);
+
+    filesToAdd.forEach(file => uploadFile(file));
+  }, [uploadingFiles.length, uploadedCount, creatorProfileId]);
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop: onDropPortfolio,
+    onDrop,
     accept: {
       'video/*': ['.mp4', '.mov', '.webm', '.avi'],
       'image/*': ['.jpg', '.jpeg', '.png', '.gif', '.webp'],
     },
-    maxFiles: MAX_PORTFOLIO_FILES - portfolioFiles.length,
-    disabled: portfolioFiles.length >= MAX_PORTFOLIO_FILES || !creatorProfileId,
+    maxFiles: MAX_PORTFOLIO_FILES,
+    disabled: !creatorProfileId || (uploadingFiles.length + uploadedCount) >= MAX_PORTFOLIO_FILES,
   });
 
-  const uploadedCount = portfolioFiles.filter(f => f.uploaded).length;
-  const uploadingCount = portfolioFiles.filter(f => f.uploading).length;
+  const isUploading = uploadingFiles.some(f => f.status === 'uploading');
+  const totalItems = uploadedCount + uploadingFiles.filter(f => f.status === 'success').length;
 
   const canProceed = () => {
     switch (currentStep) {
       case 0: return bio.length >= 10;
       case 1: return selectedAreas.length > 0;
-      case 2: return uploadedCount >= 1; // At least 1 uploaded file required
+      case 2: return totalItems >= 1 && !isUploading;
       case 3: return true;
       default: return false;
     }
@@ -691,13 +716,13 @@ const OnboardingProfile = () => {
                     Sube tu mejor trabajo *
                   </label>
                   <p className="text-xs text-white/50 mb-4">
-                    Las marcas quieren ver tu trabajo. Sube al menos 1 video o imagen de tu portafolio.
+                    Las marcas quieren ver tu trabajo. Sube al menos 1 video o imagen.
                   </p>
 
                   {/* Dropzone */}
-                  {portfolioFiles.length < MAX_PORTFOLIO_FILES && (
+                  {(uploadingFiles.length + uploadedCount) < MAX_PORTFOLIO_FILES && (
                     <div
-                      {...(creatorProfileId ? getRootProps() : {})}
+                      {...(creatorProfileId && !profileError ? getRootProps() : {})}
                       className={cn(
                         'flex flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all p-8',
                         profileError
@@ -709,7 +734,7 @@ const OnboardingProfile = () => {
                           : 'border-white/20 bg-white/[0.02] cursor-wait opacity-50'
                       )}
                     >
-                      {creatorProfileId && <input {...getInputProps()} />}
+                      {creatorProfileId && !profileError && <input {...getInputProps()} />}
                       {profileError ? (
                         <>
                           <AlertCircle className="w-10 h-10 text-red-400 mb-3" />
@@ -745,26 +770,26 @@ const OnboardingProfile = () => {
                     </div>
                   )}
 
-                  {/* Uploaded files */}
-                  {portfolioFiles.length > 0 && (
+                  {/* Uploaded/Uploading files */}
+                  {uploadingFiles.length > 0 && (
                     <div className="mt-4 space-y-3">
-                      {portfolioFiles.map(pf => (
+                      {uploadingFiles.map(uf => (
                         <div
-                          key={pf.id}
+                          key={uf.id}
                           className={cn(
                             'flex items-center gap-3 p-3 rounded-lg border',
-                            pf.error
+                            uf.status === 'error'
                               ? 'bg-red-500/10 border-red-500/30'
-                              : pf.uploaded
+                              : uf.status === 'success'
                               ? 'bg-emerald-500/10 border-emerald-500/30'
                               : 'bg-white/[0.02] border-white/10'
                           )}
                         >
                           {/* Preview/Icon */}
                           <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center overflow-hidden shrink-0">
-                            {pf.preview ? (
-                              <img src={pf.preview} alt="" className="w-full h-full object-cover" />
-                            ) : pf.type === 'video' ? (
+                            {uf.preview ? (
+                              <img src={uf.preview} alt="" className="w-full h-full object-cover" />
+                            ) : uf.type === 'video' ? (
                               <Video className="w-5 h-5 text-purple-400" />
                             ) : (
                               <ImageIcon className="w-5 h-5 text-blue-400" />
@@ -773,32 +798,37 @@ const OnboardingProfile = () => {
 
                           {/* Info */}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm text-white truncate">
-                              {pf.file?.name || 'Archivo'}
-                            </p>
-                            {pf.uploading && (
-                              <Progress value={pf.progress || 0} className="h-1 mt-1" />
+                            <p className="text-sm text-white truncate">{uf.file.name}</p>
+                            {uf.status === 'uploading' && (
+                              <div className="mt-1">
+                                <Progress value={uf.progress} className="h-1.5" />
+                                <p className="text-xs text-white/50 mt-0.5">{uf.progress}% subiendo...</p>
+                              </div>
                             )}
-                            {pf.error && (
-                              <p className="text-xs text-red-400 mt-1">{pf.error}</p>
+                            {uf.status === 'error' && (
+                              <p className="text-xs text-red-400 mt-1">{uf.error}</p>
                             )}
-                            {pf.uploaded && (
-                              <p className="text-xs text-emerald-400 mt-1">Subido correctamente</p>
+                            {uf.status === 'success' && (
+                              <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" />
+                                Subido correctamente
+                              </p>
                             )}
                           </div>
 
-                          {/* Status/Actions */}
-                          {pf.uploading ? (
+                          {/* Status Icon */}
+                          {uf.status === 'uploading' ? (
                             <Loader2 className="w-5 h-5 text-purple-400 animate-spin shrink-0" />
-                          ) : pf.uploaded ? (
-                            <Check className="w-5 h-5 text-emerald-400 shrink-0" />
-                          ) : pf.error ? (
+                          ) : uf.status === 'success' ? (
+                            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                          ) : (
                             <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
-                          ) : null}
+                          )}
 
-                          {!pf.uploading && (
+                          {/* Remove button */}
+                          {uf.status !== 'uploading' && (
                             <button
-                              onClick={() => removePortfolioFile(pf.id)}
+                              onClick={() => removeFile(uf.id)}
                               className="p-1 text-white/40 hover:text-white transition-colors shrink-0"
                             >
                               <X className="w-4 h-4" />
@@ -809,16 +839,24 @@ const OnboardingProfile = () => {
                     </div>
                   )}
 
-                  {/* Status */}
-                  <div className="mt-4 p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
-                    <p className="text-sm text-purple-200">
+                  {/* Status message */}
+                  <div className={cn(
+                    'mt-4 p-3 rounded-lg border',
+                    totalItems >= 1
+                      ? 'bg-emerald-500/10 border-emerald-500/20'
+                      : 'bg-purple-500/10 border-purple-500/20'
+                  )}>
+                    <p className={cn(
+                      'text-sm',
+                      totalItems >= 1 ? 'text-emerald-200' : 'text-purple-200'
+                    )}>
                       <Sparkles className="w-4 h-4 inline mr-1" />
-                      {uploadedCount === 0 ? (
+                      {totalItems === 0 ? (
                         'Sube al menos 1 archivo para continuar'
-                      ) : uploadedCount === 1 ? (
+                      ) : totalItems === 1 ? (
                         '¡Genial! Ya tienes 1 archivo. Puedes agregar más o continuar.'
                       ) : (
-                        `¡Excelente! Tienes ${uploadedCount} archivos en tu portafolio.`
+                        `¡Excelente! Tienes ${totalItems} archivos en tu portafolio.`
                       )}
                     </p>
                   </div>
@@ -909,12 +947,12 @@ const OnboardingProfile = () => {
 
           <Button
             onClick={handleNext}
-            disabled={!canProceed() || saving || uploadingCount > 0}
+            disabled={!canProceed() || saving || isUploading}
             className="bg-purple-600 hover:bg-purple-700"
           >
             {saving ? (
               <Loader2 className="w-4 h-4 animate-spin" />
-            ) : uploadingCount > 0 ? (
+            ) : isUploading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Subiendo...
