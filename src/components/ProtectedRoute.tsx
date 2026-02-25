@@ -58,6 +58,7 @@ function getDashboardPath(roles: AppRole[], activeRole?: AppRole | null): string
 const ORG_REQUIRED_ROUTES = ['/dashboard', '/board', '/content', '/talent', '/scripts', '/clients-hub', '/team', '/ranking'];
 
 // Routes that users without roles can access (social/marketplace)
+// Note: Talents without referral keys are blocked from marketplace in the referral gate check below
 const SOCIAL_ROUTES = ['/social', '/marketplace', '/explore', '/profile', '/settings'];
 
 export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRoles, requirePlatformAdmin }: ProtectedRouteProps) {
@@ -194,18 +195,31 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     return <Navigate to="/pending-access" replace />;
   }
 
-  // Referral gate: only talent roles (creator/editor) need platform_access_unlocked
-  // Bypass: platform root/admin, social/marketplace routes, org members, clients, non-talent roles
+  // Referral gate: talents (users with creator_profile but no org) need platform_access_unlocked
+  // They MUST complete 3 referral keys before accessing ANY route including marketplace
+  // Bypass ONLY: platform root/admin, org members, clients, unlock-access page itself, settings/profile
   const hasOrganization = !!(currentOrgId || profile?.current_organization_id);
   const isTalentRole = rolesToCheck.length > 0 && rolesToCheck.every(r => {
     const pg = getPermissionGroup(r);
     return pg === 'creator' || pg === 'editor';
   });
-  if (
-    isTalentRole &&
+  // Talents without org AND without keys can ONLY access: /unlock-access, /settings, /profile
+  const isGateBypassRoute = location.pathname === '/unlock-access'
+    || location.pathname.startsWith('/settings')
+    || location.pathname.startsWith('/profile/');
+  // Also check for users without roles who have a creator_profile (pure talents)
+  const isPureTalentWithoutKeys =
+    realRoles.length === 0 &&
+    !hasOrganization &&
     !isPlatformRoot &&
     !isPlatformAdmin &&
-    !isSocialRoute &&
+    profile?.platform_access_unlocked !== true;
+
+  if (
+    (isTalentRole || isPureTalentWithoutKeys) &&
+    !isPlatformRoot &&
+    !isPlatformAdmin &&
+    !isGateBypassRoute &&
     !hasOrganization &&
     profile?.platform_access_unlocked !== true
   ) {

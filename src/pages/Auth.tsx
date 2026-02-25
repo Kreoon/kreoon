@@ -110,8 +110,11 @@ export default function Auth() {
           // User is a talent - check if they completed onboarding
           const hasCompletedProfile = creatorProfile.bio && creatorProfile.avatar_url;
           if (hasCompletedProfile) {
+            // Profile completed - now they need to get their 3 keys
+            // ProtectedRoute will redirect to /unlock-access if not unlocked
             navigate("/unlock-access", { replace: true });
           } else {
+            // Profile not completed - go to welcome/wizard
             navigate("/welcome-talent", { replace: true });
           }
           return;
