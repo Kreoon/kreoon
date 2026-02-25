@@ -1,6 +1,6 @@
 import { useState, useEffect, memo } from 'react';
 import { useParams } from 'react-router-dom';
-import { Building2, Loader2, ExternalLink, Play, Eye, Heart, Film, MapPin, Users, Calendar, Globe, Instagram, Star, Scissors, Lightbulb } from 'lucide-react';
+import { Building2, Loader2, Play, Eye, Heart, Film, MapPin, Users, Calendar, Globe, Instagram, Star, Scissors, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -128,12 +128,6 @@ const VideoCard = memo(function VideoCard({
   onClick: () => void;
 }) {
   const thumb = getThumbnail(item);
-  const initials = item.creator_name
-    ?.split(' ')
-    .map((n) => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase() || '';
 
   return (
     <div
@@ -144,7 +138,7 @@ const VideoCard = memo(function VideoCard({
         {thumb ? (
           <img
             src={thumb}
-            alt={item.title || 'Video'}
+            alt="Video"
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
             loading="lazy"
           />
@@ -158,39 +152,6 @@ const VideoCard = memo(function VideoCard({
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
           <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 scale-75 group-hover:scale-100 rounded-full p-4" style={{ backgroundColor: `${accentColor}CC` }}>
             <Play className="h-6 w-6 text-black fill-black" />
-          </div>
-        </div>
-
-        {/* Phase pill */}
-        {item.sphere_phase && PHASE_LABELS[item.sphere_phase] && (
-          <div className="absolute top-2.5 left-2.5">
-            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border backdrop-blur-sm ${PHASE_COLORS[item.sphere_phase] || ''}`}>
-              {PHASE_LABELS[item.sphere_phase]}
-            </span>
-          </div>
-        )}
-
-        {/* Bottom gradient + stats */}
-        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-10">
-          {item.creator_name && (
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <Avatar className="h-5 w-5 ring-1 ring-white/20">
-                <AvatarImage src={item.creator_avatar || ''} alt={item.creator_name} />
-                <AvatarFallback className="text-[7px] bg-white/10 text-white">{initials}</AvatarFallback>
-              </Avatar>
-              <span className="text-[11px] text-white/80 truncate font-medium">{item.creator_name}</span>
-            </div>
-          )}
-          <p className="text-xs text-white font-semibold line-clamp-2 leading-tight">
-            {item.title || 'Sin titulo'}
-          </p>
-          <div className="flex items-center gap-2.5 mt-1.5 text-white/60 text-[10px]">
-            {item.views_count > 0 && (
-              <span className="flex items-center gap-0.5"><Eye className="h-3 w-3" /> {formatNumber(item.views_count)}</span>
-            )}
-            {item.likes_count > 0 && (
-              <span className="flex items-center gap-0.5"><Heart className="h-3 w-3" /> {formatNumber(item.likes_count)}</span>
-            )}
           </div>
         </div>
       </div>
@@ -257,8 +218,10 @@ export default function OrgContentShowcase() {
     return () => { document.title = 'KREOON'; };
   }, [org]);
 
-  const availablePhases = [...new Set(content.map((c) => c.sphere_phase).filter(Boolean))] as string[];
-  const filteredContent = filterPhase ? content.filter((c) => c.sphere_phase === filterPhase) : content;
+  // Only Bunny-optimized videos
+  const bunnyContent = content.filter((c) => !!c.bunny_embed_url);
+  const availablePhases = [...new Set(bunnyContent.map((c) => c.sphere_phase).filter(Boolean))] as string[];
+  const filteredContent = filterPhase ? bunnyContent.filter((c) => c.sphere_phase === filterPhase) : bunnyContent;
 
   if (loading) {
     return (
