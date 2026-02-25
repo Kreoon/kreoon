@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Check, ArrowRight, Sparkles, Building2, Users, Link2, Mail, RefreshCw, AlertCircle } from 'lucide-react';
+import { Check, ArrowRight, Sparkles, Building2, Users, Link2, Mail, RefreshCw, AlertCircle, Key } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -23,10 +23,10 @@ const INTENT_CONFIG: Record<string, {
 }> = {
   talent: {
     icon: Sparkles,
-    title: '¡Bienvenido al marketplace!',
-    subtitle: 'Tu perfil de talento está listo. Complétalo para que las marcas te encuentren.',
-    cta: 'Ir a mi perfil',
-    route: '/settings?section=profile&tab=public',
+    title: '¡Cuenta creada!',
+    subtitle: 'Ahora necesitas obtener 3 llaves para desbloquear todas las funciones de la plataforma.',
+    cta: 'Obtener mis llaves',
+    route: '/unlock-access',
     color: 'text-purple-400',
   },
   brand: {
@@ -178,6 +178,21 @@ export function SuccessStep({ intent, mode, hasSession }: SuccessStepProps) {
         </div>
       )}
 
+      {/* Keys explanation for talent (only when confirmed) */}
+      {!needsConfirmation && intent === 'talent' && (
+        <div className="mb-6 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 max-w-sm mx-auto text-left">
+          <div className="flex items-center gap-2 mb-2">
+            <Key className="h-5 w-5 text-purple-400" />
+            <span className="font-semibold text-white text-sm">Sistema de Llaves</span>
+          </div>
+          <ul className="text-xs text-gray-400 space-y-1">
+            <li>1. Comparte tu link de referido con otros creadores</li>
+            <li>2. Ellos completan su perfil (foto + portafolio)</li>
+            <li>3. Con 3 llaves desbloqueas acceso completo</li>
+          </ul>
+        </div>
+      )}
+
       <div className="flex flex-col gap-3 items-center">
         {needsConfirmation ? (
           <>
@@ -208,7 +223,7 @@ export function SuccessStep({ intent, mode, hasSession }: SuccessStepProps) {
             className="inline-flex items-center gap-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium px-6 py-2.5 text-sm transition-colors"
           >
             {config.cta}
-            <ArrowRight className="h-4 w-4" />
+            {intent === 'talent' ? <Key className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
           </button>
         )}
       </div>
