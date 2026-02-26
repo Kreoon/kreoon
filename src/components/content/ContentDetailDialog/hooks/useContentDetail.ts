@@ -23,7 +23,7 @@ interface UseContentDetailOptions {
 
 export function useContentDetail({ content, onUpdate }: UseContentDetailOptions) {
   const { toast } = useToast();
-  const { isAdmin, isClient, isCreator, isEditor, user } = useAuth();
+  const { isAdmin, isClient, isCreator, isEditor, isStrategist, isTeamLeader, user } = useAuth();
   const { markAsChanged, markAsSaved, registerSaveHandler, unregisterSaveHandler } = useUnsavedChangesSafe();
   const { guardAction, isReadOnly } = useTrialGuard();
   
@@ -257,15 +257,18 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
       const diffUpdates = buildRoleBasedUpdates(formData, originalFormDataRef.current);
       const finalUpdates: Record<string, any> = diffUpdates ? { ...diffUpdates } : {};
 
-      // Admin-specific side effects (assignment timestamps, paid status)
-      if (isAdmin) {
+      // Assignment timestamps (admin, strategist, team_leader can assign team members)
+      if (isAdmin || isStrategist || isTeamLeader) {
         if (formData.creator_id && !content.creator_id) {
           finalUpdates.creator_assigned_at = new Date().toISOString();
         }
         if (formData.editor_id && !content.editor_id) {
           finalUpdates.editor_assigned_at = new Date().toISOString();
         }
+      }
 
+      // Admin-only: paid status transition
+      if (isAdmin) {
         const bothPaid = formData.creator_paid && formData.editor_paid;
         const wasNotBothPaid = !content.creator_paid || !content.editor_paid;
         if (bothPaid && wasNotBothPaid && content.status === 'approved') {
@@ -334,6 +337,39 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
       if (changed('hooks_count')) updates.hooks_count = data.hooks_count;
       if (changed('notes')) updates.notes = data.notes || null;
       return Object.keys(updates).length > 0 ? updates : null;
+    } else if (isStrategist || isTeamLeader) {
+      // Strategists & team leaders can edit content, team, dates, scripts, video, material
+      // but NOT payments, invoicing, is_published, or admin_guidelines
+      const updates: Record<string, any> = {};
+
+      if (changed('title')) updates.title = data.title;
+      if (changed('product')) updates.product = data.product || null;
+      if (changed('product_id')) updates.product_id = data.product_id || null;
+      if (changed('sales_angle')) updates.sales_angle = data.sales_angle || null;
+      if (changed('client_id')) updates.client_id = data.client_id || null;
+      if (changed('creator_id')) updates.creator_id = data.creator_id || null;
+      if (changed('editor_id')) updates.editor_id = data.editor_id || null;
+      if (changed('strategist_id')) updates.strategist_id = data.strategist_id || null;
+      if (changed('deadline')) updates.deadline = data.deadline ? new Date(data.deadline).toISOString() : null;
+      if (changed('start_date')) updates.start_date = data.start_date ? new Date(data.start_date).toISOString() : null;
+      if (changed('campaign_week')) updates.campaign_week = data.campaign_week || null;
+      if (changed('reference_url')) updates.reference_url = data.reference_url || null;
+      if (changed('drive_url')) updates.drive_url = data.drive_url || null;
+      if (changed('script')) updates.script = data.script || null;
+      if (changed('description')) updates.description = data.description || null;
+      if (changed('notes')) updates.notes = data.notes || null;
+      if (changed('editor_guidelines')) updates.editor_guidelines = data.editor_guidelines || null;
+      if (changed('strategist_guidelines')) updates.strategist_guidelines = data.strategist_guidelines || null;
+      if (changed('trafficker_guidelines')) updates.trafficker_guidelines = data.trafficker_guidelines || null;
+      if (changed('designer_guidelines')) updates.designer_guidelines = data.designer_guidelines || null;
+      if (changed('sphere_phase')) updates.sphere_phase = data.sphere_phase || null;
+
+      // Video fields
+      if (changed('video_url')) updates.video_url = data.video_url || null;
+      if (changed('video_urls')) updates.video_urls = data.video_urls.filter(url => url.trim() !== '');
+      if (changed('hooks_count')) updates.hooks_count = data.hooks_count;
+
+      return Object.keys(updates).length > 0 ? updates : null;
     } else if (isAdmin) {
       const updates: Record<string, any> = {};
 
@@ -375,7 +411,7 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
       return Object.keys(updates).length > 0 ? updates : null;
     }
     return null;
-  }, [isAdmin, isCreator, isEditor, content?.creator_id, content?.editor_id, user?.id]);
+  }, [isAdmin, isCreator, isEditor, isStrategist, isTeamLeader, content?.creator_id, content?.editor_id, user?.id]);
 
   // AutoSave integration
   // SAFETY: capture content.id in a ref so the onSave callback always targets the correct record.
