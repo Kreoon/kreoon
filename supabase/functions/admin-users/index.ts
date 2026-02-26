@@ -444,6 +444,9 @@ serve(async (req) => {
 
         console.log(`[delete_user] Cleaning up related data for user ${userId}`);
 
+        // ─── Partner communities ───
+        await cleanupTable("partner_community_memberships", "user_id", userId);
+
         // ─── Organization tables ───
         await cleanupTable("organization_member_badges", "user_id", userId);
         await cleanupTable("organization_member_roles", "user_id", userId);
