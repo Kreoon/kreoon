@@ -53,6 +53,7 @@ Deno.serve(async (req) => {
       )
     }
 
+    // Service role client for DB operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     const contentType = req.headers.get('content-type') || ''
 
@@ -66,9 +67,21 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Verify the JWT token
+    // Verify the JWT token using anon key client
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
+    if (!supabaseAnonKey) {
+      console.error('[bunny-marketplace-upload] Missing SUPABASE_ANON_KEY')
+      return new Response(
+        JSON.stringify({ error: 'Server configuration error' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } }
+    })
+    const { data: { user }, error: authError } = await authClient.auth.getUser()
     if (authError || !user) {
       console.error('[bunny-marketplace-upload] Invalid token:', authError?.message)
       return new Response(
