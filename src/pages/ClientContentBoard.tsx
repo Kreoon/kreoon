@@ -80,6 +80,7 @@ const canClientMoveToStatusFallback = (
 interface ClientInfo {
   id: string;
   name: string;
+  organization_id?: string;
 }
 
 type FilterTab = 'all' | 'pending' | 'approved' | 'published';
@@ -169,12 +170,16 @@ export default function ClientContentBoard() {
 
         if (savedClientId) {
           // Verify user has access to this client
-          const { data: association } = await supabase
+          const { data: association, error: assocError } = await supabase
             .from('client_users')
             .select('client_id')
             .eq('user_id', user.id)
             .eq('client_id', savedClientId)
             .maybeSingle();
+
+          if (assocError) {
+            console.error('Error checking client access:', assocError);
+          }
 
           if (association) {
             clientId = savedClientId;
@@ -183,11 +188,20 @@ export default function ClientContentBoard() {
 
         // If no saved client or invalid, get first associated client
         if (!clientId) {
-          const { data: associations } = await supabase
+          const { data: associations, error: listError } = await supabase
             .from('client_users')
             .select('client_id')
             .eq('user_id', user.id)
             .limit(1);
+
+          if (listError) {
+            console.error('Error listing client associations:', listError);
+            toast({
+              title: 'Error de acceso',
+              description: 'No se pudo verificar tu vinculación. Contacta al administrador.',
+              variant: 'destructive'
+            });
+          }
 
           if (associations && associations.length > 0) {
             clientId = associations[0].client_id;
@@ -197,27 +211,69 @@ export default function ClientContentBoard() {
       }
 
       if (clientId) {
-        // Get client info
-        const { data: clientData } = await supabase
+        // Get client info WITH organization_id
+        const { data: clientData, error: clientError } = await supabase
           .from('clients')
-          .select('id, name')
+          .select('id, name, organization_id')
           .eq('id', clientId)
           .maybeSingle();
+
+        if (clientError) {
+          console.error('Error fetching client:', clientError);
+          toast({
+            title: 'Error de acceso',
+            description: 'No se pudo cargar la información de la empresa. Contacta al administrador.',
+            variant: 'destructive'
+          });
+          return;
+        }
 
         if (clientData) {
           setClientInfo(clientData);
 
-          // Solo traemos contenido en estados relevantes para el cliente (fallback + custom)
-          const statusesToFetch = ['draft', 'script_approved', 'delivered', 'issue', 'corrected', 'approved', 'published'];
-          // Fetch content WITHOUT JOIN to clients (avoids RLS timeout)
-          const { data: contentData } = await supabase
-            .from('content')
-            .select('*')
-            .eq('client_id', clientData.id)
-            .in('status', statusesToFetch)
-            .order('created_at', { ascending: false });
+          // Verify client has organization_id
+          if (!clientData.organization_id) {
+            console.error('Client has no organization_id:', clientData);
+            toast({
+              title: 'Error de configuración',
+              description: 'La empresa no está vinculada a una organización. Contacta al administrador.',
+              variant: 'destructive'
+            });
+            return;
+          }
 
-          setContent((contentData || []) as unknown as Content[]);
+          // Use RPC get_org_content with client filter (bypasses RLS timeout issues)
+          const { data: contentData, error: contentError } = await supabase
+            .rpc('get_org_content', {
+              p_organization_id: clientData.organization_id,
+              p_role: 'client',
+              p_user_id: user.id,
+              p_client_id: clientData.id,
+              p_limit: 500
+            });
+
+          if (contentError) {
+            console.error('Error fetching content:', contentError);
+            // Fallback: try direct query with error logging
+            console.log('Attempting fallback direct query...');
+            const { data: fallbackData, error: fallbackError } = await supabase
+              .from('content')
+              .select('*')
+              .eq('client_id', clientData.id)
+              .order('created_at', { ascending: false });
+
+            if (fallbackError) {
+              console.error('Fallback query also failed:', fallbackError);
+              toast({
+                title: 'Error de permisos',
+                description: 'No tienes acceso al contenido. Verifica que estés correctamente vinculado a la empresa.',
+                variant: 'destructive'
+              });
+            }
+            setContent((fallbackData || []) as unknown as Content[]);
+          } else {
+            setContent((contentData || []) as unknown as Content[]);
+          }
         }
       }
     } catch (error) {
