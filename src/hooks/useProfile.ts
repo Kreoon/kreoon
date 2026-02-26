@@ -544,6 +544,14 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
       const ext = file.name.split('.').pop();
       const fileName = `${user.id}/cover_${Date.now()}.${ext}`;
 
+      // Delete old cover if exists (cleanup to avoid orphan files)
+      if (profile?.cover_url?.includes('portfolio')) {
+        const oldPath = profile.cover_url.split('/portfolio/')[1];
+        if (oldPath) {
+          await supabase.storage.from('portfolio').remove([oldPath]);
+        }
+      }
+
       const { error: uploadError } = await supabase.storage
         .from('portfolio')
         .upload(fileName, file, { upsert: true });
@@ -552,6 +560,13 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
 
       const { data } = supabase.storage.from('portfolio').getPublicUrl(fileName);
       updateField('cover_url', data.publicUrl);
+
+      // Persist to profiles DB immediately (don't wait for "Save" button)
+      await supabase
+        .from('profiles')
+        .update({ cover_url: data.publicUrl })
+        .eq('id', user.id);
+
       showToast('Portada actualizada');
       return data.publicUrl;
     } catch (error) {
@@ -559,7 +574,7 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
       showToast('Error', 'No se pudo subir la imagen', 'destructive');
       return null;
     }
-  }, [user?.id, updateField, showToast]);
+  }, [user?.id, profile?.cover_url, updateField, showToast]);
 
   // Add tag
   const addTag = useCallback((field: keyof ProfileData, tag: string) => {

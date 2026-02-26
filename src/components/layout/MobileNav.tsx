@@ -208,12 +208,28 @@ const clientSections: NavSection[] = [
   { label: "CONFIG", items: CONFIG_ITEMS }
 ];
 
-// Freelance users (no org, no plan) - minimal navigation
+// Freelance users (no org) - full talent navigation
 const freelanceSections: NavSection[] = [
+  {
+    label: "MI NEGOCIO",
+    items: [
+      { name: "Dashboard", href: "/freelancer-dashboard", icon: LayoutDashboard },
+      { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban },
+      { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
+    ]
+  },
+  {
+    label: "MARKETING & MEDIA",
+    items: [
+      { name: "Social Hub", href: "/social-hub", icon: Share2 },
+      // Live module coming soon
+    ]
+  },
   {
     label: "CONFIG",
     items: [
       { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
+      { name: "Plan", href: "/planes", icon: Crown },
       { name: "Settings", href: "/settings", icon: Settings },
     ]
   }
@@ -236,11 +252,15 @@ const lockedUserSections: NavSection[] = [
 ];
 
 // Marketplace sections — mirrors Sidebar.tsx
-function getMarketplaceSections(activeGroup: PermissionGroup | null): NavSection[] {
+function getMarketplaceSections(activeGroup: PermissionGroup | null, isFreelance: boolean = false): NavSection[] {
   const items: NavItem[] = [
     { name: "Marketplace", href: "/marketplace", icon: Store },
-    { name: "Videos", href: "/marketplace/videos", icon: Play },
   ];
+
+  // Videos module - not available for freelancers yet
+  if (!isFreelance) {
+    items.push({ name: "Videos", href: "/marketplace/videos", icon: Play });
+  }
 
   if (activeGroup !== 'editor' && activeGroup !== 'client') {
     items.push({ name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone });
@@ -251,7 +271,8 @@ function getMarketplaceSections(activeGroup: PermissionGroup | null): NavSection
 
   items.push({ name: "Wallet", href: "/wallet", icon: Wallet });
 
-  if (activeGroup === 'client') {
+  // Talent management — only for organizations (admin/strategist), NOT for clients or freelancers
+  if (activeGroup === 'client' || isFreelance) {
     return [{ label: "KREOON MARKETPLACE", items }];
   }
 
@@ -398,7 +419,7 @@ export function MobileNav() {
 
     // Freelance users (no org, no plan) only see marketplace + profile config
     if (isFreelanceUser && (isUnlocked || activeIsClient)) {
-      const mktSections = getMarketplaceSections(activeGroup);
+      const mktSections = getMarketplaceSections(activeGroup, true);
       return [
         ...mktSections,
         ...freelanceSections,
@@ -444,7 +465,7 @@ export function MobileNav() {
     const effectiveMktEnabled = activeIsClient ? clientMarketplaceEnabled : marketplaceEnabled;
 
     const mktSections = effectiveMktEnabled
-      ? getMarketplaceSections(activeGroup).map(s => ({ ...s, label: labelMap[s.label] || s.label }))
+      ? getMarketplaceSections(activeGroup, isFreelanceUser).map(s => ({ ...s, label: labelMap[s.label] || s.label }))
       : [];
 
     const recruitSection: NavSection = {
@@ -629,15 +650,17 @@ export function MobileNav() {
             </div>
           )}
 
-          {/* Achievements Widget */}
-          <div className="border-t border-sidebar-border">
-            <SidebarAchievementsWidget collapsed={false} />
-          </div>
+          {/* Achievements Widget - hide for freelancers */}
+          {!isFreelanceUser && (
+            <div className="border-t border-sidebar-border">
+              <SidebarAchievementsWidget collapsed={false} />
+            </div>
+          )}
 
           {/* User & Actions */}
           <div className="border-t border-sidebar-border p-3 space-y-2 bg-gradient-to-t from-muted/50 to-transparent">
-            {/* Role Switcher */}
-            {!isImpersonating && (
+            {/* Role Switcher - hide for freelancers with single role */}
+            {!isImpersonating && !isFreelanceUser && (
               <RoleSwitcher collapsed={false} />
             )}
 

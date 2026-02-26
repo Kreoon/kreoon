@@ -24,6 +24,8 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useCreatorProfile } from '@/hooks/useCreatorProfile';
 import { useCreatorServices } from '@/hooks/useCreatorServices';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { MarketplaceRoleSelector } from '@/components/marketplace/roles/MarketplaceRoleSelector';
 import type { MarketplaceRoleId } from '@/components/marketplace/types/marketplace';
@@ -201,11 +203,28 @@ function CreatorProfileTab() {
       });
       return;
     }
-    updateField('bio', tagline);
-    updateField('bio_full', bioExtended);
-    updateField('is_active', marketplaceEnabled);
-    // We need a slight delay for state to settle before save
-    setTimeout(() => save(), 50);
+    // Direct DB update to avoid race conditions with setTimeout
+    try {
+      const { error } = await (supabase as any)
+        .from('creator_profiles')
+        .update({
+          bio: tagline,
+          bio_full: bioExtended,
+          is_active: marketplaceEnabled,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', profile?.id);
+
+      if (error) {
+        console.error('[MarketplaceProfile] Error saving:', error);
+        toast.error('Error al guardar el perfil');
+      } else {
+        toast.success('Perfil guardado');
+      }
+    } catch (err) {
+      console.error('[MarketplaceProfile] Error:', err);
+      toast.error('Error al guardar');
+    }
   };
 
   if (loading) {
@@ -343,14 +362,30 @@ export function CreatorExpertiseTab() {
       });
       return;
     }
-    updateFields({
-      platforms,
-      marketplace_roles: marketplaceRoles,
-      content_types: contentStyles,
-      categories: expertiseTags,
-      languages,
-    });
-    setTimeout(() => save(), 50);
+    // Direct DB update to avoid race conditions with setTimeout
+    try {
+      const { error } = await (supabase as any)
+        .from('creator_profiles')
+        .update({
+          platforms,
+          marketplace_roles: marketplaceRoles,
+          content_types: contentStyles,
+          categories: expertiseTags,
+          languages,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', profile?.id);
+
+      if (error) {
+        console.error('[CreatorExpertise] Error saving:', error);
+        toast.error('Error al guardar especialización');
+      } else {
+        toast.success('Especialización guardada');
+      }
+    } catch (err) {
+      console.error('[CreatorExpertise] Error:', err);
+      toast.error('Error al guardar');
+    }
   };
 
   if (loading) {
@@ -711,11 +746,27 @@ export function CreatorAvailabilityTab() {
       });
       return;
     }
-    updateFields({
-      is_available: availableForHire,
-      response_time_hours: parseInt(responseTimeHours),
-    });
-    setTimeout(() => save(), 50);
+    // Direct DB update to avoid race conditions with setTimeout
+    try {
+      const { error } = await (supabase as any)
+        .from('creator_profiles')
+        .update({
+          is_available: availableForHire,
+          response_time_hours: parseInt(responseTimeHours),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', profile?.id);
+
+      if (error) {
+        console.error('[CreatorAvailability] Error saving:', error);
+        toast.error('Error al guardar disponibilidad');
+      } else {
+        toast.success('Disponibilidad guardada');
+      }
+    } catch (err) {
+      console.error('[CreatorAvailability] Error:', err);
+      toast.error('Error al guardar');
+    }
   };
 
   if (loading) {
@@ -807,8 +858,26 @@ export function CreatorPricingTab() {
       await createProfile(data);
       return;
     }
-    updateFields(data);
-    setTimeout(() => save(), 50);
+    // Direct DB update to avoid race conditions with setTimeout
+    try {
+      const { error } = await (supabase as any)
+        .from('creator_profiles')
+        .update({
+          ...data,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', profile?.id);
+
+      if (error) {
+        console.error('[CreatorPricing] Error saving:', error);
+        toast.error('Error al guardar precios');
+      } else {
+        toast.success('Precios guardados');
+      }
+    } catch (err) {
+      console.error('[CreatorPricing] Error:', err);
+      toast.error('Error al guardar');
+    }
   };
 
   if (loading) {

@@ -150,25 +150,37 @@ const canMoveToStatusLegacy = (
 };
 
 export default function ContentBoard() {
-  const { user, isAdmin, isStrategist, isCreator, isEditor, isClient, activeRole: realActiveRole } = useAuth();
+  const { user, profile, isAdmin, isStrategist, isCreator, isEditor, isClient, activeRole: realActiveRole, roles } = useAuth();
   const { effectiveUserId, effectiveRoles, isImpersonating, impersonationTarget } = useImpersonation();
-  const { currentOrgId, loading: orgLoading } = useOrgOwner();
+  const { currentOrgId, isPlatformRoot, loading: orgLoading } = useOrgOwner();
   const { toast } = useToast();
   const { guardAction, isReadOnly } = useTrialGuard();
-  
+
   // Use effective user ID for impersonation
   const targetUserId = isImpersonating ? effectiveUserId : user?.id;
-  
+
   // Use effective role for impersonation
-  const activeRole = isImpersonating && impersonationTarget.role 
-    ? impersonationTarget.role 
+  const activeRole = isImpersonating && impersonationTarget.role
+    ? impersonationTarget.role
     : realActiveRole;
-  
+
+  // Detect freelancer: no org roles, unlocked via referral gate
+  const isFreelancer = roles.length === 0 && !isPlatformRoot && profile?.platform_access_unlocked === true;
+
   // Board mode: content (internal) vs marketplace (external projects)
+  // Freelancers are forced to marketplace view only
   const [boardMode, setBoardMode] = useState<'content' | 'marketplace'>(() => {
+    if (isFreelancer) return 'marketplace';
     const params = new URLSearchParams(window.location.search);
     return params.get('view') === 'marketplace' ? 'marketplace' : 'content';
   });
+
+  // Force marketplace mode for freelancers (in case state was cached differently)
+  useEffect(() => {
+    if (isFreelancer && boardMode !== 'marketplace') {
+      setBoardMode('marketplace');
+    }
+  }, [isFreelancer, boardMode]);
 
   // Get ambassador IDs for the organization
   const { ambassadors } = useInternalOrgContent();
@@ -679,33 +691,35 @@ export default function ContentBoard() {
           </div>
         </div>
 
-        {/* Board Mode Toggle: Contenido | Marketplace */}
-        <div className="flex items-center gap-1 bg-muted rounded-xl p-1 w-fit border border-white/5">
-          <button
-            onClick={() => setBoardMode('content')}
-            className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-              boardMode === 'content'
-                ? "bg-purple-600/20 text-purple-300 border border-purple-500/30"
-                : "text-gray-500 hover:text-foreground"
-            )}
-          >
-            <Scroll className="h-4 w-4" />
-            Contenido
-          </button>
-          <button
-            onClick={() => setBoardMode('marketplace')}
-            className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-              boardMode === 'marketplace'
-                ? "bg-purple-600/20 text-purple-300 border border-purple-500/30"
-                : "text-gray-500 hover:text-foreground"
-            )}
-          >
-            <ShoppingBag className="h-4 w-4" />
-            Marketplace
-          </button>
-        </div>
+        {/* Board Mode Toggle: Contenido | Marketplace (hidden for freelancers) */}
+        {!isFreelancer && (
+          <div className="flex items-center gap-1 bg-muted rounded-xl p-1 w-fit border border-white/5">
+            <button
+              onClick={() => setBoardMode('content')}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                boardMode === 'content'
+                  ? "bg-purple-600/20 text-purple-300 border border-purple-500/30"
+                  : "text-gray-500 hover:text-foreground"
+              )}
+            >
+              <Scroll className="h-4 w-4" />
+              Contenido
+            </button>
+            <button
+              onClick={() => setBoardMode('marketplace')}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                boardMode === 'marketplace'
+                  ? "bg-purple-600/20 text-purple-300 border border-purple-500/30"
+                  : "text-gray-500 hover:text-foreground"
+              )}
+            >
+              <ShoppingBag className="h-4 w-4" />
+              Marketplace
+            </button>
+          </div>
+        )}
 
         {/* Marketplace Board View */}
         {boardMode === 'marketplace' ? (

@@ -92,8 +92,13 @@ export function AdminActionsSection({
   const invokeAdmin = async (action: string, body: Record<string, unknown>) => {
     setLoading(action);
     try {
+      // Get auth token for the request
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No autenticado');
+
       const { data, error } = await supabase.functions.invoke('admin-users', {
         body: { action, ...body },
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);

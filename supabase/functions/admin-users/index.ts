@@ -84,6 +84,9 @@ serve(async (req) => {
     const body = await req.json();
     const { action, userId, email, role, clientId, contentId, conversationId, productId, notificationId, postId, referralId } = body;
 
+    console.log(`[admin-users] Action: ${action}, Caller: ${callerEmail}, isRoot: ${isRootUser}, Target userId: ${userId || 'N/A'}`);
+
+
     // Check authorization based on action type
     if (ROOT_ONLY_ACTIONS.includes(action)) {
       // Destructive actions require ROOT access
@@ -407,8 +410,15 @@ serve(async (req) => {
           });
         }
 
+        console.log(`[delete_user] Starting deletion of user ${userId}`);
+
         // Don't allow deleting any root user
-        const { data: targetUserData } = await supabaseAdmin.auth.admin.getUserById(userId);
+        const { data: targetUserData, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(userId);
+        if (getUserError) {
+          console.error(`[delete_user] Error getting user: ${getUserError.message}`);
+          // Continue anyway - user might not exist in auth but exists in profiles
+        }
+
         if (targetUserData?.user?.email && ROOT_EMAILS.includes(targetUserData.user.email)) {
           return new Response(JSON.stringify({ error: "Cannot delete root user" }), {
             status: 403,
@@ -416,10 +426,119 @@ serve(async (req) => {
           });
         }
 
-        const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
-        if (error) throw error;
+        // Clean up all related data before deleting auth user
+        // Using a helper to log errors but continue
+        const cleanupTable = async (table: string, column: string, value: string, operation: 'delete' | 'nullify' = 'delete') => {
+          try {
+            if (operation === 'delete') {
+              const { error } = await supabaseAdmin.from(table).delete().eq(column, value);
+              if (error) console.warn(`[delete_user] Cleanup ${table}.${column}: ${error.message}`);
+            } else {
+              const { error } = await supabaseAdmin.from(table).update({ [column]: null }).eq(column, value);
+              if (error) console.warn(`[delete_user] Nullify ${table}.${column}: ${error.message}`);
+            }
+          } catch (e) {
+            console.warn(`[delete_user] Failed cleanup ${table}.${column}: ${e}`);
+          }
+        };
 
-        console.log(`User ${userId} deleted`);
+        console.log(`[delete_user] Cleaning up related data for user ${userId}`);
+
+        // ─── Organization tables ───
+        await cleanupTable("organization_member_badges", "user_id", userId);
+        await cleanupTable("organization_member_roles", "user_id", userId);
+        await cleanupTable("organization_members", "user_id", userId);
+        await cleanupTable("user_roles", "user_id", userId);
+
+        // ─── Client tables ───
+        await cleanupTable("client_users", "user_id", userId);
+
+        // ─── Notifications ───
+        await cleanupTable("notifications", "user_id", userId);
+
+        // ─── Chat ───
+        await cleanupTable("chat_participants", "user_id", userId);
+        await cleanupTable("chat_messages", "sender_id", userId);
+
+        // ─── Content (nullify, don't delete) ───
+        await cleanupTable("content", "creator_id", userId, 'nullify');
+        await cleanupTable("content", "editor_id", userId, 'nullify');
+        await cleanupTable("content", "script_approved_by", userId, 'nullify');
+        await cleanupTable("content", "approved_by", userId, 'nullify');
+        await cleanupTable("content_comments", "user_id", userId);
+        await cleanupTable("content_history", "user_id", userId);
+        await cleanupTable("content_likes", "user_id", userId);
+        await cleanupTable("content_collaborators", "user_id", userId);
+
+        // ─── Portfolio ───
+        await cleanupTable("portfolio_posts", "user_id", userId);
+        await cleanupTable("portfolio_items", "user_id", userId);
+
+        // ─── Creator/Marketplace ───
+        await cleanupTable("creator_services", "user_id", userId);
+        await cleanupTable("creator_profiles", "user_id", userId);
+        await cleanupTable("saved_creators", "user_id", userId);
+        await cleanupTable("campaign_applications", "creator_id", userId);
+        await cleanupTable("marketplace_projects", "creator_id", userId, 'nullify');
+        await cleanupTable("marketplace_projects", "editor_id", userId, 'nullify');
+        await cleanupTable("project_deliveries", "creator_id", userId, 'nullify');
+        await cleanupTable("creator_reviews", "reviewer_id", userId, 'nullify');
+
+        // ─── Referrals ───
+        await cleanupTable("referrals", "referrer_id", userId);
+        await cleanupTable("referrals", "referred_user_id", userId, 'nullify');
+        await cleanupTable("referral_commissions", "referrer_id", userId);
+
+        // ─── Unified Finance ───
+        await cleanupTable("unified_wallets", "user_id", userId);
+        await cleanupTable("unified_transactions", "user_id", userId);
+        await cleanupTable("ai_token_balances", "user_id", userId);
+        await cleanupTable("withdrawal_requests", "user_id", userId);
+        await cleanupTable("referral_relationships", "referrer_id", userId);
+        await cleanupTable("referral_relationships", "referred_id", userId);
+        await cleanupTable("referral_codes", "user_id", userId);
+        await cleanupTable("referral_earnings", "referrer_id", userId);
+
+        // ─── Reputation ───
+        await cleanupTable("reputation_events", "user_id", userId);
+        await cleanupTable("user_reputation_totals", "user_id", userId);
+        await cleanupTable("marketplace_reputation", "user_id", userId);
+
+        // ─── CRM ───
+        await cleanupTable("platform_crm_leads", "converted_user_id", userId, 'nullify');
+        await cleanupTable("platform_crm_leads", "assigned_to", userId, 'nullify');
+        await cleanupTable("platform_crm_activities", "performed_by", userId, 'nullify');
+        await cleanupTable("platform_user_health", "user_id", userId);
+
+        // ─── Followers ───
+        await cleanupTable("user_followers", "follower_id", userId);
+        await cleanupTable("user_followers", "followed_id", userId);
+
+        // ─── Brands ───
+        await cleanupTable("brand_members", "user_id", userId);
+        await cleanupTable("brands", "owner_id", userId, 'nullify');
+
+        // ─── Finally delete profile ───
+        await cleanupTable("profiles", "id", userId);
+
+        console.log(`[delete_user] Using SQL cascade function to delete user and all related data`);
+
+        // Use the robust SQL function that handles all FK constraints
+        const { data: deleteResult, error: rpcError } = await supabaseAdmin.rpc('admin_delete_user_cascade', {
+          target_user_id: userId
+        });
+
+        if (rpcError) {
+          console.error(`[delete_user] RPC error: ${rpcError.message}`);
+          throw new Error(`Failed to delete user: ${rpcError.message}`);
+        }
+
+        if (deleteResult && !deleteResult.success) {
+          console.error(`[delete_user] Cascade delete failed: ${deleteResult.error}`);
+          throw new Error(`Failed to delete user: ${deleteResult.error}`);
+        }
+
+        console.log(`[delete_user] User ${userId} deleted successfully. Tables cleaned: ${deleteResult?.deleted_from?.join(', ')}`);
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -905,8 +1024,10 @@ serve(async (req) => {
         });
     }
   } catch (error: unknown) {
-    console.error("Admin users error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error("Admin users error:", errorMessage);
+    if (errorStack) console.error("Stack:", errorStack);
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" }

@@ -494,19 +494,35 @@ function PublicProfileTab() {
     // Save to profiles
     await saveProfile();
 
-    // Save to creator_profiles
+    // Save to creator_profiles - update fields and save immediately
+    // Using direct DB update to avoid race conditions with setTimeout
     if (creatorProfile) {
-      updateCreatorFields({
-        bio: tagline,
-        bio_full: bioExtended,
-        is_active: marketplaceEnabled,
-        banner_url: bannerUrl,
-        display_name: userProfile?.full_name || creatorProfile.display_name,
-        avatar_url: creatorProfile.avatar_url || userProfile?.avatar_url,
-        location_city: userProfile?.city || creatorProfile.location_city,
-        location_country: userProfile?.country || creatorProfile.location_country,
-      });
-      setTimeout(() => saveCreator(), 50);
+      try {
+        const { error } = await (supabase as any)
+          .from('creator_profiles')
+          .update({
+            bio: tagline,
+            bio_full: bioExtended,
+            is_active: marketplaceEnabled,
+            banner_url: bannerUrl,
+            display_name: userProfile?.full_name || creatorProfile.display_name,
+            avatar_url: creatorProfile.avatar_url || userProfile?.avatar_url,
+            location_city: userProfile?.city || creatorProfile.location_city,
+            location_country: userProfile?.country || creatorProfile.location_country,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', creatorProfile.id);
+
+        if (error) {
+          console.error('[PublicProfileTab] Error saving creator profile:', error);
+          toast.error('Error al guardar el perfil público');
+        } else {
+          toast.success('Perfil público guardado');
+        }
+      } catch (err) {
+        console.error('[PublicProfileTab] Error:', err);
+        toast.error('Error al guardar');
+      }
     }
   };
 
@@ -767,6 +783,7 @@ function SocialLinksTab() {
     await save();
 
     // Sync to creator_profiles.social_links (skip for clients)
+    // Using direct DB update to avoid race conditions with setTimeout
     if (!isClient && creatorProfile && profile) {
       const socialLinks: Record<string, string> = {};
       if (profile.instagram) socialLinks.instagram = profile.instagram;
@@ -777,8 +794,21 @@ function SocialLinksTab() {
       if (profile.social_twitter) socialLinks.twitter = profile.social_twitter;
       if (profile.portfolio_url) socialLinks.portfolio = profile.portfolio_url;
 
-      updateCreatorField('social_links', socialLinks);
-      setTimeout(() => saveCreator(), 50);
+      try {
+        const { error } = await (supabase as any)
+          .from('creator_profiles')
+          .update({
+            social_links: socialLinks,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', creatorProfile.id);
+
+        if (error) {
+          console.error('[SocialLinksTab] Error syncing social links:', error);
+        }
+      } catch (err) {
+        console.error('[SocialLinksTab] Error:', err);
+      }
     }
   };
 
@@ -919,8 +949,26 @@ function AvailabilityAndPricingTab() {
       await createProfile(data);
       return;
     }
-    updateFields(data);
-    setTimeout(() => save(), 50);
+    // Direct DB update to avoid race conditions with setTimeout
+    try {
+      const { error } = await (supabase as any)
+        .from('creator_profiles')
+        .update({
+          ...data,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', profile?.id);
+
+      if (error) {
+        console.error('[AvailabilityTab] Error saving:', error);
+        toast.error('Error al guardar disponibilidad');
+      } else {
+        toast.success('Disponibilidad guardada');
+      }
+    } catch (err) {
+      console.error('[AvailabilityTab] Error:', err);
+      toast.error('Error al guardar');
+    }
   };
 
   if (loading) {

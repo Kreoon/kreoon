@@ -225,7 +225,7 @@ const freelanceSections: NavSection[] = [
     label: "MARKETING & MEDIA",
     items: [
       { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
-      { name: "Live", href: "/live", icon: Video, tourId: "sidebar-live" },
+      // Live module coming soon
     ]
   },
   {
@@ -255,11 +255,15 @@ const lockedUserSections: NavSection[] = [
 ];
 
 // Marketplace navigation sections — available to ALL users
-function getMarketplaceSections(activeGroup: PermissionGroup | null): NavSection[] {
+function getMarketplaceSections(activeGroup: PermissionGroup | null, isFreelance: boolean = false): NavSection[] {
   const items: NavItem[] = [
     { name: "Marketplace", href: "/marketplace", icon: Store, tourId: "sidebar-mkt-browse" },
-    { name: "Videos", href: "/marketplace/videos", icon: Play, tourId: "sidebar-mkt-videos" },
   ];
+
+  // Videos module - not available for freelancers yet
+  if (!isFreelance) {
+    items.push({ name: "Videos", href: "/marketplace/videos", icon: Play, tourId: "sidebar-mkt-videos" });
+  }
 
   // Campaign items — feed visible for internal roles (not editor/client)
   if (activeGroup !== 'editor' && activeGroup !== 'client') {
@@ -272,8 +276,8 @@ function getMarketplaceSections(activeGroup: PermissionGroup | null): NavSection
 
   items.push({ name: "Wallet", href: "/wallet", icon: Wallet, tourId: "sidebar-mkt-wallet" });
 
-  // Talent management — not visible to clients
-  if (activeGroup === 'client') {
+  // Talent management — only for organizations (admin/strategist), NOT for clients or freelancers
+  if (activeGroup === 'client' || isFreelance) {
     return [{ label: "KREOON MARKETPLACE", items }];
   }
 
@@ -423,7 +427,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     // Freelance users (no org, no plan) only see marketplace + profile config
     if (isFreelanceUser && (isUnlocked || activeIsClient)) {
       // Return minimal navigation for freelancers
-      const mktSections = getMarketplaceSections(activeGroup);
+      const mktSections = getMarketplaceSections(activeGroup, true);
       return [
         ...mktSections,
         ...freelanceSections,
@@ -474,7 +478,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
 
     // Use permission group for marketplace sections (apply label map)
     const mktSections = effectiveMktEnabled
-      ? getMarketplaceSections(activeGroup).map(s => ({ ...s, label: labelMap[s.label] || s.label }))
+      ? getMarketplaceSections(activeGroup, isFreelanceUser).map(s => ({ ...s, label: labelMap[s.label] || s.label }))
       : [];
 
     // "Buscar Talento" section - ALWAYS visible for recruitment, even when marketplace is disabled (not for clients)
@@ -673,7 +677,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           })}
         </nav>
 
-        {/* AI Tokens - solo si tiene org y no es cliente ni freelance */}
+        {/* AI Tokens - for org users and freelancers */}
         {profile?.current_organization_id && !activeIsClient && !isFreelanceUser && (
           <div className="border-t border-border px-3 py-2">
             <AITokensPanelTrigger
@@ -683,8 +687,17 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           </div>
         )}
 
-        {/* Achievements Widget - hide for freelancers */}
-        {!isFreelanceUser && (
+        {/* Freelancer Stats Widget - show for unlocked freelancers */}
+        {isFreelanceUser && isUnlocked && (
+          <div className="border-t border-border px-3 py-2">
+            <AITokensPanelTrigger
+              variant={collapsed ? "compact" : "header"}
+            />
+          </div>
+        )}
+
+        {/* Achievements Widget - show for everyone except clients */}
+        {!activeIsClient && (
           <div className="border-t border-border">
             <SidebarAchievementsWidget collapsed={collapsed} />
           </div>

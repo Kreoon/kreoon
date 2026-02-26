@@ -7,7 +7,7 @@ import {
   Briefcase, TrendingUp, DollarSign, Clock,
   Bell, CheckCircle2, AlertCircle, Megaphone,
   BarChart3, Calendar, Wallet, Eye, Send,
-  ChevronRight, Sparkles, Play, Users
+  ChevronRight, Sparkles, Play, Users, Kanban
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -249,19 +249,73 @@ export default function FreelancerDashboard() {
     },
   });
 
-  // Fetch social hub stats
+  // Fetch social hub stats - real data for this user
   const { data: socialStats } = useQuery({
     queryKey: ['social-stats', user?.id],
     queryFn: async () => {
-      // Placeholder - would need actual social hub integration
+      // Get posts count for this month
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
+
+      // Count posts this month for this user only
+      const { data: postsThisMonth, error: postsError } = await supabase
+        .from('scheduled_posts')
+        .select('id', { count: 'exact' })
+        .eq('user_id', user!.id)
+        .eq('status', 'published')
+        .gte('published_at', startOfMonth)
+        .lte('published_at', endOfMonth);
+
+      // Count scheduled posts for this user
+      const { data: scheduledPosts, error: scheduledError } = await supabase
+        .from('scheduled_posts')
+        .select('id', { count: 'exact' })
+        .eq('user_id', user!.id)
+        .eq('status', 'scheduled');
+
+      // Get user's social accounts and their metrics
+      const { data: userAccounts } = await supabase
+        .from('social_accounts')
+        .select('id')
+        .eq('user_id', user!.id)
+        .eq('is_active', true);
+
+      let totalReach = 0;
+      let totalEngagement = 0;
+      let totalFollowers = 0;
+
+      if (userAccounts && userAccounts.length > 0) {
+        // Get latest snapshot for each account
+        const accountIds = userAccounts.map(a => a.id);
+        const { data: snapshots } = await supabase
+          .from('social_metrics_snapshots')
+          .select('reach, total_likes, total_comments, total_shares, followers_count')
+          .in('account_id', accountIds)
+          .order('snapshot_date', { ascending: false })
+          .limit(accountIds.length);
+
+        if (snapshots) {
+          snapshots.forEach(s => {
+            totalReach += Number(s.reach || 0);
+            totalEngagement += Number(s.total_likes || 0) + Number(s.total_comments || 0) + Number(s.total_shares || 0);
+            totalFollowers += Number(s.followers_count || 0);
+          });
+        }
+      }
+
+      // Engagement rate calculation
+      const engagementRate = totalFollowers > 0 ? ((totalEngagement / totalFollowers) * 100).toFixed(1) : 0;
+
       return {
-        posts_this_month: 12,
-        total_reach: 45000,
-        engagement_rate: 4.2,
-        scheduled: 3,
+        posts_this_month: postsThisMonth?.length || 0,
+        total_reach: totalReach,
+        engagement_rate: Number(engagementRate),
+        scheduled: scheduledPosts?.length || 0,
       };
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Calculate stats

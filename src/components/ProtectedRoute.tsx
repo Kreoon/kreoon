@@ -36,9 +36,11 @@ function withTimeout<T>(promise: PromiseLike<T>, ms: number, label: string): Pro
 }
 
 // Helper to get the correct dashboard path based on active role or user roles
-function getDashboardPath(roles: AppRole[], activeRole?: AppRole | null): string {
-  // Users without roles go to marketplace
-  if (roles.length === 0) return '/marketplace';
+function getDashboardPath(roles: AppRole[], activeRole?: AppRole | null, isUnlockedFreelancer?: boolean): string {
+  // Unlocked freelancers (no org roles) go to freelancer dashboard
+  if (roles.length === 0) {
+    return isUnlockedFreelancer ? '/freelancer-dashboard' : '/marketplace';
+  }
 
   // If activeRole is set and valid, use it (resolves via permission group)
   if (activeRole && roles.includes(activeRole)) {
@@ -60,6 +62,9 @@ const ORG_REQUIRED_ROUTES = ['/dashboard', '/board', '/content', '/talent', '/sc
 // Routes that users without roles can access (social/marketplace)
 // Note: Talents without referral keys are blocked from marketplace in the referral gate check below
 const SOCIAL_ROUTES = ['/social', '/marketplace', '/explore', '/profile', '/settings'];
+
+// Additional routes that unlocked freelancers can access (no org roles but platform_access_unlocked = true)
+const FREELANCE_ALLOWED_ROUTES = ['/board', '/scripts', '/freelancer-dashboard', '/social-hub', '/wallet', '/planes'];
 
 export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRoles, requirePlatformAdmin }: ProtectedRouteProps) {
   const { user, profile, roles: realRoles, activeRole, loading, rolesLoaded, isPlatformAdmin } = useAuth();
@@ -235,10 +240,15 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     if (!profile?.platform_access_unlocked && !isBrandMember && !isGateBypassRoute) {
       return <Navigate to="/unlock-access" replace />;
     }
-    if (!isSocialRoute) {
+
+    // Unlocked freelancers can access additional routes beyond social routes
+    const isFreelanceAllowedRoute = FREELANCE_ALLOWED_ROUTES.some(route => location.pathname.startsWith(route));
+    const isUnlockedFreelancer = profile?.platform_access_unlocked === true;
+
+    if (!isSocialRoute && !(isUnlockedFreelancer && isFreelanceAllowedRoute)) {
       return <Navigate to="/marketplace" replace />;
     }
-    // Allow access to social routes for users without roles (brands, unlocked talents)
+    // Allow access to social routes and freelance routes for users without roles
     return <>{children}</>;
   }
 
@@ -276,6 +286,14 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
   if (allowedRoles && allowedRoles.length > 0) {
     // Platform root with org selected is treated as admin
     const effectiveRolesToCheck = isPlatformRoot && currentOrgId ? ['admin' as AppRole, ...rolesToCheck] : rolesToCheck;
+
+    // Allow unlocked freelancers to access their allowed routes even without org roles
+    const isFreelanceAllowedRoute = FREELANCE_ALLOWED_ROUTES.some(route => location.pathname.startsWith(route));
+    const isUnlockedFreelancer = realRoles.length === 0 && profile?.platform_access_unlocked === true && !isPlatformRoot;
+    if (isUnlockedFreelancer && isFreelanceAllowedRoute) {
+      return <>{children}</>;
+    }
+
     // Match by permission group: allowedRoles names correspond to permission group names
     const hasAllowedRole = allowedRoles.some((allowedRole) => {
       const allowedGroup = getPermissionGroup(allowedRole);
