@@ -151,7 +151,7 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.bunny-marketplace-upload]
-verify_jwt = true
+verify_jwt = false
 
 [functions.bunny-marketplace-status]
 verify_jwt = true

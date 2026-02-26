@@ -56,6 +56,29 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     const contentType = req.headers.get('content-type') || ''
 
+    // Validate user is authenticated (since verify_jwt = false)
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      console.error('[bunny-marketplace-upload] No Authorization header')
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Verify the JWT token
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    if (authError || !user) {
+      console.error('[bunny-marketplace-upload] Invalid token:', authError?.message)
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log('[bunny-marketplace-upload] Authenticated user:', user.id)
+
     // ========== PATH A: Create video slot + get upload URL ==========
     if (req.method === 'POST' && contentType.includes('application/json')) {
       const body = await req.json()
