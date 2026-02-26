@@ -211,8 +211,23 @@ const clientSections: NavSection[] = [
   { label: "CONFIG", items: CONFIG_ITEMS }
 ];
 
-// Freelance users (no org) - minimal navigation with plan access
+// Freelance users (no org) - full talent navigation
 const freelanceSections: NavSection[] = [
+  {
+    label: "MI NEGOCIO",
+    items: [
+      { name: "Dashboard", href: "/freelancer-dashboard", icon: LayoutDashboard, tourId: "sidebar-freelancer-dash" },
+      { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban, tourId: "sidebar-freelancer-board" },
+      { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+    ]
+  },
+  {
+    label: "MARKETING & MEDIA",
+    items: [
+      { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
+      { name: "Live", href: "/live", icon: Video, tourId: "sidebar-live" },
+    ]
+  },
   {
     label: "CONFIG",
     items: [
