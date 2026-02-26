@@ -9,6 +9,7 @@ import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { ErrorBoundary } from "@/components/error";
 import { useNewContentNotifications } from "@/hooks/useNewContentNotifications";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { TalentGate } from "@/components/TalentGate";
 import { AchievementNotificationProvider } from "@/components/points/AchievementNotificationProvider";
 import { UnsavedChangesProvider } from "@/contexts/UnsavedChangesContext";
 import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
@@ -222,6 +223,18 @@ function BrandReferralRedirect() {
   return <Navigate to={`/register?intent=brand&ref=${encodeURIComponent(ref)}`} replace />;
 }
 
+// Talent referral redirect: /unete-talento?ref=XXX -> /unete/talento?ref=XXX
+function TalentReferralRedirect() {
+  const search = window.location.search;
+  // Save referral code to localStorage so it persists through redirects
+  const params = new URLSearchParams(search);
+  const ref = params.get('ref');
+  if (ref) {
+    try { localStorage.setItem('kreoon_referral_code', ref); } catch {}
+  }
+  return <Navigate to={`/unete/talento${search}`} replace />;
+}
+
 function AppRoutes() {
   const { impersonationKey } = useImpersonation();
 
@@ -244,12 +257,12 @@ function AppRoutes() {
         <Route path="/social" element={<Navigate to="/marketplace" replace />} />
         <Route path="/social/*" element={<Navigate to="/marketplace" replace />} />
         {/* Marketplace routes — PUBLIC browse/view, PROTECTED actions */}
-        {/* Public: browse, creator profiles, org profiles, campaigns feed/detail */}
-        <Route path="/marketplace" element={<MarketplaceLayout><MarketplaceBrowse /></MarketplaceLayout>} />
-        <Route path="/marketplace/creator/:id" element={<CreatorProfilePage_Marketplace />} />
-        <Route path="/marketplace/org/:slug" element={<OrgProfilePage_Marketplace />} />
-        <Route path="/marketplace/campaigns" element={<MarketplaceLayout><CampaignsFeedPage /></MarketplaceLayout>} />
-        <Route path="/marketplace/campaigns/:id" element={<MarketplaceLayout><CampaignDetailPage /></MarketplaceLayout>} />
+        {/* Public routes wrapped with TalentGate: blocks talents without keys */}
+        <Route path="/marketplace" element={<TalentGate><MarketplaceLayout><MarketplaceBrowse /></MarketplaceLayout></TalentGate>} />
+        <Route path="/marketplace/creator/:id" element={<TalentGate><CreatorProfilePage_Marketplace /></TalentGate>} />
+        <Route path="/marketplace/org/:slug" element={<TalentGate><OrgProfilePage_Marketplace /></TalentGate>} />
+        <Route path="/marketplace/campaigns" element={<TalentGate><MarketplaceLayout><CampaignsFeedPage /></MarketplaceLayout></TalentGate>} />
+        <Route path="/marketplace/campaigns/:id" element={<TalentGate><MarketplaceLayout><CampaignDetailPage /></MarketplaceLayout></TalentGate>} />
         {/* Protected: actions that require login */}
         <Route path="/marketplace/videos" element={<ProtectedRoute allowNoRoles><MainLayout><VideosPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/guardados" element={<ProtectedRoute allowNoRoles><MainLayout><SavedPage /></MainLayout></ProtectedRoute>} />
@@ -292,6 +305,7 @@ function AppRoutes() {
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="/unete" element={<Unete />} />
         <Route path="/unete/talento" element={<UneteTalento />} />
+        <Route path="/unete-talento" element={<TalentReferralRedirect />} />
         <Route path="/unete/marcas" element={<UneteMarcas />} />
         <Route path="/unete/organizaciones" element={<UneteOrganizaciones />} />
         <Route path="/" element={<HomePage />} />
