@@ -15,15 +15,15 @@
 
 export const COMMISSION_RATES = {
   /** Creador ↔ Marca directo */
-  marketplace_direct: { base: 25, min: 20, max: 35 },
+  marketplace_direct: { base: 30, min: 25, max: 35 },
   /** Con escrow, gestión, soporte */
-  campaigns_managed: { base: 30, min: 25, max: 40 },
+  campaigns_managed: { base: 40, min: 35, max: 45 },
   /** Sobre ventas generadas */
   live_shopping: { base: 20, min: 15, max: 25 },
   /** Editor, estratega, etc. */
-  professional_services: { base: 25, min: 20, max: 30 },
+  professional_services: { base: 30, min: 25, max: 35 },
   /** Full-service con PM */
-  corporate_packages: { base: 35, min: 30, max: 40 },
+  corporate_packages: { base: 30, min: 25, max: 35 },
 } as const;
 
 export type CommissionType = keyof typeof COMMISSION_RATES;
@@ -151,6 +151,7 @@ export interface PlanDef {
   badge?: string;
   highlighted?: boolean;
   adnRecargadosPerMonth?: number | null; // null = unlimited, 0 = disabled
+  socialPostsPerMonth?: number | null;   // Social Hub posts/month, null = unlimited
 }
 
 export const PLANS: PlanDef[] = [
@@ -166,6 +167,7 @@ export const PLANS: PlanDef[] = [
     contentPerMonth: 0,
     storage: "—",
     adnRecargadosPerMonth: 0,
+    socialPostsPerMonth: 50,
   },
   {
     id: "marcas-starter",
@@ -180,6 +182,7 @@ export const PLANS: PlanDef[] = [
     badge: "Para empezar",
     highlighted: true,
     adnRecargadosPerMonth: 2,
+    socialPostsPerMonth: 300,
   },
   {
     id: "marcas-pro",
@@ -193,6 +196,7 @@ export const PLANS: PlanDef[] = [
     storage: "50GB",
     badge: "Más popular",
     adnRecargadosPerMonth: 5,
+    socialPostsPerMonth: null, // unlimited
   },
   {
     id: "marcas-business",
@@ -205,6 +209,7 @@ export const PLANS: PlanDef[] = [
     contentPerMonth: null,
     storage: "500GB",
     adnRecargadosPerMonth: null,
+    socialPostsPerMonth: null, // unlimited
   },
   // ── Creadores ──
   {
@@ -218,6 +223,7 @@ export const PLANS: PlanDef[] = [
     contentPerMonth: null,
     storage: "—",
     adnRecargadosPerMonth: 0,
+    socialPostsPerMonth: 50,
   },
   {
     id: "creadores-pro",
@@ -232,6 +238,7 @@ export const PLANS: PlanDef[] = [
     badge: "Badge verificado",
     highlighted: true,
     adnRecargadosPerMonth: 3,
+    socialPostsPerMonth: null, // unlimited
   },
   // ── Agencias ──
   {
@@ -251,6 +258,7 @@ export const PLANS: PlanDef[] = [
     editors: 2,
     creators: 20,
     adnRecargadosPerMonth: null,
+    socialPostsPerMonth: null, // unlimited
   },
   {
     id: "agencias-pro",
@@ -271,6 +279,7 @@ export const PLANS: PlanDef[] = [
     badge: "Más popular para agencias",
     highlighted: true,
     adnRecargadosPerMonth: null,
+    socialPostsPerMonth: null, // unlimited
   },
   {
     id: "agencias-enterprise",
@@ -289,6 +298,7 @@ export const PLANS: PlanDef[] = [
     editors: null,
     creators: null,
     adnRecargadosPerMonth: null,
+    socialPostsPerMonth: null, // unlimited
   },
 ];
 
