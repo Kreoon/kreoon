@@ -971,8 +971,12 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
         clearDraft(clientId);
         onComplete(createdProductId);
       } else {
+        const msg = error instanceof Error ? error.message : 'Intenta de nuevo';
+        const isRLS = msg.includes('row-level security') || msg.includes('policy');
         toast.error('Error al crear el producto', {
-          description: error instanceof Error ? error.message : 'Intenta de nuevo'
+          description: isRLS
+            ? 'No tienes permisos para crear productos para este cliente. Contacta al administrador.'
+            : msg
         });
       }
     } finally {
