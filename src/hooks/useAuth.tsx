@@ -500,38 +500,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setIsPlatformAdmin(detectedPlatformAdmin);
 
-      // CRITICAL FALLBACK: If still no roles but profile has active_role, use that
-      // This handles cases where RLS queries fail but the profile was loaded successfully
+      // NOTE: We do NOT use profile.active_role as an organizational role fallback.
+      // The active_role field stores the user's preferred role for UI display purposes,
+      // but it may contain marketplace roles (like 'ugc_creator') that were selected during
+      // talent registration. Using these as organizational roles would bypass the referral gate.
+      // Users without real organizational roles should remain with roles.length === 0
+      // so the referral gate can properly block them until they complete 3 referrals.
       const profileActiveRole = (userProfile as any)?.active_role as AppRole | null;
-      if (userRoles.length === 0 && profileActiveRole) {
-        console.log('[auth] No roles found from org tables, using profile.active_role:', profileActiveRole);
-        userRoles = [profileActiveRole];
-      }
 
-      // FALLBACK 2: If still no roles, check creator_profiles for marketplace users
-      // This handles users who registered as talent before the active_role fix
-      if (userRoles.length === 0) {
-        try {
-          const cpResult = await withTimeout(
-            () => (supabase as any)
-              .from('creator_profiles')
-              .select('marketplace_roles')
-              .eq('user_id', roleUserId)
-              .limit(1)
-              .maybeSingle(),
-            5000
-          );
-          if (cpResult.data?.marketplace_roles?.length > 0) {
-            const mpRole = cpResult.data.marketplace_roles[0] as AppRole;
-            console.log('[auth] Found creator_profile, using marketplace role:', mpRole);
-            userRoles = [mpRole];
-            // Auto-fix the missing active_role for future logins
-            supabase.from('profiles').update({ active_role: mpRole } as any).eq('id', roleUserId);
-          }
-        } catch (err) {
-          console.warn('[auth] Error checking creator_profiles:', err);
-        }
-      }
+      // NOTE: We intentionally do NOT use creator_profiles.marketplace_roles as organizational roles.
+      // Marketplace roles are for display purposes only (showing talent specialties in the marketplace).
+      // They should NOT affect access control or referral gate bypass.
+      // Users who registered as talents without completing the referral gate should remain with
+      // roles.length === 0 so the referral gate blocks them correctly.
+      // The active_role in profile can be set for UI purposes, but the roles array stays empty
+      // until the user joins an organization or completes the referral gate.
 
       console.log('[auth] Final roles for user:', userRoles, 'Profile active_role:', profileActiveRole);
 
