@@ -514,17 +514,25 @@ async function getPlans(supabase: any) {
 // ============================================================================
 
 async function getSubscriptionStatus(supabase: any, userId: string, organizationId?: string) {
-  const query = organizationId 
-    ? { organization_id: organizationId }
-    : { user_id: userId };
-
-  const { data: subscription } = await supabase
+  // Build query based on whether we're looking for org or personal subscription
+  let subscriptionQuery = supabase
     .from("platform_subscriptions")
     .select(`
       *,
       wallet:unified_wallets(available_balance, stripe_connect_status)
-    `)
-    .match(query)
+    `);
+
+  if (organizationId) {
+    // Organization subscription
+    subscriptionQuery = subscriptionQuery.eq("organization_id", organizationId);
+  } else {
+    // Personal subscription: user_id match AND organization_id IS NULL
+    subscriptionQuery = subscriptionQuery
+      .eq("user_id", userId)
+      .is("organization_id", null);
+  }
+
+  const { data: subscription } = await subscriptionQuery
     .order("created_at", { ascending: false })
     .limit(1)
     .single();

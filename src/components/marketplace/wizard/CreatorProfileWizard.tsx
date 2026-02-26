@@ -120,8 +120,15 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
   const { user } = useAuth();
   const { profile: userProfile } = useProfile({ autoFetch: true });
   const creatorProfile = useCreatorProfile({ autoCreate: false });
-  const portfolioItems = usePortfolioItems({ creatorProfileId: creatorProfile.profile?.id });
   const creatorServices = useCreatorServices();
+
+  // State to track newly created profile ID (for portfolio step)
+  // MUST be declared before effectiveProfileId calculation
+  const [createdProfileId, setCreatedProfileId] = useState<string | null>(null);
+
+  // portfolioItems hook - will be re-initialized when createdProfileId changes
+  const effectiveProfileId = creatorProfile.profile?.id || createdProfileId;
+  const portfolioItems = usePortfolioItems({ creatorProfileId: effectiveProfileId || undefined });
 
   const initialDraft = useMemo(() => loadDraft(), []);
 
@@ -218,12 +225,50 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
     setDraft(prev => ({ ...prev, ...updates }));
   }, []);
 
-  const goNext = useCallback(() => {
+  // Auto-create profile before portfolio step if needed
+  const ensureProfileExists = useCallback(async (): Promise<string | null> => {
+    if (creatorProfile.profile?.id) return creatorProfile.profile.id;
+    if (!user?.id) return null;
+
+    try {
+      const newProfile = await creatorProfile.createProfile({
+        display_name: draft.basic.display_name || userProfile?.full_name || 'Creador',
+        bio: draft.basic.tagline,
+        bio_full: draft.basic.bio_full,
+        location_city: draft.basic.location_city,
+        location_country: draft.basic.location_country,
+        categories: draft.expertise.categories,
+        content_types: draft.expertise.content_types,
+        platforms: draft.expertise.platforms,
+        languages: draft.expertise.languages,
+        marketplace_roles: draft.roles,
+        is_active: false, // Not published yet
+      });
+      if (newProfile?.id) {
+        setCreatedProfileId(newProfile.id);
+        return newProfile.id;
+      }
+      return null;
+    } catch (err) {
+      console.error('[CreatorProfileWizard] Error creating profile:', err);
+      return null;
+    }
+  }, [creatorProfile, user?.id, draft, userProfile?.full_name]);
+
+  const goNext = useCallback(async () => {
     if (currentStep < STEPS.length - 1) {
+      // If moving TO portfolio step (step 3), ensure profile exists first
+      if (currentStep === 2 && !creatorProfile.profile?.id && !createdProfileId) {
+        const newId = await ensureProfileExists();
+        if (!newId) {
+          return; // Don't proceed if profile creation failed
+        }
+      }
       setDirection(1);
       setCurrentStep(prev => prev + 1);
     }
-  }, [currentStep]);
+  }, [currentStep, creatorProfile.profile?.id, createdProfileId, ensureProfileExists]);
+
 
   const goBack = useCallback(() => {
     if (currentStep > 0) {
@@ -404,7 +449,7 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
               )}
               {currentStep === 3 && (
                 <WizardStepPortfolio
-                  creatorProfileId={creatorProfile.profile?.id || null}
+                  creatorProfileId={effectiveProfileId || null}
                   userId={user?.id || ''}
                   items={portfolioItems.items}
                   adding={portfolioItems.adding}

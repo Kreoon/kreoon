@@ -340,7 +340,11 @@ export function GalleryLightbox({
 
             {/* Media content */}
             {item.type === 'video' ? (
-              <TikTokSlideVideo item={item} isActive={i === activeIndex} />
+              <TikTokSlideVideo
+                item={item}
+                bunnyVideoId={portfolioItems[i]?.bunny_video_id}
+                isActive={i === activeIndex}
+              />
             ) : (
               <div className="h-full w-full flex items-center justify-center">
                 <img
@@ -473,26 +477,44 @@ export function GalleryLightbox({
 
 // ── Video Slide with Iframe Unload Strategy ──────────────
 
-function TikTokSlideVideo({ item, isActive }: { item: PortfolioMedia; isActive: boolean }) {
+// Default Bunny library ID for building embed URLs when only video_id is available
+const DEFAULT_BUNNY_LIBRARY_ID = '568434';
+
+interface TikTokSlideVideoProps {
+  item: PortfolioMedia;
+  bunnyVideoId?: string | null;
+  isActive: boolean;
+}
+
+function TikTokSlideVideo({ item, bunnyVideoId, isActive }: TikTokSlideVideoProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [iframeSrc, setIframeSrc] = useState<string | null>(null);
 
+  // Try to extract IDs from URL, or use provided bunny_video_id
   const bunnyIds = useMemo(
     () => (item.url ? extractBunnyIds(item.url) : null),
     [item.url],
   );
-  const canUseIframe = !!bunnyIds && /^\d+$/.test(String(bunnyIds.libraryId));
+
+  // Can use iframe if we have IDs from URL OR if we have bunny_video_id directly
+  const canUseIframe = (!!bunnyIds && /^\d+$/.test(String(bunnyIds.libraryId))) || !!bunnyVideoId;
+
+  // Determine the library and video IDs to use
+  const effectiveLibraryId = (bunnyIds && /^\d+$/.test(String(bunnyIds.libraryId)))
+    ? bunnyIds.libraryId
+    : DEFAULT_BUNNY_LIBRARY_ID;
+  const effectiveVideoId = bunnyIds?.videoId || bunnyVideoId;
 
   // IntersectionObserver for iframe load/unload — preloads 200px ahead
   useEffect(() => {
     const el = containerRef.current;
-    if (!el || !canUseIframe) return;
+    if (!el || !canUseIframe || !effectiveVideoId) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && entry.intersectionRatio >= 0.1) {
-            setIframeSrc(buildBunnyEmbedUrl(bunnyIds!.libraryId, bunnyIds!.videoId));
+            setIframeSrc(buildBunnyEmbedUrl(effectiveLibraryId, effectiveVideoId));
           } else {
             setIframeSrc(null);
           }
@@ -503,7 +525,7 @@ function TikTokSlideVideo({ item, isActive }: { item: PortfolioMedia; isActive: 
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [canUseIframe, bunnyIds]);
+  }, [canUseIframe, effectiveLibraryId, effectiveVideoId]);
 
   return (
     <div

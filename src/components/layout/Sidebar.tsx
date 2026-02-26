@@ -211,12 +211,28 @@ const clientSections: NavSection[] = [
   { label: "CONFIG", items: CONFIG_ITEMS }
 ];
 
-// Freelance users (no org, no plan) - minimal navigation
+// Freelance users (no org) - full talent navigation
 const freelanceSections: NavSection[] = [
+  {
+    label: "MI NEGOCIO",
+    items: [
+      { name: "Dashboard", href: "/freelancer-dashboard", icon: LayoutDashboard, tourId: "sidebar-freelancer-dash" },
+      { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban, tourId: "sidebar-freelancer-board" },
+      { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+    ]
+  },
+  {
+    label: "MARKETING & MEDIA",
+    items: [
+      { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
+      { name: "Live", href: "/live", icon: Video, tourId: "sidebar-live" },
+    ]
+  },
   {
     label: "CONFIG",
     items: [
       { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
+      { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
       { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
   }
@@ -399,12 +415,13 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const filteredSections = useMemo(() => {
     // Users who haven't unlocked via referral gate only see unlock page + profile
     // Skip this check while loading gate status or for users who bypass the gate
-    if (!isGateLoading && !isUnlocked && isFreelanceUser) {
+    // Clients/brands bypass the gate (they don't need referral keys)
+    if (!isGateLoading && !isUnlocked && isFreelanceUser && !activeIsClient) {
       return lockedUserSections;
     }
 
     // Freelance users (no org, no plan) only see marketplace + profile config
-    if (isFreelanceUser) {
+    if (isFreelanceUser && (isUnlocked || activeIsClient)) {
       // Return minimal navigation for freelancers
       const mktSections = getMarketplaceSections(activeGroup);
       return [

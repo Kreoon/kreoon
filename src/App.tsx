@@ -9,6 +9,7 @@ import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { ErrorBoundary } from "@/components/error";
 import { useNewContentNotifications } from "@/hooks/useNewContentNotifications";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { TalentGate } from "@/components/TalentGate";
 import { AchievementNotificationProvider } from "@/components/points/AchievementNotificationProvider";
 import { UnsavedChangesProvider } from "@/contexts/UnsavedChangesContext";
 import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
@@ -21,6 +22,7 @@ import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { StrategistClientProvider } from "@/contexts/StrategistClientContext";
 import { KiroProvider } from "@/contexts/KiroContext";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
+import { MarketplaceReadinessPopup } from "@/components/marketplace/MarketplaceReadinessPopup";
 import { ThemeProvider } from "next-themes";
 import { MainLayout } from "./components/layout/MainLayout";
 import { MarketplaceLayout } from "./components/layout/MarketplacePublicLayout";
@@ -114,6 +116,7 @@ const OnboardingProfile = lazy(() => import("./pages/OnboardingProfile"));
 const SubscriptionSuccess = lazy(() => import("./pages/subscription/SubscriptionSuccess"));
 const SubscriptionCancel = lazy(() => import("./pages/subscription/SubscriptionCancel"));
 const PlanesPage = lazy(() => import("./pages/PlanesPage"));
+const FreelancerDashboard = lazy(() => import("./pages/FreelancerDashboard"));
 
 // Campaign Optimization pages
 const UGCPriceCalculator = lazy(() => import("./components/marketplace/calculator/UGCPriceCalculator"));
@@ -222,6 +225,18 @@ function BrandReferralRedirect() {
   return <Navigate to={`/register?intent=brand&ref=${encodeURIComponent(ref)}`} replace />;
 }
 
+// Talent referral redirect: /unete-talento?ref=XXX -> /unete/talento?ref=XXX
+function TalentReferralRedirect() {
+  const search = window.location.search;
+  // Save referral code to localStorage so it persists through redirects
+  const params = new URLSearchParams(search);
+  const ref = params.get('ref');
+  if (ref) {
+    try { localStorage.setItem('kreoon_referral_code', ref); } catch {}
+  }
+  return <Navigate to={`/unete/talento${search}`} replace />;
+}
+
 function AppRoutes() {
   const { impersonationKey } = useImpersonation();
 
@@ -244,12 +259,12 @@ function AppRoutes() {
         <Route path="/social" element={<Navigate to="/marketplace" replace />} />
         <Route path="/social/*" element={<Navigate to="/marketplace" replace />} />
         {/* Marketplace routes — PUBLIC browse/view, PROTECTED actions */}
-        {/* Public: browse, creator profiles, org profiles, campaigns feed/detail */}
-        <Route path="/marketplace" element={<MarketplaceLayout><MarketplaceBrowse /></MarketplaceLayout>} />
-        <Route path="/marketplace/creator/:id" element={<CreatorProfilePage_Marketplace />} />
-        <Route path="/marketplace/org/:slug" element={<OrgProfilePage_Marketplace />} />
-        <Route path="/marketplace/campaigns" element={<MarketplaceLayout><CampaignsFeedPage /></MarketplaceLayout>} />
-        <Route path="/marketplace/campaigns/:id" element={<MarketplaceLayout><CampaignDetailPage /></MarketplaceLayout>} />
+        {/* Public routes wrapped with TalentGate: blocks talents without keys */}
+        <Route path="/marketplace" element={<TalentGate><MarketplaceLayout><MarketplaceBrowse /></MarketplaceLayout></TalentGate>} />
+        <Route path="/marketplace/creator/:id" element={<TalentGate><CreatorProfilePage_Marketplace /></TalentGate>} />
+        <Route path="/marketplace/org/:slug" element={<TalentGate><OrgProfilePage_Marketplace /></TalentGate>} />
+        <Route path="/marketplace/campaigns" element={<TalentGate><MarketplaceLayout><CampaignsFeedPage /></MarketplaceLayout></TalentGate>} />
+        <Route path="/marketplace/campaigns/:id" element={<TalentGate><MarketplaceLayout><CampaignDetailPage /></MarketplaceLayout></TalentGate>} />
         {/* Protected: actions that require login */}
         <Route path="/marketplace/videos" element={<ProtectedRoute allowNoRoles><MainLayout><VideosPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/guardados" element={<ProtectedRoute allowNoRoles><MainLayout><SavedPage /></MainLayout></ProtectedRoute>} />
@@ -292,6 +307,7 @@ function AppRoutes() {
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="/unete" element={<Unete />} />
         <Route path="/unete/talento" element={<UneteTalento />} />
+        <Route path="/unete-talento" element={<TalentReferralRedirect />} />
         <Route path="/unete/marcas" element={<UneteMarcas />} />
         <Route path="/unete/organizaciones" element={<UneteOrganizaciones />} />
         <Route path="/" element={<HomePage />} />
@@ -338,6 +354,7 @@ function AppRoutes() {
         <Route path="/ad-generator/:productId" element={<ProtectedRoute allowNoRoles><MainLayout><ProductBannersPage /></MainLayout></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute allowNoRoles><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
         <Route path="/planes" element={<ProtectedRoute allowNoRoles><MainLayout><PlanesPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/freelancer-dashboard" element={<ProtectedRoute allowNoRoles><MainLayout><FreelancerDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/creator-dashboard" element={<ProtectedRoute allowedRoles={['creator']}><MainLayout><CreatorDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/editor-dashboard" element={<ProtectedRoute allowedRoles={['editor']}><MainLayout><EditorDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/strategist-dashboard" element={<ProtectedRoute allowedRoles={['strategist']}><MainLayout><StrategistDashboard /></MainLayout></ProtectedRoute>} />
@@ -370,6 +387,7 @@ function AppContent() {
                               <Toaster />
                               <Sonner />
                               <UpdatePrompt />
+                              <MarketplaceReadinessPopup />
                               <ErrorBoundary>
                                 <AppRoutes />
                               </ErrorBoundary>

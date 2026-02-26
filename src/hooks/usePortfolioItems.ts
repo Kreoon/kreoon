@@ -136,9 +136,11 @@ export function usePortfolioItems(options: UsePortfolioItemsOptions = {}): UsePo
       const mapped = mapRow(row);
       setItems(prev => [...prev, mapped]);
       return mapped;
-    } catch (err) {
+    } catch (err: any) {
       console.error('[usePortfolioItems] Error adding:', err);
-      toast.error('Error al agregar item al portafolio');
+      console.error('[usePortfolioItems] creatorProfileId:', creatorProfileId);
+      const errorMsg = err?.message || err?.details || 'Error desconocido';
+      toast.error(`Error guardando en base de datos: ${errorMsg}`);
       return null;
     } finally {
       setAdding(false);
@@ -363,28 +365,38 @@ export function usePortfolioItems(options: UsePortfolioItemsOptions = {}): UsePo
     creatorId: string,
     metadata?: { title?: string; category?: string }
   ): Promise<PortfolioItemData | null> => {
-    if (!creatorProfileId) return null;
+    if (!creatorProfileId) {
+      console.error('[usePortfolioItems] uploadImage called but creatorProfileId is empty');
+      toast.error('Error: No se encontró tu perfil de creador');
+      return null;
+    }
+    console.log('[usePortfolioItems] uploadImage starting, creatorProfileId:', creatorProfileId);
 
     setAdding(true);
     try {
       const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const uniqueSuffix = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-      const storagePath = `marketplace/portfolio/${creatorId}/${uniqueSuffix}.${ext}`;
 
-      // Step 1: Get Bunny Storage credentials
-      const { data: creds, error: credsError } = await supabase.functions.invoke('bunny-raw-upload', {
-        body: { storagePath },
+      // Step 1: Call edge function to get upload credentials AND create DB record
+      // This uses service_role to bypass RLS issues
+      const { data: result, error: fnError } = await supabase.functions.invoke('portfolio-image-upload', {
+        body: {
+          creatorProfileId,
+          title: metadata?.title || file.name.replace(/\.[^.]+$/, ''),
+          category: metadata?.category || null,
+          fileName: file.name,
+          fileExt: ext,
+        },
       });
 
-      if (credsError || !creds?.success) {
-        throw new Error(credsError?.message || creds?.error || 'Error al obtener credenciales de subida');
+      if (fnError || !result?.success) {
+        throw new Error(fnError?.message || result?.error || 'Error al preparar subida');
       }
 
       // Step 2: Upload directly to Bunny Storage
-      const uploadResponse = await fetch(creds.uploadUrl, {
+      const uploadResponse = await fetch(result.uploadUrl, {
         method: 'PUT',
         headers: {
-          'AccessKey': creds.accessKey,
+          'AccessKey': result.accessKey,
           'Content-Type': file.type || 'image/jpeg',
         },
         body: file,
@@ -394,25 +406,22 @@ export function usePortfolioItems(options: UsePortfolioItemsOptions = {}): UsePo
         throw new Error(`Upload failed: ${uploadResponse.statusText}`);
       }
 
-      // Step 3: Create portfolio item with Bunny CDN URL
-      const item = await addItem({
-        media_type: 'image',
-        media_url: creds.cdnUrl,
-        thumbnail_url: creds.cdnUrl,
-        title: metadata?.title || file.name.replace(/\.[^.]+$/, ''),
-        category: metadata?.category || null,
-      });
+      // Step 3: Add the item to local state (record already created by edge function)
+      const mapped = mapRow(result.portfolioItem);
+      setItems(prev => [...prev, mapped]);
 
-      if (item) toast.success('Imagen agregada al portafolio');
-      return item;
-    } catch (err) {
+      toast.success('Imagen agregada al portafolio');
+      return mapped;
+    } catch (err: any) {
       console.error('[usePortfolioItems] Error uploading image:', err);
-      toast.error('Error al subir imagen');
+      console.error('[usePortfolioItems] creatorProfileId:', creatorProfileId);
+      const errorMsg = err?.message || err?.details || 'Error desconocido';
+      toast.error(`Error al subir imagen: ${errorMsg}`);
       return null;
     } finally {
       setAdding(false);
     }
-  }, [creatorProfileId, addItem]);
+  }, [creatorProfileId]);
 
   return {
     items,
