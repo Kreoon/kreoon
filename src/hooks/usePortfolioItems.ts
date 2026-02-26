@@ -319,9 +319,20 @@ export function usePortfolioItems(options: UsePortfolioItemsOptions = {}): UsePo
 
       if (confirmError) {
         console.error('[usePortfolioItems] Confirm error:', confirmError);
+        // Show specific error message from edge function
+        const errorMsg = confirmData?.error || confirmError.message || 'Error al confirmar subida';
+        toast.error(errorMsg);
+        return null;
       }
 
-      // Step 4: Create portfolio item record
+      // Check for error in response body (edge function returned 4xx/5xx with JSON)
+      if (confirmData?.error) {
+        console.error('[usePortfolioItems] Edge function error:', confirmData.error, confirmData.details);
+        toast.error(confirmData.error);
+        return null;
+      }
+
+      // Step 4: Get the created portfolio item
       const portfolioItemId = confirmData?.portfolio_item_id;
 
       if (portfolioItemId) {
@@ -340,17 +351,10 @@ export function usePortfolioItems(options: UsePortfolioItemsOptions = {}): UsePo
         }
       }
 
-      // Fallback: create item manually
-      const item = await addItem({
-        media_type: 'video',
-        media_url: embed_url,
-        bunny_video_id: video_id,
-        title: metadata?.title || file.name.replace(/\.[^.]+$/, ''),
-        category: metadata?.category || null,
-      });
-
-      if (item) toast.success('Video subido - procesando...');
-      return item;
+      // If no portfolio_item_id, something went wrong
+      console.error('[usePortfolioItems] No portfolio_item_id in response:', confirmData);
+      toast.error('Error: el video se subió pero no se pudo crear el registro');
+      return null;
     } catch (err) {
       console.error('[usePortfolioItems] Error uploading video:', err);
       toast.error('Error al subir video');
