@@ -25,6 +25,7 @@ import { FullscreenContentViewer } from '@/components/content/FullscreenContentV
 import { ReviewCard } from '@/components/content/ReviewCard';
 import { ContentVideoCard } from '@/components/content/ContentVideoCard';
 import { ScriptReviewCard } from '@/components/content/ScriptReviewCard';
+import { ClientScriptReview } from '@/components/content/ClientScriptReview';
 import { UnifiedContentModule } from '@/components/content/unified';
 import { useClientRealtimeContent } from '@/hooks/useClientRealtimeContent';
 import { CreateProductBriefWizard } from '@/components/products/CreateProductBriefWizard';
@@ -73,6 +74,7 @@ import {
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { sanitizeHTML } from '@/lib/sanitizeHTML';
 
 interface ClientPackage {
   id: string;
@@ -280,7 +282,9 @@ export default function ClientDashboard() {
   const [showFullscreenReview, setShowFullscreenReview] = useState(false);
   const [fullscreenStartIndex, setFullscreenStartIndex] = useState(0);
   const [showCreateProductWizard, setShowCreateProductWizard] = useState(false);
-  
+  const [stagePopup, setStagePopup] = useState<{ id: string; label: string; statuses: string[] } | null>(null);
+  const [stageScriptContent, setStageScriptContent] = useState<Content | null>(null);
+
   // Edit company state
   const [isEditingCompany, setIsEditingCompany] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -1135,8 +1139,9 @@ export default function ClientDashboard() {
                         key={stage.id}
                         onClick={() => {
                           if (stage.count > 0) {
-                            setStageFilter(stageFilter === stage.id ? null : stage.id);
-                            setActiveTab('content');
+                            const isToggleOff = stagePopup?.id === stage.id;
+                            setStagePopup(isToggleOff ? null : { id: stage.id, label: stage.label, statuses: stage.statuses });
+                            setStageFilter(isToggleOff ? null : stage.id);
                           }
                         }}
                         disabled={stage.count === 0}
@@ -1145,22 +1150,22 @@ export default function ClientDashboard() {
                           "border backdrop-blur-sm",
                           stage.count > 0 && "cursor-pointer",
                           stage.count === 0 && "opacity-40 cursor-not-allowed",
-                          stageFilter === stage.id 
-                            ? "bg-[hsl(270,100%,60%,0.2)] border-[hsl(270,100%,60%,0.5)] text-[hsl(270,100%,70%)]" 
+                          (stagePopup?.id === stage.id || stageFilter === stage.id)
+                            ? "bg-[hsl(270,100%,60%,0.2)] border-[hsl(270,100%,60%,0.5)] text-[hsl(270,100%,70%)]"
                             : "border-[hsl(270,100%,60%,0.1)] hover:border-[hsl(270,100%,60%,0.3)] text-[hsl(270,30%,60%)]"
                         )}
                         whileHover={stage.count > 0 ? { scale: 1.05 } : {}}
                         whileTap={stage.count > 0 ? { scale: 0.95 } : {}}
                       >
-                        <span className={stageFilter === stage.id ? "text-[hsl(270,100%,70%)]" : ""}>
+                        <span className={(stagePopup?.id === stage.id || stageFilter === stage.id) ? "text-[hsl(270,100%,70%)]" : ""}>
                           {stage.label}
                         </span>
                         {stage.count > 0 && (
-                          <Badge 
+                          <Badge
                             className={cn(
                               "h-5 text-[10px] border",
-                              stageFilter === stage.id 
-                                ? "bg-[hsl(270,100%,60%,0.3)] border-[hsl(270,100%,60%,0.5)] text-white" 
+                              (stagePopup?.id === stage.id || stageFilter === stage.id)
+                                ? "bg-[hsl(270,100%,60%,0.3)] border-[hsl(270,100%,60%,0.5)] text-white"
                                 : "bg-[hsl(250,20%,15%)] border-[hsl(270,100%,60%,0.2)] text-[hsl(270,30%,70%)]"
                             )}
                           >
@@ -1170,6 +1175,76 @@ export default function ClientDashboard() {
                       </motion.button>
                     ))}
                   </div>
+
+                  {/* Stage Content Popup */}
+                  {stagePopup && (() => {
+                    const stageContent = content.filter(c => stagePopup.statuses.includes(c.status));
+                    return stageContent.length > 0 ? (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="mt-3 rounded-xl border border-[hsl(270,100%,60%,0.3)] bg-background/95 backdrop-blur-md shadow-xl overflow-hidden"
+                      >
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 bg-[hsl(270,100%,60%,0.05)]">
+                          <div className="flex items-center gap-2">
+                            <Video className="h-4 w-4 text-[hsl(270,100%,70%)]" />
+                            <span className="font-semibold text-sm">{stagePopup.label}</span>
+                            <Badge className="h-5 text-[10px] bg-[hsl(270,100%,60%,0.2)] border-[hsl(270,100%,60%,0.4)]">
+                              {stageContent.length}
+                            </Badge>
+                          </div>
+                          <button
+                            onClick={() => setStagePopup(null)}
+                            className="p-1 rounded-md hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                        <ScrollArea className="max-h-[300px]">
+                          <div className="p-2 space-y-1">
+                            {stageContent.map((item) => (
+                              <button
+                                key={item.id}
+                                onClick={() => {
+                                  setStageScriptContent(item);
+                                  setStagePopup(null);
+                                }}
+                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left group"
+                              >
+                                <div className="shrink-0 w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center overflow-hidden">
+                                  {item.thumbnail_url ? (
+                                    <img src={item.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                                  ) : (
+                                    <Video className="h-4 w-4 text-muted-foreground" />
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate group-hover:text-[hsl(270,100%,70%)] transition-colors">
+                                    {item.title}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <Badge className={cn("text-[10px] h-4", STATUS_COLORS[item.status])}>
+                                      {STATUS_LABELS[item.status]}
+                                    </Badge>
+                                    {item.product && (
+                                      <span className="text-[10px] text-muted-foreground truncate">{item.product}</span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="shrink-0 flex items-center gap-1">
+                                  {item.script && (
+                                    <FileText className="h-3.5 w-3.5 text-primary/60" />
+                                  )}
+                                  <Eye className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      </motion.div>
+                    ) : null;
+                  })()}
                 </CardContent>
               </Card>
             </motion.div>
@@ -1636,14 +1711,56 @@ export default function ClientDashboard() {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="space-y-6">
                   {videoReviewContent.map((item) => (
-                    <ReviewCard
-                      key={item.id}
-                      content={item}
-                      userId={user?.id}
-                      onUpdate={() => selectedClientId && fetchClientData(selectedClientId)}
-                    />
+                    <div key={item.id} className="space-y-2">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {/* Video Review Card */}
+                        <ReviewCard
+                          content={item}
+                          userId={user?.id}
+                          onUpdate={() => selectedClientId && fetchClientData(selectedClientId)}
+                        />
+
+                        {/* Script Panel alongside video */}
+                        {item.script ? (
+                          <Card className="overflow-hidden border-primary/20">
+                            <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 bg-primary/5">
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-primary" />
+                                <span className="font-semibold text-sm">Guión</span>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => setStageScriptContent(item)}
+                              >
+                                <Eye className="h-3.5 w-3.5 mr-1" />
+                                Ver completo
+                              </Button>
+                            </div>
+                            <CardContent className="p-0">
+                              <ScrollArea className="h-[460px]">
+                                <div className="p-4">
+                                  <div
+                                    className="prose prose-sm dark:prose-invert max-w-none [&_p]:leading-relaxed [&_p]:mb-3 [&_strong]:font-bold [&_em]:text-muted-foreground [&_h2]:text-base [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-3 [&_h3]:mb-1 [&_ul]:pl-4 [&_ul]:mb-3 [&_li]:leading-relaxed"
+                                    dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.script) }}
+                                  />
+                                </div>
+                              </ScrollArea>
+                            </CardContent>
+                          </Card>
+                        ) : (
+                          <Card className="overflow-hidden border-dashed border-muted-foreground/20">
+                            <CardContent className="flex flex-col items-center justify-center h-full min-h-[200px] text-muted-foreground">
+                              <FileText className="h-8 w-8 mb-2 opacity-40" />
+                              <p className="text-sm">Sin guión disponible</p>
+                            </CardContent>
+                          </Card>
+                        )}
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
@@ -1925,6 +2042,17 @@ export default function ClientDashboard() {
         onOpenChange={(open) => !open && setSelectedProduct(null)}
         readOnly={true}
       />
+
+      {/* Stage Content Script Review Dialog */}
+      {stageScriptContent && (
+        <ClientScriptReview
+          content={stageScriptContent}
+          userId={user?.id}
+          open={!!stageScriptContent}
+          onOpenChange={(open) => !open && setStageScriptContent(null)}
+          onUpdate={() => selectedClientId && fetchClientData(selectedClientId)}
+        />
+      )}
 
       {/* Fullscreen Review Viewer */}
       {showFullscreenReview && videoReviewContent.length > 0 && (
