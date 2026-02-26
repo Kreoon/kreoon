@@ -130,11 +130,11 @@ Deno.serve(async (req) => {
       const uploadUrl = `https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${videoData.guid}`
       const embedUrl = `https://iframe.mediadelivery.net/embed/${bunnyLibraryId}/${videoData.guid}`
 
-      // Record in marketplace_media
+      // Record in marketplace_media (use authenticated user ID, not creator_profile ID)
       const { data: mediaRecord, error: mediaError } = await supabase
         .from('marketplace_media')
         .insert({
-          uploaded_by: creator_id,
+          uploaded_by: user.id,
           project_id: upload_type === 'delivery' ? project_id : null,
           portfolio_item_id: upload_type === 'portfolio' ? portfolio_item_id : null,
           file_name: videoTitle,
@@ -387,7 +387,7 @@ Deno.serve(async (req) => {
       await supabase
         .from('marketplace_media')
         .insert({
-          uploaded_by: creatorId,
+          uploaded_by: user.id,
           project_id: projectId || null,
           file_name: file.name,
           file_url: mp4Url,
