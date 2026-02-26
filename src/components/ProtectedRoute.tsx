@@ -208,7 +208,10 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     || location.pathname.startsWith('/onboarding');
 
   // Check if user is a brand member (they bypass referral gate)
-  const isBrandMember = isClient; // Clients are brand members
+  // Brand members can be detected by: having client role, active_brand_id, or active_role='client'
+  const isBrandMember = isClient ||
+    !!profile?.active_brand_id ||
+    profile?.active_role === 'client';
 
   // Pure talents = users without org roles who need to complete referral gate
   // Exclude brand members (clients) from gate requirement
