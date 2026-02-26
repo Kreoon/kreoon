@@ -147,7 +147,7 @@ export const KeysProgress = memo(function KeysProgress({
                 isCurrent={index === keysCollected}
               />
               {/* Referral name if unlocked */}
-              {referrals[index] ? (
+              {referrals[index] && (
                 <div className="flex items-center gap-1">
                   {referrals[index].avatar ? (
                     <img
@@ -160,10 +160,6 @@ export const KeysProgress = memo(function KeysProgress({
                     {referrals[index].name.split(' ')[0]}
                   </span>
                 </div>
-              ) : (
-                <span className="text-[10px] text-white/30">
-                  {index === keysCollected ? '...' : ''}
-                </span>
               )}
             </div>
           ))}
