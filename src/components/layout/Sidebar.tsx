@@ -399,12 +399,13 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const filteredSections = useMemo(() => {
     // Users who haven't unlocked via referral gate only see unlock page + profile
     // Skip this check while loading gate status or for users who bypass the gate
-    if (!isGateLoading && !isUnlocked && isFreelanceUser) {
+    // Clients/brands bypass the gate (they don't need referral keys)
+    if (!isGateLoading && !isUnlocked && isFreelanceUser && !activeIsClient) {
       return lockedUserSections;
     }
 
     // Freelance users (no org, no plan) only see marketplace + profile config
-    if (isFreelanceUser) {
+    if (isFreelanceUser && (isUnlocked || activeIsClient)) {
       // Return minimal navigation for freelancers
       const mktSections = getMarketplaceSections(activeGroup);
       return [

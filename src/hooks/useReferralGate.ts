@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { getPermissionGroup } from '@/lib/permissionGroups';
 
 export interface GateReferral {
   referred_id: string;
@@ -25,18 +26,24 @@ interface GateStatus {
 export function useReferralGate() {
   const { user, profile, roles, isPlatformAdmin, isClient, loading: authLoading, rolesLoaded } = useAuth();
 
-  // Quick bypass: platform admin, already unlocked, belongs to an org, client, or non-talent role
-  // Only pure talent roles (creator/editor) need to go through the referral gate
+  // Quick bypass: platform admin, already unlocked, belongs to an org, client, or has non-talent org roles
+  // Users who need the referral gate:
+  // - Users with NO roles (independent talents without org)
+  // - Users with ONLY creator/editor roles
   const hasOrganization = !!profile?.current_organization_id;
-  const isTalentOnly = roles.length > 0 && roles.every(
-    r => r === 'creator' || r === 'editor'
-  );
+
+  // Check if user has roles that are NOT creator/editor (meaning they have org-level permissions)
+  const hasNonTalentRoles = roles.length > 0 && roles.some(r => {
+    const pg = getPermissionGroup(r);
+    return pg !== 'creator' && pg !== 'editor';
+  });
+
   const quickBypass =
     isPlatformAdmin ||
     profile?.platform_access_unlocked === true ||
     hasOrganization ||
     isClient ||
-    !isTalentOnly;
+    hasNonTalentRoles; // Only bypass if user has non-talent roles (admin, strategist, etc.)
 
   const {
     data: gateStatus,

@@ -32,6 +32,7 @@ import {
   ChevronDown,
   Radar,
   ImagePlus,
+  Key,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -52,6 +53,7 @@ import { SidebarAchievementsWidget } from "@/components/points/SidebarAchievemen
 import { supabase } from "@/integrations/supabase/client";
 import { useWhiteLabel } from "@/hooks/useWhiteLabel";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
+import { useReferralGate } from "@/hooks/useReferralGate";
 
 interface NavItem {
   name: string;
@@ -206,6 +208,33 @@ const clientSections: NavSection[] = [
   { label: "CONFIG", items: CONFIG_ITEMS }
 ];
 
+// Freelance users (no org, no plan) - minimal navigation
+const freelanceSections: NavSection[] = [
+  {
+    label: "CONFIG",
+    items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
+      { name: "Settings", href: "/settings", icon: Settings },
+    ]
+  }
+];
+
+// Locked users (haven't completed referral gate) - only unlock access + profile
+const lockedUserSections: NavSection[] = [
+  {
+    label: "BIENVENIDA",
+    items: [
+      { name: "Obtener Llaves", href: "/unlock-access", icon: Key },
+    ]
+  },
+  {
+    label: "CONFIG",
+    items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
+    ]
+  }
+];
+
 // Marketplace sections — mirrors Sidebar.tsx
 function getMarketplaceSections(activeGroup: PermissionGroup | null): NavSection[] {
   const items: NavItem[] = [
@@ -256,6 +285,10 @@ export function MobileNav() {
   const { marketplaceEnabled, clientMarketplaceEnabled } = useOrgMarketplace();
   const { effectivePlatformName, effectiveStudioLabel, effectiveMarketplaceLabel, effectiveLogoUrl, isWhiteLabelActive } = useWhiteLabel();
   const { isImpersonating, effectiveRoles, impersonationTarget } = useImpersonation();
+  const { isUnlocked, isGateLoading } = useReferralGate();
+
+  // Detect freelance user: has no org and is not a platform admin
+  const isFreelanceUser = !profile?.current_organization_id && !isPlatformAdmin && !isPlatformRoot;
 
   // Resolve permission group — same logic as Sidebar
   const activeGroup: PermissionGroup | null = isImpersonating
@@ -356,6 +389,22 @@ export function MobileNav() {
 
   // Filter navigation sections — same logic as Sidebar
   const filteredSections = useMemo(() => {
+    // Users who haven't unlocked via referral gate only see unlock page + profile
+    // Skip this check while loading gate status or for users who bypass the gate
+    // Clients/brands bypass the gate (they don't need referral keys)
+    if (!isGateLoading && !isUnlocked && isFreelanceUser && !activeIsClient) {
+      return lockedUserSections;
+    }
+
+    // Freelance users (no org, no plan) only see marketplace + profile config
+    if (isFreelanceUser && (isUnlocked || activeIsClient)) {
+      const mktSections = getMarketplaceSections(activeGroup);
+      return [
+        ...mktSections,
+        ...freelanceSections,
+      ];
+    }
+
     // When roles haven't loaded yet, show minimal nav to avoid flashing admin menu
     let baseSections = activeIsAdmin
       ? adminSections
@@ -412,7 +461,7 @@ export function MobileNav() {
       ...(!effectiveMktEnabled && !activeIsClient ? [recruitSection] : []),
       ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Settings", href: "/settings", icon: Settings }] }]),
     ];
-  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, activeGroup]);
+  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, activeGroup, isUnlocked, isGateLoading, isFreelanceUser]);
 
   // Auto-expand section with active route
   const pathname = location.pathname;

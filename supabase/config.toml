@@ -172,7 +172,9 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.admin-users]
-verify_jwt = true
+# JWT verification handled internally by the function (supabase.auth.getUser)
+# Gateway verify_jwt caused 401 because supabase.functions.invoke header merging is inconsistent
+verify_jwt = false
 
 [functions.admin-reset-password]
 verify_jwt = true
@@ -352,4 +354,9 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.social-scraper]
+verify_jwt = true
+
+# ── Portfolio Image Upload ──
+
+[functions.portfolio-image-upload]
 verify_jwt = true
