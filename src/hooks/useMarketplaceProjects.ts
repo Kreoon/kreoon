@@ -99,6 +99,8 @@ const UNKNOWN_CREATOR: MarketplaceCreator = {
 interface UseMarketplaceProjectsOptions {
   role?: 'brand' | 'creator' | 'editor';
   brandId?: string;
+  /** For brand members without brandId yet - returns empty array instead of all projects */
+  isBrandMember?: boolean;
 }
 
 export interface CreateProjectParams {
@@ -140,8 +142,17 @@ export function useMarketplaceProjects(options: UseMarketplaceProjectsOptions = 
         query = query.eq('creator_id', user.id);
       } else if (options.role === 'editor') {
         query = query.eq('editor_id', user.id);
-      } else if (options.role === 'brand' && options.brandId) {
-        query = query.eq('brand_id', options.brandId);
+      } else if (options.role === 'brand') {
+        if (options.brandId) {
+          // Brand member with assigned brand - filter by their brand
+          query = query.eq('brand_id', options.brandId);
+        } else if (options.isBrandMember) {
+          // Brand member without brand yet - return empty (they have no projects yet)
+          setProjects([]);
+          setLoading(false);
+          return;
+        }
+        // Otherwise (org admin/strategist) - show all projects (no filter)
       }
 
       const { data: projectRows, error: projErr } = await query;
@@ -254,7 +265,7 @@ export function useMarketplaceProjects(options: UseMarketplaceProjectsOptions = 
     } finally {
       setLoading(false);
     }
-  }, [user?.id, options.role, options.brandId]);
+  }, [user?.id, options.role, options.brandId, options.isBrandMember]);
 
   useEffect(() => {
     fetchProjects();

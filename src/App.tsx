@@ -97,6 +97,9 @@ const PlatformCRMCreators = lazy(() => import("./pages/crm/platform/PlatformCRMC
 const PlatformCRMUsers = lazy(() => import("./pages/crm/platform/PlatformCRMUsers"));
 const PlatformCRMFinances = lazy(() => import("./pages/crm/platform/PlatformCRMFinances"));
 const PlatformCRMEmailMarketing = lazy(() => import("./pages/crm/platform/PlatformCRMEmailMarketing"));
+const BrandsCRM = lazy(() => import("./pages/crm/BrandsCRM"));
+const BrandDetail = lazy(() => import("./pages/crm/BrandDetail"));
+const PlatformCRMCommunities = lazy(() => import("./pages/crm/platform/PlatformCRMCommunities"));
 // CRM Org
 const OrgCRMDashboard = lazy(() => import("./pages/crm/org/OrgCRMDashboard"));
 const OrgCRMPipelines = lazy(() => import("./pages/crm/org/OrgCRMPipelines"));
@@ -117,6 +120,7 @@ const SubscriptionSuccess = lazy(() => import("./pages/subscription/Subscription
 const SubscriptionCancel = lazy(() => import("./pages/subscription/SubscriptionCancel"));
 const PlanesPage = lazy(() => import("./pages/PlanesPage"));
 const FreelancerDashboard = lazy(() => import("./pages/FreelancerDashboard"));
+const PartnerCommunityLanding = lazy(() => import("./pages/PartnerCommunityLanding"));
 
 // Campaign Optimization pages
 const UGCPriceCalculator = lazy(() => import("./components/marketplace/calculator/UGCPriceCalculator"));
@@ -310,9 +314,11 @@ function AppRoutes() {
         <Route path="/unete-talento" element={<TalentReferralRedirect />} />
         <Route path="/unete/marcas" element={<UneteMarcas />} />
         <Route path="/unete/organizaciones" element={<UneteOrganizaciones />} />
+        {/* Partner Communities */}
+        <Route path="/comunidad/:slug" element={<PartnerCommunityLanding />} />
         <Route path="/" element={<HomePage />} />
         <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'team_leader']}><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
-        <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor']}><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
+        <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client']}><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
         <Route path="/content" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor']}><MainLayout><Content /></MainLayout></ProtectedRoute>} />
         <Route path="/talent" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist']}><MainLayout><UnifiedTalentPage /></MainLayout></ProtectedRoute>} />
         <Route path="/clients-hub" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist']}><MainLayout><UnifiedClientsPage /></MainLayout></ProtectedRoute>} />
@@ -326,6 +332,9 @@ function AppRoutes() {
         <Route path="/crm" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/leads" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMLeads /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/organizaciones" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMOrganizations /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/marcas" element={<ProtectedRoute requirePlatformAdmin><MainLayout><BrandsCRM /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/marcas/:brandId" element={<ProtectedRoute requirePlatformAdmin><MainLayout><BrandDetail /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/comunidades" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMCommunities /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/creadores" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMCreators /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/usuarios" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMUsers /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/finanzas" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMFinances /></MainLayout></ProtectedRoute>} />

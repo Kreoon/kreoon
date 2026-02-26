@@ -36,10 +36,15 @@ function withTimeout<T>(promise: PromiseLike<T>, ms: number, label: string): Pro
 }
 
 // Helper to get the correct dashboard path based on active role or user roles
-function getDashboardPath(roles: AppRole[], activeRole?: AppRole | null, isUnlockedFreelancer?: boolean): string {
-  // Unlocked freelancers (no org roles) go to freelancer dashboard
+function getDashboardPath(roles: AppRole[], activeRole?: AppRole | null, isUnlockedFreelancerOrBrandMember?: boolean): string {
+  // Users without org roles
   if (roles.length === 0) {
-    return isUnlockedFreelancer ? '/freelancer-dashboard' : '/marketplace';
+    // Brand members go to client dashboard
+    if (isUnlockedFreelancerOrBrandMember === true) {
+      return '/client-dashboard';
+    }
+    // Unlocked freelancers go to freelancer dashboard, others to marketplace
+    return '/marketplace';
   }
 
   // If activeRole is set and valid, use it (resolves via permission group)
@@ -65,6 +70,9 @@ const SOCIAL_ROUTES = ['/social', '/marketplace', '/explore', '/profile', '/sett
 
 // Additional routes that unlocked freelancers can access (no org roles but platform_access_unlocked = true)
 const FREELANCE_ALLOWED_ROUTES = ['/board', '/scripts', '/freelancer-dashboard', '/social-hub', '/wallet', '/planes'];
+
+// Routes that brand members/clients can access (independent brands without org)
+const CLIENT_ALLOWED_ROUTES = ['/client-dashboard', '/board', '/marketplace', '/wallet', '/planes', '/social-hub', '/live', '/marketing-ads', '/ad-generator'];
 
 export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRoles, requirePlatformAdmin }: ProtectedRouteProps) {
   const { user, profile, roles: realRoles, activeRole, loading, rolesLoaded, isPlatformAdmin } = useAuth();
@@ -248,10 +256,14 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     const isFreelanceAllowedRoute = FREELANCE_ALLOWED_ROUTES.some(route => location.pathname.startsWith(route));
     const isUnlockedFreelancer = profile?.platform_access_unlocked === true;
 
-    if (!isSocialRoute && !(isUnlockedFreelancer && isFreelanceAllowedRoute)) {
+    // Brand members can access client-specific routes
+    const isClientAllowedRoute = CLIENT_ALLOWED_ROUTES.some(route => location.pathname.startsWith(route));
+
+    // Allow: social routes, freelance routes (if unlocked), or client routes (if brand member)
+    if (!isSocialRoute && !(isUnlockedFreelancer && isFreelanceAllowedRoute) && !(isBrandMember && isClientAllowedRoute)) {
       return <Navigate to="/marketplace" replace />;
     }
-    // Allow access to social routes and freelance routes for users without roles
+    // Allow access to social routes, freelance routes, and client routes for users without org roles
     return <>{children}</>;
   }
 
@@ -297,14 +309,24 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
       return <>{children}</>;
     }
 
+    // Allow brand members to access client routes even without org roles
+    const isClientAllowedRoute = CLIENT_ALLOWED_ROUTES.some(route => location.pathname.startsWith(route));
+    if (isBrandMember && isClientAllowedRoute && allowedRoles.includes('client')) {
+      return <>{children}</>;
+    }
+
     // Match by permission group: allowedRoles names correspond to permission group names
     const hasAllowedRole = allowedRoles.some((allowedRole) => {
       const allowedGroup = getPermissionGroup(allowedRole);
       return effectiveRolesToCheck.some(r => getPermissionGroup(r) === allowedGroup);
     });
     if (!hasAllowedRole) {
+      // Brand members without org roles but accessing client routes should be allowed
+      if (isBrandMember && allowedRoles.includes('client')) {
+        return <>{children}</>;
+      }
       // Instead of showing unauthorized, redirect to their appropriate dashboard
-      const correctDashboard = getDashboardPath(rolesToCheck, activeRole);
+      const correctDashboard = getDashboardPath(rolesToCheck, activeRole, isBrandMember);
       return <Navigate to={correctDashboard} replace />;
     }
   }

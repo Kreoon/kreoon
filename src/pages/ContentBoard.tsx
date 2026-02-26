@@ -167,20 +167,51 @@ export default function ContentBoard() {
   // Detect freelancer: no org roles, unlocked via referral gate
   const isFreelancer = roles.length === 0 && !isPlatformRoot && profile?.platform_access_unlocked === true;
 
+  // Detect user without any valid association (no org, no client_users, not freelancer)
+  // This user should NOT see internal content, only marketplace
+  const [hasNoContentAccess, setHasNoContentAccess] = useState(false);
+  useEffect(() => {
+    // If user has org or is platform root or is freelancer, they have access
+    if (currentOrgId || isPlatformRoot || isFreelancer) {
+      setHasNoContentAccess(false);
+      return;
+    }
+    // If still loading org info, wait
+    if (orgLoading) return;
+    // If user is a client role, check if they're in client_users
+    if (isClient && user?.id) {
+      const checkClientUser = async () => {
+        const { data } = await supabase
+          .from('client_users')
+          .select('client_id')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
+        // If they have a client_id, they have access via client_users
+        setHasNoContentAccess(!data?.client_id);
+      };
+      checkClientUser();
+    } else {
+      // No org, not platform root, not freelancer, not a client_user → no content access
+      setHasNoContentAccess(true);
+    }
+  }, [currentOrgId, isPlatformRoot, isFreelancer, orgLoading, isClient, user?.id]);
+
   // Board mode: content (internal) vs marketplace (external projects)
-  // Freelancers are forced to marketplace view only
+  // Freelancers and users without content access are forced to marketplace view only
+  const shouldForceMarketplace = isFreelancer || hasNoContentAccess;
   const [boardMode, setBoardMode] = useState<'content' | 'marketplace'>(() => {
-    if (isFreelancer) return 'marketplace';
+    if (shouldForceMarketplace) return 'marketplace';
     const params = new URLSearchParams(window.location.search);
     return params.get('view') === 'marketplace' ? 'marketplace' : 'content';
   });
 
-  // Force marketplace mode for freelancers (in case state was cached differently)
+  // Force marketplace mode for freelancers or users without content access
   useEffect(() => {
-    if (isFreelancer && boardMode !== 'marketplace') {
+    if (shouldForceMarketplace && boardMode !== 'marketplace') {
       setBoardMode('marketplace');
     }
-  }, [isFreelancer, boardMode]);
+  }, [shouldForceMarketplace, boardMode]);
 
   // Get ambassador IDs for the organization
   const { ambassadors } = useInternalOrgContent();
@@ -226,6 +257,28 @@ export default function ContentBoard() {
   const [editors, setEditors] = useState<{id: string; name: string}[]>([]);
   const [clients, setClients] = useState<{id: string; name: string}[]>([]);
   const [products, setProducts] = useState<{id: string; name: string; client_name?: string}[]>([]);
+
+  // For external clients (client_users): force filter by their client_id
+  const [externalClientId, setExternalClientId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!user?.id || !isClient || currentOrgId) {
+      setExternalClientId(null);
+      return;
+    }
+    // User is a client without org - fetch their client_id from client_users
+    const fetchClientUser = async () => {
+      const { data } = await supabase
+        .from('client_users')
+        .select('client_id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .maybeSingle();
+      if (data?.client_id) {
+        setExternalClientId(data.client_id);
+      }
+    };
+    fetchClientUser();
+  }, [user?.id, isClient, currentOrgId]);
 
   // Memoized options for SearchableSelect
   const creatorOptions = useMemo<SearchableSelectOption[]>(() => [
@@ -381,12 +434,15 @@ export default function ContentBoard() {
   }, [currentOrgId]);
 
   // Fetch content según rol - use targetUserId for impersonation
+  // For external clients, force their client_id filter
+  const effectiveClientId = externalClientId || (filterClientId !== 'all' ? filterClientId : undefined);
+
   const { content, loading, updateContentStatus, deleteContent, refetch } = useContentWithFilters({
     userId: targetUserId,
     role: primaryRole as any,
     creatorId: filterCreatorId !== 'all' ? filterCreatorId : undefined,
     editorId: filterEditorId !== 'all' ? filterEditorId : undefined,
-    clientId: filterClientId !== 'all' ? filterClientId : undefined
+    clientId: effectiveClientId
   });
 
   const handleDeleteContent = async (contentId: string) => {
@@ -691,8 +747,8 @@ export default function ContentBoard() {
           </div>
         </div>
 
-        {/* Board Mode Toggle: Contenido | Marketplace (hidden for freelancers) */}
-        {!isFreelancer && (
+        {/* Board Mode Toggle: Contenido | Marketplace (hidden for freelancers and users without content access) */}
+        {!shouldForceMarketplace && (
           <div className="flex items-center gap-1 bg-muted rounded-xl p-1 w-fit border border-white/5">
             <button
               onClick={() => setBoardMode('content')}

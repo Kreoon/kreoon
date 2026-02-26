@@ -10,7 +10,7 @@ export function useBrand() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Fetch all brands the user is an active member of
+  // Fetch all brands the user is an active member of (or owns)
   const {
     data,
     isLoading,
@@ -28,18 +28,62 @@ export function useBrand() {
         .eq('status', 'active');
 
       if (memError) throw memError;
-      if (!memberships?.length) return { brands: [], memberships: [], activeBrandId: null };
 
-      // 2. Get brand details
-      const brandIds = memberships.map((m: BrandMember) => m.brand_id);
-      const { data: brands, error: brandError } = await sb
+      // 2. Also check for owned brands WITHOUT membership (orphaned brands)
+      const { data: ownedBrands, error: ownedError } = await sb
         .from('brands')
         .select('*')
-        .in('id', brandIds);
+        .eq('owner_id', user.id);
 
-      if (brandError) throw brandError;
+      if (ownedError) throw ownedError;
 
-      // 3. Get active_brand_id from profile
+      // 3. Get brands from memberships
+      let brands: Brand[] = [];
+      if (memberships?.length) {
+        const brandIds = memberships.map((m: BrandMember) => m.brand_id);
+        const { data: memberBrands, error: brandError } = await sb
+          .from('brands')
+          .select('*')
+          .in('id', brandIds);
+
+        if (brandError) throw brandError;
+        brands = memberBrands || [];
+      }
+
+      // 4. Check for orphaned owned brands (owner but no membership)
+      let allMemberships = memberships || [];
+      for (const ownedBrand of (ownedBrands || [])) {
+        const hasMembership = allMemberships.some((m: BrandMember) => m.brand_id === ownedBrand.id);
+        if (!hasMembership) {
+          // Orphaned brand found - recreate membership
+          console.log('Recreating membership for orphaned brand:', ownedBrand.id);
+          const { data: newMembership, error: insertError } = await sb
+            .from('brand_members')
+            .insert({
+              brand_id: ownedBrand.id,
+              user_id: user.id,
+              role: 'owner',
+              status: 'active',
+            })
+            .select()
+            .single();
+
+          if (!insertError && newMembership) {
+            allMemberships.push(newMembership);
+            // Add the brand if not already in list
+            if (!brands.some(b => b.id === ownedBrand.id)) {
+              brands.push(ownedBrand);
+            }
+          }
+        } else {
+          // Has membership, make sure brand is in list
+          if (!brands.some(b => b.id === ownedBrand.id)) {
+            brands.push(ownedBrand);
+          }
+        }
+      }
+
+      // 5. Get active_brand_id from profile
       const { data: profile } = await supabase
         .from('profiles')
         .select('active_brand_id')
@@ -47,8 +91,8 @@ export function useBrand() {
         .maybeSingle();
 
       return {
-        brands: (brands || []) as Brand[],
-        memberships: (memberships || []) as BrandMember[],
+        brands: brands as Brand[],
+        memberships: allMemberships as BrandMember[],
         activeBrandId: (profile as any)?.active_brand_id as string | null,
       };
     },
@@ -71,10 +115,26 @@ export function useBrand() {
     ? memberships.find(m => m.brand_id === activeBrand.id)
     : null;
 
+  // Check if user already owns a brand (limit: 1 brand per user)
+  const ownedBrands = brands.filter(b => b.owner_id === user?.id);
+  const canCreateBrand = ownedBrands.length === 0;
+
   // Create brand mutation
   const createBrandMutation = useMutation({
     mutationFn: async (input: CreateBrandInput) => {
       if (!user?.id) throw new Error('No autenticado');
+
+      // Check if user already owns a brand (limit: 1)
+      const { data: existingBrands, error: checkError } = await sb
+        .from('brands')
+        .select('id')
+        .eq('owner_id', user.id)
+        .limit(1);
+
+      if (checkError) throw checkError;
+      if (existingBrands && existingBrands.length > 0) {
+        throw new Error('Ya tienes una empresa creada. Solo puedes tener 1 empresa por cuenta.');
+      }
 
       // Insert brand
       const { data: brand, error: brandError } = await sb
@@ -139,6 +199,7 @@ export function useBrand() {
     hasBrand,
     isOwner,
     isLoading,
+    canCreateBrand, // User can only create 1 brand
     createBrand: createBrandMutation.mutateAsync,
     isCreating: createBrandMutation.isPending,
     switchBrand,

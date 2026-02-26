@@ -87,11 +87,30 @@ serve(async (req) => {
 });
 
 // ============================================================================
+// MAPEO DE SUBSCRIPTION TIER A TOKENS
+// ============================================================================
+
+const TIER_TOKENS: Record<string, number> = {
+  // Marcas
+  brand_free: 300,
+  brand_starter: 4_000,
+  brand_pro: 12_000,
+  brand_business: 40_000,
+  // Creadores
+  creator_free: 800,
+  creator_pro: 6_000,
+  // Agencias
+  org_starter: 20_000,
+  org_pro: 60_000,
+  org_enterprise: 200_000,
+};
+
+// ============================================================================
 // OBTENER BALANCE
 // ============================================================================
 
 async function getBalance(supabase: any, userId: string, organizationId?: string) {
-  const query = organizationId 
+  const query = organizationId
     ? { organization_id: organizationId }
     : { user_id: userId };
 
@@ -106,16 +125,64 @@ async function getBalance(supabase: any, userId: string, organizationId?: string
   }
 
   if (!balance) {
-    // Crear balance por defecto si no existe
-    const defaultTokens = 800; // creator_free default
-    
+    // Verificar si el usuario tiene una suscripción activa
+    let subscriptionTier = organizationId ? "org_starter" : "creator_free";
+    let tokensFromPlan = TIER_TOKENS[subscriptionTier] || 800;
+
+    // Buscar suscripción activa
+    let subQuery = supabase
+      .from("platform_subscriptions")
+      .select("tier, status")
+      .in("status", ["active", "trialing"]);
+
+    if (organizationId) {
+      subQuery = subQuery.eq("organization_id", organizationId);
+    } else {
+      subQuery = subQuery.eq("user_id", userId).is("organization_id", null);
+    }
+
+    const { data: subscription } = await subQuery.limit(1).maybeSingle();
+
+    if (subscription?.tier) {
+      subscriptionTier = subscription.tier;
+      tokensFromPlan = TIER_TOKENS[subscription.tier] || tokensFromPlan;
+    } else if (!organizationId) {
+      // Si no hay org, verificar si es miembro de una marca (brand member)
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("active_brand_id, active_role")
+        .eq("id", userId)
+        .single();
+
+      if (profile?.active_brand_id || profile?.active_role === "client") {
+        // Es un miembro de marca, verificar suscripción de la marca
+        const { data: brandSub } = await supabase
+          .from("platform_subscriptions")
+          .select("tier, status")
+          .eq("user_id", userId)
+          .is("organization_id", null)
+          .in("status", ["active", "trialing"])
+          .limit(1)
+          .maybeSingle();
+
+        if (brandSub?.tier) {
+          subscriptionTier = brandSub.tier;
+          tokensFromPlan = TIER_TOKENS[brandSub.tier] || tokensFromPlan;
+        } else {
+          // Sin suscripción, usar brand_free si es marca
+          subscriptionTier = "brand_free";
+          tokensFromPlan = TIER_TOKENS.brand_free;
+        }
+      }
+    }
+
     const { data: newBalance, error: createError } = await supabase
       .from("ai_token_balances")
       .insert({
         ...query,
-        balance_subscription: defaultTokens,
-        monthly_allowance: defaultTokens,
-        subscription_tier: organizationId ? "org_starter" : "creator_free",
+        balance_subscription: tokensFromPlan,
+        monthly_allowance: tokensFromPlan,
+        subscription_tier: subscriptionTier,
         next_reset_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       })
       .select()
@@ -129,6 +196,19 @@ async function getBalance(supabase: any, userId: string, organizationId?: string
       success: true,
       balance: newBalance,
     };
+  }
+
+  // Si el balance existe pero no tiene tokens según el plan, sincronizar
+  if (balance.subscription_tier) {
+    const expectedTokens = TIER_TOKENS[balance.subscription_tier];
+    if (expectedTokens && balance.monthly_allowance !== expectedTokens) {
+      // Actualizar monthly_allowance para reflejar el plan actual
+      await supabase
+        .from("ai_token_balances")
+        .update({ monthly_allowance: expectedTokens })
+        .eq("id", balance.id);
+      balance.monthly_allowance = expectedTokens;
+    }
   }
 
   // Calcular días hasta reset

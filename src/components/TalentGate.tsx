@@ -34,6 +34,18 @@ export function TalentGate({ children }: TalentGateProps) {
     return <>{children}</>;
   }
 
+  // Check if user is a brand member (clients bypass talent gate entirely)
+  // Brand members can be detected by: having client role, active_brand_id, or active_role='client'
+  const isClient = roles.some(r => getPermissionGroup(r) === 'client');
+  const isBrandMember = isClient ||
+    !!profile?.active_brand_id ||
+    profile?.active_role === 'client';
+
+  // Brand members/clients always pass through - they don't need keys
+  if (isBrandMember) {
+    return <>{children}</>;
+  }
+
   // Check if user is a talent (creator/editor permission groups only)
   const isTalentOnly = roles.length > 0 && roles.every(r => {
     const pg = getPermissionGroup(r);

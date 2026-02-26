@@ -19,7 +19,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { updateContentStatusWithUP } from '@/hooks/useContentStatusWithUP';
 import { Content, ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
 import { useNavigate, Navigate } from 'react-router-dom';
-import { useBrand } from '@/hooks/useBrand';
+import { useBrandClient } from '@/hooks/useBrandClient';
+import { useMarketplaceStats } from '@/hooks/useMarketplaceStats';
 import { ClientFinanceChart } from '@/components/dashboard/ClientFinanceChart';
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { FullscreenContentViewer } from '@/components/content/FullscreenContentViewer';
@@ -34,11 +35,11 @@ import { ClientDNATab } from '@/components/clients/dna';
 import { ProductDetailDialog } from '@/components/products/ProductDetailDialog';
 import { TechGrid, TechParticles, TechOrb } from '@/components/ui/tech-effects';
 import { TechKpiCard } from '@/components/dashboard/TechKpiCard';
-import { 
-  LogOut, 
-  Video, 
-  Clock, 
-  CheckCircle2, 
+import {
+  LogOut,
+  Video,
+  Clock,
+  CheckCircle2,
   FileText,
   Loader2,
   User,
@@ -72,7 +73,10 @@ import {
   Maximize2,
   Plus,
   Dna,
-  Trash2
+  Trash2,
+  ShoppingBag,
+  Megaphone,
+  Briefcase
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -265,9 +269,23 @@ const PremiumStatsCard = ({
 export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
   const { isImpersonating, effectiveClientId } = useImpersonation();
-  const brandHook = useBrand();
+  const { brandClient, activeBrand, loading: brandClientLoading } = useBrandClient();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Detect independent brand member (no organization, just brand)
+  const isBrandMember = !!(profile as any)?.active_brand_id ||
+    (profile as any)?.active_role === 'client';
+  const hasOrganization = !!(profile as any)?.current_organization_id;
+
+  // Marketplace stats for brand
+  const { stats: marketplaceStats, loading: marketplaceLoading } = useMarketplaceStats({
+    role: 'brand',
+    brandId: activeBrand?.id || brandClient?.brand_id,
+  });
+
+  // Independent brand members use their brand's client
+  const isIndependentBrand = isBrandMember && !hasOrganization && !isImpersonating;
   const [content, setContent] = useState<Content[]>([]);
   const [packages, setPackages] = useState<ClientPackage[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -296,6 +314,17 @@ export default function ClientDashboard() {
   });
   const [savingCompany, setSavingCompany] = useState(false);
 
+  // Create brand state (for users without brand)
+  const [showCreateBrandDialog, setShowCreateBrandDialog] = useState(false);
+  const [isCreatingBrand, setIsCreatingBrand] = useState(false);
+  const [createBrandForm, setCreateBrandForm] = useState({
+    name: '',
+    industry: '',
+    website: '',
+    city: '',
+    description: '',
+  });
+
   // In root mode, always force the dashboard to use the impersonated clientId
   useEffect(() => {
     if (isImpersonating && effectiveClientId) {
@@ -308,7 +337,7 @@ export default function ClientDashboard() {
     if (user) {
       fetchUserClients();
     }
-  }, [user, isImpersonating, effectiveClientId]);
+  }, [user, isImpersonating, effectiveClientId, brandClient?.id, brandClientLoading]);
 
   // Listen for client switching without full page reload
   useEffect(() => {
@@ -355,6 +384,27 @@ export default function ClientDashboard() {
       return;
     }
 
+    // Independent brand member: use brand's client directly
+    if (isIndependentBrand && brandClient) {
+      setSelectedClientId(brandClient.id);
+      setUserClients([{
+        id: brandClient.id,
+        name: brandClient.name,
+        logo_url: activeBrand?.logo_url || null,
+        contact_email: null,
+        contact_phone: null,
+        notes: null,
+      }]);
+      setShowClientSelector(false);
+      await fetchClientData(brandClient.id);
+      return;
+    }
+
+    // If independent brand but client not loaded yet, wait
+    if (isIndependentBrand && brandClientLoading) {
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -389,7 +439,7 @@ export default function ClientDashboard() {
 
         // Check if there's a saved client selection in localStorage
         const savedClientId = localStorage.getItem('selectedClientId');
-        
+
         if (savedClientId && clientsData?.some(c => c.id === savedClientId)) {
           // Use saved selection if valid
           const savedClient = clientsData.find(c => c.id === savedClientId);
@@ -425,12 +475,21 @@ export default function ClientDashboard() {
     try {
       const { data: clientData } = await supabase
         .from('clients')
-        .select('id, name, logo_url, contact_email, contact_phone, notes')
+        .select('id, name, logo_url, contact_email, contact_phone, notes, brand_id')
         .eq('id', clientId)
         .maybeSingle();
 
       if (clientData) {
-        setClientInfo(clientData);
+        // For independent brand clients, use brand logo if client doesn't have one
+        let logoUrl = clientData.logo_url;
+        if (!logoUrl && isIndependentBrand && activeBrand?.logo_url) {
+          logoUrl = activeBrand.logo_url;
+        }
+
+        setClientInfo({
+          ...clientData,
+          logo_url: logoUrl,
+        });
         setEditForm({
           name: clientData.name || '',
           contact_email: clientData.contact_email || '',
@@ -531,6 +590,94 @@ export default function ClientDashboard() {
       toast({ title: 'Error', description: 'No se pudo guardar la información', variant: 'destructive' });
     } finally {
       setSavingCompany(false);
+    }
+  };
+
+  // Create brand for users without one
+  const handleCreateBrand = async () => {
+    if (!createBrandForm.name || !user?.id) {
+      toast({ title: 'Error', description: 'El nombre de la marca es requerido', variant: 'destructive' });
+      return;
+    }
+
+    setIsCreatingBrand(true);
+    try {
+      // Generate slug
+      const slug = createBrandForm.name
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        + '-' + Date.now().toString(36);
+
+      // Create brand
+      const { data: newBrand, error: brandError } = await supabase
+        .from('brands')
+        .insert({
+          name: createBrandForm.name,
+          slug,
+          owner_id: user.id,
+          industry: createBrandForm.industry || null,
+          website: createBrandForm.website || null,
+          city: createBrandForm.city || null,
+          description: createBrandForm.description || null,
+        })
+        .select()
+        .single();
+
+      if (brandError) throw brandError;
+
+      // Create brand membership
+      await supabase.from('brand_members').insert({
+        brand_id: newBrand.id,
+        user_id: user.id,
+        role: 'owner',
+        status: 'active',
+      });
+
+      // Update profile with active_brand_id
+      await supabase
+        .from('profiles')
+        .update({ active_brand_id: newBrand.id, active_role: 'client' } as any)
+        .eq('id', user.id);
+
+      // Create associated client
+      const { data: newClient } = await supabase
+        .from('clients')
+        .insert({
+          name: createBrandForm.name,
+          brand_id: newBrand.id,
+          is_internal_brand: false,
+          is_public: false,
+          bio: createBrandForm.description || `Cliente de marca: ${createBrandForm.name}`,
+        })
+        .select()
+        .single();
+
+      // Add owner to client_users
+      if (newClient) {
+        await supabase.from('client_users').insert({
+          client_id: newClient.id,
+          user_id: user.id,
+          role: 'owner',
+        });
+      }
+
+      toast({ title: 'Empresa creada', description: 'Tu empresa se ha creado correctamente' });
+      setShowCreateBrandDialog(false);
+
+      // Reload page to refresh brand context
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Error creating brand:', error);
+      if (error?.code === '23505') {
+        toast({ title: 'Error', description: 'Ya existe una marca con ese nombre', variant: 'destructive' });
+      } else {
+        toast({ title: 'Error', description: error?.message || 'Error al crear la marca', variant: 'destructive' });
+      }
+    } finally {
+      setIsCreatingBrand(false);
     }
   };
 
@@ -819,28 +966,131 @@ export default function ClientDashboard() {
   }
 
   if (!clientInfo) {
-    // Brand-mode: redirect to admin dashboard (marketplace tab available there)
-    if (brandHook.hasBrand && brandHook.activeBrand) {
-      return <Navigate to="/dashboard" replace />;
+    // Independent brand member waiting for brandClient to load
+    if (isIndependentBrand && brandClientLoading) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+          <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
+          <p className="text-muted-foreground">Cargando tu empresa...</p>
+        </div>
+      );
     }
 
-    // No brand and no client — show fallback
+    // Independent brand member without client yet - show create button
+    if (isIndependentBrand && activeBrand && !brandClient) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+          <Building2 className="w-16 h-16 text-primary mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Configurando tu empresa</h2>
+          <p className="text-muted-foreground text-center max-w-md mb-6">
+            Estamos preparando tu espacio de trabajo. Esto tomará solo un momento...
+          </p>
+          <Button onClick={() => window.location.reload()}>
+            Recargar página
+          </Button>
+        </div>
+      );
+    }
+
+    // No brand and no client — show create brand option
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-        <Package className="w-16 h-16 text-muted-foreground mb-4" />
-        <h2 className="text-xl font-semibold mb-2">Sin empresa vinculada</h2>
+        <Building2 className="w-16 h-16 text-primary mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Crea tu empresa</h2>
         <p className="text-muted-foreground text-center max-w-md mb-6">
-          Tu cuenta aun no esta vinculada a una empresa. Contacta al administrador para completar la configuracion.
+          Comienza creando tu empresa para acceder a todas las funcionalidades de la plataforma.
         </p>
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button onClick={() => setShowCreateBrandDialog(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Crear mi Empresa
+          </Button>
           <Button variant="outline" onClick={() => navigate('/marketplace')}>
-            Ver Portafolio
+            Ver Marketplace
           </Button>
           <Button variant="ghost" onClick={signOut}>
             <LogOut className="w-4 h-4 mr-2" />
             Cerrar Sesion
           </Button>
         </div>
+
+        {/* Create Brand Dialog */}
+        <Dialog open={showCreateBrandDialog} onOpenChange={setShowCreateBrandDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Crear tu Empresa</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="brand-name">Nombre de tu empresa *</Label>
+                <Input
+                  id="brand-name"
+                  placeholder="Mi Empresa S.A.S"
+                  value={createBrandForm.name}
+                  onChange={(e) => setCreateBrandForm(prev => ({ ...prev, name: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="brand-industry">Industria</Label>
+                <Input
+                  id="brand-industry"
+                  placeholder="Ej: Tecnología, Moda, Alimentos..."
+                  value={createBrandForm.industry}
+                  onChange={(e) => setCreateBrandForm(prev => ({ ...prev, industry: e.target.value }))}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="brand-website">Sitio web</Label>
+                  <Input
+                    id="brand-website"
+                    placeholder="www.miempresa.com"
+                    value={createBrandForm.website}
+                    onChange={(e) => setCreateBrandForm(prev => ({ ...prev, website: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="brand-city">Ciudad</Label>
+                  <Input
+                    id="brand-city"
+                    placeholder="Bogotá"
+                    value={createBrandForm.city}
+                    onChange={(e) => setCreateBrandForm(prev => ({ ...prev, city: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="brand-description">Descripción</Label>
+                <Textarea
+                  id="brand-description"
+                  placeholder="Breve descripción de tu empresa..."
+                  value={createBrandForm.description}
+                  onChange={(e) => setCreateBrandForm(prev => ({ ...prev, description: e.target.value }))}
+                  rows={3}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowCreateBrandDialog(false)}
+                disabled={isCreatingBrand}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleCreateBrand} disabled={isCreatingBrand}>
+                {isCreatingBrand ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Creando...
+                  </>
+                ) : (
+                  'Crear Empresa'
+                )}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -1055,6 +1305,79 @@ export default function ClientDashboard() {
                 size="sm"
               />
             </motion.div>
+
+            {/* Marketplace KPIs */}
+            {(marketplaceStats.activeProjects > 0 || marketplaceStats.activeCampaigns > 0 || marketplaceStats.completedProjects > 0) && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+              >
+                <Card className="border-border bg-gradient-to-br from-card to-background overflow-hidden relative">
+                  <motion.div
+                    className="absolute inset-0 opacity-30"
+                    style={{
+                      background: 'radial-gradient(circle at 50% 0%, hsl(280 100% 50% / 0.1), transparent 50%)',
+                    }}
+                  />
+                  <CardContent className="p-4 relative z-10">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <div className="p-2 rounded-lg bg-purple-500/15 border border-purple-500/30">
+                          <ShoppingBag className="h-4 w-4 text-purple-400" />
+                        </div>
+                        <h3 className="font-semibold text-white">Marketplace</h3>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs text-muted-foreground hover:text-purple-400"
+                        onClick={() => navigate('/marketplace')}
+                      >
+                        Ver todo
+                        <ArrowUpRight className="h-3 w-3 ml-1" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Megaphone className="h-4 w-4 text-purple-400" />
+                          <span className="text-xs text-muted-foreground">Campañas</span>
+                        </div>
+                        <p className="text-xl font-bold text-purple-400">{marketplaceStats.activeCampaigns}</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Briefcase className="h-4 w-4 text-blue-400" />
+                          <span className="text-xs text-muted-foreground">Proyectos Activos</span>
+                        </div>
+                        <p className="text-xl font-bold text-blue-400">{marketplaceStats.activeProjects}</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Eye className="h-4 w-4 text-amber-400" />
+                          <span className="text-xs text-muted-foreground">En Revisión</span>
+                        </div>
+                        <p className="text-xl font-bold text-amber-400">{marketplaceStats.inRevision}</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                        <div className="flex items-center gap-2 mb-1">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                          <span className="text-xs text-muted-foreground">Completados</span>
+                        </div>
+                        <p className="text-xl font-bold text-emerald-400">{marketplaceStats.completedProjects}</p>
+                      </div>
+                    </div>
+                    {marketplaceStats.totalInvested > 0 && (
+                      <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Total invertido en Marketplace</span>
+                        <span className="text-lg font-bold text-emerald-400">${marketplaceStats.totalInvested.toLocaleString()}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
             {/* Overall Progress Bar - Tech Style */}
             <motion.div

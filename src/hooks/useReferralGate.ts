@@ -38,11 +38,16 @@ export function useReferralGate() {
     return pg !== 'creator' && pg !== 'editor';
   });
 
+  // Brand members bypass the gate - detect by: role, active_brand_id, or active_role='client'
+  const isBrandMember = isClient ||
+    !!(profile as any)?.active_brand_id ||
+    (profile as any)?.active_role === 'client';
+
   const quickBypass =
     isPlatformAdmin ||
     profile?.platform_access_unlocked === true ||
     hasOrganization ||
-    isClient ||
+    isBrandMember || // Use isBrandMember instead of just isClient
     hasNonTalentRoles; // Only bypass if user has non-talent roles (admin, strategist, etc.)
 
   const {

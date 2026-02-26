@@ -129,11 +129,22 @@ function MarketplaceProjectCard({
 // ── Main Board View ────────────────────────────────────────────────────
 
 export function MarketplaceBoardView() {
-  const { isCreator, isEditor, isAdmin } = useAuth();
+  const { isCreator, isEditor, isAdmin, profile, isClient } = useAuth();
   const navigate = useNavigate();
 
+  // Detect brand members (independent brands without org)
+  const isBrandMember = isClient ||
+    !!(profile as any)?.active_brand_id ||
+    (profile as any)?.active_role === 'client';
+
   const role = isCreator ? 'creator' : isEditor ? 'editor' : 'brand';
-  const { projects, loading, refetch, updateProjectStatus } = useMarketplaceProjects({ role });
+  // Get brand ID for brand members to filter their projects
+  const brandId = isBrandMember ? (profile as any)?.active_brand_id : undefined;
+  const { projects, loading, refetch, updateProjectStatus } = useMarketplaceProjects({
+    role,
+    brandId,
+    isBrandMember, // Pass flag to handle brand members without brand yet
+  });
 
   const columns: KanbanColumnConfig[] = useMemo(() => {
     if (isCreator) return CREATOR_COLUMNS;

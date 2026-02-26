@@ -188,10 +188,11 @@ const creatorSections: NavSection[] = [
 
 const clientSections: NavSection[] = [
   {
-    label: "KREOON STUDIO",
+    label: "MI MARCA",
     items: [
-      { name: "Client Portal", href: "/client-dashboard", icon: LayoutDashboard },
-      { name: "Producciones", href: "/client-board", icon: Kanban },
+      { name: "Portal", href: "/client-dashboard", icon: LayoutDashboard },
+      { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban },
+      { name: "Mis Campañas", href: "/marketplace/my-campaigns", icon: Megaphone },
     ]
   },
   {
@@ -201,8 +202,6 @@ const clientSections: NavSection[] = [
       { name: "Live", href: "/live", icon: Video },
       { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3 },
       { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus },
-      { name: "Ad Intelligence", href: "/admin/ad-intelligence", icon: Search },
-      { name: "Social Scraper", href: "/admin/social-scraper", icon: Radar },
     ]
   },
   { label: "CONFIG", items: CONFIG_ITEMS }
@@ -257,11 +256,6 @@ function getMarketplaceSections(activeGroup: PermissionGroup | null, isFreelance
     { name: "Marketplace", href: "/marketplace", icon: Store },
   ];
 
-  // Videos module - not available for freelancers yet
-  if (!isFreelance) {
-    items.push({ name: "Videos", href: "/marketplace/videos", icon: Play });
-  }
-
   if (activeGroup !== 'editor' && activeGroup !== 'client') {
     items.push({ name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone });
   }
@@ -312,9 +306,16 @@ export function MobileNav() {
   const isFreelanceUser = !profile?.current_organization_id && !isPlatformAdmin && !isPlatformRoot;
 
   // Resolve permission group — same logic as Sidebar
-  const activeGroup: PermissionGroup | null = isImpersonating
+  const rawActiveGroup: PermissionGroup | null = isImpersonating
     ? (effectiveRoles.length > 0 ? getPermissionGroup(effectiveRoles[0]) : null)
     : (activeRole ? getPermissionGroup(activeRole) : null);
+
+  // Detect client/brand member: by profile flags
+  const isBrandMember = !!(profile as any)?.active_brand_id ||
+    (profile as any)?.active_role === 'client';
+
+  // For brand members without org roles, treat them as 'client' group
+  const activeGroup: PermissionGroup | null = rawActiveGroup || (isBrandMember ? 'client' : null);
 
   const activeIsAdmin = activeGroup === 'admin';
   const activeIsStrategist = activeGroup === 'strategist';
@@ -417,9 +418,19 @@ export function MobileNav() {
       return lockedUserSections;
     }
 
-    // Freelance users (no org, no plan) only see marketplace + profile config
+    // Independent users (no org) - differentiate between clients and freelancers
     if (isFreelanceUser && (isUnlocked || activeIsClient)) {
-      const mktSections = getMarketplaceSections(activeGroup, true);
+      const mktSections = getMarketplaceSections(activeGroup, !activeIsClient);
+
+      // Brand members/clients get client sections, talents get freelance sections
+      if (activeIsClient) {
+        return [
+          ...mktSections,
+          ...clientSections,
+        ];
+      }
+
+      // Freelance talents
       return [
         ...mktSections,
         ...freelanceSections,

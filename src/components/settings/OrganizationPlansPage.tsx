@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 import {
   Check, Crown, Zap, Building2, Users, Video, Sparkles, Clock,
   AlertTriangle, CheckCircle2, CreditCard, ExternalLink, Briefcase, UserCircle,
-  Shield, Compass, Film, Camera,
+  Shield, Compass, Film, Camera, Gift,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useBillingAnalytics } from '@/analytics';
@@ -25,6 +25,20 @@ import { es } from 'date-fns/locale';
 import { PLANS as PLAN_DEFS, type PlanDef } from '@/lib/finance/constants';
 import { useAITokens } from '@/hooks/useAITokens';
 import type { SubscriptionTier, BillingCycle } from '@/types/unified-finance.types';
+
+interface CommunityMembership {
+  id: string;
+  community_id: string;
+  free_months_granted: number;
+  commission_discount_applied: number;
+  bonus_tokens_granted: number;
+  status: string;
+  community: {
+    name: string;
+    custom_badge_text: string | null;
+    custom_badge_color: string | null;
+  };
+}
 
 type Segment = PlanDef['segment'];
 
@@ -164,7 +178,10 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
 
   // Client users also have their OWN subscription (not the org's)
   const permissionGroup = activeRole ? getPermissionGroup(activeRole) : null;
-  const isClientUser = permissionGroup === 'client';
+  // Brand members detection: active_brand_id or active_role='client' (for independent brands without org roles)
+  const isBrandMember = !!(profile as any)?.active_brand_id ||
+    (profile as any)?.active_role === 'client';
+  const isClientUser = permissionGroup === 'client' || isBrandMember;
 
   // Personal subscription scope: talents and clients use user_id, others use org_id
   const hasPersonalSubscription = isTalentUser || isClientUser;
@@ -191,6 +208,9 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
     isOpeningPortal,
     cancelSubscription,
     isLoading: subLoading,
+    activateCommunityStarter,
+    isActivatingCommunity,
+    refetch: refetchSubscription,
   } = useSubscription(subscriptionScopeId);
 
   // Fetch current organization data (skip for personal subscription users — talents & clients)
@@ -208,6 +228,91 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
     },
     enabled: !!organizationId && !hasPersonalSubscription,
   });
+
+  // Fetch partner community membership for the user (benefits like free months)
+  const { data: communityMembership, isFetched: communityFetched } = useQuery({
+    queryKey: ['partner-community-membership', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+
+      // First get the membership
+      const { data: membership, error: membershipError } = await supabase
+        .from('partner_community_memberships')
+        .select('id, community_id, free_months_granted, commission_discount_applied, bonus_tokens_granted, status')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .gt('free_months_granted', 0)
+        .order('free_months_granted', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (membershipError) {
+        console.error('Error fetching community membership:', membershipError);
+        return null;
+      }
+      if (!membership) return null;
+
+      // Then get the community info
+      const { data: community, error: communityError } = await supabase
+        .from('partner_communities')
+        .select('name, custom_badge_text, custom_badge_color')
+        .eq('id', membership.community_id)
+        .single();
+
+      if (communityError) {
+        console.error('Error fetching community:', communityError);
+        // Return membership without community details
+        return {
+          ...membership,
+          community: { name: 'Partner', custom_badge_text: null, custom_badge_color: null },
+        } as CommunityMembership;
+      }
+
+      return {
+        ...membership,
+        community,
+      } as CommunityMembership;
+    },
+    enabled: !!user?.id,
+    staleTime: 0, // Always refetch to avoid stale cache issues
+  });
+
+  // Check if user has pending community benefits (free months not yet used)
+  const hasCommunityBenefits = communityMembership && communityMembership.free_months_granted > 0;
+  const communityFreeMonths = communityMembership?.free_months_granted || 0;
+  const communityName = communityMembership?.community?.name || 'Partner';
+
+  // Auto-activate Community Starter for community members
+  const activationAttemptedRef = useRef(false);
+
+  useEffect(() => {
+    // Only auto-activate if:
+    // 1. Community query has actually fetched (not just cached data)
+    // 2. User has community benefits with free months
+    // 3. User does NOT have an active subscription
+    // 4. We haven't attempted activation yet in this session
+    // 5. Not loading
+    if (
+      communityFetched &&
+      hasCommunityBenefits &&
+      !isActive &&
+      !subLoading &&
+      !activationAttemptedRef.current &&
+      !isActivatingCommunity
+    ) {
+      activationAttemptedRef.current = true;
+      activateCommunityStarter()
+        .then(() => {
+          refetchSubscription();
+        })
+        .catch((err) => {
+          // Silently ignore if no membership - user just doesn't have community benefits
+          if (!err?.message?.includes('membresía de comunidad')) {
+            console.error('Error auto-activating community starter:', err);
+          }
+        });
+    }
+  }, [communityFetched, hasCommunityBenefits, isActive, subLoading, isActivatingCommunity, activateCommunityStarter, refetchSubscription]);
 
   // Get plans for the selected segment
   const segmentPlans = PLAN_DEFS.filter(p => p.segment === segment);
@@ -251,10 +356,13 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
   // Check if personal subscription is in "trialing" status (e.g., referral reward)
   const isPersonalTrial = hasPersonalSubscription && subscription?.status === 'trialing';
 
-  if (isLoading || subLoading) {
+  if (isLoading || subLoading || isActivatingCommunity) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        {isActivatingCommunity && (
+          <p className="ml-3 text-sm text-muted-foreground">Activando tu plan de comunidad...</p>
+        )}
       </div>
     );
   }
@@ -282,15 +390,20 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
                 isTrialActive ? 'secondary' :
                 isPastDue ? 'destructive' :
                 isActive ? 'default' :
+                hasCommunityBenefits ? 'default' :
                 (!hasPersonalSubscription && trialStatus.isExpired) ? 'destructive' :
                 'secondary'
               }
-              className="text-sm"
+              className={cn(
+                "text-sm",
+                hasCommunityBenefits && !isActive && "bg-amber-500/20 text-amber-600 border-amber-500/30"
+              )}
             >
               {isPersonalTrial ? 'Plan Activo' :
                isTrialActive ? 'Periodo de prueba' :
                isPastDue ? 'Pago pendiente' :
                isActive ? 'Activo' :
+               hasCommunityBenefits ? `Miembro ${communityName}` :
                (!hasPersonalSubscription && trialStatus.isExpired) ? 'Expirado' :
                isFree ? 'Plan gratuito' : 'Inactivo'}
             </Badge>
@@ -414,8 +527,76 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
               <p className="text-[10px] text-muted-foreground">disponibles</p>
             </div>
           </div>
+          {/* Community tokens bonus info */}
+          {communityMembership && communityMembership.bonus_tokens_granted > 0 && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1 mt-2">
+              <Gift className="h-3 w-3" />
+              Incluye {communityMembership.bonus_tokens_granted.toLocaleString()} tokens de bienvenida de {communityName}
+            </p>
+          )}
         </CardContent>
       </Card>
+
+      {/* Partner Community Benefits Banner */}
+      {hasCommunityBenefits && (
+        <Card className="border-amber-500/50 bg-gradient-to-r from-amber-500/10 to-orange-500/10">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-full bg-amber-500/20">
+                {isActive ? (
+                  <CheckCircle2 className="h-6 w-6 text-green-500" />
+                ) : (
+                  <Gift className="h-6 w-6 text-amber-500" />
+                )}
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-semibold text-amber-600 dark:text-amber-400">
+                    {isActive ? 'Plan Starter Activo' : `Beneficios de ${communityName}`}
+                  </h4>
+                  {communityMembership?.community?.custom_badge_text && (
+                    <Badge
+                      style={{
+                        backgroundColor: communityMembership.community.custom_badge_color || '#f59e0b',
+                        color: 'white',
+                      }}
+                      className="text-xs"
+                    >
+                      {communityMembership.community.custom_badge_text}
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  {isActive ? (
+                    <>
+                      Tu plan <span className="font-bold text-green-600 dark:text-green-400">Starter</span> está activo con <span className="font-bold text-amber-600 dark:text-amber-400">{communityFreeMonths} {communityFreeMonths === 1 ? 'mes' : 'meses'} gratis</span> por ser parte de {communityName}.
+                    </>
+                  ) : (
+                    <>
+                      Tienes <span className="font-bold text-amber-600 dark:text-amber-400">{communityFreeMonths} {communityFreeMonths === 1 ? 'mes' : 'meses'} gratis</span> del plan Starter por ser parte de la comunidad {communityName}.
+                    </>
+                  )}
+                  {communityMembership?.commission_discount_applied && communityMembership.commission_discount_applied > 0 && (
+                    <> Además, disfrutas de un <span className="font-bold text-amber-600 dark:text-amber-400">descuento de {communityMembership.commission_discount_applied}%</span> en comisiones del marketplace.</>
+                  )}
+                </p>
+                {isActive && periodEnd && (
+                  <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 bg-green-500/10 p-2 rounded-lg">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Tu periodo gratuito termina el {format(periodEnd, "d 'de' MMMM, yyyy", { locale: es })}</span>
+                  </div>
+                )}
+                {!isActive && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground bg-amber-500/10 p-2 rounded-lg">
+                    <Sparkles className="h-4 w-4 text-amber-500" />
+                    <span>Tu plan se está activando automáticamente...</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Segment Tabs — hidden when segment is fixed by role */}
       {!fixedSegment && (
@@ -616,7 +797,7 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
                   </ul>
                 </CardContent>
 
-                <CardFooter>
+                <CardFooter className="flex-col gap-2">
                   {isFreeplan ? (
                     <Button className="w-full" variant="outline" disabled>
                       <CheckCircle2 className="h-4 w-4 mr-2" />
@@ -631,26 +812,33 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
                       Contactar ventas
                     </Button>
                   ) : (
-                    <Button
-                      className="w-full"
-                      variant={isCurrentPlan && isActive ? "outline" : isPopular ? "default" : "secondary"}
-                      disabled={(isCurrentPlan && isActive) || isCheckingOut}
-                      onClick={() => handleSelectPlan(plan.id)}
-                    >
-                      {isCurrentPlan && isActive ? (
-                        <span className="flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4" />
-                          Plan actual
-                        </span>
-                      ) : isCheckingOut ? (
-                        <>
-                          <Clock className="h-4 w-4 mr-2 animate-spin" />
-                          Procesando...
-                        </>
-                      ) : (
-                        'Seleccionar plan'
+                    <>
+                      <Button
+                        className="w-full"
+                        variant={isCurrentPlan && isActive ? "outline" : isPopular ? "default" : "secondary"}
+                        disabled={(isCurrentPlan && isActive) || isCheckingOut}
+                        onClick={() => handleSelectPlan(plan.id)}
+                      >
+                        {isCurrentPlan && isActive ? (
+                          <span className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4" />
+                            Plan activo
+                          </span>
+                        ) : isCheckingOut ? (
+                          <>
+                            <Clock className="h-4 w-4 mr-2 animate-spin" />
+                            Procesando...
+                          </>
+                        ) : (
+                          'Seleccionar plan'
+                        )}
+                      </Button>
+                      {isCurrentPlan && isActive && hasCommunityBenefits && (
+                        <p className="text-xs text-center text-green-600 dark:text-green-400">
+                          {communityFreeMonths} {communityFreeMonths === 1 ? 'mes' : 'meses'} gratis de comunidad
+                        </p>
                       )}
-                    </Button>
+                    </>
                   )}
                 </CardFooter>
               </Card>

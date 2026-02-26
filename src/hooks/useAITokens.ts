@@ -132,9 +132,8 @@ export function useAITokens(organizationId?: string | null) {
     fetchData();
   }, [fetchData]);
 
-  const totalAvailable = balance
-    ? balance.tokensRemaining + balance.purchasedTokens
-    : 0;
+  // tokensRemaining ya incluye purchasedTokens (ver línea 85)
+  const totalAvailable = balance?.tokensRemaining || 0;
   const monthlyTotal =
     balance?.monthlyTokensIncluded && balance.monthlyTokensIncluded > 0
       ? balance.monthlyTokensIncluded

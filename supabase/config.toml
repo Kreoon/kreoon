@@ -360,3 +360,10 @@ verify_jwt = true
 
 [functions.portfolio-image-upload]
 verify_jwt = true
+
+# ── Partner Communities ──
+
+[functions.partner-community-service]
+# Acciones públicas (validate, get-info) + autenticadas (apply, check-membership)
+# La autenticación se verifica internamente para las acciones que lo requieren
+verify_jwt = false

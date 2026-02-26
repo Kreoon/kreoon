@@ -103,6 +103,9 @@ serve(async (req) => {
       case "get-status":
         result = await getSubscriptionStatus(supabase, user.id, body.organization_id);
         break;
+      case "activate-community-starter":
+        result = await activateCommunityStarter(supabase, user.id);
+        break;
       default:
         throw new Error(`Unknown action: ${action}`);
     }
@@ -282,6 +285,25 @@ async function createCheckoutSession(supabase: any, userId: string, request: Sub
   // URL base para redirecciones
   const baseUrl = Deno.env.get("FRONTEND_URL") || "https://kreoon.com";
 
+  // Verificar si el usuario tiene membresía de comunidad con meses gratis
+  let trialDays = tier.includes("free") ? 0 : 14; // Default: 14 días de trial
+
+  const { data: communityMembership } = await supabase
+    .from("partner_community_memberships")
+    .select("free_months_granted")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .gt("free_months_granted", 0)
+    .order("free_months_granted", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (communityMembership?.free_months_granted) {
+    // Convertir meses a días (aproximado: 30 días por mes)
+    trialDays = communityMembership.free_months_granted * 30;
+    console.log(`Partner community trial: ${trialDays} days (${communityMembership.free_months_granted} months)`);
+  }
+
   // Crear Checkout Session
   let session;
   try {
@@ -296,7 +318,7 @@ async function createCheckoutSession(supabase: any, userId: string, request: Sub
         },
       ],
       subscription_data: {
-        trial_period_days: tier.includes("free") ? 0 : 14, // 14 días de trial
+        trial_period_days: trialDays,
         metadata: {
           tier,
           user_id: userId,
@@ -506,6 +528,203 @@ async function getPlans(supabase: any) {
   return {
     success: true,
     plans,
+  };
+}
+
+// ============================================================================
+// OBTENER ESTADO DE SUSCRIPCIÓN
+// ============================================================================
+
+// ============================================================================
+// ACTIVAR PLAN STARTER PARA MIEMBROS DE COMUNIDAD (Sin Stripe)
+// ============================================================================
+
+async function activateCommunityStarter(supabase: any, userId: string) {
+  console.log(`[activate-community-starter] Checking membership for user: ${userId}`);
+
+  // 1. First, get ALL memberships for this user to debug
+  const { data: allMemberships, error: debugError } = await supabase
+    .from("partner_community_memberships")
+    .select("id, user_id, community_id, free_months_granted, status")
+    .eq("user_id", userId);
+
+  console.log(`[activate-community-starter] All memberships for user:`, JSON.stringify(allMemberships), "error:", debugError?.message);
+
+  // 2. Verificar que el usuario tiene membresía de comunidad activa con meses gratis
+  const { data: communityMembership, error: cmError } = await supabase
+    .from("partner_community_memberships")
+    .select("id, community_id, free_months_granted, status")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .gt("free_months_granted", 0)
+    .order("free_months_granted", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  console.log(`[activate-community-starter] Filtered membership:`, JSON.stringify(communityMembership), "error:", cmError?.message);
+
+  if (cmError) {
+    console.error("Error fetching community membership:", cmError);
+    throw new Error("Error al verificar membresía de comunidad");
+  }
+
+  if (!communityMembership) {
+    // Si no hay con free_months > 0, buscar cualquiera activa para dar info
+    const { data: anyActive } = await supabase
+      .from("partner_community_memberships")
+      .select("id, free_months_granted, status")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .limit(1)
+      .maybeSingle();
+
+    console.log(`[activate-community-starter] Any active membership:`, JSON.stringify(anyActive));
+
+    if (anyActive && anyActive.free_months_granted === 0) {
+      throw new Error("Tu membresía de comunidad no tiene meses gratis disponibles");
+    }
+    throw new Error("No tienes una membresía de comunidad con beneficios activos");
+  }
+
+  // 2. Verificar que no tenga ya una suscripción activa (personal, no de org)
+  const { data: existingSub } = await supabase
+    .from("platform_subscriptions")
+    .select("id, tier, status")
+    .eq("user_id", userId)
+    .is("organization_id", null)
+    .in("status", ["active", "trialing"])
+    .limit(1)
+    .maybeSingle();
+
+  if (existingSub) {
+    // Ya tiene suscripción activa
+    return {
+      success: true,
+      already_active: true,
+      subscription: existingSub,
+      message: "Ya tienes un plan activo",
+    };
+  }
+
+  // 3. Obtener o crear wallet para el usuario
+  let { data: wallet } = await supabase
+    .from("unified_wallets")
+    .select("id")
+    .eq("user_id", userId)
+    .is("organization_id", null)
+    .limit(1)
+    .maybeSingle();
+
+  if (!wallet) {
+    const { data: newWallet, error: walletError } = await supabase
+      .from("unified_wallets")
+      .insert({
+        user_id: userId,
+        wallet_type: "brand",
+      })
+      .select()
+      .single();
+
+    if (walletError) {
+      console.error("Error creating wallet:", walletError);
+      throw new Error("Error al crear wallet");
+    }
+    wallet = newWallet;
+  }
+
+  // 4. Calcular fechas de trial (meses gratis)
+  const freeMonths = communityMembership.free_months_granted;
+  const now = new Date();
+  const trialEnd = new Date(now);
+  trialEnd.setMonth(trialEnd.getMonth() + freeMonths);
+
+  // 5. Crear suscripción con status "trialing" (sin Stripe)
+  const { data: subscription, error: subError } = await supabase
+    .from("platform_subscriptions")
+    .insert({
+      user_id: userId,
+      organization_id: null,
+      wallet_id: wallet.id,
+      tier: "brand_starter",
+      status: "trialing",
+      billing_cycle: "community_benefit",
+      price_monthly: 39.00, // Plan Starter price
+      price_annual: 390.00,
+      current_price: 0, // Free during trial
+      current_period_start: now.toISOString(),
+      current_period_end: trialEnd.toISOString(),
+      trial_ends_at: trialEnd.toISOString(),
+      stripe_subscription_id: null, // Sin Stripe - es beneficio de comunidad
+      plan_limits: {
+        users: 3,
+        content_per_month: 30,
+        storage_gb: 5,
+        ai_tokens: 4000,
+      },
+      metadata: {
+        community_membership_id: communityMembership.id,
+        community_id: communityMembership.community_id,
+        free_months: freeMonths,
+        activated_at: now.toISOString(),
+        source: "community_benefit",
+      },
+    })
+    .select()
+    .single();
+
+  if (subError) {
+    console.error("Error creating subscription:", subError);
+    throw new Error("Error al activar plan: " + subError.message);
+  }
+
+  // 6. Crear o actualizar balance de tokens AI
+  const { data: existingTokens } = await supabase
+    .from("ai_token_balances")
+    .select("id")
+    .eq("user_id", userId)
+    .is("organization_id", null)
+    .limit(1)
+    .maybeSingle();
+
+  if (existingTokens) {
+    await supabase
+      .from("ai_token_balances")
+      .update({
+        monthly_allowance: 4000,
+        balance_subscription: 4000,
+        updated_at: now.toISOString(),
+      })
+      .eq("id", existingTokens.id);
+  } else {
+    await supabase
+      .from("ai_token_balances")
+      .insert({
+        user_id: userId,
+        organization_id: null,
+        monthly_allowance: 4000,
+        balance_subscription: 4000,
+        balance_purchased: 0,
+        balance_bonus: communityMembership.bonus_tokens_granted || 0,
+        balance_total: 4000 + (communityMembership.bonus_tokens_granted || 0),
+      });
+  }
+
+  // 7. Marcar los meses gratis como consumidos (opcional: poner a 0 o dejar para referencia)
+  // Por ahora dejamos los free_months_granted como están para historial
+
+  console.log(`Community Starter activated for user ${userId}: ${freeMonths} months free until ${trialEnd.toISOString()}`);
+
+  return {
+    success: true,
+    subscription: {
+      id: subscription.id,
+      tier: subscription.tier,
+      status: subscription.status,
+      trial_ends_at: subscription.trial_ends_at,
+      current_period_end: subscription.current_period_end,
+    },
+    free_months: freeMonths,
+    message: `Plan Starter activado con ${freeMonths} meses gratis`,
   };
 }
 

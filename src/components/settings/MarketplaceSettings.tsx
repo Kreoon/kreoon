@@ -24,6 +24,10 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useCreatorProfile } from '@/hooks/useCreatorProfile';
 import { useCreatorServices } from '@/hooks/useCreatorServices';
+import { useBrand } from '@/hooks/useBrand';
+import { BunnyImageUploader } from '@/components/marketplace/BunnyImageUploader';
+import { marketplaceStoragePath } from '@/hooks/useBunnyImageUpload';
+import { INDUSTRY_DATA } from '@/types/ai-matching';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -994,38 +998,194 @@ export function BrandSettingsTabs() {
 // ─── Brand Company Tab ──────────────────────────────────────────────────────────
 
 function BrandCompanyTab() {
-  const [companyName, setCompanyName] = useState('');
-  const [description, setDescription] = useState('');
+  const { activeBrand, hasBrand, isLoading, refetch } = useBrand();
+  const [saving, setSaving] = useState(false);
+
+  // Form state
+  const [form, setForm] = useState({
+    name: '',
+    description: '',
+    industry: '',
+    website: '',
+    city: '',
+    country: 'CO',
+    nit: '',
+    logo_url: '',
+  });
+
+  // Initialize form with brand data
+  useEffect(() => {
+    if (activeBrand) {
+      setForm({
+        name: activeBrand.name || '',
+        description: activeBrand.description || '',
+        industry: activeBrand.industry || '',
+        website: activeBrand.website || '',
+        city: activeBrand.city || '',
+        country: activeBrand.country || 'CO',
+        nit: activeBrand.nit || '',
+        logo_url: activeBrand.logo_url || '',
+      });
+    }
+  }, [activeBrand]);
+
+  const handleSave = async () => {
+    if (!activeBrand?.id) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('brands')
+        .update({
+          name: form.name,
+          description: form.description,
+          industry: form.industry,
+          website: form.website,
+          city: form.city,
+          country: form.country,
+          nit: form.nit,
+          logo_url: form.logo_url,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', activeBrand.id);
+
+      if (error) throw error;
+      toast.success('Empresa actualizada');
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message || 'Error al guardar');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!hasBrand || !activeBrand) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center">
+          <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">No tienes una empresa registrada.</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Ve al dashboard para crear tu empresa.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Tu Empresa</CardTitle>
-        <CardDescription>Información básica de tu empresa o marca</CardDescription>
+        <CardDescription>Información de tu empresa o marca</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Logo */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Nombre de la empresa *</label>
-          <Input
-            placeholder="Nombre de tu empresa"
-            value={companyName}
-            onChange={e => setCompanyName(e.target.value)}
+          <label className="text-sm font-medium">Logo de la empresa</label>
+          <BunnyImageUploader
+            mode="single"
+            value={form.logo_url}
+            onChange={(url) => setForm({ ...form, logo_url: url })}
+            getStoragePath={(file) => marketplaceStoragePath('brand-logo', activeBrand.slug || activeBrand.id, file)}
+            aspectRatio="square"
+            height="h-28"
+            maxSizeMB={5}
           />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Nombre de la empresa *</label>
+            <Input
+              placeholder="Nombre de tu empresa"
+              value={form.name}
+              onChange={e => setForm({ ...form, name: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Industria *</label>
+            <Select value={form.industry} onValueChange={(v) => setForm({ ...form, industry: v })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona tu industria" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(INDUSTRY_DATA).map(([key, data]) => (
+                  <SelectItem key={key} value={key}>
+                    {data.icon} {data.name_es}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Descripción</label>
           <Textarea
             placeholder="Describe tu empresa, productos y servicios..."
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            className="min-h-[120px]"
+            value={form.description}
+            onChange={e => setForm({ ...form, description: e.target.value })}
+            className="min-h-[100px]"
             maxLength={500}
           />
-          <p className="text-xs text-muted-foreground text-right">{description.length}/500</p>
+          <p className="text-xs text-muted-foreground text-right">{form.description.length}/500</p>
         </div>
 
-        <Button className="w-full sm:w-auto">Guardar Empresa</Button>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Sitio web</label>
+            <Input
+              placeholder="https://www.ejemplo.com"
+              value={form.website}
+              onChange={e => setForm({ ...form, website: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">NIT / Documento fiscal</label>
+            <Input
+              placeholder="123456789-0"
+              value={form.nit}
+              onChange={e => setForm({ ...form, nit: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Ciudad</label>
+            <Input
+              placeholder="Ej: Bogotá"
+              value={form.city}
+              onChange={e => setForm({ ...form, city: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">País</label>
+            <Input
+              placeholder="CO"
+              value={form.country}
+              onChange={e => setForm({ ...form, country: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <Button onClick={handleSave} disabled={saving || !form.name} className="w-full sm:w-auto">
+          {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          Guardar Empresa
+        </Button>
       </CardContent>
     </Card>
   );

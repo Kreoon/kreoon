@@ -20,7 +20,7 @@ interface CreateBrandDialogProps {
 
 export function CreateBrandDialog({ open, onOpenChange }: CreateBrandDialogProps) {
   const navigate = useNavigate();
-  const { createBrand, isCreating } = useBrand();
+  const { createBrand, isCreating, canCreateBrand, hasBrand } = useBrand();
 
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -58,6 +58,26 @@ export function CreateBrandDialog({ open, onOpenChange }: CreateBrandDialogProps
       // Error handled by mutation
     }
   };
+
+  // If user already has a brand, show message instead of form
+  if (!canCreateBrand && hasBrand) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ya tienes una empresa</DialogTitle>
+            <DialogDescription>
+              Solo puedes crear 1 empresa por cuenta. Si necesitas crear otra marca,
+              contacta a soporte para actualizar tu plan.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end pt-4">
+            <Button onClick={() => onOpenChange(false)}>Entendido</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

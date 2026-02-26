@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { 
+import {
   Video, Users, CheckCircle, Clock, DollarSign, TrendingUp,
   Activity, Target, BarChart3, ArrowUpRight, ArrowDownRight,
   Play, UserCheck, Calendar, Banknote, Filter, X, Settings,
@@ -274,10 +275,48 @@ const LargeKpiCard = ({
 };
 
 export default function Dashboard() {
-  const { user, isAdmin, profile } = useAuth();
-  const { currentOrgId, loading: orgLoading } = useOrgOwner();
+  const { user, isAdmin, isClient, profile } = useAuth();
+  const { currentOrgId, isPlatformRoot, loading: orgLoading } = useOrgOwner();
   const { toast } = useToast();
-  
+
+  // Detect independent client (client_users or brand member without organization)
+  const [isIndependentClient, setIsIndependentClient] = useState<boolean | null>(null);
+  useEffect(() => {
+    // Wait for org loading to finish
+    if (orgLoading) return;
+    // If user has organization or is platform root, they're not independent
+    if (currentOrgId || isPlatformRoot) {
+      setIsIndependentClient(false);
+      return;
+    }
+    // Check if user is a brand member
+    const isBrandMember = !!(profile as any)?.active_brand_id;
+    if (isBrandMember) {
+      setIsIndependentClient(true);
+      return;
+    }
+    // Check if user has client_users associations
+    if (!user?.id) {
+      setIsIndependentClient(false);
+      return;
+    }
+    const checkClientUser = async () => {
+      const { data } = await supabase
+        .from('client_users')
+        .select('client_id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .maybeSingle();
+      setIsIndependentClient(!!data?.client_id);
+    };
+    checkClientUser();
+  }, [orgLoading, currentOrgId, isPlatformRoot, profile, user?.id]);
+
+  // Redirect independent clients to their dedicated dashboard
+  if (isIndependentClient === true) {
+    return <Navigate to="/client-dashboard" replace />;
+  }
+
   // Filters state
   const [filterClientId, setFilterClientId] = useState<string>('all');
   const [filterCreatorId, setFilterCreatorId] = useState<string>('all');

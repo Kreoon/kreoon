@@ -10,9 +10,13 @@ export default function PlanesPage() {
   const organizationId = profile?.current_organization_id;
   const group = activeRole ? getPermissionGroup(activeRole) : null;
 
+  // Detect brand members: by active_brand_id or active_role='client'
+  const isBrandMember = !!(profile as any)?.active_brand_id ||
+    (profile as any)?.active_role === 'client';
+
   let segment: Segment;
-  if (group === 'client') {
-    // Client users always see brand/client plans, whether in org or not
+  if (group === 'client' || isBrandMember) {
+    // Client/brand users always see brand/client plans, whether in org or not
     segment = 'marcas';
   } else if (!organizationId) {
     // Freelance users without org: talent → creadores

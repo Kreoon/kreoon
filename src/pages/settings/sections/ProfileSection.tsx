@@ -56,8 +56,14 @@ const COUNTRIES = [
 // ─── Main Section ────────────────────────────────────────────────────────────
 
 export default function ProfileSection() {
-  const { activeRole } = useAuth();
-  const roleArea = getRoleArea(activeRole);
+  const { activeRole, profile } = useAuth();
+
+  // Detect brand members: by active_brand_id, active_role='client', or actual client role
+  const isBrandMember = !!(profile as any)?.active_brand_id ||
+    (profile as any)?.active_role === 'client';
+
+  // For brand members, force 'client' role area
+  const roleArea = isBrandMember ? 'client' : getRoleArea(activeRole);
   const isBrand = roleArea === 'client';
 
   const { profile: userProfile, loading: profileLoading } = useProfile();
@@ -235,7 +241,9 @@ function CreatorUnifiedProfile({ roleArea }: { roleArea: RoleArea }) {
           <div>
             <h2 className="text-2xl font-bold tracking-tight">Mi Perfil</h2>
             <p className="text-muted-foreground">
-              {ROLE_AREA_LABELS[roleArea]} — Personaliza tu perfil, portafolio y servicios
+              {roleArea === 'client'
+                ? 'Configura tu información personal y datos de tu empresa'
+                : `${ROLE_AREA_LABELS[roleArea]} — Personaliza tu perfil, portafolio y servicios`}
             </p>
           </div>
         </div>

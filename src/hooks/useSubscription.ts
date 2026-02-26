@@ -136,6 +136,29 @@ export function useSubscription(organizationId?: string | null) {
     },
   });
 
+  // ─── Activate Community Starter (free trial for community members) ───
+  const activateCommunityStarterMutation = useMutation({
+    mutationFn: () =>
+      invokeSubscriptionService<{
+        success: boolean;
+        already_active?: boolean;
+        subscription?: any;
+        free_months?: number;
+        message?: string;
+      }>('activate-community-starter', {}),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey });
+      if (data.already_active) {
+        // Already had subscription, no toast needed
+      } else {
+        toast.success(data.message || 'Plan Starter activado');
+      }
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Error al activar plan de comunidad');
+    },
+  });
+
   // ─── Derived state ───
   const isActive = subscription?.status === 'active' || subscription?.status === 'trialing';
   const isFree = !subscription || (subscription.tier && subscription.tier.endsWith('_free')) || false;
@@ -181,6 +204,9 @@ export function useSubscription(organizationId?: string | null) {
 
     changePlan: changePlanMutation.mutateAsync,
     isChangingPlan: changePlanMutation.isPending,
+
+    activateCommunityStarter: activateCommunityStarterMutation.mutateAsync,
+    isActivatingCommunity: activateCommunityStarterMutation.isPending,
 
     // Utils
     refetch,

@@ -3,6 +3,7 @@ import { useAuthAnalytics } from "@/analytics";
 import {
   LayoutDashboard,
   Users,
+  Users2,
   FileText,
   Building2,
   Settings,
@@ -119,6 +120,8 @@ const adminSections: NavSection[] = [
       { name: "Dashboard", href: "/crm", icon: LayoutDashboard, tourId: "sidebar-crm-dashboard" },
       { name: "Leads", href: "/crm/leads", icon: UserPlus, tourId: "sidebar-crm-leads" },
       { name: "Organizaciones", href: "/crm/organizaciones", icon: Building2, tourId: "sidebar-crm-orgs" },
+      { name: "Marcas", href: "/crm/marcas", icon: Store, tourId: "sidebar-crm-brands" },
+      { name: "Comunidades", href: "/crm/comunidades", icon: Users2, tourId: "sidebar-crm-communities" },
       { name: "Talento", href: "/crm/creadores", icon: Video, tourId: "sidebar-crm-creators" },
       { name: "Usuarios", href: "/crm/usuarios", icon: Users, tourId: "sidebar-crm-users" },
       { name: "Finanzas", href: "/crm/finanzas", icon: DollarSign, tourId: "sidebar-crm-finances" },
@@ -191,10 +194,11 @@ const creatorSections: NavSection[] = [
 
 const clientSections: NavSection[] = [
   {
-    label: "KREOON STUDIO",
+    label: "MI MARCA",
     items: [
-      { name: "Client Portal", href: "/client-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
-      { name: "Producciones", href: "/client-board", icon: Kanban, tourId: "sidebar-board" },
+      { name: "Portal", href: "/client-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+      { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban, tourId: "sidebar-projects" },
+      { name: "Mis Campañas", href: "/marketplace/my-campaigns", icon: Megaphone, tourId: "sidebar-my-campaigns" },
     ]
   },
   {
@@ -204,8 +208,6 @@ const clientSections: NavSection[] = [
       { name: "Live", href: "/live", icon: Video, tourId: "sidebar-live" },
       { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
       { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus, tourId: "sidebar-ad-generator" },
-      { name: "Ad Intelligence", href: "/admin/ad-intelligence", icon: Search, tourId: "sidebar-ad-intel" },
-      { name: "Social Scraper", href: "/admin/social-scraper", icon: Radar, tourId: "sidebar-social-scraper" },
     ]
   },
   { label: "CONFIG", items: CONFIG_ITEMS }
@@ -260,11 +262,6 @@ function getMarketplaceSections(activeGroup: PermissionGroup | null, isFreelance
     { name: "Marketplace", href: "/marketplace", icon: Store, tourId: "sidebar-mkt-browse" },
   ];
 
-  // Videos module - not available for freelancers yet
-  if (!isFreelance) {
-    items.push({ name: "Videos", href: "/marketplace/videos", icon: Play, tourId: "sidebar-mkt-videos" });
-  }
-
   // Campaign items — feed visible for internal roles (not editor/client)
   if (activeGroup !== 'editor' && activeGroup !== 'client') {
     items.push({ name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone, tourId: "sidebar-mkt-campaigns" });
@@ -318,9 +315,16 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const [clientCount, setClientCount] = useState(0);
 
   // Resolve permission group for active role (supports all 36+ marketplace roles)
-  const activeGroup: PermissionGroup | null = isImpersonating
+  const rawActiveGroup: PermissionGroup | null = isImpersonating
     ? (effectiveRoles.length > 0 ? getPermissionGroup(effectiveRoles[0]) : null)
     : (activeRole ? getPermissionGroup(activeRole) : null);
+
+  // Detect client/brand member: by permission group OR profile flags
+  const isBrandMember = !!(profile as any)?.active_brand_id ||
+    (profile as any)?.active_role === 'client';
+
+  // For brand members without org roles, treat them as 'client' group
+  const activeGroup: PermissionGroup | null = rawActiveGroup || (isBrandMember ? 'client' : null);
 
   const activeIsAdmin = activeGroup === 'admin';
   const activeIsStrategist = activeGroup === 'strategist';
@@ -424,10 +428,19 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       return lockedUserSections;
     }
 
-    // Freelance users (no org, no plan) only see marketplace + profile config
+    // Independent users (no org) - differentiate between clients and freelancers
     if (isFreelanceUser && (isUnlocked || activeIsClient)) {
-      // Return minimal navigation for freelancers
-      const mktSections = getMarketplaceSections(activeGroup, true);
+      const mktSections = getMarketplaceSections(activeGroup, !activeIsClient);
+
+      // Brand members/clients get client sections, talents get freelance sections
+      if (activeIsClient) {
+        return [
+          ...mktSections,
+          ...clientSections,
+        ];
+      }
+
+      // Freelance talents
       return [
         ...mktSections,
         ...freelanceSections,

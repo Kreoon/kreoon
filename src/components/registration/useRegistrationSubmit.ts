@@ -195,6 +195,26 @@ async function handleBrandSubmit(userId: string, data: UnifiedRegistrationData) 
         active_role: 'client',
       })
       .eq('id', userId);
+
+    // Apply partner community benefits if present
+    const communitySlug = localStorage.getItem('kreoon_partner_community')
+      || new URLSearchParams(window.location.search).get('community');
+
+    if (communitySlug) {
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        if (session?.session) {
+          await supabase.functions.invoke('partner-community-service/apply', {
+            body: { community_slug: communitySlug, brand_id: brandData.id },
+            headers: { Authorization: `Bearer ${session.session.access_token}` },
+          });
+          localStorage.removeItem('kreoon_partner_community');
+        }
+      } catch (err) {
+        // Non-critical: log but don't fail registration
+        console.warn('Failed to apply partner community benefits:', err);
+      }
+    }
   }
 
   toast.success('¡Marca registrada!', {

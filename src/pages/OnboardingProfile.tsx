@@ -21,7 +21,10 @@ import { MARKETPLACE_ROLES, MARKETPLACE_ROLE_CATEGORIES } from '@/components/mar
 import type { MarketplaceRoleCategory } from '@/components/marketplace/types/marketplace';
 
 // ─── Constants ─────────────────────────────────────────────
-const STEPS = ['Foto y Bio', 'Especialización', 'Portafolio', 'Redes Sociales'];
+type AccountType = 'talent' | 'brand' | null;
+
+const TALENT_STEPS = ['Foto y Bio', 'Especialización', 'Portafolio', 'Redes Sociales'];
+const BRAND_STEPS = ['Datos de tu Marca'];
 
 const TALENT_AREAS = [
   { id: 'content_creation', label: 'Creador de contenido', icon: Video, color: 'from-pink-500 to-rose-500' },
@@ -51,7 +54,8 @@ interface UploadingFile {
 // ─── Component ─────────────────────────────────────────────
 const OnboardingProfile = () => {
   const navigate = useNavigate();
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, refetchUserData } = useAuth();
+  const [accountType, setAccountType] = useState<AccountType>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [creatorProfileId, setCreatorProfileId] = useState<string | null>(null);
@@ -73,6 +77,13 @@ const OnboardingProfile = () => {
     website: '',
   });
 
+  // Brand form state
+  const [brandName, setBrandName] = useState('');
+  const [brandIndustry, setBrandIndustry] = useState('');
+  const [brandWebsite, setBrandWebsite] = useState('');
+
+  const STEPS = accountType === 'brand' ? BRAND_STEPS : TALENT_STEPS;
+
   // Load existing data
   useEffect(() => {
     if (profile) {
@@ -81,12 +92,12 @@ const OnboardingProfile = () => {
     }
   }, [profile]);
 
-  // Fetch or create creator profile when reaching portfolio step
+  // Fetch or create creator profile when reaching portfolio step (only for talents)
   useEffect(() => {
-    if (currentStep === 2 && user && !creatorProfileId && !creatingProfileRef.current) {
+    if (accountType === 'talent' && currentStep === 2 && user && !creatorProfileId && !creatingProfileRef.current) {
       fetchOrCreateCreatorProfile();
     }
-  }, [currentStep, user, creatorProfileId]);
+  }, [accountType, currentStep, user, creatorProfileId]);
 
   const fetchOrCreateCreatorProfile = async () => {
     if (!user || creatingProfileRef.current) return;
@@ -409,6 +420,11 @@ const OnboardingProfile = () => {
   const totalItems = uploadedCount + uploadingFiles.filter(f => f.status === 'success').length;
 
   const canProceed = () => {
+    if (accountType === 'brand') {
+      // Brand flow: solo necesita nombre de marca
+      return brandName.length >= 2;
+    }
+    // Talent flow
     switch (currentStep) {
       case 0: return bio.length >= 10;
       case 1: return selectedAreas.length > 0;
@@ -437,37 +453,117 @@ const OnboardingProfile = () => {
     setSaving(true);
 
     try {
-      // Update profile
-      await supabase
-        .from('profiles')
-        .update({
-          avatar_url: avatarUrl,
-          bio,
-        })
-        .eq('id', user.id);
+      if (accountType === 'brand') {
+        // ─── BRAND FLOW ───────────────────────────────
+        const brandSlug = brandName
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '')
+          + '-' + Date.now().toString(36);
 
-      // Update creator_profile
-      const { error: updateError } = await (supabase as any)
-        .from('creator_profiles')
-        .update({
-          display_name: profile?.full_name || '',
-          bio,
-          avatar_url: avatarUrl,
-          categories: selectedAreas,
-          marketplace_roles: selectedRoles,
-          platforms: selectedPlatforms,
-          social_links: socialLinks,
-          is_active: true,
-        })
-        .eq('user_id', user.id);
+        // Create brand
+        const { data: brandData, error: brandError } = await (supabase as any)
+          .from('brands')
+          .insert({
+            name: brandName,
+            slug: brandSlug,
+            industry: brandIndustry || null,
+            website: brandWebsite || null,
+            owner_id: user.id,
+          })
+          .select('id')
+          .single();
 
-      if (updateError) throw updateError;
+        if (brandError) throw brandError;
 
-      toast.success('¡Perfil completado!', {
-        description: 'Ahora obtén tus llaves para desbloquear KREOON',
-      });
+        if (brandData) {
+          // Add as brand owner
+          await (supabase as any)
+            .from('brand_members')
+            .insert({
+              brand_id: brandData.id,
+              user_id: user.id,
+              role: 'owner',
+            });
 
-      navigate('/unlock-access');
+          // Update profile with client role (NO keys required)
+          await supabase
+            .from('profiles')
+            .update({
+              avatar_url: avatarUrl,
+              bio,
+              active_brand_id: brandData.id,
+              active_role: 'client',
+            })
+            .eq('id', user.id);
+
+          // Check for partner community benefits
+          const communitySlug = localStorage.getItem('kreoon_partner_community');
+          if (communitySlug) {
+            try {
+              const { data: session } = await supabase.auth.getSession();
+              if (session?.session) {
+                await supabase.functions.invoke('partner-community-service/apply', {
+                  body: { community_slug: communitySlug, brand_id: brandData.id },
+                  headers: { Authorization: `Bearer ${session.session.access_token}` },
+                });
+                localStorage.removeItem('kreoon_partner_community');
+              }
+            } catch (err) {
+              console.warn('Failed to apply partner community benefits:', err);
+            }
+          }
+        }
+
+        toast.success('¡Marca registrada!', {
+          description: 'Ya puedes explorar el marketplace y contratar talento.',
+        });
+
+        // CRITICAL: Refresh auth context before navigating so ProtectedRoute sees updated profile
+        await refetchUserData();
+
+        // Brands go directly to marketplace (NO unlock-access)
+        navigate('/marketplace');
+      } else {
+        // ─── TALENT FLOW ───────────────────────────────
+        // Update profile
+        await supabase
+          .from('profiles')
+          .update({
+            avatar_url: avatarUrl,
+            bio,
+          })
+          .eq('id', user.id);
+
+        // Update creator_profile
+        const { error: updateError } = await (supabase as any)
+          .from('creator_profiles')
+          .update({
+            display_name: profile?.full_name || '',
+            bio,
+            avatar_url: avatarUrl,
+            categories: selectedAreas,
+            marketplace_roles: selectedRoles,
+            platforms: selectedPlatforms,
+            social_links: socialLinks,
+            is_active: true,
+          })
+          .eq('user_id', user.id);
+
+        if (updateError) throw updateError;
+
+        toast.success('¡Perfil completado!', {
+          description: 'Ahora obtén tus llaves para desbloquear KREOON',
+        });
+
+        // Refresh auth context before navigating
+        await refetchUserData();
+
+        navigate('/unlock-access');
+      }
     } catch (error: any) {
       console.error('Error saving profile:', error);
       toast.error('Error al guardar', {
@@ -486,6 +582,65 @@ const OnboardingProfile = () => {
     );
   }
 
+  // ─── Account Type Selection Screen ───────────────────────────
+  if (!accountType) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/15 rounded-full blur-[120px]" />
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-500/10 rounded-full blur-[120px]" />
+        </div>
+
+        <div className="relative max-w-2xl mx-auto px-4 py-12">
+          <div className="text-center mb-10">
+            <h1 className="text-3xl font-bold text-white mb-3">¡Bienvenido a KREOON!</h1>
+            <p className="text-white/60">¿Cómo quieres usar la plataforma?</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Talent Option */}
+            <button
+              onClick={() => setAccountType('talent')}
+              className="group p-6 rounded-2xl border-2 border-white/10 bg-white/[0.02] hover:border-purple-500/50 hover:bg-purple-500/10 transition-all text-left"
+            >
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-4">
+                <Video className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">Soy Talento</h3>
+              <p className="text-sm text-white/50">
+                Creador de contenido, editor, productor u otro profesional creativo.
+                Quiero que las marcas me encuentren.
+              </p>
+              <div className="mt-4 flex items-center text-purple-400 text-sm font-medium group-hover:translate-x-1 transition-transform">
+                Crear perfil de talento
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </div>
+            </button>
+
+            {/* Brand Option */}
+            <button
+              onClick={() => setAccountType('brand')}
+              className="group p-6 rounded-2xl border-2 border-white/10 bg-white/[0.02] hover:border-amber-500/50 hover:bg-amber-500/10 transition-all text-left"
+            >
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center mb-4">
+                <Briefcase className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">Soy Marca / Empresa</h3>
+              <p className="text-sm text-white/50">
+                Tengo un negocio o marca y quiero contratar talento creativo
+                para mis proyectos.
+              </p>
+              <div className="mt-4 flex items-center text-amber-400 text-sm font-medium group-hover:translate-x-1 transition-transform">
+                Registrar mi marca
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Background */}
@@ -497,9 +652,13 @@ const OnboardingProfile = () => {
       <div className="relative max-w-2xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-white mb-2">Completa tu perfil</h1>
+          <h1 className="text-2xl font-bold text-white mb-2">
+            {accountType === 'brand' ? 'Registra tu Marca' : 'Completa tu perfil'}
+          </h1>
           <p className="text-white/50 text-sm">
-            Para que las marcas te encuentren en el marketplace
+            {accountType === 'brand'
+              ? 'Configura tu marca para contratar talento'
+              : 'Para que las marcas te encuentren en el marketplace'}
           </p>
         </div>
 
@@ -536,8 +695,94 @@ const OnboardingProfile = () => {
 
         {/* Steps */}
         <AnimatePresence mode="wait">
+          {/* ─── BRAND FLOW ─── */}
+          {accountType === 'brand' && currentStep === 0 && (
+            <motion.div
+              key="brand-step"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+            >
+              <Card className="!bg-white/[0.03] !border-white/10 p-6 space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-white/80 mb-3">
+                    <Camera className="w-4 h-4 inline mr-2" />
+                    Logo de tu marca (opcional)
+                  </label>
+                  <div className="flex justify-center">
+                    <div className="w-32">
+                      <BunnyImageUploader
+                        mode="single"
+                        value={avatarUrl || ''}
+                        onChange={(url) => setAvatarUrl(url || null)}
+                        getStoragePath={(file) => `brands/${user?.id || 'unknown'}/${Date.now()}-${file.name}`}
+                        aspectRatio="square"
+                        height="h-32"
+                        maxSizeMB={5}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-white/80 mb-2">
+                    <Briefcase className="w-4 h-4 inline mr-2" />
+                    Nombre de tu marca *
+                  </label>
+                  <Input
+                    value={brandName}
+                    onChange={e => setBrandName(e.target.value)}
+                    placeholder="Ej: Mi Empresa S.A.S"
+                    className="bg-white/5 border-white/10"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-white/80 mb-2">
+                    Industria (opcional)
+                  </label>
+                  <Input
+                    value={brandIndustry}
+                    onChange={e => setBrandIndustry(e.target.value)}
+                    placeholder="Ej: Moda, Tecnología, Alimentos..."
+                    className="bg-white/5 border-white/10"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-white/80 mb-2">
+                    <Globe className="w-4 h-4 inline mr-2" />
+                    Sitio web (opcional)
+                  </label>
+                  <Input
+                    value={brandWebsite}
+                    onChange={e => setBrandWebsite(e.target.value)}
+                    placeholder="https://..."
+                    className="bg-white/5 border-white/10"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-white/80 mb-2">
+                    <FileText className="w-4 h-4 inline mr-2" />
+                    Sobre tu marca (opcional)
+                  </label>
+                  <textarea
+                    value={bio}
+                    onChange={e => setBio(e.target.value)}
+                    placeholder="Describe brevemente tu marca o negocio..."
+                    rows={3}
+                    maxLength={500}
+                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-amber-500/50 focus:outline-none resize-none"
+                  />
+                </div>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* ─── TALENT FLOW ─── */}
           {/* Step 1: Photo & Bio */}
-          {currentStep === 0 && (
+          {accountType === 'talent' && currentStep === 0 && (
             <motion.div
               key="step1"
               initial={{ opacity: 0, x: 20 }}
@@ -588,7 +833,7 @@ const OnboardingProfile = () => {
           )}
 
           {/* Step 2: Specialization */}
-          {currentStep === 1 && (
+          {accountType === 'talent' && currentStep === 1 && (
             <motion.div
               key="step2"
               initial={{ opacity: 0, x: 20 }}
@@ -704,7 +949,7 @@ const OnboardingProfile = () => {
           )}
 
           {/* Step 3: Portfolio Upload (REQUIRED) */}
-          {currentStep === 2 && (
+          {accountType === 'talent' && currentStep === 2 && (
             <motion.div
               key="step3"
               initial={{ opacity: 0, x: 20 }}
@@ -880,7 +1125,7 @@ const OnboardingProfile = () => {
           )}
 
           {/* Step 4: Social Links */}
-          {currentStep === 3 && (
+          {accountType === 'talent' && currentStep === 3 && (
             <motion.div
               key="step4"
               initial={{ opacity: 0, x: 20 }}
@@ -951,8 +1196,13 @@ const OnboardingProfile = () => {
         <div className="flex items-center justify-between mt-6">
           <Button
             variant="ghost"
-            onClick={handleBack}
-            disabled={currentStep === 0}
+            onClick={() => {
+              if (currentStep === 0) {
+                setAccountType(null); // Go back to account type selection
+              } else {
+                handleBack();
+              }
+            }}
             className="text-white/60"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -962,7 +1212,7 @@ const OnboardingProfile = () => {
           <Button
             onClick={handleNext}
             disabled={!canProceed() || saving || isUploading}
-            className="bg-purple-600 hover:bg-purple-700"
+            className={accountType === 'brand' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-purple-600 hover:bg-purple-700'}
           >
             {saving ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -973,7 +1223,7 @@ const OnboardingProfile = () => {
               </>
             ) : currentStep === STEPS.length - 1 ? (
               <>
-                Guardar y continuar
+                {accountType === 'brand' ? 'Registrar Marca' : 'Guardar y continuar'}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </>
             ) : (
