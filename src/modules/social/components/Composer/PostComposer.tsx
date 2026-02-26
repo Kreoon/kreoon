@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import {
   Send, Clock, Hash, MapPin, MessageSquare, Calendar as CalendarIcon,
   X, Plus, Sparkles, Eye, ChevronDown, User, Building, Globe, FolderOpen,
+  AlertTriangle, Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { useSocialAccounts } from '../../hooks/useSocialAccounts';
 import { useScheduledPosts } from '../../hooks/useScheduledPosts';
 import { useAccountGroups } from '../../hooks/useAccountGroups';
+import { useSocialPostsLimit } from '../../hooks/useSocialPostsLimit';
 import { PlatformIcon } from '../common/PlatformIcon';
 import { MediaUploader } from './MediaUploader';
 import { HashtagManager } from './HashtagManager';
@@ -43,6 +45,7 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
   const { createPost, publishNow } = useScheduledPosts();
   const { groups } = useAccountGroups();
   const orgTz = useOrgTimezone();
+  const postsLimit = useSocialPostsLimit();
 
   const [caption, setCaption] = useState(initialData?.caption || '');
   const [hashtags, setHashtags] = useState<string[]>([]);
@@ -159,6 +162,11 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
       toast.error('Agrega un caption o media');
       return;
     }
+    // Check posts limit
+    if (!postsLimit.canCreatePost) {
+      toast.error(`Has alcanzado el límite de ${postsLimit.limit} posts/mes de tu plan ${postsLimit.planName}. Actualiza tu plan para continuar.`);
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -195,6 +203,8 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
         toast.success('Borrador guardado');
       }
 
+      // Refresh posts limit counter
+      postsLimit.refresh();
       onSuccess?.();
     } catch (err: any) {
       toast.error(`Error: ${err.message}`);
@@ -210,6 +220,50 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
 
   return (
     <div className="space-y-6">
+      {/* Posts limit banner */}
+      {!postsLimit.isUnlimited && !postsLimit.loading && (
+        <div className={cn(
+          "flex items-center justify-between gap-3 p-3 rounded-lg border text-sm",
+          postsLimit.canCreatePost
+            ? postsLimit.percentUsed >= 80
+              ? "bg-amber-500/10 border-amber-500/30 text-amber-200"
+              : "bg-muted/30 border-border text-muted-foreground"
+            : "bg-red-500/10 border-red-500/30 text-red-200"
+        )}>
+          <div className="flex items-center gap-2">
+            {postsLimit.canCreatePost ? (
+              postsLimit.percentUsed >= 80 ? (
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+              ) : null
+            ) : (
+              <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+            )}
+            <span>
+              {postsLimit.canCreatePost
+                ? `${postsLimit.usedThisMonth}/${postsLimit.limit} posts este mes`
+                : `Límite de ${postsLimit.limit} posts alcanzado`
+              }
+              {!postsLimit.canCreatePost && (
+                <span className="ml-1 opacity-70">
+                  — Plan {postsLimit.planName}
+                </span>
+              )}
+            </span>
+          </div>
+          {(postsLimit.percentUsed >= 80 || !postsLimit.canCreatePost) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs gap-1.5 shrink-0"
+              onClick={() => window.location.href = '/settings/planes'}
+            >
+              <Zap className="w-3 h-3" />
+              Mejorar plan
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* Account selector - grouped by entity */}
       <div className="space-y-3">
         <Label className="text-sm font-semibold">Publicar en</Label>
@@ -566,7 +620,7 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
         <Button
           variant="outline"
           onClick={() => handleSubmit(false)}
-          disabled={isSubmitting || selectedAccountIds.length === 0}
+          disabled={isSubmitting || selectedAccountIds.length === 0 || !postsLimit.canCreatePost}
           className="flex-1"
         >
           {scheduledAt ? (
@@ -580,7 +634,7 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
         </Button>
         <Button
           onClick={() => handleSubmit(true)}
-          disabled={isSubmitting || selectedAccountIds.length === 0}
+          disabled={isSubmitting || selectedAccountIds.length === 0 || !postsLimit.canCreatePost}
           className="flex-1"
         >
           <Send className="w-4 h-4 mr-2" />
