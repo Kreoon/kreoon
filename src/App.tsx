@@ -22,6 +22,7 @@ import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { StrategistClientProvider } from "@/contexts/StrategistClientContext";
 import { KiroProvider } from "@/contexts/KiroContext";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
+import { MarketplaceReadinessPopup } from "@/components/marketplace/MarketplaceReadinessPopup";
 import { ThemeProvider } from "next-themes";
 import { MainLayout } from "./components/layout/MainLayout";
 import { MarketplaceLayout } from "./components/layout/MarketplacePublicLayout";
@@ -386,6 +387,7 @@ function AppContent() {
                               <Toaster />
                               <Sonner />
                               <UpdatePrompt />
+                              <MarketplaceReadinessPopup />
                               <ErrorBoundary>
                                 <AppRoutes />
                               </ErrorBoundary>

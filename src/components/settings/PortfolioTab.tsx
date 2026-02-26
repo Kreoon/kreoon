@@ -17,7 +17,8 @@ import { extractBunnyIds } from '@/hooks/useHLSPlayer';
 import { toast } from 'sonner';
 
 export function PortfolioTab() {
-  const { profile: creatorProfile, loading: cpLoading } = useCreatorProfile();
+  const { profile: creatorProfile, loading: cpLoading, createProfile } = useCreatorProfile();
+  const [isCreating, setIsCreating] = useState(false);
   const creatorId = creatorProfile?.id || '';
   const {
     items, loading, adding,
@@ -49,11 +50,38 @@ export function PortfolioTab() {
     setDeletingId(null);
   };
 
-  if (cpLoading || !creatorProfile) {
+  const handleCreateProfile = async () => {
+    setIsCreating(true);
+    await createProfile();
+    setIsCreating(false);
+  };
+
+  if (cpLoading) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Si no tiene perfil de creador, mostrar opción para crearlo
+  if (!creatorProfile) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="p-4 rounded-full bg-muted mb-4">
+            <FolderOpen className="h-10 w-10 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-semibold mb-2">Configura tu perfil de creador</h3>
+          <p className="text-sm text-muted-foreground max-w-sm mb-6">
+            Para subir contenido a tu portafolio, primero necesitas activar tu perfil de creador en el marketplace.
+          </p>
+          <Button onClick={handleCreateProfile} disabled={isCreating}>
+            {isCreating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+            Activar perfil de creador
+          </Button>
         </CardContent>
       </Card>
     );
@@ -261,6 +289,9 @@ function EditPortfolioItemDialog({
 
 // ── Portfolio Item Card ──────────────────────────────────
 
+// Default Bunny library ID for building embed URLs when only video_id is available
+const DEFAULT_BUNNY_LIBRARY_ID = '568434';
+
 function buildBunnyEmbedUrl(libraryId: string, videoId: string): string {
   const params = new URLSearchParams({
     autoplay: 'false',
@@ -287,8 +318,16 @@ function PortfolioItemCard({
     () => (item.media_url ? extractBunnyIds(item.media_url) : null),
     [item.media_url],
   );
-  const canUseIframe = item.media_type === 'video' && !!bunnyIds && /^\d+$/.test(String(bunnyIds.libraryId));
-  const embedUrl = canUseIframe ? buildBunnyEmbedUrl(bunnyIds!.libraryId, bunnyIds!.videoId) : null;
+  // Can use iframe if we have IDs from URL OR if we have bunny_video_id directly
+  const hasNumericLibraryId = !!bunnyIds && /^\d+$/.test(String(bunnyIds.libraryId));
+  const canUseIframe = item.media_type === 'video' && (hasNumericLibraryId || !!item.bunny_video_id);
+
+  // Use library ID from URL if numeric, otherwise use default
+  const effectiveLibraryId = hasNumericLibraryId ? bunnyIds!.libraryId : DEFAULT_BUNNY_LIBRARY_ID;
+  const effectiveVideoId = bunnyIds?.videoId || item.bunny_video_id;
+  const embedUrl = canUseIframe && effectiveVideoId
+    ? buildBunnyEmbedUrl(effectiveLibraryId, effectiveVideoId)
+    : null;
 
   return (
     <div className="relative group rounded-lg overflow-hidden border border-border bg-black aspect-[9/16]">

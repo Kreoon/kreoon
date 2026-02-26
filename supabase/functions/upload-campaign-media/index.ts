@@ -241,7 +241,7 @@ async function handleCreate(
       ? `https://${BUNNY_CDN_HOSTNAME}/${videoGuid}/thumbnail.jpg`
       : null;
     const mp4Url = BUNNY_CDN_HOSTNAME
-      ? `https://${BUNNY_CDN_HOSTNAME}/${videoGuid}/play_720p.mp4`
+      ? `https://${BUNNY_CDN_HOSTNAME}/${videoGuid}/play_1080p.mp4`
       : null;
 
     return jsonResponse({

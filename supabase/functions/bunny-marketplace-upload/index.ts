@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
           file_type: 'video',
           bunny_video_id: videoData.guid,
           bunny_library_id: bunnyLibraryId,
-          cdn_url: bunnyCdnHostname ? `https://${bunnyCdnHostname}/${videoData.guid}/play_720p.mp4` : null,
+          cdn_url: bunnyCdnHostname ? `https://${bunnyCdnHostname}/${videoData.guid}/play_1080p.mp4` : null,
           encoding_status: 'pending',
           is_public: upload_type === 'portfolio',
         })
@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
 
       console.log(`[bunny-marketplace-upload] Confirming ${upload_type} upload: ${video_id}`)
 
-      const mp4Url = bunnyCdnHostname ? `https://${bunnyCdnHostname}/${video_id}/play_720p.mp4` : embed_url
+      const mp4Url = bunnyCdnHostname ? `https://${bunnyCdnHostname}/${video_id}/play_1080p.mp4` : embed_url
       const thumbnailUrl = bunnyCdnHostname ? `https://${bunnyCdnHostname}/${video_id}/thumbnail.jpg` : null
 
       // Update media record encoding status
@@ -189,7 +189,7 @@ Deno.serve(async (req) => {
       }
 
       if (upload_type === 'portfolio' && portfolio_creator_id) {
-        // Create portfolio item
+        // Create portfolio item - use embed_url for reliable iframe playback
         const { data: portfolioItem, error: portfolioError } = await supabase
           .from('portfolio_items')
           .insert({
@@ -197,7 +197,7 @@ Deno.serve(async (req) => {
             title: portfolio_title || null,
             description: portfolio_description || null,
             media_type: 'video',
-            media_url: mp4Url,
+            media_url: embed_url,  // Use embed URL for iframe playback
             thumbnail_url: thumbnailUrl,
             bunny_video_id: video_id,
             category: portfolio_category || null,
@@ -299,7 +299,7 @@ Deno.serve(async (req) => {
       }
 
       const embedUrl = `https://iframe.mediadelivery.net/embed/${bunnyLibraryId}/${videoData.guid}`
-      const mp4Url = bunnyCdnHostname ? `https://${bunnyCdnHostname}/${videoData.guid}/play_720p.mp4` : embedUrl
+      const mp4Url = bunnyCdnHostname ? `https://${bunnyCdnHostname}/${videoData.guid}/play_1080p.mp4` : embedUrl
       const thumbnailUrl = bunnyCdnHostname ? `https://${bunnyCdnHostname}/${videoData.guid}/thumbnail.jpg` : null
 
       // Create media record

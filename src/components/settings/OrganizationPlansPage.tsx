@@ -154,17 +154,25 @@ interface OrganizationPlansPageProps {
 }
 
 export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPageProps = {}) {
-  const { profile, activeRole } = useAuth();
+  const { user, profile, activeRole } = useAuth();
   const { trackPlanSelected, trackPlanViewed } = useBillingAnalytics();
   const organizationId = profile?.current_organization_id;
 
-  // Client users have their OWN subscription (not the org's)
+  // Talent users (freelancers) have their OWN subscription (not the org's)
+  const accountType = user?.user_metadata?.account_type;
+  const isTalentUser = accountType === 'talent';
+
+  // Client users also have their OWN subscription (not the org's)
   const permissionGroup = activeRole ? getPermissionGroup(activeRole) : null;
   const isClientUser = permissionGroup === 'client';
-  // null = user-level tokens (no org fallback), string = org-level tokens
-  const subscriptionScopeId = isClientUser ? null : organizationId;
 
-  const trialStatus = useOrganizationTrial(organizationId || null);
+  // Personal subscription scope: talents and clients use user_id, others use org_id
+  const hasPersonalSubscription = isTalentUser || isClientUser;
+  // null = user-level tokens/subscription, string = org-level
+  const subscriptionScopeId = hasPersonalSubscription ? null : organizationId;
+
+  // Only fetch org trial status for non-personal subscriptions
+  const trialStatus = useOrganizationTrial(hasPersonalSubscription ? null : organizationId);
   const { totalAvailable: kreoonCoins, loading: tokensLoading } = useAITokens(subscriptionScopeId);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const [segment, setSegment] = useState<Segment>(fixedSegment || 'marcas');
@@ -185,7 +193,7 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
     isLoading: subLoading,
   } = useSubscription(subscriptionScopeId);
 
-  // Fetch current organization data (skip for client users — they have personal subscriptions)
+  // Fetch current organization data (skip for personal subscription users — talents & clients)
   const { data: organization, isLoading } = useQuery({
     queryKey: ['organization-plan', organizationId],
     queryFn: async () => {
@@ -198,7 +206,7 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
       if (error) throw error;
       return data;
     },
-    enabled: !!organizationId && !isClientUser,
+    enabled: !!organizationId && !hasPersonalSubscription,
   });
 
   // Get plans for the selected segment
@@ -237,7 +245,11 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
   };
 
   // Active subscription from platform_subscriptions takes priority over old trial system
-  const isTrialActive = !isActive && !isPastDue && trialStatus.isTrialActive && !trialStatus.isExpired;
+  // For personal subscriptions (talents/clients), don't show org trial status
+  const isTrialActive = !hasPersonalSubscription && !isActive && !isPastDue && trialStatus.isTrialActive && !trialStatus.isExpired;
+
+  // Check if personal subscription is in "trialing" status (e.g., referral reward)
+  const isPersonalTrial = hasPersonalSubscription && subscription?.status === 'trialing';
 
   if (isLoading || subLoading) {
     return (
@@ -255,24 +267,78 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                {isClientUser ? <UserCircle className="h-5 w-5" /> : <Building2 className="h-5 w-5" />}
+                {hasPersonalSubscription ? <UserCircle className="h-5 w-5" /> : <Building2 className="h-5 w-5" />}
                 Estado de tu Suscripcion
               </CardTitle>
               <CardDescription>
-                {isClientUser
-                  ? (profile?.full_name || 'Tu cuenta')
+                {hasPersonalSubscription
+                  ? (profile?.full_name || 'Tu cuenta personal')
                   : (organization?.name || 'Tu organizacion')}
               </CardDescription>
             </div>
             <Badge
-              variant={isTrialActive ? 'secondary' : isPastDue ? 'destructive' : isActive ? 'default' : trialStatus.isExpired ? 'destructive' : 'secondary'}
+              variant={
+                isPersonalTrial ? 'default' :
+                isTrialActive ? 'secondary' :
+                isPastDue ? 'destructive' :
+                isActive ? 'default' :
+                (!hasPersonalSubscription && trialStatus.isExpired) ? 'destructive' :
+                'secondary'
+              }
               className="text-sm"
             >
-              {isTrialActive ? 'Periodo de prueba' : isPastDue ? 'Pago pendiente' : isActive ? 'Activo' : trialStatus.isExpired ? 'Expirado' : isFree ? 'Plan gratuito' : 'Inactivo'}
+              {isPersonalTrial ? 'Plan Activo' :
+               isTrialActive ? 'Periodo de prueba' :
+               isPastDue ? 'Pago pendiente' :
+               isActive ? 'Activo' :
+               (!hasPersonalSubscription && trialStatus.isExpired) ? 'Expirado' :
+               isFree ? 'Plan gratuito' : 'Inactivo'}
             </Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Personal subscription status (talents with referral rewards, etc.) */}
+          {isPersonalTrial && subscription && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm text-green-600">
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Plan activo: {
+                  PLAN_DEFS.find(p => PLAN_TO_TIER[p.id] === currentTier)?.name ||
+                  (currentTier === 'creator_pro' ? 'Creator Pro' : currentTier)
+                }</span>
+              </div>
+              {subscription.billing_cycle === 'referral_reward' && (
+                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <div className="flex items-center gap-2 text-amber-500 mb-1">
+                    <Sparkles className="h-4 w-4" />
+                    <span className="text-sm font-medium">Reward por referidos</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Conseguiste tus 3 llaves y activaste {(subscription.metadata as any)?.reward_months || 3} meses gratis de Creator Pro
+                  </p>
+                </div>
+              )}
+              {periodEnd && (
+                <>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Dias restantes</span>
+                    <span className="font-medium">
+                      {Math.max(0, Math.ceil((periodEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} dias
+                    </span>
+                  </div>
+                  <Progress
+                    value={Math.max(0, Math.min(100, ((periodEnd.getTime() - Date.now()) / (90 * 24 * 60 * 60 * 1000)) * 100))}
+                    className="h-2"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Tu plan se renueva el {format(periodEnd, "d 'de' MMMM, yyyy", { locale: es })}
+                  </p>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Organization trial status */}
           {isTrialActive && (
             <>
               <div className="flex items-center justify-between text-sm">
@@ -297,7 +363,7 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
             </Alert>
           )}
 
-          {trialStatus.isExpired && !isActive && (
+          {!hasPersonalSubscription && trialStatus.isExpired && !isActive && (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>

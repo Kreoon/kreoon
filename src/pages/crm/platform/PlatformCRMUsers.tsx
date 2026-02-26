@@ -10,6 +10,10 @@ import {
   UserX,
   MailX,
   Ban,
+  Key,
+  KeyRound,
+  Unlock,
+  Loader2,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
@@ -32,6 +36,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 import {
   useUsersWithHealth,
   useUsersNeedingAttention,
@@ -150,11 +157,13 @@ function isActiveRecently(user: UserWithHealth, ms: number) {
 // =====================================================
 
 const PlatformCRMUsers = () => {
+  const { user: currentUser } = useAuth();
   const { data: users = [], isLoading, refetch } = useUsersWithHealth();
   const { data: usersNeedingAttention = [] } = useUsersNeedingAttention();
 
   const [search, setSearch] = useState("");
-  const [quickFilter, setQuickFilter] = useState<'all' | 'admins' | 'no_org' | 'no_profile' | 'unconfirmed' | 'banned'>('all');
+  const [quickFilter, setQuickFilter] = useState<'all' | 'admins' | 'no_org' | 'no_profile' | 'unconfirmed' | 'banned' | 'pending_keys'>('all');
+  const [unlockingUserId, setUnlockingUserId] = useState<string | null>(null);
   const [roleFilter, setRoleFilter] = useState("all");
   const [healthFilter, setHealthFilter] = useState("all");
   const [activityFilter, setActivityFilter] = useState("all");
@@ -169,6 +178,7 @@ const PlatformCRMUsers = () => {
     no_profile: users.filter(u => !u.has_profile).length,
     unconfirmed: users.filter(u => !u.email_confirmed_at).length,
     banned: users.filter(u => u.is_banned).length,
+    pending_keys: users.filter(u => !u.platform_access_unlocked && u.user_type === 'talent').length,
   }), [users]);
 
   // Derive stats
@@ -193,6 +203,7 @@ const PlatformCRMUsers = () => {
       case 'no_profile': list = list.filter(u => !u.has_profile); break;
       case 'unconfirmed': list = list.filter(u => !u.email_confirmed_at); break;
       case 'banned': list = list.filter(u => u.is_banned); break;
+      case 'pending_keys': list = list.filter(u => !u.platform_access_unlocked && u.user_type === 'talent'); break;
     }
 
     if (search.trim()) {
@@ -227,6 +238,29 @@ const PlatformCRMUsers = () => {
 
   const handleSelectUser = (user: UserWithHealth) => {
     setSelectedUser(selectedUser?.id === user.id ? null : user);
+  };
+
+  const handleUnlockUser = async (userId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!currentUser?.id) return;
+
+    setUnlockingUserId(userId);
+    try {
+      const { error } = await (supabase as any).rpc('grant_platform_access', {
+        p_admin_id: currentUser.id,
+        p_target_user_id: userId,
+      });
+
+      if (error) throw error;
+
+      toast.success('Acceso desbloqueado correctamente');
+      refetch();
+    } catch (err) {
+      console.error('Error unlocking user:', err);
+      toast.error('Error al desbloquear usuario');
+    } finally {
+      setUnlockingUserId(null);
+    }
   };
 
   return (
@@ -304,6 +338,7 @@ const PlatformCRMUsers = () => {
           <div className="flex flex-wrap gap-2">
             {([
               { key: 'all' as const, label: 'Todos', icon: Users },
+              { key: 'pending_keys' as const, label: 'Pendientes llaves', icon: KeyRound },
               { key: 'admins' as const, label: 'Admins', icon: ShieldCheck },
               { key: 'no_org' as const, label: 'Sin org', icon: Building2 },
               { key: 'no_profile' as const, label: 'Sin perfil', icon: UserX },
@@ -417,13 +452,33 @@ const PlatformCRMUsers = () => {
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium", getRoleColor(user.role))}>
                           {getRoleLabel(user.role)}
                         </span>
                         <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium", HEALTH_STATUS_COLORS[status])}>
                           {HEALTH_STATUS_LABELS[status]}
                         </span>
+                        {/* Key status badge */}
+                        {user.user_type === 'talent' && !user.platform_access_unlocked && (
+                          <button
+                            onClick={(e) => handleUnlockUser(user.id, e)}
+                            disabled={unlockingUserId === user.id}
+                            className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                          >
+                            {unlockingUserId === user.id ? (
+                              <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                            ) : (
+                              <Key className="h-2.5 w-2.5" />
+                            )}
+                            Dar llave
+                          </button>
+                        )}
+                        {user.user_type === 'talent' && user.platform_access_unlocked && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/20 text-emerald-400 flex items-center gap-1">
+                            <Unlock className="h-2.5 w-2.5" />
+                          </span>
+                        )}
                       </div>
                       <div className={cn("w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold", hc.bg, hc.text)}>
                         {user.health_score}
@@ -464,6 +519,26 @@ const PlatformCRMUsers = () => {
                     <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium hidden sm:inline", getRoleColor(user.role))}>
                       {getRoleLabel(user.role)}
                     </span>
+                    {/* Key status in list view */}
+                    {user.user_type === 'talent' && !user.platform_access_unlocked && (
+                      <button
+                        onClick={(e) => handleUnlockUser(user.id, e)}
+                        disabled={unlockingUserId === user.id}
+                        className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                      >
+                        {unlockingUserId === user.id ? (
+                          <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                        ) : (
+                          <Key className="h-2.5 w-2.5" />
+                        )}
+                        Llave
+                      </button>
+                    )}
+                    {user.user_type === 'talent' && user.platform_access_unlocked && (
+                      <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/20 text-emerald-400">
+                        <Unlock className="h-2.5 w-2.5" />
+                      </span>
+                    )}
                     <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold", hc.bg, hc.text)}>
                       {user.health_score}
                     </div>
@@ -542,7 +617,7 @@ const PlatformCRMUsers = () => {
                             : "Nunca"}
                         </TableCell>
                         <TableCell>
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex flex-wrap gap-1 items-center">
                             <span className={cn("px-2 py-0.5 rounded-full text-[10px]", HEALTH_STATUS_COLORS[status] || "bg-white/10 text-white/50")}>
                               {HEALTH_STATUS_LABELS[status] || status}
                             </span>
@@ -557,6 +632,28 @@ const PlatformCRMUsers = () => {
                             )}
                             {!user.email_confirmed_at && (
                               <span className="px-2 py-0.5 rounded-full text-[10px] bg-yellow-500/20 text-yellow-400">Sin confirmar</span>
+                            )}
+                            {/* Referral/key status */}
+                            {user.user_type === 'talent' && (
+                              user.platform_access_unlocked ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-400 flex items-center gap-1">
+                                  <Unlock className="h-2.5 w-2.5" />
+                                  Desbloqueado
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={(e) => handleUnlockUser(user.id, e)}
+                                  disabled={unlockingUserId === user.id}
+                                  className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                >
+                                  {unlockingUserId === user.id ? (
+                                    <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                                  ) : (
+                                    <Key className="h-2.5 w-2.5" />
+                                  )}
+                                  Dar llave
+                                </button>
+                              )
                             )}
                           </div>
                         </TableCell>

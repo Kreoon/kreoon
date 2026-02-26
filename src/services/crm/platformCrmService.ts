@@ -395,6 +395,9 @@ export interface UserWithHealth {
   is_banned: boolean;
   has_profile: boolean;
   is_platform_admin: boolean;
+  // Referral/key status
+  platform_access_unlocked: boolean;
+  user_type: string | null;
 }
 
 export async function getUsersWithHealth(): Promise<UserWithHealth[]> {

@@ -106,8 +106,8 @@ Deno.serve(async (req) => {
 
     // Generate URLs
     const embedUrl = `https://iframe.mediadelivery.net/embed/${bunnyLibraryId}/${videoData.guid}`
-    // Direct MP4 URL (available after encoding completes)
-    const mp4Url = `https://${bunnyCdnHostname}/${videoData.guid}/play_720p.mp4`
+    // Direct MP4 URL (available after encoding completes) - use 1080p for better quality
+    const mp4Url = `https://${bunnyCdnHostname}/${videoData.guid}/play_1080p.mp4`
     // Thumbnail URL (available after encoding completes)
     const thumbnailUrl = `https://${bunnyCdnHostname}/${videoData.guid}/thumbnail.jpg`
 
