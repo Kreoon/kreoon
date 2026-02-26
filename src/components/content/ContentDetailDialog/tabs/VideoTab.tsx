@@ -145,7 +145,7 @@ export function VideoTab({
                 if (!editMode) setEditMode(true);
                 // Auto-save video URLs to DB immediately to prevent loss on Realtime refetch
                 const contentId = content?.id;
-                if (contentId) {
+                if (contentId && canEditVideo) {
                   // Use 5-minute window to cover video encoding time
                   markLocalUpdate(contentId, 5 * 60 * 1000);
                   supabase
@@ -159,6 +159,8 @@ export function VideoTab({
                         console.log('[VideoTab] Auto-saved video URLs to database');
                       }
                     });
+                } else if (contentId && !canEditVideo) {
+                  console.warn('[VideoTab] Upload blocked — user lacks content.video edit permission');
                 }
               }}
               disabled={!canEditVideo}

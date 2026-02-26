@@ -16,6 +16,22 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    // Webhook secret validation — n8n must send ?secret=<BUNNY_WEBHOOK_SECRET> or
+    // the X-Webhook-Secret header. This prevents unauthorized callers from updating
+    // arbitrary content records via this public endpoint.
+    const webhookSecret = Deno.env.get('BUNNY_WEBHOOK_SECRET')
+    if (webhookSecret) {
+      const url = new URL(req.url)
+      const providedSecret = url.searchParams.get('secret') || req.headers.get('x-webhook-secret')
+      if (providedSecret !== webhookSecret) {
+        console.error('[bunny-webhook] Invalid or missing webhook secret')
+        return new Response(
+          JSON.stringify({ error: 'Forbidden' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    }
+
     const body = await req.json()
     console.log('Received webhook from n8n:', body)
 
@@ -25,6 +41,15 @@ Deno.serve(async (req) => {
       console.error('Missing content_id in webhook payload')
       return new Response(
         JSON.stringify({ error: 'Missing content_id' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Validate bunny_embed_url is actually a Bunny CDN URL to prevent URL injection
+    if (bunny_embed_url && !bunny_embed_url.includes('mediadelivery.net') && !bunny_embed_url.includes('bunnycdn.com')) {
+      console.error('[bunny-webhook] Rejected non-Bunny URL:', bunny_embed_url)
+      return new Response(
+        JSON.stringify({ error: 'Invalid embed URL — must be a Bunny CDN URL' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
