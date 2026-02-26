@@ -166,7 +166,7 @@ BEGIN
   BEGIN DELETE FROM project_assignments WHERE user_id = target_user_id; EXCEPTION WHEN undefined_table OR undefined_column THEN NULL; END;
   BEGIN DELETE FROM profile_blocks_config WHERE user_id = target_user_id; EXCEPTION WHEN undefined_table OR undefined_column THEN NULL; END;
   BEGIN DELETE FROM suggested_profiles_cache WHERE user_id = target_user_id; EXCEPTION WHEN undefined_table OR undefined_column THEN NULL; END;
-  BEGIN DELETE FROM organization_ambassadors WHERE user_id = target_user_id; EXCEPTION WHEN undefined_table OR undefined_column THEN NULL; END;
+  -- organization_ambassadors is a VIEW, not a table - skip
   BEGIN DELETE FROM company_profiles WHERE user_id = target_user_id; EXCEPTION WHEN undefined_table OR undefined_column THEN NULL; END;
   BEGIN UPDATE clients SET user_id = NULL WHERE user_id = target_user_id; EXCEPTION WHEN undefined_table OR undefined_column THEN NULL; END;
   deleted_tables := array_append(deleted_tables, 'misc');
