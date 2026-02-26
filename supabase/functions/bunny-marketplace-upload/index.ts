@@ -28,11 +28,30 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const bunnyApiKey = Deno.env.get('BUNNY_API_KEY')!
-    const bunnyLibraryId = Deno.env.get('BUNNY_LIBRARY_ID')!
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const bunnyApiKey = Deno.env.get('BUNNY_API_KEY')
+    const bunnyLibraryId = Deno.env.get('BUNNY_LIBRARY_ID')
     const bunnyCdnHostname = Deno.env.get('BUNNY_CDN_HOSTNAME') || ''
+
+    // Validate required env vars
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('[bunny-marketplace-upload] Missing Supabase env vars')
+      return new Response(
+        JSON.stringify({ error: 'Server configuration error: missing Supabase credentials' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    if (!bunnyApiKey || !bunnyLibraryId) {
+      console.error('[bunny-marketplace-upload] Missing Bunny env vars:', {
+        hasBunnyApiKey: !!bunnyApiKey,
+        hasBunnyLibraryId: !!bunnyLibraryId
+      })
+      return new Response(
+        JSON.stringify({ error: 'Server configuration error: missing Bunny CDN credentials' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     const contentType = req.headers.get('content-type') || ''
@@ -189,6 +208,26 @@ Deno.serve(async (req) => {
       }
 
       if (upload_type === 'portfolio' && portfolio_creator_id) {
+        // Verify creator profile exists before inserting
+        const { data: creatorCheck, error: creatorCheckError } = await supabase
+          .from('creator_profiles')
+          .select('id, user_id')
+          .eq('id', portfolio_creator_id)
+          .single()
+
+        if (creatorCheckError || !creatorCheck) {
+          console.error('[bunny-marketplace-upload] Creator profile not found:', portfolio_creator_id, creatorCheckError)
+          return new Response(
+            JSON.stringify({
+              error: 'Creator profile not found. Please refresh the page and try again.',
+              details: { portfolio_creator_id, errorCode: creatorCheckError?.code }
+            }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+
+        console.log('[bunny-marketplace-upload] Creating portfolio item for creator:', portfolio_creator_id)
+
         // Create portfolio item - use embed_url for reliable iframe playback
         const { data: portfolioItem, error: portfolioError } = await supabase
           .from('portfolio_items')
@@ -210,7 +249,13 @@ Deno.serve(async (req) => {
 
         if (portfolioError) {
           console.error('[bunny-marketplace-upload] Portfolio insert error:', portfolioError)
-          throw portfolioError
+          return new Response(
+            JSON.stringify({
+              error: 'Failed to create portfolio item',
+              details: { code: portfolioError.code, message: portfolioError.message }
+            }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
         }
 
         // Link media to portfolio item
