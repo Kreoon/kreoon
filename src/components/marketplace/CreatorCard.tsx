@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, memo } from 'react';
+import { motion } from 'framer-motion';
 import { Heart, ChevronLeft, ChevronRight, Star, MapPin, CheckCircle2, Play, Gift, Percent, Package, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -74,12 +75,17 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
         : null;
 
   return (
-    <div
+    <motion.div
       className={cn(
-        'group relative cursor-pointer transition-all duration-200 hover:scale-[1.02]',
+        'group relative cursor-pointer',
         className,
       )}
       onClick={onClick}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.02, y: -4 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.2 }}
     >
       {/* Media area — 9:16 aspect ratio, click opens profile */}
       <div
@@ -141,10 +147,12 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
         <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
 
         {/* Favorite button */}
-        <button
+        <motion.button
           onClick={handleFavorite}
-          className="absolute top-3 right-3 z-10 transition-transform duration-200 active:scale-125"
+          className="absolute top-3 right-3 z-10"
           aria-label="Favorito"
+          whileTap={{ scale: 1.3 }}
+          animate={isFavorite ? { scale: [1, 1.2, 1] } : {}}
         >
           <Heart
             className={cn(
@@ -154,7 +162,7 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
                 : 'text-white hover:text-pink-300',
             )}
           />
-        </button>
+        </motion.button>
 
         {/* Badges */}
         <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
@@ -325,7 +333,7 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
