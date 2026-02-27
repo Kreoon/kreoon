@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, memo } from 'react';
-import { Heart, ChevronLeft, ChevronRight, Star, MapPin, CheckCircle2, Play, Gift, Percent } from 'lucide-react';
+import { Heart, ChevronLeft, ChevronRight, Star, MapPin, CheckCircle2, Play, Gift, Percent, Package, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import type { MarketplaceCreator, PortfolioMedia } from './types/marketplace';
@@ -211,7 +211,7 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
         )}
 
         {/* Creator info overlay at bottom of card */}
-        <div className="absolute bottom-0 inset-x-0 z-10 p-3 space-y-1">
+        <div className="absolute bottom-0 inset-x-0 z-10 p-3 space-y-1.5">
           {/* Name + verified */}
           <div className="flex items-center gap-1.5">
             {creator.avatar_url ? (
@@ -247,17 +247,39 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
             </div>
           )}
 
-          {/* Rating + Price inline */}
-          <div className="flex items-center gap-2">
+          {/* Social Proof Row */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Rating con count */}
             <div className="flex items-center gap-1">
               <Star className="h-3 w-3 text-purple-400 fill-purple-400" />
               <span className="text-white text-xs font-medium drop-shadow-sm">
                 {creator.rating_avg.toFixed(1)}
               </span>
+              <span className="text-white/50 text-[10px]">({creator.rating_count})</span>
             </div>
+
+            {/* Projects completed */}
+            {creator.completed_projects > 0 && (
+              <div className="flex items-center gap-1 text-white/70 text-xs">
+                <Package className="h-3 w-3" />
+                <span>{creator.completed_projects}</span>
+              </div>
+            )}
+
+            {/* Response time */}
+            {creator.response_time_label && (
+              <div className="flex items-center gap-1 text-green-400 text-[10px]">
+                <Clock className="h-3 w-3" />
+                <span>{creator.response_time_label}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Price + Exchange */}
+          <div className="flex items-center gap-2">
             {creator.base_price != null && (
               <span className="text-white/70 text-xs drop-shadow-sm">
-                · Desde <span className="text-white font-semibold">{formatPrice(creator.base_price)}</span>
+                Desde <span className="text-white font-semibold">{formatPrice(creator.base_price)}</span>
               </span>
             )}
             {creator.accepts_product_exchange && (
