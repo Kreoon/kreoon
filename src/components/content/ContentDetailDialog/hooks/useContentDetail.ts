@@ -70,9 +70,13 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
 
   const [formData, setFormData] = useState<ContentFormData>(initialFormData);
   const originalFormDataRef = useRef<ContentFormData>(initialFormData);
+  const formDataRef = useRef<ContentFormData>(initialFormData);
   const skipNextContentResetRef = useRef(false);
   // Track content ID to detect when we switch to a DIFFERENT content item
   const prevContentIdRef = useRef<string | null>(null);
+
+  // Keep ref in sync so handleSave always reads the latest formData
+  formDataRef.current = formData;
 
   // Initialize form data from content
   useEffect(() => {
@@ -249,27 +253,32 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
     }
 
     setLoading(true);
-    // Mark as local update to prevent realtime refetch from closing the dialog
-    markLocalUpdate(content.id);
+    // Mark as local update to prevent realtime refetch from closing the dialog.
+    // Use 5-minute window to avoid overwriting VideoTab's longer protection.
+    markLocalUpdate(content.id, 5 * 60 * 1000);
 
     try {
+      // Use ref to guarantee we read the LATEST formData, not a stale closure snapshot.
+      // This prevents video_urls (set by VideoTab's onUploadComplete) from being lost.
+      const data = formDataRef.current;
+
       // Use diff-only updates: only send fields that actually changed
-      const diffUpdates = buildRoleBasedUpdates(formData, originalFormDataRef.current);
+      const diffUpdates = buildRoleBasedUpdates(data, originalFormDataRef.current);
       const finalUpdates: Record<string, any> = diffUpdates ? { ...diffUpdates } : {};
 
       // Assignment timestamps (admin, strategist, team_leader can assign team members)
       if (isAdmin || isStrategist || isTeamLeader) {
-        if (formData.creator_id && !content.creator_id) {
+        if (data.creator_id && !content.creator_id) {
           finalUpdates.creator_assigned_at = new Date().toISOString();
         }
-        if (formData.editor_id && !content.editor_id) {
+        if (data.editor_id && !content.editor_id) {
           finalUpdates.editor_assigned_at = new Date().toISOString();
         }
       }
 
       // Admin-only: paid status transition
       if (isAdmin) {
-        const bothPaid = formData.creator_paid && formData.editor_paid;
+        const bothPaid = data.creator_paid && data.editor_paid;
         const wasNotBothPaid = !content.creator_paid || !content.editor_paid;
         if (bothPaid && wasNotBothPaid && content.status === 'approved') {
           finalUpdates.status = 'paid';
@@ -288,18 +297,18 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
       }
 
       // Notify drive upload if changed
-      const driveUrlChanged = formData.drive_url && formData.drive_url !== content.drive_url;
+      const driveUrlChanged = data.drive_url && data.drive_url !== content.drive_url;
       if (driveUrlChanged) {
         try {
           await supabase.functions.invoke('notify-drive-upload', {
-            body: { content_id: content.id, drive_url: formData.drive_url }
+            body: { content_id: content.id, drive_url: data.drive_url }
           });
         } catch (e) {
           console.error('Drive notification error:', e);
         }
       }
 
-      originalFormDataRef.current = JSON.parse(JSON.stringify(formData));
+      originalFormDataRef.current = JSON.parse(JSON.stringify(data));
       markAsSaved('content-detail');
       toast({ title: 'Cambios guardados' });
       setEditMode(false);
@@ -317,24 +326,29 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
   // Compares current data against original snapshot and only returns changed fields.
   // Video fields (VIDEO_FIELDS) are NEVER included unless explicitly modified.
   const buildRoleBasedUpdates = useCallback((data: ContentFormData, original: ContentFormData) => {
-    const isAssignedCreatorCheck = isCreator && content?.creator_id === user?.id && !isAdmin;
-    const isAssignedEditorCheck = isEditor && content?.editor_id === user?.id && !isAdmin;
+    // Check content assignment, NOT global activeRole — a user with activeRole='creator'
+    // who is assigned as editor_id must still get the editor save path.
+    const isAssignedEditorCheck = content?.editor_id === user?.id && !isAdmin;
+    const isAssignedCreatorCheck = content?.creator_id === user?.id && !isAdmin;
 
     // Deep comparison per field
     const changed = (field: keyof ContentFormData): boolean => {
       return JSON.stringify(data[field]) !== JSON.stringify(original[field]);
     };
 
-    if (isAssignedCreatorCheck) {
-      const updates: Record<string, any> = {};
-      if (changed('drive_url')) updates.drive_url = data.drive_url || null;
-      if (changed('notes')) updates.notes = data.notes || null;
-      return Object.keys(updates).length > 0 ? updates : null;
-    } else if (isAssignedEditorCheck) {
+    // Editor check FIRST: if user is both creator and editor on the same content,
+    // editor path includes video_urls which is the critical field to persist.
+    if (isAssignedEditorCheck) {
       const updates: Record<string, any> = {};
       if (changed('video_url')) updates.video_url = data.video_url || null;
       if (changed('video_urls')) updates.video_urls = data.video_urls.filter(url => url.trim() !== '');
       if (changed('hooks_count')) updates.hooks_count = data.hooks_count;
+      if (changed('drive_url')) updates.drive_url = data.drive_url || null;
+      if (changed('notes')) updates.notes = data.notes || null;
+      return Object.keys(updates).length > 0 ? updates : null;
+    } else if (isAssignedCreatorCheck) {
+      const updates: Record<string, any> = {};
+      if (changed('drive_url')) updates.drive_url = data.drive_url || null;
       if (changed('notes')) updates.notes = data.notes || null;
       return Object.keys(updates).length > 0 ? updates : null;
     } else if (isStrategist || isTeamLeader) {
@@ -411,7 +425,7 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
       return Object.keys(updates).length > 0 ? updates : null;
     }
     return null;
-  }, [isAdmin, isCreator, isEditor, isStrategist, isTeamLeader, content?.creator_id, content?.editor_id, user?.id]);
+  }, [isAdmin, isStrategist, isTeamLeader, content?.creator_id, content?.editor_id, user?.id]);
 
   // AutoSave integration
   // SAFETY: capture content.id in a ref so the onSave callback always targets the correct record.
@@ -433,8 +447,8 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
       // Use diff-only updates: only send fields that actually changed
       const updates = buildRoleBasedUpdates(data, originalFormDataRef.current);
       if (!updates) return; // Nothing changed, skip DB update
-      // Mark as local update to prevent realtime refetch from closing the dialog
-      markLocalUpdate(content.id);
+      // Mark as local update (5min to match handleSave / VideoTab protection window)
+      markLocalUpdate(content.id, 5 * 60 * 1000);
       await supabase.from('content').update(updates).eq('id', content.id);
     },
     enabled: editMode,
