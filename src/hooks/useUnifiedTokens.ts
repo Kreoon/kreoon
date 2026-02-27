@@ -9,6 +9,7 @@ import type {
 } from '@/types/unified-finance.types';
 import { AI_TOKEN_COSTS, TOKEN_PACKAGES } from '@/lib/finance/constants';
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
+import { supabase } from '@/integrations/supabase/client';
 
 // ─── Extended balance type with legacy field aliases ───
 export type ExtendedAITokenBalance = AITokenBalance & {
@@ -20,6 +21,41 @@ export type ExtendedAITokenBalance = AITokenBalance & {
 // ─── Helper: invoke ai-tokens-service ───
 function invokeTokenService<T = unknown>(action: string, body?: Record<string, unknown>) {
   return invokeEdgeFunction<T>('ai-tokens-service', action, body);
+}
+
+// ─── Fallback: query directa a la DB si edge function falla ───
+async function getBalanceFallback(userId: string, organizationId?: string) {
+  try {
+    let query = supabase.from('ai_token_balances').select('*');
+
+    if (organizationId) {
+      query = query.eq('organization_id', organizationId);
+    } else {
+      query = query.eq('user_id', userId).is('organization_id', null);
+    }
+
+    const { data, error } = await query.limit(1).maybeSingle();
+
+    if (error) {
+      console.warn('[useUnifiedTokens] Fallback query error:', error.message);
+      return null;
+    }
+
+    if (!data) {
+      console.warn('[useUnifiedTokens] No balance found in fallback');
+      return null;
+    }
+
+    return {
+      ...data,
+      subscription_tokens: data.balance_subscription ?? 0,
+      purchased_tokens: data.balance_purchased ?? 0,
+      bonus_tokens: data.balance_bonus ?? 0,
+    };
+  } catch (err) {
+    console.error('[useUnifiedTokens] Fallback error:', err);
+    return null;
+  }
 }
 
 /**
@@ -39,22 +75,28 @@ export function useUnifiedTokens(organizationId?: string) {
   } = useQuery({
     queryKey,
     queryFn: async () => {
-      const res = await invokeTokenService<{ success: boolean; balance: AITokenBalance }>(
-        'get-balance',
-        { organization_id: organizationId }
-      );
-      if (!res?.success || !res.balance) {
-        return null;
+      try {
+        const res = await invokeTokenService<{ success: boolean; balance: AITokenBalance }>(
+          'get-balance',
+          { organization_id: organizationId }
+        );
+        if (!res?.success || !res.balance) {
+          console.warn('[useUnifiedTokens] Edge function returned no balance, trying fallback');
+          return await getBalanceFallback(user!.id, organizationId);
+        }
+        // Normalizar campos para compatibilidad con consumidores legacy
+        const b = res.balance;
+        return {
+          ...b,
+          // Alias legacy para ProductDetailDialog y otros consumidores
+          subscription_tokens: b.balance_subscription ?? 0,
+          purchased_tokens: b.balance_purchased ?? 0,
+          bonus_tokens: b.balance_bonus ?? 0,
+        };
+      } catch (err) {
+        console.warn('[useUnifiedTokens] Edge function failed, trying fallback:', err);
+        return await getBalanceFallback(user!.id, organizationId);
       }
-      // Normalizar campos para compatibilidad con consumidores legacy
-      const b = res.balance;
-      return {
-        ...b,
-        // Alias legacy para ProductDetailDialog y otros consumidores
-        subscription_tokens: b.balance_subscription ?? 0,
-        purchased_tokens: b.balance_purchased ?? 0,
-        bonus_tokens: b.balance_bonus ?? 0,
-      };
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 min
