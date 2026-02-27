@@ -35,6 +35,23 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    // Authenticate user — verify_jwt is false in config so we validate manually
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const body = await req.json().catch(() => ({}))
     const { content_id, video_id } = body
 
@@ -75,14 +92,31 @@ Deno.serve(async (req) => {
 
     console.log('[bunny-status] Bunny status:', videoData.status, 'mapped:', processingStatus, 'progress:', encodeProgress)
 
-    // Update content status if content_id provided
+    // Update content status if content_id provided — verify user belongs to the content's org
     if (content_id && (processingStatus === 'completed' || processingStatus === 'failed')) {
-      await supabase
+      const { data: contentRow } = await supabase
         .from('content')
-        .update({
-          video_processing_status: processingStatus,
-        })
+        .select('organization_id')
         .eq('id', content_id)
+        .maybeSingle()
+
+      if (contentRow?.organization_id) {
+        const { data: membership } = await supabase
+          .from('organization_members')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('organization_id', contentRow.organization_id)
+          .maybeSingle()
+
+        if (membership) {
+          await supabase
+            .from('content')
+            .update({ video_processing_status: processingStatus })
+            .eq('id', content_id)
+        } else {
+          console.warn('[bunny-status] User', user.id, 'not in org for content', content_id)
+        }
+      }
     }
 
     return new Response(

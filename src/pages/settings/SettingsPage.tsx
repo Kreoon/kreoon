@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 
 // Lazy load all sections - CONSOLIDATED
 const ProfileSection = lazy(() => import('./sections/ProfileSection'));
+const CreatorProfileSection = lazy(() => import('./sections/CreatorProfileSection'));
 const NotificationsUnifiedSection = lazy(() => import('./sections/NotificationsUnifiedSection'));
 const SecuritySection = lazy(() => import('./sections/SecuritySection'));
 const TourSection = lazy(() => import('./sections/TourSection'));
@@ -49,6 +50,7 @@ SectionLoader.displayName = 'SectionLoader';
 const SECTION_COMPONENTS: Record<SettingsSectionKey, React.LazyExoticComponent<React.ComponentType>> = {
   // User level
   profile: ProfileSection,
+  creator_profile: CreatorProfileSection,
   notifications: NotificationsUnifiedSection,
   security: SecuritySection,
   tour: TourSection,

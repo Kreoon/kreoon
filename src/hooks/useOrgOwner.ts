@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
+// DEPRECATED: ROOT_EMAILS hardcoded - now using is_superadmin from database
+// Kept for backward compatibility but is_superadmin takes precedence
 const ROOT_EMAILS = ["jacsolucionesgraficas@gmail.com", "kairosgp.sas@gmail.com"];
 
 /** Raw white-label branding data from the org context RPC */
@@ -185,7 +187,11 @@ export function useOrgOwner(): OrgOwnerStatus {
   const [orgTimezone, setOrgTimezone] = useState<string>('America/Bogota');
   const [loading, setLoading] = useState(true);
 
-  const isPlatformRoot = user?.email ? ROOT_EMAILS.includes(user.email) : false;
+  // IMPORTANT: during migrations the profile row might not match auth.uid().
+  // Root checks must rely on the authenticated user's email (authoritative),
+  // not only on the profile record.
+  // NEW: Also check is_superadmin from database (takes precedence)
+  const isPlatformRoot = profile?.is_superadmin === true || (user?.email ? ROOT_EMAILS.includes(user.email) : false);
 
   useEffect(() => {
     let cancelled = false;

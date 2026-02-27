@@ -110,7 +110,8 @@ export function VideoTab({
                 if (!editMode) setEditMode(true);
                 // Auto-save video URLs to DB immediately via RPC (bypasses 18 RLS policies)
                 const contentId = content?.id;
-                if (contentId) {
+                if (contentId && canEditVideo) {
+                  // Use 5-minute window to cover video encoding time
                   markLocalUpdate(contentId, 5 * 60 * 1000);
                   supabase
                     .rpc('update_content_by_id', {
@@ -124,6 +125,8 @@ export function VideoTab({
                         console.log('[VideoTab] Auto-saved video URLs to database');
                       }
                     });
+                } else if (contentId && !canEditVideo) {
+                  console.warn('[VideoTab] Upload blocked — user lacks content.video edit permission');
                 }
               }}
               disabled={!canEditVideo}

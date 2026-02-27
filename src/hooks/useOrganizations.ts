@@ -60,7 +60,8 @@ export function useOrganizations() {
   const [loading, setLoading] = useState(true);
 
   // Check if user is platform root (can see all organizations)
-  const isPlatformRoot = user?.email ? ROOT_EMAILS.includes(user.email) : false;
+  // NEW: Check is_superadmin from database (takes precedence over hardcoded emails)
+  const isPlatformRoot = profile?.is_superadmin === true || (user?.email ? ROOT_EMAILS.includes(user.email) : false);
 
   // Fetch user's organizations (always filtered by membership for security)
   // Platform root users who need to manage ALL orgs should use /crm/organizaciones

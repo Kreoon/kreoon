@@ -4,9 +4,10 @@ import { useOrgOwner } from './useOrgOwner';
 import { supabase } from '@/integrations/supabase/client';
 
 // Section keys for settings module (CONSOLIDATED - reduced from 25 to 17)
-export type SettingsSectionKey = 
+export type SettingsSectionKey =
   // User level
   | 'profile'
+  | 'creator_profile'    // Creator marketplace profile (creator_profiles table)
   | 'notifications'      // Merged: personal notifications + org preferences + chat RBAC
   | 'security'
   | 'tour'
@@ -59,6 +60,7 @@ export interface SettingsPermissions {
 const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'platform'> = {
   // User level - everyone can access their own
   profile: 'user',
+  creator_profile: 'user',
   notifications: 'user',
   security: 'user',
   tour: 'user',
@@ -116,8 +118,9 @@ export function useSettingsPermissions(): SettingsPermissions {
   const isPlatformRoot = useMemo(() => {
     // IMPORTANT: during migrations profile can fail to load by auth.uid();
     // use auth user email as the source of truth.
-    return (user?.email && ROOT_EMAILS.includes(user.email)) || isPlatformRootFromHook;
-  }, [user?.email, isPlatformRootFromHook]);
+    // NEW: isPlatformRootFromHook now checks is_superadmin from database, but we add explicit check for safety
+    return profile?.is_superadmin === true || (user?.email && ROOT_EMAILS.includes(user.email)) || isPlatformRootFromHook;
+  }, [user?.email, isPlatformRootFromHook, profile?.is_superadmin]);
 
   // Determine if user is org admin (uses permission group from useAuth)
   const isOrgAdmin = useMemo(() => {

@@ -42,6 +42,54 @@ serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
+    // ============ JWT + ROOT VALIDATION ============
+    // This function can sync profiles, migrate data, and reset passwords
+    // Requires JWT authentication + ROOT admin verification
+
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: "No authorization header - JWT required" }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Validate JWT using Kreoon admin client
+    const token = authHeader.replace('Bearer ', '');
+    const { data: userData, error: userError } = await kreoonClient.auth.getUser(token);
+
+    if (userError || !userData?.user) {
+      console.error("JWT validation failed:", userError);
+      return new Response(JSON.stringify({ error: "Invalid or expired token" }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const authenticatedEmail = userData.user.email as string; // Email from JWT, not body
+    const callerId = userData.user.id as string;
+
+    // Check if authenticated user is ROOT
+    const ROOT_EMAILS = (Deno.env.get("ROOT_ADMIN_EMAILS") ||
+      "jacsolucionesgraficas@gmail.com,kairosgp.sas@gmail.com")
+      .split(",").map(e => e.trim());
+
+    const isRootUser = ROOT_EMAILS.includes(authenticatedEmail);
+
+    if (!isRootUser) {
+      console.warn(`SECURITY: Unauthorized emergency-password-reset attempt by ${authenticatedEmail}`);
+      return new Response(JSON.stringify({
+        error: "Unauthorized - Root admin access required for emergency operations"
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log(`SECURITY: emergency-password-reset authorized for ROOT user ${authenticatedEmail}`);
+
+    // ============ END JWT VALIDATION ============
+
     const { email, password, secret, action, newAuthId } = await req.json();
 
     const EXPECTED_SECRET = Deno.env.get("EMERGENCY_PASSWORD_RESET_SECRET") || 'kreoon-emergency-2026';
@@ -222,18 +270,14 @@ serve(async (req) => {
 
     // ACTION: sync_profile - Legacy sync within same database
     if (action === 'sync_profile') {
-      if (email !== (Deno.env.get("AUTHORIZED_RESET_EMAIL") || 'jacsolucionesgraficas@gmail.com')) {
-        return new Response(JSON.stringify({ error: 'Email no autorizado' }), {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+      // Email authorization already verified via JWT (authenticatedEmail is ROOT)
+      // No need to check email from body - using authenticatedEmail from JWT instead
 
-      // Find user by email in Kreoon auth
+      // Find user by email in Kreoon auth (using authenticated email from JWT)
       const { data: users, error: listErr } = await kreoonClient.auth.admin.listUsers();
       if (listErr) throw listErr;
 
-      const targetUser = users.users.find(u => u.email === email);
+      const targetUser = users.users.find(u => u.email === authenticatedEmail);
       if (!targetUser) {
         return new Response(JSON.stringify({ error: "Usuario no encontrado en auth" }), {
           status: 404,
@@ -366,16 +410,13 @@ serve(async (req) => {
     }
 
     // Default: password reset
-    if (email !== (Deno.env.get("AUTHORIZED_RESET_EMAIL") || 'jacsolucionesgraficas@gmail.com')) {
-      return new Response(JSON.stringify({ error: 'Email no autorizado' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    // Email authorization already verified via JWT (authenticatedEmail is ROOT)
+    // Using target email from body for the user to reset, but caller is already authenticated
 
     const { data: users, error: listErr } = await kreoonClient.auth.admin.listUsers();
     if (listErr) throw listErr;
 
+    // Reset password for the target user (email from body)
     const targetUser = users.users.find(u => u.email === email);
     if (!targetUser) {
       return new Response(JSON.stringify({ error: "Usuario no encontrado en auth" }), {

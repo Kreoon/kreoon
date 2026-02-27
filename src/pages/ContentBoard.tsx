@@ -510,7 +510,7 @@ export default function ContentBoard() {
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       const matchesSearch = (
-        c.title.toLowerCase().includes(term) ||
+        (c.title ?? '').toLowerCase().includes(term) ||
         c.description?.toLowerCase().includes(term) ||
         c.client?.name?.toLowerCase().includes(term)
       );

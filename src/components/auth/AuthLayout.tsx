@@ -1,6 +1,7 @@
 import * as React from "react";
 import { motion } from "framer-motion";
 import { KreoonPageWrapper } from "@/components/ui/kreoon";
+import { TechGrid, TechParticles, TechOrb } from "@/components/ui/tech-effects";
 import { cn } from "@/lib/utils";
 import { useBranding } from "@/contexts/BrandingContext";
 
@@ -62,24 +63,14 @@ export function AuthLayout({
                   className="absolute inset-0 bg-kreoon-gradient-dark"
                   aria-hidden
                 />
-                <div
-                  className="absolute top-1/4 left-1/4 h-64 w-64 rounded-full opacity-30"
-                  style={{
-                    background:
-                      "radial-gradient(circle, rgba(124, 58, 237, 0.5) 0%, transparent 70%)",
-                    filter: "blur(50px)",
-                  }}
-                  aria-hidden
-                />
-                <div
-                  className="absolute bottom-1/3 right-1/4 h-48 w-48 rounded-full opacity-25"
-                  style={{
-                    background:
-                      "radial-gradient(circle, rgba(168, 85, 247, 0.4) 0%, transparent 70%)",
-                    filter: "blur(40px)",
-                  }}
-                  aria-hidden
-                />
+                {/* Animated orbs replacing static gradient blobs */}
+                <TechOrb size="lg" position="top-left" delay={0} />
+                <TechOrb size="md" position="bottom-right" delay={1.5} />
+                <TechOrb size="sm" position="center" delay={3} />
+                {/* SVG grid overlay */}
+                <TechGrid />
+                {/* Floating particles */}
+                <TechParticles count={15} />
                 <div className="relative flex h-full min-h-screen flex-col p-8 lg:p-10">
                   <motion.div
                     variants={leftColumnVariants}
@@ -106,12 +97,19 @@ export function AuthLayout({
                   >
                     <div
                       className={cn(
-                        "kreoon-3d-placeholder flex h-64 w-64 items-center justify-center rounded-2xl",
-                        "border border-kreoon-border bg-kreoon-bg-card/30 backdrop-blur-sm",
-                        "text-kreoon-text-muted text-sm",
+                        "flex flex-col items-center justify-center gap-4 rounded-2xl px-10 py-12",
+                        "border border-kreoon-purple-400/20 bg-kreoon-bg-card/40 backdrop-blur-xl",
+                        "shadow-kreoon-glow",
                       )}
                     >
-                      Ilustración
+                      <img
+                        src="/favicon.png"
+                        alt="KREOON"
+                        className="h-20 w-20 rounded-2xl object-cover shadow-kreoon-glow"
+                      />
+                      <p className="text-sm font-medium text-kreoon-text-secondary tracking-wide">
+                        El sistema operativo para creadores
+                      </p>
                     </div>
                   </motion.div>
                   <motion.p
@@ -120,6 +118,10 @@ export function AuthLayout({
                     animate="visible"
                     custom={2}
                     className="text-center text-lg font-medium tracking-wide text-kreoon-purple-400 lg:text-xl"
+                    style={{
+                      textShadow:
+                        "0 0 10px rgba(124, 58, 237, 0.5), 0 0 20px rgba(124, 58, 237, 0.3)",
+                    }}
                   >
                     Conecta. Crea. Crece.
                   </motion.p>

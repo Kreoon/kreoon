@@ -1368,7 +1368,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
 
   // Pre-fill avatar from product if available
   useEffect(() => {
-    if (product?.ideal_avatar) {
+    if (product?.ideal_avatar && typeof product.ideal_avatar === 'string') {
       const strippedAvatar = product.ideal_avatar.replace(/<[^>]*>/g, '').substring(0, 200);
       setFormData(prev => ({
         ...prev,
@@ -2558,7 +2558,8 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
               <CollapsibleContent className="absolute right-0 mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-[calc(100vw-3rem)] sm:w-80 shadow-lg">
                 {researchPains.map((pain: any, idx: number) => {
                   const painText = typeof pain === 'string' ? pain : (pain?.pain || pain?.description || pain?.text || `Dolor ${idx + 1}`);
-                  const category = typeof pain === 'object' ? (pain?.category || pain?.type) : null;
+                  if (!painText || (typeof painText === 'string' && !painText.trim())) return null;
+                  const category = typeof pain === 'object' && pain ? (pain?.category || pain?.type) : null;
 
                   return (
                     <button
@@ -2611,7 +2612,8 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
               <CollapsibleContent className="absolute right-0 mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-[calc(100vw-3rem)] sm:w-80 shadow-lg">
                 {researchDesires.map((desire: any, idx: number) => {
                   const desireText = typeof desire === 'string' ? desire : (desire?.desire || desire?.description || desire?.text || `Deseo ${idx + 1}`);
-                  const category = typeof desire === 'object' ? (desire?.category || desire?.type) : null;
+                  if (!desireText || (typeof desireText === 'string' && !desireText.trim())) return null;
+                  const category = typeof desire === 'object' && desire ? (desire?.category || desire?.type) : null;
 
                   return (
                     <button
@@ -2664,7 +2666,8 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
               <CollapsibleContent className="absolute right-0 mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-[calc(100vw-3rem)] sm:w-80 shadow-lg">
                 {researchObjections.map((objection: any, idx: number) => {
                   const objectionText = typeof objection === 'string' ? objection : (objection?.objection || objection?.description || objection?.text || `Objeción ${idx + 1}`);
-                  const category = typeof objection === 'object' ? (objection?.category || objection?.type) : null;
+                  if (!objectionText || (typeof objectionText === 'string' && !objectionText.trim())) return null;
+                  const category = typeof objection === 'object' && objection ? (objection?.category || objection?.type) : null;
 
                   return (
                     <button

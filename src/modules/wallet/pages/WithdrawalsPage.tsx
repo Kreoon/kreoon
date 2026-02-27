@@ -193,7 +193,7 @@ export function WithdrawalsPage() {
                   {activeWithdrawal.formattedNetAmount || activeWithdrawal.formattedAmount}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Solicitado: {new Date(activeWithdrawal.created_at).toLocaleDateString('es-CO')}
+                  Solicitado: {activeWithdrawal.created_at ? new Date(activeWithdrawal.created_at).toLocaleDateString('es-CO') : '—'}
                 </p>
               </div>
               <div className="text-right">

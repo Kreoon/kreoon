@@ -42,6 +42,64 @@ serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
+    // ============ JWT + ROOT VALIDATION ============
+    // This function is extremely dangerous (can reset passwords for all users)
+    // so we require JWT authentication + ROOT admin verification
+
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: "No authorization header - JWT required" }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Validate JWT using Kreoon admin client
+    const token = authHeader.replace('Bearer ', '');
+    const { data: userData, error: userError } = await kreoonClient.auth.getUser(token);
+
+    if (userError || !userData?.user) {
+      console.error("JWT validation failed:", userError);
+      return new Response(JSON.stringify({ error: "Invalid or expired token" }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const callerEmail = userData.user.email as string;
+    const callerId = userData.user.id as string;
+
+    // Check if caller is ROOT user (only ROOT can use this dangerous function)
+    const ROOT_EMAILS = (Deno.env.get("ROOT_ADMIN_EMAILS") ||
+      "jacsolucionesgraficas@gmail.com,kairosgp.sas@gmail.com")
+      .split(",").map(e => e.trim());
+
+    const isRootUser = ROOT_EMAILS.includes(callerEmail);
+
+    if (!isRootUser) {
+      // Double check in user_roles table
+      const { data: adminRole } = await kreoonClient
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", callerId)
+        .eq("role", "admin")
+        .maybeSingle();
+
+      if (!adminRole) {
+        console.warn(`SECURITY: Unauthorized bulk-password-reset attempt by ${callerEmail}`);
+        return new Response(JSON.stringify({
+          error: "Unauthorized - Root admin access required for bulk operations"
+        }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    console.log(`SECURITY: bulk-password-reset authorized for ROOT user ${callerEmail}`);
+
+    // ============ END JWT VALIDATION ============
+
     const { secret, action, password } = await req.json();
 
     const EXPECTED_SECRET = Deno.env.get("EMERGENCY_PASSWORD_RESET_SECRET") || 'kreoon-emergency-2026';

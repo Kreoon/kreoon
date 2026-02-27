@@ -549,7 +549,7 @@ export function ScriptGenerator({ product, contentId, onScriptGenerated, organiz
 
   // Pre-fill avatar from product if available
   useEffect(() => {
-    if (product?.ideal_avatar) {
+    if (product?.ideal_avatar && typeof product.ideal_avatar === 'string') {
       const strippedAvatar = product.ideal_avatar.replace(/<[^>]*>/g, "").substring(0, 200);
       setFormData((prev) => ({
         ...prev,

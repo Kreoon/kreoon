@@ -27,6 +27,22 @@ const GROUP_ICONS: Record<PermissionGroup, React.ComponentType<{ className?: str
   client: Building2,
 };
 
+// Dashboard routes for each role
+const ROLE_DASHBOARDS: Record<AppRole, string> = {
+  admin: '/dashboard',
+  strategist: '/strategist-dashboard',
+  creator: '/creator-dashboard',
+  editor: '/editor-dashboard',
+  client: '/client-dashboard',
+  trafficker: '/marketing',
+  team_leader: '/dashboard',
+  ambassador: '/creator-dashboard',
+};
+
+// Classify roles into personal vs company context (ambassador excluded - it's a badge)
+const PERSONAL_ROLES: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor'];
+const COMPANY_ROLES: AppRole[] = ['client'];
+
 // Group descriptions
 const GROUP_DESCRIPTIONS: Record<PermissionGroup, string> = {
   admin: 'Gestión completa de la plataforma',
@@ -61,7 +77,8 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
   const { roles, activeRole, setActiveRole } = useAuth();
   const navigate = useNavigate();
 
-  const selectableRoles = roles;
+  // Filter out 'ambassador' - it's a badge/privilege, not a switchable functional role
+  const selectableRoles = roles.filter((r) => r !== 'ambassador');
 
   // Only show if user has multiple selectable roles
   if (selectableRoles.length <= 1) {

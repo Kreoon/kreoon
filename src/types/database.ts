@@ -63,6 +63,7 @@ export interface Profile {
   phone: string | null;
   bio: string | null;
   is_ambassador: boolean;
+  is_superadmin?: boolean; // Platform superadmin - can access all organizations
   is_public: boolean | null;
   portfolio_url: string | null;
   instagram: string | null;

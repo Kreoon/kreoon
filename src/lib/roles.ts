@@ -124,16 +124,24 @@ export function getRoleSolidColor(role: AppRole | string): string {
   return GROUP_SOLID_COLORS[group] || 'bg-muted';
 }
 
-// Get the primary role from an array (priority: by permission group weight)
+// Functional roles that can be used as active_role (ambassador is a badge, NOT a functional role)
+export const FUNCTIONAL_ROLES: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client'];
+
+// Check if a role is a functional role (can be used as active_role)
+export function isFunctionalRole(role: string): boolean {
+  return FUNCTIONAL_ROLES.includes(role as AppRole);
+}
+
+// Get the primary role from an array (priority order) - only returns functional roles
 export function getPrimaryRole(roles: AppRole[]): AppRole | null {
   if (roles.length === 0) return null;
 
-  // Priority order by permission group
-  const groupPriority: PermissionGroup[] = ['admin', 'team_leader', 'strategist', 'editor', 'creator', 'client'];
+  const priority: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client'];
 
-  for (const group of groupPriority) {
-    const match = roles.find(r => getPermissionGroup(r) === group);
-    if (match) return match;
+  for (const role of priority) {
+    if (roles.includes(role)) {
+      return role;
+    }
   }
 
   return roles[0];
@@ -165,7 +173,7 @@ export const GLOBAL_NICHE_ROLES: AppRole[] = [
 // All marketplace roles (specializations within creator_profiles, not for org assignment)
 export const MARKETPLACE_ASSIGNABLE_ROLES: AppRole[] = MARKETPLACE_ROLES.map(r => r.id as AppRole);
 
-// All roles that can appear in UI selectors
+// Roles that can appear in UI role-switching selectors (ambassador excluded - it's a badge)
 export const SELECTABLE_ROLES: AppRole[] = [...GLOBAL_NICHE_ROLES];
 
 // All available roles (global + marketplace + legacy for backward compat)
