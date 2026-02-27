@@ -2,6 +2,31 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
+// ─── Fallback: query tokens directly from DB ───
+async function getTokensFallback(userId: string, organizationId?: string | null): Promise<any | null> {
+  try {
+    let query = supabase.from('ai_token_balances').select('*');
+
+    if (organizationId) {
+      query = query.eq('organization_id', organizationId);
+    } else {
+      query = query.eq('user_id', userId).is('organization_id', null);
+    }
+
+    const { data, error } = await query.limit(1).maybeSingle();
+
+    if (error) {
+      console.error('[useAITokens] Fallback query error:', error.message);
+      return null;
+    }
+
+    return data;
+  } catch (err) {
+    console.error('[useAITokens] Fallback error:', err);
+    return null;
+  }
+}
+
 export interface AITokenBalance {
   tokensRemaining: number;
   tokensUsedThisPeriod: number;
@@ -80,8 +105,18 @@ export function useAITokens(organizationId?: string | null) {
         }),
       ]);
 
-      if (balanceRes?.success && balanceRes.balance) {
-        const b = balanceRes.balance;
+      let b = balanceRes?.success && balanceRes.balance ? balanceRes.balance : null;
+
+      // Fallback: query DB directly if edge function fails
+      if (!b && user?.id) {
+        console.warn('[useAITokens] Edge function failed, using fallback');
+        b = await getTokensFallback(user.id, orgId);
+        if (b) {
+          console.log('[useAITokens] Using fallback tokens:', b.balance_subscription);
+        }
+      }
+
+      if (b) {
         const totalBalance = (b.balance_subscription ?? 0) + (b.balance_purchased ?? 0) + (b.balance_bonus ?? 0);
 
         setBalance({

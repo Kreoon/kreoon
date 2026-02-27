@@ -733,6 +733,8 @@ async function activateCommunityStarter(supabase: any, userId: string) {
 // ============================================================================
 
 async function getSubscriptionStatus(supabase: any, userId: string, organizationId?: string) {
+  console.log(`[get-status] userId: ${userId}, organizationId: ${organizationId}`);
+
   // Build query based on whether we're looking for org or personal subscription
   let subscriptionQuery = supabase
     .from("platform_subscriptions")
@@ -751,17 +753,24 @@ async function getSubscriptionStatus(supabase: any, userId: string, organization
       .is("organization_id", null);
   }
 
-  const { data: subscription } = await subscriptionQuery
+  const { data: subscription, error: subError } = await subscriptionQuery
     .order("created_at", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
+
+  if (subError) {
+    console.error(`[get-status] Error fetching subscription:`, subError.message, subError.code);
+    // Don't throw - return free tier on error to not block the UI
+  }
+
+  console.log(`[get-status] subscription found:`, subscription ? `${subscription.id} (${subscription.tier}, ${subscription.status})` : 'none');
 
   if (!subscription) {
     // Sin suscripción = plan free
     return {
       success: true,
       has_subscription: false,
-      tier: userId ? "creator_free" : "brand_free",
+      tier: organizationId ? "brand_free" : "creator_free",
       status: "active",
       features: ["browse_marketplace", "basic_ai"],
     };

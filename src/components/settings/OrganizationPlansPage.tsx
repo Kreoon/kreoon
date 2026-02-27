@@ -192,7 +192,6 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
   const trialStatus = useOrganizationTrial(hasPersonalSubscription ? null : organizationId);
   const { totalAvailable: kreoonCoins, loading: tokensLoading } = useAITokens(subscriptionScopeId);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
-  const [segment, setSegment] = useState<Segment>(fixedSegment || 'marcas');
 
   const {
     subscription,
@@ -212,6 +211,27 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
     isActivatingCommunity,
     refetch: refetchSubscription,
   } = useSubscription(subscriptionScopeId);
+
+  // Auto-detect segment based on current subscription tier
+  const getSegmentFromTier = (tier: string): Segment => {
+    if (tier.startsWith('org_')) return 'agencias';
+    if (tier.startsWith('creator_')) return 'creadores';
+    return 'marcas';
+  };
+
+  const [segment, setSegment] = useState<Segment>(() => {
+    if (fixedSegment) return fixedSegment;
+    // Will be updated by useEffect when subscription loads
+    return 'marcas';
+  });
+
+  // Update segment when subscription loads (auto-navigate to correct segment)
+  useEffect(() => {
+    if (!fixedSegment && currentTier && currentTier !== 'brand_free' && currentTier !== 'creator_free') {
+      const detectedSegment = getSegmentFromTier(currentTier);
+      setSegment(detectedSegment);
+    }
+  }, [currentTier, fixedSegment]);
 
   // Fetch current organization data (skip for personal subscription users — talents & clients)
   const { data: organization, isLoading } = useQuery({
