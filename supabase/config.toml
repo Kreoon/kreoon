@@ -367,3 +367,17 @@ verify_jwt = true
 # Acciones públicas (validate, get-info) + autenticadas (apply, check-membership)
 # La autenticación se verifica internamente para las acciones que lo requieren
 verify_jwt = false
+
+# ── Booking System ──
+
+[functions.booking-create]
+# Público para permitir reservas sin login
+verify_jwt = false
+
+[functions.booking-confirm]
+# Público para confirmaciones/cancelaciones via token
+verify_jwt = false
+
+[functions.booking-reminder]
+# Ejecutado via cron, no requiere JWT
+verify_jwt = false

@@ -152,6 +152,11 @@ const SocialScraperPage = lazy(() => import("./modules/social-scraper/pages/Soci
 const AdGeneratorPage = lazy(() => import("./modules/ad-generator/pages/AdGeneratorPage"));
 const ProductBannersPage = lazy(() => import("./modules/ad-generator/pages/ProductBannersPage"));
 
+// Booking Module
+const BookingSettingsPage = lazy(() => import("./modules/booking/pages/BookingSettingsPage").then(m => ({ default: m.BookingSettingsPage })));
+const BookingCalendarPage = lazy(() => import("./modules/booking/pages/BookingCalendarPage").then(m => ({ default: m.BookingCalendarPage })));
+const PublicBookingPage = lazy(() => import("./modules/booking/components/Public/PublicBookingPage").then(m => ({ default: m.PublicBookingPage })));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -361,6 +366,11 @@ function AppRoutes() {
         {/* Ad Generator Module */}
         <Route path="/ad-generator" element={<ProtectedRoute allowNoRoles><MainLayout><AdGeneratorPage /></MainLayout></ProtectedRoute>} />
         <Route path="/ad-generator/:productId" element={<ProtectedRoute allowNoRoles><MainLayout><ProductBannersPage /></MainLayout></ProtectedRoute>} />
+        {/* Booking Module */}
+        <Route path="/booking/settings" element={<ProtectedRoute allowNoRoles><MainLayout><BookingSettingsPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/booking/calendar" element={<ProtectedRoute allowNoRoles><MainLayout><BookingCalendarPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/book/:username" element={<PublicBookingPage />} />
+        <Route path="/book/:username/:eventSlug" element={<PublicBookingPage />} />
         <Route path="/settings" element={<ProtectedRoute allowNoRoles><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
         <Route path="/planes" element={<ProtectedRoute allowNoRoles><MainLayout><PlanesPage /></MainLayout></ProtectedRoute>} />
         <Route path="/freelancer-dashboard" element={<ProtectedRoute allowNoRoles><MainLayout><FreelancerDashboard /></MainLayout></ProtectedRoute>} />
