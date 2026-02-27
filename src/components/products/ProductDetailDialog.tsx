@@ -97,7 +97,7 @@ export function ProductDetailDialog({
 }: ProductDetailDialogProps) {
   const { toast } = useToast();
   const { user, profile, isAdmin, isClient } = useAuth();
-  const { isOrgOwner } = useOrgOwner();
+  const { isOrgOwner, isPlatformRoot } = useOrgOwner();
   const canEdit = isAdmin && !readOnly;
   const [loading, setLoading] = useState(false);
   const [newAngle, setNewAngle] = useState("");
@@ -595,7 +595,7 @@ export function ProductDetailDialog({
                         hasEnoughTokens={hasEnoughTokens}
                         balanceLoading={balanceLoading}
                         isClient={isClient}
-                        isAdmin={isAdmin || isOrgOwner}
+                        isAdmin={isAdmin || isOrgOwner || isPlatformRoot}
                         monthlyUsageCount={monthlyUsageCount || 0}
                         monthlyLimit={monthlyLimit}
                         limitReached={limitReached || planDisabled}
