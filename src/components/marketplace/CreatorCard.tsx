@@ -210,6 +210,38 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
           </div>
         )}
 
+        {/* Hover mini-gallery */}
+        {media.length >= 3 && (
+          <div
+            className={cn(
+              "absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex gap-1 transition-all duration-300",
+              "opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0"
+            )}
+          >
+            {media.slice(0, 3).map((item, i) => (
+              <button
+                key={item.id}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentSlide(i);
+                }}
+                className={cn(
+                  "w-12 h-16 rounded-lg overflow-hidden border-2 transition-all",
+                  i === currentSlide
+                    ? "border-white scale-105"
+                    : "border-white/30 hover:border-white/60"
+                )}
+              >
+                <img
+                  src={resolveThumb(item)}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Creator info overlay at bottom of card */}
         <div className="absolute bottom-0 inset-x-0 z-10 p-3 space-y-1.5">
           {/* Name + verified */}
