@@ -35,7 +35,7 @@ const styles = {
     backgroundColor: '#FAFBFC',
   },
   header: {
-    background: 'linear-gradient(135deg, #0066FF 0%, #0052CC 100%)',
+    background: 'linear-gradient(135deg, hsl(270 90% 50%) 0%, hsl(280 90% 45%) 100%)',
     padding: '48px 0 80px',
     position: 'relative' as const,
     overflow: 'hidden',
@@ -64,10 +64,10 @@ const styles = {
     cursor: 'pointer',
     transition: 'all 0.2s ease',
     border: 'none',
-    background: isActive ? '#0066FF' : '#FFFFFF',
+    background: isActive ? '#8B5CF6' : '#FFFFFF',
     color: isActive ? '#FFFFFF' : '#64748B',
     boxShadow: isActive
-      ? '0 4px 12px rgba(0, 102, 255, 0.25)'
+      ? '0 4px 12px rgba(139, 92, 246, 0.25)'
       : '0 1px 3px rgba(0, 0, 0, 0.05)',
   }),
   bookingCard: {
@@ -107,8 +107,8 @@ export function BookingCalendarPage() {
       value: todayBookings.length,
       sublabel: todayBookings.length === 1 ? 'cita programada' : 'citas programadas',
       icon: CalendarDays,
-      color: '#0066FF',
-      bgColor: '#EFF6FF',
+      color: '#8B5CF6',
+      bgColor: '#F5F3FF',
     },
     {
       label: 'Próximas',
@@ -285,8 +285,8 @@ export function BookingCalendarPage() {
                       to="/booking/settings"
                       className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-white"
                       style={{
-                        background: 'linear-gradient(135deg, #0066FF 0%, #0052CC 100%)',
-                        boxShadow: '0 4px 14px rgba(0, 102, 255, 0.25)',
+                        background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+                        boxShadow: '0 4px 14px rgba(139, 92, 246, 0.25)',
                       }}
                     >
                       <Settings className="w-4 h-4" />

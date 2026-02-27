@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, ComponentType } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,6 +27,41 @@ import { ThemeProvider } from "next-themes";
 import { MainLayout } from "./components/layout/MainLayout";
 import { MarketplaceLayout } from "./components/layout/MarketplacePublicLayout";
 
+// Helper: detect chunk/module load failures (stale hashes after deploy)
+function isChunkLoadError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const msg = error.message;
+  return (
+    msg.includes('Failed to fetch dynamically imported module') ||
+    msg.includes('Importing a module script failed') ||
+    msg.includes('error loading dynamically imported module') ||
+    msg.includes('Loading chunk') ||
+    msg.includes('Loading CSS chunk')
+  );
+}
+
+// Lazy import wrapper that auto-reloads on stale chunk errors after deploy.
+// Prevents users from seeing "Failed to fetch dynamically imported module" errors
+// when old JS chunk hashes no longer exist on the server.
+function lazyWithRetry<T extends ComponentType<any>>(
+  importFn: () => Promise<{ default: T }>
+) {
+  return lazy(() =>
+    importFn().catch((error) => {
+      if (isChunkLoadError(error)) {
+        // Prevent infinite reload loop: only reload once per 10 seconds
+        const lastReload = sessionStorage.getItem('last-chunk-reload');
+        const now = Date.now();
+        if (!lastReload || now - parseInt(lastReload) > 10000) {
+          sessionStorage.setItem('last-chunk-reload', now.toString());
+          window.location.reload();
+        }
+      }
+      throw error;
+    })
+  );
+}
+
 // Loading fallback component
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -34,109 +69,112 @@ const PageLoader = () => (
   </div>
 );
 
-// Lazy load all pages for code splitting
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const ContentBoard = lazy(() => import("./pages/ContentBoard"));
-const Auth = lazy(() => import("./pages/Auth"));
-const Content = lazy(() => import("./pages/Content"));
-const Scripts = lazy(() => import("./pages/Scripts"));
-const Settings = lazy(() => import("./pages/Settings"));
-const Team = lazy(() => import("./pages/Team"));
-const CreatorDashboard = lazy(() => import("./pages/CreatorDashboard"));
-const EditorDashboard = lazy(() => import("./pages/EditorDashboard"));
-const StrategistDashboard = lazy(() => import("./pages/StrategistDashboard"));
-const ClientDashboard = lazy(() => import("./pages/ClientDashboard"));
-const ClientContentBoard = lazy(() => import("./pages/ClientContentBoard"));
-const VideosPage = lazy(() => import("./pages/portfolio/VideosPage"));
-const SavedPage = lazy(() => import("./pages/portfolio/SavedPage"));
-const CompanyProfilePage = lazy(() => import("./pages/portfolio/CompanyProfilePage"));
-const PublicProfilePage = lazy(() => import("./pages/portfolio/PublicProfilePage"));
-const Ranking = lazy(() => import("./pages/Ranking"));
-const Unauthorized = lazy(() => import("./pages/Unauthorized"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const NoCompany = lazy(() => import("./pages/NoCompany"));
-const NoOrganization = lazy(() => import("./pages/NoOrganization"));
-const PendingAccess = lazy(() => import("./pages/PendingAccess"));
-const WelcomeNewMember = lazy(() => import("./pages/WelcomeNewMember"));
-const UPDocumentation = lazy(() => import("./pages/UPDocumentation"));
-const OrgAuth = lazy(() => import("./pages/OrgAuth"));
-const HomePage = lazy(() => import("./pages/HomePage"));
-const Register = lazy(() => import("./pages/Register"));
-const OrgRegister = lazy(() => import("./pages/auth/OrgRegister"));
-const Live = lazy(() => import("./pages/Live"));
-const Marketing = lazy(() => import("./pages/Marketing"));
-const ResearchLanding = lazy(() => import("./pages/ResearchLanding"));
-const OrgPortfolioPage = lazy(() => import("./pages/OrgPortfolioPage"));
-const OrgContentShowcase = lazy(() => import("./pages/OrgContentShowcase"));
-const CreatorProfilePage_Marketplace = lazy(() => import("./components/marketplace/profile/CreatorProfilePage"));
-const HiringWizardPage = lazy(() => import("./pages/HiringWizardPage"));
-const MarketplaceDashboard = lazy(() => import("./pages/MarketplaceDashboard"));
-const CampaignsFeedPage = lazy(() => import("./pages/CampaignsFeedPage"));
-const CampaignDetailPage = lazy(() => import("./pages/CampaignDetailPage"));
-const CampaignWizardPage = lazy(() => import("./pages/CampaignWizardPage"));
-const BrandCampaignsPage = lazy(() => import("./pages/BrandCampaignsPage"));
-const CreatorCampaignsPage = lazy(() => import("./pages/CreatorCampaignsPage"));
-const MarketplaceBrowse = lazy(() => import("./components/marketplace/MarketplacePage"));
-const OrgProfilePage_Marketplace = lazy(() => import("./components/marketplace/org-profile/OrgProfilePage"));
-const TalentListsPage = lazy(() => import("./pages/marketplace/TalentListsPage"));
-const TalentListDetailPage = lazy(() => import("./pages/marketplace/TalentListDetailPage"));
-const MarketplaceInvitationsPage = lazy(() => import("./pages/marketplace/MarketplaceInvitationsPage"));
-const MarketplaceInquiriesPage = lazy(() => import("./pages/marketplace/MarketplaceInquiriesPage"));
-const CampaignPaymentSuccessPage = lazy(() => import("./pages/marketplace/CampaignPaymentSuccess"));
-const CampaignPaymentCancelPage = lazy(() => import("./pages/marketplace/CampaignPaymentCancel"));
-const CreatorProfileSetup = lazy(() => import("./pages/CreatorProfileSetup"));
-const Unete = lazy(() => import("./pages/Unete"));
-const UneteTalento = lazy(() => import("./pages/unete/talento"));
-const UneteMarcas = lazy(() => import("./pages/unete/marcas"));
-const UneteOrganizaciones = lazy(() => import("./pages/unete/organizaciones"));
+// Lazy load all pages for code splitting (with auto-retry on stale chunks)
+const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
+const ContentBoard = lazyWithRetry(() => import("./pages/ContentBoard"));
+const Auth = lazyWithRetry(() => import("./pages/Auth"));
+const Content = lazyWithRetry(() => import("./pages/Content"));
+const Creators = lazyWithRetry(() => import("./pages/Creators"));
+const Scripts = lazyWithRetry(() => import("./pages/Scripts"));
+const Clients = lazyWithRetry(() => import("./pages/Clients"));
+const Settings = lazyWithRetry(() => import("./pages/Settings"));
+const Team = lazyWithRetry(() => import("./pages/Team"));
+const CreatorDashboard = lazyWithRetry(() => import("./pages/CreatorDashboard"));
+const EditorDashboard = lazyWithRetry(() => import("./pages/EditorDashboard"));
+const StrategistDashboard = lazyWithRetry(() => import("./pages/StrategistDashboard"));
+const ClientDashboard = lazyWithRetry(() => import("./pages/ClientDashboard"));
+const ClientContentBoard = lazyWithRetry(() => import("./pages/ClientContentBoard"));
+const VideosPage = lazyWithRetry(() => import("./pages/portfolio/VideosPage"));
+const SavedPage = lazyWithRetry(() => import("./pages/portfolio/SavedPage"));
+const CompanyProfilePage = lazyWithRetry(() => import("./pages/portfolio/CompanyProfilePage"));
+const PublicProfilePage = lazyWithRetry(() => import("./pages/portfolio/PublicProfilePage"));
+const Ranking = lazyWithRetry(() => import("./pages/Ranking"));
+const Unauthorized = lazyWithRetry(() => import("./pages/Unauthorized"));
+const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
+const NoCompany = lazyWithRetry(() => import("./pages/NoCompany"));
+const NoOrganization = lazyWithRetry(() => import("./pages/NoOrganization"));
+const PendingAccess = lazyWithRetry(() => import("./pages/PendingAccess"));
+const WelcomeNewMember = lazyWithRetry(() => import("./pages/WelcomeNewMember"));
+const UPDocumentation = lazyWithRetry(() => import("./pages/UPDocumentation"));
+const OrgAuth = lazyWithRetry(() => import("./pages/OrgAuth"));
+const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
+const Register = lazyWithRetry(() => import("./pages/Register"));
+const OrgRegister = lazyWithRetry(() => import("./pages/auth/OrgRegister"));
+const Live = lazyWithRetry(() => import("./pages/Live"));
+const Marketing = lazyWithRetry(() => import("./pages/Marketing"));
+const ResearchLanding = lazyWithRetry(() => import("./pages/ResearchLanding"));
+const OrgPortfolioPage = lazyWithRetry(() => import("./pages/OrgPortfolioPage"));
+const OrgContentShowcase = lazyWithRetry(() => import("./pages/OrgContentShowcase"));
+const CreatorProfilePage_Marketplace = lazyWithRetry(() => import("./components/marketplace/profile/CreatorProfilePage"));
+const HiringWizardPage = lazyWithRetry(() => import("./pages/HiringWizardPage"));
+const MarketplaceDashboard = lazyWithRetry(() => import("./pages/MarketplaceDashboard"));
+const CampaignsFeedPage = lazyWithRetry(() => import("./pages/CampaignsFeedPage"));
+const CampaignDetailPage = lazyWithRetry(() => import("./pages/CampaignDetailPage"));
+const CampaignWizardPage = lazyWithRetry(() => import("./pages/CampaignWizardPage"));
+const CampaignEditWizardPage = lazyWithRetry(() => import("./pages/CampaignEditWizardPage"));
+const BrandCampaignsPage = lazyWithRetry(() => import("./pages/BrandCampaignsPage"));
+const CreatorCampaignsPage = lazyWithRetry(() => import("./pages/CreatorCampaignsPage"));
+const MarketplaceBrowse = lazyWithRetry(() => import("./components/marketplace/MarketplacePage"));
+const OrgProfilePage_Marketplace = lazyWithRetry(() => import("./components/marketplace/org-profile/OrgProfilePage"));
+const TalentListsPage = lazyWithRetry(() => import("./pages/marketplace/TalentListsPage"));
+const TalentListDetailPage = lazyWithRetry(() => import("./pages/marketplace/TalentListDetailPage"));
+const MarketplaceInvitationsPage = lazyWithRetry(() => import("./pages/marketplace/MarketplaceInvitationsPage"));
+const MarketplaceInquiriesPage = lazyWithRetry(() => import("./pages/marketplace/MarketplaceInquiriesPage"));
+const CampaignPaymentSuccessPage = lazyWithRetry(() => import("./pages/marketplace/CampaignPaymentSuccess"));
+const CampaignPaymentCancelPage = lazyWithRetry(() => import("./pages/marketplace/CampaignPaymentCancel"));
+const CreatorProfileSetup = lazyWithRetry(() => import("./pages/CreatorProfileSetup"));
+const Unete = lazyWithRetry(() => import("./pages/Unete"));
+const UneteTalento = lazyWithRetry(() => import("./pages/unete/talento"));
+const UneteMarcas = lazyWithRetry(() => import("./pages/unete/marcas"));
+const UneteOrganizaciones = lazyWithRetry(() => import("./pages/unete/organizaciones"));
 // CRM Platform
-const PlatformCRMDashboard = lazy(() => import("./pages/crm/platform/PlatformCRMDashboard"));
-const PlatformCRMLeads = lazy(() => import("./pages/crm/platform/PlatformCRMLeads"));
-const PlatformCRMOrganizations = lazy(() => import("./pages/crm/platform/PlatformCRMOrganizations"));
-const PlatformCRMCreators = lazy(() => import("./pages/crm/platform/PlatformCRMCreators"));
-const PlatformCRMUsers = lazy(() => import("./pages/crm/platform/PlatformCRMUsers"));
-const PlatformCRMFinances = lazy(() => import("./pages/crm/platform/PlatformCRMFinances"));
-const PlatformCRMEmailMarketing = lazy(() => import("./pages/crm/platform/PlatformCRMEmailMarketing"));
-const BrandsCRM = lazy(() => import("./pages/crm/BrandsCRM"));
-const BrandDetail = lazy(() => import("./pages/crm/BrandDetail"));
-const PlatformCRMCommunities = lazy(() => import("./pages/crm/platform/PlatformCRMCommunities"));
+const PlatformCRMDashboard = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMDashboard"));
+const PlatformCRMLeads = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMLeads"));
+const PlatformCRMOrganizations = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMOrganizations"));
+const PlatformCRMCreators = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMCreators"));
+const PlatformCRMUsers = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMUsers"));
+const PlatformCRMFinances = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMFinances"));
+const PlatformCRMEmailMarketing = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMEmailMarketing"));
+const BrandsCRM = lazyWithRetry(() => import("./pages/crm/BrandsCRM"));
+const BrandDetail = lazyWithRetry(() => import("./pages/crm/BrandDetail"));
+const PlatformCRMCommunities = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMCommunities"));
 // CRM Org
-const OrgCRMDashboard = lazy(() => import("./pages/crm/org/OrgCRMDashboard"));
-const OrgCRMPipelines = lazy(() => import("./pages/crm/org/OrgCRMPipelines"));
-const OrgCRMFinances = lazy(() => import("./pages/crm/org/OrgCRMFinances"));
+const OrgCRMDashboard = lazyWithRetry(() => import("./pages/crm/org/OrgCRMDashboard"));
+const OrgCRMPipelines = lazyWithRetry(() => import("./pages/crm/org/OrgCRMPipelines"));
+const OrgCRMFinances = lazyWithRetry(() => import("./pages/crm/org/OrgCRMFinances"));
 // Unified pages (Talent + Clients)
-const UnifiedTalentPage = lazy(() => import("./pages/UnifiedTalentPage"));
-const UnifiedClientsPage = lazy(() => import("./pages/UnifiedClientsPage"));
+const UnifiedTalentPage = lazyWithRetry(() => import("./pages/UnifiedTalentPage"));
+const UnifiedClientsPage = lazyWithRetry(() => import("./pages/UnifiedClientsPage"));
 
 // KAE Analytics
-const KAEAnalyticsDashboard = lazy(() => import("./components/admin/analytics/KAEDashboard"));
+const KAEAnalyticsDashboard = lazyWithRetry(() => import("./components/admin/analytics/KAEDashboard"));
 
 // Subscription pages
-const ReferralLanding = lazy(() => import("./pages/ReferralLanding"));
-const UnlockAccess = lazy(() => import("./pages/UnlockAccess"));
-const WelcomeTalent = lazy(() => import("./pages/WelcomeTalent"));
-const OnboardingProfile = lazy(() => import("./pages/OnboardingProfile"));
-const SubscriptionSuccess = lazy(() => import("./pages/subscription/SubscriptionSuccess"));
-const SubscriptionCancel = lazy(() => import("./pages/subscription/SubscriptionCancel"));
-const PlanesPage = lazy(() => import("./pages/PlanesPage"));
-const FreelancerDashboard = lazy(() => import("./pages/FreelancerDashboard"));
-const PartnerCommunityLanding = lazy(() => import("./pages/PartnerCommunityLanding"));
+const ReferralLanding = lazyWithRetry(() => import("./pages/ReferralLanding"));
+const UnlockAccess = lazyWithRetry(() => import("./pages/UnlockAccess"));
+const WelcomeTalent = lazyWithRetry(() => import("./pages/WelcomeTalent"));
+const OnboardingProfile = lazyWithRetry(() => import("./pages/OnboardingProfile"));
+const SubscriptionSuccess = lazyWithRetry(() => import("./pages/subscription/SubscriptionSuccess"));
+const SubscriptionCancel = lazyWithRetry(() => import("./pages/subscription/SubscriptionCancel"));
+const PlanesPage = lazyWithRetry(() => import("./pages/PlanesPage"));
+const FreelancerDashboard = lazyWithRetry(() => import("./pages/FreelancerDashboard"));
+const PartnerCommunityLanding = lazyWithRetry(() => import("./pages/PartnerCommunityLanding"));
 
 // Campaign Optimization pages
-const UGCPriceCalculator = lazy(() => import("./components/marketplace/calculator/UGCPriceCalculator"));
-const CaseStudies = lazy(() => import("./pages/CaseStudies"));
-const CaseStudyDetail = lazy(() => import("./pages/CaseStudyDetail"));
+const UGCPriceCalculator = lazyWithRetry(() => import("./components/marketplace/calculator/UGCPriceCalculator"));
+const CaseStudies = lazyWithRetry(() => import("./pages/CaseStudies"));
+const CaseStudyDetail = lazyWithRetry(() => import("./pages/CaseStudyDetail"));
 
 // Legal pages
-const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
-const TermsOfService = lazy(() => import("./pages/legal/TermsOfService"));
-const DataDeletion = lazy(() => import("./pages/legal/DataDeletion"));
+const PrivacyPolicy = lazyWithRetry(() => import("./pages/legal/PrivacyPolicy"));
+const TermsOfService = lazyWithRetry(() => import("./pages/legal/TermsOfService"));
+const DataDeletion = lazyWithRetry(() => import("./pages/legal/DataDeletion"));
 
 // Wallet Module Pages
-const WalletPage = lazy(() => import("./modules/wallet/pages/WalletPage").then(m => ({ default: m.WalletPage })));
-const TransactionsPage = lazy(() => import("./modules/wallet/pages/TransactionsPage").then(m => ({ default: m.TransactionsPage })));
-const WithdrawalsPage = lazy(() => import("./modules/wallet/pages/WithdrawalsPage").then(m => ({ default: m.WithdrawalsPage })));
-const AdminWalletsPage = lazy(() => import("./modules/wallet/pages/AdminWalletsPage").then(m => ({ default: m.AdminWalletsPage })));
+const WalletPage = lazyWithRetry(() => import("./modules/wallet/pages/WalletPage").then(m => ({ default: m.WalletPage })));
+const TransactionsPage = lazyWithRetry(() => import("./modules/wallet/pages/TransactionsPage").then(m => ({ default: m.TransactionsPage })));
+const WithdrawalsPage = lazyWithRetry(() => import("./modules/wallet/pages/WithdrawalsPage").then(m => ({ default: m.WithdrawalsPage })));
+const AdminWalletsPage = lazyWithRetry(() => import("./modules/wallet/pages/AdminWalletsPage").then(m => ({ default: m.AdminWalletsPage })));
 
 // Social Hub Module
 const SocialHubPage = lazy(() => import("./modules/social/pages/SocialHubPage"));
@@ -283,7 +321,7 @@ function AppRoutes() {
         <Route path="/marketplace/projects" element={<Navigate to="/board?view=marketplace" replace />} />
         <Route path="/marketplace/content" element={<Navigate to="/content?view=marketplace" replace />} />
         <Route path="/marketplace/campaigns/create" element={<ProtectedRoute allowNoRoles><MainLayout><CampaignWizardPage /></MainLayout></ProtectedRoute>} />
-        <Route path="/marketplace/campaigns/:id/edit" element={<ProtectedRoute allowNoRoles><MainLayout><CampaignWizardPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/marketplace/campaigns/:id/edit" element={<ProtectedRoute allowNoRoles><MainLayout><CampaignEditWizardPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/my-campaigns" element={<ProtectedRoute allowNoRoles><MainLayout><BrandCampaignsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/creator-campaigns" element={<ProtectedRoute allowNoRoles><MainLayout><CreatorCampaignsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/talent-lists" element={<ProtectedRoute allowNoRoles><MainLayout><TalentListsPage /></MainLayout></ProtectedRoute>} />

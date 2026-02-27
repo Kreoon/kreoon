@@ -10,6 +10,13 @@ import type {
 import { AI_TOKEN_COSTS, TOKEN_PACKAGES } from '@/lib/finance/constants';
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 
+// ─── Extended balance type with legacy field aliases ───
+export type ExtendedAITokenBalance = AITokenBalance & {
+  subscription_tokens: number;
+  purchased_tokens: number;
+  bonus_tokens: number;
+};
+
 // ─── Helper: invoke ai-tokens-service ───
 function invokeTokenService<T = unknown>(action: string, body?: Record<string, unknown>) {
   return invokeEdgeFunction<T>('ai-tokens-service', action, body);
@@ -31,10 +38,24 @@ export function useUnifiedTokens(organizationId?: string) {
     refetch: refetchBalance,
   } = useQuery({
     queryKey,
-    queryFn: () =>
-      invokeTokenService<AITokenBalance>('get-balance', {
-        organization_id: organizationId,
-      }),
+    queryFn: async () => {
+      const res = await invokeTokenService<{ success: boolean; balance: AITokenBalance }>(
+        'get-balance',
+        { organization_id: organizationId }
+      );
+      if (!res?.success || !res.balance) {
+        return null;
+      }
+      // Normalizar campos para compatibilidad con consumidores legacy
+      const b = res.balance;
+      return {
+        ...b,
+        // Alias legacy para ProductDetailDialog y otros consumidores
+        subscription_tokens: b.balance_subscription ?? 0,
+        purchased_tokens: b.balance_purchased ?? 0,
+        bonus_tokens: b.balance_bonus ?? 0,
+      };
+    },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 min
   });
@@ -42,7 +63,23 @@ export function useUnifiedTokens(organizationId?: string) {
   // ─── Get action costs ───
   const { data: actionCosts } = useQuery({
     queryKey: ['unified-token-costs'],
-    queryFn: () => invokeTokenService<Record<string, number>>('get-action-costs'),
+    queryFn: async () => {
+      const res = await invokeTokenService<{ success: boolean; costs: Record<string, any[]>; default_cost: number }>(
+        'get-action-costs'
+      );
+      if (!res?.success) return null;
+      // Flatten grouped costs into a flat map for easy lookup
+      const flatCosts: Record<string, number> = {};
+      for (const category of Object.values(res.costs || {})) {
+        for (const item of category) {
+          if (item.action && typeof item.tokens === 'number') {
+            flatCosts[item.action] = item.tokens;
+          }
+        }
+      }
+      flatCosts.default = res.default_cost ?? 40;
+      return flatCosts;
+    },
     enabled: !!user?.id,
     staleTime: 60 * 60 * 1000, // 1 hour — costs rarely change
   });
@@ -50,7 +87,10 @@ export function useUnifiedTokens(organizationId?: string) {
   // ─── Get purchasable packages ───
   const { data: packages } = useQuery({
     queryKey: ['unified-token-packages'],
-    queryFn: () => invokeTokenService<typeof TOKEN_PACKAGES>('get-packages'),
+    queryFn: async () => {
+      const res = await invokeTokenService<{ success: boolean; packages: any[] }>('get-packages');
+      return res?.success ? (res.packages || []) : [];
+    },
     enabled: !!user?.id,
     staleTime: 60 * 60 * 1000,
   });
@@ -62,11 +102,13 @@ export function useUnifiedTokens(organizationId?: string) {
     refetch: refetchHistory,
   } = useQuery({
     queryKey: ['unified-token-history', user?.id, organizationId],
-    queryFn: () =>
-      invokeTokenService<AITokenTransaction[]>('get-history', {
-        organization_id: organizationId,
-        limit: 50,
-      }),
+    queryFn: async () => {
+      const res = await invokeTokenService<{ success: boolean; transactions: AITokenTransaction[] }>(
+        'get-history',
+        { organization_id: organizationId, limit: 50 }
+      );
+      return res?.success ? (res.transactions || []) : [];
+    },
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000,
   });
@@ -89,11 +131,11 @@ export function useUnifiedTokens(organizationId?: string) {
     orgId?: string
   ): Promise<boolean> => {
     try {
-      const result = await invokeTokenService<ConsumeTokensResponse>(
+      const result = await invokeTokenService<{ success: boolean; can_consume: boolean }>(
         'check-can-consume',
         { action_type: actionType, organization_id: orgId || organizationId }
       );
-      return result.success;
+      return result?.success && result?.can_consume;
     } catch {
       return false;
     }

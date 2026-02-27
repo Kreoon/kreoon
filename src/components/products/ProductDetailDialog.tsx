@@ -36,6 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useUnifiedTokens } from "@/hooks/useUnifiedTokens";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { AI_TOKEN_COSTS, getPlanById } from "@/lib/finance/constants";
 import {
   Package, FileText, Users, Target, Save,
@@ -96,16 +97,34 @@ export function ProductDetailDialog({
 }: ProductDetailDialogProps) {
   const { toast } = useToast();
   const { user, profile, isAdmin, isClient } = useAuth();
+  const { isOrgOwner } = useOrgOwner();
   const canEdit = isAdmin && !readOnly;
   const [loading, setLoading] = useState(false);
   const [newAngle, setNewAngle] = useState("");
 
+  // ── Obtener organización del cliente del producto ──
+  const productClientId = product?.client_id || clientId;
+  const { data: clientOrg } = useQuery({
+    queryKey: ['client-org', productClientId],
+    queryFn: async () => {
+      if (!productClientId) return null;
+      const { data } = await supabase
+        .from('clients')
+        .select('organization_id')
+        .eq('id', productClientId)
+        .single();
+      return data?.organization_id || null;
+    },
+    enabled: !!productClientId && !isClient,
+    staleTime: 10 * 60 * 1000, // 10 min
+  });
+
   // ── Token access control for ADN Recargado ──
-  const orgId = profile?.current_organization_id;
-  const { balance, checkCanConsume, balanceLoading } = useUnifiedTokens(
-    isClient ? undefined : orgId || undefined
-  );
-  const { subscription } = useSubscription(orgId || undefined);
+  // Para admins: usar organización del cliente del producto
+  // Para clientes: usar undefined (busca por user_id)
+  const effectiveOrgId = isClient ? undefined : (clientOrg || profile?.current_organization_id || undefined);
+  const { balance, checkCanConsume, balanceLoading } = useUnifiedTokens(effectiveOrgId);
+  const { subscription } = useSubscription(effectiveOrgId);
   const RESEARCH_COST = AI_TOKEN_COSTS["research.full"]; // 600
 
   // Monthly usage count for clients (count research.full transactions this month)
@@ -141,6 +160,18 @@ export function ProductDetailDialog({
     ? (balance.subscription_tokens ?? 0) + (balance.purchased_tokens ?? 0) + (balance.bonus_tokens ?? 0)
     : 0;
   const hasEnoughTokens = totalTokens >= RESEARCH_COST;
+
+  // DEBUG: Logging para diagnosticar problema de tokens
+  console.log('[ADN Debug]', {
+    productClientId,
+    clientOrg,
+    profileOrgId: profile?.current_organization_id,
+    effectiveOrgId,
+    balance,
+    totalTokens,
+    hasEnoughTokens,
+    RESEARCH_COST,
+  });
   
   const [formData, setFormData] = useState({
     name: "",
@@ -236,7 +267,7 @@ export function ProductDetailDialog({
     }
 
     // Double-check via server
-    const canConsume = await checkCanConsume('research.full', isClient ? undefined : orgId || undefined);
+    const canConsume = await checkCanConsume('research.full', isClient ? undefined : effectiveOrgId || undefined);
     if (!canConsume) {
       toast({ title: 'Tokens insuficientes', description: 'No hay tokens disponibles para esta acción.', variant: 'destructive' });
       return;
@@ -302,7 +333,7 @@ export function ProductDetailDialog({
     // Fire the edge function with token context
     const result = await generateFullResearch(product.id, {
       userId: user.id,
-      organizationId: orgId || undefined,
+      organizationId: effectiveOrgId || undefined,
       isClientUser: isClient,
     });
     if (!result.success) {
@@ -550,8 +581,8 @@ export function ProductDetailDialog({
                     onSaveSection={handleDnaSaveSection}
                   />
 
-                  {/* Generate Full Research — KIRO Branded */}
-                  {dnaRecord.status === 'ready' && (
+                  {/* Generate Full Research — KIRO Branded (Solo admins de org pueden activar) */}
+                  {dnaRecord.status === 'ready' && (isAdmin || isClient) && (
                     researchGenerating ? (
                       <KiroResearchProgress
                         progress={researchProgress}
@@ -564,6 +595,7 @@ export function ProductDetailDialog({
                         hasEnoughTokens={hasEnoughTokens}
                         balanceLoading={balanceLoading}
                         isClient={isClient}
+                        isAdmin={isAdmin || isOrgOwner}
                         monthlyUsageCount={monthlyUsageCount || 0}
                         monthlyLimit={monthlyLimit}
                         limitReached={limitReached || planDisabled}
@@ -896,6 +928,7 @@ function KiroResearchButton({
   hasEnoughTokens,
   balanceLoading,
   isClient,
+  isAdmin,
   monthlyUsageCount,
   monthlyLimit,
   limitReached,
@@ -905,21 +938,26 @@ function KiroResearchButton({
   hasEnoughTokens: boolean;
   balanceLoading: boolean;
   isClient: boolean;
+  isAdmin?: boolean;
   monthlyUsageCount: number;
   monthlyLimit?: number | null;
   limitReached: boolean;
 }) {
-  const disabled = !hasEnoughTokens || limitReached || balanceLoading;
+  // Admins, propietarios de organización, o clientes pueden activar (clientes tienen límites mensuales)
+  const canActivate = isAdmin || isClient;
+  const disabled = !canActivate || !hasEnoughTokens || limitReached || balanceLoading;
 
   const tooltipMessage = balanceLoading
-    ? 'Verificando tokens...'
-    : limitReached
-      ? monthlyLimit === 0
-        ? 'Tu plan no incluye ADN Recargado'
-        : `Límite mensual alcanzado (${monthlyUsageCount}/${monthlyLimit})`
-      : !hasEnoughTokens
-        ? `Tokens insuficientes (necesitas ${tokenCost})`
-        : '';
+    ? 'Verificando Kreoon Coins...'
+    : !canActivate
+      ? 'Solo administradores de la organización pueden activar ADN Recargado'
+      : limitReached
+        ? monthlyLimit === 0
+          ? 'Tu plan no incluye ADN Recargado'
+          : `Límite mensual alcanzado (${monthlyUsageCount}/${monthlyLimit})`
+        : !hasEnoughTokens
+          ? `Kreoon Coins insuficientes (necesitas ${tokenCost})`
+          : '';
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-purple-500/20 bg-gradient-to-br from-purple-950/60 via-black/40 to-pink-950/60 p-6">
@@ -950,11 +988,11 @@ function KiroResearchButton({
           <p className="text-xs text-gray-400 mt-1 leading-relaxed">
             KIRO combina ADN de Marca + ADN de Producto para generar la investigación completa de 12 pasos.
           </p>
-          {/* Token cost + monthly usage info */}
+          {/* Kreoon Coins cost + monthly usage info */}
           <div className="flex items-center gap-3 mt-2">
             <span className="inline-flex items-center gap-1 text-[10px] font-medium text-purple-300/80 bg-purple-500/10 px-2 py-0.5 rounded-full">
               <Coins className="w-3 h-3" />
-              {tokenCost} tokens
+              {tokenCost} Kreoon Coins
             </span>
             {isClient && monthlyLimit !== null && monthlyLimit !== undefined && (
               <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${

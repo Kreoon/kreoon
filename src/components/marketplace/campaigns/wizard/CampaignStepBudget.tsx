@@ -1,9 +1,10 @@
-import { DollarSign, Gift, Layers, Shield, Gavel, ArrowUpDown, Eye, EyeOff, Calendar, Briefcase } from 'lucide-react';
+import { DollarSign, Gift, Layers, Shield, Gavel, ArrowUpDown, Eye, EyeOff, Calendar, Briefcase, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PriceInput } from '@/components/ui/PriceInput';
 import { InlinePrice } from '@/components/ui/Price';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import type { CampaignType, CampaignBudgetMode, CampaignPricingMode, BidVisibility } from '../../types/marketplace';
+import type { CampaignType, CampaignBudgetMode, CampaignPricingMode, BidVisibility, MarketplaceRoleId } from '../../types/marketplace';
+import { getMinBudgetForRoles, MARKETPLACE_ROLES_MAP } from '../../roles/marketplaceRoleConfig';
 
 export interface CampaignBudgetData {
   campaign_type: CampaignType;
@@ -26,6 +27,7 @@ interface CampaignStepBudgetProps {
   data: CampaignBudgetData;
   onChange: <K extends keyof CampaignBudgetData>(field: K, value: CampaignBudgetData[K]) => void;
   contentCount: number;
+  desiredRoles?: MarketplaceRoleId[];
 }
 
 const TYPE_OPTIONS: { value: CampaignType; label: string; description: string; icon: React.ElementType; color: string }[] = [
@@ -42,7 +44,7 @@ const PRICING_OPTIONS: { value: CampaignPricingMode; label: string; description:
 
 import { COMMISSION_RATES } from '@/lib/finance/constants';
 
-export function CampaignStepBudget({ data, onChange, contentCount }: CampaignStepBudgetProps) {
+export function CampaignStepBudget({ data, onChange, contentCount, desiredRoles = [] }: CampaignStepBudgetProps) {
   const { formatPrice } = useCurrency();
   const showPaymentFields = data.campaign_type === 'paid' || data.campaign_type === 'hybrid';
   const showExchangeFields = data.campaign_type === 'exchange' || data.campaign_type === 'hybrid';
@@ -58,6 +60,14 @@ export function CampaignStepBudget({ data, onChange, contentCount }: CampaignSte
     : data.total_budget;
   const platformFee = Math.round(totalCreatorPayment * commissionPct / 100);
   const totalCost = totalCreatorPayment + platformFee;
+
+  // Budget validation based on selected roles
+  const suggestedMinBudget = getMinBudgetForRoles(desiredRoles);
+  const currentBudgetPerVideo = data.budget_mode === 'per_video' ? data.budget_per_video : (data.total_budget / Math.max(1, contentCount * data.max_creators));
+  const isBudgetLow = showPaymentFields && currentBudgetPerVideo > 0 && currentBudgetPerVideo < suggestedMinBudget;
+  const highestRoleLabel = desiredRoles.length > 0
+    ? MARKETPLACE_ROLES_MAP[desiredRoles.sort((a, b) => (getMinBudgetForRoles([b]) - getMinBudgetForRoles([a])))[0]]?.label
+    : null;
 
   return (
     <div className="space-y-6">
@@ -159,6 +169,21 @@ export function CampaignStepBudget({ data, onChange, contentCount }: CampaignSte
                 </button>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Budget warning based on roles */}
+      {isBudgetLow && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-amber-300 text-sm font-medium">Presupuesto por debajo del promedio del mercado</p>
+            <p className="text-amber-400/80 text-xs mt-1">
+              Para los roles seleccionados{highestRoleLabel && ` (incluyendo ${highestRoleLabel})`}, el presupuesto sugerido es de al menos{' '}
+              <InlinePrice amount={suggestedMinBudget} /> por video. Tu oferta actual de{' '}
+              <InlinePrice amount={currentBudgetPerVideo} /> puede limitar las aplicaciones de calidad.
+            </p>
           </div>
         </div>
       )}

@@ -76,7 +76,7 @@ const styles = {
     textAlign: 'center' as const,
   },
   createButton: {
-    background: 'linear-gradient(135deg, #0066FF 0%, #0052CC 100%)',
+    background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
     color: '#FFFFFF',
     fontWeight: 600,
     padding: '12px 24px',
@@ -87,7 +87,7 @@ const styles = {
     alignItems: 'center',
     gap: '8px',
     fontSize: '15px',
-    boxShadow: '0 4px 14px rgba(0, 102, 255, 0.25)',
+    boxShadow: '0 4px 14px rgba(139, 92, 246, 0.25)',
     transition: 'all 0.2s ease',
   },
 };
@@ -185,7 +185,7 @@ export function EventTypeList() {
           </p>
         </div>
         <motion.button
-          whileHover={{ scale: 1.02, boxShadow: '0 6px 20px rgba(0, 102, 255, 0.3)' }}
+          whileHover={{ scale: 1.02, boxShadow: '0 6px 20px rgba(139, 92, 246, 0.3)' }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setIsCreateOpen(true)}
           style={styles.createButton}
@@ -202,8 +202,8 @@ export function EventTypeList() {
           animate={{ opacity: 1, scale: 1 }}
           style={styles.emptyState}
         >
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-50 mb-6">
-            <Calendar className="w-8 h-8 text-blue-500" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-violet-50 mb-6">
+            <Calendar className="w-8 h-8 text-violet-500" />
           </div>
           <h4 className="text-xl font-semibold text-slate-900 mb-2">
             Crea tu primer tipo de evento
@@ -236,7 +236,7 @@ export function EventTypeList() {
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ delay: index * 0.05 }}
                   style={styles.card}
-                  className={`group hover:shadow-lg hover:border-blue-200 ${
+                  className={`group hover:shadow-lg hover:border-violet-200 ${
                     !eventType.is_active ? 'opacity-60' : ''
                   }`}
                 >

@@ -775,7 +775,12 @@ export default function CampaignWizard({ editCampaignId }: { editCampaignId?: st
           />
         )}
         {currentStep === 4 && (
-          <CampaignStepBudget data={budgetData} onChange={updateBudgetData} contentCount={totalVideos} />
+          <CampaignStepBudget
+            data={budgetData}
+            onChange={updateBudgetData}
+            contentCount={totalVideos}
+            desiredRoles={creatorRequirements.desired_roles}
+          />
         )}
         {currentStep === 5 && (
           <CampaignStepReview

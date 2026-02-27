@@ -26,6 +26,8 @@ import { Calendar, DollarSign, Paperclip, Send, Loader2, X } from 'lucide-react'
 import { cn } from '@/lib/utils';
 import { useMarketplaceProposals } from '@/hooks/useMarketplaceProposals';
 import { useCreatorServices } from '@/hooks/useCreatorServices';
+import { useBunnyImageUpload, marketplaceStoragePath, type AttachmentMeta } from '@/hooks/useBunnyImageUpload';
+import { useAuth } from '@/hooks/useAuth';
 import type { CreatorService, BudgetType } from '@/types/marketplace';
 import { SERVICE_TYPE_ICONS, SERVICE_TYPE_LABELS } from '@/types/marketplace';
 
@@ -59,10 +61,14 @@ export function ProposalForm({
   providerAvatar,
   preselectedServiceId,
 }: ProposalFormProps) {
+  const { user } = useAuth();
   const { createProposal, isCreating } = useMarketplaceProposals();
   const { services } = useCreatorServices({ userId: providerId, activeOnly: true });
+  const { uploadImage, isUploading: isUploadingFile } = useBunnyImageUpload();
 
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [uploadedAttachments, setUploadedAttachments] = useState<AttachmentMeta[]>([]);
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
 
   const {
     register,
@@ -85,7 +91,32 @@ export function ProposalForm({
   const selectedService = services.find((s) => s.id === selectedServiceId);
 
   const onSubmit = async (data: ProposalFormData) => {
+    if (!user?.id) return;
+
     try {
+      // Upload any pending files first
+      const finalAttachments = [...uploadedAttachments];
+
+      for (let i = 0; i < attachments.length; i++) {
+        const file = attachments[i];
+        // Check if already uploaded
+        if (finalAttachments.some(a => a.name === file.name)) continue;
+
+        setUploadingIndex(i);
+        const storagePath = marketplaceStoragePath('proposal-attachment', user.id, file);
+        const result = await uploadImage(file, storagePath);
+
+        if (result.success && result.cdnUrl) {
+          finalAttachments.push({
+            name: file.name,
+            url: result.cdnUrl,
+            type: file.type,
+            size: file.size,
+          });
+        }
+      }
+      setUploadingIndex(null);
+
       await createProposal({
         provider_id: providerId,
         title: data.title,
@@ -96,14 +127,16 @@ export function ProposalForm({
         budget_max: data.budget_type === 'range' ? data.budget_max : undefined,
         budget_currency: data.budget_currency,
         desired_deadline: data.desired_deadline || undefined,
-        attachments: [], // TODO: Upload attachments
+        attachments: finalAttachments,
       });
 
       reset();
       setAttachments([]);
+      setUploadedAttachments([]);
       onClose();
     } catch (error) {
       // Error is handled by the hook
+      setUploadingIndex(null);
     }
   };
 
@@ -324,15 +357,19 @@ export function ProposalForm({
               </Button>
               <Button
                 type="submit"
-                disabled={isCreating}
+                disabled={isCreating || isUploadingFile}
                 className="flex-1 gap-2 bg-gradient-to-r from-social-accent to-purple-600 hover:opacity-90"
               >
-                {isCreating ? (
+                {isCreating || isUploadingFile ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Send className="h-4 w-4" />
                 )}
-                Enviar propuesta
+                {uploadingIndex !== null
+                  ? `Subiendo ${uploadingIndex + 1}/${attachments.length}...`
+                  : isCreating
+                    ? 'Enviando...'
+                    : 'Enviar propuesta'}
               </Button>
             </div>
           </form>

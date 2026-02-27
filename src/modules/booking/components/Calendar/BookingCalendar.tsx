@@ -54,14 +54,14 @@ const styles = {
     cursor: 'pointer',
     transition: 'all 0.15s ease',
     background: isSelected
-      ? '#EFF6FF'
+      ? '#F5F3FF'
       : isCurrentMonth
       ? '#FFFFFF'
       : '#F8FAFC',
     border: isSelected
-      ? '2px solid #0066FF'
+      ? '2px solid #8B5CF6'
       : isToday
-      ? '2px solid #0066FF'
+      ? '2px solid #8B5CF6'
       : '1px solid #E5E7EB',
     opacity: isCurrentMonth ? 1 : 0.5,
   }),
@@ -217,9 +217,9 @@ export function BookingCalendar() {
                 <div
                   className={`text-sm font-medium ${
                     isToday
-                      ? 'text-blue-600'
+                      ? 'text-violet-600'
                       : isSelected
-                      ? 'text-blue-600'
+                      ? 'text-violet-600'
                       : 'text-slate-700'
                   }`}
                 >
@@ -258,7 +258,7 @@ export function BookingCalendar() {
       {/* Side Panel */}
       <div style={styles.sidePanel}>
         <div className="flex items-center gap-2 mb-6">
-          <CalendarIcon className="w-5 h-5 text-blue-500" />
+          <CalendarIcon className="w-5 h-5 text-violet-500" />
           <h3 className="text-lg font-semibold text-slate-900">
             {selectedDate
               ? format(selectedDate, "EEEE d 'de' MMMM", { locale: es })
@@ -312,7 +312,7 @@ export function BookingCalendar() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
                   onClick={() => setSelectedBooking(booking)}
-                  className="p-4 rounded-xl bg-white border border-slate-200 cursor-pointer hover:shadow-md hover:border-blue-200 transition-all group"
+                  className="p-4 rounded-xl bg-white border border-slate-200 cursor-pointer hover:shadow-md hover:border-violet-200 transition-all group"
                   style={{
                     borderLeft: `4px solid ${booking.event_type?.color || '#8B5CF6'}`,
                   }}

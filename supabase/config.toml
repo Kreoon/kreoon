@@ -387,3 +387,36 @@ verify_jwt = false
 [functions.marketplace-ai-search]
 # Búsqueda en lenguaje natural, público
 verify_jwt = false
+
+# ── Booking Webhooks & Calendar ──
+
+[functions.booking-webhook-test]
+# Probar webhooks configurados
+verify_jwt = true
+
+[functions.calendar-oauth-start]
+# Iniciar OAuth para conectar calendario externo
+verify_jwt = true
+
+[functions.calendar-sync]
+# Sincronizar eventos con calendario externo
+verify_jwt = true
+
+[functions.calendar-check-conflicts]
+# Verificar conflictos con calendario externo (público para reservas)
+verify_jwt = false
+
+# ── Google Calendar OAuth ──
+
+[functions.calendar-google-auth]
+# Generar URL de autorización OAuth2 para Google Calendar
+verify_jwt = true
+
+[functions.calendar-google-callback]
+# Callback de Google OAuth - recibe code y lo intercambia por tokens
+# verify_jwt=false porque Google redirige aquí directamente (sin headers)
+verify_jwt = false
+
+[functions.calendar-google-sync]
+# Sincronizar eventos de Google Calendar como blocked_events
+verify_jwt = true

@@ -93,9 +93,9 @@ const styles = {
     gap: '8px',
     border: 'none',
     ...(variant === 'primary' && {
-      background: 'linear-gradient(135deg, #0066FF 0%, #0052CC 100%)',
+      background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
       color: '#FFFFFF',
-      boxShadow: '0 4px 14px rgba(0, 102, 255, 0.25)',
+      boxShadow: '0 4px 14px rgba(139, 92, 246, 0.25)',
     }),
     ...(variant === 'danger' && {
       background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
@@ -216,8 +216,8 @@ export function BookingDetailDrawer({ booking, onClose }: BookingDetailDrawerPro
               {/* Time section */}
               <div style={styles.section}>
                 <div style={styles.infoRow}>
-                  <div style={styles.iconWrapper('#0066FF')}>
-                    <Clock className="w-4 h-4 text-blue-500" />
+                  <div style={styles.iconWrapper('#8B5CF6')}>
+                    <Clock className="w-4 h-4 text-violet-500" />
                   </div>
                   <div>
                     <p className="font-semibold text-slate-900">
@@ -249,7 +249,7 @@ export function BookingDetailDrawer({ booking, onClose }: BookingDetailDrawerPro
                     </div>
                     <a
                       href={`mailto:${booking.guest_email}`}
-                      className="text-blue-600 hover:underline"
+                      className="text-violet-600 hover:underline"
                     >
                       {booking.guest_email}
                     </a>
@@ -261,7 +261,7 @@ export function BookingDetailDrawer({ booking, onClose }: BookingDetailDrawerPro
                       </div>
                       <a
                         href={`tel:${booking.guest_phone}`}
-                        className="text-blue-600 hover:underline"
+                        className="text-violet-600 hover:underline"
                       >
                         {booking.guest_phone}
                       </a>
@@ -288,7 +288,7 @@ export function BookingDetailDrawer({ booking, onClose }: BookingDetailDrawerPro
                     rel="noopener noreferrer"
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
-                    className="mt-3 flex items-center justify-center gap-2 w-full p-3 rounded-lg bg-blue-50 text-blue-600 font-medium text-sm hover:bg-blue-100 transition-colors"
+                    className="mt-3 flex items-center justify-center gap-2 w-full p-3 rounded-lg bg-violet-50 text-violet-600 font-medium text-sm hover:bg-violet-100 transition-colors"
                   >
                     <Video className="w-4 h-4" />
                     Unirse a la reunión
@@ -326,7 +326,7 @@ export function BookingDetailDrawer({ booking, onClose }: BookingDetailDrawerPro
                         setHostNotes(booking.host_notes || '');
                         setIsEditingNotes(true);
                       }}
-                      className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                      className="text-sm text-violet-600 hover:text-violet-700 font-medium flex items-center gap-1"
                     >
                       <MessageSquare className="w-3.5 h-3.5" />
                       {booking.host_notes ? 'Editar' : 'Agregar'}

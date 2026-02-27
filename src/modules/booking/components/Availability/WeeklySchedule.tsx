@@ -34,7 +34,7 @@ const styles = {
     padding: '16px 20px',
     borderRadius: '12px',
     background: isEnabled ? '#FFFFFF' : '#F8FAFC',
-    border: isCopyTarget ? '2px dashed #0066FF' : '1px solid #E5E7EB',
+    border: isCopyTarget ? '2px dashed #8B5CF6' : '1px solid #E5E7EB',
     transition: 'all 0.2s ease',
     cursor: isCopyTarget ? 'pointer' : 'default',
   }),
@@ -145,7 +145,7 @@ export function WeeklySchedule({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.03 }}
                 style={styles.dayRow(isEnabled, isCopyTarget)}
-                className={`group ${isCopyTarget ? 'hover:bg-blue-50 hover:border-blue-400' : ''}`}
+                className={`group ${isCopyTarget ? 'hover:bg-violet-50 hover:border-violet-400' : ''}`}
                 onClick={() => {
                   if (isCopyTarget) {
                     handleCopyDayTo(dayOfWeek);
@@ -158,7 +158,7 @@ export function WeeklySchedule({
                     checked={isEnabled}
                     onCheckedChange={() => handleToggleDay(dayOfWeek)}
                     disabled={isLoading || copyingFrom !== null}
-                    className="data-[state=checked]:bg-blue-500"
+                    className="data-[state=checked]:bg-violet-500"
                   />
                   <span
                     className={`font-medium text-sm ${
@@ -187,7 +187,7 @@ export function WeeklySchedule({
                               handleUpdateSlot(dayOfWeek, slotIndex, 'start_time', e.target.value)
                             }
                             style={styles.timeInput}
-                            className="focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 outline-none"
+                            className="focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20 outline-none"
                             disabled={isLoading || copyingFrom !== null}
                           />
                           <span className="text-slate-300 font-medium">—</span>
@@ -198,7 +198,7 @@ export function WeeklySchedule({
                               handleUpdateSlot(dayOfWeek, slotIndex, 'end_time', e.target.value)
                             }
                             style={styles.timeInput}
-                            className="focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 outline-none"
+                            className="focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20 outline-none"
                             disabled={isLoading || copyingFrom !== null}
                           />
                           <motion.button
@@ -214,9 +214,9 @@ export function WeeklySchedule({
                       ))}
                       <motion.button
                         whileHover={{
-                          borderColor: '#0066FF',
-                          color: '#0066FF',
-                          background: '#F0F7FF',
+                          borderColor: '#8B5CF6',
+                          color: '#8B5CF6',
+                          background: '#F5F3FF',
                         }}
                         style={styles.addButton}
                         onClick={() => handleAddSlot(dayOfWeek)}
@@ -242,7 +242,7 @@ export function WeeklySchedule({
                         animate={{ opacity: 1, scale: 1 }}
                         className="flex items-center gap-2"
                       >
-                        <span className="text-xs text-blue-600 font-medium">
+                        <span className="text-xs text-violet-600 font-medium">
                           Selecciona destino
                         </span>
                         <Button
@@ -252,7 +252,7 @@ export function WeeklySchedule({
                             e.stopPropagation();
                             handleCopyToWeekdays();
                           }}
-                          className="h-7 text-xs rounded-lg border-blue-200 text-blue-600 hover:bg-blue-50"
+                          className="h-7 text-xs rounded-lg border-violet-200 text-violet-600 hover:bg-violet-50"
                         >
                           Lun-Vie
                         </Button>
@@ -295,8 +295,8 @@ export function WeeklySchedule({
                     animate={{ opacity: 1, scale: 1 }}
                     className="flex-shrink-0"
                   >
-                    <div className="p-2 rounded-lg bg-blue-100">
-                      <ChevronRight className="w-4 h-4 text-blue-500" />
+                    <div className="p-2 rounded-lg bg-violet-100">
+                      <ChevronRight className="w-4 h-4 text-violet-500" />
                     </div>
                   </motion.div>
                 )}
@@ -312,15 +312,15 @@ export function WeeklySchedule({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-blue-50 border border-blue-200"
+              className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-violet-50 border border-violet-200"
             >
-              <span className="text-sm text-blue-700">
+              <span className="text-sm text-violet-700">
                 Haz clic en un día para copiar el horario de{' '}
                 <strong>{DAY_LABELS[copyingFrom]}</strong>
               </span>
               <button
                 onClick={() => setCopyingFrom(null)}
-                className="ml-2 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100 rounded"
+                className="ml-2 px-2 py-1 text-xs font-medium text-violet-600 hover:bg-violet-100 rounded"
               >
                 Cancelar
               </button>
