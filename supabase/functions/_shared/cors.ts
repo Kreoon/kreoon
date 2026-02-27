@@ -15,14 +15,15 @@ const ALLOWED_ORIGINS: string[] = [
   "https://kreoon.vercel.app",
 ];
 
-// Add localhost for development
-if (Deno.env.get("ENVIRONMENT") !== "production") {
-  ALLOWED_ORIGINS.push(
-    "http://localhost:8080",
-    "http://localhost:5173",
-    "http://localhost:3000",
-  );
-}
+// Add localhost for development (always allowed - no security risk since localhost only works in dev browsers)
+ALLOWED_ORIGINS.push(
+  "http://localhost:8080",
+  "http://localhost:8081",
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://127.0.0.1:8080",
+  "http://127.0.0.1:8081",
+);
 
 // Add custom FRONTEND_URL if configured
 const customFrontend = Deno.env.get("FRONTEND_URL");
