@@ -94,14 +94,14 @@ const styles = {
     width: '36px',
     height: '36px',
     borderRadius: '10px',
-    border: isSelected ? '3px solid #0066FF' : '2px solid transparent',
+    border: isSelected ? '3px solid #8B5CF6' : '2px solid transparent',
     cursor: 'pointer',
     transition: 'all 0.15s ease',
     transform: isSelected ? 'scale(1.1)' : 'scale(1)',
-    boxShadow: isSelected ? '0 0 0 3px rgba(0, 102, 255, 0.2)' : 'none',
+    boxShadow: isSelected ? '0 0 0 3px rgba(139, 92, 246, 0.2)' : 'none',
   }),
   submitButton: {
-    background: 'linear-gradient(135deg, #0066FF 0%, #0052CC 100%)',
+    background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
     color: '#FFFFFF',
     fontWeight: 600,
     padding: '12px 28px',
@@ -109,7 +109,7 @@ const styles = {
     fontSize: '15px',
     border: 'none',
     cursor: 'pointer',
-    boxShadow: '0 4px 14px rgba(0, 102, 255, 0.25)',
+    boxShadow: '0 4px 14px rgba(139, 92, 246, 0.25)',
   },
 };
 
@@ -181,7 +181,7 @@ export function EventTypeForm({
           style={styles.section}
         >
           <div style={styles.sectionTitle}>
-            <Calendar className="w-4 h-4 text-blue-500" />
+            <Calendar className="w-4 h-4 text-violet-500" />
             Información básica
           </div>
 
@@ -197,7 +197,7 @@ export function EventTypeForm({
                   <FormControl>
                     <Input
                       placeholder="Ej: Llamada de descubrimiento"
-                      className="bg-slate-50 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 h-11 rounded-lg"
+                      className="bg-slate-50 border-slate-200 focus:border-violet-500 focus:ring-violet-500/20 h-11 rounded-lg"
                       {...field}
                     />
                   </FormControl>
@@ -217,7 +217,7 @@ export function EventTypeForm({
                   <FormControl>
                     <Textarea
                       placeholder="Describe brevemente de qué trata esta cita..."
-                      className="bg-slate-50 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 resize-none rounded-lg"
+                      className="bg-slate-50 border-slate-200 focus:border-violet-500 focus:ring-violet-500/20 resize-none rounded-lg"
                       rows={3}
                       {...field}
                     />
@@ -237,7 +237,7 @@ export function EventTypeForm({
           style={styles.section}
         >
           <div style={styles.sectionTitle}>
-            <Clock className="w-4 h-4 text-blue-500" />
+            <Clock className="w-4 h-4 text-violet-500" />
             Duración
           </div>
 
@@ -256,7 +256,7 @@ export function EventTypeForm({
                       onClick={() => field.onChange(duration)}
                       className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
                         selectedDuration === duration
-                          ? 'bg-blue-500 text-white shadow-md'
+                          ? 'bg-violet-500 text-white shadow-md'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
@@ -290,7 +290,7 @@ export function EventTypeForm({
           style={styles.section}
         >
           <div style={styles.sectionTitle}>
-            <MapPin className="w-4 h-4 text-blue-500" />
+            <MapPin className="w-4 h-4 text-violet-500" />
             Ubicación
           </div>
 
@@ -314,7 +314,7 @@ export function EventTypeForm({
                           onClick={() => field.onChange(type)}
                           className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
                             isSelected
-                              ? 'bg-blue-50 text-blue-600 border-2 border-blue-500'
+                              ? 'bg-violet-50 text-violet-600 border-2 border-violet-500'
                               : 'bg-slate-50 text-slate-600 border border-slate-200 hover:border-slate-300'
                           }`}
                         >
@@ -366,7 +366,7 @@ export function EventTypeForm({
           style={styles.section}
         >
           <div style={styles.sectionTitle}>
-            <Timer className="w-4 h-4 text-blue-500" />
+            <Timer className="w-4 h-4 text-violet-500" />
             Buffers de tiempo
           </div>
 
@@ -439,7 +439,7 @@ export function EventTypeForm({
           style={styles.section}
         >
           <div style={styles.sectionTitle}>
-            <Shield className="w-4 h-4 text-blue-500" />
+            <Shield className="w-4 h-4 text-violet-500" />
             Límites de reserva
           </div>
 
@@ -532,7 +532,7 @@ export function EventTypeForm({
           style={styles.section}
         >
           <div style={styles.sectionTitle}>
-            <Palette className="w-4 h-4 text-blue-500" />
+            <Palette className="w-4 h-4 text-violet-500" />
             Color del evento
           </div>
 

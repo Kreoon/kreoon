@@ -1,8 +1,12 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const ALLOWED_DOC_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'];
+const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_DOC_TYPES, ...ALLOWED_VIDEO_TYPES];
 const DEFAULT_MAX_SIZE_MB = 10;
+const VIDEO_MAX_SIZE_MB = 100;
 
 interface BunnyImageUploadProgress {
   loaded: number;
@@ -33,12 +37,15 @@ export function useBunnyImageUpload() {
 
     try {
       // Client-side validation
+      const isVideo = ALLOWED_VIDEO_TYPES.includes(file.type);
+      const effectiveMaxSize = isVideo ? VIDEO_MAX_SIZE_MB : maxSizeMB;
+
       if (!ALLOWED_TYPES.includes(file.type)) {
-        throw new Error('Formato no soportado. Usa JPG, PNG, GIF o WebP.');
+        throw new Error('Formato no soportado. Usa JPG, PNG, GIF, WebP, PDF, DOC o MP4.');
       }
 
-      if (file.size > maxSizeMB * 1024 * 1024) {
-        throw new Error(`El archivo excede ${maxSizeMB}MB.`);
+      if (file.size > effectiveMaxSize * 1024 * 1024) {
+        throw new Error(`El archivo excede ${effectiveMaxSize}MB.`);
       }
 
       // Step 1: Get Bunny Storage credentials
@@ -124,7 +131,7 @@ export function useBunnyImageUpload() {
 
 /** Helper to generate consistent Bunny Storage paths for marketplace images */
 export function marketplaceStoragePath(
-  type: 'org-cover' | 'org-gallery' | 'brand-logo' | 'portfolio-image',
+  type: 'org-cover' | 'org-gallery' | 'brand-logo' | 'portfolio-image' | 'proposal-attachment',
   entityId: string,
   file?: File
 ): string {
@@ -140,5 +147,15 @@ export function marketplaceStoragePath(
       return `marketplace/brands/${entityId}/logo_${uniqueSuffix}.${ext}`;
     case 'portfolio-image':
       return `marketplace/portfolio/${entityId}/${uniqueSuffix}.${ext}`;
+    case 'proposal-attachment':
+      return `marketplace/proposals/${entityId}/${uniqueSuffix}.${ext}`;
   }
+}
+
+/** Type for uploaded attachment metadata */
+export interface AttachmentMeta {
+  name: string;
+  url: string;
+  type: string;
+  size: number;
 }

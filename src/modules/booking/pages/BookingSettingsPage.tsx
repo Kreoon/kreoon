@@ -15,13 +15,19 @@ import {
   Settings2,
   Link2,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Palette,
+  Webhook,
+  Link as LinkIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { EventTypeList } from '../components/EventTypes';
 import { AvailabilityEditor } from '../components/Availability';
+import { BrandingEditor } from '../components/Settings/BrandingEditor';
+import { WebhooksEditor } from '../components/Settings/WebhooksEditor';
+import { CalendarIntegrations } from '../components/Settings/CalendarIntegrations';
 import { useProfile } from '@/hooks/useProfile';
-import { useBookingStats } from '../hooks';
+import { useBookingStats, useBranding, useWebhooks, useCalendarIntegrations } from '../hooks';
 
 // Calendly-inspired design tokens
 const styles = {
@@ -31,7 +37,7 @@ const styles = {
     backgroundColor: '#FAFBFC',
   },
   header: {
-    background: 'linear-gradient(135deg, #0066FF 0%, #0052CC 100%)',
+    background: 'linear-gradient(135deg, hsl(270 90% 50%) 0%, hsl(280 90% 45%) 100%)',
     padding: '48px 0 80px',
     position: 'relative' as const,
     overflow: 'hidden',
@@ -74,9 +80,9 @@ const styles = {
     background: 'transparent',
   },
   activeTab: {
-    background: '#0066FF',
+    background: '#8B5CF6',
     color: '#FFFFFF',
-    boxShadow: '0 4px 12px rgba(0, 102, 255, 0.25)',
+    boxShadow: '0 4px 12px rgba(139, 92, 246, 0.25)',
   },
   inactiveTab: {
     background: '#FFFFFF',
@@ -85,13 +91,18 @@ const styles = {
   },
 };
 
-type TabValue = 'event-types' | 'availability';
+type TabValue = 'event-types' | 'availability' | 'branding' | 'webhooks' | 'integrations';
 
 export function BookingSettingsPage() {
   const { profile } = useProfile();
   const { data: stats } = useBookingStats();
   const [activeTab, setActiveTab] = useState<TabValue>('event-types');
   const [linkCopied, setLinkCopied] = useState(false);
+
+  // Hooks for new features
+  const { branding, saveBranding, uploadLogo, isSaving: isSavingBranding } = useBranding();
+  const { webhooks, logs, addWebhook, updateWebhook, deleteWebhook, testWebhook, isLoading: isLoadingWebhooks } = useWebhooks();
+  const { integrations, connectCalendar, disconnectCalendar, updateIntegration, syncCalendar, isLoading: isLoadingIntegrations } = useCalendarIntegrations();
 
   const bookingUrl = profile?.username
     ? `${window.location.origin}/book/${profile.username}`
@@ -118,8 +129,8 @@ export function BookingSettingsPage() {
       value: stats?.total ?? 0,
       sublabel: 'reservas totales',
       icon: Calendar,
-      color: '#0066FF',
-      bgColor: '#EFF6FF',
+      color: '#8B5CF6',
+      bgColor: '#F5F3FF',
     },
     {
       label: 'Pendientes',
@@ -275,6 +286,42 @@ export function BookingSettingsPage() {
             Disponibilidad
             {activeTab === 'availability' && <ChevronRight className="w-4 h-4 ml-1" />}
           </button>
+
+          <button
+            onClick={() => setActiveTab('branding')}
+            style={{
+              ...styles.tab,
+              ...(activeTab === 'branding' ? styles.activeTab : styles.inactiveTab),
+            }}
+          >
+            <Palette className="w-5 h-5" />
+            Personalización
+            {activeTab === 'branding' && <ChevronRight className="w-4 h-4 ml-1" />}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('integrations')}
+            style={{
+              ...styles.tab,
+              ...(activeTab === 'integrations' ? styles.activeTab : styles.inactiveTab),
+            }}
+          >
+            <LinkIcon className="w-5 h-5" />
+            Integraciones
+            {activeTab === 'integrations' && <ChevronRight className="w-4 h-4 ml-1" />}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('webhooks')}
+            style={{
+              ...styles.tab,
+              ...(activeTab === 'webhooks' ? styles.activeTab : styles.inactiveTab),
+            }}
+          >
+            <Webhook className="w-5 h-5" />
+            Webhooks
+            {activeTab === 'webhooks' && <ChevronRight className="w-4 h-4 ml-1" />}
+          </button>
         </motion.div>
 
         {/* Tab Content */}
@@ -289,6 +336,36 @@ export function BookingSettingsPage() {
           >
             {activeTab === 'event-types' && <EventTypeList />}
             {activeTab === 'availability' && <AvailabilityEditor />}
+            {activeTab === 'branding' && (
+              <BrandingEditor
+                branding={branding}
+                onSave={saveBranding}
+                onUploadLogo={uploadLogo}
+                previewUrl={profile?.username ? `${window.location.origin}/book/${profile.username}` : undefined}
+                isLoading={isSavingBranding}
+              />
+            )}
+            {activeTab === 'integrations' && (
+              <CalendarIntegrations
+                integrations={integrations}
+                onConnect={connectCalendar}
+                onDisconnect={disconnectCalendar}
+                onUpdate={(id, updates) => updateIntegration({ id, ...updates })}
+                onSync={syncCalendar}
+                isLoading={isLoadingIntegrations}
+              />
+            )}
+            {activeTab === 'webhooks' && (
+              <WebhooksEditor
+                webhooks={webhooks}
+                logs={logs}
+                onAdd={addWebhook}
+                onUpdate={(id, updates) => updateWebhook({ id, ...updates })}
+                onDelete={deleteWebhook}
+                onTest={testWebhook}
+                isLoading={isLoadingWebhooks}
+              />
+            )}
           </motion.div>
         </AnimatePresence>
       </div>

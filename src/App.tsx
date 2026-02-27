@@ -111,6 +111,7 @@ const MarketplaceDashboard = lazyWithRetry(() => import("./pages/MarketplaceDash
 const CampaignsFeedPage = lazyWithRetry(() => import("./pages/CampaignsFeedPage"));
 const CampaignDetailPage = lazyWithRetry(() => import("./pages/CampaignDetailPage"));
 const CampaignWizardPage = lazyWithRetry(() => import("./pages/CampaignWizardPage"));
+const CampaignEditWizardPage = lazyWithRetry(() => import("./pages/CampaignEditWizardPage"));
 const BrandCampaignsPage = lazyWithRetry(() => import("./pages/BrandCampaignsPage"));
 const CreatorCampaignsPage = lazyWithRetry(() => import("./pages/CreatorCampaignsPage"));
 const MarketplaceBrowse = lazyWithRetry(() => import("./components/marketplace/MarketplacePage"));
@@ -320,7 +321,7 @@ function AppRoutes() {
         <Route path="/marketplace/projects" element={<Navigate to="/board?view=marketplace" replace />} />
         <Route path="/marketplace/content" element={<Navigate to="/content?view=marketplace" replace />} />
         <Route path="/marketplace/campaigns/create" element={<ProtectedRoute allowNoRoles><MainLayout><CampaignWizardPage /></MainLayout></ProtectedRoute>} />
-        <Route path="/marketplace/campaigns/:id/edit" element={<ProtectedRoute allowNoRoles><MainLayout><CampaignWizardPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/marketplace/campaigns/:id/edit" element={<ProtectedRoute allowNoRoles><MainLayout><CampaignEditWizardPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/my-campaigns" element={<ProtectedRoute allowNoRoles><MainLayout><BrandCampaignsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/creator-campaigns" element={<ProtectedRoute allowNoRoles><MainLayout><CreatorCampaignsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/talent-lists" element={<ProtectedRoute allowNoRoles><MainLayout><TalentListsPage /></MainLayout></ProtectedRoute>} />

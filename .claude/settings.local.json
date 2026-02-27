@@ -1,4 +1,6 @@
 {
+  "model": "claude-opus-4-5-20251101",
+  "language": "spanish",
   "permissions": {
     "defaultMode": "bypassPermissions",
     "allow": [
@@ -8,7 +10,10 @@
       "Read",
       "Edit",
       "Write",
-      "WebFetch"
+      "WebFetch",
+      "Glob",
+      "Grep",
+      "Task"
     ],
     "deny": []
   },

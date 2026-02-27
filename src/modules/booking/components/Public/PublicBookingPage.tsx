@@ -160,10 +160,10 @@ const styles = {
     transition-all duration-200
     ${!isCurrentMonth ? 'text-[#CBD5E1]' : ''}
     ${isAvailable && isCurrentMonth && !isSelected
-      ? 'text-[#0F172A] hover:bg-[#006BFF] hover:text-white cursor-pointer'
+      ? 'text-[#0F172A] hover:bg-[#8B5CF6] hover:text-white cursor-pointer'
       : ''}
     ${isSelected
-      ? 'bg-[#006BFF] text-white shadow-lg shadow-blue-500/30'
+      ? 'bg-[#8B5CF6] text-white shadow-lg shadow-violet-500/30'
       : ''}
     ${!isAvailable && isCurrentMonth
       ? 'text-[#CBD5E1] cursor-not-allowed'
@@ -182,8 +182,8 @@ const styles = {
     px-4 py-3 rounded-lg text-sm font-medium
     border transition-all duration-200
     ${isSelected
-      ? 'bg-[#006BFF] text-white border-[#006BFF] shadow-lg shadow-blue-500/20'
-      : 'bg-white text-[#0F172A] border-[#E2E8F0] hover:border-[#006BFF] hover:text-[#006BFF]'}
+      ? 'bg-[#8B5CF6] text-white border-[#8B5CF6] shadow-lg shadow-violet-500/20'
+      : 'bg-white text-[#0F172A] border-[#E2E8F0] hover:border-[#8B5CF6] hover:text-[#8B5CF6]'}
   `,
 
   // Timezone Selector
@@ -206,14 +206,14 @@ const styles = {
     w-full px-4 py-3 rounded-xl
     border border-[#E2E8F0] bg-white
     text-[#0F172A] placeholder:text-[#94A3B8]
-    focus:outline-none focus:ring-2 focus:ring-[#006BFF]/20 focus:border-[#006BFF]
+    focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/20 focus:border-[#8B5CF6]
     transition-all duration-200
   `,
   formTextarea: `
     w-full px-4 py-3 rounded-xl
     border border-[#E2E8F0] bg-white
     text-[#0F172A] placeholder:text-[#94A3B8]
-    focus:outline-none focus:ring-2 focus:ring-[#006BFF]/20 focus:border-[#006BFF]
+    focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/20 focus:border-[#8B5CF6]
     transition-all duration-200
     resize-none
   `,
@@ -221,10 +221,10 @@ const styles = {
   // Buttons
   primaryBtn: `
     w-full py-4 px-6 rounded-xl
-    bg-[#006BFF] text-white font-semibold
-    hover:bg-[#0055CC] active:bg-[#0044AA]
+    bg-[#8B5CF6] text-white font-semibold
+    hover:bg-[#7C3AED] active:bg-[#6D28D9]
     transition-all duration-200
-    shadow-lg shadow-blue-500/20
+    shadow-lg shadow-violet-500/20
     disabled:opacity-50 disabled:cursor-not-allowed
   `,
   backBtn: `
@@ -275,7 +275,7 @@ const styles = {
     bg-[#F8FAFC]
   `,
   loadingSpinner: `
-    w-10 h-10 border-3 border-[#E2E8F0] border-t-[#006BFF]
+    w-10 h-10 border-3 border-[#E2E8F0] border-t-[#8B5CF6]
     rounded-full animate-spin
   `,
 };
@@ -502,7 +502,7 @@ export function PublicBookingPage() {
           </p>
           <button
             onClick={() => navigate('/')}
-            className="px-6 py-3 bg-[#006BFF] text-white rounded-xl font-medium hover:bg-[#0055CC] transition-colors"
+            className="px-6 py-3 bg-[#8B5CF6] text-white rounded-xl font-medium hover:bg-[#7C3AED] transition-colors"
           >
             Volver al inicio
           </button>
@@ -537,7 +537,7 @@ export function PublicBookingPage() {
 
           <div className="space-y-3 mb-8">
             <div className={styles.successDetail}>
-              <CalendarIcon className="w-5 h-5 text-[#006BFF]" />
+              <CalendarIcon className="w-5 h-5 text-[#8B5CF6]" />
               <div>
                 <p className="font-medium text-[#0F172A]">
                   {format(new Date(createdBooking.start_time), "EEEE d 'de' MMMM, yyyy", { locale: es })}
@@ -549,7 +549,7 @@ export function PublicBookingPage() {
             </div>
 
             <div className={styles.successDetail}>
-              <User className="w-5 h-5 text-[#006BFF]" />
+              <User className="w-5 h-5 text-[#8B5CF6]" />
               <div>
                 <p className="font-medium text-[#0F172A]">{host.display_name}</p>
                 <p className="text-sm text-[#64748B]">{selectedEventType?.title}</p>
@@ -561,7 +561,7 @@ export function PublicBookingPage() {
                 <>
                   {(() => {
                     const Icon = LOCATION_ICONS[selectedEventType.location_type];
-                    return <Icon className="w-5 h-5 text-[#006BFF]" />;
+                    return <Icon className="w-5 h-5 text-[#8B5CF6]" />;
                   })()}
                   <div>
                     <p className="font-medium text-[#0F172A]">
@@ -580,7 +580,7 @@ export function PublicBookingPage() {
             href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(selectedEventType?.title || 'Cita')}&dates=${format(new Date(createdBooking.start_time), "yyyyMMdd'T'HHmmss")}/${format(new Date(createdBooking.end_time), "yyyyMMdd'T'HHmmss")}&details=${encodeURIComponent(`Cita con ${host.display_name}`)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 w-full py-4 px-6 rounded-xl border-2 border-[#E2E8F0] text-[#0F172A] font-semibold hover:border-[#006BFF] hover:text-[#006BFF] transition-colors"
+            className="inline-flex items-center justify-center gap-2 w-full py-4 px-6 rounded-xl border-2 border-[#E2E8F0] text-[#0F172A] font-semibold hover:border-[#8B5CF6] hover:text-[#8B5CF6] transition-colors"
           >
             <CalendarIcon className="w-5 h-5" />
             Agregar a Google Calendar
@@ -599,7 +599,7 @@ export function PublicBookingPage() {
         <div className={styles.leftPanel}>
           <Avatar className={styles.hostAvatar}>
             <AvatarImage src={host.avatar_url || undefined} />
-            <AvatarFallback className="text-3xl bg-gradient-to-br from-[#006BFF] to-[#0055CC] text-white">
+            <AvatarFallback className="text-3xl bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED] text-white">
               {host.display_name.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
@@ -672,7 +672,7 @@ export function PublicBookingPage() {
                           key={eventType.id}
                           variants={fadeInUp}
                           onClick={() => handleSelectEventType(eventType)}
-                          className="p-5 rounded-2xl border-2 border-[#E2E8F0] bg-white cursor-pointer hover:border-[#006BFF] hover:shadow-lg transition-all duration-200 group"
+                          className="p-5 rounded-2xl border-2 border-[#E2E8F0] bg-white cursor-pointer hover:border-[#8B5CF6] hover:shadow-lg transition-all duration-200 group"
                         >
                           <div className="flex gap-4">
                             <div
@@ -680,7 +680,7 @@ export function PublicBookingPage() {
                               style={{ backgroundColor: eventType.color }}
                             />
                             <div className="flex-1">
-                              <h3 className="font-semibold text-[#0F172A] group-hover:text-[#006BFF] transition-colors">
+                              <h3 className="font-semibold text-[#0F172A] group-hover:text-[#8B5CF6] transition-colors">
                                 {eventType.title}
                               </h3>
                               <div className="flex items-center gap-4 mt-2 text-sm text-[#64748B]">

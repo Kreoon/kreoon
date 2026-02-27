@@ -43,10 +43,10 @@ const styles = {
     cursor: 'pointer',
     transition: 'all 0.2s ease',
     border: 'none',
-    background: isActive ? '#0066FF' : '#FFFFFF',
+    background: isActive ? '#8B5CF6' : '#FFFFFF',
     color: isActive ? '#FFFFFF' : '#64748B',
     boxShadow: isActive
-      ? '0 4px 12px rgba(0, 102, 255, 0.25)'
+      ? '0 4px 12px rgba(139, 92, 246, 0.25)'
       : '0 1px 3px rgba(0, 0, 0, 0.05)',
   }),
   card: {
@@ -68,8 +68,8 @@ const styles = {
     flex: 1,
     padding: '20px',
     borderRadius: '12px',
-    border: isActive ? '2px solid #0066FF' : '1px solid #E5E7EB',
-    background: isActive ? '#EFF6FF' : '#FFFFFF',
+    border: isActive ? '2px solid #8B5CF6' : '1px solid #E5E7EB',
+    background: isActive ? '#F5F3FF' : '#FFFFFF',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
     display: 'flex',
@@ -180,7 +180,7 @@ export function AvailabilityEditor() {
               className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                 activeTab === 'exceptions'
                   ? 'bg-white/20 text-white'
-                  : 'bg-blue-100 text-blue-600'
+                  : 'bg-violet-100 text-violet-600'
               }`}
             >
               {exceptions.length}
@@ -361,12 +361,12 @@ export function AvailabilityEditor() {
               >
                 <div
                   className={`p-3 rounded-full ${
-                    exceptionType === 'special' ? 'bg-blue-100' : 'bg-slate-100'
+                    exceptionType === 'special' ? 'bg-violet-100' : 'bg-slate-100'
                   }`}
                 >
                   <Clock
                     className={`w-6 h-6 ${
-                      exceptionType === 'special' ? 'text-blue-500' : 'text-slate-400'
+                      exceptionType === 'special' ? 'text-violet-500' : 'text-slate-400'
                     }`}
                   />
                 </div>
@@ -441,8 +441,8 @@ export function AvailabilityEditor() {
               disabled={addException.isPending}
               className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-white font-medium disabled:opacity-50"
               style={{
-                background: 'linear-gradient(135deg, #0066FF 0%, #0052CC 100%)',
-                boxShadow: '0 4px 14px rgba(0, 102, 255, 0.25)',
+                background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+                boxShadow: '0 4px 14px rgba(139, 92, 246, 0.25)',
               }}
             >
               {addException.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -475,13 +475,13 @@ function ExceptionItem({
       <div className="flex items-center gap-4">
         <div
           className={`p-2.5 rounded-xl ${
-            exception.is_blocked ? 'bg-red-50' : 'bg-blue-50'
+            exception.is_blocked ? 'bg-red-50' : 'bg-violet-50'
           }`}
         >
           {exception.is_blocked ? (
             <CalendarOff className="w-5 h-5 text-red-500" />
           ) : (
-            <Clock className="w-5 h-5 text-blue-500" />
+            <Clock className="w-5 h-5 text-violet-500" />
           )}
         </div>
         <div>

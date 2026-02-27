@@ -73,6 +73,69 @@ export const MARKETPLACE_ROLES_MAP: Record<MarketplaceRoleId, MarketplaceRoleDef
 
 export const MAX_ROLES_PER_CREATOR = 5;
 
+// --- Suggested Minimum Rates (USD) ---
+// Used for budget validation in campaign creation
+
+export const ROLE_MIN_RATES: Partial<Record<MarketplaceRoleId, number>> = {
+  // Content Creation - Higher rates for influencers
+  ugc_creator: 50,
+  lifestyle_creator: 75,
+  nano_influencer: 100,
+  micro_influencer: 200,
+  macro_influencer: 1000,
+  brand_ambassador: 500,
+  live_streamer: 150,
+  podcast_host: 200,
+  photographer: 100,
+  copywriter: 50,
+  graphic_designer: 75,
+  voice_artist: 75,
+
+  // Post-Production
+  video_editor: 100,
+  motion_graphics: 150,
+  sound_designer: 100,
+  colorist: 100,
+  director: 300,
+  producer: 250,
+  animator_2d3d: 200,
+
+  // Strategy & Marketing
+  content_strategist: 150,
+  social_media_manager: 100,
+  community_manager: 75,
+  digital_strategist: 200,
+  trafficker: 150,
+  seo_specialist: 150,
+  email_marketer: 100,
+  growth_hacker: 200,
+  crm_specialist: 150,
+  conversion_optimizer: 175,
+
+  // Technology
+  web_developer: 200,
+  app_developer: 300,
+  ai_specialist: 250,
+
+  // Education
+  online_instructor: 150,
+  workshop_facilitator: 200,
+};
+
+/**
+ * Get minimum suggested budget for a set of roles
+ */
+export function getMinBudgetForRoles(roleIds: MarketplaceRoleId[]): number {
+  if (roleIds.length === 0) return 50; // Default minimum
+
+  const rates = roleIds
+    .map(id => ROLE_MIN_RATES[id] || 50)
+    .sort((a, b) => b - a); // Sort descending
+
+  // Return the highest rate among selected roles
+  return rates[0];
+}
+
 // --- Pricing Mode Config ---
 
 export const PRICING_MODE_CONFIG: Record<CampaignPricingMode, { label: string; description: string; icon: string; color: string }> = {
