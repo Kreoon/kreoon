@@ -1,13 +1,12 @@
-// Formulario para crear/editar tipos de evento
+// Event Type Form - Calendly-inspired design
 
-import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -24,7 +23,19 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Loader2 } from 'lucide-react';
+import {
+  Loader2,
+  Clock,
+  MapPin,
+  Video,
+  Phone,
+  Link as LinkIcon,
+  Palette,
+  Calendar,
+  Timer,
+  Shield,
+  CheckCircle2,
+} from 'lucide-react';
 import type { BookingEventType, EventTypeInput, BookingLocationType } from '../../types';
 import { LOCATION_TYPE_LABELS, DEFAULT_COLORS } from '../../types';
 
@@ -53,6 +64,66 @@ interface EventTypeFormProps {
   isLoading?: boolean;
 }
 
+// Design tokens
+const styles = {
+  section: {
+    background: '#FFFFFF',
+    borderRadius: '12px',
+    border: '1px solid #E5E7EB',
+    padding: '20px',
+    marginBottom: '16px',
+  },
+  sectionTitle: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    fontSize: '14px',
+    fontWeight: 600,
+    color: '#374151',
+    marginBottom: '16px',
+  },
+  input: {
+    background: '#FAFBFC',
+    border: '1px solid #E5E7EB',
+    borderRadius: '10px',
+    padding: '12px 14px',
+    fontSize: '15px',
+    transition: 'all 0.2s ease',
+  },
+  colorButton: (isSelected: boolean) => ({
+    width: '36px',
+    height: '36px',
+    borderRadius: '10px',
+    border: isSelected ? '3px solid #0066FF' : '2px solid transparent',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+    transform: isSelected ? 'scale(1.1)' : 'scale(1)',
+    boxShadow: isSelected ? '0 0 0 3px rgba(0, 102, 255, 0.2)' : 'none',
+  }),
+  submitButton: {
+    background: 'linear-gradient(135deg, #0066FF 0%, #0052CC 100%)',
+    color: '#FFFFFF',
+    fontWeight: 600,
+    padding: '12px 28px',
+    borderRadius: '10px',
+    fontSize: '15px',
+    border: 'none',
+    cursor: 'pointer',
+    boxShadow: '0 4px 14px rgba(0, 102, 255, 0.25)',
+  },
+};
+
+const LOCATION_ICONS: Record<BookingLocationType, React.ComponentType<{ className?: string }>> = {
+  google_meet: Video,
+  zoom: Video,
+  phone: Phone,
+  in_person: MapPin,
+  custom: LinkIcon,
+};
+
+// Duration presets
+const DURATION_PRESETS = [15, 30, 45, 60, 90];
+
 export function EventTypeForm({
   eventType,
   onSubmit,
@@ -79,6 +150,8 @@ export function EventTypeForm({
   });
 
   const locationType = form.watch('location_type');
+  const selectedDuration = form.watch('duration_minutes');
+  const selectedColor = form.watch('color');
 
   const handleSubmit = (data: FormData) => {
     onSubmit({
@@ -100,193 +173,31 @@ export function EventTypeForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         {/* Información básica */}
-        <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="title"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Título *</FormLabel>
-                <FormControl>
-                  <Input placeholder="Ej: Llamada de descubrimiento" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={styles.section}
+        >
+          <div style={styles.sectionTitle}>
+            <Calendar className="w-4 h-4 text-blue-500" />
+            Información básica
+          </div>
 
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Descripción</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Describe brevemente de qué trata esta cita..."
-                    className="resize-none"
-                    rows={3}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Duración y buffers */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <FormField
-            control={form.control}
-            name="duration_minutes"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Duración (min) *</FormLabel>
-                <FormControl>
-                  <Input type="number" min={5} max={480} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="buffer_before_minutes"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Buffer antes (min)</FormLabel>
-                <FormControl>
-                  <Input type="number" min={0} max={120} {...field} />
-                </FormControl>
-                <FormDescription>Tiempo libre antes de la cita</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="buffer_after_minutes"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Buffer después (min)</FormLabel>
-                <FormControl>
-                  <Input type="number" min={0} max={120} {...field} />
-                </FormControl>
-                <FormDescription>Tiempo libre después de la cita</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Límites */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <FormField
-            control={form.control}
-            name="min_notice_hours"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Aviso mínimo (horas)</FormLabel>
-                <FormControl>
-                  <Input type="number" min={0} max={720} {...field} />
-                </FormControl>
-                <FormDescription>Horas de anticipación mínima</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="max_days_in_advance"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Días máximo</FormLabel>
-                <FormControl>
-                  <Input type="number" min={1} max={365} {...field} />
-                </FormControl>
-                <FormDescription>Hasta cuántos días adelante</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="max_bookings_per_day"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Límite diario</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={50}
-                    placeholder="Sin límite"
-                    {...field}
-                    value={field.value ?? ''}
-                    onChange={(e) =>
-                      field.onChange(e.target.value ? parseInt(e.target.value) : null)
-                    }
-                  />
-                </FormControl>
-                <FormDescription>Máximo de citas por día</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Ubicación */}
-        <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="location_type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tipo de ubicación *</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona tipo" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {(Object.keys(LOCATION_TYPE_LABELS) as BookingLocationType[]).map(
-                      (type) => (
-                        <SelectItem key={type} value={type}>
-                          {LOCATION_TYPE_LABELS[type]}
-                        </SelectItem>
-                      )
-                    )}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {(locationType === 'in_person' || locationType === 'custom') && (
+          <div className="space-y-4">
             <FormField
               control={form.control}
-              name="location_details"
+              name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    {locationType === 'in_person' ? 'Dirección' : 'Detalles de ubicación'}
+                  <FormLabel className="text-slate-700 font-medium">
+                    Nombre del evento *
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder={
-                        locationType === 'in_person'
-                          ? 'Ej: Calle 123 #45-67, Bogotá'
-                          : 'Ej: URL personalizada o instrucciones'
-                      }
+                      placeholder="Ej: Llamada de descubrimiento"
+                      className="bg-slate-50 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 h-11 rounded-lg"
                       {...field}
                     />
                   </FormControl>
@@ -294,48 +205,392 @@ export function EventTypeForm({
                 </FormItem>
               )}
             />
-          )}
-        </div>
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-slate-700 font-medium">
+                    Descripción
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Describe brevemente de qué trata esta cita..."
+                      className="bg-slate-50 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 resize-none rounded-lg"
+                      rows={3}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </motion.div>
+
+        {/* Duración */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          style={styles.section}
+        >
+          <div style={styles.sectionTitle}>
+            <Clock className="w-4 h-4 text-blue-500" />
+            Duración
+          </div>
+
+          <FormField
+            control={form.control}
+            name="duration_minutes"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex flex-wrap gap-2">
+                  {DURATION_PRESETS.map((duration) => (
+                    <motion.button
+                      key={duration}
+                      type="button"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => field.onChange(duration)}
+                      className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                        selectedDuration === duration
+                          ? 'bg-blue-500 text-white shadow-md'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {duration} min
+                    </motion.button>
+                  ))}
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min={5}
+                      max={480}
+                      placeholder="Otro"
+                      className="w-24 h-10 bg-slate-50 border-slate-200 rounded-lg text-center"
+                      value={!DURATION_PRESETS.includes(selectedDuration) ? selectedDuration : ''}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 30)}
+                    />
+                    <span className="text-sm text-slate-500">min</span>
+                  </div>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </motion.div>
+
+        {/* Ubicación */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          style={styles.section}
+        >
+          <div style={styles.sectionTitle}>
+            <MapPin className="w-4 h-4 text-blue-500" />
+            Ubicación
+          </div>
+
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="location_type"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {(Object.keys(LOCATION_TYPE_LABELS) as BookingLocationType[]).map((type) => {
+                      const Icon = LOCATION_ICONS[type];
+                      const isSelected = field.value === type;
+
+                      return (
+                        <motion.button
+                          key={type}
+                          type="button"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => field.onChange(type)}
+                          className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
+                            isSelected
+                              ? 'bg-blue-50 text-blue-600 border-2 border-blue-500'
+                              : 'bg-slate-50 text-slate-600 border border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          <Icon className="w-4 h-4" />
+                          {LOCATION_TYPE_LABELS[type]}
+                          {isSelected && <CheckCircle2 className="w-4 h-4 ml-auto" />}
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {(locationType === 'in_person' || locationType === 'custom') && (
+              <FormField
+                control={form.control}
+                name="location_details"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-slate-700 font-medium">
+                      {locationType === 'in_person' ? 'Dirección' : 'Detalles'}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={
+                          locationType === 'in_person'
+                            ? 'Ej: Calle 123 #45-67, Bogotá'
+                            : 'Ej: URL o instrucciones personalizadas'
+                        }
+                        className="bg-slate-50 border-slate-200 h-11 rounded-lg"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+          </div>
+        </motion.div>
+
+        {/* Buffers y límites */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          style={styles.section}
+        >
+          <div style={styles.sectionTitle}>
+            <Timer className="w-4 h-4 text-blue-500" />
+            Buffers de tiempo
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="buffer_before_minutes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-slate-700 font-medium text-sm">
+                    Antes de la cita
+                  </FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={120}
+                        className="bg-slate-50 border-slate-200 h-10 rounded-lg pr-12"
+                        {...field}
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">
+                        min
+                      </span>
+                    </div>
+                  </FormControl>
+                  <FormDescription className="text-xs">
+                    Tiempo libre antes de cada cita
+                  </FormDescription>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="buffer_after_minutes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-slate-700 font-medium text-sm">
+                    Después de la cita
+                  </FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={120}
+                        className="bg-slate-50 border-slate-200 h-10 rounded-lg pr-12"
+                        {...field}
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">
+                        min
+                      </span>
+                    </div>
+                  </FormControl>
+                  <FormDescription className="text-xs">
+                    Tiempo libre después de cada cita
+                  </FormDescription>
+                </FormItem>
+              )}
+            />
+          </div>
+        </motion.div>
+
+        {/* Límites de reserva */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          style={styles.section}
+        >
+          <div style={styles.sectionTitle}>
+            <Shield className="w-4 h-4 text-blue-500" />
+            Límites de reserva
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <FormField
+              control={form.control}
+              name="min_notice_hours"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-slate-700 font-medium text-sm">
+                    Aviso mínimo
+                  </FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={720}
+                        className="bg-slate-50 border-slate-200 h-10 rounded-lg pr-10"
+                        {...field}
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                        hrs
+                      </span>
+                    </div>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="max_days_in_advance"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-slate-700 font-medium text-sm">
+                    Máx. anticipación
+                  </FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={365}
+                        className="bg-slate-50 border-slate-200 h-10 rounded-lg pr-12"
+                        {...field}
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                        días
+                      </span>
+                    </div>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="max_bookings_per_day"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-slate-700 font-medium text-sm">
+                    Límite diario
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={50}
+                      placeholder="∞"
+                      className="bg-slate-50 border-slate-200 h-10 rounded-lg text-center"
+                      {...field}
+                      value={field.value ?? ''}
+                      onChange={(e) =>
+                        field.onChange(e.target.value ? parseInt(e.target.value) : null)
+                      }
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+        </motion.div>
 
         {/* Color */}
-        <FormField
-          control={form.control}
-          name="color"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Color</FormLabel>
-              <div className="flex gap-2 flex-wrap">
-                {DEFAULT_COLORS.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    className={`w-8 h-8 rounded-full border-2 transition-all ${
-                      field.value === color
-                        ? 'border-foreground scale-110'
-                        : 'border-transparent hover:scale-105'
-                    }`}
-                    style={{ backgroundColor: color }}
-                    onClick={() => field.onChange(color)}
-                  />
-                ))}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          style={styles.section}
+        >
+          <div style={styles.sectionTitle}>
+            <Palette className="w-4 h-4 text-blue-500" />
+            Color del evento
+          </div>
+
+          <FormField
+            control={form.control}
+            name="color"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex gap-3 flex-wrap">
+                  {DEFAULT_COLORS.map((color) => (
+                    <motion.button
+                      key={color}
+                      type="button"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      style={{
+                        ...styles.colorButton(selectedColor === color),
+                        backgroundColor: color,
+                      }}
+                      onClick={() => field.onChange(color)}
+                    />
+                  ))}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </motion.div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-2 pt-4 border-t">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="flex justify-end gap-3 pt-4"
+        >
           {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              className="px-6 h-11 rounded-lg"
+            >
               Cancelar
             </Button>
           )}
-          <Button type="submit" disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {eventType ? 'Guardar cambios' : 'Crear tipo de evento'}
-          </Button>
-        </div>
+          <motion.button
+            type="submit"
+            disabled={isLoading}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            style={styles.submitButton}
+            className="disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+            {eventType ? 'Guardar cambios' : 'Crear evento'}
+          </motion.button>
+        </motion.div>
       </form>
     </Form>
   );

@@ -1,18 +1,18 @@
-// Editor visual de horarios semanales
+// Weekly Schedule Editor - Calendly-inspired design
 
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Plus, Trash2, Copy } from 'lucide-react';
-import { DAY_LABELS, DAY_LABELS_SHORT } from '../../types';
+import { Plus, Trash2, Copy, X, Check, ChevronRight } from 'lucide-react';
+import { DAY_LABELS } from '../../types';
 import type { WeeklySchedule as WeeklyScheduleType } from '../../types';
 
 interface WeeklyScheduleProps {
@@ -25,6 +25,44 @@ interface WeeklyScheduleProps {
   isLoading?: boolean;
 }
 
+// Design tokens
+const styles = {
+  dayRow: (isEnabled: boolean, isCopyTarget: boolean) => ({
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '16px',
+    padding: '16px 20px',
+    borderRadius: '12px',
+    background: isEnabled ? '#FFFFFF' : '#F8FAFC',
+    border: isCopyTarget ? '2px dashed #0066FF' : '1px solid #E5E7EB',
+    transition: 'all 0.2s ease',
+    cursor: isCopyTarget ? 'pointer' : 'default',
+  }),
+  timeInput: {
+    background: '#F8FAFC',
+    border: '1px solid #E5E7EB',
+    borderRadius: '8px',
+    padding: '8px 12px',
+    fontSize: '14px',
+    width: '100px',
+    transition: 'all 0.2s ease',
+  },
+  addButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '8px 12px',
+    borderRadius: '8px',
+    background: 'transparent',
+    border: '1px dashed #CBD5E1',
+    color: '#64748B',
+    fontSize: '13px',
+    fontWeight: 500,
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
+};
+
 export function WeeklySchedule({
   schedule,
   onUpdateDay,
@@ -36,10 +74,8 @@ export function WeeklySchedule({
   const handleToggleDay = (dayOfWeek: number) => {
     const currentSlots = schedule[dayOfWeek]?.slots || [];
     if (currentSlots.length > 0) {
-      // Deshabilitar: eliminar todos los slots
       onUpdateDay(dayOfWeek, []);
     } else {
-      // Habilitar: agregar slot por defecto
       onUpdateDay(dayOfWeek, [{ start_time: '09:00', end_time: '17:00' }]);
     }
   };
@@ -85,104 +121,129 @@ export function WeeklySchedule({
 
   const handleCopyToWeekdays = () => {
     if (copyingFrom === null || !onCopyDay) return;
-    // Copiar a lunes-viernes (1-5)
     const weekdays = [1, 2, 3, 4, 5].filter((d) => d !== copyingFrom);
     onCopyDay(copyingFrom, weekdays);
     setCopyingFrom(null);
   };
 
+  // Orden: Lun, Mar, Mie, Jue, Vie, Sab, Dom
+  const daysOrder = [1, 2, 3, 4, 5, 6, 0];
+
   return (
     <TooltipProvider>
-      <div className="space-y-4">
-        {[1, 2, 3, 4, 5, 6, 0].map((dayOfWeek) => {
-          const daySchedule = schedule[dayOfWeek] || { slots: [], enabled: false };
-          const isEnabled = daySchedule.slots.length > 0;
+      <div className="space-y-3">
+        <AnimatePresence>
+          {daysOrder.map((dayOfWeek, index) => {
+            const daySchedule = schedule[dayOfWeek] || { slots: [], enabled: false };
+            const isEnabled = daySchedule.slots.length > 0;
+            const isCopyTarget = copyingFrom !== null && copyingFrom !== dayOfWeek;
 
-          return (
-            <div
-              key={dayOfWeek}
-              className={`p-4 rounded-lg border transition-colors ${
-                isEnabled ? 'bg-background' : 'bg-muted/50'
-              } ${copyingFrom !== null && copyingFrom !== dayOfWeek ? 'cursor-pointer hover:border-primary' : ''}`}
-              onClick={() => {
-                if (copyingFrom !== null && copyingFrom !== dayOfWeek) {
-                  handleCopyDayTo(dayOfWeek);
-                }
-              }}
-            >
-              <div className="flex items-start gap-4">
+            return (
+              <motion.div
+                key={dayOfWeek}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.03 }}
+                style={styles.dayRow(isEnabled, isCopyTarget)}
+                className={`group ${isCopyTarget ? 'hover:bg-blue-50 hover:border-blue-400' : ''}`}
+                onClick={() => {
+                  if (isCopyTarget) {
+                    handleCopyDayTo(dayOfWeek);
+                  }
+                }}
+              >
                 {/* Day toggle */}
-                <div className="flex items-center gap-3 min-w-[120px]">
+                <div className="flex items-center gap-3 min-w-[140px]">
                   <Switch
                     checked={isEnabled}
                     onCheckedChange={() => handleToggleDay(dayOfWeek)}
-                    disabled={isLoading}
+                    disabled={isLoading || copyingFrom !== null}
+                    className="data-[state=checked]:bg-blue-500"
                   />
-                  <Label
-                    className={`font-medium ${!isEnabled ? 'text-muted-foreground' : ''}`}
+                  <span
+                    className={`font-medium text-sm ${
+                      isEnabled ? 'text-slate-900' : 'text-slate-400'
+                    }`}
                   >
                     {DAY_LABELS[dayOfWeek]}
-                  </Label>
+                  </span>
                 </div>
 
                 {/* Time slots */}
-                <div className="flex-1 space-y-2">
+                <div className="flex-1">
                   {isEnabled ? (
-                    <>
-                      {daySchedule.slots.map((slot, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <Input
+                    <div className="space-y-2">
+                      {daySchedule.slots.map((slot, slotIndex) => (
+                        <motion.div
+                          key={slotIndex}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className="flex items-center gap-2"
+                        >
+                          <input
                             type="time"
                             value={slot.start_time}
                             onChange={(e) =>
-                              handleUpdateSlot(dayOfWeek, index, 'start_time', e.target.value)
+                              handleUpdateSlot(dayOfWeek, slotIndex, 'start_time', e.target.value)
                             }
-                            className="w-28"
-                            disabled={isLoading}
+                            style={styles.timeInput}
+                            className="focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 outline-none"
+                            disabled={isLoading || copyingFrom !== null}
                           />
-                          <span className="text-muted-foreground">-</span>
-                          <Input
+                          <span className="text-slate-300 font-medium">—</span>
+                          <input
                             type="time"
                             value={slot.end_time}
                             onChange={(e) =>
-                              handleUpdateSlot(dayOfWeek, index, 'end_time', e.target.value)
+                              handleUpdateSlot(dayOfWeek, slotIndex, 'end_time', e.target.value)
                             }
-                            className="w-28"
-                            disabled={isLoading}
+                            style={styles.timeInput}
+                            className="focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 outline-none"
+                            disabled={isLoading || copyingFrom !== null}
                           />
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemoveSlot(dayOfWeek, index)}
-                            disabled={isLoading}
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => handleRemoveSlot(dayOfWeek, slotIndex)}
+                            disabled={isLoading || copyingFrom !== null}
+                            className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 text-slate-400 hover:text-red-500"
                           >
-                            <Trash2 className="h-4 w-4 text-muted-foreground" />
-                          </Button>
-                        </div>
+                            <Trash2 className="w-4 h-4" />
+                          </motion.button>
+                        </motion.div>
                       ))}
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                      <motion.button
+                        whileHover={{
+                          borderColor: '#0066FF',
+                          color: '#0066FF',
+                          background: '#F0F7FF',
+                        }}
+                        style={styles.addButton}
                         onClick={() => handleAddSlot(dayOfWeek)}
-                        disabled={isLoading}
-                        className="text-muted-foreground"
+                        disabled={isLoading || copyingFrom !== null}
                       >
-                        <Plus className="h-4 w-4 mr-1" />
+                        <Plus className="w-4 h-4" />
                         Agregar horario
-                      </Button>
-                    </>
+                      </motion.button>
+                    </div>
                   ) : (
-                    <span className="text-sm text-muted-foreground">No disponible</span>
+                    <div className="py-2">
+                      <span className="text-sm text-slate-400 italic">No disponible</span>
+                    </div>
                   )}
                 </div>
 
                 {/* Copy button */}
                 {isEnabled && onCopyDay && (
-                  <div className="flex gap-1">
+                  <div className="flex-shrink-0">
                     {copyingFrom === dayOfWeek ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">
-                          Selecciona día destino
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="flex items-center gap-2"
+                      >
+                        <span className="text-xs text-blue-600 font-medium">
+                          Selecciona destino
                         </span>
                         <Button
                           variant="outline"
@@ -191,50 +252,81 @@ export function WeeklySchedule({
                             e.stopPropagation();
                             handleCopyToWeekdays();
                           }}
+                          className="h-7 text-xs rounded-lg border-blue-200 text-blue-600 hover:bg-blue-50"
                         >
                           Lun-Vie
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setCopyingFrom(null);
                           }}
+                          className="p-1 rounded-lg hover:bg-slate-100"
                         >
-                          Cancelar
-                        </Button>
-                      </div>
+                          <X className="w-4 h-4 text-slate-400" />
+                        </button>
+                      </motion.div>
                     ) : (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleCopyDayStart(dayOfWeek);
                             }}
                             disabled={isLoading}
+                            className="p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-100 text-slate-400 hover:text-slate-600"
                           >
-                            <Copy className="h-4 w-4 text-muted-foreground" />
-                          </Button>
+                            <Copy className="w-4 h-4" />
+                          </motion.button>
                         </TooltipTrigger>
                         <TooltipContent>Copiar a otros días</TooltipContent>
                       </Tooltip>
                     )}
                   </div>
                 )}
-              </div>
-            </div>
-          );
-        })}
 
-        {copyingFrom !== null && (
-          <p className="text-sm text-muted-foreground text-center">
-            Haz clic en un día para copiar el horario de {DAY_LABELS[copyingFrom]}
-          </p>
-        )}
+                {/* Copy target indicator */}
+                {isCopyTarget && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex-shrink-0"
+                  >
+                    <div className="p-2 rounded-lg bg-blue-100">
+                      <ChevronRight className="w-4 h-4 text-blue-500" />
+                    </div>
+                  </motion.div>
+                )}
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+
+        {/* Copy mode indicator */}
+        <AnimatePresence>
+          {copyingFrom !== null && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-blue-50 border border-blue-200"
+            >
+              <span className="text-sm text-blue-700">
+                Haz clic en un día para copiar el horario de{' '}
+                <strong>{DAY_LABELS[copyingFrom]}</strong>
+              </span>
+              <button
+                onClick={() => setCopyingFrom(null)}
+                className="ml-2 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100 rounded"
+              >
+                Cancelar
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </TooltipProvider>
   );

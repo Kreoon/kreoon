@@ -1,16 +1,15 @@
-// Calendario de reservas
+// Booking Calendar - Calendly-inspired design
 
 import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft,
   ChevronRight,
   Calendar as CalendarIcon,
   Clock,
   User,
-  Mail,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 import {
   format,
@@ -23,6 +22,7 @@ import {
   subMonths,
   startOfWeek,
   endOfWeek,
+  isToday as checkIsToday,
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useBookings } from '../../hooks';
@@ -30,12 +30,71 @@ import { BookingDetailDrawer } from './BookingDetailDrawer';
 import type { Booking, CalendarBooking } from '../../types';
 import { BOOKING_STATUS_COLORS, BOOKING_STATUS_LABELS } from '../../types';
 
+// Design tokens
+const styles = {
+  container: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 360px',
+    gap: '0',
+  },
+  calendarSection: {
+    padding: '24px',
+    borderRight: '1px solid #E5E7EB',
+  },
+  sidePanel: {
+    padding: '24px',
+    background: '#FAFBFC',
+    maxHeight: 'calc(100vh - 300px)',
+    overflowY: 'auto' as const,
+  },
+  dayCell: (isCurrentMonth: boolean, isToday: boolean, isSelected: boolean, hasBookings: boolean) => ({
+    minHeight: '90px',
+    padding: '8px',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+    background: isSelected
+      ? '#EFF6FF'
+      : isCurrentMonth
+      ? '#FFFFFF'
+      : '#F8FAFC',
+    border: isSelected
+      ? '2px solid #0066FF'
+      : isToday
+      ? '2px solid #0066FF'
+      : '1px solid #E5E7EB',
+    opacity: isCurrentMonth ? 1 : 0.5,
+  }),
+  bookingPill: (color: string) => ({
+    fontSize: '11px',
+    padding: '3px 6px',
+    borderRadius: '6px',
+    background: color + '20',
+    borderLeft: `3px solid ${color}`,
+    marginTop: '4px',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+  }),
+  navButton: {
+    padding: '8px 12px',
+    borderRadius: '8px',
+    border: '1px solid #E5E7EB',
+    background: '#FFFFFF',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+};
+
+const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
 export function BookingCalendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
-  // Obtener reservas del mes actual (+/- 1 semana para días de semanas parciales)
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
@@ -46,12 +105,10 @@ export function BookingCalendar() {
     to: calendarEnd,
   });
 
-  // Generar días del calendario
   const calendarDays = useMemo(() => {
     return eachDayOfInterval({ start: calendarStart, end: calendarEnd });
   }, [calendarStart, calendarEnd]);
 
-  // Agrupar reservas por día
   const bookingsByDate = useMemo(() => {
     const map = new Map<string, CalendarBooking[]>();
 
@@ -77,184 +134,235 @@ export function BookingCalendar() {
     return map;
   }, [bookings]);
 
-  // Reservas del día seleccionado
   const selectedDayBookings = useMemo(() => {
     if (!selectedDate) return [];
     const dateKey = format(selectedDate, 'yyyy-MM-dd');
-    return bookings.filter(
-      (b) => format(new Date(b.start_time), 'yyyy-MM-dd') === dateKey
-    );
+    return bookings
+      .filter((b) => format(new Date(b.start_time), 'yyyy-MM-dd') === dateKey)
+      .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
   }, [selectedDate, bookings]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Calendario mensual */}
-      <Card className="lg:col-span-2">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl">
-              {format(currentMonth, 'MMMM yyyy', { locale: es })}
-            </CardTitle>
-            <div className="flex gap-1">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentMonth(new Date())}
-              >
-                Hoy
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+    <div className="lg:grid" style={styles.container}>
+      {/* Calendar Grid */}
+      <div style={styles.calendarSection}>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-slate-900 capitalize">
+            {format(currentMonth, 'MMMM yyyy', { locale: es })}
+          </h2>
+          <div className="flex items-center gap-2">
+            <motion.button
+              whileHover={{ scale: 1.05, background: '#F8FAFC' }}
+              whileTap={{ scale: 0.95 }}
+              style={styles.navButton}
+              onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+            >
+              <ChevronLeft className="w-4 h-4 text-slate-600" />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02, background: '#F8FAFC' }}
+              whileTap={{ scale: 0.98 }}
+              style={{
+                ...styles.navButton,
+                padding: '8px 16px',
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#374151',
+              }}
+              onClick={() => setCurrentMonth(new Date())}
+            >
+              Hoy
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05, background: '#F8FAFC' }}
+              whileTap={{ scale: 0.95 }}
+              style={styles.navButton}
+              onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+            >
+              <ChevronRight className="w-4 h-4 text-slate-600" />
+            </motion.button>
+          </div>
+        </div>
+
+        {/* Weekday headers */}
+        <div className="grid grid-cols-7 gap-2 mb-2">
+          {WEEKDAYS.map((day) => (
+            <div
+              key={day}
+              className="text-center text-sm font-medium text-slate-500 py-2"
+            >
+              {day}
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {/* Encabezados de días */}
-          <div className="grid grid-cols-7 mb-2">
-            {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((day) => (
-              <div
-                key={day}
-                className="text-center text-sm font-medium text-muted-foreground py-2"
+          ))}
+        </div>
+
+        {/* Calendar days */}
+        <div className="grid grid-cols-7 gap-2">
+          {calendarDays.map((day) => {
+            const dateKey = format(day, 'yyyy-MM-dd');
+            const dayBookings = bookingsByDate.get(dateKey) || [];
+            const isCurrentMonth = isSameMonth(day, currentMonth);
+            const isToday = checkIsToday(day);
+            const isSelected = selectedDate && isSameDay(day, selectedDate);
+
+            return (
+              <motion.div
+                key={dateKey}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                style={styles.dayCell(isCurrentMonth, isToday, !!isSelected, dayBookings.length > 0)}
+                onClick={() => setSelectedDate(day)}
               >
-                {day}
-              </div>
-            ))}
-          </div>
-
-          {/* Días del calendario */}
-          <div className="grid grid-cols-7 gap-1">
-            {calendarDays.map((day) => {
-              const dateKey = format(day, 'yyyy-MM-dd');
-              const dayBookings = bookingsByDate.get(dateKey) || [];
-              const isCurrentMonth = isSameMonth(day, currentMonth);
-              const isToday = isSameDay(day, new Date());
-              const isSelected = selectedDate && isSameDay(day, selectedDate);
-
-              return (
                 <div
-                  key={dateKey}
-                  className={`min-h-[100px] p-1 border rounded-lg cursor-pointer transition-colors ${
-                    isCurrentMonth ? 'bg-background' : 'bg-muted/50'
-                  } ${isSelected ? 'ring-2 ring-primary' : ''} ${
-                    isToday ? 'border-primary' : ''
-                  } hover:bg-muted/50`}
-                  onClick={() => setSelectedDate(day)}
+                  className={`text-sm font-medium ${
+                    isToday
+                      ? 'text-blue-600'
+                      : isSelected
+                      ? 'text-blue-600'
+                      : 'text-slate-700'
+                  }`}
                 >
-                  <div
-                    className={`text-sm font-medium ${
-                      !isCurrentMonth ? 'text-muted-foreground' : ''
-                    } ${isToday ? 'text-primary' : ''}`}
-                  >
-                    {format(day, 'd')}
-                  </div>
-
-                  {/* Indicadores de reservas */}
-                  <div className="space-y-1 mt-1">
-                    {dayBookings.slice(0, 3).map((booking) => (
-                      <div
-                        key={booking.id}
-                        className="text-xs truncate px-1 py-0.5 rounded"
-                        style={{ backgroundColor: booking.color + '30' }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const fullBooking = bookings.find((b) => b.id === booking.id);
-                          if (fullBooking) setSelectedBooking(fullBooking);
-                        }}
-                      >
-                        <span className="font-medium">
-                          {format(booking.start, 'HH:mm')}
-                        </span>{' '}
-                        {booking.guest_name}
-                      </div>
-                    ))}
-                    {dayBookings.length > 3 && (
-                      <div className="text-xs text-muted-foreground px-1">
-                        +{dayBookings.length - 3} más
-                      </div>
-                    )}
-                  </div>
+                  {format(day, 'd')}
                 </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Panel lateral con detalles del día */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CalendarIcon className="h-5 w-5" />
+                <div className="space-y-0.5 mt-1">
+                  {dayBookings.slice(0, 2).map((booking) => (
+                    <motion.div
+                      key={booking.id}
+                      whileHover={{ opacity: 0.8 }}
+                      style={styles.bookingPill(booking.color)}
+                      className="truncate"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const fullBooking = bookings.find((b) => b.id === booking.id);
+                        if (fullBooking) setSelectedBooking(fullBooking);
+                      }}
+                    >
+                      <span className="font-semibold">{format(booking.start, 'HH:mm')}</span>
+                      <span className="text-slate-600 ml-1">{booking.guest_name.split(' ')[0]}</span>
+                    </motion.div>
+                  ))}
+                  {dayBookings.length > 2 && (
+                    <div className="text-xs text-slate-400 pl-1">
+                      +{dayBookings.length - 2} más
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Side Panel */}
+      <div style={styles.sidePanel}>
+        <div className="flex items-center gap-2 mb-6">
+          <CalendarIcon className="w-5 h-5 text-blue-500" />
+          <h3 className="text-lg font-semibold text-slate-900">
             {selectedDate
               ? format(selectedDate, "EEEE d 'de' MMMM", { locale: es })
               : 'Selecciona un día'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </h3>
+        </div>
+
+        <AnimatePresence mode="wait">
           {!selectedDate ? (
-            <p className="text-muted-foreground text-center py-8">
-              Haz clic en un día para ver las reservas
-            </p>
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-center py-12"
+            >
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-slate-100 mb-4">
+                <CalendarIcon className="w-6 h-6 text-slate-400" />
+              </div>
+              <p className="text-slate-500 text-sm">
+                Haz clic en un día para ver las reservas
+              </p>
+            </motion.div>
           ) : selectedDayBookings.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">
-              No hay reservas para este día
-            </p>
+            <motion.div
+              key="no-bookings"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-center py-12"
+            >
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-green-50 mb-4">
+                <CheckCircle2 className="w-6 h-6 text-green-500" />
+              </div>
+              <p className="text-slate-500 text-sm">
+                No hay reservas para este día
+              </p>
+            </motion.div>
           ) : (
-            <div className="space-y-3">
-              {selectedDayBookings
-                .sort(
-                  (a, b) =>
-                    new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-                )
-                .map((booking) => (
-                  <div
-                    key={booking.id}
-                    className="p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
-                    style={{ borderLeftWidth: 4, borderLeftColor: booking.event_type?.color }}
-                    onClick={() => setSelectedBooking(booking)}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-medium">{booking.event_type?.title}</p>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                          <Clock className="h-3.5 w-3.5" />
-                          {format(new Date(booking.start_time), 'HH:mm')} -{' '}
-                          {format(new Date(booking.end_time), 'HH:mm')}
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <User className="h-3.5 w-3.5" />
-                          {booking.guest_name}
-                        </div>
+            <motion.div
+              key="bookings"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-3"
+            >
+              {selectedDayBookings.map((booking, index) => (
+                <motion.div
+                  key={booking.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  onClick={() => setSelectedBooking(booking)}
+                  className="p-4 rounded-xl bg-white border border-slate-200 cursor-pointer hover:shadow-md hover:border-blue-200 transition-all group"
+                  style={{
+                    borderLeft: `4px solid ${booking.event_type?.color || '#8B5CF6'}`,
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-slate-900">
+                          {booking.event_type?.title || 'Cita'}
+                        </span>
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                            BOOKING_STATUS_COLORS[booking.status].bg
+                          } ${BOOKING_STATUS_COLORS[booking.status].text}`}
+                        >
+                          {booking.status === 'confirmed' && (
+                            <CheckCircle2 className="w-3 h-3" />
+                          )}
+                          {booking.status === 'pending' && (
+                            <AlertCircle className="w-3 h-3" />
+                          )}
+                          {BOOKING_STATUS_LABELS[booking.status]}
+                        </span>
                       </div>
-                      <Badge
-                        variant="outline"
-                        className={`${BOOKING_STATUS_COLORS[booking.status].bg} ${
-                          BOOKING_STATUS_COLORS[booking.status].text
-                        }`}
-                      >
-                        {BOOKING_STATUS_LABELS[booking.status]}
-                      </Badge>
+
+                      <div className="mt-2 space-y-1">
+                        <p className="flex items-center gap-2 text-sm text-slate-600">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          {format(new Date(booking.start_time), 'HH:mm')} –{' '}
+                          {format(new Date(booking.end_time), 'HH:mm')}
+                        </p>
+                        <p className="flex items-center gap-2 text-sm text-slate-600">
+                          <User className="w-3.5 h-3.5 text-slate-400" />
+                          {booking.guest_name}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ChevronRight className="w-5 h-5 text-slate-400" />
                     </div>
                   </div>
-                ))}
-            </div>
+                </motion.div>
+              ))}
+            </motion.div>
           )}
-        </CardContent>
-      </Card>
+        </AnimatePresence>
+      </div>
 
-      {/* Drawer de detalles */}
+      {/* Booking Detail Drawer */}
       <BookingDetailDrawer
         booking={selectedBooking}
         onClose={() => setSelectedBooking(null)}

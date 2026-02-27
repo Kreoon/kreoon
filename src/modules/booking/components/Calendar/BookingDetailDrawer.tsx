@@ -1,18 +1,16 @@
-// Drawer con detalles de una reserva
+// Booking Detail Drawer - Calendly-inspired design
 
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,8 +33,13 @@ import {
   X,
   MessageSquare,
   Loader2,
+  CalendarDays,
+  ExternalLink,
+  AlertCircle,
+  CheckCircle2,
+  XCircle,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { Booking, BookingLocationType } from '../../types';
 import {
@@ -52,6 +55,59 @@ const LOCATION_ICONS: Record<BookingLocationType, React.ComponentType<{ classNam
   phone: Phone,
   in_person: MapPin,
   custom: LinkIcon,
+};
+
+// Design tokens
+const styles = {
+  section: {
+    padding: '16px 0',
+    borderBottom: '1px solid #E5E7EB',
+  },
+  infoRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '8px 0',
+  },
+  iconWrapper: (color: string) => ({
+    width: '36px',
+    height: '36px',
+    borderRadius: '10px',
+    background: color + '15',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  }),
+  actionButton: (variant: 'primary' | 'danger' | 'outline') => ({
+    width: '100%',
+    padding: '12px 20px',
+    borderRadius: '10px',
+    fontWeight: 600,
+    fontSize: '14px',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    border: 'none',
+    ...(variant === 'primary' && {
+      background: 'linear-gradient(135deg, #0066FF 0%, #0052CC 100%)',
+      color: '#FFFFFF',
+      boxShadow: '0 4px 14px rgba(0, 102, 255, 0.25)',
+    }),
+    ...(variant === 'danger' && {
+      background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+      color: '#FFFFFF',
+      boxShadow: '0 4px 14px rgba(239, 68, 68, 0.25)',
+    }),
+    ...(variant === 'outline' && {
+      background: '#FFFFFF',
+      color: '#374151',
+      border: '1px solid #E5E7EB',
+    }),
+  }),
 };
 
 interface BookingDetailDrawerProps {
@@ -80,6 +136,7 @@ export function BookingDetailDrawer({ booking, onClose }: BookingDetailDrawerPro
   const isPending = booking.status === 'pending';
   const isConfirmed = booking.status === 'confirmed';
   const isPast = new Date(booking.end_time) < new Date();
+  const startDate = new Date(booking.start_time);
 
   const handleConfirm = () => {
     confirmBooking.mutate(booking.id, {
@@ -124,269 +181,338 @@ export function BookingDetailDrawer({ booking, onClose }: BookingDetailDrawerPro
   return (
     <>
       <Sheet open={!!booking} onOpenChange={onClose}>
-        <SheetContent className="sm:max-w-lg">
-          <SheetHeader>
-            <div className="flex items-start justify-between">
-              <div>
-                <SheetTitle>{booking.event_type?.title || 'Cita'}</SheetTitle>
-                <SheetDescription>
-                  {format(new Date(booking.start_time), "EEEE d 'de' MMMM, yyyy", {
-                    locale: es,
-                  })}
-                </SheetDescription>
-              </div>
-              <Badge
-                variant="outline"
-                className={`${BOOKING_STATUS_COLORS[booking.status].bg} ${
-                  BOOKING_STATUS_COLORS[booking.status].text
-                }`}
-              >
-                {BOOKING_STATUS_LABELS[booking.status]}
-              </Badge>
-            </div>
-          </SheetHeader>
+        <SheetContent className="sm:max-w-lg p-0 overflow-hidden">
+          {/* Header with color bar */}
+          <div
+            className="h-2"
+            style={{ background: booking.event_type?.color || '#8B5CF6' }}
+          />
 
-          <div className="space-y-6 mt-6">
-            {/* Horario */}
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-primary/10">
-                <Clock className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-medium">
-                  {format(new Date(booking.start_time), 'HH:mm')} -{' '}
-                  {format(new Date(booking.end_time), 'HH:mm')}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {booking.event_type?.duration_minutes} minutos
-                </p>
-              </div>
-            </div>
-
-            {/* Invitado */}
-            <div className="space-y-3">
-              <h4 className="font-medium">Invitado</h4>
-              <div className="flex items-center gap-3">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span>{booking.guest_name}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <a
-                  href={`mailto:${booking.guest_email}`}
-                  className="text-primary hover:underline"
-                >
-                  {booking.guest_email}
-                </a>
-              </div>
-              {booking.guest_phone && (
-                <div className="flex items-center gap-3">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <a
-                    href={`tel:${booking.guest_phone}`}
-                    className="text-primary hover:underline"
-                  >
-                    {booking.guest_phone}
-                  </a>
+          <div className="p-6">
+            <SheetHeader className="text-left">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <SheetTitle className="text-xl font-semibold text-slate-900">
+                    {booking.event_type?.title || 'Cita'}
+                  </SheetTitle>
+                  <p className="text-sm text-slate-500 mt-1">
+                    {format(startDate, "EEEE d 'de' MMMM, yyyy", { locale: es })}
+                  </p>
                 </div>
-              )}
-            </div>
-
-            {/* Ubicación */}
-            <div className="space-y-3">
-              <h4 className="font-medium">Ubicación</h4>
-              <div className="flex items-center gap-3">
-                <LocationIcon className="h-4 w-4 text-muted-foreground" />
-                <span>{LOCATION_TYPE_LABELS[booking.location_type]}</span>
+                <span
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${
+                    BOOKING_STATUS_COLORS[booking.status].bg
+                  } ${BOOKING_STATUS_COLORS[booking.status].text}`}
+                >
+                  {booking.status === 'confirmed' && <CheckCircle2 className="w-3.5 h-3.5" />}
+                  {booking.status === 'pending' && <AlertCircle className="w-3.5 h-3.5" />}
+                  {booking.status === 'cancelled' && <XCircle className="w-3.5 h-3.5" />}
+                  {BOOKING_STATUS_LABELS[booking.status]}
+                </span>
               </div>
-              {booking.meeting_url && (
-                <Button variant="outline" asChild className="w-full">
-                  <a href={booking.meeting_url} target="_blank" rel="noopener noreferrer">
-                    <Video className="h-4 w-4 mr-2" />
-                    Unirse a la reunión
-                  </a>
-                </Button>
-              )}
-              {booking.location_details && !booking.meeting_url && (
-                <p className="text-sm text-muted-foreground pl-7">
-                  {booking.location_details}
-                </p>
-              )}
-            </div>
+            </SheetHeader>
 
-            {/* Notas del invitado */}
-            {booking.guest_notes && (
-              <div className="space-y-2">
-                <h4 className="font-medium">Notas del invitado</h4>
-                <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
-                  {booking.guest_notes}
-                </p>
-              </div>
-            )}
-
-            {/* Notas del host */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium">Mis notas</h4>
-                {!isEditingNotes && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setHostNotes(booking.host_notes || '');
-                      setIsEditingNotes(true);
-                    }}
-                  >
-                    <MessageSquare className="h-4 w-4 mr-1" />
-                    {booking.host_notes ? 'Editar' : 'Agregar'}
-                  </Button>
-                )}
-              </div>
-              {isEditingNotes ? (
-                <div className="space-y-2">
-                  <Textarea
-                    value={hostNotes}
-                    onChange={(e) => setHostNotes(e.target.value)}
-                    placeholder="Notas privadas sobre esta cita..."
-                    rows={3}
-                  />
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={handleSaveNotes} disabled={updateBooking.isPending}>
-                      {updateBooking.isPending && (
-                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                      )}
-                      Guardar
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsEditingNotes(false)}
-                    >
-                      Cancelar
-                    </Button>
+            <div className="mt-6 space-y-0">
+              {/* Time section */}
+              <div style={styles.section}>
+                <div style={styles.infoRow}>
+                  <div style={styles.iconWrapper('#0066FF')}>
+                    <Clock className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900">
+                      {format(startDate, 'HH:mm')} – {format(new Date(booking.end_time), 'HH:mm')}
+                    </p>
+                    <p className="text-sm text-slate-500">
+                      {booking.event_type?.duration_minutes} minutos ·{' '}
+                      {formatDistanceToNow(startDate, { locale: es, addSuffix: true })}
+                    </p>
                   </div>
                 </div>
-              ) : booking.host_notes ? (
-                <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
-                  {booking.host_notes}
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground">Sin notas</p>
-              )}
-            </div>
+              </div>
 
-            <Separator />
+              {/* Guest section */}
+              <div style={styles.section}>
+                <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">
+                  Invitado
+                </h4>
+                <div className="space-y-2">
+                  <div style={styles.infoRow}>
+                    <div style={styles.iconWrapper('#10B981')}>
+                      <User className="w-4 h-4 text-green-500" />
+                    </div>
+                    <span className="font-medium text-slate-900">{booking.guest_name}</span>
+                  </div>
+                  <div style={styles.infoRow}>
+                    <div style={styles.iconWrapper('#8B5CF6')}>
+                      <Mail className="w-4 h-4 text-purple-500" />
+                    </div>
+                    <a
+                      href={`mailto:${booking.guest_email}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {booking.guest_email}
+                    </a>
+                  </div>
+                  {booking.guest_phone && (
+                    <div style={styles.infoRow}>
+                      <div style={styles.iconWrapper('#F59E0B')}>
+                        <Phone className="w-4 h-4 text-amber-500" />
+                      </div>
+                      <a
+                        href={`tel:${booking.guest_phone}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {booking.guest_phone}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
 
-            {/* Acciones */}
-            <div className="space-y-2">
-              {isPending && (
-                <>
-                  <Button
-                    className="w-full"
-                    onClick={handleConfirm}
-                    disabled={confirmBooking.isPending}
+              {/* Location section */}
+              <div style={styles.section}>
+                <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">
+                  Ubicación
+                </h4>
+                <div style={styles.infoRow}>
+                  <div style={styles.iconWrapper('#EC4899')}>
+                    <LocationIcon className="w-4 h-4 text-pink-500" />
+                  </div>
+                  <span className="text-slate-900">{LOCATION_TYPE_LABELS[booking.location_type]}</span>
+                </div>
+                {booking.meeting_url && (
+                  <motion.a
+                    href={booking.meeting_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    className="mt-3 flex items-center justify-center gap-2 w-full p-3 rounded-lg bg-blue-50 text-blue-600 font-medium text-sm hover:bg-blue-100 transition-colors"
                   >
-                    {confirmBooking.isPending ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Check className="h-4 w-4 mr-2" />
-                    )}
-                    Confirmar reserva
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => setShowCancelDialog(true)}
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    Rechazar
-                  </Button>
-                </>
-              )}
-
-              {isConfirmed && !isPast && (
-                <Button
-                  variant="outline"
-                  className="w-full text-destructive"
-                  onClick={() => setShowCancelDialog(true)}
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Cancelar reserva
-                </Button>
-              )}
-
-              {isConfirmed && isPast && (
-                <>
-                  <Button
-                    className="w-full"
-                    onClick={handleComplete}
-                    disabled={completeBooking.isPending}
-                  >
-                    {completeBooking.isPending ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Check className="h-4 w-4 mr-2" />
-                    )}
-                    Marcar como completada
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={handleNoShow}
-                    disabled={markNoShow.isPending}
-                  >
-                    No asistió
-                  </Button>
-                </>
-              )}
-            </div>
-
-            {/* Info de cancelación */}
-            {booking.status === 'cancelled' && booking.cancelled_at && (
-              <div className="bg-destructive/10 p-3 rounded-lg text-sm">
-                <p className="font-medium text-destructive">Reserva cancelada</p>
-                <p className="text-muted-foreground">
-                  Cancelada por {booking.cancelled_by === 'host' ? 'ti' : 'el invitado'} el{' '}
-                  {format(new Date(booking.cancelled_at), "d 'de' MMMM 'a las' HH:mm", {
-                    locale: es,
-                  })}
-                </p>
-                {booking.cancellation_reason && (
-                  <p className="mt-1">Razón: {booking.cancellation_reason}</p>
+                    <Video className="w-4 h-4" />
+                    Unirse a la reunión
+                    <ExternalLink className="w-3 h-3" />
+                  </motion.a>
+                )}
+                {booking.location_details && !booking.meeting_url && (
+                  <p className="mt-2 text-sm text-slate-500 pl-12">
+                    {booking.location_details}
+                  </p>
                 )}
               </div>
-            )}
+
+              {/* Guest notes */}
+              {booking.guest_notes && (
+                <div style={styles.section}>
+                  <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">
+                    Notas del invitado
+                  </h4>
+                  <p className="text-sm text-slate-700 bg-slate-50 p-4 rounded-xl">
+                    {booking.guest_notes}
+                  </p>
+                </div>
+              )}
+
+              {/* Host notes */}
+              <div style={styles.section}>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">
+                    Mis notas
+                  </h4>
+                  {!isEditingNotes && (
+                    <button
+                      onClick={() => {
+                        setHostNotes(booking.host_notes || '');
+                        setIsEditingNotes(true);
+                      }}
+                      className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      {booking.host_notes ? 'Editar' : 'Agregar'}
+                    </button>
+                  )}
+                </div>
+                <AnimatePresence mode="wait">
+                  {isEditingNotes ? (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="space-y-3"
+                    >
+                      <Textarea
+                        value={hostNotes}
+                        onChange={(e) => setHostNotes(e.target.value)}
+                        placeholder="Notas privadas sobre esta cita..."
+                        className="bg-slate-50 border-slate-200 rounded-xl"
+                        rows={3}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={handleSaveNotes}
+                          disabled={updateBooking.isPending}
+                          className="rounded-lg"
+                        >
+                          {updateBooking.isPending && (
+                            <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                          )}
+                          Guardar
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsEditingNotes(false)}
+                          className="rounded-lg"
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </motion.div>
+                  ) : booking.host_notes ? (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-sm text-slate-700 bg-slate-50 p-4 rounded-xl"
+                    >
+                      {booking.host_notes}
+                    </motion.p>
+                  ) : (
+                    <p className="text-sm text-slate-400 italic">Sin notas</p>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Cancellation info */}
+              {booking.status === 'cancelled' && booking.cancelled_at && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-red-50 p-4 rounded-xl"
+                >
+                  <div className="flex items-center gap-2 text-red-600 font-semibold mb-2">
+                    <XCircle className="w-4 h-4" />
+                    Reserva cancelada
+                  </div>
+                  <p className="text-sm text-red-700">
+                    Cancelada por {booking.cancelled_by === 'host' ? 'ti' : 'el invitado'} el{' '}
+                    {format(new Date(booking.cancelled_at), "d 'de' MMMM 'a las' HH:mm", {
+                      locale: es,
+                    })}
+                  </p>
+                  {booking.cancellation_reason && (
+                    <p className="text-sm text-red-600 mt-2">
+                      Razón: {booking.cancellation_reason}
+                    </p>
+                  )}
+                </motion.div>
+              )}
+
+              {/* Actions */}
+              <div className="pt-6 space-y-3">
+                {isPending && (
+                  <>
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      onClick={handleConfirm}
+                      disabled={confirmBooking.isPending}
+                      style={styles.actionButton('primary')}
+                      className="disabled:opacity-50"
+                    >
+                      {confirmBooking.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Check className="w-4 h-4" />
+                      )}
+                      Confirmar reserva
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      onClick={() => setShowCancelDialog(true)}
+                      style={styles.actionButton('outline')}
+                    >
+                      <X className="w-4 h-4" />
+                      Rechazar
+                    </motion.button>
+                  </>
+                )}
+
+                {isConfirmed && !isPast && (
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => setShowCancelDialog(true)}
+                    style={styles.actionButton('danger')}
+                  >
+                    <X className="w-4 h-4" />
+                    Cancelar reserva
+                  </motion.button>
+                )}
+
+                {isConfirmed && isPast && (
+                  <>
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      onClick={handleComplete}
+                      disabled={completeBooking.isPending}
+                      style={styles.actionButton('primary')}
+                      className="disabled:opacity-50"
+                    >
+                      {completeBooking.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="w-4 h-4" />
+                      )}
+                      Marcar como completada
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      onClick={handleNoShow}
+                      disabled={markNoShow.isPending}
+                      style={styles.actionButton('outline')}
+                      className="disabled:opacity-50"
+                    >
+                      No asistió
+                    </motion.button>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </SheetContent>
       </Sheet>
 
-      {/* Dialog de cancelación */}
+      {/* Cancel Dialog */}
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancelar reserva</AlertDialogTitle>
+            <AlertDialogTitle className="text-xl">¿Cancelar reserva?</AlertDialogTitle>
             <AlertDialogDescription>
-              ¿Estás seguro de que quieres cancelar esta reserva? Se notificará al
-              invitado por email.
+              Se notificará al invitado por email sobre la cancelación.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-4">
-            <Label>Razón (opcional)</Label>
+            <Label className="text-sm text-slate-600">Razón (opcional)</Label>
             <Textarea
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
               placeholder="Explica brevemente por qué cancelas..."
-              className="mt-2"
+              className="mt-2 bg-slate-50 border-slate-200 rounded-xl"
             />
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel>Volver</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-lg">Volver</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleCancel}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-red-600 hover:bg-red-700 text-white rounded-lg"
             >
               {cancelBooking.isPending && (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               )}
               Cancelar reserva
             </AlertDialogAction>
