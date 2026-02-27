@@ -22,6 +22,8 @@ export interface MarketplaceCreator {
   completed_projects: number;
   joined_at: string;
   accepts_product_exchange: boolean;
+  /** Average response time label e.g. "< 2h" */
+  response_time_label?: string;
   marketplace_roles?: MarketplaceRoleId[];
   /** User has an active paid subscription (basic or pro) */
   is_subscribed?: boolean;

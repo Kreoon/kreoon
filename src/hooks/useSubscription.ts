@@ -10,10 +10,50 @@ import type {
 } from '@/types/unified-finance.types';
 import { PLANS } from '@/lib/finance/constants';
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
+import { supabase } from '@/integrations/supabase/client';
 
 // ─── Helper: invoke subscription-service ───
 function invokeSubscriptionService<T = unknown>(action: string, body?: Record<string, unknown>) {
   return invokeEdgeFunction<T>('subscription-service', action, body);
+}
+
+// ─── Fallback: query subscription directly from DB ───
+async function getSubscriptionFallback(userId: string, organizationId?: string): Promise<PlatformSubscription | null> {
+  try {
+    let query = supabase
+      .from('platform_subscriptions')
+      .select('*')
+      .in('status', ['active', 'trialing']);
+
+    if (organizationId) {
+      query = query.eq('organization_id', organizationId);
+    } else {
+      query = query.eq('user_id', userId).is('organization_id', null);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false }).limit(1).maybeSingle();
+
+    if (error) {
+      console.error('[useSubscription] Fallback query error:', error.message);
+      return null;
+    }
+
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      tier: data.tier,
+      status: data.status,
+      billing_cycle: data.billing_cycle,
+      current_price: data.current_price,
+      current_period_end: data.current_period_end,
+      cancel_at_period_end: data.cancel_at_period_end,
+      trial_ends_at: data.trial_ends_at,
+    } as PlatformSubscription;
+  } catch (err) {
+    console.error('[useSubscription] Fallback error:', err);
+    return null;
+  }
 }
 
 /**
@@ -35,13 +75,27 @@ export function useSubscription(organizationId?: string | null) {
   } = useQuery({
     queryKey,
     queryFn: async (): Promise<PlatformSubscription | null> => {
-      const res = await invokeSubscriptionService<any>('get-status', {
-        organization_id: orgId,
-      });
-      // Edge function returns { has_subscription, subscription?: {...}, tier?, ... }
-      if (res?.has_subscription && res.subscription) {
-        return res.subscription as PlatformSubscription;
+      try {
+        const res = await invokeSubscriptionService<any>('get-status', {
+          organization_id: orgId,
+        });
+        // Edge function returns { has_subscription, subscription?: {...}, tier?, ... }
+        if (res?.has_subscription && res.subscription) {
+          return res.subscription as PlatformSubscription;
+        }
+      } catch (err) {
+        console.warn('[useSubscription] Edge function failed, using fallback:', err);
       }
+
+      // Fallback: query DB directly if edge function fails or returns no data
+      if (user?.id) {
+        const fallbackSub = await getSubscriptionFallback(user.id, orgId);
+        if (fallbackSub) {
+          console.log('[useSubscription] Using fallback subscription:', fallbackSub.tier);
+          return fallbackSub;
+        }
+      }
+
       // No subscription → return null (free tier)
       return null;
     },

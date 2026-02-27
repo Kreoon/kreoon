@@ -61,17 +61,12 @@ export function CreatorGrid({
           ? Array.from({ length: 8 }).map((_, i) => (
               <CreatorCardSkeleton key={i} />
             ))
-          : creators.map((creator, i) => (
-              <div
+          : creators.map((creator) => (
+              <MarketplaceCreatorCard
                 key={creator.id}
-                className="animate-in fade-in duration-300"
-                style={{ animationDelay: `${i * 50}ms` }}
-              >
-                <MarketplaceCreatorCard
-                  creator={creator}
-                  onClick={() => onCreatorClick?.(creator.slug || creator.id)}
-                />
-              </div>
+                creator={creator}
+                onClick={() => onCreatorClick?.(creator.slug || creator.id)}
+              />
             ))}
       </div>
 

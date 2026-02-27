@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, memo } from 'react';
-import { Heart, ChevronLeft, ChevronRight, Star, MapPin, CheckCircle2, Play, Gift, Percent } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Heart, ChevronLeft, ChevronRight, Star, MapPin, CheckCircle2, Play, Gift, Percent, Package, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import type { MarketplaceCreator, PortfolioMedia } from './types/marketplace';
@@ -74,12 +75,17 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
         : null;
 
   return (
-    <div
+    <motion.div
       className={cn(
-        'group relative cursor-pointer transition-all duration-200 hover:scale-[1.02]',
+        'group relative cursor-pointer',
         className,
       )}
       onClick={onClick}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.02, y: -4 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.2 }}
     >
       {/* Media area — 9:16 aspect ratio, click opens profile */}
       <div
@@ -141,10 +147,12 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
         <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
 
         {/* Favorite button */}
-        <button
+        <motion.button
           onClick={handleFavorite}
-          className="absolute top-3 right-3 z-10 transition-transform duration-200 active:scale-125"
+          className="absolute top-3 right-3 z-10"
           aria-label="Favorito"
+          whileTap={{ scale: 1.3 }}
+          animate={isFavorite ? { scale: [1, 1.2, 1] } : {}}
         >
           <Heart
             className={cn(
@@ -154,7 +162,7 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
                 : 'text-white hover:text-pink-300',
             )}
           />
-        </button>
+        </motion.button>
 
         {/* Badges */}
         <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
@@ -210,8 +218,40 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
           </div>
         )}
 
+        {/* Hover mini-gallery */}
+        {media.length >= 3 && (
+          <div
+            className={cn(
+              "absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex gap-1 transition-all duration-300",
+              "opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0"
+            )}
+          >
+            {media.slice(0, 3).map((item, i) => (
+              <button
+                key={item.id}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentSlide(i);
+                }}
+                className={cn(
+                  "w-12 h-16 rounded-lg overflow-hidden border-2 transition-all",
+                  i === currentSlide
+                    ? "border-white scale-105"
+                    : "border-white/30 hover:border-white/60"
+                )}
+              >
+                <img
+                  src={resolveThumb(item)}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Creator info overlay at bottom of card */}
-        <div className="absolute bottom-0 inset-x-0 z-10 p-3 space-y-1">
+        <div className="absolute bottom-0 inset-x-0 z-10 p-3 space-y-1.5">
           {/* Name + verified */}
           <div className="flex items-center gap-1.5">
             {creator.avatar_url ? (
@@ -247,17 +287,39 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
             </div>
           )}
 
-          {/* Rating + Price inline */}
-          <div className="flex items-center gap-2">
+          {/* Social Proof Row */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Rating con count */}
             <div className="flex items-center gap-1">
               <Star className="h-3 w-3 text-purple-400 fill-purple-400" />
               <span className="text-white text-xs font-medium drop-shadow-sm">
                 {creator.rating_avg.toFixed(1)}
               </span>
+              <span className="text-white/50 text-[10px]">({creator.rating_count})</span>
             </div>
+
+            {/* Projects completed */}
+            {creator.completed_projects > 0 && (
+              <div className="flex items-center gap-1 text-white/70 text-xs">
+                <Package className="h-3 w-3" />
+                <span>{creator.completed_projects}</span>
+              </div>
+            )}
+
+            {/* Response time */}
+            {creator.response_time_label && (
+              <div className="flex items-center gap-1 text-green-400 text-[10px]">
+                <Clock className="h-3 w-3" />
+                <span>{creator.response_time_label}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Price + Exchange */}
+          <div className="flex items-center gap-2">
             {creator.base_price != null && (
               <span className="text-white/70 text-xs drop-shadow-sm">
-                · Desde <span className="text-white font-semibold">{formatPrice(creator.base_price)}</span>
+                Desde <span className="text-white font-semibold">{formatPrice(creator.base_price)}</span>
               </span>
             )}
             {creator.accepts_product_exchange && (
@@ -271,7 +333,7 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

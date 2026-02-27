@@ -1,8 +1,9 @@
 import { memo } from 'react';
-import { Star, Users, Briefcase, Clock, Building2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Star, Users, Briefcase, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MarketplaceOrg } from './types/marketplace';
-import { ORG_TYPE_LABELS, ORG_TYPE_COLORS, TEAM_SIZE_LABELS, RESPONSE_TIME_LABELS } from './types/marketplace';
+import { ORG_TYPE_LABELS, ORG_TYPE_COLORS, TEAM_SIZE_LABELS } from './types/marketplace';
 
 interface OrgCardProps {
   org: MarketplaceOrg;
@@ -15,22 +16,22 @@ function OrgCardComponent({ org, onClick, className }: OrgCardProps) {
   const typeLabel = org.org_type ? ORG_TYPE_LABELS[org.org_type] : null;
   const accentColor = org.portfolio_color || '#8B5CF6';
 
-  const budgetLabel = org.org_min_budget && org.org_max_budget
-    ? `$${(org.org_min_budget / 1000000).toFixed(1)}M - $${(org.org_max_budget / 1000000).toFixed(1)}M ${org.org_budget_currency}`
-    : org.org_min_budget
-      ? `Desde $${(org.org_min_budget / 1000000).toFixed(1)}M ${org.org_budget_currency}`
-      : null;
-
   return (
-    <div
+    <motion.div
       className={cn(
-        'group relative cursor-pointer rounded-2xl border border-white/5 bg-card overflow-hidden transition-all duration-200 hover:border-white/10 hover:shadow-lg hover:scale-[1.02]',
-        className
+        'group relative cursor-pointer overflow-hidden',
+        className,
       )}
       onClick={onClick}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.02, y: -4 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.2 }}
     >
-      {/* Cover / Header */}
-      <div className="relative h-28 overflow-hidden">
+      {/* Vertical media area - 9:16 */}
+      <div className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-card border border-white/5">
+        {/* Cover image */}
         {org.org_cover_url ? (
           <img
             src={org.org_cover_url}
@@ -43,98 +44,83 @@ function OrgCardComponent({ org, onClick, className }: OrgCardProps) {
             style={{ background: `linear-gradient(135deg, ${accentColor}30, ${accentColor}10, transparent)` }}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#12121a] via-transparent to-transparent" />
+
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
         {/* Type badge */}
         {typeColor && typeLabel && (
-          <div className={cn('absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-semibold', typeColor.bg, typeColor.text)}>
+          <div className={cn('absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-semibold z-10', typeColor.bg, typeColor.text)}>
             {typeLabel}
           </div>
         )}
-      </div>
 
-      {/* Logo + Info */}
-      <div className="px-4 pb-4 -mt-8 relative z-10">
-        {/* Logo */}
-        <div className="mb-3">
+        {/* Floating logo */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
           {org.logo_url ? (
             <img
               src={org.logo_url}
               alt={org.org_display_name}
-              className="h-14 w-14 rounded-xl border-2 border-[#12121a] object-cover shadow-lg bg-gray-900"
+              className="h-20 w-20 rounded-2xl border-2 border-white/20 object-cover shadow-2xl bg-gray-900"
             />
           ) : (
             <div
-              className="h-14 w-14 rounded-xl border-2 border-[#12121a] flex items-center justify-center shadow-lg"
-              style={{ backgroundColor: `${accentColor}20` }}
+              className="h-20 w-20 rounded-2xl border-2 border-white/20 flex items-center justify-center shadow-2xl"
+              style={{ backgroundColor: `${accentColor}30` }}
             >
-              <Building2 className="h-6 w-6" style={{ color: accentColor }} />
+              <Building2 className="h-10 w-10" style={{ color: accentColor }} />
             </div>
           )}
         </div>
 
-        {/* Name + Tagline */}
-        <h3 className="font-semibold text-white text-sm truncate">{org.org_display_name}</h3>
-        {org.org_tagline && (
-          <p className="text-gray-500 text-xs mt-0.5 line-clamp-2 leading-relaxed">{org.org_tagline}</p>
-        )}
+        {/* Info overlay */}
+        <div className="absolute bottom-0 inset-x-0 z-10 p-3 space-y-1.5">
+          <h3 className="font-semibold text-white text-sm truncate drop-shadow-md">
+            {org.org_display_name}
+          </h3>
 
-        {/* Specialties */}
-        {org.org_specialties.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            {org.org_specialties.slice(0, 3).map(spec => (
-              <span key={spec} className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/5 text-gray-400 capitalize">
-                {spec}
-              </span>
-            ))}
-            {org.org_specialties.length > 3 && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/5 text-gray-500">
-                +{org.org_specialties.length - 3}
-              </span>
+          {org.org_tagline && (
+            <p className="text-white/70 text-xs line-clamp-2">{org.org_tagline}</p>
+          )}
+
+          {/* Specialties */}
+          {org.org_specialties.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {org.org_specialties.slice(0, 2).map(spec => (
+                <span key={spec} className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/80 capitalize">
+                  {spec}
+                </span>
+              ))}
+              {org.org_specialties.length > 2 && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/60">
+                  +{org.org_specialties.length - 2}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Stats */}
+          <div className="flex items-center gap-3 text-xs">
+            <div className="flex items-center gap-1">
+              <Star className="h-3 w-3 text-purple-400 fill-purple-400" />
+              <span className="text-white font-medium">{org.org_marketplace_rating_avg.toFixed(1)}</span>
+            </div>
+            {org.org_team_size_range && (
+              <div className="flex items-center gap-1 text-white/60">
+                <Users className="h-3 w-3" />
+                <span>{TEAM_SIZE_LABELS[org.org_team_size_range] || org.org_team_size_range}</span>
+              </div>
+            )}
+            {org.org_marketplace_projects_count > 0 && (
+              <div className="flex items-center gap-1 text-white/60">
+                <Briefcase className="h-3 w-3" />
+                <span>{org.org_marketplace_projects_count}</span>
+              </div>
             )}
           </div>
-        )}
-
-        {/* Stats row */}
-        <div className="flex items-center gap-3 mt-3 text-xs">
-          {/* Rating */}
-          <div className="flex items-center gap-1">
-            <Star className="h-3 w-3 text-purple-400 fill-purple-400" />
-            <span className="text-white font-medium">{org.org_marketplace_rating_avg.toFixed(1)}</span>
-            <span className="text-gray-600">({org.org_marketplace_rating_count})</span>
-          </div>
-
-          {/* Team size */}
-          {org.org_team_size_range && (
-            <div className="flex items-center gap-1 text-gray-500">
-              <Users className="h-3 w-3" />
-              <span>{TEAM_SIZE_LABELS[org.org_team_size_range] || org.org_team_size_range}</span>
-            </div>
-          )}
-
-          {/* Projects */}
-          {org.org_marketplace_projects_count > 0 && (
-            <div className="flex items-center gap-1 text-gray-500">
-              <Briefcase className="h-3 w-3" />
-              <span>{org.org_marketplace_projects_count}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Budget + Response time */}
-        <div className="flex items-center justify-between mt-2">
-          {budgetLabel && (
-            <span className="text-xs text-gray-400">{budgetLabel}</span>
-          )}
-          {org.org_response_time && (
-            <div className="flex items-center gap-1 text-[10px] text-gray-500">
-              <Clock className="h-2.5 w-2.5" />
-              <span>{RESPONSE_TIME_LABELS[org.org_response_time] || org.org_response_time}</span>
-            </div>
-          )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

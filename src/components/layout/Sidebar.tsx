@@ -35,6 +35,7 @@ import {
   Share2,
   Radar,
   ImagePlus,
+  CalendarDays,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -85,6 +86,7 @@ const MARKETING_ITEMS: NavItem[] = [
 
 const CONFIG_ITEMS: NavItem[] = [
   { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
+  { name: "Booking", href: "/booking/calendar", icon: CalendarDays, tourId: "sidebar-booking" },
   { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
   { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
