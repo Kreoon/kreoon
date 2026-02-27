@@ -381,3 +381,9 @@ verify_jwt = false
 [functions.booking-reminder]
 # Ejecutado via cron, no requiere JWT
 verify_jwt = false
+
+# ── Marketplace AI Search ──
+
+[functions.marketplace-ai-search]
+# Búsqueda en lenguaje natural, público
+verify_jwt = false
