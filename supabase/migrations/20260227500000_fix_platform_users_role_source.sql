@@ -1,7 +1,7 @@
--- Fix: Use organization_members.role instead of organization_member_roles
--- The issue was that organization_member_roles can have multiple roles (including badges like 'ambassador')
--- and the LIMIT 1 was picking up 'ambassador' instead of the main role like 'creator'
--- organization_members.role is the correct source for the user's primary role in the org
+-- Fix: Support multi-role users
+-- Users can have multiple roles (creator, editor, strategist, ambassador, etc.)
+-- Return both the primary role (from organization_members) and all roles (from organization_member_roles)
+-- Frontend will use all_roles to show users in multiple tabs
 
 CREATE OR REPLACE FUNCTION get_platform_users_with_health()
 RETURNS JSONB
@@ -18,9 +18,10 @@ BEGIN
             COALESCE(p.email, au.email) AS email,
             COALESCE(p.full_name, au.raw_user_meta_data->>'full_name', 'Sin nombre') AS full_name,
             p.avatar_url,
-            -- Use organization_members.role as primary source (main role in org)
-            -- Falls back to profiles.active_role, then NULL
+            -- Primary role from organization_members (for display)
             COALESCE(om.role::text, p.active_role) AS role,
+            -- All roles from organization_member_roles (for multi-tab classification)
+            COALESCE(all_roles.roles, ARRAY[]::text[]) AS all_roles,
             om.organization_id,
             o.name AS organization_name,
             COALESCE(h.health_score, 50) AS health_score,
@@ -54,6 +55,12 @@ BEGIN
             ORDER BY om2.is_owner DESC, om2.joined_at ASC
             LIMIT 1
         ) om ON TRUE
+        LEFT JOIN LATERAL (
+            SELECT array_agg(DISTINCT omr.role::text) AS roles
+            FROM organization_member_roles omr
+            WHERE omr.user_id = au.id
+              AND omr.organization_id = om.organization_id
+        ) all_roles ON TRUE
         LEFT JOIN organizations o ON o.id = om.organization_id
         LEFT JOIN platform_user_health h ON h.user_id = au.id
     ) t;

@@ -380,6 +380,7 @@ export interface UserWithHealth {
   full_name: string | null;
   avatar_url: string | null;
   role: string | null;
+  all_roles: string[]; // All roles for multi-tab classification
   organization_id: string | null;
   organization_name: string | null;
   health_score: number;
