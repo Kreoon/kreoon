@@ -1,13 +1,17 @@
-import { useState, useCallback, useRef } from 'react';
-import { CheckCircle2, XCircle, Clock, Settings } from 'lucide-react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { CheckCircle2, XCircle, Clock, Settings, ShieldCheck, KeyRound, Ban, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { DetailPanelShell } from './DetailPanelShell';
 import { DetailSection } from './DetailSection';
-import { useFullCreatorDetail } from '@/hooks/useCrm';
+import { useFullCreatorDetail, useFullUserDetail } from '@/hooks/useCrm';
 import { useCrmCustomFieldDefs, useUpdateUserCustomFields, useUpdateUserProfileFields } from '@/hooks/useCrmCustomFields';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import type { CreatorWithMetrics } from '@/services/crm/platformCrmService';
 
 import { PersonalDataSection } from './detail-sections/PersonalDataSection';
@@ -20,6 +24,12 @@ import { ServicesSection } from './detail-sections/ServicesSection';
 import { ScoresSection } from './detail-sections/ScoresSection';
 import { CustomFieldsSection } from './detail-sections/CustomFieldsSection';
 import { CrmFieldsConfigDialog } from './detail-sections/CrmFieldsConfigDialog';
+import { RolesBadgesSection } from './detail-sections/RolesBadgesSection';
+import { OrganizationsListSection } from './detail-sections/OrganizationsListSection';
+import { CompaniesSection } from './detail-sections/CompaniesSection';
+import { AdminActionsSection } from './detail-sections/AdminActionsSection';
+
+const ROOT_EMAILS = ['jacsolucionesgraficas@gmail.com', 'kairosgp.sas@gmail.com'];
 
 function getInitials(name: string): string {
   return name
@@ -33,11 +43,59 @@ function getInitials(name: string): string {
 interface TalentDetailPanelProps {
   creator: CreatorWithMetrics;
   onClose: () => void;
+  onUpdate?: () => void;
 }
 
-export function TalentDetailPanel({ creator, onClose }: TalentDetailPanelProps) {
+export function TalentDetailPanel({ creator, onClose, onUpdate }: TalentDetailPanelProps) {
+  const { profile } = useAuth();
+  const queryClient = useQueryClient();
+  const currentUserEmail = profile?.email || '';
+  const isRoot = ROOT_EMAILS.includes(currentUserEmail);
+  const isPlatformAdmin = isRoot; // Platform CRM is already admin-gated
+
   const { data: full, isLoading: fullLoading } = useFullCreatorDetail(creator.id);
   const userId = full?.user_id || full?.id;
+
+  // Fetch additional user data for admin sections
+  const { data: userDetail } = useFullUserDetail(userId);
+
+  // Lightweight query for platform_access_unlocked and other auth fields
+  const [platformAccessUnlocked, setPlatformAccessUnlocked] = useState<boolean | undefined>(undefined);
+  const [isBanned, setIsBanned] = useState(false);
+  const [isPlatformAdminUser, setIsPlatformAdminUser] = useState(false);
+  const [hasProfile, setHasProfile] = useState(true);
+
+  useEffect(() => {
+    if (!userId) return;
+    supabase
+      .from('profiles')
+      .select('platform_access_unlocked, is_platform_admin')
+      .eq('id', userId)
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        setPlatformAccessUnlocked(data?.platform_access_unlocked ?? undefined);
+        setIsPlatformAdminUser(data?.is_platform_admin ?? false);
+        setHasProfile(!!data);
+      });
+
+    // Check banned status from auth.users via RPC if available
+    // For now, we'll use the userDetail data when available
+  }, [userId]);
+
+  useEffect(() => {
+    if (userDetail) {
+      setIsBanned(userDetail.is_banned ?? false);
+      setIsPlatformAdminUser(userDetail.is_platform_admin ?? false);
+    }
+  }, [userDetail]);
+
+  const handleActionComplete = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['full-creator-detail', creator.id] });
+    queryClient.invalidateQueries({ queryKey: ['full-user-detail', userId] });
+    onUpdate?.();
+  }, [queryClient, creator.id, userId, onUpdate]);
+
   const { data: fieldDefs = [] } = useCrmCustomFieldDefs(
     undefined, // platform-level: no org scope needed for creator entity type
     'creator',
@@ -102,8 +160,41 @@ export function TalentDetailPanel({ creator, onClose }: TalentDetailPanelProps) 
           >
             {creator.is_available ? 'Disponible' : 'No disponible'}
           </span>
+          {isPlatformAdminUser && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/20 text-amber-400">
+              Admin Plataforma
+            </span>
+          )}
+          {isBanned && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-600/20 text-red-500">
+              Bloqueado
+            </span>
+          )}
         </>
       }
+      menuItems={isPlatformAdmin ? (
+        <>
+          <DropdownMenuItem onClick={() => {}} className="gap-2 text-xs text-white/70">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            {isPlatformAdminUser ? 'Quitar admin' : 'Hacer admin'}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => {}} className="gap-2 text-xs text-white/70">
+            <KeyRound className="h-3.5 w-3.5" />
+            Reset contraseña
+          </DropdownMenuItem>
+          <DropdownMenuSeparator className="bg-white/10" />
+          <DropdownMenuItem onClick={() => {}} className="gap-2 text-xs text-red-400">
+            <Ban className="h-3.5 w-3.5" />
+            {isBanned ? 'Desbloquear' : 'Bloquear'}
+          </DropdownMenuItem>
+          {isRoot && (
+            <DropdownMenuItem onClick={() => {}} className="gap-2 text-xs text-red-500">
+              <Trash2 className="h-3.5 w-3.5" />
+              Eliminar usuario
+            </DropdownMenuItem>
+          )}
+        </>
+      ) : undefined}
     >
       {/* Loading indicator for full detail */}
       {fullLoading && (
@@ -260,6 +351,52 @@ export function TalentDetailPanel({ creator, onClose }: TalentDetailPanelProps) 
           </span>
         </div>
       </DetailSection>
+
+      {/* Roles & Badges */}
+      {userDetail && (
+        <RolesBadgesSection
+          roles={userDetail.roles}
+          badges={userDetail.badges}
+          ambassadorLevel={userDetail.ambassador_level}
+        />
+      )}
+
+      {/* Organizations (all memberships) */}
+      {userDetail && userId && (
+        <OrganizationsListSection
+          organizations={userDetail.organizations || []}
+          userId={userId}
+          onActionComplete={handleActionComplete}
+        />
+      )}
+
+      {/* Companies (all linked via client_users) */}
+      {userDetail && userId && (
+        <CompaniesSection
+          companies={userDetail.companies || []}
+          userId={userId}
+          onActionComplete={handleActionComplete}
+        />
+      )}
+
+      {/* Admin Actions */}
+      {isPlatformAdmin && userId && (
+        <AdminActionsSection
+          userId={userId}
+          userEmail={creator.email}
+          userName={creator.full_name}
+          hasProfile={hasProfile}
+          isPlatformAdmin={isPlatformAdminUser}
+          isBanned={isBanned}
+          orgId={userDetail?.organization_id || null}
+          orgName={userDetail?.organization_name || null}
+          isOwner={userDetail?.is_owner ?? false}
+          activeRole={userDetail?.active_role || null}
+          currentUserEmail={currentUserEmail}
+          platformAccessUnlocked={platformAccessUnlocked}
+          onActionComplete={handleActionComplete}
+        />
+      )}
 
       {/* Custom Fields Config Dialog */}
       {showFieldsConfig && (

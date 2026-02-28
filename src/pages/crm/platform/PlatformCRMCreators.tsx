@@ -112,7 +112,7 @@ function getPrimaryRole(creator: CreatorWithMetrics): SpecificRole | null {
 // =====================================================
 
 const PlatformCRMCreators = () => {
-  const { data: creators = [], isLoading } = useCreatorsWithMetrics();
+  const { data: creators = [], isLoading, refetch } = useCreatorsWithMetrics();
 
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
@@ -581,6 +581,14 @@ const PlatformCRMCreators = () => {
           <TalentDetailPanel
             creator={selectedCreator}
             onClose={() => setSelectedCreator(null)}
+            onUpdate={async () => {
+              const result = await refetch();
+              // Sync selectedCreator with fresh data so the panel reflects changes
+              if (result.data && selectedCreator) {
+                const fresh = result.data.find((c) => c.id === selectedCreator.id);
+                if (fresh) setSelectedCreator(fresh);
+              }
+            }}
           />
         </div>
       )}
