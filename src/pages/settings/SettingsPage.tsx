@@ -32,10 +32,9 @@ const BillingUnifiedSection = lazy(() => import('./sections/BillingUnifiedSectio
 const PlatformConfigSection = lazy(() => import('./sections/PlatformConfigSection'));
 const PlatformAdminSection = lazy(() => import('./sections/PlatformAdminSection'));
 const AITokenizationSection = lazy(() => import('@/pages/admin/AITokenizationPage'));
-const LiveStreamingSection = lazy(() => import('./sections/LiveStreamingPlatformSection'));
-const LiveStreamingOrgSection = lazy(() => import('./sections/LiveStreamingOrgSection'));
 const WhiteLabelSection = lazy(() => import('./sections/WhiteLabelSection'));
 const OrgReferralsSection = lazy(() => import('./sections/OrgReferralsSection'));
+const PromptsSection = lazy(() => import('./sections/PromptsSection'));
 
 // Loading fallback
 const SectionLoader = memo(() => (
@@ -63,7 +62,6 @@ const SECTION_COMPONENTS: Record<SettingsSectionKey, React.LazyExoticComponent<R
   tracking: TrackingSection,
   org_marketplace: OrgMarketplaceSection,
   org_agency_profile: OrgAgencyProfileSection,
-  live_streaming_org: LiveStreamingOrgSection,
   white_label: WhiteLabelSection,
   org_referrals: OrgReferralsSection,
   // Platform level
@@ -73,7 +71,7 @@ referrals: ReferralSection,
   platform_config: PlatformConfigSection,
   platform_admin: PlatformAdminSection,
   ai_tokenization: AITokenizationSection,
-  live_streaming: LiveStreamingSection,
+  prompts: PromptsSection,
 };
 
 // Wide sections that need more space
