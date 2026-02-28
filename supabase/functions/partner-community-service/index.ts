@@ -275,17 +275,25 @@ async function applyToCommunity(supabase: any, userId: string, request: ApplyReq
     };
   }
 
+  // 3.5 Obtener el tipo de usuario (brand o talent) desde auth.users
+  const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+  const userType = authUser?.user?.user_metadata?.user_type || null;
+  const isBrand = userType === "brand";
+  const isTalent = userType === "talent";
+
   // 4. Crear membership
   const membershipData: any = {
     community_id: community.id,
     user_id: userId,
     free_months_granted: community.free_months,
-    commission_discount_applied: community.commission_discount_points,
+    // Solo brands reciben descuento en comisiones
+    commission_discount_applied: isBrand ? community.commission_discount_points : 0,
     bonus_tokens_granted: community.bonus_ai_tokens,
     status: "active",
     metadata: {
       applied_via: "landing_page",
       applied_at_redemptions: community.current_redemptions,
+      user_type: userType,
     },
   };
 
@@ -303,8 +311,8 @@ async function applyToCommunity(supabase: any, userId: string, request: ApplyReq
     throw new Error(`Error al crear membresía: ${membershipError.message}`);
   }
 
-  // 5. Crear custom_pricing_agreement si hay descuento en comisiones
-  if (community.commission_discount_points > 0) {
+  // 5. Crear custom_pricing_agreement si hay descuento en comisiones (SOLO PARA BRANDS)
+  if (isBrand && community.commission_discount_points > 0) {
     // Comisión base marketplace: 30%, con descuento de 5 puntos = 25%
     const baseRate = 0.30;
     const discountedRate = Math.max(0.05, baseRate - (community.commission_discount_points / 100));
@@ -326,16 +334,34 @@ async function applyToCommunity(supabase: any, userId: string, request: ApplyReq
       });
   }
 
-  // 6. Actualizar brand con badge si aplica
-  if (brand_id && community.custom_badge_text) {
+  // 5.5 Desbloquear acceso sin llaves (SOLO PARA BRANDS)
+  if (isBrand) {
     await supabase
+      .from("profiles")
+      .update({ platform_access_unlocked: true })
+      .eq("id", userId);
+  }
+
+  // 6. Actualizar brand con comunidad y badge
+  if (brand_id) {
+    const brandUpdate: Record<string, any> = {
+      partner_community_id: community.id,
+    };
+
+    // Agregar badge solo si está configurado
+    if (community.custom_badge_text) {
+      brandUpdate.community_badge_text = community.custom_badge_text;
+      brandUpdate.community_badge_color = community.custom_badge_color;
+    }
+
+    const { error: brandError } = await supabase
       .from("brands")
-      .update({
-        partner_community_id: community.id,
-        community_badge_text: community.custom_badge_text,
-        community_badge_color: community.custom_badge_color,
-      })
+      .update(brandUpdate)
       .eq("id", brand_id);
+
+    if (brandError) {
+      console.error("Error updating brand with community:", brandError);
+    }
   }
 
   // 7. Incrementar contador de redenciones
@@ -374,12 +400,72 @@ async function applyToCommunity(supabase: any, userId: string, request: ApplyReq
     }
   }
 
+  // 9. Crear suscripción con meses gratis si aplica
+  if (community.free_months > 0) {
+    // Verificar si ya tiene suscripción
+    const { data: existingSub } = await supabase
+      .from("platform_subscriptions")
+      .select("id")
+      .eq("user_id", userId)
+      .limit(1)
+      .maybeSingle();
+
+    if (!existingSub) {
+      // Determinar el tier basado en el TIPO DE USUARIO (no el target de la comunidad)
+      // - Brands/Clientes → brand_starter
+      // - Freelancers/Talent → creator_pro
+      const tier = isBrand ? "brand_starter" : "creator_pro";
+
+      // Precios base según tier
+      const pricing = tier === "brand_starter"
+        ? { monthly: 39, annual: 390, limits: { users: 3, ai_tokens: 4000, storage_gb: 5, content_per_month: 30 } }
+        : { monthly: 29, annual: 290, limits: { projects: 20, ai_tokens: 3000, storage_gb: 10 } };
+
+      const trialEndDate = new Date();
+      trialEndDate.setMonth(trialEndDate.getMonth() + community.free_months);
+
+      const { error: subError } = await supabase
+        .from("platform_subscriptions")
+        .insert({
+          user_id: userId,
+          tier: tier,
+          status: "trialing",
+          billing_cycle: "community_benefit",
+          price_monthly: pricing.monthly,
+          price_annual: pricing.annual,
+          current_price: 0, // Gratis durante el trial
+          trial_ends_at: trialEndDate.toISOString(),
+          current_period_start: new Date().toISOString(),
+          current_period_end: trialEndDate.toISOString(),
+          plan_limits: pricing.limits,
+          metadata: {
+            source: "community_benefit",
+            free_months: community.free_months,
+            community_id: community.id,
+            community_slug: community.slug,
+            community_membership_id: membership.id,
+            user_type: userType,
+            activated_at: new Date().toISOString(),
+          },
+        });
+
+      if (subError) {
+        console.error("Error creating subscription:", subError);
+      }
+    }
+  }
+
   return {
     success: true,
     membership_id: membership.id,
+    user_type: userType,
     benefits_applied: {
       free_months: community.free_months,
-      commission_discount: community.commission_discount_points,
+      plan_tier: isBrand ? "brand_starter" : "creator_pro",
+      // Solo brands reciben estos beneficios
+      commission_discount: isBrand ? community.commission_discount_points : 0,
+      platform_access_unlocked: isBrand,
+      // Todos reciben tokens bonus
       bonus_tokens: community.bonus_ai_tokens,
       badge: community.custom_badge_text ? {
         text: community.custom_badge_text,

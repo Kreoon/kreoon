@@ -63,7 +63,9 @@ import {
 } from "@/types/crm.types";
 import type { HealthStatus, TalentCategory, SpecificRole } from "@/types/crm.types";
 import type { UserWithHealth, CreatorWithMetrics } from "@/services/crm/platformCrmService";
-import { ViewModeToggle, UserDetailPanel, TalentDetailPanel } from "@/components/crm";
+import { ViewModeToggle } from "@/components/crm";
+import { UserDetailDialog } from "@/components/crm/UserDetailDialog";
+import { TalentDetailDialog } from "@/components/crm/TalentDetailDialog";
 import type { ViewMode } from "@/components/crm";
 
 // =====================================================
@@ -152,6 +154,11 @@ const getUserTypeColor = (userType: string | null) => {
   return colors[userType] || "bg-white/10 text-white/70";
 };
 
+// Helper to check if avatar URL is valid (not null, not empty, not whitespace)
+const hasValidAvatar = (url: string | null | undefined): url is string => {
+  return !!(url && url.trim().length > 0);
+};
+
 // Organization role labels (role within an org)
 const getOrgRoleLabel = (role: string | null) => {
   if (!role) return null; // Return null so we can conditionally show
@@ -226,7 +233,7 @@ const PlatformCRMPeople = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: users = [], isLoading: loadingUsers, refetch } = useUsersWithHealth();
   const { data: usersNeedingAttention = [] } = useUsersNeedingAttention();
-  const { data: creators = [], isLoading: loadingCreators } = useCreatorsWithMetrics();
+  const { data: creators = [], isLoading: loadingCreators, refetch: refetchCreators } = useCreatorsWithMetrics();
 
   // Read initial tab from URL param
   const initialTab = (searchParams.get("tab") as PeopleTab) || "clientes";
@@ -557,11 +564,10 @@ const PlatformCRMPeople = () => {
   };
 
   const isLoading = loadingUsers || loadingCreators;
-  const hasSelection = selectedUser || selectedCreator;
 
   return (
-    <div className="min-h-screen flex">
-      <div className={cn("flex-1 transition-all duration-300", hasSelection && "md:mr-[440px]")}>
+    <div className="min-h-screen">
+      <div className="flex-1">
         <div className="p-4 md:p-6 space-y-6">
           {/* ========== HEADER ========== */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -800,7 +806,7 @@ const PlatformCRMPeople = () => {
                         onClick={() => handleSelectUser(user)}
                       >
                         <div className="flex items-center gap-3 mb-3">
-                          {user.avatar_url ? (
+                          {hasValidAvatar(user.avatar_url) ? (
                             <img src={user.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" />
                           ) : (
                             <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 font-medium">
@@ -846,7 +852,7 @@ const PlatformCRMPeople = () => {
                         )}
                         onClick={() => handleSelectUser(user)}
                       >
-                        {user.avatar_url ? (
+                        {hasValidAvatar(user.avatar_url) ? (
                           <img src={user.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
                         ) : (
                           <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 text-xs font-medium">
@@ -897,7 +903,7 @@ const PlatformCRMPeople = () => {
                           >
                             <TableCell>
                               <div className="flex items-center gap-3">
-                                {user.avatar_url ? (
+                                {hasValidAvatar(user.avatar_url) ? (
                                   <img src={user.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" />
                                 ) : (
                                   <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 font-medium">
@@ -974,7 +980,7 @@ const PlatformCRMPeople = () => {
                       >
                         <div className="flex items-start gap-3 mb-3">
                           <div className="relative shrink-0">
-                            {creator.avatar_url ? (
+                            {hasValidAvatar(creator.avatar_url) ? (
                               <img src={creator.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover" />
                             ) : (
                               <div className="w-12 h-12 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-300 text-lg">
@@ -1043,7 +1049,7 @@ const PlatformCRMPeople = () => {
                         )}
                       >
                         <div className="relative shrink-0">
-                          {creator.avatar_url ? (
+                          {hasValidAvatar(creator.avatar_url) ? (
                             <img src={creator.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover" />
                           ) : (
                             <div className="w-9 h-9 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-300 text-sm">
@@ -1108,7 +1114,7 @@ const PlatformCRMPeople = () => {
                             <TableCell>
                               <div className="flex items-center gap-3">
                                 <div className="relative shrink-0">
-                                  {creator.avatar_url ? (
+                                  {hasValidAvatar(creator.avatar_url) ? (
                                     <img src={creator.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" />
                                   ) : (
                                     <div className="w-10 h-10 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-300">
@@ -1165,41 +1171,39 @@ const PlatformCRMPeople = () => {
         </div>
       </div>
 
-      {/* Mobile backdrop */}
-      {hasSelection && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
-          onClick={() => {
-            setSelectedUser(null);
-            setSelectedCreator(null);
+      {/* ========== DETAIL DIALOGS ========== */}
+      {selectedUser && (
+        <UserDetailDialog
+          user={selectedUser}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setSelectedUser(null);
+          }}
+          onUpdate={async () => {
+            const result = await refetch();
+            if (result.data && selectedUser) {
+              const fresh = result.data.find((u: UserWithHealth) => u.id === selectedUser.id);
+              if (fresh) setSelectedUser(fresh);
+            }
           }}
         />
       )}
 
-      {/* ========== DETAIL PANELS ========== */}
-      {selectedUser && (
-        <div className="fixed inset-y-0 right-0 w-full md:w-auto z-40">
-          <UserDetailPanel
-            user={selectedUser}
-            onClose={() => setSelectedUser(null)}
-            onUpdate={async () => {
-              const result = await refetch();
-              if (result.data && selectedUser) {
-                const fresh = result.data.find((u: UserWithHealth) => u.id === selectedUser.id);
-                if (fresh) setSelectedUser(fresh);
-              }
-            }}
-          />
-        </div>
-      )}
-
       {selectedCreator && (
-        <div className="fixed inset-y-0 right-0 w-full md:w-auto z-40">
-          <TalentDetailPanel
-            creator={selectedCreator}
-            onClose={() => setSelectedCreator(null)}
-          />
-        </div>
+        <TalentDetailDialog
+          creator={selectedCreator}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setSelectedCreator(null);
+          }}
+          onUpdate={async () => {
+            const result = await refetchCreators();
+            if (result.data && selectedCreator) {
+              const fresh = result.data.find((c: CreatorWithMetrics) => c.id === selectedCreator.id);
+              if (fresh) setSelectedCreator(fresh);
+            }
+          }}
+        />
       )}
     </div>
   );
