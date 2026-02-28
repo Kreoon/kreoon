@@ -3,6 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getKreoonClient, isKreoonConfigured } from "../_shared/kreoon-client.ts";
 import { getModuleAIConfig } from "../_shared/get-module-ai-config.ts";
 import { callAISingle, corsHeaders } from "../_shared/ai-providers.ts";
+// Nuevo: Prompts desde DB con fallback a hardcodeados
+import { getPrompt, interpolatePrompt } from "../_shared/prompts/db-prompts.ts";
 
 interface ScriptRequest {
   organizationId: string;
@@ -148,9 +150,12 @@ serve(async (req) => {
 
     // Get sphere phase info if provided
     const phaseInfo = sphere_phase ? SPHERE_PHASE_DETAILS[sphere_phase] : null;
-    
+
+    // Obtener prompt base desde DB (con cache y fallback a hardcodeados)
+    const promptConfig = await getPrompt(supabase, "scripts", "creator");
+
     // Build dynamic system prompt based on sphere phase
-    let systemPrompt = `Eres un experto copywriter especializado en crear guiones para videos UGC (User Generated Content) y anuncios en redes sociales. Tu objetivo es crear guiones persuasivos, naturales y que conecten emocionalmente con la audiencia.
+    let systemPrompt = promptConfig.systemPrompt || `Eres un experto copywriter especializado en crear guiones para videos UGC (User Generated Content) y anuncios en redes sociales. Tu objetivo es crear guiones persuasivos, naturales y que conecten emocionalmente con la audiencia.
 
 Reglas generales para el guión:
 1. Usa un tono conversacional y natural, como si hablaras con un amigo

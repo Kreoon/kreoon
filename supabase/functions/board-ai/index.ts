@@ -7,11 +7,10 @@ import {
   callAIWithFallback,
 } from "../_shared/ai-providers.ts";
 import { getModuleAIConfigsWithFallback } from "../_shared/get-module-ai-config.ts";
-import {
-  BOARD_SYSTEM_PROMPTS,
-  BOARD_USER_TEMPLATES,
-  replaceBoardVariables,
-} from "../_shared/prompts/board.ts";
+// Nuevo: Prompts desde DB con fallback a hardcodeados
+import { getPrompt, interpolatePrompt } from "../_shared/prompts/db-prompts.ts";
+// Fallback legacy (se usa internamente por db-prompts)
+import { replaceBoardVariables } from "../_shared/prompts/board.ts";
 import { PerplexitySearches } from "../_shared/perplexity-client.ts";
 
 // Action types
@@ -186,8 +185,10 @@ ${p.market_research ? `- Research de mercado (resumen): ${String(p.market_resear
     productContextBlock = "\nPRODUCTO: No asociado";
   }
 
-  const systemPrompt = BOARD_SYSTEM_PROMPTS.analyze_card;
-  const userPrompt = replaceBoardVariables(BOARD_USER_TEMPLATES.analyze_card, {
+  // Obtener prompts desde DB (con cache y fallback a hardcodeados)
+  const promptConfig = await getPrompt(supabase, "board", "analyze_card");
+  const systemPrompt = promptConfig.systemPrompt;
+  const userPrompt = interpolatePrompt(promptConfig.userPrompt || "", {
     title: content.title,
     client_name: content.client?.name || "Sin cliente",
     status: STATUS_LABELS[content.status] || content.status,
@@ -399,8 +400,10 @@ ${clientNames.size > 0 ? `\nClientes: ${[...clientNames].join(", ")}` : ""}
 `;
   }
 
-  const systemPrompt = BOARD_SYSTEM_PROMPTS.analyze_board;
-  const userPrompt = replaceBoardVariables(BOARD_USER_TEMPLATES.analyze_board, {
+  // Obtener prompts desde DB (con cache y fallback a hardcodeados)
+  const promptConfig = await getPrompt(supabase, "board", "analyze_board");
+  const systemPrompt = promptConfig.systemPrompt;
+  const userPrompt = interpolatePrompt(promptConfig.userPrompt || "", {
     total_cards: totalCards,
     overdue_count: overdueItems.length,
     status_distribution: `${statusDistributionStr}\n- Tarjetas sin movimiento (7+ días): ${staleItems.length}`,
@@ -506,8 +509,10 @@ async function suggestNextState(supabase: any, contentId: string, organizationId
 
   if (!content) throw new Error("Content not found");
 
-  const systemPrompt = BOARD_SYSTEM_PROMPTS.suggest_next_state;
-  const userPrompt = replaceBoardVariables(BOARD_USER_TEMPLATES.suggest_next_state, {
+  // Obtener prompts desde DB (con cache y fallback a hardcodeados)
+  const promptConfig = await getPrompt(supabase, "board", "suggest_next_state");
+  const systemPrompt = promptConfig.systemPrompt;
+  const userPrompt = interpolatePrompt(promptConfig.userPrompt || "", {
     current_status: STATUS_LABELS[content.status] || content.status,
     has_script: content.script ? "Sí" : "No",
     has_video: content.video_url ? "Sí" : "No",
@@ -605,8 +610,10 @@ async function recommendAutomation(supabase: any, organizationId: string, userId
     .map(([t, c]) => `- ${t}: ${c} veces`)
     .join("\n");
 
-  const systemPrompt = BOARD_SYSTEM_PROMPTS.recommend_automation;
-  const userPrompt = replaceBoardVariables(BOARD_USER_TEMPLATES.recommend_automation, {
+  // Obtener prompts desde DB (con cache y fallback a hardcodeados)
+  const promptConfig = await getPrompt(supabase, "board", "recommend_automation");
+  const systemPrompt = promptConfig.systemPrompt;
+  const userPrompt = interpolatePrompt(promptConfig.userPrompt || "", {
     transition_patterns: transitionLines || "(sin patrones)",
     current_rules: "",
   });
