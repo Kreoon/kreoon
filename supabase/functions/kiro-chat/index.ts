@@ -2,6 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, callAI } from "../_shared/ai-providers.ts";
 import { getModuleAIConfig } from "../_shared/get-module-ai-config.ts";
+// Nuevo: Prompts desde DB con cache y fallback
+import { getPrompt, combinePrompts } from "../_shared/prompts/db-prompts.ts";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // KIRO CHAT — Super Brain IA de KIRO (Asistente de Plataforma Kreoon)
@@ -54,7 +56,7 @@ function cleanResponse(text: string): string {
     .trim();
 }
 
-// ─── KIRO's core identity (used when no custom prompt config exists) ───
+// ─── KIRO's core identity (fallback when no DB/custom prompt config exists) ───
 const KIRO_DEFAULT_IDENTITY = `Eres KIRO, el asistente IA de la plataforma Kreoon.
 
 ## TU IDENTIDAD
@@ -64,7 +66,7 @@ const KIRO_DEFAULT_IDENTITY = `Eres KIRO, el asistente IA de la plataforma Kreoo
 - Estilo: Respuestas CORTAS y directas. Máximo 2-3 oraciones. No seas verboso.
 - Emojis: Usa 1-2 emojis por respuesta máximo, no abuses.`;
 
-// ─── Platform base knowledge (always included) ───
+// ─── Platform base knowledge (fallback) ───
 const PLATFORM_BASE_KNOWLEDGE = `
 ## CONOCIMIENTO BASE DE LA PLATAFORMA
 Kreoon es una plataforma de contenido UGC que conecta marcas con creadores de contenido.
@@ -91,7 +93,7 @@ Los niveles de creadores son: Pasante, Productor Junior, Productor, Director Cre
 - Niveles y logros desbloqueables
 - Tabla de clasificación competitiva`;
 
-// ─── KIRO's inviolable rules (always included) ───
+// ─── KIRO's inviolable rules (fallback) ───
 const KIRO_RULES = `
 ## REGLAS INVIOLABLES (NUNCA ROMPER)
 1. SOLO habla sobre información del usuario logueado. NUNCA des información de otros usuarios.
@@ -108,6 +110,34 @@ const KIRO_RULES = `
 ## FORMATO DE RESPUESTA
 Responde SOLO con texto plano. No uses markdown. No uses headers ni bullet points.
 Respuestas cortas: idealmente 1-3 oraciones. Máximo 4 oraciones si es necesario.`;
+
+// ─── Load prompts from DB with cache ───
+async function loadKiroPromptsFromDB(supabase: any): Promise<{
+  identity: string;
+  knowledge: string;
+  rules: string;
+}> {
+  try {
+    const [identityRes, knowledgeRes, rulesRes] = await Promise.all([
+      getPrompt(supabase, "kiro", "identity"),
+      getPrompt(supabase, "kiro", "knowledge"),
+      getPrompt(supabase, "kiro", "rules"),
+    ]);
+
+    return {
+      identity: identityRes.systemPrompt || KIRO_DEFAULT_IDENTITY,
+      knowledge: knowledgeRes.systemPrompt || PLATFORM_BASE_KNOWLEDGE,
+      rules: rulesRes.systemPrompt || KIRO_RULES,
+    };
+  } catch (err) {
+    console.warn("[kiro-chat] Error loading prompts from DB, using fallback:", err);
+    return {
+      identity: KIRO_DEFAULT_IDENTITY,
+      knowledge: PLATFORM_BASE_KNOWLEDGE,
+      rules: KIRO_RULES,
+    };
+  }
+}
 
 serve(async (req) => {
   // ─── CORS preflight ───
@@ -271,12 +301,18 @@ serve(async (req) => {
     const serverHistory = serverHistoryRes.data || [];
 
     // ═══════════════════════════════════════════════════════════════════════
+    // LOAD KIRO PROMPTS FROM DB (with fallback to hardcoded)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    const kiroPrompts = await loadKiroPromptsFromDB(supabase);
+
+    // ═══════════════════════════════════════════════════════════════════════
     // BUILD SYSTEM PROMPT (Dynamic Brain)
     // ═══════════════════════════════════════════════════════════════════════
 
     let systemPrompt = "";
 
-    // 1. Identity block — use org prompt config if available, otherwise KIRO defaults
+    // 1. Identity block — use org prompt config if available, otherwise KIRO defaults (from DB)
     if (promptConfig?.assistant_role) {
       const personality = promptConfig.personality || "amigable y profesional";
       const tone = promptConfig.tone || "cercano";
@@ -286,7 +322,7 @@ Personalidad: ${personality}. Tono: ${tone}.
 Idioma: ${promptConfig.language || "español"}.
 Estilo: Respuestas CORTAS y directas. Máximo 2-3 oraciones.\n\n`;
     } else {
-      systemPrompt += KIRO_DEFAULT_IDENTITY + "\n\n";
+      systemPrompt += kiroPrompts.identity + "\n\n";
     }
 
     // 2. User context block
@@ -298,8 +334,8 @@ Estilo: Respuestas CORTAS y directas. Máximo 2-3 oraciones.\n\n`;
 - Ruta actual: ${context.currentRoute}
 ${context.recentNotifications?.length > 0 ? `- Notificaciones recientes: ${context.recentNotifications.join(", ")}` : ""}\n\n`;
 
-    // 3. Platform base knowledge
-    systemPrompt += PLATFORM_BASE_KNOWLEDGE + "\n\n";
+    // 3. Platform base knowledge (from DB)
+    systemPrompt += kiroPrompts.knowledge + "\n\n";
 
     // 4. Dynamic platform knowledge from DB
     if (platformKnowledge.length > 0) {
@@ -386,8 +422,8 @@ ${context.recentNotifications?.length > 0 ? `- Notificaciones recientes: ${conte
       }
     }
 
-    // 11. Core KIRO rules (always last, always enforced)
-    systemPrompt += KIRO_RULES;
+    // 11. Core KIRO rules (always last, always enforced - from DB)
+    systemPrompt += kiroPrompts.rules;
 
     // ═══════════════════════════════════════════════════════════════════════
     // BUILD USER PROMPT WITH HISTORY

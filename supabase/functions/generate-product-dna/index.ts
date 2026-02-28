@@ -1,5 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2.46.2";
 import { corsHeaders, getAPIKey } from "../_shared/ai-providers.ts";
+// Nuevo: Prompts desde DB con cache y fallback
+import { getPrompt } from "../_shared/prompts/db-prompts.ts";
 
 // ── JSON repair ─────────────────────────────────────────────────────────
 function repairJsonForParse(str: string): string {
@@ -511,7 +513,15 @@ Deno.serve(async (req: Request) => {
     // ── 3. Build enhanced prompt ────────────────────────────────────────
     const wizardContext = buildWizardContext(record.wizard_responses || {});
     const emotionalContext = formatEmotionalContext(emotionalAnalysis);
-    const systemPrompt = PRODUCT_DNA_SYSTEM_PROMPT + emotionalContext;
+
+    // Intentar obtener prompt desde DB
+    let systemPrompt: string;
+    try {
+      const promptConfig = await getPrompt(supabase, "dna", "product_analysis");
+      systemPrompt = (promptConfig.systemPrompt || PRODUCT_DNA_SYSTEM_PROMPT) + emotionalContext;
+    } catch {
+      systemPrompt = PRODUCT_DNA_SYSTEM_PROMPT + emotionalContext;
+    }
 
     let userPrompt = `Tipo de servicio: ${record.service_group}\nServicios especificos: ${(record.service_types || []).join(", ")}`;
 
