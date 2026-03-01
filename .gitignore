@@ -24,6 +24,26 @@ dist-ssr
 *.sw?
 .vercel
 
+# AI/Agent IDE configurations
+.agents/
+.claude/
+.continue/
+.windsurf/
+.mcp.json
+skills-lock.json
+
+# Temporary files
+*.bak
+*.tmp
+*.timestamp-*
+test_audio.webm
+funcs_temp.json
+_fix_*.py
+
+# Local scripts
+install-kreoon-skills.sh
+scripts/*.sql
+
 # Supabase local files
 supabase/.temp/
 
