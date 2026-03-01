@@ -47,3 +47,5 @@ export { MarkdownRenderer } from './chat/MarkdownRenderer';
 export { TypingIndicator } from './chat/TypingIndicator';
 export { MessageFeedback } from './chat/MessageFeedback';
 export { ChatInput } from './chat/ChatInput';
+export { KiroProgressBar } from './chat/KiroProgressBar';
+export { LevelUpCelebration } from './chat/LevelUpCelebration';

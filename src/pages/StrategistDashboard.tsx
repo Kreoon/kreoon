@@ -86,7 +86,7 @@ export default function StrategistDashboard() {
 
       const orgId = authProfile?.current_organization_id;
 
-      let productsQuery = supabase
+      const productsQuery = supabase
         .from('products')
         .select('*, client:clients(organization_id)')
         .order('name');

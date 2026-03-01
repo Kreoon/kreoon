@@ -1708,7 +1708,7 @@ export default function Dashboard() {
           const fetchGoal = async () => {
             const currentMonth = new Date().getMonth() + 1;
             const currentYear = new Date().getFullYear();
-            let goalQuery = supabase
+            const goalQuery = supabase
               .from('goals')
               .select('*')
               .eq('period_type', 'month')

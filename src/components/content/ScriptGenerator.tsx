@@ -582,7 +582,7 @@ export function ScriptGenerator({ product, contentId, onScriptGenerated, organiz
         // Parse JSON strings if needed
         const normalized = (() => {
           if (!data) return null;
-          let result = { ...(data as any) };
+          const result = { ...(data as any) };
           
           // Parse market_research if it's a string
           if (typeof result.market_research === "string") {

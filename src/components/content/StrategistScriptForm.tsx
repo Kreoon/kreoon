@@ -1400,7 +1400,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
 
         const normalized = (() => {
           if (!data) return null;
-          let result = { ...(data as any) };
+          const result = { ...(data as any) };
           
           // Parse market_research if it's a string
           const mr = result.market_research;

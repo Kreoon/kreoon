@@ -24,6 +24,10 @@ export const COMMISSION_RATES = {
   professional_services: { base: 30, min: 25, max: 35 },
   /** Full-service con PM */
   corporate_packages: { base: 30, min: 25, max: 35 },
+  /** Live Hosting - Canal A/B (marketplace o invitación directa) */
+  live_hosting_direct: { base: 20, min: 15, max: 25 },
+  /** Live Hosting - Canal C (org gestiona, white-label) */
+  live_hosting_whitelabel: { base: 12, min: 10, max: 15 },
 } as const;
 
 export type CommissionType = keyof typeof COMMISSION_RATES;

@@ -206,6 +206,10 @@ export default {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
+        "float-up": {
+          "0%": { opacity: "1", transform: "translateY(0) scale(1)" },
+          "100%": { opacity: "0", transform: "translateY(-200px) scale(1.5)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -228,6 +232,7 @@ export default {
         "kreoon-skeleton-pulse": "kreoon-skeleton-pulse 1.5s ease-in-out infinite",
         "kreoon-skeleton-shimmer": "kreoon-skeleton-shimmer 1.5s ease-in-out infinite",
         "pulse-slow": "pulse-slow 2s ease-in-out infinite",
+        "float-up": "float-up 2.5s ease-out forwards",
       },
       backgroundImage: {
         'gradient-primary': 'var(--gradient-primary)',
@@ -246,5 +251,6 @@ export default {
       },
     },
   },
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   plugins: [require("tailwindcss-animate")],
 } satisfies Config;

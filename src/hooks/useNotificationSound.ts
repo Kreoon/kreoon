@@ -8,7 +8,7 @@ const NOTIFICATION_SOUNDS = {
 };
 
 // Pre-loaded audio elements for background playback
-let audioElements: Record<string, HTMLAudioElement> = {};
+const audioElements: Record<string, HTMLAudioElement> = {};
 
 // Initialize audio elements
 const initAudio = () => {

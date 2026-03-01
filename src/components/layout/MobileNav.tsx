@@ -73,7 +73,7 @@ interface NavSection {
 const MARKETING_ITEMS: NavItem[] = [
   { name: "Marketing", href: "/marketing", icon: TrendingUp, requiresOrg: true },
   { name: "Social Hub", href: "/social-hub", icon: Share2 },
-  { name: "Live", href: "/live", icon: Video },
+  { name: "Streaming", href: "/streaming", icon: Video },
   { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3 },
   { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus },
   { name: "Ad Intelligence", href: "/admin/ad-intelligence", icon: Search },
@@ -116,8 +116,7 @@ const adminSections: NavSection[] = [
       { name: "Dashboard", href: "/crm", icon: LayoutDashboard },
       { name: "Leads", href: "/crm/leads", icon: UserPlus },
       { name: "Organizaciones", href: "/crm/organizaciones", icon: Building2 },
-      { name: "Talento", href: "/crm/creadores", icon: Video },
-      { name: "Usuarios", href: "/crm/usuarios", icon: Users },
+      { name: "Personas", href: "/crm/personas", icon: Users },
       { name: "Finanzas", href: "/crm/finanzas", icon: DollarSign },
       { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone },
     ]
@@ -199,7 +198,7 @@ const clientSections: NavSection[] = [
     label: "MARKETING & MEDIA",
     items: [
       { name: "Social Hub", href: "/social-hub", icon: Share2 },
-      { name: "Live", href: "/live", icon: Video },
+      { name: "Streaming", href: "/streaming", icon: Video },
       { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3 },
       { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus },
     ]
@@ -438,7 +437,7 @@ export function MobileNav() {
     }
 
     // When roles haven't loaded yet, show minimal nav to avoid flashing admin menu
-    let baseSections = activeIsAdmin
+    const baseSections = activeIsAdmin
       ? adminSections
       : activeIsStrategist
       ? strategistSections

@@ -513,8 +513,8 @@ export default function ClientDashboard() {
           const creatorIds = [...new Set(contentItems.filter(c => c.creator_id).map(c => c.creator_id))];
           const editorIds = [...new Set(contentItems.filter(c => c.editor_id).map(c => c.editor_id))];
 
-          let creatorMap = new Map();
-          let editorMap = new Map();
+          const creatorMap = new Map();
+          const editorMap = new Map();
 
           if (creatorIds.length > 0) {
             const { data: creators } = await supabase
