@@ -15,6 +15,7 @@ import { CreatorGrid } from './CreatorGrid';
 import { MarketplaceOrgGrid } from './OrgGrid';
 import { FilterModal } from './FilterModal';
 import { CampaignsFeed } from './campaigns/feed/CampaignsFeed';
+import { ActiveLivesCarousel } from '@/components/live-streaming/ActiveLivesCarousel';
 import { useMarketplaceFilters } from './hooks/useMarketplaceFilters';
 import { useCreatorSearch } from './hooks/useCreatorSearch';
 import { useInfiniteCreators } from './hooks/useInfiniteCreators';
@@ -26,7 +27,7 @@ import type { MarketplaceFilters, MarketplaceViewMode, MarketplaceRoleId, Market
 
 export default function MarketplacePage() {
   const navigate = useNavigate();
-  const { user, activeRole } = useAuth();
+  const { user, activeRole, isPlatformAdmin } = useAuth();
   const { exists: hasCreatorProfile, loading: profileLoading } = useCreatorProfile();
   const { filters, updateFilter, resetFilters, activeFilterCount, setFilters } =
     useMarketplaceFilters();
@@ -325,6 +326,14 @@ export default function MarketplacePage() {
                   subtitle="Basado en tus intereses y actividad"
                   creators={recommended}
                   onCreatorClick={handleCreatorClick}
+                />
+              )}
+
+              {/* Lives activos - solo para admins (feature en construcción para otros) */}
+              {(activeRole === 'admin' || isPlatformAdmin) && (
+                <ActiveLivesCarousel
+                  onViewAll={() => navigate('/live')}
+                  className="mb-6"
                 />
               )}
 

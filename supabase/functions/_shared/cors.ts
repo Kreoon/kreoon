@@ -16,14 +16,16 @@ const ALLOWED_ORIGINS: string[] = [
 ];
 
 // Add localhost for development (always allowed - no security risk since localhost only works in dev browsers)
-ALLOWED_ORIGINS.push(
-  "http://localhost:8080",
-  "http://localhost:8081",
-  "http://localhost:5173",
-  "http://localhost:3000",
-  "http://127.0.0.1:8080",
-  "http://127.0.0.1:8081",
-);
+// Adding a range of ports to handle Vite auto-port-increment
+for (let port = 3000; port <= 3010; port++) {
+  ALLOWED_ORIGINS.push(`http://localhost:${port}`, `http://127.0.0.1:${port}`);
+}
+for (let port = 5173; port <= 5180; port++) {
+  ALLOWED_ORIGINS.push(`http://localhost:${port}`, `http://127.0.0.1:${port}`);
+}
+for (let port = 8080; port <= 8100; port++) {
+  ALLOWED_ORIGINS.push(`http://localhost:${port}`, `http://127.0.0.1:${port}`);
+}
 
 // Add custom FRONTEND_URL if configured
 const customFrontend = Deno.env.get("FRONTEND_URL");

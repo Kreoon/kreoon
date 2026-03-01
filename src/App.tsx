@@ -26,6 +26,7 @@ import { MarketplaceReadinessPopup } from "@/components/marketplace/MarketplaceR
 import { ThemeProvider } from "next-themes";
 import { MainLayout } from "./components/layout/MainLayout";
 import { MarketplaceLayout } from "./components/layout/MarketplacePublicLayout";
+import { AdminOnlyFeature } from "./components/common/AdminOnlyFeature";
 
 // Helper: detect chunk/module load failures (stale hashes after deploy)
 function isChunkLoadError(error: unknown): boolean {
@@ -96,11 +97,21 @@ const NoOrganization = lazyWithRetry(() => import("./pages/NoOrganization"));
 const PendingAccess = lazyWithRetry(() => import("./pages/PendingAccess"));
 const WelcomeNewMember = lazyWithRetry(() => import("./pages/WelcomeNewMember"));
 const UPDocumentation = lazyWithRetry(() => import("./pages/UPDocumentation"));
-const OrgAuth = lazyWithRetry(() => import("./pages/OrgAuth"));
+// OrgAuth eliminado - usar OrgRegister (/auth/org/:slug) en su lugar
 const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
 const Register = lazyWithRetry(() => import("./pages/Register"));
 const OrgRegister = lazyWithRetry(() => import("./pages/auth/OrgRegister"));
-const Live = lazyWithRetry(() => import("./pages/Live"));
+// Streaming V2
+const StreamingHubPage = lazyWithRetry(() => import("./pages/streaming/StreamingHubPage"));
+const StreamingStudioPage = lazyWithRetry(() => import("./pages/streaming/StreamingStudioPage"));
+const StreamingRecapPage = lazyWithRetry(() => import("./pages/streaming/StreamingRecapPage"));
+// Live Hosting
+const LiveHostingDashboard = lazyWithRetry(() => import("./pages/streaming/hosting/LiveHostingDashboard"));
+const LiveHostingRequest = lazyWithRetry(() => import("./pages/streaming/hosting/LiveHostingRequest"));
+// Live Broadcasting (Cloudflare Stream)
+const LiveDiscoverPage = lazyWithRetry(() => import("./pages/live/LiveDiscoverPage"));
+const LiveViewerPage = lazyWithRetry(() => import("./pages/live/LiveViewerPage"));
+const LiveBroadcastPage = lazyWithRetry(() => import("./pages/live/LiveBroadcastPage"));
 const Marketing = lazyWithRetry(() => import("./pages/Marketing"));
 const ResearchLanding = lazyWithRetry(() => import("./pages/ResearchLanding"));
 const OrgPortfolioPage = lazyWithRetry(() => import("./pages/OrgPortfolioPage"));
@@ -131,8 +142,7 @@ const UneteOrganizaciones = lazyWithRetry(() => import("./pages/unete/organizaci
 const PlatformCRMDashboard = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMDashboard"));
 const PlatformCRMLeads = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMLeads"));
 const PlatformCRMOrganizations = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMOrganizations"));
-const PlatformCRMCreators = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMCreators"));
-const PlatformCRMUsers = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMUsers"));
+const PlatformCRMPeople = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMPeople"));
 const PlatformCRMFinances = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMFinances"));
 const PlatformCRMEmailMarketing = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMEmailMarketing"));
 const BrandsCRM = lazyWithRetry(() => import("./pages/crm/BrandsCRM"));
@@ -194,6 +204,11 @@ const ProductBannersPage = lazy(() => import("./modules/ad-generator/pages/Produ
 const BookingSettingsPage = lazy(() => import("./modules/booking/pages/BookingSettingsPage").then(m => ({ default: m.BookingSettingsPage })));
 const BookingCalendarPage = lazy(() => import("./modules/booking/pages/BookingCalendarPage").then(m => ({ default: m.BookingCalendarPage })));
 const PublicBookingPage = lazy(() => import("./modules/booking/components/Public/PublicBookingPage").then(m => ({ default: m.PublicBookingPage })));
+const CancelBookingPage = lazy(() => import("./modules/booking/pages/CancelBookingPage").then(m => ({ default: m.CancelBookingPage })));
+const RescheduleBookingPage = lazy(() => import("./modules/booking/pages/RescheduleBookingPage").then(m => ({ default: m.RescheduleBookingPage })));
+
+// Ambassador Module
+const AmbassadorPage = lazyWithRetry(() => import("./pages/AmbassadorPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -267,7 +282,7 @@ function BrandReferralRedirect() {
   const params = new URLSearchParams(window.location.search);
   const ref = params.get('ref') || '';
   if (ref) {
-    try { localStorage.setItem('kreoon_brand_referral', ref); } catch {}
+    try { localStorage.setItem('kreoon_brand_referral', ref); } catch { /* localStorage unavailable in incognito */ }
   }
   return <Navigate to={`/register?intent=brand&ref=${encodeURIComponent(ref)}`} replace />;
 }
@@ -279,9 +294,17 @@ function TalentReferralRedirect() {
   const params = new URLSearchParams(search);
   const ref = params.get('ref');
   if (ref) {
-    try { localStorage.setItem('kreoon_referral_code', ref); } catch {}
+    try { localStorage.setItem('kreoon_referral_code', ref); } catch { /* localStorage unavailable in incognito */ }
   }
   return <Navigate to={`/unete/talento${search}`} replace />;
+}
+
+// OrgAuth redirect: /org/:slug and /register/:slug -> /auth/org/:slug
+// OrgAuth.tsx was removed as it was a duplicate of OrgRegister.tsx
+function OrgAuthRedirect() {
+  const slug = window.location.pathname.split('/').filter(Boolean).pop() || '';
+  const search = window.location.search;
+  return <Navigate to={`/auth/org/${slug}${search}`} replace />;
 }
 
 function AppRoutes() {
@@ -344,11 +367,13 @@ function AppRoutes() {
         <Route path="/up-documentation" element={<UPDocumentation />} />
         <Route path="/org/:slug/talento" element={<OrgPortfolioPage />} />
         <Route path="/org/:slug/contenido" element={<OrgContentShowcase />} />
-        <Route path="/org/:slug" element={<OrgAuth />} />
+        {/* /org/:slug redirige a /auth/org/:slug (OrgAuth eliminado) */}
+        <Route path="/org/:slug" element={<OrgAuthRedirect />} />
         <Route path="/auth/org/:slug" element={<OrgRegister />} />
         <Route path="/r/:code" element={<ReferralLanding />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/register/:slug" element={<Register />} />
+        {/* /register/:slug redirige a /auth/org/:slug */}
+        <Route path="/register/:slug" element={<OrgAuthRedirect />} />
         <Route path="/subscription/success" element={<SubscriptionSuccess />} />
         <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
@@ -369,7 +394,17 @@ function AppRoutes() {
         <Route path="/clients" element={<Navigate to="/clients-hub" replace />} />
         <Route path="/scripts" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'strategist']}><MainLayout><Scripts /></MainLayout></ProtectedRoute>} />
         <Route path="/team" element={<Navigate to="/talent" replace />} />
-        <Route path="/live" element={<ProtectedRoute allowNoRoles><MainLayout><Live /></MainLayout></ProtectedRoute>} />
+        {/* Streaming V2 - Unified Module (Admin Only - En Construcción para otros) */}
+        <Route path="/streaming" element={<ProtectedRoute allowNoRoles><MainLayout><AdminOnlyFeature featureName="Streaming" description="Estamos perfeccionando nuestro sistema de streaming para ofrecerte la mejor experiencia."><StreamingHubPage /></AdminOnlyFeature></MainLayout></ProtectedRoute>} />
+        <Route path="/streaming/studio/:sessionId" element={<ProtectedRoute allowNoRoles><MainLayout><AdminOnlyFeature featureName="Estudio de Streaming"><StreamingStudioPage /></AdminOnlyFeature></MainLayout></ProtectedRoute>} />
+        {/* Live Broadcasting (Cloudflare Stream) - Admin Only */}
+        <Route path="/live" element={<AdminOnlyFeature featureName="En Vivo" description="Muy pronto podrás ver y crear transmisiones en vivo. ¡Estamos trabajando en ello!"><LiveDiscoverPage /></AdminOnlyFeature>} />
+        <Route path="/live/broadcast" element={<ProtectedRoute allowNoRoles><AdminOnlyFeature featureName="Transmisión en Vivo"><LiveBroadcastPage /></AdminOnlyFeature></ProtectedRoute>} />
+        <Route path="/live/:creatorSlug" element={<AdminOnlyFeature featureName="Ver Transmisión"><LiveViewerPage /></AdminOnlyFeature>} />
+        <Route path="/streaming/recap/:sessionId" element={<ProtectedRoute allowNoRoles><MainLayout><AdminOnlyFeature featureName="Resumen de Stream"><StreamingRecapPage /></AdminOnlyFeature></MainLayout></ProtectedRoute>} />
+        <Route path="/streaming/hosting" element={<ProtectedRoute allowNoRoles><MainLayout><AdminOnlyFeature featureName="Live Hosting" description="Sistema de contratación de hosts para transmisiones en vivo."><LiveHostingDashboard /></AdminOnlyFeature></MainLayout></ProtectedRoute>} />
+        <Route path="/streaming/hosting/new" element={<ProtectedRoute allowNoRoles><MainLayout><AdminOnlyFeature featureName="Live Hosting"><LiveHostingRequest /></AdminOnlyFeature></MainLayout></ProtectedRoute>} />
+        <Route path="/streaming/hosting/:requestId" element={<ProtectedRoute allowNoRoles><MainLayout><AdminOnlyFeature featureName="Live Hosting"><LiveHostingRequest /></AdminOnlyFeature></MainLayout></ProtectedRoute>} />
         <Route path="/marketing" element={<ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Marketing /></MainLayout></ProtectedRoute>} />
         {/* CRM Plataforma */}
         <Route path="/crm" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMDashboard /></MainLayout></ProtectedRoute>} />
@@ -378,8 +413,10 @@ function AppRoutes() {
         <Route path="/crm/marcas" element={<ProtectedRoute requirePlatformAdmin><MainLayout><BrandsCRM /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/marcas/:brandId" element={<ProtectedRoute requirePlatformAdmin><MainLayout><BrandDetail /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/comunidades" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMCommunities /></MainLayout></ProtectedRoute>} />
-        <Route path="/crm/creadores" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMCreators /></MainLayout></ProtectedRoute>} />
-        <Route path="/crm/usuarios" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMUsers /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/personas" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMPeople /></MainLayout></ProtectedRoute>} />
+        {/* Redirects from old routes */}
+        <Route path="/crm/creadores" element={<Navigate to="/crm/personas?tab=freelancers" replace />} />
+        <Route path="/crm/usuarios" element={<Navigate to="/crm/personas?tab=clientes" replace />} />
         <Route path="/crm/finanzas" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMFinances /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/email-marketing" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMEmailMarketing /></MainLayout></ProtectedRoute>} />
         {/* CRM Organización */}
@@ -409,6 +446,8 @@ function AppRoutes() {
         <Route path="/booking/calendar" element={<ProtectedRoute allowNoRoles><MainLayout><BookingCalendarPage /></MainLayout></ProtectedRoute>} />
         <Route path="/book/:username" element={<PublicBookingPage />} />
         <Route path="/book/:username/:eventSlug" element={<PublicBookingPage />} />
+        <Route path="/book/cancel/:bookingId" element={<CancelBookingPage />} />
+        <Route path="/book/reschedule/:bookingId" element={<RescheduleBookingPage />} />
         <Route path="/settings" element={<ProtectedRoute allowNoRoles><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
         <Route path="/planes" element={<ProtectedRoute allowNoRoles><MainLayout><PlanesPage /></MainLayout></ProtectedRoute>} />
         <Route path="/freelancer-dashboard" element={<ProtectedRoute allowNoRoles><MainLayout><FreelancerDashboard /></MainLayout></ProtectedRoute>} />
@@ -418,6 +457,7 @@ function AppRoutes() {
         <Route path="/client-dashboard" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/client-board" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientContentBoard /></MainLayout></ProtectedRoute>} />
         <Route path="/ranking" element={<ProtectedRoute allowedRoles={['admin', 'creator', 'editor']}><MainLayout><Ranking /></MainLayout></ProtectedRoute>} />
+        <Route path="/ambassador" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><AmbassadorPage /></MainLayout></ProtectedRoute>} />
         <Route path="/research/:productId" element={<ProtectedRoute allowNoRoles><ResearchLanding /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>

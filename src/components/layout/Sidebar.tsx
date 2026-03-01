@@ -65,6 +65,7 @@ interface NavItem {
   isDynamic?: boolean;
   platformRootOnly?: boolean;
   requiresOrg?: boolean;
+  adminOnly?: boolean; // Solo visible para admins (feature en construcción para otros)
 }
 
 interface NavSection {
@@ -77,7 +78,8 @@ interface NavSection {
 const MARKETING_ITEMS: NavItem[] = [
   { name: "Marketing", href: "/marketing", icon: TrendingUp, tourId: "sidebar-marketing", requiresOrg: true },
   { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
-  { name: "Live", href: "/live", icon: Video, tourId: "sidebar-live" },
+  { name: "Streaming", href: "/streaming", icon: Video, tourId: "sidebar-live", adminOnly: true },
+  { name: "Live Hosting", href: "/streaming/hosting", icon: Users, tourId: "sidebar-live-hosting", adminOnly: true },
   { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
   { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus, tourId: "sidebar-ad-generator" },
   { name: "Ad Intelligence", href: "/admin/ad-intelligence", icon: Search, tourId: "sidebar-ad-intel" },
@@ -124,8 +126,7 @@ const adminSections: NavSection[] = [
       { name: "Organizaciones", href: "/crm/organizaciones", icon: Building2, tourId: "sidebar-crm-orgs" },
       { name: "Marcas", href: "/crm/marcas", icon: Store, tourId: "sidebar-crm-brands" },
       { name: "Comunidades", href: "/crm/comunidades", icon: Users2, tourId: "sidebar-crm-communities" },
-      { name: "Talento", href: "/crm/creadores", icon: Video, tourId: "sidebar-crm-creators" },
-      { name: "Usuarios", href: "/crm/usuarios", icon: Users, tourId: "sidebar-crm-users" },
+      { name: "Personas", href: "/crm/personas", icon: Users, tourId: "sidebar-crm-people" },
       { name: "Finanzas", href: "/crm/finanzas", icon: DollarSign, tourId: "sidebar-crm-finances" },
       { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone, tourId: "sidebar-crm-email" },
     ]
@@ -207,7 +208,7 @@ const clientSections: NavSection[] = [
     label: "MARKETING & MEDIA",
     items: [
       { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
-      { name: "Live", href: "/live", icon: Video, tourId: "sidebar-live" },
+      // Streaming y Live Hosting solo para admins (en construcción para otros)
       { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
       { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus, tourId: "sidebar-ad-generator" },
     ]
@@ -229,7 +230,6 @@ const freelanceSections: NavSection[] = [
     label: "MARKETING & MEDIA",
     items: [
       { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
-      // Live module coming soon
     ]
   },
   {
@@ -450,7 +450,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     }
 
     // When roles haven't loaded yet, show minimal nav to avoid flashing admin menu
-    let baseSections = activeIsAdmin
+    const baseSections = activeIsAdmin
       ? adminSections
       : activeIsStrategist
       ? strategistSections
@@ -481,6 +481,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         items: section.items.filter(item => {
           if (!isPlatformRoot && item.platformRootOnly) return false;
           if (isPlatformRoot && !profile?.current_organization_id && item.requiresOrg) return false;
+          // Hide adminOnly items (streaming/live) for non-admins - feature en construcción
+          if (item.adminOnly && !activeIsAdmin && !isPlatformAdmin) return false;
           // Hide marketplace link from role sections when org has it disabled
           const effectiveMkt = activeIsClient ? clientMarketplaceEnabled : marketplaceEnabled;
           if (!effectiveMkt && item.href === '/marketplace') return false;
