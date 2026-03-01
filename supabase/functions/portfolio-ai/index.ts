@@ -1,6 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { makeAIRequest, getAPIKey, corsHeaders } from "../_shared/ai-providers.ts";
+// Fallback legacy
 import { PORTFOLIO_PROMPTS } from "../_shared/portfolio-prompts.ts";
+// Nuevo: Prompts desde DB con cache y fallback
+import { getPrompt, interpolatePrompt } from "../_shared/prompts/db-prompts.ts";
 
 interface AIRequest {
   action: "search" | "caption" | "bio" | "recommendations" | "moderation" | "blocks";
@@ -28,6 +32,28 @@ function getLocalPrompts(action: string, payload: Record<string, unknown>): { sy
   };
 }
 
+/** Obtiene prompts desde DB con fallback a hardcodeados */
+async function getPromptsFromDB(
+  supabase: any,
+  action: string,
+  payload: Record<string, unknown>
+): Promise<{ system: string; user: string }> {
+  try {
+    const promptConfig = await getPrompt(supabase, "portfolio", action);
+    if (promptConfig.systemPrompt) {
+      return {
+        system: promptConfig.systemPrompt,
+        user: promptConfig.userPrompt
+          ? interpolatePrompt(promptConfig.userPrompt, payload as Record<string, string>)
+          : JSON.stringify(payload),
+      };
+    }
+  } catch (err) {
+    console.warn(`[portfolio-ai] Error fetching prompt from DB, using fallback:`, err);
+  }
+  return getLocalPrompts(action, payload);
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -41,6 +67,11 @@ serve(async (req) => {
       throw new Error("No AI API keys configured. Set GOOGLE_AI_API_KEY or OPENAI_API_KEY");
     }
 
+    // Crear cliente Supabase para leer prompts desde DB
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
     const { action, payload, organizationId, prompts } = (await req.json()) as AIRequest;
 
     console.log(`[portfolio-ai] Action: ${action}, Org: ${organizationId}, promptsFromFrontend: ${!!prompts}`);
@@ -52,9 +83,10 @@ serve(async (req) => {
       systemPrompt = prompts.system;
       userPrompt = prompts.user;
     } else {
-      const localPrompts = getLocalPrompts(action, payload ?? {});
-      systemPrompt = localPrompts.system;
-      userPrompt = localPrompts.user;
+      // Intentar obtener prompts desde DB primero
+      const dbPrompts = await getPromptsFromDB(supabase, action, payload ?? {});
+      systemPrompt = dbPrompts.system;
+      userPrompt = dbPrompts.user;
     }
 
     let result: any;

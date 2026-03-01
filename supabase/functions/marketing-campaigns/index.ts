@@ -822,7 +822,7 @@ async function handlePromoteContent(
   }
 
   // 2. Fetch client DNA for targeting hints
-  let dnaTargeting: TargetingConfig = {
+  const dnaTargeting: TargetingConfig = {
     age_min: 18,
     age_max: 65,
     genders: [0],

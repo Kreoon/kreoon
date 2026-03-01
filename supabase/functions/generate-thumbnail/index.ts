@@ -245,7 +245,7 @@ serve(async (req) => {
 
     // Check if normalization is needed
     const dims = getPngDimensionsFromDataUrl(imageData);
-    let needsNormalization = !dims || dims.width !== width || dims.height !== height;
+    const needsNormalization = !dims || dims.width !== width || dims.height !== height;
 
     let finalBytes: Uint8Array;
     if (needsNormalization) {

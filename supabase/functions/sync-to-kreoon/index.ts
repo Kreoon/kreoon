@@ -353,7 +353,7 @@ serve(async (req) => {
       const batchSize = 100;
       let successCount = 0;
       let errorCount = 0;
-      let skippedCount = 0;
+      const skippedCount = 0;
       const errors: string[] = [];
 
       for (let i = 0; i < sourceData.length; i += batchSize) {

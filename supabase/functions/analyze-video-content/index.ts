@@ -130,7 +130,7 @@ serve(async (req) => {
     }
 
     // Build comprehensive context for analysis
-    let contextParts: string[] = [];
+    const contextParts: string[] = [];
     
     contextParts.push("=== INFORMACIÓN DE LA EMPRESA/CLIENTE ===");
     if (client) {
