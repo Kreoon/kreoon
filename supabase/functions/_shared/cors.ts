@@ -15,13 +15,16 @@ const ALLOWED_ORIGINS: string[] = [
   "https://kreoon.vercel.app",
 ];
 
-// Add localhost for development
-if (Deno.env.get("ENVIRONMENT") !== "production") {
-  ALLOWED_ORIGINS.push(
-    "http://localhost:8080",
-    "http://localhost:5173",
-    "http://localhost:3000",
-  );
+// Add localhost for development (always allowed - no security risk since localhost only works in dev browsers)
+// Adding a range of ports to handle Vite auto-port-increment
+for (let port = 3000; port <= 3010; port++) {
+  ALLOWED_ORIGINS.push(`http://localhost:${port}`, `http://127.0.0.1:${port}`);
+}
+for (let port = 5173; port <= 5180; port++) {
+  ALLOWED_ORIGINS.push(`http://localhost:${port}`, `http://127.0.0.1:${port}`);
+}
+for (let port = 8080; port <= 8100; port++) {
+  ALLOWED_ORIGINS.push(`http://localhost:${port}`, `http://127.0.0.1:${port}`);
 }
 
 // Add custom FRONTEND_URL if configured

@@ -21,7 +21,6 @@ export type SettingsSectionKey =
   | 'audit_log'
   | 'org_marketplace'    // Marketplace access control & public portfolio
   | 'org_agency_profile' // Public agency profile for marketplace
-  | 'live_streaming_org' // KREOON Live - Organization level config
   | 'white_label'        // White-label branding, domain, email config
   | 'org_referrals'      // Organization-level referral codes
   // Platform level (Root only)
@@ -32,7 +31,7 @@ export type SettingsSectionKey =
   | 'platform_admin'     // Merged: platform_security + root_admin
   | 'tracking'           // Tracking & Analytics engine (platform level)
   | 'ai_tokenization'    // AI-powered profile tokenization
-  | 'live_streaming';    // KREOON Live - Platform level config
+  | 'prompts'            // AI prompts management (platform root only)
 
 export interface SectionPermission {
   canAccess: boolean;
@@ -74,7 +73,6 @@ const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'plat
   audit_log: 'organization',
   org_marketplace: 'organization', // Marketplace control & portfolio
   org_agency_profile: 'organization', // Agency profile for marketplace
-  live_streaming_org: 'organization', // KREOON Live org config
   white_label: 'organization',       // White-label settings
   // Platform level - root only
   organization_registrations: 'platform',
@@ -84,7 +82,7 @@ const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'plat
   platform_admin: 'platform',
   tracking: 'platform',
   ai_tokenization: 'platform',
-  live_streaming: 'platform', // KREOON Live platform config
+  prompts: 'platform',
 };
 
 // Module key mapping for database lookup

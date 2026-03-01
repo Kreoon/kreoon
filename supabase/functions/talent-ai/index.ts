@@ -5,6 +5,8 @@ import { getKreoonClient, isKreoonConfigured, validateKreoonAuth } from "../_sha
 import { getModuleAIConfig } from "../_shared/get-module-ai-config.ts";
 import { callAISingle } from "../_shared/ai-providers.ts";
 import { searchWithPerplexity } from "../_shared/perplexity-client.ts";
+// Nuevo: Prompts desde DB con cache y fallback
+import { getPrompt, interpolatePrompt } from "../_shared/prompts/db-prompts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -183,7 +185,21 @@ Por ejemplo, si el avatar es una mujer joven interesada en skincare, un creador 
 Incluye un fit_score (0-100) que evalúe qué tan bien el talento encaja con el avatar objetivo.
 ` : "";
 
-  const systemPrompt = `Eres un asistente experto en asignación de talento para producción de contenido UGC.
+  // Intentar obtener prompt desde DB
+  let systemPrompt: string;
+  try {
+    const promptConfig = await getPrompt(supabase, "talent", "matching");
+    if (promptConfig.systemPrompt) {
+      systemPrompt = interpolatePrompt(promptConfig.systemPrompt, {
+        role: req.role === "editor" ? "editor" : "creador",
+        avatar_context: avatarContextBlock,
+      });
+    } else {
+      throw new Error("No DB prompt");
+    }
+  } catch {
+    // Fallback al prompt hardcodeado
+    systemPrompt = `Eres un asistente experto en asignación de talento para producción de contenido UGC.
 
 Tu tarea es seleccionar el mejor ${req.role === "editor" ? "editor" : "creador"} para un proyecto específico considerando:
 1. Carga de trabajo actual (no sobrecargar)
@@ -195,6 +211,7 @@ Tu tarea es seleccionar el mejor ${req.role === "editor" ? "editor" : "creador"}
 ${avatarContextBlock}
 
 Responde en español. Proporciona reasoning detallado.`;
+  }
 
   const userPrompt = `Rol buscado: ${req.role}
 ${req.deadline ? `Deadline: ${req.deadline}` : ""}
@@ -298,8 +315,15 @@ async function handleQuality(supabase: any, req: TalentQualityRequest, provider:
     .order("created_at", { ascending: false })
     .limit(10);
 
-  const systemPrompt = `Eres un evaluador de calidad de trabajo para una agencia de contenido.
+  // Intentar obtener prompt desde DB
+  let systemPrompt: string;
+  try {
+    const promptConfig = await getPrompt(supabase, "talent", "quality");
+    systemPrompt = promptConfig.systemPrompt || "Eres un evaluador de calidad de trabajo para una agencia de contenido.\nEvalúa el trabajo del talento en este proyecto específico.";
+  } catch {
+    systemPrompt = `Eres un evaluador de calidad de trabajo para una agencia de contenido.
 Evalúa el trabajo del talento en este proyecto específico.`;
+  }
 
   const userPrompt = `Evalúa la calidad del trabajo en este contenido:
 
@@ -375,8 +399,15 @@ async function handleRisk(supabase: any, req: TalentRiskRequest, provider: strin
     .order("approved_at", { ascending: false })
     .limit(20);
 
-  const systemPrompt = `Eres un analista de riesgo para una agencia de contenido.
+  // Intentar obtener prompt desde DB
+  let systemPrompt: string;
+  try {
+    const promptConfig = await getPrompt(supabase, "talent", "risk");
+    systemPrompt = promptConfig.systemPrompt || "Eres un analista de riesgo para una agencia de contenido.\nDetecta riesgos de retraso, burnout o sobrecarga de trabajo en el talento.";
+  } catch {
+    systemPrompt = `Eres un analista de riesgo para una agencia de contenido.
 Detecta riesgos de retraso, burnout o sobrecarga de trabajo en el talento.`;
+  }
 
   const userPrompt = `Analiza el riesgo del siguiente talento:
 
@@ -461,8 +492,15 @@ async function handleReputation(supabase: any, req: TalentReputationRequest, pro
     .eq("organization_id", req.organizationId)
     .single();
 
-  const systemPrompt = `Eres un analista de reputación y desarrollo de talento para una agencia de contenido.
+  // Intentar obtener prompt desde DB
+  let systemPrompt: string;
+  try {
+    const promptConfig = await getPrompt(supabase, "talent", "reputation");
+    systemPrompt = promptConfig.systemPrompt || "Eres un analista de reputación y desarrollo de talento para una agencia de contenido.\nEvalúa la reputación del talento y genera recomendaciones de desarrollo.";
+  } catch {
+    systemPrompt = `Eres un analista de reputación y desarrollo de talento para una agencia de contenido.
 Evalúa la reputación del talento y genera recomendaciones de desarrollo.`;
+  }
 
   const userPrompt = `Evalúa la reputación del siguiente talento:
 
@@ -601,7 +639,11 @@ async function handleAmbassador(supabase: any, req: TalentAmbassadorRequest, pro
     .eq("organization_id", req.organizationId)
     .single();
 
-  const systemPrompt = `Eres un analista de embajadores para una agencia de contenido.
+  // Intentar obtener prompt desde DB
+  let systemPrompt: string;
+  try {
+    const promptConfig = await getPrompt(supabase, "talent", "ambassador");
+    systemPrompt = promptConfig.systemPrompt || `Eres un analista de embajadores para una agencia de contenido.
 Los embajadores son actores clave de crecimiento: producen + atraen + validan + representan la marca.
 
 Evalúa:
@@ -610,6 +652,17 @@ Evalúa:
 3. Retención de su red
 4. Potencial de ascenso/descenso de nivel (bronze → silver → gold)
 5. Riesgos (embajador pasivo, red inactiva, pérdida de engagement)`;
+  } catch {
+    systemPrompt = `Eres un analista de embajadores para una agencia de contenido.
+Los embajadores son actores clave de crecimiento: producen + atraen + validan + representan la marca.
+
+Evalúa:
+1. Impacto de red (referidos activos, contenido generado por su red)
+2. Calidad del trabajo personal
+3. Retención de su red
+4. Potencial de ascenso/descenso de nivel (bronze → silver → gold)
+5. Riesgos (embajador pasivo, red inactiva, pérdida de engagement)`;
+  }
 
   const userPrompt = `Evalúa el rendimiento de este embajador:
 

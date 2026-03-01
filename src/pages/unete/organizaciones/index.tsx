@@ -1,59 +1,13 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, ArrowRight, Check, Loader2, Users,
-  LayoutDashboard, CreditCard, UserCheck, BarChart3,
+  ArrowLeft, ArrowRight, Users,
+  LayoutDashboard, CreditCard, UserCheck, BarChart3, X,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { useUTMTracking } from '@/hooks/useUTMTracking';
 import { useAnalyticsContext } from '@/contexts/AnalyticsContext';
 import PhoneMockupCarousel from '@/components/landing/PhoneMockupCarousel';
-
-// ─── Validation ───────────────────────────────────────────
-const formSchema = z.object({
-  full_name: z.string().min(2, 'Nombre muy corto'),
-  email: z.string().email('Email inválido'),
-  organization_name: z.string().min(2, 'Nombre de organización requerido'),
-  organization_type: z.string().min(1, 'Selecciona un tipo'),
-  team_size: z.string().optional(),
-  phone: z.string().optional(),
-  website: z.string().url('URL inválida').optional().or(z.literal('')),
-  services: z.array(z.string()).min(1, 'Selecciona al menos un servicio'),
-  message: z.string().optional(),
-});
-
-type FormData = z.infer<typeof formSchema>;
-
-// ─── Data ─────────────────────────────────────────────────
-const ORG_TYPES = [
-  { value: 'agency', label: 'Agencia de Marketing' },
-  { value: 'production', label: 'Productora Audiovisual' },
-  { value: 'studio', label: 'Estudio Creativo' },
-  { value: 'media', label: 'Medio de Comunicación' },
-  { value: 'brand_team', label: 'Equipo de Marca (In-house)' },
-  { value: 'other', label: 'Otro' },
-];
-
-const TEAM_SIZES = [
-  { value: '1-5', label: '1-5 personas' },
-  { value: '6-15', label: '6-15 personas' },
-  { value: '16-50', label: '16-50 personas' },
-  { value: '50+', label: 'Más de 50' },
-];
-
-const SERVICES = [
-  { id: 'manage_creators', label: 'Gestionar creadores/editores', description: 'Asignar proyectos y seguimiento' },
-  { id: 'client_campaigns', label: 'Campañas para clientes', description: 'Gestionar contenido de terceros' },
-  { id: 'talent_recruiting', label: 'Reclutamiento de talento', description: 'Encontrar nuevos creadores' },
-  { id: 'payments', label: 'Centralizar pagos', description: 'Facturación y pagos a creadores' },
-  { id: 'analytics', label: 'Reportes y analytics', description: 'Métricas de rendimiento' },
-  { id: 'white_label', label: 'White label', description: 'Plataforma con tu marca' },
-];
+import { WizardContainer } from '@/components/registration-v2';
 
 const BENEFITS = [
   { icon: LayoutDashboard, title: 'Dashboard unificado', description: 'Gestiona todos tus proyectos en un solo lugar' },
@@ -62,122 +16,34 @@ const BENEFITS = [
   { icon: BarChart3, title: 'Analytics avanzados', description: 'Métricas de rendimiento por proyecto' },
 ];
 
-// ─── Component ────────────────────────────────────────────
-export default function OrganizacionesLanding() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+const FEATURES = [
+  'Gestión de creadores y editores',
+  'Campañas para clientes externos',
+  'Reclutamiento de talento',
+  'Pagos centralizados',
+  'Reportes y analytics',
+  'White label disponible',
+];
 
-  const { getTrackingParams, clearUTMParams } = useUTMTracking();
+export default function OrganizacionesLanding() {
+  const [showWizard, setShowWizard] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
+
+  useUTMTracking();
   const analytics = useAnalyticsContext();
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      full_name: '',
-      email: '',
-      organization_name: '',
-      organization_type: '',
-      team_size: '',
-      phone: '',
-      website: '',
-      services: [],
-      message: '',
-    },
-  });
-
   useEffect(() => {
-    analytics.track({ event_name: 'landing_view', event_category: 'engagement', properties: { page: 'organizaciones_landing' } });
+    analytics.track({
+      event_name: 'landing_view',
+      event_category: 'engagement',
+      properties: { page: 'organizaciones_landing' },
+    });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleSubmit = async (data: FormData) => {
-    setIsSubmitting(true);
-    setSubmitError(null);
-
-    try {
-      const trackingParams = getTrackingParams();
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/capture-lead`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            full_name: data.full_name,
-            email: data.email,
-            phone: data.phone || undefined,
-            lead_type: 'organization',
-            registration_intent: 'organization',
-            message: data.message || undefined,
-            ...trackingParams,
-            custom_fields: {
-              organization_name: data.organization_name,
-              organization_type: data.organization_type,
-              team_size: data.team_size,
-              website: data.website,
-              services_interested: data.services,
-            },
-          }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (result.success) {
-        analytics.trackLeadCaptured({
-          lead_id: result.lead_id,
-          lead_type: 'organization',
-        });
-
-        clearUTMParams();
-        setSubmitSuccess(true);
-      } else {
-        throw new Error(result.error || 'Error al registrar');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      setSubmitError((error as Error).message);
-      analytics.track({ event_name: 'form_error', event_category: 'engagement', properties: { error: (error as Error).message } });
-    } finally {
-      setIsSubmitting(false);
-    }
+  const scrollToForm = () => {
+    formRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const services = form.watch('services');
-
-  // ─── Success screen ─────────────────────────────────────
-  if (submitSuccess) {
-    return (
-      <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center max-w-md"
-        >
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: 'spring' }}
-            className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-500/20 flex items-center justify-center"
-          >
-            <Check className="w-10 h-10 text-green-400" />
-          </motion.div>
-
-          <h1 className="text-3xl font-bold mb-4">¡Solicitud recibida!</h1>
-          <p className="text-white/60 mb-8">
-            Nuestro equipo de partnerships revisará tu solicitud y te contactará
-            para agendar una demo personalizada.
-          </p>
-
-          <Button asChild className="w-full bg-green-600 hover:bg-green-700">
-            <a href="/">Volver al inicio</a>
-          </Button>
-        </motion.div>
-      </div>
-    );
-  }
-
-  // ─── Form ───────────────────────────────────────────────
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#0a0a0f] text-white">
       {/* Background */}
@@ -209,10 +75,17 @@ export default function OrganizacionesLanding() {
               con herramientas poderosas
             </span>
           </h1>
-          <p className="text-white/60 max-w-2xl mx-auto text-lg">
+          <p className="text-white/60 max-w-2xl mx-auto text-lg mb-8">
             Gestiona equipos, campañas y pagos desde una sola plataforma
             diseñada para agencias y productoras
           </p>
+
+          <button
+            onClick={scrollToForm}
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold text-lg transition-all hover:scale-[1.02]"
+          >
+            Crear mi organización <ArrowRight className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Benefits */}
@@ -237,8 +110,26 @@ export default function OrganizacionesLanding() {
           })}
         </div>
 
+        {/* Features list */}
+        <div className="max-w-2xl mx-auto mb-12">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {FEATURES.map((feature, index) => (
+              <motion.div
+                key={feature}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 + index * 0.05 }}
+                className="flex items-center gap-2 p-3 rounded-lg bg-white/5 border border-white/10"
+              >
+                <div className="w-2 h-2 rounded-full bg-green-400" />
+                <span className="text-sm text-white/80">{feature}</span>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
         {/* Video carousel */}
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-5xl mx-auto mb-16">
           <PhoneMockupCarousel
             title="Contenido gestionado en Kreoon"
             subtitle="Tu equipo puede crear contenido así"
@@ -246,253 +137,76 @@ export default function OrganizacionesLanding() {
           />
         </div>
 
-        {/* Form */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="max-w-2xl mx-auto"
-        >
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 md:p-8">
-            <h2 className="text-xl font-bold mb-6 text-center">
-              Solicita acceso para tu organización
-            </h2>
-
-            <form
-              onSubmit={form.handleSubmit(handleSubmit)}
-              className="space-y-6"
-            >
-              {/* Personal info */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-white/70 mb-2">
-                    Tu nombre *
-                  </label>
-                  <Input
-                    {...form.register('full_name')}
-                    placeholder="Juan Pérez"
-                    className="bg-white/5 border-white/10"
-                  />
-                  {form.formState.errors.full_name && (
-                    <p className="text-red-400 text-xs mt-1">
-                      {form.formState.errors.full_name.message}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm text-white/70 mb-2">
-                    Email *
-                  </label>
-                  <Input
-                    {...form.register('email')}
-                    type="email"
-                    placeholder="juan@agencia.com"
-                    className="bg-white/5 border-white/10"
-                  />
-                  {form.formState.errors.email && (
-                    <p className="text-red-400 text-xs mt-1">
-                      {form.formState.errors.email.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Organization info */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-white/70 mb-2">
-                    Nombre de la organización *
-                  </label>
-                  <Input
-                    {...form.register('organization_name')}
-                    placeholder="Mi Agencia Creativa"
-                    className="bg-white/5 border-white/10"
-                  />
-                  {form.formState.errors.organization_name && (
-                    <p className="text-red-400 text-xs mt-1">
-                      {form.formState.errors.organization_name.message}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm text-white/70 mb-2">
-                    Tipo de organización *
-                  </label>
-                  <select
-                    {...form.register('organization_type')}
-                    className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-white"
-                  >
-                    <option value="" className="bg-card">
-                      Seleccionar...
-                    </option>
-                    {ORG_TYPES.map((type) => (
-                      <option
-                        key={type.value}
-                        value={type.value}
-                        className="bg-card"
-                      >
-                        {type.label}
-                      </option>
-                    ))}
-                  </select>
-                  {form.formState.errors.organization_type && (
-                    <p className="text-red-400 text-xs mt-1">
-                      {form.formState.errors.organization_type.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-white/70 mb-2">
-                    Tamaño del equipo
-                  </label>
-                  <select
-                    {...form.register('team_size')}
-                    className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-white"
-                  >
-                    <option value="" className="bg-card">
-                      Seleccionar...
-                    </option>
-                    {TEAM_SIZES.map((size) => (
-                      <option
-                        key={size.value}
-                        value={size.value}
-                        className="bg-card"
-                      >
-                        {size.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm text-white/70 mb-2">
-                    WhatsApp (opcional)
-                  </label>
-                  <Input
-                    {...form.register('phone')}
-                    placeholder="+57 300 123 4567"
-                    className="bg-white/5 border-white/10"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm text-white/70 mb-2">
-                  Website (opcional)
-                </label>
-                <Input
-                  {...form.register('website')}
-                  placeholder="https://miagencia.com"
-                  className="bg-white/5 border-white/10"
-                />
-                {form.formState.errors.website && (
-                  <p className="text-red-400 text-xs mt-1">
-                    {form.formState.errors.website.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Services of interest */}
-              <div>
-                <label className="block text-sm text-white/70 mb-3">
-                  ¿Qué funcionalidades te interesan? *
-                </label>
-                <div className="grid md:grid-cols-2 gap-3">
-                  {SERVICES.map((service) => {
-                    const isSelected = services.includes(service.id);
-                    return (
-                      <label
-                        key={service.id}
-                        className={`p-3 rounded-lg cursor-pointer border transition-all ${
-                          isSelected
-                            ? 'border-green-500 bg-green-500/20'
-                            : 'border-white/10 bg-white/5 hover:border-white/20'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          value={service.id}
-                          {...form.register('services')}
-                          className="sr-only"
-                        />
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                              isSelected
-                                ? 'border-green-500 bg-green-500'
-                                : 'border-white/30'
-                            }`}
-                          >
-                            {isSelected && (
-                              <Check className="w-3 h-3 text-white" />
-                            )}
-                          </div>
-                          <div>
-                            <p className="font-medium text-sm">
-                              {service.label}
-                            </p>
-                            <p className="text-xs text-white/50">
-                              {service.description}
-                            </p>
-                          </div>
-                        </div>
-                      </label>
-                    );
-                  })}
-                </div>
-                {form.formState.errors.services && (
-                  <p className="text-red-400 text-xs mt-2">
-                    {form.formState.errors.services.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Message */}
-              <div>
-                <label className="block text-sm text-white/70 mb-2">
-                  Cuéntanos sobre tu organización (opcional)
-                </label>
-                <Textarea
-                  {...form.register('message')}
-                  placeholder="¿Qué proyectos manejan? ¿Cuántos creadores trabajan con ustedes actualmente?"
-                  className="bg-white/5 border-white/10 min-h-[100px]"
-                />
-              </div>
-
-              {submitError && (
-                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-                  {submitError}
-                </div>
-              )}
-
-              {/* Submit */}
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 py-6 text-lg"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />{' '}
-                    Enviando...
-                  </>
-                ) : (
-                  <>
-                    Solicitar demo personalizada{' '}
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </>
-                )}
-              </Button>
-
-              <p className="text-center text-white/40 text-xs">
-                Te contactaremos para agendar una demo según tus necesidades
+        {/* Registration Form */}
+        <div ref={formRef} className="max-w-lg mx-auto scroll-mt-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+          >
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold mb-2">Crea tu organización</h2>
+              <p className="text-white/60">
+                Prueba gratis por 30 días sin compromiso
               </p>
-            </form>
+            </div>
+
+            <WizardContainer flow="general" />
+          </motion.div>
+        </div>
+
+        {/* Trial info */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="mt-8 max-w-md mx-auto"
+        >
+          <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-center">
+            <p className="text-sm text-white/80">
+              <strong className="text-green-400">Prueba de 30 días incluida</strong>
+              <br />
+              <span className="text-white/60">
+                Sin tarjeta de crédito. Cancela cuando quieras.
+              </span>
+            </p>
           </div>
         </motion.div>
       </div>
+
+      {/* Modal wizard (for mobile CTA) */}
+      <AnimatePresence>
+        {showWizard && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              onClick={() => setShowWizard(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            >
+              <button
+                onClick={() => setShowWizard(false)}
+                className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <WizardContainer
+                flow="general"
+                compact
+                onBack={() => setShowWizard(false)}
+              />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

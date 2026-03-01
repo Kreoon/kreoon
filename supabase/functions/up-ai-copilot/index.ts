@@ -3,6 +3,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getModuleAIConfig } from "../_shared/get-module-ai-config.ts";
 import { callAISingle, corsHeaders } from "../_shared/ai-providers.ts";
+// Nuevo: Prompts desde DB con cache y fallback
+import { getPrompt } from "../_shared/prompts/db-prompts.ts";
 
 interface QualityScoreRequest {
   action: "quality_score";
@@ -267,7 +269,30 @@ async function evaluateQualityScore(
       ).join("\n")
     : "Sin historial";
 
-  const systemPrompt = `Eres un evaluador experto de calidad de contenido UGC para agencias de marketing.
+  // Intentar obtener prompt desde DB
+  let systemPrompt: string;
+  try {
+    const promptConfig = await getPrompt(supabase, "up", "quality_score");
+    systemPrompt = promptConfig.systemPrompt || `Eres un evaluador experto de calidad de contenido UGC para agencias de marketing.
+Tu evaluación debe ser ESPECÍFICA basada en el contenido real proporcionado.
+
+Criterios de evaluación:
+1. HOOK (0-100): ¿El gancho es atractivo, genera curiosidad, detiene el scroll?
+2. ESTRUCTURA (0-100): ¿Tiene introducción, desarrollo y cierre claros? ¿Fluye bien?
+3. CTA (0-100): ¿El llamado a la acción es claro, persuasivo y alineado con el objetivo?
+4. COHERENCIA (0-100): ¿El contenido es coherente con el brief, avatar ideal y ángulo de venta?
+5. POTENCIAL VIRAL (0-100): ¿Tiene elementos que lo hagan compartible, relatable, memorable?
+
+IMPORTANTE:
+- Lee TODA la información proporcionada antes de evaluar
+- Sé específico en las razones, menciona partes concretas del guión
+- Las sugerencias deben ser accionables y específicas
+- Si falta guión o información clave, refleja eso en el score
+- Considera las correcciones previas y comentarios
+
+Responde SOLO con JSON válido.`;
+  } catch {
+    systemPrompt = `Eres un evaluador experto de calidad de contenido UGC para agencias de marketing.
 Tu evaluación debe ser ESPECÍFICA basada en el contenido real proporcionado.
 
 Criterios de evaluación:
@@ -291,6 +316,7 @@ Responde SOLO con JSON válido:
   "reasons": ["razón específica 1", "razón específica 2", "razón 3"],
   "suggestions": ["sugerencia accionable 1", "sugerencia 2"]
 }`;
+  }
 
   const prompt = `EVALÚA ESTE CONTENIDO EN DETALLE:
 
@@ -490,7 +516,17 @@ async function detectEvents(
     .order("moved_at", { ascending: false })
     .limit(5);
 
-  const systemPrompt = `Eres un sistema de detección de eventos para gamificación de UGC Colombia.
+  // Intentar obtener prompt desde DB
+  let systemPrompt: string;
+  try {
+    const promptConfig = await getPrompt(supabase, "up", "detect_events");
+    systemPrompt = promptConfig.systemPrompt || `Eres un sistema de detección de eventos para gamificación de UGC Colombia.
+Analiza la actividad del contenido y detecta eventos implícitos que podrían no haberse registrado.
+Solo detecta eventos con alta confianza (>0.7).
+
+Responde con un JSON válido.`;
+  } catch {
+    systemPrompt = `Eres un sistema de detección de eventos para gamificación de UGC Colombia.
 Analiza la actividad del contenido y detecta eventos implícitos que podrían no haberse registrado.
 Solo detecta eventos con alta confianza (>0.7).
 
@@ -500,6 +536,7 @@ Responde con un JSON válido con esta estructura:
     { "eventType": "string", "confidence": number (0-1), "evidence": ["string"], "recommendedPoints": number }
   ]
 }`;
+  }
 
   const prompt = `Analiza esta actividad de contenido:
 
@@ -621,7 +658,21 @@ async function checkAntiFraud(
     user_name: userNameMap[up.user_id] || up.user_id
   }));
 
-  const systemPrompt = `Eres un sistema anti-fraude para el sistema de gamificación UP de UGC Colombia.
+  // Intentar obtener prompt desde DB
+  let systemPrompt: string;
+  try {
+    const promptConfig = await getPrompt(supabase, "up", "anti_fraud");
+    systemPrompt = promptConfig.systemPrompt || `Eres un sistema anti-fraude para el sistema de gamificación UP de UGC Colombia.
+Detecta patrones sospechosos como:
+- Rachas perfectas irreales
+- Asignaciones repetidas entre mismos usuarios
+- Aprobaciones sin review
+- Spam de microtareas
+Solo reporta patrones con evidencia clara.
+
+Responde con un JSON válido.`;
+  } catch {
+    systemPrompt = `Eres un sistema anti-fraude para el sistema de gamificación UP de UGC Colombia.
 Detecta patrones sospechosos como:
 - Rachas perfectas irreales
 - Asignaciones repetidas entre mismos usuarios
@@ -636,6 +687,7 @@ Responde con un JSON válido con esta estructura:
   ],
   "summary": "string"
 }`;
+  }
 
   const prompt = `Analiza estos datos de actividad:
 
@@ -738,7 +790,20 @@ async function generateQuests(
     .eq("organization_id", req.organizationId)
     .eq("is_active", true);
 
-  const systemPrompt = `Eres un generador de misiones/retos para el sistema de gamificación UP de UGC Colombia.
+  // Intentar obtener prompt desde DB
+  let systemPrompt: string;
+  try {
+    const promptConfig = await getPrompt(supabase, "up", "generate_quests");
+    systemPrompt = promptConfig.systemPrompt || `Eres un generador de misiones/retos para el sistema de gamificación UP de UGC Colombia.
+Crea misiones semanales relevantes basadas en:
+- Cuellos de botella detectados
+- Objetivos de mejora de la agencia
+- Engagement del equipo de creadores y editores
+Las misiones deben ser alcanzables pero desafiantes.
+
+Responde con un JSON válido.`;
+  } catch {
+    systemPrompt = `Eres un generador de misiones/retos para el sistema de gamificación UP de UGC Colombia.
 Crea misiones semanales relevantes basadas en:
 - Cuellos de botella detectados
 - Objetivos de mejora de la agencia
@@ -751,6 +816,7 @@ Responde con un JSON válido con esta estructura:
     { "title": "string", "description": "string", "goalMetric": "string", "goalValue": number, "rewardPoints": number, "appliesTo": ["role"], "reasoning": "string" }
   ]
 }`;
+  }
 
   const prompt = `Genera misiones semanales para esta organización:
 
@@ -839,7 +905,20 @@ async function getRuleRecommendations(
     eventFreq[e.event_type_key] = (eventFreq[e.event_type_key] || 0) + 1;
   });
 
-  const systemPrompt = `Eres un consultor de gamificación experto para UGC Colombia.
+  // Intentar obtener prompt desde DB
+  let systemPrompt: string;
+  try {
+    const promptConfig = await getPrompt(supabase, "up", "rule_recommendations");
+    systemPrompt = promptConfig.systemPrompt || `Eres un consultor de gamificación experto para UGC Colombia.
+Analiza las reglas actuales y sugiere mejoras basándote en:
+- Balance de puntos
+- Engagement del equipo
+- Prevención de fraude
+- Simplicidad del sistema
+
+Responde con un JSON válido.`;
+  } catch {
+    systemPrompt = `Eres un consultor de gamificación experto para UGC Colombia.
 Analiza las reglas actuales y sugiere mejoras basándote en:
 - Balance de puntos
 - Engagement del equipo
@@ -856,6 +935,7 @@ Responde con un JSON válido con esta estructura:
   ],
   "summary": "string"
 }`;
+  }
 
   const prompt = `Analiza estas reglas de gamificación:
 

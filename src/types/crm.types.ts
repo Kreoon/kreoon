@@ -700,6 +700,8 @@ export interface FullUserDetail {
   ai_recommended_level: string | null;
   ai_risk_flag: string | null;
   is_active: boolean;
+  is_banned: boolean;
+  is_platform_admin: boolean;
   crm_custom_fields: Record<string, unknown>;
   created_at: string;
   // creator_profiles (nullable)

@@ -161,18 +161,6 @@ export function ProductDetailDialog({
     : 0;
   const hasEnoughTokens = totalTokens >= RESEARCH_COST;
 
-  // DEBUG: Logging para diagnosticar problema de tokens
-  console.log('[ADN Debug]', {
-    productClientId,
-    clientOrg,
-    profileOrgId: profile?.current_organization_id,
-    effectiveOrgId,
-    balance,
-    totalTokens,
-    hasEnoughTokens,
-    RESEARCH_COST,
-  });
-  
   const [formData, setFormData] = useState({
     name: "",
     description: "",

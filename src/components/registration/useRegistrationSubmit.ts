@@ -18,6 +18,11 @@ export function useRegistrationSubmit() {
 
     try {
       // 1. Sign up
+      // Detect community from URL or localStorage
+      const communitySlug = localStorage.getItem('kreoon_partner_community')
+        || new URLSearchParams(window.location.search).get('community')
+        || null;
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -25,8 +30,12 @@ export function useRegistrationSubmit() {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
             full_name: data.fullName,
+            // user_type is the platform-level type (brand or talent)
+            user_type: data.intent === 'brand' ? 'brand' : (data.intent === 'talent' ? 'talent' : null),
             account_type: data.intent || 'talent',
             country: data.locationCountry,
+            // Store community info for post-verification processing
+            partner_community: communitySlug,
           },
         },
       });

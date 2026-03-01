@@ -4,7 +4,10 @@ import { getKreoonClient, isKreoonConfigured } from "../_shared/kreoon-client.ts
 import { getModuleAIConfig } from "../_shared/get-module-ai-config.ts";
 import { callAIWithFallback, corsHeaders } from "../_shared/ai-providers.ts";
 import { PerplexitySearches, searchWithPerplexity } from "../_shared/perplexity-client.ts";
+// Fallback legacy
 import { MASTER_SCRIPT_PROMPT } from "../_shared/prompts/scripts.ts";
+// Nuevo: Prompts desde DB con cache y fallback a hardcodeados
+import { getPrompt, interpolatePrompt } from "../_shared/prompts/db-prompts.ts";
 import { checkAndDeductTokens, insufficientTokensResponse } from "../_shared/ai-token-guard.ts";
 
 interface ContentAIRequest {
@@ -586,16 +589,20 @@ IMPORTANTE: Usa la información de la investigación para:
           
           // Build product context to inject into prompts (legacy support)
           const productContext = buildProductContext(product);
-          
-          let masterPrompt = MASTER_SCRIPT_PROMPT;
+
+          // Obtener prompt maestro desde DB (con cache y fallback a hardcodeados)
+          const dbPromptConfig = await getPrompt(supabase, "scripts", "creator");
+
+          let masterPrompt = dbPromptConfig.systemPrompt || MASTER_SCRIPT_PROMPT;
           let formatRules = "";
           let criticalRules = "";
           let rolePrompt = "";
           
           if (customPrompts) {
             // Apply template variable replacements to custom prompts
+            // masterPrompt ya tiene el valor de DB como fallback
             masterPrompt = replaceTemplateVariables(
-              customPrompts.master_prompt || MASTER_SCRIPT_PROMPT,
+              customPrompts.master_prompt || masterPrompt,
               product, body.script_params, documents
             );
             formatRules = replaceTemplateVariables(
@@ -634,7 +641,7 @@ IMPORTANTE:
 - Usa expresiones y modismos del país objetivo cuando sea apropiado
 - El resultado debe ser HTML limpio, sin markdown, listo para renderizar
 - ORGANIZA el contenido usando la estructura de bloques indicada`
-            : `${MASTER_SCRIPT_PROMPT}
+            : `${masterPrompt}
 
 ${BLOCK_FORMAT_INSTRUCTIONS}
 
