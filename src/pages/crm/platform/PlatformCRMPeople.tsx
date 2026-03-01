@@ -65,7 +65,7 @@ import type { HealthStatus, TalentCategory, SpecificRole } from "@/types/crm.typ
 import type { UserWithHealth, CreatorWithMetrics } from "@/services/crm/platformCrmService";
 import { ViewModeToggle } from "@/components/crm";
 import { UserDetailDialog } from "@/components/crm/UserDetailDialog";
-import { TalentDetailDialog } from "@/components/crm/TalentDetailDialog";
+import { UnifiedTalentDetailDialog } from "@/components/crm/UnifiedTalentDetailDialog";
 import type { ViewMode } from "@/components/crm";
 
 // =====================================================
@@ -251,6 +251,9 @@ const PlatformCRMPeople = () => {
   const [healthFilter, setHealthFilter] = useState("all");
   const [activityFilter, setActivityFilter] = useState("all");
 
+  // Filter by organization (en_org tab)
+  const [orgFilter, setOrgFilter] = useState("all");
+
   // Filters for freelancers tab
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -357,6 +360,20 @@ const PlatformCRMPeople = () => {
     return { byRole, userIdsInOrgs };
   }, [users]);
 
+  // Unique organizations for filter dropdown
+  const uniqueOrganizations = useMemo(() => {
+    const orgs = new Map<string, { id: string; name: string }>();
+    usersInOrgs.byRole.all.forEach((user) => {
+      if (user.organization_id && user.organization_name) {
+        orgs.set(user.organization_id, {
+          id: user.organization_id,
+          name: user.organization_name,
+        });
+      }
+    });
+    return Array.from(orgs.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [usersInOrgs.byRole.all]);
+
   // Filter creators to exclude brand users AND users in organizations
   // (brand users appear in Clientes, org users appear in En Organizaciones)
   const creatorsExcludingBrandsAndOrgs = useMemo(() => {
@@ -436,6 +453,11 @@ const PlatformCRMPeople = () => {
       list = [...categorizedUsers.clientes];
     }
 
+    // Filter by organization (only for en_org tab)
+    if (activeTab === "en_org" && orgFilter !== "all") {
+      list = list.filter((u) => u.organization_id === orgFilter);
+    }
+
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -466,7 +488,7 @@ const PlatformCRMPeople = () => {
     }
 
     return list;
-  }, [activeTab, categorizedUsers, usersInOrgs, orgRoleSubTab, search, healthFilter, activityFilter]);
+  }, [activeTab, categorizedUsers, usersInOrgs, orgRoleSubTab, search, healthFilter, activityFilter, orgFilter]);
 
   // Filtered creators (for freelancers tab) - uses creatorsExcludingBrandsAndOrgs as base
   const filteredCreators = useMemo(() => {
@@ -553,6 +575,7 @@ const PlatformCRMPeople = () => {
     setRoleFilter("all");
     setStatusFilter("all");
     setOrgRoleSubTab("all");
+    setOrgFilter("all");
   };
 
   const handleOrgRoleSubTabChange = (subTab: OrgRoleSubTab) => {
@@ -734,6 +757,24 @@ const PlatformCRMPeople = () => {
               </>
             ) : (
               <>
+                {/* Organization filter - only shown in en_org tab */}
+                {activeTab === "en_org" && uniqueOrganizations.length > 0 && (
+                  <Select value={orgFilter} onValueChange={setOrgFilter}>
+                    <SelectTrigger className="w-56 bg-white/5 border-white/10">
+                      <Building2 className="w-4 h-4 mr-2 text-white/50" />
+                      <SelectValue placeholder="Organización" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      <SelectItem value="all">Todas las organizaciones</SelectItem>
+                      {uniqueOrganizations.map((org) => (
+                        <SelectItem key={org.id} value={org.id}>
+                          {org.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+
                 <Select value={healthFilter} onValueChange={setHealthFilter}>
                   <SelectTrigger className="w-48 bg-white/5 border-white/10">
                     <SelectValue placeholder="Estado de salud" />
@@ -1190,7 +1231,7 @@ const PlatformCRMPeople = () => {
       )}
 
       {selectedCreator && (
-        <TalentDetailDialog
+        <UnifiedTalentDetailDialog
           creator={selectedCreator}
           open={true}
           onOpenChange={(open) => {

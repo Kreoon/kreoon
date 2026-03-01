@@ -1,6 +1,10 @@
 import { Video, Image, Star } from 'lucide-react';
 import { DetailSection } from '@/components/crm/DetailSection';
 
+const hasValidUrl = (url: string | null | undefined): url is string => {
+  return !!(url && url.trim().length > 0);
+};
+
 interface PortfolioItem {
   id: string;
   title: string | null;
@@ -25,7 +29,7 @@ export function PortfolioSection({ portfolio }: PortfolioSectionProps) {
         {portfolio.map((item) => (
           <div key={item.id} className="relative group">
             <div className="aspect-video rounded-lg bg-white/5 overflow-hidden">
-              {item.thumbnail_url ? (
+              {hasValidUrl(item.thumbnail_url) ? (
                 <img
                   src={item.thumbnail_url}
                   alt={item.title || ''}

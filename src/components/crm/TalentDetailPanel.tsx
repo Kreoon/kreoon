@@ -31,6 +31,10 @@ import { AdminActionsSection } from './detail-sections/AdminActionsSection';
 
 const ROOT_EMAILS = ['jacsolucionesgraficas@gmail.com', 'kairosgp.sas@gmail.com'];
 
+const hasValidAvatar = (url: string | null | undefined): url is string => {
+  return !!(url && url.trim().length > 0);
+};
+
 function getInitials(name: string): string {
   return name
     .split(' ')
@@ -119,7 +123,7 @@ export function TalentDetailPanel({ creator, onClose, onUpdate }: TalentDetailPa
     updateProfileFields.mutate({ userId, data });
   }, [userId, updateProfileFields]);
 
-  const avatar = creator.avatar_url ? (
+  const avatar = hasValidAvatar(creator.avatar_url) ? (
     <img
       src={creator.avatar_url}
       alt={creator.full_name}

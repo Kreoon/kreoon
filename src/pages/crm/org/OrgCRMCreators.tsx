@@ -32,7 +32,7 @@ import {
 import {
   CreatorRelationshipBadge,
   ViewModeToggle,
-  OrgTalentDetailPanel,
+  UnifiedTalentDetailDialog,
 } from "@/components/crm";
 import type { ViewMode } from "@/components/crm";
 import type { OrgCreatorWithStats, CreatorRelationshipType } from "@/types/crm.types";
@@ -127,13 +127,8 @@ export function TalentContent({ orgId }: { orgId: string }) {
   };
 
   return (
-    <div className="min-h-0 flex">
-      <div
-        className={cn(
-          "flex-1 space-y-6 transition-[margin] duration-300",
-          selectedCreator && "md:mr-[440px]"
-        )}
-      >
+    <div className="min-h-0">
+      <div className="flex-1 space-y-6">
         {/* Stats Row */}
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -342,21 +337,15 @@ export function TalentContent({ orgId }: { orgId: string }) {
         )}
       </div>
 
-      {/* Mobile backdrop */}
+      {/* ========== DETAIL DIALOG ========== */}
       {selectedCreator && (
-        <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setSelectedCreator(null)} />
-      )}
-
-      {/* ========== DETAIL PANEL ========== */}
-      {selectedCreator && (
-        <div className="fixed inset-y-0 right-0 w-full md:w-auto z-40">
-          <OrgTalentDetailPanel
-            creator={selectedCreator}
-            organizationId={orgId}
-            onClose={() => setSelectedCreator(null)}
-            onUpdate={handleUpdate}
-          />
-        </div>
+        <UnifiedTalentDetailDialog
+          orgCreator={selectedCreator}
+          organizationId={orgId}
+          open={true}
+          onOpenChange={(open) => { if (!open) setSelectedCreator(null); }}
+          onUpdate={handleUpdate}
+        />
       )}
     </div>
   );
