@@ -2048,8 +2048,8 @@ serve(async (req) => {
       .single();
 
     const progress = (product as any)?.research_progress;
-    let results: Record<string, unknown> = previousResults || progress?.partial_results || {};
-    let completedSteps: string[] = progress?.completed_steps || [];
+    const results: Record<string, unknown> = previousResults || progress?.partial_results || {};
+    const completedSteps: string[] = progress?.completed_steps || [];
 
     // Find starting point
     const startIdx = startFromStep

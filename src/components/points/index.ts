@@ -33,3 +33,7 @@ export { ReassignmentAlert } from './ReassignmentAlert';
 
 // Unified Badges System
 export { UnifiedBadgesShowcase } from './UnifiedBadgesShowcase';
+
+// Season Management
+export { SeasonManager } from './SeasonManager';
+export { SeasonUrgencyBanner } from './SeasonUrgencyBanner';

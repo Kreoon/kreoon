@@ -339,7 +339,7 @@ async function syncAllCampaigns(
   await verifyOrgMembership(supabase, userId, organization_id);
 
   // Get all active campaigns with connected channels
-  let query = supabase
+  const query = supabase
     .from("marketing_campaigns")
     .select("id, name, channel_id, platforms")
     .eq("organization_id", organization_id)

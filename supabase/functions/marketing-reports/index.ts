@@ -238,7 +238,7 @@ async function generateReport(
   }
 
   // Get campaigns if filtered
-  let campaignMap: Record<string, string> = {};
+  const campaignMap: Record<string, string> = {};
   if (campaign_ids && campaign_ids.length > 0) {
     const { data: campaigns } = await supabase
       .from("marketing_campaigns")

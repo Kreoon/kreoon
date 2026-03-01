@@ -24,3 +24,8 @@ export { OrgDetailPanel } from './OrgDetailPanel';
 export { UserDetailPanel } from './UserDetailPanel';
 export { TalentDetailPanel } from './TalentDetailPanel';
 export { OrgTalentDetailPanel } from './OrgTalentDetailPanel';
+
+// Dialogs
+export { UserDetailDialog } from './UserDetailDialog';
+export { TalentDetailDialog } from './TalentDetailDialog';
+export { UnifiedTalentDetailDialog } from './UnifiedTalentDetailDialog';

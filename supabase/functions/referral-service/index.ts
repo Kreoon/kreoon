@@ -158,7 +158,7 @@ async function getLeaderboard(supabase: any, month?: string) {
 
   // Enrich with profile data
   const userIds = (entries || []).map((e: any) => e.user_id);
-  let profileMap: Record<string, any> = {};
+  const profileMap: Record<string, any> = {};
   if (userIds.length > 0) {
     const { data: profiles } = await supabase
       .from("profiles")
@@ -357,7 +357,7 @@ async function getMyReferrals(supabase: any, userId: string) {
 
   // Step 2: Enrich with profile data (separate query — FK goes to auth.users, not profiles)
   const referredIds = (referrals || []).map((r: any) => r.referred_id).filter(Boolean);
-  let profileMap: Record<string, any> = {};
+  const profileMap: Record<string, any> = {};
   if (referredIds.length > 0) {
     const { data: profiles } = await supabase
       .from("profiles")

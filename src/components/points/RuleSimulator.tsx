@@ -113,8 +113,8 @@ export function RuleSimulator({ organizationId, rules }: RuleSimulatorProps) {
     const matchedRule = matchingRules[0] || null;
     
     // Check limits (simulated)
-    let blocked = false;
-    let blockReason: string | null = null;
+    const blocked = false;
+    const blockReason: string | null = null;
     const appliedConditions: string[] = [];
 
     if (matchedRule) {

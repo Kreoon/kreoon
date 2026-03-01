@@ -75,7 +75,7 @@ export function useProjectAssignments({ projectSource, projectId }: UseProjectAs
       const rows = data || [];
       // Batch-fetch user profiles for all assigned users
       const userIds = [...new Set(rows.map((r: any) => r.user_id).filter(Boolean))] as string[];
-      let profileMap: Record<string, { full_name: string; avatar_url: string | null }> = {};
+      const profileMap: Record<string, { full_name: string; avatar_url: string | null }> = {};
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles')

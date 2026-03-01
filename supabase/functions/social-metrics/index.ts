@@ -725,7 +725,7 @@ async function fetchInstagramFullMetrics(
   //    Valid metrics with metric_type=total_value & period=day:
   //      reach, accounts_engaged, total_interactions, likes, comments, follower_count
   //    profile_views needs a SEPARATE call (incompatible with day period in some versions)
-  let insights: Record<string, number> = {};
+  const insights: Record<string, number> = {};
   let insightsError: string | null = null;
   try {
     const nowTs = Math.floor(Date.now() / 1000);
@@ -808,7 +808,7 @@ async function fetchInstagramFullMetrics(
         const comments = item.comments_count ?? 0;
 
         // Try to get detailed insights per media
-        let mediaInsights = { impressions: 0, reach: 0, shares: 0, saves: 0, video_views: 0 };
+        const mediaInsights = { impressions: 0, reach: 0, shares: 0, saves: 0, video_views: 0 };
         try {
           const isVideo = item.media_type === "VIDEO" || item.media_type === "REEL";
           // For Reels: use plays instead of video_views (v19+ deprecates video_views for reels)
@@ -973,7 +973,7 @@ async function fetchFacebookFullMetrics(
   // 2. Page insights — New Pages Experience deprecated most page-level metrics.
   //    Only page_views_total and page_video_views still work reliably.
   //    For impressions/reach/engagement, we aggregate from per-post insights below.
-  let insights: Record<string, number> = {};
+  const insights: Record<string, number> = {};
   let fbInsightsError: string | null = null;
   const nowTs = Math.floor(Date.now() / 1000);
   const sinceTs = nowTs - 28 * 86400;

@@ -1,12 +1,17 @@
 export { useSocialAccounts } from './useSocialAccounts';
 export { useScheduledPosts } from './useScheduledPosts';
-export { useSocialMetrics } from './useSocialMetrics';
+export { useSocialMetrics, useOrgSnapshots } from './useSocialMetrics';
+export type { AccountSnapshot, AccountMetricsSummary } from './useSocialMetrics';
 export { useCampaignSocialMetrics } from './useCampaignSocialMetrics';
 export { useAccountGroups } from './useAccountGroups';
 export { useAccountPermissions } from './useAccountPermissions';
 export { useContentQueue } from './useContentQueue';
 export { usePostMetrics } from './usePostMetrics';
+export { useBatchPostMetrics } from './useBatchPostMetrics';
 export { useContentSocialStatus } from './useContentSocialStatus';
 export type { ContentSocialStatus } from './useContentSocialStatus';
 export { useAIContentGenerator, CAPTION_STYLE_LABELS } from './useAIContentGenerator';
 export type { AICaption, AIGenerationResult } from './useAIContentGenerator';
+export { useApprovedContent } from './useApprovedContent';
+export type { ApprovedContent } from './useApprovedContent';
+export { useSocialPostsLimit } from './useSocialPostsLimit';

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Users, DollarSign, CheckCircle, Clock, CreditCard, User, Building2 } from "lucide-react";
+import { Users, DollarSign, Clock, CreditCard, User, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,18 +30,18 @@ export function ReferralStats() {
         .select('*', { count: 'exact', head: true });
 
       // 2. Fetch active non-free platform subscriptions → get org IDs
-      const { data: orgSubs } = await (supabase as any)
+      const { data: orgSubs } = await (supabase as never)
         .from('platform_subscriptions')
         .select('organization_id')
         .not('tier', 'in', '(brand_free,creator_free)')
         .eq('status', 'active');
 
-      const subscribedOrgIds = (orgSubs || []).map((s: any) => s.organization_id).filter(Boolean);
+      const subscribedOrgIds = (orgSubs || []).map((s: { organization_id: string }) => s.organization_id).filter(Boolean);
 
       // 3. Count members of those orgs
       let subscribedUsers = 0;
       if (subscribedOrgIds.length > 0) {
-        const { count } = await (supabase as any)
+        const { count } = await (supabase as never)
           .from('organization_members')
           .select('user_id', { count: 'exact', head: true })
           .in('organization_id', subscribedOrgIds);
@@ -58,9 +58,9 @@ export function ReferralStats() {
         subscribedUsers,
       }));
 
-      // 4. Fetch referral stats
+      // 4. Fetch referral stats from unified system (referral_relationships)
       const { data: referralsData } = await supabase
-        .from('referrals')
+        .from('referral_relationships')
         .select('status');
 
       if (referralsData) {
@@ -76,15 +76,15 @@ export function ReferralStats() {
         }));
       }
 
-      // 5. Fetch commission stats
-      const { data: commissionsData } = await supabase
-        .from('referral_commissions')
-        .select('amount, status');
+      // 5. Fetch commission stats from unified system (referral_earnings)
+      const { data: earningsData } = await supabase
+        .from('referral_earnings')
+        .select('commission_amount, status');
 
-      if (commissionsData) {
-        const totalCommissions = commissionsData.reduce((sum, c) => sum + c.amount, 0);
-        const pendingCommissions = commissionsData.filter(c => c.status === 'pending').reduce((sum, c) => sum + c.amount, 0);
-        const paidCommissions = commissionsData.filter(c => c.status === 'paid').reduce((sum, c) => sum + c.amount, 0);
+      if (earningsData) {
+        const totalCommissions = earningsData.reduce((sum, c) => sum + (c.commission_amount || 0), 0);
+        const pendingCommissions = earningsData.filter(c => c.status === 'pending').reduce((sum, c) => sum + (c.commission_amount || 0), 0);
+        const paidCommissions = earningsData.filter(c => c.status === 'credited').reduce((sum, c) => sum + (c.commission_amount || 0), 0);
 
         setStats(prev => ({
           ...prev,

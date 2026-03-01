@@ -51,7 +51,7 @@ export function useBrand() {
       }
 
       // 4. Check for orphaned owned brands (owner but no membership)
-      let allMemberships = memberships || [];
+      const allMemberships = memberships || [];
       for (const ownedBrand of (ownedBrands || [])) {
         const hasMembership = allMemberships.some((m: BrandMember) => m.brand_id === ownedBrand.id);
         if (!hasMembership) {

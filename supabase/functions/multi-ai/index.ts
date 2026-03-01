@@ -256,7 +256,7 @@ serve(async (req) => {
     console.log("Available providers:", providers);
 
     // Auto-detectar modelos disponibles si no se especifican
-    let selectedModels = models || [];
+    const selectedModels = models || [];
     
     if (selectedModels.length === 0) {
       if (providers.gemini) {

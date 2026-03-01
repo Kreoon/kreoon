@@ -270,7 +270,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     try {
       // First fetch profile to get current_organization_id (with 20s timeout)
-      let profileResult = await withTimeout(
+      const profileResult = await withTimeout(
         () =>
           supabase
             .from('profiles')

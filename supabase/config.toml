@@ -394,6 +394,10 @@ verify_jwt = false
 # Probar webhooks configurados
 verify_jwt = true
 
+[functions.booking-webhook-dispatch]
+# Disparar webhooks cuando hay eventos de booking (llamado internamente)
+verify_jwt = false
+
 [functions.calendar-oauth-start]
 # Iniciar OAuth para conectar calendario externo
 verify_jwt = true
@@ -420,3 +424,54 @@ verify_jwt = false
 [functions.calendar-google-sync]
 # Sincronizar eventos de Google Calendar como blocked_events
 verify_jwt = true
+
+# ── Live Hosting System ──
+
+[functions.live-hosting-service]
+# Gestión de contratación de hosts para transmisiones en vivo
+# JWT verificado internamente para mayor flexibilidad
+verify_jwt = true
+
+# ── Streaming V2 Module ──
+
+[functions.streaming-hub]
+# API principal para gestión de sesiones de streaming
+verify_jwt = true
+
+[functions.streaming-ai]
+# IA para generación de guiones y sugerencias de streaming
+verify_jwt = true
+
+[functions.streaming-chat-aggregator]
+# Agregación de chat multi-plataforma (YouTube, TikTok, etc.)
+verify_jwt = false
+
+[functions.streaming-shopping]
+# Lógica de Live Shopping (productos, flash offers, compras)
+verify_jwt = true
+
+[functions.streaming-obs-bridge]
+# Proxy WebSocket para control remoto de OBS Studio
+verify_jwt = true
+
+[functions.streaming-webhook-v2]
+# Webhooks de plataformas de streaming (YouTube, TikTok, Twitch)
+verify_jwt = false
+
+# ── Cloudflare Stream - Live Broadcasting ──
+
+[functions.cloudflare-live-service]
+# API principal para transmisiones en vivo directas desde el navegador
+# Usa WHIP (WebRTC-HTTP Ingestion Protocol) con Cloudflare Stream
+# JWT verificado internamente por la función (supabase.auth.getUser)
+# Gateway verify_jwt causaba 401 por inconsistencias con header merging
+verify_jwt = false
+
+[functions.cloudflare-live-webhook]
+# Webhooks de Cloudflare Stream (live_input.connected, disconnected, etc.)
+# No requiere JWT porque Cloudflare envía directamente
+verify_jwt = false
+
+[functions.cloudflare-test]
+# Función temporal para probar conexión con Cloudflare
+verify_jwt = false
