@@ -7,7 +7,7 @@ import type { PostMetrics } from '../types/social.types';
  * Returns a Map of postId → PostMetrics[] for efficient lookup.
  */
 export function useBatchPostMetrics(postIds: string[]) {
-  return useQuery({
+  const query = useQuery({
     queryKey: ['batch-post-metrics', postIds],
     queryFn: async () => {
       if (postIds.length === 0) return new Map<string, PostMetrics[]>();
@@ -28,9 +28,18 @@ export function useBatchPostMetrics(postIds: string[]) {
       }
       return map;
     },
-    // Always return empty Map as initialData to avoid undefined
-    initialData: () => new Map<string, PostMetrics[]>(),
     enabled: postIds.length > 0,
     staleTime: 5 * 60 * 1000,
   });
+
+  // Ensure we always return a valid Map, even if cache returned a plain object
+  // (Maps lose their methods when serialized/deserialized from localStorage)
+  const data = query.data;
+  const safeMap = data instanceof Map
+    ? data
+    : data && typeof data === 'object'
+      ? new Map(Object.entries(data as Record<string, PostMetrics[]>))
+      : new Map<string, PostMetrics[]>();
+
+  return { ...query, data: safeMap };
 }

@@ -450,6 +450,7 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
         thumbnailUrl={thumbnailUrl}
         onThumbnailChange={setThumbnailUrl}
         maxFiles={10}
+        postType={postType}
       />
 
       {/* Schedule */}

@@ -1,9 +1,10 @@
 import { useState, useRef, useCallback } from 'react';
-import { Upload, X, Image, Film, Loader2, ChevronLeft, ChevronRight, GripVertical } from 'lucide-react';
+import { Upload, X, Image, Film, Loader2, ChevronLeft, ChevronRight, GripVertical, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { SUPPORTED_MEDIA_TYPES, SUPPORTED_IMAGE_TYPES, MAX_MEDIA_UPLOAD_SIZE_MB } from '../../config/constants';
 import { toast } from 'sonner';
+import type { SocialPostType } from '../../types/social.types';
 
 interface MediaUploaderProps {
   mediaUrls: string[];
@@ -11,7 +12,31 @@ interface MediaUploaderProps {
   thumbnailUrl: string | null;
   onThumbnailChange: (url: string | null) => void;
   maxFiles?: number;
+  postType?: SocialPostType;
 }
+
+// Video requirements per post type
+const VIDEO_REQUIREMENTS: Record<string, { title: string; specs: string[] }> = {
+  reel: {
+    title: 'Requisitos para Reels',
+    specs: [
+      'Formato vertical 9:16 (1080x1920 recomendado)',
+      'Duración: 3 - 90 segundos',
+      'Resolución mínima: 540x960',
+      'Formato: MP4 o MOV (H.264)',
+      'Máximo 4GB (recomendado < 100MB)',
+    ],
+  },
+  story: {
+    title: 'Requisitos para Historias',
+    specs: [
+      'Formato vertical 9:16 (1080x1920 recomendado)',
+      'Duración: 1 - 60 segundos',
+      'Resolución mínima: 540x960',
+      'Formato: MP4 o MOV (H.264)',
+    ],
+  },
+};
 
 export function MediaUploader({
   mediaUrls,
@@ -19,6 +44,7 @@ export function MediaUploader({
   thumbnailUrl,
   onThumbnailChange,
   maxFiles = 10,
+  postType = 'post',
 }: MediaUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
@@ -199,6 +225,25 @@ export function MediaUploader({
           </>
         )}
       </div>
+
+      {/* Video requirements info for reels/stories */}
+      {(postType === 'reel' || postType === 'story') && VIDEO_REQUIREMENTS[postType] && (
+        <div className="flex gap-2 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+          <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-blue-300">
+              {VIDEO_REQUIREMENTS[postType].title}
+            </p>
+            <ul className="space-y-0.5">
+              {VIDEO_REQUIREMENTS[postType].specs.map((spec, i) => (
+                <li key={i} className="text-[10px] text-blue-200/80">
+                  • {spec}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
 
       <input
         ref={fileInputRef}

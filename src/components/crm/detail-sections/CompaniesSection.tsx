@@ -46,10 +46,12 @@ export function CompaniesSection({ companies, userId, onActionComplete }: Compan
 
   const openLinkForm = async () => {
     setLinkOpen(true);
-    // Fetch all clients to pick from (platform admin can see all)
+    // Fetch only independent brand clients (clients with brand_id set)
+    // These are brands independientes, not organization clients
     const { data } = await supabase
       .from('clients')
-      .select('id, name, organization_id')
+      .select('id, name, brand_id, brands:brand_id(name)')
+      .not('brand_id', 'is', null)
       .order('name')
       .limit(200);
 
@@ -59,7 +61,11 @@ export function CompaniesSection({ companies, userId, onActionComplete }: Compan
       setAvailableClients(
         data
           .filter(c => !linkedIds.has(c.id))
-          .map(c => ({ id: c.id, name: c.name, organization_name: '' }))
+          .map(c => ({
+            id: c.id,
+            name: c.name,
+            organization_name: (c.brands as any)?.name || ''
+          }))
       );
     }
   };
