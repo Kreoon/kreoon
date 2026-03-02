@@ -34,7 +34,7 @@ import {
   Film,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { invokeProductResearch } from '@/lib/productResearch';
+import { fireProductResearch, pollProductResearchProgress } from '@/lib/productResearch';
 import { invokeAIWithTokens } from '@/lib/ai/token-gate';
 import { ResearchProgressIndicator } from './ResearchProgressIndicator';
 import { toast } from 'sonner';
@@ -868,24 +868,52 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
 
       toast.success('Producto creado, iniciando investigación con IA...');
 
-      // Step 2: Call the research function (Kreoon directo)
-      // Research errors are handled separately - product is already saved
+      // Step 2: Fire research as fire-and-forget (edge function self-invokes for all 12 steps)
+      // The ResearchProgressIndicator component polls research_progress automatically
       let researchSuccess = false;
       try {
-        const { data, error } = await invokeProductResearch({ productId: newProduct.id, briefData });
+        const fireResult = await fireProductResearch({ productId: newProduct.id, briefData });
 
-        if (error) {
-          console.error('Research function error:', error);
-          toast.error('Error al generar la investigación', {
+        if (!fireResult.success) {
+          console.error('Research fire error:', fireResult.error);
+          toast.error('Error al iniciar la investigación', {
             description: 'El brief fue guardado. Puedes reintentar la investigación desde el detalle del producto.'
           });
-        } else if (!data?.success) {
-          console.error('Research returned failure:', data?.error);
-          toast.error('La investigación no se completó', {
-            description: data?.error || 'El brief fue guardado. Puedes reintentar desde el detalle del producto.'
-          });
         } else {
-          researchSuccess = true;
+          // Poll for completion — wait up to 10 minutes
+          researchSuccess = await new Promise<boolean>((resolve) => {
+            const cancelPoll = pollProductResearchProgress(
+              newProduct.id,
+              (progress, done) => {
+                if (done) {
+                  if (progress?.error) {
+                    console.error('Research poll error:', progress.label);
+                    toast.error('La investigación encontró un error', {
+                      description: progress.label || 'Puedes reintentar desde el detalle del producto.'
+                    });
+                    resolve(false);
+                  } else {
+                    resolve(true);
+                  }
+                  cancelPoll();
+                }
+              },
+              3000,
+              200,
+            );
+
+            // Safety timeout: don't block forever (10 min)
+            setTimeout(() => {
+              cancelPoll();
+              resolve(false);
+            }, 600000);
+          });
+
+          if (!researchSuccess) {
+            toast.error('La investigación no se completó a tiempo', {
+              description: 'Puedes ver el progreso parcial y reintentar desde el detalle del producto.'
+            });
+          }
         }
       } catch (researchError) {
         console.error('Research exception:', researchError);
