@@ -24,7 +24,7 @@ const VIDEO_REQUIREMENTS: Record<string, { title: string; specs: string[] }> = {
       'Duración: 3 - 90 segundos',
       'Resolución mínima: 540x960',
       'Formato: MP4 o MOV (H.264)',
-      'Máximo 4GB (recomendado < 100MB)',
+      'Máximo 4GB (recomendado < 200MB)',
     ],
   },
   story: {

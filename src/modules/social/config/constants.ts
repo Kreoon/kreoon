@@ -5,7 +5,7 @@ export const MAX_ACCOUNTS_PER_ORG = 50;
 export const MAX_GROUPS_PER_ORG = 20;
 export const MAX_ACCOUNTS_PER_GROUP = 25;
 export const MAX_QUEUE_SLOTS_PER_DAY = 10;
-export const MAX_MEDIA_UPLOAD_SIZE_MB = 100;
+export const MAX_MEDIA_UPLOAD_SIZE_MB = 200;
 export const MAX_MEDIA_FILES_PER_POST = 10;
 
 // Queue defaults
