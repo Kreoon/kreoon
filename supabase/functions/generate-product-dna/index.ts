@@ -151,29 +151,26 @@ Responde SOLO con el JSON.`,
   }
 }
 
-// ── Perplexity AI call ──────────────────────────────────────────────────
-async function callPerplexity(systemPrompt: string, userPrompt: string): Promise<string> {
+// ── Perplexity AI call (research mode - no JSON constraint) ─────────────
+async function callPerplexityResearch(userPrompt: string, researchPrompt: string): Promise<string> {
   const apiKey = getAPIKey("perplexity");
   if (!apiKey) {
     console.error("[generate-product-dna] PERPLEXITY_API_KEY not found in environment");
     throw new Error("PERPLEXITY_API_KEY not configured");
   }
 
-  console.log("[generate-product-dna] Calling Perplexity sonar-pro...");
-  console.log(`[generate-product-dna] API Key starts with: ${apiKey.substring(0, 8)}...`);
+  console.log("[generate-product-dna] Step 1: Perplexity research...");
 
   const requestBody = {
     model: "sonar-pro",
     messages: [
-      { role: "system", content: systemPrompt },
+      { role: "system", content: researchPrompt },
       { role: "user", content: userPrompt },
     ],
     max_tokens: 8000,
-    temperature: 0.2,
-    return_citations: false,
+    temperature: 0.3,
+    return_citations: true,
   };
-
-  console.log(`[generate-product-dna] Request body size: ${JSON.stringify(requestBody).length} chars`);
 
   const response = await fetch("https://api.perplexity.ai/chat/completions", {
     method: "POST",
@@ -196,12 +193,63 @@ async function callPerplexity(systemPrompt: string, userPrompt: string): Promise
   const content = data.choices?.[0]?.message?.content || "";
 
   if (!content) {
-    console.error("[generate-product-dna] Perplexity returned empty content. Full response:", JSON.stringify(data).substring(0, 500));
+    console.error("[generate-product-dna] Perplexity returned empty content");
     throw new Error("Perplexity returned empty response");
   }
 
-  console.log(`[generate-product-dna] Perplexity success: ${content.length} chars`);
-  console.log(`[generate-product-dna] Content starts with: ${content.substring(0, 200)}`);
+  console.log(`[generate-product-dna] Perplexity research: ${content.length} chars`);
+  return content;
+}
+
+// ── Gemini call (structure into JSON) ───────────────────────────────────
+async function callGeminiStructure(research: string, jsonStructure: string, structurePrompt: string): Promise<string> {
+  const apiKey = Deno.env.get("GOOGLE_AI_API_KEY") || Deno.env.get("GEMINI_API_KEY");
+  if (!apiKey) {
+    throw new Error("GOOGLE_AI_API_KEY not configured");
+  }
+
+  console.log("[generate-product-dna] Step 2: Gemini structuring...");
+
+  const userPrompt = `INVESTIGACION DE MERCADO:
+${research}
+
+---
+
+ESTRUCTURA JSON REQUERIDA:
+${jsonStructure}
+
+---
+
+Convierte la investigacion anterior en un JSON con exactamente esa estructura. Responde SOLO con el JSON.`;
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: userPrompt }] }],
+        systemInstruction: { parts: [{ text: structurePrompt }] },
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 8000,
+          responseMimeType: "application/json", // Force JSON output
+        },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errText = await response.text();
+    console.error("[generate-product-dna] Gemini error:", errText);
+    throw new Error(`Gemini API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+  console.log(`[generate-product-dna] Gemini structured: ${content.length} chars`);
+  console.log(`[generate-product-dna] Gemini starts with: ${content.substring(0, 100)}`);
   return content;
 }
 
@@ -493,7 +541,78 @@ function formatEmotionalContext(ea: Record<string, unknown>): string {
     : "";
 }
 
-// ── System Prompt ───────────────────────────────────────────────────────
+// ── JSON Structure Template ─────────────────────────────────────────────
+const JSON_STRUCTURE_TEMPLATE = `{
+  "market_research": {
+    "market_overview": "Descripcion del mercado (3-4 oraciones con datos)",
+    "market_size": "Tamaño estimado del mercado",
+    "growth_trends": ["tendencia 1", "tendencia 2", "tendencia 3"],
+    "opportunities": ["oportunidad 1", "oportunidad 2", "oportunidad 3"],
+    "threats": ["amenaza 1", "amenaza 2"],
+    "target_segments": [{"name": "Segmento", "description": "Desc", "size_estimate": "Tamaño", "priority": "high/medium/low"}],
+    "ideal_customer_profile": {
+      "demographics": "Edad, genero, ubicacion",
+      "psychographics": "Valores, intereses, estilo de vida",
+      "pain_points": ["dolor 1", "dolor 2", "dolor 3"],
+      "desires": ["deseo 1", "deseo 2", "deseo 3"],
+      "objections": ["objecion 1", "objecion 2"],
+      "buying_triggers": ["disparador 1", "disparador 2"]
+    }
+  },
+  "competitor_analysis": {
+    "direct_competitors": [{"name": "Nombre", "strengths": ["f1"], "weaknesses": ["d1"], "positioning": "Pos", "price_range": "Rango"}],
+    "indirect_competitors": ["competidor 1", "competidor 2"],
+    "competitive_advantage": "Ventaja competitiva principal",
+    "positioning_strategy": "Estrategia de posicionamiento",
+    "differentiation_points": ["diferenciador 1", "diferenciador 2"]
+  },
+  "strategy_recommendations": {
+    "value_proposition": "Propuesta de valor (1-2 oraciones)",
+    "brand_positioning": "Posicionamiento de marca",
+    "pricing_strategy": "Estrategia de precio",
+    "sales_angles": [{"angle_name": "Angulo", "headline": "Titular", "hook": "Gancho", "target_emotion": "Emocion"}],
+    "funnel_strategy": {"awareness": "Estrategia", "consideration": "Estrategia", "conversion": "Estrategia", "retention": "Estrategia"},
+    "content_pillars": ["pilar 1", "pilar 2", "pilar 3"],
+    "platforms": [{"name": "Plataforma", "strategy": "Estrategia", "content_types": ["tipo 1"], "priority": "high"}],
+    "hashtags": ["#hashtag1", "#hashtag2", "#hashtag3"],
+    "ads_targeting": {"interests": ["i1", "i2"], "behaviors": ["b1"], "keywords": ["k1"], "lookalike_sources": ["fuente 1"]}
+  },
+  "content_brief": {
+    "brand_voice": {"tone": ["tono 1", "tono 2"], "personality": "Personalidad", "do_say": ["frase 1"], "dont_say": ["frase 1"]},
+    "key_messages": ["mensaje 1", "mensaje 2"],
+    "tagline_suggestions": ["tagline 1", "tagline 2"],
+    "content_ideas": [{"title": "Idea", "format": "video/reel/carrusel", "objective": "awareness/conversion", "brief_description": "Descripcion"}],
+    "visual_direction": {"color_palette": ["#hex1", "#hex2"], "style": "Estilo visual", "mood": "Atmosfera"}
+  }
+}`;
+
+// ── Default Prompts (fallback if DB unavailable) ────────────────────────
+const DEFAULT_RESEARCH_PROMPT = `Eres un investigador de mercado experto para LATAM. Tu tarea es investigar a fondo el producto/servicio descrito y proporcionar un analisis completo.
+
+INVESTIGA Y PROPORCIONA:
+1. MERCADO: Tamaño del mercado, tendencias actuales, oportunidades y amenazas
+2. COMPETENCIA: Competidores directos e indirectos, sus fortalezas y debilidades, precios
+3. AUDIENCIA: Perfil demografico y psicografico del cliente ideal, sus dolores y deseos
+4. ESTRATEGIA: Propuesta de valor, posicionamiento, angulos de venta, estrategia de precios
+5. CONTENIDO: Tono de marca, mensajes clave, ideas de contenido, hashtags relevantes
+
+Incluye datos especificos, numeros y tendencias actuales del mercado latinoamericano.
+Puedes estructurar tu respuesta como prefieras (bullet points, parrafos, etc).
+Lo importante es que sea COMPLETO y con DATOS REALES.`;
+
+const DEFAULT_STRUCTURE_PROMPT = `Eres un asistente que estructura informacion en JSON.
+Tu UNICA tarea es tomar la investigacion proporcionada y organizarla en el formato JSON especificado.
+
+REGLAS ESTRICTAS:
+1. Tu respuesta debe ser UNICAMENTE un objeto JSON valido
+2. El primer caracter debe ser {
+3. El ultimo caracter debe ser }
+4. NO incluyas texto, explicaciones ni markdown
+5. Usa la informacion de la investigacion para llenar cada campo
+6. Si falta informacion para algun campo, infiere basandote en el contexto
+7. Todo el contenido debe estar en español`;
+
+// ── System Prompt (legacy, kept for backward compat) ────────────────────
 const PRODUCT_DNA_SYSTEM_PROMPT = `Eres un API de analisis de mercado. Respondes EXCLUSIVAMENTE con JSON.
 
 INSTRUCCIONES CRITICAS:
@@ -738,13 +857,23 @@ Deno.serve(async (req: Request) => {
     const wizardContext = buildWizardContext(wizardResponses);
     const emotionalContext = formatEmotionalContext(emotionalAnalysis);
 
-    // Intentar obtener prompt desde DB
-    let systemPrompt: string;
+    // Get prompts from DB with fallbacks
+    let researchPrompt = DEFAULT_RESEARCH_PROMPT;
+    let structurePrompt = DEFAULT_STRUCTURE_PROMPT;
+
     try {
-      const promptConfig = await getPrompt(supabase, "dna", "product_analysis");
-      systemPrompt = (promptConfig.systemPrompt || PRODUCT_DNA_SYSTEM_PROMPT) + emotionalContext;
-    } catch {
-      systemPrompt = PRODUCT_DNA_SYSTEM_PROMPT + emotionalContext;
+      const researchConfig = await getPrompt(supabase, "dna", "product_research");
+      if (researchConfig.systemPrompt) researchPrompt = researchConfig.systemPrompt;
+    } catch { /* use default */ }
+
+    try {
+      const structureConfig = await getPrompt(supabase, "dna", "product_structure");
+      if (structureConfig.systemPrompt) structurePrompt = structureConfig.systemPrompt;
+    } catch { /* use default */ }
+
+    // Add emotional context to research prompt if available
+    if (emotionalContext) {
+      researchPrompt += emotionalContext;
     }
 
     let userPrompt = `Tipo de servicio: ${record.service_group}\nServicios especificos: ${(record.service_types || []).join(", ")}`;
@@ -769,17 +898,21 @@ Deno.serve(async (req: Request) => {
     if (inspLinks.length) userPrompt += `\n\nEnlaces de inspiracion: ${inspLinks.join(", ")}`;
 
     console.log(`[generate-product-dna] Prompt built: ${userPrompt.length} chars (transcription: ${transcription.length}, wizard: ${wizardContext.length})`);
-    console.log(`[generate-product-dna] User prompt (first 800 chars): ${userPrompt.substring(0, 800)}`);
 
-    // ── 4. Generate analysis with Perplexity (required) ───────
+    // ── 4. Two-step generation: Perplexity research → Gemini structure ───────
     let aiResponse: string;
 
     try {
-      // Call Perplexity - this is required, no fallback to other providers
-      aiResponse = await callPerplexity(systemPrompt, userPrompt);
-    } catch (perplexityError) {
-      console.error("[generate-product-dna] Perplexity call failed:", perplexityError);
-      throw perplexityError;
+      // Step 1: Perplexity does deep research (no JSON constraint)
+      const research = await callPerplexityResearch(userPrompt, researchPrompt);
+      console.log(`[generate-product-dna] Research completed: ${research.length} chars`);
+
+      // Step 2: Gemini structures the research into JSON
+      aiResponse = await callGeminiStructure(research, JSON_STRUCTURE_TEMPLATE, structurePrompt);
+      console.log(`[generate-product-dna] Structuring completed: ${aiResponse.length} chars`);
+    } catch (genError) {
+      console.error("[generate-product-dna] Generation failed:", genError);
+      throw genError;
     }
 
     // ── 5. Parse AI response ────────────────────────────────────────────
@@ -816,18 +949,31 @@ Deno.serve(async (req: Request) => {
         try {
           analysisData = JSON.parse(repairJsonForParse(jsonMatch[0]));
           console.log("[generate-product-dna] Recovered JSON via regex extraction");
-        } catch {
+        } catch (finalErr) {
           console.error("[generate-product-dna] Regex extraction also failed");
           console.error("[generate-product-dna] Last 500 chars of response:", aiResponse.substring(Math.max(0, aiResponse.length - 500)));
-          throw new Error("Error al parsear respuesta de Perplexity. El análisis no pudo ser generado.");
+          const parseError = new Error(`Parse failed. Response starts: "${aiResponse.substring(0, 150)}..." ends: "...${aiResponse.substring(Math.max(0, aiResponse.length - 150))}"`);
+          throw parseError;
         }
       } else {
         console.error("[generate-product-dna] No JSON structure found in response at all");
-        throw new Error("Perplexity no devolvió JSON válido. Intenta de nuevo.");
+        const noJsonError = new Error(`No JSON found. Response (${aiResponse.length} chars): "${aiResponse.substring(0, 300)}..."`);
+        throw noJsonError;
       }
     }
 
     console.log("[generate-product-dna] Analysis generated, sections:", Object.keys(analysisData).join(", "));
+
+    // Validate required sections exist
+    const requiredSections = ["market_research", "competitor_analysis", "strategy_recommendations", "content_brief"];
+    const missingSections = requiredSections.filter(s => !analysisData[s]);
+
+    if (missingSections.length > 0) {
+      console.error("[generate-product-dna] Missing sections:", missingSections.join(", "));
+      console.error("[generate-product-dna] Got sections:", Object.keys(analysisData).join(", "));
+      console.error("[generate-product-dna] Full response preview:", JSON.stringify(analysisData).substring(0, 1000));
+      throw new Error(`Análisis incompleto. Faltan: ${missingSections.join(", ")}. Recibido: ${Object.keys(analysisData).join(", ")}`);
+    }
 
     // ── 6. UPDATE the record ────────────────────────────────────────────
     const complexity = estimateComplexity(
@@ -836,10 +982,10 @@ Deno.serve(async (req: Request) => {
     );
 
     const updatePayload: Record<string, unknown> = {
-      market_research: analysisData.market_research || null,
-      competitor_analysis: analysisData.competitor_analysis || null,
-      strategy_recommendations: analysisData.strategy_recommendations || null,
-      content_brief: analysisData.content_brief || null,
+      market_research: analysisData.market_research,
+      competitor_analysis: analysisData.competitor_analysis,
+      strategy_recommendations: analysisData.strategy_recommendations,
+      content_brief: analysisData.content_brief,
       ai_confidence_score: 85,
       estimated_complexity: complexity,
       status: "ready",
@@ -957,7 +1103,9 @@ Deno.serve(async (req: Request) => {
     );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Error procesando producto";
+    const stack = error instanceof Error ? error.stack : undefined;
     console.error("[generate-product-dna] Error:", message);
+    console.error("[generate-product-dna] Stack:", stack);
 
     // Reset status to draft on failure
     if (productDnaId) {
@@ -973,7 +1121,15 @@ Deno.serve(async (req: Request) => {
     }
 
     return new Response(
-      JSON.stringify({ success: false, error: message }),
+      JSON.stringify({
+        success: false,
+        error: message,
+        debug: {
+          productDnaId,
+          errorType: error instanceof Error ? error.name : typeof error,
+          timestamp: new Date().toISOString()
+        }
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
