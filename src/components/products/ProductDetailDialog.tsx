@@ -239,7 +239,7 @@ export function ProductDetailDialog({
     }
   }, [open]);
 
-  const handleGenerateResearch = async (includeClientDna: boolean = true) => {
+  const handleGenerateResearch = async (includeClientDna: boolean = true, forceRegenerate: boolean = false) => {
     if (!product?.id || !user?.id) return;
 
     // Pre-validation: check tokens
@@ -319,11 +319,13 @@ export function ProductDetailDialog({
     );
 
     // Fire the edge function with token context
+    console.log('[handleGenerateResearch] Calling with:', { includeClientDna, forceRegenerate });
     const result = await generateFullResearch(product.id, {
       userId: user.id,
       organizationId: effectiveOrgId || undefined,
       isClientUser: isClient,
       includeClientDna,
+      forceRegenerate,
     });
     if (!result.success) {
       toast({ title: 'Error al generar investigación', description: result.error, variant: 'destructive' });
@@ -924,7 +926,7 @@ function KiroResearchButton({
   limitReached,
   isRegenerate = false,
 }: {
-  onClick: (includeClientDna: boolean) => void;
+  onClick: (includeClientDna: boolean, forceRegenerate: boolean) => void;
   tokenCost: number;
   hasEnoughTokens: boolean;
   balanceLoading: boolean;
@@ -1018,7 +1020,7 @@ function KiroResearchButton({
             <TooltipTrigger asChild>
               <div>
                 <button
-                  onClick={disabled ? undefined : () => onClick(includeClientDna)}
+                  onClick={disabled ? undefined : () => onClick(includeClientDna, isRegenerate)}
                   disabled={disabled}
                   className={`relative group flex-shrink-0 px-5 py-2.5 rounded-xl text-sm font-medium
                     transition-all duration-300 flex items-center gap-2

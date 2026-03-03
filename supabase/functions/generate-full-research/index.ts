@@ -880,6 +880,7 @@ Deno.serve(async (req) => {
     const organizationId: string | null = body.organization_id || null;
     const isClientUser: boolean = body.is_client_user || false;
     const includeClientDna: boolean = body.include_client_dna !== false; // Default true
+    const forceRegenerate: boolean = body.force_regenerate === true; // Force regeneration (ignore existing data)
 
     // Support both new "phase" param and legacy "start_step" param
     const phase: number = body.phase ?? (body.start_step != null ? startStepToPhase(body.start_step) : 0);
@@ -891,7 +892,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[full-research] Product ${productId} — phase ${phase} of ${EXECUTION_PHASES.length}`);
+    console.log(`[full-research] Product ${productId} — phase ${phase} of ${EXECUTION_PHASES.length}, forceRegenerate=${forceRegenerate}, includeClientDna=${includeClientDna}`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -982,14 +983,37 @@ Deno.serve(async (req) => {
     let competitorAnalysis: any = {};
     let salesAnglesData: any = {};
 
-    const restored = await reconstructPrevResults(supabase, productId);
-    stepResults = restored.stepResults;
-    marketResearch = restored.marketResearch;
-    competitorAnalysis = restored.competitorAnalysis;
-    salesAnglesData = restored.salesAnglesData;
-    const restoredCount = Object.keys(stepResults).length;
-    if (restoredCount > 0) {
-      console.log(`[full-research] Restored ${restoredCount} previous results from DB`);
+    // If force regenerate on phase 0, clear existing data and start fresh
+    console.log(`[full-research] forceRegenerate=${forceRegenerate}, phase=${phase}`);
+    if (forceRegenerate && phase === 0) {
+      console.log(`[full-research] Force regenerate: clearing existing research data for product ${productId}`);
+      const { error: clearError } = await supabase.from("products").update({
+        market_research: null,
+        competitor_analysis: null,
+        avatar_profiles: null,
+        sales_angles_data: null,
+        content_strategy: null,
+        content_calendar: null,
+        launch_strategy: null,
+        research_generated_at: null,
+        research_progress: { step: 0, total: 12, label: "Iniciando regeneración..." },
+      }).eq("id", productId);
+      if (clearError) {
+        console.error(`[full-research] Error clearing data:`, clearError.message);
+      } else {
+        console.log(`[full-research] Data cleared successfully, starting fresh regeneration`);
+      }
+    } else {
+      // Normal flow: restore previous results for resumption
+      const restored = await reconstructPrevResults(supabase, productId);
+      stepResults = restored.stepResults;
+      marketResearch = restored.marketResearch;
+      competitorAnalysis = restored.competitorAnalysis;
+      salesAnglesData = restored.salesAnglesData;
+      const restoredCount = Object.keys(stepResults).length;
+      if (restoredCount > 0) {
+        console.log(`[full-research] Restored ${restoredCount} previous results from DB`);
+      }
     }
 
     // ── 4. Process current phase ─────────────────────────────────────
