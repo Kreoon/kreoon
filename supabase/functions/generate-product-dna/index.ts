@@ -401,7 +401,8 @@ ESTRUCTURA REQUERIDA:
     "opportunities": ["Oportunidad específica con potencial", "Otra oportunidad con datos"],
     "threats": ["Amenaza real con impacto", "Otra amenaza específica"],
     "target_segments": [
-      {"name": "Nombre del segmento", "description": "Descripción detallada", "size_estimate": "Porcentaje o número", "priority": "high/medium/low"}
+      {"name": "Avatar 1 - Nombre y rol", "description": "Descripción detallada: edad, género, situación, necesidades, presupuesto", "size_estimate": "Porcentaje del mercado", "priority": "high"},
+      {"name": "Avatar 2 - Nombre y rol", "description": "Segundo perfil de cliente ideal diferente al primero", "size_estimate": "Porcentaje del mercado", "priority": "high"}
     ],
     "ideal_customer_profile": {
       "demographics": "Edad, género, ubicación, ingresos específicos",
@@ -705,12 +706,20 @@ function generateEnrichedAnalysis(
         "Cambios constantes en algoritmos de redes",
         "Competencia de herramientas gratuitas de IA"
       ],
-      target_segments: [{
-        name: "Emprendedores y PYMEs",
-        description: `Negocios que buscan ${serviceTypes.join(", ")} para aumentar ventas online`,
-        size_estimate: "80% del mercado LATAM",
-        priority: "high"
-      }],
+      target_segments: [
+        {
+          name: "María - Emprendedora E-commerce",
+          description: "Mujer 28-35 años, dueña de tienda online de moda/belleza. Maneja todo sola, necesita contenido rápido y económico para Instagram. Factura $2,000-10,000 USD/mes.",
+          size_estimate: "45% del mercado",
+          priority: "high"
+        },
+        {
+          name: "Carlos - Dueño de PYME",
+          description: "Hombre 35-45 años, negocio establecido (restaurante, clínica, servicios). Quiere modernizar su presencia digital pero no entiende de redes. Presupuesto $500-2,000/mes para marketing.",
+          size_estimate: "35% del mercado",
+          priority: "high"
+        }
+      ],
       ideal_customer_profile: {
         demographics: extracted.demographics,
         psychographics: "Busca eficiencia, valora resultados sobre proceso, activo en redes sociales",
