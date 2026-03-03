@@ -269,8 +269,11 @@ export function ProductDetailDialog({
     // Clear previous research timestamp so polling doesn't think it's already done
     await supabase
       .from('products')
-      .update({ research_generated_at: null, research_progress: null })
+      .update({ research_generated_at: null, research_progress: { step: 0, total: 12, label: 'Iniciando...' } })
       .eq('id', product.id);
+
+    // Small delay to ensure DB update is propagated before polling starts
+    await new Promise(r => setTimeout(r, 1000));
 
     // Start polling progress
     const cancelPoll = pollResearchProgress(

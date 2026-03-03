@@ -413,6 +413,7 @@ export function pollResearchProgress(
   maxAttempts: number = 200 // ~10 min at 3s
 ): () => void {
   let attempts = 0;
+  let hasSeenProgress = false; // Track if we've seen actual progress (step > 0)
 
   const intervalId = setInterval(async () => {
     attempts++;
@@ -429,7 +430,20 @@ export function pollResearchProgress(
       }
 
       const progress = data?.research_progress as any;
-      const isDone = !!data?.research_generated_at && (!progress || progress.step >= progress.total);
+
+      // Track if we've seen real progress (not just initialization)
+      if (progress && progress.step > 0) {
+        hasSeenProgress = true;
+      }
+
+      // Only consider "done" if:
+      // 1. research_generated_at is set AND
+      // 2. progress shows completion (step >= total) AND
+      // 3. We've actually seen progress happen (to avoid false positives from stale data)
+      const isDone = !!data?.research_generated_at &&
+                     progress &&
+                     progress.step >= progress.total &&
+                     hasSeenProgress;
       const isError = !!progress?.error;
 
       onUpdate(progress, isDone || isError);
