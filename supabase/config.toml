@@ -475,3 +475,9 @@ verify_jwt = false
 [functions.cloudflare-test]
 # Función temporal para probar conexión con Cloudflare
 verify_jwt = false
+
+# ── Talent DNA (ADN de Talento para Freelancers) ──
+
+[functions.generate-talent-dna]
+# Genera el ADN de Talento a partir de transcripción de audio
+verify_jwt = false
