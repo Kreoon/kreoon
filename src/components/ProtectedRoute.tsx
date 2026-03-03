@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { useOrgMarketplace } from '@/hooks/useOrgMarketplace';
+import { useTalentGateConfig } from '@/hooks/useTalentGateConfig';
 import { AppRole } from '@/types/database';
 import { getPermissionGroup, getDashboardForRole, type PermissionGroup } from '@/lib/permissionGroups';
 import { Loader2 } from 'lucide-react';
@@ -79,6 +80,7 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
   const { isImpersonating, effectiveRoles, isRootAdmin } = useImpersonation();
   const { isPlatformRoot, currentOrgId, loading: orgLoading } = useOrgOwner();
   const { marketplaceEnabled, clientMarketplaceEnabled, loading: mktLoading } = useOrgMarketplace();
+  const { isEnabled: talentGateEnabled, isLoading: talentGateLoading } = useTalentGateConfig();
   const location = useLocation();
 
   const [clientHasCompany, setClientHasCompany] = useState<boolean | null>(null);
@@ -154,7 +156,7 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
   }, [user, isClient, rolesLoaded, isImpersonating]);
 
   // Wait for both auth loading AND roles to be loaded AND org check for platform root
-  if (loading || !rolesLoaded || orgLoading || (isClient && clientHasCompany === null) || checkingCompany) {
+  if (loading || !rolesLoaded || orgLoading || talentGateLoading || (isClient && clientHasCompany === null) || checkingCompany) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -232,7 +234,9 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     profile?.platform_access_unlocked !== true;
 
   // Block talents without keys from ALL routes except gate bypass routes
+  // Only apply if talent gate is enabled globally
   if (
+    talentGateEnabled &&
     (isTalentRole || isPureTalentWithoutKeys) &&
     !isPlatformRoot &&
     !isPlatformAdmin &&
@@ -247,8 +251,8 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
   // Users without any roles can only access social routes (AFTER referral gate check)
   // But only if they are unlocked (passed referral gate) or are brand members
   if (realRoles.length === 0 && !isPlatformRoot) {
-    // Users without keys cannot access marketplace - redirect to unlock
-    if (!profile?.platform_access_unlocked && !isBrandMember && !isGateBypassRoute) {
+    // Users without keys cannot access marketplace - redirect to unlock (only if gate enabled)
+    if (talentGateEnabled && !profile?.platform_access_unlocked && !isBrandMember && !isGateBypassRoute) {
       return <Navigate to="/unlock-access" replace />;
     }
 

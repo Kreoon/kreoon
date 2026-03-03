@@ -556,13 +556,14 @@ const OnboardingProfile = () => {
         if (updateError) throw updateError;
 
         toast.success('¡Perfil completado!', {
-          description: 'Ahora obtén tus llaves para desbloquear KREOON',
+          description: '¡Bienvenido a KREOON!',
         });
 
         // Refresh auth context before navigating
         await refetchUserData();
 
-        navigate('/unlock-access');
+        // Go to marketplace - ProtectedRoute will redirect to unlock-access if gate is enabled
+        navigate('/marketplace');
       }
     } catch (error: any) {
       console.error('Error saving profile:', error);
