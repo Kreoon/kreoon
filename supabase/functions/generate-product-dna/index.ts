@@ -3,12 +3,45 @@ import { corsHeaders, getAPIKey } from "../_shared/ai-providers.ts";
 // Nuevo: Prompts desde DB con cache y fallback
 import { getPrompt } from "../_shared/prompts/db-prompts.ts";
 
-// ── JSON repair ─────────────────────────────────────────────────────────
+// ── JSON extraction and repair ─────────────────────────────────────────────
+function extractJsonFromText(text: string): string | null {
+  // Remove common prefixes that Perplexity might add
+  let s = text
+    .replace(/^[\s\S]*?(?=\{)/m, "") // Remove everything before first {
+    .replace(/```json\s*/gi, "")
+    .replace(/```\s*/gi, "")
+    .replace(/^Here is the .*?:\s*/i, "")
+    .replace(/^Here's the .*?:\s*/i, "")
+    .replace(/^Aqui esta el .*?:\s*/i, "")
+    .replace(/^El JSON .*?:\s*/i, "")
+    .trim();
+
+  // Try to find JSON object in the text
+  const jsonStart = s.indexOf("{");
+  const jsonEnd = s.lastIndexOf("}");
+
+  if (jsonStart === -1 || jsonEnd === -1 || jsonEnd <= jsonStart) {
+    return null;
+  }
+
+  return s.substring(jsonStart, jsonEnd + 1);
+}
+
 function repairJsonForParse(str: string): string {
   let s = str.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").trim();
+
+  // Remove markdown code blocks
   s = s.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "");
+  s = s.replace(/```json\s*/gi, "").replace(/```\s*/g, "");
+
+  // Extract JSON if embedded in text
+  const extracted = extractJsonFromText(s);
+  if (extracted) {
+    s = extracted;
+  }
 
   try { JSON.parse(s); return s; } catch {
+    // Fix unclosed strings
     let inString = false, escaped = false;
     for (let i = 0; i < s.length; i++) {
       if (escaped) { escaped = false; continue; }
@@ -16,8 +49,11 @@ function repairJsonForParse(str: string): string {
       if (s[i] === '"') inString = !inString;
     }
     if (inString) { while (s.endsWith("\\")) s = s.slice(0, -1); s += '"'; }
+
+    // Remove trailing incomplete properties
     s = s.replace(/,\s*"[^"]*"\s*$/, "").replace(/,\s*"[^"]*"\s*:\s*$/, "").replace(/,\s*$/, "");
 
+    // Balance brackets
     let open = 0, bracket = 0;
     inString = false; escaped = false;
     for (let i = 0; i < s.length; i++) {
@@ -458,20 +494,25 @@ function formatEmotionalContext(ea: Record<string, unknown>): string {
 }
 
 // ── System Prompt ───────────────────────────────────────────────────────
-const PRODUCT_DNA_SYSTEM_PROMPT = `Eres un experto senior en investigacion de mercado, estrategia de producto, marketing digital y analisis competitivo para el mercado latinoamericano. Tu tarea es analizar la informacion de un producto/servicio y generar un analisis completo y accionable.
+const PRODUCT_DNA_SYSTEM_PROMPT = `Eres un API de analisis de mercado. Respondes EXCLUSIVAMENTE con JSON.
 
-El usuario proporciono informacion a traves de un wizard interactivo y opcionalmente un audio describiendo su producto.
+INSTRUCCIONES CRITICAS:
+- Responde SOLO con un objeto JSON valido
+- El primer caracter de tu respuesta DEBE ser {
+- El ultimo caracter de tu respuesta DEBE ser }
+- NO escribas texto antes o despues del JSON
+- NO uses markdown, NO uses \`\`\`
+- NO digas "Aqui esta" ni "Este es" ni ninguna introduccion
 
-INSTRUCCIONES:
-- Analiza TODO lo proporcionado: respuestas del wizard, transcripcion de audio (si existe), y links de referencia
-- Si algo no se menciona, INFIERE de forma inteligente basandote en la industria y contexto
-- Los datos deben ser ESTRATEGICOS y ACCIONABLES, no genericos
-- Todo en español
-- Considera el tipo de servicio (service_group) y los servicios especificos seleccionados
-- Si se proporcionan links de referencia/competidores/inspiracion, incluyelos en tu analisis
-- Adapta tu analisis al OBJETIVO principal del emprendedor
+Analiza la informacion y genera un analisis estrategico para LATAM.
 
-Genera un JSON con EXACTAMENTE esta estructura:
+REGLAS:
+1. Responde SOLO con JSON valido
+2. Todo en español
+3. Datos estrategicos y accionables
+4. Infiere lo que no se mencione
+
+ESTRUCTURA JSON REQUERIDA:
 
 {
   "market_research": {
@@ -735,28 +776,45 @@ Deno.serve(async (req: Request) => {
 
     // ── 5. Parse AI response ────────────────────────────────────────────
     console.log(`[generate-product-dna] Parsing AI response: ${aiResponse.length} chars`);
+    console.log(`[generate-product-dna] First 500 chars of response: ${aiResponse.substring(0, 500)}`);
 
-    const repaired = repairJsonForParse(aiResponse);
+    // Aggressive cleanup of the response
+    let cleanedResponse = aiResponse
+      .replace(/^[\s\S]*?(?=\{)/m, "") // Remove everything before first {
+      .replace(/\}[\s\S]*$/m, "}") // Remove everything after last }
+      .trim();
+
+    // If cleanup stripped everything, try extraction
+    if (!cleanedResponse.startsWith("{")) {
+      const extracted = extractJsonFromText(aiResponse);
+      if (extracted) {
+        cleanedResponse = extracted;
+      }
+    }
+
+    const repaired = repairJsonForParse(cleanedResponse);
     let analysisData: Record<string, unknown>;
 
     try {
       analysisData = JSON.parse(repaired);
       console.log("[generate-product-dna] Successfully parsed AI response");
     } catch (parseErr) {
-      console.error("[generate-product-dna] JSON parse failed, trying extraction...");
-      console.error("[generate-product-dna] Raw response (first 1000 chars):", aiResponse.substring(0, 1000));
+      console.error("[generate-product-dna] JSON parse failed after cleanup");
+      console.error("[generate-product-dna] Cleaned response (first 500 chars):", cleanedResponse.substring(0, 500));
 
-      // Try to extract any valid JSON from the response
+      // Last resort: try regex extraction
       const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         try {
           analysisData = JSON.parse(repairJsonForParse(jsonMatch[0]));
-          console.log("[generate-product-dna] Recovered JSON from response");
+          console.log("[generate-product-dna] Recovered JSON via regex extraction");
         } catch {
-          console.error("[generate-product-dna] JSON extraction also failed");
+          console.error("[generate-product-dna] Regex extraction also failed");
+          console.error("[generate-product-dna] Last 500 chars of response:", aiResponse.substring(Math.max(0, aiResponse.length - 500)));
           throw new Error("Error al parsear respuesta de Perplexity. El análisis no pudo ser generado.");
         }
       } else {
+        console.error("[generate-product-dna] No JSON structure found in response at all");
         throw new Error("Perplexity no devolvió JSON válido. Intenta de nuevo.");
       }
     }
