@@ -239,7 +239,7 @@ export function ProductDetailDialog({
     }
   }, [open]);
 
-  const handleGenerateResearch = async () => {
+  const handleGenerateResearch = async (includeClientDna: boolean = true) => {
     if (!product?.id || !user?.id) return;
 
     // Pre-validation: check tokens
@@ -323,6 +323,7 @@ export function ProductDetailDialog({
       userId: user.id,
       organizationId: effectiveOrgId || undefined,
       isClientUser: isClient,
+      includeClientDna,
     });
     if (!result.success) {
       toast({ title: 'Error al generar investigación', description: result.error, variant: 'destructive' });
@@ -921,7 +922,7 @@ function KiroResearchButton({
   monthlyLimit,
   limitReached,
 }: {
-  onClick: () => void;
+  onClick: (includeClientDna: boolean) => void;
   tokenCost: number;
   hasEnoughTokens: boolean;
   balanceLoading: boolean;
@@ -931,6 +932,8 @@ function KiroResearchButton({
   monthlyLimit?: number | null;
   limitReached: boolean;
 }) {
+  const [includeClientDna, setIncludeClientDna] = React.useState(true);
+
   // Admins, propietarios de organización, o clientes pueden activar (clientes tienen límites mensuales)
   const canActivate = isAdmin || isClient;
   const disabled = !canActivate || !hasEnoughTokens || limitReached || balanceLoading;
@@ -976,6 +979,18 @@ function KiroResearchButton({
           <p className="text-xs text-gray-400 mt-1 leading-relaxed">
             KIRO combina ADN de Marca + ADN de Producto para generar la investigación completa de 12 pasos.
           </p>
+          {/* Checkbox para incluir ADN de Marca */}
+          <label className="flex items-center gap-2 mt-2 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={includeClientDna}
+              onChange={(e) => setIncludeClientDna(e.target.checked)}
+              className="w-4 h-4 rounded border-purple-500/50 bg-purple-900/30 text-purple-500 focus:ring-purple-500/50 focus:ring-offset-0"
+            />
+            <span className="text-[11px] text-gray-400 group-hover:text-gray-300 transition-colors">
+              Incluir ADN de Marca (Client DNA)
+            </span>
+          </label>
           {/* Kreoon Coins cost + monthly usage info */}
           <div className="flex items-center gap-3 mt-2">
             <span className="inline-flex items-center gap-1 text-[10px] font-medium text-purple-300/80 bg-purple-500/10 px-2 py-0.5 rounded-full">
@@ -1000,7 +1015,7 @@ function KiroResearchButton({
             <TooltipTrigger asChild>
               <div>
                 <button
-                  onClick={disabled ? undefined : onClick}
+                  onClick={disabled ? undefined : () => onClick(includeClientDna)}
                   disabled={disabled}
                   className={`relative group flex-shrink-0 px-5 py-2.5 rounded-xl text-sm font-medium
                     transition-all duration-300 flex items-center gap-2

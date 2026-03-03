@@ -879,6 +879,7 @@ Deno.serve(async (req) => {
     const userId: string | null = body.user_id || null;
     const organizationId: string | null = body.organization_id || null;
     const isClientUser: boolean = body.is_client_user || false;
+    const includeClientDna: boolean = body.include_client_dna !== false; // Default true
 
     // Support both new "phase" param and legacy "start_step" param
     const phase: number = body.phase ?? (body.start_step != null ? startStepToPhase(body.start_step) : 0);
@@ -954,7 +955,7 @@ Deno.serve(async (req) => {
     }
 
     let clientDna: any = null;
-    if (clientId) {
+    if (clientId && includeClientDna) {
       const { data } = await supabase
         .from("client_dna")
         .select("*")
@@ -964,6 +965,9 @@ Deno.serve(async (req) => {
         .limit(1)
         .maybeSingle();
       clientDna = data;
+      console.log(`[full-research] Client DNA ${clientDna ? 'loaded' : 'not found'} for client ${clientId}`);
+    } else if (!includeClientDna) {
+      console.log(`[full-research] Client DNA skipped (includeClientDna=false)`);
     }
 
     const baseContext = buildBaseContext(clientDna, productDna, product.name || "Producto");
@@ -1178,6 +1182,7 @@ Deno.serve(async (req) => {
             user_id: userId,
             organization_id: organizationId,
             is_client_user: isClientUser,
+            include_client_dna: includeClientDna,
           }),
         })
           .then((res) => {

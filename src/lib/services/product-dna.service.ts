@@ -354,6 +354,7 @@ export interface TokenContext {
   userId: string;
   organizationId?: string;
   isClientUser: boolean;
+  includeClientDna?: boolean;
 }
 
 /**
@@ -376,6 +377,7 @@ export async function generateFullResearch(
         user_id: tokenContext?.userId,
         organization_id: tokenContext?.organizationId,
         is_client_user: tokenContext?.isClientUser ?? false,
+        include_client_dna: tokenContext?.includeClientDna ?? true,
       },
     }).then(({ error }) => {
       if (error) {
