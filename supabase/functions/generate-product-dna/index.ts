@@ -683,6 +683,8 @@ Deno.serve(async (req: Request) => {
     }
 
     console.log(`[generate-product-dna] Record loaded - client: ${record.client_id}, group: ${record.service_group}, services: ${record.service_types?.join(",")}`);
+    console.log(`[generate-product-dna] wizard_responses keys: ${Object.keys(record.wizard_responses || {}).join(",")}`);
+    console.log(`[generate-product-dna] wizard_responses raw: ${JSON.stringify(record.wizard_responses || {}).substring(0, 500)}`);
 
     // ── 2. Get transcription (check wizard_responses first, then record field) ───
     const wizardResponses = record.wizard_responses || {};
@@ -767,12 +769,18 @@ Deno.serve(async (req: Request) => {
     if (inspLinks.length) userPrompt += `\n\nEnlaces de inspiracion: ${inspLinks.join(", ")}`;
 
     console.log(`[generate-product-dna] Prompt built: ${userPrompt.length} chars (transcription: ${transcription.length}, wizard: ${wizardContext.length})`);
+    console.log(`[generate-product-dna] User prompt (first 800 chars): ${userPrompt.substring(0, 800)}`);
 
     // ── 4. Generate analysis with Perplexity (required) ───────
     let aiResponse: string;
 
-    // Call Perplexity - this is required, no fallback to other providers
-    aiResponse = await callPerplexity(systemPrompt, userPrompt);
+    try {
+      // Call Perplexity - this is required, no fallback to other providers
+      aiResponse = await callPerplexity(systemPrompt, userPrompt);
+    } catch (perplexityError) {
+      console.error("[generate-product-dna] Perplexity call failed:", perplexityError);
+      throw perplexityError;
+    }
 
     // ── 5. Parse AI response ────────────────────────────────────────────
     console.log(`[generate-product-dna] Parsing AI response: ${aiResponse.length} chars`);
