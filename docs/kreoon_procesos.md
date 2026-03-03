@@ -65,6 +65,7 @@
 ```
 
 **Tablas involucradas:**
+
 - `auth.users` - Cuenta de autenticación
 - `profiles` - Perfil de usuario
 - `organizations` - Organización creada
@@ -1268,15 +1269,15 @@ Por Definir → Producción → En Revisión → Aprobado → Publicado
 
 ### 10.1 Tipos de Notificaciones
 
-| Evento | Canal | Template |
-|--------|-------|----------|
-| Nueva reserva | Email, In-app | booking_confirmation |
-| Recordatorio | Email | booking_reminder |
+| Evento              | Canal         | Template             |
+| ------------------- | ------------- | -------------------- |
+| Nueva reserva       | Email, In-app | booking_confirmation |
+| Recordatorio        | Email         | booking_reminder     |
 | Aplicación recibida | Email, In-app | campaign_application |
-| Proyecto asignado | Email, In-app | project_assigned |
-| Entrega recibida | Email, In-app | delivery_received |
-| Pago recibido | Email, In-app | payment_received |
-| Tokens bajos | Email, In-app | tokens_low |
+| Proyecto asignado   | Email, In-app | project_assigned     |
+| Entrega recibida    | Email, In-app | delivery_received    |
+| Pago recibido       | Email, In-app | payment_received     |
+| Tokens bajos        | Email, In-app | tokens_low           |
 
 ### 10.2 Flujo de Notificación
 
@@ -1503,4 +1504,4 @@ Por Definir → Producción → En Revisión → Aprobado → Publicado
 
 ---
 
-*Documentación de procesos KREOON - Marzo 2026*
+_Documentación de procesos KREOON - Marzo 2026_

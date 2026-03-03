@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { getPermissionGroup } from '@/lib/permissionGroups';
+import { useTalentGateConfig } from '@/hooks/useTalentGateConfig';
 import { Loader2 } from 'lucide-react';
 
 interface TalentGateProps {
@@ -15,18 +16,26 @@ interface TalentGateProps {
  * - Anonymous users CAN access (for browsing)
  * - Logged-in talents WITHOUT keys CANNOT access (must unlock first)
  * - Logged-in users WITH keys or non-talents CAN access
+ *
+ * The gate can be disabled globally from Platform Settings > Security
  */
 export function TalentGate({ children }: TalentGateProps) {
   const { user, profile, roles, loading, rolesLoaded } = useAuth();
+  const { isEnabled: gateEnabled, isLoading: configLoading } = useTalentGateConfig();
   const location = useLocation();
 
   // Still loading - show spinner
-  if (loading || !rolesLoaded) {
+  if (loading || !rolesLoaded || configLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
+  }
+
+  // Gate disabled globally - allow everyone
+  if (!gateEnabled) {
+    return <>{children}</>;
   }
 
   // No user = anonymous visitor, allow access to public routes

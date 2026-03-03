@@ -33,12 +33,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
+import {
   Loader2, Shield, Smartphone, Key, Lock, Users, Globe,
-  CheckCircle2, XCircle, AlertTriangle, Ban, Clock, 
+  CheckCircle2, XCircle, AlertTriangle, Ban, Clock,
   Monitor, MapPin, RefreshCw, Settings2, UserCheck,
-  ShieldCheck, ShieldAlert, History, Activity, Bot, Radar
+  ShieldCheck, ShieldAlert, History, Activity, Bot, Radar,
+  KeyRound
 } from "lucide-react";
+import { useTalentGateConfig } from "@/hooks/useTalentGateConfig";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -112,6 +114,7 @@ interface SecurityEvent {
 
 export function PlatformSecurityPanel() {
   const { user } = useAuth();
+  const { config: talentGateConfig, updateConfig: updateTalentGate, isUpdating: talentGateUpdating } = useTalentGateConfig();
   const [loading, setLoading] = useState(true);
   const [policies, setPolicies] = useState<SecurityPolicy[]>([]);
   const [userStatuses, setUserStatuses] = useState<UserSecurityStatus[]>([]);
@@ -512,6 +515,94 @@ export function PlatformSecurityPanel() {
                   </Button>
                 </div>
               ))}
+            </CardContent>
+          </Card>
+
+          {/* Talent Access Gate */}
+          <Card className="border-amber-500/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <KeyRound className="h-5 w-5 text-amber-500" />
+                Control de Acceso con Llaves
+              </CardTitle>
+              <CardDescription>
+                Controla si los talentos (creadores/editores) requieren desbloquear acceso mediante el sistema de referidos para usar funciones del marketplace
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${talentGateConfig.enabled ? "bg-amber-100 dark:bg-amber-900" : "bg-muted"}`}>
+                    <KeyRound className={`h-5 w-5 ${talentGateConfig.enabled ? "text-amber-600" : "text-muted-foreground"}`} />
+                  </div>
+                  <div>
+                    <p className="font-medium">Requerir Llaves para Talentos</p>
+                    <p className="text-xs text-muted-foreground">
+                      {talentGateConfig.enabled
+                        ? "Los talentos sin acceso desbloqueado seran redirigidos a /unlock-access"
+                        : "Todos los talentos pueden acceder libremente al marketplace"
+                      }
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {talentGateUpdating && <Loader2 className="h-4 w-4 animate-spin" />}
+                  <Switch
+                    checked={talentGateConfig.enabled}
+                    onCheckedChange={async (checked) => {
+                      try {
+                        await updateTalentGate({ enabled: checked });
+                        toast.success(checked ? "Gate de llaves activado" : "Gate de llaves desactivado");
+                      } catch (error) {
+                        console.error("Error updating talent gate:", error);
+                        toast.error("Error al actualizar configuracion");
+                      }
+                    }}
+                    disabled={talentGateUpdating}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-muted">
+                    <ShieldCheck className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Admins Bypass Gate</p>
+                    <p className="text-xs text-muted-foreground">
+                      Los administradores siempre pueden acceder sin restricciones
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={talentGateConfig.bypass_admins}
+                  onCheckedChange={async (checked) => {
+                    try {
+                      await updateTalentGate({ bypass_admins: checked });
+                      toast.success("Configuracion actualizada");
+                    } catch (error) {
+                      console.error("Error updating talent gate:", error);
+                      toast.error("Error al actualizar configuracion");
+                    }
+                  }}
+                  disabled={talentGateUpdating}
+                />
+              </div>
+
+              {!talentGateConfig.enabled && (
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                    <div className="text-sm text-amber-800 dark:text-amber-200">
+                      <p className="font-medium">Gate desactivado</p>
+                      <p className="text-xs mt-1">
+                        Todos los talentos pueden acceder al marketplace sin restricciones.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

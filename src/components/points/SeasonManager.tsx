@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,9 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useUPSeasons, UPSeason } from '@/hooks/useUPSeasons';
-import { useCreatorLeaderboard } from '@/hooks/useUPCreadores';
-import { useEditorLeaderboard } from '@/hooks/useUPEditores';
+import { useReputationSeasons } from '@/hooks/useUnifiedReputation';
+import { useOrgRanking } from '@/hooks/useUnifiedReputation';
 import { 
   Calendar, 
   Trophy, 
@@ -34,9 +33,18 @@ interface SeasonManagerProps {
 }
 
 export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
-  const { seasons, activeSeason, loading, createSeason, closeSeason, refetch } = useUPSeasons();
-  const { leaderboard: creatorLeaderboard } = useCreatorLeaderboard();
-  const { leaderboard: editorLeaderboard } = useEditorLeaderboard();
+  const { seasons, activeSeason, loading, createSeason } = useReputationSeasons();
+  const { ranking, loading: rankingLoading } = useOrgRanking();
+
+  // Filtrar ranking por rol
+  const creatorLeaderboard = useMemo(
+    () => ranking.filter(r => r.role_key === 'creator'),
+    [ranking]
+  );
+  const editorLeaderboard = useMemo(
+    () => ranking.filter(r => r.role_key === 'editor'),
+    [ranking]
+  );
   
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showCloseDialog, setShowCloseDialog] = useState(false);
@@ -64,17 +72,14 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
 
   const handleCreateSeason = async () => {
     if (!newSeasonName || !newSeasonStartDate || !newSeasonEndDate) return;
-    
+
     setCreating(true);
     try {
       await createSeason({
         name: newSeasonName,
-        mode: newSeasonMode,
-        starts_at: newSeasonStartDate,
-        ends_at: newSeasonEndDate,
-        reset_points: resetPoints,
-        reset_ranking: true,
-        closeCurrentSeason
+        start_date: newSeasonStartDate,
+        end_date: newSeasonEndDate,
+        is_active: true
       });
       setShowCreateDialog(false);
       setNewSeasonName('');
@@ -85,11 +90,17 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
 
   const handleCloseSeason = async () => {
     if (!activeSeason) return;
-    
+
     setClosing(true);
     try {
-      await closeSeason(activeSeason.id);
+      // Cerrar temporada actualizando is_active a false
+      const { supabase } = await import('@/integrations/supabase/client');
+      await supabase
+        .from('reputation_seasons')
+        .update({ is_active: false })
+        .eq('id', activeSeason.id);
       setShowCloseDialog(false);
+      window.location.reload(); // Refrescar para ver cambios
     } finally {
       setClosing(false);
     }
@@ -99,7 +110,7 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
   const topCreator = creatorLeaderboard[0];
   const topEditor = editorLeaderboard[0];
 
-  if (loading) {
+  if (loading || rankingLoading) {
     return (
       <Card className="border-[hsl(270,100%,60%,0.15)]">
         <CardContent className="p-6 flex items-center justify-center">
@@ -158,8 +169,8 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
                     <span className="text-lg font-bold text-white">{activeSeason.name}</span>
                   </div>
                   <p className="text-xs text-emerald-400/70 mt-1">
-                    {format(new Date(activeSeason.starts_at), "d 'de' MMMM", { locale: es })} - {' '}
-                    {activeSeason.ends_at ? format(new Date(activeSeason.ends_at), "d 'de' MMMM yyyy", { locale: es }) : 'Sin fecha de fin'}
+                    {format(new Date(activeSeason.start_date), "d 'de' MMMM", { locale: es })} - {' '}
+                    {activeSeason.end_date ? format(new Date(activeSeason.end_date), "d 'de' MMMM yyyy", { locale: es }) : 'Sin fecha de fin'}
                   </p>
                 </div>
                 <Button
@@ -191,8 +202,8 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
                     <span className="text-xs text-muted-foreground">Puntos Totales</span>
                   </div>
                   <span className="text-lg font-bold text-white">
-                    {(creatorLeaderboard.reduce((sum, c) => sum + (c.total_points || 0), 0) + 
-                      editorLeaderboard.reduce((sum, e) => sum + (e.total_points || 0), 0)).toLocaleString()} UP
+                    {(creatorLeaderboard.reduce((sum, c) => sum + (c.lifetime_points || 0), 0) + 
+                      editorLeaderboard.reduce((sum, e) => sum + (e.lifetime_points || 0), 0)).toLocaleString()} UP
                   </span>
                 </div>
               </div>
@@ -206,8 +217,8 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
                       <div className="flex items-center gap-2 p-2 rounded-lg bg-muted">
                         <Crown className="w-4 h-4 text-yellow-500" />
                         <div className="min-w-0">
-                          <p className="text-xs font-medium text-white truncate">{topCreator.profile?.full_name}</p>
-                          <p className="text-xs text-muted-foreground">{topCreator.total_points} UP</p>
+                          <p className="text-xs font-medium text-white truncate">{topCreator.full_name}</p>
+                          <p className="text-xs text-muted-foreground">{topCreator.lifetime_points} UP</p>
                         </div>
                       </div>
                     )}
@@ -215,8 +226,8 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
                       <div className="flex items-center gap-2 p-2 rounded-lg bg-muted">
                         <Crown className="w-4 h-4 text-yellow-500" />
                         <div className="min-w-0">
-                          <p className="text-xs font-medium text-white truncate">{topEditor.profile?.full_name}</p>
-                          <p className="text-xs text-muted-foreground">{topEditor.total_points} UP</p>
+                          <p className="text-xs font-medium text-white truncate">{topEditor.full_name}</p>
+                          <p className="text-xs text-muted-foreground">{topEditor.lifetime_points} UP</p>
                         </div>
                       </div>
                     )}
