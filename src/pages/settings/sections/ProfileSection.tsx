@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   User, Globe, Briefcase, FolderOpen, Star, Calendar, Save,
-  Loader2, Camera, ImageIcon, X, Palette, CheckCircle2, Circle,
+  Loader2, Camera, ImageIcon, X, Palette, CheckCircle2, Circle, Dna,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,6 +37,7 @@ import {
 } from '@/components/settings/MarketplaceSettings';
 import { PortfolioTab } from '@/components/settings/PortfolioTab';
 import { ProfileCustomizationTab } from '@/components/settings/ProfileCustomizationTab';
+import { TalentDNAPage } from '@/components/talent-dna';
 
 const COUNTRIES = [
   { code: 'CO', name: 'Colombia', flag: '\u{1F1E8}\u{1F1F4}' },
@@ -123,6 +124,11 @@ const ALL_TABS: TabDef[] = [
     value: 'personal', icon: User, label: 'Personal',
     component: PersonalInfoTab,
     visibleTo: ALL_AREAS,
+  },
+  {
+    value: 'talent-dna', icon: Dna, label: 'ADN de Talento',
+    component: TalentDNATab,
+    visibleTo: ALL_NON_CLIENT,
   },
   {
     value: 'public', icon: Globe, label: 'Perfil Público',
@@ -916,6 +922,36 @@ function SocialLinksTab() {
             )}
           </Button>
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Tab: ADN de Talento ──────────────────────────────────────────────────────
+
+function TalentDNATab() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/20">
+            <Dna className="h-5 w-5 text-emerald-400" />
+          </div>
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              ADN de Talento
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                IA
+              </span>
+            </CardTitle>
+            <CardDescription>
+              Graba un audio respondiendo 7 preguntas y la IA generará tu perfil profesional completo
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <TalentDNAPage />
       </CardContent>
     </Card>
   );
