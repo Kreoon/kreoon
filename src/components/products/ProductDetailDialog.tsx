@@ -588,6 +588,7 @@ export function ProductDetailDialog({
                         monthlyUsageCount={monthlyUsageCount || 0}
                         monthlyLimit={monthlyLimit}
                         limitReached={limitReached || planDisabled}
+                        isRegenerate={!!product?.research_generated_at}
                       />
                     )
                   )}
@@ -921,6 +922,7 @@ function KiroResearchButton({
   monthlyUsageCount,
   monthlyLimit,
   limitReached,
+  isRegenerate = false,
 }: {
   onClick: (includeClientDna: boolean) => void;
   tokenCost: number;
@@ -931,6 +933,7 @@ function KiroResearchButton({
   monthlyUsageCount: number;
   monthlyLimit?: number | null;
   limitReached: boolean;
+  isRegenerate?: boolean;
 }) {
   const [includeClientDna, setIncludeClientDna] = useState(true);
 
@@ -1026,10 +1029,12 @@ function KiroResearchButton({
                 >
                   {disabled ? (
                     <AlertTriangle className="w-4 h-4" />
+                  ) : isRegenerate ? (
+                    <RefreshCw className="w-4 h-4 group-hover:animate-spin" />
                   ) : (
                     <Rocket className="w-4 h-4 group-hover:animate-bounce" />
                   )}
-                  Activar
+                  {isRegenerate ? 'Recrear' : 'Activar'}
                 </button>
               </div>
             </TooltipTrigger>
