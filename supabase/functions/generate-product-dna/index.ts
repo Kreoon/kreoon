@@ -201,6 +201,111 @@ async function callPerplexityResearch(userPrompt: string, researchPrompt: string
   return content;
 }
 
+// ── Retry with simplified prompt ─────────────────────────────────────────
+async function retryWithSimplePrompt(apiKey: string, research: string, section: string): Promise<Record<string, unknown>> {
+  const simplePrompts: Record<string, string> = {
+    competitor_analysis: `Basándote en esta investigación, extrae los competidores mencionados.
+
+INVESTIGACIÓN:
+${research.substring(0, 8000)}
+
+Responde SOLO con este JSON:
+{
+  "competitor_analysis": {
+    "direct_competitors": [{"name": "Competidor 1", "strengths": ["fuerza"], "weaknesses": ["debilidad"], "positioning": "posición", "price_range": "precio"}],
+    "indirect_competitors": ["alternativa 1", "alternativa 2"],
+    "competitive_advantage": "Ventaja basada en la investigación",
+    "positioning_strategy": "Estrategia de posicionamiento",
+    "differentiation_points": ["diferenciador 1", "diferenciador 2", "diferenciador 3"]
+  }
+}`,
+
+    strategy_recommendations: `Basándote en esta investigación, genera recomendaciones de marketing.
+
+INVESTIGACIÓN:
+${research.substring(0, 8000)}
+
+Responde SOLO con este JSON:
+{
+  "strategy_recommendations": {
+    "value_proposition": "Propuesta de valor en 15 palabras",
+    "brand_positioning": "Posicionamiento en 20 palabras",
+    "pricing_strategy": "Estrategia de precios",
+    "sales_angles": [
+      {"angle_name": "Ángulo 1", "headline": "Titular", "hook": "Gancho", "target_emotion": "Emoción"},
+      {"angle_name": "Ángulo 2", "headline": "Titular 2", "hook": "Gancho 2", "target_emotion": "Emoción 2"},
+      {"angle_name": "Ángulo 3", "headline": "Titular 3", "hook": "Gancho 3", "target_emotion": "Emoción 3"}
+    ],
+    "funnel_strategy": {"awareness": "táctica", "consideration": "táctica", "conversion": "táctica", "retention": "táctica"},
+    "content_pillars": ["pilar 1", "pilar 2", "pilar 3"],
+    "platforms": [{"name": "Instagram", "strategy": "estrategia", "content_types": ["Reels"], "priority": "high"}],
+    "hashtags": ["#hashtag1", "#hashtag2", "#hashtag3", "#hashtag4", "#hashtag5"],
+    "ads_targeting": {"interests": ["interés 1"], "behaviors": ["comportamiento"], "keywords": ["keyword"], "lookalike_sources": ["fuente"]}
+  }
+}`,
+
+    content_brief: `Basándote en esta investigación, crea un brief creativo.
+
+INVESTIGACIÓN:
+${research.substring(0, 8000)}
+
+Responde SOLO con este JSON:
+{
+  "content_brief": {
+    "brand_voice": {"tone": ["tono 1", "tono 2"], "personality": "personalidad", "do_say": ["frase 1"], "dont_say": ["evitar 1"]},
+    "key_messages": ["mensaje 1", "mensaje 2", "mensaje 3"],
+    "tagline_suggestions": ["tagline 1", "tagline 2", "tagline 3"],
+    "content_ideas": [{"title": "Idea 1", "format": "reel", "objective": "awareness", "brief_description": "descripción"}],
+    "visual_direction": {"color_palette": ["#6366f1", "#8b5cf6"], "style": "estilo", "mood": "mood"}
+  }
+}`,
+
+    market_research: `Extrae datos de mercado de esta investigación.
+
+INVESTIGACIÓN:
+${research.substring(0, 8000)}
+
+Responde SOLO con JSON válido.`
+  };
+
+  const prompt = simplePrompts[section] || simplePrompts.market_research;
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.2, maxOutputTokens: 4000 },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      console.error(`[generate-product-dna] ${section} retry failed: ${response.status}`);
+      return {};
+    }
+
+    const data = await response.json();
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    console.log(`[generate-product-dna] ${section} retry response: ${content.length} chars`);
+
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const repaired = repairJsonForParse(jsonMatch[0]);
+      const parsed = JSON.parse(repaired);
+      console.log(`[generate-product-dna] ${section} retry SUCCESS`);
+      return parsed;
+    }
+  } catch (err) {
+    console.error(`[generate-product-dna] ${section} retry exception:`, err);
+  }
+
+  return {};
+}
+
 // ── Gemini call for single section ──────────────────────────────────────
 async function callGeminiSection(apiKey: string, research: string, section: string, sectionPrompt: string): Promise<Record<string, unknown>> {
   console.log(`[generate-product-dna] Calling Gemini for section: ${section}`);
@@ -254,18 +359,24 @@ INSTRUCCIONES FINALES:
         const repaired = repairJsonForParse(jsonMatch[0]);
         const parsed = JSON.parse(repaired);
         console.log(`[generate-product-dna] ${section} parsed keys:`, Object.keys(parsed).join(", "));
-        return parsed;
+        // Verify the section has actual data
+        const sectionData = parsed[section] || parsed;
+        if (Object.keys(sectionData).length > 0) {
+          return parsed;
+        }
+        console.warn(`[generate-product-dna] ${section} parsed but empty`);
       } catch (parseErr) {
-        console.error(`[generate-product-dna] ${section} JSON repair failed, trying simpler structure`);
-        // Return empty section that will be filled with defaults
-        return {};
+        console.error(`[generate-product-dna] ${section} JSON repair failed:`, parseErr);
       }
     }
-    console.error(`[generate-product-dna] ${section} no JSON found in response`);
-    return {};
+
+    // Retry with simplified prompt
+    console.log(`[generate-product-dna] ${section} retrying with simplified prompt...`);
+    return await retryWithSimplePrompt(apiKey, research, section);
   } catch (err) {
     console.error(`[generate-product-dna] ${section} exception:`, err);
-    throw err;
+    // Don't throw, return empty to be filled by enriched defaults
+    return {};
   }
 }
 
