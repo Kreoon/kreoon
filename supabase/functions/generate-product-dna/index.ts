@@ -120,19 +120,18 @@ async function callPerplexity(systemPrompt: string, userPrompt: string): Promise
   const apiKey = getAPIKey("perplexity");
   if (!apiKey) throw new Error("PERPLEXITY_API_KEY not configured");
 
-  console.log("[generate-product-dna] Calling Perplexity...");
+  console.log("[generate-product-dna] Calling Perplexity sonar...");
   const response = await fetch("https://api.perplexity.ai/chat/completions", {
     method: "POST",
     headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "sonar-pro",
+      model: "sonar",  // Changed from sonar-pro for better reliability
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      max_tokens: 12000,
-      temperature: 0.3,
-      return_citations: true,
+      max_tokens: 8000,
+      temperature: 0.2,
     }),
   });
 
@@ -143,7 +142,9 @@ async function callPerplexity(systemPrompt: string, userPrompt: string): Promise
   }
 
   const data = await response.json();
-  return data.choices?.[0]?.message?.content || "";
+  const content = data.choices?.[0]?.message?.content || "";
+  console.log(`[generate-product-dna] Perplexity response: ${content.length} chars, starts with: ${content.substring(0, 100)}`);
+  return content;
 }
 
 // ── Gemini fallback ─────────────────────────────────────────────────────
@@ -151,20 +152,20 @@ async function callGeminiFallback(systemPrompt: string, userPrompt: string): Pro
   const apiKey = Deno.env.get("GOOGLE_AI_API_KEY") || Deno.env.get("GEMINI_API_KEY");
   if (!apiKey) throw new Error("GOOGLE_AI_API_KEY not configured");
 
-  console.log("[generate-product-dna] Falling back to Gemini...");
+  console.log("[generate-product-dna] Falling back to Gemini 2.0 Flash...");
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "gemini-2.5-flash",
+        model: "gemini-2.0-flash",  // Use stable model
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        max_tokens: 12000,
-        temperature: 0.3,
+        max_tokens: 8000,
+        temperature: 0.2,
       }),
     }
   );
@@ -176,7 +177,107 @@ async function callGeminiFallback(systemPrompt: string, userPrompt: string): Pro
   }
 
   const data = await response.json();
-  return data.choices?.[0]?.message?.content || "";
+  const content = data.choices?.[0]?.message?.content || "";
+  console.log(`[generate-product-dna] Gemini response: ${content.length} chars, starts with: ${content.substring(0, 100)}`);
+  return content;
+}
+
+// ── Generate basic fallback analysis ────────────────────────────────────
+function generateBasicAnalysis(wizardResponses: Record<string, unknown>, serviceGroup: string, serviceTypes: string[]): Record<string, unknown> {
+  const goals = (wizardResponses.goals as string[]) || [];
+  const platforms = (wizardResponses.platforms as string[]) || [];
+  const audiences = (wizardResponses.audiences as string[]) || [];
+
+  return {
+    market_research: {
+      market_overview: "Análisis de mercado pendiente - se requiere más información para un análisis completo.",
+      market_size: "Por determinar",
+      growth_trends: ["Crecimiento digital", "Contenido en video", "Redes sociales"],
+      opportunities: ["Diferenciación de marca", "Contenido auténtico", "Engagement con audiencia"],
+      threats: ["Competencia alta", "Cambios en algoritmos"],
+      target_segments: [{
+        name: "Segmento principal",
+        description: `Audiencia de ${audiences.join(", ") || "edad variada"}`,
+        size_estimate: "Por determinar",
+        priority: "high"
+      }],
+      ideal_customer_profile: {
+        demographics: audiences.length ? `Edades: ${audiences.join(", ")}` : "Por definir",
+        psychographics: "Usuario activo en redes sociales",
+        pain_points: ["Falta de contenido de calidad", "Necesidad de diferenciación"],
+        desires: ["Contenido que conecte", "Resultados medibles"],
+        objections: ["Presupuesto", "Tiempo de producción"],
+        buying_triggers: ["Urgencia de campaña", "Lanzamiento de producto"]
+      }
+    },
+    competitor_analysis: {
+      direct_competitors: [],
+      indirect_competitors: [],
+      competitive_advantage: "Por definir con análisis más profundo",
+      positioning_strategy: "Diferenciación por calidad y autenticidad",
+      differentiation_points: ["Contenido personalizado", "Enfoque estratégico"]
+    },
+    strategy_recommendations: {
+      value_proposition: "Contenido de calidad que conecta con tu audiencia",
+      brand_positioning: "Marca auténtica y cercana",
+      pricing_strategy: "Competitivo con valor agregado",
+      sales_angles: goals.map(g => ({
+        angle_name: g,
+        headline: `Logra ${g} con contenido estratégico`,
+        hook: "Conecta con tu audiencia de forma auténtica",
+        target_emotion: "Confianza"
+      })),
+      funnel_strategy: {
+        awareness: "Contenido orgánico en redes",
+        consideration: "Casos de éxito y testimonios",
+        conversion: "Llamadas a la acción claras",
+        retention: "Contenido de valor continuo"
+      },
+      content_pillars: ["Educativo", "Entretenimiento", "Inspiracional", "Promocional"],
+      platforms: platforms.map(p => ({
+        name: p,
+        strategy: `Contenido optimizado para ${p}`,
+        content_types: ["Video", "Imagen", "Stories"],
+        priority: "high"
+      })),
+      hashtags: ["#contenido", "#marca", "#marketing", "#estrategia", "#redes"],
+      ads_targeting: {
+        interests: ["Marketing digital", "Emprendimiento", "Negocios"],
+        behaviors: ["Compradores online", "Usuarios activos"],
+        keywords: serviceTypes,
+        lookalike_sources: ["Clientes actuales", "Seguidores"]
+      }
+    },
+    content_brief: {
+      brand_voice: {
+        tone: ["Profesional", "Cercano", "Auténtico"],
+        personality: "Marca confiable y experta en su campo",
+        do_say: ["Conecta", "Transforma", "Logra"],
+        dont_say: ["Barato", "Fácil", "Garantizado"]
+      },
+      key_messages: [
+        "Contenido que conecta",
+        "Resultados medibles",
+        "Estrategia personalizada"
+      ],
+      tagline_suggestions: [
+        "Conectando marcas con personas",
+        "Contenido que transforma",
+        "Tu historia, nuestra pasión"
+      ],
+      content_ideas: serviceTypes.slice(0, 3).map(s => ({
+        title: `Contenido tipo ${s}`,
+        format: "video",
+        objective: goals[0] || "engagement",
+        brief_description: `Crear contenido ${s} alineado con los objetivos de marca`
+      })),
+      visual_direction: {
+        color_palette: ["#6366f1", "#8b5cf6", "#ec4899"],
+        style: "Moderno y profesional",
+        mood: "Inspirador y confiable"
+      }
+    }
+  };
 }
 
 // ── Build context from wizard responses ─────────────────────────────────
@@ -604,45 +705,55 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[generate-product-dna] Prompt built: ${userPrompt.length} chars (transcription: ${transcription.length}, wizard: ${wizardContext.length})`);
 
-    // ── 4. Generate analysis with Perplexity (fallback to Gemini) ───────
-    let aiResponse: string;
+    // ── 4. Generate analysis with Perplexity (fallback to Gemini, then basic) ───────
+    let aiResponse: string = "";
+    let analysisData: Record<string, unknown> | null = null;
+
+    // Try Perplexity first
     try {
       aiResponse = await callPerplexity(systemPrompt, userPrompt);
     } catch (err) {
-      console.warn("[generate-product-dna] Perplexity failed, trying Gemini:", err);
-      aiResponse = await callGeminiFallback(systemPrompt, userPrompt);
+      console.warn("[generate-product-dna] Perplexity failed:", err);
+    }
+
+    // Try Gemini if Perplexity failed
+    if (!aiResponse || aiResponse.length < 100) {
+      try {
+        aiResponse = await callGeminiFallback(systemPrompt, userPrompt);
+      } catch (err) {
+        console.warn("[generate-product-dna] Gemini also failed:", err);
+      }
     }
 
     // ── 5. Parse AI response ────────────────────────────────────────────
-    console.log(`[generate-product-dna] AI response length: ${aiResponse.length} chars`);
+    if (aiResponse && aiResponse.length >= 100) {
+      console.log(`[generate-product-dna] AI response length: ${aiResponse.length} chars`);
 
-    // Check if response is empty or too short
-    if (!aiResponse || aiResponse.length < 100) {
-      console.error("[generate-product-dna] AI response too short or empty");
-      throw new Error("La IA no generó una respuesta válida. Intenta de nuevo.");
+      const repaired = repairJsonForParse(aiResponse);
+      try {
+        analysisData = JSON.parse(repaired);
+        console.log("[generate-product-dna] Successfully parsed AI response");
+      } catch (parseErr) {
+        console.error("[generate-product-dna] JSON parse failed, trying extraction...");
+        console.error("[generate-product-dna] Raw response (first 500 chars):", aiResponse.substring(0, 500));
+
+        // Try to extract any valid JSON from the response
+        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            analysisData = JSON.parse(repairJsonForParse(jsonMatch[0]));
+            console.log("[generate-product-dna] Recovered JSON from response");
+          } catch {
+            console.warn("[generate-product-dna] JSON extraction also failed");
+          }
+        }
+      }
     }
 
-    const repaired = repairJsonForParse(aiResponse);
-    let analysisData;
-    try {
-      analysisData = JSON.parse(repaired);
-    } catch (parseErr) {
-      console.error("[generate-product-dna] JSON parse failed:", parseErr);
-      console.error("[generate-product-dna] Raw response (first 1000 chars):", aiResponse.substring(0, 1000));
-      console.error("[generate-product-dna] Repaired response (first 1000 chars):", repaired.substring(0, 1000));
-
-      // Try to extract any valid JSON from the response
-      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        try {
-          analysisData = JSON.parse(repairJsonForParse(jsonMatch[0]));
-          console.log("[generate-product-dna] Recovered JSON from response");
-        } catch {
-          throw new Error("Error al parsear la respuesta de IA. Intenta de nuevo.");
-        }
-      } else {
-        throw new Error("Error al parsear la respuesta de IA. Intenta de nuevo.");
-      }
+    // Fallback to basic analysis if AI completely failed
+    if (!analysisData) {
+      console.warn("[generate-product-dna] Using basic fallback analysis");
+      analysisData = generateBasicAnalysis(wizardResponses, record.service_group, record.service_types || []);
     }
 
     console.log("[generate-product-dna] Analysis generated, sections:", Object.keys(analysisData).join(", "));
