@@ -401,8 +401,8 @@ ESTRUCTURA REQUERIDA:
     "opportunities": ["Oportunidad específica con potencial", "Otra oportunidad con datos"],
     "threats": ["Amenaza real con impacto", "Otra amenaza específica"],
     "target_segments": [
-      {"name": "Avatar 1 - Nombre y rol", "description": "Descripción detallada: edad, género, situación, necesidades, presupuesto", "size_estimate": "Porcentaje del mercado", "priority": "high"},
-      {"name": "Avatar 2 - Nombre y rol", "description": "Segundo perfil de cliente ideal diferente al primero", "size_estimate": "Porcentaje del mercado", "priority": "high"}
+      {"name": "María - Emprendedora Digital", "description": "Mujer 25-35 años, dueña de tienda online, busca contenido económico y rápido, factura $2000-8000/mes", "size_estimate": "45%", "priority": "high"},
+      {"name": "Carlos - Dueño de Negocio", "description": "Hombre 35-50 años, negocio físico queriendo digitalizar, presupuesto $500-2000/mes para marketing", "size_estimate": "35%", "priority": "high"}
     ],
     "ideal_customer_profile": {
       "demographics": "Edad, género, ubicación, ingresos específicos",
@@ -415,7 +415,10 @@ ESTRUCTURA REQUERIDA:
   }
 }
 
-IMPORTANTE: Usa DATOS REALES de la investigación. No inventes ni uses placeholders.`,
+IMPORTANTE:
+- Usa DATOS REALES de la investigación
+- GENERA EXACTAMENTE 2 avatares en target_segments (NO 1, deben ser 2 diferentes)
+- Cada avatar debe tener nombre, edad, situación y presupuesto`,
 
     competitor_analysis: `Eres un estratega competitivo experto. Identifica competidores ESPECÍFICOS mencionados en la investigación.
 
