@@ -1,6 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useCreatorProfile, CreatorProfileData } from '@/hooks/useCreatorProfile';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -34,7 +36,9 @@ import {
   X,
   Plus,
   Sparkles,
+  UserPlus,
 } from 'lucide-react';
+import { MARKETPLACE_ROLES } from '@/lib/talent-dna/constants';
 
 const PLATFORM_OPTIONS = [
   { value: 'instagram', label: 'Instagram' },
@@ -107,23 +111,52 @@ const SOCIAL_LINK_FIELDS = [
   { key: 'website', label: 'Sitio web', placeholder: 'https://mi-sitio.com' },
 ];
 
+// Default empty profile structure for new profiles
+const getDefaultFormData = (): Partial<CreatorProfileData> => ({
+  display_name: '',
+  slug: null,
+  bio: null,
+  bio_full: null,
+  avatar_url: null,
+  banner_url: null,
+  location_city: null,
+  location_country: 'CO',
+  country_flag: '',
+  categories: [],
+  content_types: [],
+  languages: ['es'],
+  platforms: [],
+  social_links: {},
+  is_available: true,
+  base_price: null,
+  currency: 'USD',
+  accepts_product_exchange: false,
+  exchange_conditions: null,
+  response_time_hours: 24,
+  marketplace_roles: [],
+  showreel_url: null,
+});
+
 export function CreatorProfileEditor() {
+  const { user } = useAuth();
   const {
     profile: savedProfile,
-    isNew,
     loading,
-    roles,
-    uploading,
     saving,
     save,
-    uploadAvatar,
-    uploadBanner,
+    exists,
+    updateFields,
+    createProfile,
   } = useCreatorProfile();
 
-  const [formData, setFormData] = useState<CreatorProfileData>(savedProfile);
+  const [formData, setFormData] = useState<Partial<CreatorProfileData>>(getDefaultFormData());
   const [categoryInput, setCategoryInput] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [creating, setCreating] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
+
+  const isNew = !exists;
 
   // Sync form when profile loads from DB
   useEffect(() => {
@@ -141,7 +174,7 @@ export function CreatorProfileEditor() {
 
   const toggleArrayItem = (field: keyof CreatorProfileData, value: string) => {
     setFormData(prev => {
-      const current = (prev[field] as string[]) || [];
+      const current = ((prev as Record<string, unknown>)[field] as string[]) || [];
       const updated = current.includes(value)
         ? current.filter(v => v !== value)
         : [...current, value];
@@ -152,42 +185,83 @@ export function CreatorProfileEditor() {
   const updateSocialLink = (key: string, value: string) => {
     setFormData(prev => ({
       ...prev,
-      social_links: { ...prev.social_links, [key]: value },
+      social_links: { ...(prev.social_links || {}), [key]: value },
     }));
   };
 
   const addCategory = (cat: string) => {
     const trimmed = cat.trim();
-    if (trimmed && !formData.categories.includes(trimmed)) {
-      updateField('categories', [...formData.categories, trimmed]);
+    const categories = formData.categories || [];
+    if (trimmed && !categories.includes(trimmed)) {
+      updateField('categories', [...categories, trimmed]);
     }
     setCategoryInput('');
   };
 
   const removeCategory = (cat: string) => {
-    updateField('categories', formData.categories.filter(c => c !== cat));
+    updateField('categories', (formData.categories || []).filter(c => c !== cat));
   };
+
+  // Upload file to Supabase Storage
+  const uploadFile = useCallback(async (file: File, bucket: string, path: string): Promise<string | null> => {
+    try {
+      setUploading(true);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${path}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (err) {
+      console.error('Error uploading file:', err);
+      toast.error('Error al subir la imagen');
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  }, []);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const url = await uploadAvatar(file);
+    if (!file || !user?.id) return;
+    const url = await uploadFile(file, 'avatars', `creator-profiles/${user.id}`);
     if (url) updateField('avatar_url', url);
   };
 
   const handleBannerChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const url = await uploadBanner(file);
+    if (!file || !user?.id) return;
+    const url = await uploadFile(file, 'banners', `creator-profiles/${user.id}`);
     if (url) updateField('banner_url', url);
   };
 
   const handleSave = async () => {
-    if (!formData.display_name.trim()) {
+    if (!formData.display_name?.trim()) {
       toast.error('El nombre de creador es requerido');
       return;
     }
-    await save(formData);
+
+    if (isNew) {
+      // Create new profile
+      setCreating(true);
+      try {
+        await createProfile(formData as Partial<CreatorProfileData>);
+      } finally {
+        setCreating(false);
+      }
+    } else {
+      // Update existing profile
+      updateFields(formData as Partial<CreatorProfileData>);
+      await save();
+    }
   };
 
   if (loading) {
@@ -235,7 +309,7 @@ export function CreatorProfileEditor() {
               <div className="space-y-2">
                 <Label>Nombre de creador *</Label>
                 <Input
-                  value={formData.display_name}
+                  value={formData.display_name || ''}
                   onChange={e => updateField('display_name', e.target.value)}
                   placeholder="Tu nombre artístico o profesional"
                 />
@@ -243,7 +317,7 @@ export function CreatorProfileEditor() {
               <div className="space-y-2">
                 <Label>Slug (URL amigable)</Label>
                 <Input
-                  value={formData.slug}
+                  value={formData.slug || ''}
                   onChange={e => updateField('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                   placeholder="mi-perfil"
                 />
@@ -258,28 +332,28 @@ export function CreatorProfileEditor() {
             <div className="space-y-2">
               <Label>Bio corta</Label>
               <Textarea
-                value={formData.bio}
+                value={formData.bio || ''}
                 onChange={e => updateField('bio', e.target.value)}
                 placeholder="Describe brevemente quién eres..."
                 rows={2}
                 maxLength={200}
               />
               <p className="text-xs text-muted-foreground text-right">
-                {formData.bio.length}/200
+                {(formData.bio || '').length}/200
               </p>
             </div>
 
             <div className="space-y-2">
               <Label>Bio completa</Label>
               <Textarea
-                value={formData.bio_full}
+                value={formData.bio_full || ''}
                 onChange={e => updateField('bio_full', e.target.value)}
                 placeholder="Cuéntanos tu historia, experiencia y qué te hace único..."
                 rows={5}
                 maxLength={2000}
               />
               <p className="text-xs text-muted-foreground text-right">
-                {formData.bio_full.length}/2000
+                {(formData.bio_full || '').length}/2000
               </p>
             </div>
           </AccordionContent>
@@ -300,9 +374,9 @@ export function CreatorProfileEditor() {
               <div className="flex items-center gap-4">
                 <div className="relative group">
                   <Avatar className="h-20 w-20 border-2 border-border">
-                    <AvatarImage src={formData.avatar_url} />
+                    <AvatarImage src={formData.avatar_url || undefined} />
                     <AvatarFallback className="text-lg bg-primary/10 text-primary">
-                      {formData.display_name?.charAt(0)?.toUpperCase() || 'C'}
+                      {(formData.display_name || 'C').charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <button
@@ -371,7 +445,7 @@ export function CreatorProfileEditor() {
             <div className="space-y-2">
               <Label>URL del showreel</Label>
               <Input
-                value={formData.showreel_url}
+                value={formData.showreel_url || ''}
                 onChange={e => updateField('showreel_url', e.target.value)}
                 placeholder="https://youtube.com/watch?v=..."
               />
@@ -392,7 +466,7 @@ export function CreatorProfileEditor() {
               <div className="space-y-2">
                 <Label>Ciudad</Label>
                 <Input
-                  value={formData.location_city}
+                  value={formData.location_city || ''}
                   onChange={e => updateField('location_city', e.target.value)}
                   placeholder="Tu ciudad"
                 />
@@ -400,7 +474,7 @@ export function CreatorProfileEditor() {
               <div className="space-y-2">
                 <Label>País</Label>
                 <Select
-                  value={formData.location_country}
+                  value={formData.location_country || 'CO'}
                   onValueChange={v => updateField('location_country', v)}
                 >
                   <SelectTrigger>
@@ -428,15 +502,15 @@ export function CreatorProfileEditor() {
             </div>
           </AccordionTrigger>
           <AccordionContent className="space-y-6 pb-6">
-            {/* Marketplace Roles - from DB */}
+            {/* Marketplace Roles */}
             <div className="space-y-3">
               <Label>Roles en el marketplace</Label>
               <p className="text-xs text-muted-foreground">Selecciona los roles que desempeñas</p>
               <div className="flex flex-wrap gap-2">
-                {roles.map(role => (
+                {MARKETPLACE_ROLES.map(role => (
                   <Badge
                     key={role.id}
-                    variant={formData.marketplace_roles.includes(role.id) ? 'default' : 'outline'}
+                    variant={(formData.marketplace_roles || []).includes(role.id) ? 'default' : 'outline'}
                     className="cursor-pointer transition-all hover:scale-105"
                     onClick={() => toggleArrayItem('marketplace_roles', role.id)}
                   >
@@ -450,7 +524,7 @@ export function CreatorProfileEditor() {
             <div className="space-y-3">
               <Label>Categorías</Label>
               <div className="flex flex-wrap gap-2 mb-2">
-                {formData.categories.map(cat => (
+                {(formData.categories || []).map(cat => (
                   <Badge key={cat} className="gap-1">
                     {cat}
                     <X
@@ -483,7 +557,7 @@ export function CreatorProfileEditor() {
                 </Button>
               </div>
               <div className="flex flex-wrap gap-1">
-                {CATEGORY_SUGGESTIONS.filter(s => !formData.categories.includes(s)).slice(0, 10).map(s => (
+                {CATEGORY_SUGGESTIONS.filter(s => !(formData.categories || []).includes(s)).slice(0, 10).map(s => (
                   <Badge
                     key={s}
                     variant="outline"
@@ -503,7 +577,7 @@ export function CreatorProfileEditor() {
                 {CONTENT_TYPE_OPTIONS.map(opt => (
                   <Badge
                     key={opt.value}
-                    variant={formData.content_types.includes(opt.value) ? 'default' : 'outline'}
+                    variant={(formData.content_types || []).includes(opt.value) ? 'default' : 'outline'}
                     className="cursor-pointer transition-all hover:scale-105"
                     onClick={() => toggleArrayItem('content_types', opt.value)}
                   >
@@ -520,7 +594,7 @@ export function CreatorProfileEditor() {
                 {PLATFORM_OPTIONS.map(opt => (
                   <Badge
                     key={opt.value}
-                    variant={formData.platforms.includes(opt.value) ? 'default' : 'outline'}
+                    variant={(formData.platforms || []).includes(opt.value) ? 'default' : 'outline'}
                     className="cursor-pointer transition-all hover:scale-105"
                     onClick={() => toggleArrayItem('platforms', opt.value)}
                   >
@@ -537,7 +611,7 @@ export function CreatorProfileEditor() {
                 {LANGUAGE_OPTIONS.map(opt => (
                   <Badge
                     key={opt.value}
-                    variant={formData.languages.includes(opt.value) ? 'default' : 'outline'}
+                    variant={(formData.languages || []).includes(opt.value) ? 'default' : 'outline'}
                     className="cursor-pointer transition-all hover:scale-105"
                     onClick={() => toggleArrayItem('languages', opt.value)}
                   >
@@ -572,7 +646,7 @@ export function CreatorProfileEditor() {
               <div className="space-y-2">
                 <Label>Moneda</Label>
                 <Select
-                  value={formData.currency}
+                  value={formData.currency || 'USD'}
                   onValueChange={v => updateField('currency', v)}
                 >
                   <SelectTrigger>
@@ -605,7 +679,7 @@ export function CreatorProfileEditor() {
               <div className="space-y-2">
                 <Label>Condiciones de intercambio</Label>
                 <Textarea
-                  value={formData.exchange_conditions}
+                  value={formData.exchange_conditions || ''}
                   onChange={e => updateField('exchange_conditions', e.target.value)}
                   placeholder="Describe qué tipo de productos aceptas y bajo qué condiciones..."
                   rows={3}
@@ -640,7 +714,7 @@ export function CreatorProfileEditor() {
             <div className="space-y-2">
               <Label>Tiempo de respuesta típico</Label>
               <Select
-                value={formData.response_time_hours.toString()}
+                value={(formData.response_time_hours || 24).toString()}
                 onValueChange={v => updateField('response_time_hours', parseInt(v))}
               >
                 <SelectTrigger>
@@ -672,7 +746,7 @@ export function CreatorProfileEditor() {
                 <div key={field.key} className="space-y-2">
                   <Label>{field.label}</Label>
                   <Input
-                    value={formData.social_links[field.key] || ''}
+                    value={(formData.social_links || {})[field.key] || ''}
                     onChange={e => updateSocialLink(field.key, e.target.value)}
                     placeholder={field.placeholder}
                   />
@@ -687,18 +761,18 @@ export function CreatorProfileEditor() {
       <div className="flex justify-end pt-2 pb-8">
         <Button
           onClick={handleSave}
-          disabled={saving || !formData.display_name.trim()}
+          disabled={saving || creating || !(formData.display_name || '').trim()}
           className="min-w-[180px] bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
           size="lg"
         >
-          {saving ? (
+          {saving || creating ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Guardando...
+              {creating ? 'Creando...' : 'Guardando...'}
             </>
           ) : (
             <>
-              <Save className="mr-2 h-4 w-4" />
+              {isNew ? <UserPlus className="mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
               {isNew ? 'Crear perfil' : 'Guardar cambios'}
             </>
           )}
