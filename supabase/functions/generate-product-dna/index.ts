@@ -213,20 +213,25 @@ async function callGeminiSection(apiKey: string, research: string, section: stri
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{
-            parts: [{ text: `Genera la seccion "${section}" basandote en esta investigacion.
-
-INVESTIGACION:
-${research.substring(0, 4000)}
+            parts: [{ text: `${sectionPrompt}
 
 ---
 
-${sectionPrompt}
+INVESTIGACIÓN DE MERCADO COMPLETA:
+${research.substring(0, 12000)}
 
-IMPORTANTE: Responde UNICAMENTE con un objeto JSON valido. Ejemplo: {"${section}": {...}}` }]
+---
+
+INSTRUCCIONES FINALES:
+1. Lee TODA la investigación cuidadosamente
+2. Extrae datos específicos, números, porcentajes y nombres mencionados
+3. NO uses placeholders genéricos como "Por definir" o "Por determinar"
+4. Responde ÚNICAMENTE con un objeto JSON válido
+5. El primer carácter debe ser { y el último }` }]
           }],
           generationConfig: {
-            temperature: 0.3,
-            maxOutputTokens: 4000,
+            temperature: 0.4,
+            maxOutputTokens: 6000,
           },
         }),
       }
@@ -274,13 +279,128 @@ async function callGeminiStructure(research: string, _jsonStructure: string, _st
   console.log("[generate-product-dna] Step 2: Gemini structuring (4 parallel calls)...");
 
   const sectionPrompts = {
-    market_research: `Genera "market_research" con: market_overview (string), market_size (string), growth_trends (array de strings), opportunities (array), threats (array), target_segments (array de objetos con name, description, size_estimate, priority), ideal_customer_profile (objeto con demographics, psychographics, pain_points, desires, objections, buying_triggers).`,
+    market_research: `Eres un analista de mercado experto. Extrae TODOS los datos específicos de la investigación.
 
-    competitor_analysis: `Genera "competitor_analysis" con: direct_competitors (array de objetos con name, strengths, weaknesses, positioning, price_range), indirect_competitors (array de strings), competitive_advantage (string), positioning_strategy (string), differentiation_points (array de strings).`,
+ESTRUCTURA REQUERIDA:
+{
+  "market_research": {
+    "market_overview": "Resumen ejecutivo del mercado (2-3 oraciones con datos concretos)",
+    "market_size": "Tamaño exacto del mercado con cifras (ej: 'USD 1.2 mil millones en LATAM 2025')",
+    "growth_trends": ["Tendencia 1 con dato específico", "Tendencia 2 con porcentaje", "Tendencia 3 con estadística", "Tendencia 4"],
+    "opportunities": ["Oportunidad específica con potencial", "Otra oportunidad con datos"],
+    "threats": ["Amenaza real con impacto", "Otra amenaza específica"],
+    "target_segments": [
+      {"name": "Nombre del segmento", "description": "Descripción detallada", "size_estimate": "Porcentaje o número", "priority": "high/medium/low"}
+    ],
+    "ideal_customer_profile": {
+      "demographics": "Edad, género, ubicación, ingresos específicos",
+      "psychographics": "Motivaciones, valores, estilo de vida",
+      "pain_points": ["Dolor específico 1", "Dolor 2", "Dolor 3"],
+      "desires": ["Deseo 1", "Deseo 2"],
+      "objections": ["Objeción común 1", "Objeción 2"],
+      "buying_triggers": ["Trigger 1", "Trigger 2"]
+    }
+  }
+}
 
-    strategy_recommendations: `Genera "strategy_recommendations" con: value_proposition (string), brand_positioning (string), pricing_strategy (string), sales_angles (array de objetos con angle_name, headline, hook, target_emotion), funnel_strategy (objeto con awareness, consideration, conversion, retention), content_pillars (array), platforms (array de objetos con name, strategy, content_types, priority), hashtags (array), ads_targeting (objeto con interests, behaviors, keywords, lookalike_sources).`,
+IMPORTANTE: Usa DATOS REALES de la investigación. No inventes ni uses placeholders.`,
 
-    content_brief: `Genera "content_brief" con: brand_voice (objeto con tone, personality, do_say, dont_say), key_messages (array), tagline_suggestions (array), content_ideas (array de objetos con title, format, objective, brief_description), visual_direction (objeto con color_palette, style, mood).`
+    competitor_analysis: `Eres un estratega competitivo experto. Identifica competidores ESPECÍFICOS mencionados en la investigación.
+
+ESTRUCTURA REQUERIDA:
+{
+  "competitor_analysis": {
+    "direct_competitors": [
+      {"name": "Nombre real del competidor", "strengths": ["Fortaleza 1", "Fortaleza 2"], "weaknesses": ["Debilidad 1"], "positioning": "Cómo se posicionan", "price_range": "Rango de precios"}
+    ],
+    "indirect_competitors": ["Competidor indirecto 1", "Alternativa 2", "Sustituto 3"],
+    "competitive_advantage": "La ventaja competitiva específica basada en la investigación (mínimo 50 palabras)",
+    "positioning_strategy": "Estrategia de posicionamiento recomendada con justificación (mínimo 50 palabras)",
+    "differentiation_points": ["Diferenciador único 1", "Diferenciador 2", "Diferenciador 3", "Diferenciador 4", "Diferenciador 5"]
+  }
+}
+
+Si la investigación menciona herramientas (Freepeek AI, ChatGPT, etc.), inclúyelas como ventajas competitivas.
+IMPORTANTE: Genera al menos 3 competidores directos y 5 diferenciadores.`,
+
+    strategy_recommendations: `Eres un director de marketing con 15 años de experiencia en LATAM. Crea recomendaciones ACCIONABLES.
+
+ESTRUCTURA REQUERIDA:
+{
+  "strategy_recommendations": {
+    "value_proposition": "Propuesta de valor única y memorable (máximo 15 palabras, específica al producto)",
+    "brand_positioning": "Posicionamiento de marca diferenciado (máximo 20 palabras)",
+    "pricing_strategy": "Estrategia de precios con justificación basada en el mercado",
+    "sales_angles": [
+      {"angle_name": "Nombre del ángulo", "headline": "Titular impactante de max 10 palabras", "hook": "Gancho emocional de apertura", "target_emotion": "Emoción a evocar"},
+      {"angle_name": "Segundo ángulo", "headline": "Otro titular", "hook": "Otro gancho", "target_emotion": "Otra emoción"},
+      {"angle_name": "Tercer ángulo", "headline": "Titular 3", "hook": "Gancho 3", "target_emotion": "Emoción 3"},
+      {"angle_name": "Cuarto ángulo", "headline": "Titular 4", "hook": "Gancho 4", "target_emotion": "Emoción 4"}
+    ],
+    "funnel_strategy": {
+      "awareness": "Táctica específica para awareness con ejemplo",
+      "consideration": "Táctica para consideración con formato",
+      "conversion": "Táctica de conversión con CTA específico",
+      "retention": "Táctica de retención con frecuencia"
+    },
+    "content_pillars": ["Pilar 1: tema específico", "Pilar 2: tema", "Pilar 3: tema", "Pilar 4: tema"],
+    "platforms": [
+      {"name": "Instagram", "strategy": "Estrategia específica para esta plataforma", "content_types": ["Reels", "Stories", "Carruseles"], "priority": "high"},
+      {"name": "TikTok", "strategy": "Estrategia para TikTok", "content_types": ["Videos cortos", "Trends"], "priority": "high"}
+    ],
+    "hashtags": ["#hashtag1", "#hashtag2", "#hashtag3", "#hashtag4", "#hashtag5", "#hashtag6", "#hashtag7", "#hashtag8", "#hashtag9", "#hashtag10"],
+    "ads_targeting": {
+      "interests": ["Interés específico 1", "Interés 2", "Interés 3", "Interés 4", "Interés 5"],
+      "behaviors": ["Comportamiento 1", "Comportamiento 2", "Comportamiento 3"],
+      "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
+      "lookalike_sources": ["Fuente 1", "Fuente 2"]
+    }
+  }
+}
+
+IMPORTANTE: Genera MÍNIMO 4 ángulos de venta diferentes y 10 hashtags relevantes al nicho.`,
+
+    content_brief: `Eres un director creativo de una agencia top de LATAM. Crea un brief que inspire contenido memorable.
+
+ESTRUCTURA REQUERIDA:
+{
+  "content_brief": {
+    "brand_voice": {
+      "tone": ["Adjetivo 1", "Adjetivo 2", "Adjetivo 3"],
+      "personality": "Descripción de la personalidad de marca en 20 palabras",
+      "do_say": ["Frase o palabra a usar", "Otra frase", "Tercera frase"],
+      "dont_say": ["Palabra a evitar", "Frase a evitar", "Otra a evitar"]
+    },
+    "key_messages": [
+      "Mensaje clave 1 específico al producto (máx 10 palabras)",
+      "Mensaje clave 2 diferenciador",
+      "Mensaje clave 3 emocional",
+      "Mensaje clave 4 con beneficio",
+      "Mensaje clave 5 con llamada a acción"
+    ],
+    "tagline_suggestions": [
+      "Tagline creativo 1 (máx 6 palabras)",
+      "Tagline 2 memorable",
+      "Tagline 3 con gancho",
+      "Tagline 4 diferenciador",
+      "Tagline 5 emocional"
+    ],
+    "content_ideas": [
+      {"title": "Título creativo del contenido", "format": "reel/carrusel/story/video", "objective": "awareness/engagement/conversion", "brief_description": "Descripción de 2-3 oraciones de qué se trata"},
+      {"title": "Segunda idea", "format": "formato", "objective": "objetivo", "brief_description": "Descripción"},
+      {"title": "Tercera idea", "format": "formato", "objective": "objetivo", "brief_description": "Descripción"},
+      {"title": "Cuarta idea", "format": "formato", "objective": "objetivo", "brief_description": "Descripción"},
+      {"title": "Quinta idea", "format": "formato", "objective": "objetivo", "brief_description": "Descripción"}
+    ],
+    "visual_direction": {
+      "color_palette": ["#hexcolor1", "#hexcolor2", "#hexcolor3"],
+      "style": "Estilo visual recomendado con referencias",
+      "mood": "Estado de ánimo visual a transmitir"
+    }
+  }
+}
+
+IMPORTANTE: Los mensajes y taglines deben ser ESPECÍFICOS al producto, no genéricos. Genera mínimo 5 ideas de contenido.`
   };
 
   // Call all 4 sections in parallel with error handling
@@ -650,18 +770,53 @@ const JSON_STRUCTURE_TEMPLATE = `{
 }`;
 
 // ── Default Prompts (fallback if DB unavailable) ────────────────────────
-const DEFAULT_RESEARCH_PROMPT = `Eres un investigador de mercado experto para LATAM. Tu tarea es investigar a fondo el producto/servicio descrito y proporcionar un analisis completo.
+const DEFAULT_RESEARCH_PROMPT = `Eres un investigador de mercado y estratega de marketing digital EXPERTO especializado en LATAM.
 
-INVESTIGA Y PROPORCIONA:
-1. MERCADO: Tamaño del mercado, tendencias actuales, oportunidades y amenazas
-2. COMPETENCIA: Competidores directos e indirectos, sus fortalezas y debilidades, precios
-3. AUDIENCIA: Perfil demografico y psicografico del cliente ideal, sus dolores y deseos
-4. ESTRATEGIA: Propuesta de valor, posicionamiento, angulos de venta, estrategia de precios
-5. CONTENIDO: Tono de marca, mensajes clave, ideas de contenido, hashtags relevantes
+Tu tarea es realizar una investigación PROFUNDA y ACCIONABLE sobre el producto/servicio descrito.
 
-Incluye datos especificos, numeros y tendencias actuales del mercado latinoamericano.
-Puedes estructurar tu respuesta como prefieras (bullet points, parrafos, etc).
-Lo importante es que sea COMPLETO y con DATOS REALES.`;
+## 1. ANÁLISIS DE MERCADO (con datos reales)
+- Tamaño exacto del mercado en USD (con fuente y año)
+- Tasa de crecimiento anual (CAGR) del sector
+- 4-5 tendencias actuales con estadísticas específicas
+- Oportunidades de mercado con potencial cuantificado
+- Amenazas reales con impacto estimado
+- Países líderes en LATAM para este sector
+
+## 2. COMPETIDORES ESPECÍFICOS
+- NOMBRA 5+ competidores directos reales (empresas, apps, herramientas)
+- Para cada uno: fortalezas, debilidades, precio, posicionamiento
+- Competidores indirectos y sustitutos
+- Gaps de mercado que nadie está cubriendo
+- Qué hacen bien los líderes que podemos replicar
+
+## 3. CLIENTE IDEAL DETALLADO
+- Demografía exacta: edad, género, ubicación, ingresos, ocupación
+- Psicografía: valores, motivaciones, miedos, aspiraciones
+- Comportamiento online: plataformas que usa, horas activas, contenido que consume
+- 5 dolores/problemas específicos que tiene
+- 5 deseos/resultados que quiere lograr
+- Objeciones comunes antes de comprar
+- Triggers que lo hacen tomar acción
+
+## 4. ESTRATEGIA DE MARKETING
+- Propuesta de valor diferenciadora (en 1 oración potente)
+- 5 ángulos de venta diferentes con gancho emocional
+- Estrategia de precios basada en el mercado
+- Canales de adquisición más efectivos
+- Embudo de conversión recomendado
+
+## 5. CONTENIDO Y MARCA
+- Tono de voz recomendado (con ejemplos de frases)
+- 10 hashtags más relevantes del nicho
+- 5 ideas de contenido viral específicas
+- Mensajes que resuenan con la audiencia
+- Colores y estilo visual del sector
+
+IMPORTANTE:
+- Incluye DATOS REALES, NÚMEROS y FUENTES cuando sea posible
+- Menciona HERRAMIENTAS, APPS o TECNOLOGÍAS específicas relacionadas
+- Todo enfocado en LATAM (México, Colombia, Argentina, Brasil, Chile)
+- Sé ESPECÍFICO, no genérico. Nombres reales, cifras reales.`;
 
 const DEFAULT_STRUCTURE_PROMPT = `Eres un asistente que estructura informacion en JSON.
 Tu UNICA tarea es tomar la investigacion proporcionada y organizarla en el formato JSON especificado.

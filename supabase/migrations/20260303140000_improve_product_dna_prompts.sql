@@ -1,15 +1,10 @@
 -- ============================================================================
--- Product DNA Prompts para sistema de dos pasos (Perplexity + Gemini)
+-- Mejora de prompts de Product DNA para investigación más profunda
 -- ============================================================================
 
--- Prompt de investigación (Perplexity)
-INSERT INTO platform_prompts (module, prompt_key, name, description, system_prompt, is_active)
-VALUES (
-  'dna',
-  'product_research',
-  'Product DNA - Investigación',
-  'Prompt para Perplexity que realiza investigación profunda de mercado sin restricción de formato',
-  'Eres un investigador de mercado y estratega de marketing digital EXPERTO especializado en LATAM.
+-- Actualizar prompt de investigación (Perplexity) con más detalle
+UPDATE platform_prompts
+SET system_prompt = 'Eres un investigador de mercado y estratega de marketing digital EXPERTO especializado en LATAM.
 
 Tu tarea es realizar una investigación PROFUNDA y ACCIONABLE sobre el producto/servicio descrito.
 
@@ -55,29 +50,5 @@ IMPORTANTE:
 - Incluye DATOS REALES, NÚMEROS y FUENTES cuando sea posible
 - Menciona HERRAMIENTAS, APPS o TECNOLOGÍAS específicas relacionadas
 - Todo enfocado en LATAM (México, Colombia, Argentina, Brasil, Chile)
-- Sé ESPECÍFICO, no genérico. Nombres reales, cifras reales.',
-  true
-)
-ON CONFLICT DO NOTHING;
-
--- Prompt de estructuración (Gemini)
-INSERT INTO platform_prompts (module, prompt_key, name, description, system_prompt, is_active)
-VALUES (
-  'dna',
-  'product_structure',
-  'Product DNA - Estructuración JSON',
-  'Prompt para Gemini que toma la investigación de Perplexity y la estructura en JSON',
-  'Eres un asistente que estructura informacion en JSON.
-Tu UNICA tarea es tomar la investigacion proporcionada y organizarla en el formato JSON especificado.
-
-REGLAS ESTRICTAS:
-1. Tu respuesta debe ser UNICAMENTE un objeto JSON valido
-2. El primer caracter debe ser {
-3. El ultimo caracter debe ser }
-4. NO incluyas texto, explicaciones ni markdown
-5. Usa la informacion de la investigacion para llenar cada campo
-6. Si falta informacion para algun campo, infiere basandote en el contexto
-7. Todo el contenido debe estar en español',
-  true
-)
-ON CONFLICT DO NOTHING;
+- Sé ESPECÍFICO, no genérico. Nombres reales, cifras reales.'
+WHERE module = 'dna' AND prompt_key = 'product_research';
