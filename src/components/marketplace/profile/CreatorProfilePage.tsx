@@ -190,8 +190,10 @@ export default function CreatorProfilePage() {
     );
   }
 
-  // Validate minimum requirements: profile photo AND at least 1 portfolio item
-  const hasMinimumRequirements = !!creator.avatar_url && creator.portfolio_media.length > 0;
+  // Validate minimum requirements: VALID profile photo URL AND at least 1 portfolio item
+  const avatarUrl = creator.avatar_url?.trim() || '';
+  const hasValidAvatar = avatarUrl.length > 0 && avatarUrl.startsWith('http');
+  const hasMinimumRequirements = hasValidAvatar && creator.portfolio_media.length > 0;
 
   if (!hasMinimumRequirements) {
     return (

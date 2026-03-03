@@ -259,8 +259,12 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
         }
         return creator;
       })
-      // Only show creators with a profile photo AND at least one portfolio creative
-      .filter(c => !!c.avatar_url && c.portfolio_media.length > 0);
+      // Only show creators with a VALID profile photo URL AND at least one portfolio creative
+      .filter(c => {
+        const hasValidAvatar = c.avatar_url && c.avatar_url.trim().length > 0 && c.avatar_url.startsWith('http');
+        const hasPortfolio = c.portfolio_media.length > 0;
+        return hasValidAvatar && hasPortfolio;
+      });
 
       // ── 3. Fallback: Fetch profiles with content (not in creator_profiles) ──
       // Also exclude client users from profiles fallback
@@ -326,10 +330,12 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
           }
         }
 
-        // Include profiles with name, avatar, AND at least one portfolio creative
+        // Include profiles with name, VALID avatar URL, AND at least one portfolio creative
         for (const row of profileRows) {
           if (!row.full_name && !row.username) continue;
-          if (!row.avatar_url) continue; // Must have profile photo
+          // Must have valid profile photo URL (not null, not empty, starts with http)
+          const avatarUrl = row.avatar_url?.trim() || '';
+          if (!avatarUrl || !avatarUrl.startsWith('http')) continue;
           const media = contentMap.get(row.id) || [];
           if (media.length === 0) continue; // Must have at least one creative
 
