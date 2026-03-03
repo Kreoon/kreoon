@@ -520,10 +520,18 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[generate-product-dna] Record loaded - client: ${record.client_id}, group: ${record.service_group}, services: ${record.service_types?.join(",")}`);
 
-    // ── 2. Transcribe audio (if audio_url exists) ───────────────────────
-    let transcription = record.transcription || "";
-    let emotionalAnalysis: Record<string, unknown> = {};
+    // ── 2. Get transcription (check wizard_responses first, then record field) ───
+    const wizardResponses = record.wizard_responses || {};
+    let transcription = record.transcription || wizardResponses.transcription || "";
+    let emotionalAnalysis: Record<string, unknown> = wizardResponses.emotional_analysis || {};
 
+    console.log(`[generate-product-dna] Transcription source: ${
+      record.transcription ? 'record.transcription' :
+      wizardResponses.transcription ? 'wizard_responses.transcription' :
+      'none'
+    }, length: ${transcription.length}`);
+
+    // Only transcribe if we don't have one already
     if (record.audio_url && !transcription) {
       try {
         console.log(`[generate-product-dna] Downloading audio from: ${record.audio_url}`);
@@ -561,7 +569,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // ── 3. Build enhanced prompt ────────────────────────────────────────
-    const wizardContext = buildWizardContext(record.wizard_responses || {});
+    const wizardContext = buildWizardContext(wizardResponses);
     const emotionalContext = formatEmotionalContext(emotionalAnalysis);
 
     // Intentar obtener prompt desde DB
