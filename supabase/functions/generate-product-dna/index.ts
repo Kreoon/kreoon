@@ -446,7 +446,8 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    productDnaId = body.productDnaId;
+    // Soportar ambos formatos: productDnaId y product_dna_id
+    productDnaId = body.productDnaId || body.product_dna_id;
 
     if (!productDnaId) {
       return new Response(
