@@ -123,6 +123,28 @@ export default function TeamTab({ project, formData, setFormData, editMode, read
         paymentCurrency: 'COP',
         paymentMethod: 'payment',
       });
+
+      // También actualizar campos escalares para content (creator_id, editor_id, strategist_id)
+      // Esto permite que las tarjetas del tablero muestren los asignados
+      if (project.source === 'content' && project.id) {
+        const scalarFields = SCALAR_ROLE_FIELDS[roleId];
+        if (scalarFields) {
+          const updates: Record<string, any> = {
+            [scalarFields.idField]: data.userId,
+          };
+          if (scalarFields.paymentField) {
+            updates[scalarFields.paymentField] = Number(data.payment);
+          }
+          setFormData((prev: Record<string, any>) => ({ ...prev, ...updates }));
+          markLocalUpdate(project.id, 5 * 60 * 1000);
+          supabase
+            .rpc('update_content_by_id', { p_content_id: project.id, p_updates: updates })
+            .then(({ error }) => {
+              if (error) console.error(`[TeamTab] Failed to sync ${roleId} to content:`, error);
+            });
+        }
+      }
+
       setSelectedRoles(prev => prev.filter(r => r !== roleId));
       setRoleAssignments(prev => { const next = { ...prev }; delete next[roleId]; return next; });
     } finally {
@@ -179,11 +201,17 @@ export default function TeamTab({ project, formData, setFormData, editMode, read
     return member?.full_name || member?.email || 'Sin nombre';
   }, [orgMembers]);
 
-  // Existing team members from scalar fields
+  // Roles que ya tienen asignación en project_assignments (evitar duplicados)
+  const assignmentRoleIds = useMemo(() => {
+    return new Set(assignments.map(a => a.roleId));
+  }, [assignments]);
+
+  // Existing team members from scalar fields (solo si NO hay asignación en project_assignments)
   const scalarMembers = useMemo(() => {
     const members: { roleLabel: string; roleId: string; name: string; userId: string; payment?: number; paid?: boolean }[] = [];
     if (project.source === 'content') {
-      if (formData.creator_id) {
+      // Solo mostrar scalar si NO existe asignación para ese rol
+      if (formData.creator_id && !assignmentRoleIds.has('creator')) {
         members.push({
           roleLabel: getRoleLabel('creator'), roleId: 'creator',
           name: resolveUserName(formData.creator_id, project.contentData?.creator?.full_name),
@@ -191,7 +219,7 @@ export default function TeamTab({ project, formData, setFormData, editMode, read
           payment: formData.creator_payment, paid: formData.creator_paid,
         });
       }
-      if (formData.editor_id) {
+      if (formData.editor_id && !assignmentRoleIds.has('editor')) {
         members.push({
           roleLabel: getRoleLabel('editor'), roleId: 'editor',
           name: resolveUserName(formData.editor_id, project.contentData?.editor?.full_name),
@@ -199,7 +227,7 @@ export default function TeamTab({ project, formData, setFormData, editMode, read
           payment: formData.editor_payment, paid: formData.editor_paid,
         });
       }
-      if (formData.strategist_id) {
+      if (formData.strategist_id && !assignmentRoleIds.has('strategist')) {
         members.push({
           roleLabel: getRoleLabel('strategist'), roleId: 'strategist',
           name: resolveUserName(formData.strategist_id, project.contentData?.strategist?.full_name),
@@ -207,13 +235,14 @@ export default function TeamTab({ project, formData, setFormData, editMode, read
         });
       }
     } else {
-      if (project.creatorName) members.push({ roleLabel: getRoleLabel('creator'), roleId: 'creator', name: project.creatorName, userId: '' });
-      if (project.editorName) members.push({ roleLabel: getRoleLabel('editor'), roleId: 'editor', name: project.editorName, userId: '' });
-      if (project.clientName) members.push({ roleLabel: getRoleLabel('client'), roleId: 'client', name: project.clientName, userId: '' });
+      // Marketplace: también evitar duplicados con project_assignments
+      if (project.creatorName && !assignmentRoleIds.has('creator')) members.push({ roleLabel: getRoleLabel('creator'), roleId: 'creator', name: project.creatorName, userId: '' });
+      if (project.editorName && !assignmentRoleIds.has('editor')) members.push({ roleLabel: getRoleLabel('editor'), roleId: 'editor', name: project.editorName, userId: '' });
+      if (project.clientName && !assignmentRoleIds.has('client')) members.push({ roleLabel: getRoleLabel('client'), roleId: 'client', name: project.clientName, userId: '' });
     }
     return members;
   }, [project, formData.creator_id, formData.editor_id, formData.strategist_id,
-      formData.creator_payment, formData.editor_payment, formData.creator_paid, formData.editor_paid, resolveUserName]);
+      formData.creator_payment, formData.editor_payment, formData.creator_paid, formData.editor_paid, resolveUserName, assignmentRoleIds]);
 
   const hasAnyMembers = scalarMembers.length > 0 || assignments.length > 0;
 

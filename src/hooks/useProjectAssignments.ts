@@ -110,6 +110,7 @@ export function useProjectAssignments({ projectSource, projectId }: UseProjectAs
   }) => {
     try {
       const resolvedGroup = params.roleGroup || getRoleGroup(params.roleId);
+      // Asignaciones internas de equipo van directamente a 'accepted' (no requieren aceptación)
       const payload: Record<string, any> = {
         project_source: projectSource,
         [fkColumn]: projectId,
@@ -122,7 +123,8 @@ export function useProjectAssignments({ projectSource, projectId }: UseProjectAs
         payment_currency: params.paymentCurrency || 'COP',
         payment_method: params.paymentMethod || null,
         workspace_block_type: params.workspaceBlockType || null,
-        status: 'pending',
+        status: 'accepted',
+        accepted_at: new Date().toISOString(),
       };
 
       const { data, error } = await (supabase as any)
@@ -147,7 +149,7 @@ export function useProjectAssignments({ projectSource, projectId }: UseProjectAs
       }
 
       setAssignments(prev => [...prev, mapRow({ ...data, user: userProfile })]);
-      toast({ title: 'Asignacion creada' });
+      toast({ title: 'Miembro asignado correctamente' });
       return data?.id || null;
     } catch (err: any) {
       console.error('[useProjectAssignments] create error:', err);
