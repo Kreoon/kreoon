@@ -106,9 +106,20 @@ export function useRegistrationSubmit() {
       return true;
     } catch (error: any) {
       console.error('Registration error:', error);
-      const msg = error.message?.includes('already registered')
-        ? 'Este correo ya está registrado'
-        : error.message || 'Ocurrió un error al registrar';
+      let msg = 'Ocurrió un error al registrar';
+
+      if (error.message?.includes('already registered') || error.message?.includes('already exists')) {
+        msg = 'Este correo ya está registrado';
+      } else if (error.status === 429 || error.message?.includes('rate limit') || error.message?.includes('too many')) {
+        msg = 'Demasiados intentos. Espera unos minutos e intenta de nuevo.';
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        msg = 'Error de conexión. Verifica tu internet.';
+      } else if (error.code === '23505') {
+        msg = 'Este usuario ya existe.';
+      } else if (error.message) {
+        msg = error.message;
+      }
+
       trackSignupFailed(msg, 'email');
       toast.error(msg);
       return false;

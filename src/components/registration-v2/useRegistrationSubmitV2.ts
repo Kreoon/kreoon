@@ -338,10 +338,17 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
 
       let errorMessage = 'Error al crear la cuenta. Intenta de nuevo.';
 
-      if (error.message?.includes('already registered')) {
+      // Detectar tipo de error específico
+      if (error.message?.includes('already registered') || error.message?.includes('already exists')) {
         errorMessage = 'Este email ya está registrado. Intenta iniciar sesión.';
-      } else if (error.message?.includes('invalid')) {
+      } else if (error.message?.includes('invalid') || error.message?.includes('Invalid')) {
         errorMessage = 'Datos inválidos. Verifica la información ingresada.';
+      } else if (error.status === 429 || error.message?.includes('rate limit') || error.message?.includes('too many')) {
+        errorMessage = 'Demasiados intentos. Espera unos minutos e intenta de nuevo.';
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = 'Error de conexión. Verifica tu internet e intenta de nuevo.';
+      } else if (error.code === '23505') {
+        errorMessage = 'Este usuario ya existe. Intenta iniciar sesión.';
       }
 
       setSubmitError(errorMessage);
