@@ -183,23 +183,72 @@ async function callGeminiFallback(systemPrompt: string, userPrompt: string): Pro
 function buildWizardContext(responses: Record<string, unknown>): string {
   const parts: string[] = [];
 
-  // Goal
+  // Goal labels for both old and new format
   const goalLabels: Record<string, string> = {
     brand_awareness: "Reconocimiento de Marca",
+    awareness: "Reconocimiento de Marca",
     lead_generation: "Generación de Leads",
+    leads: "Generación de Leads",
     sales: "Ventas Directas",
     engagement: "Engagement y Comunidad",
     education: "Educación y Capacitación",
     other: "Otro objetivo",
   };
-  if (responses.primary_goal) {
+
+  // NEW simplified wizard format: goals (array)
+  if (Array.isArray(responses.goals) && responses.goals.length > 0) {
+    const goalNames = (responses.goals as string[]).map(g => goalLabels[g] || g);
+    parts.push(`OBJETIVOS: ${goalNames.join(", ")}`);
+  }
+  // OLD format: primary_goal (string)
+  else if (responses.primary_goal) {
     parts.push(`OBJETIVO PRINCIPAL: ${goalLabels[responses.primary_goal as string] || responses.primary_goal}`);
   }
+
+  // NEW simplified wizard format: platforms (array)
+  if (Array.isArray(responses.platforms) && responses.platforms.length > 0) {
+    parts.push(`PLATAFORMAS: ${(responses.platforms as string[]).join(", ")}`);
+  }
+
+  // NEW simplified wizard format: audiences (array of age ranges)
+  if (Array.isArray(responses.audiences) && responses.audiences.length > 0) {
+    const audienceLabels: Record<string, string> = {
+      "18_24": "18-24 años",
+      "25_34": "25-34 años",
+      "35_44": "35-44 años",
+      "45_plus": "45+ años",
+    };
+    const audienceNames = (responses.audiences as string[]).map(a => audienceLabels[a] || a);
+    parts.push(`AUDIENCIA: ${audienceNames.join(", ")}`);
+  }
+
+  // NEW simplified wizard format: service_types (array)
+  if (Array.isArray(responses.service_types) && responses.service_types.length > 0) {
+    const serviceLabels: Record<string, string> = {
+      video_ugc: "Video UGC",
+      photo_ugc: "Foto UGC",
+      carousel: "Carrusel",
+      reels: "Reels/TikToks",
+      photography: "Fotografía",
+      video_editing: "Edición de Video",
+      graphic_design: "Diseño Gráfico",
+      strategy: "Estrategia",
+    };
+    const serviceNames = (responses.service_types as string[]).map(s => serviceLabels[s] || s);
+    parts.push(`SERVICIOS REQUERIDOS: ${serviceNames.join(", ")}`);
+  }
+
+  // Transcription from simplified wizard (already included in wizard_responses)
+  if (responses.transcription && typeof responses.transcription === "string") {
+    // Don't add here - it's added separately in the main flow
+  }
+
+  // OLD format fields (for backward compatibility)
   if (responses.goal_description) {
     parts.push(`Descripción del objetivo: ${responses.goal_description}`);
   }
 
-  // Goal-specific responses
+  // Goal-specific responses (old wizard format)
   const goalFields: Record<string, string> = {
     brand_tone: "Tono de marca",
     brand_values: "Valores de marca",
@@ -246,7 +295,7 @@ function buildWizardContext(responses: Record<string, unknown>): string {
     }
   }
 
-  // Audience
+  // OLD format: Audience
   if (responses.target_age) {
     const ages = Array.isArray(responses.target_age)
       ? responses.target_age.join(", ")
@@ -557,14 +606,35 @@ Deno.serve(async (req: Request) => {
     }
 
     // ── 5. Parse AI response ────────────────────────────────────────────
+    console.log(`[generate-product-dna] AI response length: ${aiResponse.length} chars`);
+
+    // Check if response is empty or too short
+    if (!aiResponse || aiResponse.length < 100) {
+      console.error("[generate-product-dna] AI response too short or empty");
+      throw new Error("La IA no generó una respuesta válida. Intenta de nuevo.");
+    }
+
     const repaired = repairJsonForParse(aiResponse);
     let analysisData;
     try {
       analysisData = JSON.parse(repaired);
     } catch (parseErr) {
       console.error("[generate-product-dna] JSON parse failed:", parseErr);
-      console.error("[generate-product-dna] Raw response:", aiResponse.substring(0, 500));
-      throw new Error("Error al parsear la respuesta de IA. Intenta de nuevo.");
+      console.error("[generate-product-dna] Raw response (first 1000 chars):", aiResponse.substring(0, 1000));
+      console.error("[generate-product-dna] Repaired response (first 1000 chars):", repaired.substring(0, 1000));
+
+      // Try to extract any valid JSON from the response
+      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          analysisData = JSON.parse(repairJsonForParse(jsonMatch[0]));
+          console.log("[generate-product-dna] Recovered JSON from response");
+        } catch {
+          throw new Error("Error al parsear la respuesta de IA. Intenta de nuevo.");
+        }
+      } else {
+        throw new Error("Error al parsear la respuesta de IA. Intenta de nuevo.");
+      }
     }
 
     console.log("[generate-product-dna] Analysis generated, sections:", Object.keys(analysisData).join(", "));
