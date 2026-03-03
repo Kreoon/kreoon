@@ -932,7 +932,7 @@ function KiroResearchButton({
   monthlyLimit?: number | null;
   limitReached: boolean;
 }) {
-  const [includeClientDna, setIncludeClientDna] = React.useState(true);
+  const [includeClientDna, setIncludeClientDna] = useState(true);
 
   // Admins, propietarios de organización, o clientes pueden activar (clientes tienen límites mensuales)
   const canActivate = isAdmin || isClient;
