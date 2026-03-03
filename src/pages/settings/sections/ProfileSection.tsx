@@ -441,15 +441,41 @@ function PublicProfileTab() {
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
     const newAvatarUrl = await uploadAvatar(file);
-    if (creatorProfile && newAvatarUrl) {
+    if (!newAvatarUrl) {
+      // uploadAvatar already shows error toast
+      return;
+    }
+
+    // Always try to update creator_profiles, even if creatorProfile is still loading
+    // This handles the race condition where user uploads before profile loads
+    if (creatorProfile) {
       // Update local state
       updateCreatorField('avatar_url', newAvatarUrl);
       // Also persist to creator_profiles DB immediately (don't wait for "Guardar")
-      await (supabase as any)
+      const { error } = await (supabase as any)
         .from('creator_profiles')
         .update({ avatar_url: newAvatarUrl })
         .eq('id', creatorProfile.id);
+
+      if (error) {
+        console.error('[PublicProfileTab] Error updating creator_profiles avatar:', error);
+        toast.error('Error al sincronizar foto con el marketplace');
+      }
+    } else if (userProfile?.id) {
+      // Fallback: creatorProfile not loaded yet, try to update by user_id
+      const { error } = await (supabase as any)
+        .from('creator_profiles')
+        .update({ avatar_url: newAvatarUrl })
+        .eq('user_id', userProfile.id);
+
+      if (error) {
+        console.error('[PublicProfileTab] Error updating creator_profiles avatar by user_id:', error);
+        // Don't show error - might not have a creator_profile yet
+      } else {
+        toast.success('Foto sincronizada con el marketplace');
+      }
     }
   };
 
