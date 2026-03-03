@@ -70,6 +70,8 @@ export function useMarketplaceProposals(options: UseMarketplaceProposalsOptions 
       })) as MarketplaceProposal[];
     },
     enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5,  // 5 minutos
+    gcTime: 1000 * 60 * 30,    // 30 minutos cache
   });
 
   // Create proposal

@@ -51,6 +51,8 @@ export function useCreatorServices(options: UseCreatorServicesOptions = {}) {
       })) as CreatorService[];
     },
     enabled: !!targetUserId,
+    staleTime: 1000 * 60 * 5,  // 5 minutos
+    gcTime: 1000 * 60 * 30,    // 30 minutos cache
   });
 
   // Create service
@@ -212,5 +214,7 @@ export function useCreatorService(serviceId: string | undefined) {
       };
     },
     enabled: !!serviceId,
+    staleTime: 1000 * 60 * 5,  // 5 minutos
+    gcTime: 1000 * 60 * 30,    // 30 minutos cache
   });
 }

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import type { MarketplaceCreator } from './types/marketplace';
 import { MarketplaceCreatorCard } from './CreatorCard';
@@ -14,7 +15,7 @@ interface CreatorGridProps {
   searchQuery?: string;
 }
 
-export function CreatorGrid({
+export const CreatorGrid = memo(function CreatorGrid({
   creators,
   isLoading,
   hasMore,
@@ -83,4 +84,4 @@ export function CreatorGrid({
       )}
     </section>
   );
-}
+});

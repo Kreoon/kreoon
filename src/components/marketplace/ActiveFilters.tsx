@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MarketplaceFilters } from './types/marketplace';
@@ -17,77 +18,81 @@ interface FilterChip {
   value?: string;
 }
 
-export function ActiveFilters({ filters, onRemoveFilter, onClearAll }: ActiveFiltersProps) {
-  const chips: FilterChip[] = [];
+export const ActiveFilters = memo(function ActiveFilters({ filters, onRemoveFilter, onClearAll }: ActiveFiltersProps) {
+  const chips = useMemo(() => {
+    const result: FilterChip[] = [];
 
-  if (filters.category) {
-    const cat = MARKETPLACE_CATEGORIES.find(c => c.id === filters.category);
-    chips.push({ key: 'category', label: cat?.label || filters.category });
-  }
+    if (filters.category) {
+      const cat = MARKETPLACE_CATEGORIES.find(c => c.id === filters.category);
+      result.push({ key: 'category', label: cat?.label || filters.category });
+    }
 
-  if (filters.country) {
-    const c = COUNTRIES.find(co => co.code === filters.country);
-    chips.push({ key: 'country', label: c ? `${c.flag} ${c.label}` : filters.country });
-  }
+    if (filters.country) {
+      const c = COUNTRIES.find(co => co.code === filters.country);
+      result.push({ key: 'country', label: c ? `${c.flag} ${c.label}` : filters.country });
+    }
 
-  filters.content_type.forEach(ct => {
-    chips.push({ key: 'content_type', label: ct, value: ct });
-  });
-
-  if (filters.rating_min != null) {
-    chips.push({ key: 'rating_min', label: `⭐ ${filters.rating_min}+` });
-  }
-
-  if (filters.price_min != null || filters.price_max != null) {
-    const parts = [];
-    if (filters.price_min != null) parts.push(`$${filters.price_min.toLocaleString()}`);
-    parts.push('-');
-    if (filters.price_max != null) parts.push(`$${filters.price_max.toLocaleString()}`);
-    chips.push({ key: 'price_min', label: `💰 ${parts.join(' ')}` });
-  }
-
-  filters.level.forEach(l => {
-    chips.push({ key: 'level', label: l.charAt(0).toUpperCase() + l.slice(1), value: l });
-  });
-
-  filters.languages.forEach(l => {
-    chips.push({ key: 'languages', label: l, value: l });
-  });
-
-  if (filters.availability !== 'any') {
-    chips.push({
-      key: 'availability',
-      label: filters.availability === 'now' ? 'Disponible ahora' : 'Esta semana',
+    filters.content_type.forEach(ct => {
+      result.push({ key: 'content_type', label: ct, value: ct });
     });
-  }
 
-  // Role-based chips
-  filters.marketplace_roles.forEach(roleId => {
-    const role = MARKETPLACE_ROLES_MAP[roleId];
-    chips.push({ key: 'marketplace_roles', label: role?.label || roleId, value: roleId });
-  });
+    if (filters.rating_min != null) {
+      result.push({ key: 'rating_min', label: `⭐ ${filters.rating_min}+` });
+    }
 
-  // Adaptive filter chips
-  const lookupMap: Record<string, { list: typeof PLATFORMS; key: keyof MarketplaceFilters }> = {
-    platforms: { list: PLATFORMS, key: 'platforms' },
-    software: { list: SOFTWARE_TOOLS, key: 'software' },
-    tech_stack: { list: TECH_STACKS, key: 'tech_stack' },
-    education_format: { list: EDUCATION_FORMATS, key: 'education_format' },
-  };
+    if (filters.price_min != null || filters.price_max != null) {
+      const parts = [];
+      if (filters.price_min != null) parts.push(`$${filters.price_min.toLocaleString()}`);
+      parts.push('-');
+      if (filters.price_max != null) parts.push(`$${filters.price_max.toLocaleString()}`);
+      result.push({ key: 'price_min', label: `💰 ${parts.join(' ')}` });
+    }
 
-  for (const [, { list, key }] of Object.entries(lookupMap)) {
-    const values = filters[key] as string[];
-    if (values && values.length > 0) {
-      values.forEach(v => {
-        const opt = list.find(o => o.value === v);
-        chips.push({ key, label: opt?.label || v, value: v });
+    filters.level.forEach(l => {
+      result.push({ key: 'level', label: l.charAt(0).toUpperCase() + l.slice(1), value: l });
+    });
+
+    filters.languages.forEach(l => {
+      result.push({ key: 'languages', label: l, value: l });
+    });
+
+    if (filters.availability !== 'any') {
+      result.push({
+        key: 'availability',
+        label: filters.availability === 'now' ? 'Disponible ahora' : 'Esta semana',
       });
     }
-  }
 
-  if (filters.accepts_exchange === true) {
-    chips.push({ key: 'accepts_exchange', label: 'Acepta intercambio' });
-  }
+    // Role-based chips
+    filters.marketplace_roles.forEach(roleId => {
+      const role = MARKETPLACE_ROLES_MAP[roleId];
+      result.push({ key: 'marketplace_roles', label: role?.label || roleId, value: roleId });
+    });
+
+    // Adaptive filter chips
+    const lookupMap: Record<string, { list: typeof PLATFORMS; key: keyof MarketplaceFilters }> = {
+      platforms: { list: PLATFORMS, key: 'platforms' },
+      software: { list: SOFTWARE_TOOLS, key: 'software' },
+      tech_stack: { list: TECH_STACKS, key: 'tech_stack' },
+      education_format: { list: EDUCATION_FORMATS, key: 'education_format' },
+    };
+
+    for (const [, { list, key }] of Object.entries(lookupMap)) {
+      const values = filters[key] as string[];
+      if (values && values.length > 0) {
+        values.forEach(v => {
+          const opt = list.find(o => o.value === v);
+          result.push({ key, label: opt?.label || v, value: v });
+        });
+      }
+    }
+
+    if (filters.accepts_exchange === true) {
+      result.push({ key: 'accepts_exchange', label: 'Acepta intercambio' });
+    }
+
+    return result;
+  }, [filters]);
 
   if (chips.length === 0) return null;
 
@@ -115,4 +120,4 @@ export function ActiveFilters({ filters, onRemoveFilter, onClearAll }: ActiveFil
       </button>
     </div>
   );
-}
+});

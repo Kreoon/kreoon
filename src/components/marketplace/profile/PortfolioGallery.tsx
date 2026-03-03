@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, memo } from 'react';
 import { Play, Grid } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { PortfolioMedia } from '../types/marketplace';
@@ -35,7 +35,7 @@ interface PortfolioGalleryProps {
   creatorId: string;
 }
 
-export function PortfolioGallery({
+export const PortfolioGallery = memo(function PortfolioGallery({
   media,
   portfolioItems,
   creatorName,
@@ -231,4 +231,4 @@ export function PortfolioGallery({
       )}
     </>
   );
-}
+});
