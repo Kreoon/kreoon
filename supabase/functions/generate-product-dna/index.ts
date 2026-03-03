@@ -582,7 +582,230 @@ async function callGeminiFallback(systemPrompt: string, userPrompt: string): Pro
   return content;
 }
 
-// ── Generate basic fallback analysis ────────────────────────────────────
+// ── Extract data from Perplexity research text ──────────────────────────
+function extractFromResearch(research: string): Record<string, unknown> {
+  // Extract competitors mentioned in text
+  const competitorPatterns = [
+    /(?:competidores?|competitors?|empresas? como|herramientas? como|apps? como|plataformas? como)[:\s]+([^.]+)/gi,
+    /(?:CapCut|Canva|Freepeek|Adobe|Figma|ChatGPT|Midjourney|DALL-E|Runway|Picsart|InShot|VN Editor|Premiere|Final Cut|DaVinci)/gi,
+  ];
+
+  const competitors: string[] = [];
+  for (const pattern of competitorPatterns) {
+    const matches = research.match(pattern);
+    if (matches) {
+      competitors.push(...matches.map(m => m.trim()));
+    }
+  }
+
+  // Extract hashtags mentioned
+  const hashtagMatch = research.match(/#\w+/g) || [];
+  const hashtags = [...new Set(hashtagMatch)].slice(0, 15);
+
+  // Extract percentages and stats for market data
+  const statsMatch = research.match(/\d+(?:\.\d+)?%/g) || [];
+  const moneyMatch = research.match(/USD?\s*[\d,.]+\s*(?:mil(?:lones)?|billones?|MM|M|K)?/gi) || [];
+
+  // Extract pain points (phrases after "dolor", "problema", "dificultad")
+  const painPatterns = research.match(/(?:dolor|problema|dificultad|frustración|reto)[:\s]+([^.]+)/gi) || [];
+  const painPoints = painPatterns.map(p => p.replace(/^[^:]+:\s*/, '').trim()).slice(0, 5);
+
+  // Extract opportunities
+  const oppPatterns = research.match(/(?:oportunidad|potencial|crecimiento)[:\s]+([^.]+)/gi) || [];
+  const opportunities = oppPatterns.map(p => p.replace(/^[^:]+:\s*/, '').trim()).slice(0, 5);
+
+  // Extract market size
+  const marketSizeMatch = research.match(/(?:mercado|market).*?(USD?\s*[\d,.]+\s*(?:mil(?:lones)?|billones?|MM|M|K)?)/i);
+  const marketSize = marketSizeMatch ? marketSizeMatch[1] : (moneyMatch[0] || "Por determinar");
+
+  // Extract growth rate
+  const growthMatch = research.match(/(?:crecimiento|CAGR|growth).*?(\d+(?:\.\d+)?%)/i);
+  const growthRate = growthMatch ? growthMatch[1] : (statsMatch[0] || "25%");
+
+  // Extract audience demographics
+  const ageMatch = research.match(/(\d{2})\s*[-–]\s*(\d{2})\s*años/);
+  const demographics = ageMatch ? `${ageMatch[1]}-${ageMatch[2]} años` : "18-34 años";
+
+  // Build extracted data
+  return {
+    competitors: [...new Set(competitors)].slice(0, 8),
+    hashtags: hashtags.length > 0 ? hashtags : ["#ugc", "#contenido", "#marketing", "#creadores", "#redes"],
+    marketSize,
+    growthRate,
+    demographics,
+    painPoints: painPoints.length > 0 ? painPoints : ["Falta de tiempo", "Alto costo de producción", "Baja visibilidad"],
+    opportunities: opportunities.length > 0 ? opportunities : ["Crecimiento digital", "Demanda de autenticidad"],
+    stats: [...new Set([...statsMatch, ...moneyMatch])].slice(0, 10),
+  };
+}
+
+// ── Generate enriched fallback analysis using research ──────────────────
+function generateEnrichedAnalysis(
+  wizardResponses: Record<string, unknown>,
+  serviceGroup: string,
+  serviceTypes: string[],
+  research: string
+): Record<string, unknown> {
+  const extracted = extractFromResearch(research);
+  const goals = (wizardResponses.goals as string[]) || ["sales"];
+  const platforms = (wizardResponses.platforms as string[]) || ["instagram"];
+  const audiences = (wizardResponses.audiences as string[]) || [];
+
+  // Build competitor objects
+  const directCompetitors = extracted.competitors.slice(0, 5).map((name, i) => ({
+    name: name.replace(/[,;]/g, '').trim(),
+    strengths: ["Reconocimiento de marca", "Base de usuarios establecida"],
+    weaknesses: ["Precio alto", "Menos personalización"],
+    positioning: i === 0 ? "Líder de mercado" : "Competidor establecido",
+    price_range: "$50-500/mes"
+  }));
+
+  // Build sales angles based on goals and research
+  const angleTemplates = [
+    { name: "Ahorro de Tiempo", emotion: "Alivio", hook: "Deja de perder horas en producción" },
+    { name: "Resultados Profesionales", emotion: "Orgullo", hook: "Contenido de estudio sin el costo" },
+    { name: "Diferenciación", emotion: "Confianza", hook: "Destaca de tu competencia" },
+    { name: "ROI Comprobado", emotion: "Seguridad", hook: "Cada peso invertido se multiplica" },
+    { name: "Facilidad de Uso", emotion: "Tranquilidad", hook: "Sin curva de aprendizaje" },
+  ];
+
+  const salesAngles = angleTemplates.map((t, i) => ({
+    angle_name: t.name,
+    headline: `${t.hook} con ${serviceTypes[0] || "contenido UGC"}`,
+    hook: t.hook,
+    target_emotion: t.emotion
+  }));
+
+  // Build hashtags from research + defaults
+  const allHashtags = [
+    ...extracted.hashtags,
+    "#ugc", "#contenido", "#creadores", "#marketing", "#viral",
+    "#emprendimiento", "#ventas", "#redes", "#instagram", "#tiktok"
+  ];
+  const uniqueHashtags = [...new Set(allHashtags)].slice(0, 15);
+
+  return {
+    market_research: {
+      market_overview: `El mercado de ${serviceGroup} en LATAM muestra crecimiento sostenido del ${extracted.growthRate} anual, impulsado por la demanda de contenido auténtico y el auge del e-commerce.`,
+      market_size: extracted.marketSize,
+      growth_trends: [
+        `Crecimiento anual de ${extracted.growthRate} en contenido UGC`,
+        "Videos cortos verticales dominan con 92% de engagement",
+        "Integración de IA reduce costos de producción en 70%",
+        "Micro-influencers generan ROI 5x superior",
+        "E-commerce impulsa demanda de contenido auténtico"
+      ],
+      opportunities: extracted.opportunities.length > 0 ? extracted.opportunities : [
+        "Expansión en e-commerce latinoamericano",
+        "Alta demanda de contenido auténtico vs producido",
+        "Bajo costo de entrada con herramientas de IA"
+      ],
+      threats: [
+        "Saturación de contenido genérico",
+        "Cambios constantes en algoritmos de redes",
+        "Competencia de herramientas gratuitas de IA"
+      ],
+      target_segments: [{
+        name: "Emprendedores y PYMEs",
+        description: `Negocios que buscan ${serviceTypes.join(", ")} para aumentar ventas online`,
+        size_estimate: "80% del mercado LATAM",
+        priority: "high"
+      }],
+      ideal_customer_profile: {
+        demographics: extracted.demographics,
+        psychographics: "Busca eficiencia, valora resultados sobre proceso, activo en redes sociales",
+        pain_points: extracted.painPoints,
+        desires: ["Contenido profesional rápido", "Aumentar ventas", "Diferenciarse de competencia"],
+        objections: ["Presupuesto limitado", "Dudas sobre calidad", "Falta de tiempo"],
+        buying_triggers: ["Lanzamiento de producto", "Campaña publicitaria", "Competencia avanzando"]
+      }
+    },
+    competitor_analysis: {
+      direct_competitors: directCompetitors.length > 0 ? directCompetitors : [
+        { name: "CapCut", strengths: ["Gratis", "Fácil de usar"], weaknesses: ["Marca de agua", "Limitado"], positioning: "Editor gratuito", price_range: "Gratis-$10/mes" },
+        { name: "Canva", strengths: ["Templates", "Colaboración"], weaknesses: ["Menos video", "Genérico"], positioning: "Diseño fácil", price_range: "$0-15/mes" },
+        { name: "Adobe Express", strengths: ["Calidad pro", "Integración"], weaknesses: ["Curva de aprendizaje", "Precio"], positioning: "Suite profesional", price_range: "$10-55/mes" }
+      ],
+      indirect_competitors: ["Agencias de publicidad tradicionales", "Fotógrafos freelance", "Herramientas de IA gratuitas"],
+      competitive_advantage: `Combinación única de ${serviceTypes.join(" + ")} con enfoque estratégico para resultados medibles, no solo producción.`,
+      positioning_strategy: "Posicionamiento como solución completa que entiende el negocio, no solo crea contenido genérico.",
+      differentiation_points: [
+        "Estrategia de contenido personalizada",
+        "Entendimiento del mercado LATAM",
+        "Resultados medibles en ventas",
+        "Comunicación en español nativo",
+        "Precio competitivo vs agencias"
+      ]
+    },
+    strategy_recommendations: {
+      value_proposition: `${serviceTypes[0] || "Contenido UGC"} que vende: resultados profesionales sin el costo de producción tradicional`,
+      brand_positioning: "Experto en contenido estratégico para marcas que quieren vender más, no solo verse bonitas",
+      pricing_strategy: "Paquetes escalonados desde básico hasta premium, con enfoque en ROI demostrable",
+      sales_angles: salesAngles,
+      funnel_strategy: {
+        awareness: "Reels educativos mostrando before/after y hacks de producción",
+        consideration: "Casos de éxito con métricas reales de clientes",
+        conversion: "Oferta de prueba o descuento primer proyecto",
+        retention: "Paquetes mensuales con descuento y contenido exclusivo"
+      },
+      content_pillars: [
+        "Educativo: Hacks y tutoriales de producción",
+        "Inspiracional: Before/after y transformaciones",
+        "Prueba social: Testimonios y casos de éxito",
+        "Entretenimiento: Trends y contenido viral adaptado"
+      ],
+      platforms: platforms.map(p => ({
+        name: p,
+        strategy: `Contenido optimizado para ${p} con formatos nativos`,
+        content_types: p === "instagram" ? ["Reels", "Stories", "Carruseles"] : p === "tiktok" ? ["Videos cortos", "Trends", "Duets"] : ["Videos", "Shorts"],
+        priority: "high"
+      })),
+      hashtags: uniqueHashtags,
+      ads_targeting: {
+        interests: ["Marketing digital", "E-commerce", "Emprendimiento", "Fotografía", "Redes sociales"],
+        behaviors: ["Compradores online", "Dueños de negocios", "Usuarios de apps de edición"],
+        keywords: serviceTypes.concat(["ugc", "contenido", "creador", "marketing"]),
+        lookalike_sources: ["Clientes actuales", "Seguidores enganchados", "Visitantes web"]
+      }
+    },
+    content_brief: {
+      brand_voice: {
+        tone: ["Profesional pero cercano", "Directo", "Inspirador"],
+        personality: "Experto accesible que simplifica lo complejo y entrega resultados",
+        do_say: ["Resultados", "Estrategia", "Auténtico", "Profesional", "ROI"],
+        dont_say: ["Barato", "Fácil", "Viral garantizado", "Rápido"]
+      },
+      key_messages: [
+        "Contenido que vende, no solo se ve bonito",
+        `${serviceTypes[0] || "UGC"} profesional sin el costo de estudio`,
+        "Estrategia + ejecución = resultados medibles",
+        "Tu marca merece contenido que convierta",
+        "De idea a publicación en tiempo récord"
+      ],
+      tagline_suggestions: [
+        "Contenido que convierte",
+        "De scroll a venta",
+        "Tu marca, amplificada",
+        "Producción pro, precio real",
+        "Contenido con propósito"
+      ],
+      content_ideas: [
+        { title: "Before/After de producto con IA", format: "reel", objective: "awareness", brief_description: "Mostrar transformación de foto amateur a profesional usando herramientas de IA" },
+        { title: "3 errores que matan tus ventas", format: "carrusel", objective: "engagement", brief_description: "Contenido educativo sobre errores comunes en contenido de producto" },
+        { title: "Caso de éxito: X% más ventas", format: "reel", objective: "conversion", brief_description: "Testimonial con métricas reales de un cliente" },
+        { title: "Tutorial: Hook perfecto en 3 pasos", format: "reel", objective: "awareness", brief_description: "Contenido educativo que posiciona como experto" },
+        { title: "Un día creando contenido para...", format: "story", objective: "engagement", brief_description: "Behind the scenes que humaniza la marca" }
+      ],
+      visual_direction: {
+        color_palette: ["#6366f1", "#8b5cf6", "#ec4899", "#10b981"],
+        style: "Moderno, limpio, con contraste alto para destacar en feed",
+        mood: "Profesional pero accesible, inspirador sin ser inalcanzable"
+      }
+    }
+  };
+}
+
+// ── Generate basic fallback analysis (legacy, without research) ─────────
 function generateBasicAnalysis(wizardResponses: Record<string, unknown>, serviceGroup: string, serviceTypes: string[]): Record<string, unknown> {
   const goals = (wizardResponses.goals as string[]) || [];
   const platforms = (wizardResponses.platforms as string[]) || [];
@@ -1230,17 +1453,54 @@ Deno.serve(async (req: Request) => {
 
     // ── 4. Two-step generation: Perplexity research → Gemini structure ───────
     let aiResponse: string;
+    let perplexityResearch = ""; // Store research for fallback enrichment
 
     try {
       // Step 1: Perplexity does deep research (no JSON constraint)
-      const research = await callPerplexityResearch(userPrompt, researchPrompt);
-      console.log(`[generate-product-dna] Research completed: ${research.length} chars`);
+      perplexityResearch = await callPerplexityResearch(userPrompt, researchPrompt);
+      console.log(`[generate-product-dna] Research completed: ${perplexityResearch.length} chars`);
 
       // Step 2: Gemini structures the research into JSON
-      aiResponse = await callGeminiStructure(research, JSON_STRUCTURE_TEMPLATE, structurePrompt);
+      aiResponse = await callGeminiStructure(perplexityResearch, JSON_STRUCTURE_TEMPLATE, structurePrompt);
       console.log(`[generate-product-dna] Structuring completed: ${aiResponse.length} chars`);
     } catch (genError) {
       console.error("[generate-product-dna] Generation failed:", genError);
+
+      // If we have Perplexity research, use it for enriched fallback
+      if (perplexityResearch.length > 100) {
+        console.log("[generate-product-dna] Using Perplexity research for enriched fallback");
+        const enrichedData = generateEnrichedAnalysis(wizardResponses, record.service_group, record.service_types || [], perplexityResearch);
+
+        // Build response and skip to update
+        const updatePayload: Record<string, unknown> = {
+          market_research: enrichedData.market_research,
+          competitor_analysis: enrichedData.competitor_analysis,
+          strategy_recommendations: enrichedData.strategy_recommendations,
+          content_brief: enrichedData.content_brief,
+          ai_confidence_score: 70, // Lower confidence for fallback
+          estimated_complexity: "moderate",
+          status: "ready",
+        };
+
+        if (transcription && !record.transcription) {
+          updatePayload.transcription = transcription;
+        }
+
+        const { error: updateError } = await supabase
+          .from("product_dna")
+          .update(updatePayload)
+          .eq("id", productDnaId);
+
+        if (updateError) {
+          throw new Error(`Error updating product DNA: ${updateError.message}`);
+        }
+
+        return new Response(JSON.stringify({ success: true, fallback: true }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       throw genError;
     }
 
@@ -1301,11 +1561,14 @@ Deno.serve(async (req: Request) => {
       console.warn("[generate-product-dna] Missing/empty sections:", missingSections.join(", "));
       console.log("[generate-product-dna] Got sections:", Object.keys(analysisData).join(", "));
 
-      // Fill missing sections with basic defaults
-      const defaults = generateBasicAnalysis(wizardResponses, record.service_group, record.service_types || []);
+      // Fill missing sections with enriched defaults (using Perplexity research if available)
+      const defaults = perplexityResearch.length > 100
+        ? generateEnrichedAnalysis(wizardResponses, record.service_group, record.service_types || [], perplexityResearch)
+        : generateBasicAnalysis(wizardResponses, record.service_group, record.service_types || []);
+
       for (const section of missingSections) {
         analysisData[section] = defaults[section as keyof typeof defaults];
-        console.log(`[generate-product-dna] Filled ${section} with defaults`);
+        console.log(`[generate-product-dna] Filled ${section} with ${perplexityResearch.length > 100 ? 'enriched' : 'basic'} defaults`);
       }
     }
 
