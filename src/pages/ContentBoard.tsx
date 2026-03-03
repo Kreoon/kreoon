@@ -164,8 +164,10 @@ export default function ContentBoard() {
     ? impersonationTarget.role
     : realActiveRole;
 
-  // Detect freelancer: no org roles, unlocked via referral gate
-  const isFreelancer = roles.length === 0 && !isPlatformRoot && profile?.platform_access_unlocked === true;
+  // Detect freelancer: no org roles, not platform root, not a client/brand member
+  // Freelancers don't need platform_access_unlocked when gate is disabled
+  const isBrandMember = isClient || !!(profile as any)?.active_brand_id || (profile as any)?.active_role === 'client';
+  const isFreelancer = roles.length === 0 && !isPlatformRoot && !isBrandMember;
 
   // Detect user without any valid association (no org, no client_users, not freelancer)
   // This user should NOT see internal content, only marketplace

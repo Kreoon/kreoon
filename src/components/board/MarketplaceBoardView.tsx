@@ -129,7 +129,7 @@ function MarketplaceProjectCard({
 // ── Main Board View ────────────────────────────────────────────────────
 
 export function MarketplaceBoardView() {
-  const { isCreator, isEditor, isAdmin, profile, isClient } = useAuth();
+  const { isCreator, isEditor, isAdmin, profile, isClient, roles } = useAuth();
   const navigate = useNavigate();
 
   // Detect brand members (independent brands without org)
@@ -137,7 +137,11 @@ export function MarketplaceBoardView() {
     !!(profile as any)?.active_brand_id ||
     (profile as any)?.active_role === 'client';
 
-  const role = isCreator ? 'creator' : isEditor ? 'editor' : 'brand';
+  // Detect freelancers: users without org roles who are NOT brand members
+  // Freelancers should be treated as creators
+  const isFreelancer = roles.length === 0 && !profile?.current_organization_id && !isBrandMember;
+
+  const role = (isCreator || isFreelancer) ? 'creator' : isEditor ? 'editor' : 'brand';
   // Get brand ID for brand members to filter their projects
   const brandId = isBrandMember ? (profile as any)?.active_brand_id : undefined;
   const { projects, loading, refetch, updateProjectStatus } = useMarketplaceProjects({
@@ -147,10 +151,10 @@ export function MarketplaceBoardView() {
   });
 
   const columns: KanbanColumnConfig[] = useMemo(() => {
-    if (isCreator) return CREATOR_COLUMNS;
+    if (isCreator || isFreelancer) return CREATOR_COLUMNS;
     if (isEditor) return EDITOR_COLUMNS;
     return BRAND_COLUMNS;
-  }, [isCreator, isEditor]);
+  }, [isCreator, isEditor, isFreelancer]);
 
   const [draggingProject, setDraggingProject] = useState<MarketplaceProject | null>(null);
   const [dropTarget, setDropTarget] = useState<ProjectStatus | null>(null);
