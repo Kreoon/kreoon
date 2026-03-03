@@ -1,33 +1,18 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useRef, useCallback } from 'react';
+import { Dna, ChevronRight, Loader2, CheckCircle2, Circle, Sparkles, Check } from 'lucide-react';
+import { AudioRecorder } from '@/components/client-dna/AudioRecorder';
 import {
-  ChevronLeft, ChevronRight, Sparkles, Loader2,
-  CheckCircle2, Wand2, Check,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+  PRODUCT_DNA_QUESTIONS,
+  SERVICE_TYPE_OPTIONS,
+  GOAL_OPTIONS,
+  PLATFORM_OPTIONS,
+  AUDIENCE_OPTIONS,
+  URGENCY_OPTIONS,
+} from '@/lib/product-dna-questions';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { useAIAnalytics } from '@/analytics';
-
-import { SERVICE_GROUPS, type ServiceGroupConfig, type ServiceConfig } from '@/config/service-catalog';
-import {
-  AUDIENCE_QUESTIONS,
-  type GoalType,
-  type ServiceGroup,
-  getGoalsForServiceGroup,
-  getGoalQuestions,
-  getGoalColor,
-  getGoalIcon,
-  getPathSummary,
-} from '@/config/wizard-questions';
-
-import { ServiceGroupSelector } from './steps/ServiceGroupSelector';
-import { ServiceTypeSelector } from './steps/ServiceTypeSelector';
-import { QuestionStep } from './steps/QuestionStep';
-import { AudioStep } from './steps/AudioStep';
-import { ReferencesStep } from './steps/ReferencesStep';
-import { ReviewStep } from './steps/ReviewStep';
-import { KIROAssistant } from './KIROAssistant';
+import { cn } from '@/lib/utils';
 
 interface ProductDNAWizardProps {
   clientId: string;
@@ -35,184 +20,213 @@ interface ProductDNAWizardProps {
   onCancel?: () => void;
 }
 
-export type WizardStep =
-  | 'group_selection'
-  | 'service_selection'
-  | 'goal_selection'
-  | 'goal_questions'
-  | 'audience'
-  | 'audio'
-  | 'references'
-  | 'review'
-  | 'analyzing';
+type ProcessingStep = 'idle' | 'uploading' | 'transcribing' | 'generating' | 'complete' | 'error';
 
-export interface WizardState {
-  selectedGroup: ServiceGroupConfig | null;
-  selectedServices: ServiceConfig[];
-  selectedGoal: GoalType | null;
-  responses: Record<string, any>;
-  audioUrl: string | null;
-  audioDuration: number;
-  referenceLinks: Array<{ url: string; type: string; notes?: string }>;
-  competitorLinks: Array<{ url: string; type: string; notes?: string }>;
-  inspirationLinks: Array<{ url: string; type: string; notes?: string }>;
+interface TranscriptionResult {
+  transcription: string;
+  emotional_analysis: Record<string, unknown>;
 }
 
-const STEP_ORDER: WizardStep[] = [
-  'group_selection',
-  'service_selection',
-  'goal_selection',
-  'goal_questions',
-  'audience',
-  'audio',
-  'references',
-  'review',
-];
+// Extract actual error message from Supabase FunctionsHttpError
+async function extractErrorMessage(data: unknown, fnError: unknown, fallback: string): Promise<string> {
+  if (data && typeof data === 'object' && 'error' in data) {
+    const msg = (data as Record<string, unknown>).error;
+    if (typeof msg === 'string' && msg) return msg;
+  }
+  if (fnError && typeof fnError === 'object' && 'context' in fnError) {
+    try {
+      const ctx = (fnError as { context: Response }).context;
+      if (ctx && typeof ctx.json === 'function') {
+        const body = await ctx.json();
+        if (body?.error && typeof body.error === 'string') return body.error;
+      }
+    } catch { /* response already consumed or not JSON */ }
+  }
+  if (fnError instanceof Error && fnError.message) return fnError.message;
+  return fallback;
+}
+
+// Invoke edge function with retries
+async function invokeWithRetry<T>(fnName: string, options: { body: unknown }): Promise<T> {
+  const MAX_ATTEMPTS = 3;
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const { data, error: fnError } = await supabase.functions.invoke(fnName, options);
+    if (!fnError && data?.success) return data as T;
+
+    const errMsg = await extractErrorMessage(data, fnError, `Error en ${fnName}`);
+    const isRetryable = errMsg.includes('429') || errMsg.includes('rate') || errMsg.includes('500') || errMsg.includes('non-2xx');
+
+    if (attempt < MAX_ATTEMPTS - 1 && isRetryable) {
+      const delay = errMsg.includes('429') ? 8000 + attempt * 5000 : 3000;
+      console.warn(`[${fnName}] Attempt ${attempt + 1}/${MAX_ATTEMPTS} failed, retrying in ${delay / 1000}s: ${errMsg}`);
+      await new Promise(r => setTimeout(r, delay));
+      continue;
+    }
+    throw new Error(errMsg);
+  }
+  throw new Error(`Error en ${fnName}`);
+}
 
 export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAWizardProps) {
   const { trackDNAWizardStarted, trackDNAWizardCompleted, trackDNAAnalysisGenerated } = useAIAnalytics();
-  const [currentStep, setCurrentStep] = useState<WizardStep>('group_selection');
-  const [state, setState] = useState<WizardState>({
-    selectedGroup: null,
-    selectedServices: [],
-    selectedGoal: null,
-    responses: {},
-    audioUrl: null,
-    audioDuration: 0,
-    referenceLinks: [],
-    competitorLinks: [],
-    inspirationLinks: [],
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [kiroSuggestion, setKiroSuggestion] = useState<string | null>(null);
 
-  // Progreso del wizard
-  const progress = useMemo(() => {
-    const currentIndex = STEP_ORDER.indexOf(currentStep);
-    return ((currentIndex + 1) / STEP_ORDER.length) * 100;
-  }, [currentStep]);
+  // Audio state
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [transcriptionReady, setTranscriptionReady] = useState(false);
+  const transcriptionRef = useRef<TranscriptionResult | null>(null);
+  const transcriptionPromiseRef = useRef<Promise<TranscriptionResult> | null>(null);
 
-  // Navegación
-  const goToStep = (step: WizardStep) => {
-    setCurrentStep(step);
-  };
+  // Selection state
+  const [serviceTypes, setServiceTypes] = useState<string[]>([]);
+  const [goal, setGoal] = useState<string | null>(null);
+  const [platforms, setPlatforms] = useState<string[]>([]);
+  const [audience, setAudience] = useState<string | null>(null);
+  const [urgency, setUrgency] = useState<string | null>(null);
 
-  const goNext = () => {
-    const currentIndex = STEP_ORDER.indexOf(currentStep);
-    if (currentIndex < STEP_ORDER.length - 1) {
-      setCurrentStep(STEP_ORDER[currentIndex + 1]);
-    }
-  };
+  // Processing state
+  const [processingStep, setProcessingStep] = useState<ProcessingStep>('idle');
+  const [error, setError] = useState<string | null>(null);
 
-  const goBack = () => {
-    const currentIndex = STEP_ORDER.indexOf(currentStep);
-    if (currentIndex > 0) {
-      setCurrentStep(STEP_ORDER[currentIndex - 1]);
-    }
-  };
+  // Handle audio ready - start background transcription
+  const handleAudioReady = useCallback((blob: Blob | null) => {
+    setAudioBlob(blob);
 
-  // Actualizar respuestas
-  const updateResponse = useCallback((questionId: string, value: any) => {
-    setState(prev => ({
-      ...prev,
-      responses: { ...prev.responses, [questionId]: value },
-    }));
-  }, []);
-
-  // Manejar selección de grupo
-  const handleGroupSelect = (group: ServiceGroupConfig) => {
-    setState(prev => ({
-      ...prev,
-      selectedGroup: group,
-      selectedServices: [],
-      selectedGoal: null,
-    }));
-    goNext();
-  };
-
-  // Manejar selección de servicios (máx 3)
-  const handleServicesSelect = (services: ServiceConfig[]) => {
-    if (services.length > 3) {
-      toast.error('Máximo 3 servicios permitidos');
+    if (!blob) {
+      transcriptionRef.current = null;
+      transcriptionPromiseRef.current = null;
+      setIsTranscribing(false);
+      setTranscriptionReady(false);
       return;
     }
-    setState(prev => ({ ...prev, selectedServices: services }));
+
+    setIsTranscribing(true);
+    setTranscriptionReady(false);
+    transcriptionRef.current = null;
+
+    const promise = (async (): Promise<TranscriptionResult> => {
+      const formData = new FormData();
+      formData.append('audio', blob);
+
+      const data = await invokeWithRetry<{
+        success: boolean;
+        transcription: string;
+        emotional_analysis: Record<string, unknown>;
+      }>('transcribe-audio-gemini', { body: formData });
+
+      return {
+        transcription: data.transcription,
+        emotional_analysis: data.emotional_analysis || {},
+      };
+    })();
+
+    transcriptionPromiseRef.current = promise;
+
+    promise
+      .then((result) => {
+        transcriptionRef.current = result;
+        setTranscriptionReady(true);
+        setIsTranscribing(false);
+      })
+      .catch((err) => {
+        console.error('Background transcription failed:', err);
+        setIsTranscribing(false);
+      });
+  }, []);
+
+  // Toggle selection helpers
+  const toggleServiceType = (id: string) => {
+    setServiceTypes(prev =>
+      prev.includes(id)
+        ? prev.filter(x => x !== id)
+        : prev.length < 3 ? [...prev, id] : prev
+    );
   };
 
-  // Manejar selección de objetivo
-  const handleGoalSelect = (goalId: GoalType) => {
-    setState(prev => ({
-      ...prev,
-      selectedGoal: goalId,
-      responses: { ...prev.responses, primary_goal: goalId },
-    }));
+  const togglePlatform = (id: string) => {
+    setPlatforms(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
   };
 
-  // Manejar audio
-  const handleAudioComplete = (url: string, duration: number) => {
-    setState(prev => ({ ...prev, audioUrl: url, audioDuration: duration }));
-  };
+  // Validation
+  const canSubmit = audioBlob && serviceTypes.length > 0 && goal && platforms.length > 0;
 
-  // Preguntas específicas del objetivo seleccionado
-  const goalQuestions = useMemo(() => {
-    if (!state.selectedGoal) return [];
-    return getGoalQuestions(state.selectedGoal);
-  }, [state.selectedGoal]);
-
-  // Validar paso actual
-  const canProceed = useMemo(() => {
-    switch (currentStep) {
-      case 'group_selection':
-        return state.selectedGroup !== null;
-      case 'service_selection':
-        return state.selectedServices.length > 0 && state.selectedServices.length <= 3;
-      case 'goal_selection':
-        return state.selectedGoal !== null;
-      case 'goal_questions': {
-        // Check required goal-specific questions are answered
-        const requiredQs = goalQuestions.filter(q => q.required);
-        return requiredQs.every(q => {
-          const val = state.responses[q.id];
-          if (val === undefined || val === null) return false;
-          if (Array.isArray(val)) return val.length > 0;
-          if (typeof val === 'string') return val.trim().length > 0;
-          return true;
-        });
-      }
-      case 'audience':
-        return !!state.responses.target_age && !!state.responses.target_gender;
-      case 'audio':
-        return true; // Audio is optional
-      case 'references':
-        return true; // References are optional
-      case 'review':
-        return true;
-      default:
-        return true;
-    }
-  }, [currentStep, state, goalQuestions]);
-
-  // Enviar y procesar
+  // Submit handler
   const handleSubmit = async () => {
-    setIsSubmitting(true);
-    setCurrentStep('analyzing');
+    if (!canSubmit) return;
     const startTime = Date.now();
-    trackDNAWizardStarted('manual');
+    trackDNAWizardStarted('audio');
 
     try {
+      setError(null);
+
+      // Step 1: Upload audio to storage
+      setProcessingStep('uploading');
+      const filename = `product-dna/${Date.now()}-${Math.random().toString(36).slice(2)}.webm`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('audio-recordings')
+        .upload(filename, audioBlob, { contentType: 'audio/webm', upsert: false });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('audio-recordings')
+        .getPublicUrl(uploadData.path);
+
+      const audioUrl = urlData.publicUrl;
+      const estimatedDuration = Math.round(audioBlob.size / 2000);
+
+      // Step 2: Wait for transcription
+      setProcessingStep('transcribing');
+
+      let transcriptionResult: TranscriptionResult;
+
+      if (transcriptionRef.current) {
+        transcriptionResult = transcriptionRef.current;
+      } else if (transcriptionPromiseRef.current) {
+        transcriptionResult = await transcriptionPromiseRef.current;
+      } else {
+        // Fallback: start transcription now
+        const formData = new FormData();
+        formData.append('audio', audioBlob);
+
+        const data = await invokeWithRetry<{
+          success: boolean;
+          transcription: string;
+          emotional_analysis: Record<string, unknown>;
+        }>('transcribe-audio-gemini', { body: formData });
+
+        transcriptionResult = {
+          transcription: data.transcription,
+          emotional_analysis: data.emotional_analysis || {},
+        };
+      }
+
+      // Step 3: Create product DNA record
+      setProcessingStep('generating');
+
+      const wizardResponses = {
+        service_types: serviceTypes,
+        goal,
+        platforms,
+        audience,
+        urgency,
+        transcription: transcriptionResult.transcription,
+        emotional_analysis: transcriptionResult.emotional_analysis,
+      };
+
       // product_dna table not yet in generated types — cast to any
       const { data: productDna, error: createError } = await (supabase as any)
         .from('product_dna')
         .insert({
           client_id: clientId,
-          service_group: state.selectedGroup!.id,
-          service_types: state.selectedServices.map(s => s.id),
-          audio_url: state.audioUrl,
-          audio_duration_seconds: state.audioDuration,
-          reference_links: state.referenceLinks,
-          competitor_links: state.competitorLinks,
-          inspiration_links: state.inspirationLinks,
-          wizard_responses: state.responses,
+          service_group: 'content_creation',
+          service_types: serviceTypes,
+          audio_url: audioUrl,
+          audio_duration_seconds: estimatedDuration,
+          wizard_responses: wizardResponses,
           status: 'analyzing',
         })
         .select()
@@ -220,395 +234,393 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
 
       if (createError) throw createError;
 
+      // Step 4: Generate DNA
       const { error: analyzeError } = await supabase.functions.invoke('generate-product-dna', {
         body: { productDnaId: productDna.id },
       });
 
       if (analyzeError) throw analyzeError;
 
+      setProcessingStep('complete');
       const elapsed = Math.round((Date.now() - startTime) / 1000);
       trackDNAAnalysisGenerated(productDna.id, 'product_dna', true, elapsed);
-      trackDNAWizardCompleted(productDna.id, ['service_selection', 'goal', 'audience', 'audio', 'references']);
-      toast.success('¡Análisis completado! Tu Product DNA está listo.');
-      onComplete(productDna.id);
-    } catch (error) {
-      console.error('Error creating product DNA:', error);
+      trackDNAWizardCompleted(productDna.id, ['audio', 'selections']);
+      toast.success('¡Product DNA generado exitosamente!');
+
+      setTimeout(() => {
+        onComplete(productDna.id);
+      }, 1500);
+
+    } catch (err) {
+      console.error('Error:', err);
       const elapsed = Math.round((Date.now() - startTime) / 1000);
       trackDNAAnalysisGenerated(clientId, 'product_dna', false, elapsed);
-      toast.error('Error al procesar tu solicitud');
-      setCurrentStep('review');
-    } finally {
-      setIsSubmitting(false);
+      setError(err instanceof Error ? err.message : 'Error desconocido');
+      setProcessingStep('error');
+      toast.error('Error al procesar el Product DNA');
     }
   };
 
-  const getStepTitle = () => {
-    const titles: Record<WizardStep, string> = {
-      group_selection: '¿Qué tipo de servicio necesitas?',
-      service_selection: 'Selecciona los servicios específicos',
-      goal_selection: '¿Cuál es tu objetivo principal?',
-      goal_questions: getGoalStepTitle(),
-      audience: 'Tu audiencia objetivo',
-      audio: 'Cuéntanos tu visión',
-      references: 'Referencias y competencia',
-      review: 'Revisa tu solicitud',
-      analyzing: 'Analizando tu proyecto...',
-    };
-    return titles[currentStep];
-  };
+  // Full-screen processing state
+  if (processingStep !== 'idle' && processingStep !== 'error') {
+    return (
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-8">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-transparent to-pink-600/10" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl" />
 
-  const getGoalStepTitle = () => {
-    if (!state.selectedGoal) return 'Define tu estrategia';
-    const summary = getPathSummary(state.selectedGoal);
-    return `Estrategia: ${summary.goalLabel}`;
-  };
+        <div className="relative flex flex-col items-center justify-center py-12 space-y-8">
+          <div className="relative">
+            <div className="absolute inset-0 bg-purple-500/30 rounded-full blur-xl animate-pulse" />
+            <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+              {processingStep === 'complete' ? (
+                <CheckCircle2 className="w-10 h-10 text-white" />
+              ) : (
+                <Dna className="w-10 h-10 text-white animate-pulse" />
+              )}
+            </div>
+          </div>
 
-  return (
-    <div className="relative min-h-[60vh]">
-      <div className="relative z-10 max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          {/* Progress Bar */}
-          <div className="relative h-2 bg-white/10 rounded-full overflow-hidden mb-6">
-            <motion.div
-              className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-pink-500"
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.3 }}
+          <div className="space-y-4">
+            <ProcessingStepItem
+              label="Subiendo audio"
+              status={processingStep === 'uploading' ? 'active' : ['transcribing', 'generating', 'complete'].includes(processingStep) ? 'done' : 'pending'}
+            />
+            <ProcessingStepItem
+              label="Transcribiendo con Gemini"
+              status={processingStep === 'transcribing' ? 'active' : ['generating', 'complete'].includes(processingStep) ? 'done' : 'pending'}
+            />
+            <ProcessingStepItem
+              label="Generando Product DNA con IA"
+              status={processingStep === 'generating' ? 'active' : processingStep === 'complete' ? 'done' : 'pending'}
             />
           </div>
 
-          {/* Step Title */}
-          <div className="flex items-center justify-between">
-            <div>
-              <motion.h1
-                key={currentStep}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-2xl font-bold text-white"
-              >
-                {getStepTitle()}
-              </motion.h1>
-              {state.selectedGroup && currentStep !== 'group_selection' && (
-                <p className="text-gray-400 mt-1">
-                  {state.selectedGroup.name}
-                  {state.selectedServices.length > 0 && (
-                    <span className="text-purple-400">
-                      {' → '}{state.selectedServices.map(s => s.name).join(', ')}
-                    </span>
-                  )}
-                  {state.selectedGoal && currentStep !== 'goal_selection' && (
-                    <span className="text-emerald-400">
-                      {' → '}{getPathSummary(state.selectedGoal).goalLabel}
-                    </span>
-                  )}
-                </p>
-              )}
+          {processingStep === 'complete' && (
+            <div className="flex items-center gap-2 text-green-400">
+              <Sparkles className="w-4 h-4" />
+              <span className="text-sm font-medium">¡Product DNA generado!</span>
             </div>
-
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500
-                            flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-white" />
-            </div>
-          </div>
+          )}
         </div>
-
-        {/* Content Area */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentStep}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-            className="relative"
-          >
-            {currentStep === 'group_selection' && (
-              <ServiceGroupSelector
-                groups={SERVICE_GROUPS}
-                selectedGroup={state.selectedGroup}
-                onSelect={handleGroupSelect}
-              />
-            )}
-
-            {currentStep === 'service_selection' && state.selectedGroup && (
-              <ServiceTypeSelector
-                group={state.selectedGroup}
-                selected={state.selectedServices}
-                onSelect={handleServicesSelect}
-                maxSelections={3}
-              />
-            )}
-
-            {currentStep === 'goal_selection' && state.selectedGroup && (
-              <GoalSelectionStep
-                selectedGroup={state.selectedGroup.id as ServiceGroup}
-                selectedGoal={state.selectedGoal}
-                onSelect={handleGoalSelect}
-              />
-            )}
-
-            {currentStep === 'goal_questions' && state.selectedGoal && (
-              <QuestionStep
-                questions={goalQuestions}
-                responses={state.responses}
-                onResponse={updateResponse}
-              />
-            )}
-
-            {currentStep === 'audience' && (
-              <QuestionStep
-                questions={AUDIENCE_QUESTIONS}
-                responses={state.responses}
-                onResponse={updateResponse}
-              />
-            )}
-
-            {currentStep === 'audio' && (
-              <AudioStep
-                audioUrl={state.audioUrl}
-                onAudioComplete={handleAudioComplete}
-              />
-            )}
-
-            {currentStep === 'references' && (
-              <ReferencesStep
-                referenceLinks={state.referenceLinks}
-                competitorLinks={state.competitorLinks}
-                inspirationLinks={state.inspirationLinks}
-                onUpdate={(type, links) => {
-                  setState(prev => ({ ...prev, [`${type}Links`]: links }));
-                }}
-              />
-            )}
-
-            {currentStep === 'review' && (
-              <ReviewStep state={state} onEdit={goToStep} />
-            )}
-
-            {currentStep === 'analyzing' && <AnalyzingStep />}
-          </motion.div>
-        </AnimatePresence>
-
-        {/* KIRO Assistant Panel */}
-        {kiroSuggestion && (
-          <KIROAssistant
-            message={kiroSuggestion}
-            onDismiss={() => setKiroSuggestion(null)}
-          />
-        )}
-
-        {/* Navigation Footer */}
-        {currentStep !== 'analyzing' && (
-          <div className="mt-8 flex items-center justify-between">
-            <button
-              onClick={currentStep === 'group_selection' ? onCancel : goBack}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl
-                         bg-white/5 border border-white/10 text-gray-400
-                         hover:text-white hover:bg-white/10 transition-all"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              {currentStep === 'group_selection' ? 'Cancelar' : 'Atrás'}
-            </button>
-
-            {currentStep === 'review' ? (
-              <button
-                onClick={handleSubmit}
-                disabled={!canProceed || isSubmitting}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl
-                           bg-gradient-to-r from-purple-500 to-pink-500
-                           text-white font-medium
-                           disabled:opacity-50 disabled:cursor-not-allowed
-                           hover:opacity-90 transition-all"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Procesando...
-                  </>
-                ) : (
-                  <>
-                    <Wand2 className="w-5 h-5" />
-                    Generar Product DNA
-                  </>
-                )}
-              </button>
-            ) : (
-              <button
-                onClick={goNext}
-                disabled={!canProceed}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl
-                           bg-gradient-to-r from-purple-500 to-pink-500
-                           text-white font-medium
-                           disabled:opacity-50 disabled:cursor-not-allowed
-                           hover:opacity-90 transition-all"
-              >
-                Continuar
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            )}
-          </div>
-        )}
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-// ── Goal Selection Step ──────────────────────────────────────────────────
-
-// KIRO hints contextuales por grupo
-function getKiroHintForGroup(group: ServiceGroup): string {
-  const hints: Record<ServiceGroup, string> = {
-    technology: "Para proyectos tech, el tipo de proyecto define toda la arquitectura y timeline. ¿Es un MVP para validar o una app completa?",
-    content_creation: "Tu objetivo determina el estilo de contenido. ¿Buscas awareness, leads o ventas directas?",
-    post_production: "El destino del video define la edición. No es lo mismo un reel de 15s que un corporativo de 3 minutos.",
-    strategy_marketing: "La estrategia correcta depende de tu meta. ¿Lanzamiento puntual o crecimiento sostenido?",
-    education_training: "El formato educativo ideal depende de tu audiencia y profundidad del tema.",
-    general_services: "Cuéntanos qué necesitas y encontraremos la mejor forma de ayudarte.",
-  };
-  return hints[group];
-}
-
-const GoalSelectionStep: React.FC<{
-  selectedGroup: ServiceGroup;
-  selectedGoal: string | null;
-  onSelect: (goalId: string) => void;
-}> = ({ selectedGroup, selectedGoal, onSelect }) => {
-  const goals = getGoalsForServiceGroup(selectedGroup);
-  const groupLabel = SERVICE_GROUPS.find(g => g.id === selectedGroup)?.name;
+  const buttonTranscribing = isTranscribing && !transcriptionReady;
 
   return (
     <div className="space-y-6">
-      {/* Header contextual */}
-      <div className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-          <Sparkles className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <p className="text-white/60 text-sm">Servicio seleccionado</p>
-          <p className="text-white font-medium">{groupLabel}</p>
-        </div>
-      </div>
-
-      {/* KIRO hint */}
-      <div className="flex gap-3 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
-        <img src="/kiro-avatar.png" className="w-8 h-8 rounded-full" alt="" />
-        <div>
-          <p className="text-white text-sm font-medium">KIRO sugiere</p>
-          <p className="text-white/70 text-sm">
-            {getKiroHintForGroup(selectedGroup)}
-          </p>
-        </div>
-      </div>
-
-      {/* Goals Grid */}
-      <div className="grid grid-cols-2 gap-4">
-        {goals.map((goal) => (
-          <button
-            key={goal.id}
-            onClick={() => onSelect(goal.id)}
-            className={cn(
-              "p-4 rounded-xl border text-left transition-all",
-              selectedGoal === goal.id
-                ? `bg-gradient-to-br ${goal.color} border-white/30`
-                : "bg-white/5 border-white/10 hover:border-white/20"
-            )}
-          >
-            <div className="text-2xl mb-2">{goal.icon}</div>
-            <h3 className="text-white font-semibold mb-1">{goal.label}</h3>
-            <p className="text-white/60 text-sm mb-3">{goal.description}</p>
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-white/50">{goal.questionCount} preguntas</span>
-              <span className={cn(
-                "px-2 py-0.5 rounded-full",
-                goal.complexity === 'simple' && "bg-green-500/20 text-green-400",
-                goal.complexity === 'moderate' && "bg-amber-500/20 text-amber-400",
-                goal.complexity === 'detailed' && "bg-purple-500/20 text-purple-400"
-              )}>
-                {goal.complexity === 'simple' && 'Simple'}
-                {goal.complexity === 'moderate' && 'Moderado'}
-                {goal.complexity === 'detailed' && 'Detallado'}
-              </span>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <div className="absolute inset-0 bg-purple-500/30 rounded-xl blur-lg" />
+            <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+              <Dna className="w-6 h-6 text-white" />
             </div>
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white">Product DNA</h2>
+            <p className="text-sm text-gray-400">Cuéntanos sobre tu producto en un audio</p>
+          </div>
+        </div>
+        {onCancel && (
+          <button
+            onClick={onCancel}
+            className="text-sm text-gray-400 hover:text-white transition-colors"
+          >
+            Cancelar
           </button>
-        ))}
+        )}
+      </div>
+
+      {/* Grid: Preguntas + Audio */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Left Panel: Questions */}
+        <div className="relative overflow-hidden rounded-2xl border border-white/10">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-purple-500/10 to-pink-500/20" />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-xl" />
+
+          <div className="relative p-6 h-full flex flex-col justify-center">
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                <span className="text-lg">💬</span>
+              </div>
+              <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">Responde en tu audio</h3>
+            </div>
+
+            <div className="space-y-3">
+              {PRODUCT_DNA_QUESTIONS.map((q) => (
+                <div key={q.id} className="flex gap-2.5 group">
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-purple-500/30 to-pink-500/30 border border-white/10 flex items-center justify-center text-[10px] font-bold text-purple-300">
+                    {q.id}
+                  </span>
+                  <div>
+                    <p className="text-xs text-foreground/80 leading-relaxed group-hover:text-foreground transition-colors">
+                      {q.question}
+                    </p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">{q.tip}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Panel: Audio */}
+        <div className="relative overflow-hidden rounded-2xl border border-white/10">
+          <div className="absolute inset-0 bg-gradient-to-br from-pink-600/20 via-pink-500/10 to-purple-500/20" />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-xl" />
+
+          <div className="relative p-6 h-full flex flex-col">
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                <span className="text-lg">🎤</span>
+              </div>
+              <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">Graba tu audio</h3>
+            </div>
+
+            <div className="flex-1 flex flex-col items-center justify-center">
+              <p className="text-sm text-gray-400 text-center max-w-xs mb-8">
+                Responde las preguntas en un solo audio de 2-5 minutos.
+              </p>
+
+              <div className="py-4">
+                <AudioRecorder onAudioReady={handleAudioReady} disabled={processingStep !== 'idle'} />
+              </div>
+
+              {isTranscribing && (
+                <div className="flex items-center gap-2 mt-4 text-purple-400">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-xs">Transcribiendo...</span>
+                </div>
+              )}
+              {transcriptionReady && (
+                <div className="flex items-center gap-2 mt-4 text-green-400">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span className="text-xs">Audio listo</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Selection Panels */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Service Type */}
+        <SelectionPanel
+          title="¿Qué necesitas?"
+          emoji="🎯"
+          subtitle="Máx 3 opciones"
+        >
+          <div className="flex flex-wrap gap-2">
+            {SERVICE_TYPE_OPTIONS.map((opt) => (
+              <ChipButton
+                key={opt.id}
+                label={opt.label}
+                emoji={opt.emoji}
+                selected={serviceTypes.includes(opt.id)}
+                onClick={() => toggleServiceType(opt.id)}
+              />
+            ))}
+          </div>
+        </SelectionPanel>
+
+        {/* Goal */}
+        <SelectionPanel title="¿Cuál es tu objetivo?" emoji="🎯">
+          <div className="flex flex-wrap gap-2">
+            {GOAL_OPTIONS.map((opt) => (
+              <ChipButton
+                key={opt.id}
+                label={opt.label}
+                emoji={opt.emoji}
+                selected={goal === opt.id}
+                onClick={() => setGoal(goal === opt.id ? null : opt.id)}
+              />
+            ))}
+          </div>
+        </SelectionPanel>
+
+        {/* Platforms */}
+        <SelectionPanel title="¿Dónde publicarás?" emoji="📱">
+          <div className="flex flex-wrap gap-2">
+            {PLATFORM_OPTIONS.map((opt) => (
+              <ChipButton
+                key={opt.id}
+                label={opt.label}
+                emoji={opt.emoji}
+                selected={platforms.includes(opt.id)}
+                onClick={() => togglePlatform(opt.id)}
+              />
+            ))}
+          </div>
+        </SelectionPanel>
+
+        {/* Audience + Urgency */}
+        <div className="space-y-4">
+          <SelectionPanel title="Tu audiencia" emoji="👥">
+            <div className="flex flex-wrap gap-2">
+              {AUDIENCE_OPTIONS.map((opt) => (
+                <ChipButton
+                  key={opt.id}
+                  label={opt.label}
+                  emoji={opt.emoji}
+                  selected={audience === opt.id}
+                  onClick={() => setAudience(audience === opt.id ? null : opt.id)}
+                />
+              ))}
+            </div>
+          </SelectionPanel>
+
+          <SelectionPanel title="¿Para cuándo?" emoji="⏰">
+            <div className="flex flex-wrap gap-2">
+              {URGENCY_OPTIONS.map((opt) => (
+                <ChipButton
+                  key={opt.id}
+                  label={opt.label}
+                  emoji={opt.emoji}
+                  selected={urgency === opt.id}
+                  onClick={() => setUrgency(urgency === opt.id ? null : opt.id)}
+                />
+              ))}
+            </div>
+          </SelectionPanel>
+        </div>
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 backdrop-blur-xl">
+          <p className="text-sm text-red-400">{error}</p>
+        </div>
+      )}
+
+      {/* Submit Button */}
+      <button
+        onClick={handleSubmit}
+        disabled={!canSubmit || buttonTranscribing}
+        className="relative w-full group overflow-hidden rounded-xl"
+      >
+        <div className={cn(
+          "absolute inset-0 transition-all duration-300",
+          buttonTranscribing
+            ? "bg-gradient-to-r from-purple-600/80 via-pink-500/80 to-purple-600/80 bg-[length:200%_100%] animate-[shimmerBg_2s_linear_infinite]"
+            : canSubmit
+              ? "bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 bg-[length:200%_100%] group-hover:bg-right"
+              : "bg-gray-700"
+        )} />
+
+        {buttonTranscribing && (
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[shimmerSlide_1.5s_ease-in-out_infinite]" />
+          </div>
+        )}
+
+        {canSubmit && !buttonTranscribing && (
+          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+          </div>
+        )}
+
+        <div className="relative flex items-center justify-center gap-3 px-6 py-4">
+          {buttonTranscribing ? (
+            <>
+              <Loader2 className="w-5 h-5 text-white animate-spin" />
+              <span className="font-semibold text-white">Transcribiendo audio...</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className={cn("w-5 h-5", canSubmit ? "text-white" : "text-gray-500")} />
+              <span className={cn("font-semibold", canSubmit ? "text-white" : "text-gray-500")}>
+                Generar Product DNA
+              </span>
+              <ChevronRight className={cn(
+                "w-5 h-5 transition-transform group-hover:translate-x-1",
+                canSubmit ? "text-white" : "text-gray-500"
+              )} />
+            </>
+          )}
+        </div>
+      </button>
+    </div>
+  );
+}
+
+// Selection Panel wrapper
+function SelectionPanel({ title, emoji, subtitle, children }: {
+  title: string;
+  emoji: string;
+  subtitle?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-xl border border-white/10 p-4">
+      <div className="absolute inset-0 bg-white/5" />
+      <div className="relative">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-sm">{emoji}</span>
+          <span className="text-xs font-medium text-white/80">{title}</span>
+          {subtitle && <span className="text-[10px] text-gray-500">({subtitle})</span>}
+        </div>
+        {children}
       </div>
     </div>
   );
-};
+}
 
-// ── Analyzing Step ─────────────────────────────────────────────────────
-
-function AnalyzingStep() {
-  const steps = [
-    { label: 'Transcribiendo audio', delay: 0 },
-    { label: 'Analizando respuestas', delay: 1.5 },
-    { label: 'Investigando mercado', delay: 3 },
-    { label: 'Analizando competencia', delay: 4.5 },
-    { label: 'Generando estrategia', delay: 6 },
-    { label: 'Creando brief de contenido', delay: 7.5 },
-  ];
-
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-
-  React.useEffect(() => {
-    const timers = steps.map((step, index) =>
-      setTimeout(() => {
-        setCompletedSteps(prev => [...prev, index]);
-      }, step.delay * 1000)
-    );
-    return () => timers.forEach(clearTimeout);
-  }, []);
-
+// Chip button component
+function ChipButton({ label, emoji, selected, onClick }: {
+  label: string;
+  emoji: string;
+  selected: boolean;
+  onClick: () => void;
+}) {
   return (
-    <div className="flex flex-col items-center justify-center py-16">
-      <motion.div
-        animate={{ scale: [1, 1.05, 1], rotate: [0, 5, -5, 0] }}
-        transition={{ duration: 2, repeat: Infinity }}
-        className="w-24 h-24 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500
-                   flex items-center justify-center mb-8 shadow-xl shadow-purple-500/30"
-      >
-        <Sparkles className="w-12 h-12 text-white" />
-      </motion.div>
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+        selected
+          ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/20"
+          : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10"
+      )}
+    >
+      <span>{emoji}</span>
+      <span>{label}</span>
+      {selected && <Check className="w-3 h-3 ml-1" />}
+    </button>
+  );
+}
 
-      <h2 className="text-2xl font-bold text-white mb-2">KIRO está analizando</h2>
-      <p className="text-gray-400 mb-8">Esto puede tomar un momento...</p>
-
-      <div className="space-y-3 w-full max-w-sm">
-        {steps.map((step, index) => {
-          const isCompleted = completedSteps.includes(index);
-          const isActive = !isCompleted && completedSteps.length === index;
-
-          return (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: step.delay }}
-              className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
-                isCompleted
-                  ? 'bg-green-500/10 border border-green-500/20'
-                  : isActive
-                    ? 'bg-purple-500/10 border border-purple-500/20'
-                    : 'bg-white/5 border border-white/10'
-              }`}
-            >
-              {isCompleted ? (
-                <CheckCircle2 className="w-5 h-5 text-green-400" />
-              ) : isActive ? (
-                <Loader2 className="w-5 h-5 text-purple-400 animate-spin" />
-              ) : (
-                <div className="w-5 h-5 rounded-full border-2 border-white/20" />
-              )}
-              <span className={`text-sm ${
-                isCompleted ? 'text-green-400' : isActive ? 'text-purple-400' : 'text-gray-500'
-              }`}>
-                {step.label}
-              </span>
-            </motion.div>
-          );
-        })}
-      </div>
+// Processing step item
+function ProcessingStepItem({ label, status }: { label: string; status: 'pending' | 'active' | 'done' }) {
+  return (
+    <div className="flex items-center gap-3">
+      {status === 'done' && (
+        <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
+          <CheckCircle2 className="w-4 h-4 text-green-400" />
+        </div>
+      )}
+      {status === 'active' && (
+        <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center">
+          <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />
+        </div>
+      )}
+      {status === 'pending' && (
+        <div className="w-6 h-6 rounded-full bg-gray-700/50 flex items-center justify-center">
+          <Circle className="w-4 h-4 text-gray-600" />
+        </div>
+      )}
+      <span className={cn(
+        "text-sm font-medium",
+        status === 'done' && "text-green-400",
+        status === 'active' && "text-white",
+        status === 'pending' && "text-gray-500"
+      )}>
+        {label}
+      </span>
     </div>
   );
 }

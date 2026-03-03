@@ -29,16 +29,47 @@ export const PRODUCT_DNA_QUESTIONS = [
     question: '¿Cuánto cuesta, qué incluye y qué garantías o testimonios tienes?',
     tip: 'Precio, entregables, garantías, prueba social'
   },
-  {
-    id: 6,
-    block: 'Tu Competencia',
-    question: '¿Quiénes son tus principales competidores? ¿Qué hacen bien y qué hacen mal?',
-    tip: 'Nombres, fortalezas, debilidades, precios'
-  },
-  {
-    id: 7,
-    block: 'Tu Marketing',
-    question: '¿Dónde publicas contenido, dónde está tu audiencia y qué tipo de contenido funciona mejor?',
-    tip: 'Plataformas, formatos, voz de marca, presupuesto'
-  }
+];
+
+// Opciones simplificadas para selección rápida
+export const SERVICE_TYPE_OPTIONS = [
+  { id: 'video_ugc', label: 'Video UGC', emoji: '🎬' },
+  { id: 'photo_ugc', label: 'Foto UGC', emoji: '📸' },
+  { id: 'carousel', label: 'Carrusel', emoji: '🖼️' },
+  { id: 'reels', label: 'Reels/TikToks', emoji: '📱' },
+  { id: 'photography', label: 'Fotografía', emoji: '📷' },
+  { id: 'video_editing', label: 'Edición', emoji: '✂️' },
+  { id: 'graphic_design', label: 'Diseño', emoji: '🎨' },
+  { id: 'strategy', label: 'Estrategia', emoji: '📊' },
+];
+
+export const GOAL_OPTIONS = [
+  { id: 'sales', label: 'Vender', emoji: '💰' },
+  { id: 'awareness', label: 'Dar a conocer', emoji: '👁️' },
+  { id: 'leads', label: 'Captar leads', emoji: '📋' },
+  { id: 'engagement', label: 'Engagement', emoji: '❤️' },
+  { id: 'education', label: 'Educar', emoji: '📚' },
+];
+
+export const PLATFORM_OPTIONS = [
+  { id: 'instagram', label: 'Instagram', emoji: '📸' },
+  { id: 'tiktok', label: 'TikTok', emoji: '🎵' },
+  { id: 'youtube', label: 'YouTube', emoji: '▶️' },
+  { id: 'facebook', label: 'Facebook', emoji: '👤' },
+  { id: 'linkedin', label: 'LinkedIn', emoji: '💼' },
+  { id: 'ads', label: 'Ads', emoji: '📣' },
+];
+
+export const AUDIENCE_OPTIONS = [
+  { id: '18_24', label: '18-24 años', emoji: '🧑' },
+  { id: '25_34', label: '25-34 años', emoji: '👨' },
+  { id: '35_44', label: '35-44 años', emoji: '👨‍💼' },
+  { id: '45_plus', label: '45+ años', emoji: '👴' },
+];
+
+export const URGENCY_OPTIONS = [
+  { id: 'urgent', label: 'Esta semana', emoji: '🔥' },
+  { id: 'soon', label: '2 semanas', emoji: '⚡' },
+  { id: 'month', label: 'Este mes', emoji: '📅' },
+  { id: 'flexible', label: 'Sin prisa', emoji: '🌿' },
 ];
