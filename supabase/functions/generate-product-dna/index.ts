@@ -114,7 +114,7 @@ async function analyzeEmotions(transcription: string): Promise<Record<string, un
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "gemini-2.0-flash",
+        model: "gemini-2.5-flash",
         messages: [
           {
             role: "system",
@@ -201,56 +201,119 @@ async function callPerplexityResearch(userPrompt: string, researchPrompt: string
   return content;
 }
 
-// ── Gemini call (structure into JSON) ───────────────────────────────────
-async function callGeminiStructure(research: string, jsonStructure: string, structurePrompt: string): Promise<string> {
+// ── Gemini call for single section ──────────────────────────────────────
+async function callGeminiSection(apiKey: string, research: string, section: string, sectionPrompt: string): Promise<Record<string, unknown>> {
+  console.log(`[generate-product-dna] Calling Gemini for section: ${section}`);
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: `Genera la seccion "${section}" basandote en esta investigacion.
+
+INVESTIGACION:
+${research.substring(0, 4000)}
+
+---
+
+${sectionPrompt}
+
+IMPORTANTE: Responde UNICAMENTE con un objeto JSON valido. Ejemplo: {"${section}": {...}}` }]
+          }],
+          generationConfig: {
+            temperature: 0.3,
+            maxOutputTokens: 4000,
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error(`[generate-product-dna] Gemini ${section} error:`, errText.substring(0, 200));
+      throw new Error(`Gemini ${section} error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    console.log(`[generate-product-dna] ${section} response: ${content.length} chars, starts: ${content.substring(0, 100)}`);
+
+    // Extract and repair JSON
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        const repaired = repairJsonForParse(jsonMatch[0]);
+        const parsed = JSON.parse(repaired);
+        console.log(`[generate-product-dna] ${section} parsed keys:`, Object.keys(parsed).join(", "));
+        return parsed;
+      } catch (parseErr) {
+        console.error(`[generate-product-dna] ${section} JSON repair failed, trying simpler structure`);
+        // Return empty section that will be filled with defaults
+        return {};
+      }
+    }
+    console.error(`[generate-product-dna] ${section} no JSON found in response`);
+    return {};
+  } catch (err) {
+    console.error(`[generate-product-dna] ${section} exception:`, err);
+    throw err;
+  }
+}
+
+// ── Gemini call (structure into JSON) - calls 4 sections in parallel ────
+async function callGeminiStructure(research: string, _jsonStructure: string, _structurePrompt: string): Promise<string> {
   const apiKey = Deno.env.get("GOOGLE_AI_API_KEY") || Deno.env.get("GEMINI_API_KEY");
   if (!apiKey) {
     throw new Error("GOOGLE_AI_API_KEY not configured");
   }
 
-  console.log("[generate-product-dna] Step 2: Gemini structuring...");
+  console.log("[generate-product-dna] Step 2: Gemini structuring (4 parallel calls)...");
 
-  const userPrompt = `INVESTIGACION DE MERCADO:
-${research}
+  const sectionPrompts = {
+    market_research: `Genera "market_research" con: market_overview (string), market_size (string), growth_trends (array de strings), opportunities (array), threats (array), target_segments (array de objetos con name, description, size_estimate, priority), ideal_customer_profile (objeto con demographics, psychographics, pain_points, desires, objections, buying_triggers).`,
 
----
+    competitor_analysis: `Genera "competitor_analysis" con: direct_competitors (array de objetos con name, strengths, weaknesses, positioning, price_range), indirect_competitors (array de strings), competitive_advantage (string), positioning_strategy (string), differentiation_points (array de strings).`,
 
-ESTRUCTURA JSON REQUERIDA:
-${jsonStructure}
+    strategy_recommendations: `Genera "strategy_recommendations" con: value_proposition (string), brand_positioning (string), pricing_strategy (string), sales_angles (array de objetos con angle_name, headline, hook, target_emotion), funnel_strategy (objeto con awareness, consideration, conversion, retention), content_pillars (array), platforms (array de objetos con name, strategy, content_types, priority), hashtags (array), ads_targeting (objeto con interests, behaviors, keywords, lookalike_sources).`,
 
----
+    content_brief: `Genera "content_brief" con: brand_voice (objeto con tone, personality, do_say, dont_say), key_messages (array), tagline_suggestions (array), content_ideas (array de objetos con title, format, objective, brief_description), visual_direction (objeto con color_palette, style, mood).`
+  };
 
-Convierte la investigacion anterior en un JSON con exactamente esa estructura. Responde SOLO con el JSON.`;
+  // Call all 4 sections in parallel with error handling
+  const results = await Promise.allSettled([
+    callGeminiSection(apiKey, research, "market_research", sectionPrompts.market_research),
+    callGeminiSection(apiKey, research, "competitor_analysis", sectionPrompts.competitor_analysis),
+    callGeminiSection(apiKey, research, "strategy_recommendations", sectionPrompts.strategy_recommendations),
+    callGeminiSection(apiKey, research, "content_brief", sectionPrompts.content_brief),
+  ]);
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: userPrompt }] }],
-        systemInstruction: { parts: [{ text: structurePrompt }] },
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 8000,
-          responseMimeType: "application/json", // Force JSON output
-        },
-      }),
+  // Extract results
+  const marketRes = results[0].status === "fulfilled" ? results[0].value : {};
+  const compRes = results[1].status === "fulfilled" ? results[1].value : {};
+  const stratRes = results[2].status === "fulfilled" ? results[2].value : {};
+  const contentRes = results[3].status === "fulfilled" ? results[3].value : {};
+
+  // Log failures
+  results.forEach((r, i) => {
+    if (r.status === "rejected") {
+      console.error(`[generate-product-dna] Section ${i} failed:`, r.reason);
     }
-  );
+  });
 
-  if (!response.ok) {
-    const errText = await response.text();
-    console.error("[generate-product-dna] Gemini error:", errText);
-    throw new Error(`Gemini API error: ${response.status}`);
-  }
+  // Combine all sections - handle both wrapped and unwrapped responses
+  const combined = {
+    market_research: marketRes.market_research || (Object.keys(marketRes).length > 0 ? marketRes : null),
+    competitor_analysis: compRes.competitor_analysis || (Object.keys(compRes).length > 0 ? compRes : null),
+    strategy_recommendations: stratRes.strategy_recommendations || (Object.keys(stratRes).length > 0 ? stratRes : null),
+    content_brief: contentRes.content_brief || (Object.keys(contentRes).length > 0 ? contentRes : null),
+  };
 
-  const data = await response.json();
-  const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-  console.log(`[generate-product-dna] Gemini structured: ${content.length} chars`);
-  console.log(`[generate-product-dna] Gemini starts with: ${content.substring(0, 100)}`);
-  return content;
+  console.log("[generate-product-dna] Combined sections:", Object.keys(combined).filter(k => combined[k as keyof typeof combined]).join(", "));
+  return JSON.stringify(combined);
 }
 
 // ── Gemini fallback ─────────────────────────────────────────────────────
@@ -265,7 +328,7 @@ async function callGeminiFallback(systemPrompt: string, userPrompt: string): Pro
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "gemini-2.0-flash",  // Use stable model
+        model: "gemini-2.5-flash",  // Use stable model
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -964,15 +1027,20 @@ Deno.serve(async (req: Request) => {
 
     console.log("[generate-product-dna] Analysis generated, sections:", Object.keys(analysisData).join(", "));
 
-    // Validate required sections exist
+    // Check which sections exist and fill missing ones with defaults
     const requiredSections = ["market_research", "competitor_analysis", "strategy_recommendations", "content_brief"];
-    const missingSections = requiredSections.filter(s => !analysisData[s]);
+    const missingSections = requiredSections.filter(s => !analysisData[s] || Object.keys(analysisData[s] as object).length === 0);
 
     if (missingSections.length > 0) {
-      console.error("[generate-product-dna] Missing sections:", missingSections.join(", "));
-      console.error("[generate-product-dna] Got sections:", Object.keys(analysisData).join(", "));
-      console.error("[generate-product-dna] Full response preview:", JSON.stringify(analysisData).substring(0, 1000));
-      throw new Error(`Análisis incompleto. Faltan: ${missingSections.join(", ")}. Recibido: ${Object.keys(analysisData).join(", ")}`);
+      console.warn("[generate-product-dna] Missing/empty sections:", missingSections.join(", "));
+      console.log("[generate-product-dna] Got sections:", Object.keys(analysisData).join(", "));
+
+      // Fill missing sections with basic defaults
+      const defaults = generateBasicAnalysis(wizardResponses, record.service_group, record.service_types || []);
+      for (const section of missingSections) {
+        analysisData[section] = defaults[section as keyof typeof defaults];
+        console.log(`[generate-product-dna] Filled ${section} with defaults`);
+      }
     }
 
     // ── 6. UPDATE the record ────────────────────────────────────────────
