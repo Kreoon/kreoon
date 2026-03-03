@@ -7,7 +7,6 @@ import {
   GOAL_OPTIONS,
   PLATFORM_OPTIONS,
   AUDIENCE_OPTIONS,
-  URGENCY_OPTIONS,
 } from '@/lib/product-dna-questions';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -77,12 +76,11 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
   const transcriptionRef = useRef<TranscriptionResult | null>(null);
   const transcriptionPromiseRef = useRef<Promise<TranscriptionResult> | null>(null);
 
-  // Selection state
+  // Selection state (all multi-select, max 3 each)
   const [serviceTypes, setServiceTypes] = useState<string[]>([]);
-  const [goal, setGoal] = useState<string | null>(null);
+  const [goals, setGoals] = useState<string[]>([]);
   const [platforms, setPlatforms] = useState<string[]>([]);
-  const [audience, setAudience] = useState<string | null>(null);
-  const [urgency, setUrgency] = useState<string | null>(null);
+  const [audiences, setAudiences] = useState<string[]>([]);
 
   // Processing state
   const [processingStep, setProcessingStep] = useState<ProcessingStep>('idle');
@@ -134,23 +132,21 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
       });
   }, []);
 
-  // Toggle selection helpers
-  const toggleServiceType = (id: string) => {
-    setServiceTypes(prev =>
-      prev.includes(id)
-        ? prev.filter(x => x !== id)
-        : prev.length < 3 ? [...prev, id] : prev
-    );
-  };
-
-  const togglePlatform = (id: string) => {
-    setPlatforms(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+  // Toggle selection helpers (all max 3)
+  const toggleSelection = (
+    setter: React.Dispatch<React.SetStateAction<string[]>>,
+    id: string,
+    current: string[]
+  ) => {
+    setter(
+      current.includes(id)
+        ? current.filter(x => x !== id)
+        : current.length < 3 ? [...current, id] : current
     );
   };
 
   // Validation
-  const canSubmit = audioBlob && serviceTypes.length > 0 && goal && platforms.length > 0;
+  const canSubmit = audioBlob && serviceTypes.length > 0 && goals.length > 0 && platforms.length > 0;
 
   // Submit handler
   const handleSubmit = async () => {
@@ -209,10 +205,9 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
 
       const wizardResponses = {
         service_types: serviceTypes,
-        goal,
+        goals,
         platforms,
-        audience,
-        urgency,
+        audiences,
         transcription: transcriptionResult.transcription,
         emotional_analysis: transcriptionResult.emotional_analysis,
       };
@@ -406,14 +401,10 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
         </div>
       </div>
 
-      {/* Selection Panels */}
+      {/* Selection Panels - 4 opciones, todas multi-select max 3 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Service Type */}
-        <SelectionPanel
-          title="¿Qué necesitas?"
-          emoji="🎯"
-          subtitle="Máx 3 opciones"
-        >
+        <SelectionPanel title="¿Qué necesitas?" emoji="🎬" subtitle="Máx 3">
           <div className="flex flex-wrap gap-2">
             {SERVICE_TYPE_OPTIONS.map((opt) => (
               <ChipButton
@@ -421,29 +412,29 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
                 label={opt.label}
                 emoji={opt.emoji}
                 selected={serviceTypes.includes(opt.id)}
-                onClick={() => toggleServiceType(opt.id)}
+                onClick={() => toggleSelection(setServiceTypes, opt.id, serviceTypes)}
               />
             ))}
           </div>
         </SelectionPanel>
 
         {/* Goal */}
-        <SelectionPanel title="¿Cuál es tu objetivo?" emoji="🎯">
+        <SelectionPanel title="¿Cuál es tu objetivo?" emoji="🎯" subtitle="Máx 3">
           <div className="flex flex-wrap gap-2">
             {GOAL_OPTIONS.map((opt) => (
               <ChipButton
                 key={opt.id}
                 label={opt.label}
                 emoji={opt.emoji}
-                selected={goal === opt.id}
-                onClick={() => setGoal(goal === opt.id ? null : opt.id)}
+                selected={goals.includes(opt.id)}
+                onClick={() => toggleSelection(setGoals, opt.id, goals)}
               />
             ))}
           </div>
         </SelectionPanel>
 
         {/* Platforms */}
-        <SelectionPanel title="¿Dónde publicarás?" emoji="📱">
+        <SelectionPanel title="¿Dónde publicarás?" emoji="📱" subtitle="Máx 3">
           <div className="flex flex-wrap gap-2">
             {PLATFORM_OPTIONS.map((opt) => (
               <ChipButton
@@ -451,42 +442,26 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
                 label={opt.label}
                 emoji={opt.emoji}
                 selected={platforms.includes(opt.id)}
-                onClick={() => togglePlatform(opt.id)}
+                onClick={() => toggleSelection(setPlatforms, opt.id, platforms)}
               />
             ))}
           </div>
         </SelectionPanel>
 
-        {/* Audience + Urgency */}
-        <div className="space-y-4">
-          <SelectionPanel title="Tu audiencia" emoji="👥">
-            <div className="flex flex-wrap gap-2">
-              {AUDIENCE_OPTIONS.map((opt) => (
-                <ChipButton
-                  key={opt.id}
-                  label={opt.label}
-                  emoji={opt.emoji}
-                  selected={audience === opt.id}
-                  onClick={() => setAudience(audience === opt.id ? null : opt.id)}
-                />
-              ))}
-            </div>
-          </SelectionPanel>
-
-          <SelectionPanel title="¿Para cuándo?" emoji="⏰">
-            <div className="flex flex-wrap gap-2">
-              {URGENCY_OPTIONS.map((opt) => (
-                <ChipButton
-                  key={opt.id}
-                  label={opt.label}
-                  emoji={opt.emoji}
-                  selected={urgency === opt.id}
-                  onClick={() => setUrgency(urgency === opt.id ? null : opt.id)}
-                />
-              ))}
-            </div>
-          </SelectionPanel>
-        </div>
+        {/* Audience */}
+        <SelectionPanel title="Tu audiencia" emoji="👥" subtitle="Máx 3">
+          <div className="flex flex-wrap gap-2">
+            {AUDIENCE_OPTIONS.map((opt) => (
+              <ChipButton
+                key={opt.id}
+                label={opt.label}
+                emoji={opt.emoji}
+                selected={audiences.includes(opt.id)}
+                onClick={() => toggleSelection(setAudiences, opt.id, audiences)}
+              />
+            ))}
+          </div>
+        </SelectionPanel>
       </div>
 
       {/* Error */}
