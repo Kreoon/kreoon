@@ -118,32 +118,54 @@ Responde SOLO con el JSON.`,
 // ── Perplexity AI call ──────────────────────────────────────────────────
 async function callPerplexity(systemPrompt: string, userPrompt: string): Promise<string> {
   const apiKey = getAPIKey("perplexity");
-  if (!apiKey) throw new Error("PERPLEXITY_API_KEY not configured");
+  if (!apiKey) {
+    console.error("[generate-product-dna] PERPLEXITY_API_KEY not found in environment");
+    throw new Error("PERPLEXITY_API_KEY not configured");
+  }
 
-  console.log("[generate-product-dna] Calling Perplexity sonar...");
+  console.log("[generate-product-dna] Calling Perplexity sonar-pro...");
+  console.log(`[generate-product-dna] API Key starts with: ${apiKey.substring(0, 8)}...`);
+
+  const requestBody = {
+    model: "sonar-pro",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    max_tokens: 8000,
+    temperature: 0.2,
+    return_citations: false,
+  };
+
+  console.log(`[generate-product-dna] Request body size: ${JSON.stringify(requestBody).length} chars`);
+
   const response = await fetch("https://api.perplexity.ai/chat/completions", {
     method: "POST",
-    headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "sonar",  // Changed from sonar-pro for better reliability
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      max_tokens: 8000,
-      temperature: 0.2,
-    }),
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(requestBody),
   });
+
+  console.log(`[generate-product-dna] Perplexity response status: ${response.status}`);
 
   if (!response.ok) {
     const errText = await response.text();
-    console.error("[generate-product-dna] Perplexity error:", errText);
-    throw new Error(`Perplexity API error: ${response.status}`);
+    console.error("[generate-product-dna] Perplexity error response:", errText);
+    throw new Error(`Perplexity API error: ${response.status} - ${errText.substring(0, 200)}`);
   }
 
   const data = await response.json();
   const content = data.choices?.[0]?.message?.content || "";
-  console.log(`[generate-product-dna] Perplexity response: ${content.length} chars, starts with: ${content.substring(0, 100)}`);
+
+  if (!content) {
+    console.error("[generate-product-dna] Perplexity returned empty content. Full response:", JSON.stringify(data).substring(0, 500));
+    throw new Error("Perplexity returned empty response");
+  }
+
+  console.log(`[generate-product-dna] Perplexity success: ${content.length} chars`);
+  console.log(`[generate-product-dna] Content starts with: ${content.substring(0, 200)}`);
   return content;
 }
 
@@ -705,55 +727,38 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[generate-product-dna] Prompt built: ${userPrompt.length} chars (transcription: ${transcription.length}, wizard: ${wizardContext.length})`);
 
-    // ── 4. Generate analysis with Perplexity (fallback to Gemini, then basic) ───────
-    let aiResponse: string = "";
-    let analysisData: Record<string, unknown> | null = null;
+    // ── 4. Generate analysis with Perplexity (required) ───────
+    let aiResponse: string;
 
-    // Try Perplexity first
-    try {
-      aiResponse = await callPerplexity(systemPrompt, userPrompt);
-    } catch (err) {
-      console.warn("[generate-product-dna] Perplexity failed:", err);
-    }
-
-    // Try Gemini if Perplexity failed
-    if (!aiResponse || aiResponse.length < 100) {
-      try {
-        aiResponse = await callGeminiFallback(systemPrompt, userPrompt);
-      } catch (err) {
-        console.warn("[generate-product-dna] Gemini also failed:", err);
-      }
-    }
+    // Call Perplexity - this is required, no fallback to other providers
+    aiResponse = await callPerplexity(systemPrompt, userPrompt);
 
     // ── 5. Parse AI response ────────────────────────────────────────────
-    if (aiResponse && aiResponse.length >= 100) {
-      console.log(`[generate-product-dna] AI response length: ${aiResponse.length} chars`);
+    console.log(`[generate-product-dna] Parsing AI response: ${aiResponse.length} chars`);
 
-      const repaired = repairJsonForParse(aiResponse);
-      try {
-        analysisData = JSON.parse(repaired);
-        console.log("[generate-product-dna] Successfully parsed AI response");
-      } catch (parseErr) {
-        console.error("[generate-product-dna] JSON parse failed, trying extraction...");
-        console.error("[generate-product-dna] Raw response (first 500 chars):", aiResponse.substring(0, 500));
+    const repaired = repairJsonForParse(aiResponse);
+    let analysisData: Record<string, unknown>;
 
-        // Try to extract any valid JSON from the response
-        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          try {
-            analysisData = JSON.parse(repairJsonForParse(jsonMatch[0]));
-            console.log("[generate-product-dna] Recovered JSON from response");
-          } catch {
-            console.warn("[generate-product-dna] JSON extraction also failed");
-          }
+    try {
+      analysisData = JSON.parse(repaired);
+      console.log("[generate-product-dna] Successfully parsed AI response");
+    } catch (parseErr) {
+      console.error("[generate-product-dna] JSON parse failed, trying extraction...");
+      console.error("[generate-product-dna] Raw response (first 1000 chars):", aiResponse.substring(0, 1000));
+
+      // Try to extract any valid JSON from the response
+      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          analysisData = JSON.parse(repairJsonForParse(jsonMatch[0]));
+          console.log("[generate-product-dna] Recovered JSON from response");
+        } catch {
+          console.error("[generate-product-dna] JSON extraction also failed");
+          throw new Error("Error al parsear respuesta de Perplexity. El análisis no pudo ser generado.");
         }
+      } else {
+        throw new Error("Perplexity no devolvió JSON válido. Intenta de nuevo.");
       }
-    }
-
-    // Fallback to basic analysis if AI completely failed
-    if (!analysisData) {
-      console.warn("[generate-product-dna] Using basic fallback analysis");
-      analysisData = generateBasicAnalysis(wizardResponses, record.service_group, record.service_types || []);
     }
 
     console.log("[generate-product-dna] Analysis generated, sections:", Object.keys(analysisData).join(", "));
