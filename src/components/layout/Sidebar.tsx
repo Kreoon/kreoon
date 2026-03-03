@@ -47,6 +47,7 @@ import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { useOrgMarketplace } from "@/hooks/useOrgMarketplace";
 import { ClientSelectorDialog } from "@/components/clients/ClientSelectorDialog";
 import { RootOrgSwitcher } from "@/components/layout/RootOrgSwitcher";
+import { UserOrgSwitcher } from "@/components/layout/UserOrgSwitcher";
 import { RoleSwitcher } from "@/components/layout/RoleSwitcher";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -606,6 +607,13 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         {(isSuperadmin || isPlatformRoot) && !collapsed && (
           <div className="px-3 py-2 border-b border-border">
             <RootOrgSwitcher />
+          </div>
+        )}
+
+        {/* Regular User Organization Switcher - for users with multiple orgs (not root) */}
+        {!isSuperadmin && !isPlatformRoot && !collapsed && (
+          <div className="px-3 py-2 border-b border-border">
+            <UserOrgSwitcher />
           </div>
         )}
 

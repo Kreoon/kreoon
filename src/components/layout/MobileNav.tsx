@@ -47,6 +47,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ClientSelectorDialog } from "@/components/clients/ClientSelectorDialog";
 import { RootOrgSwitcher } from "@/components/layout/RootOrgSwitcher";
+import { UserOrgSwitcher } from "@/components/layout/UserOrgSwitcher";
 import { RoleSwitcher } from "@/components/layout/RoleSwitcher";
 import { AITokensPanelTrigger } from "@/components/ai/AITokensPanel";
 import { SidebarAchievementsWidget } from "@/components/points/SidebarAchievementsWidget";
@@ -549,6 +550,13 @@ export function MobileNav() {
           {isPlatformRoot && (
             <div className="px-3 py-2 border-b border-sidebar-border">
               <RootOrgSwitcher />
+            </div>
+          )}
+
+          {/* Regular User Organization Switcher - for users with multiple orgs */}
+          {!isPlatformRoot && (
+            <div className="px-3 py-2 border-b border-sidebar-border">
+              <UserOrgSwitcher />
             </div>
           )}
 
