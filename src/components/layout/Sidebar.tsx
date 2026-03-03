@@ -217,14 +217,22 @@ const clientSections: NavSection[] = [
   { label: "CONFIG", items: CONFIG_ITEMS }
 ];
 
-// Freelance users (no org) - full talent navigation
+// Freelance users (no org) - Plan Básico Gratis
+// Dashboard, Tablero, Marketplace, Campañas, Wallet, Perfil, Social Hub
 const freelanceSections: NavSection[] = [
   {
     label: "MI NEGOCIO",
     items: [
-      { name: "Dashboard", href: "/freelancer-dashboard", icon: LayoutDashboard, tourId: "sidebar-freelancer-dash" },
+      { name: "Dashboard", href: "/marketplace", icon: LayoutDashboard, tourId: "sidebar-freelancer-dash" },
       { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban, tourId: "sidebar-freelancer-board" },
-      { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+    ]
+  },
+  {
+    label: "MARKETPLACE",
+    items: [
+      { name: "Explorar", href: "/marketplace", icon: Store, tourId: "sidebar-mkt-browse" },
+      { name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone, tourId: "sidebar-mkt-campaigns" },
+      { name: "Wallet", href: "/wallet", icon: Wallet, tourId: "sidebar-mkt-wallet" },
     ]
   },
   {

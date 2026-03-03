@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useTalentGateConfig } from '@/hooks/useTalentGateConfig';
 import { getPermissionGroup } from '@/lib/permissionGroups';
 
 export interface GateReferral {
@@ -25,6 +26,7 @@ interface GateStatus {
 
 export function useReferralGate() {
   const { user, profile, roles, isPlatformAdmin, isClient, loading: authLoading, rolesLoaded } = useAuth();
+  const { isEnabled: talentGateEnabled, isLoading: gateConfigLoading } = useTalentGateConfig();
 
   // Quick bypass: platform admin, already unlocked, belongs to an org, client, or has non-talent org roles
   // Users who need the referral gate:
@@ -43,7 +45,9 @@ export function useReferralGate() {
     !!(profile as any)?.active_brand_id ||
     (profile as any)?.active_role === 'client';
 
+  // If gate is globally disabled, bypass for everyone
   const quickBypass =
+    !talentGateEnabled || // Gate disabled globally = everyone bypasses
     isPlatformAdmin ||
     profile?.platform_access_unlocked === true ||
     hasOrganization ||
@@ -68,7 +72,7 @@ export function useReferralGate() {
 
   // Derive final state
   const isUnlocked = quickBypass || gateStatus?.unlocked === true;
-  const isGateLoading = authLoading || !rolesLoaded || (!quickBypass && gateLoading);
+  const isGateLoading = authLoading || !rolesLoaded || gateConfigLoading || (!quickBypass && gateLoading);
 
   return {
     isUnlocked,
