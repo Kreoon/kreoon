@@ -223,7 +223,7 @@ const freelanceSections: NavSection[] = [
   {
     label: "MI NEGOCIO",
     items: [
-      { name: "Dashboard", href: "/marketplace", icon: LayoutDashboard, tourId: "sidebar-freelancer-dash" },
+      { name: "Dashboard", href: "/freelancer-dashboard", icon: LayoutDashboard, tourId: "sidebar-freelancer-dash" },
       { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban, tourId: "sidebar-freelancer-board" },
     ]
   },
@@ -236,7 +236,7 @@ const freelanceSections: NavSection[] = [
     ]
   },
   {
-    label: "MARKETING & MEDIA",
+    label: "SOCIAL",
     items: [
       { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
     ]
@@ -441,21 +441,17 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
 
     // Independent users (no org) - differentiate between clients and freelancers
     if (isFreelanceUser && (isUnlocked || activeIsClient)) {
-      const mktSections = getMarketplaceSections(activeGroup, !activeIsClient);
-
-      // Brand members/clients get client sections, talents get freelance sections
+      // Brand members/clients get marketplace + client sections
       if (activeIsClient) {
+        const mktSections = getMarketplaceSections(activeGroup, false);
         return [
           ...mktSections,
           ...clientSections,
         ];
       }
 
-      // Freelance talents
-      return [
-        ...mktSections,
-        ...freelanceSections,
-      ];
+      // Freelance talents - menu already includes marketplace section
+      return freelanceSections;
     }
 
     // When roles haven't loaded yet, show minimal nav to avoid flashing admin menu
