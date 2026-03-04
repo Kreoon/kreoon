@@ -1,4 +1,5 @@
-// pancake-setup: Inicialización única — obtiene Shop ID y crea las tablas CRM en Pancake
+// pancake-setup: Inicialización — obtiene Shop ID y verifica conexión con Pancake
+// NOTA: La creación de tablas CRM no funciona vía API, se usa la tabla Contact existente
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -25,11 +26,10 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
-    // 1. Obtener shops de Pancake
+    // 1. Obtener shops de Pancake (api_key va como query parameter)
     console.log('Obteniendo shops de Pancake...')
-    const shopsRes = await fetch(`${PANCAKE_API_URL}/shops`, {
+    const shopsRes = await fetch(`${PANCAKE_API_URL}/shops?api_key=${PANCAKE_API_KEY}`, {
       headers: {
-        'api_key': PANCAKE_API_KEY,
         'Content-Type': 'application/json'
       }
     })
@@ -41,12 +41,13 @@ serve(async (req) => {
 
     const shopsData = await shopsRes.json()
 
-    if (!shopsData?.data?.length) {
+    // La API de Pancake responde con { shops: [...], success: true }
+    if (!shopsData?.shops?.length) {
       throw new Error('No se encontraron shops en Pancake. Verifica la API Key.')
     }
 
-    const shopId = String(shopsData.data[0].id)
-    const shopName = shopsData.data[0].name || 'Shop Principal'
+    const shopId = String(shopsData.shops[0].id)
+    const shopName = shopsData.shops[0].name || 'Shop Principal'
     console.log(`Shop encontrado: ${shopName} (ID: ${shopId})`)
 
     // 2. Guardar Shop ID en config
@@ -58,82 +59,21 @@ serve(async (req) => {
         updated_at: new Date().toISOString()
       }, { onConflict: 'config_key' })
 
-    // 3. Definir campos para tabla kreoon_users
-    const usersTableFields = [
-      { key: 'kreoon_user_id', label: 'Kreoon User ID', type: 'text' },
-      { key: 'full_name', label: 'Nombre Completo', type: 'text' },
-      { key: 'email', label: 'Email', type: 'text' },
-      { key: 'phone', label: 'Teléfono', type: 'text' },
-      { key: 'role', label: 'Rol Principal', type: 'text' },
-      { key: 'subscription_plan', label: 'Plan Activo', type: 'text' },
-      { key: 'up_level', label: 'Nivel UP', type: 'text' },
-      { key: 'up_points', label: 'Puntos UP', type: 'number' },
-      { key: 'registration_date', label: 'Fecha de Registro', type: 'text' },
-      { key: 'country', label: 'País', type: 'text' },
-      { key: 'city', label: 'Ciudad', type: 'text' },
-      { key: 'username', label: 'Username', type: 'text' },
-      { key: 'profile_url', label: 'URL Perfil Kreoon', type: 'text' },
-      { key: 'organization_name', label: 'Organización', type: 'text' },
-      { key: 'organization_id', label: 'Kreoon Org ID', type: 'text' },
-      { key: 'account_status', label: 'Estado', type: 'text' },
-      { key: 'last_sync', label: 'Última Sincronización', type: 'text' }
-    ]
-
-    // 4. Definir campos para tabla kreoon_organizations
-    const orgsTableFields = [
-      { key: 'kreoon_org_id', label: 'Kreoon Org ID', type: 'text' },
-      { key: 'org_name', label: 'Nombre de la Organización', type: 'text' },
-      { key: 'owner_email', label: 'Email del Owner', type: 'text' },
-      { key: 'owner_phone', label: 'Teléfono del Owner', type: 'text' },
-      { key: 'owner_name', label: 'Nombre del Owner', type: 'text' },
-      { key: 'subscription_plan', label: 'Plan de Suscripción', type: 'text' },
-      { key: 'members_count', label: 'Cantidad de Miembros', type: 'number' },
-      { key: 'creation_date', label: 'Fecha de Creación', type: 'text' },
-      { key: 'country', label: 'País', type: 'text' },
-      { key: 'org_type', label: 'Tipo (agencia/marca/colectivo)', type: 'text' },
-      { key: 'workspace_url', label: 'URL Workspace Kreoon', type: 'text' },
-      { key: 'account_status', label: 'Estado', type: 'text' },
-      { key: 'ai_tokens_consumed', label: 'Tokens IA Consumidos', type: 'number' },
-      { key: 'last_sync', label: 'Última Sincronización', type: 'text' }
-    ]
-
-    // 5. Crear tabla kreoon_users en Pancake
-    console.log('Creando tabla kreoon_users en Pancake...')
-    const usersTableRes = await fetch(`${PANCAKE_API_URL}/shops/${shopId}/crm/tables`, {
-      method: 'POST',
+    // 3. Verificar tablas CRM existentes
+    console.log('Verificando tablas CRM existentes...')
+    const tablesRes = await fetch(`${PANCAKE_API_URL}/shops/${shopId}/crm/tables?api_key=${PANCAKE_API_KEY}`, {
       headers: {
-        'api_key': PANCAKE_API_KEY,
         'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: 'kreoon_users',
-        display_name: 'Kreoon - Usuarios',
-        fields: usersTableFields
-      })
+      }
     })
 
-    const usersTableData = await usersTableRes.json()
-    console.log('Resultado tabla kreoon_users:', usersTableRes.status, usersTableData)
+    const tablesData = await tablesRes.json()
+    const existingTables = (tablesData?.tables || []).map((t: any) => ({
+      name: t.name,
+      label: t.label
+    }))
 
-    // 6. Crear tabla kreoon_organizations en Pancake
-    console.log('Creando tabla kreoon_organizations en Pancake...')
-    const orgsTableRes = await fetch(`${PANCAKE_API_URL}/shops/${shopId}/crm/tables`, {
-      method: 'POST',
-      headers: {
-        'api_key': PANCAKE_API_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: 'kreoon_organizations',
-        display_name: 'Kreoon - Organizaciones',
-        fields: orgsTableFields
-      })
-    })
-
-    const orgsTableData = await orgsTableRes.json()
-    console.log('Resultado tabla kreoon_organizations:', orgsTableRes.status, orgsTableData)
-
-    // 7. Obtener webhook secret para configuración
+    // 4. Obtener webhook secret para configuración
     const { data: webhookConfig } = await supabase
       .from('pancake_integration_config')
       .select('config_value')
@@ -146,15 +86,11 @@ serve(async (req) => {
       success: true,
       shop_id: shopId,
       shop_name: shopName,
-      tables_created: {
-        kreoon_users: {
-          status: usersTableRes.status,
-          response: usersTableData
-        },
-        kreoon_organizations: {
-          status: orgsTableRes.status,
-          response: orgsTableData
-        }
+      existing_crm_tables: existingTables,
+      note: 'La API de Pancake no permite crear tablas CRM. Se usará la tabla Contact existente para sincronizar usuarios.',
+      sync_strategy: {
+        users: 'Tabla Contact - Campo Name para nombre, Phone para teléfono, Note para datos adicionales de Kreoon (JSON)',
+        organizations: 'No soportado en esta versión - Pancake CRM solo tiene tabla Contact'
       },
       webhook_config: {
         url: webhookUrl,
@@ -162,9 +98,9 @@ serve(async (req) => {
         secret_value: webhookConfig?.config_value || '(ver en pancake_integration_config)'
       },
       next_steps: [
-        '1. Verificar que las tablas se crearon en Pancake CRM',
+        '1. La conexión con Pancake está verificada',
         '2. Configurar webhook en Pancake apuntando a: ' + webhookUrl,
-        '3. Ejecutar pancake-bulk-sync para sincronizar datos existentes'
+        '3. Ejecutar pancake-bulk-sync para sincronizar usuarios existentes'
       ]
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

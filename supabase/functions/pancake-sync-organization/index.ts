@@ -84,6 +84,15 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
+    // NOTA: La API de Pancake solo tiene la tabla Contact.
+    // La sincronización de organizaciones no está soportada actualmente.
+    console.log('Sync de organizaciones no soportado - Pancake CRM solo tiene tabla Contact')
+    return new Response(JSON.stringify({
+      skipped: true,
+      reason: 'organizations_not_supported_in_pancake_contact_table',
+      note: 'Pancake CRM solo tiene tabla Contact para usuarios. La sincronización de organizaciones requiere configuración adicional.'
+    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+
     // 2. Obtener datos de la organización
     const { data: org, error: orgError } = await supabase
       .from('organizations')
@@ -178,11 +187,10 @@ serve(async (req) => {
       console.log(`Actualizando organización ${organization_id} en Pancake (record: ${pancakeRecordId})`)
 
       const updateRes = await fetch(
-        `${PANCAKE_API_URL}/shops/${shopId}/crm/kreoon_organizations/records/${pancakeRecordId}`,
+        `${PANCAKE_API_URL}/shops/${shopId}/crm/kreoon_organizations/records/${pancakeRecordId}?api_key=${PANCAKE_API_KEY}`,
         {
           method: 'PUT',
           headers: {
-            'api_key': PANCAKE_API_KEY,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(pancakePayload)
@@ -211,11 +219,10 @@ serve(async (req) => {
       console.log(`Creando organización ${organization_id} en Pancake`)
 
       const createRes = await fetch(
-        `${PANCAKE_API_URL}/shops/${shopId}/crm/kreoon_organizations/records`,
+        `${PANCAKE_API_URL}/shops/${shopId}/crm/kreoon_organizations/records?api_key=${PANCAKE_API_KEY}`,
         {
           method: 'POST',
           headers: {
-            'api_key': PANCAKE_API_KEY,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(pancakePayload)

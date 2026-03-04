@@ -126,16 +126,14 @@ serve(async (req) => {
       .eq('user_id', user_id)
       .maybeSingle()
 
-    // 7. Preparar payload para Pancake
+    // 7. Preparar payload para Pancake (usando tabla Contact)
     const reputationPoints = reputation?.total_points || 0
     const orgInfo = orgMember?.organizations as { name?: string; organization_type?: string } | null
     const primaryRole = roleData?.role || profile.active_role || 'creator'
 
-    const pancakePayload = {
+    // Datos adicionales en JSON para el campo Note
+    const kreoonData = {
       kreoon_user_id: profile.id,
-      full_name: profile.full_name || '',
-      email: profile.email || '',
-      phone: profile.phone || '',
       role: primaryRole,
       subscription_plan: subscription?.tier || 'free',
       up_level: getUpLevel(reputationPoints),
@@ -155,6 +153,14 @@ serve(async (req) => {
       last_sync: new Date().toISOString()
     }
 
+    // Payload para tabla Contact de Pancake
+    const pancakePayload = {
+      Name: profile.full_name || profile.email || '',
+      Phone: profile.phone || '',
+      Email: profile.email || '',
+      Note: JSON.stringify(kreoonData)
+    }
+
     // 8. Verificar si ya existe mapeo en Pancake
     const { data: existingMap } = await supabase
       .from('pancake_sync_map')
@@ -167,16 +173,15 @@ serve(async (req) => {
     let action = 'create'
 
     if (pancakeRecordId) {
-      // UPDATE existente en Pancake
+      // UPDATE existente en Pancake (tabla Contact)
       action = 'update'
-      console.log(`Actualizando usuario ${user_id} en Pancake (record: ${pancakeRecordId})`)
+      console.log(`Actualizando usuario ${user_id} en Pancake Contact (record: ${pancakeRecordId})`)
 
       const updateRes = await fetch(
-        `${PANCAKE_API_URL}/shops/${shopId}/crm/kreoon_users/records/${pancakeRecordId}`,
+        `${PANCAKE_API_URL}/shops/${shopId}/crm/Contact/records/${pancakeRecordId}?api_key=${PANCAKE_API_KEY}`,
         {
           method: 'PUT',
           headers: {
-            'api_key': PANCAKE_API_KEY,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(pancakePayload)
@@ -202,15 +207,14 @@ serve(async (req) => {
       }
 
     } else {
-      // CREATE nuevo en Pancake
-      console.log(`Creando usuario ${user_id} en Pancake`)
+      // CREATE nuevo en Pancake (tabla Contact)
+      console.log(`Creando usuario ${user_id} en Pancake Contact`)
 
       const createRes = await fetch(
-        `${PANCAKE_API_URL}/shops/${shopId}/crm/kreoon_users/records`,
+        `${PANCAKE_API_URL}/shops/${shopId}/crm/Contact/records?api_key=${PANCAKE_API_KEY}`,
         {
           method: 'POST',
           headers: {
-            'api_key': PANCAKE_API_KEY,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(pancakePayload)
@@ -218,7 +222,7 @@ serve(async (req) => {
       )
 
       const createData = await createRes.json()
-      pancakeRecordId = createData?.data?.id?.toString() || createData?.id?.toString()
+      pancakeRecordId = createData?.record?.id?.toString() || createData?.data?.id?.toString() || createData?.id?.toString()
 
       // Registrar en log
       await supabase.from('pancake_sync_log').insert({
@@ -242,7 +246,7 @@ serve(async (req) => {
       kreoon_entity_type: 'user',
       kreoon_entity_id: user_id,
       pancake_record_id: pancakeRecordId,
-      pancake_table_name: 'kreoon_users',
+      pancake_table_name: 'Contact',
       sync_status: 'synced',
       last_synced_at: new Date().toISOString(),
       error_message: null
@@ -269,7 +273,7 @@ serve(async (req) => {
         await supabase.from('pancake_sync_map').upsert({
           kreoon_entity_type: 'user',
           kreoon_entity_id: body.user_id,
-          pancake_table_name: 'kreoon_users',
+          pancake_table_name: 'Contact',
           sync_status: 'error',
           error_message: error.message
         }, { onConflict: 'kreoon_entity_type,kreoon_entity_id' })
