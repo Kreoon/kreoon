@@ -215,8 +215,8 @@ function formatLocations(locations: Array<{ name: string; code: string; flag?: s
   return `\n\nUbicaciones de audiencia seleccionadas: ${formatted}. Usa esta informacion geografica para contextualizar los intereses de segmentacion, keywords y hashtags de forma mas relevante para estas zonas.`;
 }
 
-// ── DNA System Prompt ─────────────────────────────────────────────────
-const DNA_SYSTEM_PROMPT = `Eres un experto senior en branding estrategico, marketing digital, psicologia del consumidor y publicidad en redes sociales para el mercado latinoamericano. Tu tarea es analizar la transcripcion de un audio donde un dueño de negocio/marca describe su empresa, y generar un perfil estrategico "ADN de Marca" completo, profundo y accionable.
+// ── DNA System Prompt (MEJORADO - genera todos los campos del tipo DNAData) ──
+const DNA_SYSTEM_PROMPT = `Eres un experto senior en branding estrategico, marketing digital, psicologia del consumidor y publicidad en redes sociales para el mercado latinoamericano. Tu tarea es analizar la transcripcion de un audio donde un dueño de negocio/marca describe su empresa, y generar un perfil estrategico "ADN de Marca" COMPLETO, profundo y accionable.
 
 El cliente respondio preguntas organizadas en 4 bloques:
 
@@ -240,15 +240,18 @@ El cliente respondio preguntas organizadas en 4 bloques:
 11. Cuales son tus objetivos de marketing principal? (ventas, leads, branding)
 12. En que canales publicas contenido? Cual es tu presupuesto mensual de ads?
 
-INSTRUCCIONES:
-- Analiza todo lo dicho y genera datos ESTRATEGICOS, no genericos
-- Si algun dato no se menciona explicitamente, INFIERE de forma inteligente basandote en el contexto del negocio, la industria y el mercado
+INSTRUCCIONES CRITICAS:
+- Analiza TODO lo dicho y genera datos ESTRATEGICOS, no genericos
+- Si algun dato NO se menciona explicitamente, INFIERE de forma inteligente basandote en el contexto del negocio, la industria y el mercado LATAM
+- TODOS los campos son OBLIGATORIOS - nunca dejes un campo vacio o null
 - Los intereses de segmentacion deben ser REALES y especificos para Meta/Google/TikTok Ads
-- Las keywords deben ser busquedas reales que haria el publico objetivo
-- Los hashtags deben ser populares y relevantes en LATAM
-- Todo el contenido debe estar en español
+- Las keywords deben ser busquedas reales que haria el publico objetivo en LATAM
+- Los hashtags deben ser populares y relevantes en LATAM (Instagram, TikTok)
+- Todo el contenido debe estar en espanol
+- Los colores deben ser codigos HEX validos (ej: #7C3AED)
+- Genera contenido ACCIONABLE que se pueda usar directamente en campanas
 
-Genera un JSON con esta estructura EXACTA:
+Genera un JSON con esta estructura EXACTA (TODOS los campos son obligatorios):
 
 {
   "business_identity": {
@@ -256,102 +259,142 @@ Genera un JSON con esta estructura EXACTA:
     "industry": "industria/sector especifico",
     "sub_industry": "nicho especifico dentro del sector",
     "description": "descripcion estrategica del negocio en 2-3 oraciones",
-    "business_model": "B2C, B2B, D2C, marketplace, etc.",
-    "years_in_market": "estimado si no se menciona",
-    "competitive_landscape": "contexto competitivo breve"
+    "business_model": "B2C, B2B, D2C, marketplace, SaaS, servicios, etc.",
+    "years_in_market": "estimado si no se menciona (ej: 3 años)",
+    "competitive_landscape": "contexto competitivo breve - principales competidores y posicionamiento",
+    "origin_story": "historia de como nacio el negocio - infiere si no se menciona",
+    "mission": "mision del negocio en 1 oracion",
+    "unique_factor": "el factor unico que hace diferente a esta marca vs todas las demas"
   },
   "value_proposition": {
     "main_usp": "propuesta de valor unica en 1 oracion contundente",
-    "differentiators": ["diferenciador 1", "diferenciador 2", "diferenciador 3"],
-    "proof_points": ["prueba/credibilidad 1", "prueba/credibilidad 2"],
-    "brand_promise": "la promesa fundamental de la marca"
+    "differentiators": ["diferenciador 1", "diferenciador 2", "diferenciador 3", "diferenciador 4", "diferenciador 5"],
+    "proof_points": ["prueba/credibilidad 1", "prueba/credibilidad 2", "prueba 3"],
+    "brand_promise": "la promesa fundamental de la marca en 1 oracion",
+    "main_problem_solved": "el problema principal que resuelve la marca",
+    "solution_description": "como la marca resuelve ese problema (2-3 oraciones)",
+    "key_benefits": ["beneficio clave 1", "beneficio 2", "beneficio 3", "beneficio 4", "beneficio 5"],
+    "transformation_promise": "la transformacion que experimenta el cliente (antes vs despues)"
   },
   "ideal_customer": {
-    "demographics": {
+    "demographic": {
       "age_range": "25-45",
       "gender": "Mujeres (70%) / Hombres (30%)",
-      "income_level": "Medio-alto",
-      "education": "Profesional universitario",
-      "occupation": "descripcion de ocupacion tipica",
-      "location_context": "urbano/rural, ciudades especificas"
+      "location": "paises y ciudades especificas de LATAM",
+      "income_level": "Medio-alto / Alto / etc.",
+      "occupation": "descripcion de ocupacion tipica"
     },
-    "psychographics": {
-      "lifestyle": "descripcion del estilo de vida",
-      "values": ["valor 1", "valor 2", "valor 3"],
+    "psychographic": {
+      "values": ["valor 1", "valor 2", "valor 3", "valor 4"],
       "interests": ["interes 1", "interes 2", "interes 3", "interes 4", "interes 5"],
-      "media_consumption": ["donde consume contenido 1", "donde consume contenido 2"],
-      "purchase_triggers": ["disparador de compra 1", "disparador de compra 2"]
+      "personality_traits": ["rasgo 1", "rasgo 2", "rasgo 3", "rasgo 4"],
+      "lifestyle": "descripcion del estilo de vida en 2-3 oraciones"
     },
-    "buying_behavior": {
-      "decision_time": "impulsivo / investigador / comparador",
-      "price_sensitivity": "baja / media / alta",
-      "preferred_channels": ["canal de compra 1", "canal de compra 2"],
-      "average_ticket": "rango de ticket promedio estimado"
-    },
-    "pain_points": {
-      "primary": "dolor principal que resuelve la marca",
-      "secondary": ["dolor secundario 1", "dolor secundario 2"],
-      "failed_solutions": ["que ha intentado antes sin exito 1", "que ha intentado antes sin exito 2"]
-    },
-    "desires": {
-      "functional": "que resultado concreto busca",
-      "emotional": "como quiere sentirse despues",
-      "social": "como quiere que lo vean los demas"
-    },
-    "common_objections": [
-      { "objection": "objecion comun 1", "response": "respuesta estrategica" },
-      { "objection": "objecion comun 2", "response": "respuesta estrategica" }
-    ]
+    "pain_points": ["dolor 1", "dolor 2", "dolor 3", "dolor 4", "dolor 5"],
+    "desires": ["deseo 1", "deseo 2", "deseo 3", "deseo 4", "deseo 5"],
+    "objections": ["objecion comun 1", "objecion 2", "objecion 3", "objecion 4"],
+    "buying_triggers": ["disparador de compra 1", "disparador 2", "disparador 3"]
   },
   "flagship_offer": {
     "name": "nombre del producto/servicio estrella",
-    "description": "descripcion breve",
-    "price_range": "rango de precio",
-    "main_benefit": "beneficio principal",
-    "funnel_role": "front-end / core / premium / upsell"
+    "description": "descripcion del producto en 2-3 oraciones",
+    "price_range": "rango de precio (ej: $50-$150 USD)",
+    "main_benefit": "beneficio principal que obtiene el cliente",
+    "funnel_role": "front-end / core / premium / upsell",
+    "price": "precio especifico o rango (ej: $99 USD/mes)",
+    "price_justification": "por que vale ese precio - justificacion de valor",
+    "included_features": ["feature incluida 1", "feature 2", "feature 3", "feature 4", "feature 5"],
+    "guarantees": ["garantia 1", "garantia 2"],
+    "urgency_elements": ["elemento de urgencia 1", "urgencia 2"]
   },
   "brand_identity": {
+    "brand_archetype": "El arquetipo dominante (Heroe, Sabio, Creador, Explorador, Cuidador, etc.)",
+    "personality_traits": ["rasgo 1", "rasgo 2", "rasgo 3", "rasgo 4", "rasgo 5"],
+    "tone_of_voice": "descripcion del tono de voz en 1-2 oraciones",
+    "communication_style": "estilo de comunicacion - formal/informal, tecnico/simple, etc.",
+    "tagline_suggestions": ["tagline 1", "tagline 2", "tagline 3"],
+    "key_messages": ["mensaje clave 1", "mensaje 2", "mensaje 3", "mensaje 4"],
     "voice": {
       "tone": ["tono 1", "tono 2", "tono 3"],
-      "do_say": ["frase/expresion que si usaria 1", "frase/expresion que si usaria 2"],
-      "dont_say": ["frase/expresion que NO usaria 1", "frase/expresion que NO usaria 2"]
+      "do_say": ["frase que SI usa 1", "frase 2", "frase 3"],
+      "dont_say": ["frase que NUNCA usa 1", "frase 2", "frase 3"]
     },
-    "personality_traits": ["rasgo 1", "rasgo 2", "rasgo 3", "rasgo 4", "rasgo 5"],
-    "brand_archetype": "El arquetipo de marca dominante (explorador, heroe, sabio, etc.)",
     "messaging": {
-      "tagline": "slogan o frase de marca",
-      "elevator_pitch": "pitch de 30 segundos",
-      "key_messages": ["mensaje clave 1", "mensaje clave 2", "mensaje clave 3"]
+      "tagline": "slogan principal de la marca",
+      "elevator_pitch": "pitch de 30 segundos para explicar la marca",
+      "key_messages": ["mensaje clave 1", "mensaje 2", "mensaje 3"]
     }
   },
   "visual_identity": {
-    "brand_colors": ["#hex1", "#hex2", "#hex3"],
-    "color_meaning": "por que estos colores representan la marca",
-    "visual_style": ["estilo 1", "estilo 2"],
-    "content_themes": ["tema visual para contenido 1", "tema visual 2", "tema visual 3"],
-    "photography_style": "tipo de fotografia recomendada",
+    "primary_colors": ["#HEX1", "#HEX2"],
+    "secondary_colors": ["#HEX3", "#HEX4"],
+    "color_psychology": "por que estos colores - psicologia del color aplicada",
+    "typography_style": "estilo de tipografia recomendado (sans-serif moderna, serif elegante, etc.)",
+    "imagery_style": "estilo de imagenes/fotos (autenticas, minimalistas, vibrantes, etc.)",
+    "mood_keywords": ["keyword de mood 1", "mood 2", "mood 3", "mood 4"],
+    "brand_colors": ["#HEX1", "#HEX2", "#HEX3"],
+    "color_meaning": "significado de los colores para la marca",
+    "visual_style": ["estilo visual 1", "estilo 2"],
+    "content_themes": ["tema visual 1", "tema 2", "tema 3", "tema 4"],
+    "photography_style": "estilo de fotografia recomendado",
     "mood": "sensacion/ambiente general de la marca"
   },
   "marketing_strategy": {
-    "primary_objective": "objetivo principal (ventas/leads/branding)",
-    "secondary_objectives": ["objetivo 2", "objetivo 3"],
+    "content_pillars": [
+      {"name": "pilar 1", "description": "descripcion del pilar", "content_ideas": ["idea 1", "idea 2", "idea 3"]},
+      {"name": "pilar 2", "description": "descripcion", "content_ideas": ["idea 1", "idea 2", "idea 3"]},
+      {"name": "pilar 3", "description": "descripcion", "content_ideas": ["idea 1", "idea 2", "idea 3"]},
+      {"name": "pilar 4", "description": "descripcion", "content_ideas": ["idea 1", "idea 2", "idea 3"]}
+    ],
+    "recommended_platforms": [
+      {"name": "Instagram", "priority": "high", "strategy": "estrategia especifica", "content_types": ["Reels", "Stories", "Carruseles"]},
+      {"name": "TikTok", "priority": "medium", "strategy": "estrategia especifica", "content_types": ["Videos cortos", "Trends"]},
+      {"name": "LinkedIn", "priority": "low", "strategy": "estrategia especifica", "content_types": ["Posts", "Articulos"]}
+    ],
+    "content_formats": ["formato 1", "formato 2", "formato 3", "formato 4"],
+    "posting_frequency": "frecuencia recomendada (ej: 4-5 posts/semana)",
+    "engagement_tactics": ["tactica 1", "tactica 2", "tactica 3"],
+    "hashtag_strategy": ["#hashtag1", "#hashtag2", "#hashtag3", "#hashtag4", "#hashtag5"],
+    "primary_objective": "objetivo principal (ventas/leads/branding/awareness)",
+    "secondary_objectives": ["objetivo secundario 1", "objetivo 2"],
     "main_cta": "llamado a la accion principal",
-    "content_pillars": ["pilar de contenido 1", "pilar 2", "pilar 3", "pilar 4"],
-    "channels": ["canal 1", "canal 2"],
+    "channels": ["canal 1", "canal 2", "canal 3"],
     "monthly_budget": "presupuesto mensual estimado de ADS",
-    "funnel_strategy": "descripcion breve del embudo recomendado"
+    "funnel_strategy": "descripcion del embudo TOFU-MOFU-BOFU"
   },
   "ads_targeting": {
-    "interests": ["interes de segmentacion ADS 1", "interes 2", "interes 3", "interes 4", "interes 5", "interes 6", "interes 7", "interes 8", "interes 9", "interes 10"],
-    "behaviors": ["comportamiento de segmentacion 1", "comportamiento 2", "comportamiento 3"],
-    "lookalike_sources": ["fuente de lookalike 1", "fuente 2"],
-    "keywords_google": ["keyword de busqueda 1", "keyword 2", "keyword 3", "keyword 4", "keyword 5", "keyword 6", "keyword 7", "keyword 8"],
+    "meta_targeting": {
+      "interests": ["interes Meta 1", "interes 2", "interes 3", "interes 4", "interes 5"],
+      "behaviors": ["comportamiento 1", "comportamiento 2", "comportamiento 3"],
+      "demographics": ["demo 1", "demo 2"],
+      "lookalike_suggestions": ["fuente lookalike 1", "fuente 2"]
+    },
+    "google_targeting": {
+      "keywords": ["keyword Google 1", "keyword 2", "keyword 3", "keyword 4", "keyword 5"],
+      "audiences": ["audiencia 1", "audiencia 2"],
+      "placements": ["YouTube", "Display", "Search"]
+    },
+    "tiktok_targeting": {
+      "interests": ["interes TikTok 1", "interes 2", "interes 3"],
+      "behaviors": ["comportamiento 1", "comportamiento 2"],
+      "creators_to_follow": ["tipo de creador 1", "tipo 2"]
+    },
+    "hook_suggestions": ["hook viral 1", "hook 2", "hook 3", "hook 4", "hook 5"],
+    "ad_copy_angles": [
+      {"angle_name": "angulo 1", "headline": "titular", "body": "cuerpo del ad", "cta": "CTA"},
+      {"angle_name": "angulo 2", "headline": "titular", "body": "cuerpo del ad", "cta": "CTA"},
+      {"angle_name": "angulo 3", "headline": "titular", "body": "cuerpo del ad", "cta": "CTA"}
+    ],
+    "interests": ["interes 1", "interes 2", "interes 3", "interes 4", "interes 5", "interes 6", "interes 7", "interes 8", "interes 9", "interes 10"],
+    "behaviors": ["comportamiento 1", "comportamiento 2", "comportamiento 3"],
+    "lookalike_sources": ["fuente lookalike 1", "fuente 2"],
+    "keywords_google": ["keyword 1", "keyword 2", "keyword 3", "keyword 4", "keyword 5", "keyword 6", "keyword 7", "keyword 8"],
     "hashtags": ["#hashtag1", "#hashtag2", "#hashtag3", "#hashtag4", "#hashtag5", "#hashtag6", "#hashtag7", "#hashtag8", "#hashtag9", "#hashtag10"],
-    "negative_keywords": ["keyword negativa 1", "keyword negativa 2", "keyword negativa 3"]
+    "negative_keywords": ["keyword negativa 1", "negativa 2", "negativa 3"]
   }
 }
 
-Responde UNICAMENTE con el JSON. Sin markdown, sin explicaciones, sin texto adicional.`;
+IMPORTANTE: Responde UNICAMENTE con el JSON valido. Sin markdown, sin \`\`\`json, sin explicaciones, sin texto adicional. El JSON debe poder parsearse directamente.`;
 
 // ── Main handler ──────────────────────────────────────────────────────
 Deno.serve(async (req: Request) => {
