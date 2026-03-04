@@ -1,15 +1,19 @@
 import { createClient } from "npm:@supabase/supabase-js@2.46.2";
 import { corsHeaders, getAPIKey } from "../_shared/ai-providers.ts";
 
-// ── JSON repair (from product-research pattern) ───────────────────────
+// ── JSON repair (enhanced for array element errors) ───────────────────
 function repairJsonForParse(str: string): string {
   let s = str.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").trim();
   s = s.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "");
 
+  // Try parsing as-is first
   try {
     JSON.parse(s);
     return s;
-  } catch {
+  } catch (firstError) {
+    console.log("[generate-client-dna] JSON parse failed, attempting repair...");
+
+    // Fix 1: Close unclosed strings
     let inString = false;
     let escaped = false;
     for (let i = 0; i < s.length; i++) {
@@ -21,10 +25,28 @@ function repairJsonForParse(str: string): string {
       while (s.endsWith("\\")) s = s.slice(0, -1);
       s += '"';
     }
+
+    // Fix 2: Remove trailing incomplete properties
     s = s.replace(/,\s*"[^"]*"\s*$/, "");
     s = s.replace(/,\s*"[^"]*"\s*:\s*$/, "");
     s = s.replace(/,\s*$/, "");
 
+    // Fix 3: Fix missing commas between array elements (""" -> "", ")
+    s = s.replace(/"\s*"/g, '", "');
+
+    // Fix 4: Fix arrays with missing commas before objects
+    s = s.replace(/"\s*\{/g, '", {');
+    s = s.replace(/\}\s*"/g, '}, "');
+    s = s.replace(/\}\s*\{/g, '}, {');
+
+    // Fix 5: Remove duplicate commas
+    s = s.replace(/,\s*,+/g, ',');
+
+    // Fix 6: Remove comma before closing brackets
+    s = s.replace(/,\s*\]/g, ']');
+    s = s.replace(/,\s*\}/g, '}');
+
+    // Fix 7: Close unclosed brackets and braces
     let open = 0, bracket = 0;
     inString = false;
     escaped = false;
@@ -40,7 +62,45 @@ function repairJsonForParse(str: string): string {
     }
     while (bracket > 0) { s += "]"; bracket--; }
     while (open > 0) { s += "}"; open--; }
-    return s;
+
+    // Try parsing again
+    try {
+      JSON.parse(s);
+      console.log("[generate-client-dna] JSON repair successful");
+      return s;
+    } catch (secondError) {
+      // Fix 8: More aggressive - try to find and fix the specific position
+      const match = String(secondError).match(/position (\d+)/);
+      if (match) {
+        const pos = parseInt(match[1], 10);
+        console.log(`[generate-client-dna] Error at position ${pos}, attempting targeted fix`);
+
+        // Look around the error position for common issues
+        const before = s.substring(Math.max(0, pos - 20), pos);
+        const after = s.substring(pos, Math.min(s.length, pos + 20));
+        console.log(`[generate-client-dna] Context: ...${before}|ERROR|${after}...`);
+
+        // Try inserting a comma if we're between elements
+        if (s[pos - 1] === '"' && (s[pos] === '"' || s[pos] === '{' || s[pos] === '[')) {
+          s = s.substring(0, pos) + ', ' + s.substring(pos);
+        }
+        // Try removing problematic character
+        else if (s[pos] && !/["\[\]{},:0-9a-zA-Z\-_\s]/.test(s[pos])) {
+          s = s.substring(0, pos) + s.substring(pos + 1);
+        }
+      }
+
+      // Final attempt
+      try {
+        JSON.parse(s);
+        console.log("[generate-client-dna] Targeted fix successful");
+        return s;
+      } catch (finalError) {
+        console.error("[generate-client-dna] JSON repair failed:", finalError);
+        // Return the best attempt
+        return s;
+      }
+    }
   }
 }
 
@@ -361,18 +421,43 @@ Deno.serve(async (req: Request) => {
     const locationsContext = formatLocations(locations || []);
     const userPrompt = `Transcripcion del audio del cliente describiendo su negocio:\n\n${transcription}${locationsContext}`;
 
-    // Generate DNA with Perplexity (fallback to Gemini)
-    let aiResponse: string;
-    try {
-      aiResponse = await callPerplexity(systemPrompt, userPrompt);
-    } catch (err) {
-      console.warn("[generate-client-dna] Perplexity failed, trying Gemini fallback:", err);
-      aiResponse = await callGeminiFallback(systemPrompt, userPrompt);
+    // Generate DNA with Perplexity (fallback to Gemini) with retry logic
+    let aiResponse = "";
+    let dnaData: Record<string, unknown> | null = null;
+    const maxAttempts = 2;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        if (attempt === 1) {
+          try {
+            aiResponse = await callPerplexity(systemPrompt, userPrompt);
+          } catch (err) {
+            console.warn("[generate-client-dna] Perplexity failed, trying Gemini fallback:", err);
+            aiResponse = await callGeminiFallback(systemPrompt, userPrompt);
+          }
+        } else {
+          // Retry with Gemini and stricter prompt
+          console.log("[generate-client-dna] Retrying with Gemini (strict JSON mode)...");
+          const strictPrompt = systemPrompt + "\n\nIMPORTANTE: Responde SOLO con JSON valido. NO uses caracteres especiales dentro de strings. Asegurate de que todos los arrays tengan comas entre elementos.";
+          aiResponse = await callGeminiFallback(strictPrompt, userPrompt);
+        }
+
+        // Parse response
+        const repaired = repairJsonForParse(aiResponse);
+        dnaData = JSON.parse(repaired);
+        console.log(`[generate-client-dna] JSON parsed successfully on attempt ${attempt}`);
+        break;
+      } catch (parseError) {
+        console.error(`[generate-client-dna] Parse attempt ${attempt} failed:`, parseError);
+        if (attempt >= maxAttempts) {
+          throw new Error(`Error parseando respuesta de IA después de ${maxAttempts} intentos: ${parseError}`);
+        }
+      }
     }
 
-    // Parse response
-    const repaired = repairJsonForParse(aiResponse);
-    const dnaData = JSON.parse(repaired);
+    if (!dnaData) {
+      throw new Error("No se pudo generar el ADN de marca");
+    }
 
     // Add metadata
     dnaData.metadata = {
