@@ -190,10 +190,8 @@ export default function CreatorProfilePage() {
     );
   }
 
-  // Validate minimum requirements: VALID profile photo URL AND at least 1 portfolio item
-  const avatarUrl = creator.avatar_url?.trim() || '';
-  const hasValidAvatar = avatarUrl.length > 0 && avatarUrl.startsWith('http');
-  const hasMinimumRequirements = hasValidAvatar && creator.portfolio_media.length > 0;
+  // Validate minimum requirements: at least 1 portfolio item (avatar is optional - show initials)
+  const hasMinimumRequirements = creator.portfolio_media.length > 0;
 
   if (!hasMinimumRequirements) {
     return (
@@ -204,7 +202,7 @@ export default function CreatorProfilePage() {
           </div>
           <h2 className="text-2xl font-bold text-white">Perfil incompleto</h2>
           <p className="text-gray-400">
-            Este creador aún no ha completado su perfil. Se requiere foto de perfil y al menos un contenido en el portafolio para aparecer en el marketplace.
+            Este creador aún no ha completado su perfil. Se requiere al menos un contenido en el portafolio para aparecer en el marketplace.
           </p>
           <button
             onClick={() => navigate('/marketplace')}
