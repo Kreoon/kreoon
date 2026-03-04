@@ -55,15 +55,15 @@ export function useCreatorServices(options: UseCreatorServicesOptions = {}) {
     gcTime: 1000 * 60 * 30,    // 30 minutos cache
   });
 
-  // Create service
+  // Create service (supports admin mode when targetUserId differs from current user)
   const createMutation = useMutation({
     mutationFn: async (input: CreatorServiceInput) => {
-      if (!user?.id) throw new Error('No autenticado');
+      if (!targetUserId) throw new Error('No hay usuario destino');
 
       const { data, error } = await (supabase as any)
         .from('creator_services')
         .insert({
-          user_id: user.id,
+          user_id: targetUserId,
           ...input,
           deliverables: input.deliverables || [],
           portfolio_items: input.portfolio_items || [],
@@ -75,7 +75,7 @@ export function useCreatorServices(options: UseCreatorServicesOptions = {}) {
       return data as CreatorService;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['creator-services', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['creator-services', targetUserId] });
       toast.success('Servicio creado exitosamente');
     },
     onError: (error: Error) => {
@@ -83,16 +83,15 @@ export function useCreatorServices(options: UseCreatorServicesOptions = {}) {
     },
   });
 
-  // Update service
+  // Update service (supports admin mode - uses service ID directly without user filter)
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...input }: Partial<CreatorServiceInput> & { id: string }) => {
-      if (!user?.id) throw new Error('No autenticado');
+      if (!targetUserId) throw new Error('No hay usuario destino');
 
       const { data, error } = await (supabase as any)
         .from('creator_services')
         .update(input)
         .eq('id', id)
-        .eq('user_id', user.id)
         .select()
         .single();
 
@@ -100,7 +99,7 @@ export function useCreatorServices(options: UseCreatorServicesOptions = {}) {
       return data as CreatorService;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['creator-services', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['creator-services', targetUserId] });
       toast.success('Servicio actualizado');
     },
     onError: (error: Error) => {
@@ -108,21 +107,20 @@ export function useCreatorServices(options: UseCreatorServicesOptions = {}) {
     },
   });
 
-  // Delete service
+  // Delete service (supports admin mode - uses service ID directly)
   const deleteMutation = useMutation({
     mutationFn: async (serviceId: string) => {
-      if (!user?.id) throw new Error('No autenticado');
+      if (!targetUserId) throw new Error('No hay usuario destino');
 
       const { error } = await (supabase as any)
         .from('creator_services')
         .delete()
-        .eq('id', serviceId)
-        .eq('user_id', user.id);
+        .eq('id', serviceId);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['creator-services', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['creator-services', targetUserId] });
       toast.success('Servicio eliminado');
     },
     onError: (error: Error) => {
@@ -140,9 +138,9 @@ export function useCreatorServices(options: UseCreatorServicesOptions = {}) {
     await updateMutation.mutateAsync({ id: serviceId, is_featured: isFeatured });
   }, [updateMutation]);
 
-  // Reorder services
+  // Reorder services (supports admin mode)
   const reorderServices = useCallback(async (orderedIds: string[]) => {
-    if (!user?.id) return;
+    if (!targetUserId) return;
 
     const updates = orderedIds.map((id, index) => ({
       id,
@@ -153,12 +151,11 @@ export function useCreatorServices(options: UseCreatorServicesOptions = {}) {
       await (supabase as any)
         .from('creator_services')
         .update({ display_order: update.display_order })
-        .eq('id', update.id)
-        .eq('user_id', user.id);
+        .eq('id', update.id);
     }
 
-    queryClient.invalidateQueries({ queryKey: ['creator-services', user.id] });
-  }, [user?.id, queryClient]);
+    queryClient.invalidateQueries({ queryKey: ['creator-services', targetUserId] });
+  }, [targetUserId, queryClient]);
 
   return {
     services,

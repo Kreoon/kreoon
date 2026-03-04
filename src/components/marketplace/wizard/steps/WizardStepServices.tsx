@@ -63,10 +63,10 @@ export function WizardStepServices({
       service_type: form.service_type,
       description: form.description || null,
       price_amount: form.price_amount ? Number(form.price_amount) : null,
-      price_currency: form.price_currency,
+      price_currency: 'USD', // Fixed to USD for all services
       delivery_days: form.delivery_days ? Number(form.delivery_days) : null,
       deliverables: form.includes.length > 0
-        ? [{ name: 'Basico', description: form.description, price: Number(form.price_amount) || 0, currency: form.price_currency, delivery_days: Number(form.delivery_days) || 7, includes: form.includes, is_popular: false }]
+        ? [{ name: 'Basico', description: form.description, price: Number(form.price_amount) || 0, currency: 'USD', delivery_days: Number(form.delivery_days) || 7, includes: form.includes, is_popular: false }]
         : [],
     });
 
@@ -110,15 +110,9 @@ export function WizardStepServices({
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-400 mb-1.5">Moneda</label>
-            <select
-              value={servicesData.currency}
-              onChange={(e) => onChange({ ...servicesData, currency: e.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
-            >
-              {CURRENCIES.map(c => (
-                <option key={c} value={c} className="bg-card">{c}</option>
-              ))}
-            </select>
+            <div className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/60 text-sm">
+              USD
+            </div>
           </div>
         </div>
 
@@ -293,15 +287,9 @@ export function WizardStepServices({
             </div>
             <div>
               <label className="block text-xs text-gray-400 mb-1">Moneda</label>
-              <select
-                value={form.price_currency}
-                onChange={(e) => setForm(prev => ({ ...prev, price_currency: e.target.value }))}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-              >
-                {CURRENCIES.map(c => (
-                  <option key={c} value={c} className="bg-card">{c}</option>
-                ))}
-              </select>
+              <div className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white/60 text-sm">
+                USD
+              </div>
             </div>
             <div>
               <label className="block text-xs text-gray-400 mb-1">Entrega (dias)</label>

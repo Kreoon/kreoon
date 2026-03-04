@@ -22,8 +22,10 @@ import {
   Star,
   Briefcase,
   UserCircle,
+  Calendar,
+  Clock,
 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -875,6 +877,20 @@ const PlatformCRMPeople = () => {
                         {user.organization_name && (
                           <p className="text-[10px] text-white/30 mt-2 truncate">{user.organization_name}</p>
                         )}
+
+                        {/* Fechas */}
+                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5 text-[10px] text-white/40">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {format(new Date(user.created_at), "d MMM yy", { locale: es })}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {user.last_login_at
+                              ? formatDistanceToNow(new Date(user.last_login_at), { addSuffix: true, locale: es })
+                              : "Nunca"}
+                          </div>
+                        </div>
                       </Card>
                     );
                   })}
@@ -906,6 +922,11 @@ const PlatformCRMPeople = () => {
                         <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium hidden sm:inline", getUserTypeColor(user.user_type))}>
                           {getUserTypeLabel(user.user_type)}
                         </span>
+                        <span className="text-[10px] text-white/30 hidden lg:inline">
+                          {user.last_login_at
+                            ? formatDistanceToNow(new Date(user.last_login_at), { addSuffix: true, locale: es })
+                            : "Nunca"}
+                        </span>
                         <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold", hc.bg, hc.text)}>
                           {user.health_score}
                         </div>
@@ -925,6 +946,7 @@ const PlatformCRMPeople = () => {
                         <TableHead className="text-white/70">Tipo</TableHead>
                         <TableHead className="text-white/70 hidden md:table-cell">Organización</TableHead>
                         <TableHead className="text-white/70">Health Score</TableHead>
+                        <TableHead className="text-white/70 hidden lg:table-cell">Registro</TableHead>
                         <TableHead className="text-white/70 hidden lg:table-cell">Últ. Login</TableHead>
                         <TableHead className="text-white/70">Estado</TableHead>
                       </TableRow>
@@ -972,6 +994,9 @@ const PlatformCRMPeople = () => {
                                   <div className={cn("h-full rounded-full", hc.bar)} style={{ width: `${Math.min(user.health_score, 100)}%` }} />
                                 </div>
                               </div>
+                            </TableCell>
+                            <TableCell className="text-white/50 text-sm hidden lg:table-cell">
+                              {format(new Date(user.created_at), "d MMM yyyy", { locale: es })}
                             </TableCell>
                             <TableCell className="text-white/50 hidden lg:table-cell">
                               {user.last_login_at
@@ -1072,6 +1097,12 @@ const PlatformCRMPeople = () => {
                             {creator.is_active ? "Activo" : "Inactivo"}
                           </span>
                         </div>
+
+                        {/* Fecha de registro */}
+                        <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-white/5 text-xs text-white/40">
+                          <Calendar className="w-3 h-3" />
+                          <span>Registro: {format(new Date(creator.created_at), "d MMM yyyy", { locale: es })}</span>
+                        </div>
                       </Card>
                     );
                   })}
@@ -1115,6 +1146,9 @@ const PlatformCRMPeople = () => {
                           {creator.rating_avg > 0 ? creator.rating_avg.toFixed(1) : "—"}
                         </div>
                         <span className="text-xs text-white/50 hidden md:inline">{creator.completed_projects} proy.</span>
+                        <span className="text-[10px] text-white/30 hidden lg:inline">
+                          {format(new Date(creator.created_at), "d MMM yy", { locale: es })}
+                        </span>
                         <span className={cn(
                           "px-2 py-0.5 rounded-full text-[10px]",
                           creator.is_active ? "bg-green-500/20 text-green-300" : "bg-white/10 text-white/50"
@@ -1136,6 +1170,7 @@ const PlatformCRMPeople = () => {
                         <TableHead className="text-white/70">Rating</TableHead>
                         <TableHead className="text-white/70 hidden md:table-cell">Proyectos</TableHead>
                         <TableHead className="text-white/70 hidden lg:table-cell">Ganado</TableHead>
+                        <TableHead className="text-white/70 hidden lg:table-cell">Registro</TableHead>
                         <TableHead className="text-white/70">Estado</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1192,6 +1227,9 @@ const PlatformCRMPeople = () => {
                             </TableCell>
                             <TableCell className="text-white hidden md:table-cell">{creator.completed_projects}</TableCell>
                             <TableCell className="text-green-400 hidden lg:table-cell">{formatCurrency(creator.total_earned)}</TableCell>
+                            <TableCell className="text-white/50 text-sm hidden lg:table-cell">
+                              {format(new Date(creator.created_at), "d MMM yyyy", { locale: es })}
+                            </TableCell>
                             <TableCell>
                               <span className={cn(
                                 "px-2 py-1 rounded-full text-xs",

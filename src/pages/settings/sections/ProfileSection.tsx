@@ -991,7 +991,6 @@ function AvailabilityAndPricingTab() {
   const [availableForHire, setAvailableForHire] = useState(true);
   const [responseTimeHours, setResponseTimeHours] = useState('24');
   const [basePrice, setBasePrice] = useState('');
-  const [currency, setCurrency] = useState('USD');
   const [acceptsExchange, setAcceptsExchange] = useState(false);
   const [exchangeConditions, setExchangeConditions] = useState('');
 
@@ -1000,7 +999,6 @@ function AvailabilityAndPricingTab() {
       setAvailableForHire(profile.is_available);
       setResponseTimeHours(String(profile.response_time_hours));
       setBasePrice(profile.base_price != null ? String(profile.base_price) : '');
-      setCurrency(profile.currency || 'USD');
       setAcceptsExchange(profile.accepts_product_exchange);
       setExchangeConditions(profile.exchange_conditions || '');
     }
@@ -1011,7 +1009,7 @@ function AvailabilityAndPricingTab() {
       is_available: availableForHire,
       response_time_hours: parseInt(responseTimeHours),
       base_price: basePrice ? parseFloat(basePrice) : null,
-      currency,
+      currency: 'USD', // Fixed to USD for all freelancers
       accepts_product_exchange: acceptsExchange,
       exchange_conditions: acceptsExchange ? exchangeConditions : null,
     };
@@ -1113,17 +1111,9 @@ function AvailabilityAndPricingTab() {
                   className="pl-7"
                 />
               </div>
-              <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="COP">COP</SelectItem>
-                  <SelectItem value="MXN">MXN</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
-                </SelectContent>
-              </Select>
+              <span className="flex items-center justify-center px-4 py-2 bg-muted border rounded-md text-muted-foreground text-sm w-[120px]">
+                USD
+              </span>
             </div>
           </div>
 
