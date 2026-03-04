@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { UnifiedRegistrationData } from './types';
 import { useAuthAnalytics } from '@/analytics';
+import { triggerUserSyncSilent, triggerOrgSyncSilent } from '@/services/pancakeCrmService';
 
 const PENDING_REG_KEY = 'kreoon_pending_registration';
 
@@ -102,6 +103,9 @@ export function useRegistrationSubmit() {
         signup_method: 'email',
         user_role: data.intent || 'talent',
       });
+
+      // Sincronizar con Pancake CRM (fire-and-forget)
+      triggerUserSyncSilent(userId);
 
       return true;
     } catch (error: any) {
@@ -291,6 +295,11 @@ async function handleOrgSubmit(userId: string, data: UnifiedRegistrationData) {
   toast.success('¡Organización creada!', {
     description: 'Tu prueba de 30 días ha comenzado.',
   });
+
+  // Sincronizar organización con Pancake CRM
+  if (orgData?.id) {
+    triggerOrgSyncSilent(orgData.id);
+  }
 }
 
 async function handleJoinSubmit(userId: string, data: UnifiedRegistrationData) {

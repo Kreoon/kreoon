@@ -481,3 +481,30 @@ verify_jwt = false
 [functions.generate-talent-dna]
 # Genera el ADN de Talento a partir de transcripción de audio
 verify_jwt = false
+
+# ── Pancake CRM Integration ──
+
+[functions.pancake-setup]
+# Setup inicial: obtiene Shop ID y crea tablas CRM en Pancake
+# Solo debe ejecutarse una vez por admin
+verify_jwt = false
+
+[functions.pancake-sync-user]
+# Sincroniza un usuario de Kreoon hacia Pancake CRM
+# Llamado internamente por triggers/hooks
+verify_jwt = false
+
+[functions.pancake-sync-organization]
+# Sincroniza una organización de Kreoon hacia Pancake CRM
+# Llamado internamente por triggers/hooks
+verify_jwt = false
+
+[functions.pancake-webhook-receiver]
+# Recibe webhooks desde Pancake CRM hacia Kreoon
+# Autenticación via header x-pancake-secret
+verify_jwt = false
+
+[functions.pancake-bulk-sync]
+# Sincronización masiva de usuarios y organizaciones existentes
+# Solo debe ejecutarse por admin
+verify_jwt = false

@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { RegistrationFormData, UserType, RegistrationV2State } from './types';
+import { triggerUserSyncSilent, triggerOrgSyncSilent } from '@/services/pancakeCrmService';
 
 interface UseRegistrationSubmitV2Options {
   state: RegistrationV2State;
@@ -177,6 +178,9 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
       .eq('id', userId);
 
     toast.success('¡Tu organización ha sido creada! Tu prueba de 30 días ha comenzado.');
+
+    // Sincronizar organización con Pancake CRM
+    triggerOrgSyncSilent(org.id);
   }, []);
 
   const handleClientJoinOrg = useCallback(async (
@@ -317,6 +321,9 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
             console.warn('Error applying referral code:', e);
           }
         }
+
+        // 5. Sincronizar con Pancake CRM (fire-and-forget)
+        triggerUserSyncSilent(userId);
       } else {
         // Si requiere confirmación de email, guardar datos pendientes
         localStorage.setItem('kreoon_pending_registration', JSON.stringify({
