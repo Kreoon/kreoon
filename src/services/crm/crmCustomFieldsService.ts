@@ -121,3 +121,64 @@ export async function updateUserProfileFields(
     .eq('id', userId);
   if (error) throw error;
 }
+
+// =====================================================
+// CREATOR PROFILE UPDATES (creator_profiles table for marketplace)
+// =====================================================
+
+export async function updateCreatorProfileFields(
+  creatorProfileId: string,
+  data: Record<string, unknown>,
+): Promise<void> {
+  const { error } = await (supabase as any)
+    .from('creator_profiles')
+    .update({ ...data, updated_at: new Date().toISOString() })
+    .eq('id', creatorProfileId);
+  if (error) throw error;
+}
+
+export async function updateCreatorProfileByUserId(
+  userId: string,
+  data: Record<string, unknown>,
+): Promise<void> {
+  const { error } = await (supabase as any)
+    .from('creator_profiles')
+    .update({ ...data, updated_at: new Date().toISOString() })
+    .eq('user_id', userId);
+  if (error) throw error;
+}
+
+// Upload avatar and update both profiles and creator_profiles
+export async function uploadCreatorAvatar(
+  userId: string,
+  file: File,
+): Promise<string> {
+  // Validate
+  if (!file.type.startsWith('image/')) {
+    throw new Error('Por favor selecciona una imagen válida');
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error('La imagen no debe superar los 5MB');
+  }
+
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+  const fileName = `${userId}/avatar_${Date.now()}.${ext}`;
+
+  // Upload to storage
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(fileName, file, { cacheControl: '3600', upsert: true });
+
+  if (uploadError) throw uploadError;
+
+  const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
+  const avatarUrl = data.publicUrl;
+
+  // Update both tables
+  await Promise.all([
+    (supabase as any).from('profiles').update({ avatar_url: avatarUrl }).eq('id', userId),
+    (supabase as any).from('creator_profiles').update({ avatar_url: avatarUrl }).eq('user_id', userId),
+  ]);
+
+  return avatarUrl;
+}

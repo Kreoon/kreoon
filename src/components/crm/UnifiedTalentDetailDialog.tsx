@@ -2,9 +2,9 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   User, Briefcase, Building2, Shield, Star, Image, Video,
   Phone, Mail, MapPin, Globe, Pencil, Check, BadgeCheck,
-  Instagram, Linkedin, Youtube, Link2,
+  Instagram, Linkedin, Youtube, Link2, Camera, Trash2,
   Loader2, AlertTriangle, DollarSign, Clock, Users,
-  Heart, Ban, Plus, X, Settings, Tag, FileText,
+  Heart, Ban, Plus, X, Settings, Tag, FileText, Upload,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -32,7 +32,7 @@ import {
   useToggleFavoriteCreator,
   useBlockCreator,
 } from '@/hooks/useCrm';
-import { useUpdateUserProfileFields, useCrmCustomFieldDefs, useUpdateOrgCreatorCustomFields } from '@/hooks/useCrmCustomFields';
+import { useUpdateUserProfileFields, useCrmCustomFieldDefs, useUpdateOrgCreatorCustomFields, useUpdateCreatorProfileFields, useUploadCreatorAvatar } from '@/hooks/useCrmCustomFields';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import type { CreatorWithMetrics } from '@/services/crm/platformCrmService';
@@ -217,6 +217,11 @@ export function UnifiedTalentDetailDialog({
   const [isEditing, setIsEditing] = useState(false);
   const [showFieldsConfig, setShowFieldsConfig] = useState(false);
 
+  // Avatar upload
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const uploadAvatar = useUploadCreatorAvatar();
+  const updateCreatorProfile = useUpdateCreatorProfileFields();
+
   // Platform access state
   const [platformAccessUnlocked, setPlatformAccessUnlocked] = useState<boolean | undefined>(undefined);
   const [isBanned, setIsBanned] = useState(false);
@@ -286,6 +291,33 @@ export function UnifiedTalentDetailDialog({
       }
     );
   }, [userId, updateProfileFields, handleActionComplete]);
+
+  // Creator profile field save (for marketplace-specific fields)
+  const handleCreatorFieldSave = useCallback((key: string, value: unknown) => {
+    if (!creatorProfileId) return;
+    updateCreatorProfile.mutate(
+      { creatorProfileId, data: { [key]: value } },
+      {
+        onSuccess: () => {
+          toast.success('Campo de marketplace actualizado');
+          handleActionComplete();
+        },
+        onError: (err: any) => toast.error(`Error: ${err.message}`),
+      }
+    );
+  }, [creatorProfileId, updateCreatorProfile, handleActionComplete]);
+
+  // Avatar upload handler
+  const handleAvatarUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !userId) return;
+    uploadAvatar.mutate(
+      { userId, file },
+      { onSuccess: handleActionComplete }
+    );
+    // Reset input
+    if (avatarInputRef.current) avatarInputRef.current.value = '';
+  }, [userId, uploadAvatar, handleActionComplete]);
 
   // Org relationship handlers
   const notesTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -390,7 +422,7 @@ export function UnifiedTalentDetailDialog({
         <DialogHeader className="p-6 pb-4 border-b border-white/10">
           <div className="flex items-start gap-4">
             {/* Avatar */}
-            <div className="relative shrink-0">
+            <div className="relative shrink-0 group">
               {hasValidAvatar(creatorAvatar) ? (
                 <img
                   src={creatorAvatar}
@@ -405,10 +437,33 @@ export function UnifiedTalentDetailDialog({
                   {getInitials(creatorName)}
                 </div>
               )}
-              {isVerified && (
+              {isVerified && !isEditing && (
                 <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1.5">
                   <BadgeCheck className="w-4 h-4 text-white" />
                 </div>
+              )}
+              {/* Avatar upload button (edit mode) */}
+              {isEditing && (
+                <>
+                  <button
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={uploadAvatar.isPending}
+                    className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  >
+                    {uploadAvatar.isPending ? (
+                      <Loader2 className="h-6 w-6 text-white animate-spin" />
+                    ) : (
+                      <Camera className="h-6 w-6 text-white" />
+                    )}
+                  </button>
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                </>
               )}
             </div>
 
@@ -786,10 +841,161 @@ export function UnifiedTalentDetailDialog({
                     </div>
                   )}
                 </div>
+
+                {/* Marketplace Configuration (edit mode) */}
+                {isEditing && (
+                  <div className="rounded-lg border border-pink-500/30 bg-pink-500/5 p-4">
+                    <h3 className="text-sm font-semibold text-pink-300 mb-4 flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      Configuración Marketplace
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Base Price */}
+                      <div className="space-y-2">
+                        <label className="text-xs text-white/60">Precio Base (USD)</label>
+                        <Input
+                          type="number"
+                          min="0"
+                          defaultValue={basePrice || ''}
+                          placeholder="Ej: 100"
+                          className="bg-white/5 border-white/20"
+                          onBlur={(e) => {
+                            const val = e.target.value ? parseFloat(e.target.value) : null;
+                            handleCreatorFieldSave('base_price', val);
+                          }}
+                        />
+                      </div>
+                      {/* Currency */}
+                      <div className="space-y-2">
+                        <label className="text-xs text-white/60">Moneda</label>
+                        <select
+                          defaultValue={full?.currency || 'USD'}
+                          className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-md text-white text-sm"
+                          onChange={(e) => handleCreatorFieldSave('currency', e.target.value)}
+                        >
+                          <option value="USD">USD - Dólar</option>
+                          <option value="COP">COP - Peso Colombiano</option>
+                          <option value="MXN">MXN - Peso Mexicano</option>
+                          <option value="EUR">EUR - Euro</option>
+                          <option value="ARS">ARS - Peso Argentino</option>
+                          <option value="CLP">CLP - Peso Chileno</option>
+                          <option value="PEN">PEN - Sol Peruano</option>
+                        </select>
+                      </div>
+                      {/* Active Toggle */}
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                        <div>
+                          <p className="text-sm text-white">Perfil Activo</p>
+                          <p className="text-xs text-white/50">Visible en el marketplace</p>
+                        </div>
+                        <button
+                          onClick={() => handleCreatorFieldSave('is_active', !isActive)}
+                          className={cn(
+                            'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                            isActive ? 'bg-green-500' : 'bg-white/20'
+                          )}
+                        >
+                          <span className={cn(
+                            'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                            isActive ? 'translate-x-6' : 'translate-x-1'
+                          )} />
+                        </button>
+                      </div>
+                      {/* Available Toggle */}
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                        <div>
+                          <p className="text-sm text-white">Disponible</p>
+                          <p className="text-xs text-white/50">Aceptando nuevos proyectos</p>
+                        </div>
+                        <button
+                          onClick={() => handleCreatorFieldSave('is_available', !isAvailable)}
+                          className={cn(
+                            'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                            isAvailable ? 'bg-emerald-500' : 'bg-white/20'
+                          )}
+                        >
+                          <span className={cn(
+                            'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                            isAvailable ? 'translate-x-6' : 'translate-x-1'
+                          )} />
+                        </button>
+                      </div>
+                      {/* Accepts Exchange Toggle */}
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 md:col-span-2">
+                        <div>
+                          <p className="text-sm text-white">Acepta Canje de Productos</p>
+                          <p className="text-xs text-white/50">Intercambio de productos por contenido</p>
+                        </div>
+                        <button
+                          onClick={() => handleCreatorFieldSave('accepts_product_exchange', !(full?.accepts_product_exchange))}
+                          className={cn(
+                            'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                            full?.accepts_product_exchange ? 'bg-purple-500' : 'bg-white/20'
+                          )}
+                        >
+                          <span className={cn(
+                            'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                            full?.accepts_product_exchange ? 'translate-x-6' : 'translate-x-1'
+                          )} />
+                        </button>
+                      </div>
+                      {/* Level */}
+                      <div className="space-y-2">
+                        <label className="text-xs text-white/60">Nivel</label>
+                        <select
+                          defaultValue={level || 'bronze'}
+                          className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-md text-white text-sm"
+                          onChange={(e) => handleCreatorFieldSave('level', e.target.value)}
+                        >
+                          <option value="bronze">Bronze</option>
+                          <option value="silver">Silver</option>
+                          <option value="gold">Gold</option>
+                          <option value="elite">Elite</option>
+                        </select>
+                      </div>
+                      {/* Verified Toggle */}
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                        <div>
+                          <p className="text-sm text-white">Verificado</p>
+                          <p className="text-xs text-white/50">Mostrar badge de verificación</p>
+                        </div>
+                        <button
+                          onClick={() => handleCreatorFieldSave('is_verified', !isVerified)}
+                          className={cn(
+                            'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                            isVerified ? 'bg-blue-500' : 'bg-white/20'
+                          )}
+                        >
+                          <span className={cn(
+                            'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                            isVerified ? 'translate-x-6' : 'translate-x-1'
+                          )} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </TabsContent>
 
               {/* PORTFOLIO TAB */}
               <TabsContent value="portfolio" className="mt-0 space-y-6">
+                {/* Quick actions */}
+                {isEditing && creatorProfileId && (
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-pink-500/10 border border-pink-500/20">
+                    <p className="text-sm text-pink-300">
+                      Gestiona el portafolio desde el perfil público del creador
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-pink-500/30 text-pink-300 hover:bg-pink-500/20"
+                      onClick={() => window.open(`/marketplace/creator/${creatorProfileId}`, '_blank')}
+                    >
+                      <Globe className="h-4 w-4 mr-2" />
+                      Ver Perfil
+                    </Button>
+                  </div>
+                )}
                 {full?.portfolio && full.portfolio.length > 0 ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {full.portfolio.map((item: any) => (
@@ -831,12 +1037,40 @@ export function UnifiedTalentDetailDialog({
                   <div className="text-center py-12">
                     <Image className="h-12 w-12 text-white/10 mx-auto mb-3" />
                     <p className="text-white/40">Sin elementos en el portafolio</p>
+                    {isEditing && creatorProfileId && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mt-4 border-pink-500/30 text-pink-300 hover:bg-pink-500/20"
+                        onClick={() => window.open(`/marketplace/creator/${creatorProfileId}`, '_blank')}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Agregar desde Perfil
+                      </Button>
+                    )}
                   </div>
                 )}
               </TabsContent>
 
               {/* SERVICES TAB */}
               <TabsContent value="services" className="mt-0 space-y-6">
+                {/* Quick actions */}
+                {isEditing && userId && (
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                    <p className="text-sm text-purple-300">
+                      Gestiona los servicios desde la configuración del creador
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-purple-500/30 text-purple-300 hover:bg-purple-500/20"
+                      onClick={() => window.open(`/settings?tab=services&user=${userId}`, '_blank')}
+                    >
+                      <Settings className="h-4 w-4 mr-2" />
+                      Configurar
+                    </Button>
+                  </div>
+                )}
                 {full?.services && full.services.length > 0 ? (
                   <div className="space-y-4">
                     {full.services.map((service: any) => (
@@ -846,7 +1080,14 @@ export function UnifiedTalentDetailDialog({
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-white truncate">{service.title}</h4>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium text-white truncate">{service.title}</h4>
+                              {service.is_active === false && (
+                                <Badge variant="secondary" className="bg-white/10 text-white/50 text-[10px]">
+                                  Inactivo
+                                </Badge>
+                              )}
+                            </div>
                             {service.description && (
                               <p className="text-sm text-white/60 mt-1 line-clamp-2">
                                 {service.description}
@@ -876,6 +1117,17 @@ export function UnifiedTalentDetailDialog({
                   <div className="text-center py-12">
                     <Briefcase className="h-12 w-12 text-white/10 mx-auto mb-3" />
                     <p className="text-white/40">Sin servicios configurados</p>
+                    {isEditing && userId && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mt-4 border-purple-500/30 text-purple-300 hover:bg-purple-500/20"
+                        onClick={() => window.open(`/settings?tab=services&user=${userId}`, '_blank')}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Agregar Servicios
+                      </Button>
+                    )}
                   </div>
                 )}
               </TabsContent>
