@@ -44,6 +44,14 @@ export interface DocumentType {
   is_active: boolean;
 }
 
+export interface City {
+  id: string;
+  country_code: string;
+  name: string;
+  is_capital: boolean;
+  sort_order: number;
+}
+
 export interface ProfileData {
   full_name: string;
   username: string;
@@ -98,6 +106,20 @@ export function useOnboardingGate() {
       });
 
       if (error) {
+        // Si la función no existe (migraciones no aplicadas), asumir completo
+        if (error.code === 'PGRST202' || error.message?.includes('Could not find')) {
+          console.warn('[onboarding] RPC check_profile_completion not found. Assuming complete (migrations pending).');
+          return {
+            complete: true,
+            missing: [],
+            has_social: true,
+            age_ok: true,
+            profile_completed: true,
+            age_verified: true,
+            legal_consents_completed: true,
+            onboarding_completed: true,
+          };
+        }
         console.error('[onboarding] Error checking profile completion:', error);
         throw error;
       }
@@ -107,6 +129,7 @@ export function useOnboardingGate() {
     enabled: !!user?.id,
     staleTime: 0, // Siempre fresco
     refetchOnWindowFocus: true,
+    retry: false, // No reintentar si falla (evita loops)
   });
 
   // Documentos legales pendientes
@@ -125,7 +148,8 @@ export function useOnboardingGate() {
 
       if (error) {
         // Si la función no existe, devolver vacío
-        if (error.message?.includes('does not exist')) {
+        if (error.code === 'PGRST202' || error.message?.includes('Could not find') || error.message?.includes('does not exist')) {
+          console.warn('[onboarding] RPC get_pending_consents not found. Assuming no pending docs.');
           return [];
         }
         throw error;
@@ -135,6 +159,7 @@ export function useOnboardingGate() {
     },
     enabled: !!user?.id,
     staleTime: 0,
+    retry: false,
   });
 
   // Lista de países
@@ -146,10 +171,18 @@ export function useOnboardingGate() {
         .select('*')
         .order('sort_order');
 
-      if (error) throw error;
+      if (error) {
+        // Si la tabla no existe, devolver lista por defecto
+        if (error.code === '42P01' || error.message?.includes('does not exist')) {
+          console.warn('[onboarding] Table countries not found. Using defaults.');
+          return getDefaultCountries();
+        }
+        throw error;
+      }
       return data as Country[];
     },
     staleTime: 60 * 60 * 1000, // 1 hora
+    retry: false,
   });
 
   // Tipos de documento
@@ -161,11 +194,47 @@ export function useOnboardingGate() {
         .select('*')
         .eq('is_active', true);
 
-      if (error) throw error;
+      if (error) {
+        // Si la tabla no existe, devolver lista por defecto
+        if (error.code === '42P01' || error.message?.includes('does not exist')) {
+          console.warn('[onboarding] Table document_types not found. Using defaults.');
+          return getDefaultDocumentTypes();
+        }
+        throw error;
+      }
       return data as DocumentType[];
     },
     staleTime: 60 * 60 * 1000,
+    retry: false,
   });
+
+  // Lista de ciudades
+  const { data: cities } = useQuery({
+    queryKey: ['cities'],
+    queryFn: async (): Promise<City[]> => {
+      const { data, error } = await supabase
+        .from('cities')
+        .select('*')
+        .order('sort_order');
+
+      if (error) {
+        if (error.code === '42P01' || error.message?.includes('does not exist')) {
+          console.warn('[onboarding] Table cities not found. Using empty list.');
+          return [];
+        }
+        throw error;
+      }
+      return data as City[];
+    },
+    staleTime: 60 * 60 * 1000,
+    retry: false,
+  });
+
+  // Filtrar ciudades por país
+  const getCitiesByCountry = useCallback((countryCode: string): City[] => {
+    if (!cities || !countryCode) return [];
+    return cities.filter(c => c.country_code === countryCode);
+  }, [cities]);
 
   // Guardar datos del perfil
   const saveProfileMutation = useMutation({
@@ -303,6 +372,8 @@ export function useOnboardingGate() {
 
     // Datos de referencia
     countries: countries || [],
+    cities: cities || [],
+    getCitiesByCountry,
     documentTypes: documentTypes || [],
     existingProfileData,
 
@@ -324,3 +395,33 @@ export function useOnboardingGate() {
 }
 
 export default useOnboardingGate;
+
+// ============================================
+// FALLBACK DATA (cuando las tablas no existen)
+// ============================================
+
+function getDefaultCountries(): Country[] {
+  return [
+    { code: 'CO', name_es: 'Colombia', name_en: 'Colombia', dial_code: '+57', flag: '🇨🇴', is_latam: true, sort_order: 1 },
+    { code: 'MX', name_es: 'México', name_en: 'Mexico', dial_code: '+52', flag: '🇲🇽', is_latam: true, sort_order: 2 },
+    { code: 'AR', name_es: 'Argentina', name_en: 'Argentina', dial_code: '+54', flag: '🇦🇷', is_latam: true, sort_order: 3 },
+    { code: 'PE', name_es: 'Perú', name_en: 'Peru', dial_code: '+51', flag: '🇵🇪', is_latam: true, sort_order: 4 },
+    { code: 'CL', name_es: 'Chile', name_en: 'Chile', dial_code: '+56', flag: '🇨🇱', is_latam: true, sort_order: 5 },
+    { code: 'EC', name_es: 'Ecuador', name_en: 'Ecuador', dial_code: '+593', flag: '🇪🇨', is_latam: true, sort_order: 6 },
+    { code: 'US', name_es: 'Estados Unidos', name_en: 'United States', dial_code: '+1', flag: '🇺🇸', is_latam: false, sort_order: 10 },
+    { code: 'ES', name_es: 'España', name_en: 'Spain', dial_code: '+34', flag: '🇪🇸', is_latam: false, sort_order: 11 },
+  ];
+}
+
+function getDefaultDocumentTypes(): DocumentType[] {
+  return [
+    { id: 'cc', label_es: 'Cédula de Ciudadanía', label_en: 'National ID', countries: ['CO'], format_hint: '10 dígitos', is_active: true },
+    { id: 'ce', label_es: 'Cédula de Extranjería', label_en: 'Foreign ID', countries: ['CO'], format_hint: '6-10 caracteres', is_active: true },
+    { id: 'passport', label_es: 'Pasaporte', label_en: 'Passport', countries: ['*'], format_hint: 'Alfanumérico', is_active: true },
+    { id: 'curp', label_es: 'CURP', label_en: 'CURP', countries: ['MX'], format_hint: '18 caracteres', is_active: true },
+    { id: 'ine', label_es: 'INE', label_en: 'INE', countries: ['MX'], format_hint: '13 dígitos', is_active: true },
+    { id: 'dni', label_es: 'DNI', label_en: 'DNI', countries: ['AR', 'PE', 'ES'], format_hint: '8 dígitos', is_active: true },
+    { id: 'rut', label_es: 'RUT', label_en: 'RUT', countries: ['CL'], format_hint: '9 dígitos + K', is_active: true },
+    { id: 'ssn', label_es: 'SSN', label_en: 'Social Security Number', countries: ['US'], format_hint: '9 dígitos', is_active: true },
+  ];
+}

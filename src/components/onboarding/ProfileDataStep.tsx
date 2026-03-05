@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useOnboardingGate, ProfileData } from '@/hooks/useOnboardingGate';
+import { useOnboardingGate, ProfileData, City } from '@/hooks/useOnboardingGate';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -83,14 +83,20 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
   const {
     existingProfileData,
     countries,
+    getCitiesByCountry,
     documentTypes,
     saveProfileData,
     checkUsernameAvailable,
     isSavingProfile,
   } = useOnboardingGate();
 
+  // Ciudades filtradas por país seleccionado
+  const [availableCities, setAvailableCities] = useState<City[]>([]);
+
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
   const [selectedCountry, setSelectedCountry] = useState(existingProfileData.country || '');
+  const [showCustomCity, setShowCustomCity] = useState(false);
+  const [customCityValue, setCustomCityValue] = useState('');
 
   const {
     register,
@@ -151,10 +157,18 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
     return () => clearTimeout(timer);
   }, [usernameValue, checkUsernameAvailable, existingProfileData.username]);
 
-  // Actualizar país seleccionado
+  // Actualizar país seleccionado y cargar ciudades
   useEffect(() => {
     if (countryValue !== selectedCountry) {
       setSelectedCountry(countryValue);
+      // Cargar ciudades del país
+      const citiesForCountry = getCitiesByCountry(countryValue);
+      setAvailableCities(citiesForCountry);
+      // Limpiar ciudad si no está en la nueva lista
+      const currentCity = watch('city');
+      if (currentCity && !citiesForCountry.some(c => c.name === currentCity)) {
+        setValue('city', '');
+      }
       // Limpiar tipo de documento si no aplica al nuevo país
       const currentDocType = watch('document_type');
       const stillValid = filteredDocTypes.some(dt => dt.id === currentDocType);
@@ -162,7 +176,15 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
         setValue('document_type', '');
       }
     }
-  }, [countryValue, selectedCountry, filteredDocTypes, setValue, watch]);
+  }, [countryValue, selectedCountry, filteredDocTypes, setValue, watch, getCitiesByCountry]);
+
+  // Cargar ciudades iniciales si hay país seleccionado
+  useEffect(() => {
+    if (existingProfileData.country && availableCities.length === 0) {
+      const citiesForCountry = getCitiesByCountry(existingProfileData.country);
+      setAvailableCities(citiesForCountry);
+    }
+  }, [existingProfileData.country, getCitiesByCountry, availableCities.length]);
 
   const onSubmit = useCallback(async (data: ProfileFormData) => {
     if (usernameStatus === 'taken') {
@@ -337,7 +359,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                 <SelectTrigger className="bg-white/5 border-white/10 text-white">
                   <SelectValue placeholder="Selecciona tu país" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" sideOffset={4} className="max-h-60 overflow-y-auto z-[9999]">
                   {countries.map((country) => (
                     <SelectItem key={country.code} value={country.code}>
                       <span className="mr-2">{country.flag}</span>
@@ -356,11 +378,59 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
               <Label className="text-white/90">
                 Ciudad <span className="text-red-400">*</span>
               </Label>
-              <Input
-                {...register('city')}
-                placeholder="Tu ciudad"
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
-              />
+              {availableCities.length > 0 && !showCustomCity ? (
+                <>
+                  <Select
+                    value={watch('city')}
+                    onValueChange={(v) => {
+                      if (v === '__other__') {
+                        setShowCustomCity(true);
+                        setValue('city', '');
+                      } else {
+                        setValue('city', v);
+                      }
+                    }}
+                    disabled={!countryValue}
+                  >
+                    <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                      <SelectValue placeholder={countryValue ? "Selecciona tu ciudad" : "Primero selecciona país"} />
+                    </SelectTrigger>
+                    <SelectContent position="popper" sideOffset={4} className="max-h-60 overflow-y-auto z-[9999]">
+                      {availableCities.map((city) => (
+                        <SelectItem key={city.id} value={city.name}>
+                          {city.name} {city.is_capital && '⭐'}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="__other__">Otra ciudad...</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </>
+              ) : (
+                <div className="space-y-2">
+                  <Input
+                    value={customCityValue || watch('city')}
+                    onChange={(e) => {
+                      setCustomCityValue(e.target.value);
+                      setValue('city', e.target.value);
+                    }}
+                    placeholder={countryValue ? "Escribe tu ciudad" : "Primero selecciona país"}
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                    disabled={!countryValue}
+                  />
+                  {availableCities.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCustomCity(false);
+                        setCustomCityValue('');
+                      }}
+                      className="text-xs text-purple-400 hover:text-purple-300"
+                    >
+                      ← Volver a seleccionar de la lista
+                    </button>
+                  )}
+                </div>
+              )}
               {errors.city && (
                 <p className="text-xs text-red-400">{errors.city.message}</p>
               )}
@@ -393,7 +463,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                 <SelectTrigger className="bg-white/5 border-white/10 text-white">
                   <SelectValue placeholder="Selecciona tu nacionalidad" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" sideOffset={4} className="max-h-60 overflow-y-auto z-[9999]">
                   {countries.map((country) => (
                     <SelectItem key={country.code} value={country.code}>
                       <span className="mr-2">{country.flag}</span>
@@ -430,7 +500,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                 <SelectTrigger className="bg-white/5 border-white/10 text-white">
                   <SelectValue placeholder={countryValue ? "Selecciona tipo" : "Primero selecciona país"} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" sideOffset={4} className="max-h-60 overflow-y-auto z-[9999]">
                   {filteredDocTypes.map((docType) => (
                     <SelectItem key={docType.id} value={docType.id}>
                       {docType.label_es}

@@ -1,2 +1,3 @@
-export { LegalConsentModal } from './LegalConsentModal';
-export { LegalConsentGate, useLegalGate } from './LegalConsentGate';
+export { SignatureCanvas } from './SignatureCanvas';
+export { SignatureModal } from './SignatureModal';
+export { SignatureReceipt } from './SignatureReceipt';

@@ -508,3 +508,6 @@ verify_jwt = false
 # Sincronización masiva de usuarios y organizaciones existentes
 # Solo debe ejecutarse por admin
 verify_jwt = false
+
+[functions.send-support-email]
+verify_jwt = false

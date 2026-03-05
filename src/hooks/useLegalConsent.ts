@@ -130,12 +130,20 @@ export function useLegalConsent() {
         .eq('user_id', user.id)
         .eq('declared_age_18_plus', true)
         .eq('verification_status', 'verified')
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) {
+        // Ignorar errores de tabla no existente o sin resultados
+        if (error.code === 'PGRST116' || error.code === '42P01') {
+          return null;
+        }
+        console.warn('[useLegalConsent] Error fetching age verification:', error);
+        return null;
+      }
       return data;
     },
     enabled: !!user?.id,
+    retry: false,
   });
 
   // Mutación para registrar consentimiento
