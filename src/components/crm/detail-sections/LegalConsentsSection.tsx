@@ -20,6 +20,9 @@ import {
   Eye,
   Loader2,
   AlertTriangle,
+  Globe,
+  Monitor,
+  Fingerprint,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -79,6 +82,7 @@ const SIGNATURE_METHOD_LABELS: Record<string, string> = {
 
 export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCompletedProp }: LegalConsentsSectionProps) {
   const [selectedSignature, setSelectedSignature] = useState<DigitalSignature | null>(null);
+  const [selectedConsent, setSelectedConsent] = useState<UserConsent | null>(null);
 
   // Cargar estado de onboarding del perfil si no se proporciona
   const { data: profileData } = useQuery({
@@ -199,10 +203,19 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
                       </span>
                       <span className="text-white/40">v{consent.document_version}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-white/40">
-                      <span>{SIGNATURE_METHOD_LABELS[consent.consent_method] || consent.consent_method}</span>
-                      <span>•</span>
-                      <span>{formatDate(consent.accepted_at)}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-white/40">{SIGNATURE_METHOD_LABELS[consent.consent_method] || consent.consent_method}</span>
+                      <span className="text-white/40">•</span>
+                      <span className="text-white/40">{formatDate(consent.accepted_at)}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedConsent(consent)}
+                        className="h-6 w-6 p-0 text-white/40 hover:text-white"
+                        title="Ver detalles legales"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -352,6 +365,98 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
               <div>
                 <p className="text-white/40 text-xs">ID de Firma</p>
                 <p className="text-white/60 font-mono text-[10px]">{selectedSignature.id}</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de detalle de consentimiento */}
+      <Dialog open={!!selectedConsent} onOpenChange={() => setSelectedConsent(null)}>
+        <DialogContent className="max-w-lg bg-[#1a1a2e] border-white/10">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-white">
+              <Fingerprint className="h-5 w-5 text-blue-400" />
+              Detalle de Consentimiento Legal
+            </DialogTitle>
+            <DialogDescription className="text-white/60">
+              Información completa del consentimiento para fines legales
+            </DialogDescription>
+          </DialogHeader>
+          {selectedConsent && (
+            <div className="space-y-4 text-sm">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-white/40 text-xs">Documento</p>
+                  <p className="text-white font-medium">
+                    {DOC_TYPE_LABELS[selectedConsent.document_type] || selectedConsent.document_type}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-white/40 text-xs">Versión</p>
+                  <p className="text-white">v{selectedConsent.document_version}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-white/40 text-xs">Estado</p>
+                  <div className="flex items-center gap-2">
+                    {selectedConsent.accepted ? (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 text-green-400" />
+                        <span className="text-green-400 font-medium">Aceptado</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-4 w-4 text-red-400" />
+                        <span className="text-red-400 font-medium">Rechazado</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-white/40 text-xs">Método de Consentimiento</p>
+                  <p className="text-white">
+                    {SIGNATURE_METHOD_LABELS[selectedConsent.consent_method] || selectedConsent.consent_method}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-white/40 text-xs">Fecha y Hora UTC</p>
+                <p className="text-white">{formatDate(selectedConsent.accepted_at)}</p>
+              </div>
+
+              <div className="pt-3 border-t border-white/10">
+                <p className="text-[10px] text-white/40 uppercase tracking-wide mb-3">
+                  Datos Técnicos (Prueba Legal)
+                </p>
+
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
+                    <Globe className="h-4 w-4 text-blue-400 mt-0.5 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-white/40 text-xs">Dirección IP</p>
+                      <p className="text-white font-mono text-sm">{selectedConsent.ip_address || 'No registrada'}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
+                    <Monitor className="h-4 w-4 text-purple-400 mt-0.5 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-white/40 text-xs">User Agent (Navegador/Dispositivo)</p>
+                      <p className="text-white/70 text-xs break-all font-mono leading-relaxed">
+                        {selectedConsent.user_agent || 'No registrado'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-white/10">
+                <p className="text-white/40 text-xs">ID de Consentimiento</p>
+                <p className="text-white/60 font-mono text-[10px]">{selectedConsent.id}</p>
               </div>
             </div>
           )}

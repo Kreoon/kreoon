@@ -399,6 +399,9 @@ export interface UserWithHealth {
   // Referral/key status
   platform_access_unlocked: boolean;
   user_type: string | null;
+  // Onboarding status
+  onboarding_completed: boolean;
+  consent_count: number;
 }
 
 export async function getUsersWithHealth(): Promise<UserWithHealth[]> {

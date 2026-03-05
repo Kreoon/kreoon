@@ -24,6 +24,8 @@ import {
   UserCircle,
   Calendar,
   Clock,
+  FileCheck,
+  FileX,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
@@ -869,6 +871,18 @@ const PlatformCRMPeople = () => {
                             <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium", HEALTH_STATUS_COLORS[status])}>
                               {HEALTH_STATUS_LABELS[status]}
                             </span>
+                            {/* Badge de Onboarding */}
+                            {user.onboarding_completed ? (
+                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-500/20 text-green-400" title={`${user.consent_count || 0} consentimientos firmados`}>
+                                <FileCheck className="w-3 h-3" />
+                                Legal ✓
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-500/20 text-orange-400" title="Sin onboarding completo">
+                                <FileX className="w-3 h-3" />
+                                Pendiente
+                              </span>
+                            )}
                           </div>
                           <div className={cn("w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold", hc.bg, hc.text)}>
                             {user.health_score}
@@ -922,6 +936,16 @@ const PlatformCRMPeople = () => {
                         <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium hidden sm:inline", getUserTypeColor(user.user_type))}>
                           {getUserTypeLabel(user.user_type)}
                         </span>
+                        {/* Badge de Onboarding en lista */}
+                        {user.onboarding_completed ? (
+                          <span className="hidden md:flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-500/20 text-green-400">
+                            <FileCheck className="w-3 h-3" />
+                          </span>
+                        ) : (
+                          <span className="hidden md:flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-500/20 text-orange-400">
+                            <FileX className="w-3 h-3" />
+                          </span>
+                        )}
                         <span className="text-[10px] text-white/30 hidden lg:inline">
                           {user.last_login_at
                             ? formatDistanceToNow(new Date(user.last_login_at), { addSuffix: true, locale: es })
@@ -945,6 +969,7 @@ const PlatformCRMPeople = () => {
                         <TableHead className="text-white/70">Usuario</TableHead>
                         <TableHead className="text-white/70">Tipo</TableHead>
                         <TableHead className="text-white/70 hidden md:table-cell">Organización</TableHead>
+                        <TableHead className="text-white/70">Legal</TableHead>
                         <TableHead className="text-white/70">Health Score</TableHead>
                         <TableHead className="text-white/70 hidden lg:table-cell">Registro</TableHead>
                         <TableHead className="text-white/70 hidden lg:table-cell">Últ. Login</TableHead>
@@ -985,6 +1010,19 @@ const PlatformCRMPeople = () => {
                               </span>
                             </TableCell>
                             <TableCell className="text-white/70 hidden md:table-cell">{user.organization_name || "—"}</TableCell>
+                            <TableCell>
+                              {user.onboarding_completed ? (
+                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-500/20 text-green-400 w-fit" title={`${user.consent_count || 0} consentimientos`}>
+                                  <FileCheck className="w-3 h-3" />
+                                  {user.consent_count || 0}
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-500/20 text-orange-400 w-fit" title="Sin firmar">
+                                  <FileX className="w-3 h-3" />
+                                  Pend.
+                                </span>
+                              )}
+                            </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold", hc.bg, hc.text)}>
