@@ -4,7 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Gift, Percent, Star, ArrowRight, CheckCircle2, AlertCircle, Sparkles, Zap, Shield, Clock } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Loader2, Gift, Percent, Star, ArrowRight, CheckCircle2, AlertCircle, Sparkles, Zap, Shield, Clock, User, Building2, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface CommunityMetadata {
@@ -67,6 +74,7 @@ export default function PartnerCommunityLanding() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [community, setCommunity] = useState<CommunityInfo | null>(null);
+  const [showUserTypeModal, setShowUserTypeModal] = useState(false);
 
   useEffect(() => {
     if (!slug) {
@@ -135,10 +143,22 @@ export default function PartnerCommunityLanding() {
     }
   }
 
-  function handleRegisterBrand() {
+  function handleOpenRegistration() {
+    setShowUserTypeModal(true);
+  }
+
+  function handleSelectUserType(userType: 'talent' | 'brand' | 'organization') {
     if (!slug) return;
     localStorage.setItem("kreoon_partner_community", slug);
-    navigate(`/register?intent=brand&community=${slug}`);
+    setShowUserTypeModal(false);
+
+    if (userType === 'talent') {
+      navigate(`/register?intent=talent&community=${slug}`);
+    } else if (userType === 'brand') {
+      navigate(`/register?intent=brand&community=${slug}`);
+    } else if (userType === 'organization') {
+      navigate(`/register?intent=organization&community=${slug}`);
+    }
   }
 
   if (loading) {
@@ -172,8 +192,8 @@ export default function PartnerCommunityLanding() {
   const heroTitle = community.metadata?.hero_title || `¡Bienvenidos a KREOON!`;
   const heroSubtitle = community.metadata?.hero_subtitle || `Comunidad ${community.name}`;
   const ctaTitle = community.metadata?.cta_title || "¿Listo para comenzar?";
-  const ctaSubtitle = community.metadata?.cta_subtitle || `Registra tu marca ahora y accede a todos los beneficios de la comunidad ${community.name}.`;
-  const ctaButtonText = community.metadata?.cta_button_text || "Registrar mi Marca";
+  const ctaSubtitle = community.metadata?.cta_subtitle || `Regístrate ahora y accede a todos los beneficios de la comunidad ${community.name}.`;
+  const ctaButtonText = community.metadata?.cta_button_text || "Unirme a la Comunidad";
 
   return (
     <div className={cn("min-h-screen", `bg-gradient-to-br ${bgGradient}`)}>
@@ -435,20 +455,18 @@ export default function PartnerCommunityLanding() {
               {ctaSubtitle}
             </p>
 
-            {isBrandTarget && (
-              <Button
-                size="lg"
-                onClick={handleRegisterBrand}
-                className="font-semibold px-8 py-6 text-lg transition-transform hover:scale-105"
-                style={{
-                  backgroundColor: themeColor,
-                  color: 'black'
-                }}
-              >
-                {ctaButtonText}
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            )}
+            <Button
+              size="lg"
+              onClick={handleOpenRegistration}
+              className="font-semibold px-8 py-6 text-lg transition-transform hover:scale-105"
+              style={{
+                backgroundColor: themeColor,
+                color: 'black'
+              }}
+            >
+              {ctaButtonText}
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
 
             <p className="text-zinc-500 text-sm mt-6">
               El registro es gratuito. Los beneficios se aplican automaticamente.
@@ -456,6 +474,79 @@ export default function PartnerCommunityLanding() {
           </Card>
         </div>
       </section>
+
+      {/* Modal de selección de tipo de usuario */}
+      <Dialog open={showUserTypeModal} onOpenChange={setShowUserTypeModal}>
+        <DialogContent className="sm:max-w-lg bg-zinc-900 border-zinc-800">
+          <DialogHeader>
+            <DialogTitle className="text-2xl text-white text-center">
+              ¿Cómo quieres unirte?
+            </DialogTitle>
+            <DialogDescription className="text-zinc-400 text-center">
+              Selecciona el tipo de cuenta que mejor se adapte a ti
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-6">
+            {/* Opción Talento */}
+            <button
+              onClick={() => handleSelectUserType('talent')}
+              className="flex items-center gap-4 p-4 rounded-xl border border-zinc-700 hover:border-primary hover:bg-zinc-800/50 transition-all text-left group"
+            >
+              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0 group-hover:bg-primary/30 transition-colors">
+                <User className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white group-hover:text-primary transition-colors">
+                  Soy Talento / Creador
+                </h3>
+                <p className="text-sm text-zinc-400">
+                  Quiero ofrecer mis servicios como creador de contenido, editor, fotógrafo, etc.
+                </p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-zinc-600 group-hover:text-primary transition-colors ml-auto" />
+            </button>
+
+            {/* Opción Marca */}
+            <button
+              onClick={() => handleSelectUserType('brand')}
+              className="flex items-center gap-4 p-4 rounded-xl border border-zinc-700 hover:border-amber-500 hover:bg-zinc-800/50 transition-all text-left group"
+            >
+              <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0 group-hover:bg-amber-500/30 transition-colors">
+                <Briefcase className="w-6 h-6 text-amber-500" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white group-hover:text-amber-500 transition-colors">
+                  Soy una Marca / Empresa
+                </h3>
+                <p className="text-sm text-zinc-400">
+                  Quiero contratar talento para crear contenido para mi marca o empresa.
+                </p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-zinc-600 group-hover:text-amber-500 transition-colors ml-auto" />
+            </button>
+
+            {/* Opción Organización */}
+            <button
+              onClick={() => handleSelectUserType('organization')}
+              className="flex items-center gap-4 p-4 rounded-xl border border-zinc-700 hover:border-purple-500 hover:bg-zinc-800/50 transition-all text-left group"
+            >
+              <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0 group-hover:bg-purple-500/30 transition-colors">
+                <Building2 className="w-6 h-6 text-purple-500" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white group-hover:text-purple-500 transition-colors">
+                  Soy una Agencia / Organización
+                </h3>
+                <p className="text-sm text-zinc-400">
+                  Tengo un equipo de creadores y quiero gestionar proyectos para mis clientes.
+                </p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-zinc-600 group-hover:text-purple-500 transition-colors ml-auto" />
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Footer */}
       <footer className="border-t border-zinc-800 py-8 px-4">
