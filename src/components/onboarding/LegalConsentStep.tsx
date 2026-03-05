@@ -273,31 +273,46 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
 
   // Completar onboarding
   const handleComplete = async () => {
-    if (!canComplete) return;
+    if (!canComplete) {
+      toast.error('Debes aceptar todos los documentos y confirmar tu edad');
+      return;
+    }
 
     try {
-      // Aceptar documentos que falten
-      for (const doc of documentsToShow) {
-        if (!acceptedDocs.has(doc.document_id)) {
-          await acceptDocument(doc.document_id);
-        }
-      }
-
       // Verificar edad si no está verificada
       if (!isAgeVerified() && ageConfirmed) {
         await verifyAge(true);
       }
 
-      // Completar onboarding
-      await completeOnboarding();
-      toast.success('¡Bienvenido a KREOON!');
+      // Aceptar documentos que falten (solo los que no están ya aceptados/firmados)
+      for (const doc of documentsToShow) {
+        const isAccepted = acceptedDocs.has(doc.document_id) || signedDocuments.has(doc.document_id);
+        if (!isAccepted) {
+          try {
+            await acceptDocument(doc.document_id);
+          } catch (e) {
+            console.warn(`[onboarding] Error aceptando doc ${doc.document_type}:`, e);
+          }
+        }
+      }
 
-      // Refrescar estado y redirigir
-      refetch();
-      window.location.reload();
+      // Completar onboarding
+      const result = await completeOnboarding();
+
+      if (result) {
+        toast.success('¡Bienvenido a KREOON!');
+        // Esperar un poco antes de recargar para que el toast se muestre
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      } else {
+        toast.error('No se pudo completar el onboarding. Verifica que hayas aceptado todos los documentos.');
+        refetch();
+      }
     } catch (error: any) {
       console.error('Error completing onboarding:', error);
-      toast.error('Error al completar. Intenta de nuevo.');
+      toast.error(error.message || 'Error al completar. Intenta de nuevo.');
+      refetch();
     }
   };
 

@@ -39,11 +39,11 @@ export function OnboardingWizard() {
   }
 
   return (
-    <div className="fixed inset-0 z-[100] bg-[#0F0F23] overflow-auto">
+    <div className="fixed inset-0 z-[100] bg-[#0F0F23] overflow-x-hidden overflow-y-auto">
       {/* Background gradient */}
-      <div className="absolute inset-0 pointer-events-none">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] opacity-30"
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-[min(800px,200vw)] h-[400px] opacity-30"
           style={{
             background: 'radial-gradient(ellipse at center, rgba(147, 51, 234, 0.3) 0%, transparent 70%)',
             filter: 'blur(60px)',
