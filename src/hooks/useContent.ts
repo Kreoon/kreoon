@@ -185,10 +185,26 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
     await fetchContent();
   };
 
-  const deleteContent = async (contentId: string) => {
+  const deleteContent = async (contentId: string, reason?: string) => {
     markLocalUpdate(contentId);
-    const { error } = await supabase.from('content').delete().eq('id', contentId);
+    // Usar soft delete - mueve a papelera en lugar de eliminar permanentemente
+    const { data, error } = await supabase.rpc('soft_delete_content', {
+      p_content_id: contentId,
+      p_reason: reason || null
+    });
     if (error) throw error;
+    if (data && !data.success) throw new Error(data.error || 'Error al eliminar');
+    await fetchContent();
+  };
+
+  // Restaurar contenido desde papelera
+  const restoreContent = async (contentId: string) => {
+    markLocalUpdate(contentId);
+    const { data, error } = await supabase.rpc('restore_content_from_trash', {
+      p_content_id: contentId
+    });
+    if (error) throw error;
+    if (data && !data.success) throw new Error(data.error || 'Error al restaurar');
     await fetchContent();
   };
 
@@ -222,7 +238,7 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
 
   // Realtime auto-refresh removed — content updates only on explicit user actions (refetch)
 
-  return { content, loading, error, refetch: fetchContent, updateContentStatus, updateContent, deleteContent, approveContent, approveScript };
+  return { content, loading, error, refetch: fetchContent, updateContentStatus, updateContent, deleteContent, restoreContent, approveContent, approveScript };
 }
 
 // Hook para usar con filtros más avanzados
@@ -278,10 +294,26 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
     await fetchContent();
   };
 
-  const deleteContent = async (contentId: string) => {
+  const deleteContent = async (contentId: string, reason?: string) => {
     markLocalUpdate(contentId);
-    const { error } = await supabase.from('content').delete().eq('id', contentId);
+    // Usar soft delete - mueve a papelera en lugar de eliminar permanentemente
+    const { data, error } = await supabase.rpc('soft_delete_content', {
+      p_content_id: contentId,
+      p_reason: reason || null
+    });
     if (error) throw error;
+    if (data && !data.success) throw new Error(data.error || 'Error al eliminar');
+    await fetchContent();
+  };
+
+  // Restaurar contenido desde papelera
+  const restoreContent = async (contentId: string) => {
+    markLocalUpdate(contentId);
+    const { data, error } = await supabase.rpc('restore_content_from_trash', {
+      p_content_id: contentId
+    });
+    if (error) throw error;
+    if (data && !data.success) throw new Error(data.error || 'Error al restaurar');
     await fetchContent();
   };
 
@@ -291,5 +323,5 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
 
   // Realtime auto-refresh removed — content updates only on explicit user actions (refetch)
 
-  return { content, loading, error, refetch: fetchContent, updateContentStatus, deleteContent };
+  return { content, loading, error, refetch: fetchContent, updateContentStatus, deleteContent, restoreContent };
 }

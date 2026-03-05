@@ -243,13 +243,13 @@ export function UnifiedTalentDetailDialog({
   const full = isOrgContext ? fullOrg : (isUserContext ? null : fullPlatform);
   const fullLoading = isOrgContext ? loadingOrg : (isUserContext ? false : loadingPlatform);
 
-  // creatorProfileId: for platform use creator.id, for org use fullOrg.creator_profile_id
-  const creatorProfileId = creator?.id || (fullOrg as any)?.creator_profile_id;
-
   // userId: use creator.user_id (for platform creator), user.id (for user), or creatorId (for org), fallback to full data
   const userId = creator?.user_id || user?.id || creatorId || full?.user_id || full?.id;
   const { data: userDetail } = useFullUserDetail(userId);
   const updateProfileFields = useUpdateUserProfileFields();
+
+  // creatorProfileId: for platform use creator.id, for org use fullOrg.creator_profile_id, for user use userDetail
+  const creatorProfileId = creator?.id || (fullOrg as any)?.creator_profile_id || userDetail?.creator_profile_id;
 
   // Org-specific hooks
   const updateRelationship = useUpdateCreatorRelationship(organizationId || '');
@@ -258,8 +258,8 @@ export function UnifiedTalentDetailDialog({
   const { data: fieldDefs = [] } = useCrmCustomFieldDefs(organizationId || '', 'org_creator');
   const updateCustomFields = useUpdateOrgCreatorCustomFields(organizationId || '');
 
-  // Portfolio and Services hooks for inline CRUD
-  const portfolioHook = usePortfolioItems({ creatorProfileId });
+  // Portfolio and Services hooks for inline CRUD (use creatorProfileId once available)
+  const portfolioHook = usePortfolioItems({ creatorProfileId: creatorProfileId || undefined });
   const servicesHook = useCreatorServices({ userId });
 
   const [activeTab, setActiveTab] = useState('general');
