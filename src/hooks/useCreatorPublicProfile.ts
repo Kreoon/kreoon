@@ -287,6 +287,19 @@ export function useCreatorPublicProfile(creatorProfileId: string | undefined) {
           date: r.created_at || '',
         }));
 
+        // 5. Fetch unified stats (marketplace + org projects combined)
+        const { data: unifiedStats } = await (supabase as any)
+          .rpc('get_creator_unified_stats', { p_user_id: profile.user_id });
+
+        // Override profile stats with unified data
+        if (unifiedStats) {
+          profile.completed_projects = unifiedStats.completed_projects || profile.completed_projects;
+          profile.rating_avg = unifiedStats.rating_avg || profile.rating_avg;
+          profile.rating_count = unifiedStats.rating_count || profile.rating_count;
+          profile.on_time_delivery_pct = unifiedStats.on_time_delivery_pct || profile.on_time_delivery_pct;
+          profile.repeat_clients_pct = unifiedStats.repeat_clients_pct || profile.repeat_clients_pct;
+        }
+
         if (!cancelled) {
           setData({ profile, portfolioItems, services, reviews });
         }
