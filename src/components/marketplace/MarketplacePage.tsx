@@ -11,7 +11,6 @@ import { RoleCategoryBar } from './RoleCategoryBar';
 import { RoleSubChips } from './RoleSubChips';
 import { ActiveFilters } from './ActiveFilters';
 import { CreatorCarousel } from './CreatorCarousel';
-import { LazyCarousel } from './LazyCarousel';
 import { CreatorGrid } from './CreatorGrid';
 import { MarketplaceOrgGrid } from './OrgGrid';
 import { FilterModal } from './FilterModal';
@@ -319,15 +318,14 @@ export default function MarketplacePage() {
           ) : (
             <>
               {/* Curated sections (hidden during search or filtered views) */}
-              {/* Personalized recommendations - lazy loaded as it's personalized content */}
+              {/* Personalized recommendations */}
               {showCarousels && isPersonalized && recommended.length > 0 && (
-                <LazyCarousel
+                <CreatorCarousel
                   title="Recomendados para ti"
                   emoji="✨"
                   subtitle="Basado en tus intereses y actividad"
-                  creators={recommended}
+                  creators={recommended.slice(0, 8)}
                   onCreatorClick={handleCreatorClick}
-                  rootMargin="100px"
                 />
               )}
 
@@ -341,30 +339,30 @@ export default function MarketplacePage() {
 
               {showCarousels && (
                 <>
-                  {/* First carousel loads eagerly for LCP */}
+                  {/* First carousel - priority loading for LCP */}
                   <CreatorCarousel
                     title="Talento Destacado"
                     emoji="🔥"
                     subtitle="Los mejores profesionales creativos en LATAM"
-                    creators={featured}
+                    creators={featured.slice(0, 8)}
                     onCreatorClick={handleCreatorClick}
                     priority={true}
                   />
 
-                  {/* Lazy load below-the-fold carousels */}
-                  <LazyCarousel
+                  {/* Secondary carousels - limited items to reduce initial load */}
+                  <CreatorCarousel
                     title="Nuevos Talentos"
                     emoji="🆕"
                     subtitle="Recien llegados con propuestas frescas y descuentos de bienvenida"
-                    creators={newTalent}
+                    creators={newTalent.slice(0, 6)}
                     onCreatorClick={handleCreatorClick}
                   />
 
-                  <LazyCarousel
+                  <CreatorCarousel
                     title="Los Mejor Valorados"
                     emoji="⭐"
                     subtitle="Consistencia y calidad comprobada por marcas"
-                    creators={topRated}
+                    creators={topRated.slice(0, 6)}
                     onCreatorClick={handleCreatorClick}
                   />
                 </>
