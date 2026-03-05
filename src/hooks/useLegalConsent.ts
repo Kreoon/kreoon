@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { getCachedClientIP } from '@/lib/get-client-ip';
 
 export interface LegalDocument {
   id: string;
@@ -173,11 +174,14 @@ export function useLegalConsent() {
     mutationFn: async (declared18Plus: boolean) => {
       if (!user?.id) throw new Error('Usuario no autenticado');
 
+      // Obtener IP del cliente
+      const ipAddress = await getCachedClientIP();
+
       const { data, error } = await supabase
         .rpc('record_age_verification', {
           p_user_id: user.id,
           p_declared_age_18_plus: declared18Plus,
-          p_ip_address: null,
+          p_ip_address: ipAddress || null,
           p_user_agent: navigator.userAgent,
         });
 
@@ -191,8 +195,12 @@ export function useLegalConsent() {
 
   // Aceptar un documento específico
   const acceptDocument = useCallback(async (documentId: string) => {
+    // Obtener IP del cliente
+    const ipAddress = await getCachedClientIP();
+
     return recordConsentMutation.mutateAsync({
       documentId,
+      ipAddress: ipAddress || undefined,
       userAgent: navigator.userAgent,
     });
   }, [recordConsentMutation]);
