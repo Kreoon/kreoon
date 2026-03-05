@@ -15,11 +15,65 @@ export interface CreatorReviewData {
   date: string;
 }
 
+export interface CreatorTrustStats {
+  // Proyectos
+  completed_projects: number;
+  marketplace_projects: number;
+  org_projects: number;
+  active_projects: number;
+  cancelled_projects: number;
+  cancellation_rate: number;
+
+  // Ratings
+  rating_avg: number;
+  rating_count: number;
+
+  // Tiempos
+  response_time_hours: number;
+  on_time_delivery_pct: number;
+  avg_delivery_days: number;
+  last_delivery_days: number;
+
+  // Clientes
+  unique_clients: number;
+  repeat_clients: number;
+  repeat_clients_pct: number;
+
+  // Financiero
+  total_earned: number;
+
+  // Antigüedad
+  member_since: string | null;
+  days_on_platform: number;
+
+  // Verificaciones
+  identity_verified: boolean;
+  email_verified: boolean;
+  legal_docs_signed: number;
+  payment_verified: boolean;
+  onboarding_completed: boolean;
+
+  // Portfolio
+  portfolio_views: number;
+  portfolio_likes: number;
+  portfolio_saves: number;
+  portfolio_items: number;
+
+  // Experiencia
+  industries: string[];
+  organizations_worked: number;
+
+  // Comunicación
+  invitation_response_rate: number;
+  invitations_received: number;
+}
+
 export interface CreatorPublicProfile {
   profile: CreatorProfileData;
   portfolioItems: PortfolioItemData[];
   services: CreatorService[];
   reviews: CreatorReviewData[];
+  trustStats: CreatorTrustStats | null;
 }
 
 const DEFAULT_CUSTOMIZATION: ProfileCustomization = {
@@ -291,6 +345,8 @@ export function useCreatorPublicProfile(creatorProfileId: string | undefined) {
         const { data: unifiedStats, error: statsError } = await (supabase as any)
           .rpc('get_creator_unified_stats', { p_user_id: profile.user_id });
 
+        let trustStats: CreatorTrustStats | null = null;
+
         if (statsError) {
           console.warn('[useCreatorPublicProfile] Error fetching unified stats:', statsError);
         }
@@ -302,11 +358,47 @@ export function useCreatorPublicProfile(creatorProfileId: string | undefined) {
           profile.rating_count = unifiedStats.rating_count ?? profile.rating_count;
           profile.on_time_delivery_pct = unifiedStats.on_time_delivery_pct ?? profile.on_time_delivery_pct;
           profile.repeat_clients_pct = unifiedStats.repeat_clients_pct ?? profile.repeat_clients_pct;
-          console.log('[useCreatorPublicProfile] Unified stats applied:', unifiedStats);
+
+          // Build trust stats object
+          trustStats = {
+            completed_projects: unifiedStats.completed_projects ?? 0,
+            marketplace_projects: unifiedStats.marketplace_projects ?? 0,
+            org_projects: unifiedStats.org_projects ?? 0,
+            active_projects: unifiedStats.active_projects ?? 0,
+            cancelled_projects: unifiedStats.cancelled_projects ?? 0,
+            cancellation_rate: unifiedStats.cancellation_rate ?? 0,
+            rating_avg: unifiedStats.rating_avg ?? 0,
+            rating_count: unifiedStats.rating_count ?? 0,
+            response_time_hours: unifiedStats.response_time_hours ?? 24,
+            on_time_delivery_pct: unifiedStats.on_time_delivery_pct ?? 100,
+            avg_delivery_days: unifiedStats.avg_delivery_days ?? 0,
+            last_delivery_days: unifiedStats.last_delivery_days ?? 0,
+            unique_clients: unifiedStats.unique_clients ?? 0,
+            repeat_clients: unifiedStats.repeat_clients ?? 0,
+            repeat_clients_pct: unifiedStats.repeat_clients_pct ?? 0,
+            total_earned: unifiedStats.total_earned ?? 0,
+            member_since: unifiedStats.member_since ?? null,
+            days_on_platform: unifiedStats.days_on_platform ?? 0,
+            identity_verified: unifiedStats.identity_verified ?? false,
+            email_verified: unifiedStats.email_verified ?? false,
+            legal_docs_signed: unifiedStats.legal_docs_signed ?? 0,
+            payment_verified: unifiedStats.payment_verified ?? false,
+            onboarding_completed: unifiedStats.onboarding_completed ?? false,
+            portfolio_views: unifiedStats.portfolio_views ?? 0,
+            portfolio_likes: unifiedStats.portfolio_likes ?? 0,
+            portfolio_saves: unifiedStats.portfolio_saves ?? 0,
+            portfolio_items: unifiedStats.portfolio_items ?? 0,
+            industries: Array.isArray(unifiedStats.industries) ? unifiedStats.industries : [],
+            organizations_worked: unifiedStats.organizations_worked ?? 0,
+            invitation_response_rate: unifiedStats.invitation_response_rate ?? 0,
+            invitations_received: unifiedStats.invitations_received ?? 0,
+          };
+
+          console.log('[useCreatorPublicProfile] Trust stats loaded:', trustStats);
         }
 
         if (!cancelled) {
-          setData({ profile, portfolioItems, services, reviews });
+          setData({ profile, portfolioItems, services, reviews, trustStats });
         }
       } catch (err) {
         console.error('[useCreatorPublicProfile] Error:', err);

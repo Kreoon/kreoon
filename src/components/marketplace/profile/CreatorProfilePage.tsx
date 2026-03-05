@@ -11,7 +11,9 @@ import { ReviewsSection } from './ReviewsSection';
 import { PricingSidebar } from './PricingSidebar';
 import { SimilarCreators } from './SimilarCreators';
 import { CreatorProfileSkeleton } from './CreatorProfileSkeleton';
+import { TrustBadges, CreatorMetrics } from './TrustBadges';
 import { useCreatorPublicProfile } from '@/hooks/useCreatorPublicProfile';
+import type { CreatorTrustStats } from '@/hooks/useCreatorPublicProfile';
 import type { CreatorFullProfile, PortfolioMedia, CreatorService as MarketplaceCreatorService, CreatorStats, CreatorReview, CreatorPackage } from '../types/marketplace';
 import type { PortfolioItemData } from '@/hooks/usePortfolioItems';
 
@@ -169,6 +171,11 @@ export default function CreatorProfilePage() {
     [dbData],
   );
 
+  const trustStats: CreatorTrustStats | null = useMemo(
+    () => dbData?.trustStats || null,
+    [dbData],
+  );
+
   const isLoading = dbLoading;
 
   if (!id || isLoading) return <CreatorProfileSkeleton />;
@@ -283,7 +290,20 @@ export default function CreatorProfilePage() {
               creatorAvatar={creator.avatar_url}
               creatorId={creator.id}
             />
-            <StatsSection stats={creator.stats} />
+
+            {/* Trust & Stats Section */}
+            {trustStats ? (
+              <div className="space-y-8 pb-8 border-b border-white/10">
+                <div>
+                  <h2 className="text-xl font-semibold text-white mb-4">Estadísticas y Métricas</h2>
+                  <CreatorMetrics stats={trustStats} />
+                </div>
+                <TrustBadges stats={trustStats} />
+              </div>
+            ) : (
+              <StatsSection stats={creator.stats} />
+            )}
+
             <ReviewsSection
               reviews={creator.reviews}
               ratingAvg={creator.stats.rating_avg}
