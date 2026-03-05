@@ -114,62 +114,115 @@ export function LegalConsentsAdminPanel() {
   });
 
   // Lista de consentimientos
-  const { data: consents, isLoading: loadingConsents } = useQuery({
+  const { data: consents, isLoading: loadingConsents, error: consentsError } = useQuery({
     queryKey: ['legal-admin-consents', searchTerm],
     queryFn: async () => {
-      let query = supabase
+      // Primero obtener los consentimientos
+      const { data: consentsData, error: consentsErr } = await supabase
         .from('user_legal_consents')
-        .select(`
-          *,
-          profiles:user_id (full_name, email, username)
-        `)
-        .eq('is_current', true)
+        .select('*')
         .order('accepted_at', { ascending: false })
         .limit(100);
 
-      if (searchTerm) {
-        // Buscar por nombre o email en profiles
-        const { data: matchingProfiles } = await supabase
-          .from('profiles')
-          .select('id')
-          .or(`full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,username.ilike.%${searchTerm}%`);
-
-        if (matchingProfiles && matchingProfiles.length > 0) {
-          const userIds = matchingProfiles.map(p => p.id);
-          query = query.in('user_id', userIds);
-        } else {
-          return [];
-        }
+      if (consentsErr) {
+        console.error('[LegalConsentsAdmin] Error fetching consents:', consentsErr);
+        throw consentsErr;
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as UserConsent[];
+      if (!consentsData || consentsData.length === 0) {
+        return [];
+      }
+
+      // Luego obtener los perfiles de esos usuarios
+      const userIds = [...new Set(consentsData.map(c => c.user_id))];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, username')
+        .in('id', userIds);
+
+      const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
+
+      // Combinar datos
+      let result = consentsData.map(consent => ({
+        ...consent,
+        profiles: profilesMap.get(consent.user_id) || null,
+      }));
+
+      // Filtrar por búsqueda si hay término
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        result = result.filter(c => {
+          const profile = c.profiles;
+          if (!profile) return false;
+          return (
+            profile.full_name?.toLowerCase().includes(term) ||
+            profile.email?.toLowerCase().includes(term) ||
+            profile.username?.toLowerCase().includes(term)
+          );
+        });
+      }
+
+      return result as UserConsent[];
     },
   });
 
+  // Log para debug
+  if (consentsError) {
+    console.error('[LegalConsentsAdmin] Query error:', consentsError);
+  }
+
   // Lista de firmas digitales
-  const { data: signatures, isLoading: loadingSignatures } = useQuery({
+  const { data: signatures, isLoading: loadingSignatures, error: signaturesError } = useQuery({
     queryKey: ['legal-admin-signatures', searchTerm],
     queryFn: async () => {
-      let query = supabase
+      // Obtener firmas
+      const { data: signaturesData, error: sigsErr } = await supabase
         .from('digital_signatures')
-        .select(`
-          *,
-          profiles:user_id (full_name, email, username)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (searchTerm) {
-        query = query.or(`signer_full_name.ilike.%${searchTerm}%,signer_email.ilike.%${searchTerm}%`);
+      if (sigsErr) {
+        console.error('[LegalConsentsAdmin] Error fetching signatures:', sigsErr);
+        throw sigsErr;
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as DigitalSignature[];
+      if (!signaturesData || signaturesData.length === 0) {
+        return [];
+      }
+
+      // Obtener perfiles
+      const userIds = [...new Set(signaturesData.map(s => s.user_id))];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, username')
+        .in('id', userIds);
+
+      const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
+
+      // Combinar datos
+      let result = signaturesData.map(sig => ({
+        ...sig,
+        profiles: profilesMap.get(sig.user_id) || null,
+      }));
+
+      // Filtrar por búsqueda
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        result = result.filter(s =>
+          s.signer_full_name?.toLowerCase().includes(term) ||
+          s.signer_email?.toLowerCase().includes(term)
+        );
+      }
+
+      return result as DigitalSignature[];
     },
   });
+
+  // Log para debug
+  if (signaturesError) {
+    console.error('[LegalConsentsAdmin] Signatures error:', signaturesError);
+  }
 
   const getDocTypeLabel = (type: string): string => {
     const labels: Record<string, string> = {
