@@ -73,7 +73,7 @@ function getPortfolioThumbUrls(item: PortfolioItemData): { primary: string | nul
   return { primary, fallback };
 }
 import type { CreatorService, CreatorServiceInput, ServiceType } from '@/types/marketplace';
-import type { CreatorWithMetrics } from '@/services/crm/platformCrmService';
+import type { CreatorWithMetrics, UserWithHealth } from '@/services/crm/platformCrmService';
 import type { OrgCreatorWithStats, CreatorRelationshipType } from '@/types/crm.types';
 import { CREATOR_RELATIONSHIP_TYPE_LABELS } from '@/types/crm.types';
 import { AdminActionsSection } from './detail-sections/AdminActionsSection';
@@ -197,6 +197,8 @@ function EditableField({
 interface UnifiedTalentDetailDialogProps {
   // For platform context (CreatorWithMetrics)
   creator?: CreatorWithMetrics;
+  // For platform user context (UserWithHealth) - users without creator profile
+  user?: UserWithHealth;
   // For org context (OrgCreatorWithStats)
   orgCreator?: OrgCreatorWithStats;
   organizationId?: string;
@@ -207,6 +209,7 @@ interface UnifiedTalentDetailDialogProps {
 
 export function UnifiedTalentDetailDialog({
   creator,
+  user,
   orgCreator,
   organizationId,
   open,
@@ -218,31 +221,32 @@ export function UnifiedTalentDetailDialog({
   const currentUserEmail = profile?.email || '';
   const isRoot = ROOT_EMAILS.includes(currentUserEmail);
   const isOrgContext = !!orgCreator && !!organizationId;
+  const isUserContext = !!user && !creator && !orgCreator;
 
-  // Normalize data from either source
+  // Normalize data from either source (creator, user, or orgCreator)
   const creatorId = creator?.id || orgCreator?.creator_id;
-  const creatorName = creator?.full_name || orgCreator?.creator_name || '';
-  const creatorEmail = creator?.email || orgCreator?.creator_email || '';
-  const creatorAvatar = creator?.avatar_url || orgCreator?.creator_avatar;
+  const displayName = creator?.full_name || user?.full_name || orgCreator?.creator_name || '';
+  const displayEmail = creator?.email || user?.email || orgCreator?.creator_email || '';
+  const displayAvatar = creator?.avatar_url || user?.avatar_url || orgCreator?.creator_avatar;
   const creatorUsername = creator?.username;
 
-  // Fetch full details
+  // Fetch full details (skip for user-only context)
   const { data: fullPlatform, isLoading: loadingPlatform } = useFullCreatorDetail(
-    isOrgContext ? undefined : creator?.id
+    isOrgContext || isUserContext ? undefined : creator?.id
   );
   const { data: fullOrg, isLoading: loadingOrg } = useFullOrgCreatorDetail(
     isOrgContext ? organizationId : undefined,
     isOrgContext ? creatorId : undefined
   );
 
-  const full = isOrgContext ? fullOrg : fullPlatform;
-  const fullLoading = isOrgContext ? loadingOrg : loadingPlatform;
+  const full = isOrgContext ? fullOrg : (isUserContext ? null : fullPlatform);
+  const fullLoading = isOrgContext ? loadingOrg : (isUserContext ? false : loadingPlatform);
 
   // creatorProfileId: for platform use creator.id, for org use fullOrg.creator_profile_id
   const creatorProfileId = creator?.id || (fullOrg as any)?.creator_profile_id;
 
-  // userId: use creator.user_id directly (for platform) or creatorId (for org), fallback to full data
-  const userId = creator?.user_id || creatorId || full?.user_id || full?.id;
+  // userId: use creator.user_id (for platform creator), user.id (for user), or creatorId (for org), fallback to full data
+  const userId = creator?.user_id || user?.id || creatorId || full?.user_id || full?.id;
   const { data: userDetail } = useFullUserDetail(userId);
   const updateProfileFields = useUpdateUserProfileFields();
 
@@ -595,10 +599,10 @@ export function UnifiedTalentDetailDialog({
           <div className="flex items-start gap-4">
             {/* Avatar */}
             <div className="relative shrink-0 group">
-              {hasValidAvatar(creatorAvatar) ? (
+              {hasValidAvatar(displayAvatar) ? (
                 <img
-                  src={creatorAvatar}
-                  alt={creatorName}
+                  src={displayAvatar}
+                  alt={displayName}
                   className="w-20 h-20 rounded-full object-cover ring-2 ring-pink-500/30"
                 />
               ) : (
@@ -606,7 +610,7 @@ export function UnifiedTalentDetailDialog({
                   className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold ring-2 ring-pink-500/30"
                   style={{ background: 'linear-gradient(135deg, #ec4899, #f97316)' }}
                 >
-                  {getInitials(creatorName)}
+                  {getInitials(displayName)}
                 </div>
               )}
               {isVerified && !isEditing && (
@@ -642,10 +646,10 @@ export function UnifiedTalentDetailDialog({
             {/* Info */}
             <div className="flex-1 min-w-0">
               <DialogTitle className="text-xl font-semibold text-white truncate">
-                {creatorName}
+                {displayName}
               </DialogTitle>
               <p className="text-sm text-white/50 truncate">
-                {creatorUsername ? `@${creatorUsername}` : creatorEmail}
+                {creatorUsername ? `@${creatorUsername}` : displayEmail}
               </p>
 
               {/* Stats Row */}
@@ -804,7 +808,7 @@ export function UnifiedTalentDetailDialog({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
                     <EditableField
                       label="Email"
-                      value={creatorEmail}
+                      value={displayEmail}
                       fieldKey="email"
                       icon={Mail}
                       type="email"
@@ -2080,8 +2084,8 @@ export function UnifiedTalentDetailDialog({
                     </p>
                     <AdminActionsSection
                       userId={userId}
-                      userEmail={creatorEmail}
-                      userName={creatorName}
+                      userEmail={displayEmail}
+                      userName={displayName}
                       hasProfile={hasProfile}
                       isPlatformAdmin={isPlatformAdminUser}
                       isBanned={isBanned}
