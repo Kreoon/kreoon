@@ -53,28 +53,31 @@ function LazyCarouselComponent({
     return () => observer.disconnect();
   }, [rootMargin]);
 
-  // Placeholder while not visible
+  // Placeholder while not visible - exact same structure as real carousel to prevent CLS
   if (!hasBeenVisible) {
     return (
       <div
         ref={containerRef}
         className="space-y-4"
-        style={{ minHeight: '280px' }} // Reserve space to prevent CLS
       >
-        {/* Header placeholder */}
+        {/* Header - exact same as CreatorCarousel */}
         <div className="flex items-center justify-between">
           <div>
-            <div className="h-7 w-48 bg-white/5 rounded animate-pulse" />
-            <div className="h-4 w-64 bg-white/5 rounded mt-2 animate-pulse" />
+            <h2 className="text-xl font-semibold text-white">
+              {title} {emoji}
+            </h2>
+            {subtitle && <p className="text-gray-400 text-sm mt-0.5">{subtitle}</p>}
           </div>
         </div>
-        {/* Cards placeholder */}
-        <div className="flex gap-4 overflow-hidden">
+        {/* Cards placeholder - exact dimensions */}
+        <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
           {[1, 2, 3, 4, 5].map((i) => (
             <div
               key={i}
-              className="flex-shrink-0 w-[180px] aspect-[9/16] bg-white/5 rounded-2xl animate-pulse"
-            />
+              className="snap-start flex-shrink-0 w-[180px] max-sm:w-[45vw]"
+            >
+              <div className="aspect-[9/16] bg-white/5 rounded-2xl animate-pulse" />
+            </div>
           ))}
         </div>
       </div>
