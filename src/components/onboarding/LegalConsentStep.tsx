@@ -135,9 +135,10 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
 
       // Si el contenido es un placeholder, cargar desde archivo HTML público
       if (!content || content.trim().startsWith('<!--') || content.length < 100) {
-        const version = doc.version || 'v1';
-        const versionNumber = version.replace('v', '');
-        const filename = `${doc.document_type}_v${versionNumber}.html`;
+        // Extraer número de versión mayor (ej: "1.0" -> "1", "v1" -> "1", "2.3" -> "2")
+        const version = doc.version || '1';
+        const majorVersion = version.replace(/^v/i, '').split('.')[0] || '1';
+        const filename = `${doc.document_type}_v${majorVersion}.html`;
 
         try {
           const response = await fetch(`/legal/${filename}`);
@@ -189,9 +190,10 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
 
       // Si el contenido es un placeholder, cargar desde archivo HTML público
       if (!content || content.trim().startsWith('<!--') || content.length < 100) {
-        const version = doc.version || 'v1';
-        const versionNumber = version.replace('v', '');
-        const filename = `${doc.document_type}_v${versionNumber}.html`;
+        // Extraer número de versión mayor (ej: "1.0" -> "1", "v1" -> "1", "2.3" -> "2")
+        const version = doc.version || '1';
+        const majorVersion = version.replace(/^v/i, '').split('.')[0] || '1';
+        const filename = `${doc.document_type}_v${majorVersion}.html`;
 
         try {
           const response = await fetch(`/legal/${filename}`);
