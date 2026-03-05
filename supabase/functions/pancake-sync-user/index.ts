@@ -12,10 +12,10 @@ const PANCAKE_API_URL = 'https://pos.pages.fm/api/v1'
 
 // Tablas disponibles en Pancake (nombres exactos)
 const PANCAKE_TABLES = {
-  freelancer: 'freelancerskreoon',           // Freelancers independientes (sin org)
-  brand: 'Marcas_Kreoon',                    // Marcas/empresas independientes
-  org_member: 'Organizaciones_Kreoon',       // Miembros de org (admin, creator, etc.)
-  org_client: 'Clientes_Organizaciones_Kreoon' // Clientes dentro de organizaciones
+  freelancer: 'freelancerskreoon',              // Freelancers independientes (sin org)
+  org_talent: 'Organizaciones_Kreoon',          // Talentos de organizaciones
+  org_client: 'Clientes_Organizaciones_Kreoon', // Clientes de organizaciones
+  independent_client: 'clientesindependienteskreoon' // Clientes independientes (sin org)
 } as const
 
 type UserType = keyof typeof PANCAKE_TABLES
@@ -109,6 +109,11 @@ serve(async (req) => {
       .eq('user_id', user_id)
       .maybeSingle()
 
+    // 3.1 Obtener user_type de auth.users metadata
+    const { data: authUserData } = await supabase.auth.admin.getUserById(user_id)
+    const authUserType = authUserData?.user?.user_metadata?.user_type || null
+    const isBrandUser = authUserType === 'brand'
+
     // 4. Obtener datos de organización y rol si pertenece a una
     let orgInfo: { name?: string; organization_type?: string } | null = null
     let orgRole: string | null = null
@@ -143,27 +148,50 @@ serve(async (req) => {
       brandInfo = brand
     }
 
+    // Obtener TODOS los roles del usuario en la org
+    let allOrgRoles: string[] = []
+    if (profile.current_organization_id) {
+      const { data: rolesData } = await supabase
+        .from('organization_member_roles')
+        .select('role')
+        .eq('user_id', user_id)
+        .eq('organization_id', profile.current_organization_id)
+
+      allOrgRoles = (rolesData || []).map(r => r.role?.toLowerCase()).filter(Boolean)
+    }
+
+    // Roles que indican "cliente" en una organización
+    const clientRoles = ['client', 'brand_manager', 'marketing_director']
+    const isOrgClient = allOrgRoles.some(r => clientRoles.includes(r))
+
     // =========================================
     // CLASIFICACIÓN DE USUARIO
     // =========================================
-    // 1. Si está en org con rol 'client' → org_client (Clientes de Organizaciones)
-    // 2. Si está en org con otro rol → org_member (Miembros de Organizaciones)
-    // 3. Si user_type === 'brand' (sin org) → brand (Marcas independientes)
-    // 4. Si tiene creator_profile (sin org, sin brand) → freelancer
+    // 1. Si está en org con rol cliente → org_client (Clientes de Organizaciones)
+    // 2. Si está en org con rol talento → org_talent (Talentos de Organizaciones)
+    // 3. Si user_type='brand' (sin org) → independent_client (Cliente independiente)
+    // 4. Si tiene creator_profile (sin org, no brand) → freelancer
     // 5. Si no tiene nada → skip
 
     let userType: UserType | null = null
     const belongsToOrg = !!profile.current_organization_id
-    const isBrand = profile.user_type === 'brand'
-    const isOrgClient = belongsToOrg && orgRole === 'client'
 
-    if (isOrgClient) {
+    // Roles de talento (creadores, editores, estrategas, etc.)
+    const talentRoles = ['creator', 'editor', 'strategist', 'trafficker', 'team_leader', 'admin']
+    const isOrgTalent = allOrgRoles.some(r => talentRoles.includes(r))
+
+    if (belongsToOrg && isOrgClient) {
       userType = 'org_client'
+    } else if (belongsToOrg && isOrgTalent) {
+      userType = 'org_talent'
     } else if (belongsToOrg) {
-      userType = 'org_member'
-    } else if (isBrand) {
-      userType = 'brand'
+      // Miembro de org sin rol específico → tratarlo como talento también
+      userType = 'org_talent'
+    } else if (isBrandUser) {
+      // user_type='brand' sin organización → cliente independiente
+      userType = 'independent_client'
     } else if (creatorProfile) {
+      // Tiene creator_profile, no es brand, no está en org → freelancer
       userType = 'freelancer'
     }
 
@@ -244,12 +272,23 @@ serve(async (req) => {
       // Cliente de organización: incluir nombre de org y empresa
       if (orgInfo?.name) pancakePayload.nombre_de_la_organizacion = orgInfo.name
       if (brandInfo?.name) pancakePayload.nombre_de_la_empresamarca = brandInfo.name
-    } else if (userType === 'org_member') {
-      // Miembro de org: incluir nombre de org
+    } else if (userType === 'org_talent') {
+      // Talento de org: incluir nombre de org, rol y especialidades
       if (orgInfo?.name) pancakePayload.nombre_de_la_organizacion = orgInfo.name
+      pancakePayload.username_de_kreoon = profile.username || profile.id
+      pancakePayload.nivel_up_reputacion = `${getUpLevel(reputationPoints)} (${reputationPoints} pts)`
+      // Agregar rol en la org al inicio de categorías
+      if (orgRole) {
+        const roleLabel = orgRole.charAt(0).toUpperCase() + orgRole.slice(1)
+        categories.unshift(`Rol: ${roleLabel}`)
+      }
       if (categories.length > 0) pancakePayload.especialidadescategorias = categories.join(', ')
+    } else if (userType === 'independent_client') {
+      // Cliente independiente (marca sin org): incluir empresa/marca si existe
+      if (brandInfo?.name) pancakePayload.nombre_de_la_empresamarca = brandInfo.name
+      pancakePayload.username_de_kreoon = profile.username || profile.id
     } else {
-      // Freelancer o Marca: incluir campos de creator
+      // Freelancer: incluir campos de creator
       pancakePayload.username_de_kreoon = profile.username || profile.id
       pancakePayload.nivel_up_reputacion = `${getUpLevel(reputationPoints)} (${reputationPoints} pts)`
       if (categories.length > 0) pancakePayload.especialidadescategorias = categories.join(', ')

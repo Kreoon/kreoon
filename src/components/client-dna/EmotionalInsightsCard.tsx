@@ -16,7 +16,8 @@ const MOOD_CONFIG = {
 };
 
 export function EmotionalInsightsCard({ analysis }: EmotionalInsightsCardProps) {
-  const moodConfig = MOOD_CONFIG[analysis.overall_mood] || MOOD_CONFIG.calm;
+  if (!analysis) return null;
+  const moodConfig = MOOD_CONFIG[analysis.overall_mood as keyof typeof MOOD_CONFIG] || MOOD_CONFIG.calm;
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-white/10">
@@ -52,39 +53,43 @@ export function EmotionalInsightsCard({ analysis }: EmotionalInsightsCardProps) 
           </div>
 
           {/* Confidence Level */}
-          <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-            <div className="flex items-center gap-2 mb-2">
-              <Zap className="w-4 h-4 text-gray-400" />
-              <span className="text-xs text-gray-500 uppercase tracking-wider">Confianza</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl font-bold text-white">{analysis.confidence_level}%</span>
-              <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-500"
-                  style={{ width: `${analysis.confidence_level}%` }}
-                />
+          {analysis.confidence_level != null && (
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+              <div className="flex items-center gap-2 mb-2">
+                <Zap className="w-4 h-4 text-gray-400" />
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Confianza</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl font-bold text-white">{analysis.confidence_level}%</span>
+                <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-500"
+                    style={{ width: `${analysis.confidence_level}%` }}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Communication Style */}
-          <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-            <div className="flex items-center gap-2 mb-2">
-              <MessageCircle className="w-4 h-4 text-gray-400" />
-              <span className="text-xs text-gray-500 uppercase tracking-wider">Comunicación</span>
+          {analysis.communication_style && (
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+              <div className="flex items-center gap-2 mb-2">
+                <MessageCircle className="w-4 h-4 text-gray-400" />
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Comunicación</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <StyleBadge label={analysis.communication_style.pace} type="pace" />
+                <StyleBadge label={analysis.communication_style.energy} type="energy" />
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <StyleBadge label={analysis.communication_style.pace} type="pace" />
-              <StyleBadge label={analysis.communication_style.energy} type="energy" />
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Topics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Passion Topics */}
-          {analysis.passion_topics.length > 0 && (
+          {(analysis.passion_topics?.length || 0) > 0 && (
             <div className="p-4 rounded-xl bg-green-500/5 border border-green-500/20">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-6 h-6 rounded-lg bg-green-500/20 flex items-center justify-center">
@@ -93,7 +98,7 @@ export function EmotionalInsightsCard({ analysis }: EmotionalInsightsCardProps) 
                 <span className="text-sm font-medium text-green-400">Temas con Pasión</span>
               </div>
               <div className="flex flex-wrap gap-2">
-                {analysis.passion_topics.map((topic, i) => (
+                {(analysis.passion_topics || []).map((topic, i) => (
                   <span
                     key={i}
                     className="px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20
@@ -107,7 +112,7 @@ export function EmotionalInsightsCard({ analysis }: EmotionalInsightsCardProps) 
           )}
 
           {/* Concern Areas */}
-          {analysis.concern_areas.length > 0 && (
+          {(analysis.concern_areas?.length || 0) > 0 && (
             <div className="p-4 rounded-xl bg-orange-500/5 border border-orange-500/20">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-6 h-6 rounded-lg bg-orange-500/20 flex items-center justify-center">
@@ -116,7 +121,7 @@ export function EmotionalInsightsCard({ analysis }: EmotionalInsightsCardProps) 
                 <span className="text-sm font-medium text-orange-400">Áreas de Preocupación</span>
               </div>
               <div className="flex flex-wrap gap-2">
-                {analysis.concern_areas.map((area, i) => (
+                {(analysis.concern_areas || []).map((area, i) => (
                   <span
                     key={i}
                     className="px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20
@@ -139,14 +144,16 @@ export function EmotionalInsightsCard({ analysis }: EmotionalInsightsCardProps) 
               </div>
               <span className="text-sm font-medium text-purple-400">Recomendaciones de KIRO</span>
             </div>
-            <p className="text-sm text-foreground/80 mb-3">
-              <span className="text-purple-400 font-medium">Tono sugerido:</span>{' '}
-              {analysis.content_recommendations.suggested_tone}
-            </p>
-            {analysis.content_recommendations.emphasize_topics.length > 0 && (
+            {analysis.content_recommendations.suggested_tone && (
+              <p className="text-sm text-foreground/80 mb-3">
+                <span className="text-purple-400 font-medium">Tono sugerido:</span>{' '}
+                {analysis.content_recommendations.suggested_tone}
+              </p>
+            )}
+            {(analysis.content_recommendations.emphasize_topics?.length || 0) > 0 && (
               <div className="flex flex-wrap gap-2">
                 <span className="text-xs text-gray-500">Enfatizar:</span>
-                {analysis.content_recommendations.emphasize_topics.map((topic, i) => (
+                {(analysis.content_recommendations.emphasize_topics || []).map((topic, i) => (
                   <span
                     key={i}
                     className="px-2 py-0.5 rounded-full bg-purple-500/20 text-xs text-purple-300"

@@ -21,7 +21,8 @@ serve(async (req) => {
       entity_type = 'both',  // 'users', 'organizations', 'both'
       batch_size = 50,
       offset = 0,
-      delay_ms = 300  // Delay entre cada request para no saturar Pancake
+      delay_ms = 300,  // Delay entre cada request para no saturar Pancake
+      user_type_filter = null  // 'org_client', 'org_talent', 'freelancer', 'independent_client' - filtra por tipo
     } = body
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -47,27 +48,147 @@ serve(async (req) => {
 
     // Sincronizar usuarios
     if (entity_type === 'users' || entity_type === 'both') {
-      console.log('Iniciando sincronización de usuarios...')
+      console.log(`Iniciando sincronización de usuarios${user_type_filter ? ` (filtro: ${user_type_filter})` : ''}...`)
 
-      // Obtener usuarios que no están sincronizados o con error
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id')
-        .order('created_at', { ascending: true })
-        .range(offset, offset + batch_size - 1)
+      let userIds: string[] = []
 
-      if (profilesError) {
-        throw new Error(`Error obteniendo perfiles: ${profilesError.message}`)
+      // Si hay filtro de tipo, obtener usuarios específicos
+      if (user_type_filter === 'org_client') {
+        // Clientes de organizaciones: rol 'client', 'brand_manager', o 'marketing_director'
+        // Buscar en organization_member_roles que tiene todos los roles
+        const { data: orgClients, error: ocError } = await supabase
+          .from('organization_member_roles')
+          .select('user_id')
+          .in('role', ['client', 'brand_manager', 'marketing_director'])
+          .range(offset, offset + batch_size - 1)
+
+        if (ocError) throw new Error(`Error obteniendo clientes de org: ${ocError.message}`)
+        // Eliminar duplicados (un usuario puede tener múltiples roles)
+        userIds = [...new Set((orgClients || []).map(c => c.user_id))]
+
+      } else if (user_type_filter === 'org_talent') {
+        // Talentos de org (NO clientes): creator, editor, strategist, trafficker, team_leader, admin
+        // Solo usuarios que existan en profiles y tengan current_organization_id
+        const { data: talentProfiles, error: tpError } = await supabase
+          .from('profiles')
+          .select('id, current_organization_id')
+          .not('current_organization_id', 'is', null)
+          .range(offset, offset + batch_size - 1)
+
+        if (tpError) throw new Error(`Error obteniendo perfiles de talentos: ${tpError.message}`)
+
+        // Filtrar los que tienen roles de talento (no cliente)
+        const clientRoles = ['client', 'brand_manager', 'marketing_director']
+        const validTalentIds: string[] = []
+
+        for (const profile of talentProfiles || []) {
+          const { data: rolesData } = await supabase
+            .from('organization_member_roles')
+            .select('role')
+            .eq('user_id', profile.id)
+            .eq('organization_id', profile.current_organization_id)
+
+          const roles = (rolesData || []).map(r => r.role?.toLowerCase()).filter(Boolean)
+          const isClient = roles.some(r => clientRoles.includes(r))
+
+          // Si NO es cliente, es talento
+          if (!isClient && roles.length > 0) {
+            validTalentIds.push(profile.id)
+          }
+        }
+
+        userIds = validTalentIds
+
+      } else if (user_type_filter === 'freelancer') {
+        // Freelancers: tienen creator_profile, NO están en org, NO son brand
+        // 1. Obtener todos los creator_profiles
+        const { data: creators, error: cError } = await supabase
+          .from('creator_profiles')
+          .select('user_id')
+
+        if (cError) throw new Error(`Error obteniendo creator_profiles: ${cError.message}`)
+
+        const creatorUserIds = (creators || []).map(c => c.user_id)
+
+        // 2. Obtener los user_ids que son brand (para excluirlos)
+        const { data: authUsers, error: auError } = await supabase.auth.admin.listUsers({
+          perPage: 1000
+        })
+
+        if (auError) throw new Error(`Error obteniendo auth users: ${auError.message}`)
+
+        const brandUserIds = new Set(
+          (authUsers?.users || [])
+            .filter(u => u.user_metadata?.user_type === 'brand')
+            .map(u => u.id)
+        )
+
+        // 3. Filtrar: creator_profile + sin org + NO brand
+        const { data: freelancerProfiles, error: fpError } = await supabase
+          .from('profiles')
+          .select('id')
+          .in('id', creatorUserIds)
+          .is('current_organization_id', null)
+
+        if (fpError) throw new Error(`Error obteniendo freelancers: ${fpError.message}`)
+
+        // Excluir brands y aplicar paginación
+        const filteredIds = (freelancerProfiles || [])
+          .filter(p => !brandUserIds.has(p.id))
+          .map(p => p.id)
+          .slice(offset, offset + batch_size)
+
+        userIds = filteredIds
+
+      } else if (user_type_filter === 'independent_client') {
+        // Clientes independientes: user_type='brand' en auth.users SIN organización
+        // Consultar auth.users para obtener los que tienen user_type='brand'
+        const { data: authUsers, error: auError } = await supabase.auth.admin.listUsers({
+          perPage: 1000
+        })
+
+        if (auError) throw new Error(`Error obteniendo auth users: ${auError.message}`)
+
+        // Filtrar solo los que tienen user_type='brand'
+        const brandUserIds = (authUsers?.users || [])
+          .filter(u => u.user_metadata?.user_type === 'brand')
+          .map(u => u.id)
+
+        if (brandUserIds.length === 0) {
+          userIds = []
+        } else {
+          // Verificar cuáles NO tienen organización
+          const { data: profiles, error: pError } = await supabase
+            .from('profiles')
+            .select('id')
+            .in('id', brandUserIds)
+            .is('current_organization_id', null)
+            .range(offset, offset + batch_size - 1)
+
+          if (pError) throw new Error(`Error obteniendo clientes independientes: ${pError.message}`)
+          userIds = (profiles || []).map(p => p.id)
+        }
+
+      } else {
+        // Sin filtro: todos los usuarios
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id')
+          .order('created_at', { ascending: true })
+          .range(offset, offset + batch_size - 1)
+
+        if (profilesError) throw new Error(`Error obteniendo perfiles: ${profilesError.message}`)
+        userIds = (profiles || []).map(p => p.id)
       }
 
-      results.users.total = profiles?.length || 0
+      results.users.total = userIds.length
       console.log(`Encontrados ${results.users.total} usuarios para sincronizar`)
 
-      for (const profile of profiles || []) {
+      for (const userId of userIds) {
         try {
           // Llamar a pancake-sync-user
           const { error: syncError } = await supabase.functions.invoke('pancake-sync-user', {
-            body: { user_id: profile.id }
+            body: { user_id: userId }
           })
 
           if (syncError) {
@@ -75,7 +196,7 @@ serve(async (req) => {
           }
 
           results.users.synced++
-          console.log(`Usuario ${profile.id} sincronizado (${results.users.synced}/${results.users.total})`)
+          console.log(`Usuario ${userId} sincronizado (${results.users.synced}/${results.users.total})`)
 
           // Delay para evitar rate limiting
           await delay(delay_ms)
@@ -84,10 +205,10 @@ serve(async (req) => {
           results.users.errors++
           results.errors_detail.push({
             entity_type: 'user',
-            entity_id: profile.id,
+            entity_id: userId,
             error: error.message
           })
-          console.error(`Error sincronizando usuario ${profile.id}:`, error.message)
+          console.error(`Error sincronizando usuario ${userId}:`, error.message)
         }
       }
     }
