@@ -32,9 +32,11 @@ interface CreatorCardProps {
   creator: MarketplaceCreator;
   onClick?: () => void;
   className?: string;
+  /** Priority loading for LCP optimization */
+  priority?: boolean;
 }
 
-function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps) {
+function CreatorCardComponent({ creator, onClick, className, priority = false }: CreatorCardProps) {
   const { formatPrice } = useCurrency();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -119,9 +121,9 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
                     'w-full h-full object-cover transition-opacity duration-300',
                     imgLoaded[i] ? 'opacity-100' : 'opacity-0',
                   )}
-                  loading={i === 0 ? 'eager' : 'lazy'}
-                  decoding={i === 0 ? 'sync' : 'async'}
-                  fetchPriority={i === 0 ? 'high' : 'auto'}
+                  loading={(priority && i === 0) ? 'eager' : 'lazy'}
+                  decoding={(priority && i === 0) ? 'sync' : 'async'}
+                  fetchPriority={(priority && i === 0) ? 'high' : 'auto'}
                   onLoad={() => setImgLoaded(prev => ({ ...prev, [i]: true }))}
                 />
                 {item.type === 'video' && (

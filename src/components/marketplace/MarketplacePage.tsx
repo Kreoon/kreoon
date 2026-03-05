@@ -11,6 +11,7 @@ import { RoleCategoryBar } from './RoleCategoryBar';
 import { RoleSubChips } from './RoleSubChips';
 import { ActiveFilters } from './ActiveFilters';
 import { CreatorCarousel } from './CreatorCarousel';
+import { LazyCarousel } from './LazyCarousel';
 import { CreatorGrid } from './CreatorGrid';
 import { MarketplaceOrgGrid } from './OrgGrid';
 import { FilterModal } from './FilterModal';
@@ -318,14 +319,15 @@ export default function MarketplacePage() {
           ) : (
             <>
               {/* Curated sections (hidden during search or filtered views) */}
-              {/* Personalized recommendations (shown when user has profile with categories) */}
+              {/* Personalized recommendations - lazy loaded as it's personalized content */}
               {showCarousels && isPersonalized && recommended.length > 0 && (
-                <CreatorCarousel
+                <LazyCarousel
                   title="Recomendados para ti"
                   emoji="✨"
                   subtitle="Basado en tus intereses y actividad"
                   creators={recommended}
                   onCreatorClick={handleCreatorClick}
+                  rootMargin="100px"
                 />
               )}
 
@@ -339,15 +341,18 @@ export default function MarketplacePage() {
 
               {showCarousels && (
                 <>
+                  {/* First carousel loads eagerly for LCP */}
                   <CreatorCarousel
                     title="Talento Destacado"
                     emoji="🔥"
                     subtitle="Los mejores profesionales creativos en LATAM"
                     creators={featured}
                     onCreatorClick={handleCreatorClick}
+                    priority={true}
                   />
 
-                  <CreatorCarousel
+                  {/* Lazy load below-the-fold carousels */}
+                  <LazyCarousel
                     title="Nuevos Talentos"
                     emoji="🆕"
                     subtitle="Recien llegados con propuestas frescas y descuentos de bienvenida"
@@ -355,7 +360,7 @@ export default function MarketplacePage() {
                     onCreatorClick={handleCreatorClick}
                   />
 
-                  <CreatorCarousel
+                  <LazyCarousel
                     title="Los Mejor Valorados"
                     emoji="⭐"
                     subtitle="Consistencia y calidad comprobada por marcas"
