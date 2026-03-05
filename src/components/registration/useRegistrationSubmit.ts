@@ -169,6 +169,26 @@ async function handleTalentSubmit(userId: string, data: UnifiedRegistrationData)
       profile_customization: {},
     });
 
+  // Apply partner community benefits if present
+  const communitySlug = localStorage.getItem('kreoon_partner_community')
+    || new URLSearchParams(window.location.search).get('community');
+
+  if (communitySlug) {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (session?.session) {
+        await supabase.functions.invoke('partner-community-service/apply', {
+          body: { community_slug: communitySlug },
+          headers: { Authorization: `Bearer ${session.session.access_token}` },
+        });
+        localStorage.removeItem('kreoon_partner_community');
+      }
+    } catch (err) {
+      // Non-critical: log but don't fail registration
+      console.warn('Failed to apply partner community benefits:', err);
+    }
+  }
+
   toast.success('¡Bienvenido a KREOON!', {
     description: 'Tu perfil de talento ha sido creado. Complétalo para recibir propuestas.',
   });
@@ -290,6 +310,26 @@ async function handleOrgSubmit(userId: string, data: UnifiedRegistrationData) {
         bio: data.bio || null,
       })
       .eq('id', userId);
+  }
+
+  // Apply partner community benefits if present
+  const communitySlug = localStorage.getItem('kreoon_partner_community')
+    || new URLSearchParams(window.location.search).get('community');
+
+  if (communitySlug) {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (session?.session) {
+        await supabase.functions.invoke('partner-community-service/apply', {
+          body: { community_slug: communitySlug },
+          headers: { Authorization: `Bearer ${session.session.access_token}` },
+        });
+        localStorage.removeItem('kreoon_partner_community');
+      }
+    } catch (err) {
+      // Non-critical: log but don't fail registration
+      console.warn('Failed to apply partner community benefits:', err);
+    }
   }
 
   toast.success('¡Organización creada!', {

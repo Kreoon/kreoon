@@ -102,8 +102,24 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
 
     if (profileError) throw profileError;
 
+    // 3. Aplicar partner community si existe
+    if (state.partnerCommunity) {
+      try {
+        await supabase.functions.invoke('partner-community-service', {
+          body: {
+            action: 'apply',
+            user_id: userId,
+            community_slug: state.partnerCommunity,
+            user_type: 'talent',
+          },
+        });
+      } catch (e) {
+        console.warn('Error applying partner community:', e);
+      }
+    }
+
     toast.success('¡Tu perfil de creador ha sido creado!');
-  }, []);
+  }, [state.partnerCommunity]);
 
   const handleBrandSubmit = useCallback(async (
     userId: string,
@@ -214,11 +230,27 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
       })
       .eq('id', userId);
 
+    // 5. Aplicar partner community si existe
+    if (state.partnerCommunity) {
+      try {
+        await supabase.functions.invoke('partner-community-service', {
+          body: {
+            action: 'apply',
+            user_id: userId,
+            community_slug: state.partnerCommunity,
+            user_type: 'organization',
+          },
+        });
+      } catch (e) {
+        console.warn('Error applying partner community:', e);
+      }
+    }
+
     toast.success('¡Tu organización ha sido creada! Tu prueba de 30 días ha comenzado.');
 
     // Sincronizar organización con Pancake CRM
     triggerOrgSyncSilent(org.id);
-  }, []);
+  }, [state.partnerCommunity]);
 
   const handleClientJoinOrg = useCallback(async (
     userId: string,
