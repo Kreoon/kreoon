@@ -161,6 +161,9 @@ const UnifiedClientsPage = lazyWithRetry(() => import("./pages/UnifiedClientsPag
 // KAE Analytics
 const KAEAnalyticsDashboard = lazyWithRetry(() => import("./components/admin/analytics/KAEDashboard"));
 
+// Admin pages
+const PapeleraPage = lazyWithRetry(() => import("./pages/admin/PapeleraPage"));
+
 // Subscription pages
 const ReferralLanding = lazyWithRetry(() => import("./pages/ReferralLanding"));
 const UnlockAccess = lazyWithRetry(() => import("./pages/UnlockAccess"));
@@ -442,6 +445,7 @@ function AppRoutes() {
         <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><KAEAnalyticsDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/admin/ad-intelligence" element={<ProtectedRoute allowNoRoles><MainLayout><AdIntelligencePage /></MainLayout></ProtectedRoute>} />
         <Route path="/admin/social-scraper" element={<ProtectedRoute allowNoRoles><MainLayout><SocialScraperPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/admin/papelera" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PapeleraPage /></MainLayout></ProtectedRoute>} />
         {/* Ad Generator Module */}
         <Route path="/ad-generator" element={<ProtectedRoute allowNoRoles><MainLayout><AdGeneratorPage /></MainLayout></ProtectedRoute>} />
         <Route path="/ad-generator/:productId" element={<ProtectedRoute allowNoRoles><MainLayout><ProductBannersPage /></MainLayout></ProtectedRoute>} />
