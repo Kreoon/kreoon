@@ -98,40 +98,34 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
 
   const onboardingCompleted = onboardingCompletedProp ?? profileData?.onboarding_completed ?? false;
 
-  // Cargar consentimientos del usuario
+  // Cargar consentimientos del usuario usando RPC (bypasses RLS for admins)
   const { data: consents, isLoading: loadingConsents } = useQuery({
     queryKey: ['user-consents-crm', userId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('user_legal_consents')
-        .select('*')
-        .eq('user_id', userId)
-        .order('accepted_at', { ascending: false });
+      const { data, error } = await (supabase as any)
+        .rpc('get_user_consents', { p_user_id: userId });
 
       if (error) {
         console.error('[LegalConsentsSection] Error:', error);
         return [];
       }
-      return data as UserConsent[];
+      return (data || []) as UserConsent[];
     },
     enabled: !!userId,
   });
 
-  // Cargar firmas digitales del usuario
+  // Cargar firmas digitales del usuario usando RPC
   const { data: signatures, isLoading: loadingSignatures } = useQuery({
     queryKey: ['user-signatures-crm', userId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('digital_signatures')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+      const { data, error } = await (supabase as any)
+        .rpc('get_user_signatures', { p_user_id: userId });
 
       if (error) {
         console.error('[LegalConsentsSection] Signatures error:', error);
         return [];
       }
-      return data as DigitalSignature[];
+      return (data || []) as DigitalSignature[];
     },
     enabled: !!userId,
   });

@@ -1,9 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Phone, Mail, FileText, MapPin, Building2, Globe, Pencil, Check } from 'lucide-react';
+import { Phone, Mail, FileText, MapPin, Building2, Globe, Pencil, Check, User, Flag, Calendar } from 'lucide-react';
 import { DetailSection } from '@/components/crm/DetailSection';
 import { CopyButton } from '@/components/crm/CopyButton';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface PersonalDataSectionProps {
   phone: string | null;
@@ -13,6 +15,9 @@ interface PersonalDataSectionProps {
   address: string | null;
   city: string | null;
   country: string | null;
+  nationality: string | null;
+  dateOfBirth: string | null;
+  username: string | null;
   onSave?: (data: Record<string, string | null>) => void;
 }
 
@@ -70,15 +75,30 @@ export function PersonalDataSection({
   address,
   city,
   country,
+  nationality,
+  dateOfBirth,
+  username,
   onSave,
 }: PersonalDataSectionProps) {
   const [editing, setEditing] = useState(false);
-  const hasData = phone || email || documentType || documentNumber || address || city || country;
+  const hasData = phone || email || documentType || documentNumber || address || city || country || nationality || dateOfBirth || username;
 
   if (!hasData && !onSave) return null;
 
   const handleFieldSave = (key: string, value: string | null) => {
     onSave?.({ [key]: value });
+  };
+
+  const formatDateOfBirth = (dateStr: string | null) => {
+    if (!dateStr) return null;
+    try {
+      const date = new Date(dateStr);
+      const formatted = format(date, "d 'de' MMMM, yyyy", { locale: es });
+      const age = Math.floor((Date.now() - date.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+      return `${formatted} (${age} años)`;
+    } catch {
+      return dateStr;
+    }
   };
 
   const editAction = onSave ? (
@@ -94,10 +114,13 @@ export function PersonalDataSection({
     </Button>
   ) : undefined;
 
-  const fields: { key: string; label: string; icon: typeof Phone; value: string | null; type?: string; placeholder: string }[] = [
+  const fields: { key: string; label: string; icon: typeof Phone; value: string | null; type?: string; placeholder: string; readonly?: boolean }[] = [
+    { key: 'username', label: 'Usuario', icon: User, value: username, placeholder: '@usuario' },
     { key: 'phone', label: 'Telefono', icon: Phone, value: phone, type: 'tel', placeholder: '+57 300...' },
     { key: 'email', label: 'Email', icon: Mail, value: email, type: 'email', placeholder: 'correo@email.com' },
-    { key: 'document_number', label: 'Documento', icon: FileText, value: documentNumber, placeholder: 'Numero de documento' },
+    { key: 'document_number', label: 'Documento', icon: FileText, value: documentNumber ? `${documentType || ''} ${documentNumber}`.trim() : null, placeholder: 'Numero de documento' },
+    { key: 'nationality', label: 'Nacionalidad', icon: Flag, value: nationality, placeholder: 'Nacionalidad' },
+    { key: 'date_of_birth', label: 'Nacimiento', icon: Calendar, value: formatDateOfBirth(dateOfBirth), placeholder: 'Fecha de nacimiento', readonly: true },
     { key: 'address', label: 'Direccion', icon: MapPin, value: address, placeholder: 'Direccion' },
     { key: 'city', label: 'Ciudad', icon: Building2, value: city, placeholder: 'Ciudad' },
     { key: 'country', label: 'Pais', icon: Globe, value: country, placeholder: 'Pais' },

@@ -670,6 +670,9 @@ export interface FullUserDetail {
   address: string | null;
   city: string | null;
   country: string | null;
+  nationality: string | null;
+  date_of_birth: string | null;
+  onboarding_completed: boolean;
   instagram: string | null;
   tiktok: string | null;
   facebook: string | null;
