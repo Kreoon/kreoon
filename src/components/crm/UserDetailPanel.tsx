@@ -31,6 +31,7 @@ import { CrmFieldsConfigDialog } from './detail-sections/CrmFieldsConfigDialog';
 import { AdminActionsSection } from './detail-sections/AdminActionsSection';
 import { OrganizationsListSection } from './detail-sections/OrganizationsListSection';
 import { CompaniesSection } from './detail-sections/CompaniesSection';
+import { LegalConsentsSection } from './detail-sections/LegalConsentsSection';
 
 const ROOT_EMAILS = ['jacsolucionesgraficas@gmail.com', 'kairosgp.sas@gmail.com'];
 
@@ -299,6 +300,12 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
           ambassadorLevel={full.ambassador_level}
         />
       )}
+
+      {/* Legal Consents */}
+      <LegalConsentsSection
+        userId={user.id}
+        onboardingCompleted={full?.onboarding_completed}
+      />
 
       {/* Scores */}
       {full && (
