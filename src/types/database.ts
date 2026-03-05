@@ -69,6 +69,9 @@ export interface Profile {
   instagram: string | null;
   tiktok: string | null;
   facebook: string | null;
+  youtube: string | null;
+  twitter: string | null;
+  linkedin: string | null;
   city: string | null;
   address: string | null;
   document_type: string | null;
@@ -80,6 +83,11 @@ export interface Profile {
   platform_access_unlocked?: boolean;
   display_currency?: string | null;
   country?: string | null;
+  nationality?: string | null;
+  date_of_birth?: string | null;
+  onboarding_completed?: boolean;
+  onboarding_completed_at?: string | null;
+  profile_data_completed?: boolean;
   created_at: string;
   updated_at: string;
 }

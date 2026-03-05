@@ -19,6 +19,7 @@ import { TrialProvider } from "@/contexts/TrialContext";
 import { AnalyticsProvider } from "@/contexts/AnalyticsContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { OnboardingGateProvider } from "@/providers/OnboardingGateProvider";
 import { StrategistClientProvider } from "@/contexts/StrategistClientContext";
 import { KiroProvider } from "@/contexts/KiroContext";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
@@ -472,7 +473,8 @@ function AppContent() {
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <BrandingProvider>
         <AuthProvider>
-          <CurrencyProvider>
+          <OnboardingGateProvider>
+            <CurrencyProvider>
             <AnalyticsProvider>
               <ImpersonationProvider>
                 <TrialProvider>
@@ -499,7 +501,8 @@ function AppContent() {
                 </TrialProvider>
               </ImpersonationProvider>
             </AnalyticsProvider>
-          </CurrencyProvider>
+            </CurrencyProvider>
+          </OnboardingGateProvider>
         </AuthProvider>
       </BrandingProvider>
     </BrowserRouter>
