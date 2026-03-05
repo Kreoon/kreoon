@@ -30,9 +30,10 @@ interface LegalConsentStepProps {
 }
 
 export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
-  const { user, permissionGroup } = useAuth();
+  const { user } = useAuth();
   const {
     requiredPendingDocuments,
+    completionStatus,
     completeOnboarding,
     isCompletingOnboarding,
     refetch,
@@ -65,33 +66,10 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
   const [showReceipt, setShowReceipt] = useState<string | null>(null);
   const [signedDocuments, setSignedDocuments] = useState<Set<string>>(new Set());
 
-  // Determinar qué documentos mostrar según el tipo de usuario
-  const userType = permissionGroup || 'freelancer';
-  const documentsToShow = requiredPendingDocuments.filter(doc => {
-    // Documentos para todos
-    const forAll = ['terms_of_service', 'privacy_policy', 'acceptable_use_policy', 'cookie_policy', 'age_verification_policy'];
-    if (forAll.includes(doc.document_type)) return true;
-
-    // Documentos para creadores
-    if (userType === 'freelancer' || userType === 'internal') {
-      const forCreators = ['creator_agreement', 'content_moderation_policy', 'dmca_policy'];
-      if (forCreators.includes(doc.document_type)) return true;
-    }
-
-    // Documentos para marcas/clientes
-    if (userType === 'brand') {
-      const forBrands = ['brand_agreement', 'escrow_payment_terms'];
-      if (forBrands.includes(doc.document_type)) return true;
-    }
-
-    // Documentos para organizaciones
-    if (userType === 'organization') {
-      const forOrgs = ['white_label_agreement', 'data_processing_agreement'];
-      if (forOrgs.includes(doc.document_type)) return true;
-    }
-
-    return false;
-  });
+  // Usar directamente los documentos pendientes del backend
+  // El backend ya filtra por rol del usuario en get_pending_consents()
+  // Si el usuario no tiene roles, solo verá documentos con user_role='all'
+  const documentsToShow = requiredPendingDocuments;
 
   // Sincronizar documentos firmados al cargar
   useEffect(() => {
@@ -271,6 +249,26 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
     }
   };
 
+  // Helper para traducir campos faltantes
+  const translateMissingField = (field: string): string => {
+    const translations: Record<string, string> = {
+      'full_name': 'nombre completo',
+      'username': 'nombre de usuario',
+      'phone': 'teléfono',
+      'email': 'correo electrónico',
+      'country': 'país',
+      'city': 'ciudad',
+      'address': 'dirección',
+      'document_type': 'tipo de documento',
+      'document_number': 'número de documento',
+      'nationality': 'nacionalidad',
+      'date_of_birth': 'fecha de nacimiento',
+      'age_under_18': 'debes ser mayor de 18 años',
+      'social': 'al menos una red social',
+    };
+    return translations[field] || field;
+  };
+
   // Completar onboarding
   const handleComplete = async () => {
     if (!canComplete) {
@@ -278,26 +276,50 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
       return;
     }
 
+    // Verificar si el perfil está incompleto ANTES de intentar completar
+    if (completionStatus && !completionStatus.profile_completed && completionStatus.missing?.length > 0) {
+      const missingFields = completionStatus.missing.map(translateMissingField).join(', ');
+      toast.error(`Faltan campos en tu perfil: ${missingFields}`);
+      console.error('[onboarding] Perfil incompleto. Faltan:', completionStatus.missing);
+      return;
+    }
+
     try {
+      console.log('[onboarding] Iniciando proceso de completar...');
+
       // Verificar edad si no está verificada
       if (!isAgeVerified() && ageConfirmed) {
+        console.log('[onboarding] Verificando edad...');
         await verifyAge(true);
       }
 
-      // Aceptar documentos que falten (solo los que no están ya aceptados/firmados)
-      for (const doc of documentsToShow) {
-        const isAccepted = acceptedDocs.has(doc.document_id) || signedDocuments.has(doc.document_id);
-        if (!isAccepted) {
-          try {
-            await acceptDocument(doc.document_id);
-          } catch (e) {
-            console.warn(`[onboarding] Error aceptando doc ${doc.document_type}:`, e);
-          }
+      // Registrar todos los consentimientos en la BD (incluyendo los ya marcados localmente)
+      // Esto asegura que estén en la BD antes de llamar a completeOnboarding
+      const acceptPromises = documentsToShow.map(async (doc) => {
+        try {
+          console.log(`[onboarding] Registrando consentimiento: ${doc.document_type}`);
+          await acceptDocument(doc.document_id);
+          return { docType: doc.document_type, success: true };
+        } catch (e: any) {
+          console.warn(`[onboarding] Error aceptando ${doc.document_type}:`, e?.message || e);
+          // No fallar si ya estaba aceptado
+          return { docType: doc.document_type, success: false, error: e?.message };
         }
-      }
+      });
+
+      const acceptResults = await Promise.all(acceptPromises);
+      console.log('[onboarding] Resultados de consentimientos:', acceptResults);
+
+      // Pequeña pausa para asegurar que la BD se sincronizó
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Refrescar estado antes de completar
+      await refetch();
 
       // Completar onboarding
+      console.log('[onboarding] Llamando a completeOnboarding...');
       const result = await completeOnboarding();
+      console.log('[onboarding] Resultado de completeOnboarding:', result);
 
       if (result) {
         toast.success('¡Bienvenido a KREOON!');
@@ -306,12 +328,15 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
           window.location.reload();
         }, 500);
       } else {
-        toast.error('No se pudo completar el onboarding. Verifica que hayas aceptado todos los documentos.');
+        // Intentar obtener más info del error
+        console.error('[onboarding] completeOnboarding retornó false');
+        toast.error('Error: Verifica que hayas completado tu perfil y aceptado todos los documentos requeridos.');
         refetch();
       }
     } catch (error: any) {
-      console.error('Error completing onboarding:', error);
-      toast.error(error.message || 'Error al completar. Intenta de nuevo.');
+      console.error('[onboarding] Error completing onboarding:', error);
+      const errorMsg = error?.message || 'Error desconocido';
+      toast.error(`Error al completar: ${errorMsg}`);
       refetch();
     }
   };
