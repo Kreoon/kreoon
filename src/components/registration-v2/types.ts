@@ -90,6 +90,10 @@ export const registrationFormSchema = z.object({
   companyName: z.string().optional(),
 
   // Checkboxes legales
+  acceptAge18Plus: z.literal(true, {
+    errorMap: () => ({ message: 'Debes confirmar que eres mayor de 18 años' })
+  }),
+
   acceptTerms: z.literal(true, {
     errorMap: () => ({ message: 'Debes aceptar los términos y condiciones' })
   }),
@@ -161,6 +165,7 @@ export const initialRegistrationState: RegistrationV2State = {
   currentStep: 'type-selector',
   formData: {
     phoneCountryCode: '+57', // Colombia por defecto
+    acceptAge18Plus: false,
     acceptTerms: false,
     acceptPrivacy: false,
     acceptDataTreatment: false,

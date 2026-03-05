@@ -179,6 +179,7 @@ const CaseStudyDetail = lazyWithRetry(() => import("./pages/CaseStudyDetail"));
 const PrivacyPolicy = lazyWithRetry(() => import("./pages/legal/PrivacyPolicy"));
 const TermsOfService = lazyWithRetry(() => import("./pages/legal/TermsOfService"));
 const DataDeletion = lazyWithRetry(() => import("./pages/legal/DataDeletion"));
+const LegalDocumentPage = lazyWithRetry(() => import("./pages/legal/LegalDocumentPage"));
 
 // Wallet Module Pages
 const WalletPage = lazyWithRetry(() => import("./modules/wallet/pages/WalletPage").then(m => ({ default: m.WalletPage })));
@@ -325,6 +326,7 @@ function AppRoutes() {
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/data-deletion" element={<DataDeletion />} />
+        <Route path="/legal/:documentType" element={<LegalDocumentPage />} />
         {/* Redirect old /social routes to /marketplace */}
         <Route path="/social" element={<Navigate to="/marketplace" replace />} />
         <Route path="/social/*" element={<Navigate to="/marketplace" replace />} />
