@@ -219,7 +219,8 @@ export function UnifiedTalentDetailDialog({
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const currentUserEmail = profile?.email || '';
-  const isRoot = ROOT_EMAILS.includes(currentUserEmail);
+  // Root access: either in ROOT_EMAILS list or is_platform_admin
+  const isRoot = ROOT_EMAILS.includes(currentUserEmail) || profile?.is_platform_admin === true;
   const isOrgContext = !!orgCreator && !!organizationId;
   const isUserContext = !!user && !creator && !orgCreator;
 
