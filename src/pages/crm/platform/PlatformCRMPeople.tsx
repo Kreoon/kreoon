@@ -1116,6 +1116,18 @@ const PlatformCRMPeople = () => {
                               {SPECIFIC_ROLE_LABELS[role]}
                             </span>
                           )}
+                          {/* Badge de Onboarding */}
+                          {creator.onboarding_completed ? (
+                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-500/20 text-green-400" title={`${creator.consent_count || 0} consentimientos firmados`}>
+                              <FileCheck className="w-3 h-3" />
+                              Legal ✓
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-500/20 text-orange-400" title="Sin onboarding completo">
+                              <FileX className="w-3 h-3" />
+                              Pendiente
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex items-center justify-between text-sm">
@@ -1179,6 +1191,16 @@ const PlatformCRMPeople = () => {
                             {TALENT_CATEGORY_LABELS[category]}
                           </span>
                         )}
+                        {/* Badge de Onboarding en lista */}
+                        {creator.onboarding_completed ? (
+                          <span className="hidden md:flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-500/20 text-green-400">
+                            <FileCheck className="w-3 h-3" />
+                          </span>
+                        ) : (
+                          <span className="hidden md:flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-500/20 text-orange-400">
+                            <FileX className="w-3 h-3" />
+                          </span>
+                        )}
                         <div className="flex items-center gap-1 text-yellow-400 text-xs">
                           <Star className="w-3.5 h-3.5 fill-current" />
                           {creator.rating_avg > 0 ? creator.rating_avg.toFixed(1) : "—"}
@@ -1205,6 +1227,7 @@ const PlatformCRMPeople = () => {
                         <TableHead className="text-white/70">Freelancer</TableHead>
                         <TableHead className="text-white/70">Categoría</TableHead>
                         <TableHead className="text-white/70 hidden md:table-cell">Rol</TableHead>
+                        <TableHead className="text-white/70">Legal</TableHead>
                         <TableHead className="text-white/70">Rating</TableHead>
                         <TableHead className="text-white/70 hidden md:table-cell">Proyectos</TableHead>
                         <TableHead className="text-white/70 hidden lg:table-cell">Ganado</TableHead>
@@ -1256,6 +1279,19 @@ const PlatformCRMPeople = () => {
                             </TableCell>
                             <TableCell className="text-white/70 hidden md:table-cell">
                               {role ? SPECIFIC_ROLE_LABELS[role] : "—"}
+                            </TableCell>
+                            <TableCell>
+                              {creator.onboarding_completed ? (
+                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-500/20 text-green-400 w-fit" title={`${creator.consent_count || 0} consentimientos`}>
+                                  <FileCheck className="w-3 h-3" />
+                                  {creator.consent_count || 0}
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-500/20 text-orange-400 w-fit" title="Sin firmar">
+                                  <FileX className="w-3 h-3" />
+                                  Pend.
+                                </span>
+                              )}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1 text-yellow-400">
