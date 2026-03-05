@@ -1,20 +1,31 @@
 import { useState, useRef, useCallback, memo } from 'react';
-import { motion } from 'framer-motion';
 import { Heart, ChevronLeft, ChevronRight, Star, MapPin, CheckCircle2, Play, Gift, Percent, Package, Clock } from 'lucide-react';
+// Removed framer-motion for better performance - using CSS transitions instead
 import { cn } from '@/lib/utils';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import type { MarketplaceCreator, PortfolioMedia } from './types/marketplace';
 import { getBunnyThumbnailUrl } from '@/hooks/useHLSPlayer';
+import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 
-function resolveThumb(item: PortfolioMedia): string {
+// Card dimensions for image optimization
+const CARD_WIDTH = 180;
+const CARD_HEIGHT = 320; // 9:16 aspect ratio
+
+function resolveThumb(item: PortfolioMedia, optimize = true): string {
   // For videos: prefer Bunny Stream CDN thumbnail (always reliable)
-  // This ensures consistent thumbnails regardless of what's stored in DB
   if (item.type === 'video') {
     const bunnyThumb = getBunnyThumbnailUrl(item.url);
     if (bunnyThumb) return bunnyThumb;
   }
-  if (item.thumbnail_url) return item.thumbnail_url;
-  return item.url;
+
+  const baseUrl = item.thumbnail_url || item.url;
+
+  // Optimize non-Bunny images (e.g., Supabase Storage)
+  if (optimize && baseUrl && !baseUrl.includes('b-cdn.net')) {
+    return getOptimizedImageUrl(baseUrl, { width: CARD_WIDTH * 2, quality: 75 });
+  }
+
+  return baseUrl;
 }
 
 interface CreatorCardProps {
@@ -75,17 +86,12 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
         : null;
 
   return (
-    <motion.div
+    <div
       className={cn(
-        'group relative cursor-pointer',
+        'group relative cursor-pointer transition-transform duration-200 hover:scale-[1.02] hover:-translate-y-1 active:scale-[0.98]',
         className,
       )}
       onClick={onClick}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02, y: -4 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.2 }}
     >
       {/* Media area — 9:16 aspect ratio, click opens profile */}
       <div
@@ -107,11 +113,15 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
                 <img
                   src={resolveThumb(item)}
                   alt=""
+                  width={CARD_WIDTH}
+                  height={CARD_HEIGHT}
                   className={cn(
                     'w-full h-full object-cover transition-opacity duration-300',
                     imgLoaded[i] ? 'opacity-100' : 'opacity-0',
                   )}
                   loading={i === 0 ? 'eager' : 'lazy'}
+                  decoding={i === 0 ? 'sync' : 'async'}
+                  fetchPriority={i === 0 ? 'high' : 'auto'}
                   onLoad={() => setImgLoaded(prev => ({ ...prev, [i]: true }))}
                 />
                 {item.type === 'video' && (
@@ -129,8 +139,12 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
           <div className="w-full h-full flex items-center justify-center">
             {creator.avatar_url ? (
               <img
-                src={creator.avatar_url}
+                src={getOptimizedImageUrl(creator.avatar_url, { width: CARD_WIDTH * 2, quality: 75 })}
                 alt={creator.display_name}
+                width={CARD_WIDTH}
+                height={CARD_HEIGHT}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -147,22 +161,20 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
         <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
 
         {/* Favorite button */}
-        <motion.button
+        <button
           onClick={handleFavorite}
-          className="absolute top-3 right-3 z-10"
+          className="absolute top-3 right-3 z-10 transition-transform duration-150 active:scale-125"
           aria-label="Favorito"
-          whileTap={{ scale: 1.3 }}
-          animate={isFavorite ? { scale: [1, 1.2, 1] } : {}}
         >
           <Heart
             className={cn(
-              'h-6 w-6 drop-shadow-lg transition-colors duration-200',
+              'h-6 w-6 drop-shadow-lg transition-all duration-200',
               isFavorite
-                ? 'text-pink-500 fill-pink-500'
+                ? 'text-pink-500 fill-pink-500 scale-110'
                 : 'text-white hover:text-pink-300',
             )}
           />
-        </motion.button>
+        </button>
 
         {/* Badges */}
         <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
@@ -218,12 +230,13 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
           </div>
         )}
 
-        {/* Hover mini-gallery */}
+        {/* Hover mini-gallery - hidden on mobile for performance */}
         {media.length >= 3 && (
           <div
             className={cn(
               "absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex gap-1 transition-all duration-300",
-              "opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0"
+              "opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0",
+              "hidden sm:flex" // Hide on mobile
             )}
           >
             {media.slice(0, 3).map((item, i) => (
@@ -243,6 +256,10 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
                 <img
                   src={resolveThumb(item)}
                   alt=""
+                  width={48}
+                  height={64}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
               </button>
@@ -256,8 +273,12 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
           <div className="flex items-center gap-1.5">
             {creator.avatar_url ? (
               <img
-                src={creator.avatar_url}
+                src={getOptimizedImageUrl(creator.avatar_url, { width: 48, quality: 70 })}
                 alt=""
+                width={24}
+                height={24}
+                loading="lazy"
+                decoding="async"
                 className="w-6 h-6 rounded-full object-cover flex-shrink-0 border border-white/30"
               />
             ) : (
@@ -333,7 +354,7 @@ function CreatorCardComponent({ creator, onClick, className }: CreatorCardProps)
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
