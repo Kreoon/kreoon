@@ -65,22 +65,28 @@ const MODULE_LABELS: Record<string, string> = {
   dna: "ADN",
 };
 
-// Query directa para historial de transacciones
+// Query directa para historial de transacciones (via balance_id)
 async function getTransactionsFallback(userId: string, organizationId?: string | null, limit = 20): Promise<any[]> {
   try {
-    let query = supabase
+    // Primero obtener el balance_id del usuario
+    let balanceQuery = supabase.from('ai_token_balances').select('id');
+    if (organizationId) {
+      balanceQuery = balanceQuery.eq('organization_id', organizationId);
+    } else {
+      balanceQuery = balanceQuery.eq('user_id', userId).is('organization_id', null);
+    }
+    const { data: balanceData } = await balanceQuery.limit(1).maybeSingle();
+
+    if (!balanceData?.id) return [];
+
+    // Ahora obtener transacciones usando balance_id
+    const { data, error } = await supabase
       .from('ai_token_transactions')
       .select('*')
+      .eq('balance_id', balanceData.id)
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    if (organizationId) {
-      query = query.eq('organization_id', organizationId);
-    } else {
-      query = query.eq('user_id', userId).is('organization_id', null);
-    }
-
-    const { data, error } = await query;
     if (error) return [];
     return data || [];
   } catch {
