@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, memo } from 'react';
 import { Heart, ChevronLeft, ChevronRight, Star, MapPin, CheckCircle2, Play, Gift, Percent, Package, Clock } from 'lucide-react';
 // Removed framer-motion for better performance - using CSS transitions instead
 import { cn } from '@/lib/utils';
-import { useCurrency } from '@/contexts/CurrencyContext';
 import type { MarketplaceCreator, PortfolioMedia } from './types/marketplace';
 import { getBunnyThumbnailUrl } from '@/hooks/useHLSPlayer';
 import { getOptimizedImageUrl } from '@/lib/imageOptimization';
@@ -37,7 +36,6 @@ interface CreatorCardProps {
 }
 
 function CreatorCardComponent({ creator, onClick, className, priority = false }: CreatorCardProps) {
-  const { formatPrice } = useCurrency();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [imgLoaded, setImgLoaded] = useState<Record<number, boolean>>({});
@@ -338,22 +336,18 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
             )}
           </div>
 
-          {/* Price + Exchange */}
-          <div className="flex items-center gap-2">
-            {creator.base_price != null && (
-              <span className="text-white/70 text-xs drop-shadow-sm">
-                Desde <span className="text-white font-semibold">{formatPrice(creator.base_price)}</span>
-              </span>
-            )}
-            {creator.accepts_product_exchange && (
+          {/* Exchange badge */}
+          {creator.accepts_product_exchange && (
+            <div className="flex items-center gap-1">
               <span
                 className="flex items-center gap-0.5 text-green-400 text-xs"
                 title="Acepta canje de producto"
               >
                 <Gift className="h-3 w-3" />
+                <span>Acepta canje</span>
               </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

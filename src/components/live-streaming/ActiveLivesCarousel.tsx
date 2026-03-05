@@ -39,26 +39,14 @@ export function ActiveLivesCarousel({
     });
   };
 
-  if (isLoading) {
-    return (
-      <div className={cn('space-y-4', className)}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Radio className="h-5 w-5 text-red-500" />
-            <h2 className="text-lg font-semibold">{title}</h2>
-          </div>
-        </div>
-        <div className="flex gap-4 overflow-hidden">
-          {[1, 2, 3, 4].map((i) => (
-            <LiveCardSkeleton key={i} />
-          ))}
-        </div>
-      </div>
-    );
+  // Don't show anything (including skeleton) if no streams - prevents CLS
+  if (!isLoading && (!streams || streams.length === 0)) {
+    return null;
   }
 
-  if (!streams || streams.length === 0) {
-    return null; // No mostrar nada si no hay streams activos
+  // Show skeleton only briefly while loading
+  if (isLoading) {
+    return null; // Prevent CLS by not showing skeleton for conditional content
   }
 
   return (

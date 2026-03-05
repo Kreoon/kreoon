@@ -623,45 +623,15 @@ export function CreatorProfileEditor() {
           </AccordionContent>
         </AccordionItem>
 
-        {/* Section 5: Pricing */}
-        <AccordionItem value="pricing" className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl px-6">
+        {/* Section 5: Product Exchange */}
+        <AccordionItem value="exchange" className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl px-6">
           <AccordionTrigger className="hover:no-underline">
             <div className="flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-primary" />
-              <span className="font-semibold">Precios</span>
+              <span className="font-semibold">Intercambio de Producto</span>
             </div>
           </AccordionTrigger>
           <AccordionContent className="space-y-4 pb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Precio base por proyecto</Label>
-                <Input
-                  type="number"
-                  value={formData.base_price ?? ''}
-                  onChange={e => updateField('base_price', e.target.value ? Number(e.target.value) : null)}
-                  placeholder="0.00"
-                  min={0}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Moneda</Label>
-                <Select
-                  value={formData.currency || 'USD'}
-                  onValueChange={v => updateField('currency', v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USD">USD - Dólar</SelectItem>
-                    <SelectItem value="COP">COP - Peso colombiano</SelectItem>
-                    <SelectItem value="EUR">EUR - Euro</SelectItem>
-                    <SelectItem value="MXN">MXN - Peso mexicano</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
             <div className="flex items-center justify-between p-4 rounded-xl bg-muted/10 border border-white/5">
               <div>
                 <p className="text-sm font-medium">Acepta intercambio de producto</p>

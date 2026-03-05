@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sparkles, ArrowRight } from 'lucide-react';
@@ -23,6 +23,7 @@ import { useOrgSearch } from './hooks/useOrgSearch';
 import { useInfiniteOrgs } from './hooks/useInfiniteOrgs';
 import { useAuth } from '@/hooks/useAuth';
 import { useCreatorProfile } from '@/hooks/useCreatorProfile';
+import { getBunnyThumbnailUrl } from '@/hooks/useHLSPlayer';
 import type { MarketplaceFilters, MarketplaceViewMode, MarketplaceRoleId, MarketplaceTab } from './types/marketplace';
 
 export default function MarketplacePage() {
@@ -58,6 +59,34 @@ export default function MarketplacePage() {
     reset();
     orgReset();
   }, [filters, reset, orgReset]);
+
+  // Preload LCP images from first carousel for better performance
+  const preloadedRef = useRef(false);
+  useEffect(() => {
+    if (preloadedRef.current || featured.length === 0) return;
+    preloadedRef.current = true;
+
+    // Preload first 3 creator thumbnails
+    featured.slice(0, 3).forEach((creator) => {
+      const firstMedia = creator.portfolio_media?.[0];
+      if (!firstMedia) return;
+
+      let thumbUrl = firstMedia.thumbnail_url || firstMedia.url;
+      if (firstMedia.type === 'video') {
+        const bunnyThumb = getBunnyThumbnailUrl(firstMedia.url);
+        if (bunnyThumb) thumbUrl = bunnyThumb;
+      }
+
+      if (thumbUrl) {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = thumbUrl;
+        link.fetchPriority = 'high';
+        document.head.appendChild(link);
+      }
+    });
+  }, [featured]);
 
   const handleCreatorClick = useCallback(
     (id: string) => {

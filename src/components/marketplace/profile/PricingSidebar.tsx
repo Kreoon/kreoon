@@ -232,19 +232,6 @@ export function PricingSidebar({
     return (
       <>
         <div className="bg-card/80 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-5">
-          {/* Price header */}
-          {basePrice != null && (
-            <div>
-              <span className="text-gray-400 text-sm">Desde </span>
-              <span className="text-2xl font-bold text-white">
-                ${basePrice.toLocaleString()}
-              </span>
-              <span className="text-gray-400 text-sm"> {currency} / video</span>
-            </div>
-          )}
-
-          <div className="border-t border-white/10" />
-
           {/* Exchange option */}
           {acceptsExchange && (
             <>
@@ -293,19 +280,6 @@ export function PricingSidebar({
       {/* Desktop sidebar */}
       <div className="hidden lg:block sticky top-24">
         <div className="bg-card/80 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-xl shadow-purple-500/5 space-y-6">
-          {/* Base price */}
-          {basePrice != null && (
-            <div>
-              <span className="text-gray-400 text-sm">Desde </span>
-              <span className="text-3xl font-bold text-white">
-                ${basePrice.toLocaleString()}
-              </span>
-              <span className="text-gray-400 text-base"> {currency} / video</span>
-            </div>
-          )}
-
-          <div className="border-t border-white/10" />
-
           {/* Exchange option (gated) */}
           {acceptsExchange && (
             <>
