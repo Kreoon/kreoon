@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,11 +18,15 @@ const ROUTE_TO_TYPE: Record<string, string> = {
   'moderation': 'content_moderation_policy',
   'escrow': 'escrow_payment_terms',
   'age-verification': 'age_verification_policy',
+  'white-label': 'white_label_agreement',
+  'dpa': 'data_processing_agreement',
 };
 
 export function LegalDocumentPage() {
   const { documentType } = useParams<{ documentType: string }>();
   const docType = documentType ? ROUTE_TO_TYPE[documentType] || documentType : null;
+  const [htmlContent, setHtmlContent] = useState<string | null>(null);
+  const [loadingHtml, setLoadingHtml] = useState(false);
 
   const { data: document, isLoading, error } = useQuery({
     queryKey: ['legal-document', docType],
@@ -41,7 +46,48 @@ export function LegalDocumentPage() {
     enabled: !!docType,
   });
 
-  if (isLoading) {
+  // Si el contenido de la BD es un placeholder, cargar desde archivo HTML
+  useEffect(() => {
+    const loadHtmlFile = async () => {
+      if (!document) return;
+
+      const content = document.content_html || '';
+      // Detectar si es un placeholder (vacío, solo comentario, o muy corto)
+      const isPlaceholder = !content ||
+        content.trim().startsWith('<!--') ||
+        content.length < 100;
+
+      if (isPlaceholder) {
+        setLoadingHtml(true);
+        try {
+          // Extraer versión mayor
+          const version = document.version || '1';
+          const majorVersion = version.replace(/^v/i, '').split('.')[0] || '1';
+          const filename = `${docType}_v${majorVersion}.html`;
+
+          const response = await fetch(`/legal/${filename}`);
+          if (response.ok) {
+            const html = await response.text();
+            setHtmlContent(html);
+          } else {
+            console.warn(`[LegalDocumentPage] No se encontró /legal/${filename}`);
+            setHtmlContent(null);
+          }
+        } catch (err) {
+          console.error('[LegalDocumentPage] Error cargando HTML:', err);
+          setHtmlContent(null);
+        } finally {
+          setLoadingHtml(false);
+        }
+      } else {
+        setHtmlContent(content);
+      }
+    };
+
+    loadHtmlFile();
+  }, [document, docType]);
+
+  if (isLoading || loadingHtml) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
@@ -49,7 +95,7 @@ export function LegalDocumentPage() {
     );
   }
 
-  if (error || !document) {
+  if (error || !document || !htmlContent) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
         <FileText className="w-16 h-16 text-muted-foreground" />
@@ -100,9 +146,9 @@ export function LegalDocumentPage() {
       <main className="container max-w-4xl mx-auto px-4 py-8">
         <article className="legal-document prose prose-invert prose-purple max-w-none">
           {/* Si el contenido es HTML, renderizarlo */}
-          {document.content_html.startsWith('<') ? (
+          {htmlContent && htmlContent.startsWith('<') ? (
             <div
-              dangerouslySetInnerHTML={{ __html: document.content_html }}
+              dangerouslySetInnerHTML={{ __html: htmlContent }}
               className={cn(
                 // Estilos para el contenido HTML legal
                 "[&_h1]:text-3xl [&_h1]:font-bold [&_h1]:mb-6 [&_h1]:text-foreground",
@@ -133,7 +179,7 @@ export function LegalDocumentPage() {
             <div>
               <h1>{document.title}</h1>
               <pre className="whitespace-pre-wrap font-sans">
-                {document.content_html}
+                {htmlContent}
               </pre>
             </div>
           )}
