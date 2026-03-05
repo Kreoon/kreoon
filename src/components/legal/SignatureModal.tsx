@@ -161,22 +161,22 @@ export function SignatureModal({
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
-          className="bg-gradient-to-b from-slate-900 to-slate-950 border border-white/10 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
+          className="bg-gradient-to-b from-slate-900 to-slate-950 border border-white/10 rounded-2xl w-full max-w-3xl max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-white/10">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500/20 rounded-lg">
-                <FileText className="w-5 h-5 text-purple-400" />
+          <div className="flex items-center justify-between p-3 sm:p-4 border-b border-white/10 flex-shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="p-1.5 sm:p-2 bg-purple-500/20 rounded-lg flex-shrink-0">
+                <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
               </div>
-              <div>
-                <h2 className="text-lg font-semibold text-white">{document.title}</h2>
-                <p className="text-sm text-white/60">Versión {document.version} — SICOMMER INT LLC</p>
+              <div className="min-w-0">
+                <h2 className="text-base sm:text-lg font-semibold text-white truncate">{document.title}</h2>
+                <p className="text-xs sm:text-sm text-white/60">v{document.version} — SICOMMER INT LLC</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
             >
               <X className="w-5 h-5 text-white/60" />
             </button>
@@ -185,7 +185,7 @@ export function SignatureModal({
           {/* Contenido del documento */}
           <div
             ref={contentRef}
-            className="flex-1 overflow-y-auto p-6 prose prose-invert prose-sm max-w-none"
+            className="flex-1 overflow-y-auto p-4 sm:p-6 prose prose-invert prose-sm max-w-none min-h-0"
           >
             {document.content_html ? (
               <>
@@ -210,7 +210,7 @@ export function SignatureModal({
           )}
 
           {/* Sección de firma */}
-          <div className="border-t border-white/10 p-6 space-y-4 bg-black/20">
+          <div className="border-t border-white/10 p-4 sm:p-6 space-y-3 sm:space-y-4 bg-black/20 flex-shrink-0 max-h-[50vh] overflow-y-auto">
             {/* Estado de lectura */}
             <div className={cn(
               "flex items-center gap-2 text-sm",

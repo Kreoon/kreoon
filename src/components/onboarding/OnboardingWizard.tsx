@@ -122,7 +122,7 @@ export function OnboardingWizard() {
       </div>
 
       {/* Main content */}
-      <main className="max-w-3xl mx-auto px-4 pb-12">
+      <main className="max-w-3xl mx-auto px-4 pb-24 sm:pb-16">
         <AnimatePresence mode="wait">
           {displayStep === 'profile_data' && (
             <motion.div

@@ -526,19 +526,19 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
       <Sheet open={!!openDocument} onOpenChange={(open) => !open && closeDocumentDrawer()}>
         <SheetContent
           side="right"
-          className="w-full sm:max-w-2xl bg-[#0F0F23] border-white/10 p-0 z-[200]"
+          className="w-full sm:max-w-2xl bg-[#0F0F23] border-white/10 p-0 z-[200] flex flex-col h-full"
         >
-          <SheetHeader className="p-6 border-b border-white/10">
-            <SheetTitle className="text-white text-lg">
+          <SheetHeader className="p-4 sm:p-6 border-b border-white/10 flex-shrink-0">
+            <SheetTitle className="text-white text-base sm:text-lg">
               {openDocument?.title || getDocTypeLabel(openDocument?.document_type || '')}
             </SheetTitle>
-            <SheetDescription className="text-white/60 text-sm">
-              Versión {openDocument?.version} — Lee el documento completo antes de aceptar
+            <SheetDescription className="text-white/60 text-xs sm:text-sm">
+              Versión {openDocument?.version} — Lee el documento completo
             </SheetDescription>
           </SheetHeader>
 
-          <ScrollArea className="h-[calc(100vh-200px)]">
-            <div className="p-6">
+          <ScrollArea className="flex-1 min-h-0">
+            <div className="p-4 sm:p-6">
               {loadingContent ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
@@ -552,7 +552,7 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
             </div>
           </ScrollArea>
 
-          <div className="p-6 border-t border-white/10">
+          <div className="p-4 sm:p-6 border-t border-white/10 flex-shrink-0 bg-[#0F0F23]">
             {openDocument && getSignatureMethodForDocument(openDocument.document_type) !== 'clickwrap' ? (
               <Button
                 onClick={() => {
