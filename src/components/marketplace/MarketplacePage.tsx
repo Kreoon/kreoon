@@ -347,7 +347,7 @@ export default function MarketplacePage() {
           ) : (
             <>
               {/* Curated sections (hidden during search or filtered views) */}
-              {/* Personalized recommendations */}
+              {/* Personalized recommendations - priority if first visible */}
               {showCarousels && isPersonalized && recommended.length > 0 && (
                 <CreatorCarousel
                   title="Recomendados para ti"
@@ -355,6 +355,7 @@ export default function MarketplacePage() {
                   subtitle="Basado en tus intereses y actividad"
                   creators={recommended.slice(0, 8)}
                   onCreatorClick={handleCreatorClick}
+                  priority={true}
                 />
               )}
 
@@ -405,6 +406,7 @@ export default function MarketplacePage() {
                 onLoadMore={loadMore}
                 onCreatorClick={handleCreatorClick}
                 searchQuery={isSearchActive ? filters.search : undefined}
+                priority={!showCarousels}
               />
             </>
           )}

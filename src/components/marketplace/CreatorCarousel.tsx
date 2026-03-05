@@ -123,7 +123,7 @@ export function CreatorCarousel({
                 <MarketplaceCreatorCard
                   creator={creator}
                   onClick={() => onCreatorClick?.(creator.slug || creator.id)}
-                  priority={priority && i < 3} // First 3 items are priority when carousel is priority
+                  priority={priority && i < 6} // First 6 items are priority when carousel is priority
                 />
               </div>
             ))}

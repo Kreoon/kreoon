@@ -68,7 +68,6 @@ import {
 import type { HealthStatus, TalentCategory, SpecificRole } from "@/types/crm.types";
 import type { UserWithHealth, CreatorWithMetrics } from "@/services/crm/platformCrmService";
 import { ViewModeToggle } from "@/components/crm";
-import { UserDetailDialog } from "@/components/crm/UserDetailDialog";
 import { UnifiedTalentDetailDialog } from "@/components/crm/UnifiedTalentDetailDialog";
 import type { ViewMode } from "@/components/crm";
 
@@ -1326,7 +1325,7 @@ const PlatformCRMPeople = () => {
 
       {/* ========== DETAIL DIALOGS ========== */}
       {selectedUser && (
-        <UserDetailDialog
+        <UnifiedTalentDetailDialog
           user={selectedUser}
           open={true}
           onOpenChange={(open) => {

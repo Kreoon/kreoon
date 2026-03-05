@@ -29,7 +29,14 @@ export function getOptimizedImageUrl(
     const urlObj = new URL(url);
 
     // Supabase Storage - use render endpoint with transformations
-    if (urlObj.hostname === SUPABASE_STORAGE_HOST && urlObj.pathname.includes('/storage/v1/object/')) {
+    // Only for portfolio bucket which has transformations enabled
+    // Skip avatar images as they may fail transformation
+    if (
+      urlObj.hostname === SUPABASE_STORAGE_HOST &&
+      urlObj.pathname.includes('/storage/v1/object/') &&
+      urlObj.pathname.includes('/portfolio/') &&
+      !urlObj.pathname.includes('/avatar')
+    ) {
       // Convert from /storage/v1/object/public/... to /storage/v1/render/image/public/...
       const renderPath = urlObj.pathname.replace('/object/', '/render/image/');
       const params = new URLSearchParams();
@@ -44,7 +51,7 @@ export function getOptimizedImageUrl(
       return url;
     }
 
-    // External images - return as-is (consider using a proxy in production)
+    // External images and avatars - return as-is
     return url;
   } catch {
     return url || '';
