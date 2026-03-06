@@ -425,7 +425,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                 )}>
                   <SelectValue placeholder="Selecciona tu sexo" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" sideOffset={4} className="z-[9999]">
                   <SelectItem value="male">Masculino</SelectItem>
                   <SelectItem value="female">Femenino</SelectItem>
                   <SelectItem value="other">Otro</SelectItem>
