@@ -68,7 +68,7 @@ export function AuthModal({
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent
         className={cn(
-          "border-kreoon-border bg-kreoon-bg-card p-0 gap-0 overflow-hidden",
+          "border-kreoon-border bg-kreoon-bg-card p-0 gap-0 overflow-hidden overflow-y-auto",
           "shadow-kreoon-glow-sm border-kreoon-purple-500/30",
           "max-w-lg w-[calc(100%-2rem)] sm:w-full",
           "h-[100dvh] sm:h-auto sm:max-h-[90vh] rounded-none sm:rounded-xl",
@@ -80,7 +80,10 @@ export function AuthModal({
           {view === "forgot-password" && "Recuperar contraseña"}
         </DialogTitle>
 
-        <div className="flex flex-col p-6 sm:p-8">
+        <div className={cn(
+          "flex flex-col",
+          view === "register" ? "p-4 sm:p-6" : "p-6 sm:p-8"
+        )}>
           <AnimatePresence mode="wait" custom={direction}>
             {view === "login" && (
               <motion.div
@@ -114,12 +117,8 @@ export function AuthModal({
                 exit="exit"
                 variants={viewTransition}
                 transition={{ duration: 0.2 }}
-                className="space-y-6"
               >
-                <AuthTabs
-                  activeTab="register"
-                  onTabChange={(tab) => handleTabChange(tab)}
-                />
+                {/* WizardContainer has its own design - no AuthTabs needed */}
                 <RegisterForm
                   onSuccess={handleSuccess}
                   onSwitchToLogin={() => setCurrentTab("login")}
