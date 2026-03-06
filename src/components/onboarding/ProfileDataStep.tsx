@@ -218,6 +218,39 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
     // Dejar que react-hook-form maneje el submit
   }, []);
 
+  // Callback cuando hay errores de validación
+  const onValidationError = useCallback((validationErrors: any) => {
+    console.log('[onboarding] Errores de validación:', validationErrors);
+    setSubmitAttempted(true);
+
+    // Mostrar toast con los campos faltantes
+    const errorFields = Object.keys(validationErrors);
+    if (errorFields.length > 0) {
+      const fieldNames: Record<string, string> = {
+        full_name: 'Nombre completo',
+        username: 'Username',
+        phone: 'Teléfono',
+        email: 'Email',
+        country: 'País',
+        city: 'Ciudad',
+        address: 'Dirección',
+        nationality: 'Nacionalidad',
+        document_type: 'Tipo de documento',
+        document_number: 'Número de documento',
+        date_of_birth: 'Fecha de nacimiento',
+        gender: 'Sexo',
+        social_network: 'Red social',
+      };
+
+      const missingFields = errorFields
+        .map(f => fieldNames[f] || f)
+        .slice(0, 3)
+        .join(', ');
+
+      toast.error(`Campos incompletos: ${missingFields}${errorFields.length > 3 ? '...' : ''}`);
+    }
+  }, []);
+
   // Scroll al primer error cuando hay errores después de intentar enviar
   useEffect(() => {
     if (submitAttempted && Object.keys(errors).length > 0) {
@@ -247,7 +280,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
         </p>
       </div>
 
-      <form ref={formRef} onSubmit={(e) => { handleFormSubmit(e); handleSubmit(onSubmit)(e); }} className="space-y-8">
+      <form ref={formRef} onSubmit={(e) => { handleFormSubmit(e); handleSubmit(onSubmit, onValidationError)(e); }} className="space-y-8">
         {/* Mensaje de error global cuando hay campos faltantes */}
         {submitAttempted && Object.keys(errors).length > 0 && (
           <motion.div
