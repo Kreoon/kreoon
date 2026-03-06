@@ -235,8 +235,18 @@ export function useTalentDNA() {
         const { error: updateError } = await supabase
           .from('creator_profiles')
           .update({
-            ...profileUpdate,
-            talent_dna_id: dna.id,
+            bio: profileUpdate.bio,
+            bio_full: profileUpdate.bio_full,
+            experience_level: profileUpdate.experience_level,
+            categories: profileUpdate.secondary_categories.length > 0
+              ? [profileUpdate.primary_category, ...profileUpdate.secondary_categories].filter(Boolean)
+              : profileUpdate.primary_category ? [profileUpdate.primary_category] : undefined,
+            content_types: profileUpdate.content_types,
+            content_style: { tone_descriptors: profileUpdate.content_style },
+            marketplace_roles: profileUpdate.marketplace_roles,
+            platforms: profileUpdate.platforms,
+            languages: profileUpdate.languages,
+            has_talent_dna: true,
           })
           .eq('user_id', user.id);
 
@@ -247,8 +257,16 @@ export function useTalentDNA() {
           .from('creator_profiles')
           .insert({
             user_id: user.id,
-            ...profileUpdate,
-            talent_dna_id: dna.id,
+            bio: profileUpdate.bio,
+            bio_full: profileUpdate.bio_full,
+            experience_level: profileUpdate.experience_level,
+            categories: profileUpdate.primary_category ? [profileUpdate.primary_category, ...profileUpdate.secondary_categories] : [],
+            content_types: profileUpdate.content_types,
+            content_style: { tone_descriptors: profileUpdate.content_style },
+            marketplace_roles: profileUpdate.marketplace_roles,
+            platforms: profileUpdate.platforms,
+            languages: profileUpdate.languages,
+            has_talent_dna: true,
           });
 
         if (insertError) throw insertError;

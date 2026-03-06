@@ -129,3 +129,22 @@ export interface TalentDNAProfileMapping {
   languages: string[];            // ← languages
   specialization_tags: string[];  // ← specialization.specialized_services
 }
+
+// ── Question Structure (para el wizard) ─────────────────────────────
+
+export interface TalentDNAQuestion {
+  id: number;
+  block: string;
+  emoji: string;
+  question: string;
+  hint?: string;
+}
+
+// ── Processing State ────────────────────────────────────────────────
+
+export type TalentDNAProcessingStep = 'idle' | 'transcribing' | 'generating' | 'complete' | 'error';
+
+export interface TalentDNAUploadProgress {
+  stage: 'uploading' | 'transcribing' | 'generating';
+  percentage: number;
+}
