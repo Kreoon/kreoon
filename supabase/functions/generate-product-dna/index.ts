@@ -236,26 +236,66 @@ function getDefaultExtraction(wizardResponses: Record<string, unknown>): Record<
   };
 }
 
-// ── Perplexity AI call (research mode - no JSON constraint) ─────────────
-async function callPerplexityResearch(userPrompt: string, researchPrompt: string): Promise<string> {
+// ── Perplexity AI call (content-focused research) ────────────────────────
+async function callPerplexityResearch(
+  extractedData: Record<string, unknown>,
+  wizardResponses: Record<string, unknown>
+): Promise<string> {
   const apiKey = getAPIKey("perplexity");
   if (!apiKey) {
-    console.error("[generate-product-dna] PERPLEXITY_API_KEY not found in environment");
+    console.error("[generate-product-dna] PERPLEXITY_API_KEY not found");
     throw new Error("PERPLEXITY_API_KEY not configured");
   }
 
-  console.log("[generate-product-dna] Step 1: Perplexity research...");
+  const serviceTypes = (wizardResponses.service_types as string[]) || [];
+  const goals = (wizardResponses.goals as string[]) || [];
+  const platforms = (wizardResponses.platforms as string[]) || [];
+  const audiences = (wizardResponses.audiences as string[]) || [];
 
-  const requestBody = {
-    model: "sonar-pro",
-    messages: [
-      { role: "system", content: researchPrompt },
-      { role: "user", content: userPrompt },
-    ],
-    max_tokens: 8000,
-    temperature: 0.3,
-    return_citations: true,
-  };
+  const canalPrimario = extractedData.canal_primario || platforms[0] || "instagram";
+  const servicioExacto = extractedData.servicio_exacto || "producto/servicio";
+
+  const systemPrompt = `Eres un estratega digital especialista en contenido para ${canalPrimario}.
+Tu investigacion debe ser ESPECIFICA para crear contenido de ${serviceTypes.join(" y ") || "video UGC"}
+con el objetivo de ${goals.join(" y ") || "vender"}.
+Enfocate en LATAM. Usa datos reales y actuales.`;
+
+  const userPrompt = `Necesito una investigacion de mercado completa para crear contenido.
+
+PRODUCTO/SERVICIO: ${servicioExacto}
+CANAL PRINCIPAL: ${platforms.join(", ") || "Instagram, TikTok"}
+AUDIENCIA: ${audiences.join(", ") || "25-34"} anos
+OBJETIVO: ${goals.join(", ") || "vender"}
+
+Investiga y dame:
+
+1. PANORAMA DEL MERCADO
+   - Estado actual del mercado para este producto/servicio en LATAM
+   - Tamano aproximado y tendencias actuales
+   - Que esta funcionando HOY en ${platforms.join("/") || "redes sociales"} para esta categoria
+
+2. ANALISIS DE COMPETENCIA (5 competidores reales y activos)
+   Para cada uno: nombre, promesa principal, precio referencial si aplica,
+   principal fortaleza en contenido, principal debilidad, que plataformas usa
+
+3. GAP COMPETITIVO
+   - Que NO estan haciendo bien los competidores en contenido
+   - La oportunidad real de diferenciacion
+
+4. COMPORTAMIENTO DE LA AUDIENCIA EN ${platforms.join("/") || "REDES"}
+   - Como consume contenido esta audiencia en ese canal
+   - Que formatos generan mas engagement
+   - Que tipo de hooks detienen el scroll
+   - Horarios y frecuencias de mayor actividad
+
+5. TENDENCIAS DE CONTENIDO ACTUALES
+   - Formatos que estan funcionando ahora mismo
+   - Estilos de video que generan conversion en este nicho
+   - Hashtags y terminos relevantes
+
+Responde con datos reales, especificos y actuales. Evita generalidades.`;
+
+  console.log("[generate-product-dna] Step 2: Perplexity research (content-focused)...");
 
   const response = await fetch("https://api.perplexity.ai/chat/completions", {
     method: "POST",
@@ -263,22 +303,30 @@ async function callPerplexityResearch(userPrompt: string, researchPrompt: string
       "Authorization": `Bearer ${apiKey}`,
       "Content-Type": "application/json"
     },
-    body: JSON.stringify(requestBody),
+    body: JSON.stringify({
+      model: "sonar-pro",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      max_tokens: 12000,
+      temperature: 0.3,
+      return_citations: true,
+    }),
   });
 
   console.log(`[generate-product-dna] Perplexity response status: ${response.status}`);
 
   if (!response.ok) {
     const errText = await response.text();
-    console.error("[generate-product-dna] Perplexity error response:", errText);
-    throw new Error(`Perplexity API error: ${response.status} - ${errText.substring(0, 200)}`);
+    console.error("[generate-product-dna] Perplexity error:", errText);
+    throw new Error(`Perplexity API error: ${response.status}`);
   }
 
   const data = await response.json();
   const content = data.choices?.[0]?.message?.content || "";
 
   if (!content) {
-    console.error("[generate-product-dna] Perplexity returned empty content");
     throw new Error("Perplexity returned empty response");
   }
 
