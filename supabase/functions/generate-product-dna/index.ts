@@ -513,175 +513,127 @@ INSTRUCCIONES FINALES:
   }
 }
 
-// ── Gemini call (structure into JSON) - calls 4 sections in parallel ────
-async function callGeminiStructure(research: string, _jsonStructure: string, _structurePrompt: string): Promise<string> {
+// ── Execute 4 parallel Gemini calls for 8 sections ───────────────────────
+async function generateAllSections(
+  extractedData: Record<string, unknown>,
+  perplexityResearch: string,
+  wizardResponses: Record<string, unknown>
+): Promise<{
+  market_research: Record<string, unknown>;
+  competitor_analysis: Record<string, unknown>;
+  strategy_recommendations: Record<string, unknown>;
+  content_brief: Record<string, unknown>;
+}> {
   const apiKey = Deno.env.get("GOOGLE_AI_API_KEY") || Deno.env.get("GEMINI_API_KEY");
   if (!apiKey) {
     throw new Error("GOOGLE_AI_API_KEY not configured");
   }
 
-  console.log("[generate-product-dna] Step 2: Gemini structuring (4 parallel calls)...");
+  console.log("[generate-product-dna] Step 2: Generating 8 sections with 4 parallel Gemini calls...");
 
-  const sectionPrompts = {
-    market_research: `Eres un analista de mercado experto. Extrae TODOS los datos específicos de la investigación.
+  // Call 1: Contexto + Mercado
+  const call1Promise = callGeminiWithPrompt(apiKey, buildCall1Prompt(extractedData, perplexityResearch, wizardResponses), "call1_contexto_mercado");
 
-ESTRUCTURA REQUERIDA:
-{
-  "market_research": {
-    "market_overview": "Resumen ejecutivo del mercado (2-3 oraciones con datos concretos)",
-    "market_size": "Tamaño exacto del mercado con cifras (ej: 'USD 1.2 mil millones en LATAM 2025')",
-    "growth_trends": ["Tendencia 1 con dato específico", "Tendencia 2 con porcentaje", "Tendencia 3 con estadística", "Tendencia 4"],
-    "opportunities": ["Oportunidad específica con potencial", "Otra oportunidad con datos"],
-    "threats": ["Amenaza real con impacto", "Otra amenaza específica"],
-    "target_segments": [
-      {"name": "María - Emprendedora Digital", "description": "Mujer 25-35 años, dueña de tienda online, busca contenido económico y rápido, factura $2000-8000/mes", "size_estimate": "45%", "priority": "high"},
-      {"name": "Carlos - Dueño de Negocio", "description": "Hombre 35-50 años, negocio físico queriendo digitalizar, presupuesto $500-2000/mes para marketing", "size_estimate": "35%", "priority": "high"}
-    ],
-    "ideal_customer_profile": {
-      "demographics": "Edad, género, ubicación, ingresos específicos",
-      "psychographics": "Motivaciones, valores, estilo de vida",
-      "pain_points": ["Dolor específico 1", "Dolor 2", "Dolor 3"],
-      "desires": ["Deseo 1", "Deseo 2"],
-      "objections": ["Objeción común 1", "Objeción 2"],
-      "buying_triggers": ["Trigger 1", "Trigger 2"]
-    }
-  }
-}
+  // Call 2: Avatares (independiente)
+  const call2Promise = callGeminiWithPrompt(apiKey, buildCall2Prompt(extractedData, perplexityResearch, wizardResponses), "call2_avatares");
 
-IMPORTANTE:
-- Usa DATOS REALES de la investigación
-- GENERA EXACTAMENTE 2 avatares en target_segments (NO 1, deben ser 2 diferentes)
-- Cada avatar debe tener nombre, edad, situación y presupuesto`,
+  // Wait for call1 and call2 to complete
+  const [call1Result, call2Result] = await Promise.all([call1Promise, call2Promise]);
 
-    competitor_analysis: `Eres un estratega competitivo experto. Identifica competidores ESPECÍFICOS mencionados en la investigación.
+  // Extract avatares for call3
+  const avatares = call2Result?.seccion_3_avatares || [];
 
-ESTRUCTURA REQUERIDA:
-{
-  "competitor_analysis": {
-    "direct_competitors": [
-      {"name": "Nombre real del competidor", "strengths": ["Fortaleza 1", "Fortaleza 2"], "weaknesses": ["Debilidad 1"], "positioning": "Cómo se posicionan", "price_range": "Rango de precios"}
-    ],
-    "indirect_competitors": ["Competidor indirecto 1", "Alternativa 2", "Sustituto 3"],
-    "competitive_advantage": "La ventaja competitiva específica basada en la investigación (mínimo 50 palabras)",
-    "positioning_strategy": "Estrategia de posicionamiento recomendada con justificación (mínimo 50 palabras)",
-    "differentiation_points": ["Diferenciador único 1", "Diferenciador 2", "Diferenciador 3", "Diferenciador 4", "Diferenciador 5"]
-  }
-}
+  // Call 3: Angulos + Ideas (needs avatares)
+  const call3Promise = callGeminiWithPrompt(apiKey, buildCall3Prompt(extractedData, perplexityResearch, avatares, wizardResponses), "call3_angulos_ideas");
 
-Si la investigación menciona herramientas (Freepeek AI, ChatGPT, etc.), inclúyelas como ventajas competitivas.
-IMPORTANTE: Genera al menos 3 competidores directos y 5 diferenciadores.`,
+  // Wait for call3
+  const call3Result = await call3Promise;
 
-    strategy_recommendations: `Eres un director de marketing con 15 años de experiencia en LATAM. Crea recomendaciones ACCIONABLES.
+  // Extract angulos for call4
+  const angulos = call3Result?.seccion_4_angulos || [];
 
-ESTRUCTURA REQUERIDA:
-{
-  "strategy_recommendations": {
-    "value_proposition": "Propuesta de valor única y memorable (máximo 15 palabras, específica al producto)",
-    "brand_positioning": "Posicionamiento de marca diferenciado (máximo 20 palabras)",
-    "pricing_strategy": "Estrategia de precios con justificación basada en el mercado",
-    "sales_angles": [
-      {"angle_name": "Nombre del ángulo", "headline": "Titular impactante de max 10 palabras", "hook": "Gancho emocional de apertura", "target_emotion": "Emoción a evocar"},
-      {"angle_name": "Segundo ángulo", "headline": "Otro titular", "hook": "Otro gancho", "target_emotion": "Otra emoción"},
-      {"angle_name": "Tercer ángulo", "headline": "Titular 3", "hook": "Gancho 3", "target_emotion": "Emoción 3"},
-      {"angle_name": "Cuarto ángulo", "headline": "Titular 4", "hook": "Gancho 4", "target_emotion": "Emoción 4"}
-    ],
-    "funnel_strategy": {
-      "awareness": "Táctica específica para awareness con ejemplo",
-      "consideration": "Táctica para consideración con formato",
-      "conversion": "Táctica de conversión con CTA específico",
-      "retention": "Táctica de retención con frecuencia"
+  // Call 4: Estrategia + Brief (needs angulos)
+  const call4Result = await callGeminiWithPrompt(apiKey, buildCall4Prompt(extractedData, perplexityResearch, angulos, wizardResponses), "call4_estrategia_brief");
+
+  // Assemble final result mapping to existing DB columns
+  return {
+    market_research: {
+      seccion_1_contexto: call1Result?.seccion_1_contexto || extractedData,
+      seccion_2_mercado: call1Result?.seccion_2_mercado || {},
     },
-    "content_pillars": ["Pilar 1: tema específico", "Pilar 2: tema", "Pilar 3: tema", "Pilar 4: tema"],
-    "platforms": [
-      {"name": "Instagram", "strategy": "Estrategia específica para esta plataforma", "content_types": ["Reels", "Stories", "Carruseles"], "priority": "high"},
-      {"name": "TikTok", "strategy": "Estrategia para TikTok", "content_types": ["Videos cortos", "Trends"], "priority": "high"}
-    ],
-    "hashtags": ["#hashtag1", "#hashtag2", "#hashtag3", "#hashtag4", "#hashtag5", "#hashtag6", "#hashtag7", "#hashtag8", "#hashtag9", "#hashtag10"],
-    "ads_targeting": {
-      "interests": ["Interés específico 1", "Interés 2", "Interés 3", "Interés 4", "Interés 5"],
-      "behaviors": ["Comportamiento 1", "Comportamiento 2", "Comportamiento 3"],
-      "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
-      "lookalike_sources": ["Fuente 1", "Fuente 2"]
-    }
-  }
-}
-
-IMPORTANTE: Genera MÍNIMO 4 ángulos de venta diferentes y 10 hashtags relevantes al nicho.`,
-
-    content_brief: `Eres un director creativo de una agencia top de LATAM. Crea un brief que inspire contenido memorable.
-
-ESTRUCTURA REQUERIDA:
-{
-  "content_brief": {
-    "brand_voice": {
-      "tone": ["Adjetivo 1", "Adjetivo 2", "Adjetivo 3"],
-      "personality": "Descripción de la personalidad de marca en 20 palabras",
-      "do_say": ["Frase o palabra a usar", "Otra frase", "Tercera frase"],
-      "dont_say": ["Palabra a evitar", "Frase a evitar", "Otra a evitar"]
+    competitor_analysis: {
+      competidores: call1Result?.seccion_2_mercado?.competidores || [],
+      gap_competitivo: call1Result?.seccion_2_mercado?.gap_competitivo || "",
+      posicionamiento: call1Result?.seccion_2_mercado?.posicionamiento_sugerido || "",
     },
-    "key_messages": [
-      "Mensaje clave 1 específico al producto (máx 10 palabras)",
-      "Mensaje clave 2 diferenciador",
-      "Mensaje clave 3 emocional",
-      "Mensaje clave 4 con beneficio",
-      "Mensaje clave 5 con llamada a acción"
-    ],
-    "tagline_suggestions": [
-      "Tagline creativo 1 (máx 6 palabras)",
-      "Tagline 2 memorable",
-      "Tagline 3 con gancho",
-      "Tagline 4 diferenciador",
-      "Tagline 5 emocional"
-    ],
-    "content_ideas": [
-      {"title": "Título creativo del contenido", "format": "reel/carrusel/story/video", "objective": "awareness/engagement/conversion", "brief_description": "Descripción de 2-3 oraciones de qué se trata"},
-      {"title": "Segunda idea", "format": "formato", "objective": "objetivo", "brief_description": "Descripción"},
-      {"title": "Tercera idea", "format": "formato", "objective": "objetivo", "brief_description": "Descripción"},
-      {"title": "Cuarta idea", "format": "formato", "objective": "objetivo", "brief_description": "Descripción"},
-      {"title": "Quinta idea", "format": "formato", "objective": "objetivo", "brief_description": "Descripción"}
-    ],
-    "visual_direction": {
-      "color_palette": ["#hexcolor1", "#hexcolor2", "#hexcolor3"],
-      "style": "Estilo visual recomendado con referencias",
-      "mood": "Estado de ánimo visual a transmitir"
+    strategy_recommendations: {
+      seccion_3_avatares: call2Result?.seccion_3_avatares || [],
+      seccion_4_angulos: call3Result?.seccion_4_angulos || [],
+      seccion_6_organico: call4Result?.seccion_6_estrategia_organica || {},
+      seccion_7_ads: call4Result?.seccion_7_estrategia_ads || {},
+    },
+    content_brief: {
+      seccion_5_ideas: call3Result?.seccion_5_ideas_contenido || [],
+      seccion_8_brief_creador: call4Result?.seccion_8_brief_creador || {},
+    },
+  };
+}
+
+// ── Single Gemini call helper ────────────────────────────────────────────
+async function callGeminiWithPrompt(
+  apiKey: string,
+  prompt: string,
+  callName: string
+): Promise<Record<string, unknown>> {
+  console.log(`[generate-product-dna] ${callName}: calling Gemini...`);
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 12000,
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error(`[generate-product-dna] ${callName} error:`, errText.substring(0, 200));
+      return {};
     }
+
+    const data = await response.json();
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    console.log(`[generate-product-dna] ${callName} response: ${content.length} chars`);
+
+    // Extract and parse JSON
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const repaired = repairJsonForParse(jsonMatch[0]);
+      const parsed = JSON.parse(repaired);
+      console.log(`[generate-product-dna] ${callName} parsed keys:`, Object.keys(parsed).join(", "));
+      return parsed;
+    }
+
+    console.warn(`[generate-product-dna] ${callName} no JSON found in response`);
+    return {};
+  } catch (err) {
+    console.error(`[generate-product-dna] ${callName} exception:`, err);
+    return {};
   }
 }
 
-IMPORTANTE: Los mensajes y taglines deben ser ESPECÍFICOS al producto, no genéricos. Genera mínimo 5 ideas de contenido.`
-  };
-
-  // Call all 4 sections in parallel with error handling
-  const results = await Promise.allSettled([
-    callGeminiSection(apiKey, research, "market_research", sectionPrompts.market_research),
-    callGeminiSection(apiKey, research, "competitor_analysis", sectionPrompts.competitor_analysis),
-    callGeminiSection(apiKey, research, "strategy_recommendations", sectionPrompts.strategy_recommendations),
-    callGeminiSection(apiKey, research, "content_brief", sectionPrompts.content_brief),
-  ]);
-
-  // Extract results
-  const marketRes = results[0].status === "fulfilled" ? results[0].value : {};
-  const compRes = results[1].status === "fulfilled" ? results[1].value : {};
-  const stratRes = results[2].status === "fulfilled" ? results[2].value : {};
-  const contentRes = results[3].status === "fulfilled" ? results[3].value : {};
-
-  // Log failures
-  results.forEach((r, i) => {
-    if (r.status === "rejected") {
-      console.error(`[generate-product-dna] Section ${i} failed:`, r.reason);
-    }
-  });
-
-  // Combine all sections - handle both wrapped and unwrapped responses
-  const combined = {
-    market_research: marketRes.market_research || (Object.keys(marketRes).length > 0 ? marketRes : null),
-    competitor_analysis: compRes.competitor_analysis || (Object.keys(compRes).length > 0 ? compRes : null),
-    strategy_recommendations: stratRes.strategy_recommendations || (Object.keys(stratRes).length > 0 ? stratRes : null),
-    content_brief: contentRes.content_brief || (Object.keys(contentRes).length > 0 ? contentRes : null),
-  };
-
-  console.log("[generate-product-dna] Combined sections:", Object.keys(combined).filter(k => combined[k as keyof typeof combined]).join(", "));
-  return JSON.stringify(combined);
+// ── DEPRECATED: Legacy function - se elimina en Task 7 ───────────────────
+async function callGeminiStructure(_research: string, _jsonStructure: string, _structurePrompt: string): Promise<string> {
+  console.warn("[generate-product-dna] callGeminiStructure is deprecated - use generateAllSections instead");
+  return JSON.stringify({});
 }
 
 // ── Gemini fallback ─────────────────────────────────────────────────────
