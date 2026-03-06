@@ -4,6 +4,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { MarketplaceSearchBar } from './MarketplaceSearchBar';
 import { AISearchInput } from './AISearchInput';
+import { MarketplaceSearchToggle } from './search/MarketplaceSearchToggle';
 import { cn } from '@/lib/utils';
 import { MarketplaceTabBar } from './MarketplaceTabBar';
 import { CategoryBar } from './CategoryBar';
@@ -21,6 +22,7 @@ import { useCreatorSearch } from './hooks/useCreatorSearch';
 import { useInfiniteCreators } from './hooks/useInfiniteCreators';
 import { useOrgSearch } from './hooks/useOrgSearch';
 import { useInfiniteOrgs } from './hooks/useInfiniteOrgs';
+import { useMarketplaceSearch } from '@/hooks/useMarketplaceSearch';
 import { useAuth } from '@/hooks/useAuth';
 import { useCreatorProfile } from '@/hooks/useCreatorProfile';
 import { getBunnyThumbnailUrl } from '@/hooks/useHLSPlayer';
@@ -35,6 +37,15 @@ export default function MarketplacePage() {
   const { creators, featured, newTalent, topRated, recommended, totalCount, isPersonalized } =
     useCreatorSearch(filters);
   const { visibleCreators, hasMore, loadMore, reset } = useInfiniteCreators(creators);
+
+  // Nuevo hook de búsqueda con ranking AI
+  const marketplaceSearch = useMarketplaceSearch();
+  const {
+    creators: aiCreators,
+    isLoading: aiLoading,
+    aiMode,
+    trackInteraction,
+  } = marketplaceSearch;
 
   // Org search
   const { orgs, totalCount: orgTotalCount } = useOrgSearch(filters);
@@ -90,9 +101,11 @@ export default function MarketplacePage() {
 
   const handleCreatorClick = useCallback(
     (id: string) => {
+      // Track click para mejorar el algoritmo de ranking
+      trackInteraction(id, 'click');
       navigate(`/marketplace/creator/${id}`);
     },
-    [navigate],
+    [navigate, trackInteraction],
   );
 
   const handleOrgClick = useCallback(
@@ -202,47 +215,9 @@ export default function MarketplacePage() {
         {/* Sticky header area */}
         <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-xl border-b border-white/5">
           <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
-            {/* Search bar - AI mode toggle */}
-            <div className="py-4 space-y-2">
-              <div className="flex items-center gap-2 mb-2">
-                <button
-                  onClick={() => setAiSearchMode(false)}
-                  className={cn(
-                    "px-3 py-1 rounded-full text-xs transition-colors",
-                    !aiSearchMode
-                      ? "bg-purple-600 text-white"
-                      : "bg-white/5 text-gray-400 hover:text-white"
-                  )}
-                >
-                  Búsqueda normal
-                </button>
-                <button
-                  onClick={() => setAiSearchMode(true)}
-                  className={cn(
-                    "px-3 py-1 rounded-full text-xs transition-colors flex items-center gap-1",
-                    aiSearchMode
-                      ? "bg-purple-600 text-white"
-                      : "bg-white/5 text-gray-400 hover:text-white"
-                  )}
-                >
-                  <Sparkles className="h-3 w-3" />
-                  AI Search
-                </button>
-              </div>
-
-              {aiSearchMode ? (
-                <AISearchInput onFiltersChange={handleAIFiltersChange} />
-              ) : (
-                <MarketplaceSearchBar
-                  search={filters.search}
-                  country={filters.country}
-                  contentTypes={filters.content_type}
-                  onSearchChange={handleSearchChange}
-                  onCountryChange={v => updateFilter('country', v)}
-                  onContentTypesChange={v => updateFilter('content_type', v)}
-                  onSubmit={handleSearchSubmit}
-                />
-              )}
+            {/* Search bar - AI mode toggle con ranking */}
+            <div className="py-4">
+              <MarketplaceSearchToggle hook={marketplaceSearch} />
             </div>
 
             {/* Top-level tab bar: Creadores / Agencias / Campañas */}
