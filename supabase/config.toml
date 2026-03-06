@@ -511,3 +511,8 @@ verify_jwt = false
 
 [functions.send-support-email]
 verify_jwt = false
+
+[functions.marketplace-score-updater]
+# Worker de recálculo de scores de ranking
+# Ejecutar como cron diario
+verify_jwt = false
