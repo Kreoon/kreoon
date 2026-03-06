@@ -29,6 +29,19 @@ export interface MarketplaceCreator {
   is_subscribed?: boolean;
   /** Introductory discount % for first hires (Airbnb model) — null = not opted in */
   introductory_discount_pct?: number | null;
+  /** Organization this creator belongs to */
+  organization_id?: string | null;
+  organization_name?: string | null;
+  organization_logo?: string | null;
+  /** Creator has Talent DNA profile applied */
+  has_talent_dna?: boolean;
+  /** Experience level from Talent DNA */
+  experience_level?: 'beginner' | 'intermediate' | 'advanced' | 'expert' | null;
+  /** Content style from Talent DNA */
+  content_style?: {
+    tone_descriptors?: string[];
+    primary_style?: string;
+  } | null;
 }
 
 export interface PortfolioMedia {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MapPin, Star, CheckCircle2, Share2, Heart, Circle, Gift, Lock, UserPlus } from 'lucide-react';
+import { MapPin, Star, CheckCircle2, Share2, Heart, Circle, Gift, Lock, UserPlus, Dna } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MarketplaceRoleBadge } from '../roles/MarketplaceRoleBadge';
 import { RecruitCreatorDialog } from './RecruitCreatorDialog';
@@ -129,6 +129,13 @@ export function CreatorHeader({ creator, hasPaidPlan = false }: CreatorHeaderPro
               >
                 {LEVEL_LABELS[creator.level]}
               </span>
+              {/* Talent DNA Badge */}
+              {creator.has_talent_dna && (
+                <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white">
+                  <Dna className="h-3 w-3" />
+                  Perfil ADN
+                </span>
+              )}
             </div>
 
             {/* Location */}

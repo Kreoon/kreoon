@@ -56,6 +56,7 @@ import { AITokensPanelTrigger } from "@/components/ai/AITokensPanel";
 import { Badge } from "@/components/ui/badge";
 import { useWhiteLabel } from "@/hooks/useWhiteLabel";
 import { useReferralGate } from "@/hooks/useReferralGate";
+import { useUserPlanContext } from "@/hooks/useUserPlanContext";
 import { Key } from "lucide-react";
 
 interface NavItem {
@@ -217,6 +218,42 @@ const clientSections: NavSection[] = [
   { label: "CONFIG", items: CONFIG_ITEMS }
 ];
 
+// Talent users with basic/free plan in an org - Limited access
+// Only: Dashboard, Board, Content, Scripts, Social Hub, Marketplace, Campaigns, Wallet, Profile, Plan, Settings
+const basicTalentInOrgSections: NavSection[] = [
+  {
+    label: "KREOON STUDIO",
+    items: [
+      { name: "Dashboard", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+      { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
+      { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
+      { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+    ]
+  },
+  {
+    label: "SOCIAL",
+    items: [
+      { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
+    ]
+  },
+  {
+    label: "MARKETPLACE",
+    items: [
+      { name: "Explorar", href: "/marketplace", icon: Store, tourId: "sidebar-mkt-browse" },
+      { name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone, tourId: "sidebar-mkt-campaigns" },
+      { name: "Wallet", href: "/wallet", icon: Wallet, tourId: "sidebar-mkt-wallet" },
+    ]
+  },
+  {
+    label: "CONFIG",
+    items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
+      { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
+      { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+    ]
+  }
+];
+
 // Freelance users (no org) - Plan Básico Gratis
 // Dashboard, Tablero, Marketplace, Campañas, Wallet, Perfil, Social Hub
 const freelanceSections: NavSection[] = [
@@ -321,6 +358,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const { marketplaceEnabled, clientMarketplaceEnabled } = useOrgMarketplace();
   const { effectivePlatformName, effectiveStudioLabel, effectiveMarketplaceLabel, effectiveLogoUrl, isWhiteLabelActive } = useWhiteLabel();
   const { isUnlocked, isGateLoading } = useReferralGate();
+  const { shouldUseReducedMenu, usePersonalCoins } = useUserPlanContext();
   const [showClientSelector, setShowClientSelector] = useState(false);
   const [currentClientName, setCurrentClientName] = useState<string | null>(null);
   const [clientCount, setClientCount] = useState(0);
@@ -439,6 +477,12 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       return lockedUserSections;
     }
 
+    // Talent in org with basic/free personal plan - limited menu
+    // This takes priority over role-based sections for these users
+    if (shouldUseReducedMenu && !isPlatformAdmin && !isPlatformRoot) {
+      return basicTalentInOrgSections;
+    }
+
     // Independent users (no org) - differentiate between clients and freelancers
     if (isFreelanceUser && (isUnlocked || activeIsClient)) {
       // Brand members/clients get marketplace + client sections
@@ -523,7 +567,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       ...(!effectiveMktEnabled && !activeIsClient ? [recruitSection] : []),
       ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" }] }]),
     ];
-  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, isFreelanceUser, activeGroup, isUnlocked, isGateLoading]);
+  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, isFreelanceUser, activeGroup, isUnlocked, isGateLoading, shouldUseReducedMenu]);
 
   // Collapsible sections state — auto-expand section containing active route
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});

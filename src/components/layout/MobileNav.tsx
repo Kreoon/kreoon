@@ -55,6 +55,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWhiteLabel } from "@/hooks/useWhiteLabel";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { useReferralGate } from "@/hooks/useReferralGate";
+import { useUserPlanContext } from "@/hooks/useUserPlanContext";
 
 interface NavItem {
   name: string;
@@ -250,6 +251,41 @@ const lockedUserSections: NavSection[] = [
   }
 ];
 
+// Talent users with basic/free plan in an org - Limited access
+const basicTalentInOrgSections: NavSection[] = [
+  {
+    label: "KREOON STUDIO",
+    items: [
+      { name: "Dashboard", href: "/creator-dashboard", icon: LayoutDashboard },
+      { name: "Producciones", href: "/board", icon: Kanban },
+      { name: "Portafolio", href: "/content", icon: FileText },
+      { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
+    ]
+  },
+  {
+    label: "SOCIAL",
+    items: [
+      { name: "Social Hub", href: "/social-hub", icon: Share2 },
+    ]
+  },
+  {
+    label: "MARKETPLACE",
+    items: [
+      { name: "Explorar", href: "/marketplace", icon: Store },
+      { name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone },
+      { name: "Wallet", href: "/wallet", icon: Wallet },
+    ]
+  },
+  {
+    label: "CONFIG",
+    items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
+      { name: "Plan", href: "/planes", icon: Crown },
+      { name: "Settings", href: "/settings", icon: Settings },
+    ]
+  }
+];
+
 // Marketplace sections — mirrors Sidebar.tsx
 function getMarketplaceSections(activeGroup: PermissionGroup | null, isFreelance: boolean = false): NavSection[] {
   const items: NavItem[] = [
@@ -301,6 +337,7 @@ export function MobileNav() {
   const { effectivePlatformName, effectiveStudioLabel, effectiveMarketplaceLabel, effectiveLogoUrl, isWhiteLabelActive } = useWhiteLabel();
   const { isImpersonating, effectiveRoles, impersonationTarget } = useImpersonation();
   const { isUnlocked, isGateLoading } = useReferralGate();
+  const { shouldUseReducedMenu } = useUserPlanContext();
 
   // Detect freelance user: has no org and is not a platform admin
   const isFreelanceUser = !profile?.current_organization_id && !isPlatformAdmin && !isPlatformRoot;
@@ -418,6 +455,11 @@ export function MobileNav() {
       return lockedUserSections;
     }
 
+    // Talent in org with basic/free personal plan - limited menu
+    if (shouldUseReducedMenu && !isPlatformAdmin && !isPlatformRoot) {
+      return basicTalentInOrgSections;
+    }
+
     // Independent users (no org) - differentiate between clients and freelancers
     if (isFreelanceUser && (isUnlocked || activeIsClient)) {
       const mktSections = getMarketplaceSections(activeGroup, !activeIsClient);
@@ -493,7 +535,7 @@ export function MobileNav() {
       ...(!effectiveMktEnabled && !activeIsClient ? [recruitSection] : []),
       ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Settings", href: "/settings", icon: Settings }] }]),
     ];
-  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, activeGroup, isUnlocked, isGateLoading, isFreelanceUser]);
+  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, activeGroup, isUnlocked, isGateLoading, isFreelanceUser, shouldUseReducedMenu]);
 
   // Auto-expand section with active route
   const pathname = location.pathname;

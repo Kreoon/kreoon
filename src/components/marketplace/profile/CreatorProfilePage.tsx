@@ -150,6 +150,10 @@ function dbToCreatorFullProfile(
       : `< ${profile.response_time_hours} hrs`,
     delivery_time: '3-7 días',
     exchange_conditions: profile.exchange_conditions || undefined,
+    // Talent DNA fields
+    has_talent_dna: profile.has_talent_dna,
+    experience_level: profile.experience_level,
+    content_style: profile.content_style,
   } as CreatorFullProfile;
 }
 

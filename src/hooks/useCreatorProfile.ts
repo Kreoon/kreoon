@@ -41,6 +41,13 @@ export interface CreatorProfileData {
   showreel_thumbnail: string | null;
   created_at: string;
   updated_at: string;
+  // Talent DNA fields
+  has_talent_dna?: boolean;
+  experience_level?: 'beginner' | 'intermediate' | 'advanced' | 'expert' | null;
+  content_style?: {
+    tone_descriptors?: string[];
+    primary_style?: string;
+  } | null;
 }
 
 export interface ProfileCustomization {
@@ -136,6 +143,10 @@ export function useCreatorProfile(options: UseCreatorProfileOptions = {}): UseCr
     showreel_thumbnail: row.showreel_thumbnail as string | null,
     created_at: row.created_at as string || '',
     updated_at: row.updated_at as string || '',
+    // Talent DNA fields
+    has_talent_dna: (row.has_talent_dna as boolean) || false,
+    experience_level: row.experience_level as 'beginner' | 'intermediate' | 'advanced' | 'expert' | null,
+    content_style: row.content_style as { tone_descriptors?: string[]; primary_style?: string } | null,
   });
 
   const fetchProfile = useCallback(async () => {
