@@ -1,10 +1,18 @@
 import { useState } from 'react';
-import { Globe, Clock, Smartphone } from 'lucide-react';
+import { Globe, Clock, Smartphone, Award, Palette } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { CreatorFullProfile } from '../types/marketplace';
 
 interface AboutSectionProps {
   creator: CreatorFullProfile;
 }
+
+const EXPERIENCE_LABELS: Record<string, { label: string; color: string }> = {
+  beginner: { label: 'Principiante', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+  intermediate: { label: 'Intermedio', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
+  advanced: { label: 'Avanzado', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
+  expert: { label: 'Experto', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+};
 
 /** Strip contact info from bio text: emails, phone numbers, URLs, WhatsApp mentions, @handles */
 function sanitizeBio(text: string): string {
@@ -67,6 +75,38 @@ export function AboutSection({ creator }: AboutSectionProps) {
           <div className="flex items-center gap-2.5 text-gray-400 text-sm">
             <Smartphone className="h-4 w-4 flex-shrink-0" />
             <span>Plataformas: {creator.platforms.join(', ')}</span>
+          </div>
+        )}
+
+        {/* Experience Level - from Talent DNA */}
+        {creator.experience_level && EXPERIENCE_LABELS[creator.experience_level] && (
+          <div className="flex items-center gap-2.5 text-sm">
+            <Award className="h-4 w-4 flex-shrink-0 text-gray-400" />
+            <span
+              className={cn(
+                'px-2 py-0.5 rounded-full text-xs font-medium border',
+                EXPERIENCE_LABELS[creator.experience_level].color
+              )}
+            >
+              {EXPERIENCE_LABELS[creator.experience_level].label}
+            </span>
+          </div>
+        )}
+
+        {/* Content Style - from Talent DNA */}
+        {creator.content_style?.tone_descriptors && creator.content_style.tone_descriptors.length > 0 && (
+          <div className="flex items-start gap-2.5 text-sm">
+            <Palette className="h-4 w-4 flex-shrink-0 text-gray-400 mt-0.5" />
+            <div className="flex flex-wrap gap-1.5">
+              {creator.content_style.tone_descriptors.slice(0, 5).map((style, idx) => (
+                <span
+                  key={idx}
+                  className="px-2 py-0.5 rounded-full text-xs bg-white/5 text-gray-300 border border-white/10"
+                >
+                  {style}
+                </span>
+              ))}
+            </div>
           </div>
         )}
       </div>

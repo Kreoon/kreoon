@@ -122,6 +122,10 @@ const mapProfileRow = (row: Record<string, unknown>): CreatorProfileData => ({
   showreel_thumbnail: row.showreel_thumbnail as string | null,
   created_at: (row.created_at as string) || '',
   updated_at: (row.updated_at as string) || '',
+  // Talent DNA fields
+  has_talent_dna: (row.has_talent_dna as boolean) || false,
+  experience_level: row.experience_level as 'beginner' | 'intermediate' | 'advanced' | 'expert' | null,
+  content_style: row.content_style as { tone_descriptors?: string[]; primary_style?: string } | null,
 });
 
 const mapPortfolioRow = (row: Record<string, unknown>): PortfolioItemData => ({

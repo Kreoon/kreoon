@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import {
   User, Mail, Phone, MapPin, FileText, Globe, Instagram,
   Facebook, Twitter, Youtube, Linkedin, ChevronRight,
-  AlertCircle, CheckCircle2, Loader2
+  AlertCircle, CheckCircle2, Loader2, AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +38,7 @@ const profileSchema = z.object({
   document_type: z.string().min(1, 'Selecciona tipo de documento'),
   document_number: z.string().min(3, 'Número de documento requerido'),
   date_of_birth: z.string().min(1, 'Fecha de nacimiento requerida'),
+  gender: z.enum(['male', 'female', 'other'], { required_error: 'Selecciona tu sexo' }),
   social_instagram: z.string().optional(),
   social_facebook: z.string().optional(),
   social_tiktok: z.string().optional(),
@@ -97,6 +98,8 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
   const [selectedCountry, setSelectedCountry] = useState(existingProfileData.country || '');
   const [showCustomCity, setShowCustomCity] = useState(false);
   const [customCityValue, setCustomCityValue] = useState('');
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const {
     register,
@@ -118,6 +121,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
       document_type: existingProfileData.document_type || '',
       document_number: existingProfileData.document_number || '',
       date_of_birth: existingProfileData.date_of_birth || '',
+      gender: existingProfileData.gender || undefined,
       social_instagram: existingProfileData.social_instagram || '',
       social_facebook: existingProfileData.social_facebook || '',
       social_tiktok: existingProfileData.social_tiktok || '',
@@ -208,6 +212,28 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
     }
   }, [saveProfileData, usernameStatus, onComplete]);
 
+  // Manejar errores de validación
+  const handleFormSubmit = useCallback((e: React.FormEvent) => {
+    setSubmitAttempted(true);
+    // Dejar que react-hook-form maneje el submit
+  }, []);
+
+  // Scroll al primer error cuando hay errores después de intentar enviar
+  useEffect(() => {
+    if (submitAttempted && Object.keys(errors).length > 0) {
+      // Encontrar el primer campo con error y hacer scroll
+      const firstErrorKey = Object.keys(errors)[0];
+      const errorElement = formRef.current?.querySelector(`[name="${firstErrorKey}"]`) ||
+                          formRef.current?.querySelector(`[data-field="${firstErrorKey}"]`);
+      if (errorElement) {
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        // Si no encontramos el elemento, scroll al inicio del form
+        formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  }, [errors, submitAttempted]);
+
   return (
     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 md:p-8">
       {/* Header */}
@@ -221,7 +247,24 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <form ref={formRef} onSubmit={(e) => { handleFormSubmit(e); handleSubmit(onSubmit)(e); }} className="space-y-8">
+        {/* Mensaje de error global cuando hay campos faltantes */}
+        {submitAttempted && Object.keys(errors).length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-start gap-3"
+          >
+            <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-red-400 font-medium">Faltan campos obligatorios</p>
+              <p className="text-red-400/70 text-sm mt-1">
+                Por favor completa todos los campos marcados con * antes de continuar.
+                {(errors as any).social_network && ' Recuerda agregar al menos una red social.'}
+              </p>
+            </div>
+          </motion.div>
+        )}
         {/* Sección: Información Personal */}
         <section>
           <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -231,22 +274,28 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Nombre completo */}
-            <div className="space-y-2">
+            <div className="space-y-2" data-field="full_name">
               <Label className="text-white/90">
                 Nombre completo <span className="text-red-400">*</span>
               </Label>
               <Input
                 {...register('full_name')}
                 placeholder="Tu nombre completo"
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                className={cn(
+                  "bg-white/5 border-white/10 text-white placeholder:text-white/40",
+                  errors.full_name && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
+                )}
               />
               {errors.full_name && (
-                <p className="text-xs text-red-400">{errors.full_name.message}</p>
+                <p className="text-xs text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.full_name.message}
+                </p>
               )}
             </div>
 
             {/* Username */}
-            <div className="space-y-2">
+            <div className="space-y-2" data-field="username">
               <Label className="text-white/90">
                 Username <span className="text-red-400">*</span>
               </Label>
@@ -255,7 +304,10 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                 <Input
                   {...register('username')}
                   placeholder="tu_username"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40 pl-8 pr-10"
+                  className={cn(
+                    "bg-white/5 border-white/10 text-white placeholder:text-white/40 pl-8 pr-10",
+                    (errors.username || usernameStatus === 'taken') && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
+                  )}
                   onChange={(e) => {
                     const value = e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, '');
                     setValue('username', value);
@@ -274,15 +326,21 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                 </div>
               </div>
               {errors.username && (
-                <p className="text-xs text-red-400">{errors.username.message}</p>
+                <p className="text-xs text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.username.message}
+                </p>
               )}
               {usernameStatus === 'taken' && (
-                <p className="text-xs text-red-400">Este username ya está en uso</p>
+                <p className="text-xs text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  Este username ya está en uso
+                </p>
               )}
             </div>
 
             {/* Email */}
-            <div className="space-y-2">
+            <div className="space-y-2" data-field="email">
               <Label className="text-white/90">
                 Correo electrónico <span className="text-red-400">*</span>
               </Label>
@@ -297,12 +355,15 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                 />
               </div>
               {errors.email && (
-                <p className="text-xs text-red-400">{errors.email.message}</p>
+                <p className="text-xs text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
             {/* Teléfono */}
-            <div className="space-y-2">
+            <div className="space-y-2" data-field="phone">
               <Label className="text-white/90">
                 Teléfono <span className="text-red-400">*</span>
               </Label>
@@ -312,29 +373,70 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                   {...register('phone')}
                   type="tel"
                   placeholder="+57 300 123 4567"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40 pl-10"
+                  className={cn(
+                    "bg-white/5 border-white/10 text-white placeholder:text-white/40 pl-10",
+                    errors.phone && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
+                  )}
                 />
               </div>
               {errors.phone && (
-                <p className="text-xs text-red-400">{errors.phone.message}</p>
+                <p className="text-xs text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.phone.message}
+                </p>
               )}
             </div>
 
             {/* Fecha de nacimiento */}
-            <div className="space-y-2 md:col-span-2">
+            <div className="space-y-2" data-field="date_of_birth">
               <Label className="text-white/90">
                 Fecha de nacimiento <span className="text-red-400">*</span>
               </Label>
               <Input
                 {...register('date_of_birth')}
                 type="date"
-                className="bg-white/5 border-white/10 text-white [&::-webkit-calendar-picker-indicator]:invert"
+                className={cn(
+                  "bg-white/5 border-white/10 text-white [&::-webkit-calendar-picker-indicator]:invert",
+                  errors.date_of_birth && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
+                )}
                 max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
               />
               {errors.date_of_birth && (
-                <p className="text-xs text-red-400">{errors.date_of_birth.message}</p>
+                <p className="text-xs text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.date_of_birth.message}
+                </p>
               )}
               <p className="text-xs text-white/40">Debes ser mayor de 18 años para usar KREOON</p>
+            </div>
+
+            {/* Sexo */}
+            <div className="space-y-2" data-field="gender">
+              <Label className="text-white/90">
+                Sexo <span className="text-red-400">*</span>
+              </Label>
+              <Select
+                value={watch('gender') || ''}
+                onValueChange={(value) => setValue('gender', value as 'male' | 'female' | 'other')}
+              >
+                <SelectTrigger className={cn(
+                  "bg-white/5 border-white/10 text-white",
+                  errors.gender && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
+                )}>
+                  <SelectValue placeholder="Selecciona tu sexo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="male">Masculino</SelectItem>
+                  <SelectItem value="female">Femenino</SelectItem>
+                  <SelectItem value="other">Otro</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.gender && (
+                <p className="text-xs text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.gender.message}
+                </p>
+              )}
             </div>
           </div>
         </section>
@@ -348,15 +450,18 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* País */}
-            <div className="space-y-2">
+            <div className="space-y-2" data-field="country">
               <Label className="text-white/90">
                 País <span className="text-red-400">*</span>
               </Label>
               <Select
-                value={watch('country')}
+                value={watch('country') || ''}
                 onValueChange={(v) => setValue('country', v)}
               >
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                <SelectTrigger className={cn(
+                  "bg-white/5 border-white/10 text-white",
+                  errors.country && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
+                )}>
                   <SelectValue placeholder="Selecciona tu país" />
                 </SelectTrigger>
                 <SelectContent position="popper" sideOffset={4} className="max-h-60 overflow-y-auto z-[9999]">
@@ -369,19 +474,22 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                 </SelectContent>
               </Select>
               {errors.country && (
-                <p className="text-xs text-red-400">{errors.country.message}</p>
+                <p className="text-xs text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.country.message}
+                </p>
               )}
             </div>
 
             {/* Ciudad */}
-            <div className="space-y-2">
+            <div className="space-y-2" data-field="city">
               <Label className="text-white/90">
                 Ciudad <span className="text-red-400">*</span>
               </Label>
               {availableCities.length > 0 && !showCustomCity ? (
                 <>
                   <Select
-                    value={watch('city')}
+                    value={watch('city') || ''}
                     onValueChange={(v) => {
                       if (v === '__other__') {
                         setShowCustomCity(true);
@@ -392,7 +500,10 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                     }}
                     disabled={!countryValue}
                   >
-                    <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                    <SelectTrigger className={cn(
+                      "bg-white/5 border-white/10 text-white",
+                      errors.city && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
+                    )}>
                       <SelectValue placeholder={countryValue ? "Selecciona tu ciudad" : "Primero selecciona país"} />
                     </SelectTrigger>
                     <SelectContent position="popper" sideOffset={4} className="max-h-60 overflow-y-auto z-[9999]">
@@ -432,35 +543,47 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                 </div>
               )}
               {errors.city && (
-                <p className="text-xs text-red-400">{errors.city.message}</p>
+                <p className="text-xs text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.city.message}
+                </p>
               )}
             </div>
 
             {/* Dirección */}
-            <div className="space-y-2">
+            <div className="space-y-2" data-field="address">
               <Label className="text-white/90">
                 Dirección <span className="text-red-400">*</span>
               </Label>
               <Input
                 {...register('address')}
                 placeholder="Tu dirección completa"
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                className={cn(
+                  "bg-white/5 border-white/10 text-white placeholder:text-white/40",
+                  errors.address && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
+                )}
               />
               {errors.address && (
-                <p className="text-xs text-red-400">{errors.address.message}</p>
+                <p className="text-xs text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.address.message}
+                </p>
               )}
             </div>
 
             {/* Nacionalidad */}
-            <div className="space-y-2">
+            <div className="space-y-2" data-field="nationality">
               <Label className="text-white/90">
                 Nacionalidad <span className="text-red-400">*</span>
               </Label>
               <Select
-                value={watch('nationality')}
+                value={watch('nationality') || ''}
                 onValueChange={(v) => setValue('nationality', v)}
               >
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                <SelectTrigger className={cn(
+                  "bg-white/5 border-white/10 text-white",
+                  errors.nationality && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
+                )}>
                   <SelectValue placeholder="Selecciona tu nacionalidad" />
                 </SelectTrigger>
                 <SelectContent position="popper" sideOffset={4} className="max-h-60 overflow-y-auto z-[9999]">
@@ -473,7 +596,10 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                 </SelectContent>
               </Select>
               {errors.nationality && (
-                <p className="text-xs text-red-400">{errors.nationality.message}</p>
+                <p className="text-xs text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.nationality.message}
+                </p>
               )}
             </div>
           </div>
@@ -488,16 +614,19 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Tipo de documento */}
-            <div className="space-y-2">
+            <div className="space-y-2" data-field="document_type">
               <Label className="text-white/90">
                 Tipo de documento <span className="text-red-400">*</span>
               </Label>
               <Select
-                value={watch('document_type')}
+                value={watch('document_type') || ''}
                 onValueChange={(v) => setValue('document_type', v)}
                 disabled={!countryValue}
               >
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                <SelectTrigger className={cn(
+                  "bg-white/5 border-white/10 text-white",
+                  errors.document_type && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
+                )}>
                   <SelectValue placeholder={countryValue ? "Selecciona tipo" : "Primero selecciona país"} />
                 </SelectTrigger>
                 <SelectContent position="popper" sideOffset={4} className="max-h-60 overflow-y-auto z-[9999]">
@@ -509,12 +638,15 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                 </SelectContent>
               </Select>
               {errors.document_type && (
-                <p className="text-xs text-red-400">{errors.document_type.message}</p>
+                <p className="text-xs text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.document_type.message}
+                </p>
               )}
             </div>
 
             {/* Número de documento */}
-            <div className="space-y-2">
+            <div className="space-y-2" data-field="document_number">
               <Label className="text-white/90">
                 Número de documento <span className="text-red-400">*</span>
               </Label>
@@ -524,10 +656,16 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                   filteredDocTypes.find(dt => dt.id === watch('document_type'))?.format_hint ||
                   'Número de documento'
                 }
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                className={cn(
+                  "bg-white/5 border-white/10 text-white placeholder:text-white/40",
+                  errors.document_number && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
+                )}
               />
               {errors.document_number && (
-                <p className="text-xs text-red-400">{errors.document_number.message}</p>
+                <p className="text-xs text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.document_number.message}
+                </p>
               )}
             </div>
           </div>

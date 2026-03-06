@@ -66,6 +66,16 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // ─── Close expired UP seasons automatically ─────────
+    try {
+      const { data: seasonResult } = await supabase.rpc("close_expired_seasons");
+      if (seasonResult?.seasons_closed > 0) {
+        console.log(`Closed ${seasonResult.seasons_closed} expired season(s)`);
+      }
+    } catch (err) {
+      console.error("Error closing expired seasons:", err);
+    }
+
     // ─── Fetch all relevant content ──────────────────────
     const { data: allContent, error: contentErr } = await supabase
       .from("content")

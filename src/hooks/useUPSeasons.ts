@@ -311,6 +311,41 @@ export function useUPSeasons() {
     }
   };
 
+  /**
+   * Close all expired seasons automatically
+   */
+  const closeExpiredSeasons = async () => {
+    try {
+      const { data, error } = await supabase.rpc('close_expired_seasons');
+
+      if (error) throw error;
+
+      if (data?.seasons_closed > 0) {
+        toast({
+          title: 'Temporadas cerradas',
+          description: data.message
+        });
+        await fetchSeasons();
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error closing expired seasons:', error);
+      return null;
+    }
+  };
+
+  // Auto-check for expired seasons on mount
+  useEffect(() => {
+    if (activeSeason?.ends_at) {
+      const endsAt = new Date(activeSeason.ends_at);
+      const now = new Date();
+      if (endsAt < now) {
+        closeExpiredSeasons();
+      }
+    }
+  }, [activeSeason]);
+
   return {
     seasons,
     activeSeason,
@@ -318,6 +353,7 @@ export function useUPSeasons() {
     refetch: fetchSeasons,
     createSeason,
     closeSeason,
+    closeExpiredSeasons,
     createSeasonSnapshot,
     getSeasonSnapshots,
     getFinishedSeasonsWithResults
