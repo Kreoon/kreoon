@@ -16,6 +16,8 @@ import {
   generateFullResearch,
   pollResearchProgress,
   updateProductDNA,
+  regenerateProductDNAAnalysis,
+  pollProductDNAStatus,
 } from "@/lib/services/product-dna.service";
 import {
   MarketOverviewTab,
@@ -179,6 +181,7 @@ export function ProductDetailDialog({
   // Product DNA record (fetched from product_dna table)
   const [dnaRecord, setDnaRecord] = useState<ProductDNARecord | null>(null);
   const [dnaLoading, setDnaLoading] = useState(false);
+  const [dnaRegenerating, setDnaRegenerating] = useState(false);
 
   // Full research generation state
   const [researchGenerating, setResearchGenerating] = useState(false);
@@ -352,6 +355,36 @@ export function ProductDetailDialog({
     } catch {
       toast({ title: 'Error al guardar', variant: 'destructive' });
       return false;
+    }
+  };
+
+  const handleRegenerateDNA = async () => {
+    if (!dnaRecord) return;
+    setDnaRegenerating(true);
+    try {
+      const result = await regenerateProductDNAAnalysis(dnaRecord.id);
+      if (!result.success) {
+        toast({ title: 'Error', description: result.error || 'No se pudo regenerar', variant: 'destructive' });
+        setDnaRegenerating(false);
+        return;
+      }
+      toast({ title: 'Regenerando ADN...', description: 'El análisis se está procesando.' });
+      // Poll for completion
+      const cancelPoll = pollProductDNAStatus(dnaRecord.id, (status, data) => {
+        if (data) setDnaRecord(data);
+        if (status === 'ready' || status === 'failed') {
+          setDnaRegenerating(false);
+          if (status === 'ready') {
+            toast({ title: 'ADN regenerado', description: 'El análisis se completó con la nueva estructura.' });
+          } else {
+            toast({ title: 'Error en análisis', variant: 'destructive' });
+          }
+        }
+      }, 3000, 60);
+      // Cleanup on unmount handled by component lifecycle
+    } catch {
+      toast({ title: 'Error al regenerar', variant: 'destructive' });
+      setDnaRegenerating(false);
     }
   };
 
@@ -573,6 +606,8 @@ export function ProductDetailDialog({
                     productDna={dnaRecord}
                     editable={canEdit}
                     onSaveSection={handleDnaSaveSection}
+                    onRegenerate={handleRegenerateDNA}
+                    isRegenerating={dnaRegenerating}
                   />
 
                   {/* Generate Full Research — KIRO Branded (Solo admins de org pueden activar) */}
