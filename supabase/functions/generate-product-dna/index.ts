@@ -1203,263 +1203,281 @@ function formatEmotionalContext(ea: Record<string, unknown>): string {
     : "";
 }
 
-// ── JSON Structure Template ─────────────────────────────────────────────
-const JSON_STRUCTURE_TEMPLATE = `{
-  "market_research": {
-    "market_overview": "Descripcion del mercado (3-4 oraciones con datos)",
-    "market_size": "Tamaño estimado del mercado",
-    "growth_trends": ["tendencia 1", "tendencia 2", "tendencia 3"],
-    "opportunities": ["oportunidad 1", "oportunidad 2", "oportunidad 3"],
-    "threats": ["amenaza 1", "amenaza 2"],
-    "target_segments": [{"name": "Segmento", "description": "Desc", "size_estimate": "Tamaño", "priority": "high/medium/low"}],
-    "ideal_customer_profile": {
-      "demographics": "Edad, genero, ubicacion",
-      "psychographics": "Valores, intereses, estilo de vida",
-      "pain_points": ["dolor 1", "dolor 2", "dolor 3"],
-      "desires": ["deseo 1", "deseo 2", "deseo 3"],
-      "objections": ["objecion 1", "objecion 2"],
-      "buying_triggers": ["disparador 1", "disparador 2"]
-    }
+// ── Prompt Builders for 8 Sections ───────────────────────────────────────
+
+// Call 1: Seccion 1 (Contexto) + Seccion 2 (Mercado)
+function buildCall1Prompt(
+  extractedData: Record<string, unknown>,
+  perplexityResearch: string,
+  wizardResponses: Record<string, unknown>
+): string {
+  const serviceTypes = (wizardResponses.service_types as string[]) || [];
+  const goals = (wizardResponses.goals as string[]) || [];
+  const platforms = (wizardResponses.platforms as string[]) || [];
+  const audiences = (wizardResponses.audiences as string[]) || [];
+
+  return `Eres un estratega de marketing digital y creativo de contenido experto en LATAM.
+
+DATOS DEL ENCARGO:
+${JSON.stringify(extractedData, null, 2)}
+
+INVESTIGACION DE MERCADO:
+${perplexityResearch.substring(0, 15000)}
+
+WIZARD:
+- Tipos de servicio: ${serviceTypes.join(", ")}
+- Objetivos: ${goals.join(", ")}
+- Plataformas: ${platforms.join(", ")}
+- Audiencias: ${audiences.join(", ")} anos
+
+Genera SOLO este JSON (sin texto adicional, sin markdown):
+{
+  "seccion_1_contexto": {
+    "servicio_exacto": "string",
+    "objetivo_real": "string",
+    "palabras_clave_cliente": ["string"],
+    "restricciones_creativas": "string",
+    "referentes_estilo": "string",
+    "tono_emocional_audio": "string"
   },
-  "competitor_analysis": {
-    "direct_competitors": [{"name": "Nombre", "strengths": ["f1"], "weaknesses": ["d1"], "positioning": "Pos", "price_range": "Rango"}],
-    "indirect_competitors": ["competidor 1", "competidor 2"],
-    "competitive_advantage": "Ventaja competitiva principal",
-    "positioning_strategy": "Estrategia de posicionamiento",
-    "differentiation_points": ["diferenciador 1", "diferenciador 2"]
-  },
-  "strategy_recommendations": {
-    "value_proposition": "Propuesta de valor (1-2 oraciones)",
-    "brand_positioning": "Posicionamiento de marca",
-    "pricing_strategy": "Estrategia de precio",
-    "sales_angles": [{"angle_name": "Angulo", "headline": "Titular", "hook": "Gancho", "target_emotion": "Emocion"}],
-    "funnel_strategy": {"awareness": "Estrategia", "consideration": "Estrategia", "conversion": "Estrategia", "retention": "Estrategia"},
-    "content_pillars": ["pilar 1", "pilar 2", "pilar 3"],
-    "platforms": [{"name": "Plataforma", "strategy": "Estrategia", "content_types": ["tipo 1"], "priority": "high"}],
-    "hashtags": ["#hashtag1", "#hashtag2", "#hashtag3"],
-    "ads_targeting": {"interests": ["i1", "i2"], "behaviors": ["b1"], "keywords": ["k1"], "lookalike_sources": ["fuente 1"]}
-  },
-  "content_brief": {
-    "brand_voice": {"tone": ["tono 1", "tono 2"], "personality": "Personalidad", "do_say": ["frase 1"], "dont_say": ["frase 1"]},
-    "key_messages": ["mensaje 1", "mensaje 2"],
-    "tagline_suggestions": ["tagline 1", "tagline 2"],
-    "content_ideas": [{"title": "Idea", "format": "video/reel/carrusel", "objective": "awareness/conversion", "brief_description": "Descripcion"}],
-    "visual_direction": {"color_palette": ["#hex1", "#hex2"], "style": "Estilo visual", "mood": "Atmosfera"}
+  "seccion_2_mercado": {
+    "panorama_mercado": "string - 3-4 oraciones con datos concretos",
+    "tendencias_actuales": "string - que funciona HOY en el canal",
+    "competidores": [
+      {
+        "nombre": "string",
+        "promesa_principal": "string",
+        "precio_referencial": "string",
+        "fortaleza": "string",
+        "debilidad": "string",
+        "plataformas": ["string"]
+      }
+    ],
+    "gap_competitivo": "string - la oportunidad real",
+    "posicionamiento_sugerido": "string - como diferenciarse en ese canal"
   }
 }`;
-
-// ── Default Prompts (fallback if DB unavailable) ────────────────────────
-const DEFAULT_RESEARCH_PROMPT = `Eres un investigador de mercado y estratega de marketing digital EXPERTO especializado en LATAM.
-
-Tu tarea es realizar una investigación PROFUNDA y ACCIONABLE sobre el producto/servicio descrito.
-
-## 1. ANÁLISIS DE MERCADO (con datos reales)
-- Tamaño exacto del mercado en USD (con fuente y año)
-- Tasa de crecimiento anual (CAGR) del sector
-- 4-5 tendencias actuales con estadísticas específicas
-- Oportunidades de mercado con potencial cuantificado
-- Amenazas reales con impacto estimado
-- Países líderes en LATAM para este sector
-
-## 2. COMPETIDORES ESPECÍFICOS
-- NOMBRA 5+ competidores directos reales (empresas, apps, herramientas)
-- Para cada uno: fortalezas, debilidades, precio, posicionamiento
-- Competidores indirectos y sustitutos
-- Gaps de mercado que nadie está cubriendo
-- Qué hacen bien los líderes que podemos replicar
-
-## 3. CLIENTE IDEAL DETALLADO
-- Demografía exacta: edad, género, ubicación, ingresos, ocupación
-- Psicografía: valores, motivaciones, miedos, aspiraciones
-- Comportamiento online: plataformas que usa, horas activas, contenido que consume
-- 5 dolores/problemas específicos que tiene
-- 5 deseos/resultados que quiere lograr
-- Objeciones comunes antes de comprar
-- Triggers que lo hacen tomar acción
-
-## 4. ESTRATEGIA DE MARKETING
-- Propuesta de valor diferenciadora (en 1 oración potente)
-- 5 ángulos de venta diferentes con gancho emocional
-- Estrategia de precios basada en el mercado
-- Canales de adquisición más efectivos
-- Embudo de conversión recomendado
-
-## 5. CONTENIDO Y MARCA
-- Tono de voz recomendado (con ejemplos de frases)
-- 10 hashtags más relevantes del nicho
-- 5 ideas de contenido viral específicas
-- Mensajes que resuenan con la audiencia
-- Colores y estilo visual del sector
-
-IMPORTANTE:
-- Incluye DATOS REALES, NÚMEROS y FUENTES cuando sea posible
-- Menciona HERRAMIENTAS, APPS o TECNOLOGÍAS específicas relacionadas
-- Todo enfocado en LATAM (México, Colombia, Argentina, Brasil, Chile)
-- Sé ESPECÍFICO, no genérico. Nombres reales, cifras reales.`;
-
-const DEFAULT_STRUCTURE_PROMPT = `Eres un asistente que estructura informacion en JSON.
-Tu UNICA tarea es tomar la investigacion proporcionada y organizarla en el formato JSON especificado.
-
-REGLAS ESTRICTAS:
-1. Tu respuesta debe ser UNICAMENTE un objeto JSON valido
-2. El primer caracter debe ser {
-3. El ultimo caracter debe ser }
-4. NO incluyas texto, explicaciones ni markdown
-5. Usa la informacion de la investigacion para llenar cada campo
-6. Si falta informacion para algun campo, infiere basandote en el contexto
-7. Todo el contenido debe estar en español`;
-
-// ── System Prompt (legacy, kept for backward compat) ────────────────────
-const PRODUCT_DNA_SYSTEM_PROMPT = `Eres un API de analisis de mercado. Respondes EXCLUSIVAMENTE con JSON.
-
-INSTRUCCIONES CRITICAS:
-- Responde SOLO con un objeto JSON valido
-- El primer caracter de tu respuesta DEBE ser {
-- El ultimo caracter de tu respuesta DEBE ser }
-- NO escribas texto antes o despues del JSON
-- NO uses markdown, NO uses \`\`\`
-- NO digas "Aqui esta" ni "Este es" ni ninguna introduccion
-
-Analiza la informacion y genera un analisis estrategico para LATAM.
-
-REGLAS:
-1. Responde SOLO con JSON valido
-2. Todo en español
-3. Datos estrategicos y accionables
-4. Infiere lo que no se mencione
-
-ESTRUCTURA JSON REQUERIDA:
-
-{
-  "market_research": {
-    "market_overview": "Descripcion del mercado actual para este producto/servicio (3-4 oraciones con datos reales)",
-    "market_size": "Estimacion del tamaño del mercado (local e internacional si aplica)",
-    "growth_trends": ["tendencia 1", "tendencia 2", "tendencia 3"],
-    "opportunities": ["oportunidad de mercado 1", "oportunidad 2", "oportunidad 3"],
-    "threats": ["amenaza/riesgo 1", "amenaza 2"],
-    "target_segments": [
-      {
-        "name": "Segmento 1",
-        "description": "Descripcion del segmento",
-        "size_estimate": "Estimacion del tamaño",
-        "priority": "high"
-      },
-      {
-        "name": "Segmento 2",
-        "description": "Descripcion",
-        "size_estimate": "Estimacion",
-        "priority": "medium"
-      }
-    ],
-    "ideal_customer_profile": {
-      "demographics": "Edad, genero, ubicacion, nivel socioeconomico",
-      "psychographics": "Valores, intereses, estilo de vida",
-      "pain_points": ["dolor 1", "dolor 2", "dolor 3"],
-      "desires": ["deseo 1", "deseo 2", "deseo 3"],
-      "objections": ["objecion 1", "objecion 2", "objecion 3"],
-      "buying_triggers": ["disparador 1", "disparador 2"]
-    }
-  },
-  "competitor_analysis": {
-    "direct_competitors": [
-      {
-        "name": "Competidor 1",
-        "strengths": ["fortaleza 1", "fortaleza 2"],
-        "weaknesses": ["debilidad 1", "debilidad 2"],
-        "positioning": "Como se posiciona",
-        "price_range": "Rango de precios"
-      }
-    ],
-    "indirect_competitors": ["competidor indirecto 1", "competidor indirecto 2"],
-    "competitive_advantage": "Ventaja competitiva principal del producto",
-    "positioning_strategy": "Estrategia de posicionamiento recomendada",
-    "differentiation_points": ["diferenciador 1", "diferenciador 2", "diferenciador 3"]
-  },
-  "strategy_recommendations": {
-    "value_proposition": "Propuesta de valor unica en 1-2 oraciones",
-    "brand_positioning": "Posicionamiento de marca recomendado",
-    "pricing_strategy": "Estrategia de precio recomendada con justificacion",
-    "sales_angles": [
-      {
-        "angle_name": "Angulo 1",
-        "headline": "Titular de venta",
-        "hook": "Gancho para captar atencion",
-        "target_emotion": "Emocion que apela"
-      },
-      {
-        "angle_name": "Angulo 2",
-        "headline": "Titular de venta",
-        "hook": "Gancho",
-        "target_emotion": "Emocion"
-      },
-      {
-        "angle_name": "Angulo 3",
-        "headline": "Titular de venta",
-        "hook": "Gancho",
-        "target_emotion": "Emocion"
-      }
-    ],
-    "funnel_strategy": {
-      "awareness": "Estrategia de awareness",
-      "consideration": "Estrategia de consideracion",
-      "conversion": "Estrategia de conversion",
-      "retention": "Estrategia de retencion"
-    },
-    "content_pillars": ["pilar 1", "pilar 2", "pilar 3", "pilar 4"],
-    "platforms": [
-      {
-        "name": "Instagram",
-        "strategy": "Estrategia especifica para esta plataforma",
-        "content_types": ["tipo 1", "tipo 2"],
-        "priority": "high"
-      }
-    ],
-    "hashtags": ["#hashtag1", "#hashtag2", "#hashtag3", "#hashtag4", "#hashtag5"],
-    "ads_targeting": {
-      "interests": ["interes 1", "interes 2", "interes 3", "interes 4", "interes 5"],
-      "behaviors": ["comportamiento 1", "comportamiento 2"],
-      "keywords": ["keyword 1", "keyword 2", "keyword 3", "keyword 4", "keyword 5"],
-      "lookalike_sources": ["fuente 1", "fuente 2"]
-    }
-  },
-  "content_brief": {
-    "brand_voice": {
-      "tone": ["tono 1", "tono 2", "tono 3"],
-      "personality": "Personalidad de marca en 1-2 oraciones",
-      "do_say": ["frase que SI usar 1", "frase 2"],
-      "dont_say": ["frase que NO usar 1", "frase 2"]
-    },
-    "key_messages": ["mensaje clave 1", "mensaje clave 2", "mensaje clave 3"],
-    "tagline_suggestions": ["tagline 1", "tagline 2", "tagline 3"],
-    "content_ideas": [
-      {
-        "title": "Idea de contenido 1",
-        "format": "video/carrusel/reel/story",
-        "objective": "awareness/conversion/engagement",
-        "brief_description": "Descripcion breve del contenido"
-      },
-      {
-        "title": "Idea de contenido 2",
-        "format": "formato",
-        "objective": "objetivo",
-        "brief_description": "Descripcion"
-      },
-      {
-        "title": "Idea de contenido 3",
-        "format": "formato",
-        "objective": "objetivo",
-        "brief_description": "Descripcion"
-      }
-    ],
-    "visual_direction": {
-      "color_palette": ["#hex1", "#hex2", "#hex3"],
-      "style": "Estilo visual recomendado",
-      "mood": "Atmosfera/mood de la marca"
-    }
-  }
 }
 
-Responde UNICAMENTE con el JSON. Sin markdown, sin explicaciones, sin texto adicional.`;
+// Call 2: Seccion 3 (3 Avatares)
+function buildCall2Prompt(
+  extractedData: Record<string, unknown>,
+  perplexityResearch: string,
+  wizardResponses: Record<string, unknown>
+): string {
+  const goals = (wizardResponses.goals as string[]) || [];
+  const platforms = (wizardResponses.platforms as string[]) || [];
+  const audiences = (wizardResponses.audiences as string[]) || [];
+  const palabrasClave = (extractedData.palabras_clave_cliente as string[]) || [];
+
+  return `Eres un estratega de marketing digital experto en psicologia del consumidor
+y comportamiento de audiencias digitales en LATAM.
+
+PRODUCTO/SERVICIO: ${extractedData.servicio_exacto || "No especificado"}
+CANAL: ${platforms.join(", ")}
+AUDIENCIA: ${audiences.join(", ")} anos
+OBJETIVO: ${goals.join(", ")}
+PALABRAS DEL CLIENTE: ${palabrasClave.join(", ")}
+
+INVESTIGACION DE MERCADO:
+${perplexityResearch.substring(0, 12000)}
+
+Crea 3 avatares del cliente ideal. Cada avatar debe ser especifico,
+humano y basado en la investigacion real. No generico.
+
+Genera SOLO este JSON (sin texto adicional, sin markdown):
+{
+  "seccion_3_avatares": [
+    {
+      "id": "avatar_1",
+      "nombre_edad": "string - nombre ficticio + edad ej: Maria, 28 anos",
+      "situacion_actual": "string - donde esta hoy, que problema tiene",
+      "dolor_principal": "string - el dolor mas profundo y urgente",
+      "deseo_principal": "string - lo que realmente quiere lograr",
+      "objecion_principal": "string - por que dudaria en comprar",
+      "como_habla": ["frase textual 1", "frase textual 2", "frase textual 3"],
+      "trigger_de_compra": "string - que lo haria decidirse a actuar",
+      "nivel_consciencia": "inconsciente_del_problema|consciente_del_problema|consciente_de_la_solucion|consciente_del_producto"
+    },
+    {
+      "id": "avatar_2",
+      "nombre_edad": "string",
+      "situacion_actual": "string",
+      "dolor_principal": "string",
+      "deseo_principal": "string",
+      "objecion_principal": "string",
+      "como_habla": ["string"],
+      "trigger_de_compra": "string",
+      "nivel_consciencia": "string"
+    },
+    {
+      "id": "avatar_3",
+      "nombre_edad": "string",
+      "situacion_actual": "string",
+      "dolor_principal": "string",
+      "deseo_principal": "string",
+      "objecion_principal": "string",
+      "como_habla": ["string"],
+      "trigger_de_compra": "string",
+      "nivel_consciencia": "string"
+    }
+  ]
+}`;
+}
+
+// Call 3: Seccion 4 (10 Angulos) + Seccion 5 (10 Ideas)
+function buildCall3Prompt(
+  extractedData: Record<string, unknown>,
+  perplexityResearch: string,
+  avatares: unknown[],
+  wizardResponses: Record<string, unknown>
+): string {
+  const goals = (wizardResponses.goals as string[]) || [];
+  const platforms = (wizardResponses.platforms as string[]) || [];
+  const audiences = (wizardResponses.audiences as string[]) || [];
+
+  return `Eres un estratega creativo de contenido digital especialista en UGC,
+copywriting de alto impacto y produccion de contenido para ${platforms.join("/")}.
+
+PRODUCTO/SERVICIO: ${extractedData.servicio_exacto || "No especificado"}
+OBJETIVO: ${goals.join(", ")}
+CANAL: ${platforms.join(", ")}
+AUDIENCIA: ${audiences.join(", ")} anos
+RESTRICCIONES: ${extractedData.restricciones_creativas || "Ninguna especificada"}
+TONO EMOCIONAL DEL CLIENTE: ${extractedData.tono_emocional || "neutral"}
+
+AVATARES GENERADOS:
+${JSON.stringify(avatares, null, 2)}
+
+INVESTIGACION:
+${perplexityResearch.substring(0, 10000)}
+
+Genera SOLO este JSON (sin texto adicional, sin markdown):
+{
+  "seccion_4_angulos": [
+    {
+      "id": 1,
+      "tipo": "educativo|emocional|aspiracional|prueba_social|anti_objecion|transformacion|urgencia|comparativo|testimonial|error_comun",
+      "hook_apertura": "string - primera frase que detiene el scroll",
+      "desarrollo": "string - de que trata el cuerpo del video",
+      "cta": "string - accion especifica al final",
+      "avatar_objetivo": "avatar_1|avatar_2|avatar_3",
+      "fase_esfera": "enganche|solucion|remarketing|fidelizacion",
+      "uso_recomendado": "organico|ads|ambos"
+    }
+  ],
+  "seccion_5_ideas_contenido": [
+    {
+      "id": 1,
+      "titulo": "string",
+      "formato": "testimonial_selfie|antes_despues|tutorial|unboxing|broll|educativo|reto|pov",
+      "hook_variacion_1": "string",
+      "hook_variacion_2": "string",
+      "hook_variacion_3": "string",
+      "desarrollo": "string - estructura del cuerpo del video",
+      "cta": "string",
+      "duracion_recomendada": "string - ej: 15-30 seg, 30-60 seg",
+      "fase_esfera": "enganche|solucion|remarketing|fidelizacion",
+      "uso_recomendado": "organico|ads|ambos"
+    }
+  ]
+}
+
+IMPORTANTE:
+- Genera EXACTAMENTE 10 angulos en seccion_4_angulos
+- Genera EXACTAMENTE 10 ideas en seccion_5_ideas_contenido
+- Distribuir ideas: 3 enganche, 4 solucion, 2 remarketing, 1 fidelizacion`;
+}
+
+// Call 4: Seccion 6 (Organico) + Seccion 7 (Ads) + Seccion 8 (Brief)
+function buildCall4Prompt(
+  extractedData: Record<string, unknown>,
+  perplexityResearch: string,
+  angulos: unknown[],
+  wizardResponses: Record<string, unknown>
+): string {
+  const goals = (wizardResponses.goals as string[]) || [];
+  const platforms = (wizardResponses.platforms as string[]) || [];
+  const audiences = (wizardResponses.audiences as string[]) || [];
+
+  return `Eres un estratega digital senior especialista en growth de contenido organico
+y performance de campanas pagas en ${platforms.join("/")} para el mercado LATAM.
+
+PRODUCTO/SERVICIO: ${extractedData.servicio_exacto || "No especificado"}
+OBJETIVO: ${goals.join(", ")}
+CANAL: ${platforms.join(", ")}
+AUDIENCIA: ${audiences.join(", ")} anos
+RESTRICCIONES: ${extractedData.restricciones_creativas || "Ninguna"}
+
+INVESTIGACION:
+${perplexityResearch.substring(0, 8000)}
+
+ANGULOS E IDEAS GENERADOS:
+${JSON.stringify(angulos, null, 2).substring(0, 4000)}
+
+Genera SOLO este JSON (sin texto adicional, sin markdown):
+{
+  "seccion_6_estrategia_organica": {
+    "objetivo_organico": "string - que construye en el tiempo",
+    "distribucion_contenido": {
+      "viral": 25,
+      "valor": 40,
+      "venta": 25,
+      "personal": 10,
+      "justificacion": "string - por que esa distribucion para este caso"
+    },
+    "frecuencia_publicacion": "string - ej: 5 veces por semana",
+    "tipo_contenido_organico": "string - que formatos funcionan mejor organicamente",
+    "pilares_tematicos": ["pilar 1", "pilar 2", "pilar 3"],
+    "tono_organico": "string",
+    "metricas_organico": {
+      "retencion_objetivo": "string - ej: 50-70% del video",
+      "interacciones_clave": "string - jerarquia de interacciones importantes",
+      "frecuencia_revision": "string - cada cuanto revisar metricas"
+    },
+    "errores_comunes_organico": ["error 1", "error 2", "error 3"]
+  },
+  "seccion_7_estrategia_ads": {
+    "objetivo_campana": "conversiones|trafico|reconocimiento",
+    "estructura_campana": {
+      "frio": "string - como atacar audiencia nueva",
+      "tibio": "string - como atacar audiencia que ya interactuo",
+      "remarketing": "string - como reimpactar a quienes no compraron"
+    },
+    "publico_frio": {
+      "intereses": ["interes 1", "interes 2", "interes 3"],
+      "comportamientos": ["comportamiento 1", "comportamiento 2"],
+      "caracteristicas": "string - descripcion del publico frio ideal"
+    },
+    "publico_remarketing": "string - a quien reimpactar y con que mensaje",
+    "presupuesto_minimo_sugerido": "string - monto base recomendado",
+    "ideas_para_ads": "string - cuales de las 10 ideas son mas recomendadas para pauta y por que",
+    "estructura_creativo_ad": {
+      "hook": "string - duracion y objetivo (3-5 seg)",
+      "problema": "string - duracion y objetivo (5-10 seg)",
+      "solucion": "string - duracion y objetivo (15-30 seg)",
+      "cta": "string - duracion y objetivo (3-5 seg)"
+    },
+    "variaciones_recomendadas": "string - cuantas variaciones de hook probar",
+    "ctr_objetivo": "string - benchmark segun canal: Meta >1% / TikTok >1.5%",
+    "senales_de_escalar": "string - cuando y bajo que metricas escalar el presupuesto",
+    "senales_de_pausar": "string - cuando pausar un creativo"
+  },
+  "seccion_8_brief_creador": {
+    "tono_de_voz": "string",
+    "palabras_usar": ["palabra 1", "palabra 2", "palabra 3", "palabra 4", "palabra 5"],
+    "palabras_evitar": ["palabra 1", "palabra 2", "palabra 3"],
+    "indicaciones_visuales": "string - locacion, vestimenta, iluminacion, encuadre",
+    "especificaciones_tecnicas": "string - duracion, formato 9:16, calidad minima",
+    "cta_recomendado": "string - llamada a la accion exacta segun objetivo",
+    "restricciones_del_cliente": "string - lo que el cliente dijo que no quiere"
+  }
+}`;
+}
+
+// ── DEPRECATED: Placeholder para compatibilidad temporal ────────────────
+// Esta constante se elimina en Task 6 cuando se actualice el handler principal
+const JSON_STRUCTURE_TEMPLATE = "{}"; // Placeholder - no se usa en nuevo flujo
 
 // ── Main handler ────────────────────────────────────────────────────────
 Deno.serve(async (req: Request) => {
