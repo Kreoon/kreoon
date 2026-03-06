@@ -7,6 +7,7 @@ import {
   GOAL_OPTIONS,
   PLATFORM_OPTIONS,
   AUDIENCE_OPTIONS,
+  COUNTRY_OPTIONS,
 } from '@/lib/product-dna-questions';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -81,6 +82,7 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
   const [goals, setGoals] = useState<string[]>([]);
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [audiences, setAudiences] = useState<string[]>([]);
+  const [targetCountry, setTargetCountry] = useState<string>('latam');
 
   // Processing state
   const [processingStep, setProcessingStep] = useState<ProcessingStep>('idle');
@@ -208,6 +210,7 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
         goals,
         platforms,
         audiences,
+        target_country: targetCountry,
         transcription: transcriptionResult.transcription,
         emotional_analysis: transcriptionResult.emotional_analysis,
       };
@@ -463,6 +466,21 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
           </div>
         </SelectionPanel>
       </div>
+
+      {/* Country Selection - Full width single select */}
+      <SelectionPanel title="¿En qué mercado vendes?" emoji="🌎" subtitle="Selecciona uno">
+        <div className="flex flex-wrap gap-2">
+          {COUNTRY_OPTIONS.map((opt) => (
+            <ChipButton
+              key={opt.id}
+              label={opt.label}
+              emoji={opt.emoji}
+              selected={targetCountry === opt.id}
+              onClick={() => setTargetCountry(opt.id)}
+            />
+          ))}
+        </div>
+      </SelectionPanel>
 
       {/* Error */}
       {error && (

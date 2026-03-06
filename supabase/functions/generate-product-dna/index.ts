@@ -249,6 +249,22 @@ async function callPerplexityResearch(
   const goals = (wizardResponses.goals as string[]) || [];
   const platforms = (wizardResponses.platforms as string[]) || [];
   const audiences = (wizardResponses.audiences as string[]) || [];
+  const targetCountry = (wizardResponses.target_country as string) || "latam";
+
+  // Map country ID to display name
+  const countryNames: Record<string, string> = {
+    colombia: "Colombia",
+    mexico: "México",
+    argentina: "Argentina",
+    chile: "Chile",
+    peru: "Perú",
+    ecuador: "Ecuador",
+    spain: "España",
+    usa: "Estados Unidos",
+    usa_hispanic: "Estados Unidos (mercado hispano)",
+    latam: "LATAM (Latinoamérica)"
+  };
+  const mercadoNombre = countryNames[targetCountry] || "LATAM";
 
   const canalPrimario = extractedData.canal_primario || platforms[0] || "instagram";
   const servicioExacto = extractedData.servicio_exacto || "producto/servicio";
@@ -256,7 +272,8 @@ async function callPerplexityResearch(
   const systemPrompt = `Eres un estratega digital especialista en contenido para ${canalPrimario}.
 Tu investigacion debe ser ESPECIFICA para crear contenido de ${serviceTypes.join(" y ") || "video UGC"}
 con el objetivo de ${goals.join(" y ") || "vender"}.
-Enfocate en LATAM. Usa datos reales y actuales.`;
+MERCADO OBJETIVO: ${mercadoNombre}. Enfoca toda tu investigacion en este mercado especifico.
+Usa datos reales y actuales.`;
 
   const userPrompt = `Necesito una investigacion de mercado completa para crear contenido.
 
@@ -264,34 +281,35 @@ PRODUCTO/SERVICIO: ${servicioExacto}
 CANAL PRINCIPAL: ${platforms.join(", ") || "Instagram, TikTok"}
 AUDIENCIA: ${audiences.join(", ") || "25-34"} anos
 OBJETIVO: ${goals.join(", ") || "vender"}
+MERCADO: ${mercadoNombre}
 
 Investiga y dame:
 
 1. PANORAMA DEL MERCADO
-   - Estado actual del mercado para este producto/servicio en LATAM
-   - Tamano aproximado y tendencias actuales
-   - Que esta funcionando HOY en ${platforms.join("/") || "redes sociales"} para esta categoria
+   - Estado actual del mercado para este producto/servicio en ${mercadoNombre}
+   - Tamano aproximado y tendencias actuales en ${mercadoNombre}
+   - Que esta funcionando HOY en ${platforms.join("/") || "redes sociales"} para esta categoria en ${mercadoNombre}
 
-2. ANALISIS DE COMPETENCIA (5 competidores reales y activos)
+2. ANALISIS DE COMPETENCIA (5 competidores reales y activos en ${mercadoNombre})
    Para cada uno: nombre, promesa principal, precio referencial si aplica,
    principal fortaleza en contenido, principal debilidad, que plataformas usa
 
-3. GAP COMPETITIVO
+3. GAP COMPETITIVO EN ${mercadoNombre}
    - Que NO estan haciendo bien los competidores en contenido
-   - La oportunidad real de diferenciacion
+   - La oportunidad real de diferenciacion en este mercado
 
-4. COMPORTAMIENTO DE LA AUDIENCIA EN ${platforms.join("/") || "REDES"}
-   - Como consume contenido esta audiencia en ese canal
+4. COMPORTAMIENTO DE LA AUDIENCIA EN ${platforms.join("/") || "REDES"} (${mercadoNombre})
+   - Como consume contenido esta audiencia en ese canal en ${mercadoNombre}
    - Que formatos generan mas engagement
    - Que tipo de hooks detienen el scroll
-   - Horarios y frecuencias de mayor actividad
+   - Horarios y frecuencias de mayor actividad en ${mercadoNombre}
 
-5. TENDENCIAS DE CONTENIDO ACTUALES
-   - Formatos que estan funcionando ahora mismo
+5. TENDENCIAS DE CONTENIDO ACTUALES EN ${mercadoNombre}
+   - Formatos que estan funcionando ahora mismo en ${mercadoNombre}
    - Estilos de video que generan conversion en este nicho
-   - Hashtags y terminos relevantes
+   - Hashtags y terminos relevantes para ${mercadoNombre}
 
-Responde con datos reales, especificos y actuales. Evita generalidades.`;
+Responde con datos reales, especificos y actuales de ${mercadoNombre}. Evita generalidades.`;
 
   console.log("[generate-product-dna] Step 2: Perplexity research (content-focused)...");
 
@@ -657,8 +675,11 @@ function buildCall1Prompt(
   const goals = (wizardResponses.goals as string[]) || [];
   const platforms = (wizardResponses.platforms as string[]) || [];
   const audiences = (wizardResponses.audiences as string[]) || [];
+  const targetCountry = (wizardResponses.target_country as string) || "latam";
+  const countryNames: Record<string, string> = { colombia: "Colombia", mexico: "México", argentina: "Argentina", chile: "Chile", peru: "Perú", ecuador: "Ecuador", spain: "España", usa: "Estados Unidos", usa_hispanic: "USA Hispano", latam: "LATAM" };
+  const mercado = countryNames[targetCountry] || "LATAM";
 
-  return `Eres un estratega de marketing digital y creativo de contenido experto en LATAM.
+  return `Eres un estratega de marketing digital y creativo de contenido experto en ${mercado}.
 
 DATOS DEL ENCARGO:
 ${JSON.stringify(extractedData, null, 2)}
@@ -671,6 +692,7 @@ WIZARD:
 - Objetivos: ${goals.join(", ")}
 - Plataformas: ${platforms.join(", ")}
 - Audiencias: ${audiences.join(", ")} anos
+- Mercado objetivo: ${mercado}
 
 Genera SOLO este JSON (sin texto adicional, sin markdown):
 {
@@ -711,14 +733,18 @@ function buildCall2Prompt(
   const platforms = (wizardResponses.platforms as string[]) || [];
   const audiences = (wizardResponses.audiences as string[]) || [];
   const palabrasClave = (extractedData.palabras_clave_cliente as string[]) || [];
+  const targetCountry = (wizardResponses.target_country as string) || "latam";
+  const countryNames: Record<string, string> = { colombia: "Colombia", mexico: "México", argentina: "Argentina", chile: "Chile", peru: "Perú", ecuador: "Ecuador", spain: "España", usa: "Estados Unidos", usa_hispanic: "USA Hispano", latam: "LATAM" };
+  const mercado = countryNames[targetCountry] || "LATAM";
 
   return `Eres un estratega de marketing digital experto en psicologia del consumidor
-y comportamiento de audiencias digitales en LATAM.
+y comportamiento de audiencias digitales en ${mercado}.
 
 PRODUCTO/SERVICIO: ${extractedData.servicio_exacto || "No especificado"}
 CANAL: ${platforms.join(", ")}
 AUDIENCIA: ${audiences.join(", ")} anos
 OBJETIVO: ${goals.join(", ")}
+MERCADO: ${mercado}
 PALABRAS DEL CLIENTE: ${palabrasClave.join(", ")}
 
 INVESTIGACION DE MERCADO:
@@ -777,13 +803,17 @@ function buildCall3Prompt(
   const goals = (wizardResponses.goals as string[]) || [];
   const platforms = (wizardResponses.platforms as string[]) || [];
   const audiences = (wizardResponses.audiences as string[]) || [];
+  const targetCountry = (wizardResponses.target_country as string) || "latam";
+  const countryNames: Record<string, string> = { colombia: "Colombia", mexico: "México", argentina: "Argentina", chile: "Chile", peru: "Perú", ecuador: "Ecuador", spain: "España", usa: "Estados Unidos", usa_hispanic: "USA Hispano", latam: "LATAM" };
+  const mercado = countryNames[targetCountry] || "LATAM";
 
   return `Eres un estratega creativo de contenido digital especialista en UGC,
-copywriting de alto impacto y produccion de contenido para ${platforms.join("/")}.
+copywriting de alto impacto y produccion de contenido para ${platforms.join("/")} en ${mercado}.
 
 PRODUCTO/SERVICIO: ${extractedData.servicio_exacto || "No especificado"}
 OBJETIVO: ${goals.join(", ")}
 CANAL: ${platforms.join(", ")}
+MERCADO: ${mercado}
 AUDIENCIA: ${audiences.join(", ")} anos
 RESTRICCIONES: ${extractedData.restricciones_creativas || "Ninguna especificada"}
 TONO EMOCIONAL DEL CLIENTE: ${extractedData.tono_emocional || "neutral"}
@@ -842,13 +872,23 @@ function buildCall4Prompt(
   const platforms = (wizardResponses.platforms as string[]) || [];
   const audiences = (wizardResponses.audiences as string[]) || [];
 
+  // Market context
+  const targetCountry = (wizardResponses.target_country as string) || "latam";
+  const countryNames: Record<string, string> = {
+    colombia: "Colombia", mexico: "México", argentina: "Argentina",
+    chile: "Chile", peru: "Perú", ecuador: "Ecuador", spain: "España",
+    usa: "Estados Unidos", usa_hispanic: "USA (mercado hispano)", latam: "LATAM"
+  };
+  const mercadoNombre = countryNames[targetCountry] || "LATAM";
+
   return `Eres un estratega digital senior especialista en growth de contenido organico
-y performance de campanas pagas en ${platforms.join("/")} para el mercado LATAM.
+y performance de campanas pagas en ${platforms.join("/")} para el mercado de ${mercadoNombre}.
 
 PRODUCTO/SERVICIO: ${extractedData.servicio_exacto || "No especificado"}
 OBJETIVO: ${goals.join(", ")}
 CANAL: ${platforms.join(", ")}
 AUDIENCIA: ${audiences.join(", ")} anos
+MERCADO OBJETIVO: ${mercadoNombre}
 RESTRICCIONES: ${extractedData.restricciones_creativas || "Ninguna"}
 
 INVESTIGACION:

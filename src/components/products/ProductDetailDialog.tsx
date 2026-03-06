@@ -48,6 +48,13 @@ import {
 } from "lucide-react";
 import { generateProductResearchPdf } from "./productResearchPdfGenerator";
 import { CreateContentFromResearchDialog } from "./CreateContentFromResearchDialog";
+import {
+  COUNTRY_OPTIONS,
+  SERVICE_TYPE_OPTIONS,
+  GOAL_OPTIONS,
+  PLATFORM_OPTIONS,
+  AUDIENCE_OPTIONS,
+} from "@/lib/product-dna-questions";
 
 interface Product {
   id: string;
@@ -182,6 +189,14 @@ export function ProductDetailDialog({
   const [dnaRecord, setDnaRecord] = useState<ProductDNARecord | null>(null);
   const [dnaLoading, setDnaLoading] = useState(false);
   const [dnaRegenerating, setDnaRegenerating] = useState(false);
+  const [showDnaEditModal, setShowDnaEditModal] = useState(false);
+  const [editedWizardData, setEditedWizardData] = useState<{
+    service_types: string[];
+    goals: string[];
+    platforms: string[];
+    audiences: string[];
+    target_country: string;
+  } | null>(null);
 
   // Full research generation state
   const [researchGenerating, setResearchGenerating] = useState(false);
@@ -358,19 +373,47 @@ export function ProductDetailDialog({
     }
   };
 
-  const handleRegenerateDNA = async () => {
+  // Open edit modal before regenerating
+  const handleRegenerateDNA = () => {
     if (!dnaRecord) return;
+    const wr = dnaRecord.wizard_responses || {};
+    setEditedWizardData({
+      service_types: wr.service_types || [],
+      goals: wr.goals || [],
+      platforms: wr.platforms || [],
+      audiences: wr.audiences || [],
+      target_country: wr.target_country || 'latam',
+    });
+    setShowDnaEditModal(true);
+  };
+
+  // Actually perform regeneration after edits
+  const confirmRegenerateDNA = async () => {
+    if (!dnaRecord || !editedWizardData) return;
+    setShowDnaEditModal(false);
     setDnaRegenerating(true);
     try {
+      // First update wizard_responses in DB
+      const updatedWizard = {
+        ...dnaRecord.wizard_responses,
+        ...editedWizardData,
+      };
+      const { error: updateError } = await supabase
+        .from('product_dna')
+        .update({ wizard_responses: updatedWizard })
+        .eq('id', dnaRecord.id);
+      if (updateError) throw updateError;
+
+      // Then trigger regeneration
       const result = await regenerateProductDNAAnalysis(dnaRecord.id);
       if (!result.success) {
         toast({ title: 'Error', description: result.error || 'No se pudo regenerar', variant: 'destructive' });
         setDnaRegenerating(false);
         return;
       }
-      toast({ title: 'Regenerando ADN...', description: 'El análisis se está procesando.' });
+      toast({ title: 'Regenerando ADN...', description: 'El análisis se está procesando con los nuevos parámetros.' });
       // Poll for completion
-      const cancelPoll = pollProductDNAStatus(dnaRecord.id, (status, data) => {
+      pollProductDNAStatus(dnaRecord.id, (status, data) => {
         if (data) setDnaRecord(data);
         if (status === 'ready' || status === 'failed') {
           setDnaRegenerating(false);
@@ -381,7 +424,6 @@ export function ProductDetailDialog({
           }
         }
       }, 3000, 60);
-      // Cleanup on unmount handled by component lifecycle
     } catch {
       toast({ title: 'Error al regenerar', variant: 'destructive' });
       setDnaRegenerating(false);
@@ -925,6 +967,176 @@ export function ProductDetailDialog({
         }}
       />
     )}
+
+    {/* Modal para editar parámetros antes de regenerar ADN */}
+    <Dialog open={showDnaEditModal} onOpenChange={setShowDnaEditModal}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <RefreshCw className="w-5 h-5 text-primary" />
+            Regenerar ADN Básico
+          </DialogTitle>
+        </DialogHeader>
+        {editedWizardData && (
+          <div className="space-y-4 py-2">
+            {/* País/Mercado */}
+            <div>
+              <Label className="text-sm font-medium mb-2 flex items-center gap-1">
+                <Globe className="w-4 h-4" /> Mercado objetivo
+              </Label>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {COUNTRY_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setEditedWizardData(prev => prev ? { ...prev, target_country: opt.id } : prev)}
+                    className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                      editedWizardData.target_country === opt.id
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted hover:bg-muted/80'
+                    }`}
+                  >
+                    {opt.emoji} {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tipos de servicio */}
+            <div>
+              <Label className="text-sm font-medium mb-2">Tipos de servicio</Label>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {SERVICE_TYPE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => {
+                      setEditedWizardData(prev => {
+                        if (!prev) return prev;
+                        const has = prev.service_types.includes(opt.id);
+                        return {
+                          ...prev,
+                          service_types: has
+                            ? prev.service_types.filter(s => s !== opt.id)
+                            : [...prev.service_types, opt.id],
+                        };
+                      });
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                      editedWizardData.service_types.includes(opt.id)
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted hover:bg-muted/80'
+                    }`}
+                  >
+                    {opt.emoji} {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Objetivos */}
+            <div>
+              <Label className="text-sm font-medium mb-2">Objetivos</Label>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {GOAL_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => {
+                      setEditedWizardData(prev => {
+                        if (!prev) return prev;
+                        const has = prev.goals.includes(opt.id);
+                        return {
+                          ...prev,
+                          goals: has ? prev.goals.filter(g => g !== opt.id) : [...prev.goals, opt.id],
+                        };
+                      });
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                      editedWizardData.goals.includes(opt.id)
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted hover:bg-muted/80'
+                    }`}
+                  >
+                    {opt.emoji} {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Plataformas */}
+            <div>
+              <Label className="text-sm font-medium mb-2">Plataformas</Label>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {PLATFORM_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => {
+                      setEditedWizardData(prev => {
+                        if (!prev) return prev;
+                        const has = prev.platforms.includes(opt.id);
+                        return {
+                          ...prev,
+                          platforms: has ? prev.platforms.filter(p => p !== opt.id) : [...prev.platforms, opt.id],
+                        };
+                      });
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                      editedWizardData.platforms.includes(opt.id)
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted hover:bg-muted/80'
+                    }`}
+                  >
+                    {opt.emoji} {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Audiencia */}
+            <div>
+              <Label className="text-sm font-medium mb-2">Audiencia</Label>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {AUDIENCE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => {
+                      setEditedWizardData(prev => {
+                        if (!prev) return prev;
+                        const has = prev.audiences.includes(opt.id);
+                        return {
+                          ...prev,
+                          audiences: has ? prev.audiences.filter(a => a !== opt.id) : [...prev.audiences, opt.id],
+                        };
+                      });
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                      editedWizardData.audiences.includes(opt.id)
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted hover:bg-muted/80'
+                    }`}
+                  >
+                    {opt.emoji} {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4 border-t">
+              <Button variant="outline" onClick={() => setShowDnaEditModal(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={confirmRegenerateDNA} className="gap-2">
+                <RefreshCw className="w-4 h-4" />
+                Regenerar ADN
+              </Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
     </>
   );
 }

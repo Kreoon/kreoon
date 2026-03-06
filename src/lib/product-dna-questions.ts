@@ -73,3 +73,16 @@ export const URGENCY_OPTIONS = [
   { id: 'month', label: 'Este mes', emoji: '📅' },
   { id: 'flexible', label: 'Sin prisa', emoji: '🌿' },
 ];
+
+export const COUNTRY_OPTIONS = [
+  { id: 'colombia', label: 'Colombia', emoji: '🇨🇴' },
+  { id: 'mexico', label: 'México', emoji: '🇲🇽' },
+  { id: 'argentina', label: 'Argentina', emoji: '🇦🇷' },
+  { id: 'chile', label: 'Chile', emoji: '🇨🇱' },
+  { id: 'peru', label: 'Perú', emoji: '🇵🇪' },
+  { id: 'ecuador', label: 'Ecuador', emoji: '🇪🇨' },
+  { id: 'spain', label: 'España', emoji: '🇪🇸' },
+  { id: 'usa', label: 'Estados Unidos', emoji: '🇺🇸' },
+  { id: 'usa_hispanic', label: 'USA Hispano', emoji: '🇺🇸' },
+  { id: 'latam', label: 'LATAM General', emoji: '🌎' },
+];
