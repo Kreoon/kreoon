@@ -49,12 +49,12 @@ import {
 import { generateProductResearchPdf } from "./productResearchPdfGenerator";
 import { CreateContentFromResearchDialog } from "./CreateContentFromResearchDialog";
 import {
-  COUNTRY_OPTIONS,
   SERVICE_TYPE_OPTIONS,
   GOAL_OPTIONS,
   PLATFORM_OPTIONS,
   AUDIENCE_OPTIONS,
 } from "@/lib/product-dna-questions";
+import { LocationSelector } from "@/components/product-dna/LocationSelector";
 
 interface Product {
   id: string;
@@ -195,7 +195,7 @@ export function ProductDetailDialog({
     goals: string[];
     platforms: string[];
     audiences: string[];
-    target_country: string;
+    target_locations: string[];
   } | null>(null);
 
   // Full research generation state
@@ -377,12 +377,17 @@ export function ProductDetailDialog({
   const handleRegenerateDNA = () => {
     if (!dnaRecord) return;
     const wr = dnaRecord.wizard_responses || {};
+    // Support both old (target_country) and new (target_locations) format
+    let locations = wr.target_locations || [];
+    if (locations.length === 0 && wr.target_country) {
+      locations = [wr.target_country]; // Migrate old single country to array
+    }
     setEditedWizardData({
       service_types: wr.service_types || [],
       goals: wr.goals || [],
       platforms: wr.platforms || [],
       audiences: wr.audiences || [],
-      target_country: wr.target_country || 'latam',
+      target_locations: locations,
     });
     setShowDnaEditModal(true);
   };
@@ -979,26 +984,18 @@ export function ProductDetailDialog({
         </DialogHeader>
         {editedWizardData && (
           <div className="space-y-4 py-2">
-            {/* País/Mercado */}
+            {/* Mercados - Selector tipo Meta Ads */}
             <div>
               <Label className="text-sm font-medium mb-2 flex items-center gap-1">
-                <Globe className="w-4 h-4" /> Mercado objetivo
+                <Globe className="w-4 h-4" /> Mercados objetivo
               </Label>
-              <div className="flex flex-wrap gap-2 mt-1">
-                {COUNTRY_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setEditedWizardData(prev => prev ? { ...prev, target_country: opt.id } : prev)}
-                    className={`px-3 py-1.5 rounded-full text-sm transition-all ${
-                      editedWizardData.target_country === opt.id
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted hover:bg-muted/80'
-                    }`}
-                  >
-                    {opt.emoji} {opt.label}
-                  </button>
-                ))}
+              <div className="mt-1">
+                <LocationSelector
+                  value={editedWizardData.target_locations}
+                  onChange={(locations) => setEditedWizardData(prev => prev ? { ...prev, target_locations: locations } : prev)}
+                  placeholder="Buscar país, ciudad o región..."
+                  maxSelections={10}
+                />
               </div>
             </div>
 

@@ -234,6 +234,65 @@ function getDefaultExtraction(wizardResponses: Record<string, unknown>): Record<
   };
 }
 
+// ── Location mapping for market context ──────────────────────────────────
+const LOCATION_NAMES: Record<string, string> = {
+  // Regiones
+  worldwide: "Todo el mundo",
+  latam: "Latinoamérica",
+  europe: "Europa",
+  north_america: "Norteamérica",
+  central_america: "Centroamérica",
+  south_america: "Sudamérica",
+  spanish_speaking: "Países hispanohablantes",
+  // Países
+  AR: "Argentina", BO: "Bolivia", BR: "Brasil", CL: "Chile", CO: "Colombia",
+  CR: "Costa Rica", CU: "Cuba", DO: "República Dominicana", EC: "Ecuador",
+  SV: "El Salvador", GT: "Guatemala", HN: "Honduras", MX: "México",
+  NI: "Nicaragua", PA: "Panamá", PY: "Paraguay", PE: "Perú", PR: "Puerto Rico",
+  UY: "Uruguay", VE: "Venezuela", ES: "España", PT: "Portugal", FR: "Francia",
+  IT: "Italia", DE: "Alemania", GB: "Reino Unido", NL: "Países Bajos",
+  US: "Estados Unidos", CA: "Canadá",
+  // Ciudades
+  "CO-BOG": "Bogotá, Colombia", "CO-MDE": "Medellín, Colombia", "CO-CLO": "Cali, Colombia",
+  "CO-BAQ": "Barranquilla, Colombia", "CO-CTG": "Cartagena, Colombia",
+  "MX-MEX": "Ciudad de México", "MX-GDL": "Guadalajara, México", "MX-MTY": "Monterrey, México",
+  "MX-TIJ": "Tijuana, México", "MX-CUN": "Cancún, México",
+  "AR-BUE": "Buenos Aires, Argentina", "AR-COR": "Córdoba, Argentina",
+  "AR-ROS": "Rosario, Argentina", "AR-MZA": "Mendoza, Argentina",
+  "CL-SCL": "Santiago, Chile", "CL-VAP": "Valparaíso, Chile", "CL-CCP": "Concepción, Chile",
+  "PE-LIM": "Lima, Perú", "PE-AQP": "Arequipa, Perú", "PE-TRU": "Trujillo, Perú",
+  "ES-MAD": "Madrid, España", "ES-BCN": "Barcelona, España",
+  "ES-VLC": "Valencia, España", "ES-SEV": "Sevilla, España",
+  "US-MIA": "Miami, USA", "US-LAX": "Los Ángeles, USA", "US-NYC": "Nueva York, USA",
+  "US-HOU": "Houston, USA", "US-CHI": "Chicago, USA", "US-DFW": "Dallas, USA",
+  "US-PHX": "Phoenix, USA", "US-SAN": "San Diego, USA",
+  // Legacy single country IDs (backward compatibility)
+  colombia: "Colombia", mexico: "México", argentina: "Argentina", chile: "Chile",
+  peru: "Perú", ecuador: "Ecuador", spain: "España", usa: "Estados Unidos",
+  usa_hispanic: "Estados Unidos (mercado hispano)",
+};
+
+function getMarketDescription(wizardResponses: Record<string, unknown>): string {
+  // Support both new array format and legacy single string
+  const locations = wizardResponses.target_locations as string[] | undefined;
+  const legacyCountry = wizardResponses.target_country as string | undefined;
+
+  if (locations && locations.length > 0) {
+    const names = locations
+      .map(id => LOCATION_NAMES[id] || id)
+      .filter(Boolean);
+    if (names.length === 1) return names[0];
+    if (names.length <= 3) return names.join(", ");
+    return `${names.slice(0, 3).join(", ")} y ${names.length - 3} más`;
+  }
+
+  if (legacyCountry) {
+    return LOCATION_NAMES[legacyCountry] || legacyCountry;
+  }
+
+  return "Latinoamérica";
+}
+
 // ── Perplexity AI call (content-focused research) ────────────────────────
 async function callPerplexityResearch(
   extractedData: Record<string, unknown>,
@@ -249,22 +308,7 @@ async function callPerplexityResearch(
   const goals = (wizardResponses.goals as string[]) || [];
   const platforms = (wizardResponses.platforms as string[]) || [];
   const audiences = (wizardResponses.audiences as string[]) || [];
-  const targetCountry = (wizardResponses.target_country as string) || "latam";
-
-  // Map country ID to display name
-  const countryNames: Record<string, string> = {
-    colombia: "Colombia",
-    mexico: "México",
-    argentina: "Argentina",
-    chile: "Chile",
-    peru: "Perú",
-    ecuador: "Ecuador",
-    spain: "España",
-    usa: "Estados Unidos",
-    usa_hispanic: "Estados Unidos (mercado hispano)",
-    latam: "LATAM (Latinoamérica)"
-  };
-  const mercadoNombre = countryNames[targetCountry] || "LATAM";
+  const mercadoNombre = getMarketDescription(wizardResponses);
 
   const canalPrimario = extractedData.canal_primario || platforms[0] || "instagram";
   const servicioExacto = extractedData.servicio_exacto || "producto/servicio";
@@ -675,9 +719,7 @@ function buildCall1Prompt(
   const goals = (wizardResponses.goals as string[]) || [];
   const platforms = (wizardResponses.platforms as string[]) || [];
   const audiences = (wizardResponses.audiences as string[]) || [];
-  const targetCountry = (wizardResponses.target_country as string) || "latam";
-  const countryNames: Record<string, string> = { colombia: "Colombia", mexico: "México", argentina: "Argentina", chile: "Chile", peru: "Perú", ecuador: "Ecuador", spain: "España", usa: "Estados Unidos", usa_hispanic: "USA Hispano", latam: "LATAM" };
-  const mercado = countryNames[targetCountry] || "LATAM";
+  const mercado = getMarketDescription(wizardResponses);
 
   return `Eres un estratega de marketing digital y creativo de contenido experto en ${mercado}.
 
@@ -733,9 +775,7 @@ function buildCall2Prompt(
   const platforms = (wizardResponses.platforms as string[]) || [];
   const audiences = (wizardResponses.audiences as string[]) || [];
   const palabrasClave = (extractedData.palabras_clave_cliente as string[]) || [];
-  const targetCountry = (wizardResponses.target_country as string) || "latam";
-  const countryNames: Record<string, string> = { colombia: "Colombia", mexico: "México", argentina: "Argentina", chile: "Chile", peru: "Perú", ecuador: "Ecuador", spain: "España", usa: "Estados Unidos", usa_hispanic: "USA Hispano", latam: "LATAM" };
-  const mercado = countryNames[targetCountry] || "LATAM";
+  const mercado = getMarketDescription(wizardResponses);
 
   return `Eres un estratega de marketing digital experto en psicologia del consumidor
 y comportamiento de audiencias digitales en ${mercado}.
@@ -803,9 +843,7 @@ function buildCall3Prompt(
   const goals = (wizardResponses.goals as string[]) || [];
   const platforms = (wizardResponses.platforms as string[]) || [];
   const audiences = (wizardResponses.audiences as string[]) || [];
-  const targetCountry = (wizardResponses.target_country as string) || "latam";
-  const countryNames: Record<string, string> = { colombia: "Colombia", mexico: "México", argentina: "Argentina", chile: "Chile", peru: "Perú", ecuador: "Ecuador", spain: "España", usa: "Estados Unidos", usa_hispanic: "USA Hispano", latam: "LATAM" };
-  const mercado = countryNames[targetCountry] || "LATAM";
+  const mercado = getMarketDescription(wizardResponses);
 
   return `Eres un estratega creativo de contenido digital especialista en UGC,
 copywriting de alto impacto y produccion de contenido para ${platforms.join("/")} en ${mercado}.
@@ -871,24 +909,16 @@ function buildCall4Prompt(
   const goals = (wizardResponses.goals as string[]) || [];
   const platforms = (wizardResponses.platforms as string[]) || [];
   const audiences = (wizardResponses.audiences as string[]) || [];
-
-  // Market context
-  const targetCountry = (wizardResponses.target_country as string) || "latam";
-  const countryNames: Record<string, string> = {
-    colombia: "Colombia", mexico: "México", argentina: "Argentina",
-    chile: "Chile", peru: "Perú", ecuador: "Ecuador", spain: "España",
-    usa: "Estados Unidos", usa_hispanic: "USA (mercado hispano)", latam: "LATAM"
-  };
-  const mercadoNombre = countryNames[targetCountry] || "LATAM";
+  const mercado = getMarketDescription(wizardResponses);
 
   return `Eres un estratega digital senior especialista en growth de contenido organico
-y performance de campanas pagas en ${platforms.join("/")} para el mercado de ${mercadoNombre}.
+y performance de campanas pagas en ${platforms.join("/")} para el mercado de ${mercado}.
 
 PRODUCTO/SERVICIO: ${extractedData.servicio_exacto || "No especificado"}
 OBJETIVO: ${goals.join(", ")}
 CANAL: ${platforms.join(", ")}
 AUDIENCIA: ${audiences.join(", ")} anos
-MERCADO OBJETIVO: ${mercadoNombre}
+MERCADO OBJETIVO: ${mercado}
 RESTRICCIONES: ${extractedData.restricciones_creativas || "Ninguna"}
 
 INVESTIGACION:
