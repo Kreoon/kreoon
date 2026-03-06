@@ -151,6 +151,91 @@ Responde SOLO con el JSON.`,
   }
 }
 
+// ── Extract structured data from audio transcription ─────────────────────
+async function extractFromAudio(
+  transcription: string,
+  wizardResponses: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const apiKey = Deno.env.get("GOOGLE_AI_API_KEY") || Deno.env.get("GEMINI_API_KEY");
+  if (!apiKey || !transcription || transcription.length < 20) {
+    console.warn("[generate-product-dna] No Gemini key or transcription too short, using defaults");
+    return getDefaultExtraction(wizardResponses);
+  }
+
+  const serviceTypes = (wizardResponses.service_types as string[]) || [];
+  const goals = (wizardResponses.goals as string[]) || [];
+  const platforms = (wizardResponses.platforms as string[]) || [];
+  const audiences = (wizardResponses.audiences as string[]) || [];
+
+  const extractionPrompt = `Eres un estratega de contenido digital experto en briefing creativo.
+
+Analiza esta transcripcion de audio donde un cliente describe lo que necesita:
+
+TRANSCRIPCION:
+${transcription}
+
+SELECCIONES DEL WIZARD:
+- Tipos de servicio: ${serviceTypes.join(", ") || "No especificado"}
+- Objetivos: ${goals.join(", ") || "No especificado"}
+- Plataformas: ${platforms.join(", ") || "No especificado"}
+- Audiencias: ${audiences.join(", ") || "No especificado"}
+
+Extrae y devuelve SOLO este JSON (sin texto adicional, sin markdown):
+{
+  "servicio_exacto": "descripcion exacta del producto/servicio en las palabras del cliente",
+  "objetivo_real": "objetivo declarado + objetivo implicito detectado",
+  "palabras_clave_cliente": ["frase literal 1", "frase literal 2", "frase literal 3"],
+  "restricciones_creativas": "lo que NO quiere en el contenido",
+  "referentes_estilo": "estilos o ejemplos mencionados",
+  "tono_emocional": "urgente|claro|apasionado|inseguro|neutral",
+  "canal_primario": "el canal mas importante mencionado o seleccionado",
+  "tipo_contenido_principal": "el tipo de contenido mas solicitado"
+}`;
+
+  console.log("[generate-product-dna] Extracting data from audio with Gemini...");
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: extractionPrompt }] }],
+          generationConfig: { temperature: 0.2, maxOutputTokens: 2000 },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      console.warn("[generate-product-dna] Extraction failed, using defaults");
+      return getDefaultExtraction(wizardResponses);
+    }
+
+    const data = await response.json();
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    const parsed = JSON.parse(repairJsonForParse(content));
+    console.log("[generate-product-dna] Extraction successful:", Object.keys(parsed).join(", "));
+    return parsed;
+  } catch (err) {
+    console.error("[generate-product-dna] Extraction error:", err);
+    return getDefaultExtraction(wizardResponses);
+  }
+}
+
+function getDefaultExtraction(wizardResponses: Record<string, unknown>): Record<string, unknown> {
+  return {
+    servicio_exacto: "Servicio no especificado",
+    objetivo_real: (wizardResponses.goals as string[])?.join(", ") || "Vender",
+    palabras_clave_cliente: [],
+    restricciones_creativas: "",
+    referentes_estilo: "",
+    tono_emocional: "neutral",
+    canal_primario: (wizardResponses.platforms as string[])?.[0] || "instagram",
+    tipo_contenido_principal: (wizardResponses.service_types as string[])?.[0] || "video_ugc",
+  };
+}
+
 // ── Perplexity AI call (research mode - no JSON constraint) ─────────────
 async function callPerplexityResearch(userPrompt: string, researchPrompt: string): Promise<string> {
   const apiKey = getAPIKey("perplexity");
