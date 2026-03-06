@@ -143,20 +143,23 @@ export function useOnboardingGate() {
     queryFn: async (): Promise<PendingDocument[]> => {
       if (!user?.id) return [];
 
-      const { data, error } = await supabase.rpc('get_pending_consents', {
-        p_user_id: user.id,
-      });
+      try {
+        const { data, error } = await supabase.rpc('get_pending_consents', {
+          p_user_id: user.id,
+        });
 
-      if (error) {
-        // Si la función no existe, devolver vacío
-        if (error.code === 'PGRST202' || error.message?.includes('Could not find') || error.message?.includes('does not exist')) {
-          console.warn('[onboarding] RPC get_pending_consents not found. Assuming no pending docs.');
+        if (error) {
+          // Cualquier error con esta RPC no debe bloquear el onboarding
+          console.warn('[onboarding] Error en get_pending_consents:', error.code, error.message);
+          console.warn('[onboarding] Continuando sin documentos pendientes...');
           return [];
         }
-        throw error;
-      }
 
-      return (data || []) as PendingDocument[];
+        return (data || []) as PendingDocument[];
+      } catch (e) {
+        console.warn('[onboarding] Excepción en get_pending_consents:', e);
+        return [];
+      }
     },
     enabled: !!user?.id,
     staleTime: 0,
