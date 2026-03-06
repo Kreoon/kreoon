@@ -1485,190 +1485,63 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // ── 3. Build enhanced prompt ────────────────────────────────────────
-    const wizardContext = buildWizardContext(wizardResponses);
-    const emotionalContext = formatEmotionalContext(emotionalAnalysis);
+    // ── 3. Extract data from audio ─────────────────────────────────────────
+    console.log("[generate-product-dna] Step 1: Extracting data from audio...");
+    const extractedData = await extractFromAudio(transcription, wizardResponses);
+    console.log(`[generate-product-dna] Extracted data keys: ${Object.keys(extractedData).join(", ")}`);
 
-    // Get prompts from DB with fallbacks
-    let researchPrompt = DEFAULT_RESEARCH_PROMPT;
-    let structurePrompt = DEFAULT_STRUCTURE_PROMPT;
-
-    try {
-      const researchConfig = await getPrompt(supabase, "dna", "product_research");
-      if (researchConfig.systemPrompt) researchPrompt = researchConfig.systemPrompt;
-    } catch { /* use default */ }
+    // ── 4. Research with Perplexity ────────────────────────────────────────
+    let perplexityResearch = "";
 
     try {
-      const structureConfig = await getPrompt(supabase, "dna", "product_structure");
-      if (structureConfig.systemPrompt) structurePrompt = structureConfig.systemPrompt;
-    } catch { /* use default */ }
-
-    // Add emotional context to research prompt if available
-    if (emotionalContext) {
-      researchPrompt += emotionalContext;
-    }
-
-    let userPrompt = `Tipo de servicio: ${record.service_group}\nServicios especificos: ${(record.service_types || []).join(", ")}`;
-
-    // Add wizard responses context
-    if (wizardContext) {
-      userPrompt += `\n\n--- RESPUESTAS DEL WIZARD ---\n${wizardContext}\n--- FIN RESPUESTAS ---`;
-    }
-
-    // Add transcription
-    if (transcription) {
-      userPrompt += `\n\n--- TRANSCRIPCION DE AUDIO ---\n${transcription}\n--- FIN TRANSCRIPCION ---`;
-    }
-
-    // Add links context
-    const refLinks = (record.reference_links || []).map((l: { url: string }) => l.url).filter(Boolean);
-    const compLinks = (record.competitor_links || []).map((l: { url: string }) => l.url).filter(Boolean);
-    const inspLinks = (record.inspiration_links || []).map((l: { url: string }) => l.url).filter(Boolean);
-
-    if (refLinks.length) userPrompt += `\n\nEnlaces de referencia del negocio: ${refLinks.join(", ")}`;
-    if (compLinks.length) userPrompt += `\n\nEnlaces de competidores: ${compLinks.join(", ")}`;
-    if (inspLinks.length) userPrompt += `\n\nEnlaces de inspiracion: ${inspLinks.join(", ")}`;
-
-    console.log(`[generate-product-dna] Prompt built: ${userPrompt.length} chars (transcription: ${transcription.length}, wizard: ${wizardContext.length})`);
-
-    // ── 4. Two-step generation: Perplexity research → Gemini structure ───────
-    let aiResponse: string;
-    let perplexityResearch = ""; // Store research for fallback enrichment
-
-    try {
-      // Step 1: Perplexity does deep research (no JSON constraint)
-      perplexityResearch = await callPerplexityResearch(userPrompt, researchPrompt);
+      perplexityResearch = await callPerplexityResearch(extractedData, wizardResponses);
       console.log(`[generate-product-dna] Research completed: ${perplexityResearch.length} chars`);
-
-      // Step 2: Gemini structures the research into JSON
-      aiResponse = await callGeminiStructure(perplexityResearch, JSON_STRUCTURE_TEMPLATE, structurePrompt);
-      console.log(`[generate-product-dna] Structuring completed: ${aiResponse.length} chars`);
-    } catch (genError) {
-      console.error("[generate-product-dna] Generation failed:", genError);
-
-      // If we have Perplexity research, use it for enriched fallback
-      if (perplexityResearch.length > 100) {
-        console.log("[generate-product-dna] Using Perplexity research for enriched fallback");
-        const enrichedData = generateEnrichedAnalysis(wizardResponses, record.service_group, record.service_types || [], perplexityResearch);
-
-        // Build response and skip to update
-        const updatePayload: Record<string, unknown> = {
-          market_research: enrichedData.market_research,
-          competitor_analysis: enrichedData.competitor_analysis,
-          strategy_recommendations: enrichedData.strategy_recommendations,
-          content_brief: enrichedData.content_brief,
-          ai_confidence_score: 70, // Lower confidence for fallback
-          estimated_complexity: "moderate",
-          status: "ready",
-        };
-
-        if (transcription && !record.transcription) {
-          updatePayload.transcription = transcription;
-        }
-
-        const { error: updateError } = await supabase
-          .from("product_dna")
-          .update(updatePayload)
-          .eq("id", productDnaId);
-
-        if (updateError) {
-          throw new Error(`Error updating product DNA: ${updateError.message}`);
-        }
-
-        return new Response(JSON.stringify({ success: true, fallback: true }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      throw genError;
+    } catch (researchError) {
+      console.error("[generate-product-dna] Perplexity research failed:", researchError);
+      // Continue with fallback - will use extractedData + defaults
     }
 
-    // ── 5. Parse AI response ────────────────────────────────────────────
-    console.log(`[generate-product-dna] Parsing AI response: ${aiResponse.length} chars`);
-    console.log(`[generate-product-dna] First 500 chars of response: ${aiResponse.substring(0, 500)}`);
+    // ── 5. Generate 8 sections with Gemini ─────────────────────────────────
+    let analysisResult: {
+      market_research: Record<string, unknown>;
+      competitor_analysis: Record<string, unknown>;
+      strategy_recommendations: Record<string, unknown>;
+      content_brief: Record<string, unknown>;
+    };
 
-    // Aggressive cleanup of the response
-    let cleanedResponse = aiResponse
-      .replace(/^[\s\S]*?(?=\{)/m, "") // Remove everything before first {
-      .replace(/\}[\s\S]*$/m, "}") // Remove everything after last }
-      .trim();
-
-    // If cleanup stripped everything, try extraction
-    if (!cleanedResponse.startsWith("{")) {
-      const extracted = extractJsonFromText(aiResponse);
-      if (extracted) {
-        cleanedResponse = extracted;
+    if (perplexityResearch.length > 100) {
+      try {
+        analysisResult = await generateAllSections(extractedData, perplexityResearch, wizardResponses);
+        console.log("[generate-product-dna] All sections generated successfully");
+      } catch (genError) {
+        console.error("[generate-product-dna] Section generation failed:", genError);
+        analysisResult = generateEnrichedAnalysis(wizardResponses, extractedData, perplexityResearch);
       }
+    } else {
+      console.log("[generate-product-dna] Using fallback analysis (no research)");
+      analysisResult = generateEnrichedAnalysis(wizardResponses, extractedData, "");
     }
 
-    const repaired = repairJsonForParse(cleanedResponse);
-    let analysisData: Record<string, unknown>;
+    // ── 6. Calculate confidence score ──────────────────────────────────────
+    let confidenceScore = 85;
+    if (!perplexityResearch || perplexityResearch.length < 500) confidenceScore -= 20;
+    if (!transcription || transcription.length < 100) confidenceScore -= 15;
+    const angulos = (analysisResult.strategy_recommendations as Record<string, unknown>)?.seccion_4_angulos;
+    if (!angulos || !Array.isArray(angulos) || angulos.length === 0) confidenceScore -= 10;
+    confidenceScore = Math.max(50, Math.min(100, confidenceScore));
 
-    try {
-      analysisData = JSON.parse(repaired);
-      console.log("[generate-product-dna] Successfully parsed AI response");
-    } catch (parseErr) {
-      console.error("[generate-product-dna] JSON parse failed after cleanup");
-      console.error("[generate-product-dna] Cleaned response (first 500 chars):", cleanedResponse.substring(0, 500));
-
-      // Last resort: try regex extraction
-      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        try {
-          analysisData = JSON.parse(repairJsonForParse(jsonMatch[0]));
-          console.log("[generate-product-dna] Recovered JSON via regex extraction");
-        } catch (finalErr) {
-          console.error("[generate-product-dna] Regex extraction also failed");
-          console.error("[generate-product-dna] Last 500 chars of response:", aiResponse.substring(Math.max(0, aiResponse.length - 500)));
-          const parseError = new Error(`Parse failed. Response starts: "${aiResponse.substring(0, 150)}..." ends: "...${aiResponse.substring(Math.max(0, aiResponse.length - 150))}"`);
-          throw parseError;
-        }
-      } else {
-        console.error("[generate-product-dna] No JSON structure found in response at all");
-        const noJsonError = new Error(`No JSON found. Response (${aiResponse.length} chars): "${aiResponse.substring(0, 300)}..."`);
-        throw noJsonError;
-      }
-    }
-
-    console.log("[generate-product-dna] Analysis generated, sections:", Object.keys(analysisData).join(", "));
-
-    // Check which sections exist and fill missing ones with defaults
-    const requiredSections = ["market_research", "competitor_analysis", "strategy_recommendations", "content_brief"];
-    const missingSections = requiredSections.filter(s => !analysisData[s] || Object.keys(analysisData[s] as object).length === 0);
-
-    if (missingSections.length > 0) {
-      console.warn("[generate-product-dna] Missing/empty sections:", missingSections.join(", "));
-      console.log("[generate-product-dna] Got sections:", Object.keys(analysisData).join(", "));
-
-      // Fill missing sections with enriched defaults (using Perplexity research if available)
-      const defaults = perplexityResearch.length > 100
-        ? generateEnrichedAnalysis(wizardResponses, record.service_group, record.service_types || [], perplexityResearch)
-        : generateBasicAnalysis(wizardResponses, record.service_group, record.service_types || []);
-
-      for (const section of missingSections) {
-        analysisData[section] = defaults[section as keyof typeof defaults];
-        console.log(`[generate-product-dna] Filled ${section} with ${perplexityResearch.length > 100 ? 'enriched' : 'basic'} defaults`);
-      }
-    }
-
-    // ── 6. UPDATE the record ────────────────────────────────────────────
-    const complexity = estimateComplexity(
-      transcription + wizardContext,
-      record.service_types || []
-    );
-
+    // ── 7. Update product_dna record ───────────────────────────────────────
     const updatePayload: Record<string, unknown> = {
-      market_research: analysisData.market_research,
-      competitor_analysis: analysisData.competitor_analysis,
-      strategy_recommendations: analysisData.strategy_recommendations,
-      content_brief: analysisData.content_brief,
-      ai_confidence_score: 85,
-      estimated_complexity: complexity,
+      market_research: analysisResult.market_research,
+      competitor_analysis: analysisResult.competitor_analysis,
+      strategy_recommendations: analysisResult.strategy_recommendations,
+      content_brief: analysisResult.content_brief,
+      ai_confidence_score: confidenceScore,
+      estimated_complexity: "moderate",
       status: "ready",
     };
 
-    // Only update transcription if we generated one
+    // Save transcription if we generated it
     if (transcription && !record.transcription) {
       updatePayload.transcription = transcription;
     }
@@ -1681,6 +1554,8 @@ Deno.serve(async (req: Request) => {
       };
     }
 
+    console.log("[generate-product-dna] Updating record with analysis...");
+
     const { error: updateError } = await supabase
       .from("product_dna")
       .update(updatePayload)
@@ -1690,17 +1565,37 @@ Deno.serve(async (req: Request) => {
       throw new Error(`Error updating product DNA: ${updateError.message}`);
     }
 
+    // ── 8. Consume tokens ──────────────────────────────────────────────────
+    try {
+      await supabase.rpc("consume_ai_tokens", {
+        p_user_id: null,
+        p_organization_id: null,
+        p_tokens: 600,
+        p_feature: "product_dna",
+        p_model: "gemini-2.5-flash",
+      });
+    } catch (tokenErr) {
+      console.warn("[generate-product-dna] Token consumption failed:", tokenErr);
+    }
+
     console.log(`[generate-product-dna] Product DNA updated: ${productDnaId} → status=ready`);
 
-    // ── 7. CREATE a products record so it shows in the Products tab ──────
+    // ── 9. CREATE a products record so it shows in the Products tab ──────
     let productId: string | null = null;
     try {
-      const sr = analysisData.strategy_recommendations || {};
-      const mr = analysisData.market_research || {};
-      const cb = analysisData.content_brief || {};
-      const ca = analysisData.competitor_analysis || {};
+      const sr = analysisResult.strategy_recommendations as Record<string, unknown> || {};
+      const mr = analysisResult.market_research as Record<string, unknown> || {};
+      const cb = analysisResult.content_brief as Record<string, unknown> || {};
+      const ca = analysisResult.competitor_analysis || {};
 
-      // Build a product name from the value proposition or service group
+      // New structure fields
+      const contexto = (mr.seccion_1_contexto as Record<string, unknown>) || {};
+      const mercado = (mr.seccion_2_mercado as Record<string, unknown>) || {};
+      const avatares = (sr.seccion_3_avatares as unknown[]) || [];
+      const angulos = (sr.seccion_4_angulos as Array<{ hook_apertura?: string }>) || [];
+      const briefCreador = (cb.seccion_8_brief_creador as Record<string, unknown>) || {};
+
+      // Build a product name from extracted service or service group
       const groupLabels: Record<string, string> = {
         content_creation: "Creación de Contenido",
         post_production: "Post Producción",
@@ -1710,38 +1605,37 @@ Deno.serve(async (req: Request) => {
         general_services: "Servicios Generales",
       };
       const groupName = groupLabels[record.service_group] || record.service_group;
-      const productName = sr.value_proposition
-        ? sr.value_proposition.split(".")[0].substring(0, 80)
+      const servicioExacto = (contexto.servicio_exacto as string) || "";
+      const productName = servicioExacto
+        ? servicioExacto.substring(0, 80)
         : `${groupName} - ${(record.service_types || []).join(", ")}`;
 
-      // Extract sales angle names as text array
-      const salesAngles = (sr.sales_angles || [])
-        .map((a: { angle_name?: string }) => a.angle_name)
+      // Extract sales angle hooks as text array
+      const salesAngles = angulos
+        .map((a) => a.hook_apertura)
         .filter(Boolean);
 
-      // Build ideal avatar summary
-      const icp = mr.ideal_customer_profile || {};
-      const idealAvatar = [
-        icp.demographics,
-        icp.psychographics,
-        icp.pain_points?.length ? `Dolores: ${icp.pain_points.join(", ")}` : null,
-        icp.desires?.length ? `Deseos: ${icp.desires.join(", ")}` : null,
-      ]
-        .filter(Boolean)
-        .join("\n");
+      // Build ideal avatar summary from first avatar
+      const firstAvatar = avatares[0] as Record<string, unknown> | undefined;
+      const idealAvatar = firstAvatar ? [
+        firstAvatar.nombre_edad,
+        firstAvatar.situacion_actual,
+        firstAvatar.dolor_principal ? `Dolor: ${firstAvatar.dolor_principal}` : null,
+        firstAvatar.deseo_principal ? `Deseo: ${firstAvatar.deseo_principal}` : null,
+      ].filter(Boolean).join("\n") : null;
 
       const { data: newProduct, error: productError } = await supabase
         .from("products")
         .insert({
           client_id: record.client_id,
           name: productName,
-          description: sr.value_proposition || null,
-          strategy: sr.brand_positioning || null,
-          market_research: mr.market_overview || null,
+          description: (contexto.objetivo_real as string) || null,
+          strategy: (briefCreador.tono_de_voz as string) || null,
+          market_research: (mercado.panorama_mercado as string) || null,
           ideal_avatar: idealAvatar || null,
           sales_angles: salesAngles.length > 0 ? salesAngles : null,
           competitor_analysis: ca,
-          sales_angles_data: sr.sales_angles || null,
+          sales_angles_data: angulos || null,
           content_strategy: cb,
           brief_data: {
             product_dna_id: productDnaId,
@@ -1774,7 +1668,8 @@ Deno.serve(async (req: Request) => {
         product_dna_id: productDnaId,
         product_id: productId,
         has_transcription: !!transcription,
-        sections: Object.keys(analysisData),
+        confidence_score: confidenceScore,
+        sections: Object.keys(analysisResult),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
