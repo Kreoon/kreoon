@@ -728,177 +728,142 @@ function extractFromResearch(research: string): Record<string, unknown> {
   };
 }
 
-// ── Generate enriched fallback analysis using research ──────────────────
+// ── Generate fallback analysis (no client_dna) ──────────────────────────
 function generateEnrichedAnalysis(
   wizardResponses: Record<string, unknown>,
-  serviceGroup: string,
-  serviceTypes: string[],
+  extractedData: Record<string, unknown>,
   research: string
-): Record<string, unknown> {
+): {
+  market_research: Record<string, unknown>;
+  competitor_analysis: Record<string, unknown>;
+  strategy_recommendations: Record<string, unknown>;
+  content_brief: Record<string, unknown>;
+} {
   const extracted = extractFromResearch(research);
   const goals = (wizardResponses.goals as string[]) || ["sales"];
   const platforms = (wizardResponses.platforms as string[]) || ["instagram"];
-  const audiences = (wizardResponses.audiences as string[]) || [];
+  const audiences = (wizardResponses.audiences as string[]) || ["25_34"];
+  const serviceTypes = (wizardResponses.service_types as string[]) || ["video_ugc"];
 
-  // Build competitor objects
-  const directCompetitors = extracted.competitors.slice(0, 5).map((name, i) => ({
-    name: name.replace(/[,;]/g, '').trim(),
-    strengths: ["Reconocimiento de marca", "Base de usuarios establecida"],
-    weaknesses: ["Precio alto", "Menos personalización"],
-    positioning: i === 0 ? "Líder de mercado" : "Competidor establecido",
-    price_range: "$50-500/mes"
+  // Build competitor objects from research
+  const competidores = (extracted.competitors as string[]).slice(0, 5).map((name) => ({
+    nombre: String(name).replace(/[,;]/g, "").trim(),
+    promesa_principal: "Propuesta no identificada",
+    precio_referencial: "Variable",
+    fortaleza: "Presencia de mercado",
+    debilidad: "Por analizar",
+    plataformas: platforms,
   }));
 
-  // Build sales angles based on goals and research
-  const angleTemplates = [
-    { name: "Ahorro de Tiempo", emotion: "Alivio", hook: "Deja de perder horas en producción" },
-    { name: "Resultados Profesionales", emotion: "Orgullo", hook: "Contenido de estudio sin el costo" },
-    { name: "Diferenciación", emotion: "Confianza", hook: "Destaca de tu competencia" },
-    { name: "ROI Comprobado", emotion: "Seguridad", hook: "Cada peso invertido se multiplica" },
-    { name: "Facilidad de Uso", emotion: "Tranquilidad", hook: "Sin curva de aprendizaje" },
+  // Build default avatars based on audience
+  const avatarDefaults = [
+    {
+      id: "avatar_1",
+      nombre_edad: "Maria, 28 anos",
+      situacion_actual: "Emprendedora buscando escalar su negocio online",
+      dolor_principal: "No tiene tiempo para crear contenido de calidad",
+      deseo_principal: "Aumentar ventas sin invertir mas horas",
+      objecion_principal: "No se si realmente funciona para mi nicho",
+      como_habla: ["Necesito algo rapido", "No tengo presupuesto enorme", "Quiero resultados ya"],
+      trigger_de_compra: "Ver casos de exito similares a su negocio",
+      nivel_consciencia: "consciente_de_la_solucion",
+    },
+    {
+      id: "avatar_2",
+      nombre_edad: "Carlos, 35 anos",
+      situacion_actual: "Dueno de PYME queriendo digitalizar su negocio",
+      dolor_principal: "No entiende de redes sociales ni contenido",
+      deseo_principal: "Tener presencia profesional sin complicarse",
+      objecion_principal: "Es muy caro para lo que necesito",
+      como_habla: ["Solo quiero que funcione", "No tengo tiempo para aprender", "Necesito algo simple"],
+      trigger_de_compra: "Recomendacion de alguien de confianza",
+      nivel_consciencia: "consciente_del_problema",
+    },
+    {
+      id: "avatar_3",
+      nombre_edad: "Ana, 32 anos",
+      situacion_actual: "Marketing manager buscando optimizar recursos",
+      dolor_principal: "El equipo interno no da abasto",
+      deseo_principal: "Escalar produccion sin contratar mas gente",
+      objecion_principal: "Ya probamos agencias y no funcionaron",
+      como_habla: ["Necesito calidad consistente", "El ROI es lo que importa", "Quiero ver metricas"],
+      trigger_de_compra: "Demostracion de resultados medibles",
+      nivel_consciencia: "consciente_del_producto",
+    },
   ];
 
-  const salesAngles = angleTemplates.map((t, i) => ({
-    angle_name: t.name,
-    headline: `${t.hook} con ${serviceTypes[0] || "contenido UGC"}`,
-    hook: t.hook,
-    target_emotion: t.emotion
-  }));
-
-  // Build hashtags from research + defaults
-  const allHashtags = [
-    ...extracted.hashtags,
-    "#ugc", "#contenido", "#creadores", "#marketing", "#viral",
-    "#emprendimiento", "#ventas", "#redes", "#instagram", "#tiktok"
+  // Build default angles
+  const angulosDefault = [
+    { id: 1, tipo: "educativo", hook_apertura: "El error que comete el 90% de los emprendedores en redes", desarrollo: "Explicar el problema comun y la solucion", cta: "Guardalo para despues", avatar_objetivo: "avatar_1", fase_esfera: "enganche", uso_recomendado: "organico" },
+    { id: 2, tipo: "transformacion", hook_apertura: "Asi pasamos de 0 a 10k seguidores en 30 dias", desarrollo: "Mostrar el antes/despues con el proceso", cta: "Te cuento como en el link", avatar_objetivo: "avatar_1", fase_esfera: "solucion", uso_recomendado: "ambos" },
+    { id: 3, tipo: "prueba_social", hook_apertura: "Lo que dicen nuestros clientes despues de 3 meses", desarrollo: "Testimoniales reales con resultados", cta: "Quieres lo mismo? Link en bio", avatar_objetivo: "avatar_2", fase_esfera: "remarketing", uso_recomendado: "ads" },
   ];
-  const uniqueHashtags = [...new Set(allHashtags)].slice(0, 15);
 
   return {
     market_research: {
-      market_overview: `El mercado de ${serviceGroup} en LATAM muestra crecimiento sostenido del ${extracted.growthRate} anual, impulsado por la demanda de contenido auténtico y el auge del e-commerce.`,
-      market_size: extracted.marketSize,
-      growth_trends: [
-        `Crecimiento anual de ${extracted.growthRate} en contenido UGC`,
-        "Videos cortos verticales dominan con 92% de engagement",
-        "Integración de IA reduce costos de producción en 70%",
-        "Micro-influencers generan ROI 5x superior",
-        "E-commerce impulsa demanda de contenido auténtico"
-      ],
-      opportunities: extracted.opportunities.length > 0 ? extracted.opportunities : [
-        "Expansión en e-commerce latinoamericano",
-        "Alta demanda de contenido auténtico vs producido",
-        "Bajo costo de entrada con herramientas de IA"
-      ],
-      threats: [
-        "Saturación de contenido genérico",
-        "Cambios constantes en algoritmos de redes",
-        "Competencia de herramientas gratuitas de IA"
-      ],
-      target_segments: [
-        {
-          name: "María - Emprendedora E-commerce",
-          description: "Mujer 28-35 años, dueña de tienda online de moda/belleza. Maneja todo sola, necesita contenido rápido y económico para Instagram. Factura $2,000-10,000 USD/mes.",
-          size_estimate: "45% del mercado",
-          priority: "high"
-        },
-        {
-          name: "Carlos - Dueño de PYME",
-          description: "Hombre 35-45 años, negocio establecido (restaurante, clínica, servicios). Quiere modernizar su presencia digital pero no entiende de redes. Presupuesto $500-2,000/mes para marketing.",
-          size_estimate: "35% del mercado",
-          priority: "high"
-        }
-      ],
-      ideal_customer_profile: {
-        demographics: extracted.demographics,
-        psychographics: "Busca eficiencia, valora resultados sobre proceso, activo en redes sociales",
-        pain_points: extracted.painPoints,
-        desires: ["Contenido profesional rápido", "Aumentar ventas", "Diferenciarse de competencia"],
-        objections: ["Presupuesto limitado", "Dudas sobre calidad", "Falta de tiempo"],
-        buying_triggers: ["Lanzamiento de producto", "Campaña publicitaria", "Competencia avanzando"]
-      }
+      seccion_1_contexto: {
+        servicio_exacto: extractedData.servicio_exacto || serviceTypes.join(", "),
+        objetivo_real: extractedData.objetivo_real || goals.join(", "),
+        palabras_clave_cliente: extractedData.palabras_clave_cliente || [],
+        restricciones_creativas: extractedData.restricciones_creativas || "",
+        referentes_estilo: extractedData.referentes_estilo || "",
+        tono_emocional_audio: extractedData.tono_emocional || "neutral",
+      },
+      seccion_2_mercado: {
+        panorama_mercado: `El mercado de ${serviceTypes.join(" y ")} en LATAM muestra crecimiento sostenido, impulsado por la demanda de contenido autentico.`,
+        tendencias_actuales: "Videos cortos verticales dominan. El contenido UGC genera mayor engagement que el producido profesionalmente.",
+        competidores: competidores,
+        gap_competitivo: "Oportunidad en contenido autentico y personalizado para nichos especificos.",
+        posicionamiento_sugerido: "Diferenciarse por autenticidad y resultados medibles.",
+      },
     },
     competitor_analysis: {
-      direct_competitors: directCompetitors.length > 0 ? directCompetitors : [
-        { name: "CapCut", strengths: ["Gratis", "Fácil de usar"], weaknesses: ["Marca de agua", "Limitado"], positioning: "Editor gratuito", price_range: "Gratis-$10/mes" },
-        { name: "Canva", strengths: ["Templates", "Colaboración"], weaknesses: ["Menos video", "Genérico"], positioning: "Diseño fácil", price_range: "$0-15/mes" },
-        { name: "Adobe Express", strengths: ["Calidad pro", "Integración"], weaknesses: ["Curva de aprendizaje", "Precio"], positioning: "Suite profesional", price_range: "$10-55/mes" }
-      ],
-      indirect_competitors: ["Agencias de publicidad tradicionales", "Fotógrafos freelance", "Herramientas de IA gratuitas"],
-      competitive_advantage: `Combinación única de ${serviceTypes.join(" + ")} con enfoque estratégico para resultados medibles, no solo producción.`,
-      positioning_strategy: "Posicionamiento como solución completa que entiende el negocio, no solo crea contenido genérico.",
-      differentiation_points: [
-        "Estrategia de contenido personalizada",
-        "Entendimiento del mercado LATAM",
-        "Resultados medibles en ventas",
-        "Comunicación en español nativo",
-        "Precio competitivo vs agencias"
-      ]
+      competidores: competidores,
+      gap_competitivo: "Contenido autentico y personalizado",
+      posicionamiento: "Autenticidad + Resultados",
     },
     strategy_recommendations: {
-      value_proposition: `${serviceTypes[0] || "Contenido UGC"} que vende: resultados profesionales sin el costo de producción tradicional`,
-      brand_positioning: "Experto en contenido estratégico para marcas que quieren vender más, no solo verse bonitas",
-      pricing_strategy: "Paquetes escalonados desde básico hasta premium, con enfoque en ROI demostrable",
-      sales_angles: salesAngles,
-      funnel_strategy: {
-        awareness: "Reels educativos mostrando before/after y hacks de producción",
-        consideration: "Casos de éxito con métricas reales de clientes",
-        conversion: "Oferta de prueba o descuento primer proyecto",
-        retention: "Paquetes mensuales con descuento y contenido exclusivo"
+      seccion_3_avatares: avatarDefaults,
+      seccion_4_angulos: angulosDefault,
+      seccion_6_organico: {
+        objetivo_organico: "Construir autoridad y comunidad",
+        distribucion_contenido: { viral: 25, valor: 40, venta: 25, personal: 10, justificacion: "Balance entre engagement y conversion" },
+        frecuencia_publicacion: "5 veces por semana",
+        tipo_contenido_organico: "Reels, carruseles educativos, stories interactivos",
+        pilares_tematicos: ["Educacion", "Casos de exito", "Detras de camaras"],
+        tono_organico: "Cercano y profesional",
+        metricas_organico: { retencion_objetivo: "50-70%", interacciones_clave: "Guardados > Compartidos > Comentarios", frecuencia_revision: "Semanal" },
+        errores_comunes_organico: ["Publicar sin estrategia", "Ignorar metricas", "No responder comentarios"],
       },
-      content_pillars: [
-        "Educativo: Hacks y tutoriales de producción",
-        "Inspiracional: Before/after y transformaciones",
-        "Prueba social: Testimonios y casos de éxito",
-        "Entretenimiento: Trends y contenido viral adaptado"
-      ],
-      platforms: platforms.map(p => ({
-        name: p,
-        strategy: `Contenido optimizado para ${p} con formatos nativos`,
-        content_types: p === "instagram" ? ["Reels", "Stories", "Carruseles"] : p === "tiktok" ? ["Videos cortos", "Trends", "Duets"] : ["Videos", "Shorts"],
-        priority: "high"
-      })),
-      hashtags: uniqueHashtags,
-      ads_targeting: {
-        interests: ["Marketing digital", "E-commerce", "Emprendimiento", "Fotografía", "Redes sociales"],
-        behaviors: ["Compradores online", "Dueños de negocios", "Usuarios de apps de edición"],
-        keywords: serviceTypes.concat(["ugc", "contenido", "creador", "marketing"]),
-        lookalike_sources: ["Clientes actuales", "Seguidores enganchados", "Visitantes web"]
-      }
+      seccion_7_ads: {
+        objetivo_campana: "conversiones",
+        estructura_campana: { frio: "Contenido educativo de valor", tibio: "Casos de exito y testimoniales", remarketing: "Oferta directa con urgencia" },
+        publico_frio: { intereses: ["Marketing digital", "Emprendimiento", "E-commerce"], comportamientos: ["Compradores online", "Duenos de paginas"], caracteristicas: "25-45 anos, interes en negocios" },
+        publico_remarketing: "Visitantes web ultimos 30 dias, engagement en redes",
+        presupuesto_minimo_sugerido: "$300-500 USD/mes para empezar",
+        ideas_para_ads: "Ideas 2 y 3 son ideales para pauta por su enfoque en resultados",
+        estructura_creativo_ad: { hook: "0-3 seg: Pregunta o dato impactante", problema: "3-10 seg: Identificar el dolor", solucion: "10-25 seg: Mostrar la solucion", cta: "25-30 seg: Llamada clara a la accion" },
+        variaciones_recomendadas: "3-5 variaciones de hook por creativo",
+        ctr_objetivo: "Meta Ads >1%, TikTok Ads >1.5%",
+        senales_de_escalar: "CTR >2%, CPA bajo objetivo, ROAS >2x",
+        senales_de_pausar: "CTR <0.5% despues de 1000 impresiones, CPA 2x objetivo",
+      },
     },
     content_brief: {
-      brand_voice: {
-        tone: ["Profesional pero cercano", "Directo", "Inspirador"],
-        personality: "Experto accesible que simplifica lo complejo y entrega resultados",
-        do_say: ["Resultados", "Estrategia", "Auténtico", "Profesional", "ROI"],
-        dont_say: ["Barato", "Fácil", "Viral garantizado", "Rápido"]
+      seccion_5_ideas: [
+        { id: 1, titulo: "El secreto que nadie te cuenta", formato: "educativo", hook_variacion_1: "Nadie te dice esto sobre...", hook_variacion_2: "Lo que los gurus no quieren que sepas", hook_variacion_3: "El error que yo cometi y tu puedes evitar", desarrollo: "Revelar insight valioso del nicho", cta: "Guardalo", duracion_recomendada: "30-60 seg", fase_esfera: "enganche", uso_recomendado: "organico" },
+        { id: 2, titulo: "Antes vs Despues real", formato: "antes_despues", hook_variacion_1: "Mira esta transformacion", hook_variacion_2: "De esto a esto en 30 dias", hook_variacion_3: "No vas a creer el cambio", desarrollo: "Mostrar resultados tangibles", cta: "Quieres lo mismo?", duracion_recomendada: "15-30 seg", fase_esfera: "solucion", uso_recomendado: "ambos" },
+      ],
+      seccion_8_brief_creador: {
+        tono_de_voz: "Cercano, confiable, experto pero accesible",
+        palabras_usar: ["Resultados", "Facil", "Rapido", "Comprobado", "Autentico"],
+        palabras_evitar: ["Barato", "Gratis", "Garantizado", "Milagroso"],
+        indicaciones_visuales: "Luz natural, fondo limpio, ropa casual-profesional, encuadre vertical 9:16",
+        especificaciones_tecnicas: "Video vertical 9:16, minimo 1080p, audio claro sin eco",
+        cta_recomendado: goals.includes("vender") ? "Link en bio para mas info" : "Guardalo y sigueme para mas",
+        restricciones_del_cliente: (extractedData.restricciones_creativas as string) || "Ninguna especificada",
       },
-      key_messages: [
-        "Contenido que vende, no solo se ve bonito",
-        `${serviceTypes[0] || "UGC"} profesional sin el costo de estudio`,
-        "Estrategia + ejecución = resultados medibles",
-        "Tu marca merece contenido que convierta",
-        "De idea a publicación en tiempo récord"
-      ],
-      tagline_suggestions: [
-        "Contenido que convierte",
-        "De scroll a venta",
-        "Tu marca, amplificada",
-        "Producción pro, precio real",
-        "Contenido con propósito"
-      ],
-      content_ideas: [
-        { title: "Before/After de producto con IA", format: "reel", objective: "awareness", brief_description: "Mostrar transformación de foto amateur a profesional usando herramientas de IA" },
-        { title: "3 errores que matan tus ventas", format: "carrusel", objective: "engagement", brief_description: "Contenido educativo sobre errores comunes en contenido de producto" },
-        { title: "Caso de éxito: X% más ventas", format: "reel", objective: "conversion", brief_description: "Testimonial con métricas reales de un cliente" },
-        { title: "Tutorial: Hook perfecto en 3 pasos", format: "reel", objective: "awareness", brief_description: "Contenido educativo que posiciona como experto" },
-        { title: "Un día creando contenido para...", format: "story", objective: "engagement", brief_description: "Behind the scenes que humaniza la marca" }
-      ],
-      visual_direction: {
-        color_palette: ["#6366f1", "#8b5cf6", "#ec4899", "#10b981"],
-        style: "Moderno, limpio, con contraste alto para destacar en feed",
-        mood: "Profesional pero accesible, inspirador sin ser inalcanzable"
-      }
-    }
+    },
   };
 }
 
