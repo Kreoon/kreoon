@@ -1,6 +1,20 @@
 import { calculateDaysInColombia, calculateCreatorPoints, CREATOR_POINTS_CONFIG } from './useUPCreadores';
 import { calculateEditorPoints, EDITOR_POINTS_CONFIG } from './useUPEditores';
 import { logReputationEvent } from '@/hooks/useUnifiedReputation';
+import { supabase } from '@/integrations/supabase/client';
+
+/**
+ * Get active season ID for an organization
+ */
+async function getActiveSeasonId(organizationId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('reputation_seasons')
+    .select('id')
+    .eq('organization_id', organizationId)
+    .eq('is_active', true)
+    .maybeSingle();
+  return data?.id || null;
+}
 
 /**
  * Central handler for UP points based on content status changes
@@ -40,6 +54,10 @@ export async function handleUPStatusChange(params: {
   console.log('[UP Handler] Status change:', { contentId, oldStatus, newStatus, creatorId, editorId });
 
   try {
+    // Get active season ID for this org
+    const seasonId = await getActiveSeasonId(organizationId);
+    console.log('[UP Handler] Active season:', seasonId);
+
     // ============================================
     // CREATOR POINTS: recording → recorded OR assigned → recorded
     // ============================================
@@ -67,6 +85,7 @@ export async function handleUPStatusChange(params: {
             days_to_deliver: daysToDeliver,
             source: 'content_status_change',
           },
+          seasonId: seasonId || undefined,
         });
       }
     }
@@ -98,6 +117,7 @@ export async function handleUPStatusChange(params: {
             days_to_deliver: daysToDeliver,
             source: 'content_status_change',
           },
+          seasonId: seasonId || undefined,
         });
       }
     }
@@ -119,6 +139,7 @@ export async function handleUPStatusChange(params: {
           eventSubtype: 'issue_penalty',
           basePoints: CREATOR_POINTS_CONFIG.issue_penalty,
           breakdown: { base: CREATOR_POINTS_CONFIG.issue_penalty, source: 'issue_reported' },
+          seasonId: seasonId || undefined,
         });
       }
 
@@ -133,6 +154,7 @@ export async function handleUPStatusChange(params: {
           eventSubtype: 'issue_penalty',
           basePoints: EDITOR_POINTS_CONFIG.issue_penalty,
           breakdown: { base: EDITOR_POINTS_CONFIG.issue_penalty, source: 'issue_reported' },
+          seasonId: seasonId || undefined,
         });
       }
     }
@@ -159,6 +181,7 @@ export async function handleUPStatusChange(params: {
             eventSubtype: 'issue_recovery',
             basePoints: CREATOR_POINTS_CONFIG.issue_recovery,
             breakdown: { base: CREATOR_POINTS_CONFIG.issue_recovery, days_to_recover: daysSinceIssue },
+            seasonId: seasonId || undefined,
           });
         }
 
@@ -173,6 +196,7 @@ export async function handleUPStatusChange(params: {
             eventSubtype: 'issue_recovery',
             basePoints: EDITOR_POINTS_CONFIG.issue_recovery,
             breakdown: { base: EDITOR_POINTS_CONFIG.issue_recovery, days_to_recover: daysSinceIssue },
+            seasonId: seasonId || undefined,
           });
         }
       }
@@ -195,6 +219,7 @@ export async function handleUPStatusChange(params: {
           eventSubtype: 'clean_approval_bonus',
           basePoints: CREATOR_POINTS_CONFIG.clean_approval_bonus,
           breakdown: { base: CREATOR_POINTS_CONFIG.clean_approval_bonus, source: 'clean_approval' },
+          seasonId: seasonId || undefined,
         });
       }
 
@@ -209,6 +234,7 @@ export async function handleUPStatusChange(params: {
           eventSubtype: 'clean_approval_bonus',
           basePoints: EDITOR_POINTS_CONFIG.clean_approval_bonus,
           breakdown: { base: EDITOR_POINTS_CONFIG.clean_approval_bonus, source: 'clean_approval' },
+          seasonId: seasonId || undefined,
         });
       }
     }
