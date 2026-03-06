@@ -17,12 +17,14 @@ export function OnboardingWizard() {
   const { signOut } = useAuth();
   const { currentStep, isLoading, completionStatus } = useOnboardingGate();
   const [activeStep, setActiveStep] = useState<'profile_data' | 'legal_consents'>('profile_data');
+  const [profileSaved, setProfileSaved] = useState(false);
 
   const handleLogout = async () => {
     await signOut();
   };
 
   const goToLegalStep = () => {
+    setProfileSaved(true); // Marcar que ya guardó el perfil exitosamente
     setActiveStep('legal_consents');
   };
 
@@ -31,7 +33,9 @@ export function OnboardingWizard() {
   };
 
   // Determinar el paso a mostrar
-  const displayStep = completionStatus?.profile_completed ? activeStep : 'profile_data';
+  // Si profileSaved es true (guardó exitosamente), confiar en activeStep
+  // Si no, verificar completionStatus del servidor
+  const displayStep = (profileSaved || completionStatus?.profile_completed) ? activeStep : 'profile_data';
   const currentStepIndex = STEPS.findIndex(s => s.id === displayStep);
 
   if (isLoading) {
