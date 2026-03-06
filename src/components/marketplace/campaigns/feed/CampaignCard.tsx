@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { DollarSign, Gift, Layers, Calendar, Users, Clock, Gavel, ArrowUpDown, Globe, Lock, Target, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CAMPAIGN_STATUS_COLORS, CAMPAIGN_STATUS_LABELS } from '@/hooks/useMarketplaceCampaigns';
@@ -21,7 +22,7 @@ const TYPE_CONFIG = {
   hybrid: { icon: Layers, label: 'Hibrida', color: 'text-blue-400' },
 } as const;
 
-export function CampaignCard({ campaign, onClick }: CampaignCardProps) {
+export const CampaignCard = memo(function CampaignCard({ campaign, onClick }: CampaignCardProps) {
   const { formatPrice } = useCurrency();
   const typeConfig = TYPE_CONFIG[campaign.campaign_type];
   const TypeIcon = typeConfig.icon;
@@ -52,7 +53,7 @@ export function CampaignCard({ campaign, onClick }: CampaignCardProps) {
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2.5 min-w-0">
           {campaign.brand_logo ? (
-            <img src={campaign.brand_logo} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+            <img src={campaign.brand_logo} alt="" loading="lazy" className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
           ) : (
             <div className="w-9 h-9 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 text-xs font-bold flex-shrink-0">
               {displayName.charAt(0)}
@@ -141,4 +142,4 @@ export function CampaignCard({ campaign, onClick }: CampaignCardProps) {
       </div>
     </button>
   );
-}
+});

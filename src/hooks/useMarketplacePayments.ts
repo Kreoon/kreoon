@@ -48,6 +48,8 @@ export function useMarketplacePayments() {
       return data as MarketplacePayment[];
     },
     enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5,  // 5 minutos
+    gcTime: 1000 * 60 * 30,    // 30 minutos cache
   });
 
   // Create payment (company initiates)
@@ -295,6 +297,8 @@ export function usePaymentDisputes() {
       return data as PaymentDispute[];
     },
     enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5,  // 5 minutos
+    gcTime: 1000 * 60 * 30,    // 30 minutos cache
   });
 
   // Open dispute
@@ -413,6 +417,8 @@ export function useCreatorPayoutSettings() {
       return data as CreatorPayoutSettings | null;
     },
     enabled: !!user?.id,
+    staleTime: 1000 * 60 * 10, // 10 minutos
+    gcTime: 1000 * 60 * 60,    // 1 hora cache
   });
 
   // Update settings
@@ -495,6 +501,8 @@ export function usePaymentTransactions(paymentId?: string) {
       return data as PaymentTransaction[];
     },
     enabled: !!user?.id,
+    staleTime: 1000 * 60 * 2,  // 2 minutos
+    gcTime: 1000 * 60 * 15,    // 15 minutos cache
   });
 }
 
@@ -552,6 +560,8 @@ export function useCreatorEarnings() {
       };
     },
     enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5,  // 5 minutos
+    gcTime: 1000 * 60 * 30,    // 30 minutos cache
   });
 }
 
@@ -607,5 +617,7 @@ export function useCompanySpending() {
       };
     },
     enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5,  // 5 minutos
+    gcTime: 1000 * 60 * 30,    // 30 minutos cache
   });
 }

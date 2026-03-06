@@ -9,19 +9,23 @@ interface LegalCheckbox {
   checked: boolean;
   onChange: (checked: boolean) => void;
   error?: string;
+  isImportant?: boolean;
 }
 
 interface LegalCheckboxesProps {
   acceptTerms: boolean;
   acceptPrivacy: boolean;
   acceptDataTreatment: boolean;
+  acceptAge18Plus: boolean;
   onTermsChange: (checked: boolean) => void;
   onPrivacyChange: (checked: boolean) => void;
   onDataTreatmentChange: (checked: boolean) => void;
+  onAge18PlusChange: (checked: boolean) => void;
   errors?: {
     acceptTerms?: string;
     acceptPrivacy?: string;
     acceptDataTreatment?: string;
+    acceptAge18Plus?: string;
   };
   disabled?: boolean;
 }
@@ -30,18 +34,30 @@ export function LegalCheckboxes({
   acceptTerms,
   acceptPrivacy,
   acceptDataTreatment,
+  acceptAge18Plus,
   onTermsChange,
   onPrivacyChange,
   onDataTreatmentChange,
+  onAge18PlusChange,
   errors,
   disabled,
 }: LegalCheckboxesProps) {
   const checkboxes: LegalCheckbox[] = [
     {
+      id: 'age-18-plus',
+      label: 'Declaro bajo juramento que',
+      linkText: 'soy mayor de 18 años',
+      href: '/legal/age-verification',
+      checked: acceptAge18Plus,
+      onChange: onAge18PlusChange,
+      error: errors?.acceptAge18Plus,
+      isImportant: true,
+    },
+    {
       id: 'terms',
       label: 'Acepto los',
       linkText: 'Términos y Condiciones',
-      href: '/terms',
+      href: '/legal/terms',
       checked: acceptTerms,
       onChange: onTermsChange,
       error: errors?.acceptTerms,
@@ -50,7 +66,7 @@ export function LegalCheckboxes({
       id: 'privacy',
       label: 'Acepto la',
       linkText: 'Política de Privacidad',
-      href: '/privacy',
+      href: '/legal/privacy',
       checked: acceptPrivacy,
       onChange: onPrivacyChange,
       error: errors?.acceptPrivacy,
@@ -58,8 +74,8 @@ export function LegalCheckboxes({
     {
       id: 'data-treatment',
       label: 'Acepto el',
-      linkText: 'Tratamiento de Datos',
-      href: '/data-processing',
+      linkText: 'Tratamiento de Datos (Ley 1581)',
+      href: '/legal/privacy',
       checked: acceptDataTreatment,
       onChange: onDataTreatmentChange,
       error: errors?.acceptDataTreatment,

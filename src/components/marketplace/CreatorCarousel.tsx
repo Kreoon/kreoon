@@ -13,6 +13,8 @@ interface CreatorCarouselProps {
   isLoading?: boolean;
   onSeeAll?: () => void;
   onCreatorClick?: (id: string) => void;
+  /** Mark first items as priority for LCP optimization */
+  priority?: boolean;
 }
 
 export function CreatorCarousel({
@@ -23,6 +25,7 @@ export function CreatorCarousel({
   isLoading,
   onSeeAll,
   onCreatorClick,
+  priority = false,
 }: CreatorCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -116,11 +119,11 @@ export function CreatorCarousel({
               <div
                 key={creator.id}
                 className="snap-start flex-shrink-0 w-[180px] max-sm:w-[45vw]"
-                style={{ animationDelay: `${i * 50}ms` }}
               >
                 <MarketplaceCreatorCard
                   creator={creator}
                   onClick={() => onCreatorClick?.(creator.slug || creator.id)}
+                  priority={priority && i < 6} // First 6 items are priority when carousel is priority
                 />
               </div>
             ))}

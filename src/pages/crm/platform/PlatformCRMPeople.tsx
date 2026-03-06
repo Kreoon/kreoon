@@ -22,8 +22,12 @@ import {
   Star,
   Briefcase,
   UserCircle,
+  Calendar,
+  Clock,
+  FileCheck,
+  FileX,
 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -64,7 +68,6 @@ import {
 import type { HealthStatus, TalentCategory, SpecificRole } from "@/types/crm.types";
 import type { UserWithHealth, CreatorWithMetrics } from "@/services/crm/platformCrmService";
 import { ViewModeToggle } from "@/components/crm";
-import { UserDetailDialog } from "@/components/crm/UserDetailDialog";
 import { UnifiedTalentDetailDialog } from "@/components/crm/UnifiedTalentDetailDialog";
 import type { ViewMode } from "@/components/crm";
 
@@ -867,6 +870,18 @@ const PlatformCRMPeople = () => {
                             <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium", HEALTH_STATUS_COLORS[status])}>
                               {HEALTH_STATUS_LABELS[status]}
                             </span>
+                            {/* Badge de Onboarding */}
+                            {user.onboarding_completed ? (
+                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-500/20 text-green-400" title={`${user.consent_count || 0} consentimientos firmados`}>
+                                <FileCheck className="w-3 h-3" />
+                                Legal ✓
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-500/20 text-orange-400" title="Sin onboarding completo">
+                                <FileX className="w-3 h-3" />
+                                Pendiente
+                              </span>
+                            )}
                           </div>
                           <div className={cn("w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold", hc.bg, hc.text)}>
                             {user.health_score}
@@ -875,6 +890,20 @@ const PlatformCRMPeople = () => {
                         {user.organization_name && (
                           <p className="text-[10px] text-white/30 mt-2 truncate">{user.organization_name}</p>
                         )}
+
+                        {/* Fechas */}
+                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5 text-[10px] text-white/40">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {format(new Date(user.created_at), "d MMM yy", { locale: es })}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {user.last_login_at
+                              ? formatDistanceToNow(new Date(user.last_login_at), { addSuffix: true, locale: es })
+                              : "Nunca"}
+                          </div>
+                        </div>
                       </Card>
                     );
                   })}
@@ -906,6 +935,21 @@ const PlatformCRMPeople = () => {
                         <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium hidden sm:inline", getUserTypeColor(user.user_type))}>
                           {getUserTypeLabel(user.user_type)}
                         </span>
+                        {/* Badge de Onboarding en lista */}
+                        {user.onboarding_completed ? (
+                          <span className="hidden md:flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-500/20 text-green-400">
+                            <FileCheck className="w-3 h-3" />
+                          </span>
+                        ) : (
+                          <span className="hidden md:flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-500/20 text-orange-400">
+                            <FileX className="w-3 h-3" />
+                          </span>
+                        )}
+                        <span className="text-[10px] text-white/30 hidden lg:inline">
+                          {user.last_login_at
+                            ? formatDistanceToNow(new Date(user.last_login_at), { addSuffix: true, locale: es })
+                            : "Nunca"}
+                        </span>
                         <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold", hc.bg, hc.text)}>
                           {user.health_score}
                         </div>
@@ -924,7 +968,9 @@ const PlatformCRMPeople = () => {
                         <TableHead className="text-white/70">Usuario</TableHead>
                         <TableHead className="text-white/70">Tipo</TableHead>
                         <TableHead className="text-white/70 hidden md:table-cell">Organización</TableHead>
+                        <TableHead className="text-white/70">Legal</TableHead>
                         <TableHead className="text-white/70">Health Score</TableHead>
+                        <TableHead className="text-white/70 hidden lg:table-cell">Registro</TableHead>
                         <TableHead className="text-white/70 hidden lg:table-cell">Últ. Login</TableHead>
                         <TableHead className="text-white/70">Estado</TableHead>
                       </TableRow>
@@ -964,6 +1010,19 @@ const PlatformCRMPeople = () => {
                             </TableCell>
                             <TableCell className="text-white/70 hidden md:table-cell">{user.organization_name || "—"}</TableCell>
                             <TableCell>
+                              {user.onboarding_completed ? (
+                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-500/20 text-green-400 w-fit" title={`${user.consent_count || 0} consentimientos`}>
+                                  <FileCheck className="w-3 h-3" />
+                                  {user.consent_count || 0}
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-500/20 text-orange-400 w-fit" title="Sin firmar">
+                                  <FileX className="w-3 h-3" />
+                                  Pend.
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell>
                               <div className="flex items-center gap-2">
                                 <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold", hc.bg, hc.text)}>
                                   {user.health_score}
@@ -972,6 +1031,9 @@ const PlatformCRMPeople = () => {
                                   <div className={cn("h-full rounded-full", hc.bar)} style={{ width: `${Math.min(user.health_score, 100)}%` }} />
                                 </div>
                               </div>
+                            </TableCell>
+                            <TableCell className="text-white/50 text-sm hidden lg:table-cell">
+                              {format(new Date(user.created_at), "d MMM yyyy", { locale: es })}
                             </TableCell>
                             <TableCell className="text-white/50 hidden lg:table-cell">
                               {user.last_login_at
@@ -1053,6 +1115,18 @@ const PlatformCRMPeople = () => {
                               {SPECIFIC_ROLE_LABELS[role]}
                             </span>
                           )}
+                          {/* Badge de Onboarding */}
+                          {creator.onboarding_completed ? (
+                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-500/20 text-green-400" title={`${creator.consent_count || 0} consentimientos firmados`}>
+                              <FileCheck className="w-3 h-3" />
+                              Legal ✓
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-500/20 text-orange-400" title="Sin onboarding completo">
+                              <FileX className="w-3 h-3" />
+                              Pendiente
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex items-center justify-between text-sm">
@@ -1071,6 +1145,12 @@ const PlatformCRMPeople = () => {
                           )}>
                             {creator.is_active ? "Activo" : "Inactivo"}
                           </span>
+                        </div>
+
+                        {/* Fecha de registro */}
+                        <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-white/5 text-xs text-white/40">
+                          <Calendar className="w-3 h-3" />
+                          <span>Registro: {format(new Date(creator.created_at), "d MMM yyyy", { locale: es })}</span>
                         </div>
                       </Card>
                     );
@@ -1110,11 +1190,24 @@ const PlatformCRMPeople = () => {
                             {TALENT_CATEGORY_LABELS[category]}
                           </span>
                         )}
+                        {/* Badge de Onboarding en lista */}
+                        {creator.onboarding_completed ? (
+                          <span className="hidden md:flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-500/20 text-green-400">
+                            <FileCheck className="w-3 h-3" />
+                          </span>
+                        ) : (
+                          <span className="hidden md:flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-500/20 text-orange-400">
+                            <FileX className="w-3 h-3" />
+                          </span>
+                        )}
                         <div className="flex items-center gap-1 text-yellow-400 text-xs">
                           <Star className="w-3.5 h-3.5 fill-current" />
                           {creator.rating_avg > 0 ? creator.rating_avg.toFixed(1) : "—"}
                         </div>
                         <span className="text-xs text-white/50 hidden md:inline">{creator.completed_projects} proy.</span>
+                        <span className="text-[10px] text-white/30 hidden lg:inline">
+                          {format(new Date(creator.created_at), "d MMM yy", { locale: es })}
+                        </span>
                         <span className={cn(
                           "px-2 py-0.5 rounded-full text-[10px]",
                           creator.is_active ? "bg-green-500/20 text-green-300" : "bg-white/10 text-white/50"
@@ -1133,9 +1226,11 @@ const PlatformCRMPeople = () => {
                         <TableHead className="text-white/70">Freelancer</TableHead>
                         <TableHead className="text-white/70">Categoría</TableHead>
                         <TableHead className="text-white/70 hidden md:table-cell">Rol</TableHead>
+                        <TableHead className="text-white/70">Legal</TableHead>
                         <TableHead className="text-white/70">Rating</TableHead>
                         <TableHead className="text-white/70 hidden md:table-cell">Proyectos</TableHead>
                         <TableHead className="text-white/70 hidden lg:table-cell">Ganado</TableHead>
+                        <TableHead className="text-white/70 hidden lg:table-cell">Registro</TableHead>
                         <TableHead className="text-white/70">Estado</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1185,6 +1280,19 @@ const PlatformCRMPeople = () => {
                               {role ? SPECIFIC_ROLE_LABELS[role] : "—"}
                             </TableCell>
                             <TableCell>
+                              {creator.onboarding_completed ? (
+                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-500/20 text-green-400 w-fit" title={`${creator.consent_count || 0} consentimientos`}>
+                                  <FileCheck className="w-3 h-3" />
+                                  {creator.consent_count || 0}
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-500/20 text-orange-400 w-fit" title="Sin firmar">
+                                  <FileX className="w-3 h-3" />
+                                  Pend.
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell>
                               <div className="flex items-center gap-1 text-yellow-400">
                                 <Star className="w-4 h-4 fill-current" />
                                 {creator.rating_avg > 0 ? creator.rating_avg.toFixed(1) : "N/A"}
@@ -1192,6 +1300,9 @@ const PlatformCRMPeople = () => {
                             </TableCell>
                             <TableCell className="text-white hidden md:table-cell">{creator.completed_projects}</TableCell>
                             <TableCell className="text-green-400 hidden lg:table-cell">{formatCurrency(creator.total_earned)}</TableCell>
+                            <TableCell className="text-white/50 text-sm hidden lg:table-cell">
+                              {format(new Date(creator.created_at), "d MMM yyyy", { locale: es })}
+                            </TableCell>
                             <TableCell>
                               <span className={cn(
                                 "px-2 py-1 rounded-full text-xs",
@@ -1214,7 +1325,7 @@ const PlatformCRMPeople = () => {
 
       {/* ========== DETAIL DIALOGS ========== */}
       {selectedUser && (
-        <UserDetailDialog
+        <UnifiedTalentDetailDialog
           user={selectedUser}
           open={true}
           onOpenChange={(open) => {

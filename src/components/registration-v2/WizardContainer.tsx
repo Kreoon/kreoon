@@ -184,7 +184,19 @@ export function WizardContainer({
 
       {/* Footer */}
       {state.currentStep !== 'success' && (
-        <div className="mt-6 text-center">
+        <div className="mt-6 text-center space-y-3">
+          {onBack && steps.indexOf(state.currentStep) === 0 && (
+            <p className="text-sm text-white/60">
+              ¿Ya tienes cuenta?{' '}
+              <button
+                type="button"
+                onClick={onBack}
+                className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
+              >
+                Inicia sesión
+              </button>
+            </p>
+          )}
           <p className="text-xs text-white/40">
             Al continuar, aceptas nuestros términos de servicio
           </p>

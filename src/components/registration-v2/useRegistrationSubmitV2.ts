@@ -2,6 +2,44 @@ import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { RegistrationFormData, UserType, RegistrationV2State } from './types';
+import { triggerUserSyncSilent, triggerOrgSyncSilent } from '@/services/pancakeCrmService';
+
+/**
+ * Registra los consentimientos legales del usuario después del registro
+ */
+async function recordLegalConsents(userId: string): Promise<void> {
+  try {
+    // 1. Registrar verificación de edad
+    await supabase.rpc('record_age_verification', {
+      p_user_id: userId,
+      p_declared_age_18_plus: true,
+      p_ip_address: null,
+      p_user_agent: navigator.userAgent,
+    });
+
+    // 2. Obtener documentos legales vigentes
+    const { data: documents } = await supabase
+      .from('legal_documents')
+      .select('id')
+      .eq('is_current', true)
+      .eq('is_required', true);
+
+    if (documents && documents.length > 0) {
+      // 3. Registrar consentimiento para cada documento
+      for (const doc of documents) {
+        await supabase.rpc('record_consent', {
+          p_user_id: userId,
+          p_document_id: doc.id,
+          p_ip_address: null,
+          p_user_agent: navigator.userAgent,
+        });
+      }
+    }
+  } catch (error) {
+    console.warn('Error recording legal consents:', error);
+    // No falla el registro si hay error en consentimientos
+  }
+}
 
 interface UseRegistrationSubmitV2Options {
   state: RegistrationV2State;
@@ -64,8 +102,24 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
 
     if (profileError) throw profileError;
 
+    // 3. Aplicar partner community si existe
+    if (state.partnerCommunity) {
+      try {
+        await supabase.functions.invoke('partner-community-service', {
+          body: {
+            action: 'apply',
+            user_id: userId,
+            community_slug: state.partnerCommunity,
+            user_type: 'talent',
+          },
+        });
+      } catch (e) {
+        console.warn('Error applying partner community:', e);
+      }
+    }
+
     toast.success('¡Tu perfil de creador ha sido creado!');
-  }, []);
+  }, [state.partnerCommunity]);
 
   const handleBrandSubmit = useCallback(async (
     userId: string,
@@ -176,8 +230,27 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
       })
       .eq('id', userId);
 
+    // 5. Aplicar partner community si existe
+    if (state.partnerCommunity) {
+      try {
+        await supabase.functions.invoke('partner-community-service', {
+          body: {
+            action: 'apply',
+            user_id: userId,
+            community_slug: state.partnerCommunity,
+            user_type: 'organization',
+          },
+        });
+      } catch (e) {
+        console.warn('Error applying partner community:', e);
+      }
+    }
+
     toast.success('¡Tu organización ha sido creada! Tu prueba de 30 días ha comenzado.');
-  }, []);
+
+    // Sincronizar organización con Pancake CRM
+    triggerOrgSyncSilent(org.id);
+  }, [state.partnerCommunity]);
 
   const handleClientJoinOrg = useCallback(async (
     userId: string,
@@ -303,7 +376,10 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
           }
         }
 
-        // 4. Aplicar código de referido si existe
+        // 4. Registrar consentimientos legales
+        await recordLegalConsents(userId);
+
+        // 5. Aplicar código de referido si existe
         if (state.referralCode) {
           try {
             await supabase.functions.invoke('referral-service', {
@@ -317,6 +393,9 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
             console.warn('Error applying referral code:', e);
           }
         }
+
+        // 6. Sincronizar con Pancake CRM (fire-and-forget)
+        triggerUserSyncSilent(userId);
       } else {
         // Si requiere confirmación de email, guardar datos pendientes
         localStorage.setItem('kreoon_pending_registration', JSON.stringify({
@@ -330,7 +409,7 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
         }));
       }
 
-      // 5. Ir al paso success
+      // 7. Ir al paso success
       goToNextStep();
 
     } catch (error: any) {

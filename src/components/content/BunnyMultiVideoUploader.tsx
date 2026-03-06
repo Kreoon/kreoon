@@ -298,12 +298,14 @@ export function BunnyMultiVideoUploader({
           }
         });
 
-        xhr.addEventListener('error', () => reject(new Error('Error de red')));
+        xhr.addEventListener('error', () => reject(new Error('Error de conexión. Verifica tu internet y desactiva VPN/bloqueadores si los tienes.')));
         xhr.addEventListener('abort', () => reject(new Error('Subida cancelada')));
+        xhr.addEventListener('timeout', () => reject(new Error('Tiempo de espera agotado. Verifica tu conexión.')));
 
         xhr.open('POST', `${SUPABASE_FUNCTIONS_URL}/functions/v1/bunny-portfolio-upload`);
         // No auth headers needed - bunny-portfolio-upload has verify_jwt = false
         // Do NOT set Content-Type for FormData - browser sets it with boundary
+        xhr.timeout = 600000; // 10 minutes for large files
         xhr.send(formData);
       });
 

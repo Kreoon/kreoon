@@ -94,7 +94,7 @@ export function IdealCustomerSection({ data, isEditing, onFieldChange }: Props) 
                   <EditableTags items={data.psychographic?.values || data.psychographics?.values || []} onChange={change('psychographic.values') as (v: string[]) => void} color="purple" placeholder="Agregar valor..." />
                 </div>
               ) : (
-                <TagList label="Valores" items={psycho.values} color="purple" />
+                <TagList label="Valores" items={psycho?.values || []} color="purple" />
               )
             )}
             {(psycho?.interests?.length > 0 || isEditing) && (
@@ -104,7 +104,7 @@ export function IdealCustomerSection({ data, isEditing, onFieldChange }: Props) 
                   <EditableTags items={data.psychographic?.interests || data.psychographics?.interests || []} onChange={change('psychographic.interests') as (v: string[]) => void} color="pink" placeholder="Agregar interés..." />
                 </div>
               ) : (
-                <TagList label="Intereses" items={psycho.interests} color="pink" />
+                <TagList label="Intereses" items={psycho?.interests || []} color="pink" />
               )
             )}
             {(psycho?.personality_traits?.length > 0 || isEditing) && (
@@ -114,7 +114,7 @@ export function IdealCustomerSection({ data, isEditing, onFieldChange }: Props) 
                   <EditableTags items={data.psychographic?.personality_traits || data.psychographics?.personality_traits || []} onChange={change('psychographic.personality_traits') as (v: string[]) => void} color="blue" placeholder="Agregar rasgo..." />
                 </div>
               ) : (
-                <TagList label="Rasgos de Personalidad" items={psycho.personality_traits} color="blue" />
+                <TagList label="Rasgos de Personalidad" items={psycho?.personality_traits || []} color="blue" />
               )
             )}
             {(psycho?.lifestyle || isEditing) && (

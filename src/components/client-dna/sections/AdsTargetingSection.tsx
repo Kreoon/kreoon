@@ -208,7 +208,7 @@ export function AdsTargetingSection({ data, isEditing, onFieldChange }: Props) {
             <EditableTags items={data.hashtags || []} onChange={change('hashtags') as (v: string[]) => void} color="pink" placeholder="Agregar hashtag..." />
           ) : (
             <div className="flex flex-wrap gap-2">
-              {data.hashtags.map((tag, i) => (
+              {(data.hashtags || []).map((tag, i) => (
                 <span
                   key={i}
                   className="px-2 py-1 rounded-full bg-pink-500/10 border border-pink-500/20 text-xs text-pink-300"
@@ -227,7 +227,7 @@ export function AdsTargetingSection({ data, isEditing, onFieldChange }: Props) {
             <EditableTags items={data.negative_keywords || []} onChange={change('negative_keywords') as (v: string[]) => void} color="red" placeholder="Agregar keyword negativa..." />
           ) : (
             <div className="flex flex-wrap gap-2">
-              {data.negative_keywords.map((kw, i) => (
+              {(data.negative_keywords || []).map((kw, i) => (
                 <span key={i} className="px-2 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-xs text-red-300">
                   {kw}
                 </span>

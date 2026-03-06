@@ -51,6 +51,8 @@ export function useMarketplaceReviews(options: UseMarketplaceReviewsOptions = {}
       return data as MarketplaceReview[];
     },
     enabled: !!(userId || reviewerId),
+    staleTime: 1000 * 60 * 15, // 15 minutos (reseñas cambian poco)
+    gcTime: 1000 * 60 * 120,   // 2 horas cache
   });
 
   // Create review

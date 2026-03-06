@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { PortfolioGallery } from './PortfolioGallery';
 import { CreatorHeader } from './CreatorHeader';
 import { AboutSection } from './AboutSection';
@@ -11,7 +11,9 @@ import { ReviewsSection } from './ReviewsSection';
 import { PricingSidebar } from './PricingSidebar';
 import { SimilarCreators } from './SimilarCreators';
 import { CreatorProfileSkeleton } from './CreatorProfileSkeleton';
+import { TrustBadges, CreatorMetrics } from './TrustBadges';
 import { useCreatorPublicProfile } from '@/hooks/useCreatorPublicProfile';
+import type { CreatorTrustStats } from '@/hooks/useCreatorPublicProfile';
 import type { CreatorFullProfile, PortfolioMedia, CreatorService as MarketplaceCreatorService, CreatorStats, CreatorReview, CreatorPackage } from '../types/marketplace';
 import type { PortfolioItemData } from '@/hooks/usePortfolioItems';
 
@@ -173,6 +175,11 @@ export default function CreatorProfilePage() {
     [dbData],
   );
 
+  const trustStats: CreatorTrustStats | null = useMemo(
+    () => dbData?.trustStats || null,
+    [dbData],
+  );
+
   const isLoading = dbLoading;
 
   if (!id || isLoading) return <CreatorProfileSkeleton />;
@@ -188,6 +195,31 @@ export default function CreatorProfilePage() {
             className="bg-purple-600 hover:bg-purple-500 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
           >
             Volver al Marketplace
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Validate minimum requirements: at least 1 portfolio item (avatar is optional - show initials)
+  const hasMinimumRequirements = creator.portfolio_media.length > 0;
+
+  if (!hasMinimumRequirements) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4 max-w-md mx-auto px-4">
+          <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/20 flex items-center justify-center">
+            <AlertCircle className="h-8 w-8 text-amber-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-white">Perfil incompleto</h2>
+          <p className="text-gray-400">
+            Este creador aún no ha completado su perfil. Se requiere al menos un contenido en el portafolio para aparecer en el marketplace.
+          </p>
+          <button
+            onClick={() => navigate('/marketplace')}
+            className="bg-purple-600 hover:bg-purple-500 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+          >
+            Explorar Marketplace
           </button>
         </div>
       </div>
@@ -262,7 +294,20 @@ export default function CreatorProfilePage() {
               creatorAvatar={creator.avatar_url}
               creatorId={creator.id}
             />
-            <StatsSection stats={creator.stats} />
+
+            {/* Trust & Stats Section */}
+            {trustStats ? (
+              <div className="space-y-8 pb-8 border-b border-white/10">
+                <div>
+                  <h2 className="text-xl font-semibold text-white mb-4">Estadísticas y Métricas</h2>
+                  <CreatorMetrics stats={trustStats} />
+                </div>
+                <TrustBadges stats={trustStats} />
+              </div>
+            ) : (
+              <StatsSection stats={creator.stats} />
+            )}
+
             <ReviewsSection
               reviews={creator.reviews}
               ratingAvg={creator.stats.rating_avg}

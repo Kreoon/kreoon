@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import type { MarketplaceCreator } from './types/marketplace';
 import { MarketplaceCreatorCard } from './CreatorCard';
@@ -12,9 +13,11 @@ interface CreatorGridProps {
   onLoadMore?: () => void;
   onCreatorClick?: (id: string) => void;
   searchQuery?: string;
+  /** Priority loading for first items (LCP optimization) */
+  priority?: boolean;
 }
 
-export function CreatorGrid({
+export const CreatorGrid = memo(function CreatorGrid({
   creators,
   isLoading,
   hasMore,
@@ -22,6 +25,7 @@ export function CreatorGrid({
   onLoadMore,
   onCreatorClick,
   searchQuery,
+  priority = false,
 }: CreatorGridProps) {
   if (!isLoading && creators.length === 0) {
     return (
@@ -61,11 +65,12 @@ export function CreatorGrid({
           ? Array.from({ length: 8 }).map((_, i) => (
               <CreatorCardSkeleton key={i} />
             ))
-          : creators.map((creator) => (
+          : creators.map((creator, i) => (
               <MarketplaceCreatorCard
                 key={creator.id}
                 creator={creator}
                 onClick={() => onCreatorClick?.(creator.slug || creator.id)}
+                priority={priority && i < 6}
               />
             ))}
       </div>
@@ -83,4 +88,4 @@ export function CreatorGrid({
       )}
     </section>
   );
-}
+});

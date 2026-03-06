@@ -47,6 +47,7 @@ export function RegistrationFormStep({
       password: '',
       confirmPassword: '',
       companyName: initialData.companyName || '',
+      acceptAge18Plus: false,
       acceptTerms: false,
       acceptPrivacy: false,
       acceptDataTreatment: false,
@@ -56,6 +57,7 @@ export function RegistrationFormStep({
   const password = watch('password');
   const phone = watch('phone');
   const phoneCountryCode = watch('phoneCountryCode');
+  const acceptAge18Plus = watch('acceptAge18Plus');
   const acceptTerms = watch('acceptTerms');
   const acceptPrivacy = watch('acceptPrivacy');
   const acceptDataTreatment = watch('acceptDataTreatment');
@@ -207,13 +209,16 @@ export function RegistrationFormStep({
 
       {/* Checkboxes legales */}
       <LegalCheckboxes
+        acceptAge18Plus={acceptAge18Plus}
         acceptTerms={acceptTerms}
         acceptPrivacy={acceptPrivacy}
         acceptDataTreatment={acceptDataTreatment}
+        onAge18PlusChange={(v) => setValue('acceptAge18Plus', v as true)}
         onTermsChange={(v) => setValue('acceptTerms', v as true)}
         onPrivacyChange={(v) => setValue('acceptPrivacy', v as true)}
         onDataTreatmentChange={(v) => setValue('acceptDataTreatment', v as true)}
         errors={{
+          acceptAge18Plus: errors.acceptAge18Plus?.message,
           acceptTerms: errors.acceptTerms?.message,
           acceptPrivacy: errors.acceptPrivacy?.message,
           acceptDataTreatment: errors.acceptDataTreatment?.message,

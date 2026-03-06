@@ -36,6 +36,7 @@ import {
   Radar,
   ImagePlus,
   CalendarDays,
+  Trash2,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -131,6 +132,7 @@ const adminSections: NavSection[] = [
       { name: "Personas", href: "/crm/personas", icon: Users, tourId: "sidebar-crm-people" },
       { name: "Finanzas", href: "/crm/finanzas", icon: DollarSign, tourId: "sidebar-crm-finances" },
       { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone, tourId: "sidebar-crm-email" },
+      { name: "Papelera", href: "/admin/papelera", icon: Trash2, tourId: "sidebar-trash", platformRootOnly: true },
     ]
   },
   { label: "CONFIG", items: CONFIG_ITEMS }

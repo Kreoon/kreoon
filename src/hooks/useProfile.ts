@@ -513,10 +513,16 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
       updateField('avatar_url', data.publicUrl);
 
       // Persist to profiles DB immediately (don't wait for "Save" button)
-      await supabase
+      const { error: dbError } = await supabase
         .from('profiles')
         .update({ avatar_url: data.publicUrl })
         .eq('id', user.id);
+
+      if (dbError) {
+        console.error('[useProfile] Error saving avatar URL to profiles:', dbError);
+        showToast('Error', 'La imagen se subió pero no se guardó en tu perfil. Intenta de nuevo.', 'destructive');
+        return null;
+      }
 
       showToast('Avatar actualizado');
       return data.publicUrl;

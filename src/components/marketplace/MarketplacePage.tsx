@@ -1,9 +1,10 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { MarketplaceSearchBar } from './MarketplaceSearchBar';
 import { AISearchInput } from './AISearchInput';
+import { MarketplaceSearchToggle } from './search/MarketplaceSearchToggle';
 import { cn } from '@/lib/utils';
 import { MarketplaceTabBar } from './MarketplaceTabBar';
 import { CategoryBar } from './CategoryBar';
@@ -21,8 +22,10 @@ import { useCreatorSearch } from './hooks/useCreatorSearch';
 import { useInfiniteCreators } from './hooks/useInfiniteCreators';
 import { useOrgSearch } from './hooks/useOrgSearch';
 import { useInfiniteOrgs } from './hooks/useInfiniteOrgs';
+import { useMarketplaceSearch } from '@/hooks/useMarketplaceSearch';
 import { useAuth } from '@/hooks/useAuth';
 import { useCreatorProfile } from '@/hooks/useCreatorProfile';
+import { getBunnyThumbnailUrl } from '@/hooks/useHLSPlayer';
 import type { MarketplaceFilters, MarketplaceViewMode, MarketplaceRoleId, MarketplaceTab } from './types/marketplace';
 
 export default function MarketplacePage() {
@@ -34,6 +37,15 @@ export default function MarketplacePage() {
   const { creators, featured, newTalent, topRated, recommended, totalCount, isPersonalized } =
     useCreatorSearch(filters);
   const { visibleCreators, hasMore, loadMore, reset } = useInfiniteCreators(creators);
+
+  // Nuevo hook de búsqueda con ranking AI
+  const marketplaceSearch = useMarketplaceSearch();
+  const {
+    creators: aiCreators,
+    isLoading: aiLoading,
+    aiMode,
+    trackInteraction,
+  } = marketplaceSearch;
 
   // Org search
   const { orgs, totalCount: orgTotalCount } = useOrgSearch(filters);
@@ -59,11 +71,41 @@ export default function MarketplacePage() {
     orgReset();
   }, [filters, reset, orgReset]);
 
+  // Preload LCP images from first carousel for better performance
+  const preloadedRef = useRef(false);
+  useEffect(() => {
+    if (preloadedRef.current || featured.length === 0) return;
+    preloadedRef.current = true;
+
+    // Preload first 3 creator thumbnails
+    featured.slice(0, 3).forEach((creator) => {
+      const firstMedia = creator.portfolio_media?.[0];
+      if (!firstMedia) return;
+
+      let thumbUrl = firstMedia.thumbnail_url || firstMedia.url;
+      if (firstMedia.type === 'video') {
+        const bunnyThumb = getBunnyThumbnailUrl(firstMedia.url);
+        if (bunnyThumb) thumbUrl = bunnyThumb;
+      }
+
+      if (thumbUrl) {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = thumbUrl;
+        link.fetchPriority = 'high';
+        document.head.appendChild(link);
+      }
+    });
+  }, [featured]);
+
   const handleCreatorClick = useCallback(
     (id: string) => {
+      // Track click para mejorar el algoritmo de ranking
+      trackInteraction(id, 'click');
       navigate(`/marketplace/creator/${id}`);
     },
-    [navigate],
+    [navigate, trackInteraction],
   );
 
   const handleOrgClick = useCallback(
@@ -173,47 +215,9 @@ export default function MarketplacePage() {
         {/* Sticky header area */}
         <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-xl border-b border-white/5">
           <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
-            {/* Search bar - AI mode toggle */}
-            <div className="py-4 space-y-2">
-              <div className="flex items-center gap-2 mb-2">
-                <button
-                  onClick={() => setAiSearchMode(false)}
-                  className={cn(
-                    "px-3 py-1 rounded-full text-xs transition-colors",
-                    !aiSearchMode
-                      ? "bg-purple-600 text-white"
-                      : "bg-white/5 text-gray-400 hover:text-white"
-                  )}
-                >
-                  Búsqueda normal
-                </button>
-                <button
-                  onClick={() => setAiSearchMode(true)}
-                  className={cn(
-                    "px-3 py-1 rounded-full text-xs transition-colors flex items-center gap-1",
-                    aiSearchMode
-                      ? "bg-purple-600 text-white"
-                      : "bg-white/5 text-gray-400 hover:text-white"
-                  )}
-                >
-                  <Sparkles className="h-3 w-3" />
-                  AI Search
-                </button>
-              </div>
-
-              {aiSearchMode ? (
-                <AISearchInput onFiltersChange={handleAIFiltersChange} />
-              ) : (
-                <MarketplaceSearchBar
-                  search={filters.search}
-                  country={filters.country}
-                  contentTypes={filters.content_type}
-                  onSearchChange={handleSearchChange}
-                  onCountryChange={v => updateFilter('country', v)}
-                  onContentTypesChange={v => updateFilter('content_type', v)}
-                  onSubmit={handleSearchSubmit}
-                />
-              )}
+            {/* Search bar - AI mode toggle con ranking */}
+            <div className="py-4">
+              <MarketplaceSearchToggle hook={marketplaceSearch} />
             </div>
 
             {/* Top-level tab bar: Creadores / Agencias / Campañas */}
@@ -318,14 +322,15 @@ export default function MarketplacePage() {
           ) : (
             <>
               {/* Curated sections (hidden during search or filtered views) */}
-              {/* Personalized recommendations (shown when user has profile with categories) */}
+              {/* Personalized recommendations - priority if first visible */}
               {showCarousels && isPersonalized && recommended.length > 0 && (
                 <CreatorCarousel
                   title="Recomendados para ti"
                   emoji="✨"
                   subtitle="Basado en tus intereses y actividad"
-                  creators={recommended}
+                  creators={recommended.slice(0, 8)}
                   onCreatorClick={handleCreatorClick}
+                  priority={true}
                 />
               )}
 
@@ -339,19 +344,22 @@ export default function MarketplacePage() {
 
               {showCarousels && (
                 <>
+                  {/* First carousel - priority loading for LCP */}
                   <CreatorCarousel
                     title="Talento Destacado"
                     emoji="🔥"
                     subtitle="Los mejores profesionales creativos en LATAM"
-                    creators={featured}
+                    creators={featured.slice(0, 8)}
                     onCreatorClick={handleCreatorClick}
+                    priority={true}
                   />
 
+                  {/* Secondary carousels - limited items to reduce initial load */}
                   <CreatorCarousel
                     title="Nuevos Talentos"
                     emoji="🆕"
                     subtitle="Recien llegados con propuestas frescas y descuentos de bienvenida"
-                    creators={newTalent}
+                    creators={newTalent.slice(0, 6)}
                     onCreatorClick={handleCreatorClick}
                   />
 
@@ -359,7 +367,7 @@ export default function MarketplacePage() {
                     title="Los Mejor Valorados"
                     emoji="⭐"
                     subtitle="Consistencia y calidad comprobada por marcas"
-                    creators={topRated}
+                    creators={topRated.slice(0, 6)}
                     onCreatorClick={handleCreatorClick}
                   />
                 </>
@@ -373,6 +381,7 @@ export default function MarketplacePage() {
                 onLoadMore={loadMore}
                 onCreatorClick={handleCreatorClick}
                 searchQuery={isSearchActive ? filters.search : undefined}
+                priority={!showCarousels}
               />
             </>
           )}

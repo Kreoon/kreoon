@@ -65,17 +65,33 @@ const MODULE_LABELS: Record<string, string> = {
   dna: "ADN",
 };
 
-async function invokeTokenService<T = any>(action: string, body?: Record<string, any>): Promise<T | null> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return null;
+// Query directa para historial de transacciones (via balance_id)
+async function getTransactionsFallback(userId: string, organizationId?: string | null, limit = 20): Promise<any[]> {
+  try {
+    // Primero obtener el balance_id del usuario
+    let balanceQuery = supabase.from('ai_token_balances').select('id');
+    if (organizationId) {
+      balanceQuery = balanceQuery.eq('organization_id', organizationId);
+    } else {
+      balanceQuery = balanceQuery.eq('user_id', userId).is('organization_id', null);
+    }
+    const { data: balanceData } = await balanceQuery.limit(1).maybeSingle();
 
-  const { data, error } = await supabase.functions.invoke(`ai-tokens-service/${action}`, {
-    body: body || {},
-    headers: { Authorization: `Bearer ${session.access_token}` },
-  });
+    if (!balanceData?.id) return [];
 
-  if (error || data?.error) return null;
-  return data as T;
+    // Ahora obtener transacciones usando balance_id
+    const { data, error } = await supabase
+      .from('ai_token_transactions')
+      .select('*')
+      .eq('balance_id', balanceData.id)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) return [];
+    return data || [];
+  } catch {
+    return [];
+  }
 }
 
 export function useAITokens(organizationId?: string | null) {
@@ -89,32 +105,17 @@ export function useAITokens(organizationId?: string | null) {
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
-    if (!orgId && !user?.id) {
+    if (!user?.id) {
       setLoading(false);
       return;
     }
     setLoading(true);
     try {
-      const [balanceRes, historyRes] = await Promise.all([
-        invokeTokenService<{ success: boolean; balance: any }>("get-balance", {
-          organization_id: orgId || undefined,
-        }),
-        invokeTokenService<{ success: boolean; transactions: any[]; stats: any }>("get-history", {
-          organization_id: orgId || undefined,
-          limit: 20,
-        }),
+      // Usar queries directas a la DB para evitar errores de token
+      const [b, txns] = await Promise.all([
+        getTokensFallback(user.id, orgId),
+        getTransactionsFallback(user.id, orgId, 20),
       ]);
-
-      let b = balanceRes?.success && balanceRes.balance ? balanceRes.balance : null;
-
-      // Fallback: query DB directly if edge function fails
-      if (!b && user?.id) {
-        console.warn('[useAITokens] Edge function failed, using fallback');
-        b = await getTokensFallback(user.id, orgId);
-        if (b) {
-          console.log('[useAITokens] Using fallback tokens:', b.balance_subscription);
-        }
-      }
 
       if (b) {
         const totalBalance = (b.balance_subscription ?? 0) + (b.balance_purchased ?? 0) + (b.balance_bonus ?? 0);
@@ -140,22 +141,23 @@ export function useAITokens(organizationId?: string | null) {
         });
       }
 
-      if (historyRes?.success && historyRes.transactions) {
+      if (txns.length > 0) {
         setTransactions(
-          historyRes.transactions.map((t: any) => ({
+          txns.map((t: any) => ({
             id: t.id,
             type: t.transaction_type === "consumption" ? "usage" : t.transaction_type,
             tokens_amount: t.transaction_type === "consumption" ? -Math.abs(t.tokens) : t.tokens,
             module_key: t.action_type?.split(".")?.[0] || null,
             action: t.action_type || null,
-            description: null,
+            description: t.description || null,
             created_at: t.created_at,
           }))
         );
       } else {
         setTransactions([]);
       }
-    } catch {
+    } catch (err) {
+      console.warn('[useAITokens] Error fetching data:', err);
       setBalance(null);
       setTransactions([]);
     } finally {

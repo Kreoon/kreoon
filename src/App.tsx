@@ -19,10 +19,12 @@ import { TrialProvider } from "@/contexts/TrialContext";
 import { AnalyticsProvider } from "@/contexts/AnalyticsContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { OnboardingGateProvider } from "@/providers/OnboardingGateProvider";
 import { StrategistClientProvider } from "@/contexts/StrategistClientContext";
 import { KiroProvider } from "@/contexts/KiroContext";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import { MarketplaceReadinessPopup } from "@/components/marketplace/MarketplaceReadinessPopup";
+import { CookieConsentBanner } from "@/components/legal/CookieConsentBanner";
 import { ThemeProvider } from "next-themes";
 import { MainLayout } from "./components/layout/MainLayout";
 import { MarketplaceLayout } from "./components/layout/MarketplacePublicLayout";
@@ -159,6 +161,9 @@ const UnifiedClientsPage = lazyWithRetry(() => import("./pages/UnifiedClientsPag
 // KAE Analytics
 const KAEAnalyticsDashboard = lazyWithRetry(() => import("./components/admin/analytics/KAEDashboard"));
 
+// Admin pages
+const PapeleraPage = lazyWithRetry(() => import("./pages/admin/PapeleraPage"));
+
 // Subscription pages
 const ReferralLanding = lazyWithRetry(() => import("./pages/ReferralLanding"));
 const UnlockAccess = lazyWithRetry(() => import("./pages/UnlockAccess"));
@@ -179,6 +184,7 @@ const CaseStudyDetail = lazyWithRetry(() => import("./pages/CaseStudyDetail"));
 const PrivacyPolicy = lazyWithRetry(() => import("./pages/legal/PrivacyPolicy"));
 const TermsOfService = lazyWithRetry(() => import("./pages/legal/TermsOfService"));
 const DataDeletion = lazyWithRetry(() => import("./pages/legal/DataDeletion"));
+const LegalDocumentPage = lazyWithRetry(() => import("./pages/legal/LegalDocumentPage"));
 
 // Wallet Module Pages
 const WalletPage = lazyWithRetry(() => import("./modules/wallet/pages/WalletPage").then(m => ({ default: m.WalletPage })));
@@ -325,6 +331,7 @@ function AppRoutes() {
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/data-deletion" element={<DataDeletion />} />
+        <Route path="/legal/:documentType" element={<LegalDocumentPage />} />
         {/* Redirect old /social routes to /marketplace */}
         <Route path="/social" element={<Navigate to="/marketplace" replace />} />
         <Route path="/social/*" element={<Navigate to="/marketplace" replace />} />
@@ -438,6 +445,7 @@ function AppRoutes() {
         <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><KAEAnalyticsDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/admin/ad-intelligence" element={<ProtectedRoute allowNoRoles><MainLayout><AdIntelligencePage /></MainLayout></ProtectedRoute>} />
         <Route path="/admin/social-scraper" element={<ProtectedRoute allowNoRoles><MainLayout><SocialScraperPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/admin/papelera" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PapeleraPage /></MainLayout></ProtectedRoute>} />
         {/* Ad Generator Module */}
         <Route path="/ad-generator" element={<ProtectedRoute allowNoRoles><MainLayout><AdGeneratorPage /></MainLayout></ProtectedRoute>} />
         <Route path="/ad-generator/:productId" element={<ProtectedRoute allowNoRoles><MainLayout><ProductBannersPage /></MainLayout></ProtectedRoute>} />
@@ -470,7 +478,8 @@ function AppContent() {
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <BrandingProvider>
         <AuthProvider>
-          <CurrencyProvider>
+          <OnboardingGateProvider>
+            <CurrencyProvider>
             <AnalyticsProvider>
               <ImpersonationProvider>
                 <TrialProvider>
@@ -485,6 +494,7 @@ function AppContent() {
                               <Sonner />
                               <UpdatePrompt />
                               <MarketplaceReadinessPopup />
+                              <CookieConsentBanner />
                               <ErrorBoundary>
                                 <AppRoutes />
                               </ErrorBoundary>
@@ -497,7 +507,8 @@ function AppContent() {
                 </TrialProvider>
               </ImpersonationProvider>
             </AnalyticsProvider>
-          </CurrencyProvider>
+            </CurrencyProvider>
+          </OnboardingGateProvider>
         </AuthProvider>
       </BrandingProvider>
     </BrowserRouter>

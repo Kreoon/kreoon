@@ -156,3 +156,42 @@ export function useUpdateUserProfileFields() {
     },
   });
 }
+
+export function useUpdateCreatorProfileFields() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ creatorProfileId, data }: { creatorProfileId: string; data: Record<string, unknown> }) =>
+      cfService.updateCreatorProfileFields(creatorProfileId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['full-creator-detail'] });
+      queryClient.invalidateQueries({ queryKey: ['full-org-creator-detail'] });
+      queryClient.invalidateQueries({ queryKey: ['platform-creators'] });
+      queryClient.invalidateQueries({ queryKey: ['marketplace-creators'] });
+      queryClient.invalidateQueries({ queryKey: ['unified-talent'] });
+      toast.success('Perfil de marketplace actualizado');
+    },
+    onError: (error: Error) => {
+      toast.error(`Error al actualizar: ${error.message}`);
+    },
+  });
+}
+
+export function useUploadCreatorAvatar() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId, file }: { userId: string; file: File }) =>
+      cfService.uploadCreatorAvatar(userId, file),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['full-user-detail', variables.userId] });
+      queryClient.invalidateQueries({ queryKey: ['full-creator-detail'] });
+      queryClient.invalidateQueries({ queryKey: ['platform-creators'] });
+      queryClient.invalidateQueries({ queryKey: ['marketplace-creators'] });
+      toast.success('Avatar actualizado');
+    },
+    onError: (error: Error) => {
+      toast.error(`Error al subir avatar: ${error.message}`);
+    },
+  });
+}

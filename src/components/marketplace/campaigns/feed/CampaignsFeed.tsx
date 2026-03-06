@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Megaphone, Loader2 } from 'lucide-react';
 import { useMarketplaceCampaigns } from '@/hooks/useMarketplaceCampaigns';
@@ -8,7 +8,7 @@ import { CampaignsFeedFilters } from './CampaignsFeedFilters';
 import { DEFAULT_CAMPAIGN_FILTERS } from '../../types/marketplace';
 import type { Campaign, CampaignFilters, CampaignType } from '../../types/marketplace';
 
-export function CampaignsFeed() {
+export const CampaignsFeed = memo(function CampaignsFeed() {
   const navigate = useNavigate();
   const [filters, setFilters] = useState<CampaignFilters>({ ...DEFAULT_CAMPAIGN_FILTERS });
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -133,4 +133,4 @@ export function CampaignsFeed() {
       </div>
     </div>
   );
-}
+});

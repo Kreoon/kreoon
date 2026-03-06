@@ -3,7 +3,7 @@ import {
   User, Briefcase, Building2, Shield, Settings,
   Phone, Mail, MapPin, Globe, FileText, Pencil, Check,
   Instagram, Video, Facebook, Linkedin, Twitter, Youtube, Link2,
-  Loader2, X, AlertTriangle, BadgeCheck,
+  Loader2, X, AlertTriangle, BadgeCheck, Calendar, Flag, AtSign, Home,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -34,6 +34,7 @@ import { AdminActionsSection } from './detail-sections/AdminActionsSection';
 import { RolesBadgesSection } from './detail-sections/RolesBadgesSection';
 import { OrganizationsListSection } from './detail-sections/OrganizationsListSection';
 import { CompaniesSection } from './detail-sections/CompaniesSection';
+import { LegalConsentsSection } from './detail-sections/LegalConsentsSection';
 
 const ROOT_EMAILS = ['jacsolucionesgraficas@gmail.com', 'kairosgp.sas@gmail.com'];
 
@@ -248,6 +249,16 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
                     Bloqueado
                   </span>
                 )}
+                {full?.onboarding_completed === false && (
+                  <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-orange-500/20 text-orange-400">
+                    Sin onboarding
+                  </span>
+                )}
+                {full?.onboarding_completed === true && (
+                  <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
+                    Onboarding ✓
+                  </span>
+                )}
                 {user.organization_name && (
                   <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">
                     {user.organization_name}
@@ -342,6 +353,15 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
                       onSave={handleFieldSave}
                     />
                     <EditableField
+                      label="Usuario"
+                      value={full?.username ? `@${full.username}` : null}
+                      fieldKey="username"
+                      icon={AtSign}
+                      placeholder="@usuario"
+                      isEditing={isEditing}
+                      onSave={handleFieldSave}
+                    />
+                    <EditableField
                       label="Email"
                       value={user.email}
                       fieldKey="email"
@@ -362,11 +382,42 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
                       onSave={handleFieldSave}
                     />
                     <EditableField
-                      label="País"
-                      value={full?.country}
-                      fieldKey="country"
-                      icon={Globe}
-                      placeholder="País"
+                      label="Fecha de nacimiento"
+                      value={full?.date_of_birth ? (() => {
+                        const d = new Date(full.date_of_birth);
+                        const age = Math.floor((Date.now() - d.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+                        return `${format(d, 'd MMM yyyy', { locale: es })} (${age} años)`;
+                      })() : null}
+                      fieldKey="date_of_birth"
+                      icon={Calendar}
+                      placeholder="Fecha de nacimiento"
+                      isEditing={false}
+                      onSave={handleFieldSave}
+                    />
+                    <EditableField
+                      label="Nacionalidad"
+                      value={full?.nationality}
+                      fieldKey="nationality"
+                      icon={Flag}
+                      placeholder="Nacionalidad"
+                      isEditing={isEditing}
+                      onSave={handleFieldSave}
+                    />
+                    <EditableField
+                      label="Documento"
+                      value={full?.document_number ? `${full.document_type || ''} ${full.document_number}`.trim() : null}
+                      fieldKey="document_number"
+                      icon={FileText}
+                      placeholder="Número de documento"
+                      isEditing={isEditing}
+                      onSave={handleFieldSave}
+                    />
+                    <EditableField
+                      label="Dirección"
+                      value={full?.address}
+                      fieldKey="address"
+                      icon={Home}
+                      placeholder="Dirección"
                       isEditing={isEditing}
                       onSave={handleFieldSave}
                     />
@@ -380,11 +431,11 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
                       onSave={handleFieldSave}
                     />
                     <EditableField
-                      label="Documento"
-                      value={full?.document_number}
-                      fieldKey="document_number"
-                      icon={FileText}
-                      placeholder="Número de documento"
+                      label="País"
+                      value={full?.country}
+                      fieldKey="country"
+                      icon={Globe}
+                      placeholder="País"
                       isEditing={isEditing}
                       onSave={handleFieldSave}
                     />
@@ -485,6 +536,14 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
                       <p className="text-xs text-white/50">Último login</p>
                     </div>
                   </div>
+                </div>
+
+                {/* Legal Consents */}
+                <div className="rounded-lg border border-white/10 p-4">
+                  <LegalConsentsSection
+                    userId={user.id}
+                    onboardingCompleted={full?.onboarding_completed}
+                  />
                 </div>
               </TabsContent>
 

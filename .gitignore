@@ -58,3 +58,4 @@ reports/
 .env.local
 .env.*.local
 .env*.local
+legal.local.md

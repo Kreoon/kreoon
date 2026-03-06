@@ -76,6 +76,9 @@ interface UserData {
   organization_name: string | null;
   isPlatformAdmin: boolean;
   hasProfile: boolean;
+  consentsCount: number;
+  signaturesCount: number;
+  onboardingCompleted: boolean;
 }
 
 interface Organization {
@@ -132,7 +135,20 @@ export function PlatformUsersManagement() {
       // Fetch profiles for additional data
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('id, email, full_name, avatar_url, current_organization_id, active_role');
+        .select('id, email, full_name, avatar_url, current_organization_id, active_role, onboarding_completed');
+
+      // Fetch consent counts per user
+      const { data: consentsData } = await supabase
+        .from('user_legal_consents')
+        .select('user_id')
+        .eq('accepted', true)
+        .eq('is_current', true);
+
+      // Fetch signature counts per user
+      const { data: signaturesData } = await supabase
+        .from('digital_signatures')
+        .select('user_id')
+        .eq('status', 'valid');
 
       // Fetch all user roles
       const { data: userRolesData } = await supabase
@@ -160,6 +176,16 @@ export function PlatformUsersManagement() {
       const platformAdminIds = new Set(
         userRolesData?.filter(r => r.role === 'admin').map(r => r.user_id) || []
       );
+
+      // Count consents and signatures per user
+      const consentsCountMap = new Map<string, number>();
+      consentsData?.forEach(c => {
+        consentsCountMap.set(c.user_id, (consentsCountMap.get(c.user_id) || 0) + 1);
+      });
+      const signaturesCountMap = new Map<string, number>();
+      signaturesData?.forEach(s => {
+        signaturesCountMap.set(s.user_id, (signaturesCountMap.get(s.user_id) || 0) + 1);
+      });
 
       // Build enhanced users from auth users (includes ALL registered users)
       const enhancedUsers: UserData[] = authUsers.map((authUser: any) => {
@@ -193,7 +219,10 @@ export function PlatformUsersManagement() {
             ? orgNamesMap.get(profile.current_organization_id) || null
             : null,
           isPlatformAdmin: isAdminByRole || isRootUser,
-          hasProfile: !!profile
+          hasProfile: !!profile,
+          consentsCount: consentsCountMap.get(authUser.id) || 0,
+          signaturesCount: signaturesCountMap.get(authUser.id) || 0,
+          onboardingCompleted: profile?.onboarding_completed || false,
         };
       });
 
@@ -462,6 +491,21 @@ export function PlatformUsersManagement() {
             {!user.hasProfile && (
               <Badge variant="secondary" className="text-xs text-red-600 bg-red-100 dark:bg-red-900/30">
                 Sin perfil
+              </Badge>
+            )}
+            {user.onboardingCompleted ? (
+              <Badge variant="secondary" className="text-xs text-green-600 bg-green-100 dark:bg-green-900/30">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Legal OK
+              </Badge>
+            ) : user.consentsCount > 0 || user.signaturesCount > 0 ? (
+              <Badge variant="secondary" className="text-xs text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30">
+                {user.consentsCount} consent{user.consentsCount !== 1 ? 's' : ''}
+                {user.signaturesCount > 0 && `, ${user.signaturesCount} firma${user.signaturesCount !== 1 ? 's' : ''}`}
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="text-xs text-orange-600 bg-orange-100 dark:bg-orange-900/30">
+                Sin consentimientos
               </Badge>
             )}
           </div>

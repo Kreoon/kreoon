@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { Star, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { CreatorReview } from '../types/marketplace';
@@ -20,7 +20,7 @@ function timeAgo(dateStr: string): string {
   return `hace más de 1 año`;
 }
 
-export function ReviewsSection({ reviews, ratingAvg, ratingCount }: ReviewsSectionProps) {
+export const ReviewsSection = memo(function ReviewsSection({ reviews, ratingAvg, ratingCount }: ReviewsSectionProps) {
   const [showAll, setShowAll] = useState(false);
   const visible = showAll ? reviews : reviews.slice(0, 3);
 
@@ -95,4 +95,4 @@ export function ReviewsSection({ reviews, ratingAvg, ratingCount }: ReviewsSecti
       )}
     </div>
   );
-}
+});

@@ -112,20 +112,18 @@ export function TalentDNAPage() {
 
     try {
       // Map DNA to creator_profiles fields
+      const niches = data.specialization.niches || [];
       const profileUpdate = {
         bio: data.creator_identity.tagline,
         bio_full: data.creator_identity.bio_full,
         experience_level: data.creator_identity.experience_level,
-        unique_factor: data.creator_identity.unique_factor,
-        primary_category: data.specialization.niches[0] || null,
-        secondary_categories: data.specialization.niches.slice(1),
+        categories: niches.length > 0 ? niches : undefined,
         content_types: data.specialization.content_formats,
-        content_style: data.content_style.tone_descriptors,
-        marketplace_roles: data.marketplace_roles.slice(0, 5),
-        strong_platforms: data.platforms,
+        content_style: { tone_descriptors: data.content_style?.tone_descriptors || [] },
+        marketplace_roles: data.marketplace_roles?.slice(0, 5),
+        platforms: data.platforms,
         languages: data.languages,
-        specialization_tags: data.specialization.specialized_services,
-        talent_dna_id: activeDNA.id,
+        has_talent_dna: true,
       };
 
       // Check if creator_profile exists
@@ -138,7 +136,9 @@ export function TalentDNAPage() {
       if (existingProfile) {
         const { error: updateError } = await supabase
           .from('creator_profiles')
-          .update(profileUpdate)
+          .update({
+            ...profileUpdate,
+          })
           .eq('user_id', user.id);
 
         if (updateError) throw updateError;

@@ -31,6 +31,7 @@ import { CrmFieldsConfigDialog } from './detail-sections/CrmFieldsConfigDialog';
 import { AdminActionsSection } from './detail-sections/AdminActionsSection';
 import { OrganizationsListSection } from './detail-sections/OrganizationsListSection';
 import { CompaniesSection } from './detail-sections/CompaniesSection';
+import { LegalConsentsSection } from './detail-sections/LegalConsentsSection';
 
 const ROOT_EMAILS = ['jacsolucionesgraficas@gmail.com', 'kairosgp.sas@gmail.com'];
 
@@ -157,6 +158,11 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
               Bloqueado
             </span>
           )}
+          {full?.onboarding_completed === false && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-500/20 text-orange-400">
+              Sin onboarding
+            </span>
+          )}
           {!user.has_profile && (
             <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-500/20 text-red-400">
               Sin perfil
@@ -215,6 +221,9 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
         address={full?.address ?? null}
         city={full?.city ?? null}
         country={full?.country ?? null}
+        nationality={full?.nationality ?? null}
+        dateOfBirth={full?.date_of_birth ?? null}
+        username={full?.username ?? null}
         onSave={handleProfileFieldSave}
       />
 
@@ -299,6 +308,12 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
           ambassadorLevel={full.ambassador_level}
         />
       )}
+
+      {/* Legal Consents */}
+      <LegalConsentsSection
+        userId={user.id}
+        onboardingCompleted={full?.onboarding_completed}
+      />
 
       {/* Scores */}
       {full && (

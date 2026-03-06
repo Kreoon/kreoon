@@ -49,7 +49,7 @@ import {
 } from "@/types/crm.types";
 import type { HealthStatus } from "@/types/crm.types";
 import type { UserWithHealth } from "@/services/crm/platformCrmService";
-import { ViewModeToggle, UserDetailPanel } from "@/components/crm";
+import { ViewModeToggle, UnifiedTalentDetailDialog } from "@/components/crm";
 import type { ViewMode } from "@/components/crm";
 
 // =====================================================
@@ -265,7 +265,7 @@ const PlatformCRMUsers = () => {
 
   return (
     <div className="min-h-screen flex">
-      <div className={cn("flex-1 transition-all duration-300", selectedUser && "md:mr-[440px]")}>
+      <div className="flex-1">
         <div className="p-4 md:p-6 space-y-8">
           {/* ========== HEADER ========== */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -667,28 +667,19 @@ const PlatformCRMUsers = () => {
         </div>
       </div>
 
-      {/* Mobile backdrop */}
-      {selectedUser && (
-        <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setSelectedUser(null)} />
-      )}
-
-      {/* ========== DETAIL PANEL ========== */}
-      {selectedUser && (
-        <div className="fixed inset-y-0 right-0 w-full md:w-auto z-40">
-          <UserDetailPanel
-            user={selectedUser}
-            onClose={() => setSelectedUser(null)}
-            onUpdate={async () => {
-              const result = await refetch();
-              // Sync selectedUser with fresh data so the panel reflects changes
-              if (result.data && selectedUser) {
-                const fresh = result.data.find((u: UserWithHealth) => u.id === selectedUser.id);
-                if (fresh) setSelectedUser(fresh);
-              }
-            }}
-          />
-        </div>
-      )}
+      {/* ========== DETAIL DIALOG ========== */}
+      <UnifiedTalentDetailDialog
+        user={selectedUser ?? undefined}
+        open={!!selectedUser}
+        onOpenChange={(open) => !open && setSelectedUser(null)}
+        onUpdate={async () => {
+          const result = await refetch();
+          if (result.data && selectedUser) {
+            const fresh = result.data.find((u: UserWithHealth) => u.id === selectedUser.id);
+            if (fresh) setSelectedUser(fresh);
+          }
+        }}
+      />
     </div>
   );
 };

@@ -36,6 +36,7 @@ function OrgCardComponent({ org, onClick, className }: OrgCardProps) {
           <img
             src={org.org_cover_url}
             alt=""
+            loading="lazy"
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
@@ -61,6 +62,7 @@ function OrgCardComponent({ org, onClick, className }: OrgCardProps) {
             <img
               src={org.logo_url}
               alt={org.org_display_name}
+              loading="lazy"
               className="h-20 w-20 rounded-2xl border-2 border-white/20 object-cover shadow-2xl bg-gray-900"
             />
           ) : (

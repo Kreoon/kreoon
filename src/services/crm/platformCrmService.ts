@@ -362,6 +362,9 @@ export interface CreatorWithMetrics {
   location_country: string | null;
   total_earned: number;
   created_at: string;
+  // Onboarding/legal fields
+  onboarding_completed: boolean;
+  consent_count: number;
 }
 
 export async function getCreatorsWithMetrics(): Promise<CreatorWithMetrics[]> {
@@ -399,6 +402,9 @@ export interface UserWithHealth {
   // Referral/key status
   platform_access_unlocked: boolean;
   user_type: string | null;
+  // Onboarding status
+  onboarding_completed: boolean;
+  consent_count: number;
 }
 
 export async function getUsersWithHealth(): Promise<UserWithHealth[]> {

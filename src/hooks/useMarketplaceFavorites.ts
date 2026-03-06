@@ -50,9 +50,11 @@ export function useMarketplaceFavorites() {
       })[];
     },
     enabled: !!user?.id,
+    staleTime: 1000 * 60 * 10, // 10 minutos
+    gcTime: 1000 * 60 * 60,    // 1 hora cache
   });
 
-  // Add to favorites
+  // Add to favorites (with optimistic update)
   const addMutation = useMutation({
     mutationFn: async ({
       creatorId,
@@ -82,12 +84,28 @@ export function useMarketplaceFavorites() {
 
       return data as MarketplaceFavorite;
     },
+    onMutate: async ({ creatorId, notes }) => {
+      // Cancel pending queries
+      await queryClient.cancelQueries({ queryKey: ['marketplace-favorites', user?.id] });
+      // Get previous data for rollback
+      const previousFavorites = queryClient.getQueryData(['marketplace-favorites', user?.id]);
+      // Optimistic update
+      queryClient.setQueryData(['marketplace-favorites', user?.id], (old: any) => [
+        { id: `optimistic_${Date.now()}`, user_id: user?.id, creator_id: creatorId, notes: notes || null, created_at: new Date().toISOString() },
+        ...(old || []),
+      ]);
+      return { previousFavorites };
+    },
+    onError: (error: Error, _variables, context: any) => {
+      // Rollback on error
+      if (context?.previousFavorites) {
+        queryClient.setQueryData(['marketplace-favorites', user?.id], context.previousFavorites);
+      }
+      toast.error(error.message);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['marketplace-favorites', user?.id] });
       toast.success('Agregado a favoritos');
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
     },
   });
 
@@ -200,5 +218,7 @@ export function useIsFavorite(creatorId: string | undefined) {
       return !!data;
     },
     enabled: !!creatorId && !!user?.id,
+    staleTime: 1000 * 60 * 5, // 5 minutos
+    gcTime: 1000 * 60 * 30,   // 30 minutos cache
   });
 }

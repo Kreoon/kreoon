@@ -36,8 +36,10 @@ const FOOTER_COMPANY = [
   { label: "Sobre nosotros", href: "#" },
   { label: "Contacto", href: "#" },
   { label: "Trabaja con nosotros", href: "#" },
-  { label: "Términos y condiciones", href: "/terms" },
-  { label: "Política de privacidad", href: "/privacy" },
+  { label: "Términos de servicio", href: "/legal/terms" },
+  { label: "Privacidad", href: "/legal/privacy" },
+  { label: "Uso aceptable", href: "/legal/acceptable-use" },
+  { label: "DMCA", href: "/legal/dmca" },
 ];
 
 const SOCIAL_LINKS = [
@@ -385,20 +387,26 @@ export function LandingLayout({ children, onOpenAuth }: LandingLayoutProps) {
           {/* Bottom bar */}
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <p className="text-sm text-kreoon-text-muted">
-              © 2025 Kreoon. Todos los derechos reservados.
+              © 2026 SICOMMER INT LLC. Todos los derechos reservados.
             </p>
             <div className="flex gap-6 text-sm">
               <Link
-                to="/terms"
+                to="/legal/terms"
                 className="text-kreoon-text-muted transition-colors hover:text-kreoon-purple-400"
               >
                 Términos
               </Link>
               <Link
-                to="/privacy"
+                to="/legal/privacy"
                 className="text-kreoon-text-muted transition-colors hover:text-kreoon-purple-400"
               >
                 Privacidad
+              </Link>
+              <Link
+                to="/legal/cookies"
+                className="text-kreoon-text-muted transition-colors hover:text-kreoon-purple-400"
+              >
+                Cookies
               </Link>
             </div>
           </div>

@@ -244,7 +244,7 @@ export function MarketingStrategySection({ data, isEditing, onFieldChange }: Pro
             <EditableTags items={data.secondary_objectives || []} onChange={change('secondary_objectives') as (v: string[]) => void} color="amber" placeholder="Agregar objetivo..." />
           ) : (
             <div className="flex flex-wrap gap-2">
-              {data.secondary_objectives.map((obj, i) => (
+              {(data.secondary_objectives || []).map((obj, i) => (
                 <span key={i} className="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300">
                   {obj}
                 </span>

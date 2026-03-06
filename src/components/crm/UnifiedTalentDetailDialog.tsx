@@ -2,9 +2,12 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   User, Briefcase, Building2, Shield, Star, Image, Video,
   Phone, Mail, MapPin, Globe, Pencil, Check, BadgeCheck,
-  Instagram, Linkedin, Youtube, Link2,
+  Instagram, Linkedin, Youtube, Link2, Camera, Trash2,
   Loader2, AlertTriangle, DollarSign, Clock, Users,
-  Heart, Ban, Plus, X, Settings, Tag, FileText,
+  Heart, Ban, Plus, X, Settings, Tag, FileText, Upload,
+  Play, Pin, PinOff, ToggleLeft, ToggleRight, Sparkles,
+  ImagePlus, VideoIcon, Maximize2, ChevronLeft, ChevronRight,
+  Calendar, Activity, TrendingUp, LogIn,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -32,10 +35,45 @@ import {
   useToggleFavoriteCreator,
   useBlockCreator,
 } from '@/hooks/useCrm';
-import { useUpdateUserProfileFields, useCrmCustomFieldDefs, useUpdateOrgCreatorCustomFields } from '@/hooks/useCrmCustomFields';
+import { useUpdateUserProfileFields, useCrmCustomFieldDefs, useUpdateOrgCreatorCustomFields, useUpdateCreatorProfileFields, useUploadCreatorAvatar } from '@/hooks/useCrmCustomFields';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import type { CreatorWithMetrics } from '@/services/crm/platformCrmService';
+import { usePortfolioItems, type PortfolioItemData } from '@/hooks/usePortfolioItems';
+import { useCreatorServices } from '@/hooks/useCreatorServices';
+import { extractBunnyIds, getBunnyThumbnailUrl, getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
+
+// Helper to get thumbnail URLs for portfolio item (primary + fallback)
+function getPortfolioThumbUrls(item: PortfolioItemData): { primary: string | null; fallback: string | null } {
+  const BUNNY_CDN_HOST = 'vz-78fcd769-050.b-cdn.net';
+
+  let primary: string | null = null;
+  let fallback: string | null = null;
+
+  // For videos, generate thumbnail from bunny_video_id (most reliable)
+  if (item.media_type === 'video' && item.bunny_video_id) {
+    primary = `https://${BUNNY_CDN_HOST}/${item.bunny_video_id}/thumbnail.jpg`;
+  }
+
+  // Use saved thumbnail_url as fallback (may be cdn.kreoon.com or other)
+  if (item.thumbnail_url && item.thumbnail_url !== primary) {
+    fallback = item.thumbnail_url;
+  }
+
+  // If no primary yet, try to extract from media_url
+  if (!primary && item.media_type === 'video' && item.media_url) {
+    const bunnyThumb = getBunnyThumbnailUrl(item.media_url);
+    if (bunnyThumb) primary = bunnyThumb;
+  }
+
+  // For images, use media_url directly
+  if (item.media_type === 'image' && item.media_url) {
+    primary = item.media_url;
+  }
+
+  return { primary, fallback };
+}
+import type { CreatorService, CreatorServiceInput, ServiceType } from '@/types/marketplace';
+import type { CreatorWithMetrics, UserWithHealth } from '@/services/crm/platformCrmService';
 import type { OrgCreatorWithStats, CreatorRelationshipType } from '@/types/crm.types';
 import { CREATOR_RELATIONSHIP_TYPE_LABELS } from '@/types/crm.types';
 import { AdminActionsSection } from './detail-sections/AdminActionsSection';
@@ -159,6 +197,8 @@ function EditableField({
 interface UnifiedTalentDetailDialogProps {
   // For platform context (CreatorWithMetrics)
   creator?: CreatorWithMetrics;
+  // For platform user context (UserWithHealth) - users without creator profile
+  user?: UserWithHealth;
   // For org context (OrgCreatorWithStats)
   orgCreator?: OrgCreatorWithStats;
   organizationId?: string;
@@ -169,6 +209,7 @@ interface UnifiedTalentDetailDialogProps {
 
 export function UnifiedTalentDetailDialog({
   creator,
+  user,
   orgCreator,
   organizationId,
   open,
@@ -178,33 +219,37 @@ export function UnifiedTalentDetailDialog({
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const currentUserEmail = profile?.email || '';
-  const isRoot = ROOT_EMAILS.includes(currentUserEmail);
+  // Root access: either in ROOT_EMAILS list or is_platform_admin
+  const isRoot = ROOT_EMAILS.includes(currentUserEmail) || profile?.is_platform_admin === true;
   const isOrgContext = !!orgCreator && !!organizationId;
+  const isUserContext = !!user && !creator && !orgCreator;
 
-  // Normalize data from either source
+  // Normalize data from either source (creator, user, or orgCreator)
   const creatorId = creator?.id || orgCreator?.creator_id;
-  const creatorProfileId = creator?.id; // For platform, this IS the creator_profile id
-  const creatorName = creator?.full_name || orgCreator?.creator_name || '';
-  const creatorEmail = creator?.email || orgCreator?.creator_email || '';
-  const creatorAvatar = creator?.avatar_url || orgCreator?.creator_avatar;
+  const displayName = creator?.full_name || user?.full_name || orgCreator?.creator_name || '';
+  const displayEmail = creator?.email || user?.email || orgCreator?.creator_email || '';
+  const displayAvatar = creator?.avatar_url || user?.avatar_url || orgCreator?.creator_avatar;
   const creatorUsername = creator?.username;
 
-  // Fetch full details
+  // Fetch full details (skip for user-only context)
   const { data: fullPlatform, isLoading: loadingPlatform } = useFullCreatorDetail(
-    isOrgContext ? undefined : creatorProfileId
+    isOrgContext || isUserContext ? undefined : creator?.id
   );
   const { data: fullOrg, isLoading: loadingOrg } = useFullOrgCreatorDetail(
     isOrgContext ? organizationId : undefined,
     isOrgContext ? creatorId : undefined
   );
 
-  const full = isOrgContext ? fullOrg : fullPlatform;
-  const fullLoading = isOrgContext ? loadingOrg : loadingPlatform;
+  const full = isOrgContext ? fullOrg : (isUserContext ? null : fullPlatform);
+  const fullLoading = isOrgContext ? loadingOrg : (isUserContext ? false : loadingPlatform);
 
-  // userId: use creator.user_id directly (for platform) or creatorId (for org), fallback to full data
-  const userId = creator?.user_id || creatorId || full?.user_id || full?.id;
+  // userId: use creator.user_id (for platform creator), user.id (for user), or creatorId (for org), fallback to full data
+  const userId = creator?.user_id || user?.id || creatorId || full?.user_id || full?.id;
   const { data: userDetail } = useFullUserDetail(userId);
   const updateProfileFields = useUpdateUserProfileFields();
+
+  // creatorProfileId: for platform use creator.id, for org use fullOrg.creator_profile_id, for user use userDetail
+  const creatorProfileId = creator?.id || (fullOrg as any)?.creator_profile_id || userDetail?.creator_profile_id;
 
   // Org-specific hooks
   const updateRelationship = useUpdateCreatorRelationship(organizationId || '');
@@ -213,9 +258,41 @@ export function UnifiedTalentDetailDialog({
   const { data: fieldDefs = [] } = useCrmCustomFieldDefs(organizationId || '', 'org_creator');
   const updateCustomFields = useUpdateOrgCreatorCustomFields(organizationId || '');
 
+  // Portfolio and Services hooks for inline CRUD (use creatorProfileId once available)
+  const portfolioHook = usePortfolioItems({ creatorProfileId: creatorProfileId || undefined });
+  const servicesHook = useCreatorServices({ userId });
+
   const [activeTab, setActiveTab] = useState('general');
   const [isEditing, setIsEditing] = useState(false);
   const [showFieldsConfig, setShowFieldsConfig] = useState(false);
+
+  // Portfolio CRUD state
+  const portfolioVideoRef = useRef<HTMLInputElement>(null);
+  const portfolioImageRef = useRef<HTMLInputElement>(null);
+  const [deletingPortfolioId, setDeletingPortfolioId] = useState<string | null>(null);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [portfolioFilter, setPortfolioFilter] = useState<'all' | 'video' | 'image'>('all');
+  // Track thumbnail failures: 0 = try primary, 1 = try fallback, 2 = show placeholder
+  const [thumbAttempts, setThumbAttempts] = useState<Map<string, number>>(new Map());
+
+  // Services CRUD state
+  const [showServiceForm, setShowServiceForm] = useState(false);
+  const [editingService, setEditingService] = useState<CreatorService | null>(null);
+  const [deletingServiceId, setDeletingServiceId] = useState<string | null>(null);
+  const [serviceFormData, setServiceFormData] = useState<Partial<CreatorServiceInput>>({
+    service_type: 'ugc_video',
+    title: '',
+    description: '',
+    price_amount: undefined,
+    price_currency: 'USD',
+    delivery_days: 7,
+    is_active: true,
+  });
+
+  // Avatar upload
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const uploadAvatar = useUploadCreatorAvatar();
+  const updateCreatorProfile = useUpdateCreatorProfileFields();
 
   // Platform access state
   const [platformAccessUnlocked, setPlatformAccessUnlocked] = useState<boolean | undefined>(undefined);
@@ -287,6 +364,33 @@ export function UnifiedTalentDetailDialog({
     );
   }, [userId, updateProfileFields, handleActionComplete]);
 
+  // Creator profile field save (for marketplace-specific fields)
+  const handleCreatorFieldSave = useCallback((key: string, value: unknown) => {
+    if (!creatorProfileId) return;
+    updateCreatorProfile.mutate(
+      { creatorProfileId, data: { [key]: value } },
+      {
+        onSuccess: () => {
+          toast.success('Campo de marketplace actualizado');
+          handleActionComplete();
+        },
+        onError: (err: any) => toast.error(`Error: ${err.message}`),
+      }
+    );
+  }, [creatorProfileId, updateCreatorProfile, handleActionComplete]);
+
+  // Avatar upload handler
+  const handleAvatarUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !userId) return;
+    uploadAvatar.mutate(
+      { userId, file },
+      { onSuccess: handleActionComplete }
+    );
+    // Reset input
+    if (avatarInputRef.current) avatarInputRef.current.value = '';
+  }, [userId, uploadAvatar, handleActionComplete]);
+
   // Org relationship handlers
   const notesTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -357,6 +461,111 @@ export function UnifiedTalentDetailDialog({
     updateCustomFields.mutate({ relationshipId: orgCreator.id, fields: updated });
   }, [orgCreator?.id, updateCustomFields]);
 
+  // =====================================================
+  // PORTFOLIO CRUD HANDLERS
+  // =====================================================
+
+  const handlePortfolioVideoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !creatorProfileId) return;
+    await portfolioHook.uploadVideo(file, creatorProfileId, { title: file.name.replace(/\.[^.]+$/, '') });
+    handleActionComplete();
+    if (portfolioVideoRef.current) portfolioVideoRef.current.value = '';
+  }, [creatorProfileId, portfolioHook, handleActionComplete]);
+
+  const handlePortfolioImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !creatorProfileId) return;
+    await portfolioHook.uploadImage(file, creatorProfileId, { title: file.name.replace(/\.[^.]+$/, '') });
+    handleActionComplete();
+    if (portfolioImageRef.current) portfolioImageRef.current.value = '';
+  }, [creatorProfileId, portfolioHook, handleActionComplete]);
+
+  const handleDeletePortfolioItem = useCallback(async (itemId: string) => {
+    if (!confirm('¿Eliminar este contenido del portafolio?')) return;
+    setDeletingPortfolioId(itemId);
+    await portfolioHook.deleteItem(itemId);
+    setDeletingPortfolioId(null);
+    handleActionComplete();
+  }, [portfolioHook, handleActionComplete]);
+
+  const handleTogglePortfolioPin = useCallback(async (itemId: string) => {
+    await portfolioHook.togglePin(itemId);
+    handleActionComplete();
+  }, [portfolioHook, handleActionComplete]);
+
+  // =====================================================
+  // SERVICES CRUD HANDLERS
+  // =====================================================
+
+  const resetServiceForm = useCallback(() => {
+    setServiceFormData({
+      service_type: 'ugc_video',
+      title: '',
+      description: '',
+      price_amount: undefined,
+      price_currency: 'USD',
+      delivery_days: 7,
+      is_active: true,
+    });
+    setEditingService(null);
+    setShowServiceForm(false);
+  }, []);
+
+  const handleEditService = useCallback((service: CreatorService) => {
+    setEditingService(service);
+    setServiceFormData({
+      service_type: service.service_type,
+      title: service.title,
+      description: service.description || '',
+      price_amount: service.price_amount || undefined,
+      price_currency: service.price_currency || 'USD',
+      delivery_days: service.delivery_days || 7,
+      is_active: service.is_active,
+    });
+    setShowServiceForm(true);
+  }, []);
+
+  const handleSaveService = useCallback(async () => {
+    if (!serviceFormData.title?.trim()) {
+      toast.error('El título es obligatorio');
+      return;
+    }
+    try {
+      if (editingService) {
+        await servicesHook.updateService({ id: editingService.id, ...serviceFormData });
+      } else {
+        await servicesHook.createService(serviceFormData as CreatorServiceInput);
+      }
+      resetServiceForm();
+      handleActionComplete();
+    } catch (err: any) {
+      toast.error(`Error: ${err.message}`);
+    }
+  }, [serviceFormData, editingService, servicesHook, resetServiceForm, handleActionComplete]);
+
+  const handleDeleteService = useCallback(async (serviceId: string) => {
+    if (!confirm('¿Eliminar este servicio?')) return;
+    setDeletingServiceId(serviceId);
+    try {
+      await servicesHook.deleteService(serviceId);
+      handleActionComplete();
+    } catch (err: any) {
+      toast.error(`Error: ${err.message}`);
+    }
+    setDeletingServiceId(null);
+  }, [servicesHook, handleActionComplete]);
+
+  const handleToggleServiceActive = useCallback(async (serviceId: string, isActive: boolean) => {
+    await servicesHook.toggleActive(serviceId, !isActive);
+    handleActionComplete();
+  }, [servicesHook, handleActionComplete]);
+
+  const handleToggleServiceFeatured = useCallback(async (serviceId: string, isFeatured: boolean) => {
+    await servicesHook.toggleFeatured(serviceId, !isFeatured);
+    handleActionComplete();
+  }, [servicesHook, handleActionComplete]);
+
   const formatCurrency = (amount: number | null) => {
     if (!amount) return '$0';
     return new Intl.NumberFormat('es-CO', {
@@ -390,11 +599,11 @@ export function UnifiedTalentDetailDialog({
         <DialogHeader className="p-6 pb-4 border-b border-white/10">
           <div className="flex items-start gap-4">
             {/* Avatar */}
-            <div className="relative shrink-0">
-              {hasValidAvatar(creatorAvatar) ? (
+            <div className="relative shrink-0 group">
+              {hasValidAvatar(displayAvatar) ? (
                 <img
-                  src={creatorAvatar}
-                  alt={creatorName}
+                  src={displayAvatar}
+                  alt={displayName}
                   className="w-20 h-20 rounded-full object-cover ring-2 ring-pink-500/30"
                 />
               ) : (
@@ -402,23 +611,46 @@ export function UnifiedTalentDetailDialog({
                   className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold ring-2 ring-pink-500/30"
                   style={{ background: 'linear-gradient(135deg, #ec4899, #f97316)' }}
                 >
-                  {getInitials(creatorName)}
+                  {getInitials(displayName)}
                 </div>
               )}
-              {isVerified && (
+              {isVerified && !isEditing && (
                 <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1.5">
                   <BadgeCheck className="w-4 h-4 text-white" />
                 </div>
+              )}
+              {/* Avatar upload button (edit mode) */}
+              {isEditing && (
+                <>
+                  <button
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={uploadAvatar.isPending}
+                    className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  >
+                    {uploadAvatar.isPending ? (
+                      <Loader2 className="h-6 w-6 text-white animate-spin" />
+                    ) : (
+                      <Camera className="h-6 w-6 text-white" />
+                    )}
+                  </button>
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                </>
               )}
             </div>
 
             {/* Info */}
             <div className="flex-1 min-w-0">
               <DialogTitle className="text-xl font-semibold text-white truncate">
-                {creatorName}
+                {displayName}
               </DialogTitle>
               <p className="text-sm text-white/50 truncate">
-                {creatorUsername ? `@${creatorUsername}` : creatorEmail}
+                {creatorUsername ? `@${creatorUsername}` : displayEmail}
               </p>
 
               {/* Stats Row */}
@@ -577,7 +809,7 @@ export function UnifiedTalentDetailDialog({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
                     <EditableField
                       label="Email"
-                      value={creatorEmail}
+                      value={displayEmail}
                       fieldKey="email"
                       icon={Mail}
                       type="email"
@@ -614,6 +846,104 @@ export function UnifiedTalentDetailDialog({
                       onSave={handleFieldSave}
                     />
                   </div>
+                </div>
+
+                {/* Activity & Metrics */}
+                <div className="rounded-lg border border-white/10 p-4">
+                  <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-green-400" />
+                    Actividad y Métricas
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {/* Fecha de registro */}
+                    <div className="bg-white/5 rounded-lg p-3">
+                      <div className="flex items-center gap-2 text-white/50 text-xs mb-1">
+                        <Calendar className="h-3 w-3" />
+                        Registro
+                      </div>
+                      <p className="text-white font-medium text-sm">
+                        {userDetail?.created_at
+                          ? format(new Date(userDetail.created_at), 'd MMM yyyy', { locale: es })
+                          : '—'}
+                      </p>
+                    </div>
+
+                    {/* Último ingreso */}
+                    <div className="bg-white/5 rounded-lg p-3">
+                      <div className="flex items-center gap-2 text-white/50 text-xs mb-1">
+                        <LogIn className="h-3 w-3" />
+                        Último ingreso
+                      </div>
+                      <p className={cn(
+                        'font-medium text-sm',
+                        userDetail?.last_login_at
+                          ? (userDetail.days_since_last_activity ?? 0) > 14 ? 'text-red-400' : 'text-white'
+                          : 'text-white/40'
+                      )}>
+                        {userDetail?.last_login_at
+                          ? formatDistanceToNow(new Date(userDetail.last_login_at), { addSuffix: true, locale: es })
+                          : 'Nunca'}
+                      </p>
+                    </div>
+
+                    {/* Días inactivo */}
+                    <div className="bg-white/5 rounded-lg p-3">
+                      <div className="flex items-center gap-2 text-white/50 text-xs mb-1">
+                        <Clock className="h-3 w-3" />
+                        Días inactivo
+                      </div>
+                      <p className={cn(
+                        'font-medium text-sm',
+                        (userDetail?.days_since_last_activity ?? 0) > 14 ? 'text-red-400' :
+                        (userDetail?.days_since_last_activity ?? 0) > 7 ? 'text-yellow-400' : 'text-white'
+                      )}>
+                        {userDetail?.days_since_last_activity ?? '—'}
+                      </p>
+                    </div>
+
+                    {/* Total logins */}
+                    <div className="bg-white/5 rounded-lg p-3">
+                      <div className="flex items-center gap-2 text-white/50 text-xs mb-1">
+                        <TrendingUp className="h-3 w-3" />
+                        Total ingresos
+                      </div>
+                      <p className="text-white font-medium text-sm">
+                        {userDetail?.total_logins ?? 0}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Health Status Row */}
+                  {userDetail && (
+                    <div className="mt-4 flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-white/50 text-xs">Estado de salud:</span>
+                        <span className={cn(
+                          'px-2 py-0.5 rounded-full text-xs font-medium',
+                          userDetail.health_status === 'healthy' ? 'bg-green-500/20 text-green-400' :
+                          userDetail.health_status === 'at_risk' ? 'bg-yellow-500/20 text-yellow-400' :
+                          userDetail.health_status === 'churned' ? 'bg-red-500/20 text-red-400' :
+                          'bg-white/10 text-white/50'
+                        )}>
+                          {userDetail.health_status === 'healthy' ? 'Saludable' :
+                           userDetail.health_status === 'at_risk' ? 'En riesgo' :
+                           userDetail.health_status === 'churned' ? 'Inactivo' :
+                           userDetail.health_status || 'Desconocido'}
+                        </span>
+                      </div>
+                      {userDetail.needs_attention && (
+                        <span className="flex items-center gap-1 text-amber-400 text-xs">
+                          <AlertTriangle className="h-3 w-3" />
+                          Requiere atención
+                        </span>
+                      )}
+                      {userDetail.health_score != null && (
+                        <span className="text-white/40 text-xs">
+                          Score: {userDetail.health_score}/100
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Bio */}
@@ -786,86 +1116,706 @@ export function UnifiedTalentDetailDialog({
                     </div>
                   )}
                 </div>
-              </TabsContent>
 
-              {/* PORTFOLIO TAB */}
-              <TabsContent value="portfolio" className="mt-0 space-y-6">
-                {full?.portfolio && full.portfolio.length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {full.portfolio.map((item: any) => (
-                      <div key={item.id} className="group relative">
-                        <div className="aspect-video rounded-lg bg-white/5 overflow-hidden">
-                          {hasValidUrl(item.thumbnail_url) ? (
-                            <img
-                              src={item.thumbnail_url}
-                              alt={item.title || ''}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              {item.media_type === 'video' ? (
-                                <Video className="h-8 w-8 text-white/20" />
-                              ) : (
-                                <Image className="h-8 w-8 text-white/20" />
-                              )}
-                            </div>
-                          )}
-                        </div>
-                        {item.is_featured && (
-                          <div className="absolute top-2 right-2 bg-amber-500/90 rounded-full p-1">
-                            <Star className="h-3 w-3 text-white fill-white" />
-                          </div>
-                        )}
-                        {item.title && (
-                          <p className="text-sm text-white/70 truncate mt-2">{item.title}</p>
-                        )}
-                        {item.category && (
-                          <Badge variant="secondary" className="mt-1 text-[10px] bg-white/10">
-                            {item.category}
-                          </Badge>
-                        )}
+                {/* Marketplace Configuration (edit mode) */}
+                {isEditing && (
+                  <div className="rounded-lg border border-pink-500/30 bg-pink-500/5 p-4">
+                    <h3 className="text-sm font-semibold text-pink-300 mb-4 flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      Configuración Marketplace
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Base Price */}
+                      <div className="space-y-2">
+                        <label className="text-xs text-white/60">Precio Base (USD)</label>
+                        <Input
+                          type="number"
+                          min="0"
+                          defaultValue={basePrice || ''}
+                          placeholder="Ej: 100"
+                          className="bg-white/5 border-white/20"
+                          onBlur={(e) => {
+                            const val = e.target.value ? parseFloat(e.target.value) : null;
+                            handleCreatorFieldSave('base_price', val);
+                          }}
+                        />
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <Image className="h-12 w-12 text-white/10 mx-auto mb-3" />
-                    <p className="text-white/40">Sin elementos en el portafolio</p>
+                      {/* Active Toggle */}
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                        <div>
+                          <p className="text-sm text-white">Perfil Activo</p>
+                          <p className="text-xs text-white/50">Visible en el marketplace</p>
+                        </div>
+                        <button
+                          onClick={() => handleCreatorFieldSave('is_active', !isActive)}
+                          className={cn(
+                            'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                            isActive ? 'bg-green-500' : 'bg-white/20'
+                          )}
+                        >
+                          <span className={cn(
+                            'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                            isActive ? 'translate-x-6' : 'translate-x-1'
+                          )} />
+                        </button>
+                      </div>
+                      {/* Available Toggle */}
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                        <div>
+                          <p className="text-sm text-white">Disponible</p>
+                          <p className="text-xs text-white/50">Aceptando nuevos proyectos</p>
+                        </div>
+                        <button
+                          onClick={() => handleCreatorFieldSave('is_available', !isAvailable)}
+                          className={cn(
+                            'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                            isAvailable ? 'bg-emerald-500' : 'bg-white/20'
+                          )}
+                        >
+                          <span className={cn(
+                            'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                            isAvailable ? 'translate-x-6' : 'translate-x-1'
+                          )} />
+                        </button>
+                      </div>
+                      {/* Accepts Exchange Toggle */}
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 md:col-span-2">
+                        <div>
+                          <p className="text-sm text-white">Acepta Canje de Productos</p>
+                          <p className="text-xs text-white/50">Intercambio de productos por contenido</p>
+                        </div>
+                        <button
+                          onClick={() => handleCreatorFieldSave('accepts_product_exchange', !(full?.accepts_product_exchange))}
+                          className={cn(
+                            'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                            full?.accepts_product_exchange ? 'bg-purple-500' : 'bg-white/20'
+                          )}
+                        >
+                          <span className={cn(
+                            'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                            full?.accepts_product_exchange ? 'translate-x-6' : 'translate-x-1'
+                          )} />
+                        </button>
+                      </div>
+                      {/* Level */}
+                      <div className="space-y-2">
+                        <label className="text-xs text-white/60">Nivel</label>
+                        <select
+                          defaultValue={level || 'bronze'}
+                          className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-md text-white text-sm"
+                          onChange={(e) => handleCreatorFieldSave('level', e.target.value)}
+                        >
+                          <option value="bronze">Bronze</option>
+                          <option value="silver">Silver</option>
+                          <option value="gold">Gold</option>
+                          <option value="elite">Elite</option>
+                        </select>
+                      </div>
+                      {/* Verified Toggle */}
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                        <div>
+                          <p className="text-sm text-white">Verificado</p>
+                          <p className="text-xs text-white/50">Mostrar badge de verificación</p>
+                        </div>
+                        <button
+                          onClick={() => handleCreatorFieldSave('is_verified', !isVerified)}
+                          className={cn(
+                            'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                            isVerified ? 'bg-blue-500' : 'bg-white/20'
+                          )}
+                        >
+                          <span className={cn(
+                            'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                            isVerified ? 'translate-x-6' : 'translate-x-1'
+                          )} />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </TabsContent>
 
-              {/* SERVICES TAB */}
+              {/* PORTFOLIO TAB - VERTICAL FORMAT WITH PREVIEW */}
+              <TabsContent value="portfolio" className="mt-0 space-y-4">
+                {/* Header with filters and upload */}
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  {/* Filter tabs */}
+                  <div className="flex gap-2">
+                    {(['all', 'video', 'image'] as const).map((filter) => (
+                      <button
+                        key={filter}
+                        onClick={() => setPortfolioFilter(filter)}
+                        className={cn(
+                          'px-3 py-1.5 rounded-full text-xs transition-colors',
+                          portfolioFilter === filter
+                            ? 'bg-white text-black font-semibold'
+                            : 'bg-white/5 text-gray-400 hover:text-white border border-white/10'
+                        )}
+                      >
+                        {filter === 'all' ? 'Todo' : filter === 'video' ? 'Videos' : 'Fotos'}
+                        <span className="ml-1 text-[10px] opacity-60">
+                          ({filter === 'all'
+                            ? portfolioHook.items.length
+                            : portfolioHook.items.filter(i => i.media_type === filter).length})
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Upload buttons (edit mode) */}
+                  {isEditing && creatorProfileId && (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-pink-500/30 text-pink-300 hover:bg-pink-500/20 h-8"
+                        onClick={() => portfolioImageRef.current?.click()}
+                        disabled={portfolioHook.adding}
+                      >
+                        {portfolioHook.adding ? (
+                          <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                        ) : (
+                          <ImagePlus className="h-3.5 w-3.5 mr-1.5" />
+                        )}
+                        Imagen
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-purple-500/30 text-purple-300 hover:bg-purple-500/20 h-8"
+                        onClick={() => portfolioVideoRef.current?.click()}
+                        disabled={portfolioHook.adding}
+                      >
+                        {portfolioHook.adding ? (
+                          <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                        ) : (
+                          <VideoIcon className="h-3.5 w-3.5 mr-1.5" />
+                        )}
+                        Video
+                      </Button>
+                      <input
+                        ref={portfolioImageRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePortfolioImageUpload}
+                        className="hidden"
+                      />
+                      <input
+                        ref={portfolioVideoRef}
+                        type="file"
+                        accept="video/*"
+                        onChange={handlePortfolioVideoUpload}
+                        className="hidden"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Portfolio grid - vertical masonry style */}
+                {portfolioHook.loading ? (
+                  <div className="columns-2 md:columns-3 gap-3 space-y-3">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                      <Skeleton
+                        key={i}
+                        className={cn(
+                          'w-full rounded-xl bg-white/5 break-inside-avoid',
+                          i % 3 === 0 ? 'aspect-[9/16]' : 'aspect-[3/4]'
+                        )}
+                      />
+                    ))}
+                  </div>
+                ) : (() => {
+                  const filteredItems = portfolioFilter === 'all'
+                    ? portfolioHook.items
+                    : portfolioHook.items.filter(i => i.media_type === portfolioFilter);
+
+                  if (filteredItems.length === 0) {
+                    return (
+                      <div className="text-center py-12">
+                        <Image className="h-12 w-12 text-white/10 mx-auto mb-3" />
+                        <p className="text-white/40">
+                          {portfolioFilter === 'all'
+                            ? 'Sin elementos en el portafolio'
+                            : `Sin ${portfolioFilter === 'video' ? 'videos' : 'fotos'} en el portafolio`}
+                        </p>
+                        {isEditing && creatorProfileId && portfolioFilter === 'all' && (
+                          <div className="flex justify-center gap-3 mt-4">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-pink-500/30 text-pink-300 hover:bg-pink-500/20"
+                              onClick={() => portfolioImageRef.current?.click()}
+                            >
+                              <ImagePlus className="h-4 w-4 mr-2" />
+                              Subir Imagen
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-purple-500/30 text-purple-300 hover:bg-purple-500/20"
+                              onClick={() => portfolioVideoRef.current?.click()}
+                            >
+                              <VideoIcon className="h-4 w-4 mr-2" />
+                              Subir Video
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <>
+                      {/* Masonry grid - vertical format */}
+                      <div className="columns-2 md:columns-3 gap-3 space-y-3">
+                        {filteredItems.map((item, index) => {
+                          const isLarge = index % 6 === 0 || index % 6 === 3;
+                          const { primary, fallback } = getPortfolioThumbUrls(item);
+                          const attempts = thumbAttempts.get(item.id) || 0;
+                          // Select URL based on attempts: 0 = primary, 1 = fallback, 2+ = none
+                          const thumbUrl = attempts === 0 ? primary : attempts === 1 ? fallback : null;
+
+                          return (
+                            <div
+                              key={item.id}
+                              className={cn(
+                                'relative group rounded-xl overflow-hidden cursor-pointer break-inside-avoid',
+                                isLarge ? 'aspect-[9/16]' : 'aspect-[3/4]'
+                              )}
+                              onClick={() => !isEditing && setPreviewIndex(index)}
+                            >
+                              {thumbUrl ? (
+                                <img
+                                  src={thumbUrl}
+                                  alt={item.title || ''}
+                                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                  onError={() => setThumbAttempts(prev => {
+                                    const next = new Map(prev);
+                                    next.set(item.id, (prev.get(item.id) || 0) + 1);
+                                    return next;
+                                  })}
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-gradient-to-b from-purple-900/40 to-black/60 flex items-center justify-center">
+                                  {item.media_type === 'video' ? (
+                                    <div className="flex flex-col items-center gap-2">
+                                      <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+                                        <Play className="h-6 w-6 text-white/60 fill-white/60" />
+                                      </div>
+                                      <span className="text-[10px] text-white/40">Video</span>
+                                    </div>
+                                  ) : (
+                                    <Image className="h-8 w-8 text-white/30" />
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Hover overlay for preview */}
+                              {!isEditing && (
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                                  <Maximize2 className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                              )}
+
+                              {/* Video badge */}
+                              {item.media_type === 'video' && (
+                                <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] px-2 py-1 rounded flex items-center gap-1">
+                                  <Play className="h-3 w-3 fill-white" />
+                                  Video
+                                </div>
+                              )}
+
+                              {/* Featured badge */}
+                              {item.is_featured && (
+                                <div className="absolute top-2 left-2 bg-amber-500/90 rounded-full p-1.5">
+                                  <Star className="h-3 w-3 text-white fill-white" />
+                                </div>
+                              )}
+
+                              {/* Edit mode overlay */}
+                              {isEditing && (
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setPreviewIndex(index); }}
+                                    className="p-2 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors"
+                                    title="Ver"
+                                  >
+                                    <Maximize2 className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleTogglePortfolioPin(item.id); }}
+                                    className={cn(
+                                      'p-2 rounded-full transition-colors',
+                                      item.is_featured ? 'bg-amber-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'
+                                    )}
+                                    title={item.is_featured ? 'Quitar destacado' : 'Destacar'}
+                                  >
+                                    {item.is_featured ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleDeletePortfolioItem(item.id); }}
+                                    disabled={deletingPortfolioId === item.id}
+                                    className="p-2 rounded-full bg-red-500/80 text-white hover:bg-red-600 transition-colors"
+                                    title="Eliminar"
+                                  >
+                                    {deletingPortfolioId === item.id ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="h-4 w-4" />
+                                    )}
+                                  </button>
+                                </div>
+                              )}
+
+                              {/* Title overlay - hide if title looks like a UUID */}
+                              {item.title && !/^[a-f0-9-]{36}$/i.test(item.title) && (
+                                <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                                  <p className="text-xs text-white truncate">{item.title}</p>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Inline Lightbox Preview */}
+                      {previewIndex !== null && (
+                        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center">
+                          {/* Close button */}
+                          <button
+                            onClick={() => setPreviewIndex(null)}
+                            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors z-10"
+                          >
+                            <X className="h-6 w-6 text-white" />
+                          </button>
+
+                          {/* Navigation arrows */}
+                          {previewIndex > 0 && (
+                            <button
+                              onClick={() => setPreviewIndex(previewIndex - 1)}
+                              className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors z-10"
+                            >
+                              <ChevronLeft className="h-6 w-6 text-white" />
+                            </button>
+                          )}
+                          {previewIndex < filteredItems.length - 1 && (
+                            <button
+                              onClick={() => setPreviewIndex(previewIndex + 1)}
+                              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors z-10"
+                            >
+                              <ChevronRight className="h-6 w-6 text-white" />
+                            </button>
+                          )}
+
+                          {/* Content */}
+                          <div className="max-w-md max-h-[85vh] w-full mx-4">
+                            {(() => {
+                              const item = filteredItems[previewIndex];
+                              if (!item) return null;
+
+                              if (item.media_type === 'video') {
+                                // Extract video ID and library ID from media_url or bunny_video_id
+                                const extracted = extractBunnyIds(item.media_url);
+                                const videoId = item.bunny_video_id || extracted?.videoId;
+                                // Use library ID from URL if available, fallback to default
+                                const libraryId = extracted?.libraryId || '292927';
+
+                                if (videoId) {
+                                  return (
+                                    <div className="relative w-full aspect-[9/16] rounded-xl overflow-hidden bg-black">
+                                      <iframe
+                                        src={`https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=true&muted=false&preload=true&responsive=true&loop=true`}
+                                        className="absolute inset-0 w-full h-full"
+                                        allow="autoplay; fullscreen"
+                                        allowFullScreen
+                                      />
+                                    </div>
+                                  );
+                                }
+                                // Fallback to native video player
+                                return (
+                                  <video
+                                    src={item.media_url}
+                                    controls
+                                    autoPlay
+                                    className="w-full max-h-[85vh] rounded-xl"
+                                  />
+                                );
+                              }
+
+                              // Image preview
+                              return (
+                                <img
+                                  src={item.media_url}
+                                  alt={item.title || ''}
+                                  className="w-full max-h-[85vh] object-contain rounded-xl"
+                                />
+                              );
+                            })()}
+
+                            {/* Info bar */}
+                            <div className="mt-3 flex items-center justify-between">
+                              <div>
+                                {filteredItems[previewIndex]?.title &&
+                                 !/^[a-f0-9-]{36}$/i.test(filteredItems[previewIndex].title) && (
+                                  <p className="text-white font-medium">{filteredItems[previewIndex].title}</p>
+                                )}
+                                {filteredItems[previewIndex]?.category && (
+                                  <Badge variant="secondary" className="mt-1 text-[10px] bg-white/10">
+                                    {filteredItems[previewIndex].category}
+                                  </Badge>
+                                )}
+                              </div>
+                              <span className="text-white/40 text-sm">
+                                {previewIndex + 1} / {filteredItems.length}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+              </TabsContent>
+
+              {/* SERVICES TAB - INLINE CRUD */}
               <TabsContent value="services" className="mt-0 space-y-6">
-                {full?.services && full.services.length > 0 ? (
+                {/* Add service button (edit mode) */}
+                {isEditing && userId && !showServiceForm && (
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                    <p className="text-sm text-purple-300">
+                      {servicesHook.services.length} servicio(s) configurado(s)
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-purple-500/30 text-purple-300 hover:bg-purple-500/20"
+                      onClick={() => {
+                        resetServiceForm();
+                        setShowServiceForm(true);
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Nuevo Servicio
+                    </Button>
+                  </div>
+                )}
+
+                {/* Service form (create/edit) */}
+                {showServiceForm && (
+                  <div className="rounded-lg border border-purple-500/30 bg-purple-500/5 p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-semibold text-purple-300">
+                        {editingService ? 'Editar Servicio' : 'Nuevo Servicio'}
+                      </h4>
+                      <button
+                        onClick={resetServiceForm}
+                        className="text-white/40 hover:text-white"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-xs text-white/60">Tipo de Servicio</label>
+                        <select
+                          value={serviceFormData.service_type || 'ugc_video'}
+                          onChange={(e) => setServiceFormData(prev => ({ ...prev, service_type: e.target.value as ServiceType }))}
+                          className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-md text-white text-sm"
+                        >
+                          <option value="ugc_video">UGC Video</option>
+                          <option value="reels_tiktok">Reels/TikTok</option>
+                          <option value="review">Review</option>
+                          <option value="unboxing">Unboxing</option>
+                          <option value="testimonial">Testimonial</option>
+                          <option value="tutorial">Tutorial</option>
+                          <option value="vsl">VSL</option>
+                          <option value="photography">Fotografía</option>
+                          <option value="live_streaming">Live Streaming</option>
+                          <option value="consulting">Consultoría</option>
+                          <option value="other">Otro</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs text-white/60">Título *</label>
+                        <Input
+                          value={serviceFormData.title || ''}
+                          onChange={(e) => setServiceFormData(prev => ({ ...prev, title: e.target.value }))}
+                          placeholder="Ej: Video UGC para redes"
+                          className="bg-white/5 border-white/20"
+                        />
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                        <label className="text-xs text-white/60">Descripción</label>
+                        <Textarea
+                          value={serviceFormData.description || ''}
+                          onChange={(e) => setServiceFormData(prev => ({ ...prev, description: e.target.value }))}
+                          placeholder="Describe qué incluye este servicio..."
+                          rows={2}
+                          className="bg-white/5 border-white/20 resize-none"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs text-white/60">Precio (USD)</label>
+                        <div className="flex gap-2">
+                          <Input
+                            type="number"
+                            min="0"
+                            value={serviceFormData.price_amount || ''}
+                            onChange={(e) => setServiceFormData(prev => ({ ...prev, price_amount: e.target.value ? parseFloat(e.target.value) : undefined }))}
+                            placeholder="100"
+                            className="bg-white/5 border-white/20 flex-1"
+                          />
+                          <span className="px-3 py-2 bg-white/5 border border-white/20 rounded-md text-white/60 text-sm flex items-center">
+                            USD
+                          </span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs text-white/60">Días de entrega</label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={serviceFormData.delivery_days || ''}
+                          onChange={(e) => setServiceFormData(prev => ({ ...prev, delivery_days: e.target.value ? parseInt(e.target.value) : undefined }))}
+                          placeholder="7"
+                          className="bg-white/5 border-white/20"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={serviceFormData.is_active !== false}
+                          onChange={(e) => setServiceFormData(prev => ({ ...prev, is_active: e.target.checked }))}
+                          className="rounded border-white/20 bg-white/5"
+                        />
+                        <span className="text-sm text-white/70">Activo</span>
+                      </label>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={resetServiceForm}
+                          className="border-white/20 text-white/70"
+                        >
+                          Cancelar
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={handleSaveService}
+                          disabled={servicesHook.isCreating || servicesHook.isUpdating}
+                          className="bg-purple-500 hover:bg-purple-600 text-white"
+                        >
+                          {(servicesHook.isCreating || servicesHook.isUpdating) ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Check className="h-4 w-4 mr-2" />
+                          )}
+                          {editingService ? 'Guardar' : 'Crear'}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Services list */}
+                {servicesHook.isLoading ? (
                   <div className="space-y-4">
-                    {full.services.map((service: any) => (
+                    {[1, 2].map((i) => (
+                      <Skeleton key={i} className="h-24 rounded-lg bg-white/5" />
+                    ))}
+                  </div>
+                ) : servicesHook.services.length > 0 ? (
+                  <div className="space-y-4">
+                    {servicesHook.services.map((service) => (
                       <div
                         key={service.id}
-                        className="rounded-lg border border-white/10 p-4 hover:border-pink-500/30 transition-colors"
+                        className={cn(
+                          'rounded-lg border p-4 transition-colors',
+                          service.is_active
+                            ? 'border-white/10 hover:border-purple-500/30'
+                            : 'border-white/5 bg-white/5 opacity-60'
+                        )}
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-white truncate">{service.title}</h4>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="font-medium text-white truncate">{service.title}</h4>
+                              {!service.is_active && (
+                                <Badge variant="secondary" className="bg-white/10 text-white/50 text-[10px]">
+                                  Inactivo
+                                </Badge>
+                              )}
+                              {service.is_featured && (
+                                <Badge variant="secondary" className="bg-amber-500/20 text-amber-300 text-[10px]">
+                                  <Sparkles className="h-3 w-3 mr-1" />
+                                  Destacado
+                                </Badge>
+                              )}
+                            </div>
                             {service.description && (
                               <p className="text-sm text-white/60 mt-1 line-clamp-2">
                                 {service.description}
                               </p>
                             )}
-                            {(service.category || service.service_type) && (
-                              <Badge variant="secondary" className="mt-2 bg-pink-500/20 text-pink-300">
-                                {service.category || service.service_type}
-                              </Badge>
-                            )}
+                            <Badge variant="secondary" className="mt-2 bg-purple-500/20 text-purple-300">
+                              {service.service_type}
+                            </Badge>
                           </div>
-                          <div className="text-right shrink-0">
+                          <div className="text-right shrink-0 flex flex-col items-end gap-2">
                             <p className="text-lg font-bold text-green-400">
-                              {formatCurrency(service.price || service.price_amount)}
+                              {formatCurrency(service.price_amount)}
                             </p>
-                            {(service.delivery_time || service.delivery_days) && (
+                            {service.delivery_days && (
                               <p className="text-xs text-white/40">
-                                {service.delivery_time || service.delivery_days} días
+                                {service.delivery_days} días
                               </p>
+                            )}
+                            {/* Edit mode actions */}
+                            {isEditing && (
+                              <div className="flex items-center gap-1 mt-2">
+                                <button
+                                  onClick={() => handleToggleServiceActive(service.id, service.is_active)}
+                                  className={cn(
+                                    'p-1.5 rounded transition-colors',
+                                    service.is_active ? 'text-green-400 hover:bg-green-500/20' : 'text-white/40 hover:bg-white/10'
+                                  )}
+                                  title={service.is_active ? 'Desactivar' : 'Activar'}
+                                >
+                                  {service.is_active ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
+                                </button>
+                                <button
+                                  onClick={() => handleToggleServiceFeatured(service.id, service.is_featured)}
+                                  className={cn(
+                                    'p-1.5 rounded transition-colors',
+                                    service.is_featured ? 'text-amber-400 hover:bg-amber-500/20' : 'text-white/40 hover:bg-white/10'
+                                  )}
+                                  title={service.is_featured ? 'Quitar destacado' : 'Destacar'}
+                                >
+                                  <Sparkles className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleEditService(service)}
+                                  className="p-1.5 rounded text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+                                  title="Editar"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteService(service.id)}
+                                  disabled={deletingServiceId === service.id}
+                                  className="p-1.5 rounded text-red-400 hover:bg-red-500/20 transition-colors"
+                                  title="Eliminar"
+                                >
+                                  {deletingServiceId === service.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-4 w-4" />
+                                  )}
+                                </button>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -876,6 +1826,20 @@ export function UnifiedTalentDetailDialog({
                   <div className="text-center py-12">
                     <Briefcase className="h-12 w-12 text-white/10 mx-auto mb-3" />
                     <p className="text-white/40">Sin servicios configurados</p>
+                    {isEditing && userId && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mt-4 border-purple-500/30 text-purple-300 hover:bg-purple-500/20"
+                        onClick={() => {
+                          resetServiceForm();
+                          setShowServiceForm(true);
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Crear Primer Servicio
+                      </Button>
+                    )}
                   </div>
                 )}
               </TabsContent>
@@ -1094,7 +2058,7 @@ export function UnifiedTalentDetailDialog({
                     </div>
                     <div>
                       <p className="text-xs text-white/40">Moneda</p>
-                      <p className="text-white/70">{currency}</p>
+                      <p className="text-white/70">USD</p>
                     </div>
                     <div>
                       <p className="text-xs text-white/40">Plataformas</p>
@@ -1121,8 +2085,8 @@ export function UnifiedTalentDetailDialog({
                     </p>
                     <AdminActionsSection
                       userId={userId}
-                      userEmail={creatorEmail}
-                      userName={creatorName}
+                      userEmail={displayEmail}
+                      userName={displayName}
                       hasProfile={hasProfile}
                       isPlatformAdmin={isPlatformAdminUser}
                       isBanned={isBanned}

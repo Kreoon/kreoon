@@ -482,6 +482,52 @@ export const BRAND_REFERRAL_CREDIT = {
 // 16. REFERRAL SHARE MESSAGES
 // ═══════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════
+// 14. LICENSE RENEWAL RATES (percentage of original project value)
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * License renewal rates by deliverable category
+ * Applied as percentage of original project value for 1-year extension
+ */
+export const LICENSE_RENEWAL_RATES = {
+  video_with_creator: 0.30,     // 30% of original price
+  photo_with_creator: 0.25,     // 25% of original price
+  ugc_content: 0.30,            // 30% of original price
+  live_recording: 0.20,         // 20% of original price
+  product_photo: 0.20,          // 20% of original price
+  broll_video: 0.20,            // 20% of original price
+  copywriting: 0.20,            // 20% of original price
+  /** Multiplier for full buyout (perpetual license) vs 1-year license price */
+  buyout_multiplier: 3.0,       // 3x the annual license price
+  /** Default renewal rate for unspecified categories */
+  default: 0.25,                // 25% of original price
+} as const;
+
+export type RenewalCategory = keyof typeof LICENSE_RENEWAL_RATES;
+
+/**
+ * Calculate renewal price for a license
+ */
+export function calculateRenewalPrice(
+  originalValue: number,
+  category: RenewalCategory
+): number {
+  const rate = LICENSE_RENEWAL_RATES[category] ?? LICENSE_RENEWAL_RATES.default;
+  return Math.round(originalValue * rate * 100) / 100;
+}
+
+/**
+ * Calculate buyout price (perpetual license)
+ */
+export function calculateBuyoutPrice(annualLicensePrice: number): number {
+  return Math.round(annualLicensePrice * LICENSE_RENEWAL_RATES.buyout_multiplier * 100) / 100;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 15. REFERRAL SHARE MESSAGES
+// ═══════════════════════════════════════════════════════════════
+
 export const SHARE_MESSAGES = {
   talent: {
     whatsapp:

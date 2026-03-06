@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { UnifiedRegistrationData } from './types';
 import { useAuthAnalytics } from '@/analytics';
+import { triggerUserSyncSilent, triggerOrgSyncSilent } from '@/services/pancakeCrmService';
 
 const PENDING_REG_KEY = 'kreoon_pending_registration';
 
@@ -103,6 +104,9 @@ export function useRegistrationSubmit() {
         user_role: data.intent || 'talent',
       });
 
+      // Sincronizar con Pancake CRM (fire-and-forget)
+      triggerUserSyncSilent(userId);
+
       return true;
     } catch (error: any) {
       console.error('Registration error:', error);
@@ -164,6 +168,26 @@ async function handleTalentSubmit(userId: string, data: UnifiedRegistrationData)
       is_active: true,
       profile_customization: {},
     });
+
+  // Apply partner community benefits if present
+  const communitySlug = localStorage.getItem('kreoon_partner_community')
+    || new URLSearchParams(window.location.search).get('community');
+
+  if (communitySlug) {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (session?.session) {
+        await supabase.functions.invoke('partner-community-service/apply', {
+          body: { community_slug: communitySlug },
+          headers: { Authorization: `Bearer ${session.session.access_token}` },
+        });
+        localStorage.removeItem('kreoon_partner_community');
+      }
+    } catch (err) {
+      // Non-critical: log but don't fail registration
+      console.warn('Failed to apply partner community benefits:', err);
+    }
+  }
 
   toast.success('¡Bienvenido a KREOON!', {
     description: 'Tu perfil de talento ha sido creado. Complétalo para recibir propuestas.',
@@ -288,9 +312,34 @@ async function handleOrgSubmit(userId: string, data: UnifiedRegistrationData) {
       .eq('id', userId);
   }
 
+  // Apply partner community benefits if present
+  const communitySlug = localStorage.getItem('kreoon_partner_community')
+    || new URLSearchParams(window.location.search).get('community');
+
+  if (communitySlug) {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (session?.session) {
+        await supabase.functions.invoke('partner-community-service/apply', {
+          body: { community_slug: communitySlug },
+          headers: { Authorization: `Bearer ${session.session.access_token}` },
+        });
+        localStorage.removeItem('kreoon_partner_community');
+      }
+    } catch (err) {
+      // Non-critical: log but don't fail registration
+      console.warn('Failed to apply partner community benefits:', err);
+    }
+  }
+
   toast.success('¡Organización creada!', {
     description: 'Tu prueba de 30 días ha comenzado.',
   });
+
+  // Sincronizar organización con Pancake CRM
+  if (orgData?.id) {
+    triggerOrgSyncSilent(orgData.id);
+  }
 }
 
 async function handleJoinSubmit(userId: string, data: UnifiedRegistrationData) {
