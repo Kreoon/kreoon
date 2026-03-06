@@ -36,16 +36,17 @@ export function SignatureReceipt({ signatureId, isOpen, onClose }: SignatureRece
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-gradient-to-b from-slate-900 to-slate-950 border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden"
+        className="bg-gradient-to-b from-slate-900 to-slate-950 border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto my-auto"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10 bg-green-500/10">
+        <div className="flex items-center justify-between p-4 border-b border-white/10 bg-green-500/10 sticky top-0 z-10">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-500/20 rounded-full">
               <CheckCircle2 className="w-6 h-6 text-green-400" />
@@ -57,9 +58,10 @@ export function SignatureReceipt({ signatureId, isOpen, onClose }: SignatureRece
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+            aria-label="Cerrar"
           >
-            <X className="w-5 h-5 text-white/60" />
+            <X className="w-5 h-5 text-white" />
           </button>
         </div>
 
