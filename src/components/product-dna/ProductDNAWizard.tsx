@@ -7,8 +7,8 @@ import {
   GOAL_OPTIONS,
   PLATFORM_OPTIONS,
   AUDIENCE_OPTIONS,
-  COUNTRY_OPTIONS,
 } from '@/lib/product-dna-questions';
+import { LocationSelector } from './LocationSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAIAnalytics } from '@/analytics';
@@ -82,7 +82,7 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
   const [goals, setGoals] = useState<string[]>([]);
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [audiences, setAudiences] = useState<string[]>([]);
-  const [targetCountry, setTargetCountry] = useState<string>('latam');
+  const [targetLocations, setTargetLocations] = useState<string[]>([]);
 
   // Processing state
   const [processingStep, setProcessingStep] = useState<ProcessingStep>('idle');
@@ -210,7 +210,7 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
         goals,
         platforms,
         audiences,
-        target_country: targetCountry,
+        target_locations: targetLocations,
         transcription: transcriptionResult.transcription,
         emotional_analysis: transcriptionResult.emotional_analysis,
       };
@@ -467,19 +467,14 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
         </SelectionPanel>
       </div>
 
-      {/* Country Selection - Full width single select */}
-      <SelectionPanel title="¿En qué mercado vendes?" emoji="🌎" subtitle="Selecciona uno">
-        <div className="flex flex-wrap gap-2">
-          {COUNTRY_OPTIONS.map((opt) => (
-            <ChipButton
-              key={opt.id}
-              label={opt.label}
-              emoji={opt.emoji}
-              selected={targetCountry === opt.id}
-              onClick={() => setTargetCountry(opt.id)}
-            />
-          ))}
-        </div>
+      {/* Location Selection - Meta Ads style */}
+      <SelectionPanel title="¿En qué mercados vendes?" emoji="🌎" subtitle="Busca países, ciudades o regiones">
+        <LocationSelector
+          value={targetLocations}
+          onChange={setTargetLocations}
+          placeholder="Buscar país, ciudad o región..."
+          maxSelections={10}
+        />
       </SelectionPanel>
 
       {/* Error */}
