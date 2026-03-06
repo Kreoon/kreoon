@@ -155,7 +155,7 @@ export function SignatureModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+        className="fixed inset-0 z-[250] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
       >
         <motion.div
           initial={{ scale: 0.95, opacity: 0 }}
@@ -176,9 +176,10 @@ export function SignatureModal({
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
+              className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors flex-shrink-0"
+              aria-label="Cerrar"
             >
-              <X className="w-5 h-5 text-white/60" />
+              <X className="w-5 h-5 text-white" />
             </button>
           </div>
 
