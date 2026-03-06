@@ -64,6 +64,7 @@ export interface ProfileData {
   document_type: string;
   document_number: string;
   date_of_birth: string;
+  gender?: 'male' | 'female' | 'other';
   social_instagram?: string;
   social_facebook?: string;
   social_tiktok?: string;
@@ -239,8 +240,13 @@ export function useOnboardingGate() {
   // Guardar datos del perfil
   const saveProfileMutation = useMutation({
     mutationFn: async (data: ProfileData) => {
+      console.log('[useOnboardingGate] saveProfileData llamado');
+      console.log('[useOnboardingGate] user.id:', user?.id);
+      console.log('[useOnboardingGate] data:', data);
+
       if (!user?.id) throw new Error('No user');
 
+      console.log('[useOnboardingGate] Llamando RPC save_profile_data...');
       const { data: result, error } = await supabase.rpc('save_profile_data', {
         p_user_id: user.id,
         p_full_name: data.full_name,
@@ -259,20 +265,34 @@ export function useOnboardingGate() {
         p_social_x: data.social_x || null,
         p_social_youtube: data.social_youtube || null,
         p_social_linkedin: data.social_linkedin || null,
+        p_gender: data.gender || null,
       });
 
-      if (error) throw error;
+      console.log('[useOnboardingGate] RPC result:', result);
+      console.log('[useOnboardingGate] RPC error:', error);
+
+      if (error) {
+        console.error('[useOnboardingGate] RPC error:', error);
+        throw error;
+      }
 
       const res = result as { success: boolean; error?: string };
+      console.log('[useOnboardingGate] Parsed result:', res);
+
       if (!res.success) {
+        console.error('[useOnboardingGate] RPC returned success=false:', res.error);
         throw new Error(res.error || 'Error saving profile');
       }
 
       return res;
     },
     onSuccess: () => {
+      console.log('[useOnboardingGate] Mutation success, refetching...');
       refetchCompletion();
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+    },
+    onError: (error) => {
+      console.error('[useOnboardingGate] Mutation error:', error);
     },
   });
 
@@ -353,6 +373,7 @@ export function useOnboardingGate() {
     document_type: profile?.document_type || '',
     document_number: profile?.document_number || '',
     date_of_birth: (profile as any)?.date_of_birth || '',
+    gender: (profile as any)?.gender || undefined,
     social_instagram: (profile as any)?.social_instagram || profile?.instagram || '',
     social_facebook: (profile as any)?.social_facebook || profile?.facebook || '',
     social_tiktok: (profile as any)?.social_tiktok || profile?.tiktok || '',

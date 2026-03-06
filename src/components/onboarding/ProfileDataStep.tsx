@@ -191,23 +191,32 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
   }, [existingProfileData.country, getCitiesByCountry, availableCities.length]);
 
   const onSubmit = useCallback(async (data: ProfileFormData) => {
+    console.log('[onboarding] onSubmit llamado con data:', data);
+
     if (usernameStatus === 'taken') {
+      console.log('[onboarding] Username tomado, abortando');
       toast.error('El username ya está en uso');
       return;
     }
 
     try {
-      await saveProfileData(data as ProfileData);
+      console.log('[onboarding] Llamando saveProfileData...');
+      const result = await saveProfileData(data as ProfileData);
+      console.log('[onboarding] saveProfileData exitoso:', result);
       toast.success('Datos guardados correctamente');
       onComplete();
     } catch (error: any) {
+      console.error('[onboarding] Error en saveProfileData:', error);
+      console.error('[onboarding] Error message:', error?.message);
+      console.error('[onboarding] Error completo:', JSON.stringify(error, null, 2));
+
       if (error.message === 'username_taken') {
         toast.error('El username ya está en uso');
         setUsernameStatus('taken');
       } else if (error.message === 'age_under_18') {
         toast.error('Debes ser mayor de 18 años');
       } else {
-        toast.error('Error al guardar los datos');
+        toast.error(`Error al guardar: ${error?.message || 'Error desconocido'}`);
       }
     }
   }, [saveProfileData, usernameStatus, onComplete]);
