@@ -436,6 +436,55 @@ async function generateAllSections(
   // Call 4: Estrategia + Brief (needs angulos)
   const call4Result = await callGeminiWithPrompt(apiKey, buildCall4Prompt(extractedData, perplexityResearch, angulos, wizardResponses), "call4_estrategia_brief");
 
+  // Default values for call4 sections when Gemini fails
+  const goals = (wizardResponses.goals as string[]) || [];
+  const defaultOrganico = {
+    objetivo_organico: "Construir autoridad y comunidad",
+    distribucion_contenido: { viral: 25, valor: 40, venta: 25, personal: 10, justificacion: "Balance entre engagement y conversion" },
+    frecuencia_publicacion: "5 veces por semana",
+    tipo_contenido_organico: "Reels, carruseles educativos, stories interactivos",
+    pilares_tematicos: ["Educacion", "Casos de exito", "Detras de camaras"],
+    tono_organico: "Cercano y profesional",
+    metricas_organico: { retencion_objetivo: "50-70%", interacciones_clave: "Guardados > Compartidos > Comentarios", frecuencia_revision: "Semanal" },
+    errores_comunes_organico: ["Publicar sin estrategia", "Ignorar metricas", "No responder comentarios"],
+  };
+  const defaultAds = {
+    objetivo_campana: "conversiones",
+    estructura_campana: { frio: "Contenido educativo de valor", tibio: "Casos de exito y testimoniales", remarketing: "Oferta directa con urgencia" },
+    publico_frio: { intereses: ["Marketing digital", "Emprendimiento", "E-commerce"], comportamientos: ["Compradores online", "Duenos de paginas"], caracteristicas: "25-45 anos, interes en negocios" },
+    publico_remarketing: "Visitantes web ultimos 30 dias, engagement en redes",
+    presupuesto_minimo_sugerido: "$300-500 USD/mes para empezar",
+    ideas_para_ads: "Ideas 2 y 3 son ideales para pauta por su enfoque en resultados",
+    estructura_creativo_ad: { hook: "0-3 seg: Pregunta o dato impactante", problema: "3-10 seg: Identificar el dolor", solucion: "10-25 seg: Mostrar la solucion", cta: "25-30 seg: Llamada clara a la accion" },
+    variaciones_recomendadas: "3-5 variaciones de hook por creativo",
+    ctr_objetivo: "Meta Ads >1%, TikTok Ads >1.5%",
+    senales_de_escalar: "CTR >2%, CPA bajo objetivo, ROAS >2x",
+    senales_de_pausar: "CTR <0.5% despues de 1000 impresiones, CPA 2x objetivo",
+  };
+  const defaultBrief = {
+    tono_de_voz: "Cercano, confiable, experto pero accesible",
+    palabras_usar: ["Resultados", "Facil", "Rapido", "Comprobado", "Autentico"],
+    palabras_evitar: ["Barato", "Gratis", "Garantizado", "Milagroso"],
+    indicaciones_visuales: "Luz natural, fondo limpio, ropa casual-profesional, encuadre vertical 9:16",
+    especificaciones_tecnicas: "Video vertical 9:16, minimo 1080p, audio claro sin eco",
+    cta_recomendado: goals.includes("sales") ? "Link en bio para mas info" : "Guardalo y sigueme para mas",
+    restricciones_del_cliente: (extractedData.restricciones_creativas as string) || "Ninguna especificada",
+  };
+
+  // Check if call4Result has valid data
+  const hasCall4Data = call4Result && Object.keys(call4Result).length > 0;
+  const sec6 = hasCall4Data && call4Result?.seccion_6_estrategia_organica && Object.keys(call4Result.seccion_6_estrategia_organica as object).length > 0
+    ? call4Result.seccion_6_estrategia_organica
+    : defaultOrganico;
+  const sec7 = hasCall4Data && call4Result?.seccion_7_estrategia_ads && Object.keys(call4Result.seccion_7_estrategia_ads as object).length > 0
+    ? call4Result.seccion_7_estrategia_ads
+    : defaultAds;
+  const sec8 = hasCall4Data && call4Result?.seccion_8_brief_creador && Object.keys(call4Result.seccion_8_brief_creador as object).length > 0
+    ? call4Result.seccion_8_brief_creador
+    : defaultBrief;
+
+  console.log(`[generate-product-dna] Call4 status: hasData=${hasCall4Data}, sec6=${Object.keys(sec6 as object).length}, sec7=${Object.keys(sec7 as object).length}, sec8=${Object.keys(sec8 as object).length}`);
+
   // Assemble final result mapping to existing DB columns
   return {
     market_research: {
@@ -450,12 +499,12 @@ async function generateAllSections(
     strategy_recommendations: {
       seccion_3_avatares: call2Result?.seccion_3_avatares || [],
       seccion_4_angulos: call3Result?.seccion_4_angulos || [],
-      seccion_6_organico: call4Result?.seccion_6_estrategia_organica || {},
-      seccion_7_ads: call4Result?.seccion_7_estrategia_ads || {},
+      seccion_6_organico: sec6,
+      seccion_7_ads: sec7,
     },
     content_brief: {
       seccion_5_ideas: call3Result?.seccion_5_ideas_contenido || [],
-      seccion_8_brief_creador: call4Result?.seccion_8_brief_creador || {},
+      seccion_8_brief_creador: sec8,
     },
   };
 }
