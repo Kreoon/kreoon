@@ -241,6 +241,41 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
         }
       }
 
+      // ── 2e. Fetch organization memberships for creators ──
+      const orgMemberMap = new Map<string, { org_id: string; org_name: string; org_logo: string | null }>();
+      if (creatorUserIds.length > 0) {
+        // First get memberships
+        const { data: memberRows, error: memberErr } = await supabase
+          .from('organization_members')
+          .select('user_id, organization_id')
+          .in('user_id', creatorUserIds);
+
+        if (memberRows && memberRows.length > 0) {
+          // Then get org details
+          const orgIds = [...new Set(memberRows.map(m => m.organization_id))];
+          const { data: orgRows } = await supabase
+            .from('organizations')
+            .select('id, name, logo_url')
+            .in('id', orgIds);
+
+          const orgDetailsMap = new Map<string, { name: string; logo_url: string | null }>();
+          for (const org of orgRows || []) {
+            orgDetailsMap.set(org.id, { name: org.name, logo_url: org.logo_url });
+          }
+
+          for (const m of memberRows) {
+            const orgDetail = orgDetailsMap.get(m.organization_id);
+            if (orgDetail) {
+              orgMemberMap.set(m.user_id, {
+                org_id: m.organization_id,
+                org_name: orgDetail.name,
+                org_logo: orgDetail.logo_url,
+              });
+            }
+          }
+        }
+      }
+
       const mapped = creatorRows.map((row: any) => {
         const creator = mapCreatorRow(row);
         // Fallback avatar from profiles table
@@ -251,6 +286,13 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
         creator.portfolio_media = (portfolioMap.get(row.id) || []).slice(0, 5);
         // Enrich with subscription status
         creator.is_subscribed = subscribedUserIds.has(row.user_id);
+        // Enrich with organization info
+        const orgInfo = orgMemberMap.get(row.user_id);
+        if (orgInfo) {
+          creator.organization_id = orgInfo.org_id;
+          creator.organization_name = orgInfo.org_name;
+          creator.organization_logo = orgInfo.org_logo;
+        }
         // Introductory discount: auto-suggest 20% for new talent with < 3 completed projects
         const thirtyDays = 30 * 24 * 60 * 60 * 1000;
         const isNew = Date.now() - new Date(creator.joined_at).getTime() < thirtyDays;
@@ -326,6 +368,39 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
           }
         }
 
+        // Fetch organization memberships for profile users
+        const profileOrgMap = new Map<string, { org_id: string; org_name: string; org_logo: string | null }>();
+        if (profileUserIds.length > 0) {
+          const { data: profileMemberRows } = await supabase
+            .from('organization_members')
+            .select('user_id, organization_id')
+            .in('user_id', profileUserIds);
+
+          if (profileMemberRows && profileMemberRows.length > 0) {
+            const orgIds = [...new Set(profileMemberRows.map(m => m.organization_id))];
+            const { data: orgRows } = await supabase
+              .from('organizations')
+              .select('id, name, logo_url')
+              .in('id', orgIds);
+
+            const orgDetailsMap = new Map<string, { name: string; logo_url: string | null }>();
+            for (const org of orgRows || []) {
+              orgDetailsMap.set(org.id, { name: org.name, logo_url: org.logo_url });
+            }
+
+            for (const m of profileMemberRows) {
+              const orgDetail = orgDetailsMap.get(m.organization_id);
+              if (orgDetail) {
+                profileOrgMap.set(m.user_id, {
+                  org_id: m.organization_id,
+                  org_name: orgDetail.name,
+                  org_logo: orgDetail.logo_url,
+                });
+              }
+            }
+          }
+        }
+
         // Include profiles with name AND at least one portfolio creative (avatar is optional)
         for (const row of profileRows) {
           if (!row.full_name && !row.username) continue;
@@ -335,6 +410,13 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
           const creator = mapProfileRow(row as Record<string, unknown>);
           creator.portfolio_media = media;
           creator.is_subscribed = subscribedUserIds.has(row.id);
+          // Enrich with organization info
+          const orgInfo = profileOrgMap.get(row.id);
+          if (orgInfo) {
+            creator.organization_id = orgInfo.org_id;
+            creator.organization_name = orgInfo.org_name;
+            creator.organization_logo = orgInfo.org_logo;
+          }
           const thirtyDays = 30 * 24 * 60 * 60 * 1000;
           const isNewProfile = Date.now() - new Date(creator.joined_at).getTime() < thirtyDays;
           if (isNewProfile && creator.completed_projects < 3) {

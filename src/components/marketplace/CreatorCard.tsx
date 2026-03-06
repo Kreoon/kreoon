@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, memo } from 'react';
-import { Heart, ChevronLeft, ChevronRight, Star, MapPin, CheckCircle2, Play, Gift, Percent, Package, Clock } from 'lucide-react';
+import { Heart, ChevronLeft, ChevronRight, Star, MapPin, CheckCircle2, Play, Gift, Percent, Package, Clock, Building2 } from 'lucide-react';
 // Removed framer-motion for better performance - using CSS transitions instead
 import { cn } from '@/lib/utils';
 import type { MarketplaceCreator, PortfolioMedia } from './types/marketplace';
@@ -295,6 +295,28 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
               <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
             )}
           </div>
+
+          {/* Organization badge */}
+          {creator.organization_id && creator.organization_name && (
+            <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm rounded-full px-2 py-0.5 w-fit">
+              {creator.organization_logo ? (
+                <img
+                  src={getOptimizedImageUrl(creator.organization_logo, { width: 32, quality: 70 })}
+                  alt={creator.organization_name}
+                  width={16}
+                  height={16}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-4 h-4 rounded-full object-cover flex-shrink-0"
+                />
+              ) : (
+                <Building2 className="h-3 w-3 text-purple-300 flex-shrink-0" />
+              )}
+              <span className="text-[10px] text-white/90 font-medium truncate max-w-[100px]">
+                {creator.organization_name}
+              </span>
+            </div>
+          )}
 
           {/* Location */}
           {(creator.location_city || creator.location_country) && (
