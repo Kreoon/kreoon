@@ -157,6 +157,176 @@ interface ContentBriefData {
     style?: string;
     mood?: string;
   };
+  // NEW 8-section structure
+  seccion_5_ideas?: Array<{
+    id: number;
+    titulo: string;
+    formato: string;
+    hook_variacion_1: string;
+    hook_variacion_2: string;
+    hook_variacion_3: string;
+    desarrollo: string;
+    cta: string;
+    duracion_recomendada: string;
+    fase_esfera: string;
+    uso_recomendado: string;
+  }>;
+  seccion_8_brief_creador?: {
+    tono_de_voz: string;
+    palabras_usar: string[];
+    palabras_evitar: string[];
+    indicaciones_visuales: string;
+    especificaciones_tecnicas: string;
+    cta_recomendado: string;
+    restricciones_del_cliente: string;
+  };
+}
+
+// ============================================
+// NEW 8-SECTION TYPES (for refactored edge function)
+// ============================================
+
+interface Seccion1Contexto {
+  servicio_exacto: string;
+  objetivo_real: string;
+  palabras_clave_cliente: string[];
+  restricciones_creativas: string;
+  referentes_estilo: string;
+  tono_emocional_audio: string;
+}
+
+interface Seccion2Mercado {
+  panorama_mercado: string;
+  tendencias_actuales: string;
+  competidores: Array<{
+    nombre: string;
+    promesa_principal: string;
+    precio_referencial: string;
+    fortaleza: string;
+    debilidad: string;
+    plataformas: string[];
+  }>;
+  gap_competitivo: string;
+  posicionamiento_sugerido: string;
+}
+
+interface Seccion3Avatar {
+  id: string;
+  nombre_edad: string;
+  situacion_actual: string;
+  dolor_principal: string;
+  deseo_principal: string;
+  objecion_principal: string;
+  como_habla: string[];
+  trigger_de_compra: string;
+  nivel_consciencia: string;
+}
+
+interface Seccion4Angulo {
+  id: number;
+  tipo: string;
+  hook_apertura: string;
+  desarrollo: string;
+  cta: string;
+  avatar_objetivo: string;
+  fase_esfera: string;
+  uso_recomendado: string;
+}
+
+interface Seccion5Idea {
+  id: number;
+  titulo: string;
+  formato: string;
+  hook_variacion_1: string;
+  hook_variacion_2: string;
+  hook_variacion_3: string;
+  desarrollo: string;
+  cta: string;
+  duracion_recomendada: string;
+  fase_esfera: string;
+  uso_recomendado: string;
+}
+
+interface Seccion6Organico {
+  objetivo_organico: string;
+  distribucion_contenido: {
+    viral: number;
+    valor: number;
+    venta: number;
+    personal: number;
+    justificacion: string;
+  };
+  frecuencia_publicacion: string;
+  tipo_contenido_organico: string;
+  pilares_tematicos: string[];
+  tono_organico: string;
+  metricas_organico: {
+    retencion_objetivo: string;
+    interacciones_clave: string;
+    frecuencia_revision: string;
+  };
+  errores_comunes_organico: string[];
+}
+
+interface Seccion7Ads {
+  objetivo_campana: string;
+  estructura_campana: {
+    frio: string;
+    tibio: string;
+    remarketing: string;
+  };
+  publico_frio: {
+    intereses: string[];
+    comportamientos: string[];
+    caracteristicas: string;
+  };
+  publico_remarketing: string;
+  presupuesto_minimo_sugerido: string;
+  ideas_para_ads: string;
+  estructura_creativo_ad: {
+    hook: string;
+    problema: string;
+    solucion: string;
+    cta: string;
+  };
+  variaciones_recomendadas: string;
+  ctr_objetivo: string;
+  senales_de_escalar: string;
+  senales_de_pausar: string;
+}
+
+interface Seccion8BriefCreador {
+  tono_de_voz: string;
+  palabras_usar: string[];
+  palabras_evitar: string[];
+  indicaciones_visuales: string;
+  especificaciones_tecnicas: string;
+  cta_recomendado: string;
+  restricciones_del_cliente: string;
+}
+
+// Extended interfaces to support both OLD and NEW structure
+interface MarketResearchDataV2 extends MarketResearchData {
+  seccion_1_contexto?: Seccion1Contexto;
+  seccion_2_mercado?: Seccion2Mercado;
+}
+
+interface CompetitorAnalysisDataV2 extends CompetitorAnalysisData {
+  competidores?: Seccion2Mercado['competidores'];
+  gap_competitivo?: string;
+  posicionamiento?: string;
+}
+
+interface StrategyRecommendationsDataV2 extends StrategyRecommendationsData {
+  seccion_3_avatares?: Seccion3Avatar[];
+  seccion_4_angulos?: Seccion4Angulo[];
+  seccion_6_organico?: Seccion6Organico;
+  seccion_7_ads?: Seccion7Ads;
+}
+
+/** Helper to detect if data uses the NEW 8-section structure */
+function isNewStructure(mr: any, sr: any): boolean {
+  return !!(mr?.seccion_1_contexto || mr?.seccion_2_mercado || sr?.seccion_3_avatares);
 }
 
 // ============================================
@@ -205,12 +375,13 @@ export default function ProductDNADisplay({
   const [savingSection, setSavingSection] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const mr = productDna.market_research;
-  const ca = productDna.competitor_analysis;
-  const sr = productDna.strategy_recommendations;
+  const mr = productDna.market_research as MarketResearchDataV2 | null;
+  const ca = productDna.competitor_analysis as CompetitorAnalysisDataV2 | null;
+  const sr = productDna.strategy_recommendations as StrategyRecommendationsDataV2 | null;
   const cb = productDna.content_brief;
 
   const hasAnalysis = !!(mr || ca || sr || cb);
+  const useNewStructure = isNewStructure(mr, sr);
 
   if (!hasAnalysis) {
     return <EmptyAnalysisState status={productDna.status} />;
@@ -312,110 +483,228 @@ export default function ProductDNADisplay({
         </div>
       )}
 
-      {/* Value Proposition & Positioning */}
-      {sr && (sr.value_proposition || sr.brand_positioning) && (
-        <EditableStrategySection
-          data={sr}
-          isEditing={isEditing}
-          saving={savingSection === 'strategy_recommendations'}
-          onSave={(updated) => handleSaveSection('strategy_recommendations', updated)}
-          onCopy={handleCopy}
-          copiedSection={copiedSection}
-        />
+      {/* ============================================ */}
+      {/* NEW 8-SECTION STRUCTURE */}
+      {/* ============================================ */}
+      {useNewStructure ? (
+        <>
+          {/* Sección 1: Contexto */}
+          {mr?.seccion_1_contexto && (
+            <SectionCard
+              title="Contexto del Proyecto"
+              icon={<Sparkles className="w-5 h-5" />}
+              defaultExpanded={true}
+              accentColor="from-blue-500 to-cyan-500"
+            >
+              <ContextoSection data={mr.seccion_1_contexto} />
+            </SectionCard>
+          )}
+
+          {/* Sección 2: Mercado */}
+          {mr?.seccion_2_mercado && (
+            <SectionCard
+              title="Análisis de Mercado"
+              icon={<TrendingUp className="w-5 h-5" />}
+              accentColor="from-green-500 to-emerald-500"
+              badge={`${mr.seccion_2_mercado.competidores?.length || 0} competidores`}
+            >
+              <MercadoSection data={mr.seccion_2_mercado} />
+            </SectionCard>
+          )}
+
+          {/* Sección 3: Avatares */}
+          {sr?.seccion_3_avatares && sr.seccion_3_avatares.length > 0 && (
+            <SectionCard
+              title="Avatares de Cliente"
+              icon={<Users className="w-5 h-5" />}
+              accentColor="from-purple-500 to-pink-500"
+              badge={`${sr.seccion_3_avatares.length} avatares`}
+            >
+              <AvatarSection data={sr.seccion_3_avatares} />
+            </SectionCard>
+          )}
+
+          {/* Sección 4: Ángulos de Venta */}
+          {sr?.seccion_4_angulos && sr.seccion_4_angulos.length > 0 && (
+            <SectionCard
+              title="Ángulos de Venta"
+              icon={<Megaphone className="w-5 h-5" />}
+              accentColor="from-yellow-500 to-orange-500"
+              badge={`${sr.seccion_4_angulos.length} ángulos`}
+            >
+              <AngulosSection
+                data={sr.seccion_4_angulos}
+                onCopy={handleCopy}
+                copiedSection={copiedSection}
+              />
+            </SectionCard>
+          )}
+
+          {/* Sección 5: Ideas de Contenido */}
+          {cb?.seccion_5_ideas && cb.seccion_5_ideas.length > 0 && (
+            <SectionCard
+              title="Ideas de Contenido"
+              icon={<Lightbulb className="w-5 h-5" />}
+              accentColor="from-pink-500 to-rose-500"
+              badge={`${cb.seccion_5_ideas.length} ideas`}
+            >
+              <IdeasSection
+                data={cb.seccion_5_ideas}
+                onCopy={handleCopy}
+                copiedSection={copiedSection}
+              />
+            </SectionCard>
+          )}
+
+          {/* Sección 6: Estrategia Orgánica */}
+          {sr?.seccion_6_organico && (
+            <SectionCard
+              title="Estrategia Orgánica"
+              icon={<Globe className="w-5 h-5" />}
+              accentColor="from-cyan-500 to-blue-500"
+            >
+              <OrganicoSection data={sr.seccion_6_organico} />
+            </SectionCard>
+          )}
+
+          {/* Sección 7: Estrategia Ads */}
+          {sr?.seccion_7_ads && (
+            <SectionCard
+              title="Estrategia de Ads"
+              icon={<Target className="w-5 h-5" />}
+              accentColor="from-emerald-500 to-teal-500"
+            >
+              <AdsSection data={sr.seccion_7_ads} />
+            </SectionCard>
+          )}
+
+          {/* Sección 8: Brief para Creador */}
+          {cb?.seccion_8_brief_creador && (
+            <SectionCard
+              title="Brief para Creador"
+              icon={<Palette className="w-5 h-5" />}
+              accentColor="from-indigo-500 to-purple-500"
+            >
+              <BriefCreadorSection
+                data={cb.seccion_8_brief_creador}
+                onCopy={handleCopy}
+                copiedSection={copiedSection}
+              />
+            </SectionCard>
+          )}
+        </>
+      ) : (
+        <>
+          {/* ============================================ */}
+          {/* OLD STRUCTURE (backward compatibility) */}
+          {/* ============================================ */}
+
+          {/* Value Proposition & Positioning */}
+          {sr && (sr.value_proposition || sr.brand_positioning) && (
+            <EditableStrategySection
+              data={sr}
+              isEditing={isEditing}
+              saving={savingSection === 'strategy_recommendations'}
+              onSave={(updated) => handleSaveSection('strategy_recommendations', updated)}
+              onCopy={handleCopy}
+              copiedSection={copiedSection}
+            />
+          )}
+
+          {/* Market Research */}
+          {mr && (
+            <EditableMarketSection
+              data={mr}
+              isEditing={isEditing}
+              saving={savingSection === 'market_research'}
+              onSave={(updated) => handleSaveSection('market_research', updated)}
+            />
+          )}
+
+          {/* Competitor Analysis */}
+          {ca && (
+            <EditableCompetitorSection
+              data={ca}
+              isEditing={isEditing}
+              saving={savingSection === 'competitor_analysis'}
+              onSave={(updated) => handleSaveSection('competitor_analysis', updated)}
+            />
+          )}
+
+          {/* Target Audience */}
+          {mr?.ideal_customer_profile && (
+            <SectionCard
+              title="Audiencia Objetivo"
+              icon={<Users className="w-5 h-5" />}
+              accentColor="from-purple-500 to-pink-500"
+            >
+              <TargetAudienceSection data={mr.ideal_customer_profile} />
+            </SectionCard>
+          )}
+
+          {/* Sales Angles */}
+          {sr?.sales_angles && sr.sales_angles.length > 0 && (
+            <SectionCard
+              title="Ángulos de Venta"
+              icon={<Megaphone className="w-5 h-5" />}
+              accentColor="from-yellow-500 to-orange-500"
+              badge={`${sr.sales_angles.length} ángulos`}
+            >
+              <SalesAnglesSection
+                data={sr.sales_angles}
+                onCopy={handleCopy}
+                copiedSection={copiedSection}
+              />
+            </SectionCard>
+          )}
+
+          {/* Content Brief */}
+          {cb && (
+            <EditableContentBriefSection
+              data={cb}
+              isEditing={isEditing}
+              saving={savingSection === 'content_brief'}
+              onSave={(updated) => handleSaveSection('content_brief', updated)}
+              onCopy={handleCopy}
+              copiedSection={copiedSection}
+            />
+          )}
+
+          {/* Funnel Strategy */}
+          {sr?.funnel_strategy && (
+            <SectionCard
+              title="Estrategia de Funnel"
+              icon={<Layers className="w-5 h-5" />}
+              accentColor="from-indigo-500 to-purple-500"
+            >
+              <FunnelStrategySection data={sr.funnel_strategy} />
+            </SectionCard>
+          )}
+
+          {/* Platforms & Ads */}
+          <div className="grid md:grid-cols-2 gap-6">
+            {sr?.platforms && sr.platforms.length > 0 && (
+              <SectionCard
+                title="Plataformas"
+                icon={<Globe className="w-5 h-5" />}
+                accentColor="from-cyan-500 to-blue-500"
+              >
+                <PlatformsSection data={sr.platforms} hashtags={sr.hashtags} />
+              </SectionCard>
+            )}
+
+            {sr?.ads_targeting && (
+              <SectionCard
+                title="Segmentación Ads"
+                icon={<Target className="w-5 h-5" />}
+                accentColor="from-emerald-500 to-teal-500"
+              >
+                <AdsTargetingSection data={sr.ads_targeting} />
+              </SectionCard>
+            )}
+          </div>
+        </>
       )}
-
-      {/* Market Research */}
-      {mr && (
-        <EditableMarketSection
-          data={mr}
-          isEditing={isEditing}
-          saving={savingSection === 'market_research'}
-          onSave={(updated) => handleSaveSection('market_research', updated)}
-        />
-      )}
-
-      {/* Competitor Analysis */}
-      {ca && (
-        <EditableCompetitorSection
-          data={ca}
-          isEditing={isEditing}
-          saving={savingSection === 'competitor_analysis'}
-          onSave={(updated) => handleSaveSection('competitor_analysis', updated)}
-        />
-      )}
-
-      {/* Target Audience */}
-      {mr?.ideal_customer_profile && (
-        <SectionCard
-          title="Audiencia Objetivo"
-          icon={<Users className="w-5 h-5" />}
-          accentColor="from-purple-500 to-pink-500"
-        >
-          <TargetAudienceSection data={mr.ideal_customer_profile} />
-        </SectionCard>
-      )}
-
-      {/* Sales Angles */}
-      {sr?.sales_angles && sr.sales_angles.length > 0 && (
-        <SectionCard
-          title="Ángulos de Venta"
-          icon={<Megaphone className="w-5 h-5" />}
-          accentColor="from-yellow-500 to-orange-500"
-          badge={`${sr.sales_angles.length} ángulos`}
-        >
-          <SalesAnglesSection
-            data={sr.sales_angles}
-            onCopy={handleCopy}
-            copiedSection={copiedSection}
-          />
-        </SectionCard>
-      )}
-
-      {/* Content Brief */}
-      {cb && (
-        <EditableContentBriefSection
-          data={cb}
-          isEditing={isEditing}
-          saving={savingSection === 'content_brief'}
-          onSave={(updated) => handleSaveSection('content_brief', updated)}
-          onCopy={handleCopy}
-          copiedSection={copiedSection}
-        />
-      )}
-
-      {/* Funnel Strategy */}
-      {sr?.funnel_strategy && (
-        <SectionCard
-          title="Estrategia de Funnel"
-          icon={<Layers className="w-5 h-5" />}
-          accentColor="from-indigo-500 to-purple-500"
-        >
-          <FunnelStrategySection data={sr.funnel_strategy} />
-        </SectionCard>
-      )}
-
-      {/* Platforms & Ads */}
-      <div className="grid md:grid-cols-2 gap-6">
-        {sr?.platforms && sr.platforms.length > 0 && (
-          <SectionCard
-            title="Plataformas"
-            icon={<Globe className="w-5 h-5" />}
-            accentColor="from-cyan-500 to-blue-500"
-          >
-            <PlatformsSection data={sr.platforms} hashtags={sr.hashtags} />
-          </SectionCard>
-        )}
-
-        {sr?.ads_targeting && (
-          <SectionCard
-            title="Segmentación Ads"
-            icon={<Target className="w-5 h-5" />}
-            accentColor="from-emerald-500 to-teal-500"
-          >
-            <AdsTargetingSection data={sr.ads_targeting} />
-          </SectionCard>
-        )}
-      </div>
 
       {/* References */}
       {(productDna.reference_links?.length > 0 ||
@@ -1669,6 +1958,640 @@ function EditableContentBriefSection({
         <ContentBriefSection data={local} onCopy={onCopy} copiedSection={copiedSection} />
       )}
     </SectionCard>
+  );
+}
+
+// ============================================
+// NEW 8-SECTION COMPONENTS
+// ============================================
+
+/** Sección 1: Contexto del Proyecto */
+function ContextoSection({ data }: { data: Seccion1Contexto }) {
+  return (
+    <div className="space-y-4">
+      <div className="p-4 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-lg border border-blue-500/20">
+        <p className="text-xs text-blue-400 uppercase font-semibold mb-1">Servicio Exacto</p>
+        <p className="text-foreground/80 font-medium">{data.servicio_exacto}</p>
+      </div>
+
+      <div className="p-4 bg-muted/50 rounded-lg">
+        <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Objetivo Real</p>
+        <p className="text-foreground/80">{data.objetivo_real}</p>
+      </div>
+
+      {data.palabras_clave_cliente?.length > 0 && (
+        <div>
+          <p className="text-xs text-gray-400 uppercase font-semibold mb-2">Palabras Clave del Cliente</p>
+          <div className="flex flex-wrap gap-2">
+            {data.palabras_clave_cliente.map((palabra, i) => (
+              <span key={i} className="px-3 py-1 bg-blue-500/20 rounded-full text-blue-300 text-sm">{palabra}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {data.restricciones_creativas && (
+        <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/20">
+          <p className="text-xs text-red-400 uppercase font-semibold mb-1">Restricciones Creativas</p>
+          <p className="text-foreground/80">{data.restricciones_creativas}</p>
+        </div>
+      )}
+
+      {data.referentes_estilo && (
+        <div className="p-4 bg-muted/50 rounded-lg">
+          <p className="text-xs text-purple-400 uppercase font-semibold mb-1">Referentes de Estilo</p>
+          <p className="text-foreground/80">{data.referentes_estilo}</p>
+        </div>
+      )}
+
+      {data.tono_emocional_audio && (
+        <div className="p-4 bg-muted/50 rounded-lg">
+          <p className="text-xs text-pink-400 uppercase font-semibold mb-1">Tono Emocional del Audio</p>
+          <p className="text-foreground/80 italic">{data.tono_emocional_audio}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Sección 2: Análisis de Mercado */
+function MercadoSection({ data }: { data: Seccion2Mercado }) {
+  return (
+    <div className="space-y-6">
+      {data.panorama_mercado && (
+        <div className="p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-lg border border-green-500/20">
+          <p className="text-xs text-green-400 uppercase font-semibold mb-1">Panorama del Mercado</p>
+          <p className="text-foreground/80 leading-relaxed">{data.panorama_mercado}</p>
+        </div>
+      )}
+
+      {data.tendencias_actuales && (
+        <div className="p-4 bg-muted/50 rounded-lg">
+          <p className="text-xs text-cyan-400 uppercase font-semibold mb-1">Tendencias Actuales</p>
+          <p className="text-foreground/80">{data.tendencias_actuales}</p>
+        </div>
+      )}
+
+      {data.competidores?.length > 0 && (
+        <div>
+          <p className="text-xs text-orange-400 uppercase font-semibold mb-3">Competidores ({data.competidores.length})</p>
+          <div className="grid gap-3">
+            {data.competidores.map((comp, i) => (
+              <div key={i} className="p-4 bg-muted/50 rounded-lg border-l-2 border-orange-500">
+                <div className="flex items-center justify-between mb-2">
+                  <h5 className="font-medium text-white">{comp.nombre}</h5>
+                  {comp.precio_referencial && (
+                    <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-foreground/80">{comp.precio_referencial}</span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-400 mb-2">{comp.promesa_principal}</p>
+                <div className="grid md:grid-cols-2 gap-2 text-sm">
+                  <div className="flex items-start gap-2">
+                    <span className="text-green-400">+</span>
+                    <span className="text-gray-400">{comp.fortaleza}</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-red-400">-</span>
+                    <span className="text-gray-400">{comp.debilidad}</span>
+                  </div>
+                </div>
+                {comp.plataformas?.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {comp.plataformas.map((p, j) => (
+                      <span key={j} className="text-xs bg-cyan-500/20 px-2 py-0.5 rounded-full text-cyan-300">{p}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {data.gap_competitivo && (
+        <div className="p-4 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 rounded-lg border border-yellow-500/20">
+          <p className="text-xs text-yellow-400 uppercase font-semibold mb-1">Gap Competitivo</p>
+          <p className="text-foreground/80 font-medium">{data.gap_competitivo}</p>
+        </div>
+      )}
+
+      {data.posicionamiento_sugerido && (
+        <div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
+          <p className="text-xs text-purple-400 uppercase font-semibold mb-1">Posicionamiento Sugerido</p>
+          <p className="text-foreground/80">{data.posicionamiento_sugerido}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Sección 3: Avatares de Cliente */
+function AvatarSection({ data }: { data: Seccion3Avatar[] }) {
+  const getNivelColor = (nivel: string) => {
+    switch (nivel) {
+      case 'inconsciente_del_problema': return 'bg-red-500/20 text-red-300';
+      case 'consciente_del_problema': return 'bg-orange-500/20 text-orange-300';
+      case 'consciente_de_la_solucion': return 'bg-yellow-500/20 text-yellow-300';
+      case 'consciente_del_producto': return 'bg-green-500/20 text-green-300';
+      default: return 'bg-gray-500/20 text-gray-300';
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {data.map((avatar, i) => (
+        <div key={i} className="p-4 bg-muted/50 rounded-lg border-l-2 border-purple-500">
+          <div className="flex items-center justify-between mb-3">
+            <h5 className="font-medium text-white text-lg">{avatar.nombre_edad}</h5>
+            <span className={`text-xs px-2 py-0.5 rounded-full ${getNivelColor(avatar.nivel_consciencia)}`}>
+              {avatar.nivel_consciencia?.replace(/_/g, ' ')}
+            </span>
+          </div>
+
+          <p className="text-sm text-gray-400 mb-4">{avatar.situacion_actual}</p>
+
+          <div className="grid md:grid-cols-2 gap-4 mb-4">
+            <div className="p-3 bg-red-500/10 rounded-lg">
+              <p className="text-xs text-red-400 uppercase font-semibold mb-1">Dolor Principal</p>
+              <p className="text-foreground/80 text-sm">{avatar.dolor_principal}</p>
+            </div>
+            <div className="p-3 bg-green-500/10 rounded-lg">
+              <p className="text-xs text-green-400 uppercase font-semibold mb-1">Deseo Principal</p>
+              <p className="text-foreground/80 text-sm">{avatar.deseo_principal}</p>
+            </div>
+          </div>
+
+          <div className="p-3 bg-yellow-500/10 rounded-lg mb-4">
+            <p className="text-xs text-yellow-400 uppercase font-semibold mb-1">Objeción Principal</p>
+            <p className="text-foreground/80 text-sm">{avatar.objecion_principal}</p>
+          </div>
+
+          {avatar.como_habla?.length > 0 && (
+            <div className="mb-3">
+              <p className="text-xs text-gray-400 uppercase font-semibold mb-2">Cómo Habla (frases textuales)</p>
+              <div className="space-y-1">
+                {avatar.como_habla.map((frase, j) => (
+                  <p key={j} className="text-sm text-foreground/80 italic">"{frase}"</p>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="p-3 bg-blue-500/10 rounded-lg">
+            <p className="text-xs text-blue-400 uppercase font-semibold mb-1">Trigger de Compra</p>
+            <p className="text-foreground/80 text-sm">{avatar.trigger_de_compra}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Sección 4: Ángulos de Venta */
+function AngulosSection({
+  data,
+  onCopy,
+  copiedSection
+}: {
+  data: Seccion4Angulo[];
+  onCopy: (text: string, id: string) => void;
+  copiedSection: string | null;
+}) {
+  const getFaseColor = (fase: string) => {
+    switch (fase) {
+      case 'enganche': return 'bg-cyan-500/20 text-cyan-300';
+      case 'solucion': return 'bg-green-500/20 text-green-300';
+      case 'remarketing': return 'bg-orange-500/20 text-orange-300';
+      case 'fidelizacion': return 'bg-purple-500/20 text-purple-300';
+      default: return 'bg-gray-500/20 text-gray-300';
+    }
+  };
+
+  const getUsoColor = (uso: string) => {
+    switch (uso) {
+      case 'organico': return 'bg-green-500/20 text-green-300';
+      case 'ads': return 'bg-blue-500/20 text-blue-300';
+      case 'ambos': return 'bg-purple-500/20 text-purple-300';
+      default: return 'bg-gray-500/20 text-gray-300';
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs text-gray-400">{data.length} ángulos generados</p>
+        <button
+          onClick={() => onCopy(
+            data.map(a => `[${a.tipo}] ${a.hook_apertura}\n${a.desarrollo}\nCTA: ${a.cta}`).join('\n\n---\n\n'),
+            'all-angulos'
+          )}
+          className="text-xs text-gray-400 hover:text-white flex items-center gap-1"
+        >
+          {copiedSection === 'all-angulos' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+          Copiar todos
+        </button>
+      </div>
+
+      {data.map((angulo, i) => (
+        <div key={i} className="p-4 bg-muted/50 rounded-lg border-l-2 border-yellow-500">
+          <div className="flex items-start justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs bg-yellow-500/20 px-2 py-0.5 rounded-full text-yellow-300 capitalize">
+                {angulo.tipo?.replace(/_/g, ' ')}
+              </span>
+              <span className={`text-xs px-2 py-0.5 rounded-full ${getFaseColor(angulo.fase_esfera)}`}>
+                {angulo.fase_esfera}
+              </span>
+              <span className={`text-xs px-2 py-0.5 rounded-full ${getUsoColor(angulo.uso_recomendado)}`}>
+                {angulo.uso_recomendado}
+              </span>
+            </div>
+            <span className="text-xs text-gray-500">→ {angulo.avatar_objetivo}</span>
+          </div>
+
+          <p className="text-foreground font-medium mb-2">"{angulo.hook_apertura}"</p>
+          <p className="text-gray-400 text-sm mb-3">{angulo.desarrollo}</p>
+
+          <div className="p-2 bg-green-500/10 rounded-lg">
+            <p className="text-xs text-green-400 uppercase font-semibold">CTA</p>
+            <p className="text-foreground/80 text-sm">{angulo.cta}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Sección 5: Ideas de Contenido */
+function IdeasSection({
+  data,
+  onCopy,
+  copiedSection
+}: {
+  data: Seccion5Idea[];
+  onCopy: (text: string, id: string) => void;
+  copiedSection: string | null;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs text-gray-400">{data.length} ideas generadas</p>
+        <button
+          onClick={() => onCopy(
+            data.map(i => `${i.titulo}\nFormato: ${i.formato}\nHook 1: ${i.hook_variacion_1}\nHook 2: ${i.hook_variacion_2}\nHook 3: ${i.hook_variacion_3}`).join('\n\n---\n\n'),
+            'all-ideas'
+          )}
+          className="text-xs text-gray-400 hover:text-white flex items-center gap-1"
+        >
+          {copiedSection === 'all-ideas' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+          Copiar todas
+        </button>
+      </div>
+
+      {data.map((idea, i) => (
+        <div key={i} className="p-4 bg-muted/50 rounded-lg">
+          <div className="flex items-start justify-between mb-3">
+            <h5 className="font-medium text-white">{idea.titulo}</h5>
+            <div className="flex gap-2">
+              <span className="text-xs bg-pink-500/20 px-2 py-0.5 rounded-full text-pink-300">{idea.formato}</span>
+              <span className="text-xs bg-gray-500/20 px-2 py-0.5 rounded-full text-gray-300">{idea.duracion_recomendada}</span>
+            </div>
+          </div>
+
+          <div className="space-y-2 mb-3">
+            <div className="p-2 bg-purple-500/10 rounded-lg">
+              <p className="text-xs text-purple-400 uppercase mb-1">Hook 1</p>
+              <p className="text-foreground/80 text-sm">{idea.hook_variacion_1}</p>
+            </div>
+            <div className="p-2 bg-pink-500/10 rounded-lg">
+              <p className="text-xs text-pink-400 uppercase mb-1">Hook 2</p>
+              <p className="text-foreground/80 text-sm">{idea.hook_variacion_2}</p>
+            </div>
+            <div className="p-2 bg-rose-500/10 rounded-lg">
+              <p className="text-xs text-rose-400 uppercase mb-1">Hook 3</p>
+              <p className="text-foreground/80 text-sm">{idea.hook_variacion_3}</p>
+            </div>
+          </div>
+
+          <p className="text-gray-400 text-sm mb-3">{idea.desarrollo}</p>
+
+          <div className="flex items-center justify-between">
+            <div className="p-2 bg-green-500/10 rounded-lg flex-1 mr-2">
+              <p className="text-xs text-green-400 uppercase">CTA</p>
+              <p className="text-foreground/80 text-sm">{idea.cta}</p>
+            </div>
+            <div className="flex gap-1">
+              <span className="text-xs bg-blue-500/20 px-2 py-0.5 rounded-full text-blue-300">{idea.fase_esfera}</span>
+              <span className="text-xs bg-gray-500/20 px-2 py-0.5 rounded-full text-gray-300">{idea.uso_recomendado}</span>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Sección 6: Estrategia Orgánica */
+function OrganicoSection({ data }: { data: Seccion6Organico }) {
+  return (
+    <div className="space-y-6">
+      {data.objetivo_organico && (
+        <div className="p-4 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-lg border border-cyan-500/20">
+          <p className="text-xs text-cyan-400 uppercase font-semibold mb-1">Objetivo Orgánico</p>
+          <p className="text-foreground/80 font-medium">{data.objetivo_organico}</p>
+        </div>
+      )}
+
+      {data.distribucion_contenido && (
+        <div>
+          <p className="text-xs text-gray-400 uppercase font-semibold mb-3">Distribución 4V</p>
+          <div className="grid grid-cols-4 gap-2 mb-2">
+            <div className="text-center p-3 bg-purple-500/20 rounded-lg">
+              <p className="text-2xl font-bold text-purple-300">{data.distribucion_contenido.viral}%</p>
+              <p className="text-xs text-purple-400">Viral</p>
+            </div>
+            <div className="text-center p-3 bg-blue-500/20 rounded-lg">
+              <p className="text-2xl font-bold text-blue-300">{data.distribucion_contenido.valor}%</p>
+              <p className="text-xs text-blue-400">Valor</p>
+            </div>
+            <div className="text-center p-3 bg-green-500/20 rounded-lg">
+              <p className="text-2xl font-bold text-green-300">{data.distribucion_contenido.venta}%</p>
+              <p className="text-xs text-green-400">Venta</p>
+            </div>
+            <div className="text-center p-3 bg-pink-500/20 rounded-lg">
+              <p className="text-2xl font-bold text-pink-300">{data.distribucion_contenido.personal}%</p>
+              <p className="text-xs text-pink-400">Personal</p>
+            </div>
+          </div>
+          {data.distribucion_contenido.justificacion && (
+            <p className="text-sm text-gray-400 italic">{data.distribucion_contenido.justificacion}</p>
+          )}
+        </div>
+      )}
+
+      <div className="grid md:grid-cols-2 gap-4">
+        {data.frecuencia_publicacion && (
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Frecuencia</p>
+            <p className="text-foreground/80">{data.frecuencia_publicacion}</p>
+          </div>
+        )}
+        {data.tono_organico && (
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Tono</p>
+            <p className="text-foreground/80">{data.tono_organico}</p>
+          </div>
+        )}
+      </div>
+
+      {data.pilares_tematicos?.length > 0 && (
+        <div>
+          <p className="text-xs text-gray-400 uppercase font-semibold mb-2">Pilares Temáticos</p>
+          <div className="flex flex-wrap gap-2">
+            {data.pilares_tematicos.map((pilar, i) => (
+              <span key={i} className="px-3 py-1 bg-cyan-500/20 rounded-full text-cyan-300 text-sm">{pilar}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {data.metricas_organico && (
+        <div className="p-4 bg-muted/50 rounded-lg">
+          <p className="text-xs text-gray-400 uppercase font-semibold mb-3">Métricas Objetivo</p>
+          <div className="space-y-2 text-sm">
+            <p><span className="text-gray-400">Retención:</span> <span className="text-foreground/80">{data.metricas_organico.retencion_objetivo}</span></p>
+            <p><span className="text-gray-400">Interacciones clave:</span> <span className="text-foreground/80">{data.metricas_organico.interacciones_clave}</span></p>
+            <p><span className="text-gray-400">Frecuencia de revisión:</span> <span className="text-foreground/80">{data.metricas_organico.frecuencia_revision}</span></p>
+          </div>
+        </div>
+      )}
+
+      {data.errores_comunes_organico?.length > 0 && (
+        <div>
+          <p className="text-xs text-red-400 uppercase font-semibold mb-2">Errores Comunes a Evitar</p>
+          <div className="space-y-1">
+            {data.errores_comunes_organico.map((error, i) => (
+              <div key={i} className="flex items-start gap-2 text-sm">
+                <span className="text-red-400">✗</span>
+                <span className="text-foreground/80">{error}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Sección 7: Estrategia de Ads */
+function AdsSection({ data }: { data: Seccion7Ads }) {
+  return (
+    <div className="space-y-6">
+      {data.objetivo_campana && (
+        <div className="p-4 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-lg border border-emerald-500/20">
+          <p className="text-xs text-emerald-400 uppercase font-semibold mb-1">Objetivo de Campaña</p>
+          <p className="text-foreground/80 font-medium capitalize">{data.objetivo_campana}</p>
+        </div>
+      )}
+
+      {data.estructura_campana && (
+        <div>
+          <p className="text-xs text-gray-400 uppercase font-semibold mb-3">Estructura de Campaña</p>
+          <div className="space-y-2">
+            <div className="p-3 bg-blue-500/10 rounded-lg border-l-2 border-blue-500">
+              <p className="text-xs text-blue-400 uppercase mb-1">Frío</p>
+              <p className="text-foreground/80 text-sm">{data.estructura_campana.frio}</p>
+            </div>
+            <div className="p-3 bg-yellow-500/10 rounded-lg border-l-2 border-yellow-500">
+              <p className="text-xs text-yellow-400 uppercase mb-1">Tibio</p>
+              <p className="text-foreground/80 text-sm">{data.estructura_campana.tibio}</p>
+            </div>
+            <div className="p-3 bg-orange-500/10 rounded-lg border-l-2 border-orange-500">
+              <p className="text-xs text-orange-400 uppercase mb-1">Remarketing</p>
+              <p className="text-foreground/80 text-sm">{data.estructura_campana.remarketing}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {data.publico_frio && (
+        <div className="p-4 bg-muted/50 rounded-lg">
+          <p className="text-xs text-gray-400 uppercase font-semibold mb-3">Público Frío</p>
+          {data.publico_frio.caracteristicas && (
+            <p className="text-foreground/80 text-sm mb-3">{data.publico_frio.caracteristicas}</p>
+          )}
+          <div className="grid md:grid-cols-2 gap-3">
+            {data.publico_frio.intereses?.length > 0 && (
+              <div>
+                <p className="text-xs text-purple-400 uppercase mb-1">Intereses</p>
+                <div className="flex flex-wrap gap-1">
+                  {data.publico_frio.intereses.map((i, j) => (
+                    <span key={j} className="text-xs bg-purple-500/20 px-2 py-0.5 rounded-full text-purple-300">{i}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {data.publico_frio.comportamientos?.length > 0 && (
+              <div>
+                <p className="text-xs text-blue-400 uppercase mb-1">Comportamientos</p>
+                <div className="flex flex-wrap gap-1">
+                  {data.publico_frio.comportamientos.map((c, j) => (
+                    <span key={j} className="text-xs bg-blue-500/20 px-2 py-0.5 rounded-full text-blue-300">{c}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {data.estructura_creativo_ad && (
+        <div className="p-4 bg-gradient-to-r from-pink-500/10 to-rose-500/10 rounded-lg border border-pink-500/20">
+          <p className="text-xs text-pink-400 uppercase font-semibold mb-3">Estructura del Creativo</p>
+          <div className="space-y-2 text-sm">
+            <p><span className="font-medium text-white">Hook:</span> <span className="text-foreground/80">{data.estructura_creativo_ad.hook}</span></p>
+            <p><span className="font-medium text-white">Problema:</span> <span className="text-foreground/80">{data.estructura_creativo_ad.problema}</span></p>
+            <p><span className="font-medium text-white">Solución:</span> <span className="text-foreground/80">{data.estructura_creativo_ad.solucion}</span></p>
+            <p><span className="font-medium text-white">CTA:</span> <span className="text-foreground/80">{data.estructura_creativo_ad.cta}</span></p>
+          </div>
+        </div>
+      )}
+
+      <div className="grid md:grid-cols-3 gap-4">
+        {data.presupuesto_minimo_sugerido && (
+          <div className="p-3 bg-muted/50 rounded-lg text-center">
+            <p className="text-xs text-gray-400 uppercase mb-1">Presupuesto Mínimo</p>
+            <p className="text-foreground/80 font-medium">{data.presupuesto_minimo_sugerido}</p>
+          </div>
+        )}
+        {data.ctr_objetivo && (
+          <div className="p-3 bg-muted/50 rounded-lg text-center">
+            <p className="text-xs text-gray-400 uppercase mb-1">CTR Objetivo</p>
+            <p className="text-foreground/80 font-medium">{data.ctr_objetivo}</p>
+          </div>
+        )}
+        {data.variaciones_recomendadas && (
+          <div className="p-3 bg-muted/50 rounded-lg text-center">
+            <p className="text-xs text-gray-400 uppercase mb-1">Variaciones</p>
+            <p className="text-foreground/80 font-medium">{data.variaciones_recomendadas}</p>
+          </div>
+        )}
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        {data.senales_de_escalar && (
+          <div className="p-3 bg-green-500/10 rounded-lg">
+            <p className="text-xs text-green-400 uppercase font-semibold mb-1">Señales para Escalar</p>
+            <p className="text-foreground/80 text-sm">{data.senales_de_escalar}</p>
+          </div>
+        )}
+        {data.senales_de_pausar && (
+          <div className="p-3 bg-red-500/10 rounded-lg">
+            <p className="text-xs text-red-400 uppercase font-semibold mb-1">Señales para Pausar</p>
+            <p className="text-foreground/80 text-sm">{data.senales_de_pausar}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Sección 8: Brief para Creador */
+function BriefCreadorSection({
+  data,
+  onCopy,
+  copiedSection
+}: {
+  data: Seccion8BriefCreador;
+  onCopy: (text: string, id: string) => void;
+  copiedSection: string | null;
+}) {
+  const briefText = `
+TONO DE VOZ: ${data.tono_de_voz}
+
+PALABRAS A USAR: ${data.palabras_usar?.join(', ')}
+
+PALABRAS A EVITAR: ${data.palabras_evitar?.join(', ')}
+
+INDICACIONES VISUALES: ${data.indicaciones_visuales}
+
+ESPECIFICACIONES TÉCNICAS: ${data.especificaciones_tecnicas}
+
+CTA RECOMENDADO: ${data.cta_recomendado}
+
+RESTRICCIONES: ${data.restricciones_del_cliente}
+`.trim();
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-end">
+        <button
+          onClick={() => onCopy(briefText, 'brief-creador')}
+          className="text-xs text-gray-400 hover:text-white flex items-center gap-1"
+        >
+          {copiedSection === 'brief-creador' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+          Copiar brief completo
+        </button>
+      </div>
+
+      {data.tono_de_voz && (
+        <div className="p-4 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-lg border border-indigo-500/20">
+          <p className="text-xs text-indigo-400 uppercase font-semibold mb-1">Tono de Voz</p>
+          <p className="text-foreground/80 font-medium">{data.tono_de_voz}</p>
+        </div>
+      )}
+
+      <div className="grid md:grid-cols-2 gap-4">
+        {data.palabras_usar?.length > 0 && (
+          <div className="p-3 bg-green-500/10 rounded-lg">
+            <p className="text-xs text-green-400 uppercase font-semibold mb-2">Palabras a Usar</p>
+            <div className="flex flex-wrap gap-1">
+              {data.palabras_usar.map((p, i) => (
+                <span key={i} className="text-xs bg-green-500/20 px-2 py-0.5 rounded-full text-green-300">{p}</span>
+              ))}
+            </div>
+          </div>
+        )}
+        {data.palabras_evitar?.length > 0 && (
+          <div className="p-3 bg-red-500/10 rounded-lg">
+            <p className="text-xs text-red-400 uppercase font-semibold mb-2">Palabras a Evitar</p>
+            <div className="flex flex-wrap gap-1">
+              {data.palabras_evitar.map((p, i) => (
+                <span key={i} className="text-xs bg-red-500/20 px-2 py-0.5 rounded-full text-red-300">{p}</span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {data.indicaciones_visuales && (
+        <div className="p-4 bg-muted/50 rounded-lg">
+          <p className="text-xs text-pink-400 uppercase font-semibold mb-1">Indicaciones Visuales</p>
+          <p className="text-foreground/80">{data.indicaciones_visuales}</p>
+        </div>
+      )}
+
+      {data.especificaciones_tecnicas && (
+        <div className="p-4 bg-muted/50 rounded-lg">
+          <p className="text-xs text-cyan-400 uppercase font-semibold mb-1">Especificaciones Técnicas</p>
+          <p className="text-foreground/80">{data.especificaciones_tecnicas}</p>
+        </div>
+      )}
+
+      {data.cta_recomendado && (
+        <div className="p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-lg border border-green-500/20">
+          <p className="text-xs text-green-400 uppercase font-semibold mb-1">CTA Recomendado</p>
+          <p className="text-foreground/80 font-medium">{data.cta_recomendado}</p>
+        </div>
+      )}
+
+      {data.restricciones_del_cliente && (
+        <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/20">
+          <p className="text-xs text-red-400 uppercase font-semibold mb-1">Restricciones del Cliente</p>
+          <p className="text-foreground/80">{data.restricciones_del_cliente}</p>
+        </div>
+      )}
+    </div>
   );
 }
 
