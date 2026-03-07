@@ -308,11 +308,27 @@ export function AdnResearchV3Section({
         setUiState("running");
         return { sessionId: session?.id || "" };
       }
+      // Si no fue exitoso pero no hubo excepción, verificar el error actual
+      if (error && (error.includes("insuficientes") || error.includes("tokens"))) {
+        setTokenShortfall(2400);
+        setUiState("error");
+      }
       return null;
     } catch (err) {
-      const errObj = err as Error & { code?: string; shortfall?: number };
-      if (errObj.code === "INSUFFICIENT_TOKENS" && errObj.shortfall) {
-        setTokenShortfall(errObj.shortfall);
+      console.log("[ADN Section] Catch error:", err);
+      const errObj = err as Error & {
+        code?: string;
+        shortfall?: number;
+        required_tokens?: number;
+        current_balance?: number;
+      };
+      if (errObj.code === "INSUFFICIENT_TOKENS") {
+        const shortfall = errObj.shortfall ||
+          (errObj.required_tokens ? errObj.required_tokens - (errObj.current_balance || 0) : 2400);
+        setTokenShortfall(shortfall);
+        setUiState("error");
+      } else {
+        // Error genérico
         setUiState("error");
       }
       return null;

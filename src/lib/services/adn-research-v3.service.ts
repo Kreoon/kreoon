@@ -53,10 +53,12 @@ export async function startAdnResearchV3(
       },
     });
 
+    console.log("[ADN Service] Response:", { data: response.data, error: response.error });
+
     // Even on HTTP errors (like 402), Supabase may include response data
     const data = response.data || {};
 
-    // Check for insufficient tokens error
+    // Check for insufficient tokens error - check both data and error contexts
     if (data.code === "INSUFFICIENT_TOKENS") {
       const required = data.required_tokens || 2400;
       const current = data.current_balance || 0;
@@ -70,7 +72,32 @@ export async function startAdnResearchV3(
       };
     }
 
+    // Check if error message indicates insufficient tokens (fallback)
     if (response.error) {
+      const errorMsg = response.error.message || "";
+      if (errorMsg.includes("402") || errorMsg.toLowerCase().includes("token") || errorMsg.toLowerCase().includes("insuficiente")) {
+        // Try to parse error context if available
+        const context = (response.error as any).context;
+        if (context?.code === "INSUFFICIENT_TOKENS" || context?.required_tokens) {
+          return {
+            success: false,
+            error: context.error || "Tokens insuficientes para ADN Recargado",
+            code: "INSUFFICIENT_TOKENS",
+            required_tokens: context.required_tokens || 2400,
+            current_balance: context.current_balance || 0,
+            shortfall: context.required_tokens ? context.required_tokens - (context.current_balance || 0) : 2400,
+          };
+        }
+        // Default insufficient tokens response
+        return {
+          success: false,
+          error: "Tokens insuficientes. Se requieren 2,400 tokens para el ADN Recargado v3.",
+          code: "INSUFFICIENT_TOKENS",
+          required_tokens: 2400,
+          current_balance: 0,
+          shortfall: 2400,
+        };
+      }
       return { success: false, error: response.error.message };
     }
 
