@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
   );
 
   try {
-    const { organization_id, tokens, action } = await req.json();
+    const { organization_id, tokens, action, session_id, product_id } = await req.json();
 
     // Action: check - verificar balance actual
     if (action === "check") {
@@ -101,8 +101,92 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Action: cancel_session - cancelar una sesión stuck
+    if (action === "cancel_session") {
+      if (!session_id) {
+        return new Response(
+          JSON.stringify({ error: "session_id required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { error: updateError } = await supabase
+        .from("adn_research_sessions")
+        .update({
+          status: "error",
+          error_message: "Proceso interrumpido por timeout. Puedes reiniciar.",
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", session_id);
+
+      if (updateError) {
+        return new Response(
+          JSON.stringify({ error: updateError.message }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: "Session marked as error" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Action: check_sessions - ver sesiones de research
+    if (action === "check_sessions") {
+      const { data: sessions, error: sessError } = await supabase
+        .from("adn_research_sessions")
+        .select("id, product_id, status, current_step, total_steps, tokens_consumed, error_message, progress, created_at, updated_at")
+        .eq("organization_id", organization_id)
+        .order("created_at", { ascending: false })
+        .limit(3);
+
+      if (sessError) {
+        return new Response(
+          JSON.stringify({ error: sessError.message }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ sessions }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Action: check_product - ver resultados parciales del producto
+    if (action === "check_product") {
+      const { data: product, error: prodError } = await supabase
+        .from("products")
+        .select("id, name, full_research_v3")
+        .eq("id", product_id)
+        .single();
+
+      if (prodError) {
+        return new Response(
+          JSON.stringify({ error: prodError.message }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const research = product?.full_research_v3 as Record<string, unknown> || {};
+      const tabs = research.tabs as Record<string, unknown> || {};
+      const tabKeys = Object.keys(tabs);
+
+      return new Response(
+        JSON.stringify({
+          product_id: product?.id,
+          product_name: product?.name,
+          tabs_completed: tabKeys.length,
+          tab_keys: tabKeys,
+          metadata: research.metadata,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(
-      JSON.stringify({ error: "Invalid action. Use 'check' or 'add'" }),
+      JSON.stringify({ error: "Invalid action. Use 'check', 'add', 'check_sessions', 'cancel_session', or 'check_product'" }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
