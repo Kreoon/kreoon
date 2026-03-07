@@ -40,18 +40,34 @@ export function ResearchProgressIndicator({ productId, isGenerating }: ResearchP
       try {
         const { data } = await supabase
           .from('products')
-          .select('research_progress')
+          .select('research_progress, research_generated_at')
           .eq('id', productId)
           .single();
 
         const progress = (data as any)?.research_progress;
-        if (progress?.completed_steps) {
+        if (!progress) return;
+
+        // Support both formats: legacy (completed_steps array) and new (step/total/label)
+        if (progress.completed_steps) {
           const steps: string[] = progress.completed_steps;
           setCompletedSteps(steps);
+        } else if (typeof progress.step === 'number' && progress.stepId) {
+          // Reconstruct completed steps from step index
+          const completed = RESEARCH_SECTIONS.slice(0, progress.step).map(s => s.key);
+          setCompletedSteps(completed);
+        }
 
-          // Determine which step is currently generating
-          const nextStep = RESEARCH_SECTIONS.find(s => !steps.includes(s.key));
+        // Use stepId or label to determine current step
+        if (progress.stepId) {
+          setCurrentStep(progress.stepId);
+        } else {
+          const nextStep = RESEARCH_SECTIONS.find(s => !completedSteps.includes(s.key));
           setCurrentStep(nextStep?.key || null);
+        }
+
+        // Stop polling if done or error
+        if (progress.done || progress.error || data?.research_generated_at) {
+          if (pollRef.current) clearInterval(pollRef.current);
         }
       } catch {
         // Silently ignore polling errors

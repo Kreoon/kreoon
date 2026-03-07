@@ -55,6 +55,7 @@ import {
   AUDIENCE_OPTIONS,
 } from "@/lib/product-dna-questions";
 import { LocationSelector } from "@/components/product-dna/LocationSelector";
+import { fireProductResearch, pollProductResearchProgress } from "@/lib/productResearch";
 
 interface Product {
   id: string;
@@ -639,6 +640,17 @@ export function ProductDetailDialog({
 
           <div className="flex-1 overflow-y-auto px-6 pb-6">
 
+          {/* Banner: Retry incomplete research (for brief-based products without DNA) */}
+          {product && !dnaRecord && product.brief_data && product.brief_status !== 'completed' &&
+            (!product.avatar_profiles || !product.content_calendar || !product.launch_strategy) && (
+            <RetryResearchBanner
+              product={product}
+              onRetryComplete={(updatedProduct) => {
+                if (onResearchComplete) onResearchComplete(updatedProduct);
+              }}
+            />
+          )}
+
           {/* TabsContent ordered by research invocation flow */}
           <TabsContent value="brief" className="mt-4 space-y-6">
             {product ? (
@@ -1135,6 +1147,104 @@ export function ProductDetailDialog({
       </DialogContent>
     </Dialog>
     </>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// Retry Research Banner — for brief-based products with incomplete research
+// ════════════════════════════════════════════════════════════════════
+
+function RetryResearchBanner({
+  product,
+  onRetryComplete,
+}: {
+  product: Product;
+  onRetryComplete?: (updatedProduct: Product) => void;
+}) {
+  const [retrying, setRetrying] = useState(false);
+  const [progress, setProgress] = useState<{ step: number; total: number; label: string } | null>(null);
+
+  const missingParts: string[] = [];
+  if (!product.avatar_profiles) missingParts.push('Avatares');
+  if (!product.content_calendar) missingParts.push('Parrilla de Contenido');
+  if (!product.launch_strategy) missingParts.push('Estrategia de Lanzamiento');
+  if (missingParts.length === 0) return null;
+
+  const handleRetry = async () => {
+    setRetrying(true);
+    setProgress(null);
+
+    // Determine startFromStep based on existing research_progress
+    const rp = product.brief_data?.research_progress || (product as any).research_progress;
+    const completedSteps: string[] = rp?.completed_steps || [];
+    const ALL_STEPS = [
+      'market_overview', 'jtbd', 'pains_desires', 'competitors', 'avatars',
+      'differentiation', 'sales_angles', 'puv_transformation', 'lead_magnets',
+      'video_creatives', 'content_calendar', 'launch_strategy',
+    ];
+    const nextStep = ALL_STEPS.find(s => !completedSteps.includes(s));
+
+    const result = await fireProductResearch({
+      productId: product.id,
+      briefData: product.brief_data || {},
+      startFromStep: nextStep,
+    });
+
+    if (!result.success) {
+      setRetrying(false);
+      return;
+    }
+
+    // Poll for completion
+    const cancelPoll = pollProductResearchProgress(
+      product.id,
+      (prog, done) => {
+        if (prog) setProgress({ step: prog.step, total: prog.total, label: prog.label });
+        if (done) {
+          cancelPoll();
+          setRetrying(false);
+          // Refresh product data
+          (async () => {
+            const { data } = await supabase.from('products').select('*').eq('id', product.id).single();
+            if (data && onRetryComplete) onRetryComplete(data as any);
+          })();
+        }
+      },
+      3000,
+      200,
+    );
+  };
+
+  return (
+    <div className="mx-0 mt-4 mb-2 p-4 rounded-lg border border-amber-500/30 bg-amber-500/5">
+      <div className="flex items-start gap-3">
+        <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <p className="text-sm font-medium">Investigación incompleta</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Faltan: {missingParts.join(', ')}. Puedes reintentar para completar los pasos faltantes.
+          </p>
+          {retrying && progress && (
+            <p className="text-xs text-purple-400 mt-2 animate-pulse">
+              Paso {progress.step}/{progress.total}: {progress.label}
+            </p>
+          )}
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          className="shrink-0 gap-1.5"
+          onClick={handleRetry}
+          disabled={retrying}
+        >
+          {retrying ? (
+            <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Procesando...</>
+          ) : (
+            <><RefreshCw className="h-3.5 w-3.5" /> Reintentar</>
+          )}
+        </Button>
+      </div>
+    </div>
   );
 }
 
