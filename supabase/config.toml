@@ -516,3 +516,20 @@ verify_jwt = false
 # Worker de recálculo de scores de ranking
 # Ejecutar como cron diario
 verify_jwt = false
+
+# ── ADN Recargado v3 ──
+
+[functions.adn-orchestrator]
+# Entry point para ADN Recargado v3
+# JWT verificado internamente
+verify_jwt = false
+
+[functions.adn-research-v3]
+# Worker de 22 pasos de research
+# Llamado internamente por orchestrator
+verify_jwt = false
+
+[functions.intelligence-gatherer]
+# Social + Ad Intelligence gathering
+# Llamado internamente por orchestrator
+verify_jwt = false
