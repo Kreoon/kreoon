@@ -1,11 +1,8 @@
--- ============================================================
 -- Add org_timezone to get_user_org_context RPC
---
--- The organizations table already has a `timezone` column,
--- but the RPC never returned it. This migration recreates
--- the function with the additional field so the frontend
--- can use the org's configured timezone for date rendering.
--- ============================================================
+-- Reads organizations.timezone (already exists) and returns it alongside existing fields.
+-- Must DROP first because return type changes (PostgreSQL limitation).
+
+DROP FUNCTION IF EXISTS public.get_user_org_context(uuid);
 
 CREATE OR REPLACE FUNCTION public.get_user_org_context(p_organization_id uuid)
 RETURNS TABLE (
@@ -60,7 +57,7 @@ AS $$
     o.og_image_url::text,
     COALESCE(o.selected_plan, 'starter')::text,
     COALESCE(o.white_label_config, '{}'::jsonb),
-    -- Timezone (default to Bogota if not set)
+    -- Timezone: default to America/Bogota if not set
     COALESCE(o.timezone, 'America/Bogota')::text AS org_timezone
   FROM organizations o
   LEFT JOIN organization_members om

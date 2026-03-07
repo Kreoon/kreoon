@@ -1,15 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useOrgTimezone } from '@/hooks/useOrgTimezone';
+import { useTimezone } from '@/hooks/useTimezone';
 import type { ContentQueue, QueueSlot } from '../types/social.types';
 import { DEFAULT_QUEUE_SLOTS } from '../config/constants';
 
 export function useContentQueue(accountId?: string, groupId?: string) {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
+  const { timezone: orgTimezone } = useTimezone();
   const orgId = profile?.current_organization_id;
-  const orgTz = useOrgTimezone();
 
   const {
     data: queues = [],
@@ -56,7 +56,7 @@ export function useContentQueue(accountId?: string, groupId?: string) {
           account_id: input.account_id || null,
           group_id: input.group_id || null,
           name: input.name || 'Cola principal',
-          timezone: input.timezone || orgTz,
+          timezone: input.timezone || orgTimezone,
           schedule_slots: input.schedule_slots || DEFAULT_QUEUE_SLOTS,
         } as any)
         .select()

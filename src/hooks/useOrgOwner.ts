@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
-// DEPRECATED: ROOT_EMAILS hardcoded - now using is_superadmin from database
-// Kept for backward compatibility but is_superadmin takes precedence
 const ROOT_EMAILS = ["jacsolucionesgraficas@gmail.com", "kairosgp.sas@gmail.com"];
 
 /** Raw white-label branding data from the org context RPC */
@@ -34,9 +32,8 @@ export interface OrgOwnerStatus {
   currentOrgId: string | null;
   currentOrgName: string | null;
   marketplaceEnabled: boolean;
-  clientMarketplaceEnabled: boolean;
   orgBranding: OrgBrandingData | null;
-  orgTimezone: string;
+  orgTimezone: string | null;
   loading: boolean;
 }
 
@@ -44,7 +41,6 @@ interface CachedOrgContext {
   is_owner: boolean;
   org_name: string | null;
   marketplace_enabled: boolean;
-  client_marketplace_enabled: boolean;
   // White-label fields
   org_slug: string | null;
   org_logo_url: string | null;
@@ -105,7 +101,6 @@ async function fetchOrgContextCached(orgId: string): Promise<CachedOrgContext | 
         is_owner: row.is_owner || false,
         org_name: row.org_name || null,
         marketplace_enabled: row.marketplace_enabled !== false,
-        client_marketplace_enabled: row.client_marketplace_enabled === true,
         // White-label fields (gracefully handle missing fields for backward compat)
         org_slug: row.org_slug || null,
         org_logo_url: row.org_logo_url || null,
@@ -182,16 +177,11 @@ export function useOrgOwner(): OrgOwnerStatus {
   const [currentOrgId, setCurrentOrgId] = useState<string | null>(null);
   const [currentOrgName, setCurrentOrgName] = useState<string | null>(null);
   const [marketplaceEnabled, setMarketplaceEnabled] = useState(true);
-  const [clientMarketplaceEnabled, setClientMarketplaceEnabled] = useState(false);
   const [orgBranding, setOrgBranding] = useState<OrgBrandingData | null>(null);
-  const [orgTimezone, setOrgTimezone] = useState<string>('America/Bogota');
+  const [orgTimezone, setOrgTimezone] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // IMPORTANT: during migrations the profile row might not match auth.uid().
-  // Root checks must rely on the authenticated user's email (authoritative),
-  // not only on the profile record.
-  // NEW: Also check is_superadmin from database (takes precedence)
-  const isPlatformRoot = profile?.is_superadmin === true || (user?.email ? ROOT_EMAILS.includes(user.email) : false);
+  const isPlatformRoot = user?.email ? ROOT_EMAILS.includes(user.email) : false;
 
   useEffect(() => {
     let cancelled = false;
@@ -205,9 +195,8 @@ export function useOrgOwner(): OrgOwnerStatus {
         setCurrentOrgId(null);
         setCurrentOrgName(null);
         setMarketplaceEnabled(true);
-        setClientMarketplaceEnabled(false);
         setOrgBranding(null);
-        setOrgTimezone('America/Bogota');
+        setOrgTimezone(null);
         setLoading(false);
         return;
       }
@@ -224,17 +213,15 @@ export function useOrgOwner(): OrgOwnerStatus {
           setCurrentOrgId(orgId);
           setCurrentOrgName(result.org_name);
           setMarketplaceEnabled(result.marketplace_enabled);
-          setClientMarketplaceEnabled(result.client_marketplace_enabled);
           setOrgBranding(toBrandingData(result));
-          setOrgTimezone(result.org_timezone || 'America/Bogota');
+          setOrgTimezone(result.org_timezone);
         } else {
           setIsOrgOwner(false);
           setCurrentOrgId(orgId);
           setCurrentOrgName(null);
           setMarketplaceEnabled(true);
-          setClientMarketplaceEnabled(false);
           setOrgBranding(null);
-          setOrgTimezone('America/Bogota');
+          setOrgTimezone(null);
         }
       } catch (error) {
         const isTimeout = error instanceof Error && error.message?.startsWith('timeout:');
@@ -244,9 +231,8 @@ export function useOrgOwner(): OrgOwnerStatus {
         setCurrentOrgId(orgId);
         setCurrentOrgName(null);
         setMarketplaceEnabled(true);
-        setClientMarketplaceEnabled(false);
         setOrgBranding(null);
-        setOrgTimezone('America/Bogota');
+        setOrgTimezone(null);
       } finally {
         if (cancelled) return;
         setLoading(false);
@@ -266,7 +252,6 @@ export function useOrgOwner(): OrgOwnerStatus {
     currentOrgId,
     currentOrgName,
     marketplaceEnabled,
-    clientMarketplaceEnabled,
     orgBranding,
     orgTimezone,
     loading,
