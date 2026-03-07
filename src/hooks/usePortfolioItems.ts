@@ -170,6 +170,7 @@ export function usePortfolioItems(options: UsePortfolioItemsOptions = {}): UsePo
 
   const deleteItem = useCallback(async (id: string): Promise<boolean> => {
     try {
+      console.log('[usePortfolioItems] Deleting item:', id);
       // Find the item to get Bunny CDN info before deleting
       const item = items.find(i => i.id === id);
 
@@ -180,6 +181,7 @@ export function usePortfolioItems(options: UsePortfolioItemsOptions = {}): UsePo
           const videoId = item.bunny_video_id
             || (item.media_url ? extractBunnyIds(item.media_url)?.videoId : null);
           if (videoId) {
+            console.log('[usePortfolioItems] Deleting video from Bunny:', videoId);
             const { error: bunnyErr } = await supabase.functions.invoke('bunny-delete-v2', {
               body: { videoId },
             });
@@ -189,11 +191,15 @@ export function usePortfolioItems(options: UsePortfolioItemsOptions = {}): UsePo
           }
         } else if (item.media_type === 'image' && item.media_url) {
           // Image in Bunny Storage: extract storage path from CDN URL
-          // URL format: https://{cdn-host}/marketplace/portfolio/{creatorId}/{file}
-          const match = item.media_url.match(/b-cdn\.net\/(.+)$/i)
+          // URL formats:
+          // - https://cdn.kreoon.com/marketplace/portfolio/{creatorId}/{file}
+          // - https://{zone}.b-cdn.net/marketplace/portfolio/{creatorId}/{file}
+          const match = item.media_url.match(/cdn\.kreoon\.com\/(.+)$/i)
+            || item.media_url.match(/b-cdn\.net\/(.+)$/i)
             || item.media_url.match(/\.b-cdn\.net\/(.+)$/i);
           if (match) {
             const storagePath = decodeURIComponent(match[1].split('?')[0]);
+            console.log('[usePortfolioItems] Deleting image from Bunny:', storagePath);
             const { error: bunnyErr } = await supabase.functions.invoke('bunny-raw-delete', {
               body: { storagePath },
             });
@@ -205,12 +211,25 @@ export function usePortfolioItems(options: UsePortfolioItemsOptions = {}): UsePo
       }
 
       // ── 2. Delete from database ───────────────────────────────
-      const { error } = await (supabase as any)
+      const { data: deleted, error, count } = await (supabase as any)
         .from('portfolio_items')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .select();
 
-      if (error) throw error;
+      console.log('[usePortfolioItems] DB delete result:', { deleted, error, count });
+
+      if (error) {
+        console.error('[usePortfolioItems] DB delete error:', error);
+        throw error;
+      }
+
+      if (!deleted || deleted.length === 0) {
+        console.warn('[usePortfolioItems] No rows deleted - RLS restriction');
+        console.warn('[usePortfolioItems] Para eliminar contenido de otro creador, necesitas is_platform_admin=true');
+        toast.error('No tienes permiso para eliminar este contenido');
+        return false;
+      }
 
       setItems(prev => prev.filter(item => item.id !== id));
       toast.success('Item eliminado');
@@ -270,6 +289,23 @@ export function usePortfolioItems(options: UsePortfolioItemsOptions = {}): UsePo
     metadata?: { title?: string; category?: string }
   ): Promise<PortfolioItemData | null> => {
     if (!creatorProfileId) return null;
+
+    // Validar formato de video soportado
+    const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska'];
+    const ALLOWED_VIDEO_EXTENSIONS = ['mp4', 'webm', 'mov', 'avi', 'mkv'];
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+
+    if (!ALLOWED_VIDEO_TYPES.includes(file.type) && !ALLOWED_VIDEO_EXTENSIONS.includes(ext)) {
+      toast.error(`Formato de video no soportado: .${ext || file.type}. Usa MP4, WebM o MOV.`);
+      return null;
+    }
+
+    // Validar tamaño máximo (500MB)
+    const MAX_VIDEO_SIZE_MB = 500;
+    if (file.size > MAX_VIDEO_SIZE_MB * 1024 * 1024) {
+      toast.error(`El video es muy grande. Máximo ${MAX_VIDEO_SIZE_MB}MB.`);
+      return null;
+    }
 
     setAdding(true);
     try {
@@ -374,11 +410,29 @@ export function usePortfolioItems(options: UsePortfolioItemsOptions = {}): UsePo
       toast.error('Error: No se encontró tu perfil de creador');
       return null;
     }
+
+    // Validar formato de imagen soportado por navegadores
+    const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif', 'image/svg+xml'];
+    const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'svg'];
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type) && !ALLOWED_EXTENSIONS.includes(ext)) {
+      console.error('[usePortfolioItems] Invalid image format:', file.type, ext);
+      toast.error(`Formato no soportado: .${ext || file.type}. Usa JPG, PNG, GIF o WebP.`);
+      return null;
+    }
+
+    // Validar tamaño máximo (10MB)
+    const MAX_SIZE_MB = 10;
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      toast.error(`La imagen es muy grande. Máximo ${MAX_SIZE_MB}MB.`);
+      return null;
+    }
+
     console.log('[usePortfolioItems] uploadImage starting, creatorProfileId:', creatorProfileId);
 
     setAdding(true);
     try {
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
 
       // Step 1: Call edge function to get upload credentials AND create DB record
       // This uses service_role to bypass RLS issues

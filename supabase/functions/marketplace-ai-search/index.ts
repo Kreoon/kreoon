@@ -30,15 +30,24 @@ const ROLE_MAP: Record<string, string[]> = {
   embajador:      ['brand_ambassador'],
 };
 
+// ISO 3166-1 alpha-2 para países LATAM
 const COUNTRY_MAP: Record<string, string> = {
-  colombia: 'Colombia', bogota: 'Colombia', medellin: 'Colombia', cali: 'Colombia', barranquilla: 'Colombia',
-  mexico: 'México', cdmx: 'México', guadalajara: 'México', monterrey: 'México',
-  chile: 'Chile', santiago: 'Chile',
-  argentina: 'Argentina', 'buenos aires': 'Argentina',
-  peru: 'Perú', lima: 'Perú',
-  ecuador: 'Ecuador', quito: 'Ecuador', guayaquil: 'Ecuador',
-  venezuela: 'Venezuela', caracas: 'Venezuela',
-  'estados unidos': 'Estados Unidos', usa: 'Estados Unidos', miami: 'Estados Unidos',
+  colombia: 'CO', bogota: 'CO', medellin: 'CO', cali: 'CO', barranquilla: 'CO',
+  mexico: 'MX', cdmx: 'MX', guadalajara: 'MX', monterrey: 'MX',
+  chile: 'CL', santiago: 'CL',
+  argentina: 'AR', 'buenos aires': 'AR',
+  peru: 'PE', lima: 'PE',
+  ecuador: 'EC', quito: 'EC', guayaquil: 'EC',
+  venezuela: 'VE', caracas: 'VE',
+  brasil: 'BR', 'sao paulo': 'BR',
+  uruguay: 'UY', montevideo: 'UY',
+  bolivia: 'BO',
+  paraguay: 'PY',
+  panama: 'PA',
+  'costa rica': 'CR',
+  guatemala: 'GT',
+  espana: 'ES', madrid: 'ES', barcelona: 'ES',
+  'estados unidos': 'US', usa: 'US', eeuu: 'US', miami: 'US',
 };
 
 const CITY_MAP: Record<string, string> = {
@@ -49,22 +58,24 @@ const CITY_MAP: Record<string, string> = {
   caracas: 'Caracas', miami: 'Miami',
 };
 
-const NICHE_MAP: Record<string, string> = {
+// Mapeo de nichos → category del marketplace
+const CATEGORY_MAP: Record<string, string> = {
   belleza: 'belleza', skincare: 'belleza', maquillaje: 'belleza', cosmeticos: 'belleza',
   moda: 'moda', ropa: 'moda', fashion: 'moda', estilo: 'moda',
-  fitness: 'fitness', gym: 'fitness', deporte: 'fitness', ejercicio: 'fitness',
+  fitness: 'fitness', gym: 'fitness', deporte: 'fitness', ejercicio: 'fitness', crossfit: 'fitness',
   tech: 'tech', tecnologia: 'tech', gadgets: 'tech',
-  food: 'food', comida: 'food', cocina: 'food', gastronomia: 'food', recetas: 'food',
-  hogar: 'hogar', decoracion: 'hogar', casa: 'hogar',
+  food: 'food', comida: 'food', cocina: 'food', gastronomia: 'food', recetas: 'food', restaurante: 'food',
+  hogar: 'hogar', decoracion: 'hogar', casa: 'hogar', deco: 'hogar',
   gaming: 'gaming', videojuegos: 'gaming', gamer: 'gaming',
   mascotas: 'mascotas', pets: 'mascotas', perros: 'mascotas', gatos: 'mascotas',
-  educacion: 'educación', cursos: 'educación', aprendizaje: 'educación',
+  educacion: 'educacion', cursos: 'educacion', aprendizaje: 'educacion',
   viajes: 'viajes', travel: 'viajes', turismo: 'viajes',
-  bebes: 'bebés', maternidad: 'bebés', mama: 'bebés', embarazo: 'bebés',
+  bebes: 'bebes', maternidad: 'bebes', mama: 'bebes', embarazo: 'bebes', familia: 'bebes',
   salud: 'salud', wellness: 'salud', bienestar: 'salud',
   finanzas: 'finanzas', dinero: 'finanzas', inversiones: 'finanzas',
-  musica: 'música', music: 'música',
+  musica: 'musica', music: 'musica',
   automotriz: 'automotriz', autos: 'automotriz', carros: 'automotriz',
+  arte: 'arte',
 };
 
 function normalizeStr(s: string) {
@@ -74,7 +85,7 @@ function normalizeStr(s: string) {
 function parseNaturalQuery(query: string) {
   const q = normalizeStr(query);
   const roles: string[] = [];
-  const niches: string[] = [];
+  let category: string | null = null;
   let country: string | null = null;
   let city: string | null = null;
   let price_max: number | null = null;
@@ -83,18 +94,20 @@ function parseNaturalQuery(query: string) {
   let is_available: boolean | null = null;
   let confidence = 0;
 
-  // Detectar roles
-  for (const [kw, rs] of Object.entries(ROLE_MAP)) {
+  // Detectar roles - priorizar frases más largas
+  const sortedRoles = Object.entries(ROLE_MAP).sort((a, b) => b[0].length - a[0].length);
+  for (const [kw, rs] of sortedRoles) {
     if (q.includes(normalizeStr(kw))) {
       roles.push(...rs);
       confidence += 15;
     }
   }
 
-  // Detectar país y ciudad
-  for (const [kw, countryName] of Object.entries(COUNTRY_MAP)) {
+  // Detectar país - priorizar frases más largas
+  const sortedCountries = Object.entries(COUNTRY_MAP).sort((a, b) => b[0].length - a[0].length);
+  for (const [kw, countryCode] of sortedCountries) {
     if (q.includes(normalizeStr(kw))) {
-      country = countryName;
+      country = countryCode;
       confidence += 15;
       break;
     }
@@ -108,11 +121,12 @@ function parseNaturalQuery(query: string) {
     }
   }
 
-  // Detectar nichos
-  for (const [kw, n] of Object.entries(NICHE_MAP)) {
+  // Detectar categoría (primer match)
+  for (const [kw, cat] of Object.entries(CATEGORY_MAP)) {
     if (q.includes(normalizeStr(kw))) {
-      niches.push(n);
+      category = cat;
       confidence += 10;
+      break;
     }
   }
 
@@ -156,17 +170,20 @@ function parseNaturalQuery(query: string) {
   // Generar sugerencias inteligentes
   const suggestions: string[] = [];
   const roleLabel = [...new Set(roles)][0]?.replace(/_/g, ' ') || 'creador UGC';
-  const nicheLabel = [...new Set(niches)][0] || '';
-  const locLabel = city || country || '';
+  const countryLabels: Record<string, string> = {
+    CO: 'Colombia', MX: 'México', CL: 'Chile', AR: 'Argentina',
+    PE: 'Perú', EC: 'Ecuador', VE: 'Venezuela', BR: 'Brasil', ES: 'España', US: 'USA',
+  };
+  const locLabel = city || (country ? countryLabels[country] : '') || '';
 
-  if (roleLabel && nicheLabel) {
-    suggestions.push(`${roleLabel} especializado en ${nicheLabel}`);
+  if (roleLabel && category) {
+    suggestions.push(`${roleLabel} especializado en ${category}`);
   }
   if (roleLabel && locLabel) {
     suggestions.push(`${roleLabel} en ${locLabel} disponible ahora`);
   }
-  if (!roleLabel && nicheLabel) {
-    suggestions.push(`creador UGC para ${nicheLabel}`);
+  if (!roleLabel && category) {
+    suggestions.push(`creador UGC para ${category}`);
   }
   if (roleLabel) {
     suggestions.push(`${roleLabel} que acepte canje de producto`);
@@ -183,25 +200,11 @@ function parseNaturalQuery(query: string) {
     parsed: {
       roles: [...new Set(roles)],
       country,
-      city,
-      niches: [...new Set(niches)],
+      category,
       price_max,
       accepts_exchange,
-      min_rating,
-      is_available,
       clean_keywords,
       confidence,
-    },
-    filters: {
-      query: clean_keywords.join(' '),
-      roles: roles.length > 0 ? [...new Set(roles)] : null,
-      location_country: country,
-      location_city: city,
-      niches: niches.length > 0 ? [...new Set(niches)] : null,
-      max_price: price_max,
-      min_rating,
-      accepts_exchange,
-      is_available,
     },
     suggestions: suggestions.slice(0, 3),
   };
@@ -224,8 +227,8 @@ serve(async (req) => {
 
     let result = parseNaturalQuery(query);
 
-    // Gemini para queries complejas (>15 chars y confianza baja)
-    if (use_gemini && Deno.env.get('GEMINI_API_KEY') && query.length > 15 && result.parsed.confidence < 50) {
+    // Gemini para queries complejas (>12 chars y confianza baja)
+    if (use_gemini && Deno.env.get('GEMINI_API_KEY') && query.length > 12 && result.parsed.confidence < 50) {
       try {
         const geminiRes = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${Deno.env.get('GEMINI_API_KEY')}`,
@@ -235,29 +238,26 @@ serve(async (req) => {
             body: JSON.stringify({
               contents: [{
                 parts: [{
-                  text: `Eres un parser para marketplace de talento creativo LATAM.
-Analiza la consulta y retorna SOLO JSON sin markdown ni explicaciones:
+                  text: `Eres un parser para marketplace de talento creativo en LATAM. Analiza este query y responde SOLO JSON sin markdown:
 {
   "roles": [],
   "country": null,
-  "city": null,
-  "niches": [],
+  "category": null,
   "price_max": null,
   "accepts_exchange": null,
-  "is_available": null,
   "clean_keywords": []
 }
 
-Roles válidos: ugc_creator, lifestyle_creator, video_editor, photographer, micro_influencer, nano_influencer, macro_influencer, content_strategist, trafficker, graphic_designer, motion_graphics, voice_artist, community_manager, social_media_manager, live_streamer, podcast_host, brand_ambassador, web_developer, app_developer, online_instructor
+Roles válidos (usa exactamente estos): ugc_creator, lifestyle_creator, micro_influencer, nano_influencer, macro_influencer, brand_ambassador, live_streamer, podcast_host, photographer, copywriter, graphic_designer, voice_artist, video_editor, motion_graphics, sound_designer, colorist, director, producer, animator_2d3d, content_strategist, social_media_manager, community_manager, digital_strategist, trafficker, seo_specialist, email_marketer, growth_hacker, crm_specialist, conversion_optimizer, web_developer, app_developer, ai_specialist, online_instructor, workshop_facilitator
 
-Nichos: belleza, moda, fitness, tech, food, hogar, gaming, mascotas, educación, viajes, bebés, salud, finanzas, música, automotriz
+Categorías válidas: belleza, moda, fitness, tech, food, hogar, gaming, mascotas, educacion, viajes, bebes, salud, automotriz, musica, arte
 
-Países: Colombia, México, Chile, Argentina, Perú, Ecuador, Venezuela, Estados Unidos
+Países en ISO 2: CO, MX, CL, AR, PE, EC, VE, BR, US, ES
 
-Consulta del usuario: "${query}"`
+Query: "${query}"`
                 }]
               }],
-              generationConfig: { temperature: 0, maxOutputTokens: 400 }
+              generationConfig: { temperature: 0, maxOutputTokens: 300 }
             })
           }
         );
@@ -271,23 +271,15 @@ Consulta del usuario: "${query}"`
             try {
               const gParsed = JSON.parse(text);
 
-              // Merge con resultados locales, Gemini tiene prioridad
+              // Merge: Gemini complementa al parser local
               result.parsed = {
-                ...result.parsed,
-                ...gParsed,
-                confidence: 90
-              };
-
-              result.filters = {
-                ...result.filters,
-                query: (gParsed.clean_keywords || result.parsed.clean_keywords).join(' '),
-                roles: gParsed.roles?.length > 0 ? gParsed.roles : result.filters.roles,
-                niches: gParsed.niches?.length > 0 ? gParsed.niches : result.filters.niches,
-                location_country: gParsed.country || result.filters.location_country,
-                location_city: gParsed.city || result.filters.location_city,
-                max_price: gParsed.price_max ?? result.filters.max_price,
-                accepts_exchange: gParsed.accepts_exchange ?? result.filters.accepts_exchange,
-                is_available: gParsed.is_available ?? result.filters.is_available,
+                roles: gParsed.roles?.length > 0 ? gParsed.roles : result.parsed.roles,
+                country: gParsed.country ?? result.parsed.country,
+                category: gParsed.category ?? result.parsed.category,
+                price_max: gParsed.price_max ?? result.parsed.price_max,
+                accepts_exchange: gParsed.accepts_exchange ?? result.parsed.accepts_exchange,
+                clean_keywords: gParsed.clean_keywords?.length > 0 ? gParsed.clean_keywords : result.parsed.clean_keywords,
+                confidence: 90,
               };
             } catch {
               // JSON parse failed, keep local results

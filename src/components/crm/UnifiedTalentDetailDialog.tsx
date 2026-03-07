@@ -82,6 +82,8 @@ import { OrganizationsListSection } from './detail-sections/OrganizationsListSec
 import { CompaniesSection } from './detail-sections/CompaniesSection';
 import { CustomFieldsSection } from './detail-sections/CustomFieldsSection';
 import { CrmFieldsConfigDialog } from './detail-sections/CrmFieldsConfigDialog';
+import { LegalConsentsSection } from './detail-sections/LegalConsentsSection';
+import { PersonalDataSection } from './detail-sections/PersonalDataSection';
 
 const ROOT_EMAILS = ['jacsolucionesgraficas@gmail.com', 'kairosgp.sas@gmail.com'];
 
@@ -121,6 +123,7 @@ function EditableField({
   isEditing,
   onSave,
   multiline = false,
+  required = false,
 }: {
   label: string;
   value: string | null;
@@ -131,6 +134,7 @@ function EditableField({
   isEditing: boolean;
   onSave: (key: string, value: string | null) => void;
   multiline?: boolean;
+  required?: boolean;
 }) {
   const [local, setLocal] = useState(value || '');
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -151,13 +155,17 @@ function EditableField({
 
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
-  if (!isEditing && !value) return null;
+  // Mostrar campos requeridos aunque estén vacíos, ocultar opcionales vacíos
+  if (!isEditing && !value && !required) return null;
 
   return (
     <div className="flex items-start gap-3 py-2">
       {Icon && <Icon className="h-4 w-4 text-white/40 mt-0.5 shrink-0" />}
       <div className="flex-1 min-w-0">
-        <p className="text-[10px] text-white/40 uppercase tracking-wide mb-1">{label}</p>
+        <p className="text-[10px] text-white/40 uppercase tracking-wide mb-1">
+          {label}
+          {required && !value && <span className="text-red-400 ml-1">*</span>}
+        </p>
         {isEditing ? (
           multiline ? (
             <Textarea
@@ -183,12 +191,122 @@ function EditableField({
             />
           )
         ) : (
-          <p className="text-sm text-white/80 break-words">{value}</p>
+          <p className={cn("text-sm break-words", value ? "text-white/80" : "text-red-400/60 italic")}>
+            {value || 'No especificado'}
+          </p>
         )}
       </div>
     </div>
   );
 }
+
+// Inline editable select component
+function EditableSelectField({
+  label,
+  value,
+  fieldKey,
+  icon: Icon,
+  placeholder,
+  isEditing,
+  onSave,
+  options,
+  required = false,
+}: {
+  label: string;
+  value: string | null;
+  fieldKey: string;
+  icon?: typeof Phone;
+  placeholder?: string;
+  isEditing: boolean;
+  onSave: (key: string, value: string | null) => void;
+  options: { value: string; label: string }[];
+  required?: boolean;
+}) {
+  const displayValue = options.find(o => o.value === value)?.label || value;
+
+  // Mostrar campos requeridos aunque estén vacíos, ocultar opcionales vacíos
+  if (!isEditing && !value && !required) return null;
+
+  return (
+    <div className="flex items-start gap-3 py-2">
+      {Icon && <Icon className="h-4 w-4 text-white/40 mt-0.5 shrink-0" />}
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] text-white/40 uppercase tracking-wide mb-1">
+          {label}
+          {required && !value && <span className="text-red-400 ml-1">*</span>}
+        </p>
+        {isEditing ? (
+          <select
+            value={value || ''}
+            onChange={(e) => {
+              const newValue = e.target.value || null;
+              console.log('[CRM Select] onChange:', { fieldKey, newValue, previousValue: value });
+              onSave(fieldKey, newValue);
+            }}
+            className="w-full h-8 text-sm bg-white/5 border border-white/10 text-white rounded-md px-2"
+          >
+            <option value="" className="bg-[#1a1a2e]">{placeholder || 'Seleccionar...'}</option>
+            {options.map(opt => (
+              <option key={opt.value} value={opt.value} className="bg-[#1a1a2e]">
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <p className={cn("text-sm break-words", value ? "text-white/80" : "text-red-400/60 italic")}>
+            {displayValue || 'No especificado'}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Constantes para opciones de select
+const GENDER_OPTIONS = [
+  { value: 'male', label: 'Masculino' },
+  { value: 'female', label: 'Femenino' },
+  { value: 'other', label: 'Otro' },
+];
+
+const DOCUMENT_TYPE_OPTIONS = [
+  { value: 'cc', label: 'Cédula de Ciudadanía' },
+  { value: 'ce', label: 'Cédula de Extranjería' },
+  { value: 'ti', label: 'Tarjeta de Identidad' },
+  { value: 'passport', label: 'Pasaporte' },
+  { value: 'dni', label: 'DNI' },
+  { value: 'ine', label: 'INE / IFE' },
+  { value: 'curp', label: 'CURP' },
+  { value: 'rut', label: 'RUT' },
+  { value: 'cpf', label: 'CPF' },
+  { value: 'ssn', label: 'SSN' },
+  { value: 'other', label: 'Otro documento' },
+];
+
+const COUNTRY_OPTIONS = [
+  { value: 'CO', label: 'Colombia' },
+  { value: 'MX', label: 'México' },
+  { value: 'AR', label: 'Argentina' },
+  { value: 'PE', label: 'Perú' },
+  { value: 'CL', label: 'Chile' },
+  { value: 'EC', label: 'Ecuador' },
+  { value: 'VE', label: 'Venezuela' },
+  { value: 'BO', label: 'Bolivia' },
+  { value: 'PY', label: 'Paraguay' },
+  { value: 'UY', label: 'Uruguay' },
+  { value: 'DO', label: 'Rep. Dominicana' },
+  { value: 'GT', label: 'Guatemala' },
+  { value: 'HN', label: 'Honduras' },
+  { value: 'SV', label: 'El Salvador' },
+  { value: 'NI', label: 'Nicaragua' },
+  { value: 'CR', label: 'Costa Rica' },
+  { value: 'PA', label: 'Panamá' },
+  { value: 'CU', label: 'Cuba' },
+  { value: 'PR', label: 'Puerto Rico' },
+  { value: 'BR', label: 'Brasil' },
+  { value: 'US', label: 'Estados Unidos' },
+  { value: 'ES', label: 'España' },
+];
 
 // =====================================================
 // PROPS - supports both platform and org contexts
@@ -240,12 +358,18 @@ export function UnifiedTalentDetailDialog({
     isOrgContext ? creatorId : undefined
   );
 
-  const full = isOrgContext ? fullOrg : (isUserContext ? null : fullPlatform);
-  const fullLoading = isOrgContext ? loadingOrg : (isUserContext ? false : loadingPlatform);
+  const fullBase = isOrgContext ? fullOrg : (isUserContext ? null : fullPlatform);
 
   // userId: use creator.user_id (for platform creator), user.id (for user), or creatorId (for org), fallback to full data
-  const userId = creator?.user_id || user?.id || creatorId || full?.user_id || full?.id;
-  const { data: userDetail } = useFullUserDetail(userId);
+  const userId = creator?.user_id || user?.id || creatorId || fullBase?.user_id || fullBase?.id;
+  const { data: userDetail, isLoading: loadingUserDetail } = useFullUserDetail(userId);
+
+  // Combinar datos: SIEMPRE priorizar userDetail para campos de perfil personal,
+  // y fullBase para campos de marketplace/organización
+  const full = userDetail && fullBase
+    ? { ...fullBase, ...userDetail } // userDetail sobrescribe campos de perfil
+    : (userDetail || fullBase);
+  const fullLoading = isOrgContext ? loadingOrg : (loadingUserDetail || loadingPlatform);
   const updateProfileFields = useUpdateUserProfileFields();
 
   // creatorProfileId: for platform use creator.id, for org use fullOrg.creator_profile_id, for user use userDetail
@@ -351,15 +475,23 @@ export function UnifiedTalentDetailDialog({
   }, [queryClient, creatorProfileId, organizationId, creatorId, userId, onUpdate]);
 
   const handleFieldSave = useCallback((key: string, value: string | null) => {
-    if (!userId) return;
+    if (!userId) {
+      console.error('[CRM] handleFieldSave: No userId');
+      return;
+    }
+    console.log('[CRM] handleFieldSave:', { key, value, userId });
     updateProfileFields.mutate(
       { userId, data: { [key]: value } },
       {
         onSuccess: () => {
+          console.log('[CRM] Field saved successfully:', key);
           toast.success('Campo actualizado');
           handleActionComplete();
         },
-        onError: (err: any) => toast.error(`Error: ${err.message}`),
+        onError: (err: any) => {
+          console.error('[CRM] Field save error:', key, err);
+          toast.error(`Error: ${err.message}`);
+        },
       }
     );
   }, [userId, updateProfileFields, handleActionComplete]);
@@ -785,6 +917,13 @@ export function UnifiedTalentDetailDialog({
                   Admin
                 </TabsTrigger>
               )}
+              <TabsTrigger
+                value="legal"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-white rounded-none px-4 text-white/60 gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                Legal
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -808,6 +947,24 @@ export function UnifiedTalentDetailDialog({
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
                     <EditableField
+                      label="Nombre completo"
+                      value={full?.full_name}
+                      fieldKey="full_name"
+                      icon={User}
+                      placeholder="Nombre completo"
+                      isEditing={isEditing}
+                      onSave={handleFieldSave}
+                    />
+                    <EditableField
+                      label="Username"
+                      value={full?.username ? `@${full.username}` : null}
+                      fieldKey="username"
+                      icon={User}
+                      placeholder="@usuario"
+                      isEditing={isEditing}
+                      onSave={handleFieldSave}
+                    />
+                    <EditableField
                       label="Email"
                       value={displayEmail}
                       fieldKey="email"
@@ -828,13 +985,46 @@ export function UnifiedTalentDetailDialog({
                       onSave={handleFieldSave}
                     />
                     <EditableField
+                      label="Fecha de nacimiento"
+                      value={full?.date_of_birth ? format(new Date(full.date_of_birth), 'd MMM yyyy', { locale: es }) : null}
+                      fieldKey="date_of_birth"
+                      icon={Calendar}
+                      placeholder="Fecha de nacimiento"
+                      isEditing={isEditing}
+                      onSave={handleFieldSave}
+                      required
+                    />
+                    <EditableSelectField
+                      label="Sexo"
+                      value={full?.gender}
+                      fieldKey="gender"
+                      icon={User}
+                      placeholder="Selecciona sexo"
+                      isEditing={isEditing}
+                      onSave={handleFieldSave}
+                      options={GENDER_OPTIONS}
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Location & Identity */}
+                <div className="rounded-lg border border-white/10 p-4">
+                  <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-blue-400" />
+                    Ubicación e Identidad
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+                    <EditableSelectField
                       label="País"
                       value={full?.location_country ?? full?.country}
                       fieldKey="country"
                       icon={Globe}
-                      placeholder="País"
+                      placeholder="Selecciona país"
                       isEditing={isEditing}
                       onSave={handleFieldSave}
+                      options={COUNTRY_OPTIONS}
+                      required
                     />
                     <EditableField
                       label="Ciudad"
@@ -842,6 +1032,112 @@ export function UnifiedTalentDetailDialog({
                       fieldKey="city"
                       icon={MapPin}
                       placeholder="Ciudad"
+                      isEditing={isEditing}
+                      onSave={handleFieldSave}
+                    />
+                    <EditableField
+                      label="Dirección"
+                      value={full?.address}
+                      fieldKey="address"
+                      icon={MapPin}
+                      placeholder="Dirección completa"
+                      isEditing={isEditing}
+                      onSave={handleFieldSave}
+                      required
+                    />
+                    <EditableSelectField
+                      label="Nacionalidad"
+                      value={full?.nationality}
+                      fieldKey="nationality"
+                      icon={Globe}
+                      placeholder="Selecciona nacionalidad"
+                      isEditing={isEditing}
+                      onSave={handleFieldSave}
+                      options={COUNTRY_OPTIONS}
+                      required
+                    />
+                    <EditableSelectField
+                      label="Tipo de documento"
+                      value={full?.document_type}
+                      fieldKey="document_type"
+                      icon={FileText}
+                      placeholder="Selecciona tipo"
+                      isEditing={isEditing}
+                      onSave={handleFieldSave}
+                      options={DOCUMENT_TYPE_OPTIONS}
+                      required
+                    />
+                    <EditableField
+                      label="Número de documento"
+                      value={full?.document_number}
+                      fieldKey="document_number"
+                      icon={FileText}
+                      placeholder="Número de documento"
+                      isEditing={isEditing}
+                      onSave={handleFieldSave}
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Social Networks */}
+                <div className="rounded-lg border border-white/10 p-4">
+                  <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-purple-400" />
+                    Redes Sociales
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+                    <EditableField
+                      label="Instagram"
+                      value={full?.instagram ? `@${full.instagram}` : null}
+                      fieldKey="instagram"
+                      icon={Instagram}
+                      placeholder="@usuario"
+                      isEditing={isEditing}
+                      onSave={handleFieldSave}
+                    />
+                    <EditableField
+                      label="TikTok"
+                      value={full?.tiktok ? `@${full.tiktok}` : null}
+                      fieldKey="tiktok"
+                      icon={Video}
+                      placeholder="@usuario"
+                      isEditing={isEditing}
+                      onSave={handleFieldSave}
+                    />
+                    <EditableField
+                      label="YouTube"
+                      value={full?.social_youtube}
+                      fieldKey="social_youtube"
+                      icon={Youtube}
+                      placeholder="youtube.com/@canal"
+                      isEditing={isEditing}
+                      onSave={handleFieldSave}
+                    />
+                    <EditableField
+                      label="LinkedIn"
+                      value={full?.social_linkedin}
+                      fieldKey="social_linkedin"
+                      icon={Linkedin}
+                      placeholder="linkedin.com/in/usuario"
+                      isEditing={isEditing}
+                      onSave={handleFieldSave}
+                    />
+                    <EditableField
+                      label="Facebook"
+                      value={full?.social_facebook}
+                      fieldKey="social_facebook"
+                      icon={Globe}
+                      placeholder="facebook.com/usuario"
+                      isEditing={isEditing}
+                      onSave={handleFieldSave}
+                    />
+                    <EditableField
+                      label="X (Twitter)"
+                      value={full?.social_twitter ? `@${full.social_twitter}` : null}
+                      fieldKey="social_twitter"
+                      icon={Globe}
+                      placeholder="@usuario"
                       isEditing={isEditing}
                       onSave={handleFieldSave}
                     />
@@ -977,52 +1273,6 @@ export function UnifiedTalentDetailDialog({
                   />
                 </div>
 
-                {/* Social Links */}
-                <div className="rounded-lg border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-                    <Link2 className="h-4 w-4 text-pink-400" />
-                    Redes Sociales
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-                    <EditableField
-                      label="Instagram"
-                      value={full?.instagram}
-                      fieldKey="instagram"
-                      icon={Instagram}
-                      placeholder="@usuario"
-                      isEditing={isEditing}
-                      onSave={handleFieldSave}
-                    />
-                    <EditableField
-                      label="TikTok"
-                      value={full?.tiktok}
-                      fieldKey="tiktok"
-                      icon={Video}
-                      placeholder="@usuario"
-                      isEditing={isEditing}
-                      onSave={handleFieldSave}
-                    />
-                    <EditableField
-                      label="YouTube"
-                      value={full?.social_youtube}
-                      fieldKey="social_youtube"
-                      icon={Youtube}
-                      placeholder="URL del canal"
-                      isEditing={isEditing}
-                      onSave={handleFieldSave}
-                    />
-                    <EditableField
-                      label="LinkedIn"
-                      value={full?.social_linkedin}
-                      fieldKey="social_linkedin"
-                      icon={Linkedin}
-                      placeholder="URL de perfil"
-                      isEditing={isEditing}
-                      onSave={handleFieldSave}
-                    />
-                  </div>
-                </div>
-
                 {/* Specialization */}
                 <div className="rounded-lg border border-white/10 p-4">
                   <h3 className="text-sm font-semibold text-white mb-4">Especialización</h3>
@@ -1067,7 +1317,7 @@ export function UnifiedTalentDetailDialog({
                 {/* Marketplace Stats */}
                 <div className="rounded-lg border border-white/10 p-4">
                   <h3 className="text-sm font-semibold text-white mb-4">Estadísticas Marketplace</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="text-center p-3 rounded-lg bg-white/5">
                       <p className="text-2xl font-bold text-yellow-400">
                         {ratingAvg > 0 ? ratingAvg.toFixed(1) : '—'}
@@ -1085,12 +1335,6 @@ export function UnifiedTalentDetailDialog({
                         {formatCurrency(totalEarned)}
                       </p>
                       <p className="text-xs text-white/50">Total ganado</p>
-                    </div>
-                    <div className="text-center p-3 rounded-lg bg-white/5">
-                      <p className="text-xl font-bold text-white">
-                        {formatCurrency(basePrice)}
-                      </p>
-                      <p className="text-xs text-white/50">Precio base</p>
                     </div>
                   </div>
                   {full && (
@@ -1117,6 +1361,154 @@ export function UnifiedTalentDetailDialog({
                   )}
                 </div>
 
+                {/* Organization Stats */}
+                <div className="rounded-lg border border-white/10 p-4">
+                  <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-blue-400" />
+                    Estadísticas Organizaciones
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center p-3 rounded-lg bg-white/5">
+                      <p className="text-2xl font-bold text-blue-400">
+                        {full?.organizations?.length || 0}
+                      </p>
+                      <p className="text-xs text-white/50">Organizaciones</p>
+                    </div>
+                    <div className="text-center p-3 rounded-lg bg-white/5">
+                      <p className="text-2xl font-bold text-purple-400">
+                        {full?.roles?.length || 0}
+                      </p>
+                      <p className="text-xs text-white/50">Roles</p>
+                    </div>
+                    <div className="text-center p-3 rounded-lg bg-white/5">
+                      <p className="text-2xl font-bold text-yellow-400">
+                        {full?.badges?.length || 0}
+                      </p>
+                      <p className="text-xs text-white/50">Badges</p>
+                    </div>
+                    <div className="text-center p-3 rounded-lg bg-white/5">
+                      <p className="text-2xl font-bold text-green-400">
+                        {full?.companies?.length || 0}
+                      </p>
+                      <p className="text-xs text-white/50">Empresas</p>
+                    </div>
+                  </div>
+                  {full?.organizations && full.organizations.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      <p className="text-xs text-white/40 uppercase tracking-wide">Miembro de:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {full.organizations.map((org: any) => (
+                          <Badge
+                            key={org.organization_id}
+                            variant="secondary"
+                            className={cn(
+                              "text-xs",
+                              org.is_owner
+                                ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
+                                : "bg-blue-500/20 text-blue-300"
+                            )}
+                          >
+                            {org.is_owner && <Star className="h-3 w-3 mr-1" />}
+                            {org.organization_name}
+                            {org.role && <span className="ml-1 opacity-60">({org.role})</span>}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {full?.badges && full.badges.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      <p className="text-xs text-white/40 uppercase tracking-wide">Badges:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {full.badges.map((badge: any, idx: number) => (
+                          <Badge
+                            key={idx}
+                            variant="secondary"
+                            className={cn(
+                              "text-xs",
+                              badge.level === 'gold' && "bg-yellow-500/20 text-yellow-300",
+                              badge.level === 'silver' && "bg-gray-400/20 text-gray-300",
+                              badge.level === 'bronze' && "bg-orange-500/20 text-orange-300",
+                              !badge.level && "bg-purple-500/20 text-purple-300"
+                            )}
+                          >
+                            {badge.badge} {badge.level && `(${badge.level})`}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Financial Stats */}
+                <div className="rounded-lg border border-white/10 p-4">
+                  <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-green-400" />
+                    Estadísticas Financieras
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center p-3 rounded-lg bg-white/5">
+                      <p className="text-2xl font-bold text-green-400">
+                        {formatCurrency(full?.total_earned || totalEarned || 0)}
+                      </p>
+                      <p className="text-xs text-white/50">Total ganado</p>
+                    </div>
+                    <div className="text-center p-3 rounded-lg bg-white/5">
+                      <p className="text-2xl font-bold text-red-400">
+                        {formatCurrency(full?.total_spent || 0)}
+                      </p>
+                      <p className="text-xs text-white/50">Total gastado</p>
+                    </div>
+                    <div className="text-center p-3 rounded-lg bg-white/5">
+                      <p className="text-2xl font-bold text-blue-400">
+                        {full?.total_applications || 0}
+                      </p>
+                      <p className="text-xs text-white/50">Aplicaciones</p>
+                    </div>
+                    <div className="text-center p-3 rounded-lg bg-white/5">
+                      <p className="text-2xl font-bold text-purple-400">
+                        {full?.total_completed_projects || completedProjects || 0}
+                      </p>
+                      <p className="text-xs text-white/50">Proyectos completados</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-white/5">
+                      <TrendingUp className={cn("h-4 w-4", (full?.net_balance || 0) >= 0 ? "text-green-400" : "text-red-400")} />
+                      <div>
+                        <p className={cn("text-sm font-medium", (full?.net_balance || 0) >= 0 ? "text-green-400" : "text-red-400")}>
+                          {formatCurrency(full?.net_balance || 0)}
+                        </p>
+                        <p className="text-xs text-white/50">Balance neto</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-white/5">
+                      <Activity className="h-4 w-4 text-yellow-400" />
+                      <div>
+                        <p className="text-sm font-medium text-white">
+                          {full?.conversion_rate
+                            ? `${Math.round(full.conversion_rate)}%`
+                            : '—'
+                          }
+                        </p>
+                        <p className="text-xs text-white/50">Tasa conversión</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-white/5">
+                      <DollarSign className="h-4 w-4 text-purple-400" />
+                      <div>
+                        <p className="text-sm font-medium text-white">
+                          {full?.avg_per_project
+                            ? formatCurrency(full.avg_per_project)
+                            : '—'
+                          }
+                        </p>
+                        <p className="text-xs text-white/50">Promedio por proyecto</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Marketplace Configuration (edit mode) */}
                 {isEditing && (
                   <div className="rounded-lg border border-pink-500/30 bg-pink-500/5 p-4">
@@ -1125,21 +1517,6 @@ export function UnifiedTalentDetailDialog({
                       Configuración Marketplace
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Base Price */}
-                      <div className="space-y-2">
-                        <label className="text-xs text-white/60">Precio Base (USD)</label>
-                        <Input
-                          type="number"
-                          min="0"
-                          defaultValue={basePrice || ''}
-                          placeholder="Ej: 100"
-                          className="bg-white/5 border-white/20"
-                          onBlur={(e) => {
-                            const val = e.target.value ? parseFloat(e.target.value) : null;
-                            handleCreatorFieldSave('base_price', val);
-                          }}
-                        />
-                      </div>
                       {/* Active Toggle */}
                       <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
                         <div>
@@ -2101,6 +2478,29 @@ export function UnifiedTalentDetailDialog({
                   </div>
                 </TabsContent>
               )}
+
+              {/* LEGAL TAB */}
+              <TabsContent value="legal" className="mt-0 space-y-6">
+                {/* Datos Personales Completos */}
+                <PersonalDataSection
+                  phone={full?.phone ?? null}
+                  email={displayEmail}
+                  documentType={full?.document_type ?? null}
+                  documentNumber={full?.document_number ?? null}
+                  address={full?.address ?? null}
+                  city={full?.location_city ?? full?.city ?? null}
+                  country={full?.location_country ?? full?.country ?? null}
+                  nationality={full?.nationality ?? null}
+                  dateOfBirth={full?.date_of_birth ?? null}
+                  username={full?.username ?? null}
+                />
+
+                {/* Consentimientos Legales */}
+                <LegalConsentsSection
+                  userId={userId}
+                  onboardingCompleted={userDetail?.onboarding_completed ?? full?.onboarding_completed ?? false}
+                />
+              </TabsContent>
             </div>
           </ScrollArea>
         </Tabs>

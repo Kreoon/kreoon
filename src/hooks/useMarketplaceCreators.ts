@@ -126,6 +126,49 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
       const creatorIds = creatorRows.map((r: any) => r.id);
       const creatorUserIds = creatorRows.map((r: any) => r.user_id);
 
+      // ── 1b. Fetch org project counts usando RPC (más preciso que query directa) ──
+      const orgProjectsMap = new Map<string, number>();
+      const onTimeDeliveryMap = new Map<string, number>();
+      const responseTimeMap = new Map<string, number>();
+
+      // Obtener stats unificadas para creadores que pertenecen a organizaciones
+      // (donde es más probable que tengan proyectos de org)
+      if (creatorUserIds.length > 0) {
+        // Batch de llamadas RPC en paralelo (máximo 10 a la vez para no saturar)
+        const batchSize = 10;
+        for (let i = 0; i < creatorUserIds.length; i += batchSize) {
+          const batch = creatorUserIds.slice(i, i + batchSize);
+          const results = await Promise.all(
+            batch.map(userId =>
+              supabase.rpc('get_creator_unified_stats', { p_user_id: userId })
+                .then(({ data }) => ({ userId, data }))
+                .catch(() => ({ userId, data: null }))
+            )
+          );
+
+          for (const { userId, data } of results) {
+            if (data) {
+              orgProjectsMap.set(userId, data.org_projects || 0);
+              onTimeDeliveryMap.set(userId, data.on_time_delivery_pct || 100);
+              responseTimeMap.set(userId, data.response_time_hours || 24);
+            }
+          }
+        }
+      }
+
+      // ── 1c. Fetch real registration dates from profiles ──
+      const registrationDateMap = new Map<string, string>();
+      if (creatorUserIds.length > 0) {
+        const { data: profileDates, error: dateError } = await supabase
+          .from('profiles')
+          .select('id, created_at')
+          .in('id', creatorUserIds);
+
+        for (const p of profileDates || []) {
+          registrationDateMap.set(p.id, p.created_at);
+        }
+      }
+
       // ── 2. Fetch ALL content sources for creator_profiles ────────────
       // Map by creator_profiles.id (for portfolio_items) and by user_id (for content + portfolio_posts)
       const portfolioMap = new Map<string, PortfolioMedia[]>();
@@ -293,15 +336,38 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
           creator.organization_name = orgInfo.org_name;
           creator.organization_logo = orgInfo.org_logo;
         }
+
+        // ── IMPORTANT: Enrich with org stats ──
+        const orgProjects = orgProjectsMap.get(row.user_id) || 0;
+        creator.org_projects = orgProjects;
+        // Total de proyectos = marketplace + org
+        creator.completed_projects = (creator.completed_projects || 0) + orgProjects;
+
+        // Métricas de confiabilidad
+        const onTimePct = onTimeDeliveryMap.get(row.user_id);
+        const responseHours = responseTimeMap.get(row.user_id);
+        if (onTimePct !== undefined) {
+          (creator as any).on_time_delivery_pct = onTimePct;
+        }
+        if (responseHours !== undefined) {
+          (creator as any).response_time_hours = responseHours;
+        }
+
+        // Para "Nuevos Talentos": usar fecha de creación del creator_profile
+        // (cuando se activó en el marketplace, no cuando se registró en la plataforma)
+        // row.created_at ya viene de creator_profiles, lo mantenemos en joined_at
+        // creator.joined_at ya tiene el valor correcto de mapCreatorRow (row.created_at)
+
         // Introductory discount: auto-suggest 20% for new talent with < 3 completed projects
-        const thirtyDays = 30 * 24 * 60 * 60 * 1000;
-        const isNew = Date.now() - new Date(creator.joined_at).getTime() < thirtyDays;
+        const fortyFiveDays = 45 * 24 * 60 * 60 * 1000;
+        const isNew = Date.now() - new Date(creator.joined_at).getTime() < fortyFiveDays;
         if (isNew && creator.completed_projects < 3) {
           creator.introductory_discount_pct = 20;
         }
         return creator;
       })
-      // Only show creators with at least one portfolio creative (avatar is optional - show initials if missing)
+      // SOLO incluir creadores con portfolio (contenido visible)
+      // Los creadores sin contenido no deben aparecer en el marketplace
       .filter(c => c.portfolio_media.length > 0);
 
       // ── 3. Fallback: Fetch profiles with content (not in creator_profiles) ──
@@ -401,11 +467,13 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
           }
         }
 
-        // Include profiles with name AND at least one portfolio creative (avatar is optional)
+        // SOLO incluir profiles con contenido visible (portfolio)
         for (const row of profileRows) {
           if (!row.full_name && !row.username) continue;
           const media = contentMap.get(row.id) || [];
-          if (media.length === 0) continue; // Must have at least one creative
+
+          // Skip profiles sin contenido - no deben aparecer en el marketplace
+          if (media.length === 0) continue;
 
           const creator = mapProfileRow(row as Record<string, unknown>);
           creator.portfolio_media = media;
@@ -434,6 +502,7 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
         const bHas = b.portfolio_media.length > 0 ? 1 : 0;
         return bHas - aHas;
       });
+
       setAllCreators(all);
     } catch (err) {
       console.error('[useMarketplaceCreators] Error:', err);
@@ -454,20 +523,33 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
     let result = [...allCreators];
 
     // Role category filter
+    // Include freelancers without marketplace_roles configured (they're not excluded from categories)
     if (filters.role_category && filters.role_category !== 'all' && filters.role_category !== 'agencies') {
       const categoryRoleIds = MARKETPLACE_ROLES
         .filter(r => r.category === (filters.role_category as MarketplaceRoleCategory))
         .map(r => r.id);
-      result = result.filter(c =>
-        c.marketplace_roles?.some(r => categoryRoleIds.includes(r as any)),
-      );
+      result = result.filter(c => {
+        // If creator has no marketplace_roles, include them (freelancers)
+        if (!c.marketplace_roles || c.marketplace_roles.length === 0) return true;
+        // Otherwise check if any of their roles match the category
+        return c.marketplace_roles.some(r => categoryRoleIds.includes(r as any));
+      });
     }
 
     // Specific marketplace roles (sub-chips)
+    // Filtro más flexible: prioriza pero no excluye completamente
     if (filters.marketplace_roles && filters.marketplace_roles.length > 0) {
-      result = result.filter(c =>
-        filters.marketplace_roles.some(r => c.marketplace_roles?.includes(r as any)),
-      );
+      // Separar creadores que coinciden con el rol vs los que no
+      const withRole = result.filter(c => {
+        if (!c.marketplace_roles || c.marketplace_roles.length === 0) return false;
+        return filters.marketplace_roles.some(r => c.marketplace_roles?.includes(r as any));
+      });
+
+      // Si hay coincidencias de rol, usarlas. Si no hay ninguna, mantener todos (búsqueda de texto prevalece)
+      if (withRole.length > 0) {
+        result = withRole;
+      }
+      // Si no hay coincidencias, el filtro de texto ya habrá filtrado, no excluimos más
     }
 
     // Accepts exchange (adaptive filter)
@@ -475,17 +557,36 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
       result = result.filter(c => c.accepts_product_exchange);
     }
 
-    // Text search
+    // Text search - buscar en múltiples campos
     if (filters.search) {
       const q = filters.search.toLowerCase();
-      result = result.filter(
-        c =>
-          c.display_name.toLowerCase().includes(q) ||
-          c.bio?.toLowerCase().includes(q) ||
-          c.categories.some(cat => cat.toLowerCase().includes(q)) ||
-          c.location_city?.toLowerCase().includes(q) ||
-          c.location_country?.toLowerCase().includes(q),
-      );
+      const words = q.split(/\s+/).filter(w => w.length > 2);
+
+      result = result.filter(c => {
+        // Buscar en campos básicos
+        const inName = c.display_name.toLowerCase().includes(q);
+        const inBio = c.bio?.toLowerCase().includes(q);
+        const inCategories = c.categories.some(cat => cat.toLowerCase().includes(q));
+        const inCity = c.location_city?.toLowerCase().includes(q);
+        const inCountry = c.location_country?.toLowerCase().includes(q);
+
+        // Buscar en roles de marketplace (ej: "editor", "ugc", "influencer")
+        const inRoles = c.marketplace_roles?.some(role =>
+          role.toLowerCase().includes(q) || q.includes(role.toLowerCase().replace(/_/g, ' '))
+        );
+
+        // Buscar en tipos de contenido
+        const inContentTypes = c.content_types?.some(ct => ct.toLowerCase().includes(q));
+
+        // Buscar palabras individuales en nombre y bio
+        const wordsMatch = words.length > 1 && words.every(word =>
+          c.display_name.toLowerCase().includes(word) ||
+          c.bio?.toLowerCase().includes(word) ||
+          c.categories.some(cat => cat.toLowerCase().includes(word))
+        );
+
+        return inName || inBio || inCategories || inCity || inCountry || inRoles || inContentTypes || wordsMatch;
+      });
     }
 
     // Category
@@ -496,23 +597,37 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
       );
     }
 
-    // Country
+    // Country - búsqueda flexible (incluye variaciones de escritura)
     if (filters.country) {
-      const countryMap: Record<string, string> = {
-        CO: 'Colombia', MX: 'México', CL: 'Chile', PE: 'Perú',
-        AR: 'Argentina', EC: 'Ecuador', US: 'Estados Unidos',
+      const countryMap: Record<string, string[]> = {
+        CO: ['colombia', 'co'],
+        MX: ['méxico', 'mexico', 'mx'],
+        CL: ['chile', 'cl'],
+        PE: ['perú', 'peru', 'pe'],
+        AR: ['argentina', 'ar'],
+        EC: ['ecuador', 'ec'],
+        US: ['estados unidos', 'usa', 'us', 'united states'],
+        VE: ['venezuela', 've'],
+        BR: ['brasil', 'brazil', 'br'],
+        ES: ['españa', 'spain', 'es'],
       };
-      const countryName = countryMap[filters.country];
-      if (countryName) {
-        result = result.filter(c => c.location_country === countryName);
-      }
+      const countryVariants = countryMap[filters.country] || [filters.country.toLowerCase()];
+      result = result.filter(c => {
+        const country = c.location_country?.toLowerCase() || '';
+        const city = c.location_city?.toLowerCase() || '';
+        return countryVariants.some(v => country.includes(v) || city.includes(v));
+      });
     }
 
     // Content types
+    // Include freelancers without content_types configured (they're not excluded)
     if (filters.content_type.length > 0) {
-      result = result.filter(c =>
-        filters.content_type.some(ct => c.content_types.includes(ct)),
-      );
+      result = result.filter(c => {
+        // If creator has no content_types, include them (freelancers)
+        if (!c.content_types || c.content_types.length === 0) return true;
+        // Otherwise check if any content type matches
+        return filters.content_type.some(ct => c.content_types.includes(ct));
+      });
     }
 
     // Price range
@@ -584,13 +699,13 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
     [allCreators],
   );
 
-  // Nuevos talentos: joined in last 30 days, sorted newest first
+  // Nuevos talentos: los últimos 20 registros con portfolio visible
+  // Ordenados por fecha de registro (más reciente primero)
   const newTalent = useMemo(() => {
-    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
     return allCreators
-      .filter(c => new Date(c.joined_at).getTime() > thirtyDaysAgo)
+      .filter(c => c.portfolio_media.length > 0)
       .sort((a, b) => new Date(b.joined_at).getTime() - new Date(a.joined_at).getTime())
-      .slice(0, 12);
+      .slice(0, 20);
   }, [allCreators]);
 
   // Más valorados: all with rating >= 4.5

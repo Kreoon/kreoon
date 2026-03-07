@@ -48,6 +48,7 @@ export interface SearchCreatorResult {
   accepts_exchange: boolean;
   is_verified: boolean;
   portfolio_count: number;
+  portfolio_thumbnail: string | null; // Primer thumbnail del portafolio
   search_score: number;
   quality_score: number;
   activity_score: number;

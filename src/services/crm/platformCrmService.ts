@@ -421,6 +421,7 @@ export async function getFullUserDetail(userId: string): Promise<FullUserDetail>
   const { data, error } = await (supabase as any)
     .rpc('get_full_user_detail', { p_user_id: userId });
   if (error) throw error;
+  console.log('[CRM Service] getFullUserDetail response:', { userId, gender: data?.gender, hasGender: 'gender' in (data || {}) });
   return data as FullUserDetail;
 }
 

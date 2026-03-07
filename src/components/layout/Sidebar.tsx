@@ -306,6 +306,52 @@ const lockedUserSections: NavSection[] = [
   }
 ];
 
+/**
+ * Combina secciones de navegación de múltiples roles eliminando duplicados.
+ * Útil para usuarios con múltiples roles (ej: creator + editor)
+ */
+function combineNavSections(sectionArrays: NavSection[][]): NavSection[] {
+  const sectionMap = new Map<string, NavItem[]>();
+  const sectionOrder: string[] = [];
+
+  for (const sections of sectionArrays) {
+    for (const section of sections) {
+      if (!sectionMap.has(section.label)) {
+        sectionMap.set(section.label, []);
+        sectionOrder.push(section.label);
+      }
+      const existingItems = sectionMap.get(section.label)!;
+      for (const item of section.items) {
+        // Evitar duplicados por href
+        const href = typeof item.href === 'function' ? 'dynamic' : item.href;
+        if (!existingItems.some(i => (typeof i.href === 'function' ? 'dynamic' : i.href) === href)) {
+          existingItems.push(item);
+        }
+      }
+    }
+  }
+
+  return sectionOrder.map(label => ({
+    label,
+    items: sectionMap.get(label)!,
+  })).filter(s => s.items.length > 0);
+}
+
+/**
+ * Obtiene las secciones base para un permission group específico
+ */
+function getSectionsForGroup(group: PermissionGroup): NavSection[] {
+  switch (group) {
+    case 'admin': return adminSections;
+    case 'team_leader': return adminSections; // Team leaders have admin-like nav
+    case 'strategist': return strategistSections;
+    case 'editor': return editorSections;
+    case 'creator': return creatorSections;
+    case 'client': return clientSections;
+    default: return creatorSections;
+  }
+}
+
 // Marketplace navigation sections — available to ALL users
 function getMarketplaceSections(activeGroup: PermissionGroup | null, isFreelance: boolean = false): NavSection[] {
   const items: NavItem[] = [
@@ -377,10 +423,35 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   // For brand members without org roles, treat them as 'client' group
   const activeGroup: PermissionGroup | null = rawActiveGroup || (isBrandMember ? 'client' : null);
 
-  const activeIsAdmin = activeGroup === 'admin';
-  const activeIsStrategist = activeGroup === 'strategist';
-  const activeIsEditor = activeGroup === 'editor';
-  const activeIsCreator = activeGroup === 'creator';
+  // Get ALL unique permission groups for the user (for multi-role support)
+  const allUserGroups = useMemo(() => {
+    const roles = isImpersonating ? effectiveRoles : realRoles;
+    if (!roles || roles.length === 0) return [];
+
+    const groups = new Set<PermissionGroup>();
+    for (const role of roles) {
+      const group = getPermissionGroup(role);
+      if (group) groups.add(group);
+    }
+    return Array.from(groups);
+  }, [isImpersonating, effectiveRoles, realRoles]);
+
+  // User has multiple distinct permission groups (e.g., creator + editor)
+  const isMultiRoleUser = allUserGroups.length > 1;
+
+  // For multi-role: get the "highest" group for certain checks (admin > strategist > creator > editor > client)
+  const highestGroup = useMemo(() => {
+    const priority: PermissionGroup[] = ['admin', 'team_leader', 'strategist', 'creator', 'editor', 'client'];
+    for (const g of priority) {
+      if (allUserGroups.includes(g)) return g;
+    }
+    return activeGroup;
+  }, [allUserGroups, activeGroup]);
+
+  const activeIsAdmin = activeGroup === 'admin' || allUserGroups.includes('admin');
+  const activeIsStrategist = activeGroup === 'strategist' || allUserGroups.includes('strategist');
+  const activeIsEditor = activeGroup === 'editor' || allUserGroups.includes('editor');
+  const activeIsCreator = activeGroup === 'creator' || allUserGroups.includes('creator');
   const activeIsClient = activeGroup === 'client';
 
   // Fetch current client name and count for client users
@@ -501,17 +572,28 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     }
 
     // When roles haven't loaded yet, show minimal nav to avoid flashing admin menu
-    const baseSections = activeIsAdmin
-      ? adminSections
-      : activeIsStrategist
-      ? strategistSections
-      : activeIsEditor
-      ? editorSections
-      : activeIsCreator
-      ? creatorSections
-      : activeIsClient
-      ? clientSections
-      : (isPlatformAdmin ? adminSections : creatorSections);
+    // For multi-role users, combine sections from all their permission groups
+    let baseSections: NavSection[];
+
+    if (isMultiRoleUser && !activeIsClient) {
+      // Combine navigation sections from all user's permission groups
+      const sectionArrays = allUserGroups
+        .filter(g => g !== 'client') // Don't mix client sections with other roles
+        .map(g => getSectionsForGroup(g));
+      baseSections = combineNavSections(sectionArrays);
+    } else if (activeIsAdmin) {
+      baseSections = adminSections;
+    } else if (activeIsStrategist) {
+      baseSections = strategistSections;
+    } else if (activeIsEditor) {
+      baseSections = editorSections;
+    } else if (activeIsCreator) {
+      baseSections = creatorSections;
+    } else if (activeIsClient) {
+      baseSections = clientSections;
+    } else {
+      baseSections = isPlatformAdmin ? adminSections : creatorSections;
+    }
 
     // White-label label replacement map
     const labelMap: Record<string, string> = {
@@ -569,7 +651,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       ...(!effectiveMktEnabled && !activeIsClient ? [recruitSection] : []),
       ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" }] }]),
     ];
-  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, isFreelanceUser, activeGroup, isUnlocked, isGateLoading, shouldUseReducedMenu]);
+  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, isFreelanceUser, activeGroup, isUnlocked, isGateLoading, shouldUseReducedMenu, isMultiRoleUser, allUserGroups]);
 
   // Collapsible sections state — auto-expand section containing active route
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
@@ -752,11 +834,11 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           })}
         </nav>
 
-        {/* AI Tokens - for org users and freelancers */}
+        {/* AI Tokens - for org users (use personal coins if usePersonalCoins is true) */}
         {profile?.current_organization_id && !activeIsClient && !isFreelanceUser && (
           <div className="border-t border-border px-3 py-2">
             <AITokensPanelTrigger
-              organizationId={profile.current_organization_id}
+              organizationId={usePersonalCoins ? null : profile.current_organization_id}
               variant={collapsed ? "compact" : "header"}
             />
           </div>
@@ -786,8 +868,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             </div>
           )}
 
-          {/* Role Switcher - hide for freelancers with single role */}
-          {!isImpersonating && !isFreelanceUser && (
+          {/* Role Switcher - hide for freelancers and multi-role users (they have combined nav) */}
+          {!isImpersonating && !isFreelanceUser && !isMultiRoleUser && (
             <RoleSwitcher collapsed={collapsed} />
           )}
 

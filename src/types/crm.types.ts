@@ -672,6 +672,7 @@ export interface FullUserDetail {
   country: string | null;
   nationality: string | null;
   date_of_birth: string | null;
+  gender: 'male' | 'female' | 'other' | null;
   onboarding_completed: boolean;
   instagram: string | null;
   tiktok: string | null;

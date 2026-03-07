@@ -111,6 +111,27 @@ function scoreFreshness(creator: MarketplaceCreator): { score: number; reason: s
   return { score: 0, reason: null };
 }
 
+// ── Component 6: Variability Factor (controlled randomness) ────────────
+// Genera un factor aleatorio basado en el ID del creador y el día actual
+// Esto hace que el orden cambie cada día pero sea consistente durante el día
+// REDUCIDO para que no domine sobre métricas reales
+
+function getVariabilityFactor(creatorId: string): number {
+  const today = new Date().toDateString();
+  const seed = `${creatorId}-${today}`;
+
+  // Simple hash function
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    const char = seed.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+
+  // Return a value between -3 and +3 (reduced variability)
+  return (Math.abs(hash) % 7) - 3;
+}
+
 // ── Component 6: Diversity Penalty ─────────────────────────────────────
 
 function applyDiversityPenalty(
@@ -238,8 +259,9 @@ export function useMarketplaceRecommendations() {
           reasons.push(...similarity.reasons);
         }
 
-        // Quality signal (always)
-        totalScore += scoreQuality(creator);
+        // Quality signal (always) - PESO AUMENTADO para priorizar resultados
+        const qualityScore = scoreQuality(creator);
+        totalScore += qualityScore * 2; // Multiplicador x2 para que calidad domine
 
         // Freshness boost
         const freshness = scoreFreshness(creator);
@@ -248,7 +270,81 @@ export function useMarketplaceRecommendations() {
 
         // Subscription boost
         if ((creator as any).is_subscribed) {
+          totalScore += 8;
+          reasons.push('Creador verificado');
+        }
+
+        // Portfolio richness bonus (más contenido = más visible)
+        if (creator.portfolio_media.length >= 5) {
+          totalScore += 10;
+        } else if (creator.portfolio_media.length >= 3) {
           totalScore += 5;
+        }
+
+        // Rating excellence bonus
+        if (creator.rating_avg >= 4.8 && creator.rating_count >= 5) {
+          totalScore += 15;
+          reasons.push('Excelentes reseñas');
+        } else if (creator.rating_avg >= 4.5 && creator.rating_count >= 3) {
+          totalScore += 8;
+        }
+
+        // Active projects bonus (marketplace + org)
+        if (creator.completed_projects >= 20) {
+          totalScore += 15;
+          reasons.push('Alta experiencia');
+        } else if (creator.completed_projects >= 10) {
+          totalScore += 10;
+          reasons.push('Experiencia comprobada');
+        } else if (creator.completed_projects >= 5) {
+          totalScore += 5;
+        }
+
+        // Bonus específico por proyectos de organización (trabajo en equipo)
+        const orgProjects = (creator as any).org_projects || 0;
+        if (orgProjects >= 15) {
+          totalScore += 12;
+          reasons.push('Experto en equipos');
+        } else if (orgProjects >= 8) {
+          totalScore += 8;
+          reasons.push('Trabajo en equipo');
+        } else if (orgProjects >= 3) {
+          totalScore += 4;
+        }
+
+        // Bonus por verificación de identidad
+        if (creator.is_verified) {
+          totalScore += 10;
+          reasons.push('Identidad verificada');
+        }
+
+        // Bonus por cantidad de reseñas (social proof)
+        if (creator.rating_count >= 10) {
+          totalScore += 8;
+        } else if (creator.rating_count >= 5) {
+          totalScore += 5;
+        } else if (creator.rating_count >= 2) {
+          totalScore += 2;
+        }
+
+        // Bonus por entrega a tiempo (confiabilidad)
+        const onTimePct = (creator as any).on_time_delivery_pct;
+        if (onTimePct === 100) {
+          totalScore += 10;
+          reasons.push('Siempre puntual');
+        } else if (onTimePct >= 90) {
+          totalScore += 6;
+        } else if (onTimePct >= 80) {
+          totalScore += 3;
+        }
+
+        // Bonus por tiempo de respuesta rápido
+        const responseHours = (creator as any).response_time_hours;
+        if (responseHours !== undefined && responseHours < 6) {
+          totalScore += 5;
+          reasons.push('Respuesta rápida');
+        } else if (responseHours !== undefined && responseHours < 12) {
+          totalScore += 3;
         }
 
         // ── Server-side scoring (behavioral + AI + collaborative) ──
@@ -257,6 +353,9 @@ export function useMarketplaceRecommendations() {
           totalScore += server.score;
           reasons.push(...server.reasons);
         }
+
+        // ── Variability factor (cambia cada día) ──
+        totalScore += getVariabilityFactor(creator.id);
 
         return {
           ...creator,

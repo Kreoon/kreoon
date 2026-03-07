@@ -286,6 +286,49 @@ const basicTalentInOrgSections: NavSection[] = [
   }
 ];
 
+/**
+ * Combina secciones de navegación de múltiples roles eliminando duplicados.
+ */
+function combineNavSections(sectionArrays: NavSection[][]): NavSection[] {
+  const sectionMap = new Map<string, NavItem[]>();
+  const sectionOrder: string[] = [];
+
+  for (const sections of sectionArrays) {
+    for (const section of sections) {
+      if (!sectionMap.has(section.label)) {
+        sectionMap.set(section.label, []);
+        sectionOrder.push(section.label);
+      }
+      const existingItems = sectionMap.get(section.label)!;
+      for (const item of section.items) {
+        if (!existingItems.some(i => i.href === item.href)) {
+          existingItems.push(item);
+        }
+      }
+    }
+  }
+
+  return sectionOrder.map(label => ({
+    label,
+    items: sectionMap.get(label)!,
+  })).filter(s => s.items.length > 0);
+}
+
+/**
+ * Obtiene las secciones base para un permission group específico
+ */
+function getSectionsForGroup(group: PermissionGroup): NavSection[] {
+  switch (group) {
+    case 'admin': return adminSections;
+    case 'team_leader': return adminSections;
+    case 'strategist': return strategistSections;
+    case 'editor': return editorSections;
+    case 'creator': return creatorSections;
+    case 'client': return clientSections;
+    default: return creatorSections;
+  }
+}
+
 // Marketplace sections — mirrors Sidebar.tsx
 function getMarketplaceSections(activeGroup: PermissionGroup | null, isFreelance: boolean = false): NavSection[] {
   const items: NavItem[] = [
@@ -337,7 +380,7 @@ export function MobileNav() {
   const { effectivePlatformName, effectiveStudioLabel, effectiveMarketplaceLabel, effectiveLogoUrl, isWhiteLabelActive } = useWhiteLabel();
   const { isImpersonating, effectiveRoles, impersonationTarget } = useImpersonation();
   const { isUnlocked, isGateLoading } = useReferralGate();
-  const { shouldUseReducedMenu } = useUserPlanContext();
+  const { shouldUseReducedMenu, usePersonalCoins } = useUserPlanContext();
 
   // Detect freelance user: has no org and is not a platform admin
   const isFreelanceUser = !profile?.current_organization_id && !isPlatformAdmin && !isPlatformRoot;
@@ -354,9 +397,25 @@ export function MobileNav() {
   // For brand members without org roles, treat them as 'client' group
   const activeGroup: PermissionGroup | null = rawActiveGroup || (isBrandMember ? 'client' : null);
 
-  const activeIsAdmin = activeGroup === 'admin';
-  const activeIsStrategist = activeGroup === 'strategist';
-  const activeIsEditor = activeGroup === 'editor';
+  // Get ALL unique permission groups for the user (for multi-role support)
+  const allUserGroups = useMemo(() => {
+    const userRoles = isImpersonating ? effectiveRoles : roles;
+    if (!userRoles || userRoles.length === 0) return [];
+
+    const groups = new Set<PermissionGroup>();
+    for (const role of userRoles) {
+      const group = getPermissionGroup(role);
+      if (group) groups.add(group);
+    }
+    return Array.from(groups);
+  }, [isImpersonating, effectiveRoles, roles]);
+
+  // User has multiple distinct permission groups (e.g., creator + editor)
+  const isMultiRoleUser = allUserGroups.length > 1;
+
+  const activeIsAdmin = activeGroup === 'admin' || allUserGroups.includes('admin');
+  const activeIsStrategist = activeGroup === 'strategist' || allUserGroups.includes('strategist');
+  const activeIsEditor = activeGroup === 'editor' || allUserGroups.includes('editor');
   const activeIsCreator = activeGroup === 'creator';
   const activeIsClient = activeGroup === 'client';
 
@@ -480,17 +539,28 @@ export function MobileNav() {
     }
 
     // When roles haven't loaded yet, show minimal nav to avoid flashing admin menu
-    const baseSections = activeIsAdmin
-      ? adminSections
-      : activeIsStrategist
-      ? strategistSections
-      : activeIsEditor
-      ? editorSections
-      : activeIsCreator
-      ? creatorSections
-      : activeIsClient
-      ? clientSections
-      : (isPlatformAdmin ? adminSections : creatorSections);
+    // For multi-role users, combine sections from all their permission groups
+    let baseSections: NavSection[];
+
+    if (isMultiRoleUser && !activeIsClient) {
+      // Combine navigation sections from all user's permission groups
+      const sectionArrays = allUserGroups
+        .filter(g => g !== 'client')
+        .map(g => getSectionsForGroup(g));
+      baseSections = combineNavSections(sectionArrays);
+    } else if (activeIsAdmin) {
+      baseSections = adminSections;
+    } else if (activeIsStrategist) {
+      baseSections = strategistSections;
+    } else if (activeIsEditor) {
+      baseSections = editorSections;
+    } else if (activeIsCreator) {
+      baseSections = creatorSections;
+    } else if (activeIsClient) {
+      baseSections = clientSections;
+    } else {
+      baseSections = isPlatformAdmin ? adminSections : creatorSections;
+    }
 
     const labelMap: Record<string, string> = {
       'KREOON STUDIO': effectiveStudioLabel,
@@ -535,7 +605,7 @@ export function MobileNav() {
       ...(!effectiveMktEnabled && !activeIsClient ? [recruitSection] : []),
       ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Settings", href: "/settings", icon: Settings }] }]),
     ];
-  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, activeGroup, isUnlocked, isGateLoading, isFreelanceUser, shouldUseReducedMenu]);
+  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, activeGroup, isUnlocked, isGateLoading, isFreelanceUser, shouldUseReducedMenu, isMultiRoleUser, allUserGroups]);
 
   // Auto-expand section with active route
   const pathname = location.pathname;
@@ -700,11 +770,11 @@ export function MobileNav() {
             })}
           </nav>
 
-          {/* AI Tokens — only if has org and not client */}
+          {/* AI Tokens — only if has org and not client (use personal coins if usePersonalCoins is true) */}
           {profile?.current_organization_id && !activeIsClient && (
             <div className="border-t border-sidebar-border px-3 py-2">
               <AITokensPanelTrigger
-                organizationId={profile.current_organization_id}
+                organizationId={usePersonalCoins ? null : profile.current_organization_id}
                 variant="header"
               />
             </div>
@@ -719,8 +789,8 @@ export function MobileNav() {
 
           {/* User & Actions */}
           <div className="border-t border-sidebar-border p-3 space-y-2 bg-gradient-to-t from-muted/50 to-transparent">
-            {/* Role Switcher - hide for freelancers with single role */}
-            {!isImpersonating && !isFreelanceUser && (
+            {/* Role Switcher - hide for freelancers and multi-role users (they have combined nav) */}
+            {!isImpersonating && !isFreelanceUser && !isMultiRoleUser && (
               <RoleSwitcher collapsed={false} />
             )}
 

@@ -24,6 +24,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { PLANS as PLAN_DEFS, type PlanDef } from '@/lib/finance/constants';
 import { useAITokens } from '@/hooks/useAITokens';
+import { useUserPlanContext } from '@/hooks/useUserPlanContext';
 import type { SubscriptionTier, BillingCycle } from '@/types/unified-finance.types';
 
 interface CommunityMembership {
@@ -171,6 +172,7 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
   const { user, profile, activeRole } = useAuth();
   const { trackPlanSelected, trackPlanViewed } = useBillingAnalytics();
   const organizationId = profile?.current_organization_id;
+  const { shouldUseReducedMenu, usePersonalCoins } = useUserPlanContext();
 
   // Talent users (freelancers) have their OWN subscription (not the org's)
   const accountType = user?.user_metadata?.account_type;
@@ -184,7 +186,8 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
   const isClientUser = permissionGroup === 'client' || isBrandMember;
 
   // Personal subscription scope: talents and clients use user_id, others use org_id
-  const hasPersonalSubscription = isTalentUser || isClientUser;
+  // Also include org members with basic/free personal plan (shouldUseReducedMenu)
+  const hasPersonalSubscription = isTalentUser || isClientUser || shouldUseReducedMenu;
   // null = user-level tokens/subscription, string = org-level
   const subscriptionScopeId = hasPersonalSubscription ? null : organizationId;
 

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Search, MapPin, Film, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { COUNTRIES, CONTENT_TYPES } from './types/marketplace';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MarketplaceSearchBarProps {
   search: string;
@@ -11,6 +12,13 @@ interface MarketplaceSearchBarProps {
   onCountryChange: (value: string | null) => void;
   onContentTypesChange: (value: string[]) => void;
   onSubmit: () => void;
+  onAIFiltersChange?: (filters: {
+    country?: string | null;
+    marketplace_roles?: string[];
+    category?: string | null;
+    price_max?: number | null;
+    accepts_exchange?: boolean | null;
+  }) => void;
 }
 
 type ActiveSection = 'search' | 'country' | 'content' | null;
@@ -23,9 +31,91 @@ export function MarketplaceSearchBar({
   onCountryChange,
   onContentTypesChange,
   onSubmit,
+  onAIFiltersChange,
 }: MarketplaceSearchBarProps) {
   const [activeSection, setActiveSection] = useState<ActiveSection>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // --- AI: parseo silencioso en segundo plano ---
+  const [aiChips, setAiChips] = useState<{ label: string; type: 'role' | 'location' | 'category' }[]>([]);
+  const [isAIParsing, setIsAIParsing] = useState(false);
+  const aiDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const parseWithAI = useCallback(async (query: string) => {
+    // Activar con queries más cortos: >12 chars o >2 palabras
+    if (query.length < 12 && query.split(' ').length <= 2) {
+      setAiChips([]);
+      return;
+    }
+
+    console.log('[AI Search] Parsing query:', query);
+
+    setIsAIParsing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('marketplace-ai-search', {
+        body: { query, use_gemini: query.length > 15 },
+      });
+
+      if (error || !data?.parsed) {
+        console.log('[AI Search] No data or error:', error);
+        setAiChips([]);
+        return;
+      }
+
+      const { parsed } = data;
+      console.log('[AI Search] Parsed result:', parsed);
+
+      // Construir chips visuales de lo que entendió la IA
+      const chips: { label: string; type: 'role' | 'location' | 'category' }[] = [];
+      if (parsed.roles?.length > 0) {
+        parsed.roles.slice(0, 2).forEach((r: string) =>
+          chips.push({ label: r.replace(/_/g, ' '), type: 'role' })
+        );
+      }
+      if (parsed.country) {
+        const countryLabels: Record<string, string> = {
+          CO: 'Colombia', MX: 'México', CL: 'Chile', AR: 'Argentina',
+          PE: 'Perú', EC: 'Ecuador', VE: 'Venezuela', BR: 'Brasil', ES: 'España', US: 'USA',
+        };
+        chips.push({ label: countryLabels[parsed.country] ?? parsed.country, type: 'location' });
+      }
+      if (parsed.category) {
+        chips.push({ label: parsed.category, type: 'category' });
+      }
+      setAiChips(chips);
+
+      // Emitir filtros al padre si tiene el callback
+      if (onAIFiltersChange && parsed.confidence >= 30) {
+        onAIFiltersChange({
+          country: parsed.country ?? null,
+          marketplace_roles: parsed.roles?.length > 0 ? parsed.roles : undefined,
+          category: parsed.category ?? null,
+          price_max: parsed.price_max ?? null,
+          accepts_exchange: parsed.accepts_exchange ?? null,
+        });
+      }
+    } catch (err) {
+      console.error('[AI Search] Error:', err);
+      setAiChips([]);
+    } finally {
+      setIsAIParsing(false);
+    }
+  }, [onAIFiltersChange]);
+
+  // Debounce del parse AI cuando cambia el search
+  useEffect(() => {
+    if (aiDebounceRef.current) clearTimeout(aiDebounceRef.current);
+    if (!search || search.length < 8) {
+      setAiChips([]);
+      return;
+    }
+    // Debounce más corto para respuesta más rápida
+    aiDebounceRef.current = setTimeout(() => parseWithAI(search), 500);
+    return () => {
+      if (aiDebounceRef.current) clearTimeout(aiDebounceRef.current);
+    };
+  }, [search, parseWithAI]);
+  // --- fin AI ---
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -153,6 +243,37 @@ export function MarketplaceSearchBar({
           </button>
         </div>
       </div>
+
+      {/* Chips AI — solo visibles cuando hay texto y la IA detectó algo */}
+      {aiChips.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mt-2 px-1">
+          {aiChips.map((chip, i) => (
+            <span
+              key={i}
+              className={cn(
+                'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium',
+                chip.type === 'role' && 'bg-purple-500/15 border border-purple-500/25 text-purple-300',
+                chip.type === 'location' && 'bg-blue-500/15 border border-blue-500/20 text-blue-300',
+                chip.type === 'category' && 'bg-pink-500/15 border border-pink-500/20 text-pink-300',
+              )}
+            >
+              {chip.type === 'role' && <span className="w-1.5 h-1.5 rounded-full bg-purple-400 inline-block" />}
+              {chip.type === 'location' && '📍'}
+              {chip.type === 'category' && '#'}
+              {chip.label}
+            </span>
+          ))}
+          {isAIParsing && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] text-white/30">
+              <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+              </svg>
+              IA analizando...
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Dropdowns */}
       {activeSection === 'country' && (

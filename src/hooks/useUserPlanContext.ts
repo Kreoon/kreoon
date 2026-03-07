@@ -96,8 +96,9 @@ export function useUserPlanContext(): UserPlanContext {
   );
 
   // ¿Debe ver coins personales?
-  // Sí, si no tiene rol de acceso completo
-  const usePersonalCoins = !hasFullOrgAccessRole;
+  // Sí, si está en una org pero no tiene rol de acceso completo Y tiene plan limitado
+  // (misma lógica que shouldUseReducedMenu)
+  const usePersonalCoins = shouldUseReducedMenu;
 
   return {
     hasPersonalPlan,

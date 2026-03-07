@@ -20,6 +20,8 @@ export interface MarketplaceCreator {
   is_available: boolean;
   languages: string[];
   completed_projects: number;
+  /** Projects completed within organizations (from content table) */
+  org_projects?: number;
   joined_at: string;
   accepts_product_exchange: boolean;
   /** Average response time label e.g. "< 2h" */

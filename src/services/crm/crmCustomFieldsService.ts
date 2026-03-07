@@ -115,11 +115,20 @@ export async function updateUserProfileFields(
   userId: string,
   data: Record<string, unknown>,
 ): Promise<void> {
-  const { error } = await (supabase as any)
+  console.log('[CRM Service] updateUserProfileFields:', { userId, data });
+  const { data: updated, error } = await (supabase as any)
     .from('profiles')
     .update(data)
-    .eq('id', userId);
-  if (error) throw error;
+    .eq('id', userId)
+    .select();
+  if (error) {
+    console.error('[CRM Service] Update error:', error);
+    throw error;
+  }
+  console.log('[CRM Service] Update result:', { rowsAffected: updated?.length, updated });
+  if (!updated || updated.length === 0) {
+    console.warn('[CRM Service] No rows updated - possible RLS restriction');
+  }
 }
 
 // =====================================================

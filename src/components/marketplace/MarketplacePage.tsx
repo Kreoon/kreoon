@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { MarketplaceSearchBar } from './MarketplaceSearchBar';
-import { AISearchInput } from './AISearchInput';
-import { MarketplaceSearchToggle } from './search/MarketplaceSearchToggle';
 import { cn } from '@/lib/utils';
 import { MarketplaceTabBar } from './MarketplaceTabBar';
 import { CategoryBar } from './CategoryBar';
@@ -38,14 +36,8 @@ export default function MarketplacePage() {
     useCreatorSearch(filters);
   const { visibleCreators, hasMore, loadMore, reset } = useInfiniteCreators(creators);
 
-  // Nuevo hook de búsqueda con ranking AI
-  const marketplaceSearch = useMarketplaceSearch();
-  const {
-    creators: aiCreators,
-    isLoading: aiLoading,
-    aiMode,
-    trackInteraction,
-  } = marketplaceSearch;
+  // Hook de búsqueda AI solo para tracking de interacciones (mejora el ranking)
+  const { trackInteraction } = useMarketplaceSearch();
 
   // Org search
   const { orgs, totalCount: orgTotalCount } = useOrgSearch(filters);
@@ -55,7 +47,6 @@ export default function MarketplacePage() {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
-  const [aiSearchMode, setAiSearchMode] = useState(false);
 
   // Don't show "create profile" banner for client users - they can browse but not be creators
   const isClientUser = activeRole === 'client';
@@ -115,22 +106,28 @@ export default function MarketplacePage() {
     [navigate],
   );
 
-  const handleSearchSubmit = useCallback(() => {
-    setIsSearchActive(filters.search.length > 0);
-  }, [filters.search]);
-
-  const handleAIFiltersChange = useCallback(
-    (newFilters: Partial<MarketplaceFilters>) => {
-      setFilters(prev => ({ ...prev, ...newFilters }));
-      setIsSearchActive(true);
-    },
-    [setFilters]
-  );
-
   const handleSearchChange = useCallback(
     (value: string) => {
       updateFilter('search', value);
-      if (value.length === 0) setIsSearchActive(false);
+      setIsSearchActive(value.length > 0);
+    },
+    [updateFilter],
+  );
+
+  // Handler para filtros detectados por IA desde MarketplaceSearchBar
+  const handleAIFiltersChange = useCallback(
+    (aiFilters: {
+      country?: string | null;
+      marketplace_roles?: string[];
+      category?: string | null;
+      price_max?: number | null;
+      accepts_exchange?: boolean | null;
+    }) => {
+      if (aiFilters.country !== undefined) updateFilter('country', aiFilters.country);
+      if (aiFilters.marketplace_roles !== undefined) updateFilter('marketplace_roles', aiFilters.marketplace_roles as MarketplaceRoleId[]);
+      if (aiFilters.category !== undefined) updateFilter('category', aiFilters.category);
+      if (aiFilters.price_max !== undefined) updateFilter('price_max', aiFilters.price_max);
+      if (aiFilters.accepts_exchange !== undefined) updateFilter('accepts_exchange', aiFilters.accepts_exchange);
     },
     [updateFilter],
   );
@@ -207,6 +204,7 @@ export default function MarketplacePage() {
     [setFilters],
   );
 
+  // Mostrar carruseles solo cuando no hay búsqueda ni filtros activos
   const showCarousels = !isSearchActive && isAllView && !filters.category && activeFilterCount === 0;
 
   return (
@@ -215,9 +213,18 @@ export default function MarketplacePage() {
         {/* Sticky header area */}
         <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-xl border-b border-white/5">
           <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
-            {/* Search bar - AI mode toggle con ranking */}
+            {/* Search bar */}
             <div className="py-4">
-              <MarketplaceSearchToggle hook={marketplaceSearch} />
+              <MarketplaceSearchBar
+                search={filters.search}
+                country={filters.country}
+                contentTypes={filters.content_type}
+                onSearchChange={handleSearchChange}
+                onCountryChange={(value) => updateFilter('country', value)}
+                onContentTypesChange={(value) => updateFilter('content_type', value)}
+                onSubmit={() => setIsSearchActive(filters.search.length > 0)}
+                onAIFiltersChange={handleAIFiltersChange}
+              />
             </div>
 
             {/* Top-level tab bar: Creadores / Agencias / Campañas */}

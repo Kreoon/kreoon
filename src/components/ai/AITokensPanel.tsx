@@ -327,7 +327,7 @@ export function AITokensPanelTrigger({
   organizationId,
   variant = "compact",
 }: {
-  organizationId?: string;
+  organizationId?: string | null;
   variant?: "compact" | "header";
 }) {
   const [modalOpen, setModalOpen] = useState(false);

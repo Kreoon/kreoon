@@ -46,8 +46,9 @@ export function InviteCodeStep({
     try {
       // Llamar al RPC que valida el código de invitación
       const { data, error: rpcError } = await supabase.rpc('validate_registration_code', {
-        p_code: value,
-        p_org_slug: orgSlug,
+        code: value,
+        org_slug: orgSlug,
+        ip: 'client', // IP se valida en el servidor
       });
 
       if (rpcError) throw rpcError;
