@@ -61,13 +61,15 @@ interface Tab03JTBDProps {
 }
 
 function JobCard({ job, index }: { job: Job; index: number }) {
-  const typeConfig = {
+  const typeConfig: Record<string, { icon: typeof Briefcase; color: string; label: string }> = {
     functional: { icon: Briefcase, color: "blue", label: "Funcional" },
     emotional: { icon: Heart, color: "pink", label: "Emocional" },
     social: { icon: Users, color: "purple", label: "Social" },
   };
 
-  const config = typeConfig[job.job_type];
+  // Fallback para job_type undefined o inválido
+  const jobType = job?.job_type && typeConfig[job.job_type] ? job.job_type : "functional";
+  const config = typeConfig[jobType];
   const Icon = config.icon;
 
   return (
@@ -86,10 +88,10 @@ function JobCard({ job, index }: { job: Job; index: number }) {
             <p className="text-xs text-muted-foreground">Oportunidad</p>
             <p className={cn(
               "text-lg font-bold",
-              job.opportunity_score >= 8 ? "text-green-400" :
-              job.opportunity_score >= 5 ? "text-yellow-400" : "text-red-400"
+              (job.opportunity_score || 0) >= 8 ? "text-green-400" :
+              (job.opportunity_score || 0) >= 5 ? "text-yellow-400" : "text-red-400"
             )}>
-              {job.opportunity_score.toFixed(1)}
+              {(job.opportunity_score || 0).toFixed(1)}
             </p>
           </div>
         </div>
@@ -102,13 +104,13 @@ function JobCard({ job, index }: { job: Job; index: number }) {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="text-xs text-muted-foreground mb-1">Importancia</p>
-            <Progress value={job.importance * 10} className="h-2" />
-            <p className="text-xs text-right mt-1">{job.importance}/10</p>
+            <Progress value={(job.importance || 0) * 10} className="h-2" />
+            <p className="text-xs text-right mt-1">{job.importance || 0}/10</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground mb-1">Satisfacción Actual</p>
-            <Progress value={job.satisfaction_current * 10} className="h-2" />
-            <p className="text-xs text-right mt-1">{job.satisfaction_current}/10</p>
+            <Progress value={(job.satisfaction_current || 0) * 10} className="h-2" />
+            <p className="text-xs text-right mt-1">{job.satisfaction_current || 0}/10</p>
           </div>
         </div>
 
@@ -166,6 +168,41 @@ export function Tab03JTBD({ data }: Tab03JTBDProps) {
         <p className="text-sm text-muted-foreground">
           El análisis JTBD se generará al completar el research.
         </p>
+      </div>
+    );
+  }
+
+  // Si los datos vienen en formato diferente (solo summary), mostrar vista simplificada
+  const rawData = data as Record<string, unknown>;
+  if (rawData.summary && !rawData.main_job) {
+    return (
+      <div className="space-y-6">
+        <Card className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border-blue-500/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-blue-500" />
+              Análisis Jobs To Be Done
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-4 rounded-lg bg-background/50">
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                {String(rawData.summary || "")}
+              </p>
+            </div>
+            {rawData._raw && (
+              <details className="mt-4">
+                <summary className="text-xs text-muted-foreground cursor-pointer">
+                  Ver datos completos
+                </summary>
+                <pre className="mt-2 p-3 bg-muted rounded text-xs overflow-auto max-h-96">
+                  {typeof rawData._raw === "string" ? rawData._raw : JSON.stringify(rawData, null, 2)}
+                </pre>
+              </details>
+            )}
+            <CopyButton text={String(rawData.summary || "")} />
+          </CardContent>
+        </Card>
       </div>
     );
   }

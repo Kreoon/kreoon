@@ -1,11 +1,10 @@
 /**
  * TabPlaceholder
- * Componente placeholder para tabs no implementadas aún
+ * Componente que renderiza datos de cualquier estructura de forma amigable
  */
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileText } from "lucide-react";
+import { GenericTabContent } from "./GenericTabContent";
 
 interface TabPlaceholderProps {
   tabName: string;
@@ -26,23 +25,12 @@ export function TabPlaceholder({ tabName, data }: TabPlaceholderProps) {
     );
   }
 
+  // Usar GenericTabContent para renderizar cualquier estructura
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            {tabName}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[500px]">
-            <pre className="text-sm whitespace-pre-wrap font-mono bg-muted p-4 rounded-lg">
-              {JSON.stringify(data, null, 2)}
-            </pre>
-          </ScrollArea>
-        </CardContent>
-      </Card>
-    </div>
+    <GenericTabContent
+      data={data as Record<string, unknown>}
+      title={tabName}
+      icon={<FileText className="w-4 h-4" />}
+    />
   );
 }
