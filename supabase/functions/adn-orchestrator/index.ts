@@ -65,11 +65,11 @@ async function checkTokenBalance(
 ): Promise<{ balance: number; sufficient: boolean }> {
   const { data, error } = await supabase
     .from("ai_token_balances")
-    .select("balance")
+    .select("balance_total")
     .eq("organization_id", organizationId)
-    .single();
+    .maybeSingle();
 
-  const balance = data?.balance || 0;
+  const balance = data?.balance_total || 0;
   return { balance, sufficient: balance >= ESTIMATED_TOKEN_COST };
 }
 
