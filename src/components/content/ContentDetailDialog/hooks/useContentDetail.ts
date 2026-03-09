@@ -370,7 +370,14 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
       if (changed('campaign_week')) updates.campaign_week = data.campaign_week || null;
       if (changed('reference_url')) updates.reference_url = data.reference_url || null;
       if (changed('drive_url')) updates.drive_url = data.drive_url || null;
-      if (changed('script')) updates.script = data.script || null;
+      if (changed('script')) {
+        updates.script = data.script || null;
+        // When modifying an approved script, bump version so trigger allows it and reset approval
+        if (data.script && (content as any)?.script_approved_at) {
+          updates.script_version = ((content as any)?.script_version || 0) + 1;
+          updates.script_approved_at = null;
+        }
+      }
       if (changed('description')) updates.description = data.description || null;
       if (changed('notes')) updates.notes = data.notes || null;
       if (changed('editor_guidelines')) updates.editor_guidelines = data.editor_guidelines || null;
@@ -402,7 +409,14 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
       if (changed('campaign_week')) updates.campaign_week = data.campaign_week || null;
       if (changed('reference_url')) updates.reference_url = data.reference_url || null;
       if (changed('drive_url')) updates.drive_url = data.drive_url || null;
-      if (changed('script')) updates.script = data.script || null;
+      if (changed('script')) {
+        updates.script = data.script || null;
+        // When modifying an approved script, bump version so trigger allows it and reset approval
+        if (data.script && (content as any)?.script_approved_at) {
+          updates.script_version = ((content as any)?.script_version || 0) + 1;
+          updates.script_approved_at = null;
+        }
+      }
       if (changed('description')) updates.description = data.description || null;
       if (changed('notes')) updates.notes = data.notes || null;
       if (changed('creator_payment')) updates.creator_payment = data.creator_payment;
