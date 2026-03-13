@@ -19,7 +19,6 @@ export { Tab08CopyAngles } from "./Tab08CopyAngles";
 export { Tab09Offer } from "./Tab09Offer";
 
 // Block 4: Contenido
-export { Tab10VideoCreatives } from "./Tab10VideoCreatives";
 export { Tab11Calendar } from "./Tab11Calendar";
 export { Tab12LeadMagnets } from "./Tab12LeadMagnets";
 

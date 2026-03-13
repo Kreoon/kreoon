@@ -8,7 +8,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const GEMINI_IMAGE_MODEL = "gemini-2.0-flash-exp-image-generation";
+const GEMINI_IMAGE_MODEL = "gemini-1.5-flash-exp-image-generation";
 
 // Clean and normalize prompt for image generation
 function cleanPromptForImageGen(rawPrompt: string): string {

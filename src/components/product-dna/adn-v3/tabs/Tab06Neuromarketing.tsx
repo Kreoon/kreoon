@@ -1,6 +1,7 @@
 /**
  * Tab06Neuromarketing
  * Principios de neuromarketing aplicados
+ * Adaptado a la estructura real del backend adn-research-v3
  */
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,58 +12,113 @@ import {
   Eye,
   Palette,
   Volume2,
-  Type,
   Zap,
   Target,
+  Heart,
+  Shield,
+  DollarSign,
+  Sparkles,
+  PenTool,
+  AlertTriangle,
 } from "lucide-react";
 import { CopyButton } from "../ui/CopyButton";
+import { GenericTabContent } from "./GenericTabContent";
 
-interface NeuromarketingData {
-  cognitive_biases: Array<{
-    bias: string;
-    description: string;
-    application: string;
-    example_copy: string;
+// Estructura real del backend (step-06-neuromarketing.ts)
+interface BackendNeuromarketingData {
+  primary_biases?: Array<{
+    bias?: string;
+    description?: string;
+    application?: string;
+    implementation?: {
+      landing_page?: string;
+      ad_creative?: string;
+      email?: string;
+      sales_call?: string;
+    };
   }>;
-  persuasion_principles: Array<{
-    principle: string;
-    how_to_apply: string;
-    copy_example: string;
-  }>;
-  sensory_triggers: {
-    visual: string[];
-    auditory: string[];
-    kinesthetic: string[];
+  decision_architecture?: {
+    default_option?: string;
+    choice_overload_prevention?: string;
+    decoy_effect?: {
+      applicable?: boolean;
+      how_to_implement?: string;
+    };
+    anchoring?: {
+      anchor_price?: string;
+      how_to_present?: string;
+    };
   };
-  color_psychology: Array<{
-    color: string;
-    emotion: string;
-    usage: string;
-  }>;
-  typography_recommendations: {
-    headlines: string;
-    body: string;
-    cta: string;
-    rationale: string;
+  sensory_triggers?: {
+    visual?: {
+      colors?: string[];
+      imagery?: string;
+      typography?: string;
+    };
+    auditory?: {
+      music_style?: string;
+      voice_characteristics?: string;
+      sound_effects?: string;
+    };
+    kinesthetic?: {
+      textures?: string;
+      interactive_elements?: string;
+    };
   };
-  attention_patterns: {
-    f_pattern_elements: string[];
-    z_pattern_elements: string[];
-    focal_points: string[];
+  attention_grabbers?: Array<{
+    technique?: string;
+    neuroscience?: string;
+    example?: string;
+  }>;
+  memory_encoding?: {
+    peak_end_rule?: string;
+    repetition_strategy?: string;
+    emotional_peaks?: string[];
+    distinctiveness?: string;
   };
-  emotional_triggers: Array<{
-    trigger: string;
-    activation_method: string;
-    copy_snippet: string;
-  }>;
-  decision_shortcuts: Array<{
-    shortcut: string;
-    implementation: string;
-  }>;
+  trust_signals?: {
+    neurological_trust_builders?: Array<{
+      signal?: string;
+      why_works?: string;
+      implementation?: string;
+    }>;
+    reduce_cognitive_load?: string;
+  };
+  urgency_scarcity_neuro?: {
+    loss_aversion_messaging?: string;
+    fomo_triggers?: string[];
+    ethical_boundaries?: string;
+  };
+  pricing_psychology?: {
+    charm_pricing?: string;
+    payment_pain_reduction?: string;
+    value_framing?: string;
+    installment_psychology?: string;
+  };
+  emotional_arc?: {
+    hook_emotion?: string;
+    engagement_emotion?: string;
+    conversion_emotion?: string;
+    retention_emotion?: string;
+  };
+  color_psychology?: {
+    primary_recommendation?: string;
+    secondary_recommendation?: string;
+    accent_for_cta?: string;
+    colors_to_avoid?: string[];
+  };
+  neuro_copywriting?: {
+    opening_pattern?: string;
+    credibility_pattern?: string;
+    desire_amplifier?: string;
+    urgency_pattern?: string;
+    closing_pattern?: string;
+  };
+  summary?: string;
 }
 
 interface Tab06NeuromarketingProps {
-  data: NeuromarketingData | null | undefined;
+  data: BackendNeuromarketingData | null | undefined;
 }
 
 export function Tab06Neuromarketing({ data }: Tab06NeuromarketingProps) {
@@ -78,275 +134,560 @@ export function Tab06Neuromarketing({ data }: Tab06NeuromarketingProps) {
     );
   }
 
+  // Verificar estructura del backend
+  const rawData = data as Record<string, unknown>;
+  const hasBackendStructure =
+    rawData.primary_biases ||
+    rawData.decision_architecture ||
+    rawData.sensory_triggers ||
+    rawData.emotional_arc;
+
+  if (!hasBackendStructure) {
+    return (
+      <GenericTabContent
+        data={rawData}
+        title="Neuromarketing"
+        icon={<Lightbulb className="w-4 h-4" />}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Cognitive Biases */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Brain className="w-5 h-5 text-purple-500" />
-            Sesgos Cognitivos Aplicables
-          </CardTitle>
-          <CardDescription>
-            Atajos mentales que influyen en las decisiones de compra
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {data.cognitive_biases?.map((bias, idx) => (
+      {/* Summary */}
+      {data.summary && (
+        <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Brain className="w-5 h-5 text-purple-500" />
+              Resumen de Neuromarketing
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm leading-relaxed">{data.summary}</p>
+            <CopyButton text={data.summary} className="mt-2" size="sm" />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Primary Biases */}
+      {data.primary_biases && data.primary_biases.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Brain className="w-5 h-5 text-purple-500" />
+              Sesgos Cognitivos Principales
+            </CardTitle>
+            <CardDescription>
+              Atajos mentales que influyen en las decisiones de compra
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {data.primary_biases.map((bias, idx) => (
               <div key={idx} className="p-4 rounded-lg border bg-card">
                 <div className="flex items-start justify-between mb-2">
-                  <Badge className="bg-purple-500/20 text-purple-400">
+                  <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
                     {bias.bias}
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground mb-3">{bias.description}</p>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  <div className="p-2 rounded bg-muted/50">
-                    <p className="text-xs text-muted-foreground mb-1">Aplicación</p>
-                    <p className="text-sm">{bias.application}</p>
-                  </div>
-                  <div className="p-2 rounded bg-green-500/10">
-                    <p className="text-xs text-green-400 mb-1">Ejemplo de Copy</p>
-                    <p className="text-sm italic">"{bias.example_copy}"</p>
-                    <CopyButton text={bias.example_copy} size="sm" className="mt-1" />
-                  </div>
+                <div className="p-3 rounded bg-muted/50 mb-3">
+                  <p className="text-xs text-muted-foreground mb-1">Aplicación</p>
+                  <p className="text-sm">{bias.application}</p>
                 </div>
+                {bias.implementation && (
+                  <div className="grid sm:grid-cols-2 gap-2 text-xs">
+                    {bias.implementation.landing_page && (
+                      <div className="p-2 rounded bg-blue-500/10 border border-blue-500/20">
+                        <span className="text-blue-400 font-medium">Landing:</span>{" "}
+                        <span className="text-muted-foreground">{bias.implementation.landing_page}</span>
+                      </div>
+                    )}
+                    {bias.implementation.ad_creative && (
+                      <div className="p-2 rounded bg-green-500/10 border border-green-500/20">
+                        <span className="text-green-400 font-medium">Anuncios:</span>{" "}
+                        <span className="text-muted-foreground">{bias.implementation.ad_creative}</span>
+                      </div>
+                    )}
+                    {bias.implementation.email && (
+                      <div className="p-2 rounded bg-yellow-500/10 border border-yellow-500/20">
+                        <span className="text-yellow-400 font-medium">Email:</span>{" "}
+                        <span className="text-muted-foreground">{bias.implementation.email}</span>
+                      </div>
+                    )}
+                    {bias.implementation.sales_call && (
+                      <div className="p-2 rounded bg-orange-500/10 border border-orange-500/20">
+                        <span className="text-orange-400 font-medium">Ventas:</span>{" "}
+                        <span className="text-muted-foreground">{bias.implementation.sales_call}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Persuasion Principles */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-yellow-500" />
-            Principios de Persuasión
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {data.persuasion_principles?.map((principle, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
-                <h4 className="font-semibold text-yellow-400 mb-2">{principle.principle}</h4>
-                <p className="text-sm text-muted-foreground mb-3">{principle.how_to_apply}</p>
-                <div className="p-2 rounded bg-muted/50 flex items-start justify-between">
-                  <p className="text-sm italic">"{principle.copy_example}"</p>
-                  <CopyButton text={principle.copy_example} size="sm" />
-                </div>
+      {/* Decision Architecture */}
+      {data.decision_architecture && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Target className="w-5 h-5 text-blue-500" />
+              Arquitectura de Decisiones
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {data.decision_architecture.default_option && (
+              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                <p className="text-xs text-blue-400 mb-1">Opción por Defecto</p>
+                <p className="text-sm">{data.decision_architecture.default_option}</p>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            )}
+            {data.decision_architecture.choice_overload_prevention && (
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs text-muted-foreground mb-1">Prevención de Parálisis por Análisis</p>
+                <p className="text-sm">{data.decision_architecture.choice_overload_prevention}</p>
+              </div>
+            )}
+            <div className="grid sm:grid-cols-2 gap-4">
+              {data.decision_architecture.decoy_effect && (
+                <div className="p-3 rounded-lg border">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant={data.decision_architecture.decoy_effect.applicable ? "default" : "secondary"}>
+                      Efecto Señuelo
+                    </Badge>
+                    {data.decision_architecture.decoy_effect.applicable && (
+                      <span className="text-xs text-green-400">Aplicable</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {data.decision_architecture.decoy_effect.how_to_implement}
+                  </p>
+                </div>
+              )}
+              {data.decision_architecture.anchoring && (
+                <div className="p-3 rounded-lg border">
+                  <Badge className="mb-2">Anclaje de Precio</Badge>
+                  <p className="text-sm font-medium text-green-400 mb-1">
+                    {data.decision_architecture.anchoring.anchor_price}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {data.decision_architecture.anchoring.how_to_present}
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Emotional Arc */}
+      {data.emotional_arc && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Heart className="w-5 h-5 text-red-500" />
+              Arco Emocional
+            </CardTitle>
+            <CardDescription>
+              Emociones a activar en cada etapa del journey
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {data.emotional_arc.hook_emotion && (
+                <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                  <p className="text-xs text-yellow-400 mb-1">Hook (Captura)</p>
+                  <p className="text-sm font-medium">{data.emotional_arc.hook_emotion}</p>
+                </div>
+              )}
+              {data.emotional_arc.engagement_emotion && (
+                <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                  <p className="text-xs text-blue-400 mb-1">Engagement</p>
+                  <p className="text-sm font-medium">{data.emotional_arc.engagement_emotion}</p>
+                </div>
+              )}
+              {data.emotional_arc.conversion_emotion && (
+                <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <p className="text-xs text-green-400 mb-1">Conversión</p>
+                  <p className="text-sm font-medium">{data.emotional_arc.conversion_emotion}</p>
+                </div>
+              )}
+              {data.emotional_arc.retention_emotion && (
+                <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                  <p className="text-xs text-purple-400 mb-1">Retención</p>
+                  <p className="text-sm font-medium">{data.emotional_arc.retention_emotion}</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Sensory Triggers */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Eye className="w-5 h-5 text-blue-500" />
-            Triggers Sensoriales
-          </CardTitle>
-          <CardDescription>
-            Elementos que activan los diferentes canales sensoriales
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid sm:grid-cols-3 gap-4">
-            <div className="p-4 rounded-lg border bg-blue-500/5 border-blue-500/20">
-              <div className="flex items-center gap-2 mb-3">
-                <Eye className="w-4 h-4 text-blue-400" />
-                <p className="font-medium text-blue-400">Visual</p>
-              </div>
-              <ul className="space-y-2">
-                {data.sensory_triggers?.visual?.map((item, idx) => (
-                  <li key={idx} className="text-sm text-muted-foreground">• {item}</li>
-                ))}
-              </ul>
+      {data.sensory_triggers && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Eye className="w-5 h-5 text-blue-500" />
+              Triggers Sensoriales
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid sm:grid-cols-3 gap-4">
+              {data.sensory_triggers.visual && (
+                <div className="p-4 rounded-lg border bg-blue-500/5 border-blue-500/20">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Eye className="w-4 h-4 text-blue-400" />
+                    <p className="font-medium text-blue-400">Visual</p>
+                  </div>
+                  {data.sensory_triggers.visual.colors && data.sensory_triggers.visual.colors.length > 0 && (
+                    <div className="mb-2">
+                      <p className="text-xs text-muted-foreground mb-1">Colores:</p>
+                      <ul className="space-y-1">
+                        {data.sensory_triggers.visual.colors.map((c, i) => (
+                          <li key={i} className="text-xs">• {c}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {data.sensory_triggers.visual.imagery && (
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Imágenes:</strong> {data.sensory_triggers.visual.imagery}
+                    </p>
+                  )}
+                  {data.sensory_triggers.visual.typography && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      <strong>Tipografía:</strong> {data.sensory_triggers.visual.typography}
+                    </p>
+                  )}
+                </div>
+              )}
+              {data.sensory_triggers.auditory && (
+                <div className="p-4 rounded-lg border bg-green-500/5 border-green-500/20">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Volume2 className="w-4 h-4 text-green-400" />
+                    <p className="font-medium text-green-400">Auditivo</p>
+                  </div>
+                  {data.sensory_triggers.auditory.music_style && (
+                    <p className="text-xs text-muted-foreground mb-1">
+                      <strong>Música:</strong> {data.sensory_triggers.auditory.music_style}
+                    </p>
+                  )}
+                  {data.sensory_triggers.auditory.voice_characteristics && (
+                    <p className="text-xs text-muted-foreground mb-1">
+                      <strong>Voz:</strong> {data.sensory_triggers.auditory.voice_characteristics}
+                    </p>
+                  )}
+                  {data.sensory_triggers.auditory.sound_effects && (
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Efectos:</strong> {data.sensory_triggers.auditory.sound_effects}
+                    </p>
+                  )}
+                </div>
+              )}
+              {data.sensory_triggers.kinesthetic && (
+                <div className="p-4 rounded-lg border bg-orange-500/5 border-orange-500/20">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sparkles className="w-4 h-4 text-orange-400" />
+                    <p className="font-medium text-orange-400">Kinestésico</p>
+                  </div>
+                  {data.sensory_triggers.kinesthetic.textures && (
+                    <p className="text-xs text-muted-foreground mb-1">
+                      <strong>Texturas:</strong> {data.sensory_triggers.kinesthetic.textures}
+                    </p>
+                  )}
+                  {data.sensory_triggers.kinesthetic.interactive_elements && (
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Interactivos:</strong> {data.sensory_triggers.kinesthetic.interactive_elements}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="p-4 rounded-lg border bg-green-500/5 border-green-500/20">
-              <div className="flex items-center gap-2 mb-3">
-                <Volume2 className="w-4 h-4 text-green-400" />
-                <p className="font-medium text-green-400">Auditivo</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Attention Grabbers */}
+      {data.attention_grabbers && data.attention_grabbers.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Zap className="w-5 h-5 text-yellow-500" />
+              Captadores de Atención
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {data.attention_grabbers.map((grabber, idx) => (
+              <div key={idx} className="p-4 rounded-lg border bg-card">
+                <h4 className="font-medium text-yellow-400 mb-2">{grabber.technique}</h4>
+                {grabber.neuroscience && (
+                  <p className="text-xs text-muted-foreground mb-2">
+                    <strong>Neurociencia:</strong> {grabber.neuroscience}
+                  </p>
+                )}
+                {grabber.example && (
+                  <div className="p-2 rounded bg-yellow-500/10 border border-yellow-500/20">
+                    <p className="text-sm italic">"{grabber.example}"</p>
+                    <CopyButton text={grabber.example} size="sm" className="mt-1" />
+                  </div>
+                )}
               </div>
-              <ul className="space-y-2">
-                {data.sensory_triggers?.auditory?.map((item, idx) => (
-                  <li key={idx} className="text-sm text-muted-foreground">• {item}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="p-4 rounded-lg border bg-orange-500/5 border-orange-500/20">
-              <div className="flex items-center gap-2 mb-3">
-                <Target className="w-4 h-4 text-orange-400" />
-                <p className="font-medium text-orange-400">Kinestésico</p>
-              </div>
-              <ul className="space-y-2">
-                {data.sensory_triggers?.kinesthetic?.map((item, idx) => (
-                  <li key={idx} className="text-sm text-muted-foreground">• {item}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Color Psychology */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Palette className="w-5 h-5 text-pink-500" />
-            Psicología del Color
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {data.color_psychology?.map((color, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
-                <div className="flex items-center gap-3 mb-2">
-                  <div
-                    className="w-8 h-8 rounded-full border-2"
-                    style={{
-                      backgroundColor: color.color.toLowerCase().includes('rojo') ? '#ef4444' :
-                        color.color.toLowerCase().includes('azul') ? '#3b82f6' :
-                        color.color.toLowerCase().includes('verde') ? '#22c55e' :
-                        color.color.toLowerCase().includes('amarillo') ? '#eab308' :
-                        color.color.toLowerCase().includes('naranja') ? '#f97316' :
-                        color.color.toLowerCase().includes('morado') || color.color.toLowerCase().includes('púrpura') ? '#a855f7' :
-                        color.color.toLowerCase().includes('negro') ? '#1f2937' :
-                        color.color.toLowerCase().includes('blanco') ? '#f9fafb' : '#6b7280'
-                    }}
-                  />
-                  <span className="font-medium">{color.color}</span>
+      {data.color_psychology && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Palette className="w-5 h-5 text-pink-500" />
+              Psicología del Color
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {data.color_psychology.primary_recommendation && (
+                <div className="p-3 rounded-lg border">
+                  <p className="text-xs text-muted-foreground mb-1">Color Primario</p>
+                  <p className="text-sm">{data.color_psychology.primary_recommendation}</p>
                 </div>
-                <p className="text-sm text-muted-foreground mb-1">
-                  <strong>Emoción:</strong> {color.emotion}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  <strong>Uso:</strong> {color.usage}
-                </p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Typography */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Type className="w-5 h-5 text-indigo-500" />
-            Tipografía Recomendada
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid sm:grid-cols-3 gap-4 mb-4">
-            <div className="p-4 rounded-lg border bg-card">
-              <p className="text-xs text-muted-foreground mb-1">Headlines</p>
-              <p className="font-bold text-lg">{data.typography_recommendations?.headlines}</p>
-            </div>
-            <div className="p-4 rounded-lg border bg-card">
-              <p className="text-xs text-muted-foreground mb-1">Body Text</p>
-              <p className="font-medium">{data.typography_recommendations?.body}</p>
-            </div>
-            <div className="p-4 rounded-lg border bg-card">
-              <p className="text-xs text-muted-foreground mb-1">CTAs</p>
-              <p className="font-semibold">{data.typography_recommendations?.cta}</p>
-            </div>
-          </div>
-          <div className="p-3 rounded-lg bg-muted/50">
-            <p className="text-sm text-muted-foreground">
-              <strong>Razón:</strong> {data.typography_recommendations?.rationale}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Attention Patterns */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Eye className="w-5 h-5 text-cyan-500" />
-            Patrones de Atención
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid sm:grid-cols-3 gap-4">
-            <div className="p-4 rounded-lg border bg-card">
-              <Badge variant="outline" className="mb-2">Patrón F</Badge>
-              <ul className="space-y-1">
-                {data.attention_patterns?.f_pattern_elements?.map((item, idx) => (
-                  <li key={idx} className="text-sm text-muted-foreground">• {item}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="p-4 rounded-lg border bg-card">
-              <Badge variant="outline" className="mb-2">Patrón Z</Badge>
-              <ul className="space-y-1">
-                {data.attention_patterns?.z_pattern_elements?.map((item, idx) => (
-                  <li key={idx} className="text-sm text-muted-foreground">• {item}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="p-4 rounded-lg border bg-card">
-              <Badge variant="outline" className="mb-2">Puntos Focales</Badge>
-              <ul className="space-y-1">
-                {data.attention_patterns?.focal_points?.map((item, idx) => (
-                  <li key={idx} className="text-sm text-muted-foreground">• {item}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Emotional Triggers */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-red-500" />
-            Triggers Emocionales
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {data.emotional_triggers?.map((trigger, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
-                <h4 className="font-medium text-red-400 mb-2">{trigger.trigger}</h4>
-                <p className="text-sm text-muted-foreground mb-3">{trigger.activation_method}</p>
-                <div className="p-2 rounded bg-muted/50 flex items-start justify-between">
-                  <p className="text-sm italic">"{trigger.copy_snippet}"</p>
-                  <CopyButton text={trigger.copy_snippet} size="sm" />
+              )}
+              {data.color_psychology.secondary_recommendation && (
+                <div className="p-3 rounded-lg border">
+                  <p className="text-xs text-muted-foreground mb-1">Color Secundario</p>
+                  <p className="text-sm">{data.color_psychology.secondary_recommendation}</p>
                 </div>
+              )}
+              {data.color_psychology.accent_for_cta && (
+                <div className="p-3 rounded-lg border bg-green-500/10 border-green-500/20">
+                  <p className="text-xs text-green-400 mb-1">Color CTA</p>
+                  <p className="text-sm">{data.color_psychology.accent_for_cta}</p>
+                </div>
+              )}
+            </div>
+            {data.color_psychology.colors_to_avoid && data.color_psychology.colors_to_avoid.length > 0 && (
+              <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                <p className="text-xs text-red-400 mb-2">Colores a Evitar:</p>
+                <ul className="space-y-1">
+                  {data.color_psychology.colors_to_avoid.map((c, i) => (
+                    <li key={i} className="text-xs text-muted-foreground">• {c}</li>
+                  ))}
+                </ul>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Decision Shortcuts */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="w-5 h-5 text-green-500" />
-            Atajos de Decisión
-          </CardTitle>
-          <CardDescription>
-            Elementos que aceleran la toma de decisiones
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {data.decision_shortcuts?.map((shortcut, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
-                <h4 className="font-medium text-green-400 mb-2">{shortcut.shortcut}</h4>
-                <p className="text-sm text-muted-foreground">{shortcut.implementation}</p>
+      {/* Neuro Copywriting */}
+      {data.neuro_copywriting && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <PenTool className="w-5 h-5 text-indigo-500" />
+              Neuro Copywriting
+            </CardTitle>
+            <CardDescription>
+              Patrones de escritura que activan el cerebro
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {data.neuro_copywriting.opening_pattern && (
+              <div className="p-3 rounded-lg border">
+                <p className="text-xs text-yellow-400 mb-1">Apertura</p>
+                <p className="text-sm">{data.neuro_copywriting.opening_pattern}</p>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            )}
+            {data.neuro_copywriting.credibility_pattern && (
+              <div className="p-3 rounded-lg border">
+                <p className="text-xs text-blue-400 mb-1">Credibilidad</p>
+                <p className="text-sm">{data.neuro_copywriting.credibility_pattern}</p>
+              </div>
+            )}
+            {data.neuro_copywriting.desire_amplifier && (
+              <div className="p-3 rounded-lg border">
+                <p className="text-xs text-pink-400 mb-1">Amplificador de Deseo</p>
+                <p className="text-sm">{data.neuro_copywriting.desire_amplifier}</p>
+              </div>
+            )}
+            {data.neuro_copywriting.urgency_pattern && (
+              <div className="p-3 rounded-lg border">
+                <p className="text-xs text-orange-400 mb-1">Urgencia</p>
+                <p className="text-sm">{data.neuro_copywriting.urgency_pattern}</p>
+              </div>
+            )}
+            {data.neuro_copywriting.closing_pattern && (
+              <div className="p-3 rounded-lg border">
+                <p className="text-xs text-green-400 mb-1">Cierre</p>
+                <p className="text-sm">{data.neuro_copywriting.closing_pattern}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Trust Signals */}
+      {data.trust_signals && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Shield className="w-5 h-5 text-green-500" />
+              Señales de Confianza
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {data.trust_signals.neurological_trust_builders && data.trust_signals.neurological_trust_builders.length > 0 && (
+              <div className="space-y-3">
+                {data.trust_signals.neurological_trust_builders.map((signal, idx) => (
+                  <div key={idx} className="p-3 rounded-lg border">
+                    <h4 className="font-medium text-green-400 text-sm mb-1">{signal.signal}</h4>
+                    {signal.why_works && (
+                      <p className="text-xs text-muted-foreground mb-1">
+                        <strong>Por qué funciona:</strong> {signal.why_works}
+                      </p>
+                    )}
+                    {signal.implementation && (
+                      <p className="text-xs text-muted-foreground">
+                        <strong>Implementación:</strong> {signal.implementation}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {data.trust_signals.reduce_cognitive_load && (
+              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                <p className="text-xs text-green-400 mb-1">Reducir Carga Cognitiva</p>
+                <p className="text-sm">{data.trust_signals.reduce_cognitive_load}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Pricing Psychology */}
+      {data.pricing_psychology && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <DollarSign className="w-5 h-5 text-emerald-500" />
+              Psicología de Precios
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {data.pricing_psychology.charm_pricing && (
+                <div className="p-3 rounded-lg border">
+                  <p className="text-xs text-muted-foreground mb-1">Precios con Encanto</p>
+                  <p className="text-sm">{data.pricing_psychology.charm_pricing}</p>
+                </div>
+              )}
+              {data.pricing_psychology.payment_pain_reduction && (
+                <div className="p-3 rounded-lg border">
+                  <p className="text-xs text-muted-foreground mb-1">Reducir Dolor del Pago</p>
+                  <p className="text-sm">{data.pricing_psychology.payment_pain_reduction}</p>
+                </div>
+              )}
+              {data.pricing_psychology.value_framing && (
+                <div className="p-3 rounded-lg border">
+                  <p className="text-xs text-muted-foreground mb-1">Enmarcado de Valor</p>
+                  <p className="text-sm">{data.pricing_psychology.value_framing}</p>
+                </div>
+              )}
+              {data.pricing_psychology.installment_psychology && (
+                <div className="p-3 rounded-lg border">
+                  <p className="text-xs text-muted-foreground mb-1">Psicología de Cuotas</p>
+                  <p className="text-sm">{data.pricing_psychology.installment_psychology}</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Urgency & Scarcity Neuro */}
+      {data.urgency_scarcity_neuro && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <AlertTriangle className="w-5 h-5 text-red-500" />
+              Urgencia y Escasez (Neuro)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {data.urgency_scarcity_neuro.loss_aversion_messaging && (
+              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                <p className="text-xs text-red-400 mb-1">Aversión a la Pérdida</p>
+                <p className="text-sm">{data.urgency_scarcity_neuro.loss_aversion_messaging}</p>
+              </div>
+            )}
+            {data.urgency_scarcity_neuro.fomo_triggers && data.urgency_scarcity_neuro.fomo_triggers.length > 0 && (
+              <div className="p-3 rounded-lg border">
+                <p className="text-xs text-orange-400 mb-2">Triggers FOMO:</p>
+                <ul className="space-y-1">
+                  {data.urgency_scarcity_neuro.fomo_triggers.map((trigger, i) => (
+                    <li key={i} className="text-sm">• {trigger}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {data.urgency_scarcity_neuro.ethical_boundaries && (
+              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                <p className="text-xs text-green-400 mb-1">Límites Éticos</p>
+                <p className="text-sm">{data.urgency_scarcity_neuro.ethical_boundaries}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Memory Encoding */}
+      {data.memory_encoding && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Brain className="w-5 h-5 text-cyan-500" />
+              Codificación en Memoria
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {data.memory_encoding.peak_end_rule && (
+              <div className="p-3 rounded-lg border">
+                <p className="text-xs text-cyan-400 mb-1">Regla Peak-End</p>
+                <p className="text-sm">{data.memory_encoding.peak_end_rule}</p>
+              </div>
+            )}
+            {data.memory_encoding.repetition_strategy && (
+              <div className="p-3 rounded-lg border">
+                <p className="text-xs text-muted-foreground mb-1">Estrategia de Repetición</p>
+                <p className="text-sm">{data.memory_encoding.repetition_strategy}</p>
+              </div>
+            )}
+            {data.memory_encoding.emotional_peaks && data.memory_encoding.emotional_peaks.length > 0 && (
+              <div className="p-3 rounded-lg border">
+                <p className="text-xs text-pink-400 mb-2">Picos Emocionales:</p>
+                <ul className="space-y-1">
+                  {data.memory_encoding.emotional_peaks.map((peak, i) => (
+                    <li key={i} className="text-sm">• {peak}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {data.memory_encoding.distinctiveness && (
+              <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                <p className="text-xs text-purple-400 mb-1">Distintividad vs Competencia</p>
+                <p className="text-sm">{data.memory_encoding.distinctiveness}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

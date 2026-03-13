@@ -17,8 +17,12 @@ import {
   CheckCircle2,
   Zap,
   Globe,
+  Youtube,
+  Mic,
+  Video,
 } from "lucide-react";
 import { CopyButton } from "../ui/CopyButton";
+import { GenericTabContent } from "./GenericTabContent";
 
 interface ContentPillar {
   pillar: string;
@@ -61,6 +65,24 @@ interface OrganicContentData {
   content_pillars: ContentPillar[];
   seo_strategy: SEOStrategy;
   blog_content_plan: BlogPost[];
+  // Backend additional fields
+  youtube_strategy?: {
+    channel_positioning: string;
+    video_types: string[];
+    publishing_frequency: string;
+    seo_approach: string;
+    video_ideas: Array<{
+      title: string;
+      type: string;
+      target_keyword: string;
+    }>;
+  };
+  podcast_opportunity?: {
+    viable: boolean;
+    format: string;
+    episode_topics: string[];
+    distribution_strategy: string;
+  };
   content_repurposing: Array<{
     original_format: string;
     repurposed_formats: string[];
@@ -86,6 +108,7 @@ interface OrganicContentData {
     tools_recommended: string[];
     reporting_frequency: string;
   };
+  summary?: string;
 }
 
 interface Tab21OrganicContentProps {
@@ -105,8 +128,36 @@ export function Tab21OrganicContent({ data }: Tab21OrganicContentProps) {
     );
   }
 
+  // Fallback: Si la estructura no coincide o los tipos son incorrectos, usar GenericTabContent
+  const rawData = data as Record<string, unknown>;
+  const contentStrategyOverview = rawData.content_strategy_overview as Record<string, unknown> | undefined;
+  const hasValidStructure =
+    contentStrategyOverview &&
+    typeof contentStrategyOverview === 'object' &&
+    typeof contentStrategyOverview.primary_goal === 'string' &&
+    Array.isArray(contentStrategyOverview.primary_channels);
+
+  if (!hasValidStructure) {
+    return (
+      <GenericTabContent
+        data={rawData}
+        title="Contenido Orgánico"
+        icon={<FileText className="w-4 h-4" />}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {/* Summary */}
+      {data.summary && (
+        <Card className="bg-gradient-to-br from-green-500/10 to-teal-500/10 border-green-500/30">
+          <CardContent className="pt-6">
+            <p className="text-sm leading-relaxed">{data.summary}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Strategy Overview */}
       <Card className="bg-gradient-to-br from-green-500/10 to-teal-500/10 border-green-500/30">
         <CardHeader>
@@ -315,6 +366,95 @@ export function Tab21OrganicContent({ data }: Tab21OrganicContentProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* YouTube Strategy - Backend field */}
+      {data.youtube_strategy && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Youtube className="w-5 h-5 text-red-500" />
+              Estrategia YouTube
+            </CardTitle>
+            <CardDescription>{data.youtube_strategy.channel_positioning}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid sm:grid-cols-3 gap-4">
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs text-muted-foreground mb-1">Frecuencia</p>
+                <p className="font-medium">{data.youtube_strategy.publishing_frequency}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs text-muted-foreground mb-1">Tipos de Video</p>
+                <div className="flex flex-wrap gap-1">
+                  {data.youtube_strategy.video_types?.map((type, idx) => (
+                    <Badge key={idx} variant="secondary" className="text-xs">{type}</Badge>
+                  ))}
+                </div>
+              </div>
+              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                <p className="text-xs text-red-400 mb-1">Enfoque SEO</p>
+                <p className="text-sm">{data.youtube_strategy.seo_approach}</p>
+              </div>
+            </div>
+
+            {data.youtube_strategy.video_ideas && data.youtube_strategy.video_ideas.length > 0 && (
+              <div>
+                <p className="text-sm font-medium mb-2">Ideas de Videos</p>
+                <div className="space-y-2">
+                  {data.youtube_strategy.video_ideas.map((video, idx) => (
+                    <div key={idx} className="p-3 rounded-lg border bg-card flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Video className="w-4 h-4 text-red-400" />
+                        <div>
+                          <p className="font-medium text-sm">{video.title}</p>
+                          <p className="text-xs text-muted-foreground">KW: {video.target_keyword}</p>
+                        </div>
+                      </div>
+                      <Badge variant="outline">{video.type}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Podcast Opportunity - Backend field */}
+      {data.podcast_opportunity && data.podcast_opportunity.viable && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Mic className="w-5 h-5 text-purple-500" />
+              Oportunidad de Podcast
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                <p className="text-xs text-purple-400 mb-1">Formato</p>
+                <p className="font-medium capitalize">{data.podcast_opportunity.format}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs text-muted-foreground mb-1">Distribución</p>
+                <p className="text-sm">{data.podcast_opportunity.distribution_strategy}</p>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium mb-2">Ideas de Episodios</p>
+              <div className="grid sm:grid-cols-2 gap-2">
+                {data.podcast_opportunity.episode_topics?.map((topic, idx) => (
+                  <div key={idx} className="p-2 rounded bg-muted/50 flex items-center gap-2 text-sm">
+                    <Mic className="w-3 h-3 text-purple-400" />
+                    {topic}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Content Repurposing */}
       <Card>

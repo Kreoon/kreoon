@@ -138,6 +138,15 @@ export default defineConfig(({ mode }) => ({
         cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
+            // Supabase Edge Functions - ALWAYS go to network, never cache
+            // This prevents 404 errors from cached responses
+            urlPattern: /^https:\/\/.*\.supabase\.co\/functions\/v1\/.*/i,
+            handler: 'NetworkOnly',
+            options: {
+              cacheName: 'supabase-functions',
+            }
+          },
+          {
             // Lazy-loaded JS/CSS chunks: cache on first visit, serve from cache next time
             urlPattern: /\/assets\/.*\.(?:js|css)$/i,
             handler: 'StaleWhileRevalidate',

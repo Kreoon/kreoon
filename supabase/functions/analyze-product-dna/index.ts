@@ -523,7 +523,7 @@ Asegúrate de que sea JSON válido y parseable.
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-exp:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: {
@@ -703,7 +703,7 @@ serve(async (req) => {
       .from('product_dna')
       .update({
         ai_analysis: analysis,
-        analysis_model: 'gemini-2.0-flash-exp',
+        analysis_model: 'gemini-1.5-flash-exp',
         analysis_version: 1,
         analysis_generated_at: new Date().toISOString(),
         status: 'completed',

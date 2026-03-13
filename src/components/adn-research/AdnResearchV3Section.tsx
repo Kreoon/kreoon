@@ -6,7 +6,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Sparkles, AlertCircle, ChevronLeft, Zap } from "lucide-react";
+import { Sparkles, AlertCircle, ChevronLeft, Zap, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AdnResearchV3Configurator } from "@/components/product-dna/adn-v3/AdnResearchV3Configurator";
 import { AdnResearchV3Progress } from "@/components/product-dna/adn-v3/AdnResearchV3Progress";
@@ -25,6 +25,7 @@ interface AdnResearchV3SectionProps {
   clientDna?: ClientDnaSummary | null;
   tokenBalance?: TokenBalance;
   onPushToContentBoard?: (items: unknown[]) => void;
+  useLiteMode?: boolean; // Usar orchestrator-lite con n8n webhook
 }
 
 type SectionState =
@@ -40,9 +41,11 @@ type SectionState =
 function IdleState({
   productName,
   onStart,
+  isStarting = false,
 }: {
   productName: string;
   onStart: () => void;
+  isStarting?: boolean;
 }) {
   return (
     <motion.div
@@ -90,7 +93,8 @@ function IdleState({
 
       <Button
         onClick={onStart}
-        className="h-12 px-8 bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 font-semibold shadow-lg shadow-violet-500/30 relative overflow-hidden"
+        disabled={isStarting}
+        className="h-12 px-8 bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 font-semibold shadow-lg shadow-violet-500/30 relative overflow-hidden disabled:opacity-70"
       >
         <motion.div
           className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
@@ -98,8 +102,17 @@ function IdleState({
           transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
         />
         <span className="relative flex items-center gap-2">
-          <Sparkles className="w-4 h-4" />
-          Generar ahora
+          {isStarting ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Iniciando...
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4" />
+              Generar ahora
+            </>
+          )}
         </span>
       </Button>
 
@@ -162,6 +175,7 @@ export function AdnResearchV3Section({
   productDna,
   clientDna,
   tokenBalance: externalTokenBalance,
+  useLiteMode = false,
 }: AdnResearchV3SectionProps) {
   // Estado local del flujo UI
   const [uiState, setUiState] = useState<SectionState>("loading");
@@ -185,6 +199,7 @@ export function AdnResearchV3Section({
     hasError,
     error,
     start,
+    startLite,
     regenerateTab,
     clearError,
   } = useAdnResearchV3({
@@ -252,13 +267,22 @@ export function AdnResearchV3Section({
   }, [session, hookProgressState, isRunning, isCompleted, hasError]);
 
   // Determinar estado inicial basado en el hook
+  // PRIORIDAD: Si hay datos (result), mostrar dashboard aunque haya sesión en progreso
   useEffect(() => {
     if (isLoading) {
       setUiState("loading");
       return;
     }
 
-    if (isCompleted && result) {
+    // Si hay resultado con tabs, mostrar dashboard (prioridad máxima)
+    // Esto maneja el caso donde n8n insertó datos directamente
+    if (result && result.tabs && Object.keys(result.tabs).length > 0) {
+      console.log("[AdnResearchV3Section] Mostrando dashboard - tabs encontrados:", Object.keys(result.tabs));
+      setUiState("completed");
+      return;
+    }
+
+    if (isCompleted) {
       setUiState("completed");
       return;
     }
@@ -270,12 +294,6 @@ export function AdnResearchV3Section({
 
     if (hasError) {
       setUiState("error");
-      return;
-    }
-
-    // Si ya hay resultado previo, ir directo al dashboard
-    if (result) {
-      setUiState("completed");
       return;
     }
 
@@ -291,7 +309,9 @@ export function AdnResearchV3Section({
 
   // ─── Handlers ──────────────────────────────────────────────────────────────
 
-  const handleStartFromIdle = () => {
+  const handleStartFromIdle = async () => {
+    // Siempre ir a configuración primero para poder ajustar inputs
+    console.log("[ADN Section] handleStartFromIdle - abriendo configuración");
     setUiState("configuring");
   };
 
@@ -303,7 +323,17 @@ export function AdnResearchV3Section({
     params: StartResearchParams
   ): Promise<{ sessionId: string } | null> => {
     try {
-      const success = await start(params);
+      let success: boolean;
+
+      if (useLiteMode) {
+        // Modo lite: usar n8n webhook con la configuración
+        console.log("[ADN Section] Iniciando en modo LITE con config:", params.config);
+        success = await startLite(params.config);
+      } else {
+        // Modo estándar
+        success = await start(params);
+      }
+
       if (success) {
         setUiState("running");
         return { sessionId: session?.id || "" };
@@ -355,6 +385,27 @@ export function AdnResearchV3Section({
     return regenerateTab(tabKey);
   };
 
+  const handleRegenerateAll = async () => {
+    // Siempre ir a configuración primero para poder ajustar inputs
+    console.log("[ADN Section] handleRegenerateAll - abriendo configuración");
+    setUiState("configuring");
+  };
+
+  const handleRestart = async () => {
+    // Cancelar sesión actual si existe
+    if (session?.id) {
+      try {
+        const { cancelResearchSession } = await import("@/lib/services/adn-research-v3.service");
+        await cancelResearchSession(session.id);
+        console.log("[ADN Section] Sesión cancelada:", session.id);
+      } catch (err) {
+        console.warn("[ADN Section] Error cancelando sesión:", err);
+      }
+    }
+    // Volver a configuración para reiniciar
+    setUiState("configuring");
+  };
+
   // ─── Render ────────────────────────────────────────────────────────────────
 
   // Loading
@@ -388,6 +439,7 @@ export function AdnResearchV3Section({
             <IdleState
               productName={productDna.product_name}
               onStart={handleStartFromIdle}
+              isStarting={isStarting}
             />
           </motion.div>
         )}
@@ -439,6 +491,7 @@ export function AdnResearchV3Section({
               productName={productDna.product_name}
               onDismiss={handleDismissProgress}
               onViewResults={handleViewResults}
+              onRestart={handleRestart}
             />
           </motion.div>
         )}
@@ -458,6 +511,7 @@ export function AdnResearchV3Section({
               sessionId={session?.id}
               organizationId={organizationId}
               onRegenerate={(tabKey) => handleRegenerateTab(tabKey)}
+              onRegenerateAll={handleRegenerateAll}
               onBack={handleBackFromDashboard}
             />
           </motion.div>

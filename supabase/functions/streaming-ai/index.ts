@@ -15,7 +15,7 @@ const corsHeaders = {
 
 // AI Provider configuration (fallback chain)
 const AI_PROVIDERS = [
-  { name: 'gemini', envKey: 'GEMINI_API_KEY', endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent' },
+  { name: 'gemini', envKey: 'GEMINI_API_KEY', endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent' },
   { name: 'openai', envKey: 'OPENAI_API_KEY', endpoint: 'https://api.openai.com/v1/chat/completions' },
   { name: 'anthropic', envKey: 'ANTHROPIC_API_KEY', endpoint: 'https://api.anthropic.com/v1/messages' },
 ];

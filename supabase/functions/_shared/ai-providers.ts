@@ -158,7 +158,7 @@ export const MODEL_MAP: Record<string, { provider: string; model: string }> = {
   "google/gemini-2.5-flash": { provider: "gemini", model: "gemini-2.5-flash" },
   "google/gemini-2.5-pro": { provider: "gemini", model: "gemini-2.5-pro" },
   "google/gemini-2.5-flash-lite": { provider: "gemini", model: "gemini-2.5-flash-8b" },
-  "google/gemini-2.5-flash-image-preview": { provider: "gemini", model: "gemini-2.0-flash-exp-image-generation" },
+  "google/gemini-2.5-flash-image-preview": { provider: "gemini", model: "gemini-1.5-flash-exp-image-generation" },
   "google/gemini-3-flash-preview": { provider: "gemini", model: "gemini-2.5-flash" },
   "google/gemini-3-pro-preview": { provider: "gemini", model: "gemini-2.5-pro" },
   // OpenAI models
@@ -416,7 +416,7 @@ export async function callGeminiImage(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "gemini-2.0-flash-exp-image-generation",
+      model: "gemini-1.5-flash-exp-image-generation",
       messages: [{ role: "user", content: prompt }],
       modalities: ["image", "text"],
     }),

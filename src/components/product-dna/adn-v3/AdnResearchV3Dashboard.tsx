@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 import {
   Tooltip,
   TooltipContent,
@@ -24,7 +25,6 @@ import {
   Compass,
   PenTool,
   Gift,
-  Video,
   Calendar,
   Magnet,
   Share2,
@@ -42,6 +42,8 @@ import {
   RefreshCw,
   Download,
   Sparkles,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AdnResearchV3Result } from "@/types/adn-research-v3";
@@ -56,7 +58,6 @@ import { Tab06Neuromarketing } from "./tabs/Tab06Neuromarketing";
 import { Tab07Positioning } from "./tabs/Tab07Positioning";
 import { Tab08CopyAngles } from "./tabs/Tab08CopyAngles";
 import { Tab09Offer } from "./tabs/Tab09Offer";
-import { Tab10VideoCreatives } from "./tabs/Tab10VideoCreatives";
 import { Tab11Calendar } from "./tabs/Tab11Calendar";
 import { Tab12LeadMagnets } from "./tabs/Tab12LeadMagnets";
 import { Tab13SocialMedia } from "./tabs/Tab13SocialMedia";
@@ -77,6 +78,7 @@ interface AdnResearchV3DashboardProps {
   sessionId?: string;
   organizationId?: string;
   onRegenerate?: (tabKey: string) => void;
+  onRegenerateAll?: () => void;
   onExport?: () => void;
   onBack?: () => void;
 }
@@ -96,7 +98,6 @@ const TABS = [
   { id: 8, key: "copy_angles", name: "Ángulos de Copy", icon: PenTool, block: 3 },
   { id: 9, key: "offer", name: "Oferta Irresistible", icon: Gift, block: 3 },
   // Block 4: Contenido
-  { id: 10, key: "video_creatives", name: "Creativos de Video", icon: Video, block: 4 },
   { id: 11, key: "calendar", name: "Calendario 30 Días", icon: Calendar, block: 4 },
   { id: 12, key: "lead_magnets", name: "Lead Magnets", icon: Magnet, block: 4 },
   // Block 5: Canales y Publicidad
@@ -128,6 +129,7 @@ export function AdnResearchV3Dashboard({
   sessionId,
   organizationId,
   onRegenerate,
+  onRegenerateAll,
   onExport,
   onBack,
 }: AdnResearchV3DashboardProps) {
@@ -148,11 +150,50 @@ export function AdnResearchV3Dashboard({
     return grouped;
   }, []);
 
+  // Calcular estadísticas de progreso
+  const progressStats = useMemo(() => {
+    const totalTabs = TABS.length;
+    let completedTabs = 0;
+    const completedKeys: string[] = [];
+    const pendingKeys: string[] = [];
+
+    TABS.forEach((tab) => {
+      const rawData = result.tabs?.[tab.key as keyof typeof result.tabs];
+      const hasData = rawData && (
+        (typeof rawData === 'object' && 'data' in rawData && !!(rawData as { data: unknown }).data) ||
+        (typeof rawData === 'object' && !('data' in rawData) && Object.keys(rawData).length > 0)
+      );
+
+      if (hasData) {
+        completedTabs++;
+        completedKeys.push(tab.key);
+      } else {
+        pendingKeys.push(tab.key);
+      }
+    });
+
+    const percentage = Math.round((completedTabs / totalTabs) * 100);
+    const isComplete = completedTabs === totalTabs;
+
+    return {
+      totalTabs,
+      completedTabs,
+      percentage,
+      isComplete,
+      completedKeys,
+      pendingKeys,
+    };
+  }, [result.tabs]);
+
   const renderTabContent = () => {
     const tabConfig = TABS.find((t) => t.id === activeTab);
     if (!tabConfig) return null;
 
-    const tabData = result.tabs?.[tabConfig.key as keyof typeof result.tabs];
+    const rawTabData = result.tabs?.[tabConfig.key as keyof typeof result.tabs];
+    // Extract .data if present (new format: { status, data }), otherwise use raw data
+    const tabData = rawTabData && typeof rawTabData === 'object' && 'data' in rawTabData
+      ? (rawTabData as { data: unknown }).data
+      : rawTabData;
 
     // Render tab component based on active tab
     switch (activeTab) {
@@ -178,8 +219,6 @@ export function AdnResearchV3Dashboard({
       case 9:
         return <Tab09Offer data={tabData} />;
       // Block 4: Contenido
-      case 10:
-        return <Tab10VideoCreatives data={tabData} />;
       case 11:
         return <Tab11Calendar data={tabData} />;
       case 12:
@@ -212,16 +251,16 @@ export function AdnResearchV3Dashboard({
   };
 
   return (
-    <div className="flex h-full min-h-[600px] bg-background">
-      {/* Sidebar */}
+    <div className="flex h-[calc(100vh-200px)] min-h-[600px] max-h-[900px] bg-background rounded-lg border overflow-hidden">
+      {/* Sidebar - Scroll independiente */}
       <div
         className={cn(
-          "border-r bg-muted/30 transition-all duration-300 flex flex-col",
+          "border-r bg-muted/30 transition-all duration-300 flex flex-col h-full",
           sidebarCollapsed ? "w-16" : "w-64"
         )}
       >
-        {/* Header */}
-        <div className="p-4 border-b flex items-center justify-between">
+        {/* Header - Fijo */}
+        <div className="p-4 border-b flex items-center justify-between flex-shrink-0">
           {!sidebarCollapsed && (
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-purple-500" />
@@ -242,8 +281,9 @@ export function AdnResearchV3Dashboard({
           </Button>
         </div>
 
-        {/* Navigation */}
-        <ScrollArea className="flex-1 py-2">
+        {/* Navigation - Scroll independiente */}
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="py-2">
           <TooltipProvider delayDuration={0}>
             {BLOCKS.map((block) => (
               <div key={block.id} className="mb-2">
@@ -261,7 +301,12 @@ export function AdnResearchV3Dashboard({
                   {tabsByBlock[block.id]?.map((tab) => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.id;
-                    const hasData = !!result.tabs?.[tab.key as keyof typeof result.tabs];
+                    const rawData = result.tabs?.[tab.key as keyof typeof result.tabs];
+                    // Check for data in both formats: { data: ... } or direct data
+                    const hasData = rawData && (
+                      (typeof rawData === 'object' && 'data' in rawData && !!(rawData as { data: unknown }).data) ||
+                      (typeof rawData === 'object' && !('data' in rawData) && Object.keys(rawData).length > 0)
+                    );
 
                     const button = (
                       <button
@@ -308,6 +353,7 @@ export function AdnResearchV3Dashboard({
               </div>
             ))}
           </TooltipProvider>
+          </div>
         </ScrollArea>
 
         {/* Footer Actions */}
@@ -349,6 +395,17 @@ export function AdnResearchV3Dashboard({
                 Volver
               </Button>
             )}
+            {onRegenerateAll && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={onRegenerateAll}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Regenerar Todo
+              </Button>
+            )}
             {onRegenerate && activeTabConfig && (
               <Button
                 variant="outline"
@@ -356,11 +413,43 @@ export function AdnResearchV3Dashboard({
                 onClick={() => onRegenerate(activeTabConfig.key)}
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Regenerar
+                Regenerar Pestaña
               </Button>
             )}
           </div>
         </div>
+
+        {/* Progress Banner (only shows if incomplete) */}
+        {!progressStats.isComplete && (
+          <div className="px-6 py-3 border-b bg-gradient-to-r from-violet-500/10 via-purple-500/10 to-pink-500/10">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {progressStats.percentage === 0 ? (
+                  <Clock className="w-4 h-4 text-amber-400 animate-pulse" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4 text-green-400" />
+                )}
+                <span className="text-sm font-medium">
+                  {progressStats.completedTabs} de {progressStats.totalTabs} secciones
+                </span>
+              </div>
+              <div className="flex-1 max-w-xs">
+                <Progress value={progressStats.percentage} className="h-2" />
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {progressStats.percentage}% completado
+              </span>
+              {progressStats.pendingKeys.length > 0 && progressStats.pendingKeys.length <= 5 && (
+                <span className="text-xs text-muted-foreground hidden sm:block">
+                  Faltan: {progressStats.pendingKeys.slice(0, 3).map(k =>
+                    TABS.find(t => t.key === k)?.name.split(' ')[0]
+                  ).join(', ')}
+                  {progressStats.pendingKeys.length > 3 && ` +${progressStats.pendingKeys.length - 3}`}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Content Area */}
         <ScrollArea className="flex-1">

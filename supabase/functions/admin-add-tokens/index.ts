@@ -173,6 +173,9 @@ Deno.serve(async (req) => {
       const tabs = research.tabs as Record<string, unknown> || {};
       const tabKeys = Object.keys(tabs);
 
+      // Si se pide un tab específico, devolverlo
+      const { tab_key } = { tab_key: null } as { tab_key: string | null };
+
       return new Response(
         JSON.stringify({
           product_id: product?.id,
@@ -180,6 +183,13 @@ Deno.serve(async (req) => {
           tabs_completed: tabKeys.length,
           tab_keys: tabKeys,
           metadata: research.metadata,
+          // Incluir preview de cada tab
+          tabs_preview: Object.fromEntries(
+            Object.entries(tabs).map(([key, value]) => [
+              key,
+              JSON.stringify(value).slice(0, 200) + "..."
+            ])
+          ),
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );

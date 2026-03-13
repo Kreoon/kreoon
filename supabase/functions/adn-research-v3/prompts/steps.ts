@@ -24,7 +24,56 @@ REGLAS OBLIGATORIAS:
 4. Usa español LATAM (no español de España)
 5. Sé específico y accionable, no genérico
 6. Cuando tengas datos del usuario (transcripciones, respuestas), úsalos textualmente
-7. Cuando tengas frases del Social Intelligence, úsalas como vocabulario real del cliente`;
+7. Cuando tengas frases del Social Intelligence, úsalas como vocabulario real del cliente
+
+⚠️ REGLA CRÍTICA DE CONTEXTO:
+- TODO tu análisis DEBE SER 100% ESPECÍFICO al producto/servicio descrito
+- NUNCA generes contenido genérico o de otras industrias
+- Si el producto es un suplemento, habla de suplementos. Si es software, habla de software
+- Usa el nombre exacto del producto en tus respuestas
+- Basa todo en la TRANSCRIPCIÓN y RESPUESTAS DEL WIZARD proporcionadas
+- Si no hay suficiente información, infiere del tipo de producto/servicio, pero SIEMPRE mantén coherencia`;
+
+// ─── Helper: Build Product Context Block ─────────────────────────────────────
+// Este bloque se incluye en todos los prompts para mantener consistencia
+
+function buildProductContextBlock(context: MasterContext): string {
+  return `
+═══════════════════════════════════════════════════════════════════════════════
+🎯 PRODUCTO/SERVICIO A ANALIZAR (USA ESTA INFORMACIÓN EN TODO EL ANÁLISIS)
+═══════════════════════════════════════════════════════════════════════════════
+
+📦 NOMBRE: ${context.product.name}
+📝 DESCRIPCIÓN: ${context.product.description || "No proporcionada"}
+🏷️ TIPO: ${context.product.service_types?.join(", ") || "No especificado"}
+🎯 OBJETIVO: ${context.product.goal || "No especificado"}
+🌎 MERCADOS: ${context.product.locations?.join(", ") || "Latinoamérica"}
+👥 EDADES OBJETIVO: ${context.product.audience_ages?.join(", ") || "No especificado"}
+📱 PLATAFORMAS: ${context.product.platforms?.join(", ") || "No especificado"}
+
+═══════════════════════════════════════════════════════════════════════════════
+🎤 TRANSCRIPCIÓN/RESPUESTAS DEL FUNDADOR (FUENTE PRIMARIA DE VERDAD)
+═══════════════════════════════════════════════════════════════════════════════
+
+1️⃣ SOBRE EL PRODUCTO:
+"${context.product.user_responses.q1_product || "No proporcionado"}"
+
+2️⃣ CLIENTE IDEAL:
+"${context.product.user_responses.q2_ideal_client || "No proporcionado"}"
+
+3️⃣ PROBLEMA QUE RESUELVE:
+"${context.product.user_responses.q3_problem || "No proporcionado"}"
+
+4️⃣ TRANSFORMACIÓN PROMETIDA:
+"${context.product.user_responses.q4_transformation || "No proporcionado"}"
+
+5️⃣ OFERTA ACTUAL:
+"${context.product.user_responses.q5_offer || "No proporcionado"}"
+
+═══════════════════════════════════════════════════════════════════════════════
+⚠️ RECUERDA: Todo el análisis debe ser específico para "${context.product.name}"
+═══════════════════════════════════════════════════════════════════════════════`;
+}
 
 // ─── Step Prompts ────────────────────────────────────────────────────────────
 
@@ -55,8 +104,6 @@ export function getStepPrompt(
       return getStep8Prompt(context, deps);
     case 9:
       return getStep9Prompt(context, deps);
-    case 10:
-      return getStep10Prompt(context, deps);
     case 11:
       return getStep11Prompt(context, deps);
     case 12:
@@ -138,15 +185,7 @@ JSON Schema esperado:
   "summary": "párrafo ejecutivo de 100 palabras"
 }`;
 
-  const userPrompt = `PRODUCTO A ANALIZAR:
-Nombre: ${context.product.name}
-Descripción: ${context.product.description}
-Tipo de servicios: ${context.product.service_types.join(", ")}
-Objetivo: ${context.product.goal}
-Ubicaciones: ${context.product.locations.join(", ") || "Latinoamérica"}
-
-CONTEXTO DEL FUNDADOR:
-"${context.product.user_responses.q1_product}"
+  const userPrompt = `${buildProductContextBlock(context)}
 
 ${context.social ? `
 VOCABULARIO REAL DEL MERCADO (de reviews y comentarios):
@@ -154,7 +193,8 @@ Frases de dolor: ${context.social.pain_phrases.slice(0, 5).map((p: any) => p.phr
 Quejas comunes: ${context.social.complaint_reasons?.slice(0, 3).join(" | ") || "No disponible"}
 ` : ""}
 
-Busca datos actualizados del mercado en 2024-2025 para esta categoría en LATAM.`;
+Busca datos actualizados del mercado en 2024-2025 para la categoría de "${context.product.name}" en LATAM.
+⚠️ IMPORTANTE: El análisis debe ser 100% específico para este producto/servicio.`;
 
   return { systemPrompt, userPrompt, useWebSearch: true };
 }
@@ -164,7 +204,7 @@ Busca datos actualizados del mercado en 2024-2025 para esta categoría en LATAM.
 function getStep2Prompt(context: MasterContext, deps: Record<string, any>): StepPromptResult {
   const systemPrompt = `${BASE_SYSTEM}
 
-Eres un analista de competencia. Investiga a los competidores directos e indirectos del producto.
+Eres un analista de competencia. Investiga a los competidores directos e indirectos del producto "${context.product.name}".
 
 JSON Schema esperado:
 {
@@ -212,11 +252,10 @@ JSON Schema esperado:
 
   const competitorUrls = context.product.links.competitors.join("\n- ");
 
-  const userPrompt = `PRODUCTO: ${context.product.name}
-${context.product.description}
+  const userPrompt = `${buildProductContextBlock(context)}
 
 COMPETIDORES A ANALIZAR:
-${competitorUrls || "Busca los principales competidores de la categoría"}
+${competitorUrls || "Busca los principales competidores en la categoría de " + context.product.name}
 
 PANORAMA DE MERCADO (del paso anterior):
 ${JSON.stringify(deps.tab_1_market_overview?.summary || "No disponible", null, 2)}
@@ -233,7 +272,8 @@ Razones de recomendación: ${context.social.recommendation_reasons?.slice(0, 3).
 Razones de queja: ${context.social.complaint_reasons?.slice(0, 3).join(" | ") || "No disponible"}
 ` : ""}
 
-Analiza cada competidor en profundidad.`;
+Analiza cada competidor en el contexto de "${context.product.name}".
+⚠️ Los competidores deben ser de la MISMA categoría del producto.`;
 
   return { systemPrompt, userPrompt, useWebSearch: true };
 }
@@ -282,14 +322,7 @@ JSON Schema esperado:
   }
 }`;
 
-  const userPrompt = `PRODUCTO: ${context.product.name}
-${context.product.description}
-
-PROBLEMA QUE RESUELVE (palabras del fundador):
-"${context.product.user_responses.q3_problem}"
-
-TRANSFORMACIÓN QUE OFRECE:
-"${context.product.user_responses.q4_transformation}"
+  const userPrompt = `${buildProductContextBlock(context)}
 
 PANORAMA DE MERCADO:
 Nivel de awareness: ${deps.tab_1_market_overview?.awareness_level || "No determinado"}
@@ -303,7 +336,8 @@ FRASES REALES DE DESEO:
 ${context.social.desire_phrases.slice(0, 8).map((p: any) => `- "${p.phrase}"`).join("\n")}
 ` : ""}
 
-Genera los Jobs To Be Done basándote en estas frases reales del mercado.`;
+Genera los Jobs To Be Done específicos para "${context.product.name}".
+⚠️ Los jobs deben ser relevantes para este tipo de producto/servicio únicamente.`;
 
   return { systemPrompt, userPrompt, useWebSearch: false };
 }
@@ -313,7 +347,7 @@ Genera los Jobs To Be Done basándote en estas frases reales del mercado.`;
 function getStep4Prompt(context: MasterContext, deps: Record<string, any>): StepPromptResult {
   const systemPrompt = `${BASE_SYSTEM}
 
-Crea 3 avatares de cliente ideal basándote en los datos del mercado y JTBD.
+Crea 3 avatares de cliente ideal para "${context.product.name}" basándote en los datos del mercado y JTBD.
 
 JSON Schema esperado:
 {
@@ -350,16 +384,12 @@ JSON Schema esperado:
   }
 }`;
 
-  const userPrompt = `PRODUCTO: ${context.product.name}
-
-CLIENTE IDEAL SEGÚN EL FUNDADOR:
-"${context.product.user_responses.q2_ideal_client}"
+  const userPrompt = `${buildProductContextBlock(context)}
 
 JOBS TO BE DONE IDENTIFICADOS:
 ${JSON.stringify(deps.tab_3_jtbd?.primary_jtbd || "No disponible", null, 2)}
 
 DATOS DEL MERCADO:
-Audiencias target: ${context.product.audience_ages.join(", ") || "No especificado"}
 Comportamiento: ${JSON.stringify(deps.tab_1_market_overview?.consumer_behavior || {}, null, 2)}
 
 ${context.brand?.ideal_customer ? `
@@ -372,7 +402,8 @@ VOCABULARIO REAL DEL CLIENTE:
 ${context.social.common_vocabulary.slice(0, 10).map((v: any) => `- "${v.word}" (${v.context})`).join("\n")}
 ` : ""}
 
-Crea avatares detallados y realistas para el mercado LATAM.`;
+Crea avatares específicos para compradores de "${context.product.name}" en LATAM.
+⚠️ Los avatares deben ser coherentes con el tipo de producto/servicio.`;
 
   return { systemPrompt, userPrompt, useWebSearch: false };
 }
@@ -382,7 +413,7 @@ Crea avatares detallados y realistas para el mercado LATAM.`;
 function getStep5Prompt(context: MasterContext, deps: Record<string, any>): StepPromptResult {
   const systemPrompt = `${BASE_SYSTEM}
 
-Analiza la psicología profunda del cliente para crear copy efectivo. Este es el paso MÁS IMPORTANTE para el copywriting.
+Analiza la psicología profunda del cliente de "${context.product.name}" para crear copy efectivo. Este es el paso MÁS IMPORTANTE para el copywriting.
 
 JSON Schema esperado:
 {
@@ -446,19 +477,13 @@ JSON Schema esperado:
   }
 }`;
 
-  const userPrompt = `PRODUCTO: ${context.product.name}
+  const userPrompt = `${buildProductContextBlock(context)}
 
 AVATARES IDENTIFICADOS:
 ${JSON.stringify(deps.tab_4_avatars?.primary_avatar || {}, null, 2)}
 
 JOBS TO BE DONE:
 ${JSON.stringify(deps.tab_3_jtbd || {}, null, 2)}
-
-PROBLEMA SEGÚN EL FUNDADOR:
-"${context.product.user_responses.q3_problem}"
-
-TRANSFORMACIÓN:
-"${context.product.user_responses.q4_transformation}"
 
 ${context.product.emotional_analysis ? `
 ANÁLISIS EMOCIONAL DEL FUNDADOR:
@@ -480,7 +505,8 @@ VOCABULARIO COMÚN:
 ${context.social.common_vocabulary.slice(0, 15).map((v: any) => `- "${v.word}"`).join(", ")}
 ` : ""}
 
-IMPORTANTE: Usa las frases exactas del Social Intelligence en client_vocabulary y objections_bank.`;
+⚠️ IMPORTANTE: Todo el análisis psicológico debe ser específico para compradores de "${context.product.name}".
+Usa las frases exactas del Social Intelligence en client_vocabulary y objections_bank.`;
 
   return { systemPrompt, userPrompt, useWebSearch: false };
 }
@@ -490,7 +516,7 @@ IMPORTANTE: Usa las frases exactas del Social Intelligence en client_vocabulary 
 function getStep6Prompt(context: MasterContext, deps: Record<string, any>): StepPromptResult {
   const systemPrompt = `${BASE_SYSTEM}
 
-Aplica principios de neuromarketing para optimizar la comunicación.
+Aplica principios de neuromarketing para optimizar la comunicación de "${context.product.name}".
 
 JSON Schema esperado:
 {
@@ -524,7 +550,7 @@ JSON Schema esperado:
   ]
 }`;
 
-  const userPrompt = `PRODUCTO: ${context.product.name}
+  const userPrompt = `${buildProductContextBlock(context)}
 
 PSICOLOGÍA DEL CLIENTE:
 ${JSON.stringify(deps.tab_5_psychology?.pain_map || {}, null, 2)}
@@ -535,7 +561,7 @@ ${JSON.stringify(deps.tab_5_psychology?.desire_map || {}, null, 2)}
 AVATARES:
 ${JSON.stringify(deps.tab_4_avatars?.primary_avatar || {}, null, 2)}
 
-Aplica neuromarketing práctico para este producto y audiencia.`;
+⚠️ Aplica neuromarketing ESPECÍFICO para "${context.product.name}" y su audiencia objetivo.`;
 
   return { systemPrompt, userPrompt, useWebSearch: false };
 }
@@ -545,7 +571,7 @@ Aplica neuromarketing práctico para este producto y audiencia.`;
 function getStep7Prompt(context: MasterContext, deps: Record<string, any>): StepPromptResult {
   const systemPrompt = `${BASE_SYSTEM}
 
-Define el posicionamiento estratégico y la PUV del producto.
+Define el posicionamiento estratégico y la PUV de "${context.product.name}".
 
 JSON Schema esperado:
 {
@@ -612,11 +638,7 @@ JSON Schema esperado:
   }
 }`;
 
-  const userPrompt = `PRODUCTO: ${context.product.name}
-${context.product.description}
-
-DIFERENCIADOR SEGÚN EL FUNDADOR:
-"${context.product.user_responses.q1_product}"
+  const userPrompt = `${buildProductContextBlock(context)}
 
 PANORAMA DE MERCADO:
 ${JSON.stringify(deps.tab_1_market_overview?.category_design || {}, null, 2)}
@@ -639,7 +661,7 @@ TEMAS DE PASIÓN DEL FUNDADOR:
 ${context.product.emotional_analysis.passion_topics?.join(", ") || "No disponible"}
 ` : ""}
 
-Define un posicionamiento único y memorable.`;
+⚠️ Define un posicionamiento único para "${context.product.name}" - debe ser coherente con el tipo de producto/servicio.`;
 
   return { systemPrompt, userPrompt, useWebSearch: false };
 }
@@ -649,7 +671,7 @@ Define un posicionamiento único y memorable.`;
 function getStep8Prompt(context: MasterContext, deps: Record<string, any>): StepPromptResult {
   const systemPrompt = `${BASE_SYSTEM}
 
-Genera ángulos de copywriting, hooks, headlines y CTAs listos para usar.
+Genera ángulos de copywriting, hooks, headlines y CTAs para "${context.product.name}".
 
 JSON Schema esperado:
 {
@@ -714,7 +736,7 @@ JSON Schema esperado:
   }
 }`;
 
-  const userPrompt = `PRODUCTO: ${context.product.name}
+  const userPrompt = `${buildProductContextBlock(context)}
 
 POSICIONAMIENTO:
 PUV: ${deps.tab_7_positioning?.puv?.statement || "No definido"}
@@ -737,7 +759,8 @@ Pain: ${context.social.pain_phrases.slice(0, 5).map((p: any) => `"${p.phrase}"`)
 Desire: ${context.social.desire_phrases.slice(0, 5).map((p: any) => `"${p.phrase}"`).join(" | ")}
 ` : ""}
 
-Genera 12 ángulos únicos, 30 hooks, 30 headlines y 25 CTAs.`;
+⚠️ Genera 12 ángulos únicos, 30 hooks, 30 headlines y 25 CTAs ESPECÍFICOS para "${context.product.name}".
+Todo el copy debe mencionar el producto y sus beneficios reales.`;
 
   return { systemPrompt, userPrompt, useWebSearch: false };
 }
@@ -777,10 +800,7 @@ JSON Schema esperado:
   ]
 }`;
 
-  const userPrompt = `PRODUCTO: ${context.product.name}
-
-OFERTA SEGÚN EL FUNDADOR:
-"${context.product.user_responses.q5_offer}"
+  const userPrompt = `${buildProductContextBlock(context)}
 
 POSICIONAMIENTO:
 ${JSON.stringify(deps.tab_7_positioning?.puv || {}, null, 2)}
@@ -792,69 +812,8 @@ ${context.product.emotional_analysis ? `
 NIVEL DE CONFIANZA DEL FUNDADOR: ${context.product.emotional_analysis.confidence_level || "No medido"}
 ` : ""}
 
-Diseña una oferta irresistible.`;
-
-  return { systemPrompt, userPrompt, useWebSearch: false };
-}
-
-function getStep10Prompt(context: MasterContext, deps: Record<string, any>): StepPromptResult {
-  const systemPrompt = `${BASE_SYSTEM}
-
-Diseña 8 creativos de video completos con guiones.
-
-JSON Schema esperado:
-{
-  "creatives": [
-    {
-      "creative_id": number,
-      "format": "ugc|talking_head|broll|animation|testimonial|unboxing|tutorial|lifestyle",
-      "platform": "instagram|tiktok|youtube|meta_ads",
-      "duration_seconds": number,
-      "angle_used": "string",
-      "hook": "string - primeros 3 segundos",
-      "script": {
-        "intro": "string",
-        "body": "string",
-        "cta": "string",
-        "full_script": "guion completo con timestamps"
-      },
-      "visual_notes": ["notas de producción"],
-      "audio_suggestion": "string",
-      "text_overlays": ["textos a superponer"]
-    }
-  ],
-  "ugc_creator_brief": {
-    "ideal_creator_profile": "string",
-    "talking_points": ["string"],
-    "do": ["string"],
-    "dont": ["string"],
-    "example_references": ["string"]
-  },
-  "hooks_by_platform": {
-    "instagram": ["5 hooks"],
-    "tiktok": ["5 hooks"],
-    "youtube": ["5 hooks"]
-  }
-}`;
-
-  const userPrompt = `PRODUCTO: ${context.product.name}
-
-COPYWRITING:
-${JSON.stringify(deps.tab_8_copywriting?.hooks_bank || {}, null, 2)}
-
-OFERTA:
-${JSON.stringify(deps.tab_9_puv_offer?.value_stack || [], null, 2)}
-
-${context.ads ? `
-HOOKS VIRALES DE LA COMPETENCIA:
-TikTok: ${context.ads.tiktok_ads?.viral_hooks?.join(" | ") || "No disponible"}
-Meta: ${context.ads.meta_ads?.dominant_hooks?.join(" | ") || "No disponible"}
-
-FORMATOS DOMINANTES:
-${context.ads.meta_ads?.dominant_formats?.join(", ") || "No disponible"}
-` : ""}
-
-Crea 8 creativos únicos con guiones completos.`;
+⚠️ Diseña una oferta irresistible ESPECÍFICA para "${context.product.name}".
+La oferta debe reflejar exactamente lo que describe el fundador.`;
 
   return { systemPrompt, userPrompt, useWebSearch: false };
 }
@@ -862,7 +821,7 @@ Crea 8 creativos únicos con guiones completos.`;
 function getStep11Prompt(context: MasterContext, deps: Record<string, any>): StepPromptResult {
   const systemPrompt = `${BASE_SYSTEM}
 
-Crea un calendario de contenido de 30 días con piezas completas.
+Crea un calendario de contenido de 30 días para "${context.product.name}".
 
 JSON Schema esperado:
 {
@@ -888,7 +847,7 @@ JSON Schema esperado:
   ]
 }`;
 
-  const userPrompt = `PRODUCTO: ${context.product.name}
+  const userPrompt = `${buildProductContextBlock(context)}
 
 POSICIONAMIENTO:
 ${JSON.stringify(deps.tab_7_positioning?.esfera_framework || {}, null, 2)}
@@ -896,10 +855,11 @@ ${JSON.stringify(deps.tab_7_positioning?.esfera_framework || {}, null, 2)}
 COPYWRITING:
 ${JSON.stringify(deps.tab_8_copywriting?.frameworks_applied?.pas || {}, null, 2)}
 
-CREATIVOS:
-${JSON.stringify(deps.tab_10_video_creatives?.creatives?.slice(0, 3) || [], null, 2)}
+OFERTA:
+${JSON.stringify(deps.tab_9_puv_offer?.puv || {}, null, 2)}
 
-Crea un calendario de 30 días con piezas completas (copy, hashtags, CTA).`;
+⚠️ Crea un calendario de 30 días ESPECÍFICO para "${context.product.name}".
+TODO el contenido debe hablar del producto y su industria.`;
 
   return { systemPrompt, userPrompt, useWebSearch: false };
 }
@@ -907,7 +867,7 @@ Crea un calendario de 30 días con piezas completas (copy, hashtags, CTA).`;
 function getStep12Prompt(context: MasterContext, deps: Record<string, any>): StepPromptResult {
   const systemPrompt = `${BASE_SYSTEM}
 
-Diseña 4 lead magnets con secuencias de email.
+Diseña 4 lead magnets para "${context.product.name}".
 
 JSON Schema esperado:
 {
@@ -934,7 +894,7 @@ JSON Schema esperado:
   }
 }`;
 
-  const userPrompt = `PRODUCTO: ${context.product.name}
+  const userPrompt = `${buildProductContextBlock(context)}
 
 AVATARES:
 ${JSON.stringify(deps.tab_4_avatars?.primary_avatar || {}, null, 2)}
@@ -942,7 +902,8 @@ ${JSON.stringify(deps.tab_4_avatars?.primary_avatar || {}, null, 2)}
 PSICOLOGÍA:
 Dolores: ${JSON.stringify(deps.tab_5_psychology?.pain_map?.functional_pains?.slice(0, 3) || [], null, 2)}
 
-Diseña 4 lead magnets con secuencias de 7 emails cada uno.`;
+⚠️ Diseña 4 lead magnets con secuencias de 7 emails ESPECÍFICOS para "${context.product.name}".
+Los lead magnets deben ser relevantes para este tipo de producto/servicio.`;
 
   return { systemPrompt, userPrompt, useWebSearch: false };
 }
@@ -950,7 +911,7 @@ Diseña 4 lead magnets con secuencias de 7 emails cada uno.`;
 function getStep13Prompt(context: MasterContext, deps: Record<string, any>): StepPromptResult {
   const systemPrompt = `${BASE_SYSTEM}
 
-Define la estrategia de redes sociales por plataforma.
+Define la estrategia de redes sociales para "${context.product.name}".
 
 JSON Schema esperado:
 {
@@ -977,8 +938,7 @@ JSON Schema esperado:
   }
 }`;
 
-  const userPrompt = `PRODUCTO: ${context.product.name}
-Plataformas seleccionadas: ${context.product.platforms.join(", ")}
+  const userPrompt = `${buildProductContextBlock(context)}
 
 POSICIONAMIENTO:
 ${JSON.stringify(deps.tab_7_positioning?.brand_archetype || {}, null, 2)}
@@ -991,7 +951,8 @@ ANÁLISIS DE COMPETIDORES EN REDES:
 ${JSON.stringify(context.ads.competitor_social.slice(0, 3), null, 2)}
 ` : ""}
 
-Define estrategia por plataforma.`;
+⚠️ Define estrategia de redes sociales ESPECÍFICA para "${context.product.name}".
+El contenido debe ser relevante para este tipo de producto/servicio.`;
 
   return { systemPrompt, userPrompt, useWebSearch: true };
 }
@@ -999,7 +960,7 @@ Define estrategia por plataforma.`;
 function getStep14Prompt(context: MasterContext, deps: Record<string, any>): StepPromptResult {
   const systemPrompt = `${BASE_SYSTEM}
 
-Diseña campañas completas de Meta Ads.
+Diseña campañas completas de Meta Ads para "${context.product.name}".
 
 JSON Schema esperado:
 {
@@ -1040,8 +1001,7 @@ JSON Schema esperado:
   "pixel_events": ["string"]
 }`;
 
-  const userPrompt = `PRODUCTO: ${context.product.name}
-Ubicaciones: ${context.product.locations.join(", ")}
+  const userPrompt = `${buildProductContextBlock(context)}
 
 PSICOLOGÍA:
 ${JSON.stringify(deps.tab_5_psychology?.cialdini_principles || {}, null, 2)}
@@ -1049,15 +1009,16 @@ ${JSON.stringify(deps.tab_5_psychology?.cialdini_principles || {}, null, 2)}
 COPYWRITING:
 ${JSON.stringify(deps.tab_8_copywriting?.ctas_bank || {}, null, 2)}
 
-CREATIVOS:
-${JSON.stringify(deps.tab_10_video_creatives?.creatives?.slice(0, 3) || [], null, 2)}
+OFERTA:
+${JSON.stringify(deps.tab_9_puv_offer?.puv || {}, null, 2)}
 
 ${context.ads?.meta_ads ? `
 INTELIGENCIA DE META ADS:
 ${JSON.stringify(context.ads.meta_ads, null, 2)}
 ` : ""}
 
-Diseña arquitectura completa de Meta Ads.`;
+⚠️ Diseña arquitectura de Meta Ads ESPECÍFICA para "${context.product.name}".
+Los anuncios deben promocionar este producto/servicio exactamente.`;
 
   return { systemPrompt, userPrompt, useWebSearch: false };
 }
@@ -1065,7 +1026,7 @@ Diseña arquitectura completa de Meta Ads.`;
 function getStep15Prompt(context: MasterContext, deps: Record<string, any>): StepPromptResult {
   const systemPrompt = `${BASE_SYSTEM}
 
-Diseña campañas de TikTok Ads con enfoque nativo.
+Diseña campañas de TikTok Ads para "${context.product.name}".
 
 JSON Schema esperado:
 {
@@ -1094,20 +1055,21 @@ JSON Schema esperado:
   "creative_specs": {"aspect_ratio": "string", "duration": "string", "safe_zone": "string"}
 }`;
 
-  const userPrompt = `PRODUCTO: ${context.product.name}
+  const userPrompt = `${buildProductContextBlock(context)}
 
 PSICOLOGÍA:
 ${JSON.stringify(deps.tab_5_psychology?.client_vocabulary || {}, null, 2)}
 
-CREATIVOS:
-${JSON.stringify(deps.tab_10_video_creatives?.ugc_creator_brief || {}, null, 2)}
+COPYWRITING:
+${JSON.stringify(deps.tab_8_copywriting?.hooks_bank || {}, null, 2)}
 
 ${context.ads?.tiktok_ads ? `
 INTELIGENCIA DE TIKTOK:
 ${JSON.stringify(context.ads.tiktok_ads, null, 2)}
 ` : ""}
 
-Diseña campañas nativas para TikTok.`;
+⚠️ Diseña campañas de TikTok ESPECÍFICAS para "${context.product.name}".
+El contenido debe ser nativo y relevante para este producto/servicio.`;
 
   return { systemPrompt, userPrompt, useWebSearch: false };
 }
@@ -1115,7 +1077,7 @@ Diseña campañas nativas para TikTok.`;
 function getStep16Prompt(context: MasterContext, deps: Record<string, any>): StepPromptResult {
   const systemPrompt = `${BASE_SYSTEM}
 
-Diseña campañas de Google Ads (Search, Display, YouTube).
+Diseña campañas de Google Ads para "${context.product.name}".
 
 JSON Schema esperado:
 {
@@ -1144,8 +1106,7 @@ JSON Schema esperado:
   "budget_recommendation": {"search": "string", "display": "string", "youtube": "string"}
 }`;
 
-  const userPrompt = `PRODUCTO: ${context.product.name}
-URL: ${context.product.links.product[0] || "No especificada"}
+  const userPrompt = `${buildProductContextBlock(context)}
 
 PSICOLOGÍA:
 Cómo buscan: ${deps.tab_5_psychology?.client_vocabulary?.search_phrases?.join(", ") || "No definido"}
@@ -1153,7 +1114,8 @@ Cómo buscan: ${deps.tab_5_psychology?.client_vocabulary?.search_phrases?.join("
 COPYWRITING:
 ${JSON.stringify(deps.tab_8_copywriting?.headlines_bank || {}, null, 2)}
 
-Diseña campañas de Google Ads con keywords y RSAs.`;
+⚠️ Diseña campañas de Google Ads ESPECÍFICAS para "${context.product.name}".
+Las keywords deben ser relevantes para este tipo de producto/servicio.`;
 
   return { systemPrompt, userPrompt, useWebSearch: true };
 }
@@ -1161,7 +1123,7 @@ Diseña campañas de Google Ads con keywords y RSAs.`;
 function getStep17Prompt(context: MasterContext, deps: Record<string, any>): StepPromptResult {
   const systemPrompt = `${BASE_SYSTEM}
 
-Diseña la estrategia de email marketing completa.
+Diseña la estrategia de email marketing para "${context.product.name}".
 
 JSON Schema esperado:
 {
@@ -1183,7 +1145,7 @@ JSON Schema esperado:
   "deliverability_tips": ["string"]
 }`;
 
-  const userPrompt = `PRODUCTO: ${context.product.name}
+  const userPrompt = `${buildProductContextBlock(context)}
 
 AVATARES:
 ${JSON.stringify(deps.tab_4_avatars?.primary_avatar || {}, null, 2)}
@@ -1197,7 +1159,8 @@ ${JSON.stringify(deps.tab_9_puv_offer || {}, null, 2)}
 LEAD MAGNETS:
 ${JSON.stringify(deps.tab_12_lead_magnets?.lead_magnets?.slice(0, 2) || [], null, 2)}
 
-Diseña secuencias de email completas.`;
+⚠️ Diseña secuencias de email ESPECÍFICAS para "${context.product.name}".
+El contenido debe promocionar este producto y sus beneficios.`;
 
   return { systemPrompt, userPrompt, useWebSearch: false };
 }
@@ -1205,7 +1168,7 @@ Diseña secuencias de email completas.`;
 function getStep18Prompt(context: MasterContext, deps: Record<string, any>): StepPromptResult {
   const systemPrompt = `${BASE_SYSTEM}
 
-Diseña 2 propuestas de landing page completas.
+Diseña 2 propuestas de landing page para "${context.product.name}".
 
 JSON Schema esperado:
 {
@@ -1236,7 +1199,7 @@ JSON Schema esperado:
   }
 }`;
 
-  const userPrompt = `PRODUCTO: ${context.product.name}
+  const userPrompt = `${buildProductContextBlock(context)}
 
 POSICIONAMIENTO:
 ${JSON.stringify(deps.tab_7_positioning?.puv || {}, null, 2)}
@@ -1250,7 +1213,8 @@ ${JSON.stringify(deps.tab_9_puv_offer || {}, null, 2)}
 PSICOLOGÍA:
 ${JSON.stringify(deps.tab_5_psychology?.cognitive_biases?.slice(0, 5) || [], null, 2)}
 
-Diseña 2 landing pages completas con todo el copy.`;
+⚠️ Diseña 2 landing pages completas ESPECÍFICAS para "${context.product.name}".
+Todo el copy debe hablar de este producto y sus beneficios únicos.`;
 
   return { systemPrompt, userPrompt, useWebSearch: false };
 }
@@ -1258,7 +1222,7 @@ Diseña 2 landing pages completas con todo el copy.`;
 function getStep19Prompt(context: MasterContext, deps: Record<string, any>): StepPromptResult {
   const systemPrompt = `${BASE_SYSTEM}
 
-Diseña una estrategia de lanzamiento 360.
+Diseña una estrategia de lanzamiento 360 para "${context.product.name}".
 
 JSON Schema esperado:
 {
@@ -1291,8 +1255,7 @@ JSON Schema esperado:
   ]
 }`;
 
-  const userPrompt = `PRODUCTO: ${context.product.name}
-Urgencia: ${context.product.urgency}
+  const userPrompt = `${buildProductContextBlock(context)}
 
 POSICIONAMIENTO:
 ${JSON.stringify(deps.tab_7_positioning?.purple_cow || {}, null, 2)}
@@ -1303,7 +1266,8 @@ ${JSON.stringify(deps.tab_14_meta_ads?.campaign_architecture || {}, null, 2)}
 TIKTOK ADS:
 ${JSON.stringify(deps.tab_15_tiktok_ads?.campaign_structure || {}, null, 2)}
 
-Diseña un lanzamiento de 360 grados.`;
+⚠️ Diseña un lanzamiento 360° ESPECÍFICO para "${context.product.name}".
+Las actividades deben ser coherentes con este tipo de producto/servicio.`;
 
   return { systemPrompt, userPrompt, useWebSearch: false };
 }
@@ -1311,7 +1275,7 @@ Diseña un lanzamiento de 360 grados.`;
 function getStep20Prompt(context: MasterContext, deps: Record<string, any>): StepPromptResult {
   const systemPrompt = `${BASE_SYSTEM}
 
-Define KPIs, métricas y tablero de control.
+Define KPIs y métricas para "${context.product.name}".
 
 JSON Schema esperado:
 {
@@ -1342,7 +1306,7 @@ JSON Schema esperado:
   ]
 }`;
 
-  const userPrompt = `PRODUCTO: ${context.product.name}
+  const userPrompt = `${buildProductContextBlock(context)}
 
 META ADS:
 ${JSON.stringify(deps.tab_14_meta_ads?.budget_recommendation || {}, null, 2)}
@@ -1356,7 +1320,7 @@ ${JSON.stringify(deps.tab_16_google_ads?.budget_recommendation || {}, null, 2)}
 LANZAMIENTO:
 ${JSON.stringify(deps.tab_19_launch_strategy?.budget_breakdown || {}, null, 2)}
 
-Define KPIs con benchmarks de LATAM.`;
+⚠️ Define KPIs con benchmarks de LATAM ESPECÍFICOS para "${context.product.name}".`;
 
   return { systemPrompt, userPrompt, useWebSearch: false };
 }
@@ -1364,7 +1328,7 @@ Define KPIs con benchmarks de LATAM.`;
 function getStep21Prompt(context: MasterContext, deps: Record<string, any>): StepPromptResult {
   const systemPrompt = `${BASE_SYSTEM}
 
-Diseña la estrategia de contenido orgánico y SEO.
+Diseña la estrategia de contenido orgánico y SEO para "${context.product.name}".
 
 JSON Schema esperado:
 {
@@ -1393,7 +1357,7 @@ JSON Schema esperado:
   }
 }`;
 
-  const userPrompt = `PRODUCTO: ${context.product.name}
+  const userPrompt = `${buildProductContextBlock(context)}
 
 POSICIONAMIENTO:
 ${JSON.stringify(deps.tab_7_positioning?.category_design || {}, null, 2)}
@@ -1404,7 +1368,8 @@ ${JSON.stringify(deps.tab_11_content_calendar?.strategy?.content_pillars || [], 
 REDES SOCIALES:
 ${JSON.stringify(deps.tab_13_social_media?.platform_strategy || {}, null, 2)}
 
-Diseña estrategia orgánica con SEO y PR digital.`;
+⚠️ Diseña estrategia orgánica y SEO ESPECÍFICA para "${context.product.name}".
+Las keywords y contenido deben ser relevantes para este producto/servicio.`;
 
   return { systemPrompt, userPrompt, useWebSearch: true };
 }
@@ -1412,7 +1377,7 @@ Diseña estrategia orgánica con SEO y PR digital.`;
 function getStep22Prompt(context: MasterContext, deps: Record<string, any>, allResults: Record<string, any>): StepPromptResult {
   const systemPrompt = `${BASE_SYSTEM}
 
-Genera el resumen ejecutivo final con los KIRO Insights únicos.
+Genera el resumen ejecutivo final de "${context.product.name}" con los KIRO Insights únicos.
 
 JSON Schema esperado:
 {
@@ -1464,7 +1429,7 @@ JSON Schema esperado:
     .map(([key, value]) => `${key}: ${JSON.stringify(value).substring(0, 200)}...`)
     .join("\n");
 
-  const userPrompt = `PRODUCTO: ${context.product.name}
+  const userPrompt = `${buildProductContextBlock(context)}
 
 RESUMEN DE TODOS LOS PASOS COMPLETADOS:
 ${stepsSummary}
@@ -1487,9 +1452,9 @@ ADN DE MARCA INCLUIDO:
 ${JSON.stringify(context.brand.brand_identity || {}, null, 2)}
 ` : ""}
 
-Genera 5 KIRO Insights ÚNICOS que crucen datos de múltiples pasos.
-Los insights deben ser específicos, no genéricos.
-Ejemplo de buen insight: "El mercado de [X] en Colombia tiene un CAGR del 18%, pero el 73% de competidores comunica como si la audiencia fuera solution-aware cuando el análisis muestra problem-aware. Este gap es la mayor oportunidad."`;
+⚠️ Genera 5 KIRO Insights ÚNICOS y ESPECÍFICOS para "${context.product.name}".
+Los insights deben cruzar datos de múltiples pasos y ser relevantes para este producto/servicio.
+Ejemplo: "El mercado de [nombre del producto] en [ubicación] tiene un CAGR del 18%, pero el 73% de competidores comunica como si la audiencia fuera solution-aware cuando el análisis muestra problem-aware. Este gap es la mayor oportunidad."`;
 
   return { systemPrompt, userPrompt, useWebSearch: false };
 }

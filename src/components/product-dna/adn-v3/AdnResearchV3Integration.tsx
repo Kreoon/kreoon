@@ -29,6 +29,7 @@ interface AdnResearchV3IntegrationProps {
   productId: string;
   productDnaId: string;
   clientDnaId?: string;
+  organizationId?: string; // Requerido para modo lite
   productName: string;
   productDescription: string;
   completenessScore?: number;
@@ -38,12 +39,14 @@ interface AdnResearchV3IntegrationProps {
   className?: string;
   variant?: "button" | "card" | "compact";
   onComplete?: () => void;
+  useLiteMode?: boolean; // Usar orchestrator-lite con n8n webhook
 }
 
 export function AdnResearchV3Integration({
   productId,
   productDnaId,
   clientDnaId,
+  organizationId,
   productName,
   productDescription,
   completenessScore = 50,
@@ -53,16 +56,27 @@ export function AdnResearchV3Integration({
   className,
   variant = "button",
   onComplete,
+  useLiteMode = false,
 }: AdnResearchV3IntegrationProps) {
   const [showModal, setShowModal] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
   const [hasResearch, setHasResearch] = useState(false);
   const [checkingResearch, setCheckingResearch] = useState(true);
+  const [showProgress, setShowProgress] = useState(false);
 
-  const { session, result, isRunning, isCompleted, loadResult } = useAdnResearchV3({
+  const { session, result, isRunning, isCompleted, isStarting, startLite, loadResult } = useAdnResearchV3({
     productId,
+    organizationId,
     autoLoadSession: true,
   });
+
+  // Handler para iniciar en modo lite (directo a n8n)
+  const handleStartLite = async () => {
+    const success = await startLite();
+    if (success) {
+      setShowProgress(true);
+    }
+  };
 
   // Check if research exists
   useEffect(() => {
@@ -90,6 +104,11 @@ export function AdnResearchV3Integration({
     setShowDashboard(true);
   };
 
+  const handleRegenerateAll = () => {
+    setShowDashboard(false);
+    setShowModal(true);
+  };
+
   // Render based on variant
   if (variant === "compact") {
     return (
@@ -100,14 +119,27 @@ export function AdnResearchV3Integration({
               <Button
                 size="sm"
                 variant={hasResearch ? "outline" : "default"}
-                onClick={() => (hasResearch ? setShowDashboard(true) : setShowModal(true))}
-                disabled={checkingResearch || isRunning}
+                onClick={() => {
+                  if (hasResearch) {
+                    setShowDashboard(true);
+                  } else if (useLiteMode) {
+                    handleStartLite();
+                  } else {
+                    setShowModal(true);
+                  }
+                }}
+                disabled={checkingResearch || isRunning || isStarting}
                 className={cn(
                   !hasResearch && "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                 )}
               >
                 {checkingResearch ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
+                ) : isStarting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                    Iniciando...
+                  </>
                 ) : isRunning ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-1 animate-spin" />
@@ -148,6 +180,7 @@ export function AdnResearchV3Integration({
           clientDnaName={clientDnaName}
           userTokenBalance={userTokenBalance}
           onComplete={handleComplete}
+          useLiteMode={useLiteMode}
         />
 
         {/* Dashboard Dialog */}
@@ -160,6 +193,7 @@ export function AdnResearchV3Integration({
               <AdnResearchV3Dashboard
                 result={result}
                 productName={productName}
+                onRegenerateAll={handleRegenerateAll}
               />
             )}
           </DialogContent>
@@ -228,11 +262,16 @@ export function AdnResearchV3Integration({
           ) : (
             <Button
               className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-              onClick={() => setShowModal(true)}
-              disabled={checkingResearch || isRunning}
+              onClick={() => useLiteMode ? handleStartLite() : setShowModal(true)}
+              disabled={checkingResearch || isRunning || isStarting}
             >
               {checkingResearch ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
+              ) : isStarting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Iniciando...
+                </>
               ) : isRunning ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -262,6 +301,7 @@ export function AdnResearchV3Integration({
           clientDnaName={clientDnaName}
           userTokenBalance={userTokenBalance}
           onComplete={handleComplete}
+          useLiteMode={useLiteMode}
         />
 
         {/* Dashboard Dialog */}
@@ -274,6 +314,7 @@ export function AdnResearchV3Integration({
               <AdnResearchV3Dashboard
                 result={result}
                 productName={productName}
+                onRegenerateAll={handleRegenerateAll}
               />
             )}
           </DialogContent>
@@ -301,12 +342,17 @@ export function AdnResearchV3Integration({
         </>
       ) : (
         <Button
-          onClick={() => setShowModal(true)}
-          disabled={checkingResearch || isRunning}
+          onClick={() => useLiteMode ? handleStartLite() : setShowModal(true)}
+          disabled={checkingResearch || isRunning || isStarting}
           className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
         >
           {checkingResearch ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : isStarting ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Iniciando...
+            </>
           ) : isRunning ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -347,6 +393,7 @@ export function AdnResearchV3Integration({
             <AdnResearchV3Dashboard
               result={result}
               productName={productName}
+              onRegenerateAll={handleRegenerateAll}
             />
           )}
         </DialogContent>

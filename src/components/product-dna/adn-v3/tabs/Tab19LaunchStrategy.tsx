@@ -19,6 +19,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { CopyButton } from "../ui/CopyButton";
+import { GenericTabContent } from "./GenericTabContent";
 
 interface LaunchPhase {
   phase: string;
@@ -76,6 +77,13 @@ interface LaunchStrategyData {
     mitigation: string;
   }>;
   launch_day_checklist: string[];
+  // Backend additional fields
+  post_launch_optimization?: {
+    first_48_hours: string;
+    first_week: string;
+    first_month: string;
+  };
+  summary?: string;
 }
 
 interface Tab19LaunchStrategyProps {
@@ -95,6 +103,25 @@ export function Tab19LaunchStrategy({ data }: Tab19LaunchStrategyProps) {
     );
   }
 
+  // Fallback: Si la estructura no coincide o los tipos son incorrectos, usar GenericTabContent
+  const rawData = data as Record<string, unknown>;
+  const launchOverview = rawData.launch_overview as Record<string, unknown> | undefined;
+  const hasValidStructure =
+    launchOverview &&
+    typeof launchOverview === 'object' &&
+    typeof launchOverview.launch_type === 'string' &&
+    typeof launchOverview.primary_goal === 'string';
+
+  if (!hasValidStructure) {
+    return (
+      <GenericTabContent
+        data={rawData}
+        title="Estrategia de Lanzamiento"
+        icon={<Rocket className="w-4 h-4" />}
+      />
+    );
+  }
+
   const priorityColors = {
     high: "bg-red-500/20 text-red-400",
     medium: "bg-yellow-500/20 text-yellow-400",
@@ -103,6 +130,15 @@ export function Tab19LaunchStrategy({ data }: Tab19LaunchStrategyProps) {
 
   return (
     <div className="space-y-6">
+      {/* Summary */}
+      {data.summary && (
+        <Card className="bg-gradient-to-br from-orange-500/10 to-purple-500/10 border-orange-500/30">
+          <CardContent className="pt-6">
+            <p className="text-sm leading-relaxed">{data.summary}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Launch Overview */}
       <Card className="bg-gradient-to-br from-orange-500/10 to-red-500/10 border-orange-500/30">
         <CardHeader>
@@ -473,6 +509,43 @@ export function Tab19LaunchStrategy({ data }: Tab19LaunchStrategyProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Post-Launch Optimization - Backend field */}
+      {data.post_launch_optimization && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-emerald-500" />
+              Optimización Post-Lanzamiento
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid sm:grid-cols-3 gap-4">
+              <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="w-4 h-4 text-emerald-400" />
+                  <p className="text-xs text-emerald-400 font-medium">Primeras 48 Horas</p>
+                </div>
+                <p className="text-sm">{data.post_launch_optimization.first_48_hours}</p>
+              </div>
+              <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar className="w-4 h-4 text-blue-400" />
+                  <p className="text-xs text-blue-400 font-medium">Primera Semana</p>
+                </div>
+                <p className="text-sm">{data.post_launch_optimization.first_week}</p>
+              </div>
+              <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Target className="w-4 h-4 text-purple-400" />
+                  <p className="text-xs text-purple-400 font-medium">Primer Mes</p>
+                </div>
+                <p className="text-sm">{data.post_launch_optimization.first_month}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

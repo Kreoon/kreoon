@@ -24,7 +24,6 @@ import { step06Neuromarketing } from './step-06-neuromarketing.ts'
 import { step07Positioning } from './step-07-positioning.ts'
 import { step08Copywriting } from './step-08-copywriting.ts'
 import { step09PUVOffer } from './step-09-puv-offer.ts'
-import { step10VideoCreatives } from './step-10-video-creatives.ts'
 import { step11ContentCalendar } from './step-11-content-calendar.ts'
 import { step12LeadMagnets } from './step-12-lead-magnets.ts'
 import { step13SocialMedia } from './step-13-social-media.ts'
@@ -49,7 +48,6 @@ export const RESEARCH_STEPS: ResearchStep[] = [
   step07Positioning,
   step08Copywriting,
   step09PUVOffer,
-  step10VideoCreatives,
   step11ContentCalendar,
   step12LeadMagnets,
   step13SocialMedia,
@@ -63,6 +61,37 @@ export const RESEARCH_STEPS: ResearchStep[] = [
   step21OrganicContent,
   step22ExecutiveSummary,
 ]
+
+// Helper: construir bloque de contexto de producto para inyectar en todos los prompts
+export function buildProductContextEnforcement(ctx: MasterContext): string {
+  return `
+⚠️ REGLA CRÍTICA DE CONTEXTO - LEE ESTO PRIMERO:
+═══════════════════════════════════════════════════════════════════════════════
+- TODO el análisis DEBE ser 100% ESPECÍFICO para "${ctx.product.name}"
+- NUNCA generes contenido genérico o de otras industrias
+- Si el producto es un suplemento, habla de suplementos. Si es software, habla de software
+- USA el nombre exacto "${ctx.product.name}" en tus respuestas
+- BASA todo en la transcripción y respuestas del wizard proporcionadas
+- Los datos DEBEN venir de fuentes reales verificables
+═══════════════════════════════════════════════════════════════════════════════
+
+INFORMACIÓN DEL PRODUCTO A ANALIZAR:
+• Nombre: ${ctx.product.name}
+• Descripción: ${ctx.product.description || 'No especificada'}
+• Tipo: ${ctx.product.service_types?.join(', ') || 'No especificado'}
+• Mercados: ${ctx.product.locations?.join(', ') || 'LATAM'}
+• Objetivo: ${ctx.product.goal || 'No especificado'}
+
+VOZ DEL FUNDADOR (FUENTE PRIMARIA):
+"${ctx.product.user_responses.q1_product || 'No disponible'}"
+
+PROBLEMA QUE RESUELVE:
+"${ctx.product.user_responses.q3_problem || 'No especificado'}"
+
+TRANSFORMACIÓN PROMETIDA:
+"${ctx.product.user_responses.q4_transformation || 'No especificada'}"
+`
+}
 
 // Helper: truncar contexto grande para no exceder límites de tokens
 export function truncateContext(obj: unknown, maxChars = 2000): string {

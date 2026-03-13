@@ -1,72 +1,55 @@
 /**
  * Tab01MarketOverview
  * Panorama de mercado con tendencias e insights
+ * Compatible con múltiples estructuras de datos del backend
  */
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import {
   Globe,
   TrendingUp,
-  TrendingDown,
   Users,
-  DollarSign,
-  Target,
   AlertTriangle,
   Lightbulb,
-  BarChart3,
-  ArrowUp,
-  ArrowDown,
-  Minus,
+  Zap,
+  Target,
+  Layers,
 } from "lucide-react";
 import { CopyButton } from "../ui/CopyButton";
-import { cn } from "@/lib/utils";
+import { GenericTabContent } from "./GenericTabContent";
 
+// Estructura flexible que acepta múltiples formatos del backend
 interface MarketOverviewData {
-  market_summary: {
-    description: string;
-    market_size: string;
-    growth_rate: string;
-    maturity_stage: "emerging" | "growing" | "mature" | "declining";
-    key_drivers: string[];
+  // Formato directo (estructura real del backend)
+  tam?: string;
+  sam?: string;
+  som?: string;
+  cagr?: string;
+  trends?: string[];
+  threats?: string[];
+  opportunities?: string[];
+  consumer_behavior?: string[];
+  category_design?: string;
+
+  // Formato anidado (estructura anterior)
+  market_size?: {
+    tam?: string;
+    sam_latam?: string;
+    som_year1?: string;
+    som_year3?: string;
   };
-  trends: Array<{
-    trend: string;
-    direction: "up" | "down" | "stable";
-    impact: "high" | "medium" | "low";
-    timeframe: string;
-    description: string;
+  market_state?: string;
+  adoption_stage?: string;
+  awareness_level?: string;
+  awareness_implication?: string;
+  macro_variables?: Array<{
+    factor?: string;
+    impact?: string;
+    description?: string;
   }>;
-  market_segments: Array<{
-    segment: string;
-    size_percentage: number;
-    growth_potential: "high" | "medium" | "low";
-    description: string;
-    key_players: string[];
-  }>;
-  opportunities: Array<{
-    opportunity: string;
-    description: string;
-    difficulty: "easy" | "medium" | "hard";
-    potential_impact: string;
-  }>;
-  threats: Array<{
-    threat: string;
-    severity: "high" | "medium" | "low";
-    mitigation: string;
-  }>;
-  key_statistics: Array<{
-    metric: string;
-    value: string;
-    context: string;
-  }>;
-  consumer_insights: {
-    primary_motivations: string[];
-    key_pain_points: string[];
-    purchase_triggers: string[];
-    decision_factors: string[];
-  };
+  data_sources?: string[];
+  summary?: string;
 }
 
 interface Tab01MarketOverviewProps {
@@ -86,307 +69,273 @@ export function Tab01MarketOverview({ data }: Tab01MarketOverviewProps) {
     );
   }
 
-  const maturityColors = {
-    emerging: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-    growing: "bg-green-500/20 text-green-400 border-green-500/30",
-    mature: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-    declining: "bg-red-500/20 text-red-400 border-red-500/30",
-  };
+  // Detectar formato de datos
+  const hasDirectFormat = !!(data.tam || data.sam || data.som || data.trends || data.opportunities);
+  const hasNestedFormat = !!(data.market_size || data.market_state);
 
-  const maturityLabels = {
-    emerging: "Emergente",
-    growing: "En Crecimiento",
-    mature: "Maduro",
-    declining: "En Declive",
-  };
+  if (!hasDirectFormat && !hasNestedFormat) {
+    return (
+      <GenericTabContent
+        data={data as Record<string, unknown>}
+        title="Panorama de Mercado"
+        icon={<Globe className="w-4 h-4" />}
+      />
+    );
+  }
 
-  const directionIcons = {
-    up: ArrowUp,
-    down: ArrowDown,
-    stable: Minus,
-  };
-
-  const potentialColors = {
-    high: "bg-green-500/20 text-green-400",
-    medium: "bg-yellow-500/20 text-yellow-400",
-    low: "bg-gray-500/20 text-gray-400",
-  };
-
-  const difficultyColors = {
-    easy: "bg-green-500/20 text-green-400",
-    medium: "bg-yellow-500/20 text-yellow-400",
-    hard: "bg-red-500/20 text-red-400",
-  };
+  // Normalizar datos para renderizado
+  const tam = data.tam || data.market_size?.tam;
+  const sam = data.sam || data.market_size?.sam_latam;
+  const som = data.som || data.market_size?.som_year1;
+  const cagr = data.cagr;
+  const trends = data.trends || [];
+  const threats = data.threats || [];
+  const opportunities = data.opportunities || [];
+  const consumerBehavior = data.consumer_behavior || [];
+  const categoryDesign = data.category_design;
 
   return (
     <div className="space-y-6">
-      {/* Market Summary */}
-      <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/30">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Globe className="w-5 h-5 text-blue-500" />
-            Resumen del Mercado
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm leading-relaxed">{data.market_summary?.description}</p>
+      {/* Market Size Grid */}
+      {(tam || sam || som) && (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {tam && (
+            <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/30">
+              <CardContent className="pt-4">
+                <p className="text-xs text-muted-foreground mb-1">TAM (Mercado Total)</p>
+                <p className="text-sm font-semibold text-blue-400 leading-tight">{tam}</p>
+              </CardContent>
+            </Card>
+          )}
+          {sam && (
+            <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/30">
+              <CardContent className="pt-4">
+                <p className="text-xs text-muted-foreground mb-1">SAM (Mercado Accesible)</p>
+                <p className="text-sm font-semibold text-green-400 leading-tight">{sam}</p>
+              </CardContent>
+            </Card>
+          )}
+          {som && (
+            <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border-yellow-500/30">
+              <CardContent className="pt-4">
+                <p className="text-xs text-muted-foreground mb-1">SOM (Mercado Objetivo)</p>
+                <p className="text-sm font-semibold text-yellow-400 leading-tight">{som}</p>
+              </CardContent>
+            </Card>
+          )}
+          {cagr && (
+            <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/30">
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <TrendingUp className="w-4 h-4 text-purple-500" />
+                  <p className="text-xs text-muted-foreground">CAGR</p>
+                </div>
+                <p className="text-sm font-semibold text-purple-400">{cagr}</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
 
-          <div className="grid sm:grid-cols-3 gap-4">
-            <div className="p-3 rounded-lg bg-background/50">
-              <p className="text-xs text-muted-foreground mb-1">Tamaño del Mercado</p>
-              <p className="text-lg font-bold">{data.market_summary?.market_size}</p>
-            </div>
-            <div className="p-3 rounded-lg bg-background/50">
-              <p className="text-xs text-muted-foreground mb-1">Tasa de Crecimiento</p>
-              <p className="text-lg font-bold">{data.market_summary?.growth_rate}</p>
-            </div>
-            <div className="p-3 rounded-lg bg-background/50">
-              <p className="text-xs text-muted-foreground mb-1">Etapa de Madurez</p>
-              <Badge className={maturityColors[data.market_summary?.maturity_stage || "growing"]}>
-                {maturityLabels[data.market_summary?.maturity_stage || "growing"]}
-              </Badge>
-            </div>
-          </div>
-
-          <div>
-            <p className="text-sm text-muted-foreground mb-2">Impulsores Clave</p>
-            <div className="flex flex-wrap gap-2">
-              {data.market_summary?.key_drivers?.map((driver, idx) => (
-                <Badge key={idx} variant="secondary">
-                  {driver}
-                </Badge>
+      {/* Consumer Behavior */}
+      {consumerBehavior.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Users className="w-5 h-5 text-blue-500" />
+              Comportamiento del Consumidor
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-3">
+              {consumerBehavior.map((behavior, idx) => (
+                <li key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                  <span className="text-blue-500 mt-0.5">•</span>
+                  <span className="text-sm leading-relaxed">{behavior}</span>
+                </li>
               ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Key Statistics */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {data.key_statistics?.map((stat, idx) => (
-          <Card key={idx}>
-            <CardContent className="pt-4">
-              <p className="text-xs text-muted-foreground mb-1">{stat.metric}</p>
-              <p className="text-2xl font-bold mb-1">{stat.value}</p>
-              <p className="text-xs text-muted-foreground">{stat.context}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            </ul>
+            <CopyButton
+              text={consumerBehavior.join('\n\n')}
+              className="mt-3"
+              size="sm"
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Trends */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-green-500" />
-            Tendencias del Mercado
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {data.trends?.map((trend, idx) => {
-              const DirectionIcon = directionIcons[trend.direction];
-              return (
-                <div key={idx} className="p-4 rounded-lg border bg-card">
-                  <div className="flex items-start justify-between gap-4 mb-2">
-                    <div className="flex items-center gap-2">
-                      <DirectionIcon
-                        className={cn(
-                          "w-5 h-5",
-                          trend.direction === "up"
-                            ? "text-green-500"
-                            : trend.direction === "down"
-                            ? "text-red-500"
-                            : "text-yellow-500"
-                        )}
-                      />
-                      <span className="font-medium">{trend.trend}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant="outline"
-                        className={
-                          trend.impact === "high"
-                            ? "border-green-500 text-green-500"
-                            : trend.impact === "medium"
-                            ? "border-yellow-500 text-yellow-500"
-                            : "border-gray-500 text-gray-500"
-                        }
-                      >
-                        Impacto {trend.impact === "high" ? "Alto" : trend.impact === "medium" ? "Medio" : "Bajo"}
-                      </Badge>
-                      <Badge variant="secondary" className="text-xs">
-                        {trend.timeframe}
-                      </Badge>
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{trend.description}</p>
+      {trends.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Zap className="w-5 h-5 text-cyan-500" />
+              Tendencias del Mercado
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {trends.map((trend, idx) => (
+                <div key={idx} className="flex items-start gap-3 p-3 rounded-lg border bg-card border-l-4 border-l-cyan-500">
+                  <Badge variant="secondary" className="shrink-0 mt-0.5">
+                    {idx + 1}
+                  </Badge>
+                  <span className="text-sm leading-relaxed">{trend}</span>
                 </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Market Segments */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-purple-500" />
-            Segmentos de Mercado
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {data.market_segments?.map((segment, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="font-medium">{segment.segment}</span>
-                  <div className="flex items-center gap-2">
-                    <Badge className={potentialColors[segment.growth_potential]}>
-                      Potencial {segment.growth_potential === "high" ? "Alto" : segment.growth_potential === "medium" ? "Medio" : "Bajo"}
-                    </Badge>
-                    <span className="text-sm font-medium">{segment.size_percentage}%</span>
-                  </div>
-                </div>
-                <Progress value={segment.size_percentage} className="h-2 mb-3" />
-                <p className="text-sm text-muted-foreground mb-2">{segment.description}</p>
-                {segment.key_players?.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {segment.key_players.map((player, playerIdx) => (
-                      <Badge key={playerIdx} variant="outline" className="text-xs">
-                        {player}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+            <CopyButton
+              text={trends.join('\n\n')}
+              className="mt-3"
+              size="sm"
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Opportunities */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lightbulb className="w-5 h-5 text-yellow-500" />
-              Oportunidades
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {data.opportunities?.map((opp, idx) => (
-              <div key={idx} className="p-3 rounded-lg border bg-card space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-sm">{opp.opportunity}</span>
-                  <Badge className={difficultyColors[opp.difficulty]}>
-                    {opp.difficulty === "easy" ? "Fácil" : opp.difficulty === "medium" ? "Moderado" : "Difícil"}
-                  </Badge>
+        {opportunities.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Lightbulb className="w-5 h-5 text-green-500" />
+                Oportunidades
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {opportunities.map((opp, idx) => (
+                <div key={idx} className="p-3 rounded-lg border bg-card border-l-4 border-l-green-500">
+                  <div className="flex items-start gap-2">
+                    <Badge className="bg-green-500/20 text-green-400 shrink-0">
+                      {idx + 1}
+                    </Badge>
+                    <span className="text-sm leading-relaxed">{opp}</span>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">{opp.description}</p>
-                <p className="text-xs">
-                  <span className="text-muted-foreground">Impacto: </span>
-                  <span className="text-green-400">{opp.potential_impact}</span>
-                </p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+              ))}
+              <CopyButton
+                text={opportunities.join('\n\n')}
+                className="mt-2"
+                size="sm"
+              />
+            </CardContent>
+          </Card>
+        )}
 
         {/* Threats */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-red-500" />
-              Amenazas
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {data.threats?.map((threat, idx) => (
-              <div key={idx} className="p-3 rounded-lg border bg-card space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-sm">{threat.threat}</span>
-                  <Badge
-                    variant="outline"
-                    className={
-                      threat.severity === "high"
-                        ? "border-red-500 text-red-500"
-                        : threat.severity === "medium"
-                        ? "border-yellow-500 text-yellow-500"
-                        : "border-gray-500 text-gray-500"
-                    }
-                  >
-                    {threat.severity === "high" ? "Alto" : threat.severity === "medium" ? "Medio" : "Bajo"}
-                  </Badge>
+        {threats.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+                Amenazas
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {threats.map((threat, idx) => (
+                <div key={idx} className="p-3 rounded-lg border bg-card border-l-4 border-l-red-500">
+                  <div className="flex items-start gap-2">
+                    <Badge variant="outline" className="border-red-500 text-red-400 shrink-0">
+                      {idx + 1}
+                    </Badge>
+                    <span className="text-sm leading-relaxed">{threat}</span>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  <span className="text-foreground">Mitigación: </span>
-                  {threat.mitigation}
-                </p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+              ))}
+              <CopyButton
+                text={threats.join('\n\n')}
+                className="mt-2"
+                size="sm"
+              />
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      {/* Consumer Insights */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-blue-500" />
-            Insights del Consumidor
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid sm:grid-cols-2 gap-6">
-            <div>
-              <p className="text-sm font-medium mb-2 text-green-400">Motivaciones Principales</p>
-              <ul className="space-y-1">
-                {data.consumer_insights?.primary_motivations?.map((item, idx) => (
-                  <li key={idx} className="text-sm flex items-start gap-2">
-                    <span className="text-green-500">•</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
+      {/* Category Design */}
+      {categoryDesign && (
+        <Card className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border-indigo-500/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Layers className="w-5 h-5 text-indigo-500" />
+              Diseño de Categoría
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm leading-relaxed">{categoryDesign}</p>
+            <CopyButton text={categoryDesign} className="mt-3" size="sm" />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Legacy: Market State & Awareness (for backwards compatibility) */}
+      {(data.market_state || data.awareness_level) && (
+        <div className="grid sm:grid-cols-2 gap-4">
+          {data.market_state && (
+            <Card>
+              <CardContent className="pt-4">
+                <p className="text-xs text-muted-foreground mb-2">Estado del Mercado</p>
+                <Badge variant="secondary" className="capitalize">
+                  {data.market_state}
+                </Badge>
+              </CardContent>
+            </Card>
+          )}
+          {data.awareness_level && (
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Target className="w-4 h-4 text-purple-500" />
+                  <p className="text-xs text-muted-foreground">Nivel de Consciencia</p>
+                </div>
+                <Badge className="bg-purple-500/20 text-purple-400">
+                  {data.awareness_level}
+                </Badge>
+                {data.awareness_implication && (
+                  <p className="text-xs text-muted-foreground mt-2">{data.awareness_implication}</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Legacy: Macro Variables */}
+      {data.macro_variables && data.macro_variables.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Variables Macro</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {data.macro_variables.map((mv, idx) => (
+                <div key={idx} className="p-3 rounded-lg border bg-card">
+                  <div className="flex items-center justify-between mb-2">
+                    <Badge variant="outline" className="capitalize">
+                      {mv.factor}
+                    </Badge>
+                    <Badge variant="secondary">
+                      Impacto {mv.impact}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{mv.description}</p>
+                </div>
+              ))}
             </div>
-            <div>
-              <p className="text-sm font-medium mb-2 text-red-400">Puntos de Dolor</p>
-              <ul className="space-y-1">
-                {data.consumer_insights?.key_pain_points?.map((item, idx) => (
-                  <li key={idx} className="text-sm flex items-start gap-2">
-                    <span className="text-red-500">•</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="text-sm font-medium mb-2 text-yellow-400">Disparadores de Compra</p>
-              <ul className="space-y-1">
-                {data.consumer_insights?.purchase_triggers?.map((item, idx) => (
-                  <li key={idx} className="text-sm flex items-start gap-2">
-                    <span className="text-yellow-500">•</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="text-sm font-medium mb-2 text-blue-400">Factores de Decisión</p>
-              <ul className="space-y-1">
-                {data.consumer_insights?.decision_factors?.map((item, idx) => (
-                  <li key={idx} className="text-sm flex items-start gap-2">
-                    <span className="text-blue-500">•</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Legacy: Summary */}
+      {data.summary && (
+        <Card className="border-dashed">
+          <CardContent className="pt-4">
+            <p className="text-sm leading-relaxed">{data.summary}</p>
+            <CopyButton text={data.summary} className="mt-3" size="sm" />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

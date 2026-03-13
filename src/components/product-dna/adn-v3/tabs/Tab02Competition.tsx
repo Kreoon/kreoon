@@ -1,72 +1,100 @@
 /**
  * Tab02Competition
  * Análisis de competencia detallado
+ * Adaptado a la estructura real del backend adn-research-v3
  */
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import {
   Target,
   Shield,
   AlertTriangle,
   TrendingUp,
   TrendingDown,
-  DollarSign,
   Users,
   Zap,
   ExternalLink,
+  Lightbulb,
+  Clock,
+  Crosshair,
+  BookOpen,
 } from "lucide-react";
 import { CopyButton } from "../ui/CopyButton";
-import { cn } from "@/lib/utils";
+import { GenericTabContent } from "./GenericTabContent";
 
-interface Competitor {
-  name: string;
-  website?: string;
-  positioning: string;
-  price_range: string;
-  target_audience: string;
-  strengths: string[];
-  weaknesses: string[];
-  market_share_estimate?: number;
-  threat_level: "high" | "medium" | "low";
-  differentiation_opportunity: string;
-}
-
-interface CompetitionData {
-  competitive_landscape: {
-    market_concentration: "fragmented" | "moderate" | "concentrated";
-    intensity: "high" | "medium" | "low";
-    barriers_to_entry: string[];
-    key_success_factors: string[];
-  };
-  direct_competitors: Competitor[];
-  indirect_competitors: Array<{
-    name: string;
-    category: string;
-    overlap: string;
+// Estructura real del backend (step-02-competition.ts)
+interface BackendCompetitionData {
+  direct_competitors?: Array<{
+    name?: string;
+    website?: string;
+    positioning?: string;
+    target_audience?: string;
+    price_range?: string;
+    strengths?: string[];
+    weaknesses?: string[];
+    unique_selling_point?: string;
+    content_strategy?: string;
+    threat_level?: string;
   }>;
-  competitive_advantages: Array<{
-    advantage: string;
-    sustainability: "high" | "medium" | "low";
-    proof_points: string[];
+  indirect_competitors?: Array<{
+    name?: string;
+    why_indirect?: string;
+    threat_level?: string;
   }>;
-  positioning_map: {
-    x_axis: string;
-    y_axis: string;
-    your_position: { x: number; y: number };
-    competitors_positions: Array<{
-      name: string;
-      x: number;
-      y: number;
+  competitive_gaps?: Array<{
+    gap?: string;
+    opportunity?: string;
+    difficulty?: string;
+  }>;
+  market_positioning_map?: {
+    axis_x?: string;
+    axis_y?: string;
+    positions?: Array<{
+      competitor?: string;
+      x?: number;
+      y?: number;
     }>;
   };
-  strategic_recommendations: string[];
+  differentiation_opportunities?: Array<{
+    area?: string;
+    current_state?: string;
+    opportunity?: string;
+    implementation?: string;
+  }>;
+  competitive_threats?: Array<{
+    threat?: string;
+    source?: string;
+    timeline?: string;
+    mitigation?: string;
+  }>;
+  recommended_positioning?: string;
+  summary?: string;
 }
 
 interface Tab02CompetitionProps {
-  data: CompetitionData | null | undefined;
+  data: BackendCompetitionData | null | undefined;
 }
+
+const threatColors: Record<string, string> = {
+  alto: "bg-red-500/20 text-red-400 border-red-500/30",
+  medio: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+  bajo: "bg-green-500/20 text-green-400 border-green-500/30",
+  high: "bg-red-500/20 text-red-400 border-red-500/30",
+  medium: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+  low: "bg-green-500/20 text-green-400 border-green-500/30",
+};
+
+const difficultyColors: Record<string, string> = {
+  fácil: "bg-green-500/20 text-green-400",
+  facil: "bg-green-500/20 text-green-400",
+  medio: "bg-yellow-500/20 text-yellow-400",
+  difícil: "bg-red-500/20 text-red-400",
+  dificil: "bg-red-500/20 text-red-400",
+  easy: "bg-green-500/20 text-green-400",
+  medium: "bg-yellow-500/20 text-yellow-400",
+  hard: "bg-red-500/20 text-red-400",
+};
 
 export function Tab02Competition({ data }: Tab02CompetitionProps) {
   if (!data) {
@@ -81,266 +109,337 @@ export function Tab02Competition({ data }: Tab02CompetitionProps) {
     );
   }
 
-  const threatColors = {
-    high: "bg-red-500/20 text-red-400 border-red-500/30",
-    medium: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-    low: "bg-green-500/20 text-green-400 border-green-500/30",
-  };
+  // Verificar estructura del backend
+  const rawData = data as Record<string, unknown>;
+  const hasBackendStructure =
+    rawData.direct_competitors ||
+    rawData.competitive_gaps ||
+    rawData.differentiation_opportunities;
 
-  const sustainabilityColors = {
-    high: "text-green-400",
-    medium: "text-yellow-400",
-    low: "text-red-400",
-  };
+  if (!hasBackendStructure) {
+    return (
+      <GenericTabContent
+        data={rawData}
+        title="Análisis de Competencia"
+        icon={<Target className="w-4 h-4" />}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Competitive Landscape Overview */}
-      <Card className="bg-gradient-to-br from-orange-500/10 to-red-500/10 border-orange-500/30">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="w-5 h-5 text-orange-500" />
-            Panorama Competitivo
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid sm:grid-cols-2 gap-4 mb-4">
-            <div className="p-3 rounded-lg bg-background/50">
-              <p className="text-xs text-muted-foreground mb-1">Concentración del Mercado</p>
-              <Badge variant="outline" className="capitalize">
-                {data.competitive_landscape?.market_concentration === "fragmented"
-                  ? "Fragmentado"
-                  : data.competitive_landscape?.market_concentration === "moderate"
-                  ? "Moderado"
-                  : "Concentrado"}
-              </Badge>
-            </div>
-            <div className="p-3 rounded-lg bg-background/50">
-              <p className="text-xs text-muted-foreground mb-1">Intensidad Competitiva</p>
-              <Badge
-                className={
-                  data.competitive_landscape?.intensity === "high"
-                    ? "bg-red-500/20 text-red-400"
-                    : data.competitive_landscape?.intensity === "medium"
-                    ? "bg-yellow-500/20 text-yellow-400"
-                    : "bg-green-500/20 text-green-400"
-                }
-              >
-                {data.competitive_landscape?.intensity === "high"
-                  ? "Alta"
-                  : data.competitive_landscape?.intensity === "medium"
-                  ? "Media"
-                  : "Baja"}
-              </Badge>
-            </div>
-          </div>
-
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm font-medium mb-2">Barreras de Entrada</p>
-              <ul className="space-y-1">
-                {data.competitive_landscape?.barriers_to_entry?.map((barrier, idx) => (
-                  <li key={idx} className="text-sm flex items-start gap-2">
-                    <Shield className="w-3 h-3 mt-1 text-blue-400 flex-shrink-0" />
-                    {barrier}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="text-sm font-medium mb-2">Factores Clave de Éxito</p>
-              <ul className="space-y-1">
-                {data.competitive_landscape?.key_success_factors?.map((factor, idx) => (
-                  <li key={idx} className="text-sm flex items-start gap-2">
-                    <Zap className="w-3 h-3 mt-1 text-yellow-400 flex-shrink-0" />
-                    {factor}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Summary & Recommended Positioning */}
+      {(data.summary || data.recommended_positioning) && (
+        <Card className="bg-gradient-to-br from-orange-500/10 to-red-500/10 border-orange-500/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Target className="w-5 h-5 text-orange-500" />
+              Resumen Competitivo
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {data.summary && (
+              <div>
+                <p className="text-sm leading-relaxed">{data.summary}</p>
+                <CopyButton text={data.summary} className="mt-2" size="sm" />
+              </div>
+            )}
+            {data.recommended_positioning && (
+              <div className="p-3 rounded-lg bg-background/50 border-l-4 border-l-orange-500">
+                <p className="text-xs text-muted-foreground mb-1">Posicionamiento Recomendado</p>
+                <p className="text-sm font-medium">{data.recommended_positioning}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Direct Competitors */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-red-500" />
-            Competidores Directos
-          </CardTitle>
-          <CardDescription>
-            Empresas que ofrecen productos/servicios similares al mismo mercado
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {data.direct_competitors?.map((competitor, idx) => (
-            <div key={idx} className="p-4 rounded-lg border bg-card">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center font-bold text-lg">
-                    {competitor.name.charAt(0)}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-semibold">{competitor.name}</h4>
-                      {competitor.website && (
-                        <a
-                          href={competitor.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-muted-foreground hover:text-foreground"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
+      {data.direct_competitors && data.direct_competitors.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Users className="w-5 h-5 text-red-500" />
+              Competidores Directos
+            </CardTitle>
+            <CardDescription>
+              {data.direct_competitors.length} competidores identificados
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {data.direct_competitors.map((comp, idx) => (
+              <div key={idx} className="p-4 rounded-lg border bg-card">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center font-bold text-lg">
+                      {comp.name?.charAt(0) || "?"}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-semibold">{comp.name}</h4>
+                        {comp.website && (
+                          <a
+                            href={comp.website.startsWith("http") ? comp.website : `https://${comp.website}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
+                      </div>
+                      {comp.positioning && (
+                        <p className="text-xs text-muted-foreground">{comp.positioning}</p>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground">{competitor.positioning}</p>
                   </div>
+                  {comp.threat_level && (
+                    <Badge className={threatColors[comp.threat_level.toLowerCase()] || "bg-muted"}>
+                      Amenaza {comp.threat_level}
+                    </Badge>
+                  )}
                 </div>
-                <Badge className={threatColors[competitor.threat_level]}>
-                  {competitor.threat_level === "high"
-                    ? "Amenaza Alta"
-                    : competitor.threat_level === "medium"
-                    ? "Amenaza Media"
-                    : "Amenaza Baja"}
-                </Badge>
-              </div>
 
-              <div className="grid sm:grid-cols-3 gap-4 mb-3 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Precio: </span>
-                  <span className="font-medium">{competitor.price_range}</span>
+                <div className="grid sm:grid-cols-2 gap-4 mb-3 text-sm">
+                  {comp.price_range && (
+                    <div>
+                      <span className="text-muted-foreground">Precio: </span>
+                      <span className="font-medium">{comp.price_range}</span>
+                    </div>
+                  )}
+                  {comp.target_audience && (
+                    <div>
+                      <span className="text-muted-foreground">Target: </span>
+                      <span className="font-medium">{comp.target_audience}</span>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <span className="text-muted-foreground">Target: </span>
-                  <span className="font-medium">{competitor.target_audience}</span>
+
+                <div className="grid sm:grid-cols-2 gap-4 mb-3">
+                  {comp.strengths && comp.strengths.length > 0 && (
+                    <div>
+                      <p className="text-xs text-green-400 mb-1 flex items-center gap-1">
+                        <TrendingUp className="w-3 h-3" /> Fortalezas
+                      </p>
+                      <ul className="space-y-0.5">
+                        {comp.strengths.map((s, sIdx) => (
+                          <li key={sIdx} className="text-xs text-muted-foreground">• {s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {comp.weaknesses && comp.weaknesses.length > 0 && (
+                    <div>
+                      <p className="text-xs text-red-400 mb-1 flex items-center gap-1">
+                        <TrendingDown className="w-3 h-3" /> Debilidades
+                      </p>
+                      <ul className="space-y-0.5">
+                        {comp.weaknesses.map((w, wIdx) => (
+                          <li key={wIdx} className="text-xs text-muted-foreground">• {w}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
-                {competitor.market_share_estimate && (
-                  <div>
-                    <span className="text-muted-foreground">Market Share: </span>
-                    <span className="font-medium">~{competitor.market_share_estimate}%</span>
+
+                {(comp.unique_selling_point || comp.content_strategy) && (
+                  <div className="grid sm:grid-cols-2 gap-3 pt-3 border-t">
+                    {comp.unique_selling_point && (
+                      <div className="p-2 rounded bg-purple-500/10 border border-purple-500/20">
+                        <p className="text-xs text-purple-400">
+                          <strong>USP:</strong> {comp.unique_selling_point}
+                        </p>
+                      </div>
+                    )}
+                    {comp.content_strategy && (
+                      <div className="p-2 rounded bg-blue-500/10 border border-blue-500/20">
+                        <p className="text-xs text-blue-400">
+                          <strong>Contenido:</strong> {comp.content_strategy}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-green-400 mb-1 flex items-center gap-1">
-                    <TrendingUp className="w-3 h-3" /> Fortalezas
-                  </p>
-                  <ul className="space-y-0.5">
-                    {competitor.strengths?.map((strength, sIdx) => (
-                      <li key={sIdx} className="text-xs text-muted-foreground">
-                        • {strength}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <p className="text-xs text-red-400 mb-1 flex items-center gap-1">
-                    <TrendingDown className="w-3 h-3" /> Debilidades
-                  </p>
-                  <ul className="space-y-0.5">
-                    {competitor.weaknesses?.map((weakness, wIdx) => (
-                      <li key={wIdx} className="text-xs text-muted-foreground">
-                        • {weakness}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              <div className="mt-3 p-2 rounded bg-blue-500/10 border border-blue-500/20">
-                <p className="text-xs text-blue-400">
-                  <strong>Oportunidad de diferenciación:</strong>{" "}
-                  {competitor.differentiation_opportunity}
-                </p>
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Indirect Competitors */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Competidores Indirectos</CardTitle>
-          <CardDescription>
-            Alternativas que resuelven el mismo problema de forma diferente
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {data.indirect_competitors?.map((comp, idx) => (
-              <div key={idx} className="p-3 rounded-lg border bg-muted/30">
-                <p className="font-medium text-sm">{comp.name}</p>
-                <Badge variant="outline" className="text-xs mt-1">
-                  {comp.category}
-                </Badge>
-                <p className="text-xs text-muted-foreground mt-2">{comp.overlap}</p>
+      {data.indirect_competitors && data.indirect_competitors.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Competidores Indirectos</CardTitle>
+            <CardDescription>
+              Alternativas que resuelven el mismo problema de forma diferente
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {data.indirect_competitors.map((comp, idx) => (
+                <div key={idx} className="p-3 rounded-lg border bg-muted/30">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="font-medium text-sm">{comp.name}</p>
+                    {comp.threat_level && (
+                      <Badge variant="outline" className={threatColors[comp.threat_level.toLowerCase()] || ""}>
+                        {comp.threat_level}
+                      </Badge>
+                    )}
+                  </div>
+                  {comp.why_indirect && (
+                    <p className="text-xs text-muted-foreground">{comp.why_indirect}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Competitive Gaps */}
+      {data.competitive_gaps && data.competitive_gaps.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Crosshair className="w-5 h-5 text-green-500" />
+              Gaps Competitivos
+            </CardTitle>
+            <CardDescription>
+              Espacios no cubiertos en el mercado
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {data.competitive_gaps.map((gap, idx) => (
+              <div key={idx} className="p-4 rounded-lg border bg-card border-l-4 border-l-green-500">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <span className="font-medium text-sm">{gap.gap}</span>
+                  {gap.difficulty && (
+                    <Badge className={difficultyColors[gap.difficulty.toLowerCase()] || "bg-muted"}>
+                      {gap.difficulty}
+                    </Badge>
+                  )}
+                </div>
+                {gap.opportunity && (
+                  <p className="text-sm text-muted-foreground">
+                    <span className="text-green-400">Oportunidad:</span> {gap.opportunity}
+                  </p>
+                )}
               </div>
             ))}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Competitive Advantages */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-green-500" />
-            Ventajas Competitivas
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {data.competitive_advantages?.map((adv, idx) => (
-            <div key={idx} className="p-4 rounded-lg border bg-card">
-              <div className="flex items-start justify-between mb-2">
-                <h4 className="font-medium">{adv.advantage}</h4>
-                <span className={cn("text-xs", sustainabilityColors[adv.sustainability])}>
-                  Sostenibilidad{" "}
-                  {adv.sustainability === "high"
-                    ? "Alta"
-                    : adv.sustainability === "medium"
-                    ? "Media"
-                    : "Baja"}
-                </span>
+      {/* Differentiation Opportunities */}
+      {data.differentiation_opportunities && data.differentiation_opportunities.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Lightbulb className="w-5 h-5 text-yellow-500" />
+              Oportunidades de Diferenciación
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {data.differentiation_opportunities.map((diff, idx) => (
+              <div key={idx} className="p-4 rounded-lg border bg-card">
+                <h4 className="font-medium text-sm text-yellow-400 mb-2">{diff.area}</h4>
+                <div className="space-y-2 text-sm">
+                  {diff.current_state && (
+                    <p className="text-muted-foreground">
+                      <strong>Estado actual:</strong> {diff.current_state}
+                    </p>
+                  )}
+                  {diff.opportunity && (
+                    <p>
+                      <strong className="text-green-400">Oportunidad:</strong> {diff.opportunity}
+                    </p>
+                  )}
+                  {diff.implementation && (
+                    <p className="text-muted-foreground">
+                      <strong>Implementación:</strong> {diff.implementation}
+                    </p>
+                  )}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {adv.proof_points?.map((proof, pIdx) => (
-                  <Badge key={pIdx} variant="secondary" className="text-xs">
-                    {proof}
-                  </Badge>
-                ))}
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Competitive Threats */}
+      {data.competitive_threats && data.competitive_threats.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <AlertTriangle className="w-5 h-5 text-red-500" />
+              Amenazas Competitivas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {data.competitive_threats.map((threat, idx) => (
+              <div key={idx} className="p-4 rounded-lg border bg-card border-l-4 border-l-red-500">
+                <h4 className="font-medium text-sm mb-2">{threat.threat}</h4>
+                <div className="grid sm:grid-cols-3 gap-2 text-xs">
+                  {threat.source && (
+                    <div>
+                      <span className="text-muted-foreground">Fuente: </span>
+                      <span>{threat.source}</span>
+                    </div>
+                  )}
+                  {threat.timeline && (
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-muted-foreground" />
+                      <span>{threat.timeline}</span>
+                    </div>
+                  )}
+                  {threat.mitigation && (
+                    <div className="sm:col-span-3 mt-2 p-2 rounded bg-green-500/10">
+                      <span className="text-green-400">Mitigación: </span>
+                      <span>{threat.mitigation}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Positioning Map */}
+      {data.market_positioning_map && data.market_positioning_map.positions && data.market_positioning_map.positions.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <BookOpen className="w-5 h-5 text-purple-500" />
+              Mapa de Posicionamiento
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid sm:grid-cols-2 gap-4 mb-4">
+              <div className="p-3 rounded-lg bg-muted/30">
+                <p className="text-xs text-muted-foreground">Eje X</p>
+                <p className="font-medium text-sm">{data.market_positioning_map.axis_x}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/30">
+                <p className="text-xs text-muted-foreground">Eje Y</p>
+                <p className="font-medium text-sm">{data.market_positioning_map.axis_y}</p>
               </div>
             </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Strategic Recommendations */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-yellow-500" />
-            Recomendaciones Estratégicas
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-3">
-            {data.strategic_recommendations?.map((rec, idx) => (
-              <li key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-500/20 text-yellow-400 flex items-center justify-center text-xs font-bold">
-                  {idx + 1}
-                </span>
-                <span className="text-sm">{rec}</span>
-                <CopyButton text={rec} size="sm" className="ml-auto" />
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+            <div className="space-y-2">
+              {data.market_positioning_map.positions.map((pos, idx) => (
+                <div key={idx} className="flex items-center justify-between p-2 rounded border bg-card">
+                  <span className="text-sm font-medium">{pos.competitor}</span>
+                  <div className="flex gap-2">
+                    <Badge variant="outline">X: {pos.x}</Badge>
+                    <Badge variant="outline">Y: {pos.y}</Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

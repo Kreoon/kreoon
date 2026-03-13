@@ -12,7 +12,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { buildMasterContext } from './context-builder.ts'
-import { RESEARCH_STEPS } from './steps/index.ts'
+import { RESEARCH_STEPS, buildProductContextEnforcement } from './steps/index.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -40,7 +40,7 @@ interface StepResult {
   tab_key: string
   data: Record<string, unknown>
   tokens_used: number
-  provider_used: 'perplexity' | 'gemini' | 'fallback'
+  provider_used: 'perplexity' | 'gemini' | 'perplexity+gemini' | 'fallback'
   duration_ms: number
   error?: string
 }
@@ -86,61 +86,154 @@ async function callPerplexity(
 
 async function callGemini(
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  retries = 2
 ): Promise<{ text: string; tokens: number }> {
   const apiKey = Deno.env.get('GEMINI_API_KEY') || Deno.env.get('GOOGLE_AI_API_KEY')
   if (!apiKey) throw new Error('GEMINI_API_KEY no configurada')
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          role: 'user',
-          parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }],
-        }],
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 3500,
-        },
-      }),
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              role: 'user',
+              parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }],
+            }],
+            generationConfig: {
+              temperature: 0.3,
+              maxOutputTokens: 4000,
+            },
+          }),
+        }
+      )
+
+      if (!response.ok) {
+        const err = await response.text()
+        throw new Error(`Gemini ${response.status}: ${err.slice(0, 200)}`)
+      }
+
+      const data = await response.json()
+      return {
+        text: data.candidates?.[0]?.content?.parts?.[0]?.text || '',
+        tokens: data.usageMetadata?.totalTokenCount || 0,
+      }
+    } catch (err) {
+      console.warn(`Gemini intento ${attempt + 1}/${retries + 1} falló: ${(err as Error).message}`)
+      if (attempt < retries) {
+        await new Promise(r => setTimeout(r, 2000 * (attempt + 1)))
+      } else {
+        throw err
+      }
     }
-  )
-
-  if (!response.ok) {
-    const err = await response.text()
-    throw new Error(`Gemini ${response.status}: ${err.slice(0, 200)}`)
   }
-
-  const data = await response.json()
-  return {
-    text: data.candidates?.[0]?.content?.parts?.[0]?.text || '',
-    tokens: data.usageMetadata?.totalTokenCount || 0,
-  }
+  throw new Error('Gemini: todos los intentos fallaron')
 }
 
 export async function callAI(
   systemPrompt: string,
   userPrompt: string,
   useWebSearch = true
-): Promise<{ text: string; tokens: number; provider: 'perplexity' | 'gemini' }> {
-  // Intentar Perplexity (máximo 2 intentos)
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const result = await callPerplexity(systemPrompt, userPrompt, useWebSearch)
-      return { ...result, provider: 'perplexity' }
-    } catch (err) {
-      console.warn(`Perplexity intento ${attempt + 1}/2 falló: ${(err as Error).message}`)
-      if (attempt === 0) await new Promise(r => setTimeout(r, 5000))
+): Promise<{ text: string; tokens: number; provider: 'perplexity' | 'gemini' | 'perplexity+gemini' }> {
+  let perplexityData: string | null = null
+  let totalTokens = 0
+  let perplexityError: string | null = null
+
+  // PASO 1: Perplexity busca datos reales con web search
+  if (useWebSearch) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        console.log(`🔍 Paso 1: Perplexity buscando datos reales (intento ${attempt + 1}/3)...`)
+        const perplexityResult = await callPerplexity(
+          `Eres un investigador de mercados. Busca datos REALES y ACTUALIZADOS usando tu acceso a internet.
+NO inventes datos. Cita fuentes cuando sea posible.
+Responde con la información encontrada de forma estructurada.`,
+          userPrompt,
+          true
+        )
+        perplexityData = perplexityResult.text
+        totalTokens += perplexityResult.tokens
+        console.log(`✅ Perplexity encontró datos (${perplexityResult.tokens} tokens)`)
+        break
+      } catch (err) {
+        perplexityError = (err as Error).message
+        console.warn(`Perplexity intento ${attempt + 1}/3 falló: ${perplexityError}`)
+        if (attempt < 2) await new Promise(r => setTimeout(r, 2000 * (attempt + 1)))
+      }
     }
   }
 
-  // Fallback Gemini
-  console.log('→ Usando Gemini como fallback...')
-  const result = await callGemini(systemPrompt, userPrompt)
-  return { ...result, provider: 'gemini' }
+  // PASO 2: Gemini organiza y formatea los datos
+  console.log('📝 Paso 2: Gemini organizando datos en JSON...')
+
+  const geminiSystemPrompt = `${systemPrompt}
+
+⚠️ REGLAS ESTRICTAS:
+1. Organiza y estructura la información en el formato JSON solicitado
+2. NO inventes datos adicionales - usa SOLO la información proporcionada
+3. NO omitas información relevante que se te proporcionó
+4. Si falta algún dato, usa "No disponible" o valores vacíos apropiados
+5. Mejora la redacción pero mantén el contenido fiel a los datos originales
+6. Responde SOLO con JSON válido, sin markdown ni explicaciones`
+
+  const geminiUserPrompt = perplexityData
+    ? `DATOS RECOPILADOS DE FUENTES REALES (Perplexity):
+═══════════════════════════════════════════════════════════════════════════════
+${perplexityData}
+═══════════════════════════════════════════════════════════════════════════════
+
+INSTRUCCIONES ORIGINALES:
+${userPrompt}
+
+Organiza los datos anteriores en el formato JSON solicitado. NO inventes información adicional.`
+    : userPrompt
+
+  try {
+    const geminiResult = await callGemini(geminiSystemPrompt, geminiUserPrompt, 2)
+    totalTokens += geminiResult.tokens
+
+    return {
+      text: geminiResult.text,
+      tokens: totalTokens,
+      provider: perplexityData ? 'perplexity+gemini' : 'gemini',
+    }
+  } catch (geminiErr) {
+    console.error('❌ Gemini falló después de reintentos:', (geminiErr as Error).message)
+
+    // Si Gemini falla pero tenemos datos de Perplexity, intentar formatearlos básicamente
+    if (perplexityData) {
+      console.log('⚠️ Devolviendo datos de Perplexity con formato básico')
+      // Intentar crear un JSON básico con los datos de Perplexity
+      const fallbackJson = JSON.stringify({
+        _source: 'perplexity_fallback',
+        _note: 'Gemini falló, datos sin formatear',
+        content: perplexityData,
+        summary: perplexityData.slice(0, 500)
+      })
+      return {
+        text: fallbackJson,
+        tokens: totalTokens,
+        provider: 'perplexity',
+      }
+    }
+
+    // Si ambos fallaron, devolver un error estructurado en lugar de lanzar excepción
+    console.error('❌ Ambos proveedores fallaron')
+    const errorJson = JSON.stringify({
+      _error: true,
+      _message: `Perplexity: ${perplexityError || 'no usado'}. Gemini: ${(geminiErr as Error).message}`,
+      summary: 'Error al generar contenido. Intenta regenerar esta sección.'
+    })
+    return {
+      text: errorJson,
+      tokens: totalTokens,
+      provider: 'gemini',
+    }
+  }
 }
 
 export function safeParseJSON<T>(text: string, fallback: T): T {
@@ -177,14 +270,23 @@ async function executeStep(
   // Marcar paso como 'running' en sesión
   await updateStepStatus(supabase, sessionId, step.stepId, 'running')
 
+  // Timeout adaptativo: pasos de publicidad (14-18) necesitan más tiempo
+  const isHeavyStep = step.number >= 14 && step.number <= 18
+  const timeoutMs = isHeavyStep ? 120000 : 90000
+  console.log(`⏱️ Timeout: ${timeoutMs / 1000}s ${isHeavyStep ? '(paso pesado)' : ''}`)
+
   try {
     // Construir prompts con el contexto disponible
     const { systemPrompt, userPrompt } = step.buildPrompts(masterContext, previousResults)
 
-    // Llamar a AI con timeout de 55s
-    const aiPromise = callAI(systemPrompt, userPrompt, step.useWebSearch)
+    // Inyectar contexto de producto para garantizar consistencia
+    const productContext = buildProductContextEnforcement(masterContext as any)
+    const enhancedUserPrompt = `${productContext}\n\n${userPrompt}`
+
+    // Llamar a AI con timeout adaptativo
+    const aiPromise = callAI(systemPrompt, enhancedUserPrompt, step.useWebSearch)
     const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Timeout de 55 segundos')), 55000)
+      setTimeout(() => reject(new Error(`Timeout de ${timeoutMs / 1000} segundos`)), timeoutMs)
     )
 
     const { text, tokens, provider } = await Promise.race([aiPromise, timeoutPromise])
@@ -442,12 +544,15 @@ async function runResearchProcess(
 
       if (result.error) {
         errorCount++
+        console.log(`⚠️ Paso ${step.number} falló pero continuamos con el siguiente...`)
       } else {
         completedCount++
       }
 
-      // Pequeña pausa entre pasos para evitar rate limits
-      await new Promise(r => setTimeout(r, 1000))
+      // Pausa entre pasos para evitar rate limits
+      // Pasos de publicidad (14-18) necesitan más tiempo
+      const pauseTime = step.number >= 14 && step.number <= 18 ? 2000 : 1000
+      await new Promise(r => setTimeout(r, pauseTime))
     }
 
     // 4. Marcar sesión como completada

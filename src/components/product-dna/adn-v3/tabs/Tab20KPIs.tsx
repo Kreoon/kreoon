@@ -19,7 +19,12 @@ import {
   Repeat,
   AlertCircle,
   CheckCircle2,
+  Wrench,
+  Globe,
+  Mail,
+  Megaphone,
 } from "lucide-react";
+import { GenericTabContent } from "./GenericTabContent";
 
 interface KPIMetric {
   name: string;
@@ -34,6 +39,11 @@ interface KPIMetric {
 interface KPICategory {
   category: string;
   metrics: KPIMetric[];
+}
+
+interface ChannelMetrics {
+  primary: string[];
+  secondary: string[];
 }
 
 interface KPIsData {
@@ -51,6 +61,13 @@ interface KPIsData {
     target: string;
     formula: string;
   }>;
+  // Backend additional field
+  channel_metrics?: {
+    organic_social?: ChannelMetrics;
+    paid_social?: ChannelMetrics;
+    email?: ChannelMetrics;
+    website?: ChannelMetrics;
+  };
   cohort_metrics: Array<{
     cohort: string;
     metrics: string[];
@@ -73,6 +90,13 @@ interface KPIsData {
     metrics: string[];
     audience: string;
   }>;
+  // Backend additional fields
+  tools_recommended?: Array<{
+    tool: string;
+    use_case: string;
+    priority: "must_have" | "nice_to_have";
+  }>;
+  summary?: string;
 }
 
 interface Tab20KPIsProps {
@@ -89,6 +113,25 @@ export function Tab20KPIs({ data }: Tab20KPIsProps) {
           Los KPIs y métricas se generarán al completar el research.
         </p>
       </div>
+    );
+  }
+
+  // Fallback: Si la estructura no coincide o los tipos son incorrectos, usar GenericTabContent
+  const rawData = data as Record<string, unknown>;
+  const northStarMetric = rawData.north_star_metric as Record<string, unknown> | undefined;
+  const hasValidStructure =
+    northStarMetric &&
+    typeof northStarMetric === 'object' &&
+    typeof northStarMetric.metric === 'string' &&
+    typeof northStarMetric.target === 'string';
+
+  if (!hasValidStructure) {
+    return (
+      <GenericTabContent
+        data={rawData}
+        title="KPIs y Métricas"
+        icon={<BarChart3 className="w-4 h-4" />}
+      />
     );
   }
 
@@ -111,6 +154,15 @@ export function Tab20KPIs({ data }: Tab20KPIsProps) {
 
   return (
     <div className="space-y-6">
+      {/* Summary */}
+      {data.summary && (
+        <Card className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border-yellow-500/30">
+          <CardContent className="pt-6">
+            <p className="text-sm leading-relaxed">{data.summary}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* North Star Metric */}
       <Card className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border-yellow-500/30">
         <CardHeader>
@@ -390,6 +442,153 @@ export function Tab20KPIs({ data }: Tab20KPIsProps) {
                       <Badge key={mIdx} variant="outline" className="text-xs">{metric}</Badge>
                     ))}
                   </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Channel Metrics - Backend field */}
+      {data.channel_metrics && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="w-5 h-5 text-cyan-500" />
+              Métricas por Canal
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {data.channel_metrics.organic_social && (
+                <div className="p-4 rounded-lg border bg-card">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Users className="w-4 h-4 text-pink-500" />
+                    <h4 className="font-medium">Social Orgánico</h4>
+                  </div>
+                  <div className="mb-3">
+                    <p className="text-xs text-muted-foreground mb-1">Primarias</p>
+                    <div className="flex flex-wrap gap-1">
+                      {data.channel_metrics.organic_social.primary?.map((m, idx) => (
+                        <Badge key={idx} className="text-xs bg-pink-500/20 text-pink-400">{m}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Secundarias</p>
+                    <div className="flex flex-wrap gap-1">
+                      {data.channel_metrics.organic_social.secondary?.map((m, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs">{m}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {data.channel_metrics.paid_social && (
+                <div className="p-4 rounded-lg border bg-card">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Megaphone className="w-4 h-4 text-blue-500" />
+                    <h4 className="font-medium">Paid Social</h4>
+                  </div>
+                  <div className="mb-3">
+                    <p className="text-xs text-muted-foreground mb-1">Primarias</p>
+                    <div className="flex flex-wrap gap-1">
+                      {data.channel_metrics.paid_social.primary?.map((m, idx) => (
+                        <Badge key={idx} className="text-xs bg-blue-500/20 text-blue-400">{m}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Secundarias</p>
+                    <div className="flex flex-wrap gap-1">
+                      {data.channel_metrics.paid_social.secondary?.map((m, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs">{m}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {data.channel_metrics.email && (
+                <div className="p-4 rounded-lg border bg-card">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Mail className="w-4 h-4 text-purple-500" />
+                    <h4 className="font-medium">Email</h4>
+                  </div>
+                  <div className="mb-3">
+                    <p className="text-xs text-muted-foreground mb-1">Primarias</p>
+                    <div className="flex flex-wrap gap-1">
+                      {data.channel_metrics.email.primary?.map((m, idx) => (
+                        <Badge key={idx} className="text-xs bg-purple-500/20 text-purple-400">{m}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Secundarias</p>
+                    <div className="flex flex-wrap gap-1">
+                      {data.channel_metrics.email.secondary?.map((m, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs">{m}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {data.channel_metrics.website && (
+                <div className="p-4 rounded-lg border bg-card">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Globe className="w-4 h-4 text-green-500" />
+                    <h4 className="font-medium">Website</h4>
+                  </div>
+                  <div className="mb-3">
+                    <p className="text-xs text-muted-foreground mb-1">Primarias</p>
+                    <div className="flex flex-wrap gap-1">
+                      {data.channel_metrics.website.primary?.map((m, idx) => (
+                        <Badge key={idx} className="text-xs bg-green-500/20 text-green-400">{m}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Secundarias</p>
+                    <div className="flex flex-wrap gap-1">
+                      {data.channel_metrics.website.secondary?.map((m, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs">{m}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Tools Recommended - Backend field */}
+      {data.tools_recommended && data.tools_recommended.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Wrench className="w-5 h-5 text-gray-500" />
+              Herramientas Recomendadas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {data.tools_recommended.map((tool, idx) => (
+                <div key={idx} className="p-4 rounded-lg border bg-card">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium">{tool.tool}</h4>
+                    <Badge
+                      className={tool.priority === "must_have"
+                        ? "bg-green-500/20 text-green-400"
+                        : "bg-gray-500/20 text-gray-400"
+                      }
+                    >
+                      {tool.priority === "must_have" ? "Esencial" : "Opcional"}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{tool.use_case}</p>
                 </div>
               ))}
             </div>

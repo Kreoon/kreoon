@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
   startAdnResearchV3,
+  startAdnResearchV3Lite,
   getResearchSession,
   pollResearchProgress,
   getResearchResult,
@@ -30,6 +31,7 @@ interface UseAdnResearchV3Options {
   organizationId?: string;
   autoLoadSession?: boolean;
   autoLoad?: boolean; // alias for autoLoadSession
+  useLiteMode?: boolean; // Usar orchestrator-lite con n8n webhook
 }
 
 export interface ProgressState {
@@ -60,9 +62,11 @@ interface UseAdnResearchV3Return {
   currentStepName: string | null;
   tokensUsed: number;
   progressState: ProgressState;
+  tabs: Record<string, unknown>; // Acceso directo a result.tabs
 
   // Actions
   start: (params: Omit<StartResearchParams, "productId" | "organizationId">) => Promise<boolean>;
+  startLite: (config?: AdnResearchV3Config) => Promise<boolean>; // Versión simplificada que usa n8n webhook
   cancel: () => Promise<boolean>;
   refresh: () => Promise<void>;
   loadResult: () => Promise<void>;
@@ -83,7 +87,6 @@ const STEP_NAMES: Record<number, string> = {
   7: "Posicionamiento",
   8: "Ángulos de Copy",
   9: "Oferta Irresistible",
-  10: "Creativos de Video",
   11: "Calendario 30 Días",
   12: "Lead Magnets",
   13: "Redes Sociales",
@@ -103,7 +106,7 @@ const STEP_NAMES: Record<number, string> = {
 export function useAdnResearchV3(
   options: UseAdnResearchV3Options = {}
 ): UseAdnResearchV3Return {
-  const { productId, organizationId, autoLoadSession = true, autoLoad } = options;
+  const { productId, organizationId, autoLoadSession = true, autoLoad, useLiteMode = false } = options;
   const shouldAutoLoad = autoLoad ?? autoLoadSession;
   const { toast } = useToast();
 
@@ -162,6 +165,10 @@ export function useAdnResearchV3(
     };
   }, [session, currentStepName]);
 
+  // ─── Tabs (acceso directo a result.tabs) ───────────────────────────────────
+
+  const tabs = useMemo(() => result?.tabs || {}, [result?.tabs]);
+
   // ─── Clear Error ────────────────────────────────────────────────────────────
 
   const clearError = useCallback(() => {
@@ -179,6 +186,9 @@ export function useAdnResearchV3(
       const active = await getActiveResearchSession(productId);
       if (active) {
         setSession(active);
+        // Still try to load partial results while running
+        const res = await getResearchResult(productId);
+        if (res) setResult(res);
         return;
       }
 
@@ -186,9 +196,17 @@ export function useAdnResearchV3(
       const completed = await getLatestCompletedSession(productId);
       if (completed) {
         setSession(completed);
-        // Also load result
-        const res = await getResearchResult(productId);
-        if (res) setResult(res);
+      }
+
+      // ALWAYS try to load result from full_research_v3, even without a session
+      // This handles cases where data was inserted directly (e.g., from n8n)
+      const res = await getResearchResult(productId);
+      if (res) {
+        setResult(res);
+        console.log("[useAdnResearchV3] Loaded result from full_research_v3:", {
+          hasSession: !!completed,
+          tabKeys: Object.keys(res.tabs || {}),
+        });
       }
     } catch (err) {
       console.error("Error loading session:", err);
@@ -228,6 +246,32 @@ export function useAdnResearchV3(
           orgId = memberData.organization_id;
         }
 
+        // Use lite mode if enabled (n8n webhook)
+        if (useLiteMode) {
+          const response = await startAdnResearchV3Lite({
+            productId,
+            organizationId: orgId,
+          });
+
+          if (!response.success) {
+            throw new Error(response.error || "Error iniciando research");
+          }
+
+          toast({
+            title: "Research iniciado",
+            description: "El proceso se está ejecutando en segundo plano.",
+          });
+
+          // Load the new session
+          if (response.sessionId) {
+            const newSession = await getResearchSession(response.sessionId);
+            if (newSession) setSession(newSession);
+          }
+
+          return true;
+        }
+
+        // Standard mode
         const response = await startAdnResearchV3({
           productId,
           organizationId: orgId,
@@ -278,8 +322,75 @@ export function useAdnResearchV3(
         setIsLoading(false);
       }
     },
-    [productId, organizationId, toast]
+    [productId, organizationId, useLiteMode, toast]
   );
+
+  // ─── Start Lite (simple version using n8n) ─────────────────────────────────
+
+  const startLite = useCallback(async (config?: AdnResearchV3Config): Promise<boolean> => {
+    if (!productId) {
+      setError("No productId provided");
+      return false;
+    }
+
+    setIsStarting(true);
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Get organizationId if not provided
+      let orgId = organizationId;
+      if (!orgId) {
+        const { data: userData } = await supabase.auth.getUser();
+        const { data: memberData } = await supabase
+          .from("organization_members")
+          .select("organization_id")
+          .eq("user_id", userData?.user?.id)
+          .limit(1)
+          .single();
+
+        if (!memberData?.organization_id) {
+          throw new Error("No se encontró la organización");
+        }
+        orgId = memberData.organization_id;
+      }
+
+      const response = await startAdnResearchV3Lite({
+        productId,
+        organizationId: orgId,
+        config,
+      });
+
+      if (!response.success) {
+        throw new Error(response.error || "Error iniciando research");
+      }
+
+      toast({
+        title: "Research iniciado",
+        description: "El proceso se está ejecutando en segundo plano.",
+      });
+
+      // Load the new session
+      if (response.sessionId) {
+        const newSession = await getResearchSession(response.sessionId);
+        if (newSession) setSession(newSession);
+      }
+
+      return true;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Error desconocido";
+      setError(msg);
+      toast({
+        title: "Error",
+        description: msg,
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsStarting(false);
+      setIsLoading(false);
+    }
+  }, [productId, organizationId, toast]);
 
   // ─── Cancel ────────────────────────────────────────────────────────────────
 
@@ -385,10 +496,20 @@ export function useAdnResearchV3(
   useEffect(() => {
     if (!isRunning || !session?.id) return;
 
+    let lastStep = session.current_step;
+
     const cancelPoll = pollResearchProgress(
       session.id,
       (updated) => {
         setSession(updated);
+
+        // Refetch tabs when step changes (para mostrar progreso parcial)
+        if (productId && updated.current_step !== lastStep) {
+          lastStep = updated.current_step;
+          getResearchResult(productId).then((res) => {
+            if (res) setResult(res);
+          });
+        }
 
         if (updated.status === "completed") {
           toast({
@@ -411,7 +532,7 @@ export function useAdnResearchV3(
     );
 
     return cancelPoll;
-  }, [isRunning, session?.id, productId, toast]);
+  }, [isRunning, session?.id, session?.current_step, productId, toast]);
 
   // Realtime subscription
   useEffect(() => {
@@ -452,7 +573,9 @@ export function useAdnResearchV3(
     currentStepName,
     tokensUsed,
     progressState,
+    tabs,
     start,
+    startLite,
     cancel,
     refresh,
     loadResult,

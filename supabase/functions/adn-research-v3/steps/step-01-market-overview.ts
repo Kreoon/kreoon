@@ -30,7 +30,13 @@ export const step01MarketOverview: ResearchStep = {
     const systemPrompt = `Eres un estratega de marketing y analista de mercado experto especializado en LATAM (Colombia, México, Perú, Chile, Argentina, Ecuador).
 Tienes acceso a búsqueda web en tiempo real. Úsala activamente para encontrar datos reales y actualizados.
 Responde ÚNICAMENTE con un objeto JSON válido. Sin markdown, sin explicaciones, sin bloques de código.
-Usa español LATAM en todos los textos.`
+Usa español LATAM en todos los textos.
+
+⚠️ REGLA CRÍTICA: TODO el análisis DEBE ser 100% específico para "${ctx.product.name}".
+- NO generes información genérica o de otras industrias
+- Si es un suplemento, analiza el mercado de suplementos. Si es software, analiza el mercado de software.
+- USA el nombre exacto del producto en tus respuestas
+- BASA todo en los datos proporcionados del fundador`
 
     const userPrompt = `Realiza un análisis profundo del panorama de mercado para:
 

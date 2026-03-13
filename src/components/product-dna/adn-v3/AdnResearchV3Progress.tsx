@@ -34,6 +34,7 @@ import {
   ShoppingBag,
   Search,
   MousePointer,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { AdnResearchV3Session, AdnResearchV3Progress as ProgressType } from "@/types/adn-research-v3";
@@ -70,6 +71,7 @@ interface AdnResearchV3ProgressProps {
   productName: string;
   onDismiss?: () => void;
   onViewResults?: () => void;
+  onRestart?: () => void;
   className?: string;
 }
 
@@ -339,6 +341,7 @@ export function AdnResearchV3Progress({
   productName,
   onDismiss,
   onViewResults,
+  onRestart,
   className = "",
 }: AdnResearchV3ProgressProps) {
   const [expandedStep, setExpandedStep] = useState<string | null>(null);
@@ -553,16 +556,29 @@ export function AdnResearchV3Progress({
             <p className="text-xs text-white/40">{productName}</p>
           </div>
 
-          {onDismiss && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onDismiss}
-              className="text-white/30 hover:text-white/60 text-xs h-8 px-3"
-            >
-              Cerrar ventana
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {onRestart && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onRestart}
+                className="text-amber-400 border-amber-500/30 hover:bg-amber-500/10 hover:text-amber-300 text-xs h-8 px-3"
+              >
+                <RotateCcw className="w-3 h-3 mr-1.5" />
+                Reiniciar
+              </Button>
+            )}
+            {onDismiss && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onDismiss}
+                className="text-white/30 hover:text-white/60 text-xs h-8 px-3"
+              >
+                Cerrar ventana
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 

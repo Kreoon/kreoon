@@ -1,10 +1,11 @@
 /**
  * Tab18LandingPages
- * Estrategia de landing pages
+ * Estrategia de landing pages - Compatible con estructura backend step-18-landing-pages.ts
  */
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Layout,
   Target,
@@ -14,17 +15,54 @@ import {
   Eye,
   MousePointer,
   ArrowRight,
+  Sparkles,
+  Heart,
+  Trophy,
+  FlaskConical,
 } from "lucide-react";
 import { CopyButton } from "../ui/CopyButton";
+import { GenericTabContent } from "./GenericTabContent";
 
-interface LandingPageSection {
+// Backend structure from step-18-landing-pages.ts
+interface BackendLandingSection {
+  section_name: string;
+  purpose: string;
+  headline?: string;
+  subheadline?: string;
+  copy: string;
+  elements?: string[];
+  cta?: string;
+  design_notes: string;
+}
+
+interface BackendLandingDesign {
+  name: string;
+  style: string;
+  best_for: string;
+  estimated_cvr: string;
+  sections: BackendLandingSection[];
+  tool_recommendation: string;
+}
+
+interface BackendLandingPagesData {
+  design_a: BackendLandingDesign;
+  design_b: BackendLandingDesign;
+  comparison: {
+    winner_recommendation: string;
+    justification: string;
+    ab_test_hypothesis: string;
+  };
+}
+
+// Legacy structure
+interface LegacyLandingPageSection {
   section: string;
   purpose: string;
   content_guidelines: string[];
   design_tips: string[];
 }
 
-interface LandingPageTemplate {
+interface LegacyLandingPageTemplate {
   name: string;
   goal: string;
   target_audience: string;
@@ -34,19 +72,19 @@ interface LandingPageTemplate {
     cta_text: string;
     visual_recommendation: string;
   };
-  sections: LandingPageSection[];
+  sections: LegacyLandingPageSection[];
   social_proof_elements: string[];
   urgency_elements: string[];
   trust_signals: string[];
 }
 
-interface LandingPagesData {
+interface LegacyLandingPagesData {
   page_strategy: {
     primary_pages_needed: string[];
     traffic_sources: Record<string, string>;
     conversion_goals: string[];
   };
-  templates: LandingPageTemplate[];
+  templates: LegacyLandingPageTemplate[];
   headline_variations: Array<{
     type: string;
     headlines: string[];
@@ -61,8 +99,20 @@ interface LandingPagesData {
   page_speed_tips: string[];
 }
 
+type LandingPagesData = BackendLandingPagesData | LegacyLandingPagesData;
+
 interface Tab18LandingPagesProps {
   data: LandingPagesData | null | undefined;
+}
+
+function hasBackendStructure(data: unknown): data is BackendLandingPagesData {
+  const d = data as Record<string, unknown>;
+  return !!(d.design_a && d.design_b && typeof d.design_a === 'object');
+}
+
+function hasLegacyStructure(data: unknown): data is LegacyLandingPagesData {
+  const d = data as Record<string, unknown>;
+  return !!(d.page_strategy && Array.isArray(d.templates));
 }
 
 export function Tab18LandingPages({ data }: Tab18LandingPagesProps) {
@@ -78,6 +128,206 @@ export function Tab18LandingPages({ data }: Tab18LandingPagesProps) {
     );
   }
 
+  // Backend structure (step-18-landing-pages.ts)
+  if (hasBackendStructure(data)) {
+    return <BackendLandingPagesView data={data} />;
+  }
+
+  // Legacy structure
+  if (hasLegacyStructure(data)) {
+    return <LegacyLandingPagesView data={data} />;
+  }
+
+  // Fallback: unknown structure
+  return (
+    <GenericTabContent
+      data={data as Record<string, unknown>}
+      title="Landing Pages"
+      icon={<Layout className="w-4 h-4" />}
+    />
+  );
+}
+
+// Backend structure renderer - 2 Diseños completos
+function BackendLandingPagesView({ data }: { data: BackendLandingPagesData }) {
+  return (
+    <div className="space-y-6">
+      {/* Comparison / A/B Test Recommendation */}
+      {data.comparison && (
+        <Card className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border-indigo-500/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FlaskConical className="w-5 h-5 text-indigo-500" />
+              Recomendación A/B Test
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3">
+              <Trophy className="w-5 h-5 text-yellow-500" />
+              <div>
+                <p className="text-sm text-muted-foreground">Ganador Recomendado</p>
+                <p className="font-bold text-lg">
+                  {data.comparison.winner_recommendation === 'A' ? 'Diseño A' :
+                   data.comparison.winner_recommendation === 'B' ? 'Diseño B' :
+                   'A/B Test Recomendado'}
+                </p>
+              </div>
+            </div>
+            <div className="p-3 rounded-lg bg-background/50">
+              <p className="text-xs text-muted-foreground mb-1">Justificación</p>
+              <p className="text-sm">{data.comparison.justification}</p>
+            </div>
+            <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+              <p className="text-xs text-purple-400 mb-1">Hipótesis del Test</p>
+              <p className="text-sm italic">{data.comparison.ab_test_hypothesis}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Landing Designs */}
+      <Tabs defaultValue="design_a" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="design_a" className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4" />
+            Diseño A
+          </TabsTrigger>
+          <TabsTrigger value="design_b" className="flex items-center gap-2">
+            <Heart className="w-4 h-4" />
+            Diseño B
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="design_a" className="pt-4">
+          <LandingDesignCard design={data.design_a} variant="a" />
+        </TabsContent>
+
+        <TabsContent value="design_b" className="pt-4">
+          <LandingDesignCard design={data.design_b} variant="b" />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// Landing Design Card Component
+function LandingDesignCard({ design, variant }: { design: BackendLandingDesign; variant: 'a' | 'b' }) {
+  const colorClass = variant === 'a' ? 'indigo' : 'pink';
+
+  return (
+    <div className="space-y-4">
+      {/* Design Overview */}
+      <Card className={`bg-gradient-to-br from-${colorClass}-500/10 to-purple-500/10 border-${colorClass}-500/30`}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Layout className={`w-5 h-5 text-${colorClass}-500`} />
+            {design.name}
+          </CardTitle>
+          <CardDescription>{design.style}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid sm:grid-cols-3 gap-4">
+            <div className="p-3 rounded-lg bg-background/50">
+              <p className="text-xs text-muted-foreground mb-1">Mejor Para</p>
+              <p className="font-medium text-sm">{design.best_for}</p>
+            </div>
+            <div className="p-3 rounded-lg bg-background/50">
+              <p className="text-xs text-muted-foreground mb-1">CVR Estimado</p>
+              <p className="font-bold text-lg text-green-400">{design.estimated_cvr}</p>
+            </div>
+            <div className="p-3 rounded-lg bg-background/50">
+              <p className="text-xs text-muted-foreground mb-1">Herramienta</p>
+              <Badge variant="secondary">{design.tool_recommendation}</Badge>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Sections */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <Eye className="w-5 h-5 text-blue-500" />
+          Secciones ({design.sections?.length || 0})
+        </h3>
+        {design.sections?.map((section, idx) => (
+          <Card key={idx}>
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div>
+                  <Badge variant="outline" className="mb-2">{idx + 1}</Badge>
+                  <CardTitle className="text-lg">{section.section_name}</CardTitle>
+                  <CardDescription>{section.purpose}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Headline + Subheadline */}
+              {(section.headline || section.subheadline) && (
+                <div className={`p-4 rounded-lg bg-${colorClass}-500/10 border border-${colorClass}-500/20`}>
+                  {section.headline && (
+                    <div className="mb-3">
+                      <p className={`text-xs text-${colorClass}-400 mb-1`}>Headline</p>
+                      <p className="font-bold text-lg">{section.headline}</p>
+                      <CopyButton text={section.headline} size="sm" className="mt-1" />
+                    </div>
+                  )}
+                  {section.subheadline && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Subheadline</p>
+                      <p className="text-sm">{section.subheadline}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Copy */}
+              {section.copy && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">Copy</p>
+                  <div className="p-3 rounded-lg bg-muted/50 whitespace-pre-wrap text-sm">
+                    {section.copy}
+                  </div>
+                  <CopyButton text={section.copy} size="sm" className="mt-2" />
+                </div>
+              )}
+
+              {/* Elements */}
+              {section.elements && section.elements.length > 0 && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">Elementos</p>
+                  <div className="flex flex-wrap gap-2">
+                    {section.elements.map((el, elIdx) => (
+                      <Badge key={elIdx} variant="secondary" className="text-xs">{el}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* CTA */}
+              {section.cta && (
+                <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <p className="text-xs text-green-400 mb-1">CTA</p>
+                  <Badge className="bg-green-500/20 text-green-400">{section.cta}</Badge>
+                </div>
+              )}
+
+              {/* Design Notes */}
+              {section.design_notes && (
+                <div className="p-3 rounded-lg bg-muted/30 border-l-4 border-muted">
+                  <p className="text-xs text-muted-foreground mb-1">Notas de Diseño</p>
+                  <p className="text-sm italic">{section.design_notes}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Legacy structure renderer
+function LegacyLandingPagesView({ data }: { data: LegacyLandingPagesData }) {
   return (
     <div className="space-y-6">
       {/* Page Strategy */}

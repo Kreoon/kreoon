@@ -40,6 +40,7 @@ interface AdnResearchV3ModalProps {
   clientDnaName?: string;
   userTokenBalance: number;
   onComplete?: () => void;
+  useLiteMode?: boolean; // Usar orchestrator-lite con n8n webhook
 }
 
 export function AdnResearchV3Modal({
@@ -55,6 +56,7 @@ export function AdnResearchV3Modal({
   clientDnaName,
   userTokenBalance,
   onComplete,
+  useLiteMode = false,
 }: AdnResearchV3ModalProps) {
   const [state, setState] = useState<ModalState>("configuring");
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -65,23 +67,32 @@ export function AdnResearchV3Modal({
     isRunning,
     isCompleted,
     start,
+    startLite,
     cancel,
-  } = useAdnResearchV3({ productId });
+  } = useAdnResearchV3({ productId, useLiteMode });
 
   // Handle start
   const handleStart = useCallback(
     async (config: AdnResearchV3Config) => {
-      const success = await start({
-        productDnaId,
-        clientDnaId,
-        config,
-      });
+      let success: boolean;
+
+      if (useLiteMode) {
+        // Modo lite: usar n8n webhook
+        success = await startLite();
+      } else {
+        // Modo estándar
+        success = await start({
+          productDnaId,
+          clientDnaId,
+          config,
+        });
+      }
 
       if (success) {
         setState("processing");
       }
     },
-    [start, productDnaId, clientDnaId]
+    [start, startLite, useLiteMode, productDnaId, clientDnaId]
   );
 
   // Handle close attempt

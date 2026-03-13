@@ -188,7 +188,18 @@ export async function getResearchResult(
     return null;
   }
 
-  return data.full_research_v3 as AdnResearchV3Result;
+  // Handle case where data is stored as escaped JSON string
+  let result = data.full_research_v3;
+  if (typeof result === "string") {
+    try {
+      result = JSON.parse(result);
+    } catch (e) {
+      console.error("Error parsing full_research_v3 string:", e);
+      return null;
+    }
+  }
+
+  return result as AdnResearchV3Result;
 }
 
 // ─── Get Tab ─────────────────────────────────────────────────────────────────
@@ -328,4 +339,88 @@ export async function hasCompletedResearch(productId: string): Promise<boolean> 
     .single();
 
   return !!(data?.full_research_v3?.tabs);
+}
+
+// ─── Start Research Lite (n8n) ────────────────────────────────────────────────
+
+export interface StartResearchLiteParams {
+  productId: string;
+  organizationId: string;
+  config?: AdnResearchV3Config;
+}
+
+export interface StartResearchLiteResult {
+  success: boolean;
+  sessionId?: string;
+  status?: string;
+  error?: string;
+  code?: string;
+}
+
+/**
+ * Inicia el research v3 usando el orchestrator-lite que dispara n8n
+ * Esta versión es más simple y no requiere configuración compleja
+ * Usa fetch directo para evitar problemas con el cliente Supabase
+ */
+export async function startAdnResearchV3Lite(
+  params: StartResearchLiteParams
+): Promise<StartResearchLiteResult> {
+  console.log("[ADN Service Lite] Iniciando con params:", params);
+
+  try {
+    // Obtener sesión para el token
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData?.session) {
+      console.error("[ADN Service Lite] Usuario no autenticado");
+      return { success: false, error: "No autenticado" };
+    }
+
+    const accessToken = sessionData.session.access_token;
+    // Cache-busting para evitar problemas de caché del navegador
+    const functionUrl = `https://wjkbqcrxwsmvtxmqgiqc.supabase.co/functions/v1/adn-orchestrator-lite?_t=${Date.now()}`;
+
+    console.log("[ADN Service Lite] Llamando a adn-orchestrator-lite via fetch...", functionUrl);
+
+    const response = await fetch(functionUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        product_id: params.productId,
+        organization_id: params.organizationId,
+        config: params.config || {
+          include_client_dna: false,
+          include_social_intelligence: true,
+          include_ad_intelligence: true,
+        },
+      }),
+    });
+
+    const data = await response.json();
+    console.log("[ADN Service Lite] Response:", { status: response.status, data });
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.error || `HTTP ${response.status}`,
+        code: data.code,
+      };
+    }
+
+    return {
+      success: data.success ?? false,
+      sessionId: data.session_id,
+      status: data.status,
+      error: data.error,
+      code: data.code,
+    };
+  } catch (error) {
+    console.error("[ADN Service Lite] Error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Error desconocido",
+    };
+  }
 }
