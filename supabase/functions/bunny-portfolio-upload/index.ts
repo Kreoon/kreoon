@@ -12,8 +12,13 @@ interface BunnyVideoResponse {
 }
 
 /**
- * This edge function uploads portfolio videos (posts/stories) to Bunny Stream
- * for automatic transcoding to MP4 H.264, ensuring playback in all browsers.
+ * This edge function handles portfolio video uploads to Bunny Stream.
+ *
+ * Supports two modes:
+ * 1. JSON mode (application/json): Creates video entry in Bunny and returns
+ *    upload credentials so the CLIENT uploads directly to Bunny (avoids 546 memory crash).
+ * 2. JSON "save-hash" action: Saves video hash for dedup after client-side upload completes.
+ * 3. JSON "save-record" action: Creates DB record (post/story) after upload completes.
  */
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -27,39 +32,123 @@ Deno.serve(async (req) => {
     const bunnyLibraryId = Deno.env.get('BUNNY_LIBRARY_ID')!
     const bunnyCdnHostname = Deno.env.get('BUNNY_CDN_HOSTNAME') || ''
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
-    const contentType = req.headers.get('content-type') || ''
+    const body = await req.json()
+    const action = body.action || 'create' // 'create', 'save-hash', 'save-record'
 
-    if (!contentType.includes('multipart/form-data')) {
+    // === Action: save-hash (after client-side upload completes) ===
+    if (action === 'save-hash') {
+      const { file_hash, file_size, bunny_video_id, embed_url, thumbnail_url, mp4_url, user_id } = body
+
+      if (!file_hash || !bunny_video_id) {
+        return new Response(
+          JSON.stringify({ error: 'Missing file_hash or bunny_video_id' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      const supabase = createClient(supabaseUrl, supabaseServiceKey)
+      const { error: hashError } = await supabase
+        .from('video_hashes')
+        .upsert({
+          file_hash,
+          file_size: parseInt(file_size || '0'),
+          bunny_video_id,
+          embed_url,
+          thumbnail_url,
+          mp4_url,
+          created_by: user_id,
+        }, { onConflict: 'file_hash' })
+
+      if (hashError) {
+        console.error('[bunny-portfolio-upload] Error saving video hash:', hashError)
+        return new Response(
+          JSON.stringify({ success: false, error: 'Failed to save hash' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      console.log('[bunny-portfolio-upload] Video hash saved for dedup:', file_hash.substring(0, 16) + '...')
       return new Response(
-        JSON.stringify({ error: 'Expected multipart/form-data' }),
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // === Action: save-record (create DB record after upload) ===
+    if (action === 'save-record') {
+      const { type, user_id, embed_url, thumbnail_url, caption } = body
+      const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+      if (type === 'story') {
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        const { data: storyData, error: dbError } = await supabase
+          .from('portfolio_stories')
+          .insert({
+            user_id,
+            media_url: embed_url,
+            media_type: 'video',
+            thumbnail_url,
+            caption,
+            expires_at: expiresAt,
+          })
+          .select()
+          .single()
+
+        if (dbError) {
+          console.error('[bunny-portfolio-upload] DB error:', dbError)
+          throw dbError
+        }
+
+        return new Response(
+          JSON.stringify({ success: true, id: storyData.id }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      } else if (type === 'post') {
+        const { data: postData, error: dbError } = await supabase
+          .from('portfolio_posts')
+          .insert({
+            user_id,
+            media_url: embed_url,
+            media_type: 'video',
+            caption,
+            thumbnail_url,
+          })
+          .select()
+          .single()
+
+        if (dbError) {
+          console.error('[bunny-portfolio-upload] DB error:', dbError)
+          throw dbError
+        }
+
+        return new Response(
+          JSON.stringify({ success: true, id: postData.id }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      // featured type: no DB record needed
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // === Action: create (default) - Create video in Bunny and return upload credentials ===
+    const userId = body.user_id
+    const type = body.type || 'featured'
+    const fileName = body.file_name || 'video'
+
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: 'Missing user_id' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    const formData = await req.formData()
-    const file = formData.get('file') as File
-    const userId = formData.get('user_id') as string
-    const type = formData.get('type') as string // 'post', 'story', or 'featured'
-    const caption = formData.get('caption') as string || null
-    const fileHash = formData.get('file_hash') as string || null
-    const fileSize = formData.get('file_size') as string || null
+    console.log(`[bunny-portfolio-upload] Creating video entry for ${type}, user: ${userId}`)
 
-    if (!file || !userId) {
-      return new Response(
-        JSON.stringify({ error: 'Missing file or user_id' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Featured videos don't need DB records here - they're stored in profiles table
-    if (type === 'featured') {
-      console.log(`[bunny-portfolio-upload] Uploading featured video for user ${userId}, file: ${file.name}, size: ${file.size}`)
-    } else {
-      console.log(`[bunny-portfolio-upload] Uploading ${type} for user ${userId}, file: ${file.name}, size: ${file.size}`)
-    }
-
-    // Step 1: Create video in Bunny Stream
+    // Create video in Bunny Stream (lightweight JSON call, no file data)
     const title = `portfolio-${type}-${userId}-${Date.now()}`
     const createResponse = await fetch(
       `https://video.bunnycdn.com/library/${bunnyLibraryId}/videos`,
@@ -82,146 +171,25 @@ Deno.serve(async (req) => {
     const videoData: BunnyVideoResponse = await createResponse.json()
     console.log('[bunny-portfolio-upload] Created Bunny video:', videoData.guid)
 
-    // Step 2: Upload the video file to Bunny using STREAMING to avoid memory issues
-    const uploadResponse = await fetch(
-      `https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${videoData.guid}`,
-      {
-        method: 'PUT',
-        headers: {
-          'AccessKey': bunnyApiKey,
-          'Content-Type': 'application/octet-stream',
-        },
-        // @ts-ignore - Deno supports ReadableStream as body
-        body: file.stream(),
-        // @ts-ignore - duplex required for streaming body in Deno
-        duplex: 'half',
-      }
-    )
-
-    if (!uploadResponse.ok) {
-      const errorText = await uploadResponse.text()
-      console.error('[bunny-portfolio-upload] Bunny upload error:', errorText)
-      throw new Error(`Failed to upload to Bunny: ${errorText}`)
-    }
-
     // Generate URLs
+    const uploadUrl = `https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${videoData.guid}`
     const embedUrl = `https://iframe.mediadelivery.net/embed/${bunnyLibraryId}/${videoData.guid}`
-    // Direct MP4 URL (available after encoding completes) - use 1080p for better quality
     const mp4Url = `https://${bunnyCdnHostname}/${videoData.guid}/play_1080p.mp4`
-    // Thumbnail URL (available after encoding completes)
     const thumbnailUrl = `https://${bunnyCdnHostname}/${videoData.guid}/thumbnail.jpg`
 
-    console.log(`[bunny-portfolio-upload] Video uploaded: ${embedUrl}`)
-
-    // Save file hash for dedup (if provided by client)
-    if (fileHash) {
-      const { error: hashError } = await supabase
-        .from('video_hashes')
-        .upsert({
-          file_hash: fileHash,
-          file_size: parseInt(fileSize || String(file.size)),
-          bunny_video_id: videoData.guid,
-          embed_url: embedUrl,
-          thumbnail_url: thumbnailUrl,
-          mp4_url: mp4Url,
-          created_by: userId,
-        }, { onConflict: 'file_hash' })
-
-      if (hashError) {
-        console.error('[bunny-portfolio-upload] Error saving video hash:', hashError)
-        // Non-blocking - upload still succeeded
-      } else {
-        console.log('[bunny-portfolio-upload] Video hash saved for dedup:', fileHash.substring(0, 16) + '...')
-      }
-    }
-
-    // Step 3: Create database record (skip for featured videos - they're stored in profiles)
-    if (type === 'featured') {
-      console.log('[bunny-portfolio-upload] Featured video uploaded, no DB record needed')
-      
-      return new Response(
-        JSON.stringify({
-          success: true,
-          type: 'featured',
-          video_id: videoData.guid,
-          embed_url: embedUrl,
-          mp4_url: mp4Url,
-          thumbnail_url: thumbnailUrl,
-          message: 'Featured video uploaded successfully. Encoding in progress.',
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    } else if (type === 'story') {
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
-      
-      const { data: storyData, error: dbError } = await supabase
-        .from('portfolio_stories')
-        .insert({
-          user_id: userId,
-          media_url: embedUrl, // Use Bunny embed URL
-          media_type: 'video',
-          thumbnail_url: thumbnailUrl,
-          caption: caption,
-          expires_at: expiresAt,
-        })
-        .select()
-        .single()
-
-      if (dbError) {
-        console.error('[bunny-portfolio-upload] DB error:', dbError)
-        throw dbError
-      }
-
-      console.log('[bunny-portfolio-upload] Story created:', storyData.id)
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          type: 'story',
-          id: storyData.id,
-          video_id: videoData.guid,
-          embed_url: embedUrl,
-          mp4_url: mp4Url,
-          thumbnail_url: thumbnailUrl,
-          message: 'Video uploaded successfully. Encoding in progress.',
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    } else {
-      // Post
-      const { data: postData, error: dbError } = await supabase
-        .from('portfolio_posts')
-        .insert({
-          user_id: userId,
-          media_url: embedUrl, // Use Bunny embed URL
-          media_type: 'video',
-          caption: caption,
-          thumbnail_url: thumbnailUrl,
-        })
-        .select()
-        .single()
-
-      if (dbError) {
-        console.error('[bunny-portfolio-upload] DB error:', dbError)
-        throw dbError
-      }
-
-      console.log('[bunny-portfolio-upload] Post created:', postData.id)
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          type: 'post',
-          id: postData.id,
-          video_id: videoData.guid,
-          embed_url: embedUrl,
-          mp4_url: mp4Url,
-          thumbnail_url: thumbnailUrl,
-          message: 'Video uploaded successfully. Encoding in progress.',
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
+    // Return upload credentials - client will upload directly to Bunny
+    return new Response(
+      JSON.stringify({
+        success: true,
+        video_id: videoData.guid,
+        upload_url: uploadUrl,
+        access_key: bunnyApiKey,
+        embed_url: embedUrl,
+        mp4_url: mp4Url,
+        thumbnail_url: thumbnailUrl,
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
 
   } catch (error) {
     console.error('[bunny-portfolio-upload] Error:', error)

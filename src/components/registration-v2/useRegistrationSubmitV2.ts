@@ -258,29 +258,25 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
   ) => {
     if (!state.orgId) throw new Error('Organization ID not found');
 
-    // Usar RPC si existe, o insert directo
     const { error } = await supabase.rpc('register_user_to_organization', {
+      p_organization_id: state.orgId,
       p_user_id: userId,
-      p_org_id: state.orgId,
       p_role: 'client',
-      p_invite_code: state.inviteCode || null,
     });
 
     if (error) throw error;
 
-    // Actualizar perfil
+    // Actualizar perfil con nombre y teléfono (el RPC ya setea org y status)
     await supabase
       .from('profiles')
       .update({
         full_name: data.fullName,
         phone: `${data.phoneCountryCode} ${data.phone}`,
-        current_organization_id: state.orgId,
-        organization_status: 'active',
       })
       .eq('id', userId);
 
     toast.success(`¡Te has unido a ${state.orgName || 'la organización'}!`);
-  }, [state.orgId, state.orgName, state.inviteCode]);
+  }, [state.orgId, state.orgName]);
 
   const handleFreelancerJoinOrg = useCallback(async (
     userId: string,
@@ -290,10 +286,9 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
 
     // 1. Unirse a la org como creator
     const { error: joinError } = await supabase.rpc('register_user_to_organization', {
+      p_organization_id: state.orgId,
       p_user_id: userId,
-      p_org_id: state.orgId,
       p_role: 'creator',
-      p_invite_code: state.inviteCode || null,
     });
 
     if (joinError) throw joinError;
@@ -306,20 +301,17 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
       profile_customization: {},
     });
 
-    // 3. Actualizar perfil
+    // 3. Actualizar perfil con nombre y teléfono (el RPC ya setea org, status y active_role)
     await supabase
       .from('profiles')
       .update({
         full_name: data.fullName,
         phone: `${data.phoneCountryCode} ${data.phone}`,
-        current_organization_id: state.orgId,
-        organization_status: 'active',
-        active_role: 'creator',
       })
       .eq('id', userId);
 
     toast.success(`¡Te has unido a ${state.orgName || 'la organización'}!`);
-  }, [state.orgId, state.orgName, state.inviteCode]);
+  }, [state.orgId, state.orgName]);
 
   // ============================================
   // SUBMIT PRINCIPAL
@@ -331,16 +323,27 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
 
     try {
       // 1. Crear usuario en Supabase Auth
+      // Build the redirect URL for email confirmation
+      const emailRedirectTo = state.flow === 'org' && state.orgSlug
+        ? `${window.location.origin}/register/${state.orgSlug}?confirmed=true`
+        : `${window.location.origin}/`;
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
+          emailRedirectTo,
           data: {
             full_name: data.fullName,
             phone: `${data.phoneCountryCode} ${data.phone}`,
             user_type: state.userType,
             partner_community: state.partnerCommunity,
             referral_code: state.referralCode,
+            // Store org info in user_metadata so OrgRegister can read it after email confirmation
+            ...(state.flow === 'org' && state.orgId ? {
+              pending_org_id: state.orgId,
+              pending_org_role: state.userType === 'freelancer' ? 'creator' : (state.userType || 'creator'),
+            } : {}),
           },
         },
       });
@@ -355,47 +358,57 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
       const hasSession = !!authData.session;
       setRequiresEmailConfirmation(!hasSession);
 
-      // 3. Si tiene sesión, ejecutar handlers
+      // 3. Ejecutar pasos post-signup.
+      // IMPORTANTE: signUp ya tuvo éxito, la cuenta existe.
+      // Si algo falla aquí, NO debemos mostrar "error al crear la cuenta"
+      // porque el usuario no podrá re-registrarse (email ya existe).
       if (hasSession) {
-        // Flujo ORG
-        if (state.flow === 'org') {
-          if (state.userType === 'client') {
-            await handleClientJoinOrg(userId, data);
-          } else if (state.userType === 'freelancer') {
-            await handleFreelancerJoinOrg(userId, data);
+        try {
+          // Flujo ORG
+          if (state.flow === 'org') {
+            if (state.userType === 'client') {
+              await handleClientJoinOrg(userId, data);
+            } else if (state.userType === 'freelancer') {
+              await handleFreelancerJoinOrg(userId, data);
+            }
           }
-        }
-        // Flujo GENERAL
-        else {
-          if (state.userType === 'freelancer') {
-            await handleTalentSubmit(userId, data);
-          } else if (state.userType === 'brand') {
-            await handleBrandSubmit(userId, data);
-          } else if (state.userType === 'organization') {
-            await handleOrganizationSubmit(userId, data);
+          // Flujo GENERAL
+          else {
+            if (state.userType === 'freelancer') {
+              await handleTalentSubmit(userId, data);
+            } else if (state.userType === 'brand') {
+              await handleBrandSubmit(userId, data);
+            } else if (state.userType === 'organization') {
+              await handleOrganizationSubmit(userId, data);
+            }
           }
-        }
 
-        // 4. Registrar consentimientos legales
-        await recordLegalConsents(userId);
+          // 4. Registrar consentimientos legales
+          await recordLegalConsents(userId);
 
-        // 5. Aplicar código de referido si existe
-        if (state.referralCode) {
-          try {
-            await supabase.functions.invoke('referral-service', {
-              body: {
-                action: 'apply-code',
-                user_id: userId,
-                code: state.referralCode,
-              },
-            });
-          } catch (e) {
-            console.warn('Error applying referral code:', e);
+          // 5. Aplicar código de referido si existe
+          if (state.referralCode) {
+            try {
+              await supabase.functions.invoke('referral-service', {
+                body: {
+                  action: 'apply-code',
+                  user_id: userId,
+                  code: state.referralCode,
+                },
+              });
+            } catch (e) {
+              console.warn('Error applying referral code:', e);
+            }
           }
-        }
 
-        // 6. Sincronizar con Pancake CRM (fire-and-forget)
-        triggerUserSyncSilent(userId);
+          // 6. Sincronizar con Pancake CRM (fire-and-forget)
+          triggerUserSyncSilent(userId);
+        } catch (postSignupError) {
+          // La cuenta ya fue creada — no bloquear al usuario.
+          // Registrar el error pero continuar al paso de éxito.
+          console.error('Post-signup step failed (account was created):', postSignupError);
+          toast.error('Tu cuenta fue creada, pero hubo un problema configurando tu perfil. Contacta soporte si persiste.');
+        }
       } else {
         // Si requiere confirmación de email, guardar datos pendientes
         localStorage.setItem('kreoon_pending_registration', JSON.stringify({
@@ -407,17 +420,27 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
           partnerCommunity: state.partnerCommunity,
           formData: data,
         }));
+
+        // Para flujo org, también guardar con la clave que OrgRegister espera
+        // para completar el registro después de la confirmación de email
+        if (state.flow === 'org' && state.orgId) {
+          const roleForOrg = state.userType === 'freelancer' ? 'creator' : (state.userType || 'creator');
+          localStorage.setItem('pendingOrgRegistration', JSON.stringify({
+            orgId: state.orgId,
+            role: roleForOrg,
+          }));
+        }
       }
 
-      // 7. Ir al paso success
+      // 7. Ir al paso success (siempre, la cuenta ya fue creada)
       goToNextStep();
 
     } catch (error: any) {
+      // Este catch solo atrapa errores del signUp mismo (cuenta NO creada)
       console.error('Registration error:', error);
 
       let errorMessage = 'Error al crear la cuenta. Intenta de nuevo.';
 
-      // Detectar tipo de error específico
       if (error.message?.includes('already registered') || error.message?.includes('already exists')) {
         errorMessage = 'Este email ya está registrado. Intenta iniciar sesión.';
       } else if (error.message?.includes('invalid') || error.message?.includes('Invalid')) {

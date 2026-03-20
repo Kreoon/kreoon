@@ -124,6 +124,7 @@ export default function OrgRegister() {
             toast.error("Error al completar el registro en la organización");
           } else {
             localStorage.removeItem("pendingOrgRegistration");
+            localStorage.removeItem("kreoon_pending_registration");
             await refetchUserData();
 
             supabase.functions
