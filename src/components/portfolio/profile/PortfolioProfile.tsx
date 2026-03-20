@@ -1230,36 +1230,68 @@ function UploadContentDialog({ open, onOpenChange, userId }: { open: boolean; on
       const isVideo = selectedFile.type.startsWith('video/');
 
       if (isVideo) {
-        // Upload video to Bunny via edge function
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-        formData.append('user_id', userId);
-        formData.append('type', 'post');
-        if (caption) {
-          formData.append('caption', caption);
-        }
-
         const supabaseUrl = (supabase as any).supabaseUrl as string;
-        
-        const response = await fetch(`${supabaseUrl}/functions/v1/bunny-portfolio-upload`, {
+
+        // Step 1: Create video entry in Bunny (lightweight JSON call)
+        const createRes = await fetch(`${supabaseUrl}/functions/v1/bunny-portfolio-upload`, {
           method: 'POST',
-          body: formData,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'create',
+            user_id: userId,
+            type: 'post',
+            file_name: selectedFile.name,
+          }),
         });
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
+        if (!createRes.ok) {
+          const errorData = await createRes.json().catch(() => ({}));
           throw new Error(errorData.error || 'Error al subir el video');
         }
 
-        const result = await response.json();
+        const result = await createRes.json();
+        if (!result.success) {
+          throw new Error(result.error || 'Error al crear video en Bunny');
+        }
+
+        // Step 2: Upload file directly to Bunny
+        const uploadRes = await fetch(result.upload_url, {
+          method: 'PUT',
+          headers: {
+            'AccessKey': result.access_key,
+            'Content-Type': 'application/octet-stream',
+          },
+          body: selectedFile,
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error(`Error subiendo a Bunny: ${uploadRes.status}`);
+        }
+
         console.log('[PortfolioProfile] Video uploaded to Bunny:', result);
 
-        // Update the post with post_type (the edge function already created the post)
-        if (result.id) {
+        // Step 3: Create DB record via edge function
+        const saveRes = await fetch(`${supabaseUrl}/functions/v1/bunny-portfolio-upload`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'save-record',
+            type: 'post',
+            user_id: userId,
+            embed_url: result.embed_url,
+            thumbnail_url: result.thumbnail_url,
+            caption,
+          }),
+        });
+
+        const saveResult = await saveRes.json().catch(() => ({}));
+
+        // Update the post with post_type
+        if (saveResult.id) {
           await supabase
             .from('portfolio_posts')
             .update({ post_type: postType })
-            .eq('id', result.id);
+            .eq('id', saveResult.id);
         }
 
         toast.success('Video subido exitosamente', {
