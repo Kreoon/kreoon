@@ -12,13 +12,14 @@ interface BunnyVideoResponse {
 }
 
 /**
- * This edge function handles portfolio video uploads to Bunny Stream.
+ * This edge function handles video uploads to Bunny Stream.
  *
- * Supports two modes:
- * 1. JSON mode (application/json): Creates video entry in Bunny and returns
- *    upload credentials so the CLIENT uploads directly to Bunny (avoids 546 memory crash).
- * 2. JSON "save-hash" action: Saves video hash for dedup after client-side upload completes.
- * 3. JSON "save-record" action: Creates DB record (post/story) after upload completes.
+ * Actions supported:
+ * 1. "create" (default): Creates video entry in Bunny and returns upload credentials
+ *    so the CLIENT uploads directly to Bunny (avoids 546 memory crash).
+ * 2. "save-hash": Saves video hash for dedup after client-side upload completes.
+ * 3. "save-record": Creates DB record (post/story) after upload completes.
+ * 4. "save-raw-video": Appends raw video URL to content.raw_video_urls array.
  */
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -130,6 +131,40 @@ Deno.serve(async (req) => {
       // featured type: no DB record needed
       return new Response(
         JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // === Action: save-raw-video (append URL to content.raw_video_urls) ===
+    if (action === 'save-raw-video') {
+      const { content_id, embed_url } = body
+
+      if (!content_id || !embed_url) {
+        return new Response(
+          JSON.stringify({ error: 'Missing content_id or embed_url' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+      // Use atomic append function to avoid race conditions
+      const { data: allUrls, error: appendError } = await supabase.rpc('append_raw_video_url', {
+        _content_id: content_id,
+        _url: embed_url
+      })
+
+      if (appendError) {
+        console.error('[bunny-portfolio-upload] Error appending raw video URL:', appendError)
+        return new Response(
+          JSON.stringify({ success: false, error: appendError.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      console.log(`[bunny-portfolio-upload] Raw video URL appended to content ${content_id}`)
+      return new Response(
+        JSON.stringify({ success: true, all_urls: allUrls || [] }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
