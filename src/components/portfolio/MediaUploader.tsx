@@ -166,27 +166,58 @@ export function MediaUploader({
 
       // For videos, use Bunny Stream for automatic transcoding
       if (isVideo) {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('user_id', userId);
-        formData.append('type', type);
-        if (caption) {
-          formData.append('caption', caption);
-        }
-
         const supabaseUrl = (supabase as any).supabaseUrl as string;
-        
-        const response = await fetch(`${supabaseUrl}/functions/v1/bunny-portfolio-upload`, {
+
+        // Step 1: Create video entry in Bunny (lightweight JSON call)
+        const createRes = await fetch(`${supabaseUrl}/functions/v1/bunny-portfolio-upload`, {
           method: 'POST',
-          body: formData,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'create',
+            user_id: userId,
+            type,
+            file_name: file.name,
+          }),
         });
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
+        if (!createRes.ok) {
+          const errorData = await createRes.json().catch(() => ({}));
           throw new Error(errorData.error || 'Error al subir el video');
         }
 
-        const result = await response.json();
+        const result = await createRes.json();
+        if (!result.success) {
+          throw new Error(result.error || 'Error al crear video en Bunny');
+        }
+
+        // Step 2: Upload file directly to Bunny
+        const uploadRes = await fetch(result.upload_url, {
+          method: 'PUT',
+          headers: {
+            'AccessKey': result.access_key,
+            'Content-Type': 'application/octet-stream',
+          },
+          body: file,
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error(`Error subiendo a Bunny: ${uploadRes.status}`);
+        }
+
+        // Step 3: Save DB record (post/story) via edge function
+        await fetch(`${supabaseUrl}/functions/v1/bunny-portfolio-upload`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'save-record',
+            type,
+            user_id: userId,
+            embed_url: result.embed_url,
+            thumbnail_url: result.thumbnail_url,
+            caption,
+          }),
+        });
+
         console.log('[MediaUploader] Video uploaded to Bunny:', result);
 
         toast.success(

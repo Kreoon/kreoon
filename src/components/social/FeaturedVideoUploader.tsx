@@ -82,27 +82,48 @@ export function FeaturedVideoUploader({
         setProgress(prev => Math.min(prev + 5, 85));
       }, 300);
 
-      // Upload video to Bunny via edge function
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('user_id', userId);
-      formData.append('type', 'featured');
-
+      // Step 1: Create video entry in Bunny (lightweight JSON call)
       const supabaseUrl = (supabase as any).supabaseUrl as string;
-      
-      const response = await fetch(`${supabaseUrl}/functions/v1/bunny-portfolio-upload`, {
+
+      const createRes = await fetch(`${supabaseUrl}/functions/v1/bunny-portfolio-upload`, {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create',
+          user_id: userId,
+          type: 'featured',
+          file_name: selectedFile.name,
+        }),
+      });
+
+      if (!createRes.ok) {
+        clearInterval(progressInterval);
+        const errorData = await createRes.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Error al subir el video');
+      }
+
+      const result = await createRes.json();
+      if (!result.success) {
+        clearInterval(progressInterval);
+        throw new Error(result.error || 'Error al crear video en Bunny');
+      }
+
+      // Step 2: Upload file directly to Bunny
+      const uploadRes = await fetch(result.upload_url, {
+        method: 'PUT',
+        headers: {
+          'AccessKey': result.access_key,
+          'Content-Type': 'application/octet-stream',
+        },
+        body: selectedFile,
       });
 
       clearInterval(progressInterval);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Error al subir el video');
+      if (!uploadRes.ok) {
+        throw new Error(`Error subiendo a Bunny: ${uploadRes.status}`);
       }
 
-      const result = await response.json();
       console.log('[FeaturedVideoUploader] Video uploaded to Bunny:', result);
 
       setProgress(95);

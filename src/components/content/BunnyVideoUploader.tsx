@@ -144,22 +144,34 @@ export function BunnyVideoUploader({
       const { data: { session } } = await supabase.auth.getSession();
       const userId = session?.user?.id || 'anonymous';
 
-      // Build FormData with file + metadata
-      // Uses bunny-portfolio-upload (deployed, verify_jwt=false, server-side proxy)
-      // type='featured' skips DB record creation - just uploads to Bunny
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('user_id', userId);
-      formData.append('type', 'featured');
+      // Step 1: Create video entry in Bunny via edge function (lightweight JSON call)
+      const createRes = await fetch(`${SUPABASE_FUNCTIONS_URL}/functions/v1/bunny-portfolio-upload`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create',
+          user_id: userId,
+          type: 'featured',
+          file_name: file.name,
+        }),
+      });
 
-      // Upload via XHR for progress tracking
-      // The edge function proxies the file to Bunny server-side (no CORS issues)
+      if (!createRes.ok) {
+        const errData = await createRes.json().catch(() => ({}));
+        throw new Error(errData.error || `Error del servidor: ${createRes.status}`);
+      }
+
+      const createData = await createRes.json();
+      if (!createData.success) {
+        throw new Error(createData.error || 'Error al crear video en Bunny');
+      }
+
+      // Step 2: Upload file DIRECTLY to Bunny (bypasses edge function memory limit)
       const xhr = new XMLHttpRequest();
 
-      const response = await new Promise<any>((resolve, reject) => {
+      await new Promise<void>((resolve, reject) => {
         xhr.upload.addEventListener('progress', (event) => {
           if (event.lengthComputable) {
-            // Progress 0-90% for upload to edge function
             const percentComplete = Math.round((event.loaded / event.total) * 90);
             setProgress(percentComplete);
           }
@@ -167,18 +179,9 @@ export function BunnyVideoUploader({
 
         xhr.addEventListener('load', () => {
           if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              resolve(JSON.parse(xhr.responseText));
-            } catch {
-              reject(new Error('Respuesta invalida del servidor'));
-            }
+            resolve();
           } else {
-            let errorMsg = `Error del servidor: ${xhr.status}`;
-            try {
-              const errData = JSON.parse(xhr.responseText);
-              if (errData.error) errorMsg = errData.error;
-            } catch { /* ignore parse error */ }
-            reject(new Error(errorMsg));
+            reject(new Error(`Error subiendo a Bunny: ${xhr.status}`));
           }
         });
 
@@ -186,24 +189,17 @@ export function BunnyVideoUploader({
         xhr.addEventListener('abort', () => reject(new Error('Subida cancelada')));
         xhr.addEventListener('timeout', () => reject(new Error('Tiempo de espera agotado. Verifica tu conexión a internet.')));
 
-        xhr.open('POST', `${SUPABASE_FUNCTIONS_URL}/functions/v1/bunny-portfolio-upload`);
-        // No auth headers needed - bunny-portfolio-upload has verify_jwt = false
-        // Do NOT set Content-Type for FormData - browser sets it with boundary
-        // Set timeout to 10 minutes for large files
+        xhr.open('PUT', createData.upload_url);
+        xhr.setRequestHeader('AccessKey', createData.access_key);
+        xhr.setRequestHeader('Content-Type', 'application/octet-stream');
         xhr.timeout = 600000;
-        xhr.send(formData);
+        xhr.send(file);
       });
-
-      console.log('[BunnyVideoUploader] Upload response:', JSON.stringify(response));
-
-      if (!response.success) {
-        throw new Error(response.error || 'Error al subir el video');
-      }
 
       setProgress(100);
 
-      // bunny-portfolio-upload returns: video_id, embed_url, thumbnail_url
-      const extractedVideoId = response.video_id || null;
+      const response = createData;
+      const extractedVideoId = createData.video_id || null;
       setVideoId(extractedVideoId);
 
       console.log('[BunnyVideoUploader] videoId:', extractedVideoId, 'embedUrl:', response.embed_url);

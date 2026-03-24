@@ -79,9 +79,16 @@ export function SuccessStep({
 
     setIsResending(true);
     try {
+      const emailRedirectTo = orgSlug
+        ? `${window.location.origin}/register/${orgSlug}?confirmed=true`
+        : `${window.location.origin}/`;
+
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email,
+        options: {
+          emailRedirectTo,
+        },
       });
 
       if (error) throw error;
