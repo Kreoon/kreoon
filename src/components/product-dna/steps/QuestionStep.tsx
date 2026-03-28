@@ -95,7 +95,7 @@ function SingleSelect({
           <button
             key={option.id}
             onClick={() => onChange(option.id)}
-            className={`relative p-4 rounded-xl border text-left transition-all ${
+            className={`relative p-4 rounded-sm border text-left transition-all ${
               isSelected
                 ? 'border-purple-500/50 bg-purple-500/10'
                 : 'border-white/10 bg-white/5 hover:bg-white/10'
@@ -173,7 +173,7 @@ function MultiSelect({
             <button
               key={option.id}
               onClick={() => toggle(option.id)}
-              className={`p-3 rounded-xl border text-left transition-all ${
+              className={`p-3 rounded-sm border text-left transition-all ${
                 isSelected
                   ? 'border-purple-500/50 bg-purple-500/10'
                   : 'border-white/10 bg-white/5 hover:bg-white/10'
@@ -264,7 +264,7 @@ function TextArea({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       rows={4}
-      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10
+      className="w-full px-4 py-3 rounded-sm bg-white/5 border border-white/10
                  text-white placeholder-gray-500
                  focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20
                  transition-all resize-none"

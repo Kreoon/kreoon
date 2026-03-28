@@ -157,7 +157,7 @@ export function Tab03JTBD({ data }: Tab03JTBDProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-4 rounded-lg bg-muted/50">
+            <div className="p-4 rounded-sm bg-muted/50">
               <p className="text-lg font-medium leading-relaxed">{data.main_job.job_statement}</p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -192,7 +192,7 @@ export function Tab03JTBD({ data }: Tab03JTBDProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             {data.functional_jobs.map((job, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
+              <div key={idx} className="p-4 rounded-sm border bg-card">
                 <p className="font-medium text-sm mb-3">{job.job}</p>
                 <div className="grid sm:grid-cols-3 gap-3 text-xs">
                   {job.current_solution && (
@@ -231,7 +231,7 @@ export function Tab03JTBD({ data }: Tab03JTBDProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             {data.emotional_jobs.map((job, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
+              <div key={idx} className="p-4 rounded-sm border bg-card">
                 <p className="font-medium text-sm mb-3">{job.job}</p>
                 <div className="grid sm:grid-cols-2 gap-3 text-xs">
                   {job.feeling_sought && (
@@ -264,7 +264,7 @@ export function Tab03JTBD({ data }: Tab03JTBDProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             {data.social_jobs.map((job, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
+              <div key={idx} className="p-4 rounded-sm border bg-card">
                 <p className="font-medium text-sm mb-3">{job.job}</p>
                 <div className="grid sm:grid-cols-2 gap-3 text-xs">
                   {job.perception_desired && (
@@ -299,7 +299,7 @@ export function Tab03JTBD({ data }: Tab03JTBDProps) {
             </CardHeader>
             <CardContent className="space-y-3">
               {data.hiring_triggers.map((trigger, idx) => (
-                <div key={idx} className="p-3 rounded-lg border bg-card border-l-4 border-l-green-500">
+                <div key={idx} className="p-3 rounded-sm border bg-card border-l-4 border-l-green-500">
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <span className="font-medium text-sm">{trigger.trigger}</span>
                     {trigger.urgency && (
@@ -331,7 +331,7 @@ export function Tab03JTBD({ data }: Tab03JTBDProps) {
             </CardHeader>
             <CardContent className="space-y-3">
               {data.firing_triggers.map((trigger, idx) => (
-                <div key={idx} className="p-3 rounded-lg border bg-card border-l-4 border-l-red-500">
+                <div key={idx} className="p-3 rounded-sm border bg-card border-l-4 border-l-red-500">
                   <p className="font-medium text-sm mb-1">{trigger.trigger}</p>
                   {trigger.last_straw && (
                     <p className="text-xs text-red-400">
@@ -358,7 +358,7 @@ export function Tab03JTBD({ data }: Tab03JTBDProps) {
             </CardHeader>
             <CardContent className="space-y-3">
               {data.progress_makers.map((maker, idx) => (
-                <div key={idx} className="p-3 rounded-lg border bg-card">
+                <div key={idx} className="p-3 rounded-sm border bg-card">
                   <div className="flex items-center gap-2 mb-1">
                     <ArrowRight className="w-4 h-4 text-green-400" />
                     <span className="font-medium text-sm">{maker.force}</span>
@@ -393,7 +393,7 @@ export function Tab03JTBD({ data }: Tab03JTBDProps) {
             </CardHeader>
             <CardContent className="space-y-3">
               {data.progress_blockers.map((blocker, idx) => (
-                <div key={idx} className="p-3 rounded-lg border bg-card">
+                <div key={idx} className="p-3 rounded-sm border bg-card">
                   <p className="font-medium text-sm mb-2">{blocker.force}</p>
                   {blocker.type && (
                     <Badge variant="outline" className="text-xs mb-2">

@@ -70,7 +70,7 @@ export function CreatorActivationCampaigns() {
         </div>
         <button
           onClick={load}
-          className="p-2 text-gray-500 hover:text-foreground hover:bg-white/5 rounded-lg transition-colors"
+          className="p-2 text-gray-500 hover:text-foreground hover:bg-white/5 rounded-sm transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
         </button>
@@ -118,7 +118,7 @@ function ActivationCampaignRow({ campaign, onClick }: { campaign: EligibleCampai
     <button
       onClick={onClick}
       className={cn(
-        'w-full text-left bg-card/80 border rounded-xl p-5 transition-all',
+        'w-full text-left bg-card/80 border rounded-sm p-5 transition-all',
         campaign.meets_requirements
           ? 'border-green-500/20 hover:border-green-500/40'
           : 'border-white/5 hover:border-white/10 opacity-75',

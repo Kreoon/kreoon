@@ -1,9 +1,10 @@
 /**
  * AdnResearchV3Dashboard
  * Dashboard principal con navegación lateral y 22 pestañas de resultados
+ * Implementa lazy loading para optimizar el bundle inicial
  */
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo, Suspense } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,29 +49,43 @@ import {
 import { cn } from "@/lib/utils";
 import type { AdnResearchV3Result } from "@/types/adn-research-v3";
 
-// Tab components
-import { Tab01MarketOverview } from "./tabs/Tab01MarketOverview";
-import { Tab02Competition } from "./tabs/Tab02Competition";
-import { Tab03JTBD } from "./tabs/Tab03JTBD";
-import { Tab04Avatars } from "./tabs/Tab04Avatars";
-import { Tab05Psychology } from "./tabs/Tab05Psychology";
-import { Tab06Neuromarketing } from "./tabs/Tab06Neuromarketing";
-import { Tab07Positioning } from "./tabs/Tab07Positioning";
-import { Tab08CopyAngles } from "./tabs/Tab08CopyAngles";
-import { Tab09Offer } from "./tabs/Tab09Offer";
-import { Tab11Calendar } from "./tabs/Tab11Calendar";
-import { Tab12LeadMagnets } from "./tabs/Tab12LeadMagnets";
-import { Tab13SocialMedia } from "./tabs/Tab13SocialMedia";
-import { Tab14MetaAds } from "./tabs/Tab14MetaAds";
-import { Tab15TikTokAds } from "./tabs/Tab15TikTokAds";
-import { Tab16GoogleAds } from "./tabs/Tab16GoogleAds";
-import { Tab17EmailMarketing } from "./tabs/Tab17EmailMarketing";
-import { Tab18LandingPages } from "./tabs/Tab18LandingPages";
-import { Tab19LaunchStrategy } from "./tabs/Tab19LaunchStrategy";
-import { Tab20KPIs } from "./tabs/Tab20KPIs";
-import { Tab21OrganicContent } from "./tabs/Tab21OrganicContent";
-import { Tab22ExecutiveSummary } from "./tabs/Tab22ExecutiveSummary";
-import { TabPlaceholder } from "./tabs/TabPlaceholder";
+// Skeleton de carga para tabs
+const TabSkeleton = () => (
+  <div className="animate-pulse space-y-4 p-4">
+    <div className="h-4 bg-muted rounded w-3/4" />
+    <div className="h-4 bg-muted rounded w-1/2" />
+    <div className="h-32 bg-muted rounded" />
+    <div className="grid grid-cols-2 gap-4">
+      <div className="h-24 bg-muted rounded" />
+      <div className="h-24 bg-muted rounded" />
+    </div>
+    <div className="h-4 bg-muted rounded w-2/3" />
+  </div>
+);
+
+// Lazy-loaded tab components
+const Tab01MarketOverview = React.lazy(() => import("./tabs/Tab01MarketOverview").then(m => ({ default: m.Tab01MarketOverview })));
+const Tab02Competition = React.lazy(() => import("./tabs/Tab02Competition").then(m => ({ default: m.Tab02Competition })));
+const Tab03JTBD = React.lazy(() => import("./tabs/Tab03JTBD").then(m => ({ default: m.Tab03JTBD })));
+const Tab04Avatars = React.lazy(() => import("./tabs/Tab04Avatars").then(m => ({ default: m.Tab04Avatars })));
+const Tab05Psychology = React.lazy(() => import("./tabs/Tab05Psychology").then(m => ({ default: m.Tab05Psychology })));
+const Tab06Neuromarketing = React.lazy(() => import("./tabs/Tab06Neuromarketing").then(m => ({ default: m.Tab06Neuromarketing })));
+const Tab07Positioning = React.lazy(() => import("./tabs/Tab07Positioning").then(m => ({ default: m.Tab07Positioning })));
+const Tab08CopyAngles = React.lazy(() => import("./tabs/Tab08CopyAngles").then(m => ({ default: m.Tab08CopyAngles })));
+const Tab09Offer = React.lazy(() => import("./tabs/Tab09Offer").then(m => ({ default: m.Tab09Offer })));
+const Tab11Calendar = React.lazy(() => import("./tabs/Tab11Calendar").then(m => ({ default: m.Tab11Calendar })));
+const Tab12LeadMagnets = React.lazy(() => import("./tabs/Tab12LeadMagnets").then(m => ({ default: m.Tab12LeadMagnets })));
+const Tab13SocialMedia = React.lazy(() => import("./tabs/Tab13SocialMedia").then(m => ({ default: m.Tab13SocialMedia })));
+const Tab14MetaAds = React.lazy(() => import("./tabs/Tab14MetaAds").then(m => ({ default: m.Tab14MetaAds })));
+const Tab15TikTokAds = React.lazy(() => import("./tabs/Tab15TikTokAds").then(m => ({ default: m.Tab15TikTokAds })));
+const Tab16GoogleAds = React.lazy(() => import("./tabs/Tab16GoogleAds").then(m => ({ default: m.Tab16GoogleAds })));
+const Tab17EmailMarketing = React.lazy(() => import("./tabs/Tab17EmailMarketing").then(m => ({ default: m.Tab17EmailMarketing })));
+const Tab18LandingPages = React.lazy(() => import("./tabs/Tab18LandingPages").then(m => ({ default: m.Tab18LandingPages })));
+const Tab19LaunchStrategy = React.lazy(() => import("./tabs/Tab19LaunchStrategy").then(m => ({ default: m.Tab19LaunchStrategy })));
+const Tab20KPIs = React.lazy(() => import("./tabs/Tab20KPIs").then(m => ({ default: m.Tab20KPIs })));
+const Tab21OrganicContent = React.lazy(() => import("./tabs/Tab21OrganicContent").then(m => ({ default: m.Tab21OrganicContent })));
+const Tab22ExecutiveSummary = React.lazy(() => import("./tabs/Tab22ExecutiveSummary").then(m => ({ default: m.Tab22ExecutiveSummary })));
+const TabPlaceholder = React.lazy(() => import("./tabs/TabPlaceholder").then(m => ({ default: m.TabPlaceholder })));
 
 interface AdnResearchV3DashboardProps {
   result: AdnResearchV3Result;
@@ -251,7 +266,7 @@ export function AdnResearchV3Dashboard({
   };
 
   return (
-    <div className="flex h-[calc(100vh-200px)] min-h-[600px] max-h-[900px] bg-background rounded-lg border overflow-hidden">
+    <div className="flex h-[calc(100vh-200px)] min-h-[600px] max-h-[900px] bg-background rounded-sm border overflow-hidden">
       {/* Sidebar - Scroll independiente */}
       <div
         className={cn(
@@ -313,7 +328,7 @@ export function AdnResearchV3Dashboard({
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         className={cn(
-                          "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+                          "w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-colors",
                           isActive
                             ? "bg-primary text-primary-foreground"
                             : "hover:bg-muted text-foreground/70 hover:text-foreground",
@@ -453,7 +468,11 @@ export function AdnResearchV3Dashboard({
 
         {/* Content Area */}
         <ScrollArea className="flex-1">
-          <div className="p-6">{renderTabContent()}</div>
+          <div className="p-6">
+            <Suspense fallback={<TabSkeleton />}>
+              {renderTabContent()}
+            </Suspense>
+          </div>
         </ScrollArea>
       </div>
     </div>

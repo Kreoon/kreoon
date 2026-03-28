@@ -331,7 +331,7 @@ export function CreatorOnboarding({
                         updateField('years_experience', years);
                       }}
                       className={cn(
-                        "p-3 rounded-lg border text-left transition-all",
+                        "p-3 rounded-sm border text-left transition-all",
                         (formData.years_experience >= 1 && formData.years_experience < 2 && level.value === 'beginner') ||
                         (formData.years_experience >= 2 && formData.years_experience < 4 && level.value === 'intermediate') ||
                         (formData.years_experience >= 4 && formData.years_experience < 6 && level.value === 'advanced') ||
@@ -379,7 +379,7 @@ export function CreatorOnboarding({
                       key={industry.id}
                       onClick={() => updateField('primary_category', industry.id as IndustryId)}
                       className={cn(
-                        "p-3 rounded-xl border-2 text-left transition-all",
+                        "p-3 rounded-sm border-2 text-left transition-all",
                         formData.primary_category === industry.id
                           ? "border-social-accent bg-social-accent/10"
                           : "border-social-border bg-social-card hover:border-social-accent/50"
@@ -537,7 +537,7 @@ export function CreatorOnboarding({
                     {services.map((service, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between p-3 rounded-lg bg-social-muted"
+                        className="flex items-center justify-between p-3 rounded-sm bg-social-muted"
                       >
                         <div>
                           <p className="font-medium text-social-foreground">
@@ -561,7 +561,7 @@ export function CreatorOnboarding({
               )}
 
               {/* Add service form */}
-              <div className="space-y-3 p-4 rounded-lg border border-dashed border-social-border">
+              <div className="space-y-3 p-4 rounded-sm border border-dashed border-social-border">
                 <p className="text-sm font-medium text-social-foreground">
                   Agregar servicio
                 </p>
@@ -634,7 +634,7 @@ export function CreatorOnboarding({
               </div>
 
               {/* Available for hire */}
-              <div className="flex items-center justify-between p-4 rounded-lg bg-social-card border border-social-border">
+              <div className="flex items-center justify-between p-4 rounded-sm bg-social-card border border-social-border">
                 <div>
                   <p className="font-medium text-social-foreground">
                     Disponible para contratación
@@ -694,7 +694,7 @@ export function CreatorOnboarding({
               </div>
 
               {/* Info box */}
-              <div className="p-4 rounded-lg bg-social-accent/10 border border-social-accent/20">
+              <div className="p-4 rounded-sm bg-social-accent/10 border border-social-accent/20">
                 <p className="text-sm text-social-foreground">
                   💡 <strong>Tip:</strong> Los creadores con tiempos de respuesta más rápidos
                   tienen un 40% más de probabilidades de ser contactados por marcas.

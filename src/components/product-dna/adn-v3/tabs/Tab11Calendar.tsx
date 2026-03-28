@@ -181,7 +181,7 @@ export function Tab11Calendar({ data }: Tab11CalendarProps) {
               <p className="text-sm">{data.strategy_overview}</p>
             )}
             {data.weekly_cadence && (
-              <div className="p-3 rounded-lg bg-background/50">
+              <div className="p-3 rounded-sm bg-background/50">
                 <p className="text-xs text-muted-foreground mb-1">Cadencia Semanal</p>
                 <p className="text-sm font-medium">{data.weekly_cadence}</p>
               </div>
@@ -199,7 +199,7 @@ export function Tab11Calendar({ data }: Tab11CalendarProps) {
           <CardContent>
             <div className="flex flex-wrap gap-3">
               {Object.entries(data.platform_distribution).map(([platform, count]) => (
-                <div key={platform} className="p-3 rounded-lg border bg-card min-w-[100px] text-center">
+                <div key={platform} className="p-3 rounded-sm border bg-card min-w-[100px] text-center">
                   <p className="text-2xl font-bold">{count}</p>
                   <p className="text-xs text-muted-foreground capitalize">{platform}</p>
                 </div>
@@ -474,7 +474,7 @@ export function Tab11Calendar({ data }: Tab11CalendarProps) {
           <CardContent>
             <div className="grid sm:grid-cols-2 gap-4">
               {data.content_batching_guide.batch_1_week_1 && (
-                <div className="p-4 rounded-lg border">
+                <div className="p-4 rounded-sm border">
                   <Badge className="mb-2">Batch 1 - Semana 1</Badge>
                   {data.content_batching_guide.batch_1_week_1.time_required && (
                     <p className="text-sm text-muted-foreground mb-2 flex items-center gap-1">
@@ -499,7 +499,7 @@ export function Tab11Calendar({ data }: Tab11CalendarProps) {
                 </div>
               )}
               {data.content_batching_guide.batch_2_week_2 && (
-                <div className="p-4 rounded-lg border">
+                <div className="p-4 rounded-sm border">
                   <Badge className="mb-2">Batch 2 - Semana 2</Badge>
                   {data.content_batching_guide.batch_2_week_2.time_required && (
                     <p className="text-sm text-muted-foreground mb-2 flex items-center gap-1">
@@ -540,7 +540,7 @@ export function Tab11Calendar({ data }: Tab11CalendarProps) {
           <CardContent className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4">
               {data.engagement_strategy.daily_tasks && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-2">Tareas Diarias</p>
                   <ul className="space-y-1">
                     {data.engagement_strategy.daily_tasks.map((task, i) => (
@@ -550,7 +550,7 @@ export function Tab11Calendar({ data }: Tab11CalendarProps) {
                 </div>
               )}
               {data.engagement_strategy.weekly_tasks && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-2">Tareas Semanales</p>
                   <ul className="space-y-1">
                     {data.engagement_strategy.weekly_tasks.map((task, i) => (
@@ -564,19 +564,19 @@ export function Tab11Calendar({ data }: Tab11CalendarProps) {
               <div className="space-y-3">
                 <p className="text-xs text-muted-foreground">Templates de Respuesta</p>
                 {data.engagement_strategy.response_templates.positive_comment && (
-                  <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
                     <p className="text-xs text-green-400 mb-1">Comentario Positivo</p>
                     <p className="text-sm">{data.engagement_strategy.response_templates.positive_comment}</p>
                   </div>
                 )}
                 {data.engagement_strategy.response_templates.question && (
-                  <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                  <div className="p-3 rounded-sm bg-blue-500/10 border border-blue-500/20">
                     <p className="text-xs text-blue-400 mb-1">Pregunta</p>
                     <p className="text-sm">{data.engagement_strategy.response_templates.question}</p>
                   </div>
                 )}
                 {data.engagement_strategy.response_templates.objection && (
-                  <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                  <div className="p-3 rounded-sm bg-orange-500/10 border border-orange-500/20">
                     <p className="text-xs text-orange-400 mb-1">Objeción</p>
                     <p className="text-sm">{data.engagement_strategy.response_templates.objection}</p>
                   </div>

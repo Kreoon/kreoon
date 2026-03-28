@@ -63,7 +63,7 @@ export function ExchangeRatesCard({
             )}
             <button
               onClick={() => refetch()}
-              className="p-1.5 rounded-lg hover:bg-[hsl(270,30%,15%)] transition-colors"
+              className="p-1.5 rounded-sm hover:bg-[hsl(270,30%,15%)] transition-colors"
               title="Actualizar tasas"
             >
               <RefreshCw className={cn('h-4 w-4 text-muted-foreground', isLoading && 'animate-spin')} />
@@ -90,7 +90,7 @@ export function ExchangeRatesCard({
               return (
                 <div
                   key={currency}
-                  className="flex items-center justify-between p-3 rounded-lg bg-[hsl(270,30%,10%)] hover:bg-[hsl(270,30%,12%)] transition-colors"
+                  className="flex items-center justify-between p-3 rounded-sm bg-[hsl(270,30%,10%)] hover:bg-[hsl(270,30%,12%)] transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{CURRENCY_FLAGS[currency]}</span>

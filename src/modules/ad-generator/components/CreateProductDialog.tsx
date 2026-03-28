@@ -215,7 +215,7 @@ export function CreateProductDialog({ open, onOpenChange }: CreateProductDialogP
 
               {/* Auto-filled preview */}
               {selectedCrmProduct && (
-                <div className="rounded-md border border-border/50 bg-muted/20 p-3 space-y-1.5">
+                <div className="rounded-sm border border-border/50 bg-muted/20 p-3 space-y-1.5">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium">{selectedCrmProduct.name}</span>
                     {selectedCrmProduct.research_generated_at && (
@@ -295,7 +295,7 @@ export function CreateProductDialog({ open, onOpenChange }: CreateProductDialogP
                   </div>
                 </div>
               </div>
-              <div className="rounded-md border border-primary/20 bg-primary/5 p-3">
+              <div className="rounded-sm border border-primary/20 bg-primary/5 p-3">
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
                   <PenLine className="h-3 w-3 inline-block mr-1 text-primary" />
                   Al crear el producto podrás agregar fotos, definir tu público objetivo, dolores, deseos y más en el formulario de generación.

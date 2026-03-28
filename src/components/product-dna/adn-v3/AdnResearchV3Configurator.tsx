@@ -176,7 +176,7 @@ function InputBlock({
     <motion.div
       layout
       className={`
-        relative rounded-xl border p-4 transition-all duration-300
+        relative rounded-sm border p-4 transition-all duration-300
         ${
           isEnabled && isAvailable
             ? "border-white/20 bg-white/5"
@@ -187,7 +187,7 @@ function InputBlock({
       <div className="flex items-start gap-3">
         <div
           className={`
-          flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br ${block.gradient}
+          flex-shrink-0 w-10 h-10 rounded-sm bg-gradient-to-br ${block.gradient}
           flex items-center justify-center shadow-lg
           ${!isEnabled || !isAvailable ? "opacity-50" : ""}
         `}
@@ -274,7 +274,7 @@ function DnaQualityIndicator({ dna }: { dna: ProductDnaSummary }) {
   const barColor = score >= 80 ? "bg-green-500" : score >= 50 ? "bg-amber-500" : "bg-red-500";
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+    <div className="rounded-sm border border-white/10 bg-white/[0.03] p-4">
       <div className="flex items-center justify-between mb-3">
         <span className="text-xs font-medium text-white/70">Calidad del ADN de Producto</span>
         <span className={`text-sm font-bold ${scoreColor}`}>{score}%</span>
@@ -316,7 +316,7 @@ function DnaQualityIndicator({ dna }: { dna: ProductDnaSummary }) {
       </div>
 
       {score < 70 && (
-        <div className="mt-3 flex items-start gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+        <div className="mt-3 flex items-start gap-2 p-2 rounded-sm bg-amber-500/10 border border-amber-500/20">
           <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" />
           <p className="text-[11px] text-amber-300/80 leading-relaxed">
             Un ADN más completo produce mejores resultados. Considera completar el wizard antes de
@@ -333,7 +333,7 @@ function TabsPreview() {
   const visibleTabs = expanded ? TABS_PREVIEW : TABS_PREVIEW.slice(0, 6);
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+    <div className="rounded-sm border border-white/10 bg-white/[0.02] p-4">
       <p className="text-xs font-medium text-white/50 mb-3">
         Vas a recibir 22 secciones de estrategia
       </p>
@@ -410,7 +410,7 @@ export function AdnResearchV3Configurator({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={`
-        w-full max-w-2xl mx-auto rounded-2xl border border-white/10
+        w-full max-w-2xl mx-auto rounded-sm border border-white/10
         bg-gradient-to-b from-white/[0.06] to-white/[0.02]
         backdrop-blur-xl overflow-hidden
         ${className}
@@ -421,7 +421,7 @@ export function AdnResearchV3Configurator({
         <div className="absolute inset-0 bg-gradient-to-r from-violet-500/10 via-transparent to-pink-500/10 pointer-events-none" />
 
         <div className="relative flex items-start gap-4">
-          <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-pink-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
+          <div className="flex-shrink-0 w-12 h-12 rounded-sm bg-gradient-to-br from-violet-500 to-pink-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
             <Sparkles className="w-6 h-6 text-white" />
           </div>
 
@@ -484,14 +484,14 @@ export function AdnResearchV3Configurator({
         {/* Costo en tokens */}
         <div
           className={`
-          rounded-xl border p-4 flex items-center justify-between
+          rounded-sm border p-4 flex items-center justify-between
           ${hasEnoughTokens ? "border-white/10 bg-white/[0.03]" : "border-red-500/30 bg-red-500/5"}
         `}
         >
           <div className="flex items-center gap-3">
             <div
               className={`
-              w-9 h-9 rounded-lg flex items-center justify-center
+              w-9 h-9 rounded-sm flex items-center justify-center
               ${hasEnoughTokens ? "bg-violet-500/20" : "bg-red-500/20"}
             `}
             >

@@ -46,7 +46,7 @@ export const ReviewsSection = memo(function ReviewsSection({ reviews, ratingAvg,
             {visible.map(review => (
               <div
                 key={review.id}
-                className="bg-white/5 border border-white/10 rounded-xl p-6 space-y-3"
+                className="bg-white/5 border border-white/10 rounded-sm p-6 space-y-3"
               >
                 {/* Stars + date */}
                 <div className="flex items-center gap-2">

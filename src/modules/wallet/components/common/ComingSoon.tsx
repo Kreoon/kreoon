@@ -82,14 +82,14 @@ export function ComingSoonBanner({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
         className={cn(
-          'flex items-center justify-between gap-4 px-4 py-3 rounded-xl',
+          'flex items-center justify-between gap-4 px-4 py-3 rounded-sm',
           'bg-gradient-to-r from-amber-500/10 via-[hsl(270,100%,60%,0.1)] to-amber-500/10',
           'border border-amber-500/20',
           className
         )}
       >
         <div className="flex items-center gap-3">
-          <div className="p-1.5 rounded-lg bg-amber-500/20">
+          <div className="p-1.5 rounded-sm bg-amber-500/20">
             <Construction className="h-4 w-4 text-amber-400" />
           </div>
           <div>
@@ -127,7 +127,7 @@ export function ComingSoonBanner({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
       className={cn(
-        'relative overflow-hidden rounded-2xl',
+        'relative overflow-hidden rounded-sm',
         'bg-gradient-to-br from-[hsl(270,100%,60%,0.1)] via-amber-500/5 to-[hsl(280,100%,60%,0.1)]',
         'border border-amber-500/20',
         className
@@ -155,7 +155,7 @@ export function ComingSoonBanner({
         <div className="flex flex-col lg:flex-row lg:items-center gap-6">
           {/* Icon and Title */}
           <div className="flex items-start gap-4">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500/20 to-[hsl(270,100%,60%,0.2)] animate-pulse">
+            <div className="p-3 rounded-sm bg-gradient-to-br from-amber-500/20 to-[hsl(270,100%,60%,0.2)] animate-pulse">
               <Rocket className="h-8 w-8 text-amber-400" />
             </div>
             <div>
@@ -230,7 +230,7 @@ export function ComingSoonOverlay({
       <div className="opacity-60 pointer-events-none select-none">{children}</div>
 
       {/* Overlay */}
-      <div className="absolute inset-0 flex items-center justify-center bg-[hsl(270,50%,5%,0.3)] backdrop-blur-[1px] rounded-xl">
+      <div className="absolute inset-0 flex items-center justify-center bg-[hsl(270,50%,5%,0.3)] backdrop-blur-[1px] rounded-sm">
         <div className="text-center p-4">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/30">
             <Construction className="h-4 w-4 text-amber-400" />

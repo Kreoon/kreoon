@@ -1,5 +1,20 @@
 import { useMemo } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line } from "recharts";
+import {
+  LazyBarChart,
+  LazyPieChart,
+  LazyLineChart,
+  LazyChartContainer,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Cell,
+  Pie,
+  Line,
+} from "@/components/ui/lazy-charts";
 
 interface ClientPackage {
   id: string;
@@ -105,11 +120,11 @@ export function ClientFinanceChart({ packages, content, chartType, title }: Clie
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-popover border border-border rounded-lg p-3 shadow-xl">
-          <p className="font-semibold text-foreground mb-2">{label}</p>
+        <div className="bg-[var(--nova-bg-elevated)] border border-[var(--nova-border-default)] rounded-sm p-3 shadow-xl nova-glass">
+          <p className="font-semibold text-[var(--nova-text-bright)] mb-2">{label}</p>
           <div className="space-y-1 text-sm">
             {payload.map((entry: any, index: number) => (
-              <p key={index} className="text-muted-foreground">
+              <p key={index} className="text-[var(--nova-text-secondary)]">
                 {entry.name}: <span className="font-medium" style={{ color: entry.color }}>
                   {chartType === 'investment' ? `$${entry.value.toLocaleString()}` : entry.value.toLocaleString()}
                 </span>
@@ -125,8 +140,8 @@ export function ClientFinanceChart({ packages, content, chartType, title }: Clie
   const PieTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-popover border border-border rounded-lg p-3 shadow-xl">
-          <p className="font-semibold text-foreground">
+        <div className="bg-[var(--nova-bg-elevated)] border border-[var(--nova-border-default)] rounded-sm p-3 shadow-xl nova-glass">
+          <p className="font-semibold text-[var(--nova-text-bright)]">
             {payload[0].name}: {payload[0].value}
           </p>
         </div>
@@ -138,34 +153,36 @@ export function ClientFinanceChart({ packages, content, chartType, title }: Clie
   if (chartType === 'investment') {
     if (investmentData.length === 0) {
       return (
-        <div className="w-full h-[200px] flex items-center justify-center text-muted-foreground text-sm">
-          No hay datos de inversión disponibles
+        <div className="w-full h-[200px] flex items-center justify-center text-[var(--nova-text-secondary)] text-sm">
+          No hay datos de inversion disponibles
         </div>
       );
     }
 
     return (
       <div className="w-full">
-        <h3 className="text-sm font-semibold text-foreground mb-3">{title}</h3>
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={investmentData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-            <XAxis 
-              dataKey="name" 
-              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
-              axisLine={{ stroke: 'hsl(var(--border))' }}
-            />
-            <YAxis 
-              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
-              axisLine={{ stroke: 'hsl(var(--border))' }}
-              tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend wrapperStyle={{ fontSize: '11px' }} />
-            <Bar dataKey="pagado" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="pendiente" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+        <h3 className="text-sm font-semibold text-[var(--nova-text-bright)] mb-3">{title}</h3>
+        <LazyChartContainer height={200}>
+          <ResponsiveContainer width="100%" height={200}>
+            <LazyBarChart data={investmentData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+              <XAxis
+                dataKey="name"
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                axisLine={{ stroke: 'hsl(var(--border))' }}
+              />
+              <YAxis
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                axisLine={{ stroke: 'hsl(var(--border))' }}
+                tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend wrapperStyle={{ fontSize: '11px' }} />
+              <Bar dataKey="pagado" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="pendiente" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} />
+            </LazyBarChart>
+          </ResponsiveContainer>
+        </LazyChartContainer>
       </div>
     );
   }
@@ -173,7 +190,7 @@ export function ClientFinanceChart({ packages, content, chartType, title }: Clie
   if (chartType === 'content-status') {
     if (contentStatusData.length === 0) {
       return (
-        <div className="w-full h-[200px] flex items-center justify-center text-muted-foreground text-sm">
+        <div className="w-full h-[200px] flex items-center justify-center text-[var(--nova-text-secondary)] text-sm">
           No hay contenido para mostrar
         </div>
       );
@@ -181,26 +198,28 @@ export function ClientFinanceChart({ packages, content, chartType, title }: Clie
 
     return (
       <div className="w-full">
-        <h3 className="text-sm font-semibold text-foreground mb-3">{title}</h3>
-        <ResponsiveContainer width="100%" height={200}>
-          <PieChart>
-            <Pie
-              data={contentStatusData}
-              cx="50%"
-              cy="50%"
-              innerRadius={50}
-              outerRadius={70}
-              paddingAngle={4}
-              dataKey="value"
-            >
-              {contentStatusData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.fill} />
-              ))}
-            </Pie>
-            <Tooltip content={<PieTooltip />} />
-            <Legend wrapperStyle={{ fontSize: '11px' }} />
-          </PieChart>
-        </ResponsiveContainer>
+        <h3 className="text-sm font-semibold text-[var(--nova-text-bright)] mb-3">{title}</h3>
+        <LazyChartContainer height={200}>
+          <ResponsiveContainer width="100%" height={200}>
+            <LazyPieChart>
+              <Pie
+                data={contentStatusData}
+                cx="50%"
+                cy="50%"
+                innerRadius={50}
+                outerRadius={70}
+                paddingAngle={4}
+                dataKey="value"
+              >
+                {contentStatusData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                ))}
+              </Pie>
+              <Tooltip content={<PieTooltip />} />
+              <Legend wrapperStyle={{ fontSize: '11px' }} />
+            </LazyPieChart>
+          </ResponsiveContainer>
+        </LazyChartContainer>
       </div>
     );
   }
@@ -208,7 +227,7 @@ export function ClientFinanceChart({ packages, content, chartType, title }: Clie
   if (chartType === 'engagement') {
     if (engagementData.length === 0) {
       return (
-        <div className="w-full h-[200px] flex items-center justify-center text-muted-foreground text-sm">
+        <div className="w-full h-[200px] flex items-center justify-center text-[var(--nova-text-secondary)] text-sm">
           No hay datos de engagement disponibles
         </div>
       );
@@ -216,25 +235,27 @@ export function ClientFinanceChart({ packages, content, chartType, title }: Clie
 
     return (
       <div className="w-full">
-        <h3 className="text-sm font-semibold text-foreground mb-3">{title}</h3>
-        <ResponsiveContainer width="100%" height={200}>
-          <LineChart data={engagementData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-            <XAxis 
-              dataKey="name" 
-              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
-              axisLine={{ stroke: 'hsl(var(--border))' }}
-            />
-            <YAxis 
-              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
-              axisLine={{ stroke: 'hsl(var(--border))' }}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend wrapperStyle={{ fontSize: '11px' }} />
-            <Line type="monotone" dataKey="vistas" stroke="hsl(var(--info))" strokeWidth={2} dot={{ r: 4 }} />
-            <Line type="monotone" dataKey="likes" stroke="hsl(var(--destructive))" strokeWidth={2} dot={{ r: 4 }} />
-          </LineChart>
-        </ResponsiveContainer>
+        <h3 className="text-sm font-semibold text-[var(--nova-text-bright)] mb-3">{title}</h3>
+        <LazyChartContainer height={200}>
+          <ResponsiveContainer width="100%" height={200}>
+            <LazyLineChart data={engagementData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+              <XAxis
+                dataKey="name"
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                axisLine={{ stroke: 'hsl(var(--border))' }}
+              />
+              <YAxis
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                axisLine={{ stroke: 'hsl(var(--border))' }}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend wrapperStyle={{ fontSize: '11px' }} />
+              <Line type="monotone" dataKey="vistas" stroke="hsl(var(--info))" strokeWidth={2} dot={{ r: 4 }} />
+              <Line type="monotone" dataKey="likes" stroke="hsl(var(--destructive))" strokeWidth={2} dot={{ r: 4 }} />
+            </LazyLineChart>
+          </ResponsiveContainer>
+        </LazyChartContainer>
       </div>
     );
   }

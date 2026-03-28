@@ -148,7 +148,7 @@ export function SuggestedUsers({
               key={i} 
               className={cn(
                 "bg-social-muted",
-                variant === 'list' ? "h-20 rounded-xl" : "h-64 rounded-xl"
+                variant === 'list' ? "h-20 rounded-sm" : "h-64 rounded-sm"
               )} 
             />
           ))}

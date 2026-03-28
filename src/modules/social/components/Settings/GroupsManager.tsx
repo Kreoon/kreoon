@@ -184,7 +184,7 @@ export function GroupsManager() {
                       key={account.id}
                       onClick={() => handleToggleAccount(group, account.id)}
                       className={cn(
-                        'flex items-center gap-2 px-2.5 py-1.5 rounded-md border text-sm transition-all text-left',
+                        'flex items-center gap-2 px-2.5 py-1.5 rounded-sm border text-sm transition-all text-left',
                         isMember
                           ? 'border-primary bg-primary/10 text-primary'
                           : 'border-border bg-card hover:border-primary/30'

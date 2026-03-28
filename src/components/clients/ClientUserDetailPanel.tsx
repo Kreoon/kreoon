@@ -118,7 +118,7 @@ export function ClientUserDetailPanel({
       {/* Contact Info */}
       <DetailSection title="Contacto">
         <div className="space-y-2">
-          <div className="flex items-center justify-between py-1.5 px-2 rounded-lg bg-white/5">
+          <div className="flex items-center justify-between py-1.5 px-2 rounded-sm bg-white/5">
             <div className="flex items-center gap-2 min-w-0">
               <Mail className="h-3.5 w-3.5 text-white/40 flex-shrink-0" />
               <span className="text-xs text-white/70 truncate">{user.email}</span>
@@ -126,7 +126,7 @@ export function ClientUserDetailPanel({
             <CopyButton text={user.email} />
           </div>
           {user.phone && (
-            <div className="flex items-center justify-between py-1.5 px-2 rounded-lg bg-white/5">
+            <div className="flex items-center justify-between py-1.5 px-2 rounded-sm bg-white/5">
               <div className="flex items-center gap-2 min-w-0">
                 <Phone className="h-3.5 w-3.5 text-white/40 flex-shrink-0" />
                 <span className="text-xs text-white/70">{user.phone}</span>
@@ -146,7 +146,7 @@ export function ClientUserDetailPanel({
             </div>
           )}
           {user.city && (
-            <div className="flex items-center gap-2 py-1.5 px-2 rounded-lg bg-white/5">
+            <div className="flex items-center gap-2 py-1.5 px-2 rounded-sm bg-white/5">
               <MapPin className="h-3.5 w-3.5 text-white/40 flex-shrink-0" />
               <span className="text-xs text-white/70">{user.city}</span>
             </div>
@@ -170,7 +170,7 @@ export function ClientUserDetailPanel({
               return (
                 <div
                   key={company.client_id}
-                  className="flex items-center justify-between py-2 px-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/10"
+                  className="flex items-center justify-between py-2 px-2.5 rounded-sm bg-emerald-500/5 border border-emerald-500/10"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <Building2 className="h-3.5 w-3.5 text-emerald-400 flex-shrink-0" />
@@ -216,7 +216,7 @@ export function ClientUserDetailPanel({
             })}
           </div>
         ) : (
-          <p className="text-xs text-amber-400/70 px-2 py-3 rounded-lg bg-amber-500/5 border border-amber-500/10 text-center">
+          <p className="text-xs text-amber-400/70 px-2 py-3 rounded-sm bg-amber-500/5 border border-amber-500/10 text-center">
             Sin empresas vinculadas
           </p>
         )}
@@ -231,7 +231,7 @@ export function ClientUserDetailPanel({
                 key={company.id}
                 onClick={() => handleLink(company.id)}
                 disabled={loading}
-                className="w-full flex items-center gap-2 py-2 px-2.5 rounded-lg border border-dashed border-white/10 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-colors text-left disabled:opacity-50"
+                className="w-full flex items-center gap-2 py-2 px-2.5 rounded-sm border border-dashed border-white/10 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-colors text-left disabled:opacity-50"
               >
                 <LinkIcon className="h-3.5 w-3.5 text-white/30" />
                 <span className="text-xs text-white/60">{company.name}</span>
@@ -244,19 +244,19 @@ export function ClientUserDetailPanel({
       {/* Details */}
       <DetailSection title="Detalles">
         <div className="grid grid-cols-2 gap-2">
-          <div className="py-1.5 px-2 rounded-lg bg-white/5">
+          <div className="py-1.5 px-2 rounded-sm bg-white/5">
             <p className="text-[10px] text-white/30 uppercase">Registrado</p>
             <p className="text-xs text-white/70 mt-0.5">
               {formatDistanceToNow(new Date(user.created_at), { addSuffix: true, locale: es })}
             </p>
           </div>
-          <div className="py-1.5 px-2 rounded-lg bg-white/5">
+          <div className="py-1.5 px-2 rounded-sm bg-white/5">
             <p className="text-[10px] text-white/30 uppercase">Empresas</p>
             <p className="text-xs text-white/70 mt-0.5">{user.linked_companies.length}</p>
           </div>
         </div>
         {user.bio && (
-          <div className="py-1.5 px-2 rounded-lg bg-white/5 mt-2">
+          <div className="py-1.5 px-2 rounded-sm bg-white/5 mt-2">
             <p className="text-[10px] text-white/30 uppercase">Bio</p>
             <p className="text-xs text-white/70 mt-0.5 line-clamp-3">{user.bio}</p>
           </div>

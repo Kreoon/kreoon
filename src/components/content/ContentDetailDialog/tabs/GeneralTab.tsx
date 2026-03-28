@@ -1,11 +1,11 @@
 import { useState, useRef } from 'react';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { FieldRow } from '../components/SectionCard';
 import { EditableField } from '../components/PermissionsGate';
 import { TabProps } from '../types';
 import { Target, FileText, Zap, Lightbulb, RefreshCw, Heart, Video, Upload, Loader2, Trash2, Link as LinkIcon } from 'lucide-react';
+import { NovaInput, NovaButton } from '@/components/ui/nova';
 import { QualityScoreWidget } from '@/components/points/QualityScoreWidget';
 import { AutoPauseVideo } from '@/components/content/AutoPauseVideo';
 import { Badge } from '@/components/ui/badge';
@@ -179,17 +179,17 @@ export function GeneralTab({
       )}
 
       {/* ============ VIDEO DE REFERENCIA ============ */}
-      <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+      <div className="rounded-sm border border-[var(--nova-border-subtle)] bg-[var(--nova-bg-elevated)]/30 p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <h4 className="font-medium flex items-center gap-2">
-            <Video className="h-4 w-4" />
+          <h4 className="font-medium flex items-center gap-2 text-[var(--nova-text-bright)]">
+            <Video className="h-4 w-4 text-[var(--nova-accent-primary)]" />
             Video de Referencia
           </h4>
           {canEditReferenceVideo && referenceUrl && (
-            <Button
+            <NovaButton
               variant="ghost"
               size="sm"
-              className="h-7 text-xs text-destructive hover:text-destructive"
+              className="h-7 text-xs text-[var(--nova-error)] hover:text-[var(--nova-error)]"
               onClick={() => {
                 setFormData(prev => ({ ...prev, reference_url: '' }));
                 autoSaveReferenceUrl('');
@@ -197,13 +197,13 @@ export function GeneralTab({
             >
               <Trash2 className="h-3 w-3 mr-1" />
               Quitar
-            </Button>
+            </NovaButton>
           )}
         </div>
 
         {/* Video Player */}
         {hasVideo && (
-          <div className="aspect-[9/16] max-h-[400px] rounded-lg overflow-hidden bg-black mx-auto w-full max-w-[280px]">
+          <div className="aspect-[9/16] max-h-[400px] rounded-sm overflow-hidden bg-black mx-auto w-full max-w-[280px]">
             {isBunnyVideo ? (
               <AutoPauseVideo
                 src={referenceUrl}
@@ -223,7 +223,7 @@ export function GeneralTab({
 
         {/* Non-embeddable URL — show as link */}
         {referenceUrl && !hasVideo && (
-          <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+          <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-sm">
             <LinkIcon className="h-4 w-4 text-muted-foreground shrink-0" />
             <a
               href={referenceUrl}
@@ -247,7 +247,7 @@ export function GeneralTab({
         {/* Upload/URL controls — always visible for users with edit permission (ignores block readOnly) */}
         {canEditReferenceVideo && (
           <div className="space-y-2">
-            <Input
+            <NovaInput
               value={referenceUrl}
               onChange={(e) => setFormData(prev => ({ ...prev, reference_url: e.target.value }))}
               onBlur={() => {
@@ -269,7 +269,7 @@ export function GeneralTab({
                   e.target.value = '';
                 }}
               />
-              <Button
+              <NovaButton
                 variant="outline"
                 size="sm"
                 className="text-xs"
@@ -287,8 +287,8 @@ export function GeneralTab({
                     Subir Video
                   </>
                 )}
-              </Button>
-              <span className="text-xs text-muted-foreground">
+              </NovaButton>
+              <span className="text-xs text-[var(--nova-text-muted)]">
                 o pega un enlace arriba
               </span>
             </div>
@@ -297,57 +297,57 @@ export function GeneralTab({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Ángulo de Ventas */}
-        <FieldRow label="Ángulo de Ventas" icon={Target}>
+        {/* Angulo de Ventas */}
+        <FieldRow label="Angulo de Ventas" icon={Target}>
           <EditableField
             permissions={permissions}
             resource="content.general"
             editMode={effectiveEditMode}
             readOnly={readOnly}
             editComponent={
-              <Input
+              <NovaInput
                 value={formData.sales_angle || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, sales_angle: e.target.value }))}
                 placeholder="Ej: Dolor, Beneficio, Urgencia..."
               />
             }
-            viewComponent={<p className="font-medium">{formData.sales_angle || '—'}</p>}
+            viewComponent={<p className="font-medium text-[var(--nova-text-primary)]">{formData.sales_angle || '—'}</p>}
           />
         </FieldRow>
 
-        {/* Descripción */}
-        <FieldRow label="Descripción" icon={FileText}>
+        {/* Descripcion */}
+        <FieldRow label="Descripcion" icon={FileText}>
           <EditableField
             permissions={permissions}
             resource="content.general"
             editMode={effectiveEditMode}
             readOnly={readOnly}
             editComponent={
-              <Input
+              <NovaInput
                 value={formData.description || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Descripción del contenido..."
+                placeholder="Descripcion del contenido..."
               />
             }
-            viewComponent={<p className="font-medium">{formData.description || '—'}</p>}
+            viewComponent={<p className="font-medium text-[var(--nova-text-primary)]">{formData.description || '—'}</p>}
           />
         </FieldRow>
 
-        {/* Semana de Campaña */}
-        <FieldRow label="Semana de Campaña">
+        {/* Semana de Campana */}
+        <FieldRow label="Semana de Campana">
           <EditableField
             permissions={permissions}
             resource="content.general"
             editMode={effectiveEditMode}
             readOnly={readOnly}
             editComponent={
-              <Input
+              <NovaInput
                 value={formData.campaign_week || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, campaign_week: e.target.value }))}
                 placeholder="Ej: Semana 1, Q1 2024..."
               />
             }
-            viewComponent={<p className="font-medium">{formData.campaign_week || '—'}</p>}
+            viewComponent={<p className="font-medium text-[var(--nova-text-primary)]">{formData.campaign_week || '—'}</p>}
           />
         </FieldRow>
 

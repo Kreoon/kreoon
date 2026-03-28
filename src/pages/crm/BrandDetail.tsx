@@ -282,10 +282,10 @@ export default function BrandDetail() {
             <img
               src={brand.logo_url}
               alt={brand.name}
-              className="h-16 w-16 rounded-xl object-cover"
+              className="h-16 w-16 rounded-sm object-cover"
             />
           ) : (
-            <div className="h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-sm bg-primary/10 flex items-center justify-center">
               <Building2 className="h-8 w-8 text-primary" />
             </div>
           )}
@@ -489,16 +489,16 @@ export default function BrandDetail() {
                       {(communityMembership.community as any)?.name || 'Comunidad'}
                     </Badge>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-center text-sm">
-                    <div className="p-2 bg-background rounded-lg">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center text-sm">
+                    <div className="p-2 bg-background rounded-sm">
                       <p className="font-bold text-amber-600">{communityMembership.free_months_granted}</p>
                       <p className="text-xs text-muted-foreground">Meses gratis</p>
                     </div>
-                    <div className="p-2 bg-background rounded-lg">
+                    <div className="p-2 bg-background rounded-sm">
                       <p className="font-bold text-amber-600">{communityMembership.commission_discount_applied}%</p>
                       <p className="text-xs text-muted-foreground">Descuento</p>
                     </div>
-                    <div className="p-2 bg-background rounded-lg">
+                    <div className="p-2 bg-background rounded-sm">
                       <p className="font-bold text-amber-600">{communityMembership.bonus_tokens_granted}</p>
                       <p className="text-xs text-muted-foreground">Tokens</p>
                     </div>
@@ -513,7 +513,7 @@ export default function BrandDetail() {
                 <CardTitle className="text-base">Estadísticas</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-4 gap-4 text-center">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                   <div>
                     <p className="text-2xl font-bold">{members.length}</p>
                     <p className="text-xs text-muted-foreground">Miembros</p>

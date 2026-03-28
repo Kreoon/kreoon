@@ -278,7 +278,7 @@ function ChatMessage({ message, onDelete, onBan, onPin }: ChatMessageProps) {
   return (
     <div
       className={cn(
-        'group flex gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50',
+        'group flex gap-3 rounded-sm p-2 transition-colors hover:bg-muted/50',
         isPurchase && 'bg-green-500/10 hover:bg-green-500/20',
         isDonation && 'bg-yellow-500/10 hover:bg-yellow-500/20',
         message.is_pinned && 'bg-blue-500/10 hover:bg-blue-500/20'

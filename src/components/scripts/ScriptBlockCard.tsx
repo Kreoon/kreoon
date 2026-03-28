@@ -1,10 +1,10 @@
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { FileText, Video, BarChart3, Brain, Palette, Calendar } from "lucide-react";
+import { NovaCard, NovaCardContent, NovaCardHeader, NovaCardTitle } from "@/components/ui/nova";
 
 interface ContentItem {
   id: string;
@@ -98,49 +98,51 @@ export function ScriptBlockCard({ content, blockType, onClick, isSelected }: Scr
   const preview = getPreview();
 
   return (
-    <Card 
+    <NovaCard
+      variant="elevated"
+      hover
       className={cn(
-        "cursor-pointer transition-all duration-200 hover:shadow-md",
-        isSelected && "ring-2 ring-primary",
+        "cursor-pointer transition-all duration-200",
+        isSelected && "ring-2 ring-[var(--nova-accent-primary)]",
         !hasContent && "opacity-60"
       )}
       onClick={onClick}
     >
-      <CardHeader className="pb-2">
+      <NovaCardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <Avatar className="h-10 w-10 flex-shrink-0">
               <AvatarImage src={content.client?.logo_url || undefined} />
-              <AvatarFallback className="bg-muted">
+              <AvatarFallback className="bg-[var(--nova-bg-elevated)]">
                 {content.client?.name?.slice(0, 2).toUpperCase() || 'N/A'}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <CardTitle className="text-sm font-semibold truncate">
+              <NovaCardTitle className="text-sm font-semibold truncate">
                 {content.title}
-              </CardTitle>
-              <p className="text-xs text-muted-foreground truncate">
-                {content.client?.name || 'Sin cliente'} 
-                {content.product?.name && ` • ${content.product.name}`}
+              </NovaCardTitle>
+              <p className="text-xs text-[var(--nova-text-muted)] truncate">
+                {content.client?.name || 'Sin cliente'}
+                {content.product?.name && ` - ${content.product.name}`}
               </p>
             </div>
           </div>
           <div className={cn(
-            "p-2 rounded-lg flex-shrink-0",
+            "p-2 rounded-sm flex-shrink-0",
             config.bgColor
           )}>
             <Icon className={cn("h-4 w-4", config.color)} />
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="pt-2">
+      </NovaCardHeader>
+      <NovaCardContent className="pt-2">
         <div className="space-y-2">
           {hasContent ? (
-            <p className="text-xs text-muted-foreground line-clamp-2">
+            <p className="text-xs text-[var(--nova-text-muted)] line-clamp-2">
               {preview}
             </p>
           ) : (
-            <p className="text-xs text-muted-foreground italic">
+            <p className="text-xs text-[var(--nova-text-muted)] italic">
               Sin contenido generado
             </p>
           )}
@@ -148,12 +150,12 @@ export function ScriptBlockCard({ content, blockType, onClick, isSelected }: Scr
             <Badge variant={hasContent ? "default" : "secondary"} className="text-xs">
               {hasContent ? "Generado" : "Pendiente"}
             </Badge>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-[var(--nova-text-muted)]">
               {format(new Date(content.created_at), "d MMM", { locale: es })}
             </span>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </NovaCardContent>
+    </NovaCard>
   );
 }

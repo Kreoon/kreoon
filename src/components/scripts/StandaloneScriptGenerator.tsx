@@ -973,7 +973,7 @@ export function StandaloneScriptGenerator() {
 
               {/* Show summary of selected variables */}
               {(formData.selected_pain || formData.selected_desire || formData.selected_objection) && (
-                <div className="p-3 rounded-lg bg-muted/50 border border-muted">
+                <div className="p-3 rounded-sm bg-muted/50 border border-muted">
                   <p className="text-xs font-medium mb-2">Variables seleccionadas:</p>
                   <div className="flex flex-wrap gap-1.5">
                     {formData.selected_pain && (
@@ -1198,9 +1198,9 @@ export function StandaloneScriptGenerator() {
             {/* Toggle Perplexity Research - Only for organizations (requires n8n workflow) */}
             {!isFreelancer && (
               <div className="space-y-4 pt-4 border-t">
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg border border-purple-500/20">
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-sm border border-purple-500/20">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-purple-500/20 rounded-lg">
+                    <div className="p-2 bg-purple-500/20 rounded-sm">
                       <Search className="w-5 h-5 text-purple-400" />
                     </div>
                     <div>
@@ -1276,7 +1276,7 @@ export function StandaloneScriptGenerator() {
           <CardContent className="pt-4 pb-4 space-y-4">
             {/* Generation Steps Progress */}
             {loading && (
-              <div className="space-y-2 p-3 rounded-lg bg-muted/50">
+              <div className="space-y-2 p-3 rounded-sm bg-muted/50">
                 <p className="text-sm font-medium mb-2">Generando contenido...</p>
                 <div className="grid grid-cols-2 gap-2">
                   {generationSteps.map(step => (
@@ -1295,7 +1295,7 @@ export function StandaloneScriptGenerator() {
             )}
 
             {hasStepErrors && !loading && (
-              <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-sm">
                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
                 <span>Error en la generación. Contacta al administrador.</span>
               </div>
@@ -1400,7 +1400,7 @@ export function StandaloneScriptGenerator() {
                         Copiar
                       </Button>
                     </div>
-                    <ScrollArea className="h-[500px] rounded-lg border p-4">
+                    <ScrollArea className="h-[500px] rounded-sm border p-4">
                       <div 
                         className="prose prose-sm max-w-none dark:prose-invert"
                         dangerouslySetInnerHTML={{ __html: sanitizeHTML(tab.content || '') }}

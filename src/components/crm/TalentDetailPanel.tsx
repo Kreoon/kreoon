@@ -203,8 +203,8 @@ export function TalentDetailPanel({ creator, onClose, onUpdate }: TalentDetailPa
       {/* Loading indicator for full detail */}
       {fullLoading && (
         <div className="space-y-3">
-          <Skeleton className="h-16 rounded-lg bg-white/5" />
-          <Skeleton className="h-12 rounded-lg bg-white/5" />
+          <Skeleton className="h-16 rounded-sm bg-white/5" />
+          <Skeleton className="h-12 rounded-sm bg-white/5" />
         </div>
       )}
 

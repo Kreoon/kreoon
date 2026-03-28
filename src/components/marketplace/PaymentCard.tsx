@@ -140,7 +140,7 @@ export function PaymentCard({
     <>
       <motion.div
         className={cn(
-          "p-4 rounded-xl bg-social-card border border-social-border",
+          "p-4 rounded-sm bg-social-card border border-social-border",
           "hover:border-social-accent/30 transition-all cursor-pointer",
           className
         )}
@@ -267,7 +267,7 @@ export function PaymentCard({
           </DialogHeader>
 
           <div className="py-4">
-            <div className="p-4 rounded-lg bg-social-muted">
+            <div className="p-4 rounded-sm bg-social-muted">
               <div className="flex items-center justify-between">
                 <span className="text-social-muted-foreground">Monto a liberar</span>
                 <span className="text-xl font-bold text-social-foreground">
@@ -323,7 +323,7 @@ export function PaymentCard({
               <select
                 value={disputeReason}
                 onChange={(e) => setDisputeReason(e.target.value as DisputeReason)}
-                className="w-full p-2 rounded-lg bg-social-muted border border-social-border text-social-foreground"
+                className="w-full p-2 rounded-sm bg-social-muted border border-social-border text-social-foreground"
               >
                 {Object.entries(DISPUTE_REASON_LABELS).map(([key, label]) => (
                   <option key={key} value={key}>

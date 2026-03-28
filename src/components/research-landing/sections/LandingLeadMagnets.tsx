@@ -24,7 +24,7 @@ export function LandingLeadMagnets({ salesAnglesData }: Props) {
           <h4 className="text-xs font-semibold text-purple-300 uppercase tracking-wider mb-3">Lead Magnets</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {magnets.map((m: any, i: number) => (
-              <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 space-y-2">
+              <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-sm p-4 space-y-2">
                 <p className="text-sm font-medium text-white/90">{safeStr(m.name || m, `Lead Magnet ${i + 1}`)}</p>
                 {m.objective && <p className="text-xs text-white/50">{m.objective}</p>}
                 <div className="flex flex-wrap gap-1.5">
@@ -51,7 +51,7 @@ export function LandingLeadMagnets({ salesAnglesData }: Props) {
           <h4 className="text-xs font-semibold text-purple-300 uppercase tracking-wider mb-3">Creativos de Video ({creatives.length})</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {creatives.slice(0, 12).map((c: any, i: number) => (
-              <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 space-y-1.5">
+              <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-sm p-3 space-y-1.5">
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-sm font-medium text-white/80">{safeStr(c.title || c.angle || c.idea, `Creativo ${i + 1}`)}</p>
                   {c.format && (

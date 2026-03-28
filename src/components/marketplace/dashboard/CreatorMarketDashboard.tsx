@@ -26,9 +26,9 @@ const STATUS_LABELS: Record<ProjectStatus, string> = {
 
 function KpiCard({ icon: Icon, label, value, color }: { icon: React.ElementType; label: string; value: string | number; color: string }) {
   return (
-    <div className="bg-card/80 backdrop-blur-xl border border-white/10 rounded-xl p-5">
+    <div className="bg-card/80 backdrop-blur-xl border border-white/10 rounded-sm p-5">
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${color}`}>
+        <div className={`w-10 h-10 rounded-sm flex items-center justify-center ${color}`}>
           <Icon className="h-5 w-5" />
         </div>
         <div>
@@ -77,28 +77,28 @@ export function CreatorMarketDashboard() {
         <div className="flex gap-3 flex-wrap">
           <button
             onClick={() => navigate('/board?view=marketplace')}
-            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-foreground font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
+            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-foreground font-semibold px-5 py-2.5 rounded-sm text-sm transition-colors"
           >
             <FolderKanban className="h-4 w-4" />
             Ver Ofertas
           </button>
           <button
             onClick={() => navigate('/marketplace/campaigns')}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-foreground font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-foreground font-semibold px-5 py-2.5 rounded-sm text-sm transition-colors"
           >
             <Search className="h-4 w-4" />
             Explorar Campanas
           </button>
           <button
             onClick={() => navigate('/marketplace/creator-campaigns')}
-            className="flex items-center gap-2 border border-white/20 text-foreground font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-white/5 transition-colors"
+            className="flex items-center gap-2 border border-white/20 text-foreground font-semibold px-5 py-2.5 rounded-sm text-sm hover:bg-white/5 transition-colors"
           >
             <Megaphone className="h-4 w-4" />
             Mis Aplicaciones
           </button>
           <button
             onClick={() => navigate('/settings?section=marketplace')}
-            className="flex items-center gap-2 border border-white/20 text-foreground font-semibold px-5 py-2.5 rounded-xl text-sm hover:bg-white/5 transition-colors"
+            className="flex items-center gap-2 border border-white/20 text-foreground font-semibold px-5 py-2.5 rounded-sm text-sm hover:bg-white/5 transition-colors"
           >
             <User className="h-4 w-4" />
             Config Marketplace
@@ -121,9 +121,9 @@ export function CreatorMarketDashboard() {
               <div
                 key={project.id}
                 onClick={() => navigate('/board?view=marketplace')}
-                className="w-full bg-card/60 border border-white/5 rounded-xl p-4 flex items-center gap-4 hover:border-purple-500/30 transition-all cursor-pointer"
+                className="w-full bg-card/60 border border-white/5 rounded-sm p-4 flex items-center gap-4 hover:border-purple-500/30 transition-all cursor-pointer"
               >
-                <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-300 flex-shrink-0">
+                <div className="w-10 h-10 rounded-sm bg-purple-500/10 flex items-center justify-center text-purple-300 flex-shrink-0">
                   <Clapperboard className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">

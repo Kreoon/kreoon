@@ -204,7 +204,7 @@ function BackendGoogleAdsView({ data }: { data: BackendGoogleAdsData }) {
         </CardHeader>
         <CardContent>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Objetivos</p>
               <div className="flex flex-wrap gap-1">
                 {data.strategy_overview?.objectives?.map((obj, idx) => (
@@ -212,7 +212,7 @@ function BackendGoogleAdsView({ data }: { data: BackendGoogleAdsData }) {
                 ))}
               </div>
             </div>
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Presupuesto Mensual</p>
               <p className="font-bold text-lg text-green-400">
                 ${typeof data.strategy_overview?.monthly_budget_usd === 'number'
@@ -221,7 +221,7 @@ function BackendGoogleAdsView({ data }: { data: BackendGoogleAdsData }) {
               </p>
             </div>
             {data.strategy_overview?.target_cpa_usd && (
-              <div className="p-3 rounded-lg bg-background/50">
+              <div className="p-3 rounded-sm bg-background/50">
                 <p className="text-xs text-muted-foreground mb-1">Target CPA</p>
                 <p className="font-bold text-lg">
                   ${typeof data.strategy_overview.target_cpa_usd === 'number'
@@ -231,7 +231,7 @@ function BackendGoogleAdsView({ data }: { data: BackendGoogleAdsData }) {
               </div>
             )}
             {data.strategy_overview?.target_roas && (
-              <div className="p-3 rounded-lg bg-background/50">
+              <div className="p-3 rounded-sm bg-background/50">
                 <p className="text-xs text-muted-foreground mb-1">Target ROAS</p>
                 <p className="font-bold text-lg">{data.strategy_overview.target_roas}x</p>
               </div>
@@ -252,7 +252,7 @@ function BackendGoogleAdsView({ data }: { data: BackendGoogleAdsData }) {
           <CardContent>
             <div className="space-y-3">
               {data.campaign_structure.campaigns.map((campaign, idx) => (
-                <div key={idx} className="p-4 rounded-lg border bg-card">
+                <div key={idx} className="p-4 rounded-sm border bg-card">
                   <div className="flex items-start justify-between mb-2">
                     <h4 className="font-medium">{campaign.name}</h4>
                     <Badge variant="outline">{campaign.type}</Badge>
@@ -466,7 +466,7 @@ function BackendGoogleAdsView({ data }: { data: BackendGoogleAdsData }) {
                 <p className="text-sm font-medium mb-2">Conceptos de Video</p>
                 <div className="space-y-3">
                   {data.youtube_strategy.video_concepts.map((video, idx) => (
-                    <div key={idx} className="p-3 rounded-lg border bg-card">
+                    <div key={idx} className="p-3 rounded-sm border bg-card">
                       <h4 className="font-medium mb-2">{video.title}</h4>
                       <div className="p-2 rounded bg-red-500/10 border-l-4 border-red-500 mb-2">
                         <p className="text-xs text-red-400 mb-1">Hook</p>
@@ -495,7 +495,7 @@ function BackendGoogleAdsView({ data }: { data: BackendGoogleAdsData }) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+          <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
             <p className="font-medium">{data.bidding_strategy?.strategy_type}</p>
           </div>
 
@@ -550,7 +550,7 @@ function BackendGoogleAdsView({ data }: { data: BackendGoogleAdsData }) {
               </div>
             </div>
             {data.conversion_tracking.attribution_model && (
-              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <div className="p-3 rounded-sm bg-blue-500/10 border border-blue-500/20">
                 <p className="text-xs text-blue-400 mb-1">Modelo de Atribución</p>
                 <p className="font-medium">{data.conversion_tracking.attribution_model}</p>
               </div>
@@ -576,7 +576,7 @@ function LegacyGoogleAdsView({ data }: { data: LegacyGoogleAdsData }) {
         </CardHeader>
         <CardContent>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Tipos de Campaña</p>
               <div className="flex flex-wrap gap-1">
                 {data.strategy_overview?.campaign_types?.map((t, idx) => (
@@ -584,16 +584,16 @@ function LegacyGoogleAdsView({ data }: { data: LegacyGoogleAdsData }) {
                 ))}
               </div>
             </div>
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Presupuesto Mensual</p>
               <p className="font-bold text-lg">{data.strategy_overview?.monthly_budget}</p>
             </div>
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Target CPA</p>
               <p className="font-bold text-lg">{data.strategy_overview?.target_cpa}</p>
             </div>
             {data.strategy_overview?.target_roas && (
-              <div className="p-3 rounded-lg bg-background/50">
+              <div className="p-3 rounded-sm bg-background/50">
                 <p className="text-xs text-muted-foreground mb-1">Target ROAS</p>
                 <p className="font-bold text-lg">{data.strategy_overview.target_roas}</p>
               </div>
@@ -615,7 +615,7 @@ function LegacyGoogleAdsView({ data }: { data: LegacyGoogleAdsData }) {
             <p className="text-sm font-medium mb-2">Keywords Primarias</p>
             <div className="space-y-2">
               {data.keyword_strategy?.primary_keywords?.map((kw, idx) => (
-                <div key={idx} className="p-3 rounded-lg border bg-card flex items-center justify-between">
+                <div key={idx} className="p-3 rounded-sm border bg-card flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Badge variant="outline">{kw.match_type}</Badge>
                     <span className="font-medium">{kw.keyword}</span>
@@ -714,7 +714,7 @@ function LegacyGoogleAdsView({ data }: { data: LegacyGoogleAdsData }) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+          <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
             <p className="font-medium">{data.bidding_strategy?.strategy}</p>
           </div>
 

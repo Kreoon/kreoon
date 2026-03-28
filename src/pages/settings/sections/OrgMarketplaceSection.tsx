@@ -108,7 +108,7 @@ export default function OrgMarketplaceSection() {
     <div className="space-y-6 max-w-2xl">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30">
+        <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30">
           <Store className="h-5 w-5 text-purple-400" />
         </div>
         <div>
@@ -195,7 +195,7 @@ export default function OrgMarketplaceSection() {
             <>
               {/* Public URL */}
               {portfolioUrl && (
-                <div className="p-3 rounded-lg bg-muted/50 border">
+                <div className="p-3 rounded-sm bg-muted/50 border">
                   <Label className="text-xs text-muted-foreground mb-1 block">URL Pública</Label>
                   <div className="flex items-center gap-2">
                     <code className="text-sm text-primary font-mono flex-1 truncate">{portfolioUrl}</code>
@@ -260,7 +260,7 @@ export default function OrgMarketplaceSection() {
                     type="color"
                     value={settings.portfolio_color}
                     onChange={(e) => setSettings(prev => ({ ...prev, portfolio_color: e.target.value }))}
-                    className="h-10 w-14 rounded-md border cursor-pointer"
+                    className="h-10 w-14 rounded-sm border cursor-pointer"
                   />
                   <Input
                     value={settings.portfolio_color}

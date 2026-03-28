@@ -266,7 +266,7 @@ export function DatesTab({
       {content?.created_at && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {(content as any)?.draft_at && content?.recorded_at && (
-            <div className="bg-muted/50 rounded-lg p-3 text-center">
+            <div className="bg-muted/50 rounded-sm p-3 text-center">
               <p className="text-xs text-muted-foreground mb-1">Tiempo a Grabación</p>
               <p className="text-lg font-semibold text-foreground">
                 {calculateDuration('draft_at', 'recorded_at') || '-'}
@@ -275,7 +275,7 @@ export function DatesTab({
           )}
 
           {content?.recorded_at && (content as any)?.delivered_at && (
-            <div className="bg-muted/50 rounded-lg p-3 text-center">
+            <div className="bg-muted/50 rounded-sm p-3 text-center">
               <p className="text-xs text-muted-foreground mb-1">Tiempo de Edición</p>
               <p className="text-lg font-semibold text-foreground">
                 {calculateDuration('recorded_at', 'delivered_at') || '-'}
@@ -284,7 +284,7 @@ export function DatesTab({
           )}
 
           {(content as any)?.draft_at && (content as any)?.approved_at_v2 && (
-            <div className="bg-muted/50 rounded-lg p-3 text-center">
+            <div className="bg-muted/50 rounded-sm p-3 text-center">
               <p className="text-xs text-muted-foreground mb-1">Tiempo Total</p>
               <p className="text-lg font-semibold text-foreground">
                 {calculateDuration('draft_at', 'approved_at_v2') || '-'}
@@ -293,7 +293,7 @@ export function DatesTab({
           )}
 
           {(content as any)?.issue_at && (
-            <div className="bg-destructive/10 rounded-lg p-3 text-center">
+            <div className="bg-destructive/10 rounded-sm p-3 text-center">
               <p className="text-xs text-destructive mb-1">Última Corrección</p>
               <p className="text-sm font-medium text-destructive">
                 {formatDateShort((content as any).issue_at)}

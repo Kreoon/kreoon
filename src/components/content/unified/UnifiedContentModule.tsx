@@ -65,7 +65,7 @@ const ContentGridSkeleton = memo(function ContentGridSkeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
       {[...Array(6)].map((_, i) => (
-        <Skeleton key={i} className="aspect-[9/16] rounded-xl" />
+        <Skeleton key={i} className="aspect-[9/16] rounded-sm" />
       ))}
     </div>
   );
@@ -94,35 +94,35 @@ const MetricsDashboard = memo(function MetricsDashboard({
   return (
     <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-muted/30">
       <div className="grid grid-cols-2 md:grid-cols-6 gap-2 md:gap-4">
-        <div className="bg-card rounded-lg p-3 md:p-4 border border-border">
+        <div className="bg-card rounded-sm p-3 md:p-4 border border-border">
           <div className="flex items-center gap-1 md:gap-2 text-muted-foreground text-xs md:text-sm mb-1">
             <Play className="h-3 w-3 md:h-4 md:w-4" />
             Proyectos
           </div>
           <div className="text-xl md:text-2xl font-bold text-foreground">{total}</div>
         </div>
-        <div className="bg-card rounded-lg p-3 md:p-4 border border-border">
+        <div className="bg-card rounded-sm p-3 md:p-4 border border-border">
           <div className="flex items-center gap-1 md:gap-2 text-primary text-xs md:text-sm mb-1">
             <Video className="h-3 w-3 md:h-4 md:w-4" />
             Variaciones
           </div>
           <div className="text-xl md:text-2xl font-bold text-foreground">{variations}</div>
         </div>
-        <div className="bg-card rounded-lg p-3 md:p-4 border border-border">
+        <div className="bg-card rounded-sm p-3 md:p-4 border border-border">
           <div className="flex items-center gap-1 md:gap-2 text-muted-foreground text-xs md:text-sm mb-1">
             <Eye className="h-3 w-3 md:h-4 md:w-4" />
             Vistas
           </div>
           <div className="text-xl md:text-2xl font-bold text-foreground">{formatCount(views)}</div>
         </div>
-        <div className="bg-card rounded-lg p-3 md:p-4 border border-border">
+        <div className="bg-card rounded-sm p-3 md:p-4 border border-border">
           <div className="flex items-center gap-1 md:gap-2 text-muted-foreground text-xs md:text-sm mb-1">
             <Heart className="h-3 w-3 md:h-4 md:w-4" />
             Likes
           </div>
           <div className="text-xl md:text-2xl font-bold text-foreground">{formatCount(likes)}</div>
         </div>
-        <div className="bg-card rounded-lg p-3 md:p-4 border border-border col-span-2 bg-gradient-to-br from-purple-500/10 to-pink-500/10">
+        <div className="bg-card rounded-sm p-3 md:p-4 border border-border col-span-2 bg-gradient-to-br from-purple-500/10 to-pink-500/10">
           <div className="flex items-center gap-1 md:gap-2 text-purple-500 text-xs md:text-sm mb-1">
             <Globe className="h-3 w-3 md:h-4 md:w-4" />
             En Marketplace
@@ -429,7 +429,7 @@ export const UnifiedContentModule = memo(function UnifiedContentModule({
                 placeholder="Buscar contenido..."
                 value={filters.search}
                 onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                className="h-9 md:h-10 w-full rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="h-9 md:h-10 w-full rounded-sm border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
 
@@ -614,7 +614,7 @@ export const UnifiedContentModule = memo(function UnifiedContentModule({
           {loading ? (
             <ContentGridSkeleton />
           ) : tabFilteredContent.length === 0 ? (
-            <div className="rounded-xl border border-border bg-card p-8 md:p-12 text-center">
+            <div className="rounded-sm border border-border bg-card p-8 md:p-12 text-center">
               <div className="mx-auto max-w-md">
                 <div className="mx-auto mb-4 flex h-12 w-12 md:h-16 md:w-16 items-center justify-center rounded-full bg-primary/10">
                   <Video className="h-6 w-6 md:h-8 md:w-8 text-primary" />

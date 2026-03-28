@@ -53,7 +53,7 @@ export function ProgressToNextLevel({
     return (
       <motion.div
         className={cn(
-          'relative rounded-xl overflow-hidden',
+          'relative rounded-sm overflow-hidden',
           config.padding,
           'bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-amber-500/10',
           'border border-amber-500/30',
@@ -127,7 +127,7 @@ export function ProgressToNextLevel({
   return (
     <motion.div
       className={cn(
-        'rounded-xl',
+        'rounded-sm',
         config.padding,
         'bg-gradient-to-br from-zinc-900/80 to-zinc-900/40',
         'border border-white/5',

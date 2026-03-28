@@ -201,7 +201,7 @@ export function MediaUploader({
         onDrop={handleDrop}
         onClick={() => !isUploading && fileInputRef.current?.click()}
         className={cn(
-          'border-2 border-dashed rounded-lg p-6 text-center transition-all',
+          'border-2 border-dashed rounded-sm p-6 text-center transition-all',
           isUploading ? 'cursor-wait' : 'cursor-pointer',
           dragOver
             ? 'border-primary bg-primary/5'
@@ -228,7 +228,7 @@ export function MediaUploader({
 
       {/* Video requirements info for reels/stories */}
       {(postType === 'reel' || postType === 'story') && VIDEO_REQUIREMENTS[postType] && (
-        <div className="flex gap-2 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+        <div className="flex gap-2 p-3 rounded-sm bg-blue-500/10 border border-blue-500/20">
           <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
           <div className="space-y-1">
             <p className="text-xs font-medium text-blue-300">
@@ -272,7 +272,7 @@ export function MediaUploader({
                 onDrop={(e) => handleMediaDrop(e, idx)}
                 onDragEnd={handleMediaDragEnd}
                 className={cn(
-                  'relative shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-muted group cursor-grab active:cursor-grabbing transition-all',
+                  'relative shrink-0 w-20 h-20 rounded-sm overflow-hidden bg-muted group cursor-grab active:cursor-grabbing transition-all',
                   draggedIndex === idx && 'opacity-50 scale-95',
                   dragOverIndex === idx && draggedIndex !== idx && 'ring-2 ring-primary ring-offset-1'
                 )}
@@ -344,7 +344,7 @@ export function MediaUploader({
             {mediaUrls.length < maxFiles && !isUploading && (
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="shrink-0 w-20 h-20 rounded-lg border-2 border-dashed border-border flex items-center justify-center hover:border-primary/30 transition-colors"
+                className="shrink-0 w-20 h-20 rounded-sm border-2 border-dashed border-border flex items-center justify-center hover:border-primary/30 transition-colors"
               >
                 <Image className="w-5 h-5 text-muted-foreground" />
               </button>

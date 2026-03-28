@@ -238,8 +238,8 @@ export function SecuritySettings() {
   return (
     <div className="space-y-6 p-6">
       <div className="space-y-2">
-        <h2 className="text-xl font-semibold text-foreground">Seguridad</h2>
-        <p className="text-sm text-muted-foreground">
+        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Seguridad</h2>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
           Gestiona la seguridad de tu cuenta, contraseña y autenticación
         </p>
       </div>
@@ -543,7 +543,7 @@ export function SecuritySettings() {
               </div>
               
               {qrCode && (
-                <div className="flex justify-center p-4 bg-white rounded-lg">
+                <div className="flex justify-center p-4 bg-white dark:bg-zinc-900 rounded-lg">
                   <img src={qrCode} alt="QR Code for 2FA" className="w-48 h-48" />
                 </div>
               )}

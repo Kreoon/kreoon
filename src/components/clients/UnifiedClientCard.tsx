@@ -55,7 +55,7 @@ export function UnifiedClientCard({ entity, onClick, isSelected, canEdit, onUpda
     <div
       onClick={onClick}
       className={cn(
-        'group rounded-xl border bg-card p-4 transition-all duration-300 hover:shadow-lg cursor-pointer relative overflow-hidden',
+        'group rounded-sm border bg-card p-4 transition-all duration-300 hover:shadow-lg cursor-pointer relative overflow-hidden',
         isSelected && 'ring-2 ring-[#8b5cf6] border-[#8b5cf6]/50',
         isEmpresa
           ? 'border-border hover:border-blue-500/30'
@@ -74,9 +74,9 @@ export function UnifiedClientCard({ entity, onClick, isSelected, canEdit, onUpda
         {/* Avatar / Logo */}
         {isEmpresa ? (
           entity.avatar_url ? (
-            <img src={entity.avatar_url} alt={entity.name} className="h-11 w-11 rounded-lg object-cover ring-1 ring-border" />
+            <img src={entity.avatar_url} alt={entity.name} className="h-11 w-11 rounded-sm object-cover ring-1 ring-border" />
           ) : (
-            <div className="h-11 w-11 rounded-lg bg-blue-500/10 flex items-center justify-center ring-1 ring-border">
+            <div className="h-11 w-11 rounded-sm bg-blue-500/10 flex items-center justify-center ring-1 ring-border">
               <Building2 className="h-5 w-5 text-blue-400" />
             </div>
           )

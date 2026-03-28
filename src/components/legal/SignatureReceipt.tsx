@@ -43,7 +43,7 @@ export function SignatureReceipt({ signatureId, isOpen, onClose }: SignatureRece
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-gradient-to-b from-slate-900 to-slate-950 border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto my-auto"
+        className="bg-gradient-to-b from-slate-900 to-slate-950 border border-white/10 rounded-sm w-full max-w-lg max-h-[90vh] overflow-y-auto my-auto"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10 bg-green-500/10 sticky top-0 z-10">
@@ -58,7 +58,7 @@ export function SignatureReceipt({ signatureId, isOpen, onClose }: SignatureRece
           </div>
           <button
             onClick={onClose}
-            className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+            className="p-2 bg-white/10 hover:bg-white/20 rounded-sm transition-colors"
             aria-label="Cerrar"
           >
             <X className="w-5 h-5 text-white" />
@@ -80,7 +80,7 @@ export function SignatureReceipt({ signatureId, isOpen, onClose }: SignatureRece
                   <FileText className="w-4 h-4" />
                   <span className="text-sm uppercase tracking-wide">Documento</span>
                 </div>
-                <div className="bg-white/5 rounded-lg p-4">
+                <div className="bg-white/5 rounded-sm p-4">
                   <p className="text-white font-medium">{receipt.document_title}</p>
                   <p className="text-sm text-white/60">Versión {receipt.document_version}</p>
                 </div>
@@ -92,7 +92,7 @@ export function SignatureReceipt({ signatureId, isOpen, onClose }: SignatureRece
                   <User className="w-4 h-4" />
                   <span className="text-sm uppercase tracking-wide">Firmante</span>
                 </div>
-                <div className="bg-white/5 rounded-lg p-4 space-y-2">
+                <div className="bg-white/5 rounded-sm p-4 space-y-2">
                   <p className="text-white font-medium">{receipt.signer_full_name}</p>
                   {receipt.signer_document_type && receipt.signer_document_number && (
                     <p className="text-sm text-white/60">
@@ -172,7 +172,7 @@ export function SignatureReceipt({ signatureId, isOpen, onClose }: SignatureRece
               )}
 
               {/* Declaración legal */}
-              <div className="bg-purple-500/10 rounded-lg p-4 text-sm text-white/70">
+              <div className="bg-purple-500/10 rounded-sm p-4 text-sm text-white/70">
                 <p>
                   Este documento fue firmado electrónicamente a través de KREOON,
                   operada por SICOMMER INT LLC. La firma electrónica tiene plena

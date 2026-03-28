@@ -466,7 +466,7 @@ export function ClientsContent() {
             placeholder={activeTab === "companies" ? "Buscar empresas..." : "Buscar usuarios..."}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="h-9 md:h-10 w-full rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            className="h-9 md:h-10 w-full rounded-sm border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
       </div>
@@ -474,7 +474,7 @@ export function ClientsContent() {
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           {[1, 2, 3].map(i => (
-            <Skeleton key={i} className="h-40 md:h-48 rounded-xl" />
+            <Skeleton key={i} className="h-40 md:h-48 rounded-sm" />
           ))}
         </div>
       ) : activeTab === "companies" ? (
@@ -536,7 +536,7 @@ export function ClientsContent() {
               <div
                 key={user.id}
                 onClick={() => setSelectedClientUser(user)}
-                className="group rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:shadow-lg hover:border-primary/20 cursor-pointer"
+                className="group rounded-sm border border-border bg-card p-5 transition-all duration-200 hover:shadow-lg hover:border-primary/20 cursor-pointer"
               >
                 <div className="flex items-start gap-4 mb-4">
                   <Avatar className="h-14 w-14 ring-2 ring-border">
@@ -660,7 +660,7 @@ export function ClientsContent() {
                     {selectedClientUser.linked_clients.map(c => {
                       const RoleIcon = c.role === 'owner' ? Crown : c.role === 'admin' ? Shield : Eye;
                       return (
-                        <div key={c.id} className="flex items-center justify-between p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                        <div key={c.id} className="flex items-center justify-between p-3 rounded-sm bg-green-500/10 border border-green-500/20">
                           <div className="flex items-center gap-2">
                             <Building2 className="h-4 w-4 text-green-600" />
                             <span className="font-medium">{c.name}</span>

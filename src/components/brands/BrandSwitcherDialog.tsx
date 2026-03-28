@@ -36,15 +36,15 @@ export function BrandSwitcherDialog({ open, onOpenChange }: BrandSwitcherDialogP
                 key={brand.id}
                 onClick={() => handleSelect(brand.id)}
                 className={cn(
-                  "w-full flex items-center gap-3 p-3 rounded-lg border transition-colors text-left",
+                  "w-full flex items-center gap-3 p-3 rounded-sm border transition-colors text-left",
                   isActive
                     ? "border-primary bg-primary/5"
                     : "border-border hover:bg-accent/50"
                 )}
               >
-                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <div className="h-10 w-10 rounded-sm bg-primary/10 flex items-center justify-center flex-shrink-0">
                   {brand.logo_url ? (
-                    <img src={brand.logo_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                    <img src={brand.logo_url} alt="" className="h-10 w-10 rounded-sm object-cover" />
                   ) : (
                     <Building2 className="h-5 w-5 text-primary" />
                   )}

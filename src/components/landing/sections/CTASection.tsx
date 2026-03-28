@@ -176,7 +176,7 @@ export function CTASection({
                       >
                         <div
                           className={cn(
-                            "mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br transition-shadow duration-300 group-hover:shadow-lg",
+                            "mb-3 flex h-12 w-12 items-center justify-center rounded-sm bg-gradient-to-br transition-shadow duration-300 group-hover:shadow-lg",
                             segment.gradient,
                           )}
                         >

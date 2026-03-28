@@ -224,7 +224,7 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
                   )}
                 >
                   <div className={cn(
-                    "flex h-7 w-7 items-center justify-center rounded-md",
+                    "flex h-7 w-7 items-center justify-center rounded-sm",
                     getRoleSolidColor(role)
                   )}>
                     <Icon className="h-3.5 w-3.5 text-white" />
@@ -263,7 +263,7 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
                   )}
                 >
                   <div className={cn(
-                    "flex h-7 w-7 items-center justify-center rounded-md",
+                    "flex h-7 w-7 items-center justify-center rounded-sm",
                     getRoleSolidColor(role)
                   )}>
                     <Icon className="h-3.5 w-3.5 text-white" />

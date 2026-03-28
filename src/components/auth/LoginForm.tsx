@@ -130,7 +130,7 @@ export function LoginForm({
   return (
     <KreoonGlassCard intensity="strong" className="p-6 sm:p-8 shadow-kreoon-glow overflow-hidden">
       {/* Subtle inner gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-kreoon-purple-500/[0.03] to-transparent pointer-events-none rounded-xl" aria-hidden />
+      <div className="absolute inset-0 bg-gradient-to-b from-kreoon-purple-500/[0.03] to-transparent pointer-events-none rounded-sm" aria-hidden />
       <form onSubmit={handleSubmit} className="relative space-y-6">
         <KreoonSectionTitle
           title="Bienvenido de nuevo"
@@ -142,7 +142,7 @@ export function LoginForm({
         {error ? (
           <div
             role="alert"
-            className="text-sm text-destructive bg-destructive/10 backdrop-blur-sm border border-destructive/30 rounded-lg px-4 py-2.5"
+            className="text-sm text-destructive bg-destructive/10 backdrop-blur-sm border border-destructive/30 rounded-sm px-4 py-2.5"
           >
             {error}
           </div>
@@ -183,7 +183,7 @@ export function LoginForm({
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
               className={cn(
-                "flex h-10 w-full rounded-xl border bg-white/[0.04] backdrop-blur-sm pl-10 pr-10 py-2 text-sm text-kreoon-text-primary",
+                "flex h-10 w-full rounded-sm border bg-white/[0.04] backdrop-blur-sm pl-10 pr-10 py-2 text-sm text-kreoon-text-primary",
                 "placeholder:text-kreoon-text-muted/70",
                 "border-kreoon-border hover:border-kreoon-purple-400/30",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kreoon-purple-500/50 focus-visible:border-kreoon-purple-400 focus-visible:shadow-kreoon-glow-sm",

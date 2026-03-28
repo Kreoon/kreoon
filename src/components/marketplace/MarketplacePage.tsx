@@ -280,8 +280,8 @@ export default function MarketplacePage() {
           <>
           {/* Banner: invitar a crear perfil de marketplace */}
           {showCreatorBanner && (
-            <div className="relative bg-gradient-to-r from-purple-600/20 via-purple-500/10 to-transparent border border-purple-500/20 rounded-2xl p-5 flex items-center gap-4">
-              <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
+            <div className="relative bg-gradient-to-r from-purple-600/20 via-purple-500/10 to-transparent border border-purple-500/20 rounded-sm p-5 flex items-center gap-4">
+              <div className="flex-shrink-0 w-12 h-12 rounded-sm bg-purple-500/20 flex items-center justify-center">
                 <Sparkles className="h-6 w-6 text-purple-400" />
               </div>
               <div className="flex-1 min-w-0">
@@ -294,7 +294,7 @@ export default function MarketplacePage() {
               </div>
               <button
                 onClick={() => navigate('/settings?section=marketplace')}
-                className="flex-shrink-0 bg-purple-600 hover:bg-purple-500 text-foreground text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors flex items-center gap-1.5"
+                className="flex-shrink-0 bg-purple-600 hover:bg-purple-500 text-foreground text-sm font-semibold px-4 py-2.5 rounded-sm transition-colors flex items-center gap-1.5"
               >
                 Crear perfil
                 <ArrowRight className="h-4 w-4" />

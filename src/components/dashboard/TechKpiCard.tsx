@@ -224,12 +224,13 @@ const SparklineChart = ({
   );
 };
 
+// Nova Design System color mapping
 const colorMap = {
-  violet: "hsl(270 100% 60%)",
-  cyan: "hsl(190 100% 50%)",
-  emerald: "hsl(160 100% 45%)",
-  amber: "hsl(40 100% 50%)",
-  rose: "hsl(350 100% 60%)",
+  violet: "var(--nova-accent-primary)",      // #8b5cf6
+  cyan: "var(--nova-accent-secondary)",      // #06b6d4
+  emerald: "var(--nova-success)",            // #10b981
+  amber: "var(--nova-warning)",              // #f59e0b
+  rose: "var(--nova-error)",                 // #ef4444
 };
 
 export function TechKpiCard({
@@ -277,25 +278,24 @@ export function TechKpiCard({
     <motion.div
       onClick={onClick}
       className={cn(
-        "group relative overflow-hidden rounded-2xl",
-        "bg-gradient-to-br from-card via-card to-background",
-        "border border-[hsl(270,100%,60%,0.15)]",
+        "group relative overflow-hidden rounded-sm",
+        "bg-[var(--nova-bg-elevated)]",
+        "border border-[var(--nova-border-default)]",
         "transition-all duration-500 ease-out",
         sizeConf.padding,
         onClick && "cursor-pointer"
       )}
-      whileHover={{ 
+      whileHover={{
         scale: 1.02,
-        borderColor: `${colorValue}66`,
-        boxShadow: `0 0 40px ${colorValue}33`,
+        boxShadow: "var(--nova-shadow-glow)",
       }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      {/* Animated gradient orb */}
+      {/* Animated gradient orb - Nova */}
       <motion.div
         className="absolute -top-10 -right-10 w-32 h-32 rounded-full blur-3xl pointer-events-none"
-        style={{ background: `radial-gradient(circle, ${colorValue}33, transparent 70%)` }}
+        style={{ background: "radial-gradient(circle, rgba(139, 92, 246, 0.3), transparent 70%)" }}
         animate={{
           scale: [1, 1.3, 1],
           opacity: [0.3, 0.5, 0.3],
@@ -304,20 +304,20 @@ export function TechKpiCard({
       />
 
 
-      {/* Grid pattern */}
-      <div 
+      {/* Grid pattern - Nova */}
+      <div
         className="absolute inset-0 opacity-[0.02]"
         style={{
-          backgroundImage: `linear-gradient(${colorValue}40 1px, transparent 1px),
-                           linear-gradient(90deg, ${colorValue}40 1px, transparent 1px)`,
+          backgroundImage: `linear-gradient(var(--nova-accent-primary) 1px, transparent 1px),
+                           linear-gradient(90deg, var(--nova-accent-primary) 1px, transparent 1px)`,
           backgroundSize: '20px 20px'
         }}
       />
 
-      {/* Top highlight */}
-      <div 
+      {/* Top highlight - Nova */}
+      <div
         className="absolute top-0 left-4 right-4 h-px"
-        style={{ background: `linear-gradient(90deg, transparent, ${colorValue}66, transparent)` }}
+        style={{ background: "linear-gradient(90deg, transparent, var(--nova-accent-primary), transparent)" }}
       />
 
       {/* Content */}
@@ -326,7 +326,7 @@ export function TechKpiCard({
           {/* Title */}
           <div className="flex items-center gap-2 mb-2">
             <motion.div 
-              className="p-2 rounded-lg"
+              className="p-2 rounded-sm"
               style={{ 
                 background: `${colorValue}15`,
                 border: `1px solid ${colorValue}30`,
@@ -353,23 +353,23 @@ export function TechKpiCard({
             </p>
           </div>
 
-          {/* Value */}
-          <motion.p 
-            className={cn("font-bold tracking-tight text-white mb-1", sizeConf.valueSize)}
-            style={{ 
-              textShadow: `0 0 20px ${colorValue}40`,
+          {/* Value - Nova */}
+          <motion.p
+            className={cn("font-bold tracking-tight text-[var(--nova-text-bright)] mb-1", sizeConf.valueSize)}
+            style={{
+              textShadow: "0 0 20px rgba(139, 92, 246, 0.4)",
             }}
           >
             <AnimatedCounter value={value} prefix={prefix} suffix={suffix} />
           </motion.p>
-          
+
           {subtitle && (
-            <p className="text-sm" style={{ color: `${colorValue}99` }}>{subtitle}</p>
+            <p className="text-sm text-[var(--nova-text-secondary)]">{subtitle}</p>
           )}
 
-          {/* Trend indicator */}
+          {/* Trend indicator - Nova */}
           {trend !== undefined && trend !== 0 && (
-            <motion.div 
+            <motion.div
               className="flex items-center gap-2 mt-3"
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
@@ -377,12 +377,11 @@ export function TechKpiCard({
             >
               <div className={cn(
                 "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium",
-                "border backdrop-blur-sm"
-              )} style={{
-                background: trend > 0 ? `${colorValue}15` : "hsl(350 80% 50% / 0.15)",
-                borderColor: trend > 0 ? `${colorValue}30` : "hsl(350 80% 50% / 0.3)",
-                color: trend > 0 ? colorValue : "hsl(350 80% 60%)",
-              }}>
+                "border backdrop-blur-sm",
+                trend > 0
+                  ? "bg-[var(--nova-success-bg)] border-[var(--nova-success)] text-[var(--nova-success)]"
+                  : "bg-[var(--nova-error-bg)] border-[var(--nova-error)] text-[var(--nova-error)]"
+              )}>
                 {trend > 0 ? (
                   <TrendingUp className="h-3 w-3" />
                 ) : (
@@ -390,7 +389,7 @@ export function TechKpiCard({
                 )}
                 {trend > 0 && "+"}{trend}%
               </div>
-              <span className="text-xs text-[hsl(250,20%,40%)]">vs anterior</span>
+              <span className="text-xs text-[var(--nova-text-muted)]">vs anterior</span>
             </motion.div>
           )}
         </div>
@@ -408,7 +407,7 @@ export function TechKpiCard({
           )}
           {chartType === "none" && (
             <motion.div
-              className="w-16 h-16 rounded-xl flex items-center justify-center"
+              className="w-16 h-16 rounded-sm flex items-center justify-center"
               style={{
                 background: `linear-gradient(135deg, ${colorValue}20, ${colorValue}05)`,
                 border: `1px solid ${colorValue}30`,
@@ -428,21 +427,21 @@ export function TechKpiCard({
         </div>
       </div>
 
-      {/* Goal progress bar */}
+      {/* Goal progress bar - Nova */}
       {goalValue && goalValue > 0 && chartType !== "radial" && (
         <div className="mt-4 space-y-2 relative z-10">
           <div className="flex justify-between text-xs">
-            <span style={{ color: `${colorValue}88` }}>{goalLabel || 'Meta'}</span>
-            <span style={{ color: colorValue }} className="font-medium">
+            <span className="text-[var(--nova-text-secondary)]">{goalLabel || 'Meta'}</span>
+            <span className="font-medium text-[var(--nova-accent-primary)]">
               {Math.round(Math.min((value / goalValue) * 100, 100))}%
             </span>
           </div>
-          <div className="h-2 bg-muted rounded-full overflow-hidden border" style={{ borderColor: `${colorValue}20` }}>
-            <motion.div 
+          <div className="h-2 bg-[var(--nova-bg-surface)] rounded-full overflow-hidden border border-[var(--nova-border-subtle)]">
+            <motion.div
               className="h-full rounded-full relative overflow-hidden"
-              style={{ 
-                background: `linear-gradient(90deg, ${colorValue}, ${colorValue}cc)`,
-                boxShadow: `0 0 15px ${colorValue}66`,
+              style={{
+                background: "linear-gradient(90deg, var(--nova-accent-primary), var(--nova-accent-secondary))",
+                boxShadow: "var(--nova-shadow-glow)",
               }}
               initial={{ width: 0 }}
               animate={{ width: `${Math.min((value / goalValue) * 100, 100)}%` }}
@@ -458,10 +457,10 @@ export function TechKpiCard({
         </div>
       )}
 
-      {/* Bottom accent */}
-      <motion.div 
+      {/* Bottom accent - Nova */}
+      <motion.div
         className="absolute bottom-0 left-0 right-0 h-px"
-        style={{ background: `linear-gradient(90deg, transparent, ${colorValue}66, transparent)` }}
+        style={{ background: "linear-gradient(90deg, transparent, var(--nova-accent-primary), transparent)" }}
         animate={{ opacity: [0.4, 0.8, 0.4] }}
         transition={{ duration: 2, repeat: Infinity }}
       />

@@ -269,7 +269,7 @@ export function ProductDNADashboard({
           <select
             value={statusFilter || ''}
             onChange={(e) => handleStatusFilter(e.target.value || undefined)}
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+            className="h-9 rounded-sm border border-input bg-background px-3 text-sm text-foreground"
           >
             <option value="">Todos los estados</option>
             {Object.entries(STATUS_CONFIG).map(([key, { label }]) => (
@@ -281,7 +281,7 @@ export function ProductDNADashboard({
           <select
             value={serviceGroupFilter || ''}
             onChange={(e) => handleServiceGroupFilter(e.target.value || undefined)}
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+            className="h-9 rounded-sm border border-input bg-background px-3 text-sm text-foreground"
           >
             <option value="">Todos los servicios</option>
             {Object.entries(SERVICE_GROUP_LABELS).map(([key, label]) => (
@@ -317,7 +317,7 @@ export function ProductDNADashboard({
 
       {/* ---- Error ---- */}
       {error && (
-        <div className="flex items-center gap-2 p-3 bg-destructive/10 text-destructive rounded-lg text-sm">
+        <div className="flex items-center gap-2 p-3 bg-destructive/10 text-destructive rounded-sm text-sm">
           <AlertCircle className="w-4 h-4 shrink-0" />
           {error}
         </div>
@@ -416,7 +416,7 @@ export function ProductDNADashboard({
 
 function StatsCard({ label, value, icon }: { label: string; value: string | number; icon: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-3 p-4 rounded-xl border bg-card">
+    <div className="flex items-center gap-3 p-4 rounded-sm border bg-card">
       <div className="shrink-0">{icon}</div>
       <div>
         <p className="text-2xl font-bold text-foreground">{value}</p>
@@ -472,7 +472,7 @@ function DNACard({ item, onSelect, onDelete, onDuplicate, getStatusBadge }: DNAC
     <div
       onClick={() => onSelect?.(item)}
       className={cn(
-        'group relative rounded-xl border bg-card p-4 transition-all duration-200',
+        'group relative rounded-sm border bg-card p-4 transition-all duration-200',
         onSelect && 'cursor-pointer hover:shadow-md hover:border-primary/30',
       )}
     >

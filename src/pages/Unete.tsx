@@ -118,7 +118,7 @@ function KiroMascot({ hoveredType }: { hoveredType: UserType | null }) {
           transition={{ duration: 0.2 }}
           className="absolute -top-16 left-1/2 -translate-x-1/2 whitespace-nowrap"
         >
-          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-4 py-2 text-sm text-white">
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-sm px-4 py-2 text-sm text-white">
             {hoveredType === 'talent' && '¡Muestra tu talento al mundo!'}
             {hoveredType === 'brand' && '¡Encuentra el talento perfecto!'}
             {hoveredType === 'organization' && '¡Lleva tu equipo al siguiente nivel!'}
@@ -160,14 +160,14 @@ function UserTypeCardComponent({
       onMouseEnter={() => onHover(card.type)}
       onMouseLeave={onLeave}
       onClick={handleClick}
-      className={`group relative cursor-pointer rounded-2xl border ${card.borderColor} bg-white/5 backdrop-blur-sm p-6 md:p-8 transition-all duration-300 hover:bg-white/10 hover:border-white/30 hover:scale-[1.02] hover:shadow-2xl`}
+      className={`group relative cursor-pointer rounded-sm border ${card.borderColor} bg-white/5 backdrop-blur-sm p-6 md:p-8 transition-all duration-300 hover:bg-white/10 hover:border-white/30 hover:scale-[1.02] hover:shadow-2xl`}
     >
       {/* Gradient glow on hover */}
-      <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+      <div className={`absolute inset-0 rounded-sm bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
 
       <div className="relative z-10">
         {/* Icon */}
-        <div className={`inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br ${card.gradient} mb-5`}>
+        <div className={`inline-flex items-center justify-center w-14 h-14 rounded-sm bg-gradient-to-br ${card.gradient} mb-5`}>
           <Icon className="w-7 h-7 text-white" />
         </div>
 

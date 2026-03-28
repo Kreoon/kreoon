@@ -299,7 +299,7 @@ export function CreateContentFromResearchDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-2xl max-h-[85dvh] sm:max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-purple-500" />
@@ -311,7 +311,7 @@ export function CreateContentFromResearchDialog({
         </DialogHeader>
 
         {/* Package info */}
-        <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+        <div className="bg-muted/50 rounded-sm p-3 space-y-2">
           {loadingPackages ? (
             <div className="flex items-center gap-2 text-muted-foreground text-sm">
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -348,7 +348,7 @@ export function CreateContentFromResearchDialog({
           {ESFERA_PHASES.map(phase => (
             <div
               key={phase.key}
-              className={`p-3 rounded-lg border-2 ${phase.color} transition-all`}
+              className={`p-3 rounded-sm border-2 ${phase.color} transition-all`}
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex-1 min-w-0">
@@ -390,7 +390,7 @@ export function CreateContentFromResearchDialog({
         </div>
 
         {totalSelected > 0 && (
-          <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-300 dark:border-emerald-700 rounded-lg">
+          <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-300 dark:border-emerald-700 rounded-sm">
             <p className="text-sm text-emerald-800 dark:text-emerald-200">
               Se crearan <strong>{totalSelected}</strong> proyectos en el board, cada uno con dolor, deseo, avatar, angulo de venta y hooks unicos extraidos del ADN.
             </p>

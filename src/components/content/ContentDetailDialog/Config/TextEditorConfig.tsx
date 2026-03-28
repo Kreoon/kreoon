@@ -100,7 +100,7 @@ export function TextEditorConfig({ features, onUpdate }: TextEditorConfigProps) 
                   className={`p-3 transition-all ${!isEnabled ? 'opacity-50 bg-muted/30' : ''}`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${isEnabled ? 'bg-primary/10 text-primary' : 'bg-muted'}`}>
+                    <div className={`p-2 rounded-sm ${isEnabled ? 'bg-primary/10 text-primary' : 'bg-muted'}`}>
                       {feature.icon}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -127,7 +127,7 @@ export function TextEditorConfig({ features, onUpdate }: TextEditorConfigProps) 
         </div>
       ))}
 
-      <div className="flex items-start gap-2 p-3 bg-primary/5 rounded-lg text-sm border border-primary/20">
+      <div className="flex items-start gap-2 p-3 bg-primary/5 rounded-sm text-sm border border-primary/20">
         <span>✨</span>
         <p className="text-muted-foreground">
           El editor de texto avanzado se utiliza en todos los bloques de contenido: 

@@ -175,21 +175,21 @@ export function Tab20KPIs({ data }: Tab20KPIsProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="text-center p-6 rounded-lg bg-background/50">
+          <div className="text-center p-6 rounded-sm bg-background/50">
             <p className="text-2xl font-bold text-yellow-400 mb-2">{data.north_star_metric?.metric}</p>
             <p className="text-sm text-muted-foreground">{data.north_star_metric?.definition}</p>
           </div>
 
           <div className="grid sm:grid-cols-3 gap-4">
-            <div className="p-3 rounded-lg bg-muted/50 text-center">
+            <div className="p-3 rounded-sm bg-muted/50 text-center">
               <p className="text-xs text-muted-foreground mb-1">Target</p>
               <p className="font-bold text-lg text-green-400">{data.north_star_metric?.target}</p>
             </div>
-            <div className="p-3 rounded-lg bg-muted/50 text-center">
+            <div className="p-3 rounded-sm bg-muted/50 text-center">
               <p className="text-xs text-muted-foreground mb-1">Baseline Actual</p>
               <p className="font-medium">{data.north_star_metric?.current_baseline}</p>
             </div>
-            <div className="p-3 rounded-lg bg-muted/50 text-center">
+            <div className="p-3 rounded-sm bg-muted/50 text-center">
               <p className="text-xs text-muted-foreground mb-1">Growth Target</p>
               <p className="font-bold text-blue-400">{data.north_star_metric?.growth_rate_target}</p>
             </div>
@@ -208,7 +208,7 @@ export function Tab20KPIs({ data }: Tab20KPIsProps) {
         <CardContent>
           <div className="space-y-3">
             {data.funnel_metrics?.map((stage, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
+              <div key={idx} className="p-4 rounded-sm border bg-card">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-sm">
@@ -248,7 +248,7 @@ export function Tab20KPIs({ data }: Tab20KPIsProps) {
               <CardContent>
                 <div className="space-y-3">
                   {category.metrics?.map((metric, mIdx) => (
-                    <div key={mIdx} className={`p-4 rounded-lg border ${importanceColors[metric.importance]}`}>
+                    <div key={mIdx} className={`p-4 rounded-sm border ${importanceColors[metric.importance]}`}>
                       <div className="flex items-start justify-between mb-2">
                         <div>
                           <h4 className="font-medium">{metric.name}</h4>
@@ -342,7 +342,7 @@ export function Tab20KPIs({ data }: Tab20KPIsProps) {
         <CardContent>
           <div className="space-y-3">
             {data.alert_thresholds?.map((alert, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
+              <div key={idx} className="p-4 rounded-sm border bg-card">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-medium">{alert.metric}</h4>
                 </div>
@@ -377,7 +377,7 @@ export function Tab20KPIs({ data }: Tab20KPIsProps) {
         <CardContent>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {data.dashboard_recommendations?.map((dash, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
+              <div key={idx} className="p-4 rounded-sm border bg-card">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-medium">{dash.dashboard}</h4>
                   <Badge variant="outline">{dash.refresh_frequency}</Badge>
@@ -407,7 +407,7 @@ export function Tab20KPIs({ data }: Tab20KPIsProps) {
         <CardContent>
           <div className="space-y-3">
             {data.reporting_cadence?.map((report, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
+              <div key={idx} className="p-4 rounded-sm border bg-card">
                 <div className="flex items-center justify-between mb-2">
                   <Badge className="bg-orange-500/20 text-orange-400">{report.frequency}</Badge>
                   <span className="text-sm text-muted-foreground">Para: {report.audience}</span>
@@ -435,7 +435,7 @@ export function Tab20KPIs({ data }: Tab20KPIsProps) {
           <CardContent>
             <div className="grid sm:grid-cols-2 gap-4">
               {data.cohort_metrics.map((cohort, idx) => (
-                <div key={idx} className="p-4 rounded-lg border bg-card">
+                <div key={idx} className="p-4 rounded-sm border bg-card">
                   <h4 className="font-medium mb-2">{cohort.cohort}</h4>
                   <div className="flex flex-wrap gap-1">
                     {cohort.metrics?.map((metric, mIdx) => (
@@ -461,7 +461,7 @@ export function Tab20KPIs({ data }: Tab20KPIsProps) {
           <CardContent>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {data.channel_metrics.organic_social && (
-                <div className="p-4 rounded-lg border bg-card">
+                <div className="p-4 rounded-sm border bg-card">
                   <div className="flex items-center gap-2 mb-3">
                     <Users className="w-4 h-4 text-pink-500" />
                     <h4 className="font-medium">Social Orgánico</h4>
@@ -486,7 +486,7 @@ export function Tab20KPIs({ data }: Tab20KPIsProps) {
               )}
 
               {data.channel_metrics.paid_social && (
-                <div className="p-4 rounded-lg border bg-card">
+                <div className="p-4 rounded-sm border bg-card">
                   <div className="flex items-center gap-2 mb-3">
                     <Megaphone className="w-4 h-4 text-blue-500" />
                     <h4 className="font-medium">Paid Social</h4>
@@ -511,7 +511,7 @@ export function Tab20KPIs({ data }: Tab20KPIsProps) {
               )}
 
               {data.channel_metrics.email && (
-                <div className="p-4 rounded-lg border bg-card">
+                <div className="p-4 rounded-sm border bg-card">
                   <div className="flex items-center gap-2 mb-3">
                     <Mail className="w-4 h-4 text-purple-500" />
                     <h4 className="font-medium">Email</h4>
@@ -536,7 +536,7 @@ export function Tab20KPIs({ data }: Tab20KPIsProps) {
               )}
 
               {data.channel_metrics.website && (
-                <div className="p-4 rounded-lg border bg-card">
+                <div className="p-4 rounded-sm border bg-card">
                   <div className="flex items-center gap-2 mb-3">
                     <Globe className="w-4 h-4 text-green-500" />
                     <h4 className="font-medium">Website</h4>
@@ -576,7 +576,7 @@ export function Tab20KPIs({ data }: Tab20KPIsProps) {
           <CardContent>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {data.tools_recommended.map((tool, idx) => (
-                <div key={idx} className="p-4 rounded-lg border bg-card">
+                <div key={idx} className="p-4 rounded-sm border bg-card">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-medium">{tool.tool}</h4>
                     <Badge

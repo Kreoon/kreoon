@@ -269,7 +269,7 @@ function StatCard({ label, value, icon: Icon, color }: StatCardProps) {
       <CardContent className="pt-6">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm text-muted-foreground">{label}</span>
-          <div className={cn('rounded-lg p-2', colorClasses[color])}>
+          <div className={cn('rounded-sm p-2', colorClasses[color])}>
             <Icon className="h-4 w-4" />
           </div>
         </div>

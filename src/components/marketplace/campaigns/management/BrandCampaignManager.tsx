@@ -163,7 +163,7 @@ export function BrandCampaignManager() {
             </div>
             <button
               onClick={() => navigate('/marketplace/campaigns/create')}
-              className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+              className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold px-4 py-2.5 rounded-sm transition-colors"
             >
               <Plus className="h-4 w-4" />
               Nueva Campana
@@ -226,7 +226,7 @@ export function BrandCampaignManager() {
             </div>
             <button
               onClick={() => navigate('/marketplace/campaigns/create')}
-              className="bg-purple-600 hover:bg-purple-500 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+              className="bg-purple-600 hover:bg-purple-500 text-white font-semibold px-6 py-3 rounded-sm transition-colors"
             >
               Crear Campana
             </button>
@@ -283,7 +283,7 @@ function CampaignRow({
     : 'Canje';
 
   return (
-    <div className="bg-card/80 border border-white/5 rounded-xl p-5 hover:border-white/10 transition-all">
+    <div className="bg-card/80 border border-white/5 rounded-sm p-5 hover:border-white/10 transition-all">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -370,7 +370,7 @@ function CampaignRow({
           {campaign.status === 'draft' && campaign.payment_status === 'pending_payment' && (
             <button
               onClick={onCompletePayment}
-              className="text-xs bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 px-3 py-2 rounded-lg transition-colors font-medium flex items-center gap-1"
+              className="text-xs bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 px-3 py-2 rounded-sm transition-colors font-medium flex items-center gap-1"
             >
               <CreditCard className="h-3 w-3" />
               Completar pago
@@ -379,7 +379,7 @@ function CampaignRow({
           {campaign.status === 'draft' && campaign.payment_status !== 'pending_payment' && (
             <button
               onClick={onActivate}
-              className="text-xs bg-green-600/20 hover:bg-green-600/30 text-green-300 px-3 py-2 rounded-lg transition-colors font-medium"
+              className="text-xs bg-green-600/20 hover:bg-green-600/30 text-green-300 px-3 py-2 rounded-sm transition-colors font-medium"
             >
               Activar
             </button>
@@ -388,7 +388,7 @@ function CampaignRow({
             <>
               <button
                 onClick={onEdit}
-                className="text-xs bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 px-3 py-2 rounded-lg transition-colors flex items-center gap-1"
+                className="text-xs bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 px-3 py-2 rounded-sm transition-colors flex items-center gap-1"
               >
                 <Pencil className="h-3 w-3" />
                 Editar
@@ -397,13 +397,13 @@ function CampaignRow({
                 <div className="flex items-center gap-1">
                   <button
                     onClick={onConfirmDelete}
-                    className="text-xs bg-red-600/20 hover:bg-red-600/30 text-red-300 px-3 py-2 rounded-lg transition-colors font-medium"
+                    className="text-xs bg-red-600/20 hover:bg-red-600/30 text-red-300 px-3 py-2 rounded-sm transition-colors font-medium"
                   >
                     Confirmar
                   </button>
                   <button
                     onClick={onCancelDelete}
-                    className="text-xs bg-white/5 hover:bg-white/10 text-gray-400 px-3 py-2 rounded-lg transition-colors"
+                    className="text-xs bg-white/5 hover:bg-white/10 text-gray-400 px-3 py-2 rounded-sm transition-colors"
                   >
                     Cancelar
                   </button>
@@ -411,7 +411,7 @@ function CampaignRow({
               ) : (
                 <button
                   onClick={onDelete}
-                  className="text-xs bg-red-600/10 hover:bg-red-600/20 text-red-400 px-3 py-2 rounded-lg transition-colors flex items-center gap-1"
+                  className="text-xs bg-red-600/10 hover:bg-red-600/20 text-red-400 px-3 py-2 rounded-sm transition-colors flex items-center gap-1"
                 >
                   <Trash2 className="h-3 w-3" />
                   Eliminar
@@ -421,27 +421,27 @@ function CampaignRow({
           )}
           <button
             onClick={onViewApplications}
-            className="text-xs bg-white/5 hover:bg-white/10 text-foreground/80 px-3 py-2 rounded-lg transition-colors"
+            className="text-xs bg-white/5 hover:bg-white/10 text-foreground/80 px-3 py-2 rounded-sm transition-colors"
           >
             Aplicaciones
           </button>
           <button
             onClick={onViewSmartMatch}
-            className="text-xs bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 px-3 py-2 rounded-lg transition-colors flex items-center gap-1"
+            className="text-xs bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 px-3 py-2 rounded-sm transition-colors flex items-center gap-1"
           >
             <Star className="h-3 w-3" />
             Match
           </button>
           <button
             onClick={onViewProgress}
-            className="text-xs bg-white/5 hover:bg-white/10 text-foreground/80 px-3 py-2 rounded-lg transition-colors"
+            className="text-xs bg-white/5 hover:bg-white/10 text-foreground/80 px-3 py-2 rounded-sm transition-colors"
           >
             Progreso
           </button>
           {campaign.is_brand_activation && (
             <button
               onClick={onViewActivations}
-              className="text-xs bg-green-600/20 hover:bg-green-600/30 text-green-300 px-3 py-2 rounded-lg transition-colors flex items-center gap-1"
+              className="text-xs bg-green-600/20 hover:bg-green-600/30 text-green-300 px-3 py-2 rounded-sm transition-colors flex items-center gap-1"
             >
               <Radio className="h-3 w-3" />
               Activaciones
@@ -449,7 +449,7 @@ function CampaignRow({
           )}
           <button
             onClick={onViewDetail}
-            className="text-xs bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 px-3 py-2 rounded-lg transition-colors"
+            className="text-xs bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 px-3 py-2 rounded-sm transition-colors"
           >
             Ver
           </button>

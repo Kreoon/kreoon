@@ -264,7 +264,7 @@ export function PermissionsEditor() {
               <CardContent>
                 <div className="space-y-1">
                   {/* Header */}
-                  <div className="grid grid-cols-12 gap-2 px-3 py-2 bg-muted/50 rounded-lg text-xs font-medium text-muted-foreground">
+                  <div className="grid grid-cols-12 gap-2 px-3 py-2 bg-muted/50 rounded-sm text-xs font-medium text-muted-foreground">
                     <div className="col-span-6">Módulo</div>
                     <div className="col-span-2 text-center">Ver</div>
                     <div className="col-span-2 text-center">Crear</div>
@@ -279,10 +279,10 @@ export function PermissionsEditor() {
                     return (
                       <div 
                         key={module.id}
-                        className="grid grid-cols-12 gap-2 px-3 py-3 hover:bg-muted/30 rounded-lg transition-colors items-center"
+                        className="grid grid-cols-12 gap-2 px-3 py-3 hover:bg-muted/30 rounded-sm transition-colors items-center"
                       >
                         <div className="col-span-6 flex items-center gap-3">
-                          <div className="p-1.5 rounded-md bg-muted">
+                          <div className="p-1.5 rounded-sm bg-muted">
                             <Icon className="h-4 w-4 text-muted-foreground" />
                           </div>
                           <div>
@@ -325,7 +325,7 @@ export function PermissionsEditor() {
                 </div>
 
                 {role.id === 'admin' && (
-                  <p className="text-xs text-muted-foreground mt-4 p-3 bg-muted/30 rounded-lg">
+                  <p className="text-xs text-muted-foreground mt-4 p-3 bg-muted/30 rounded-sm">
                     ℹ️ Los permisos del administrador no se pueden modificar. Los administradores tienen acceso completo a todas las funciones.
                   </p>
                 )}

@@ -68,7 +68,7 @@ export function CreditsDisplay({
   return (
     <motion.div
       className={cn(
-        'inline-flex items-center rounded-lg',
+        'inline-flex items-center rounded-sm',
         config.gap,
         config.padding,
         'bg-gradient-to-r from-purple-500/10 to-purple-600/5',

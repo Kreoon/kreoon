@@ -58,7 +58,7 @@ function SortablePortfolioItem({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'relative group rounded-xl overflow-hidden border transition-all',
+        'relative group rounded-sm overflow-hidden border transition-all',
         isDragging ? 'z-50 border-purple-500 shadow-2xl shadow-purple-500/20' : 'border-white/10',
         item.is_featured && 'ring-2 ring-yellow-500/50'
       )}
@@ -102,7 +102,7 @@ function SortablePortfolioItem({
           <button
             {...attributes}
             {...listeners}
-            className="p-2 bg-black/60 rounded-lg hover:bg-black/80 cursor-grab active:cursor-grabbing"
+            className="p-2 bg-black/60 rounded-sm hover:bg-black/80 cursor-grab active:cursor-grabbing"
           >
             <GripVertical className="h-4 w-4 text-white" />
           </button>
@@ -111,7 +111,7 @@ function SortablePortfolioItem({
           <button
             onClick={() => onTogglePin(item.id)}
             className={cn(
-              'p-2 rounded-lg transition-colors',
+              'p-2 rounded-sm transition-colors',
               item.is_featured ? 'bg-yellow-500/40 hover:bg-yellow-500/60' : 'bg-black/60 hover:bg-black/80'
             )}
           >
@@ -121,7 +121,7 @@ function SortablePortfolioItem({
           {/* Delete */}
           <button
             onClick={() => onDelete(item.id)}
-            className="p-2 bg-red-500/40 rounded-lg hover:bg-red-500/60"
+            className="p-2 bg-red-500/40 rounded-sm hover:bg-red-500/60"
           >
             <Trash2 className="h-4 w-4 text-white" />
           </button>
@@ -208,7 +208,7 @@ export function WizardStepPortfolio({
         onDragLeave={() => setDragActive(false)}
         onDrop={handleDrop}
         className={cn(
-          'border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer',
+          'border-2 border-dashed rounded-sm p-8 text-center transition-all cursor-pointer',
           dragActive
             ? 'border-purple-500 bg-purple-500/10'
             : 'border-white/20 bg-white/5 hover:border-white/30 hover:bg-white/10'
@@ -222,7 +222,7 @@ export function WizardStepPortfolio({
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3">
-            <div className="w-14 h-14 rounded-2xl bg-purple-500/20 flex items-center justify-center">
+            <div className="w-14 h-14 rounded-sm bg-purple-500/20 flex items-center justify-center">
               <Upload className="h-7 w-7 text-purple-400" />
             </div>
             <div>
@@ -275,7 +275,7 @@ export function WizardStepPortfolio({
 
       {/* Tips */}
       {items.length === 0 && !adding && (
-        <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+        <div className="p-4 rounded-sm bg-white/5 border border-white/10">
           <p className="text-gray-400 text-sm">
             <strong className="text-foreground/80">Tips:</strong> Sube al menos 3 piezas de tu mejor trabajo.
             Los videos verticales (9:16) tienen mejor rendimiento. Puedes destacar hasta 3 items.

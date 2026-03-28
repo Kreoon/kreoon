@@ -101,7 +101,7 @@ export function OrgCreatorAssigner({
               {filteredHosts.map((host) => (
                 <div
                   key={host.user_id}
-                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                  className={`flex items-center gap-3 p-3 rounded-sm border cursor-pointer transition-colors ${
                     selectedHost?.user_id === host.user_id
                       ? 'border-primary bg-primary/5'
                       : 'hover:bg-muted/50'
@@ -198,7 +198,7 @@ export function OrgCreatorAssigner({
           </Button>
 
           {breakdown && (
-            <div className="p-4 rounded-lg bg-muted/50 space-y-2 text-sm">
+            <div className="p-4 rounded-sm bg-muted/50 space-y-2 text-sm">
               <div className="flex justify-between">
                 <span>Pago al host:</span>
                 <span className="font-medium">${breakdown.host_rate_usd.toFixed(2)}</span>

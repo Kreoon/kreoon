@@ -11,9 +11,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useOrgMarketplace } from "@/hooks/useOrgMarketplace";
 import { usePresence } from "@/hooks/usePresence";
 import { useClientRealtimeNotifications } from "@/hooks/useClientRealtimeNotifications";
+import { useClientPendingReviews } from "@/hooks/useClientPendingReviews";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Kanban, Settings, LogOut, Sparkles, Scissors, Briefcase } from "lucide-react";
+import { LayoutDashboard, Kanban, Settings, LogOut, Sparkles, Scissors, Briefcase, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -80,6 +81,9 @@ export function MainLayout({
   // Client realtime notifications (for new videos, comments)
   useClientRealtimeNotifications();
 
+  // Client pending reviews count (for global banner)
+  const pendingReviews = useClientPendingReviews();
+
   // Detect marketplace routes for dark styling
   const isMarketplaceRoute = location.pathname.startsWith('/marketplace');
 
@@ -93,9 +97,9 @@ export function MainLayout({
         </div>
         
         {/* Editor Mobile Header */}
-        <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background px-3 md:hidden">
+        <header className="sticky top-0 z-50 flex h-14 items-center border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0f0f14] px-3 md:hidden">
           <div className="flex-1 flex items-center gap-2 min-w-0">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500 flex-shrink-0">
+            <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-blue-500 flex-shrink-0">
               <Scissors className="h-4 w-4 text-white" />
             </div>
             <span className="text-sm font-bold truncate">Panel Editor</span>
@@ -128,7 +132,7 @@ export function MainLayout({
         </header>
 
         {/* Editor Mobile Bottom Navigation */}
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#0f0f14] border-t border-zinc-200 dark:border-zinc-800 md:hidden">
           <div className="flex justify-around py-2">
             {editorMobileNavigation.filter(item => item.href !== '/marketplace' || marketplaceEnabled).map((item) => {
               const isActive = item.href.startsWith('/marketplace')
@@ -139,7 +143,7 @@ export function MainLayout({
                   key={item.name}
                   to={item.href}
                   className={cn(
-                    "flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg transition-colors",
+                    "flex flex-col items-center gap-1 px-2 py-1.5 rounded-sm transition-colors",
                     isActive ? "text-primary" : "text-muted-foreground"
                   )}
                 >
@@ -185,6 +189,9 @@ export function MainLayout({
 
   // For clients, reuse the main Sidebar so navigation + role switcher stay consistent
   if (isClient) {
+    const hasBanner = pendingReviews.total > 0;
+    const bannerHeight = 44; // h-11 = 44px
+
     return (
       <div className="min-h-screen bg-background">
         {/* Client Desktop Sidebar */}
@@ -192,12 +199,55 @@ export function MainLayout({
           <Sidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
         </div>
 
+        {/* Global Review Alert Banner - Fixed at top on desktop, sticky on mobile */}
+        {hasBanner && (
+          <div className={cn(
+            "fixed top-0 right-0 z-[60] h-11",
+            "bg-gradient-to-r from-purple-600 via-purple-500 to-white dark:from-purple-600 dark:via-purple-800 dark:to-zinc-950",
+            sidebarCollapsed ? "left-0 md:left-20" : "left-0 md:left-64"
+          )}>
+            <div className="h-full px-4 flex items-center">
+              <div className="flex items-center justify-between gap-4 w-full">
+                <div className="flex items-center gap-3">
+                  <div className="p-1.5 rounded-full bg-white/30 dark:bg-white/20">
+                    <Eye className="h-4 w-4 text-white" />
+                  </div>
+                  <p className="font-medium text-sm text-white drop-shadow-sm">
+                    {pendingReviews.scriptCount > 0 && (
+                      <span>{pendingReviews.scriptCount} guión{pendingReviews.scriptCount > 1 ? 'es' : ''}</span>
+                    )}
+                    {pendingReviews.scriptCount > 0 && pendingReviews.videoCount > 0 && (
+                      <span className="mx-1">y</span>
+                    )}
+                    {pendingReviews.videoCount > 0 && (
+                      <span>{pendingReviews.videoCount} video{pendingReviews.videoCount > 1 ? 's' : ''}</span>
+                    )}
+                    <span className="hidden sm:inline text-white/80 ml-1">
+                      por revisar
+                    </span>
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => navigate('/client-dashboard?tab=review')}
+                  className="shrink-0 rounded-sm bg-white text-purple-600 hover:bg-purple-50 font-semibold shadow-md h-8"
+                >
+                  Revisar
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Client Mobile Header */}
-        <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background px-3 md:hidden">
+        <header
+          className="sticky z-50 flex h-14 items-center border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0f0f14] px-3 md:hidden"
+          style={{ top: hasBanner ? bannerHeight : 0 }}
+        >
           <MobileNav />
           <div className="flex-1 flex justify-center min-w-0">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg overflow-hidden flex-shrink-0">
+              <div className="flex h-7 w-7 items-center justify-center rounded-sm overflow-hidden flex-shrink-0">
                 <img src="/favicon.png" alt="KREOON" className="h-7 w-7 object-cover" loading="lazy" />
               </div>
               <span className="text-sm font-bold truncate">Portal Cliente</span>
@@ -234,6 +284,7 @@ export function MainLayout({
         <div className="hidden md:block">
           <IntegratedNotificationHeader
             sidebarCollapsed={sidebarCollapsed}
+            topOffset={hasBanner ? bannerHeight : 0}
           />
         </div>
 
@@ -242,9 +293,9 @@ export function MainLayout({
           id="main-content"
           className={cn(
             "transition-all duration-300",
-            sidebarCollapsed ? "md:ml-20" : "md:ml-64",
-            "md:pt-14"
+            sidebarCollapsed ? "md:ml-20" : "md:ml-64"
           )}
+          style={{ paddingTop: hasBanner ? bannerHeight + 56 : 56 }} // 56px = h-14 del header
         >
           <div className={cn("min-h-screen", isMarketplaceRoute ? "bg-background" : "p-4 md:p-6")}>
             <PageWrapper locationKey={location.pathname}>
@@ -284,11 +335,11 @@ export function MainLayout({
       </div>
       
       {/* Mobile Header */}
-      <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background px-3 md:hidden">
+      <header className="sticky top-0 z-50 flex h-14 items-center border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0f0f14] px-3 md:hidden">
         <MobileNav />
         <div className="flex-1 flex justify-center min-w-0">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg overflow-hidden flex-shrink-0">
+            <div className="flex h-7 w-7 items-center justify-center rounded-sm overflow-hidden flex-shrink-0">
               <img src="/favicon.png" alt="KREOON" className="h-7 w-7 object-cover" loading="lazy" />
             </div>
             <span className="text-sm font-bold truncate">KREOON</span>

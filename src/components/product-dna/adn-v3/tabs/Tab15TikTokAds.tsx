@@ -186,11 +186,11 @@ function BackendTikTokAdsView({ data }: { data: BackendTikTokAdsData }) {
         </CardHeader>
         <CardContent>
           <div className="grid sm:grid-cols-3 gap-4">
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Objetivo</p>
               <p className="font-medium">{data.strategy?.objective}</p>
             </div>
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Presupuesto Diario</p>
               <p className="font-bold text-lg text-green-400">
                 ${typeof data.strategy?.daily_budget_usd === 'number'
@@ -198,7 +198,7 @@ function BackendTikTokAdsView({ data }: { data: BackendTikTokAdsData }) {
                   : data.strategy?.daily_budget_usd} USD
               </p>
             </div>
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Bidding</p>
               <p className="font-medium">{data.strategy?.bidding}</p>
             </div>
@@ -216,15 +216,15 @@ function BackendTikTokAdsView({ data }: { data: BackendTikTokAdsData }) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid sm:grid-cols-3 gap-4">
-            <div className="p-3 rounded-lg bg-muted/50">
+            <div className="p-3 rounded-sm bg-muted/50">
               <p className="text-xs text-muted-foreground mb-1">Edad</p>
               <p className="font-medium">{data.audience?.age}</p>
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
+            <div className="p-3 rounded-sm bg-muted/50">
               <p className="text-xs text-muted-foreground mb-1">Género</p>
               <p className="font-medium">{data.audience?.gender}</p>
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
+            <div className="p-3 rounded-sm bg-muted/50">
               <p className="text-xs text-muted-foreground mb-1">Ubicaciones</p>
               <div className="flex flex-wrap gap-1 mt-1">
                 {data.audience?.locations?.slice(0, 3).map((loc, idx) => (
@@ -270,7 +270,7 @@ function BackendTikTokAdsView({ data }: { data: BackendTikTokAdsData }) {
           <CardContent>
             <div className="grid sm:grid-cols-2 gap-3">
               {data.viral_hooks.map((hook, idx) => (
-                <div key={idx} className="p-3 rounded-lg border bg-card flex items-center justify-between">
+                <div key={idx} className="p-3 rounded-sm border bg-card flex items-center justify-between">
                   <p className="font-medium text-sm">{hook}</p>
                   <CopyButton text={hook} size="sm" />
                 </div>
@@ -302,17 +302,17 @@ function BackendTikTokAdsView({ data }: { data: BackendTikTokAdsData }) {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="p-3 rounded-lg bg-pink-500/10 border-l-4 border-pink-500">
+                <div className="p-3 rounded-sm bg-pink-500/10 border-l-4 border-pink-500">
                   <p className="text-xs text-pink-400 mb-1">Hook (3 seg)</p>
                   <p className="font-medium">{creative.hook_3s}</p>
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="p-3 rounded-lg bg-muted/50">
+                  <div className="p-3 rounded-sm bg-muted/50">
                     <p className="text-xs text-muted-foreground mb-1">Audio</p>
                     <p className="text-sm">{creative.audio}</p>
                   </div>
-                  <div className="p-3 rounded-lg bg-muted/50">
+                  <div className="p-3 rounded-sm bg-muted/50">
                     <p className="text-xs text-muted-foreground mb-1">Estilo Visual</p>
                     <p className="text-sm">{creative.visual_style}</p>
                   </div>
@@ -321,7 +321,7 @@ function BackendTikTokAdsView({ data }: { data: BackendTikTokAdsData }) {
                 {creative.script && (
                   <div>
                     <p className="text-xs text-muted-foreground mb-2">Script</p>
-                    <div className="p-3 rounded-lg bg-muted/50 whitespace-pre-wrap text-sm">
+                    <div className="p-3 rounded-sm bg-muted/50 whitespace-pre-wrap text-sm">
                       {creative.script}
                     </div>
                   </div>
@@ -389,7 +389,7 @@ function BackendTikTokAdsView({ data }: { data: BackendTikTokAdsData }) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-3 rounded-lg bg-muted/50">
+            <div className="p-3 rounded-sm bg-muted/50">
               <p className="text-xs text-muted-foreground mb-1">Perfil de Creador Ideal</p>
               <p className="text-sm">{data.spark_ads.creator_profile}</p>
             </div>
@@ -406,7 +406,7 @@ function BackendTikTokAdsView({ data }: { data: BackendTikTokAdsData }) {
             )}
 
             {data.spark_ads.brief && (
-              <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+              <div className="p-3 rounded-sm bg-purple-500/10 border border-purple-500/20">
                 <p className="text-xs text-purple-400 mb-1">Brief</p>
                 <p className="text-sm">{data.spark_ads.brief}</p>
               </div>
@@ -474,19 +474,19 @@ function LegacyTikTokAdsView({ data }: { data: LegacyTikTokAdsData }) {
         </CardHeader>
         <CardContent>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Objetivo</p>
               <p className="font-medium">{data.strategy_overview?.campaign_objective}</p>
             </div>
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Presupuesto</p>
               <p className="font-medium">{data.strategy_overview?.budget_recommendation}</p>
             </div>
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Bidding</p>
               <p className="font-medium">{data.strategy_overview?.bidding_strategy}</p>
             </div>
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Intereses Target</p>
               <div className="flex flex-wrap gap-1 mt-1">
                 {data.strategy_overview?.target_audience_interests?.slice(0, 3).map((i, idx) => (
@@ -512,7 +512,7 @@ function LegacyTikTokAdsView({ data }: { data: LegacyTikTokAdsData }) {
         <CardContent>
           <div className="grid sm:grid-cols-2 gap-3">
             {data.viral_hooks?.map((hook, idx) => (
-              <div key={idx} className="p-3 rounded-lg border bg-card flex items-center justify-between">
+              <div key={idx} className="p-3 rounded-sm border bg-card flex items-center justify-between">
                 <p className="font-medium text-sm">{hook}</p>
                 <CopyButton text={hook} size="sm" />
               </div>
@@ -539,17 +539,17 @@ function LegacyTikTokAdsView({ data }: { data: LegacyTikTokAdsData }) {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="p-3 rounded-lg bg-pink-500/10 border-l-4 border-pink-500">
+              <div className="p-3 rounded-sm bg-pink-500/10 border-l-4 border-pink-500">
                 <p className="text-xs text-pink-400 mb-1">Hook (3 seg)</p>
                 <p className="font-medium">{creative.hook}</p>
               </div>
 
               <div className="grid sm:grid-cols-2 gap-4">
-                <div className="p-3 rounded-lg bg-muted/50">
+                <div className="p-3 rounded-sm bg-muted/50">
                   <p className="text-xs text-muted-foreground mb-1">Audio</p>
                   <p className="text-sm">{creative.audio_type}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-muted/50">
+                <div className="p-3 rounded-sm bg-muted/50">
                   <p className="text-xs text-muted-foreground mb-1">Estilo Visual</p>
                   <p className="text-sm">{creative.visual_style}</p>
                 </div>
@@ -564,7 +564,7 @@ function LegacyTikTokAdsView({ data }: { data: LegacyTikTokAdsData }) {
                 </ol>
               </div>
 
-              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+              <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
                 <p className="text-xs text-green-400 mb-1">CTA</p>
                 <p className="font-medium">{creative.cta}</p>
               </div>
@@ -585,7 +585,7 @@ function LegacyTikTokAdsView({ data }: { data: LegacyTikTokAdsData }) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="p-3 rounded-lg bg-muted/50">
+          <div className="p-3 rounded-sm bg-muted/50">
             <p className="text-xs text-muted-foreground mb-1">Perfil de Creador Ideal</p>
             <p className="text-sm">{data.spark_ads_strategy?.creator_profile}</p>
           </div>
@@ -599,7 +599,7 @@ function LegacyTikTokAdsView({ data }: { data: LegacyTikTokAdsData }) {
             </ul>
           </div>
 
-          <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+          <div className="p-3 rounded-sm bg-purple-500/10 border border-purple-500/20">
             <p className="text-xs text-purple-400 mb-1">Approach de Partnership</p>
             <p className="text-sm">{data.spark_ads_strategy?.partnership_approach}</p>
           </div>

@@ -55,7 +55,7 @@ export function useCreatorMatching() {
   const recordMatchClick = useCallback(async (matchId: string, creatorId: string) => {
     if (!user?.id) return;
 
-    await (supabase as any)
+    await supabase
       .from('ai_match_history')
       .update({ was_clicked: true })
       .eq('searcher_id', user.id)
@@ -68,7 +68,7 @@ export function useCreatorMatching() {
   const recordMatchContact = useCallback(async (creatorId: string) => {
     if (!user?.id) return;
 
-    await (supabase as any)
+    await supabase
       .from('ai_match_history')
       .update({ was_contacted: true })
       .eq('searcher_id', user.id)
@@ -81,7 +81,7 @@ export function useCreatorMatching() {
   const recordMatchHire = useCallback(async (creatorId: string, rating?: number) => {
     if (!user?.id) return;
 
-    await (supabase as any)
+    await supabase
       .from('ai_match_history')
       .update({
         was_hired: true,
@@ -116,7 +116,7 @@ export function useSavedSearches() {
     queryFn: async () => {
       if (!user?.id) return [];
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('saved_searches')
         .select('*')
         .eq('user_id', user.id)
@@ -133,7 +133,7 @@ export function useSavedSearches() {
     mutationFn: async (search: Omit<SavedSearch, 'id' | 'user_id' | 'created_at' | 'last_notified_at'>) => {
       if (!user?.id) throw new Error('No autenticado');
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('saved_searches')
         .insert({
           user_id: user.id,
@@ -159,7 +159,7 @@ export function useSavedSearches() {
     mutationFn: async (searchId: string) => {
       if (!user?.id) throw new Error('No autenticado');
 
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('saved_searches')
         .delete()
         .eq('id', searchId)
@@ -178,7 +178,7 @@ export function useSavedSearches() {
     mutationFn: async ({ searchId, enabled }: { searchId: string; enabled: boolean }) => {
       if (!user?.id) throw new Error('No autenticado');
 
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('saved_searches')
         .update({ notify_new_matches: enabled })
         .eq('id', searchId)
@@ -209,7 +209,7 @@ export function useIndustries() {
   return useQuery({
     queryKey: ['marketplace-industries'],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('marketplace_industries')
         .select('*')
         .eq('is_active', true)

@@ -17,7 +17,7 @@ export const HeroSection = memo(function HeroSection({ isComplete }: HeroSection
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        'relative rounded-2xl p-6 sm:p-8 overflow-hidden',
+        'relative rounded-sm p-6 sm:p-8 overflow-hidden',
         'bg-gradient-to-br from-purple-900/30 via-slate-900/50 to-pink-900/30',
         'border border-white/10'
       )}
@@ -33,7 +33,7 @@ export const HeroSection = memo(function HeroSection({ isComplete }: HeroSection
         <motion.div
           animate={isComplete ? { rotate: [0, 10, -10, 0] } : { y: [0, -5, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-4"
+          className="inline-flex items-center justify-center w-16 h-16 rounded-sm bg-white/5 border border-white/10 mb-4"
         >
           {isComplete ? (
             <Sparkles className="w-8 h-8 text-amber-400" />

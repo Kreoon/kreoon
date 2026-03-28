@@ -306,7 +306,7 @@ export function KiroSettingsPanel({
             kiroSounds.play('action_click');
             onBack();
           }}
-          className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+          className="p-1.5 rounded-sm text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
@@ -340,7 +340,7 @@ export function KiroSettingsPanel({
             onClick={handleTestSound}
             disabled={!settings.soundEnabled}
             className={cn(
-              'mt-2 w-full py-1.5 px-3 rounded-lg text-xs',
+              'mt-2 w-full py-1.5 px-3 rounded-sm text-xs',
               'border border-violet-500/30',
               settings.soundEnabled
                 ? 'text-violet-300 bg-violet-500/10 hover:bg-violet-500/20'
@@ -406,7 +406,7 @@ export function KiroSettingsPanel({
                 onClick={onTestVoice}
                 disabled={!settings.voiceEnabled || isVoiceSpeaking}
                 className={cn(
-                  'mt-2 w-full py-1.5 px-3 rounded-lg text-xs',
+                  'mt-2 w-full py-1.5 px-3 rounded-sm text-xs',
                   'border border-violet-500/30',
                   settings.voiceEnabled && !isVoiceSpeaking
                     ? 'text-violet-300 bg-violet-500/10 hover:bg-violet-500/20'
@@ -500,7 +500,7 @@ export function KiroSettingsPanel({
           <button
             onClick={() => setConfirmAction('chatHistory')}
             className={cn(
-              'w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg',
+              'w-full flex items-center justify-center gap-2 py-2 px-3 rounded-sm',
               'text-xs text-red-400',
               'bg-red-500/10 border border-red-500/20',
               'hover:bg-red-500/20 transition-colors'
@@ -513,7 +513,7 @@ export function KiroSettingsPanel({
           <button
             onClick={() => setConfirmAction('preferences')}
             className={cn(
-              'w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg mt-2',
+              'w-full flex items-center justify-center gap-2 py-2 px-3 rounded-sm mt-2',
               'text-xs text-orange-400',
               'bg-orange-500/10 border border-orange-500/20',
               'hover:bg-orange-500/20 transition-colors'
@@ -534,7 +534,7 @@ export function KiroSettingsPanel({
               window.location.href = '/settings?section=notifications';
             }}
             className={cn(
-              'w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg',
+              'w-full flex items-center justify-center gap-2 py-2 px-3 rounded-sm',
               'text-xs text-violet-300',
               'bg-violet-500/10 border border-violet-500/20',
               'hover:bg-violet-500/20 transition-colors'
@@ -558,7 +558,7 @@ export function KiroSettingsPanel({
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {confirmAction && (
         <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-10 animate-in fade-in duration-150">
-          <div className="bg-card border border-violet-500/30 rounded-xl p-4 mx-4 max-w-[280px]">
+          <div className="bg-card border border-violet-500/30 rounded-sm p-4 mx-4 max-w-[280px]">
             <h3 className="text-sm font-medium text-violet-300 mb-2">
               ¿Confirmar acción?
             </h3>
@@ -570,13 +570,13 @@ export function KiroSettingsPanel({
             <div className="flex gap-2">
               <button
                 onClick={() => setConfirmAction(null)}
-                className="flex-1 py-1.5 px-3 rounded-lg text-xs text-muted-foreground bg-muted hover:bg-muted/80 transition-colors"
+                className="flex-1 py-1.5 px-3 rounded-sm text-xs text-muted-foreground bg-muted hover:bg-muted/80 transition-colors"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleConfirmAction}
-                className="flex-1 py-1.5 px-3 rounded-lg text-xs text-white bg-red-500 hover:bg-red-600 transition-colors"
+                className="flex-1 py-1.5 px-3 rounded-sm text-xs text-white bg-red-500 hover:bg-red-600 transition-colors"
               >
                 Confirmar
               </button>

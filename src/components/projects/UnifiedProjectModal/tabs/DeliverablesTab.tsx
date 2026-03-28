@@ -76,7 +76,7 @@ export default function DeliverablesTab({ project, permissions, readOnly, sectio
           Los entregables de contenido se gestionan en las pestanas de Video y Material del proyecto original.
         </p>
         {project.contentData?.video_url && (
-          <div className="border rounded-lg p-4">
+          <div className="border rounded-sm p-4">
             <h4 className="text-sm font-medium mb-2">Video principal</h4>
             <a
               href={project.contentData.video_url}
@@ -89,7 +89,7 @@ export default function DeliverablesTab({ project, permissions, readOnly, sectio
           </div>
         )}
         {project.contentData?.video_urls && project.contentData.video_urls.length > 0 && (
-          <div className="border rounded-lg p-4">
+          <div className="border rounded-sm p-4">
             <h4 className="text-sm font-medium mb-2">Videos adicionales ({project.contentData.video_urls.length})</h4>
             <div className="space-y-1">
               {project.contentData.video_urls.map((url: string, i: number) => (
@@ -139,7 +139,7 @@ export default function DeliverablesTab({ project, permissions, readOnly, sectio
             const StatusIcon = statusConfig.icon;
 
             return (
-              <div key={d.id} className="border rounded-lg p-4 space-y-2">
+              <div key={d.id} className="border rounded-sm p-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <StatusIcon className={cn('h-4 w-4', statusConfig.color)} />
@@ -173,7 +173,7 @@ export default function DeliverablesTab({ project, permissions, readOnly, sectio
                 )}
 
                 {d.feedback && (
-                  <div className="bg-muted/50 rounded-md p-3 text-sm">
+                  <div className="bg-muted/50 rounded-sm p-3 text-sm">
                     <span className="font-medium">Feedback:</span> {d.feedback}
                   </div>
                 )}

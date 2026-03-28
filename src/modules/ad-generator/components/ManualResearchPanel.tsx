@@ -59,7 +59,7 @@ export function ManualResearchPanel({ values, onChange, productDescription }: Ma
   const hasAnyValue = FIELDS.some((f) => values[f.key]?.trim());
 
   return (
-    <div className="rounded-lg border border-border/50 bg-muted/10 overflow-hidden">
+    <div className="rounded-sm border border-border/50 bg-muted/10 overflow-hidden">
       <div className="px-4 py-3 bg-muted/20 border-b border-border/30">
         <div className="flex items-center gap-2">
           <PenLine className="h-3.5 w-3.5 text-primary" />

@@ -71,7 +71,7 @@ function MiniProgressRing({ progress, level, points }: { progress: number; level
       {/* Tooltip on hover */}
       <div className={cn(
         'absolute left-1/2 -translate-x-1/2 top-full mt-2',
-        'px-2.5 py-1.5 rounded-lg whitespace-nowrap',
+        'px-2.5 py-1.5 rounded-sm whitespace-nowrap',
         'bg-card border border-violet-500/20',
         'text-[10px] text-muted-foreground',
         'shadow-xl shadow-black/40',
@@ -339,7 +339,7 @@ export function KiroWidget() {
               onClick={() => handleSwitchPanel(item.id)}
               title={item.label}
               className={cn(
-                'relative p-1.5 rounded-lg transition-all duration-200',
+                'relative p-1.5 rounded-sm transition-all duration-200',
                 activePanel === item.id
                   ? 'text-violet-300 bg-violet-500/15'
                   : 'text-muted-foreground hover:text-foreground hover:bg-accent'
@@ -378,7 +378,7 @@ export function KiroWidget() {
         {/* Close */}
         <button
           onClick={handleClose}
-          className="p-1.5 text-muted-foreground hover:text-muted-foreground hover:bg-accent rounded-lg transition-all duration-200 ml-0.5"
+          className="p-1.5 text-muted-foreground hover:text-muted-foreground hover:bg-accent rounded-sm transition-all duration-200 ml-0.5"
         >
           <X className="w-3.5 h-3.5" />
         </button>
@@ -690,7 +690,7 @@ export function KiroWidget() {
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               className={cn(
                 'absolute bottom-full mb-3 right-0',
-                'max-w-[200px] px-3 py-2 rounded-xl',
+                'max-w-[200px] px-3 py-2 rounded-sm',
                 'bg-card/95 backdrop-blur-xl',
                 'border border-violet-500/30',
                 'shadow-lg shadow-violet-500/20'
@@ -731,7 +731,7 @@ export function KiroWidget() {
                     setNotificationToasts([]);
                   }}
                   className={cn(
-                    'max-w-[220px] px-3 py-2 rounded-xl cursor-pointer',
+                    'max-w-[220px] px-3 py-2 rounded-sm cursor-pointer',
                     'bg-card/95 backdrop-blur-xl',
                     'border border-red-500/30',
                     'shadow-lg shadow-red-500/10',

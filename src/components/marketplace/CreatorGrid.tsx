@@ -80,7 +80,7 @@ export const CreatorGrid = memo(function CreatorGrid({
         <div className="flex justify-center pt-4">
           <button
             onClick={onLoadMore}
-            className="bg-white/5 border border-white/10 rounded-xl px-6 py-3 text-purple-400 hover:bg-white/10 hover:text-purple-300 transition-all text-sm font-medium"
+            className="bg-white/5 border border-white/10 rounded-sm px-6 py-3 text-purple-400 hover:bg-white/10 hover:text-purple-300 transition-all text-sm font-medium"
           >
             Cargar más talento
           </button>

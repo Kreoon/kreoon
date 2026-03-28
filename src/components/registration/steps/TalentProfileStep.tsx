@@ -92,7 +92,7 @@ export function TalentProfileStep({ data, onChange, onNext, onBack, mode }: Step
                 key={t.id}
                 onClick={() => onChange({ talentType: t.id })}
                 className={cn(
-                  'flex-1 flex flex-col items-center gap-1 rounded-lg border p-3 text-xs transition-all',
+                  'flex-1 flex flex-col items-center gap-1 rounded-sm border p-3 text-xs transition-all',
                   selected
                     ? 'border-purple-500/60 bg-purple-500/15 text-purple-300'
                     : 'border-border bg-muted/20 text-muted-foreground hover:border-border',
@@ -123,7 +123,7 @@ export function TalentProfileStep({ data, onChange, onNext, onBack, mode }: Step
             const selectedInCategory = roles.filter(r => data.marketplaceRoles.includes(r.id)).length;
 
             return (
-              <div key={catId} className="rounded-lg border border-white/5 overflow-hidden">
+              <div key={catId} className="rounded-sm border border-white/5 overflow-hidden">
                 <button
                   onClick={() => setExpandedCategory(isExpanded ? null : catId)}
                   className="w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-white/5 transition-colors"
@@ -223,7 +223,7 @@ export function TalentProfileStep({ data, onChange, onNext, onBack, mode }: Step
 
       <button
         onClick={handleNext}
-        className="w-full rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 text-sm transition-colors"
+        className="w-full rounded-sm bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 text-sm transition-colors"
       >
         Continuar
       </button>

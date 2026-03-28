@@ -169,11 +169,12 @@ export function DraggableContentCard({
     effectiveIsClient &&
     (content.status === "delivered" || content.status === "corrected");
 
+  // Nova Design System card styles
   const cardBaseStyle = {
-    background: TECH_COLORS.card,
+    background: "var(--nova-bg-elevated)",
     backdropFilter: "blur(16px) saturate(180%)",
-    border: `1px solid ${TECH_COLORS.border}`,
-    boxShadow: `0 0 20px rgba(139, 92, 246, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.05)`,
+    border: "1px solid var(--nova-border-default)",
+    boxShadow: "var(--nova-shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.05)",
   };
 
   return (
@@ -189,17 +190,17 @@ export function DraggableContentCard({
           onClick?.(content);
         }}
         className={cn(
-          "group relative overflow-visible rounded-xl cursor-grab active:cursor-grabbing",
+          "group relative overflow-visible rounded-sm cursor-grab active:cursor-grabbing",
           "w-full flex flex-col shrink-0 transition-[min-height] duration-300 ease-out",
           hasVideoArea ? "min-h-[420px]" : "min-h-[280px]",
-          "hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(168,85,247,0.2)]",
-          "hover:border-[rgba(168,85,247,0.5)]",
-          isDragging && "opacity-70 scale-[0.98] shadow-[0_0_25px_rgba(168,85,247,0.3)]"
+          "hover:scale-[1.02] nova-hover-glow",
+          "hover:border-[var(--nova-border-accent)]",
+          isDragging && "opacity-70 scale-[0.98] nova-glow"
         )}
         style={cardBaseStyle}
       >
         <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-          <GripVertical className="h-4 w-4 text-[#cbd5e1]" />
+          <GripVertical className="h-4 w-4 text-[var(--nova-text-secondary)]" />
         </div>
 
         {/* 1. VIDEO PREVIEW - Solo si shouldShowVideoArea (sin placeholder cuando no hay video) */}
@@ -219,7 +220,7 @@ export function DraggableContentCard({
           <h3
             className="font-semibold line-clamp-2 break-words text-sm"
             style={{
-              background: "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)",
+              background: "linear-gradient(135deg, var(--nova-accent-primary) 0%, var(--nova-aurora-2) 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
@@ -256,31 +257,31 @@ export function DraggableContentCard({
             (content as any).product?.name && (
               <Badge
                 variant="outline"
-                className="text-xs gap-1 mt-3 border-white/20 text-[#cbd5e1]"
+                className="text-xs gap-1 mt-3 border-[var(--nova-border-subtle)] text-[var(--nova-text-secondary)]"
               >
                 <Tag className="h-3 w-3" />
                 {(content as any).product.name}
               </Badge>
             )
           ) : (
-            <p className="text-xs text-[#cbd5e1] mt-3 truncate">
+            <p className="text-xs text-[var(--nova-text-secondary)] mt-3 truncate">
               {content.client?.name || "Sin cliente"}
             </p>
           )}
 
-          <div className="flex flex-wrap gap-3 text-xs text-[#cbd5e1] mt-3">
+          <div className="flex flex-wrap gap-3 text-xs text-[var(--nova-text-secondary)] mt-3">
             {!effectiveIsClient && content.creator && (
               <div className="flex items-center gap-1">
-                <User className="h-3 w-3 text-[#8b5cf6]" />
+                <User className="h-3 w-3 text-[var(--nova-accent-primary)]" />
                 <span className="truncate max-w-[100px]">{content.creator.full_name}</span>
               </div>
             )}
             <div className="flex items-center gap-1">
-              <Calendar className="h-3 w-3 text-[#8b5cf6]" />
+              <Calendar className="h-3 w-3 text-[var(--nova-accent-primary)]" />
               <span>{formatDate(content.deadline)}</span>
             </div>
             {!effectiveIsClient && displayPayment && displayPayment.value > 0 && (
-              <div className="flex items-center gap-1 text-emerald-400">
+              <div className="flex items-center gap-1 text-[var(--nova-success)]">
                 <CurrencyDisplay
                   value={displayPayment.value}
                   currency={displayPayment.currency}
@@ -291,7 +292,7 @@ export function DraggableContentCard({
             )}
             {effectiveIsClient && content.created_at && (
               <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3 text-[#8b5cf6]" />
+                <Clock className="h-3 w-3 text-[var(--nova-accent-primary)]" />
                 <span>Creado {formatDate(content.created_at)}</span>
               </div>
             )}
@@ -301,7 +302,7 @@ export function DraggableContentCard({
             {(content as any).hooks_count > 1 && (
               <Badge
                 variant="outline"
-                className="text-xs gap-1 border-white/20 text-[#cbd5e1]"
+                className="text-xs gap-1 border-[var(--nova-border-subtle)] text-[var(--nova-text-secondary)]"
               >
                 <Video className="h-3 w-3" />
                 {(content as any).hooks_count}{" "}
@@ -335,7 +336,7 @@ export function DraggableContentCard({
             {!effectiveIsClient && (content as any).drive_url && (
               <Badge
                 variant="outline"
-                className="text-xs gap-1 border-blue-500/50 text-blue-400"
+                className="text-xs gap-1 border-[var(--nova-info)] text-[var(--nova-info)]"
               >
                 <FileVideo className="h-3 w-3" />
                 Material crudo
@@ -350,9 +351,9 @@ export function DraggableContentCard({
           (canStartEditing || canMarkDelivered) ||
           canClientApprove) && (
           <div
-            className="px-4 py-3 mt-auto border-t border-white/5 flex flex-wrap gap-2"
+            className="px-4 py-3 mt-auto border-t border-[var(--nova-border-subtle)] flex flex-wrap gap-2"
             style={{
-              background: "rgba(255,255,255,0.02)",
+              background: "var(--nova-glass-bg-light)",
               backdropFilter: "blur(8px)",
             }}
           >

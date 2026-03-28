@@ -76,7 +76,7 @@ export function LiveSchedulePicker({
             onSelect={(d) => onDateChange(d || null)}
             disabled={(d) => d < minDate}
             locale={es}
-            className="rounded-md border"
+            className="rounded-sm border"
           />
         </div>
 
@@ -143,7 +143,7 @@ export function LiveSchedulePicker({
           </div>
 
           {date && timeStart && (
-            <div className="p-3 rounded-lg bg-muted/50">
+            <div className="p-3 rounded-sm bg-muted/50">
               <p className="text-sm text-muted-foreground">
                 El live está programado para:
               </p>

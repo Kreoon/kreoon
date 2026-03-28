@@ -92,7 +92,7 @@ export function PaymentMethodCard({
           {/* Icon */}
           <div
             className={cn(
-              'p-3 rounded-xl',
+              'p-3 rounded-sm',
               method.is_default
                 ? 'bg-[hsl(270,100%,60%,0.15)]'
                 : 'bg-[hsl(270,100%,60%,0.08)]'

@@ -247,7 +247,7 @@ export function TypingIndicator({ state, customMessage }: TypingIndicatorProps) 
       <div
         className={cn(
           'flex justify-start',
-          'px-4 py-3 rounded-xl',
+          'px-4 py-3 rounded-sm',
           'bg-violet-500/10 border border-violet-500/20',
           'max-w-[200px]'
         )}

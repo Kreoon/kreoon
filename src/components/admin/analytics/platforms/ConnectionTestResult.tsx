@@ -9,7 +9,7 @@ interface ConnectionTestResultProps {
 export function ConnectionTestResultDisplay({ result, testing }: ConnectionTestResultProps) {
   if (testing) {
     return (
-      <div className="flex items-center gap-2 rounded-lg bg-gray-800/50 border border-gray-700/50 p-3 mt-3">
+      <div className="flex items-center gap-2 rounded-sm bg-gray-800/50 border border-gray-700/50 p-3 mt-3">
         <Loader2 className="h-4 w-4 animate-spin text-purple-400 shrink-0" />
         <span className="text-sm text-foreground/80">Probando conexión...</span>
       </div>
@@ -20,7 +20,7 @@ export function ConnectionTestResultDisplay({ result, testing }: ConnectionTestR
 
   return (
     <div
-      className={`flex items-start gap-2 rounded-lg p-3 mt-3 border ${
+      className={`flex items-start gap-2 rounded-sm p-3 mt-3 border ${
         result.success
           ? 'bg-green-500/10 border-green-500/30'
           : 'bg-red-500/10 border-red-500/30'

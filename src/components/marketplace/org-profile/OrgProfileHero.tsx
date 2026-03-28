@@ -39,11 +39,11 @@ export function OrgProfileHero({ org, accentColor, onContact }: OrgProfileHeroPr
             <img
               src={org.logo_url}
               alt={displayName}
-              className="h-20 w-20 md:h-24 md:w-24 rounded-2xl border-4 border-[#0a0a0f] object-cover shadow-xl bg-gray-900"
+              className="h-20 w-20 md:h-24 md:w-24 rounded-sm border-4 border-[#0a0a0f] object-cover shadow-xl bg-gray-900"
             />
           ) : (
             <div
-              className="h-20 w-20 md:h-24 md:w-24 rounded-2xl border-4 border-[#0a0a0f] flex items-center justify-center shadow-xl"
+              className="h-20 w-20 md:h-24 md:w-24 rounded-sm border-4 border-[#0a0a0f] flex items-center justify-center shadow-xl"
               style={{ backgroundColor: `${accentColor}20` }}
             >
               <Building2 className="h-10 w-10" style={{ color: accentColor }} />

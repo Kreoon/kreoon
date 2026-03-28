@@ -25,7 +25,7 @@ export function HiringStepSummary({
   return (
     <div className="space-y-6">
       {/* Creator mini-card */}
-      <div className="bg-white/5 rounded-xl p-4 flex items-center gap-4">
+      <div className="bg-white/5 rounded-sm p-4 flex items-center gap-4">
         {creator.avatar_url ? (
           <img
             src={creator.avatar_url}
@@ -63,7 +63,7 @@ export function HiringStepSummary({
             Editar
           </button>
         </div>
-        <div className="bg-white/5 rounded-lg p-4 space-y-3 text-sm">
+        <div className="bg-white/5 rounded-sm p-4 space-y-3 text-sm">
           <div>
             <span className="text-gray-500">Producto:</span>
             <span className="text-white ml-2">{brief.product_name}</span>
@@ -118,7 +118,7 @@ export function HiringStepSummary({
             Cambiar
           </button>
         </div>
-        <div className="bg-white/5 rounded-lg p-4 space-y-2">
+        <div className="bg-white/5 rounded-sm p-4 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-white font-semibold">{selectedPackage.name}</span>
             <div className="flex items-center gap-1">

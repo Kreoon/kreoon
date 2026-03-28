@@ -193,7 +193,7 @@ export function PreviewPanel({
       <CardContent className="space-y-3">
         <div className={cn('mx-auto', containerMaxWidth)}>
           {/* Mock post layout */}
-          <div className="bg-card rounded-lg overflow-hidden border">
+          <div className="bg-card rounded-sm overflow-hidden border">
             {/* Header */}
             <div className="flex items-center gap-2 p-2.5 border-b">
               <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500" />

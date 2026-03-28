@@ -105,12 +105,12 @@ export function ProductShowcase({
 
           {/* Stats */}
           <div className="grid grid-cols-2 gap-4 mt-3">
-            <div className="rounded-lg bg-green-500/10 p-3 text-center">
+            <div className="rounded-sm bg-green-500/10 p-3 text-center">
               <DollarSign className="h-4 w-4 mx-auto text-green-400 mb-1" />
               <p className="text-lg font-bold text-green-400">${totalRevenue.toFixed(0)}</p>
               <p className="text-xs text-muted-foreground">Ventas totales</p>
             </div>
-            <div className="rounded-lg bg-blue-500/10 p-3 text-center">
+            <div className="rounded-sm bg-blue-500/10 p-3 text-center">
               <Package className="h-4 w-4 mx-auto text-blue-400 mb-1" />
               <p className="text-lg font-bold text-blue-400">{totalSold}</p>
               <p className="text-xs text-muted-foreground">Unidades vendidas</p>
@@ -134,7 +134,7 @@ export function ProductShowcase({
             <div className="space-y-3">
               {/* Featured product highlight */}
               {featuredProduct && (
-                <div className="rounded-lg border-2 border-yellow-500/50 bg-yellow-500/10 p-3">
+                <div className="rounded-sm border-2 border-yellow-500/50 bg-yellow-500/10 p-3">
                   <div className="flex items-center gap-2 mb-2">
                     <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
                     <span className="text-sm font-medium text-yellow-400">Producto Destacado</span>
@@ -290,9 +290,9 @@ function ProductCard({
       : 100;
 
   return (
-    <div className="flex gap-3 rounded-lg border p-3">
+    <div className="flex gap-3 rounded-sm border p-3">
       {/* Product image */}
-      <div className="h-16 w-16 shrink-0 rounded-lg bg-muted overflow-hidden">
+      <div className="h-16 w-16 shrink-0 rounded-sm bg-muted overflow-hidden">
         {product.image_url ? (
           <img
             src={product.image_url}

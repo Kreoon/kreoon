@@ -144,6 +144,7 @@ export interface ClientPackage {
   payment_status: PaymentStatus;
   paid_amount: number;
   paid_at: string | null;
+  payment_due_date: string | null;
   notes: string | null;
   is_active: boolean;
   created_at: string;

@@ -186,7 +186,7 @@ export function FeaturedVideoUploader({
 
           <div className="space-y-4">
             {previewUrl ? (
-              <div className="relative aspect-video rounded-lg overflow-hidden bg-black">
+              <div className="relative aspect-video rounded-sm overflow-hidden bg-black">
                 <video
                   src={previewUrl}
                   controls
@@ -207,7 +207,7 @@ export function FeaturedVideoUploader({
               </div>
             ) : (
               <div
-                className="aspect-video rounded-lg border-2 border-dashed border-social-border hover:border-social-accent/50 transition-colors cursor-pointer flex flex-col items-center justify-center gap-4 bg-social-muted/30"
+                className="aspect-video rounded-sm border-2 border-dashed border-social-border hover:border-social-accent/50 transition-colors cursor-pointer flex flex-col items-center justify-center gap-4 bg-social-muted/30"
                 onClick={() => inputRef.current?.click()}
               >
                 <Upload className="h-12 w-12 text-social-muted-foreground" />

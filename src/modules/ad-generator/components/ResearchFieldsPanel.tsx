@@ -218,7 +218,7 @@ export function ResearchFieldsPanel({ parsedResearch, brandDNA, values, onChange
     <div className="space-y-4">
       {/* Research variables */}
       {researchVisible.length > 0 && (
-        <div className="rounded-md border border-border/50 bg-muted/10 p-4 space-y-3">
+        <div className="rounded-sm border border-border/50 bg-muted/10 p-4 space-y-3">
           <div className="flex items-center gap-2 mb-1">
             <FlaskConical className="h-3.5 w-3.5 text-green-600" />
             <span className="text-xs font-semibold text-foreground">Variables de investigacion</span>
@@ -232,7 +232,7 @@ export function ResearchFieldsPanel({ parsedResearch, brandDNA, values, onChange
 
       {/* DNA variables */}
       {dnaVisible.length > 0 && (
-        <div className="rounded-md border border-purple-500/20 bg-purple-500/5 p-4 space-y-3">
+        <div className="rounded-sm border border-purple-500/20 bg-purple-500/5 p-4 space-y-3">
           <div className="flex items-center gap-2 mb-1">
             <Dna className="h-3.5 w-3.5 text-purple-600" />
             <span className="text-xs font-semibold text-foreground">Variables de ADN de marca</span>

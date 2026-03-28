@@ -335,7 +335,7 @@ export function ClientDNADisplay({ dna, onUpdate, onDelete }: ClientDNADisplayPr
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+          <div className="h-8 w-8 rounded-sm bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
             <Dna className="h-4 w-4 text-white" />
           </div>
           <div>
@@ -412,13 +412,13 @@ export function ClientDNADisplay({ dna, onUpdate, onDelete }: ClientDNADisplayPr
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
               {emotionalData.overall_mood && (
-                <div className="bg-background/50 rounded-md p-2 border border-border/30">
+                <div className="bg-background/50 rounded-sm p-2 border border-border/30">
                   <span className="text-muted-foreground block">Estado</span>
                   <span className="font-medium capitalize">{emotionalData.overall_mood}</span>
                 </div>
               )}
               {emotionalData.confidence_level != null && (
-                <div className="bg-background/50 rounded-md p-2 border border-border/30">
+                <div className="bg-background/50 rounded-sm p-2 border border-border/30">
                   <span className="text-muted-foreground block">Confianza</span>
                   <div className="flex items-center gap-1.5">
                     <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -433,11 +433,11 @@ export function ClientDNADisplay({ dna, onUpdate, onDelete }: ClientDNADisplayPr
               )}
               {emotionalData.communication_style && (
                 <>
-                  <div className="bg-background/50 rounded-md p-2 border border-border/30">
+                  <div className="bg-background/50 rounded-sm p-2 border border-border/30">
                     <span className="text-muted-foreground block">Ritmo</span>
                     <span className="font-medium capitalize">{emotionalData.communication_style.pace}</span>
                   </div>
-                  <div className="bg-background/50 rounded-md p-2 border border-border/30">
+                  <div className="bg-background/50 rounded-sm p-2 border border-border/30">
                     <span className="text-muted-foreground block">Energia</span>
                     <span className="font-medium capitalize">{emotionalData.communication_style.energy}</span>
                   </div>
@@ -473,7 +473,7 @@ export function ClientDNADisplay({ dna, onUpdate, onDelete }: ClientDNADisplayPr
             </div>
 
             {emotionalData.content_recommendations && (
-              <div className="bg-background/50 rounded-md p-2 border border-border/30 space-y-1.5">
+              <div className="bg-background/50 rounded-sm p-2 border border-border/30 space-y-1.5">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Recomendaciones para contenido</span>
                 {emotionalData.content_recommendations.suggested_tone && (
                   <p className="text-xs">

@@ -540,7 +540,7 @@ export default function BrandsCRM() {
             <Card key={i}>
               <CardContent className="pt-6">
                 <div className="flex items-start gap-4">
-                  <Skeleton className="h-16 w-16 rounded-xl" />
+                  <Skeleton className="h-16 w-16 rounded-sm" />
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-5 w-32" />
                     <Skeleton className="h-4 w-24" />
@@ -579,10 +579,10 @@ export default function BrandsCRM() {
                     <img
                       src={brand.logo_url}
                       alt={brand.name}
-                      className="h-16 w-16 rounded-xl object-cover"
+                      className="h-16 w-16 rounded-sm object-cover"
                     />
                   ) : (
-                    <div className="h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <div className="h-16 w-16 rounded-sm bg-primary/10 flex items-center justify-center">
                       <Building2 className="h-8 w-8 text-primary" />
                     </div>
                   )}

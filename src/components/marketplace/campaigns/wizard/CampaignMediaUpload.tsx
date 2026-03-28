@@ -107,11 +107,11 @@ export function CampaignMediaUpload({
 
   if (currentUrl) {
     return (
-      <div className={cn('relative rounded-xl overflow-hidden', className)}>
+      <div className={cn('relative rounded-sm overflow-hidden', className)}>
         {isVideo ? (
           <div className="relative aspect-video bg-gray-900">
             <video src={currentUrl} controls className="w-full h-full object-cover" />
-            <div className="absolute top-2 left-2 bg-black/60 px-2 py-1 rounded-lg">
+            <div className="absolute top-2 left-2 bg-black/60 px-2 py-1 rounded-sm">
               <Video className="w-4 h-4 text-white" />
             </div>
           </div>
@@ -146,7 +146,7 @@ export function CampaignMediaUpload({
         onDrop={handleDrop}
         onClick={() => !uploading && fileInputRef.current?.click()}
         className={cn(
-          'relative aspect-video border-2 border-dashed rounded-xl cursor-pointer transition-all',
+          'relative aspect-video border-2 border-dashed rounded-sm cursor-pointer transition-all',
           'flex flex-col items-center justify-center gap-3',
           dragOver
             ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
@@ -188,7 +188,7 @@ export function CampaignMediaUpload({
             </div>
             <button
               type="button"
-              className="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors"
+              className="px-4 py-2 bg-purple-600 text-white text-sm rounded-sm hover:bg-purple-700 transition-colors"
             >
               <Upload className="w-4 h-4 inline mr-2" />
               Seleccionar archivo

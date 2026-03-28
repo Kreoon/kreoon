@@ -31,6 +31,7 @@ import { FollowButton } from '@/components/social/FollowButton';
 import { FeaturedVideoUploader } from '@/components/social/FeaturedVideoUploader';
 import { FounderBadge, FounderAvatarRing } from '@/components/social/FounderBadge';
 import { getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
+import { uploadPortfolioImage } from '@/lib/bunnyUpload';
 
 // FeedItem interface for modal compatibility
 interface FeedItem {
@@ -477,38 +478,38 @@ export const PortfolioProfile = memo(function PortfolioProfile({
       {/* Content Tabs - Glassmorphism */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 mt-8">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-          <TabsList className="w-full justify-start glass-social rounded-xl p-1 h-auto gap-1 overflow-x-auto border border-white/10">
+          <TabsList className="w-full justify-start glass-social rounded-sm p-1 h-auto gap-1 overflow-x-auto border border-white/10">
             <TabsTrigger 
               value="portfolio" 
-              className="rounded-lg px-3 py-2 data-[state=active]:bg-social-accent data-[state=active]:text-white data-[state=active]:shadow-lg text-social-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-social-foreground hover:bg-white/5"
+              className="rounded-sm px-3 py-2 data-[state=active]:bg-social-accent data-[state=active]:text-white data-[state=active]:shadow-lg text-social-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-social-foreground hover:bg-white/5"
             >
               <FolderOpen className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Portafolio</span>
             </TabsTrigger>
             <TabsTrigger 
               value="posts" 
-              className="rounded-lg px-3 py-2 data-[state=active]:bg-social-accent data-[state=active]:text-white data-[state=active]:shadow-lg text-social-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-social-foreground hover:bg-white/5"
+              className="rounded-sm px-3 py-2 data-[state=active]:bg-social-accent data-[state=active]:text-white data-[state=active]:shadow-lg text-social-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-social-foreground hover:bg-white/5"
             >
               <Grid className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Posts</span>
             </TabsTrigger>
             <TabsTrigger 
               value="videos"
-              className="rounded-lg px-3 py-2 data-[state=active]:bg-social-accent data-[state=active]:text-white data-[state=active]:shadow-lg text-social-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-social-foreground hover:bg-white/5"
+              className="rounded-sm px-3 py-2 data-[state=active]:bg-social-accent data-[state=active]:text-white data-[state=active]:shadow-lg text-social-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-social-foreground hover:bg-white/5"
             >
               <Play className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Videos</span>
             </TabsTrigger>
             <TabsTrigger 
               value="badges"
-              className="rounded-lg px-3 py-2 data-[state=active]:bg-social-accent data-[state=active]:text-white data-[state=active]:shadow-lg text-social-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-social-foreground hover:bg-white/5"
+              className="rounded-sm px-3 py-2 data-[state=active]:bg-social-accent data-[state=active]:text-white data-[state=active]:shadow-lg text-social-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-social-foreground hover:bg-white/5"
             >
               <Star className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Logros</span>
             </TabsTrigger>
             <TabsTrigger 
               value="about"
-              className="rounded-lg px-3 py-2 data-[state=active]:bg-social-accent data-[state=active]:text-white data-[state=active]:shadow-lg text-social-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-social-foreground hover:bg-white/5"
+              className="rounded-sm px-3 py-2 data-[state=active]:bg-social-accent data-[state=active]:text-white data-[state=active]:shadow-lg text-social-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-social-foreground hover:bg-white/5"
             >
               <Briefcase className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Sobre mí</span>
@@ -1002,7 +1003,7 @@ function PresentationVideoSection({
   }
 
   return (
-    <div className="relative aspect-video rounded-xl overflow-hidden bg-black">
+    <div className="relative aspect-video rounded-sm overflow-hidden bg-black">
       <video
         src={videoUrl}
         poster={thumbnailUrl}
@@ -1049,7 +1050,7 @@ function VideoGallery({ userId, onSelect }: { userId: string; onSelect: (items: 
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="aspect-[9/16] rounded-lg" />
+          <Skeleton key={i} className="aspect-[9/16] rounded-sm" />
         ))}
       </div>
     );
@@ -1298,23 +1299,14 @@ function UploadContentDialog({ open, onOpenChange, userId }: { open: boolean; on
           description: 'El video se está procesando para mejor compatibilidad.'
         });
       } else {
-        // Upload image to Supabase storage (images don't need Bunny processing)
-        const ext = selectedFile.name.split('.').pop();
-        const fileName = `${userId}/${Date.now()}.${ext}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('portfolio')
-          .upload(fileName, selectedFile);
-
-        if (uploadError) throw uploadError;
-
-        const { data: urlData } = supabase.storage.from('portfolio').getPublicUrl(fileName);
+        // Upload image to Bunny CDN (WebP optimized, max 1200px width)
+        const result = await uploadPortfolioImage(selectedFile, userId);
 
         const { error: insertError } = await supabase
           .from('portfolio_posts')
           .insert({
             user_id: userId,
-            media_url: urlData.publicUrl,
+            media_url: result.cdnUrl,
             media_type: 'image',
             post_type: postType,
             caption: caption || null,
@@ -1372,7 +1364,7 @@ function UploadContentDialog({ open, onOpenChange, userId }: { open: boolean; on
           <div
             onClick={() => fileInputRef.current?.click()}
             className={cn(
-              "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
+              "border-2 border-dashed rounded-sm p-8 text-center cursor-pointer transition-colors",
               preview ? "border-primary" : "border-muted-foreground/25 hover:border-primary/50"
             )}
           >
@@ -1629,7 +1621,7 @@ function ProfileSkeleton() {
         </div>
       </div>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 mt-8">
-        <Skeleton className="h-16 w-full rounded-xl" />
+        <Skeleton className="h-16 w-full rounded-sm" />
       </div>
     </div>
   );

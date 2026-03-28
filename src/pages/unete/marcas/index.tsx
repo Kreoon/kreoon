@@ -71,7 +71,7 @@ export default function MarcasLanding() {
 
           <button
             onClick={scrollToForm}
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold text-lg transition-all hover:scale-[1.02]"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-sm bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold text-lg transition-all hover:scale-[1.02]"
           >
             Crear cuenta gratis <ArrowRight className="w-5 h-5" />
           </button>
@@ -89,7 +89,7 @@ export default function MarcasLanding() {
                 transition={{ delay: index * 0.1 }}
                 className="text-center p-4"
               >
-                <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                <div className="w-12 h-12 mx-auto mb-3 rounded-sm bg-blue-500/20 flex items-center justify-center">
                   <Icon className="w-6 h-6 text-blue-400" />
                 </div>
                 <h3 className="font-medium mb-1">{benefit.title}</h3>

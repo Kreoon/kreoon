@@ -297,7 +297,7 @@ export default function LiveBroadcastPage() {
 
               {/* Quick stats */}
               {status === 'live' && (
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <Card>
                     <CardContent className="p-4 text-center">
                       <Users className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />

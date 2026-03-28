@@ -142,7 +142,7 @@ export function CustomAIApiSettings({ organizationId }: CustomAIApiSettingsProps
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-primary/10">
                           {PROVIDER_ICONS[provider.key] ?? <Sparkles className="h-4 w-4" />}
                         </div>
                         <span className="font-medium">{provider.label}</span>

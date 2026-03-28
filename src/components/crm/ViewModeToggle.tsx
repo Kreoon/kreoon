@@ -19,7 +19,7 @@ export function ViewModeToggle({ value, onChange, className }: ViewModeTogglePro
   return (
     <div
       className={cn(
-        'inline-flex items-center rounded-lg border border-white/10 bg-white/5 p-0.5',
+        'inline-flex items-center rounded-sm border border-white/10 bg-white/5 p-0.5',
         className,
       )}
     >
@@ -30,7 +30,7 @@ export function ViewModeToggle({ value, onChange, className }: ViewModeTogglePro
           onClick={() => onChange(key)}
           title={label}
           className={cn(
-            'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all',
+            'flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm text-xs font-medium transition-all',
             value === key
               ? 'bg-[#8b5cf6] text-white shadow-sm'
               : 'text-white/40 hover:text-white/70 hover:bg-white/5',

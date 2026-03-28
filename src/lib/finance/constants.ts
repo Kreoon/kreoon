@@ -96,7 +96,7 @@ export type AIActionKey = keyof typeof AI_TOKEN_COSTS;
 /** Default cost when action is not in the map */
 export const AI_TOKEN_DEFAULT_COST = 40;
 
-/** Approximate value: 1 Kreoon Token ≈ $0.01 USD */
+/** Approximate value: 1 Token IA ≈ $0.01 USD */
 export const TOKEN_USD_VALUE = 0.01;
 
 // ═══════════════════════════════════════════════════════════════
@@ -438,9 +438,9 @@ export const REFERRAL_TIER_ORDER: ReferralTierKey[] = [
 // ═══════════════════════════════════════════════════════════════
 
 export const REFERRAL_BILATERAL = {
-  /** Kreoon Coins awarded to the referred user on signup */
+  /** Tokens IA awarded to the referred user on signup */
   referred_welcome_coins: 25,
-  /** Kreoon Coins awarded to referrer when referral qualifies */
+  /** Tokens IA awarded to referrer when referral qualifies */
   referrer_qualification_coins: 50,
   /** Default discount % for the referred user's first subscription */
   referred_discount_percent: 30,
@@ -531,14 +531,14 @@ export function calculateBuyoutPrice(annualLicensePrice: number): number {
 export const SHARE_MESSAGES = {
   talent: {
     whatsapp:
-      "Quiero invitarte a KREOON, la plataforma para creadores de contenido. Usa mi link y recibe 30% OFF + 25 Kreoon Coins: {URL}",
+      "Quiero invitarte a KREOON, la plataforma para creadores de contenido. Usa mi link y recibe 30% OFF + 25 Tokens IA: {URL}",
     twitter:
       "Si eres creador de contenido, tienes que conocer @kreoon_co. Registrate con mi link y recibe beneficios: {URL}",
     linkedin:
       "Si trabajas en creacion de contenido, te recomiendo KREOON. Registrate con mi link para recibir 30% de descuento: {URL}",
     email_subject: "Te invito a KREOON - beneficios exclusivos",
     email_body:
-      "Hola,\n\nQuiero invitarte a KREOON, la plataforma todo-en-uno para creadores. Al registrarte con mi link recibiras 30% de descuento en tu primera suscripcion + 25 Kreoon Coins.\n\nRegistrate aqui: {URL}\n\nNos vemos dentro!",
+      "Hola,\n\nQuiero invitarte a KREOON, la plataforma todo-en-uno para creadores. Al registrarte con mi link recibiras 30% de descuento en tu primera suscripcion + 25 Tokens IA.\n\nRegistrate aqui: {URL}\n\nNos vemos dentro!",
   },
   brand: {
     whatsapp:

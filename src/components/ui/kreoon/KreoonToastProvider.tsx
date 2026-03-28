@@ -18,7 +18,7 @@ const KREOON_TOAST_VISIBLE = 3;
 const KREOON_TOAST_GAP = 12;
 
 const toastBase =
-  "kreoon-toast !bg-kreoon-bg-card backdrop-blur-md border shadow-lg rounded-lg " +
+  "kreoon-toast !bg-kreoon-bg-card backdrop-blur-md border shadow-lg rounded-sm " +
   "flex flex-row items-start gap-3 p-4 min-w-[320px] max-w-[calc(100vw-2rem)] " +
   "[&[data-type=success]]:border-green-500/50 [&[data-type=success]]:[--kreoon-progress:#22c55e] " +
   "[&[data-type=error]]:border-red-500/50 [&[data-type=error]]:[--kreoon-progress:#ef4444] " +

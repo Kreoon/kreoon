@@ -251,10 +251,10 @@ export function UserPlansManagement() {
       <div className="space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-24 rounded-xl" />
+            <Skeleton key={i} className="h-24 rounded-sm" />
           ))}
         </div>
-        <Skeleton className="h-96 rounded-xl" />
+        <Skeleton className="h-96 rounded-sm" />
       </div>
     );
   }
@@ -266,7 +266,7 @@ export function UserPlansManagement() {
         <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/20">
+              <div className="p-2 rounded-sm bg-primary/20">
                 <Users className="h-5 w-5 text-primary" />
               </div>
               <div>
@@ -280,7 +280,7 @@ export function UserPlansManagement() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-muted">
+              <div className="p-2 rounded-sm bg-muted">
                 <User className="h-5 w-5 text-muted-foreground" />
               </div>
               <div>
@@ -294,7 +294,7 @@ export function UserPlansManagement() {
         <Card className="border-primary/20">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/20">
+              <div className="p-2 rounded-sm bg-primary/20">
                 <Building2 className="h-5 w-5 text-primary" />
               </div>
               <div>
@@ -308,7 +308,7 @@ export function UserPlansManagement() {
         <Card className="border-success/20 bg-gradient-to-br from-success/10 to-success/5">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-success/20">
+              <div className="p-2 rounded-sm bg-success/20">
                 <DollarSign className="h-5 w-5 text-success" />
               </div>
               <div>

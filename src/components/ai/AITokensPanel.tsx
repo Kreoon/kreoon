@@ -24,6 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { KreoonCard } from "@/components/ui/kreoon";
 import { useAITokens } from "@/hooks/useAITokens";
 import { useUnifiedTokens } from "@/hooks/useUnifiedTokens";
@@ -38,13 +39,19 @@ function formatTokens(n: number) {
 }
 
 interface AITokensPanelProps {
-  organizationId?: string;
+  organizationId?: string | null;
   variant?: "full" | "compact" | "header" | "modal";
   /** Para compact/header: abre el detalle en modal */
   onOpenModal?: () => void;
   /** Para variant=modal: control del diálogo */
   modalOpen?: boolean;
   onModalOpenChange?: (open: boolean) => void;
+  /** Modo solo lectura (oculta compra y API propia) - para clientes */
+  readonly?: boolean;
+  /** Permite alternar entre tokens personales y de la org (solo para admins) */
+  canSwitchContext?: boolean;
+  /** ID de la organización del usuario (necesario si canSwitchContext=true) */
+  userOrganizationId?: string;
 }
 
 export function AITokensPanel({
@@ -53,7 +60,18 @@ export function AITokensPanel({
   onOpenModal,
   modalOpen,
   onModalOpenChange,
+  readonly = false,
+  canSwitchContext = false,
+  userOrganizationId,
 }: AITokensPanelProps) {
+  // Estado para alternar entre tokens personales y de la org
+  const [viewingOrgTokens, setViewingOrgTokens] = useState(false);
+
+  // Determinar qué organizationId usar para los hooks
+  const effectiveOrgId = canSwitchContext && viewingOrgTokens && userOrganizationId
+    ? userOrganizationId
+    : organizationId;
+
   const {
     balance,
     transactions,
@@ -66,9 +84,9 @@ export function AITokensPanel({
     customApiEnabled,
     periodEndDate,
     refetch,
-  } = useAITokens(organizationId);
+  } = useAITokens(effectiveOrgId);
 
-  const { purchaseTokens, isPurchasing } = useUnifiedTokens(organizationId);
+  const { purchaseTokens, isPurchasing } = useUnifiedTokens(effectiveOrgId);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [purchasingPkg, setPurchasingPkg] = useState<string | null>(null);
 
@@ -99,7 +117,7 @@ export function AITokensPanel({
 
   if (customApiEnabled) {
     return (
-      <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm">
+      <div className="flex items-center gap-2 rounded-sm border border-primary/20 bg-primary/5 px-3 py-2 text-sm">
         <Key className="h-4 w-4 text-primary" />
         <span className="text-muted-foreground">API propia</span>
       </div>
@@ -112,8 +130,8 @@ export function AITokensPanel({
       <button
         type="button"
         onClick={onOpenModal}
-        className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm hover:bg-muted/50 transition-colors"
-        title="Kreoon Coins"
+        className="flex items-center gap-1.5 rounded-sm px-2 py-1.5 text-sm hover:bg-muted/50 transition-colors"
+        title="Tokens IA"
       >
         <Sparkles className="h-4 w-4 text-primary" />
         <span className="font-medium tabular-nums">{formatTokens(totalAvailable)}</span>
@@ -127,12 +145,12 @@ export function AITokensPanel({
       <button
         type="button"
         onClick={onOpenModal}
-        className="flex items-center gap-2 rounded-lg border border-border bg-card/50 px-3 py-2 hover:bg-muted/30 transition-colors"
+        className="flex items-center gap-2 rounded-sm border border-border bg-card/50 px-3 py-2 hover:bg-muted/30 transition-colors"
       >
         <Sparkles className="h-4 w-4 text-primary shrink-0" />
         <div className="flex flex-col items-start min-w-0">
           <span className="text-sm font-semibold tabular-nums leading-tight">
-            {formatTokens(totalAvailable)} coins
+            {formatTokens(totalAvailable)} tokens
           </span>
           <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
             <div
@@ -148,17 +166,36 @@ export function AITokensPanel({
   // Modal content (reutilizable)
   const panelContent = (
     <div className="space-y-6">
+      {/* 0. Toggle personal/org (solo para admins) */}
+      {canSwitchContext && userOrganizationId && (
+        <div className="flex items-center justify-center gap-3 p-2 rounded-lg bg-muted/50 border border-border">
+          <span className={`text-sm transition-colors ${!viewingOrgTokens ? "font-medium text-foreground" : "text-muted-foreground"}`}>
+            Mis tokens
+          </span>
+          <Switch
+            checked={viewingOrgTokens}
+            onCheckedChange={setViewingOrgTokens}
+            className="data-[state=checked]:bg-primary"
+          />
+          <span className={`text-sm transition-colors ${viewingOrgTokens ? "font-medium text-foreground" : "text-muted-foreground"}`}>
+            Tokens de la org
+          </span>
+        </div>
+      )}
+
       {/* 1. Header con balance */}
       <div>
-        <p className="text-sm text-muted-foreground mb-1">Balance actual</p>
-        <p className="text-3xl font-bold tabular-nums">{formatTokens(totalAvailable)} <span className="text-primary">Kreoon Coins</span></p>
+        <p className="text-sm text-muted-foreground mb-1">
+          {canSwitchContext && viewingOrgTokens ? "Balance de la organización" : "Balance actual"}
+        </p>
+        <p className="text-3xl font-bold tabular-nums">{formatTokens(totalAvailable)} <span className="text-primary">Tokens IA</span></p>
         <div className="mt-2">
           <Progress value={100 - usedPercent} className="h-2" />
           <p className="text-xs text-muted-foreground mt-1">
-            {formatTokens(used)} de {formatTokens(monthlyIncluded)} coins mensuales usados
+            {formatTokens(used)} de {formatTokens(monthlyIncluded)} tokens mensuales usados
           </p>
           {purchased > 0 && (
-            <p className="text-xs text-primary mt-0.5">+ {formatTokens(purchased)} coins extra</p>
+            <p className="text-xs text-primary mt-0.5">+ {formatTokens(purchased)} tokens extra</p>
           )}
         </div>
       </div>
@@ -191,34 +228,42 @@ export function AITokensPanel({
         </div>
       )}
 
-      {/* 4. Alerta coins bajos */}
+      {/* 4. Alerta tokens bajos */}
       {isLowTokens && !isOutOfTokens && (
         <KreoonCard className="p-4 border-amber-500/30 bg-amber-500/10">
           <div className="flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="font-medium text-amber-800 dark:text-amber-200">Te quedan pocos Kreoon Coins</p>
-              <div className="flex gap-2 mt-2">
-                <Button size="sm" onClick={() => handlePurchase("popular")} disabled={isPurchasing}>
-                  <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
-                  {isPurchasing ? "Procesando..." : "Comprar más"}
-                </Button>
-                <Button size="sm" variant="outline" asChild>
-                  <Link to="/settings?section=ai_settings&tab=providers&subTab=custom-api">
-                    <Key className="h-3.5 w-3.5 mr-1.5" />
-                    Conectar tu API
-                  </Link>
-                </Button>
-              </div>
+              <p className="font-medium text-amber-800 dark:text-amber-200">Te quedan pocos Tokens IA</p>
+              {!readonly && (
+                <div className="flex gap-2 mt-2">
+                  <Button size="sm" onClick={() => handlePurchase("popular")} disabled={isPurchasing}>
+                    <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+                    {isPurchasing ? "Procesando..." : "Comprar más"}
+                  </Button>
+                  <Button size="sm" variant="outline" asChild>
+                    <Link to="/settings?section=ai_settings&tab=providers&subTab=custom-api">
+                      <Key className="h-3.5 w-3.5 mr-1.5" />
+                      Conectar tu API
+                    </Link>
+                  </Button>
+                </div>
+              )}
+              {readonly && (
+                <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                  Contacta al administrador para obtener más tokens.
+                </p>
+              )}
             </div>
           </div>
         </KreoonCard>
       )}
 
-      {/* 5. Comprar Kreoon Coins extra */}
+      {/* 5. Comprar Tokens IA extra */}
+      {!readonly && (
       <div>
-        <p className="text-sm font-medium mb-3">Comprar Kreoon Coins extra</p>
-        <p className="text-xs text-muted-foreground mb-3">Los Kreoon Coins extra no expiran</p>
+        <p className="text-sm font-medium mb-3">Comprar Tokens IA extra</p>
+        <p className="text-xs text-muted-foreground mb-3">Los Tokens IA extra no expiran</p>
         <div className="grid gap-2 sm:grid-cols-3">
           {TOKEN_PACKAGES.map((pkg) => (
             <KreoonCard
@@ -232,21 +277,24 @@ export function AITokensPanel({
                 </span>
               )}
               <p className="text-xl font-bold tabular-nums mt-1">{formatTokens(pkg.tokens)}</p>
-              <p className="text-sm text-muted-foreground">coins</p>
+              <p className="text-sm text-muted-foreground">tokens</p>
               <p className="text-lg font-semibold mt-2">${pkg.price}</p>
             </KreoonCard>
           ))}
         </div>
       </div>
+      )}
 
       {/* 6. Link API propia */}
-      <Button variant="outline" className="w-full" asChild>
-        <Link to="/settings?section=ai_settings&tab=providers&subTab=custom-api">
-          <Key className="h-4 w-4 mr-2" />
-          Usar mi propia API
-          <ArrowRight className="h-4 w-4 ml-2" />
-        </Link>
-      </Button>
+      {!readonly && (
+        <Button variant="outline" className="w-full" asChild>
+          <Link to="/settings?section=ai_settings&tab=providers&subTab=custom-api">
+            <Key className="h-4 w-4 mr-2" />
+            Usar mi propia API
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Link>
+        </Button>
+      )}
 
       {/* 7. Historial (collapsible) */}
       <Collapsible open={historyOpen} onOpenChange={setHistoryOpen}>
@@ -268,7 +316,7 @@ export function AITokensPanel({
               transactions.slice(0, 10).map((t) => (
                 <div
                   key={t.id}
-                  className="flex items-center justify-between py-2 px-2 rounded-md text-sm hover:bg-muted/50"
+                  className="flex items-center justify-between py-2 px-2 rounded-sm text-sm hover:bg-muted/50"
                 >
                   <div>
                     <span className="text-muted-foreground">
@@ -297,11 +345,11 @@ export function AITokensPanel({
   if (variant === "modal") {
     return (
       <Dialog open={modalOpen} onOpenChange={onModalOpenChange ?? (() => {})}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-md max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
-              Kreoon Coins
+              Tokens IA
             </DialogTitle>
           </DialogHeader>
           {panelContent}
@@ -315,7 +363,7 @@ export function AITokensPanel({
     <KreoonCard className="p-4" glow>
       <div className="flex items-center gap-2 mb-4">
         <Sparkles className="h-5 w-5 text-primary" />
-        <h3 className="font-semibold">Kreoon Coins</h3>
+        <h3 className="font-semibold">Tokens IA</h3>
       </div>
       {panelContent}
     </KreoonCard>
@@ -326,9 +374,18 @@ export function AITokensPanel({
 export function AITokensPanelTrigger({
   organizationId,
   variant = "compact",
+  readonly = false,
+  canSwitchContext = false,
+  userOrganizationId,
 }: {
   organizationId?: string | null;
   variant?: "compact" | "header";
+  /** Modo solo lectura (oculta compra y API propia) - para clientes */
+  readonly?: boolean;
+  /** Permite alternar entre tokens personales y de la org (solo para admins) */
+  canSwitchContext?: boolean;
+  /** ID de la organización del usuario (necesario si canSwitchContext=true) */
+  userOrganizationId?: string;
 }) {
   const [modalOpen, setModalOpen] = useState(false);
   return (
@@ -337,12 +394,18 @@ export function AITokensPanelTrigger({
         organizationId={organizationId}
         variant={variant}
         onOpenModal={() => setModalOpen(true)}
+        readonly={readonly}
+        canSwitchContext={canSwitchContext}
+        userOrganizationId={userOrganizationId}
       />
       <AITokensPanel
         organizationId={organizationId}
         variant="modal"
         modalOpen={modalOpen}
         onModalOpenChange={setModalOpen}
+        readonly={readonly}
+        canSwitchContext={canSwitchContext}
+        userOrganizationId={userOrganizationId}
       />
     </>
   );
@@ -369,12 +432,12 @@ export function AITokensOutModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-amber-600">
             <AlertTriangle className="h-5 w-5" />
-            Sin Kreoon Coins disponibles
+            Sin Tokens IA disponibles
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <p className="text-muted-foreground">
-            Te has quedado sin Kreoon Coins. Compra más coins o conecta tu propia API para continuar.
+            Te has quedado sin Tokens IA. Compra más tokens o conecta tu propia API para continuar.
           </p>
           <div className="flex flex-col gap-2">
             <Button asChild>
@@ -386,7 +449,7 @@ export function AITokensOutModal({
             <Button variant="outline" asChild>
               <Link to="/settings" onClick={() => onOpenChange(false)}>
                 <ShoppingCart className="h-4 w-4 mr-2" />
-                Comprar Kreoon Coins
+                Comprar Tokens IA
               </Link>
             </Button>
           </div>

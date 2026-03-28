@@ -1,4 +1,4 @@
-import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { LazyRichTextEditor as RichTextEditor } from '@/components/ui/lazy-rich-text-editor';
 import { RichTextViewer } from '@/components/scripts/RichTextViewer';
 import { SectionCard } from '../../components/SectionCard';
 import { Scissors, Clock, Layers, Music } from 'lucide-react';
@@ -38,7 +38,7 @@ export function EditorSubTab({
             <RichTextViewer content={formData.editor_guidelines || ''} maxHeight="" />
           
           ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/30 rounded-lg">
+            <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/30 rounded-sm">
               <Scissors className="h-8 w-8 text-muted-foreground/50 mb-2" />
               <p className="text-muted-foreground text-sm">Sin indicaciones de edición</p>
             </div>
@@ -48,7 +48,7 @@ export function EditorSubTab({
 
       {/* Quick Reference Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-4 bg-muted/30 rounded-lg">
+        <div className="p-4 bg-muted/30 rounded-sm">
           <div className="flex items-center gap-2 mb-2">
             <Clock className="h-4 w-4 text-primary" />
             <span className="font-medium text-sm">Ritmo</span>
@@ -58,7 +58,7 @@ export function EditorSubTab({
           </p>
         </div>
 
-        <div className="p-4 bg-muted/30 rounded-lg">
+        <div className="p-4 bg-muted/30 rounded-sm">
           <div className="flex items-center gap-2 mb-2">
             <Layers className="h-4 w-4 text-primary" />
             <span className="font-medium text-sm">Overlays</span>
@@ -68,7 +68,7 @@ export function EditorSubTab({
           </p>
         </div>
 
-        <div className="p-4 bg-muted/30 rounded-lg">
+        <div className="p-4 bg-muted/30 rounded-sm">
           <div className="flex items-center gap-2 mb-2">
             <Music className="h-4 w-4 text-primary" />
             <span className="font-medium text-sm">Audio</span>

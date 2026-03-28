@@ -86,7 +86,7 @@ export function SeasonUrgencyBanner({ className, compact = false }: SeasonUrgenc
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className={cn(
-          'relative overflow-hidden rounded-lg p-3',
+          'relative overflow-hidden rounded-sm p-3',
           'bg-gradient-to-r',
           config.bg,
           'border',
@@ -97,7 +97,7 @@ export function SeasonUrgencyBanner({ className, compact = false }: SeasonUrgenc
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <div className={cn('p-1.5 rounded-md bg-background/50', config.text)}>
+            <div className={cn('p-1.5 rounded-sm bg-background/50', config.text)}>
               <UrgencyIcon className="w-4 h-4" />
             </div>
             <div>
@@ -124,7 +124,7 @@ export function SeasonUrgencyBanner({ className, compact = false }: SeasonUrgenc
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        'relative overflow-hidden rounded-xl',
+        'relative overflow-hidden rounded-sm',
         'bg-gradient-to-r',
         config.bg,
         'border',
@@ -159,7 +159,7 @@ export function SeasonUrgencyBanner({ className, compact = false }: SeasonUrgenc
               animate={urgency === 'critical' ? { scale: [1, 1.1, 1] } : {}}
               transition={{ duration: 1, repeat: Infinity }}
               className={cn(
-                'p-3 rounded-xl bg-background/50 backdrop-blur-sm',
+                'p-3 rounded-sm bg-background/50 backdrop-blur-sm',
                 'border',
                 config.border
               )}
@@ -191,7 +191,7 @@ export function SeasonUrgencyBanner({ className, compact = false }: SeasonUrgenc
           {/* Right side - Countdown */}
           <div className="flex items-center gap-4">
             <div className={cn(
-              'px-4 py-2 rounded-lg',
+              'px-4 py-2 rounded-sm',
               'bg-background/50 backdrop-blur-sm',
               'border',
               config.border

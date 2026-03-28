@@ -60,7 +60,7 @@ export function OnboardingWizard() {
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-sm bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
               <Shield className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -174,7 +174,7 @@ function OnboardingSplash() {
         <motion.div
           animate={{ scale: [1, 1.05, 1] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center"
+          className="w-20 h-20 mx-auto mb-6 rounded-sm bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center"
         >
           <Shield className="w-10 h-10 text-white" />
         </motion.div>

@@ -33,7 +33,7 @@ export function MetricCard({ label, value, change, format, icon: Icon, className
   const trendColor = change && change > 0 ? 'text-green-400' : change && change < 0 ? 'text-red-400' : 'text-muted-foreground';
 
   return (
-    <div className={cn('p-4 rounded-xl bg-card/50 border space-y-2', className)}>
+    <div className={cn('p-4 rounded-sm bg-card/50 border space-y-2', className)}>
       <div className="flex items-center justify-between">
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
         {Icon && <Icon className="w-4 h-4 text-muted-foreground" />}

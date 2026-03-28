@@ -50,7 +50,7 @@ export function WizardStepPublish({
       </div>
 
       {/* Completion summary */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6 space-y-4">
+      <div className="bg-white/5 rounded-sm border border-white/10 p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-white font-medium">Completitud del perfil</h3>
           <span className={cn(
@@ -94,7 +94,7 @@ export function WizardStepPublish({
       </div>
 
       {/* Profile preview card */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6 space-y-4">
+      <div className="bg-white/5 rounded-sm border border-white/10 p-6 space-y-4">
         <h3 className="text-white font-medium flex items-center gap-2">
           <Eye className="h-4 w-4" />
           Vista previa
@@ -133,16 +133,16 @@ export function WizardStepPublish({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 pt-2">
-          <div className="text-center p-2 bg-white/5 rounded-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+          <div className="text-center p-2 bg-white/5 rounded-sm">
             <p className="text-white font-semibold">{portfolioCount}</p>
             <p className="text-gray-500 text-[10px]">Portafolio</p>
           </div>
-          <div className="text-center p-2 bg-white/5 rounded-lg">
+          <div className="text-center p-2 bg-white/5 rounded-sm">
             <p className="text-white font-semibold">{servicesCount}</p>
             <p className="text-gray-500 text-[10px]">Servicios</p>
           </div>
-          <div className="text-center p-2 bg-white/5 rounded-lg">
+          <div className="text-center p-2 bg-white/5 rounded-sm">
             <p className="text-white font-semibold">{draft.expertise.categories.length}</p>
             <p className="text-gray-500 text-[10px]">Categorias</p>
           </div>
@@ -155,7 +155,7 @@ export function WizardStepPublish({
           onClick={onPublish}
           disabled={!requiredComplete || saving}
           className={cn(
-            'w-full flex items-center justify-center gap-3 py-4 rounded-2xl text-base font-semibold transition-all',
+            'w-full flex items-center justify-center gap-3 py-4 rounded-sm text-base font-semibold transition-all',
             requiredComplete && !saving
               ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-500/20'
               : 'bg-gray-800 text-gray-500 cursor-not-allowed'
@@ -177,7 +177,7 @@ export function WizardStepPublish({
         <button
           onClick={onSaveDraft}
           disabled={saving}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 text-foreground/80 rounded-xl text-sm font-medium transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 text-foreground/80 rounded-sm text-sm font-medium transition-colors"
         >
           <Save className="h-4 w-4" />
           Guardar como borrador

@@ -98,7 +98,7 @@ export default function MarketplaceInvitationsPage() {
         ) : (
           <div className="space-y-3">
             {invitations.map(inv => (
-              <div key={inv.id} className="flex items-center gap-4 p-4 rounded-xl border border-white/5 bg-white/[0.02]">
+              <div key={inv.id} className="flex items-center gap-4 p-4 rounded-sm border border-white/5 bg-white/[0.02]">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={
                     tab === 'sent'
@@ -138,7 +138,7 @@ export default function MarketplaceInvitationsPage() {
                     <button
                       onClick={() => cancelMutation.mutate(inv.id)}
                       disabled={cancelMutation.isPending}
-                      className="flex items-center gap-1 px-3 py-1.5 text-xs text-gray-400 border border-white/10 rounded-lg hover:bg-white/5 hover:text-red-400 transition-colors"
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs text-gray-400 border border-white/10 rounded-sm hover:bg-white/5 hover:text-red-400 transition-colors"
                     >
                       <XCircle className="h-3.5 w-3.5" />
                       Cancelar
@@ -151,7 +151,7 @@ export default function MarketplaceInvitationsPage() {
                       <button
                         onClick={() => acceptMutation.mutate(inv.id)}
                         disabled={acceptMutation.isPending}
-                        className="flex items-center gap-1 px-3 py-1.5 text-xs text-green-400 border border-green-500/30 rounded-lg hover:bg-green-500/10 transition-colors"
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs text-green-400 border border-green-500/30 rounded-sm hover:bg-green-500/10 transition-colors"
                       >
                         {acceptMutation.isPending ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -163,7 +163,7 @@ export default function MarketplaceInvitationsPage() {
                       <button
                         onClick={() => declineMutation.mutate({ invitationId: inv.id })}
                         disabled={declineMutation.isPending}
-                        className="flex items-center gap-1 px-3 py-1.5 text-xs text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/10 transition-colors"
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs text-red-400 border border-red-500/30 rounded-sm hover:bg-red-500/10 transition-colors"
                       >
                         {declineMutation.isPending ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />

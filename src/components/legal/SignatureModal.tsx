@@ -161,12 +161,12 @@ export function SignatureModal({
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
-          className="bg-gradient-to-b from-slate-900 to-slate-950 border border-white/10 rounded-2xl w-full max-w-3xl max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden"
+          className="bg-gradient-to-b from-slate-900 to-slate-950 border border-white/10 rounded-sm w-full max-w-3xl max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-3 sm:p-4 border-b border-white/10 flex-shrink-0">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="p-1.5 sm:p-2 bg-purple-500/20 rounded-lg flex-shrink-0">
+              <div className="p-1.5 sm:p-2 bg-purple-500/20 rounded-sm flex-shrink-0">
                 <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
               </div>
               <div className="min-w-0">
@@ -176,7 +176,7 @@ export function SignatureModal({
             </div>
             <button
               onClick={onClose}
-              className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors flex-shrink-0"
+              className="p-2 bg-white/10 hover:bg-white/20 rounded-sm transition-colors flex-shrink-0"
               aria-label="Cerrar"
             >
               <X className="w-5 h-5 text-white" />
@@ -256,7 +256,7 @@ export function SignatureModal({
             )}
 
             {/* Declaración */}
-            <div className="bg-white/5 rounded-lg p-4 space-y-2">
+            <div className="bg-white/5 rounded-sm p-4 space-y-2">
               <p className="text-xs text-white/40 uppercase tracking-wide">Declaración</p>
               <p className="text-sm text-white/80 italic">"{declarationText}"</p>
             </div>

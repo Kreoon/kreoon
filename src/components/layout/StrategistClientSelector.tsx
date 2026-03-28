@@ -26,7 +26,7 @@ export function StrategistClientSelector() {
   if (clients.length === 0) {
     return (
       <div className="px-3 py-2">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-md p-2">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-sm p-2">
           <Building2 className="h-4 w-4" />
           <span>Sin clientes asignados</span>
         </div>

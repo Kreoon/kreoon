@@ -458,7 +458,7 @@ export function PresentationMode({
                 setProgress(0);
               }}
               className={cn(
-                "w-16 h-12 rounded-md overflow-hidden border-2 transition-all",
+                "w-16 h-12 rounded-sm overflow-hidden border-2 transition-all",
                 idx === currentIndex
                   ? "border-white scale-110"
                   : "border-transparent opacity-60 hover:opacity-100"

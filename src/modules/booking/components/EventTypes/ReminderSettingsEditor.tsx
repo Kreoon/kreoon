@@ -140,7 +140,7 @@ export function ReminderSettingsEditor({
             variant="outline"
             size="sm"
             onClick={() => setIsAdding(true)}
-            className="rounded-lg"
+            className="rounded-sm"
           >
             <Plus className="w-4 h-4 mr-1" />
             Agregar
@@ -161,14 +161,14 @@ export function ReminderSettingsEditor({
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className={`bg-white border rounded-xl transition-all ${
+                className={`bg-white border rounded-sm transition-all ${
                   isEditing ? 'border-violet-300 shadow-md' : 'border-slate-200'
                 }`}
               >
                 <div className="p-4">
                   <div className="flex items-center gap-3">
                     <div
-                      className={`p-2 rounded-lg ${
+                      className={`p-2 rounded-sm ${
                         setting.enabled ? 'bg-violet-50' : 'bg-slate-100'
                       }`}
                     >
@@ -271,7 +271,7 @@ export function ReminderSettingsEditor({
                             variant="ghost"
                             size="sm"
                             onClick={() => setEditingId(null)}
-                            className="rounded-lg"
+                            className="rounded-sm"
                           >
                             <X className="w-4 h-4 mr-1" />
                             Cancelar
@@ -280,7 +280,7 @@ export function ReminderSettingsEditor({
                             size="sm"
                             onClick={handleSaveEdit}
                             disabled={savingId === setting.id}
-                            className="rounded-lg bg-violet-600 hover:bg-violet-700"
+                            className="rounded-sm bg-violet-600 hover:bg-violet-700"
                           >
                             {savingId === setting.id ? (
                               <Loader2 className="w-4 h-4 mr-1 animate-spin" />
@@ -302,7 +302,7 @@ export function ReminderSettingsEditor({
 
       {/* Empty state */}
       {settings.length === 0 && !isAdding && (
-        <div className="text-center py-8 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
+        <div className="text-center py-8 bg-slate-50 rounded-sm border-2 border-dashed border-slate-200">
           <Bell className="w-10 h-10 mx-auto text-slate-300 mb-3" />
           <p className="text-sm text-slate-500 mb-3">
             No hay recordatorios configurados
@@ -311,7 +311,7 @@ export function ReminderSettingsEditor({
             variant="outline"
             size="sm"
             onClick={() => setIsAdding(true)}
-            className="rounded-lg"
+            className="rounded-sm"
           >
             <Plus className="w-4 h-4 mr-1" />
             Agregar recordatorio
@@ -326,7 +326,7 @@ export function ReminderSettingsEditor({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="bg-violet-50 border border-violet-200 rounded-xl p-4"
+            className="bg-violet-50 border border-violet-200 rounded-sm p-4"
           >
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
@@ -373,7 +373,7 @@ export function ReminderSettingsEditor({
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsAdding(false)}
-                className="rounded-lg"
+                className="rounded-sm"
               >
                 Cancelar
               </Button>
@@ -381,7 +381,7 @@ export function ReminderSettingsEditor({
                 size="sm"
                 onClick={handleAdd}
                 disabled={addingLoading}
-                className="rounded-lg bg-violet-600 hover:bg-violet-700"
+                className="rounded-sm bg-violet-600 hover:bg-violet-700"
               >
                 {addingLoading && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
                 Agregar

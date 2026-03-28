@@ -6,6 +6,7 @@ import {
   corsHeaders,
   callAIWithFallback,
 } from "../_shared/ai-providers.ts";
+import { errorResponse, successResponse, moduleInactiveResponse } from "../_shared/error-response.ts";
 import { getModuleAIConfigsWithFallback } from "../_shared/get-module-ai-config.ts";
 // Nuevo: Prompts desde DB con fallback a hardcodeados
 import { getPrompt, interpolatePrompt } from "../_shared/prompts/db-prompts.ts";
@@ -762,10 +763,12 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let body: RequestBody | null = null;
+  let userId = "system";
+
   try {
     // Use Kreoon (external) database if configured
     let supabase;
-    let userId = "system";
     
     if (isKreoonConfigured()) {
       console.log("[board-ai] Using Kreoon database");
@@ -794,7 +797,7 @@ serve(async (req) => {
       }
     }
 
-    const body: RequestBody = await req.json();
+    body = await req.json();
     const { action, organizationId, contentId } = body;
 
     console.log(`Board AI action: ${action} for org: ${organizationId}`);
@@ -808,14 +811,7 @@ serve(async (req) => {
     // Check if module is active
     const moduleActive = await isModuleActive(supabase, organizationId, moduleKey);
     if (!moduleActive) {
-      return new Response(
-        JSON.stringify({ 
-          error: "MODULE_INACTIVE",
-          message: "Asistente no habilitado para este módulo. Actívalo en Configuración → IA & Modelos.",
-          module_key: moduleKey
-        }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return moduleInactiveResponse(moduleKey);
     }
 
     let result;
@@ -853,31 +849,12 @@ serve(async (req) => {
       _module_key: moduleKey
     });
 
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return successResponse(result);
   } catch (e) {
-    const status = typeof (e as any)?.status === "number" ? (e as any).status : 500;
-
-    if (status === 429) {
-      const retryAfterSeconds = (e as any)?.retryAfterSeconds ?? null;
-      return new Response(
-        JSON.stringify({
-          error: "Límite de solicitudes de IA alcanzado. Intenta de nuevo en unos segundos.",
-          retry_after_seconds: retryAfterSeconds,
-        }),
-        {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    console.error("Board AI Error:", e);
-    const errorMessage = e instanceof Error ? e.message : "Unknown error";
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return errorResponse(e, {
+      action: `board-ai:${body?.action || 'unknown'}`,
+      resourceId: body?.contentId,
+      userId,
+    });
   }
 });

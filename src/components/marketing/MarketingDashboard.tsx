@@ -17,20 +17,21 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  LazyAreaChart,
+  LazyBarChart,
+  LazyPieChart,
+  LazyChartContainer,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
-  BarChart as RechartsBarChart,
   Bar,
-  PieChart,
   Pie,
-  Cell
-} from "recharts";
+  Cell,
+} from "@/components/ui/lazy-charts";
 import { DashboardConfigDialog } from "./DashboardConfigDialog";
 import { BudgetAlerts } from "./BudgetAlerts";
 
@@ -89,15 +90,16 @@ const OBJECTIVE_LABELS: Record<string, string> = {
   traffic: "Tráfico",
 };
 
+// Colores de plataforma (brand colors) + variables Nova para genéricos
 const CHANNEL_COLORS: Record<string, string> = {
   meta_ads: "#1877F2",
   google_ads: "#4285F4",
   tiktok_ads: "#000000",
   youtube_ads: "#FF0000",
   linkedin_ads: "#0A66C2",
-  organic: "#22C55E",
-  email: "#F59E0B",
-  other: "#8B5CF6",
+  organic: "var(--nova-success)",
+  email: "var(--nova-warning)",
+  other: "var(--nova-accent-primary)",
 };
 
 const CHANNEL_LABELS: Record<string, string> = {
@@ -447,49 +449,51 @@ export function MarketingDashboard({ organizationId, selectedClientId }: Marketi
           </CardHeader>
           <CardContent>
             {data.dailyMetrics.length > 0 ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <AreaChart data={data.dailyMetrics}>
-                  <defs>
-                    <linearGradient id="colorInvestment" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#22C55E" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="date" tick={{ fontSize: 12 }} className="text-muted-foreground" />
-                  <YAxis tick={{ fontSize: 12 }} className="text-muted-foreground" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="investment" 
-                    stroke="hsl(var(--primary))" 
-                    fillOpacity={1} 
-                    fill="url(#colorInvestment)" 
-                    name="Inversión"
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="leads" 
-                    stroke="#22C55E" 
-                    fillOpacity={1} 
-                    fill="url(#colorLeads)" 
-                    name="Leads"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              <LazyChartContainer height={280}>
+                <ResponsiveContainer width="100%" height={280}>
+                  <LazyAreaChart data={data.dailyMetrics}>
+                    <defs>
+                      <linearGradient id="colorInvestment" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#22C55E" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} className="text-muted-foreground" />
+                    <YAxis tick={{ fontSize: 12 }} className="text-muted-foreground" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="investment"
+                      stroke="hsl(var(--primary))"
+                      fillOpacity={1}
+                      fill="url(#colorInvestment)"
+                      name="Inversion"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="leads"
+                      stroke="#22C55E"
+                      fillOpacity={1}
+                      fill="url(#colorLeads)"
+                      name="Leads"
+                    />
+                  </LazyAreaChart>
+                </ResponsiveContainer>
+              </LazyChartContainer>
             ) : (
               <div className="h-64 flex items-center justify-center text-muted-foreground">
-                <p>Sin datos suficientes para mostrar gráfico</p>
+                <p>Sin datos suficientes para mostrar grafico</p>
               </div>
             )}
           </CardContent>
@@ -506,36 +510,38 @@ export function MarketingDashboard({ organizationId, selectedClientId }: Marketi
           </CardHeader>
           <CardContent>
             {data.channelDistribution.length > 0 ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie
-                    data={data.channelDistribution}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={2}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    labelLine={false}
-                  >
-                    {data.channelDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value: number) => formatCurrency(value, data.investment.currency)}
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              <LazyChartContainer height={280}>
+                <ResponsiveContainer width="100%" height={280}>
+                  <LazyPieChart>
+                    <Pie
+                      data={data.channelDistribution}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={2}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      labelLine={false}
+                    >
+                      {data.channelDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: number) => formatCurrency(value, data.investment.currency)}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                    />
+                  </LazyPieChart>
+                </ResponsiveContainer>
+              </LazyChartContainer>
             ) : (
               <div className="h-64 flex items-center justify-center text-muted-foreground">
-                <p>Sin datos de inversión por canal</p>
+                <p>Sin datos de inversion por canal</p>
               </div>
             )}
           </CardContent>
@@ -553,22 +559,24 @@ export function MarketingDashboard({ organizationId, selectedClientId }: Marketi
         </CardHeader>
         <CardContent>
           {data.performanceByChannel.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <RechartsBarChart data={data.performanceByChannel} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis type="number" tick={{ fontSize: 12 }} />
-                <YAxis dataKey="channel" type="category" tick={{ fontSize: 12 }} width={120} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))', 
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
-                />
-                <Bar dataKey="leads" fill="hsl(var(--primary))" name="Leads" radius={[0, 4, 4, 0]} />
-                <Bar dataKey="sales" fill="#22C55E" name="Ventas" radius={[0, 4, 4, 0]} />
-              </RechartsBarChart>
-            </ResponsiveContainer>
+            <LazyChartContainer height={300}>
+              <ResponsiveContainer width="100%" height={300}>
+                <LazyBarChart data={data.performanceByChannel} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis type="number" tick={{ fontSize: 12 }} />
+                  <YAxis dataKey="channel" type="category" tick={{ fontSize: 12 }} width={120} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Bar dataKey="leads" fill="hsl(var(--primary))" name="Leads" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="sales" fill="#22C55E" name="Ventas" radius={[0, 4, 4, 0]} />
+                </LazyBarChart>
+              </ResponsiveContainer>
+            </LazyChartContainer>
           ) : (
             <div className="h-64 flex items-center justify-center text-muted-foreground">
               <div className="text-center">

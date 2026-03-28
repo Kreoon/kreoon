@@ -151,7 +151,7 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
           {/* Active Season */}
           {activeSeason ? (
             <motion.div 
-              className="p-4 rounded-xl border bg-gradient-to-br"
+              className="p-4 rounded-sm border bg-gradient-to-br"
               style={{
                 borderColor: 'hsl(160 100% 45% / 0.3)',
                 background: 'linear-gradient(135deg, hsl(160 100% 45% / 0.1), transparent)',
@@ -186,7 +186,7 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
               
               {/* Season Stats */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-lg bg-muted border border-[hsl(270,100%,60%,0.1)]">
+                <div className="p-3 rounded-sm bg-muted border border-[hsl(270,100%,60%,0.1)]">
                   <div className="flex items-center gap-2 mb-1">
                     <Users className="w-4 h-4 text-[hsl(270,100%,60%)]" />
                     <span className="text-xs text-muted-foreground">Participantes</span>
@@ -196,7 +196,7 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
                     <span className="text-white">{editorLeaderboard.length} editores</span>
                   </div>
                 </div>
-                <div className="p-3 rounded-lg bg-muted border border-[hsl(270,100%,60%,0.1)]">
+                <div className="p-3 rounded-sm bg-muted border border-[hsl(270,100%,60%,0.1)]">
                   <div className="flex items-center gap-2 mb-1">
                     <Zap className="w-4 h-4 text-amber-400" />
                     <span className="text-xs text-muted-foreground">Puntos Totales</span>
@@ -214,7 +214,7 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
                   <p className="text-xs text-muted-foreground mb-2">Líderes Actuales</p>
                   <div className="grid grid-cols-2 gap-2">
                     {topCreator && (
-                      <div className="flex items-center gap-2 p-2 rounded-lg bg-muted">
+                      <div className="flex items-center gap-2 p-2 rounded-sm bg-muted">
                         <Crown className="w-4 h-4 text-yellow-500" />
                         <div className="min-w-0">
                           <p className="text-xs font-medium text-white truncate">{topCreator.full_name}</p>
@@ -223,7 +223,7 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
                       </div>
                     )}
                     {topEditor && (
-                      <div className="flex items-center gap-2 p-2 rounded-lg bg-muted">
+                      <div className="flex items-center gap-2 p-2 rounded-sm bg-muted">
                         <Crown className="w-4 h-4 text-yellow-500" />
                         <div className="min-w-0">
                           <p className="text-xs font-medium text-white truncate">{topEditor.full_name}</p>
@@ -258,7 +258,7 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
                   {seasons.filter(s => !s.is_active).map(season => (
                     <div 
                       key={season.id}
-                      className="flex items-center justify-between p-2 rounded-lg bg-muted border border-[hsl(270,100%,60%,0.1)]"
+                      className="flex items-center justify-between p-2 rounded-sm bg-muted border border-[hsl(270,100%,60%,0.1)]"
                     >
                       <div className="flex items-center gap-2">
                         <Trophy className="w-4 h-4 text-muted-foreground" />
@@ -331,7 +331,7 @@ export function SeasonManager({ showCreateButton = true }: SeasonManagerProps) {
             </div>
 
             {activeSeason && (
-              <div className="flex items-center justify-between p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <div className="flex items-center justify-between p-3 rounded-sm bg-amber-500/10 border border-amber-500/20">
                 <div>
                   <p className="text-sm font-medium text-amber-400">Cerrar temporada actual</p>
                   <p className="text-xs text-amber-400/70">Se guardará un snapshot de los rankings</p>

@@ -338,7 +338,7 @@ export function MarketingReports({ organizationId, selectedClientId }: Marketing
 
       {/* Report Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-2xl max-h-[90vh]">
+        <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-2xl max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileBarChart className="h-5 w-5" />

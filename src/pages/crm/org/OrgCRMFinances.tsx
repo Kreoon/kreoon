@@ -144,7 +144,7 @@ function FinancesContent({ orgId }: { orgId: string }) {
 
               {subscription ? (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-white/5 rounded-sm">
                     <div>
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${SUBSCRIPTION_PLAN_COLORS[subscription.plan as SubscriptionPlan]}`}>
                         {SUBSCRIPTION_PLAN_LABELS[subscription.plan as SubscriptionPlan]}
@@ -211,9 +211,9 @@ function FinancesContent({ orgId }: { orgId: string }) {
               <h3 className="text-lg font-semibold text-white mb-4">Historial de Transacciones</h3>
               <div className="space-y-3">
                 {transactions.slice(0, 10).map(tx => (
-                  <div key={tx.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                  <div key={tx.id} className="flex items-center justify-between p-3 bg-white/5 rounded-sm">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${
+                      <div className={`p-2 rounded-sm ${
                         tx.transaction_type.includes('payment') ? 'bg-red-500/20' : 'bg-green-500/20'
                       }`}>
                         {tx.transaction_type.includes('payment') ? (
@@ -262,7 +262,7 @@ function FinancesContent({ orgId }: { orgId: string }) {
 
               <div className="space-y-3">
                 {invoices.slice(0, 5).map(invoice => (
-                  <div key={invoice.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                  <div key={invoice.id} className="flex items-center justify-between p-3 bg-white/5 rounded-sm">
                     <div>
                       <p className="text-white text-sm font-mono">{invoice.invoice_number}</p>
                       <p className="text-white/40 text-xs">
@@ -303,9 +303,9 @@ function FinancesContent({ orgId }: { orgId: string }) {
               </div>
 
               {subscription?.payment_method_last4 ? (
-                <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-white/5 rounded-sm">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white/10 rounded-lg">
+                    <div className="p-2 bg-white/10 rounded-sm">
                       <CreditCard className="w-5 h-5 text-white/70" />
                     </div>
                     <div>

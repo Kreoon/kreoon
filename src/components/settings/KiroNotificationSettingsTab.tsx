@@ -316,11 +316,11 @@ export function KiroNotificationSettingsTab() {
         </CardHeader>
         <CardContent className="space-y-6">
           {!isSupported ? (
-            <div className="p-4 rounded-lg bg-muted text-center">
+            <div className="p-4 rounded-sm bg-muted text-center">
               <p className="text-muted-foreground">Tu navegador no soporta notificaciones push</p>
             </div>
           ) : permission === 'denied' ? (
-            <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-center space-y-3">
+            <div className="p-4 rounded-sm bg-destructive/10 border border-destructive/20 text-center space-y-3">
               <BellRing className="h-8 w-8 mx-auto text-destructive" />
               <p className="text-sm font-medium text-destructive">Las notificaciones están bloqueadas</p>
               <p className="text-sm text-muted-foreground">
@@ -331,7 +331,7 @@ export function KiroNotificationSettingsTab() {
               </Button>
             </div>
           ) : permission !== 'granted' ? (
-            <div className="p-4 rounded-lg bg-primary/5 border border-primary/20 text-center space-y-3">
+            <div className="p-4 rounded-sm bg-primary/5 border border-primary/20 text-center space-y-3">
               <BellRing className="h-8 w-8 mx-auto text-primary" />
               <p className="text-sm text-muted-foreground">Habilita las notificaciones push para que Kiro te alerte en tiempo real</p>
               <Button onClick={handleRequestPushPermission} variant="default">Habilitar notificaciones</Button>

@@ -362,7 +362,7 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
 
   return (
     <>
-      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 md:p-8">
+      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-sm p-6 md:p-8">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-white mb-2">
@@ -378,7 +378,7 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
         <section className="mb-8">
           <div
             className={cn(
-              "p-4 rounded-xl border transition-all",
+              "p-4 rounded-sm border transition-all",
               ageConfirmed
                 ? "border-green-500/30 bg-green-500/5"
                 : "border-orange-500/30 bg-orange-500/5"
@@ -419,7 +419,7 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={cn(
-                  "p-4 rounded-xl border transition-all",
+                  "p-4 rounded-sm border transition-all",
                   isAccepted
                     ? "border-green-500/30 bg-green-500/5"
                     : "border-white/10 bg-white/5"
@@ -510,7 +510,7 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
         </section>
 
         {/* Nota legal */}
-        <div className="mt-6 p-4 rounded-lg bg-white/5 border border-white/10">
+        <div className="mt-6 p-4 rounded-sm bg-white/5 border border-white/10">
           <p className="text-xs text-white/60 flex items-start gap-2">
             <Lock className="w-4 h-4 mt-0.5 flex-shrink-0" />
             Tu aceptación se registra con fecha, hora, dirección IP y navegador

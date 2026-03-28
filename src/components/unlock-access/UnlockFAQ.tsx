@@ -29,7 +29,7 @@ const FAQItem = memo(function FAQItem({
       <button
         onClick={onToggle}
         className={cn(
-          'w-full p-4 rounded-xl text-left transition-all duration-300',
+          'w-full p-4 rounded-sm text-left transition-all duration-300',
           'border',
           isOpen
             ? 'bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/30'
@@ -40,7 +40,7 @@ const FAQItem = memo(function FAQItem({
           <motion.div
             animate={{ scale: isOpen ? 1.1 : 1 }}
             className={cn(
-              'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
+              'w-8 h-8 rounded-sm flex items-center justify-center shrink-0',
               'transition-colors duration-300',
               isOpen
                 ? 'bg-purple-500/20 text-purple-400'
@@ -105,13 +105,13 @@ export const UnlockFAQ = memo(function UnlockFAQ() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        'rounded-2xl p-5 sm:p-6',
+        'rounded-sm p-5 sm:p-6',
         'bg-white/[0.02] border border-white/10'
       )}
     >
       {/* Header */}
       <div className="flex items-center justify-center gap-3 mb-5">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/20 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-sm bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/20 flex items-center justify-center">
           <MessageCircleQuestion className="w-5 h-5 text-purple-400" />
         </div>
         <div>

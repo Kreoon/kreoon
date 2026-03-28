@@ -171,7 +171,7 @@ export function UseCasesSection({
                     transition={{ delay: 0.1 + index * 0.05 }}
                     onClick={() => setActiveCase(useCase.id)}
                     className={cn(
-                      "group relative flex min-w-[160px] flex-col items-start gap-2 rounded-xl border p-4 text-left transition-all duration-300 lg:min-w-0 lg:flex-row lg:items-center",
+                      "group relative flex min-w-[160px] flex-col items-start gap-2 rounded-sm border p-4 text-left transition-all duration-300 lg:min-w-0 lg:flex-row lg:items-center",
                       isActive
                         ? "border-kreoon-purple-500/50 bg-kreoon-purple-500/10 shadow-kreoon-glow-sm"
                         : "border-kreoon-border bg-kreoon-bg-card/50 hover:border-kreoon-purple-500/30 hover:bg-kreoon-bg-card",
@@ -179,7 +179,7 @@ export function UseCasesSection({
                   >
                     <div
                       className={cn(
-                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br transition-shadow",
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-gradient-to-br transition-shadow",
                         useCase.iconGradient,
                         isActive && "shadow-lg",
                       )}
@@ -232,7 +232,7 @@ export function UseCasesSection({
                     <div className="flex items-start gap-4">
                       <div
                         className={cn(
-                          "flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br shadow-lg",
+                          "flex h-14 w-14 shrink-0 items-center justify-center rounded-sm bg-gradient-to-br shadow-lg",
                           selectedCase.iconGradient,
                         )}
                       >
@@ -257,7 +257,7 @@ export function UseCasesSection({
                         <Quote className="h-4 w-4 text-kreoon-purple-400" />
                         Escenario
                       </div>
-                      <p className="rounded-lg border-l-2 border-kreoon-purple-500/50 bg-kreoon-bg-secondary/50 py-3 pl-4 pr-3 text-kreoon-text-secondary italic">
+                      <p className="rounded-sm border-l-2 border-kreoon-purple-500/50 bg-kreoon-bg-secondary/50 py-3 pl-4 pr-3 text-kreoon-text-secondary italic">
                         {selectedCase.scenario}
                       </p>
                     </div>
@@ -288,7 +288,7 @@ export function UseCasesSection({
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.3 }}
-                      className="mb-6 flex items-center gap-4 rounded-xl bg-gradient-to-r from-kreoon-purple-500/10 via-kreoon-bg-secondary to-kreoon-purple-500/10 p-4"
+                      className="mb-6 flex items-center gap-4 rounded-sm bg-gradient-to-r from-kreoon-purple-500/10 via-kreoon-bg-secondary to-kreoon-purple-500/10 p-4"
                     >
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-kreoon-purple-500/20">
                         <selectedCase.result.icon className="h-6 w-6 text-kreoon-purple-400" />

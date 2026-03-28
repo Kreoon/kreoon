@@ -127,7 +127,7 @@ export default function BlocksEditorDialog({ open, onOpenChange }: BlocksEditorD
                     onDragOver={(e) => handleDragOver(e, orderedBlocks.indexOf(block))}
                     onDragEnd={handleDragEnd}
                     className={cn(
-                      "flex items-center gap-3 p-3 bg-muted/50 rounded-lg cursor-move transition-all",
+                      "flex items-center gap-3 p-3 bg-muted/50 rounded-sm cursor-move transition-all",
                       draggedIndex === orderedBlocks.indexOf(block) && "opacity-50 ring-2 ring-primary",
                       !block.enabled && "opacity-60"
                     )}
@@ -168,7 +168,7 @@ export default function BlocksEditorDialog({ open, onOpenChange }: BlocksEditorD
                   <div
                     key={block.key}
                     className={cn(
-                      "flex items-center gap-3 p-3 bg-yellow-500/5 border border-yellow-500/20 rounded-lg",
+                      "flex items-center gap-3 p-3 bg-yellow-500/5 border border-yellow-500/20 rounded-sm",
                       !block.enabled && "opacity-60"
                     )}
                   >

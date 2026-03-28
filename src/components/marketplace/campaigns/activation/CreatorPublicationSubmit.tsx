@@ -68,7 +68,7 @@ export function CreatorPublicationSubmit({ publication, onBack, onSuccess }: Cre
           Volver
         </button>
         <div className="flex items-center gap-3">
-          <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', platformInfo.bgColor)}>
+          <div className={cn('w-10 h-10 rounded-sm flex items-center justify-center', platformInfo.bgColor)}>
             <span className="text-white font-bold">{platformInfo.label.charAt(0)}</span>
           </div>
           <div>
@@ -82,7 +82,7 @@ export function CreatorPublicationSubmit({ publication, onBack, onSuccess }: Cre
 
       {/* Status info */}
       {publication.verification_status === 'verified' && (
-        <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 flex items-center gap-3">
+        <div className="bg-green-500/10 border border-green-500/20 rounded-sm p-4 flex items-center gap-3">
           <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0" />
           <div>
             <p className="text-green-300 text-sm font-medium">Publicación verificada</p>
@@ -92,7 +92,7 @@ export function CreatorPublicationSubmit({ publication, onBack, onSuccess }: Cre
       )}
 
       {publication.verification_status === 'violation' && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-center gap-3">
+        <div className="bg-red-500/10 border border-red-500/20 rounded-sm p-4 flex items-center gap-3">
           <AlertTriangle className="h-5 w-5 text-red-400 shrink-0" />
           <div>
             <p className="text-red-300 text-sm font-medium">Violación detectada</p>
@@ -102,7 +102,7 @@ export function CreatorPublicationSubmit({ publication, onBack, onSuccess }: Cre
       )}
 
       {publication.verification_status === 'pending_verification' && (
-        <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4 flex items-center gap-3">
+        <div className="bg-purple-500/10 border border-purple-500/20 rounded-sm p-4 flex items-center gap-3">
           <Clock className="h-5 w-5 text-purple-400 shrink-0" />
           <div>
             <p className="text-purple-300 text-sm font-medium">En verificación</p>
@@ -113,7 +113,7 @@ export function CreatorPublicationSubmit({ publication, onBack, onSuccess }: Cre
 
       {/* Duration reminder */}
       {publication.must_stay_until && (
-        <div className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center gap-2">
+        <div className="bg-white/5 border border-white/10 rounded-sm p-3 flex items-center gap-2">
           <Clock className="h-4 w-4 text-gray-500 shrink-0" />
           <p className="text-gray-400 text-xs">
             El post debe permanecer activo hasta{' '}
@@ -137,7 +137,7 @@ export function CreatorPublicationSubmit({ publication, onBack, onSuccess }: Cre
               value={url}
               onChange={e => setUrl(e.target.value)}
               placeholder="https://instagram.com/p/..."
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
+              className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
             />
           </div>
 
@@ -151,7 +151,7 @@ export function CreatorPublicationSubmit({ publication, onBack, onSuccess }: Cre
               value={hashtags}
               onChange={e => setHashtags(e.target.value)}
               placeholder="#ad, #publi, #tumarca"
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
+              className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
             />
             <p className="text-xs text-gray-600 mt-1">Separados por coma</p>
           </div>
@@ -166,7 +166,7 @@ export function CreatorPublicationSubmit({ publication, onBack, onSuccess }: Cre
               value={mentions}
               onChange={e => setMentions(e.target.value)}
               placeholder="@marca"
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
+              className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
             />
           </div>
 
@@ -179,7 +179,7 @@ export function CreatorPublicationSubmit({ publication, onBack, onSuccess }: Cre
               onChange={e => setCaption(e.target.value)}
               placeholder="Texto de tu publicación..."
               rows={3}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500 resize-none"
+              className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500 resize-none"
             />
           </div>
 
@@ -193,14 +193,14 @@ export function CreatorPublicationSubmit({ publication, onBack, onSuccess }: Cre
               value={screenshotUrl}
               onChange={e => setScreenshotUrl(e.target.value)}
               placeholder="https://..."
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
+              className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
             />
           </div>
 
           <button
             onClick={handleSubmit}
             disabled={loading || !url.trim()}
-            className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors"
+            className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-semibold py-3 rounded-sm transition-colors"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -217,7 +217,7 @@ export function CreatorPublicationSubmit({ publication, onBack, onSuccess }: Cre
       {/* Existing submission info (read-only) */}
       {!isSubmittable && publication.publication_url && (
         <div className="space-y-3">
-          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+          <div className="bg-white/5 border border-white/10 rounded-sm p-3">
             <p className="text-gray-500 text-xs mb-1">URL de publicación</p>
             <a
               href={publication.publication_url}

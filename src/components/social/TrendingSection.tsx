@@ -122,7 +122,7 @@ export function TrendingSection({ className, variant = 'sidebar' }: TrendingSect
               >
                 <Link
                   to={`/marketplace?tag=${hashtag.tag}`}
-                  className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors group"
+                  className="flex items-center justify-between p-2 rounded-sm hover:bg-white/5 transition-colors group"
                 >
                   <div className="flex items-center gap-2">
                     <Hash className="h-4 w-4 text-social-accent" />
@@ -155,11 +155,11 @@ export function TrendingSection({ className, variant = 'sidebar' }: TrendingSect
   return (
     <div className={cn("space-y-4", className)}>
       {/* Tabs */}
-      <div className="flex gap-1 p-1 glass-social rounded-lg">
+      <div className="flex gap-1 p-1 glass-social rounded-sm">
         <button
           onClick={() => setActiveTab('hashtags')}
           className={cn(
-            "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-all",
+            "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-sm text-sm font-medium transition-all",
             activeTab === 'hashtags'
               ? "bg-social-accent text-white"
               : "text-social-muted-foreground hover:text-social-foreground hover:bg-white/5"
@@ -171,7 +171,7 @@ export function TrendingSection({ className, variant = 'sidebar' }: TrendingSect
         <button
           onClick={() => setActiveTab('creators')}
           className={cn(
-            "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-all",
+            "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-sm text-sm font-medium transition-all",
             activeTab === 'creators'
               ? "bg-social-accent text-white"
               : "text-social-muted-foreground hover:text-social-foreground hover:bg-white/5"
@@ -186,7 +186,7 @@ export function TrendingSection({ className, variant = 'sidebar' }: TrendingSect
       <div className="space-y-2">
         {loading ? (
           Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-12 bg-social-muted rounded-lg" />
+            <Skeleton key={i} className="h-12 bg-social-muted rounded-sm" />
           ))
         ) : activeTab === 'hashtags' ? (
           hashtags.map((hashtag, index) => (
@@ -198,7 +198,7 @@ export function TrendingSection({ className, variant = 'sidebar' }: TrendingSect
             >
               <Link
                 to={`/marketplace?tag=${hashtag.tag}`}
-                className="flex items-center gap-3 p-3 rounded-xl glass-card-hover group"
+                className="flex items-center gap-3 p-3 rounded-sm glass-card-hover group"
               >
                 <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-social-accent/20 to-pink-500/20 group-hover:from-social-accent/30 group-hover:to-pink-500/30 transition-colors">
                   <Hash className="h-5 w-5 text-social-accent" />
@@ -234,7 +234,7 @@ export function TrendingSection({ className, variant = 'sidebar' }: TrendingSect
             >
               <Link
                 to={`/profile/${creator.id}`}
-                className="flex items-center gap-3 p-3 rounded-xl glass-card-hover group"
+                className="flex items-center gap-3 p-3 rounded-sm glass-card-hover group"
               >
                 <div className="relative">
                   <Avatar className="h-10 w-10 ring-2 ring-social-border group-hover:ring-social-accent/50 transition-all">

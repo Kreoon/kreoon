@@ -29,7 +29,7 @@ export function PageHeader({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
       className={cn(
-        "relative overflow-hidden rounded-2xl p-6",
+        "relative overflow-hidden rounded-sm p-6",
         "bg-card",
         "border border-border",
         "shadow-sm",
@@ -49,7 +49,7 @@ export function PageHeader({
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.1 }}
             className={cn(
-              "p-3 rounded-xl",
+              "p-3 rounded-sm",
               "bg-primary/10",
               "border border-primary/20",
               "shadow-sm",

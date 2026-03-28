@@ -36,7 +36,7 @@ export function KiroMessageCarousel({ qualifiedCount }: KiroMessageCarouselProps
 
   return (
     <div className={cn(
-      'rounded-2xl p-5 sm:p-6 border backdrop-blur-xl',
+      'rounded-sm p-5 sm:p-6 border backdrop-blur-xl',
       isComplete
         ? 'bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-emerald-500/10 border-emerald-500/30'
         : 'bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-amber-500/10 border-purple-500/20'
@@ -50,7 +50,7 @@ export function KiroMessageCarousel({ qualifiedCount }: KiroMessageCarouselProps
           }}
           transition={{ duration: 3, repeat: Infinity }}
           className={cn(
-            'w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-lg',
+            'w-14 h-14 sm:w-16 sm:h-16 rounded-sm flex items-center justify-center shrink-0 shadow-lg',
             isComplete
               ? 'bg-gradient-to-br from-emerald-500 to-teal-500 shadow-emerald-500/20'
               : 'bg-gradient-to-br from-purple-500 to-pink-500 shadow-purple-500/20'

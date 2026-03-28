@@ -89,21 +89,21 @@ const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number; pr
   return <span>{prefix}{displayValue.toLocaleString()}{suffix}</span>;
 };
 
-// Premium Stats Card with glow effect
-const PremiumStatsCard = ({ 
-  title, 
-  value, 
-  icon: Icon, 
-  trend, 
+// Premium Stats Card with glow effect - Nova Design System
+const PremiumStatsCard = ({
+  title,
+  value,
+  icon: Icon,
+  trend,
   color = "primary",
   onClick,
   subtitle,
   goalValue,
   goalLabel
-}: { 
-  title: string; 
-  value: number; 
-  icon: any; 
+}: {
+  title: string;
+  value: number;
+  icon: any;
   trend?: number;
   color?: "primary" | "success" | "warning" | "info" | "destructive";
   onClick?: () => void;
@@ -111,55 +111,56 @@ const PremiumStatsCard = ({
   goalValue?: number;
   goalLabel?: string;
 }) => {
-  const colorClasses = {
-    primary: "from-primary/20 to-primary/5 border-primary/30 text-primary",
-    success: "from-success/20 to-success/5 border-success/30 text-success",
-    warning: "from-warning/20 to-warning/5 border-warning/30 text-warning",
-    info: "from-info/20 to-info/5 border-info/30 text-info",
-    destructive: "from-destructive/20 to-destructive/5 border-destructive/30 text-destructive",
+  // Nova color mapping
+  const novaColorMap = {
+    primary: { bg: "rgba(139, 92, 246, 0.1)", border: "var(--nova-border-accent)", text: "var(--nova-accent-primary)" },
+    success: { bg: "var(--nova-success-bg)", border: "var(--nova-success)", text: "var(--nova-success)" },
+    warning: { bg: "var(--nova-warning-bg)", border: "var(--nova-warning)", text: "var(--nova-warning)" },
+    info: { bg: "var(--nova-info-bg)", border: "var(--nova-info)", text: "var(--nova-info)" },
+    destructive: { bg: "var(--nova-error-bg)", border: "var(--nova-error)", text: "var(--nova-error)" },
   };
 
+  const novaColors = novaColorMap[color];
   const progressPercent = goalValue && goalValue > 0 ? Math.min((value / goalValue) * 100, 100) : 0;
 
   return (
-    <div 
+    <div
       onClick={onClick}
       className={cn(
-        "group relative overflow-hidden rounded-2xl border-2 p-6",
-        "bg-gradient-to-br backdrop-blur-xl",
-        "transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl",
-        colorClasses[color],
+        "group relative overflow-hidden rounded-sm border p-6",
+        "bg-[var(--nova-bg-elevated)] backdrop-blur-xl",
+        "transition-all duration-500 hover:scale-[1.02] nova-hover-glow",
         onClick && "cursor-pointer"
       )}
+      style={{ borderColor: novaColors.border }}
     >
-      <div className={cn(
-        "absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-20",
-        "bg-current blur-3xl transition-all duration-700 group-hover:scale-150"
-      )} />
-      
-      <div className={cn(
-        "absolute right-4 top-4 p-3 rounded-xl",
-        "bg-current/10 backdrop-blur-sm",
-        "transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6"
-      )}>
-        <Icon className="h-6 w-6 text-current" />
+      <div
+        className="absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-20 blur-3xl transition-all duration-700 group-hover:scale-150"
+        style={{ background: novaColors.text }}
+      />
+
+      <div
+        className="absolute right-4 top-4 p-3 rounded-sm backdrop-blur-sm transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6"
+        style={{ background: novaColors.bg }}
+      >
+        <Icon className="h-6 w-6" style={{ color: novaColors.text }} />
       </div>
-      
+
       <div className="relative z-10">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+        <p className="text-xs font-medium text-[var(--nova-text-secondary)] uppercase tracking-wider mb-2">
           {title}
         </p>
-        <p className="text-4xl font-bold tracking-tight text-foreground mb-1">
+        <p className="text-4xl font-bold tracking-tight text-[var(--nova-text-bright)] mb-1">
           <AnimatedNumber value={value} />
         </p>
         {subtitle && (
-          <p className="text-sm text-muted-foreground">{subtitle}</p>
+          <p className="text-sm text-[var(--nova-text-secondary)]">{subtitle}</p>
         )}
         {goalValue && goalValue > 0 && (
           <div className="mt-3 space-y-1">
             <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">{goalLabel || 'Meta'}</span>
-              <span className="text-muted-foreground">{Math.round(progressPercent)}%</span>
+              <span className="text-[var(--nova-text-secondary)]">{goalLabel || 'Meta'}</span>
+              <span className="text-[var(--nova-text-secondary)]">{Math.round(progressPercent)}%</span>
             </div>
             <Progress value={progressPercent} className="h-1.5" />
           </div>
@@ -167,46 +168,46 @@ const PremiumStatsCard = ({
         {trend !== undefined && (
           <div className="flex items-center gap-1 mt-2">
             {trend > 0 ? (
-              <ArrowUpRight className="h-4 w-4 text-success" />
+              <ArrowUpRight className="h-4 w-4 text-[var(--nova-success)]" />
             ) : trend < 0 ? (
-              <ArrowDownRight className="h-4 w-4 text-destructive" />
+              <ArrowDownRight className="h-4 w-4 text-[var(--nova-error)]" />
             ) : null}
             <span className={cn(
               "text-sm font-medium",
-              trend > 0 ? "text-success" : trend < 0 ? "text-destructive" : "text-muted-foreground"
+              trend > 0 ? "text-[var(--nova-success)]" : trend < 0 ? "text-[var(--nova-error)]" : "text-[var(--nova-text-secondary)]"
             )}>
               {trend > 0 && "+"}{trend}% vs mes anterior
             </span>
           </div>
         )}
       </div>
-      
-      <div className={cn(
-        "absolute bottom-0 left-0 right-0 h-1 bg-current opacity-50",
-        "transition-all duration-500 group-hover:opacity-100"
-      )} />
+
+      <div
+        className="absolute bottom-0 left-0 right-0 h-1 opacity-50 transition-all duration-500 group-hover:opacity-100"
+        style={{ background: novaColors.text }}
+      />
     </div>
   );
 };
 
-// Large KPI Card for main metrics
-const LargeKpiCard = ({ 
-  title, 
-  value, 
+// Large KPI Card for main metrics - Nova Design System
+const LargeKpiCard = ({
+  title,
+  value,
   prefix = "",
   suffix = "",
-  icon: Icon, 
+  icon: Icon,
   trend,
   description,
   onClick,
   goalValue,
   goalLabel
-}: { 
-  title: string; 
-  value: number; 
+}: {
+  title: string;
+  value: number;
   prefix?: string;
   suffix?: string;
-  icon: any; 
+  icon: any;
   trend?: number;
   description?: string;
   onClick?: () => void;
@@ -216,41 +217,42 @@ const LargeKpiCard = ({
   const progressPercent = goalValue && goalValue > 0 ? Math.min((value / goalValue) * 100, 100) : 0;
 
   return (
-    <div 
+    <div
       onClick={onClick}
       className={cn(
-        "group relative overflow-hidden rounded-3xl border border-border/50 p-8",
-        "bg-gradient-to-br from-card via-card to-muted/20 backdrop-blur-xl",
-        "transition-all duration-500 hover:shadow-[0_0_60px_-10px] hover:shadow-primary/20",
+        "group relative overflow-hidden rounded-sm border p-8",
+        "bg-[var(--nova-bg-elevated)] backdrop-blur-xl",
+        "border-[var(--nova-border-default)]",
+        "transition-all duration-500 nova-hover-glow",
         onClick && "cursor-pointer"
       )}
     >
-      <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gradient-to-br from-primary/10 to-transparent blur-3xl transition-transform duration-700 group-hover:scale-125" />
-      
+      <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gradient-to-br from-[rgba(139,92,246,0.1)] to-transparent blur-3xl transition-transform duration-700 group-hover:scale-125" />
+
       <div className="relative z-10 flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 rounded-2xl bg-primary/10 backdrop-blur-sm">
-              <Icon className="h-8 w-8 text-primary" />
+            <div className="p-3 rounded-sm bg-[rgba(139,92,246,0.1)] backdrop-blur-sm">
+              <Icon className="h-8 w-8 text-[var(--nova-accent-primary)]" />
             </div>
-            <p className="text-lg font-medium text-muted-foreground">{title}</p>
+            <p className="text-lg font-medium text-[var(--nova-text-secondary)]">{title}</p>
           </div>
-          
-          <p className="text-6xl font-bold tracking-tight text-foreground mb-2">
+
+          <p className="text-6xl font-bold tracking-tight text-[var(--nova-text-bright)] mb-2">
             {prefix}<AnimatedNumber value={value} />{suffix}
           </p>
-          
+
           {description && (
-            <p className="text-sm text-muted-foreground max-w-xs">{description}</p>
+            <p className="text-sm text-[var(--nova-text-secondary)] max-w-xs">{description}</p>
           )}
 
           {goalValue && goalValue > 0 && (
             <div className="mt-4 space-y-1 max-w-xs">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{goalLabel || 'Meta'}: {prefix}{goalValue.toLocaleString()}</span>
+                <span className="text-[var(--nova-text-secondary)]">{goalLabel || 'Meta'}: {prefix}{goalValue.toLocaleString()}</span>
                 <span className={cn(
                   "font-medium",
-                  progressPercent >= 100 ? "text-success" : progressPercent >= 75 ? "text-warning" : "text-muted-foreground"
+                  progressPercent >= 100 ? "text-[var(--nova-success)]" : progressPercent >= 75 ? "text-[var(--nova-warning)]" : "text-[var(--nova-text-secondary)]"
                 )}>
                   {Math.round(progressPercent)}%
                 </span>
@@ -259,11 +261,11 @@ const LargeKpiCard = ({
             </div>
           )}
         </div>
-        
+
         {trend !== undefined && (
           <div className={cn(
             "flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium",
-            trend > 0 ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
+            trend > 0 ? "bg-[var(--nova-success-bg)] text-[var(--nova-success)]" : "bg-[var(--nova-error-bg)] text-[var(--nova-error)]"
           )}>
             {trend > 0 ? <TrendingUp className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
             {trend > 0 && "+"}{trend}%
@@ -766,7 +768,7 @@ export default function Dashboard() {
                   <span className="hidden md:inline">Metas</span>
                 </Button>
               )}
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-success/10 border border-success/20">
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-sm bg-success/10 border border-success/20">
                 <Activity className="h-3 w-3 text-success animate-pulse" />
                 <span className="text-xs font-medium text-success">En vivo</span>
               </div>
@@ -1028,13 +1030,13 @@ export default function Dashboard() {
 
             {/* Row 2: Content Status Pipeline - Tech Style */}
             <motion.div 
-              className="rounded-xl border border-[hsl(270,100%,60%,0.15)] bg-gradient-to-br from-card to-card p-4"
+              className="rounded-sm border border-[hsl(270,100%,60%,0.15)] bg-gradient-to-br from-card to-card p-4"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
             >
               <TechSectionHeader icon={Activity} title="Pipeline de Contenidos" />
-              <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
                 <PipelineItem
                   icon={Calendar}
                   value={pending}
@@ -1090,7 +1092,7 @@ export default function Dashboard() {
             {/* Row 3: Videos Adeudados + Quick Financial Summary */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div onClick={() => openKpiDialog('Videos Adeudados', content.filter(c => ['approved', 'delivered'].includes(c.status)))}
-                className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors">
+                className="p-4 rounded-sm bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Video className="h-5 w-5 text-destructive" />
@@ -1100,7 +1102,7 @@ export default function Dashboard() {
                 </div>
               </div>
               
-              <div className="p-4 rounded-xl bg-success/10 border border-success/20">
+              <div className="p-4 rounded-sm bg-success/10 border border-success/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-5 w-5 text-success" />
@@ -1113,7 +1115,7 @@ export default function Dashboard() {
                 </div>
               </div>
               
-              <div className="p-4 rounded-xl bg-warning/10 border border-warning/20">
+              <div className="p-4 rounded-sm bg-warning/10 border border-warning/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Clock className="h-5 w-5 text-warning" />
@@ -1129,7 +1131,7 @@ export default function Dashboard() {
 
             {/* Row 4: Goals Chart */}
             {allGoals.length > 0 && (
-              <div className="rounded-xl border border-border/50 bg-card p-4">
+              <div className="rounded-sm border border-border/50 bg-card p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold flex items-center gap-2">
                     <Target className="h-4 w-4 text-primary" />
@@ -1190,21 +1192,21 @@ export default function Dashboard() {
           <TabsContent value="financiero" className="space-y-4 mt-0">
             {/* Summary Cards - Row 1: Ingresos */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="p-4 rounded-xl bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border border-yellow-500/30">
+              <div className="p-4 rounded-sm bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border border-yellow-500/30">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-lg">🇨🇴</span>
                   <span className="text-sm font-medium">Total Facturado COP</span>
                 </div>
                 <p className="text-2xl font-bold"><CurrencyDisplay value={clientsBilling.totalBilledCOP} currency="COP" size="sm" /></p>
               </div>
-              <div className="p-4 rounded-xl bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/30">
+              <div className="p-4 rounded-sm bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/30">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-lg">🇺🇸</span>
                   <span className="text-sm font-medium">Total Facturado USD</span>
                 </div>
                 <p className="text-2xl font-bold"><CurrencyDisplay value={clientsBilling.totalBilledUSD} currency="USD" size="sm" /></p>
               </div>
-              <div className="p-4 rounded-xl bg-gradient-to-br from-success/10 to-success/5 border border-success/30">
+              <div className="p-4 rounded-sm bg-gradient-to-br from-success/10 to-success/5 border border-success/30">
                 <div className="flex items-center gap-2 mb-2">
                   <CheckCircle className="h-4 w-4 text-success" />
                   <span className="text-sm font-medium">Total Recaudado</span>
@@ -1214,7 +1216,7 @@ export default function Dashboard() {
                   <p className="text-xs text-success/70"><CurrencyDisplay value={clientsBilling.totalPaidUSD} currency="USD" size="sm" /></p>
                 </div>
               </div>
-              <div className="p-4 rounded-xl bg-gradient-to-br from-warning/10 to-warning/5 border border-warning/30">
+              <div className="p-4 rounded-sm bg-gradient-to-br from-warning/10 to-warning/5 border border-warning/30">
                 <div className="flex items-center gap-2 mb-2">
                   <Clock className="h-4 w-4 text-warning" />
                   <span className="text-sm font-medium">Total Por Cobrar</span>
@@ -1229,7 +1231,7 @@ export default function Dashboard() {
             {/* Summary Cards - Row 2: Egresos y Utilidad */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {/* Total Por Pagar al Equipo */}
-              <div className="p-4 rounded-xl bg-gradient-to-br from-destructive/10 to-destructive/5 border border-destructive/30">
+              <div className="p-4 rounded-sm bg-gradient-to-br from-destructive/10 to-destructive/5 border border-destructive/30">
                 <div className="flex items-center gap-2 mb-2">
                   <Banknote className="h-4 w-4 text-destructive" />
                   <span className="text-sm font-medium">Total Por Pagar</span>
@@ -1242,7 +1244,7 @@ export default function Dashboard() {
               </div>
 
               {/* Total Pagado al Equipo */}
-              <div className="p-4 rounded-xl bg-gradient-to-br from-info/10 to-info/5 border border-info/30">
+              <div className="p-4 rounded-sm bg-gradient-to-br from-info/10 to-info/5 border border-info/30">
                 <div className="flex items-center gap-2 mb-2">
                   <CheckCircle className="h-4 w-4 text-info" />
                   <span className="text-sm font-medium">Total Pagado Equipo</span>
@@ -1254,7 +1256,7 @@ export default function Dashboard() {
               </div>
 
               {/* Utilidad Real (ya cobrado - ya pagado) */}
-              <div className="p-4 rounded-xl bg-gradient-to-br from-success/10 to-success/5 border border-success/30">
+              <div className="p-4 rounded-sm bg-gradient-to-br from-success/10 to-success/5 border border-success/30">
                 <div className="flex items-center gap-2 mb-2">
                   <TrendingUp className="h-4 w-4 text-success" />
                   <span className="text-sm font-medium">Utilidad Real</span>
@@ -1271,7 +1273,7 @@ export default function Dashboard() {
               </div>
 
               {/* Posible Utilidad (por cobrar - por pagar) */}
-              <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30">
+              <div className="p-4 rounded-sm bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30">
                 <div className="flex items-center gap-2 mb-2">
                   <Target className="h-4 w-4 text-primary" />
                   <span className="text-sm font-medium">Posible Utilidad</span>
@@ -1291,7 +1293,7 @@ export default function Dashboard() {
             {/* Facturación Detailed - By Currency */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* FACTURACIÓN - COP */}
-              <div className="rounded-xl border border-yellow-500/30 bg-gradient-to-br from-yellow-500/5 to-yellow-500/10 p-5">
+              <div className="rounded-sm border border-yellow-500/30 bg-gradient-to-br from-yellow-500/5 to-yellow-500/10 p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <span className="text-xl">🇨🇴</span>
@@ -1301,7 +1303,7 @@ export default function Dashboard() {
                 </div>
                 <div className="space-y-3">
                   <div onClick={() => openListDialog('Facturado COP', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'COP' || !(p as any).currency) })}
-                    className="flex justify-between items-center cursor-pointer hover:bg-yellow-500/10 rounded-lg p-3 transition-colors border border-yellow-500/20">
+                    className="flex justify-between items-center cursor-pointer hover:bg-yellow-500/10 rounded-sm p-3 transition-colors border border-yellow-500/20">
                     <div className="flex items-center gap-3">
                       <DollarSign className="h-5 w-5 text-yellow-600" />
                       <span className="font-medium">Facturado</span>
@@ -1309,7 +1311,7 @@ export default function Dashboard() {
                     <span className="text-xl font-bold"><CurrencyDisplay value={clientsBilling.totalBilledCOP} currency="COP" size="sm" /></span>
                   </div>
                   <div onClick={() => openListDialog('Recaudado COP', 'packages-paid', { packages: packages.filter(p => p.paid_amount > 0 && ((p as any).currency === 'COP' || !(p as any).currency)) })}
-                    className="flex justify-between items-center cursor-pointer hover:bg-success/10 rounded-lg p-3 transition-colors border border-success/20 bg-success/5">
+                    className="flex justify-between items-center cursor-pointer hover:bg-success/10 rounded-sm p-3 transition-colors border border-success/20 bg-success/5">
                     <div className="flex items-center gap-3">
                       <CheckCircle className="h-5 w-5 text-success" />
                       <span className="font-medium">Recaudado</span>
@@ -1317,7 +1319,7 @@ export default function Dashboard() {
                     <span className="text-xl font-bold text-success"><CurrencyDisplay value={clientsBilling.totalPaidCOP} currency="COP" size="sm" /></span>
                   </div>
                   <div onClick={() => openListDialog('Por Cobrar COP', 'packages-pending', { packages: packages.filter(p => (p.total_value - p.paid_amount) > 0 && ((p as any).currency === 'COP' || !(p as any).currency)) })}
-                    className="flex justify-between items-center cursor-pointer hover:bg-warning/10 rounded-lg p-3 transition-colors border border-warning/20 bg-warning/5">
+                    className="flex justify-between items-center cursor-pointer hover:bg-warning/10 rounded-sm p-3 transition-colors border border-warning/20 bg-warning/5">
                     <div className="flex items-center gap-3">
                       <Clock className="h-5 w-5 text-warning" />
                       <span className="font-medium">Por Cobrar</span>
@@ -1328,7 +1330,7 @@ export default function Dashboard() {
               </div>
 
               {/* FACTURACIÓN - USD */}
-              <div className="rounded-xl border border-green-500/30 bg-gradient-to-br from-green-500/5 to-green-500/10 p-5">
+              <div className="rounded-sm border border-green-500/30 bg-gradient-to-br from-green-500/5 to-green-500/10 p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <span className="text-xl">🇺🇸</span>
@@ -1338,7 +1340,7 @@ export default function Dashboard() {
                 </div>
                 <div className="space-y-3">
                   <div onClick={() => openListDialog('Facturado USD', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'USD') })}
-                    className="flex justify-between items-center cursor-pointer hover:bg-green-500/10 rounded-lg p-3 transition-colors border border-green-500/20">
+                    className="flex justify-between items-center cursor-pointer hover:bg-green-500/10 rounded-sm p-3 transition-colors border border-green-500/20">
                     <div className="flex items-center gap-3">
                       <DollarSign className="h-5 w-5 text-green-600" />
                       <span className="font-medium">Facturado</span>
@@ -1346,7 +1348,7 @@ export default function Dashboard() {
                     <span className="text-xl font-bold"><CurrencyDisplay value={clientsBilling.totalBilledUSD} currency="USD" size="sm" /></span>
                   </div>
                   <div onClick={() => openListDialog('Recaudado USD', 'packages-paid', { packages: packages.filter(p => p.paid_amount > 0 && (p as any).currency === 'USD') })}
-                    className="flex justify-between items-center cursor-pointer hover:bg-success/10 rounded-lg p-3 transition-colors border border-success/20 bg-success/5">
+                    className="flex justify-between items-center cursor-pointer hover:bg-success/10 rounded-sm p-3 transition-colors border border-success/20 bg-success/5">
                     <div className="flex items-center gap-3">
                       <CheckCircle className="h-5 w-5 text-success" />
                       <span className="font-medium">Recaudado</span>
@@ -1354,7 +1356,7 @@ export default function Dashboard() {
                     <span className="text-xl font-bold text-success"><CurrencyDisplay value={clientsBilling.totalPaidUSD} currency="USD" size="sm" /></span>
                   </div>
                   <div onClick={() => openListDialog('Por Cobrar USD', 'packages-pending', { packages: packages.filter(p => (p.total_value - p.paid_amount) > 0 && (p as any).currency === 'USD') })}
-                    className="flex justify-between items-center cursor-pointer hover:bg-warning/10 rounded-lg p-3 transition-colors border border-warning/20 bg-warning/5">
+                    className="flex justify-between items-center cursor-pointer hover:bg-warning/10 rounded-sm p-3 transition-colors border border-warning/20 bg-warning/5">
                     <div className="flex items-center gap-3">
                       <Clock className="h-5 w-5 text-warning" />
                       <span className="font-medium">Por Cobrar</span>
@@ -1368,7 +1370,7 @@ export default function Dashboard() {
             {/* Pagos Equipo - By Currency */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* PAGOS EQUIPO - COP */}
-              <div className="rounded-xl border border-yellow-500/30 bg-gradient-to-br from-yellow-500/5 to-yellow-500/10 p-5">
+              <div className="rounded-sm border border-yellow-500/30 bg-gradient-to-br from-yellow-500/5 to-yellow-500/10 p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <span className="text-xl">🇨🇴</span>
@@ -1378,19 +1380,19 @@ export default function Dashboard() {
                 </div>
                 <div className="space-y-3">
                   {/* Pagado */}
-                  <div className="p-3 rounded-lg bg-success/10 border border-success/20">
+                  <div className="p-3 rounded-sm bg-success/10 border border-success/20">
                     <div className="flex items-center gap-2 mb-3">
                       <CheckCircle className="h-4 w-4 text-success" />
                       <span className="text-sm font-semibold text-success">Pagado</span>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div onClick={() => openKpiDialog('Pagado a Creadores (COP)', paidCreatorContent.filter(c => (c as any).creator_payment_currency !== 'USD'))}
-                        className="flex flex-col cursor-pointer hover:bg-success/20 rounded-lg p-2 transition-colors">
+                        className="flex flex-col cursor-pointer hover:bg-success/20 rounded-sm p-2 transition-colors">
                         <span className="text-xs text-muted-foreground">Creadores</span>
                         <span className="text-lg font-bold text-success"><CurrencyDisplay value={paidCreatorPaymentCOP} currency="COP" size="sm" /></span>
                       </div>
                       <div onClick={() => openKpiDialog('Pagado a Editores (COP)', paidEditorContent.filter(c => (c as any).editor_payment_currency !== 'USD'))}
-                        className="flex flex-col cursor-pointer hover:bg-success/20 rounded-lg p-2 transition-colors">
+                        className="flex flex-col cursor-pointer hover:bg-success/20 rounded-sm p-2 transition-colors">
                         <span className="text-xs text-muted-foreground">Editores</span>
                         <span className="text-lg font-bold text-success"><CurrencyDisplay value={paidEditorPaymentCOP} currency="COP" size="sm" /></span>
                       </div>
@@ -1403,19 +1405,19 @@ export default function Dashboard() {
                     </div>
                   </div>
                   {/* Por Pagar */}
-                  <div className="p-3 rounded-lg bg-warning/10 border border-warning/20">
+                  <div className="p-3 rounded-sm bg-warning/10 border border-warning/20">
                     <div className="flex items-center gap-2 mb-3">
                       <Clock className="h-4 w-4 text-warning" />
                       <span className="text-sm font-semibold text-warning">Por Pagar</span>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div onClick={() => openKpiDialog('Por Pagar a Creadores (COP)', unpaidCreatorContent.filter(c => (c as any).creator_payment_currency !== 'USD'))}
-                        className="flex flex-col cursor-pointer hover:bg-warning/20 rounded-lg p-2 transition-colors">
+                        className="flex flex-col cursor-pointer hover:bg-warning/20 rounded-sm p-2 transition-colors">
                         <span className="text-xs text-muted-foreground">Creadores</span>
                         <span className="text-lg font-bold text-warning"><CurrencyDisplay value={pendingCreatorPaymentCOP} currency="COP" size="sm" /></span>
                       </div>
                       <div onClick={() => openKpiDialog('Por Pagar a Editores (COP)', unpaidEditorContent.filter(c => (c as any).editor_payment_currency !== 'USD'))}
-                        className="flex flex-col cursor-pointer hover:bg-warning/20 rounded-lg p-2 transition-colors">
+                        className="flex flex-col cursor-pointer hover:bg-warning/20 rounded-sm p-2 transition-colors">
                         <span className="text-xs text-muted-foreground">Editores</span>
                         <span className="text-lg font-bold text-warning"><CurrencyDisplay value={pendingEditorPaymentCOP} currency="COP" size="sm" /></span>
                       </div>
@@ -1431,7 +1433,7 @@ export default function Dashboard() {
               </div>
 
               {/* PAGOS EQUIPO - USD */}
-              <div className="rounded-xl border border-green-500/30 bg-gradient-to-br from-green-500/5 to-green-500/10 p-5">
+              <div className="rounded-sm border border-green-500/30 bg-gradient-to-br from-green-500/5 to-green-500/10 p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <span className="text-xl">🇺🇸</span>
@@ -1441,19 +1443,19 @@ export default function Dashboard() {
                 </div>
                 <div className="space-y-3">
                   {/* Pagado */}
-                  <div className="p-3 rounded-lg bg-success/10 border border-success/20">
+                  <div className="p-3 rounded-sm bg-success/10 border border-success/20">
                     <div className="flex items-center gap-2 mb-3">
                       <CheckCircle className="h-4 w-4 text-success" />
                       <span className="text-sm font-semibold text-success">Pagado</span>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div onClick={() => openKpiDialog('Pagado a Creadores (USD)', paidCreatorContent.filter(c => (c as any).creator_payment_currency === 'USD'))}
-                        className="flex flex-col cursor-pointer hover:bg-success/20 rounded-lg p-2 transition-colors">
+                        className="flex flex-col cursor-pointer hover:bg-success/20 rounded-sm p-2 transition-colors">
                         <span className="text-xs text-muted-foreground">Creadores</span>
                         <span className="text-lg font-bold text-success"><CurrencyDisplay value={paidCreatorPaymentUSD} currency="USD" size="sm" /></span>
                       </div>
                       <div onClick={() => openKpiDialog('Pagado a Editores (USD)', paidEditorContent.filter(c => (c as any).editor_payment_currency === 'USD'))}
-                        className="flex flex-col cursor-pointer hover:bg-success/20 rounded-lg p-2 transition-colors">
+                        className="flex flex-col cursor-pointer hover:bg-success/20 rounded-sm p-2 transition-colors">
                         <span className="text-xs text-muted-foreground">Editores</span>
                         <span className="text-lg font-bold text-success"><CurrencyDisplay value={paidEditorPaymentUSD} currency="USD" size="sm" /></span>
                       </div>
@@ -1466,19 +1468,19 @@ export default function Dashboard() {
                     </div>
                   </div>
                   {/* Por Pagar */}
-                  <div className="p-3 rounded-lg bg-warning/10 border border-warning/20">
+                  <div className="p-3 rounded-sm bg-warning/10 border border-warning/20">
                     <div className="flex items-center gap-2 mb-3">
                       <Clock className="h-4 w-4 text-warning" />
                       <span className="text-sm font-semibold text-warning">Por Pagar</span>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div onClick={() => openKpiDialog('Por Pagar a Creadores (USD)', unpaidCreatorContent.filter(c => (c as any).creator_payment_currency === 'USD'))}
-                        className="flex flex-col cursor-pointer hover:bg-warning/20 rounded-lg p-2 transition-colors">
+                        className="flex flex-col cursor-pointer hover:bg-warning/20 rounded-sm p-2 transition-colors">
                         <span className="text-xs text-muted-foreground">Creadores</span>
                         <span className="text-lg font-bold text-warning"><CurrencyDisplay value={pendingCreatorPaymentUSD} currency="USD" size="sm" /></span>
                       </div>
                       <div onClick={() => openKpiDialog('Por Pagar a Editores (USD)', unpaidEditorContent.filter(c => (c as any).editor_payment_currency === 'USD'))}
-                        className="flex flex-col cursor-pointer hover:bg-warning/20 rounded-lg p-2 transition-colors">
+                        className="flex flex-col cursor-pointer hover:bg-warning/20 rounded-sm p-2 transition-colors">
                         <span className="text-xs text-muted-foreground">Editores</span>
                         <span className="text-lg font-bold text-warning"><CurrencyDisplay value={pendingEditorPaymentUSD} currency="USD" size="sm" /></span>
                       </div>
@@ -1495,7 +1497,7 @@ export default function Dashboard() {
             </div>
 
             {/* Margen / Utilidad Estimada */}
-            <div className="rounded-xl border border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 p-5">
+            <div className="rounded-sm border border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-base font-semibold flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
@@ -1503,31 +1505,31 @@ export default function Dashboard() {
                 </h3>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-3 rounded-lg bg-card/50">
+                <div className="text-center p-3 rounded-sm bg-card/50">
                   <p className="text-xs text-muted-foreground mb-1">Ingresos COP</p>
                   <p className="text-lg font-bold"><CurrencyDisplay value={clientsBilling.totalPaidCOP} currency="COP" size="sm" /></p>
                 </div>
-                <div className="text-center p-3 rounded-lg bg-card/50">
+                <div className="text-center p-3 rounded-sm bg-card/50">
                   <p className="text-xs text-muted-foreground mb-1">Costos COP</p>
                   <p className="text-lg font-bold text-destructive"><CurrencyDisplay value={paidCreatorPaymentCOP + paidEditorPaymentCOP} currency="COP" size="sm" /></p>
                 </div>
-                <div className="text-center p-3 rounded-lg bg-card/50">
+                <div className="text-center p-3 rounded-sm bg-card/50">
                   <p className="text-xs text-muted-foreground mb-1">Ingresos USD</p>
                   <p className="text-lg font-bold"><CurrencyDisplay value={clientsBilling.totalPaidUSD} currency="USD" size="sm" /></p>
                 </div>
-                <div className="text-center p-3 rounded-lg bg-card/50">
+                <div className="text-center p-3 rounded-sm bg-card/50">
                   <p className="text-xs text-muted-foreground mb-1">Costos USD</p>
                   <p className="text-lg font-bold text-destructive"><CurrencyDisplay value={paidCreatorPaymentUSD + paidEditorPaymentUSD} currency="USD" size="sm" /></p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-primary/20">
-                <div className="text-center p-3 rounded-lg bg-success/10 border border-success/20">
+                <div className="text-center p-3 rounded-sm bg-success/10 border border-success/20">
                   <p className="text-xs text-muted-foreground mb-1">Utilidad COP</p>
                   <p className="text-xl font-bold text-success">
                     <CurrencyDisplay value={clientsBilling.totalPaidCOP - (paidCreatorPaymentCOP + paidEditorPaymentCOP)} currency="COP" size="sm" />
                   </p>
                 </div>
-                <div className="text-center p-3 rounded-lg bg-success/10 border border-success/20">
+                <div className="text-center p-3 rounded-sm bg-success/10 border border-success/20">
                   <p className="text-xs text-muted-foreground mb-1">Utilidad USD</p>
                   <p className="text-xl font-bold text-success">
                     <CurrencyDisplay value={clientsBilling.totalPaidUSD - (paidCreatorPaymentUSD + paidEditorPaymentUSD)} currency="USD" size="sm" />
@@ -1555,7 +1557,7 @@ export default function Dashboard() {
             )}
 
             {/* Placeholder for future UP features */}
-            <div className="rounded-xl border border-border/50 bg-card p-6 text-center">
+            <div className="rounded-sm border border-border/50 bg-card p-6 text-center">
               <Zap className="h-12 w-12 mx-auto text-primary/50 mb-3" />
               <h3 className="text-lg font-semibold mb-2">Sistema UP Activo</h3>
               <p className="text-sm text-muted-foreground max-w-md mx-auto">
@@ -1567,9 +1569,9 @@ export default function Dashboard() {
           {/* TAB 4: USUARIOS Y REFERIDOS */}
           <TabsContent value="usuarios" className="space-y-4 mt-0">
             {/* Team Summary */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div onClick={() => openListDialog('Creadores Activos', 'creators', { profiles: activeCreators })}
-                className="p-5 rounded-xl bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors text-center">
+                className="p-5 rounded-sm bg-info/10 border border-info/20 cursor-pointer hover:bg-info/20 transition-colors text-center">
                 <Users className="h-8 w-8 mx-auto text-info mb-2" />
                 <p className="text-3xl font-bold text-info">{activeCreators.length}</p>
                 <p className="text-sm text-muted-foreground">Creadores Activos</p>
@@ -1578,7 +1580,7 @@ export default function Dashboard() {
                 </p>
               </div>
               <div onClick={() => openListDialog('Editores Activos', 'editors', { profiles: activeEditors })}
-                className="p-5 rounded-xl bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors text-center">
+                className="p-5 rounded-sm bg-warning/10 border border-warning/20 cursor-pointer hover:bg-warning/20 transition-colors text-center">
                 <Scissors className="h-8 w-8 mx-auto text-warning mb-2" />
                 <p className="text-3xl font-bold text-warning">{activeEditors.length}</p>
                 <p className="text-sm text-muted-foreground">Editores Activos</p>
@@ -1587,7 +1589,7 @@ export default function Dashboard() {
                 </p>
               </div>
               <div onClick={() => openListDialog('Clientes Activos', 'clients', { clients: activeClients })}
-                className="p-5 rounded-xl bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors text-center">
+                className="p-5 rounded-sm bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors text-center">
                 <Building2 className="h-8 w-8 mx-auto text-primary mb-2" />
                 <p className="text-3xl font-bold text-primary">{activeClients.length}</p>
                 <p className="text-sm text-muted-foreground">Clientes Activos</p>
@@ -1600,14 +1602,14 @@ export default function Dashboard() {
             {/* Team Performance Summary */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Top Creators */}
-              <div className="rounded-xl border border-border/50 bg-card p-5">
+              <div className="rounded-sm border border-border/50 bg-card p-5">
                 <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-info" />
                   Top Creadores
                 </h3>
                 <div className="space-y-2">
                   {activeCreators.slice(0, 5).map((creator, index) => (
-                    <div key={creator.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                    <div key={creator.id} className="flex items-center justify-between p-2 rounded-sm bg-muted/50 hover:bg-muted transition-colors">
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-bold text-muted-foreground w-6">{index + 1}</span>
                         <div>
@@ -1627,14 +1629,14 @@ export default function Dashboard() {
               </div>
 
               {/* Top Editors */}
-              <div className="rounded-xl border border-border/50 bg-card p-5">
+              <div className="rounded-sm border border-border/50 bg-card p-5">
                 <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-warning" />
                   Top Editores
                 </h3>
                 <div className="space-y-2">
                   {activeEditors.slice(0, 5).map((editor, index) => (
-                    <div key={editor.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                    <div key={editor.id} className="flex items-center justify-between p-2 rounded-sm bg-muted/50 hover:bg-muted transition-colors">
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-bold text-muted-foreground w-6">{index + 1}</span>
                         <div>
@@ -1655,7 +1657,7 @@ export default function Dashboard() {
             </div>
 
             {/* Referral Stats */}
-            <div className="rounded-xl border border-border/50 bg-card p-5">
+            <div className="rounded-sm border border-border/50 bg-card p-5">
               <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
                 <UserCheck className="h-5 w-5 text-primary" />
                 Programa de Referidos

@@ -72,7 +72,7 @@ export function CampaignProgress({ campaignId }: CampaignProgressProps) {
       </div>
 
       {/* Progress bar */}
-      <div className="bg-white/5 rounded-xl p-4">
+      <div className="bg-white/5 rounded-sm p-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-gray-400 text-sm">Progreso de creadores</span>
           <span className="text-white text-sm font-medium">{approvedApps.length}/{campaign.max_creators}</span>
@@ -104,9 +104,9 @@ export function CampaignProgress({ campaignId }: CampaignProgressProps) {
 
 function KpiCard({ icon: Icon, label, value, color }: { icon: React.ElementType; label: string; value: string | number; color: string }) {
   return (
-    <div className="bg-card/80 border border-white/10 rounded-xl p-4">
+    <div className="bg-card/80 border border-white/10 rounded-sm p-4">
       <div className="flex items-center gap-2">
-        <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', color)}>
+        <div className={cn('w-8 h-8 rounded-sm flex items-center justify-center', color)}>
           <Icon className="h-4 w-4" />
         </div>
         <div>
@@ -121,7 +121,7 @@ function KpiCard({ icon: Icon, label, value, color }: { icon: React.ElementType;
 function CreatorProgressRow({ application, projectInfo }: { application: CampaignApplication; projectInfo?: { id: string; status: string } }) {
   const creator = application.creator;
   return (
-    <div className="flex items-center justify-between bg-white/5 rounded-lg p-3">
+    <div className="flex items-center justify-between bg-white/5 rounded-sm p-3">
       <div className="flex items-center gap-3">
         {creator.avatar_url ? (
           <img src={creator.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />

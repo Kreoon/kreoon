@@ -147,7 +147,7 @@ function InteractionItem({ interaction }: { interaction: AnyInteraction }) {
             </button>
             {expanded && (
               <div
-                className="mt-2 p-3 rounded-lg text-xs text-white/70 leading-relaxed whitespace-pre-wrap"
+                className="mt-2 p-3 rounded-sm text-xs text-white/70 leading-relaxed whitespace-pre-wrap"
                 style={{
                   background: 'rgba(255, 255, 255, 0.03)',
                   border: '1px solid rgba(255, 255, 255, 0.05)',

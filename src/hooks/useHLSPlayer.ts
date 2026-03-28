@@ -69,53 +69,56 @@ function getOptimalHlsConfig(networkQuality: NetworkQuality, fastStart: boolean)
   };
 
   if (fastStart) {
-    // Aggressive fast start - minimal buffering
+    // Fast start with min 720p policy
     return {
       ...baseConfig,
-      maxBufferLength: 10,           // Reduced from 30
-      maxMaxBufferLength: 30,        // Reduced from 60
-      maxBufferSize: 30 * 1000000,   // 30MB max buffer
-      maxBufferHole: 0.5,            // Tolerate small gaps
-      startLevel: networkQuality === 'fast' ? -1 : 0, // Start at lowest on slow
-      abrEwmaDefaultEstimate: networkQuality === 'fast' ? 5000000 : 1000000,
-      abrBandWidthFactor: 0.9,       // More aggressive bandwidth usage
-      abrBandWidthUpFactor: 0.7,     // Faster quality upgrades
-      // Fragment loading optimization
-      fragLoadingTimeOut: 10000,     // Reduced timeout
-      fragLoadingMaxRetry: 2,        // Fewer retries for faster failover
-      // Start playback as soon as possible
-      startFragPrefetch: true,       // Prefetch first fragment
-      testBandwidth: false,          // Skip initial bandwidth test
+      maxBufferLength: 30,
+      maxMaxBufferLength: 60,
+      maxBufferSize: 60 * 1000000,   // 60MB for 720p+
+      maxBufferHole: 0.5,
+      startLevel: 2,                  // Min 720p always
+      autoLevelCapping: -1,           // No cap - seek max quality
+      abrEwmaDefaultEstimate: networkQuality === 'fast' ? 5000000 : 2000000,
+      abrBandWidthFactor: 0.9,
+      abrBandWidthUpFactor: 0.7,
+      fragLoadingTimeOut: 10000,
+      fragLoadingMaxRetry: 2,
+      startFragPrefetch: true,
+      testBandwidth: false,
     };
   }
 
   // Quality-based configs
+  // POLICY: Minimum 720p (startLevel: 2), always seek max quality
+  // Quality levels: 0=360p, 1=480p, 2=720p, 3=1080p, 4=1440p, 5=2160p
   switch (networkQuality) {
     case 'slow':
       return {
         ...baseConfig,
-        maxBufferLength: 15,
-        maxMaxBufferLength: 30,
-        startLevel: 0,              // Start at lowest quality
-        abrEwmaDefaultEstimate: 500000, // Assume 500kbps
-        capLevelToPlayerSize: true, // Don't load higher than display
+        maxBufferLength: 30,
+        maxMaxBufferLength: 60,
+        startLevel: 2,              // Min 720p even on slow connection
+        abrEwmaDefaultEstimate: 500000,
+        autoLevelCapping: -1,       // No cap - allow upgrade to max
       };
     case 'medium':
       return {
         ...baseConfig,
-        maxBufferLength: 20,
-        maxMaxBufferLength: 45,
-        startLevel: 1,              // Start at medium quality
+        maxBufferLength: 45,
+        maxMaxBufferLength: 90,
+        startLevel: 2,              // Min 720p
         abrEwmaDefaultEstimate: 2000000,
+        autoLevelCapping: -1,
       };
     case 'fast':
     default:
       return {
         ...baseConfig,
-        maxBufferLength: 30,
-        maxMaxBufferLength: 60,
-        startLevel: -1,             // Auto (usually picks highest)
+        maxBufferLength: 60,
+        maxMaxBufferLength: 120,
+        startLevel: 3,              // Start at 1080p on fast connection
         abrEwmaDefaultEstimate: 5000000,
+        autoLevelCapping: -1,
       };
   }
 }

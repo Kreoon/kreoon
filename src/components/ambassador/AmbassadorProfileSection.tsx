@@ -131,22 +131,22 @@ export function AmbassadorProfileSection({ userId, ambassadorLevel = "none", isO
       <CardContent className="space-y-4">
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="text-center p-3 rounded-lg bg-muted/50">
+          <div className="text-center p-3 rounded-sm bg-muted/50">
             <Users className="h-5 w-5 mx-auto mb-1 text-blue-500" />
             <p className="text-2xl font-bold">{activeReferrals}</p>
             <p className="text-xs text-muted-foreground">Red Activa</p>
           </div>
-          <div className="text-center p-3 rounded-lg bg-muted/50">
+          <div className="text-center p-3 rounded-sm bg-muted/50">
             <TrendingUp className="h-5 w-5 mx-auto mb-1 text-green-500" />
             <p className="text-2xl font-bold">{stats?.latestStats?.content_by_network || 0}</p>
             <p className="text-xs text-muted-foreground">Contenido Red</p>
           </div>
-          <div className="text-center p-3 rounded-lg bg-muted/50">
+          <div className="text-center p-3 rounded-sm bg-muted/50">
             <DollarSign className="h-5 w-5 mx-auto mb-1 text-amber-500" />
             <p className="text-2xl font-bold">${stats?.membership?.ambassador_network_revenue?.toLocaleString() || 0}</p>
             <p className="text-xs text-muted-foreground">Revenue Indirecto</p>
           </div>
-          <div className="text-center p-3 rounded-lg bg-muted/50">
+          <div className="text-center p-3 rounded-sm bg-muted/50">
             <Sparkles className="h-5 w-5 mx-auto mb-1 text-purple-500" />
             <p className="text-2xl font-bold">{stats?.latestStats?.retention_rate?.toFixed(0) || 0}%</p>
             <p className="text-xs text-muted-foreground">Retención</p>
@@ -231,7 +231,7 @@ export function AmbassadorProfileSection({ userId, ambassadorLevel = "none", isO
           </div>
 
           {aiAnalysis && (
-            <div className="space-y-3 p-3 rounded-lg bg-muted/50">
+            <div className="space-y-3 p-3 rounded-sm bg-muted/50">
               {/* Recommended Level */}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Nivel recomendado</span>

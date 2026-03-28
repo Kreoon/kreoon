@@ -110,7 +110,7 @@ export function ProcessWithdrawalDialog({
 
         <div className="space-y-6">
           {/* User info */}
-          <div className="flex items-center gap-4 p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)]">
+          <div className="flex items-center gap-4 p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)]">
             <Avatar className="h-14 w-14">
               <AvatarImage src={profile?.avatar_url} />
               <AvatarFallback>
@@ -130,7 +130,7 @@ export function ProcessWithdrawalDialog({
           </div>
 
           {/* Payment details */}
-          <div className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)] space-y-3">
+          <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Método de Pago</span>
               <Badge variant="outline">{withdrawal.methodLabel}</Badge>

@@ -668,7 +668,7 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
               </Label>
               {assignData.strategist_guidelines ? (
                 <div 
-                  className="prose prose-sm dark:prose-invert max-w-none p-3 border rounded-md bg-muted/50"
+                  className="prose prose-sm dark:prose-invert max-w-none p-3 border rounded-sm bg-muted/50"
                   dangerouslySetInnerHTML={{ __html: sanitizeHTML(assignData.strategist_guidelines) }}
                 />
               ) : (
@@ -689,7 +689,7 @@ export function MarketingContent({ organizationId, selectedClientId }: Marketing
               </Label>
               {assignData.trafficker_guidelines ? (
                 <div 
-                  className="prose prose-sm dark:prose-invert max-w-none p-3 border rounded-md bg-muted/50"
+                  className="prose prose-sm dark:prose-invert max-w-none p-3 border rounded-sm bg-muted/50"
                   dangerouslySetInnerHTML={{ __html: sanitizeHTML(assignData.trafficker_guidelines) }}
                 />
               ) : (

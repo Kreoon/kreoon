@@ -185,12 +185,12 @@ export function ScriptReviewCard({ content, onUpdate, userId }: ScriptReviewCard
                 onClick={() => setShowScriptReview(true)}
                 className="cursor-pointer hover:opacity-80 transition-opacity"
               >
-                <div className={cn("rounded-lg bg-background/50 p-3", showFullScript ? "max-h-80 overflow-y-auto" : "max-h-36 overflow-hidden")}>
+                <div className={cn("rounded-sm bg-background/50 p-3", showFullScript ? "max-h-80 overflow-y-auto" : "max-h-36 overflow-hidden")}>
                   <ScriptPreview content={content.script} />
                 </div>
               </div>
             ) : (
-              <div className="p-4 text-center text-muted-foreground text-sm bg-background/50 rounded-lg">
+              <div className="p-4 text-center text-muted-foreground text-sm bg-background/50 rounded-sm">
                 <FileText className="h-6 w-6 mx-auto mb-2 opacity-50" />
                 Sin guión
               </div>

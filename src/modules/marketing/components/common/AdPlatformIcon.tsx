@@ -47,7 +47,7 @@ export function AdPlatformIcon({ platform, size = 'sm', withBg = false, classNam
     return (
       <div className={cn(
         bgSizeMap[size],
-        'rounded-lg flex items-center justify-center',
+        'rounded-sm flex items-center justify-center',
         'bg-white/10 border border-white/5'
       )}>
         {icon}

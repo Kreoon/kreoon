@@ -62,7 +62,7 @@ function Logo({ className }: { className?: string }) {
         }
       }}
     >
-      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-kreoon-purple-500/30 bg-gradient-to-br from-kreoon-purple-500/30 to-kreoon-purple-500/10 shadow-kreoon-glow-sm transition-all group-hover:shadow-kreoon-glow">
+      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-sm border border-kreoon-purple-500/30 bg-gradient-to-br from-kreoon-purple-500/30 to-kreoon-purple-500/10 shadow-kreoon-glow-sm transition-all group-hover:shadow-kreoon-glow">
         <img
           src="/favicon.png"
           alt="Kreoon"
@@ -187,7 +187,7 @@ export function LandingLayout({ children, onOpenAuth }: LandingLayoutProps) {
           <button
             type="button"
             aria-label="Abrir menú"
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-kreoon-text-secondary hover:bg-kreoon-purple-500/10 hover:text-white md:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-sm text-kreoon-text-secondary hover:bg-kreoon-purple-500/10 hover:text-white md:hidden"
             onClick={() => setMobileOpen(true)}
           >
             <Menu className="h-6 w-6" />
@@ -220,7 +220,7 @@ export function LandingLayout({ children, onOpenAuth }: LandingLayoutProps) {
                 <button
                   type="button"
                   aria-label="Cerrar menú"
-                  className="flex h-10 w-10 items-center justify-center rounded-lg text-kreoon-text-secondary hover:bg-kreoon-purple-500/10 hover:text-white"
+                  className="flex h-10 w-10 items-center justify-center rounded-sm text-kreoon-text-secondary hover:bg-kreoon-purple-500/10 hover:text-white"
                   onClick={() => setMobileOpen(false)}
                 >
                   <X className="h-6 w-6" />
@@ -232,14 +232,14 @@ export function LandingLayout({ children, onOpenAuth }: LandingLayoutProps) {
                     {"to" in item ? (
                       <Link
                         to={item.to}
-                        className="block rounded-lg px-4 py-3 text-kreoon-text-secondary hover:bg-kreoon-purple-500/10 hover:text-white"
+                        className="block rounded-sm px-4 py-3 text-kreoon-text-secondary hover:bg-kreoon-purple-500/10 hover:text-white"
                       >
                         {item.label}
                       </Link>
                     ) : (
                       <a
                         href={item.href}
-                        className="block rounded-lg px-4 py-3 text-kreoon-text-secondary hover:bg-kreoon-purple-500/10 hover:text-white"
+                        className="block rounded-sm px-4 py-3 text-kreoon-text-secondary hover:bg-kreoon-purple-500/10 hover:text-white"
                         onClick={(e) => {
                           const id = item.href.slice(1);
                           const el = document.getElementById(id);
@@ -303,7 +303,7 @@ export function LandingLayout({ children, onOpenAuth }: LandingLayoutProps) {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={label}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-kreoon-border text-kreoon-text-secondary transition-colors hover:border-kreoon-purple-400/50 hover:text-kreoon-purple-400"
+                    className="flex h-9 w-9 items-center justify-center rounded-sm border border-kreoon-border text-kreoon-text-secondary transition-colors hover:border-kreoon-purple-400/50 hover:text-kreoon-purple-400"
                   >
                     <Icon className="h-4 w-4" />
                   </a>

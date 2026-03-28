@@ -57,7 +57,7 @@ function PhaseCard({ title, color, children }: { title: string; color: string; c
     green: 'text-green-300',
   };
   return (
-    <div className={`${bgMap[color] || 'bg-white/[0.03] border-white/[0.06]'} border rounded-xl p-4`}>
+    <div className={`${bgMap[color] || 'bg-white/[0.03] border-white/[0.06]'} border rounded-sm p-4`}>
       <h4 className={`text-sm font-semibold ${textMap[color] || 'text-white'} mb-3`}>{title}</h4>
       {children}
     </div>
@@ -79,7 +79,7 @@ export function LandingLaunchStrategy({ launchStrategy }: Props) {
       {timelineItems.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-2">
           {timelineItems.map((t: any, i: number) => (
-            <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-lg p-2.5 min-w-[140px] shrink-0">
+            <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-sm p-2.5 min-w-[140px] shrink-0">
               <p className="text-[10px] text-purple-300/60 uppercase">{t.phase || ''} · {t.week || ''}</p>
               <p className="text-xs font-medium text-white/70 mt-0.5">{t.milestone || ''}</p>
             </div>
@@ -137,7 +137,7 @@ export function LandingLaunchStrategy({ launchStrategy }: Props) {
 
           {/* Offer */}
           {launch.offer && (
-            <div className="bg-white/[0.03] border border-white/[0.06] rounded-lg p-3 mb-3">
+            <div className="bg-white/[0.03] border border-white/[0.06] rounded-sm p-3 mb-3">
               <h5 className="text-[10px] text-white/30 uppercase mb-1">Estructura de Oferta</h5>
               {launch.offer.description && <p className="text-xs text-white/60 mb-1">{launch.offer.description}</p>}
               {launch.offer.price && <p className="text-xs text-white/70 font-medium">{launch.offer.price}</p>}
@@ -196,7 +196,7 @@ export function LandingLaunchStrategy({ launchStrategy }: Props) {
 
       {/* Budget */}
       {budget && (
-        <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
+        <div className="bg-white/[0.03] border border-white/[0.06] rounded-sm p-4">
           <h4 className="text-sm font-semibold text-white mb-3">Presupuesto</h4>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
@@ -233,7 +233,7 @@ export function LandingLaunchStrategy({ launchStrategy }: Props) {
 
       {/* Metrics */}
       {metrics && (
-        <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
+        <div className="bg-white/[0.03] border border-white/[0.06] rounded-sm p-4">
           <h4 className="text-sm font-semibold text-white mb-3">Metricas de Exito</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {[

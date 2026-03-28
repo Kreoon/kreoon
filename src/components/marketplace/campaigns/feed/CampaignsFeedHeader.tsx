@@ -38,7 +38,7 @@ export function CampaignsFeedHeader({
     <div className="space-y-4">
       {/* Title */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-sm bg-purple-500/20 flex items-center justify-center">
           <Megaphone className="h-5 w-5 text-purple-400" />
         </div>
         <div>
@@ -55,13 +55,13 @@ export function CampaignsFeedHeader({
             value={search}
             onChange={e => onSearchChange(e.target.value)}
             placeholder="Buscar campanas..."
-            className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2.5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
+            className="w-full bg-white/5 border border-white/10 rounded-sm pl-9 pr-3 py-2.5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
           />
         </div>
         <select
           value={sortBy}
           onChange={e => onSortChange(e.target.value)}
-          className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500 appearance-none cursor-pointer"
+          className="bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500 appearance-none cursor-pointer"
         >
           {SORT_OPTIONS.map(opt => (
             <option key={opt.value} value={opt.value} className="bg-card text-white">

@@ -54,7 +54,7 @@ export default function MaterialsTab({
         </div>
 
         {/* Google Drive URL */}
-        <div className="rounded-lg border p-4 space-y-3">
+        <div className="rounded-sm border p-4 space-y-3">
           <h4 className="font-medium text-sm">Google Drive</h4>
           {effectiveEditMode && canEdit ? (
             <Input
@@ -88,7 +88,7 @@ export default function MaterialsTab({
         <FolderOpen className="h-5 w-5" />
         Materiales del Proyecto
       </h3>
-      <div className="flex items-center gap-2 p-4 text-muted-foreground border rounded-lg">
+      <div className="flex items-center gap-2 p-4 text-muted-foreground border rounded-sm">
         <Info className="h-4 w-4" />
         <span className="text-sm">Los materiales del marketplace se gestionan directamente en la plataforma del proyecto.</span>
       </div>

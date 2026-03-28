@@ -143,7 +143,7 @@ export function StatusPageLayout({
             <img
               src="/favicon.png"
               alt="KREOON"
-              className="h-8 w-8 rounded-lg object-cover"
+              className="h-8 w-8 rounded-sm object-cover"
             />
             <span className="text-lg font-bold tracking-tight text-kreoon-text-primary">
               KREOON

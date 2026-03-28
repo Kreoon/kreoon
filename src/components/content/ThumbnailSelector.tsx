@@ -223,7 +223,7 @@ export function ThumbnailSelector({
       
       {/* Current thumbnail preview */}
       {currentThumbnail && !previewImage && (
-        <div className="relative w-24 h-32 rounded-lg overflow-hidden border bg-black">
+        <div className="relative w-24 h-32 rounded-sm overflow-hidden border bg-black">
           <img 
             src={currentThumbnail} 
             alt="Miniatura actual" 
@@ -234,7 +234,7 @@ export function ThumbnailSelector({
       
       {previewImage ? (
         <div className="space-y-2">
-          <div className="relative w-24 h-32 rounded-lg overflow-hidden border">
+          <div className="relative w-24 h-32 rounded-sm overflow-hidden border">
             <img 
               src={previewImage} 
               alt="Preview" 

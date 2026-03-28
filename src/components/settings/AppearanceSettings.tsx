@@ -249,7 +249,7 @@ export function AppearanceSettings() {
 
   const renderImageUploader = (key: string, currentValue: string) => (
     <div className="flex items-start gap-4">
-      <div className="h-20 w-20 rounded-lg border border-border flex items-center justify-center bg-muted overflow-hidden shrink-0">
+      <div className="h-20 w-20 rounded-sm border border-border flex items-center justify-center bg-muted overflow-hidden shrink-0">
         {currentValue ? (
           <img src={currentValue} alt={key} className="h-full w-full object-contain" />
         ) : (
@@ -301,7 +301,7 @@ export function AppearanceSettings() {
         className="max-w-40"
       />
       <div 
-        className="h-12 flex-1 rounded-lg border border-border"
+        className="h-12 flex-1 rounded-sm border border-border"
         style={{ backgroundColor: currentValue || "#000000" }}
       />
     </div>
@@ -311,7 +311,7 @@ export function AppearanceSettings() {
     if (!tips) return null;
     
     return (
-      <div className="mt-3 p-3 rounded-lg bg-muted/50 border text-xs space-y-1">
+      <div className="mt-3 p-3 rounded-sm bg-muted/50 border text-xs space-y-1">
         <div className="flex items-center gap-1 text-muted-foreground font-medium mb-2">
           <Info className="h-3 w-3" />
           Especificaciones:
@@ -400,7 +400,7 @@ export function AppearanceSettings() {
             <div className="flex items-center gap-4">
               <div className="text-center">
                 <div 
-                  className="h-16 w-16 rounded-2xl border-2 border-border overflow-hidden flex items-center justify-center"
+                  className="h-16 w-16 rounded-sm border-2 border-border overflow-hidden flex items-center justify-center"
                   style={{ backgroundColor: settings.theme_color || "#F5A623" }}
                 >
                   {settings.pwa_icon_192 ? (
@@ -419,7 +419,7 @@ export function AppearanceSettings() {
           {/* Social Share Preview */}
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">Compartir en redes sociales:</Label>
-            <div className="border rounded-lg overflow-hidden max-w-sm">
+            <div className="border rounded-sm overflow-hidden max-w-sm">
               <div className="h-32 bg-muted flex items-center justify-center">
                 {settings.og_image_url ? (
                   <img src={settings.og_image_url} alt="OG Image" className="h-full w-full object-cover" />

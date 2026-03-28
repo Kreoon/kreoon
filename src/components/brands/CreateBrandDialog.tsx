@@ -81,7 +81,7 @@ export function CreateBrandDialog({ open, onOpenChange }: CreateBrandDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-lg max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Crear mi marca</DialogTitle>
           <DialogDescription>

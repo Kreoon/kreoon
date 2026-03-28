@@ -171,14 +171,16 @@ const BunnyVideoPlayerComponent = forwardRef<BunnyVideoPlayerRef, BunnyVideoPlay
       }
 
       // hls.js for other browsers
+      // POLICY: Min 720p quality (startLevel: 2), seek max quality
       if (hlsUrl && Hls.isSupported()) {
         const hls = new Hls({
           enableWorker: true,
           lowLatencyMode: false,
-          backBufferLength: 30,
-          maxBufferLength: 20,
-          maxMaxBufferLength: 40,
-          startLevel: -1,
+          backBufferLength: 45,
+          maxBufferLength: 60,
+          maxMaxBufferLength: 90,
+          startLevel: 2, // 720p minimum (0=360p, 1=480p, 2=720p, 3=1080p)
+          autoLevelCapping: -1, // No cap - allow max quality
         });
 
         hlsRef.current = hls;

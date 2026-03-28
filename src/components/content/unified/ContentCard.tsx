@@ -106,13 +106,13 @@ export const ContentCard = memo(function ContentCard({
       <div
         onClick={onClick}
         className={cn(
-          "flex items-center gap-4 p-3 rounded-lg border bg-card transition-all cursor-pointer",
+          "flex items-center gap-4 p-3 rounded-sm border bg-card transition-all cursor-pointer",
           "hover:bg-accent/50 hover:border-primary/30",
           selected && "ring-2 ring-primary border-primary"
         )}
       >
         {/* Thumbnail */}
-        <div className="relative w-24 h-16 rounded-md overflow-hidden bg-muted flex-shrink-0">
+        <div className="relative w-24 h-16 rounded-sm overflow-hidden bg-muted flex-shrink-0">
           {previewUrl ? (
             <img
               src={item.thumbnail_url || previewUrl}
@@ -199,7 +199,7 @@ export const ContentCard = memo(function ContentCard({
       <div
         onClick={onClick}
         className={cn(
-          "relative aspect-square rounded-md overflow-hidden bg-muted cursor-pointer group",
+          "relative aspect-square rounded-sm overflow-hidden bg-muted cursor-pointer group",
           selected && "ring-2 ring-primary"
         )}
         onMouseEnter={() => setIsHovered(true)}
@@ -241,7 +241,7 @@ export const ContentCard = memo(function ContentCard({
       ref={cardRef}
       onClick={onClick}
       className={cn(
-        "relative aspect-[4/5] rounded-lg overflow-hidden bg-muted cursor-pointer group",
+        "relative aspect-[4/5] rounded-sm overflow-hidden bg-muted cursor-pointer group",
         selected && "ring-2 ring-primary"
       )}
       onMouseEnter={() => setIsHovered(true)}

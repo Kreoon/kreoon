@@ -39,7 +39,7 @@ export function AIFeedbackWidget({ executionId, onClose }: AIFeedbackWidgetProps
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg border bg-purple-500/10 border-purple-500/20">
+    <div className="flex flex-wrap items-center gap-3 p-3 rounded-sm border bg-purple-500/10 border-purple-500/20">
       <span className="text-sm text-muted-foreground">¿Qué tal el resultado?</span>
 
       <div className="flex gap-0.5" role="group" aria-label="Valoración">

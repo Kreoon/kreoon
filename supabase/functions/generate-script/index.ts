@@ -2,9 +2,10 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getKreoonClient, isKreoonConfigured } from "../_shared/kreoon-client.ts";
 import { getModuleAIConfig } from "../_shared/get-module-ai-config.ts";
-import { callAISingle, corsHeaders } from "../_shared/ai-providers.ts";
-// Nuevo: Prompts desde DB con fallback a hardcodeados
-import { getPrompt, interpolatePrompt } from "../_shared/prompts/db-prompts.ts";
+import { makeAIRequest, corsHeaders } from "../_shared/ai-providers.ts";
+// Nuevo: Prompts desde DB con fallback a V2 hardcodeados
+import { getPrompt } from "../_shared/prompts/db-prompts.ts";
+import { errorResponse, successResponse, moduleInactiveResponse, validationErrorResponse } from "../_shared/error-response.ts";
 
 interface ScriptRequest {
   organizationId: string;
@@ -16,6 +17,95 @@ interface ScriptRequest {
   additional_context: string;
   sphere_phase?: string;
 }
+
+// ============================================
+// MASTER_SCRIPT_PROMPT_V2 - Prompt Optimizado
+// ============================================
+// Tecnicas aplicadas:
+// - Chain of Thought explicito (6 pasos)
+// - 2 Few-Shot examples
+// - Temperatura: 0.7 (configurada en makeAIRequest)
+// - Output validation rules
+// - Contexto ESFERA condensado
+// ============================================
+
+const MASTER_SCRIPT_SYSTEM_PROMPT_V2 = `Eres KREOON AI, copywriter senior especializado en guiones UGC para Latinoamerica.
+
+TU METODOLOGIA (ESFERA - 4 Fases):
+1. ENGANCHAR (TOFU): Hooks disruptivos, audiencia fria, NO vender
+2. SOLUCION (MOFU): Venta directa, demos, testimonios, audiencia tibia
+3. REMARKETING (BOFU): Urgencia, FOMO, audiencia caliente
+4. FIDELIZAR: Comunidad, exclusividad, clientes actuales
+
+PROCESO DE PENSAMIENTO (sigue estos pasos):
+1. ANALIZA el avatar objetivo y su nivel de consciencia
+2. IDENTIFICA el dolor principal y deseo profundo
+3. SELECCIONA el angulo de venta mas resonante
+4. ESTRUCTURA el guion segun la fase ESFERA
+5. ESCRIBE hooks que rompan el patron de scroll
+6. VALIDA que cada seccion tenga proposito claro
+
+REGLAS DE OUTPUT:
+- Formato HTML limpio (h2, h3, p, ul, li, strong, em)
+- NO uses markdown (**, ##)
+- Maximo 2 emojis por seccion
+- Indicaciones de accion [ENTRE CORCHETES]
+- Duracion total: 30-60 segundos de lectura`;
+
+// Few-shot examples para el user prompt
+const FEW_SHOT_EXAMPLES = `
+EJEMPLOS DE REFERENCIA:
+
+EJEMPLO 1 - FASE ENGANCHAR (Skincare):
+<h2>HOOKS</h2>
+<h3>Hook A: La Revelacion</h3>
+<p>"Llevo 3 anos buscando esto y nadie me lo habia dicho..."</p>
+<p><strong>[ACCION]:</strong> Mirar fijamente a camara, pausa dramatica</p>
+
+<h3>Hook B: El Secreto</h3>
+<p>"Las dermatologas no quieren que sepas esto"</p>
+<p><strong>[ACCION]:</strong> Susurrar, acercarse a camara</p>
+
+<h2>DESARROLLO</h2>
+<h3>Problema (10 seg)</h3>
+<p>[ACCION: Tocar cara con frustracion]</p>
+<p>"Yo tambien tenia la piel opaca, sin vida, llena de marcas..."</p>
+
+<h3>Transicion (5 seg)</h3>
+<p>[ACCION: Cambio de expresion a esperanza]</p>
+<p>"Hasta que descubri algo que cambio TODO"</p>
+
+<h3>Solucion (15 seg)</h3>
+<p>[ACCION: Mostrar producto]</p>
+<p>"Este serum tiene vitamina C estabilizada al 20%..."</p>
+
+<h2>CTA</h2>
+<p>[ACCION: Mostrar link]</p>
+<p>"Link en mi bio, hay 50% de descuento solo hoy"</p>
+
+---
+
+EJEMPLO 2 - FASE SOLUCION (Curso Online):
+<h2>HOOKS</h2>
+<h3>Hook A: Resultado</h3>
+<p>"Asi facture mi primer millon con freelancing"</p>
+<p><strong>[ACCION]:</strong> Mostrar pantalla con numeros</p>
+
+<h2>DESARROLLO</h2>
+<h3>Antes/Despues (15 seg)</h3>
+<p>[ACCION: Split screen o transicion]</p>
+<p>"Hace 2 anos ganaba $500 al mes en una oficina que odiaba..."</p>
+<p>"Hoy trabajo 4 horas al dia desde Bali..."</p>
+
+<h3>El Puente (10 seg)</h3>
+<p>[ACCION: Mostrar metodologia]</p>
+<p>"El metodo tiene 3 pilares: posicionamiento, automatizacion, y escalamiento"</p>
+
+<h2>CTA</h2>
+<p>[ACCION: Urgencia]</p>
+<p>"Quedan 12 cupos para la masterclass gratis de manana"</p>
+
+---`;
 
 // Información detallada del Método Esfera para cada fase
 const SPHERE_PHASE_DETAILS: Record<string, {
@@ -98,6 +188,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let requestBody: ScriptRequest | null = null;
+
   try {
     // Use Kreoon database if configured, otherwise fallback to default
     let supabase;
@@ -110,24 +202,22 @@ serve(async (req) => {
       supabase = createClient(supabaseUrl, supabaseKey);
     }
 
-    const { 
+    requestBody = await req.json();
+    const {
       organizationId,
-      product_name, 
-      strategy, 
-      market_research, 
-      ideal_avatar, 
-      sales_angle, 
+      product_name,
+      strategy,
+      market_research,
+      ideal_avatar,
+      sales_angle,
       additional_context,
       sphere_phase
-    }: ScriptRequest = await req.json();
+    } = requestBody;
 
     console.log("Generating script for product:", product_name);
 
     if (!organizationId) {
-      return new Response(
-        JSON.stringify({ error: "organizationId es requerido" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return validationErrorResponse("organizationId es requerido", "organizationId");
     }
 
     // Validate module is active and get config
@@ -136,14 +226,7 @@ serve(async (req) => {
       aiConfig = await getModuleAIConfig(supabase, organizationId, "scripts");
     } catch (error: any) {
       if (error.message?.startsWith("MODULE_INACTIVE:")) {
-        return new Response(
-          JSON.stringify({ 
-            error: "MODULE_INACTIVE",
-            module: "scripts",
-            message: "El módulo de IA 'Generación de Guiones' no está habilitado. Actívalo en Configuración → IA & Modelos."
-          }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return moduleInactiveResponse("scripts");
       }
       throw error;
     }
@@ -151,98 +234,97 @@ serve(async (req) => {
     // Get sphere phase info if provided
     const phaseInfo = sphere_phase ? SPHERE_PHASE_DETAILS[sphere_phase] : null;
 
-    // Obtener prompt base desde DB (con cache y fallback a hardcodeados)
+    // Obtener prompt base desde DB (con cache y fallback a V2 hardcodeado)
     const promptConfig = await getPrompt(supabase, "scripts", "creator");
 
-    // Build dynamic system prompt based on sphere phase
-    let systemPrompt = promptConfig.systemPrompt || `Eres un experto copywriter especializado en crear guiones para videos UGC (User Generated Content) y anuncios en redes sociales. Tu objetivo es crear guiones persuasivos, naturales y que conecten emocionalmente con la audiencia.
+    // ============================================
+    // MASTER_SCRIPT_PROMPT_V2 - Sistema
+    // ============================================
+    // Usamos el prompt V2 optimizado con Chain of Thought
+    // Si hay prompt en DB, lo usamos; sino fallback a V2
+    let systemPrompt = promptConfig.systemPrompt || MASTER_SCRIPT_SYSTEM_PROMPT_V2;
 
-Reglas generales para el guión:
-1. Usa un tono conversacional y natural, como si hablaras con un amigo
-2. Incluye un hook poderoso en los primeros 3 segundos
-3. Mantén el guión entre 30-60 segundos de lectura
-4. Incluye indicaciones entre corchetes [ACCIÓN] para el creador
-5. Evita sonar como publicidad tradicional
-6. Usa storytelling cuando sea posible
-7. El idioma debe ser español latinoamericano`;
-
-    // Add sphere phase specific instructions
+    // Add sphere phase specific instructions (condensado para V2)
     if (phaseInfo) {
       systemPrompt += `
 
-=== INSTRUCCIONES CRÍTICAS - MÉTODO ESFERA: ${phaseInfo.label} ===
+=== FASE ESFERA ACTIVA: ${phaseInfo.label} ===
+OBJETIVO: ${phaseInfo.objective}
+AUDIENCIA: ${phaseInfo.audience}
+TONO: ${phaseInfo.tone}
+TECNICAS (usar minimo 2): ${phaseInfo.techniques.slice(0, 3).join(', ')}
+KEYWORDS: ${phaseInfo.keywords.slice(0, 4).map(k => `"${k}"`).join(', ')}
+CTA: ${phaseInfo.cta_style}
 
-🎯 OBJETIVO DE ESTA FASE:
-${phaseInfo.objective}
-
-👥 AUDIENCIA OBJETIVO:
-${phaseInfo.audience}
-
-🎨 TONO Y ESTILO:
-${phaseInfo.tone}
-
-📋 TÉCNICAS A USAR (OBLIGATORIO incluir al menos 2):
-${phaseInfo.techniques.map((t, i) => `${i + 1}. ${t}`).join('\n')}
-
-💬 FRASES/KEYWORDS SUGERIDAS:
-${phaseInfo.keywords.map(k => `• "${k}"`).join('\n')}
-
-📢 ESTILO DE CTA (Call to Action):
-${phaseInfo.cta_style}
-
-IMPORTANTE: El guión DEBE estar 100% alineado con los objetivos de la ${phaseInfo.label}. 
-NO uses tácticas de otras fases. Por ejemplo:
-- Si es ENGAGE: NO vendas directamente, solo genera curiosidad y awareness
-- Si es SOLUCIÓN: SÍ vende directamente, muestra beneficios claros
-- Si es REMARKETING: Crea urgencia, supera objeciones, usa FOMO
-- Si es FIDELIZAR: Valora al cliente, ofrece exclusividad, busca referidos`;
-    } else {
-      systemPrompt += `
-
-Estructura recomendada: Hook → Problema → Solución → Beneficios → CTA`;
+VALIDACION: El guion DEBE alinearse 100% con esta fase. NO mezclar tacticas de otras fases.`;
     }
 
-    let userPrompt = `Crea un guión de video UGC para el siguiente producto:
+    // ============================================
+    // MASTER_SCRIPT_PROMPT_V2 - Usuario
+    // ============================================
+    // Incluye few-shot examples para mejor calidad
+    let userPrompt = `Crea un guion UGC para:
 
-**Producto:** ${product_name}
+PRODUCTO: ${product_name}
+DESCRIPCION: ${strategy || 'No especificada'}
+AVATAR: ${ideal_avatar || 'No especificado'}
+FASE ESFERA: ${phaseInfo?.label || 'General (Hook -> Problema -> Solucion -> CTA)'}
+ANGULO DE VENTA: ${sales_angle || 'General'}
+INVESTIGACION DE MERCADO: ${market_research || 'No especificada'}
+CTA: Alineado con la fase
+PAIS: Colombia/LATAM
+CANTIDAD DE HOOKS: 2-3
 
-**Estrategia del producto:** ${strategy || 'No especificada'}
-
-**Investigación de mercado:** ${market_research || 'No especificada'}
-
-**Avatar ideal (cliente objetivo):** ${ideal_avatar || 'No especificado'}
-
-**Ángulo de venta a usar:** ${sales_angle || 'General'}`;
-
-    if (phaseInfo) {
-      userPrompt += `
-
-**🎯 FASE DEL EMBUDO ESFERA:** ${phaseInfo.label}
-- Objetivo: ${phaseInfo.objective}
-- Audiencia: ${phaseInfo.audience}
-- Tono requerido: ${phaseInfo.tone}`;
-    }
+---
+${FEW_SHOT_EXAMPLES}
+---`;
 
     if (additional_context) {
       userPrompt += `
 
-**Indicaciones adicionales:** ${additional_context}`;
+INDICACIONES ADICIONALES: ${additional_context}`;
     }
 
     userPrompt += `
 
-Genera un guión completo listo para grabar, con indicaciones de acción para el creador.
-${phaseInfo ? `RECUERDA: Este guión es específicamente para la fase "${phaseInfo.label}" del Método Esfera. Asegúrate de que cada elemento del guión cumpla con los objetivos de esta fase.` : ''}`;
+AHORA GENERA EL GUION PARA EL PRODUCTO INDICADO.
+Sigue el proceso de pensamiento. Adapta al avatar y fase ESFERA.
+Formato: HTML limpio (h2, h3, p, strong). NO markdown.`;
 
+    // ============================================
+    // Llamada a IA con temperatura 0.7 (V2)
+    // ============================================
     let script: string;
     try {
-      script = await callAISingle(
-        aiConfig.provider,
-        aiConfig.model,
-        aiConfig.apiKey,
+      const aiResult = await makeAIRequest({
+        provider: aiConfig.provider,
+        model: aiConfig.model,
+        apiKey: aiConfig.apiKey,
         systemPrompt,
-        userPrompt
-      );
+        userPrompt,
+        temperature: 0.7, // V2: Balance creatividad/coherencia
+        maxTokens: 4096,  // V2: Guion completo con ejemplos
+      });
+
+      if (!aiResult.success || !aiResult.content) {
+        const errorMsg = aiResult.error || "No se genero contenido";
+        // Check for rate limit or payment errors
+        if (errorMsg.includes("429")) {
+          return new Response(
+            JSON.stringify({ error: "Rate limits exceeded" }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (errorMsg.includes("402")) {
+          return new Response(
+            JSON.stringify({ error: "Payment required" }),
+            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        throw new Error(errorMsg);
+      }
+
+      script = aiResult.content;
     } catch (err: any) {
       if (err?.status === 429) {
         return new Response(
@@ -276,15 +358,15 @@ ${phaseInfo ? `RECUERDA: Este guión es específicamente para la fase "${phaseIn
       console.error("Failed to log AI usage:", e);
     }
 
-    return new Response(
-      JSON.stringify({ script, ai_provider: aiConfig.provider, ai_model: aiConfig.model }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return successResponse({
+      script,
+      ai_provider: aiConfig.provider,
+      ai_model: aiConfig.model
+    });
   } catch (error) {
-    console.error("Error in generate-script function:", error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return errorResponse(error, {
+      action: 'generate-script:generate',
+      resourceId: requestBody?.product_name,
+    });
   }
 });

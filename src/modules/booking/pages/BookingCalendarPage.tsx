@@ -163,7 +163,7 @@ export function BookingCalendarPage() {
             >
               <Link
                 to="/booking/settings"
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white/15 backdrop-blur text-white font-medium text-sm hover:bg-white/25 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-sm bg-white/15 backdrop-blur text-white font-medium text-sm hover:bg-white/25 transition-colors"
               >
                 <Settings className="w-4 h-4" />
                 Configuración
@@ -203,7 +203,7 @@ export function BookingCalendarPage() {
                   <p className="text-xs text-slate-400 mt-1">{item.sublabel}</p>
                 </div>
                 <div
-                  className="p-2.5 rounded-xl"
+                  className="p-2.5 rounded-sm"
                   style={{ backgroundColor: item.bgColor }}
                 >
                   <item.icon className="w-5 h-5" style={{ color: item.color }} />
@@ -272,7 +272,7 @@ export function BookingCalendarPage() {
 
                 {upcomingBookings.length === 0 ? (
                   <div className="text-center py-16 px-6">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-100 mb-6">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-sm bg-slate-100 mb-6">
                       <Calendar className="w-8 h-8 text-slate-400" />
                     </div>
                     <h4 className="text-xl font-semibold text-slate-900 mb-2">
@@ -283,7 +283,7 @@ export function BookingCalendarPage() {
                     </p>
                     <Link
                       to="/booking/settings"
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-white"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-sm text-sm font-medium text-white"
                       style={{
                         background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
                         boxShadow: '0 4px 14px rgba(139, 92, 246, 0.25)',
@@ -374,7 +374,7 @@ export function BookingCalendarPage() {
 
                             {/* Time badge */}
                             <div className="flex-shrink-0 text-right">
-                              <div className="inline-block px-4 py-2 rounded-xl bg-slate-100">
+                              <div className="inline-block px-4 py-2 rounded-sm bg-slate-100">
                                 <p className="text-2xl font-bold text-slate-900">
                                   {format(startDate, 'HH:mm')}
                                 </p>

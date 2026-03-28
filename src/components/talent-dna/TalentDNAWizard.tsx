@@ -179,7 +179,7 @@ export function TalentDNAWizard({ onComplete }: TalentDNAWizardProps) {
   // Full-screen processing state
   if (processingStep !== 'idle' && processingStep !== 'error') {
     return (
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-8">
+      <div className="relative overflow-hidden rounded-sm border border-white/10 bg-black/40 backdrop-blur-xl p-8">
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/10 via-transparent to-cyan-600/10" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl" />
 
@@ -230,8 +230,8 @@ export function TalentDNAWizard({ onComplete }: TalentDNAWizardProps) {
       {/* Header */}
       <div className="flex items-center gap-4">
         <div className="relative">
-          <div className="absolute inset-0 bg-emerald-500/30 rounded-xl blur-lg" />
-          <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500
+          <div className="absolute inset-0 bg-emerald-500/30 rounded-sm blur-lg" />
+          <div className="relative w-12 h-12 rounded-sm bg-gradient-to-br from-emerald-500 to-cyan-500
                           flex items-center justify-center">
             <Dna className="w-6 h-6 text-white" />
           </div>
@@ -246,13 +246,13 @@ export function TalentDNAWizard({ onComplete }: TalentDNAWizardProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* Panel Izquierdo: Preguntas */}
-        <div className="relative overflow-hidden rounded-2xl border border-white/10">
+        <div className="relative overflow-hidden rounded-sm border border-white/10">
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/20 via-emerald-500/10 to-cyan-500/20" />
           <div className="absolute inset-0 bg-black/40 backdrop-blur-xl" />
 
           <div className="relative p-6 h-full flex flex-col justify-center">
             <div className="flex items-center gap-2 mb-5">
-              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-sm bg-white/10 flex items-center justify-center">
                 <span className="text-lg">💬</span>
               </div>
               <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">7 Preguntas</h3>
@@ -280,13 +280,13 @@ export function TalentDNAWizard({ onComplete }: TalentDNAWizardProps) {
         </div>
 
         {/* Panel Derecho: Audio */}
-        <div className="relative overflow-hidden rounded-2xl border border-white/10">
+        <div className="relative overflow-hidden rounded-sm border border-white/10">
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-600/20 via-cyan-500/10 to-emerald-500/20" />
           <div className="absolute inset-0 bg-black/40 backdrop-blur-xl" />
 
           <div className="relative p-6 h-full flex flex-col">
             <div className="flex items-center gap-2 mb-5">
-              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-sm bg-white/10 flex items-center justify-center">
                 <span className="text-lg">🎤</span>
               </div>
               <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">Graba tu audio</h3>
@@ -314,7 +314,7 @@ export function TalentDNAWizard({ onComplete }: TalentDNAWizardProps) {
 
       {/* Error */}
       {error && (
-        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 backdrop-blur-xl">
+        <div className="p-4 rounded-sm bg-red-500/10 border border-red-500/20 backdrop-blur-xl">
           <p className="text-sm text-red-400">{error}</p>
         </div>
       )}
@@ -323,7 +323,7 @@ export function TalentDNAWizard({ onComplete }: TalentDNAWizardProps) {
       <button
         onClick={handleSubmit}
         disabled={!canSubmit || buttonTranscribing}
-        className="relative w-full group overflow-hidden rounded-xl"
+        className="relative w-full group overflow-hidden rounded-sm"
       >
         <div className={`absolute inset-0 transition-all duration-300 ${
           buttonTranscribing

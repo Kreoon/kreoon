@@ -66,7 +66,7 @@ export default function SavedPage() {
         <Skeleton className="h-8 w-48 mb-6" />
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="aspect-square rounded-xl" />
+            <Skeleton key={i} className="aspect-square rounded-sm" />
           ))}
         </div>
       </div>
@@ -138,7 +138,7 @@ export default function SavedPage() {
             {/* Add collection button */}
             <button
               onClick={() => setShowNewCollection(true)}
-              className="aspect-square rounded-xl border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+              className="aspect-square rounded-sm border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
             >
               <Plus className="h-8 w-8" />
               <span className="text-sm">Nueva colección</span>
@@ -231,7 +231,7 @@ function CollectionCard({
   return (
     <div
       className={cn(
-        "aspect-square rounded-xl relative overflow-hidden cursor-pointer group",
+        "aspect-square rounded-sm relative overflow-hidden cursor-pointer group",
         "bg-muted hover:bg-muted/80 transition-colors",
         isActive && "ring-2 ring-primary"
       )}
@@ -284,7 +284,7 @@ function SavedItemCard({ item }: { item: SavedItem }) {
   };
 
   return (
-    <div className="aspect-square rounded-lg bg-muted flex items-center justify-center cursor-pointer hover:bg-muted/80 transition-colors">
+    <div className="aspect-square rounded-sm bg-muted flex items-center justify-center cursor-pointer hover:bg-muted/80 transition-colors">
       <div className="text-muted-foreground">
         {getIcon()}
       </div>

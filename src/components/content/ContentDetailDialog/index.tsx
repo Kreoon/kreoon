@@ -8,6 +8,7 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 import { AutoSaveIndicator } from '@/components/ui/autosave-indicator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { NovaInput, NovaButton } from '@/components/ui/nova';
 
 import { ProductDetailDialog } from '@/components/products/ProductDetailDialog';
 import { ProductSelector } from '@/components/products/ProductSelector';
@@ -257,13 +258,13 @@ export function ContentDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-5xl max-h-[90vh] overflow-hidden p-0 flex flex-col" aria-describedby="content-detail-description">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-5xl max-h-[90vh] overflow-hidden p-0 flex flex-col bg-[var(--nova-bg-surface)] border-[var(--nova-accent-primary)]/10" aria-describedby="content-detail-description">
         <DialogDescription id="content-detail-description" className="sr-only">Detalle del proyecto de contenido</DialogDescription>
-        {/* Hero Header */}
-        <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-background p-4 sm:p-6 border-b shrink-0">
+        {/* Hero Header - Nova Style */}
+        <div className="relative bg-gradient-to-br from-[var(--nova-accent-primary)]/10 via-[var(--nova-accent-secondary)]/5 to-[var(--nova-bg-surface)] p-4 sm:p-6 border-b border-[var(--nova-border-subtle)] shrink-0">
           <div className="absolute inset-0 opacity-5">
-            <div className="absolute inset-0" style={{ 
-              backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)',
+            <div className="absolute inset-0" style={{
+              backgroundImage: 'radial-gradient(circle at 1px 1px, var(--nova-accent-primary) 1px, transparent 0)',
               backgroundSize: '24px 24px'
             }} />
           </div>
@@ -319,24 +320,24 @@ export function ContentDetailDialog({
                 )}
                 
                 {!isCreateMode && effectivePermissions.canEnterEditMode && (
-                  <Button
-                    variant={editMode ? 'default' : 'outline'}
+                  <NovaButton
+                    variant={editMode ? 'secondary' : 'outline'}
                     size="sm"
                     onClick={() => setEditMode(!editMode)}
                   >
                     {editMode ? 'Cancelar' : 'Editar'}
-                  </Button>
+                  </NovaButton>
                 )}
-                
+
                 {editMode && (
-                  <Button onClick={handleSave} disabled={saving} size="sm">
+                  <NovaButton onClick={handleSave} disabled={saving} size="sm" variant="primary">
                     {saving ? (
                       <Loader2 className="h-4 w-4 mr-1 animate-spin" />
                     ) : (
                       <Save className="h-4 w-4 mr-1" />
                     )}
                     {isCreateMode ? 'Crear' : 'Guardar'}
-                  </Button>
+                  </NovaButton>
                 )}
               </div>
             </div>
@@ -357,10 +358,10 @@ export function ContentDetailDialog({
                 )}
                 <span className="flex-1">
                   {editMode && (isCreateMode || effectivePermissions.can('content.title', 'edit')) ? (
-                    <Input
+                    <NovaInput
                       value={formData.title}
                       onChange={(e) => setFormData((prev: ContentFormData) => ({ ...prev, title: e.target.value }))}
-                      className="text-2xl sm:text-3xl font-bold h-auto py-2 bg-background/50"
+                      className="text-2xl sm:text-3xl font-bold h-auto py-2 !bg-[var(--nova-bg-elevated)]/50"
                       placeholder="Nombre del proyecto..."
                     />
                   ) : (
@@ -374,7 +375,7 @@ export function ContentDetailDialog({
             <div className="flex flex-wrap items-center gap-3 mt-4 text-sm">
               {/* Cliente Selector/Badge */}
               {canEditClientProduct ? (
-                <div className="flex items-center gap-1.5 bg-background/80 rounded-lg border border-border/50 overflow-hidden">
+                <div className="flex items-center gap-1.5 bg-background/80 rounded-sm border border-border/50 overflow-hidden">
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border-r border-border/50">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                     <span className="text-xs font-medium text-muted-foreground">Cliente</span>
@@ -404,7 +405,7 @@ export function ContentDetailDialog({
 
               {/* Producto Selector/Badge */}
               {canEditClientProduct ? (
-                <div className="flex items-center gap-1.5 bg-background/80 rounded-lg border border-border/50 overflow-hidden">
+                <div className="flex items-center gap-1.5 bg-background/80 rounded-sm border border-border/50 overflow-hidden">
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border-r border-border/50">
                     <Package className="h-4 w-4 text-muted-foreground" />
                     <span className="text-xs font-medium text-muted-foreground">Producto</span>
@@ -434,7 +435,7 @@ export function ContentDetailDialog({
 
               {/* Fecha de Inicio */}
               {editMode ? (
-                <div className="flex items-center gap-1.5 bg-background/80 rounded-lg border border-border/50 overflow-hidden">
+                <div className="flex items-center gap-1.5 bg-background/80 rounded-sm border border-border/50 overflow-hidden">
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border-r border-border/50">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="text-xs font-medium text-muted-foreground">Inicio</span>
@@ -458,7 +459,7 @@ export function ContentDetailDialog({
 
               {/* Fase Esfera - Siempre visible */}
               {editMode ? (
-                <div className="flex items-center gap-1.5 bg-background/80 rounded-lg border border-border/50 overflow-hidden">
+                <div className="flex items-center gap-1.5 bg-background/80 rounded-sm border border-border/50 overflow-hidden">
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border-r border-border/50">
                     <Zap className="h-4 w-4 text-muted-foreground" />
                     <span className="text-xs font-medium text-muted-foreground">Fase Esfera</span>
@@ -500,7 +501,7 @@ export function ContentDetailDialog({
 
               {/* Semana o Campaña - Siempre visible */}
               {editMode ? (
-                <div className="flex items-center gap-1.5 bg-background/80 rounded-lg border border-border/50 overflow-hidden">
+                <div className="flex items-center gap-1.5 bg-background/80 rounded-sm border border-border/50 overflow-hidden">
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border-r border-border/50">
                     <Target className="h-4 w-4 text-muted-foreground" />
                     <span className="text-xs font-medium text-muted-foreground">Semana/Campaña</span>
@@ -536,20 +537,22 @@ export function ContentDetailDialog({
         {/* Content Area with Tabs */}
         <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="w-full h-auto gap-1 mb-6 flex flex-wrap justify-start bg-muted/30 p-1 rounded-lg">
+            <TabsList className="w-full h-auto gap-1 mb-6 flex flex-wrap justify-start bg-[var(--nova-bg-elevated)]/50 p-1 rounded-sm border border-[var(--nova-border-subtle)]">
               {effectiveVisibleTabs.map(tabKey => {
                 const locked = isTabLocked(tabKey);
                 const readOnly = isTabReadOnly(tabKey);
                 const config = TAB_CONFIG[tabKey];
-                
+
                 return (
-                  <TabsTrigger 
-                    key={tabKey} 
-                    value={tabKey} 
+                  <TabsTrigger
+                    key={tabKey}
+                    value={tabKey}
                     className={cn(
-                      "text-xs sm:text-sm px-3 py-2 flex items-center gap-1.5 rounded-md transition-all duration-200",
-                      "data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-foreground",
-                      "hover:bg-background/50",
+                      "text-xs sm:text-sm px-3 py-2 flex items-center gap-1.5 rounded-sm transition-all duration-200",
+                      "data-[state=active]:bg-[var(--nova-bg-surface)] data-[state=active]:shadow-[var(--nova-shadow-glow)] data-[state=active]:text-[var(--nova-text-bright)]",
+                      "data-[state=active]:border-[var(--nova-border-accent)]",
+                      "hover:bg-[var(--nova-bg-hover)]",
+                      "text-[var(--nova-text-secondary)]",
                       locked && "border-warning/50",
                       readOnly && !locked && "border-dashed"
                     )}
@@ -589,13 +592,13 @@ export function ContentDetailDialog({
 
         {/* Footer Actions - Delete */}
         {!isCreateMode && effectivePermissions.can('content.delete', 'edit') && (
-          <div className="border-t p-4 bg-muted/30">
+          <div className="border-t border-[var(--nova-border-subtle)] p-4 bg-[var(--nova-bg-elevated)]/30">
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm">
+                <NovaButton variant="danger" size="sm">
                   <Trash2 className="h-4 w-4 mr-2" />
                   Eliminar Proyecto
-                </Button>
+                </NovaButton>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>

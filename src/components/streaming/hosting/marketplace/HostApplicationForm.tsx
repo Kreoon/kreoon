@@ -154,7 +154,7 @@ export function HostApplicationForm({
               {portfolioLinks.map((link) => (
                 <div
                   key={link}
-                  className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted text-sm"
+                  className="flex items-center gap-1 px-2 py-1 rounded-sm bg-muted text-sm"
                 >
                   <span className="truncate max-w-[200px]">{link}</span>
                   <button

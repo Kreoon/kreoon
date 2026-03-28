@@ -292,7 +292,7 @@ export function RescheduleBookingPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden"
+          className="bg-white rounded-sm shadow-lg border border-slate-200 overflow-hidden"
         >
           {/* Header */}
           <div className="p-6 bg-gradient-to-r from-violet-500 to-purple-500 text-white">
@@ -399,7 +399,7 @@ export function RescheduleBookingPage() {
                             setSelectedSlot(null);
                           }}
                           disabled={!isDateSelectable(day)}
-                          className={`w-full h-full rounded-lg text-sm font-medium transition-all ${
+                          className={`w-full h-full rounded-sm text-sm font-medium transition-all ${
                             selectedDate?.getDate() === day &&
                             selectedDate?.getMonth() === currentMonth.getMonth()
                               ? 'bg-violet-500 text-white'
@@ -444,7 +444,7 @@ export function RescheduleBookingPage() {
                           <button
                             key={slot.start}
                             onClick={() => setSelectedSlot(slot)}
-                            className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                            className={`py-2 px-3 rounded-sm text-sm font-medium transition-all ${
                               selectedSlot?.start === slot.start
                                 ? 'bg-violet-500 text-white'
                                 : 'bg-slate-100 text-slate-700 hover:bg-violet-100'
@@ -467,7 +467,7 @@ export function RescheduleBookingPage() {
                 <Button
                   onClick={handleReschedule}
                   disabled={!selectedSlot || rescheduling}
-                  className="w-full bg-violet-500 hover:bg-violet-600 text-white rounded-lg py-3"
+                  className="w-full bg-violet-500 hover:bg-violet-600 text-white rounded-sm py-3"
                 >
                   {rescheduling ? (
                     <>
@@ -485,7 +485,7 @@ export function RescheduleBookingPage() {
             </>
           ) : (
             <div className="p-6">
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-sm p-4">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
                   <div>

@@ -114,7 +114,7 @@ export function OrgDetailPanel({ org, onClose }: OrgDetailPanelProps) {
             href={`/org/${org.slug || org.id}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-white/60 hover:text-white hover:border-[#8b5cf6]/40 hover:bg-[#8b5cf6]/10 transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-white/5 border border-white/10 text-xs text-white/60 hover:text-white hover:border-[#8b5cf6]/40 hover:bg-[#8b5cf6]/10 transition-all"
           >
             <ExternalLink className="h-3 w-3" />
             Ver organización
@@ -135,7 +135,7 @@ function MetricCard({
   value: string | number;
 }) {
   return (
-    <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-white/[0.03] border border-white/5">
+    <div className="flex items-center gap-2.5 p-2.5 rounded-sm bg-white/[0.03] border border-white/5">
       <Icon className="h-4 w-4 text-[#a855f7] flex-shrink-0" />
       <div className="min-w-0">
         <p className="text-[10px] text-white/40">{label}</p>

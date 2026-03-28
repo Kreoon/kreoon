@@ -213,7 +213,7 @@ export function ContentValidationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh]">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-4xl max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileVideo className="h-5 w-5" />
@@ -251,7 +251,7 @@ export function ContentValidationDialog({
                 {/* Video/Image Preview */}
                 <div className="space-y-4">
                   <Card>
-                    <CardContent className="p-0 overflow-hidden rounded-lg">
+                    <CardContent className="p-0 overflow-hidden rounded-sm">
                       <div className="mx-auto w-full max-w-[360px] aspect-[9/16] bg-black relative flex items-center justify-center">
                         {(content.video_url || content.bunny_embed_url) ? (
                           <HLSVideoPlayer
@@ -379,7 +379,7 @@ export function ContentValidationDialog({
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="p-3 rounded-lg bg-muted/50">
+                    <div className="p-3 rounded-sm bg-muted/50">
                       <div className="flex items-center gap-2 mb-2">
                         {SPHERE_ICONS[content.sphere_phase]}
                         <span className="font-medium">{sphereConfig.label}</span>

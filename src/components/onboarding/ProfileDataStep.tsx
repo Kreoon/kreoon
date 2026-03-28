@@ -277,7 +277,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
   }, [errors, submitAttempted]);
 
   return (
-    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 md:p-8">
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-sm p-6 md:p-8">
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-2xl font-bold text-white mb-2">
@@ -295,7 +295,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-start gap-3"
+            className="bg-red-500/10 border border-red-500/30 rounded-sm p-4 flex items-start gap-3"
           >
             <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
             <div>

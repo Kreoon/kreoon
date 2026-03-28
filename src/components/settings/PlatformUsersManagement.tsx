@@ -462,7 +462,7 @@ export function PlatformUsersManagement() {
   }
 
   const UserCard = ({ user, showPlatformAdminToggle = false }: { user: UserData; showPlatformAdminToggle?: boolean }) => (
-    <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border">
+    <div className="flex items-center justify-between p-4 bg-muted/30 rounded-sm border">
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <Avatar className="h-10 w-10">
           <AvatarImage src={user.avatar_url || ''} />

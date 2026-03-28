@@ -149,7 +149,7 @@ export default function UPDocumentation() {
           <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
             🔥 Racha Perfecta
           </h2>
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <div className="bg-orange-50 border border-orange-200 rounded-sm p-4">
             <ul className="space-y-2 text-gray-700">
               <li>• Cada vez que entregas <strong>a tiempo</strong>, tu contador de racha aumenta</li>
               <li>• Al llegar a <strong>5 entregas consecutivas a tiempo</strong>, recibes <strong className="text-green-600">+10 UP de bono</strong></li>
@@ -308,9 +308,9 @@ export default function UPDocumentation() {
           <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
             📊 Estadísticas Registradas
           </h2>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-sm p-4">
             <p className="text-gray-700 mb-2">El sistema lleva registro de:</p>
-            <ul className="grid grid-cols-2 gap-2 text-gray-700">
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-gray-700">
               <li>• Total de puntos (UP)</li>
               <li>• Nivel actual</li>
               <li>• Contenidos completados</li>
@@ -344,7 +344,7 @@ export default function UPDocumentation() {
           <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
             💡 Consejos para Maximizar tus UP
           </h2>
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="bg-green-50 border border-green-200 rounded-sm p-4">
             <ol className="space-y-2 text-gray-700 list-decimal list-inside">
               <li><strong>Entrega antes del deadline</strong> - Obtén +3 UP extra cada vez</li>
               <li><strong>Mantén tu racha</strong> - Cada 5 entregas a tiempo = +10 UP bono</li>

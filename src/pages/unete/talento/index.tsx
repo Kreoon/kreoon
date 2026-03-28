@@ -74,7 +74,7 @@ export default function TalentoLanding() {
             </p>
             <button
               onClick={openForm}
-              className="inline-flex items-center gap-2 rounded-xl bg-kreoon-gradient px-8 py-4 font-semibold text-white shadow-kreoon-glow-sm transition-all hover:shadow-kreoon-glow hover:scale-[1.02] text-lg"
+              className="inline-flex items-center gap-2 rounded-sm bg-kreoon-gradient px-8 py-4 font-semibold text-white shadow-kreoon-glow-sm transition-all hover:shadow-kreoon-glow hover:scale-[1.02] text-lg"
             >
               Quiero unirme <ArrowRight className="h-5 w-5" />
             </button>

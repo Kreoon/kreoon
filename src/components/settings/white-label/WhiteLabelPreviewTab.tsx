@@ -56,10 +56,10 @@ export default function WhiteLabelPreviewTab() {
               <CardDescription>Así se ve el sidebar con tu branding actual</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-xl border bg-card overflow-hidden max-w-[260px] mx-auto">
+              <div className="rounded-sm border bg-card overflow-hidden max-w-[260px] mx-auto">
                 {/* Sidebar header */}
                 <div className="p-4 border-b flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                  <div className="h-9 w-9 rounded-sm overflow-hidden bg-muted flex items-center justify-center">
                     <img
                       src={effectiveLogoUrl}
                       alt="Logo"
@@ -87,7 +87,7 @@ export default function WhiteLabelPreviewTab() {
                     </p>
                     <div className="space-y-0.5">
                       {['Dashboard', 'Contenido', 'Calendario', 'Clientes'].map((item) => (
-                        <div key={item} className="text-xs px-2 py-1.5 rounded-md text-muted-foreground">
+                        <div key={item} className="text-xs px-2 py-1.5 rounded-sm text-muted-foreground">
                           {item}
                         </div>
                       ))}
@@ -99,7 +99,7 @@ export default function WhiteLabelPreviewTab() {
                     </p>
                     <div className="space-y-0.5">
                       {['Explorar', 'Campañas', 'Proyectos'].map((item) => (
-                        <div key={item} className="text-xs px-2 py-1.5 rounded-md text-muted-foreground">
+                        <div key={item} className="text-xs px-2 py-1.5 rounded-sm text-muted-foreground">
                           {item}
                         </div>
                       ))}
@@ -126,15 +126,15 @@ export default function WhiteLabelPreviewTab() {
               <CardDescription>Vista previa de un email enviado desde tu organización</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-xl border bg-card overflow-hidden max-w-md mx-auto">
+              <div className="rounded-sm border bg-card overflow-hidden max-w-md mx-auto">
                 {/* Email header */}
                 <div className="p-4 text-center border-b border-white/10">
-                  <div className="inline-block h-12 w-12 rounded-xl overflow-hidden mb-2">
+                  <div className="inline-block h-12 w-12 rounded-sm overflow-hidden mb-2">
                     {orgBranding?.logoUrl ? (
                       <img src={orgBranding.logoUrl} alt="Logo" className="h-12 w-12 object-contain" />
                     ) : (
                       <div
-                        className="h-12 w-12 rounded-xl flex items-center justify-center text-white font-bold text-xl"
+                        className="h-12 w-12 rounded-sm flex items-center justify-center text-white font-bold text-xl"
                         style={{ background: primaryColor }}
                       >
                         {effectivePlatformName.charAt(0)}
@@ -152,7 +152,7 @@ export default function WhiteLabelPreviewTab() {
                     Se te ha asignado un nuevo contenido para producción
                   </p>
                   <div
-                    className="inline-block px-6 py-2 rounded-lg text-white text-sm font-medium"
+                    className="inline-block px-6 py-2 rounded-sm text-white text-sm font-medium"
                     style={{ background: primaryColor }}
                   >
                     Ver contenido
@@ -188,10 +188,10 @@ export default function WhiteLabelPreviewTab() {
               <CardDescription>Así verán tus miembros la pantalla de inicio de sesión</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-xl border bg-gradient-to-b from-[#0f0f23] to-[#1a1a2e] overflow-hidden max-w-sm mx-auto">
+              <div className="rounded-sm border bg-gradient-to-b from-[#0f0f23] to-[#1a1a2e] overflow-hidden max-w-sm mx-auto">
                 {/* Auth header */}
                 <div className="p-8 flex flex-col items-center gap-3">
-                  <div className="h-14 w-14 rounded-xl overflow-hidden">
+                  <div className="h-14 w-14 rounded-sm overflow-hidden">
                     <img
                       src={effectiveLogoUrl}
                       alt="Logo"
@@ -205,14 +205,14 @@ export default function WhiteLabelPreviewTab() {
                 <div className="px-8 pb-4 space-y-3">
                   <div className="space-y-1.5">
                     <p className="text-[10px] text-gray-400 uppercase">Email</p>
-                    <div className="h-8 rounded-md bg-white/5 border border-white/10" />
+                    <div className="h-8 rounded-sm bg-white/5 border border-white/10" />
                   </div>
                   <div className="space-y-1.5">
                     <p className="text-[10px] text-gray-400 uppercase">Contraseña</p>
-                    <div className="h-8 rounded-md bg-white/5 border border-white/10" />
+                    <div className="h-8 rounded-sm bg-white/5 border border-white/10" />
                   </div>
                   <div
-                    className="h-9 rounded-lg flex items-center justify-center text-white text-xs font-medium mt-2"
+                    className="h-9 rounded-sm flex items-center justify-center text-white text-xs font-medium mt-2"
                     style={{ background: primaryColor }}
                   >
                     Iniciar sesión

@@ -1,3 +1,8 @@
 export { OnboardingWizard } from './OnboardingWizard';
 export { ProfileDataStep } from './ProfileDataStep';
 export { LegalConsentStep } from './LegalConsentStep';
+
+// Nova Design System versions
+export { NovaOnboardingWizard } from './NovaOnboardingWizard';
+export { NovaProfileDataStep } from './NovaProfileDataStep';
+export { NovaLegalConsentStep } from './NovaLegalConsentStep';

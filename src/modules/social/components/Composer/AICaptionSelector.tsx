@@ -106,7 +106,7 @@ export function AICaptionSelector({
           </div>
           {insufficientTokens ? (
             <p className="text-xs text-muted-foreground">
-              Compra mas Kreoon Coins en Configuracion &gt; Tokens de IA
+              Compra mas Tokens IA en Configuracion &gt; Tokens de IA
             </p>
           ) : (
             <Button variant="outline" size="sm" onClick={handleGenerate} className="gap-1.5">
@@ -169,7 +169,7 @@ export function AICaptionSelector({
                 {/* Style header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className={cn('w-6 h-6 rounded-md flex items-center justify-center border', colorClass)}>
+                    <div className={cn('w-6 h-6 rounded-sm flex items-center justify-center border', colorClass)}>
                       <Icon className="w-3.5 h-3.5" />
                     </div>
                     <div>

@@ -28,7 +28,7 @@ export default function CaseStudies() {
         <div className="text-center mb-10">
           <button
             onClick={() => navigate('/marketplace/campaigns/create?quick=true')}
-            className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+            className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold px-6 py-3 rounded-sm transition-colors"
           >
             Crea tu campana
             <ArrowRight className="h-4 w-4" />

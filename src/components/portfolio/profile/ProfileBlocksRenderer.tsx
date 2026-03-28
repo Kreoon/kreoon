@@ -109,8 +109,8 @@ const BlockRenderer = memo(function BlockRenderer({
 
   return (
     <section className={cn(
-      editMode && "ring-2 ring-primary/20 ring-offset-2 rounded-lg relative",
-      block.is_internal && "bg-yellow-500/5 rounded-lg"
+      editMode && "ring-2 ring-primary/20 ring-offset-2 rounded-sm relative",
+      block.is_internal && "bg-yellow-500/5 rounded-sm"
     )}>
       {editMode && (
         <div className="absolute -top-2 -left-2 z-10">
@@ -263,7 +263,7 @@ function HeroBlock({ userId, isOwner }: { userId: string; isOwner: boolean }) {
   if (!profile) return null;
 
   return (
-    <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 p-6">
+    <div className="relative overflow-hidden rounded-sm bg-gradient-to-br from-primary/20 to-secondary/20 p-6">
       <div className="flex flex-col sm:flex-row items-center gap-4">
         <Avatar className="h-20 w-20 ring-4 ring-background">
           <AvatarImage src={profile.avatar_url} />

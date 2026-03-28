@@ -157,7 +157,7 @@ export default function CreatorDashboard() {
             <div className="flex flex-wrap items-center gap-3">
               <ThisMonthFilter isActive={thisMonthActive} onToggle={setThisMonthActive} />
               <CreditsDisplay creditos={totalPaid + (approvedContent.length * 50)} size="sm" />
-              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-success/20 to-success/10 border border-success/30 rounded-xl shadow-lg shadow-success/10">
+              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-success/20 to-success/10 border border-success/30 rounded-sm shadow-lg shadow-success/10">
                 <DollarSign className="w-4 h-4 text-success" />
                 <span className="font-bold text-success">
                   ${pendingPayment.toLocaleString()}
@@ -170,10 +170,10 @@ export default function CreatorDashboard() {
         />
 
         {/* Dashboard Mode Toggle */}
-        <div className="flex gap-2 bg-white/5 p-1 rounded-xl w-fit">
+        <div className="flex gap-2 bg-white/5 p-1 rounded-sm w-fit">
           <button
             onClick={() => setDashboardTab('studio')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors ${
               dashboardTab === 'studio' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
             }`}
           >
@@ -182,7 +182,7 @@ export default function CreatorDashboard() {
           </button>
           <button
             onClick={() => setDashboardTab('marketplace')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors ${
               dashboardTab === 'marketplace' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
             }`}
           >
@@ -337,7 +337,7 @@ export default function CreatorDashboard() {
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <motion.div 
-                            className="p-2 rounded-lg bg-primary/10 border border-primary/20"
+                            className="p-2 rounded-sm bg-primary/10 border border-primary/20"
                             animate={{ boxShadow: ["0 0 0 0 hsl(270 100% 60% / 0)", "0 0 20px 5px hsl(270 100% 60% / 0.3)", "0 0 0 0 hsl(270 100% 60% / 0)"] }}
                             transition={{ duration: 2, repeat: Infinity }}
                           >
@@ -411,7 +411,7 @@ export default function CreatorDashboard() {
                   <div className="flex items-center justify-between relative z-10">
                     <div className="flex items-center gap-3">
                       <motion.div 
-                        className="p-2.5 rounded-xl bg-[hsl(270,100%,60%,0.15)] border border-[hsl(270,100%,60%,0.25)]"
+                        className="p-2.5 rounded-sm bg-[hsl(270,100%,60%,0.15)] border border-[hsl(270,100%,60%,0.25)]"
                         animate={{ 
                           boxShadow: [
                             "0 0 0 0 hsl(270 100% 60% / 0)",
@@ -484,7 +484,7 @@ export default function CreatorDashboard() {
                     >
                       <TechCardContent className="p-3 flex items-center gap-3">
                         <motion.div 
-                          className="h-10 w-10 rounded-lg bg-muted border border-[hsl(270,100%,60%,0.2)] flex items-center justify-center flex-shrink-0 overflow-hidden"
+                          className="h-10 w-10 rounded-sm bg-muted border border-[hsl(270,100%,60%,0.2)] flex items-center justify-center flex-shrink-0 overflow-hidden"
                           whileHover={{ borderColor: "hsl(270 100% 60% / 0.5)" }}
                         >
                           {item.thumbnail_url ? (
@@ -529,7 +529,7 @@ export default function CreatorDashboard() {
                   <TechCard variant="glass">
                     <TechCardContent className="p-8 text-center">
                       <motion.div 
-                        className="w-16 h-16 mx-auto rounded-2xl bg-muted border border-[hsl(270,100%,60%,0.2)] flex items-center justify-center mb-4"
+                        className="w-16 h-16 mx-auto rounded-sm bg-muted border border-[hsl(270,100%,60%,0.2)] flex items-center justify-center mb-4"
                         animate={{ 
                           boxShadow: [
                             "0 0 0 0 hsl(270 100% 60% / 0)",

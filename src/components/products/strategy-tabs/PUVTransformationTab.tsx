@@ -47,7 +47,7 @@ export function PUVTransformationTab({ salesAnglesData }: PUVTransformationTabPr
     <div className="space-y-6">
       {/* PUV Statement */}
       {puv?.statement && (
-        <Card className="border-primary bg-gradient-to-r from-primary/10 to-primary/5">
+        <Card className="border-primary/30 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Trophy className="h-4 w-4 text-primary" />
@@ -122,7 +122,7 @@ export function PUVTransformationTab({ salesAnglesData }: PUVTransformationTabPr
       {/* Transformation Section */}
       {transformation && (
         <>
-          <div className="p-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-lg border border-amber-500/20">
+          <div className="p-4 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
             <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
               <ArrowLeftRight className="h-4 w-4 text-amber-500" />
               Transformación: Antes vs Después

@@ -277,7 +277,7 @@ export function MarketplaceSearchBar({
 
       {/* Dropdowns */}
       {activeSection === 'country' && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-white/10 rounded-2xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-white/10 rounded-sm shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="space-y-1">
             <button
               onClick={() => {
@@ -285,7 +285,7 @@ export function MarketplaceSearchBar({
                 setActiveSection(null);
               }}
               className={cn(
-                'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm',
+                'w-full flex items-center gap-3 px-3 py-2.5 rounded-sm transition-colors text-sm',
                 country === null
                   ? 'bg-purple-500/20 text-purple-300'
                   : 'text-foreground/80 hover:bg-white/5',
@@ -301,7 +301,7 @@ export function MarketplaceSearchBar({
                   setActiveSection(null);
                 }}
                 className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm',
+                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-sm transition-colors text-sm',
                   country === c.code
                     ? 'bg-purple-500/20 text-purple-300'
                     : 'text-foreground/80 hover:bg-white/5',
@@ -315,14 +315,14 @@ export function MarketplaceSearchBar({
       )}
 
       {activeSection === 'content' && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-white/10 rounded-2xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-white/10 rounded-sm shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="grid grid-cols-2 gap-2">
             {CONTENT_TYPES.map(ct => (
               <button
                 key={ct}
                 onClick={() => toggleContentType(ct)}
                 className={cn(
-                  'flex items-center gap-2 px-3 py-2.5 rounded-lg transition-colors text-sm',
+                  'flex items-center gap-2 px-3 py-2.5 rounded-sm transition-colors text-sm',
                   contentTypes.includes(ct)
                     ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
                     : 'text-foreground/80 hover:bg-white/5 border border-transparent',

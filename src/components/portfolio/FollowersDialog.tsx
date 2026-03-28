@@ -160,7 +160,7 @@ export function FollowersDialog({
         {users.map((profile) => (
           <div
             key={profile.id}
-            className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors"
+            className="flex items-center justify-between p-3 rounded-sm hover:bg-muted/50 transition-colors"
           >
             <button
               onClick={() => handleUserClick(profile.id)}

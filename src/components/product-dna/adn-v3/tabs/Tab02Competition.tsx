@@ -145,7 +145,7 @@ export function Tab02Competition({ data }: Tab02CompetitionProps) {
               </div>
             )}
             {data.recommended_positioning && (
-              <div className="p-3 rounded-lg bg-background/50 border-l-4 border-l-orange-500">
+              <div className="p-3 rounded-sm bg-background/50 border-l-4 border-l-orange-500">
                 <p className="text-xs text-muted-foreground mb-1">Posicionamiento Recomendado</p>
                 <p className="text-sm font-medium">{data.recommended_positioning}</p>
               </div>
@@ -168,10 +168,10 @@ export function Tab02Competition({ data }: Tab02CompetitionProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {data.direct_competitors.map((comp, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
+              <div key={idx} className="p-4 rounded-sm border bg-card">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center font-bold text-lg">
+                    <div className="w-10 h-10 rounded-sm bg-muted flex items-center justify-center font-bold text-lg">
                       {comp.name?.charAt(0) || "?"}
                     </div>
                     <div>
@@ -278,7 +278,7 @@ export function Tab02Competition({ data }: Tab02CompetitionProps) {
           <CardContent>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {data.indirect_competitors.map((comp, idx) => (
-                <div key={idx} className="p-3 rounded-lg border bg-muted/30">
+                <div key={idx} className="p-3 rounded-sm border bg-muted/30">
                   <div className="flex items-center justify-between mb-2">
                     <p className="font-medium text-sm">{comp.name}</p>
                     {comp.threat_level && (
@@ -311,7 +311,7 @@ export function Tab02Competition({ data }: Tab02CompetitionProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             {data.competitive_gaps.map((gap, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card border-l-4 border-l-green-500">
+              <div key={idx} className="p-4 rounded-sm border bg-card border-l-4 border-l-green-500">
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <span className="font-medium text-sm">{gap.gap}</span>
                   {gap.difficulty && (
@@ -342,7 +342,7 @@ export function Tab02Competition({ data }: Tab02CompetitionProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {data.differentiation_opportunities.map((diff, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
+              <div key={idx} className="p-4 rounded-sm border bg-card">
                 <h4 className="font-medium text-sm text-yellow-400 mb-2">{diff.area}</h4>
                 <div className="space-y-2 text-sm">
                   {diff.current_state && (
@@ -378,7 +378,7 @@ export function Tab02Competition({ data }: Tab02CompetitionProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             {data.competitive_threats.map((threat, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card border-l-4 border-l-red-500">
+              <div key={idx} className="p-4 rounded-sm border bg-card border-l-4 border-l-red-500">
                 <h4 className="font-medium text-sm mb-2">{threat.threat}</h4>
                 <div className="grid sm:grid-cols-3 gap-2 text-xs">
                   {threat.source && (
@@ -417,11 +417,11 @@ export function Tab02Competition({ data }: Tab02CompetitionProps) {
           </CardHeader>
           <CardContent>
             <div className="grid sm:grid-cols-2 gap-4 mb-4">
-              <div className="p-3 rounded-lg bg-muted/30">
+              <div className="p-3 rounded-sm bg-muted/30">
                 <p className="text-xs text-muted-foreground">Eje X</p>
                 <p className="font-medium text-sm">{data.market_positioning_map.axis_x}</p>
               </div>
-              <div className="p-3 rounded-lg bg-muted/30">
+              <div className="p-3 rounded-sm bg-muted/30">
                 <p className="text-xs text-muted-foreground">Eje Y</p>
                 <p className="font-medium text-sm">{data.market_positioning_map.axis_y}</p>
               </div>

@@ -125,7 +125,7 @@ function PickerBody({
             key={p.key}
             onClick={() => handlePresetClick(p.key)}
             className={cn(
-              'whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition-colors text-left shrink-0',
+              'whitespace-nowrap rounded-sm px-3 py-1.5 text-xs font-medium transition-colors text-left shrink-0',
               draftPreset === p.key
                 ? 'bg-primary/15 text-primary'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted/60',

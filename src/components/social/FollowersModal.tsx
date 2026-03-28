@@ -49,7 +49,7 @@ function ProfileItem({ profile, onClose, showUnfollow, onUnfollow }: ProfileItem
 
   return (
     <div 
-      className="flex items-center gap-3 p-3 rounded-lg hover:bg-social-muted/50 cursor-pointer transition-colors"
+      className="flex items-center gap-3 p-3 rounded-sm hover:bg-social-muted/50 cursor-pointer transition-colors"
       onClick={handleClick}
     >
       <Avatar className="h-12 w-12">

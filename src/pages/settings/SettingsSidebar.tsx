@@ -37,6 +37,7 @@ const ALL_SECTIONS: SectionGroup[] = [
     icon: User,
     sections: [
       { key: 'profile', icon: User, title: 'Mi Perfil', description: 'Datos y perfil público' },
+      { key: 'client_company', icon: Building2, title: 'Mi Empresa', description: 'Datos de tu empresa' },
       { key: 'notifications', icon: Bell, title: 'Notificaciones', description: 'Alertas y preferencias' },
       { key: 'security', icon: Shield, title: 'Seguridad', description: 'Contraseña y 2FA' },
       { key: 'tour', icon: HelpCircle, title: 'Tour Guiado', description: 'Introducción' },
@@ -70,7 +71,7 @@ const ALL_SECTIONS: SectionGroup[] = [
       { key: 'platform_config', icon: Settings2, title: 'Configuración', description: 'Ajustes globales' },
       { key: 'platform_admin', icon: ShieldCheck, title: 'Administración', description: 'Seguridad y datos' },
       { key: 'tracking', icon: BarChart3, title: 'Tracking', description: 'Analytics y píxeles' },
-      { key: 'ai_tokenization', icon: Brain, title: 'Kreoon Coins', description: 'Costos por perfil' },
+      { key: 'ai_tokenization', icon: Brain, title: 'Tokens IA', description: 'Costos por perfil' },
       { key: 'prompts', icon: MessageSquareCode, title: 'Prompts AI', description: 'Editar prompts' },
     ],
   },
@@ -114,7 +115,7 @@ export const SettingsSidebar = memo(({
       <div className="space-y-6">
         {visibleGroups.map((group, groupIndex) => (
           <Card key={group.id} className="overflow-hidden">
-            <CardHeader className="pb-3 bg-muted/30">
+            <CardHeader className="pb-3 bg-zinc-50 dark:bg-[#1a1a24]">
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
                   <group.icon className="h-5 w-5 text-primary" />
@@ -126,7 +127,7 @@ export const SettingsSidebar = memo(({
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="divide-y divide-border">
+              <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
                 {group.sections.map((section, idx) => {
                   const canAccess = section.permission.canAccess;
                   
@@ -136,15 +137,15 @@ export const SettingsSidebar = memo(({
                       onClick={() => canAccess && onSectionChange(section.key)}
                       disabled={!canAccess}
                       className={cn(
-                        "w-full flex items-center justify-between px-4 py-3 text-left transition-colors",
-                        canAccess 
-                          ? "hover:bg-muted/50 active:bg-muted" 
-                          : "opacity-50 cursor-not-allowed bg-muted/20"
+                        "w-full flex items-center justify-between px-4 py-3 text-left transition-colors duration-150",
+                        canAccess
+                          ? "hover:bg-zinc-100 dark:hover:bg-[#1a1a24] active:bg-zinc-200 dark:active:bg-zinc-800"
+                          : "opacity-50 cursor-not-allowed bg-zinc-50 dark:bg-zinc-900/20"
                       )}
                     >
                       <div className="flex items-center gap-3">
                         <div className={cn(
-                          "flex h-8 w-8 items-center justify-center rounded-md",
+                          "flex h-8 w-8 items-center justify-center rounded-lg",
                           canAccess ? "bg-muted" : "bg-muted/50"
                         )}>
                           {canAccess ? (
@@ -185,7 +186,7 @@ export const SettingsSidebar = memo(({
             <div key={group.id}>
               {/* Group header */}
               <div className="flex items-center gap-2 mb-3 px-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
                   <group.icon className="h-4 w-4 text-primary" />
                 </div>
                 <div>
@@ -199,7 +200,7 @@ export const SettingsSidebar = memo(({
               </div>
               
               {/* Section items */}
-              <div className="space-y-0.5 bg-muted/30 rounded-lg p-1">
+              <div className="space-y-0.5 bg-zinc-50 dark:bg-[#1a1a24] rounded-lg p-1">
                 {group.sections.map((section, idx) => {
                   const canAccess = section.permission.canAccess;
                   const isActive = activeSection === section.key;
@@ -210,12 +211,12 @@ export const SettingsSidebar = memo(({
                       onClick={() => canAccess && onSectionChange(section.key)}
                       disabled={!canAccess}
                       className={cn(
-                        "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-left transition-all text-sm",
+                        "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors duration-150 text-sm",
                         isActive && canAccess
                           ? 'bg-primary text-primary-foreground shadow-sm'
                           : canAccess
-                            ? 'text-muted-foreground hover:bg-background hover:text-foreground hover:shadow-sm'
-                            : 'text-muted-foreground/40 cursor-not-allowed'
+                            ? 'text-zinc-500 dark:text-zinc-400 hover:bg-white dark:hover:bg-[#14141f] hover:text-zinc-900 dark:hover:text-zinc-100 hover:shadow-sm'
+                            : 'text-zinc-400/40 dark:text-zinc-500/40 cursor-not-allowed'
                       )}
                     >
                       {canAccess ? (

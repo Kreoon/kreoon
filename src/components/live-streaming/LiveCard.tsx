@@ -55,7 +55,7 @@ export function LiveCard({ stream, className, size = 'md' }: LiveCardProps) {
     <Link
       to={`/live/${creatorSlug}`}
       className={cn(
-        'group block rounded-lg overflow-hidden bg-card border hover:border-primary/50 transition-colors',
+        'group block rounded-sm overflow-hidden bg-card border hover:border-primary/50 transition-colors',
         sizeClasses[size],
         className
       )}
@@ -140,7 +140,7 @@ export function LiveCardSkeleton({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' })
   };
 
   return (
-    <div className={cn('rounded-lg overflow-hidden bg-card border', sizeClasses[size])}>
+    <div className={cn('rounded-sm overflow-hidden bg-card border', sizeClasses[size])}>
       <div className={cn('bg-muted animate-pulse', thumbnailHeights[size])} />
       <div className="p-3">
         <div className="flex items-start gap-2">
@@ -177,7 +177,7 @@ export function LiveCardCompact({ stream, className }: LiveCardCompactProps) {
     <Link
       to={`/live/${creatorSlug}`}
       className={cn(
-        'flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors',
+        'flex items-center gap-3 p-2 rounded-sm hover:bg-muted/50 transition-colors',
         className
       )}
     >

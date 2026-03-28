@@ -134,7 +134,7 @@ export function EditMarketingClientDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Active Status */}
-          <div className="flex items-center justify-between rounded-lg border p-3">
+          <div className="flex items-center justify-between rounded-sm border p-3">
             <div className="space-y-0.5">
               <Label>Estado del Cliente</Label>
               <p className="text-xs text-muted-foreground">

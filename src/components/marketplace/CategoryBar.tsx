@@ -108,7 +108,7 @@ export function CategoryBar({
       <button
         onClick={onOpenFilters}
         className={cn(
-          'flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl border transition-colors text-sm font-medium',
+          'flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-sm border transition-colors text-sm font-medium',
           activeFilterCount > 0
             ? 'border-purple-500/50 bg-purple-500/10 text-purple-300'
             : 'border-white/20 text-foreground/80 hover:border-white/40 hover:text-white',

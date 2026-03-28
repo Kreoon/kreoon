@@ -66,7 +66,7 @@ function HistoryEntry({ event }: HistoryEntryProps) {
 
   return (
     <div className="flex items-center gap-3 p-3 border-b last:border-b-0">
-      <div className={cn('p-2 rounded-lg', eventConfig.color)}>
+      <div className={cn('p-2 rounded-sm', eventConfig.color)}>
         <Icon className="h-4 w-4" />
       </div>
 
@@ -104,7 +104,7 @@ function HistorySkeleton() {
     <div className="space-y-0">
       {[1, 2, 3, 4, 5].map(i => (
         <div key={i} className="flex items-center gap-3 p-3 border-b">
-          <Skeleton className="w-10 h-10 rounded-lg" />
+          <Skeleton className="w-10 h-10 rounded-sm" />
           <div className="flex-1 space-y-1">
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-3 w-48" />

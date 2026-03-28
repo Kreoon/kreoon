@@ -133,7 +133,7 @@ export function MarketplaceReadinessPopup() {
               <div
                 key={req.key}
                 className={cn(
-                  "p-4 rounded-xl border transition-all",
+                  "p-4 rounded-sm border transition-all",
                   req.completed
                     ? "bg-emerald-500/10 border-emerald-500/30"
                     : "bg-white/5 border-white/10 hover:border-purple-500/30"
@@ -141,7 +141,7 @@ export function MarketplaceReadinessPopup() {
               >
                 <div className="flex items-start gap-3">
                   <div className={cn(
-                    "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0",
+                    "w-10 h-10 rounded-sm flex items-center justify-center flex-shrink-0",
                     req.completed ? "bg-emerald-500/20" : "bg-purple-500/20"
                   )}>
                     {req.completed ? (

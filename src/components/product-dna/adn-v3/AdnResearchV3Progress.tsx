@@ -226,7 +226,7 @@ function StepRow({
       animate={{ opacity: step.status === "pending" ? 0.4 : 1, x: 0 }}
       transition={{ delay: index * 0.02 }}
       className={`
-        rounded-lg border transition-colors duration-200
+        rounded-sm border transition-colors duration-200
         ${
           step.status === "running"
             ? "border-violet-500/30 bg-violet-500/5"
@@ -246,7 +246,7 @@ function StepRow({
           {String(index + 1).padStart(2, "0")}
         </span>
 
-        <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${cfg.iconBg}`}>
+        <div className={`w-7 h-7 rounded-sm flex items-center justify-center flex-shrink-0 ${cfg.iconBg}`}>
           {step.status === "completed" ? (
             <Check className="w-3.5 h-3.5 text-green-400" />
           ) : step.status === "error" ? (
@@ -415,7 +415,7 @@ export function AdnResearchV3Progress({
         initial={{ opacity: 0, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
         className={`
-          w-full max-w-2xl mx-auto rounded-2xl border border-green-500/30
+          w-full max-w-2xl mx-auto rounded-sm border border-green-500/30
           bg-gradient-to-b from-green-500/[0.08] to-white/[0.02]
           backdrop-blur-xl overflow-hidden text-center
           ${className}
@@ -428,7 +428,7 @@ export function AdnResearchV3Progress({
             initial={{ scale: 0, rotate: -20 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 15 }}
-            className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-pink-600 flex items-center justify-center mx-auto mb-5 shadow-2xl shadow-violet-500/40"
+            className="w-20 h-20 rounded-sm bg-gradient-to-br from-violet-500 to-pink-600 flex items-center justify-center mx-auto mb-5 shadow-2xl shadow-violet-500/40"
           >
             <Check className="w-10 h-10 text-white" strokeWidth={2.5} />
           </motion.div>
@@ -474,7 +474,7 @@ export function AdnResearchV3Progress({
               { label: "Tokens usados", value: session?.tokens_consumed?.toLocaleString() || "—" },
               { label: "Tiempo", value: `${elapsedMinutes} min` },
             ].map((stat) => (
-              <div key={stat.label} className="rounded-xl bg-white/5 border border-white/[0.08] py-3 px-2">
+              <div key={stat.label} className="rounded-sm bg-white/5 border border-white/[0.08] py-3 px-2">
                 <p className="text-lg font-bold text-white">{stat.value}</p>
                 <p className="text-[11px] text-white/40 mt-0.5">{stat.label}</p>
               </div>
@@ -506,12 +506,12 @@ export function AdnResearchV3Progress({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className={`
-          w-full max-w-2xl mx-auto rounded-2xl border border-red-500/30
+          w-full max-w-2xl mx-auto rounded-sm border border-red-500/30
           bg-red-500/5 backdrop-blur-xl p-8 text-center
           ${className}
         `}
       >
-        <div className="w-16 h-16 rounded-2xl bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 rounded-sm bg-red-500/20 flex items-center justify-center mx-auto mb-4">
           <AlertCircle className="w-8 h-8 text-red-400" />
         </div>
         <h3 className="text-lg font-bold text-white mb-2">Error en el proceso</h3>
@@ -536,7 +536,7 @@ export function AdnResearchV3Progress({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       className={`
-        w-full max-w-2xl mx-auto rounded-2xl border border-white/10
+        w-full max-w-2xl mx-auto rounded-sm border border-white/10
         bg-gradient-to-b from-white/[0.06] to-white/[0.02]
         backdrop-blur-xl overflow-hidden
         ${className}
@@ -677,7 +677,7 @@ export function AdnResearchV3Progress({
         {hasMoreSteps && (
           <button
             onClick={() => setShowAllSteps((prev) => !prev)}
-            className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 rounded-lg
+            className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 rounded-sm
               text-[11px] text-white/30 hover:text-white/60 hover:bg-white/5
               transition-all duration-200"
           >
@@ -696,7 +696,7 @@ export function AdnResearchV3Progress({
 
       {/* Footer informativo */}
       <div className="px-6 py-4 border-t border-white/[0.08] flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-violet-500/15 flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-sm bg-violet-500/15 flex items-center justify-center flex-shrink-0">
           <Sparkles className="w-4 h-4 text-violet-400" />
         </div>
         <p className="text-[11px] text-white/30 leading-relaxed">

@@ -69,7 +69,7 @@ export function EscrowStatusCard({
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className={cn('p-2 rounded-xl', escrow.statusColor.replace('text-', 'bg-').replace('/10', '/20'))}>
+            <div className={cn('p-2 rounded-sm', escrow.statusColor.replace('text-', 'bg-').replace('/10', '/20'))}>
               <Icon className={cn('h-6 w-6', escrow.statusColor.split(' ')[1])} />
             </div>
             <div>
@@ -93,13 +93,13 @@ export function EscrowStatusCard({
         </div>
 
         {/* Amount breakdown */}
-        <div className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)] space-y-3">
+        <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Total en Escrow</span>
             <span className="text-lg font-bold text-white">{escrow.formattedTotal}</span>
           </div>
           <Separator className="bg-[hsl(270,100%,60%,0.1)]" />
-          <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
             <div>
               <p className="text-xs text-muted-foreground">Creador ({escrow.creator_percentage}%)</p>
               <p className="text-sm font-medium text-emerald-400">{escrow.formattedCreatorAmount}</p>
@@ -160,7 +160,7 @@ export function EscrowStatusCard({
 
         {/* Notes */}
         {escrow.notes && (
-          <div className="p-3 rounded-lg bg-[hsl(270,100%,60%,0.05)]">
+          <div className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.05)]">
             <p className="text-xs text-muted-foreground mb-1">Notas:</p>
             <p className="text-sm text-[hsl(270,30%,70%)]">{escrow.notes}</p>
           </div>
@@ -186,7 +186,7 @@ export function EscrowListItem({ escrow, onClick, className }: EscrowListItemPro
       animate={{ opacity: 1, y: 0 }}
       onClick={onClick}
       className={cn(
-        'p-4 rounded-xl cursor-pointer transition-all',
+        'p-4 rounded-sm cursor-pointer transition-all',
         'bg-[hsl(270,100%,60%,0.03)] hover:bg-[hsl(270,100%,60%,0.08)]',
         'border border-transparent hover:border-[hsl(270,100%,60%,0.1)]',
         className

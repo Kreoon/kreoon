@@ -92,7 +92,7 @@ export function CreatorMatchingCard({
     return (
       <motion.div
         className={cn(
-          "flex items-center gap-3 p-3 rounded-lg cursor-pointer",
+          "flex items-center gap-3 p-3 rounded-sm cursor-pointer",
           "bg-social-card border border-social-border",
           "hover:border-social-accent/50 transition-all"
         )}
@@ -127,7 +127,7 @@ export function CreatorMatchingCard({
     return (
       <motion.div
         className={cn(
-          "relative p-6 rounded-2xl cursor-pointer overflow-hidden",
+          "relative p-6 rounded-sm cursor-pointer overflow-hidden",
           "bg-gradient-to-br from-social-card via-social-card to-social-accent/10",
           "border-2 border-social-accent/30",
           "hover:border-social-accent/50 transition-all"
@@ -206,7 +206,7 @@ export function CreatorMatchingCard({
 
         {/* Top service */}
         {top_service && (
-          <div className="mt-4 p-3 rounded-lg bg-social-muted/50">
+          <div className="mt-4 p-3 rounded-sm bg-social-muted/50">
             <p className="text-sm text-social-muted-foreground">Servicio destacado</p>
             <div className="flex items-center justify-between mt-1">
               <p className="font-medium text-social-foreground">{top_service.title}</p>
@@ -262,7 +262,7 @@ export function CreatorMatchingCard({
   return (
     <motion.div
       className={cn(
-        "relative p-4 rounded-xl cursor-pointer",
+        "relative p-4 rounded-sm cursor-pointer",
         "bg-social-card border border-social-border",
         "hover:border-social-accent/50 hover:shadow-lg transition-all",
         "group"

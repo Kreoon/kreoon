@@ -31,15 +31,15 @@ interface CampaignStepBudgetProps {
 }
 
 const TYPE_OPTIONS: { value: CampaignType; label: string; description: string; icon: React.ElementType; color: string }[] = [
-  { value: 'paid', label: 'Pagada', description: 'Paga a los creadores por su trabajo', icon: DollarSign, color: 'text-green-400' },
-  { value: 'exchange', label: 'Canje', description: 'Ofrece producto a cambio del contenido', icon: Gift, color: 'text-purple-400' },
-  { value: 'hybrid', label: 'Hibrida', description: 'Combinacion de pago + producto', icon: Layers, color: 'text-blue-400' },
+  { value: 'paid', label: 'Pagada', description: 'Paga a los creadores por su trabajo', icon: DollarSign, color: 'text-[var(--nova-success)]' },
+  { value: 'exchange', label: 'Canje', description: 'Ofrece producto a cambio del contenido', icon: Gift, color: 'text-[var(--nova-accent-primary)]' },
+  { value: 'hybrid', label: 'Hibrida', description: 'Combinacion de pago + producto', icon: Layers, color: 'text-[var(--nova-accent-secondary)]' },
 ];
 
 const PRICING_OPTIONS: { value: CampaignPricingMode; label: string; description: string; icon: React.ElementType; color: string }[] = [
-  { value: 'fixed', label: 'Precio Fijo', description: 'Tu defines el precio exacto', icon: DollarSign, color: 'text-green-400' },
-  { value: 'auction', label: 'Subasta', description: 'Los creadores hacen ofertas libres', icon: Gavel, color: 'text-orange-400' },
-  { value: 'range', label: 'Rango', description: 'Define min/max, creadores pujan dentro', icon: ArrowUpDown, color: 'text-blue-400' },
+  { value: 'fixed', label: 'Precio Fijo', description: 'Tu defines el precio exacto', icon: DollarSign, color: 'text-[var(--nova-success)]' },
+  { value: 'auction', label: 'Subasta', description: 'Los creadores hacen ofertas libres', icon: Gavel, color: 'text-[var(--nova-warning)]' },
+  { value: 'range', label: 'Rango', description: 'Define min/max, creadores pujan dentro', icon: ArrowUpDown, color: 'text-[var(--nova-info)]' },
 ];
 
 import { COMMISSION_RATES } from '@/lib/finance/constants';
@@ -72,21 +72,21 @@ export function CampaignStepBudget({ data, onChange, contentCount, desiredRoles 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold text-white mb-1">Presupuesto y Compensacion</h2>
-        <p className="text-gray-500 text-sm">Define como compensaras a los creadores</p>
+        <h2 className="text-lg font-bold text-[var(--nova-text-bright)] mb-1">Presupuesto y Compensacion</h2>
+        <p className="text-[var(--nova-text-muted)] text-sm">Define como compensaras a los creadores</p>
       </div>
 
       {/* Agency support toggle */}
-      <div className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-3">
+      <div className="nova-glass rounded-sm p-5 space-y-3">
         <div className="flex items-center gap-2">
-          <Briefcase className="h-5 w-5 text-amber-400" />
-          <h3 className="text-white text-sm font-semibold">Tipo de Gestion</h3>
+          <Briefcase className="h-5 w-5 text-[var(--nova-warning)]" />
+          <h3 className="text-[var(--nova-text-bright)] text-sm font-semibold">Tipo de Gestion</h3>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             onClick={() => onChange('requires_agency_support', false)}
             className={cn(
-              'text-left p-4 rounded-xl border transition-all',
+              'text-left p-4 rounded-sm border transition-all',
               !data.requires_agency_support
                 ? 'border-green-500/50 bg-green-500/10'
                 : 'border-white/10 bg-white/5 hover:border-white/20',
@@ -99,7 +99,7 @@ export function CampaignStepBudget({ data, onChange, contentCount, desiredRoles 
           <button
             onClick={() => onChange('requires_agency_support', true)}
             className={cn(
-              'text-left p-4 rounded-xl border transition-all',
+              'text-left p-4 rounded-sm border transition-all',
               data.requires_agency_support
                 ? 'border-amber-500/50 bg-amber-500/10'
                 : 'border-white/10 bg-white/5 hover:border-white/20',
@@ -111,7 +111,7 @@ export function CampaignStepBudget({ data, onChange, contentCount, desiredRoles 
           </button>
         </div>
         {data.requires_agency_support && (
-          <p className="text-amber-400/80 text-xs bg-amber-500/5 rounded-lg px-3 py-2">
+          <p className="text-amber-400/80 text-xs bg-amber-500/5 rounded-sm px-3 py-2">
             Kreoon Agency te acompana con estrategia, guiones, revision y todo el proceso hasta la entrega final.
           </p>
         )}
@@ -129,7 +129,7 @@ export function CampaignStepBudget({ data, onChange, contentCount, desiredRoles 
                 key={opt.value}
                 onClick={() => onChange('campaign_type', opt.value)}
                 className={cn(
-                  'text-left p-4 rounded-xl border transition-all',
+                  'text-left p-4 rounded-sm border transition-all',
                   isSelected
                     ? 'border-purple-500/50 bg-purple-500/10'
                     : 'border-white/10 bg-white/5 hover:border-white/20',
@@ -157,7 +157,7 @@ export function CampaignStepBudget({ data, onChange, contentCount, desiredRoles 
                   key={opt.value}
                   onClick={() => onChange('pricing_mode', opt.value)}
                   className={cn(
-                    'text-left p-3 rounded-xl border transition-all',
+                    'text-left p-3 rounded-sm border transition-all',
                     isSelected
                       ? 'border-purple-500/50 bg-purple-500/10'
                       : 'border-white/10 bg-white/5 hover:border-white/20',
@@ -175,7 +175,7 @@ export function CampaignStepBudget({ data, onChange, contentCount, desiredRoles 
 
       {/* Budget warning based on roles */}
       {isBudgetLow && (
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3">
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-sm p-4 flex items-start gap-3">
           <AlertTriangle className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-amber-300 text-sm font-medium">Presupuesto por debajo del promedio del mercado</p>
@@ -190,13 +190,13 @@ export function CampaignStepBudget({ data, onChange, contentCount, desiredRoles 
 
       {/* Fixed price fields */}
       {showPaymentFields && data.pricing_mode === 'fixed' && (
-        <div className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-4">
+        <div className="bg-white/5 border border-white/10 rounded-sm p-5 space-y-4">
           <h3 className="text-white text-sm font-semibold">Presupuesto Fijo</h3>
           <div className="flex gap-3">
             <button
               onClick={() => onChange('budget_mode', 'per_video')}
               className={cn(
-                'flex-1 py-2.5 rounded-lg text-sm font-medium border transition-all',
+                'flex-1 py-2.5 rounded-sm text-sm font-medium border transition-all',
                 data.budget_mode === 'per_video'
                   ? 'border-purple-500/50 bg-purple-500/10 text-purple-300'
                   : 'border-white/10 text-gray-400',
@@ -207,7 +207,7 @@ export function CampaignStepBudget({ data, onChange, contentCount, desiredRoles 
             <button
               onClick={() => onChange('budget_mode', 'total_budget')}
               className={cn(
-                'flex-1 py-2.5 rounded-lg text-sm font-medium border transition-all',
+                'flex-1 py-2.5 rounded-sm text-sm font-medium border transition-all',
                 data.budget_mode === 'total_budget'
                   ? 'border-purple-500/50 bg-purple-500/10 text-purple-300'
                   : 'border-white/10 text-gray-400',
@@ -234,11 +234,11 @@ export function CampaignStepBudget({ data, onChange, contentCount, desiredRoles 
             )}
             <div>
               <label className="text-gray-500 text-xs block mb-1">Maximo de creadores</label>
-              <input type="number" min="1" value={data.max_creators || ''} onChange={e => onChange('max_creators', Math.max(1, parseInt(e.target.value) || 1))} placeholder="5" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500" />
+              <input type="number" min="1" value={data.max_creators || ''} onChange={e => onChange('max_creators', Math.max(1, parseInt(e.target.value) || 1))} placeholder="5" className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500" />
             </div>
           </div>
           {(data.budget_per_video > 0 || data.total_budget > 0) && (
-            <div className="bg-background rounded-lg p-4 space-y-2">
+            <div className="bg-background rounded-sm p-4 space-y-2">
               <h4 className="text-gray-400 text-xs font-semibold uppercase">Resumen Financiero</h4>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Pago a creadores</span>
@@ -268,7 +268,7 @@ export function CampaignStepBudget({ data, onChange, contentCount, desiredRoles 
         const auctionDepositPct = 0.7;
         const auctionDeposit = Math.round(auctionMaxCost * auctionDepositPct);
         return (
-        <div className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-4">
+        <div className="bg-white/5 border border-white/10 rounded-sm p-5 space-y-4">
           <div className="flex items-center gap-2">
             <Gavel className="h-5 w-5 text-orange-400" />
             <h3 className="text-white text-sm font-semibold">Configuracion de Subasta</h3>
@@ -284,20 +284,20 @@ export function CampaignStepBudget({ data, onChange, contentCount, desiredRoles 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-gray-500 text-xs block mb-1">Maximo de creadores</label>
-              <input type="number" min="1" value={data.max_creators || ''} onChange={e => onChange('max_creators', Math.max(1, parseInt(e.target.value) || 1))} placeholder="5" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500" />
+              <input type="number" min="1" value={data.max_creators || ''} onChange={e => onChange('max_creators', Math.max(1, parseInt(e.target.value) || 1))} placeholder="5" className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500" />
             </div>
             <div>
               <label className="text-gray-500 text-xs flex items-center gap-1 mb-1"><Calendar className="h-3 w-3" />Fecha limite de ofertas</label>
-              <input type="date" value={data.bid_deadline} onChange={e => onChange('bid_deadline', e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500" />
+              <input type="date" value={data.bid_deadline} onChange={e => onChange('bid_deadline', e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500" />
             </div>
           </div>
           <div className="space-y-2">
             <label className="text-gray-500 text-xs">Visibilidad de ofertas</label>
             <div className="flex gap-3">
-              <button onClick={() => onChange('bid_visibility', 'public')} className={cn('flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium border transition-all', data.bid_visibility === 'public' ? 'border-purple-500/50 bg-purple-500/10 text-purple-300' : 'border-white/10 text-gray-400')}>
+              <button onClick={() => onChange('bid_visibility', 'public')} className={cn('flex-1 flex items-center justify-center gap-2 py-2.5 rounded-sm text-sm font-medium border transition-all', data.bid_visibility === 'public' ? 'border-purple-500/50 bg-purple-500/10 text-purple-300' : 'border-white/10 text-gray-400')}>
                 <Eye className="h-4 w-4" />Publica
               </button>
-              <button onClick={() => onChange('bid_visibility', 'sealed')} className={cn('flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium border transition-all', data.bid_visibility === 'sealed' ? 'border-purple-500/50 bg-purple-500/10 text-purple-300' : 'border-white/10 text-gray-400')}>
+              <button onClick={() => onChange('bid_visibility', 'sealed')} className={cn('flex-1 flex items-center justify-center gap-2 py-2.5 rounded-sm text-sm font-medium border transition-all', data.bid_visibility === 'sealed' ? 'border-purple-500/50 bg-purple-500/10 text-purple-300' : 'border-white/10 text-gray-400')}>
                 <EyeOff className="h-4 w-4" />Sellada
               </button>
             </div>
@@ -306,7 +306,7 @@ export function CampaignStepBudget({ data, onChange, contentCount, desiredRoles 
             </p>
           </div>
           {data.budget_per_video > 0 && (
-            <div className="bg-background rounded-lg p-4 space-y-2">
+            <div className="bg-background rounded-sm p-4 space-y-2">
               <h4 className="text-gray-400 text-xs font-semibold uppercase">Resumen de Costos</h4>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Pago max a creadores</span>
@@ -325,7 +325,7 @@ export function CampaignStepBudget({ data, onChange, contentCount, desiredRoles 
                 <span className="text-orange-300 font-bold"><InlinePrice amount={auctionDeposit} /></span>
               </div>
               <p className="text-gray-600 text-xs">Basado en {contentCount} videos x {data.max_creators} creadores</p>
-              <div className="mt-2 p-2.5 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+              <div className="mt-2 p-2.5 bg-orange-500/10 border border-orange-500/20 rounded-sm">
                 <p className="text-orange-300 text-[11px] leading-relaxed">
                   La campana se publica sin cobro. Al aprobar creadores, se cobra el 70% como deposito. El 30% restante se cobra al cerrar la subasta.
                 </p>
@@ -338,7 +338,7 @@ export function CampaignStepBudget({ data, onChange, contentCount, desiredRoles 
 
       {/* Range mode fields */}
       {showPaymentFields && data.pricing_mode === 'range' && (
-        <div className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-4">
+        <div className="bg-white/5 border border-white/10 rounded-sm p-5 space-y-4">
           <div className="flex items-center gap-2">
             <ArrowUpDown className="h-5 w-5 text-blue-400" />
             <h3 className="text-white text-sm font-semibold">Rango de Presupuesto</h3>
@@ -364,20 +364,20 @@ export function CampaignStepBudget({ data, onChange, contentCount, desiredRoles 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-gray-500 text-xs block mb-1">Maximo de creadores</label>
-              <input type="number" min="1" value={data.max_creators || ''} onChange={e => onChange('max_creators', Math.max(1, parseInt(e.target.value) || 1))} placeholder="5" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500" />
+              <input type="number" min="1" value={data.max_creators || ''} onChange={e => onChange('max_creators', Math.max(1, parseInt(e.target.value) || 1))} placeholder="5" className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500" />
             </div>
             <div>
               <label className="text-gray-500 text-xs flex items-center gap-1 mb-1"><Calendar className="h-3 w-3" />Fecha limite de ofertas</label>
-              <input type="date" value={data.bid_deadline} onChange={e => onChange('bid_deadline', e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500" />
+              <input type="date" value={data.bid_deadline} onChange={e => onChange('bid_deadline', e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500" />
             </div>
           </div>
           <div className="space-y-2">
             <label className="text-gray-500 text-xs">Visibilidad de ofertas</label>
             <div className="flex gap-3">
-              <button onClick={() => onChange('bid_visibility', 'public')} className={cn('flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium border transition-all', data.bid_visibility === 'public' ? 'border-purple-500/50 bg-purple-500/10 text-purple-300' : 'border-white/10 text-gray-400')}>
+              <button onClick={() => onChange('bid_visibility', 'public')} className={cn('flex-1 flex items-center justify-center gap-2 py-2.5 rounded-sm text-sm font-medium border transition-all', data.bid_visibility === 'public' ? 'border-purple-500/50 bg-purple-500/10 text-purple-300' : 'border-white/10 text-gray-400')}>
                 <Eye className="h-4 w-4" />Publica
               </button>
-              <button onClick={() => onChange('bid_visibility', 'sealed')} className={cn('flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium border transition-all', data.bid_visibility === 'sealed' ? 'border-purple-500/50 bg-purple-500/10 text-purple-300' : 'border-white/10 text-gray-400')}>
+              <button onClick={() => onChange('bid_visibility', 'sealed')} className={cn('flex-1 flex items-center justify-center gap-2 py-2.5 rounded-sm text-sm font-medium border transition-all', data.bid_visibility === 'sealed' ? 'border-purple-500/50 bg-purple-500/10 text-purple-300' : 'border-white/10 text-gray-400')}>
                 <EyeOff className="h-4 w-4" />Sellada
               </button>
             </div>
@@ -390,7 +390,7 @@ export function CampaignStepBudget({ data, onChange, contentCount, desiredRoles 
             const rangeMaxFee = Math.round(rangeMaxCreator * commissionPct / 100);
             const rangeMaxTotal = rangeMaxCreator + rangeMaxFee;
             return (
-            <div className="bg-background rounded-lg p-4 space-y-2">
+            <div className="bg-background rounded-sm p-4 space-y-2">
               <h4 className="text-gray-400 text-xs font-semibold uppercase">Resumen de Costos</h4>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Rango por video</span>
@@ -405,7 +405,7 @@ export function CampaignStepBudget({ data, onChange, contentCount, desiredRoles 
                 <span className="text-blue-300 font-bold"><InlinePrice amount={rangeDeposit} /></span>
               </div>
               <p className="text-gray-600 text-xs">{contentCount} videos x {data.max_creators} creadores x <InlinePrice amount={data.min_bid} /> + {commissionPct}%</p>
-              <div className="mt-2 p-2.5 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <div className="mt-2 p-2.5 bg-blue-500/10 border border-blue-500/20 rounded-sm">
                 <p className="text-blue-300 text-[11px] leading-relaxed">
                   La campana se publica sin cobro. Al aprobar creadores, se cobra el deposito basado en la oferta minima. Si las ofertas aceptadas lo superan, se cobra la diferencia.
                 </p>
@@ -418,14 +418,14 @@ export function CampaignStepBudget({ data, onChange, contentCount, desiredRoles 
 
       {/* Exchange fields */}
       {showExchangeFields && (
-        <div className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-4">
+        <div className="bg-white/5 border border-white/10 rounded-sm p-5 space-y-4">
           <div className="flex items-center gap-2">
             <Gift className="h-5 w-5 text-purple-400" />
             <h3 className="text-white text-sm font-semibold">Producto para Canje</h3>
           </div>
           <div>
             <label className="text-gray-500 text-xs block mb-1">Nombre del producto</label>
-            <input value={data.exchange_product_name} onChange={e => onChange('exchange_product_name', e.target.value)} placeholder="Ej: Audifonos Bluetooth TG-500" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500" />
+            <input value={data.exchange_product_name} onChange={e => onChange('exchange_product_name', e.target.value)} placeholder="Ej: Audifonos Bluetooth TG-500" className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500" />
           </div>
           <PriceInput
             label="Valor estimado"
@@ -435,12 +435,12 @@ export function CampaignStepBudget({ data, onChange, contentCount, desiredRoles 
           />
           <div>
             <label className="text-gray-500 text-xs block mb-1">Descripcion del producto</label>
-            <textarea value={data.exchange_product_description} onChange={e => onChange('exchange_product_description', e.target.value)} placeholder="Describe el producto que recibiran los creadores..." rows={3} className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500 resize-none" />
+            <textarea value={data.exchange_product_description} onChange={e => onChange('exchange_product_description', e.target.value)} placeholder="Describe el producto que recibiran los creadores..." rows={3} className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500 resize-none" />
           </div>
           {data.campaign_type === 'exchange' && (
             <div>
               <label className="text-gray-500 text-xs block mb-1">Maximo de creadores</label>
-              <input type="number" min="1" value={data.max_creators || ''} onChange={e => onChange('max_creators', Math.max(1, parseInt(e.target.value) || 1))} placeholder="10" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500" />
+              <input type="number" min="1" value={data.max_creators || ''} onChange={e => onChange('max_creators', Math.max(1, parseInt(e.target.value) || 1))} placeholder="10" className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500" />
             </div>
           )}
         </div>

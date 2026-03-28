@@ -39,6 +39,8 @@ interface ContentVideoCardProps {
   userId?: string;
   onStatusChange?: (id: string, status: ContentStatus, notes?: string) => Promise<void>;
   showRatings?: boolean;
+  downloadBlocked?: boolean;
+  downloadBlockedReason?: string;
 }
 
 interface Comment {
@@ -48,7 +50,15 @@ interface Comment {
   profile?: { full_name: string; avatar_url?: string };
 }
 
-export function ContentVideoCard({ content, onUpdate, userId, onStatusChange, showRatings = false }: ContentVideoCardProps) {
+export function ContentVideoCard({
+  content,
+  onUpdate,
+  userId,
+  onStatusChange,
+  showRatings = false,
+  downloadBlocked = false,
+  downloadBlockedReason = 'Descargas suspendidas por pagos vencidos'
+}: ContentVideoCardProps) {
   const { toast } = useToast();
   const [showRatingsSection, setShowRatingsSection] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -107,6 +117,16 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange, sh
 
   const handleDownload = async () => {
     if (isDownloading) return;
+
+    // Bloquear si hay pagos vencidos
+    if (downloadBlocked) {
+      toast({
+        title: 'Descargas suspendidas',
+        description: downloadBlockedReason,
+        variant: 'destructive'
+      });
+      return;
+    }
 
     const sourceUrl = currentVideoUrl;
     if (!sourceUrl) {
@@ -488,10 +508,12 @@ export function ContentVideoCard({ content, onUpdate, userId, onStatusChange, sh
                   disabled={isDownloading}
                   className={cn(
                     "p-2 rounded-full transition-colors",
-                    "bg-primary/10 text-primary hover:bg-primary/20",
+                    downloadBlocked
+                      ? "bg-red-100 dark:bg-red-900/30 text-red-500 cursor-not-allowed opacity-60"
+                      : "bg-primary/10 text-primary hover:bg-primary/20",
                     isDownloading && "opacity-60 cursor-not-allowed"
                   )}
-                  title="Descargar video"
+                  title={downloadBlocked ? downloadBlockedReason : "Descargar video"}
                 >
                   {isDownloading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

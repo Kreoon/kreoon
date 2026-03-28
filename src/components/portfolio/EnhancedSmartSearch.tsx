@@ -519,7 +519,7 @@ export function EnhancedSmartSearch({
                 <button
                   key={i}
                   onClick={() => handleRecentClick(term)}
-                  className="w-full flex items-center gap-3 px-3 py-2 hover:bg-social-muted rounded-lg transition text-left"
+                  className="w-full flex items-center gap-3 px-3 py-2 hover:bg-social-muted rounded-sm transition text-left"
                 >
                   <Search className="h-4 w-4 text-social-muted-foreground" />
                   <span className="text-social-foreground text-sm">{term}</span>
@@ -579,7 +579,7 @@ export function EnhancedSmartSearch({
             <button
               key={user.id}
               onClick={() => handleUserClick(user)}
-              className="w-full flex items-center gap-3 px-3 py-3 hover:bg-social-muted rounded-lg transition text-left"
+              className="w-full flex items-center gap-3 px-3 py-3 hover:bg-social-muted rounded-sm transition text-left"
             >
               <Avatar className="h-12 w-12 ring-2 ring-social-border flex-shrink-0">
                 <AvatarImage src={user.avatar_url || undefined} />
@@ -630,9 +630,9 @@ export function EnhancedSmartSearch({
             <button
               key={item.id}
               onClick={() => handleContentClick(item)}
-              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-social-muted rounded-lg transition text-left"
+              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-social-muted rounded-sm transition text-left"
             >
-              <div className="h-12 w-12 rounded-lg bg-social-muted overflow-hidden flex-shrink-0">
+              <div className="h-12 w-12 rounded-sm bg-social-muted overflow-hidden flex-shrink-0">
                 {item.thumbnail_url ? (
                   <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover" />
                 ) : (
@@ -670,7 +670,7 @@ export function EnhancedSmartSearch({
             <button
               key={client.id}
               onClick={() => handleClientClick(client)}
-              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-social-muted rounded-lg transition text-left"
+              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-social-muted rounded-sm transition text-left"
             >
               <Avatar className="h-10 w-10 ring-2 ring-social-border">
                 <AvatarImage src={client.logo_url || undefined} />
@@ -730,7 +730,7 @@ export function EnhancedSmartSearch({
             </div>
 
             {showDropdown && (
-              <div className="absolute top-full right-0 mt-2 w-[320px] sm:w-[380px] bg-social-card border border-social-border rounded-xl shadow-2xl z-50 overflow-hidden max-h-[70vh] overflow-y-auto">
+              <div className="absolute top-full right-0 mt-2 w-[320px] sm:w-[380px] bg-social-card border border-social-border rounded-sm shadow-2xl z-50 overflow-hidden max-h-[70vh] overflow-y-auto">
                 {renderDropdownContent()}
               </div>
             )}
@@ -770,7 +770,7 @@ export function EnhancedSmartSearch({
 
       {showDropdown && (
         <div className={cn(
-          "absolute top-full left-0 right-0 mt-2 bg-social-card border border-social-border rounded-xl shadow-2xl z-50 overflow-hidden max-h-[70vh] overflow-y-auto",
+          "absolute top-full left-0 right-0 mt-2 bg-social-card border border-social-border rounded-sm shadow-2xl z-50 overflow-hidden max-h-[70vh] overflow-y-auto",
           variant === 'full' && "max-h-[80vh]"
         )}>
           {renderDropdownContent()}

@@ -299,7 +299,7 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
 
   return (
     <Card className={cn(
-      "overflow-hidden bg-card border-border rounded-xl",
+      "overflow-hidden bg-card border-border rounded-sm",
       "hover:shadow-xl transition-all duration-300",
       className
     )}>

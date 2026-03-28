@@ -147,7 +147,7 @@ export function ScriptsTabContainer({
     <TooltipProvider>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {/* Sub-tab navigation */}
-        <TabsList className="w-full h-auto gap-0.5 sm:gap-1 grid grid-cols-4 sm:flex sm:flex-wrap sm:justify-start bg-muted/50 p-0.5 sm:p-1 rounded-lg mb-4">
+        <TabsList className="w-full h-auto gap-0.5 sm:gap-1 grid grid-cols-4 sm:flex sm:flex-wrap sm:justify-start bg-muted/50 p-0.5 sm:p-1 rounded-sm mb-4">
           {SCRIPT_SUB_TABS.map((tab) => {
             const blockKey = SUBTAB_TO_BLOCK[tab.key];
             const canViewScript = scriptPerms.canView(tab.key);
@@ -165,7 +165,7 @@ export function ScriptsTabContainer({
                       value={tab.key}
                       disabled={!canView}
                       className={cn(
-                        'flex items-center justify-center gap-1 sm:gap-1.5 px-1 py-1.5 sm:px-3 sm:py-1.5 text-xs sm:text-sm transition-all rounded-md',
+                        'flex items-center justify-center gap-1 sm:gap-1.5 px-1 py-1.5 sm:px-3 sm:py-1.5 text-xs sm:text-sm transition-all rounded-sm',
                         !canView && 'opacity-40 cursor-not-allowed',
                         isReadOnly && canView && 'border-dashed',
                         isLocked && canView && 'border-warning/50',
@@ -205,7 +205,7 @@ export function ScriptsTabContainer({
                   <TabsTrigger
                     value="reference"
                     className={cn(
-                      'flex items-center justify-center gap-1 sm:gap-1.5 px-1 py-1.5 sm:px-3 sm:py-1.5 text-xs sm:text-sm transition-all rounded-md',
+                      'flex items-center justify-center gap-1 sm:gap-1.5 px-1 py-1.5 sm:px-3 sm:py-1.5 text-xs sm:text-sm transition-all rounded-sm',
                       activeTab === 'reference' && 'bg-background shadow-sm'
                     )}
                   >
@@ -256,7 +256,7 @@ export function ScriptsTabContainer({
                   {renderSubTab(tab.key)}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center p-6 sm:p-8 text-center bg-muted/20 rounded-lg">
+                <div className="flex flex-col items-center justify-center p-6 sm:p-8 text-center bg-muted/20 rounded-sm">
                   <Lock className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground mb-2" />
                   <p className="text-muted-foreground">No tienes acceso a esta sección</p>
                 </div>
@@ -329,7 +329,7 @@ function ReferenceVideoSection({ url, contentId }: { url: string; contentId?: st
       </h4>
 
       {hasVideo ? (
-        <div className="aspect-[9/16] max-h-[500px] rounded-xl overflow-hidden bg-black mx-auto w-full max-w-[280px] sm:max-w-[320px]">
+        <div className="aspect-[9/16] max-h-[500px] rounded-sm overflow-hidden bg-black mx-auto w-full max-w-[280px] sm:max-w-[320px]">
           {isBunny ? (
             <AutoPauseVideo src={url} className="w-full h-full" contentId={contentId} />
           ) : embedUrl ? (
@@ -342,7 +342,7 @@ function ReferenceVideoSection({ url, contentId }: { url: string; contentId?: st
           ) : null}
         </div>
       ) : (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 bg-muted/30 rounded-lg border">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 bg-muted/30 rounded-sm border">
           <LinkIcon className="h-5 w-5 text-muted-foreground shrink-0" />
           <a href={url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate flex-1 min-w-0">
             {url}

@@ -82,7 +82,7 @@ export function AuthLayout({
                     <img
                       src={logoUrl}
                       alt={platformName}
-                      className="h-10 w-10 rounded-lg object-cover"
+                      className="h-10 w-10 rounded-sm object-cover"
                     />
                     <span className="text-xl font-bold tracking-tight text-kreoon-text-primary">
                       {platformName}
@@ -97,7 +97,7 @@ export function AuthLayout({
                   >
                     <div
                       className={cn(
-                        "flex flex-col items-center justify-center gap-4 rounded-2xl px-10 py-12",
+                        "flex flex-col items-center justify-center gap-4 rounded-sm px-10 py-12",
                         "border border-kreoon-purple-400/20 bg-kreoon-bg-card/40 backdrop-blur-xl",
                         "shadow-kreoon-glow",
                       )}
@@ -105,7 +105,7 @@ export function AuthLayout({
                       <img
                         src="/favicon.png"
                         alt="KREOON"
-                        className="h-20 w-20 rounded-2xl object-cover shadow-kreoon-glow"
+                        className="h-20 w-20 rounded-sm object-cover shadow-kreoon-glow"
                       />
                       <p className="text-sm font-medium text-kreoon-text-secondary tracking-wide">
                         El sistema operativo para creadores

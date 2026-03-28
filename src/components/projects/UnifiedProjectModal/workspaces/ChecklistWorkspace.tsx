@@ -67,7 +67,7 @@ export default function ChecklistWorkspace({ formData, setFormData, editMode, re
       {/* Items */}
       <div className="space-y-2">
         {items.map(item => (
-          <div key={item.id} className="flex items-center gap-3 group border rounded-lg p-3">
+          <div key={item.id} className="flex items-center gap-3 group border rounded-sm p-3">
             <Checkbox
               checked={item.completed}
               onCheckedChange={() => toggleItem(item.id)}

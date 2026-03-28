@@ -234,10 +234,12 @@ function RootModePopover() {
 
 interface IntegratedNotificationHeaderProps {
   sidebarCollapsed?: boolean;
+  topOffset?: number; // Offset in pixels when there's a banner above
 }
 
 export function IntegratedNotificationHeader({
-  sidebarCollapsed = false
+  sidebarCollapsed = false,
+  topOffset = 0
 }: IntegratedNotificationHeaderProps) {
   const { user, profile } = useAuth();
   const { isRootAdmin, isImpersonating } = useImpersonation();
@@ -249,16 +251,14 @@ export function IntegratedNotificationHeader({
   return (
     <div
       className={cn(
-        "fixed top-0 right-0 z-40 h-14 flex items-center gap-3 px-4",
-        "border-b border-border",
-        "bg-background/95",
-        "backdrop-blur-xl",
+        "fixed right-0 z-40 h-14 flex items-center gap-3 px-4",
+        "bg-white dark:bg-[#0f0f14]",
+        "border-b border-zinc-200 dark:border-zinc-800",
         "transition-all duration-300",
         sidebarCollapsed ? "left-20" : "left-64"
       )}
+      style={{ top: topOffset }}
     >
-      {/* Subtle gradient line at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
 
       {/* Spacer to push buttons to the right */}
       <div className="flex-1" />
@@ -267,24 +267,23 @@ export function IntegratedNotificationHeader({
       <button
         onClick={() => navigate('/settings?section=marketplace')}
         className={cn(
-          "flex items-center gap-2 px-3 py-1.5 rounded-xl",
-          "bg-primary/5 hover:bg-primary/10",
-          "border border-border hover:border-primary/20",
-          "transition-all duration-300 group"
+          "flex items-center gap-2 px-3 py-1.5 rounded-sm",
+          "hover:bg-zinc-100 dark:hover:bg-zinc-800",
+          "transition-colors duration-150 group"
         )}
         aria-label="Ver mi perfil"
       >
-        <Avatar className="h-8 w-8 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
+        <Avatar className="h-8 w-8">
           <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
-          <AvatarFallback className="text-xs bg-primary/20 text-primary">
+          <AvatarFallback className="text-xs bg-purple-500/10 text-purple-500">
             {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
           </AvatarFallback>
         </Avatar>
         <div className="hidden sm:flex flex-col items-start">
-          <span className="text-sm font-medium text-foreground truncate max-w-[120px]">
+          <span className="text-sm font-medium text-zinc-900 dark:text-white truncate max-w-[120px]">
             {profile?.full_name || 'Usuario'}
           </span>
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-[10px] text-zinc-500">
             Mi Perfil
           </span>
         </div>
@@ -305,15 +304,9 @@ export function IntegratedNotificationHeader({
         variant="outline"
         size="sm"
         onClick={() => navigate('/marketplace')}
-        className={cn(
-          "gap-2 rounded-xl relative overflow-hidden group",
-          "bg-primary/10 hover:bg-primary/20",
-          "border-primary/30 hover:border-primary/50",
-          "text-foreground",
-          "transition-all duration-300"
-        )}
+        className="gap-2 rounded-sm border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-150"
       >
-        <Briefcase className="h-4 w-4 text-primary" />
+        <Briefcase className="h-4 w-4 text-purple-500" />
         <span className="hidden sm:inline font-medium">Marketplace</span>
       </Button>
 
@@ -322,7 +315,7 @@ export function IntegratedNotificationHeader({
         variant="ghost"
         size="icon"
         onClick={() => setTheme(theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark')}
-        className="h-9 w-9 rounded-xl text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all"
+        className="h-9 w-9 rounded-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all"
         title={theme === 'dark' ? 'Cambiar a Claro' : theme === 'light' ? 'Cambiar a Sistema' : 'Cambiar a Oscuro'}
       >
         {theme === 'dark' ? <Moon className="h-4 w-4" /> : theme === 'light' ? <Sun className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}

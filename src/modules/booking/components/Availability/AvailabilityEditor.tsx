@@ -260,7 +260,7 @@ export function AvailabilityEditor() {
                         fontWeight: 600,
                       },
                     }}
-                    className="rounded-xl"
+                    className="rounded-sm"
                   />
                 </div>
                 <div className="flex justify-center gap-6 mt-6 text-sm">
@@ -397,7 +397,7 @@ export function AvailabilityEditor() {
                         type="time"
                         value={specialStartTime}
                         onChange={(e) => setSpecialStartTime(e.target.value)}
-                        className="bg-slate-50 border-slate-200 h-11 rounded-lg"
+                        className="bg-slate-50 border-slate-200 h-11 rounded-sm"
                       />
                     </div>
                     <div className="flex-1">
@@ -406,7 +406,7 @@ export function AvailabilityEditor() {
                         type="time"
                         value={specialEndTime}
                         onChange={(e) => setSpecialEndTime(e.target.value)}
-                        className="bg-slate-50 border-slate-200 h-11 rounded-lg"
+                        className="bg-slate-50 border-slate-200 h-11 rounded-sm"
                       />
                     </div>
                   </div>
@@ -421,7 +421,7 @@ export function AvailabilityEditor() {
                 placeholder="Ej: Vacaciones, día festivo..."
                 value={exceptionReason}
                 onChange={(e) => setExceptionReason(e.target.value)}
-                className="bg-slate-50 border-slate-200 h-11 rounded-lg mt-1"
+                className="bg-slate-50 border-slate-200 h-11 rounded-sm mt-1"
               />
             </div>
           </div>
@@ -430,7 +430,7 @@ export function AvailabilityEditor() {
             <Button
               variant="outline"
               onClick={() => setIsExceptionDialogOpen(false)}
-              className="rounded-lg"
+              className="rounded-sm"
             >
               Cancelar
             </Button>
@@ -439,7 +439,7 @@ export function AvailabilityEditor() {
               whileTap={{ scale: 0.98 }}
               onClick={handleAddException}
               disabled={addException.isPending}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-white font-medium disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-sm text-white font-medium disabled:opacity-50"
               style={{
                 background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
                 boxShadow: '0 4px 14px rgba(139, 92, 246, 0.25)',
@@ -474,7 +474,7 @@ function ExceptionItem({
     >
       <div className="flex items-center gap-4">
         <div
-          className={`p-2.5 rounded-xl ${
+          className={`p-2.5 rounded-sm ${
             exception.is_blocked ? 'bg-red-50' : 'bg-violet-50'
           }`}
         >
@@ -508,7 +508,7 @@ function ExceptionItem({
         whileTap={{ scale: 0.9 }}
         onClick={onRemove}
         disabled={isLoading}
-        className="p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 text-slate-400 hover:text-red-500 disabled:opacity-50"
+        className="p-2 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 text-slate-400 hover:text-red-500 disabled:opacity-50"
       >
         <Trash2 className="w-4 h-4" />
       </motion.button>

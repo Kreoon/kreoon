@@ -98,15 +98,10 @@ const DNA_SECTIONS = [
 ];
 
 export function ClientDNADisplay({ dna, onDelete, onRegenerate, onUpdate }: ClientDNADisplayProps) {
-  const [expandedSection, setExpandedSection] = useState<string | null>('business_identity');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState<DNAData | null>(null);
   const [saving, setSaving] = useState(false);
-
-  const toggleSection = (sectionId: string) => {
-    setExpandedSection(expandedSection === sectionId ? null : sectionId);
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-CO', {
@@ -197,37 +192,27 @@ export function ClientDNADisplay({ dna, onDelete, onRegenerate, onUpdate }: Clie
   return (
     <div className="space-y-6">
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl border border-white/10">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-pink-500/10 to-purple-600/20" />
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-xl" />
-
-        {/* Decorative blurs */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-pink-500/10 rounded-full blur-3xl" />
-
-        <div className="relative p-4 sm:p-6">
+      <div className="rounded-lg bg-white dark:bg-[#14141f] border border-zinc-200 dark:border-zinc-800 shadow-sm dark:shadow-none overflow-hidden">
+        <div className="p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div className="flex items-center gap-3 sm:gap-4 min-w-0">
               {/* KIRO DNA Icon */}
-              <div className="relative shrink-0">
-                <div className="absolute inset-0 bg-purple-500/30 rounded-xl blur-lg animate-pulse" />
-                <div className="relative w-11 h-11 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 p-[2px]">
-                  <div className="w-full h-full rounded-xl bg-black/80 flex items-center justify-center">
-                    <Dna className="w-5 h-5 sm:w-7 sm:h-7 text-purple-400" />
-                  </div>
+              <div className="shrink-0">
+                <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                  <Dna className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                 </div>
               </div>
 
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-base sm:text-lg font-bold text-white">ADN del Negocio</h2>
+                  <h2 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white">ADN del Negocio</h2>
                   {editMode && (
-                    <span className="px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-xs font-medium text-amber-400">
+                    <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 border border-amber-200 dark:border-amber-500/30 text-xs font-medium text-amber-600 dark:text-amber-400">
                       Editando
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-2 mt-1 text-xs sm:text-sm text-gray-400">
+                <div className="flex items-center gap-2 mt-1 text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
                   <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
                   <span className="truncate">Generado el {formatDate(dna.created_at)}</span>
                 </div>
@@ -242,9 +227,10 @@ export function ClientDNADisplay({ dna, onDelete, onRegenerate, onUpdate }: Clie
                     onClick={cancelEdit}
                     disabled={saving}
                     className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg
-                               bg-white/5 border border-white/10
-                               text-xs sm:text-sm text-gray-400 hover:text-white hover:bg-white/10
-                               transition-all duration-200 disabled:opacity-50"
+                               bg-zinc-100 dark:bg-zinc-800
+                               text-xs sm:text-sm text-zinc-700 dark:text-zinc-300
+                               hover:bg-zinc-200 dark:hover:bg-zinc-700
+                               transition-colors duration-150 disabled:opacity-50"
                   >
                     <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     Cancelar
@@ -253,9 +239,9 @@ export function ClientDNADisplay({ dna, onDelete, onRegenerate, onUpdate }: Clie
                     onClick={saveEdit}
                     disabled={saving}
                     className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg
-                               bg-gradient-to-r from-purple-500 to-pink-500
-                               text-xs sm:text-sm text-white font-medium hover:opacity-90
-                               transition-all duration-200 disabled:opacity-50"
+                               bg-purple-600 hover:bg-purple-500
+                               text-xs sm:text-sm text-white font-medium
+                               transition-colors duration-150 disabled:opacity-50"
                   >
                     {saving ? (
                       <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
@@ -271,9 +257,10 @@ export function ClientDNADisplay({ dna, onDelete, onRegenerate, onUpdate }: Clie
                     <button
                       onClick={startEdit}
                       className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg
-                                 bg-white/5 border border-white/10
-                                 text-xs sm:text-sm text-gray-400 hover:text-purple-400 hover:border-purple-500/30 hover:bg-purple-500/10
-                                 transition-all duration-200"
+                                 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700
+                                 text-xs sm:text-sm text-zinc-600 dark:text-zinc-400
+                                 hover:text-purple-600 dark:hover:text-purple-400 hover:border-purple-300 dark:hover:border-purple-500/30
+                                 transition-colors duration-150"
                     >
                       <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       Editar
@@ -282,9 +269,10 @@ export function ClientDNADisplay({ dna, onDelete, onRegenerate, onUpdate }: Clie
                   <button
                     onClick={() => setConfirmDelete(true)}
                     className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg
-                               bg-white/5 border border-white/10
-                               text-xs sm:text-sm text-gray-400 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/10
-                               transition-all duration-200"
+                               bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700
+                               text-xs sm:text-sm text-zinc-600 dark:text-zinc-400
+                               hover:text-red-600 dark:hover:text-red-400 hover:border-red-300 dark:hover:border-red-500/30
+                               transition-colors duration-150"
                   >
                     <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     Borrar
@@ -296,14 +284,14 @@ export function ClientDNADisplay({ dna, onDelete, onRegenerate, onUpdate }: Clie
 
           {/* Confirm delete banner */}
           {confirmDelete && (
-            <div className="mt-4 rounded-lg bg-red-500/10 border border-red-500/30 p-3 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
-              <span className="text-xs sm:text-sm text-red-400">
+            <div className="mt-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 p-3 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+              <span className="text-xs sm:text-sm text-red-600 dark:text-red-400">
                 Esto eliminara el ADN actual y volveras a grabar audio. Continuar?
               </span>
               <div className="flex gap-2 shrink-0">
                 <button
                   onClick={() => setConfirmDelete(false)}
-                  className="px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:text-white bg-white/5 border border-white/10 transition-colors"
+                  className="px-3 py-1.5 rounded-lg text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 transition-colors"
                 >
                   Cancelar
                 </button>
@@ -359,12 +347,12 @@ export function ClientDNADisplay({ dna, onDelete, onRegenerate, onUpdate }: Clie
       {/* ── Audience Locations ─────────────────────────────────────── */}
       {!editMode && dna.audience_locations && Array.isArray(dna.audience_locations) && dna.audience_locations.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap">
-          <MapPin className="w-4 h-4 text-purple-400 shrink-0" />
-          <span className="text-xs text-gray-500">Audiencia:</span>
+          <MapPin className="w-4 h-4 text-purple-500 shrink-0" />
+          <span className="text-xs text-zinc-500">Audiencia:</span>
           {(dna.audience_locations as Array<{ name: string; code: string; flag?: string }>).map((loc) => (
             <span
               key={loc.code}
-              className="px-2 py-0.5 rounded-full text-[11px] bg-purple-500/10 text-purple-400 border border-purple-500/20"
+              className="px-2 py-0.5 rounded-full text-[11px] bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20"
             >
               {loc.flag && <span className="mr-0.5">{loc.flag}</span>}
               {loc.name}
@@ -374,7 +362,7 @@ export function ClientDNADisplay({ dna, onDelete, onRegenerate, onUpdate }: Clie
       )}
 
       {/* ── DNA Sections ───────────────────────────────────────────── */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {DNA_SECTIONS.map((section) => (
           <DNASectionCard
             key={section.id}
@@ -382,8 +370,6 @@ export function ClientDNADisplay({ dna, onDelete, onRegenerate, onUpdate }: Clie
             description={section.description}
             icon={section.icon}
             gradient={section.gradient}
-            isExpanded={expandedSection === section.id}
-            onToggle={() => toggleSection(section.id)}
           >
             {renderSectionContent(section.id)}
           </DNASectionCard>
@@ -405,17 +391,14 @@ function QuickStat({
   gradient: string;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-xl border border-white/10 p-2.5 sm:p-4">
-      <div className="absolute inset-0 bg-white/5" />
-      <div className="relative flex items-center gap-2 sm:gap-3">
-        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br ${gradient} p-[1px] shrink-0`}>
-          <div className="w-full h-full rounded-lg bg-black/60 flex items-center justify-center">
-            <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-          </div>
+    <div className="rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50 p-2.5 sm:p-4">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center shrink-0`}>
+          <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
         </div>
         <div className="min-w-0">
-          <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider truncate">{label}</p>
-          <p className="text-xs sm:text-sm font-semibold text-white capitalize truncate">{value}</p>
+          <p className="text-[10px] sm:text-xs text-zinc-500 uppercase tracking-wider truncate">{label}</p>
+          <p className="text-xs sm:text-sm font-semibold text-zinc-900 dark:text-white capitalize truncate">{value}</p>
         </div>
       </div>
     </div>

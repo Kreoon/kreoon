@@ -111,7 +111,7 @@ export function ProductionCard({
     return (
       <motion.div
         className={cn(
-          'flex items-center gap-3 p-2 rounded-lg',
+          'flex items-center gap-3 p-2 rounded-sm',
           'bg-zinc-900/40 hover:bg-zinc-800/40',
           'border border-zinc-800/50 hover:border-zinc-700/50',
           'cursor-pointer transition-all',
@@ -138,7 +138,7 @@ export function ProductionCard({
     return (
       <motion.div
         className={cn(
-          'flex items-center gap-4 p-3 rounded-xl',
+          'flex items-center gap-4 p-3 rounded-sm',
           'bg-zinc-900/40 hover:bg-zinc-800/40',
           'border border-zinc-800/50 hover:border-zinc-700/50',
           'cursor-pointer transition-all',
@@ -150,7 +150,7 @@ export function ProductionCard({
         animate={{ opacity: 1, x: 0 }}
       >
         {/* Type icon */}
-        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+        <div className="flex-shrink-0 w-10 h-10 rounded-sm bg-purple-500/10 flex items-center justify-center">
           <TipoIcon className="w-5 h-5 text-purple-400" />
         </div>
 
@@ -218,7 +218,7 @@ export function ProductionCard({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className="p-1.5 rounded-lg hover:bg-zinc-700 transition-colors"
+                className="p-1.5 rounded-sm hover:bg-zinc-700 transition-colors"
                 onClick={(e) => e.stopPropagation()}
               >
                 <MoreHorizontal className="w-4 h-4 text-zinc-400" />
@@ -244,7 +244,7 @@ export function ProductionCard({
   return (
     <motion.div
       className={cn(
-        'relative rounded-2xl overflow-hidden',
+        'relative rounded-sm overflow-hidden',
         'bg-gradient-to-b from-zinc-900/80 to-zinc-900/40',
         'border border-zinc-800/50 hover:border-purple-500/30',
         'cursor-pointer transition-all group',
@@ -261,7 +261,7 @@ export function ProductionCard({
       {/* Thumbnail placeholder */}
       <div className="relative h-32 bg-gradient-to-br from-purple-900/30 to-zinc-900">
         {/* Type badge */}
-        <div className="absolute top-3 left-3 px-2 py-1 rounded-lg bg-black/50 backdrop-blur-sm flex items-center gap-1.5">
+        <div className="absolute top-3 left-3 px-2 py-1 rounded-sm bg-black/50 backdrop-blur-sm flex items-center gap-1.5">
           <TipoIcon className="w-3.5 h-3.5 text-purple-400" />
           <span className="text-xs text-white font-medium">{produccion.tipo}</span>
         </div>
@@ -319,7 +319,7 @@ export function ProductionCard({
           {deadlineInfo && (
             <motion.div
               className={cn(
-                'flex items-center gap-1.5 px-2 py-1 rounded-lg',
+                'flex items-center gap-1.5 px-2 py-1 rounded-sm',
                 deadlineInfo.urgencia === 'critical'
                   ? 'bg-red-500/10'
                   : deadlineInfo.urgencia === 'danger'
@@ -372,7 +372,7 @@ export function ProductionCard({
       {showActions && (
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
           <motion.button
-            className="px-4 py-2 rounded-xl bg-purple-500 text-white font-medium text-sm hover:bg-purple-600 transition-colors"
+            className="px-4 py-2 rounded-sm bg-purple-500 text-white font-medium text-sm hover:bg-purple-600 transition-colors"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={(e) => {

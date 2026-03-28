@@ -202,14 +202,14 @@ export function FeaturesSection() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="order-1 lg:order-2"
           >
-            <div className="overflow-hidden rounded-2xl border border-kreoon-border bg-kreoon-bg-card/60 p-6 shadow-kreoon-glow-sm backdrop-blur-sm">
+            <div className="overflow-hidden rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-6 shadow-kreoon-glow-sm backdrop-blur-sm">
               <div className="mb-4 flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-kreoon-purple-400" />
                 <span className="text-sm font-medium text-kreoon-purple-400">
                   Asistente creativo
                 </span>
               </div>
-              <div className="mb-4 rounded-lg border border-kreoon-border bg-kreoon-bg-secondary/80 p-3">
+              <div className="mb-4 rounded-sm border border-kreoon-border bg-kreoon-bg-secondary/80 p-3">
                 <p className="text-xs text-kreoon-text-muted">
                   Prompt
                 </p>
@@ -217,7 +217,7 @@ export function FeaturesSection() {
                   Genera un hook para un video de 15s sobre sostenibilidad...
                 </p>
               </div>
-              <div className="rounded-lg border border-kreoon-purple-500/30 bg-kreoon-purple-500/10 p-4">
+              <div className="rounded-sm border border-kreoon-purple-500/30 bg-kreoon-purple-500/10 p-4">
                 <p className="text-xs text-kreoon-purple-400">Resultado</p>
                 <p className="mt-2 text-sm leading-relaxed text-kreoon-text-secondary">
                   &quot;¿Sabías que tu marca puede reducir su huella un 40%?
@@ -334,7 +334,7 @@ export function FeaturesSection() {
                     <div className="mt-4 border-t border-amber-500/20 pt-4">
                       <button
                         onClick={() => handleJoinWaitlist(feature)}
-                        className="flex w-full items-center justify-center gap-2 rounded-lg bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-400 transition-colors hover:bg-amber-500/20"
+                        className="flex w-full items-center justify-center gap-2 rounded-sm bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-400 transition-colors hover:bg-amber-500/20"
                       >
                         {feature.comingSoonCta}
                         <ArrowRight className="h-4 w-4" />
@@ -355,7 +355,7 @@ export function FeaturesSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ delay: 0.5 }}
-          className="relative mb-12 rounded-2xl border border-dashed border-amber-500/30 bg-kreoon-bg-card/40 p-6 opacity-90 md:p-8"
+          className="relative mb-12 rounded-sm border border-dashed border-amber-500/30 bg-kreoon-bg-card/40 p-6 opacity-90 md:p-8"
         >
           <div className="absolute -top-2 left-1/2 -translate-x-1/2">
             <motion.span
@@ -376,7 +376,7 @@ export function FeaturesSection() {
               <div
                 key={integration.name}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg border px-4 py-2.5 transition-colors",
+                  "flex items-center gap-2 rounded-sm border px-4 py-2.5 transition-colors",
                   integration.isReady
                     ? "border-emerald-500/30 bg-emerald-500/5"
                     : "border-kreoon-border bg-kreoon-bg-secondary/30",

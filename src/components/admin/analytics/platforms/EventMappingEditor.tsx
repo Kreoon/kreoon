@@ -53,7 +53,7 @@ export function EventMappingEditor({ platform, mapping, onChange }: EventMapping
         {KAE_EVENTS.map(({ key, label, description }) => (
           <div
             key={key}
-            className="grid grid-cols-[1fr,auto,1fr] items-center gap-3 p-3 rounded-lg bg-gray-800/30 border border-gray-700/30"
+            className="grid grid-cols-[1fr,auto,1fr] items-center gap-3 p-3 rounded-sm bg-gray-800/30 border border-gray-700/30"
           >
             <div>
               <Label className="text-sm text-foreground/80">{label}</Label>

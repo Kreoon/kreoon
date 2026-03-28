@@ -102,7 +102,7 @@ export function BannerGenerationForm({ productId, organizationId, clientId, crmP
   };
 
   return (
-    <div className="rounded-lg border border-border overflow-hidden">
+    <div className="rounded-sm border border-border overflow-hidden">
       {/* Header */}
       <div className="px-5 py-4 bg-muted/20 border-b border-border/50">
         <div className="flex items-center justify-between">
@@ -204,7 +204,7 @@ export function BannerGenerationForm({ productId, organizationId, clientId, crmP
 
         {/* Manual: Suggested angle + auto-research info */}
         {!isCrmProduct && (
-          <div className="rounded-lg border border-border/50 bg-muted/10 overflow-hidden">
+          <div className="rounded-sm border border-border/50 bg-muted/10 overflow-hidden">
             <div className="px-4 py-3 bg-muted/20 border-b border-border/30">
               <div className="flex items-center gap-2">
                 <Zap className="h-3.5 w-3.5 text-amber-500" />

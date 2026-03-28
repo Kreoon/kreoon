@@ -168,7 +168,7 @@ function VariableItem({ code, description }: { code: string; description: string
   
   return (
     <div 
-      className="flex items-center justify-between p-2 rounded-lg bg-muted/50 border hover:bg-muted/80 cursor-pointer transition-colors group"
+      className="flex items-center justify-between p-2 rounded-sm bg-muted/50 border hover:bg-muted/80 cursor-pointer transition-colors group"
       onClick={handleCopy}
     >
       <div className="flex-1 min-w-0">
@@ -314,7 +314,7 @@ export function ScriptPromptsConfig({ organizationId }: ScriptPromptsConfigProps
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
+              <div className="p-2 rounded-sm bg-primary/10">
                 <Sparkles className="h-5 w-5 text-primary" />
               </div>
               <div>
@@ -397,7 +397,7 @@ export function ScriptPromptsConfig({ organizationId }: ScriptPromptsConfigProps
                 </div>
               </div>
 
-              <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+              <div className="p-3 rounded-sm bg-primary/5 border border-primary/20">
                 <p className="text-sm">
                   <strong>💡 Tip:</strong> Copia y pega las variables en cualquier parte del prompt. 
                   Si la variable no tiene valor, se dejará vacía automáticamente.
@@ -460,10 +460,10 @@ export function ScriptPromptsConfig({ organizationId }: ScriptPromptsConfigProps
                     const fullPromptValue = config.full_prompts?.[promptKey] || DEFAULT_SCRIPT_PROMPTS[promptKey] || '';
                     
                     return (
-                      <Collapsible key={role} className="border rounded-lg">
+                      <Collapsible key={role} className="border rounded-sm">
                         <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors">
                           <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-primary/10">
+                            <div className="p-2 rounded-sm bg-primary/10">
                               <Icon className="h-4 w-4 text-primary" />
                             </div>
                             <div className="text-left">

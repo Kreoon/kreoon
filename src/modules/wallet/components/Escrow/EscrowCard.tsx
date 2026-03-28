@@ -90,7 +90,7 @@ export function EscrowCard({
           <div className="flex items-center gap-3">
             <div
               className={cn(
-                'p-2 rounded-xl',
+                'p-2 rounded-sm',
                 isLocked ? 'bg-amber-500/10' : 'bg-emerald-500/10'
               )}
             >
@@ -120,7 +120,7 @@ export function EscrowCard({
 
       <CardContent className="relative space-y-4">
         {/* Total amount */}
-        <div className="text-center p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)]">
+        <div className="text-center p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)]">
           <p className="text-sm text-muted-foreground">Total bloqueado</p>
           <p className="text-2xl font-bold text-white mt-1">{escrow.formattedTotal}</p>
         </div>

@@ -325,7 +325,7 @@ if (!orgMembers || orgMembers.length === 0) {
 
           {/* Add User Form */}
           {showAddForm && isAdmin && (
-            <div className="p-4 rounded-lg bg-muted/50 border space-y-3">
+            <div className="p-4 rounded-sm bg-muted/50 border space-y-3">
               <p className="text-sm font-medium">Agregar usuario</p>
               <Select value={selectedUserId} onValueChange={setSelectedUserId}>
                 <SelectTrigger>
@@ -419,7 +419,7 @@ if (!orgMembers || orgMembers.length === 0) {
                   return (
                     <div
                       key={user.id}
-                      className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-sm border hover:bg-muted/50 transition-colors"
                     >
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={user.profile.avatar_url || undefined} />

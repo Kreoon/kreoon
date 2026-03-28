@@ -47,7 +47,7 @@ export function BillingControlPanel() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Main Toggle */}
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border">
+        <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center gap-3">
             <Shield className="h-5 w-5 text-muted-foreground" />
             <div>
@@ -91,14 +91,14 @@ export function BillingControlPanel() {
         )}
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-          <div className="text-center p-3 rounded-lg bg-card">
-            <div className="text-2xl font-bold text-foreground">30</div>
-            <div className="text-xs text-muted-foreground">Días de trial</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t">
+          <div className="text-center p-3 rounded-lg bg-white dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-800">
+            <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">30</div>
+            <div className="text-xs text-zinc-500 dark:text-zinc-400">Días de trial</div>
           </div>
-          <div className="text-center p-3 rounded-lg bg-card">
-            <div className="text-2xl font-bold text-foreground">7, 3</div>
-            <div className="text-xs text-muted-foreground">Días de aviso</div>
+          <div className="text-center p-3 rounded-lg bg-white dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-800">
+            <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">7, 3</div>
+            <div className="text-xs text-zinc-500 dark:text-zinc-400">Días de aviso</div>
           </div>
         </div>
       </CardContent>

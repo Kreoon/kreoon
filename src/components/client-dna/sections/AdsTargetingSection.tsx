@@ -87,7 +87,7 @@ export function AdsTargetingSection({ data, isEditing, onFieldChange }: Props) {
       {/* Platform Tabs */}
       {hasPlatformData && (
         <>
-          <div className="flex gap-2 p-1 rounded-xl bg-white/5">
+          <div className="flex gap-2 p-1 rounded-lg bg-zinc-100 dark:bg-zinc-800">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
               const Icon = tab.icon;
@@ -96,10 +96,10 @@ export function AdsTargetingSection({ data, isEditing, onFieldChange }: Props) {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
-                             text-sm font-medium transition-all duration-200 ${
+                             text-sm font-medium transition-colors duration-150 ${
                     isActive
-                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-zinc-100 shadow-lg'
+                      : 'text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -153,9 +153,9 @@ export function AdsTargetingSection({ data, isEditing, onFieldChange }: Props) {
 
       {/* Hook Suggestions */}
       {(hookSuggestions.length > 0 || isEditing) && (
-        <div className="p-4 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10
-                        border border-amber-500/20">
-          <p className="text-sm font-medium text-amber-400 mb-4">Hooks Sugeridos</p>
+        <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-950/30
+                        border border-amber-200 dark:border-amber-800">
+          <p className="text-sm font-medium text-amber-600 dark:text-amber-400 mb-4">Hooks Sugeridos</p>
           {isEditing ? (
             <EditableTags items={data.hook_suggestions || []} onChange={change('hook_suggestions') as (v: string[]) => void} color="amber" placeholder="Agregar hook..." />
           ) : (
@@ -171,7 +171,7 @@ export function AdsTargetingSection({ data, isEditing, onFieldChange }: Props) {
       {/* Ad Copy Angles */}
       {(adCopyAngles.length > 0 || isEditing) && (
         <div className="space-y-3">
-          <p className="text-sm font-medium text-purple-400">Ángulos de Copy</p>
+          <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Ángulos de Copy</p>
           {adCopyAngles.map((angle, i) => (
             <AdCopyAngleCard
               key={i}
@@ -189,7 +189,7 @@ export function AdsTargetingSection({ data, isEditing, onFieldChange }: Props) {
                 const updated = [...adCopyAngles, { angle_name: '', headline: '', body: '', cta: '' }];
                 onFieldChange?.('ad_copy_angles', updated);
               }}
-              className="w-full p-3 rounded-xl border border-dashed border-white/20 text-sm text-gray-400 hover:text-white hover:border-white/40 transition-colors"
+              className="w-full p-3 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 text-sm text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors duration-150"
             >
               + Agregar ángulo
             </button>
@@ -199,10 +199,10 @@ export function AdsTargetingSection({ data, isEditing, onFieldChange }: Props) {
 
       {/* Old fields fallback: hashtags & negative keywords */}
       {(data.hashtags?.length > 0 || isEditing) && (
-        <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
           <div className="flex items-center gap-2 mb-3">
-            <Hash className="w-4 h-4 text-pink-400" />
-            <p className="text-sm font-medium text-pink-400">Hashtags</p>
+            <Hash className="w-4 h-4 text-pink-600 dark:text-pink-400" />
+            <p className="text-sm font-medium text-pink-600 dark:text-pink-400">Hashtags</p>
           </div>
           {isEditing ? (
             <EditableTags items={data.hashtags || []} onChange={change('hashtags') as (v: string[]) => void} color="pink" placeholder="Agregar hashtag..." />
@@ -211,7 +211,7 @@ export function AdsTargetingSection({ data, isEditing, onFieldChange }: Props) {
               {(data.hashtags || []).map((tag, i) => (
                 <span
                   key={i}
-                  className="px-2 py-1 rounded-full bg-pink-500/10 border border-pink-500/20 text-xs text-pink-300"
+                  className="px-2 py-1 rounded-full bg-pink-100 dark:bg-pink-500/10 border border-pink-200 dark:border-pink-500/20 text-xs text-pink-600 dark:text-pink-300"
                 >
                   #{tag.replace(/^#/, '')}
                 </span>
@@ -221,14 +221,14 @@ export function AdsTargetingSection({ data, isEditing, onFieldChange }: Props) {
         </div>
       )}
       {(data.negative_keywords?.length > 0 || isEditing) && (
-        <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Keywords Negativas</p>
+        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
+          <p className="text-xs text-zinc-500 uppercase tracking-wider mb-3">Keywords Negativas</p>
           {isEditing ? (
             <EditableTags items={data.negative_keywords || []} onChange={change('negative_keywords') as (v: string[]) => void} color="red" placeholder="Agregar keyword negativa..." />
           ) : (
             <div className="flex flex-wrap gap-2">
               {(data.negative_keywords || []).map((kw, i) => (
-                <span key={i} className="px-2 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-xs text-red-300">
+                <span key={i} className="px-2 py-1 rounded-full bg-red-100 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-xs text-red-600 dark:text-red-300">
                   {kw}
                 </span>
               ))}
@@ -256,13 +256,13 @@ function PlatformTargeting({
   onFieldChange?: (path: string, value: unknown) => void;
 }) {
   const colorClasses: Record<string, string> = {
-    blue: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
-    purple: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
-    pink: 'text-pink-400 bg-pink-500/10 border-pink-500/20',
-    cyan: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20',
-    red: 'text-red-400 bg-red-500/10 border-red-500/20',
-    orange: 'text-orange-400 bg-orange-500/10 border-orange-500/20',
-    yellow: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
+    blue: 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20',
+    purple: 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/20',
+    pink: 'text-pink-600 dark:text-pink-400 bg-pink-100 dark:bg-pink-500/10 border-pink-200 dark:border-pink-500/20',
+    cyan: 'text-cyan-600 dark:text-cyan-400 bg-cyan-100 dark:bg-cyan-500/10 border-cyan-200 dark:border-cyan-500/20',
+    red: 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-500/10 border-red-200 dark:border-red-500/20',
+    orange: 'text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/20',
+    yellow: 'text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-500/10 border-yellow-200 dark:border-yellow-500/20',
   };
 
   // In edit mode show all sections; in view mode only sections with items
@@ -275,11 +275,12 @@ function PlatformTargeting({
         const Icon = section.icon;
         const colors = colorClasses[section.color] || colorClasses.purple;
 
+        const textColorClass = colors.split(' ').slice(0, 2).join(' ');
         return (
-          <div key={i} className="p-4 rounded-xl bg-white/5 border border-white/10">
+          <div key={i} className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
             <div className="flex items-center gap-2 mb-3">
-              <Icon className={`w-4 h-4 ${colors.split(' ')[0]}`} />
-              <p className={`text-sm font-medium ${colors.split(' ')[0]}`}>{section.label}</p>
+              <Icon className={`w-4 h-4 ${textColorClass}`} />
+              <p className={`text-sm font-medium ${textColorClass}`}>{section.label}</p>
             </div>
             {isEditing && onFieldChange ? (
               <EditableTags
@@ -318,21 +319,21 @@ function HookItem({ hook, index }: { hook: string; index: number }) {
   };
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg bg-black/30 border border-white/5 group">
-      <span className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center
-                      text-xs font-bold text-amber-400 flex-shrink-0">
+    <div className="flex items-center gap-3 p-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 group">
+      <span className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center
+                      text-xs font-bold text-amber-600 dark:text-amber-400 flex-shrink-0">
         {index + 1}
       </span>
-      <p className="text-sm text-foreground/80 flex-1">"{hook}"</p>
+      <p className="text-sm text-zinc-700 dark:text-zinc-300 flex-1">"{hook}"</p>
       <button
         onClick={copyHook}
-        className="p-1.5 rounded-lg bg-white/5 opacity-0 group-hover:opacity-100
-                   hover:bg-white/10 transition-all"
+        className="p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 opacity-0 group-hover:opacity-100
+                   hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors duration-150"
       >
         {copied ? (
-          <CheckCircle2 className="w-4 h-4 text-green-400" />
+          <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
         ) : (
-          <Copy className="w-4 h-4 text-gray-400" />
+          <Copy className="w-4 h-4 text-zinc-400" />
         )}
       </button>
     </div>
@@ -372,7 +373,7 @@ function AdCopyAngleCard({
   const gradient = colors[index % colors.length];
 
   return (
-    <div className="rounded-xl border border-white/10 overflow-hidden">
+    <div className="rounded-lg border border-zinc-200 dark:border-zinc-700/50 overflow-hidden">
       {isEditing ? (
         <div className="p-4 space-y-3">
           <div className="flex items-center gap-3">
@@ -382,17 +383,17 @@ function AdCopyAngleCard({
             </div>
             <EditableText value={angle.angle_name} onChange={(v) => onAngleFieldChange?.('angle_name', v)} placeholder="Nombre del ángulo..." />
           </div>
-          <div className="p-3 rounded-lg bg-white/5 space-y-3">
+          <div className="p-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 space-y-3">
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Headline</p>
+              <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Headline</p>
               <EditableText value={angle.headline} onChange={(v) => onAngleFieldChange?.('headline', v)} placeholder="Headline..." />
             </div>
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Body</p>
+              <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Body</p>
               <EditableText value={angle.body} onChange={(v) => onAngleFieldChange?.('body', v)} multiline placeholder="Body..." />
             </div>
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">CTA</p>
+              <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">CTA</p>
               <EditableText value={angle.cta} onChange={(v) => onAngleFieldChange?.('cta', v)} placeholder="CTA..." />
             </div>
           </div>
@@ -401,20 +402,20 @@ function AdCopyAngleCard({
         <>
           <button
             onClick={onToggle}
-            className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
+            className="w-full p-4 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors duration-150"
           >
             <div className="flex items-center gap-3">
               <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${gradient}
                               flex items-center justify-center text-white text-sm font-bold`}>
                 {index + 1}
               </div>
-              <p className="text-sm font-medium text-white">{angle.angle_name}</p>
+              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{angle.angle_name}</p>
             </div>
-            <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-5 h-5 text-zinc-400 transition-[transform] duration-150 ${isExpanded ? 'rotate-180' : ''}`} />
           </button>
 
           {isExpanded && (
-            <div className="px-4 pb-4 space-y-3 border-t border-white/5">
+            <div className="px-4 pb-4 space-y-3 border-t border-zinc-100 dark:border-zinc-800">
               <CopyableField
                 label="Headline"
                 value={angle.headline}
@@ -453,22 +454,22 @@ function CopyableField({
   onCopy: () => void;
 }) {
   return (
-    <div className="p-3 rounded-lg bg-white/5 group">
+    <div className="p-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 group">
       <div className="flex items-center justify-between mb-1">
-        <p className="text-xs text-gray-500 uppercase tracking-wider">{label}</p>
+        <p className="text-xs text-zinc-500 uppercase tracking-wider">{label}</p>
         <button
           onClick={onCopy}
-          className="p-1 rounded bg-white/5 opacity-0 group-hover:opacity-100
-                     hover:bg-white/10 transition-all"
+          className="p-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 opacity-0 group-hover:opacity-100
+                     hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors duration-150"
         >
           {copied ? (
-            <CheckCircle2 className="w-3 h-3 text-green-400" />
+            <CheckCircle2 className="w-3 h-3 text-green-600 dark:text-green-400" />
           ) : (
-            <Copy className="w-3 h-3 text-gray-400" />
+            <Copy className="w-3 h-3 text-zinc-400" />
           )}
         </button>
       </div>
-      <p className="text-sm text-foreground/80">{value}</p>
+      <p className="text-sm text-zinc-700 dark:text-zinc-300">{value}</p>
     </div>
   );
 }

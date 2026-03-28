@@ -75,7 +75,7 @@ export function PasswordField({
           disabled={disabled}
           placeholder={placeholder}
           className={cn(
-            "w-full h-11 pl-10 pr-12 rounded-lg border transition-all text-white",
+            "w-full h-11 pl-10 pr-12 rounded-sm border transition-all text-white",
             "bg-white/5 placeholder:text-white/40",
             "focus:outline-none focus:ring-2 focus:ring-primary/20",
             error

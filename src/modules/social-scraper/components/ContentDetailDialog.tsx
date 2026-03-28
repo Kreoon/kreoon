@@ -57,13 +57,13 @@ export function ContentDetailDialog({ item, open, onOpenChange, onAnalyze, isAna
             <div className="space-y-4">
               {/* Thumbnail / Media */}
               {item.thumbnail_url && (
-                <div className="relative w-full aspect-square bg-muted rounded-lg overflow-hidden">
+                <div className="relative w-full aspect-square bg-muted rounded-sm overflow-hidden">
                   <img src={item.thumbnail_url} alt="" className="w-full h-full object-cover" />
                 </div>
               )}
 
               {item.media_url && !item.thumbnail_url && (
-                <div className="relative w-full aspect-video bg-muted rounded-lg overflow-hidden">
+                <div className="relative w-full aspect-video bg-muted rounded-sm overflow-hidden">
                   <img src={item.media_url} alt="" className="w-full h-full object-cover" />
                 </div>
               )}

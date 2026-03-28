@@ -83,7 +83,7 @@ export function InviteCodeStep({
           <img
             src={orgLogo}
             alt={orgName || 'Organización'}
-            className="w-16 h-16 rounded-xl mx-auto object-cover bg-white/10"
+            className="w-16 h-16 rounded-sm mx-auto object-cover bg-white/10"
           />
         )}
         <div className="space-y-2">
@@ -114,7 +114,7 @@ export function InviteCodeStep({
               placeholder="XXXX-XXXX"
               maxLength={12}
               className={cn(
-                "w-full h-14 pl-12 pr-14 rounded-xl border-2 transition-all",
+                "w-full h-14 pl-12 pr-14 rounded-sm border-2 transition-all",
                 "text-center text-xl font-mono tracking-wider uppercase",
                 "bg-white/5 text-white placeholder:text-white/30",
                 "focus:outline-none focus:ring-2 focus:ring-primary/20",
@@ -157,7 +157,7 @@ export function InviteCodeStep({
             onClick={validateCode}
             disabled={isValidating || value.length < 4}
             className={cn(
-              "w-full h-12 rounded-xl font-semibold transition-all",
+              "w-full h-12 rounded-sm font-semibold transition-all",
               "flex items-center justify-center gap-2",
               isValidating || value.length < 4
                 ? "bg-white/10 text-white/40 cursor-not-allowed"

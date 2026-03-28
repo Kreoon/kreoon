@@ -112,7 +112,7 @@ export function ContactsContent({ orgId }: { orgId: string }) {
               onClick={() => setShowKanban(!showKanban)}
               title="Pipeline"
               className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all",
+                "flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm text-xs font-medium border transition-all",
                 showKanban
                   ? "bg-[#8b5cf6] text-white border-[#8b5cf6] shadow-sm"
                   : "text-white/40 hover:text-white/70 hover:bg-white/5 border-white/10"
@@ -143,7 +143,7 @@ export function ContactsContent({ orgId }: { orgId: string }) {
               {isLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <Skeleton key={i} className="h-44 rounded-xl bg-white/5" />
+                    <Skeleton key={i} className="h-44 rounded-sm bg-white/5" />
                   ))}
                 </div>
               ) : contacts.length === 0 ? (
@@ -256,7 +256,7 @@ export function ContactsContent({ orgId }: { orgId: string }) {
                           key={contact.id}
                           onClick={() => handleContactClick(contact)}
                           className={cn(
-                            "flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-white/5 cursor-pointer transition-colors border border-transparent",
+                            "flex items-center gap-4 px-4 py-3 rounded-sm hover:bg-white/5 cursor-pointer transition-colors border border-transparent",
                             selectedContact?.id === contact.id && "bg-[#8b5cf6]/10 border-[#8b5cf6]/30"
                           )}
                         >

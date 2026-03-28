@@ -54,7 +54,7 @@ export function ReferralProgressRing({ qualified, total = 3 }: ReferralProgressR
           <div
             key={i}
             className={cn(
-              'w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300',
+              'w-10 h-10 rounded-sm flex items-center justify-center transition-all duration-300',
               i < qualified
                 ? 'bg-purple-500/20 border border-purple-500/40 shadow-[0_0_12px_-3px_hsl(270,100%,60%,0.4)]'
                 : 'bg-white/5 border border-white/10'

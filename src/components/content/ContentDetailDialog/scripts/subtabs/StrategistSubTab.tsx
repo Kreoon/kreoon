@@ -1,4 +1,4 @@
-import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { LazyRichTextEditor as RichTextEditor } from '@/components/ui/lazy-rich-text-editor';
 import { RichTextViewer } from '@/components/scripts/RichTextViewer';
 import { SectionCard } from '../../components/SectionCard';
 import { Target, MessageCircle, Lightbulb } from 'lucide-react';
@@ -43,7 +43,7 @@ export function StrategistSubTab({
             <RichTextViewer content={formData.strategist_guidelines || ''} maxHeight="" />
           
           ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/30 rounded-lg">
+            <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/30 rounded-sm">
               <Target className="h-8 w-8 text-muted-foreground/50 mb-2" />
               <p className="text-muted-foreground text-sm">Sin estrategia definida</p>
             </div>
@@ -53,7 +53,7 @@ export function StrategistSubTab({
 
       {/* Strategy Framework Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-4 bg-muted/30 rounded-lg">
+        <div className="p-4 bg-muted/30 rounded-sm">
           <div className="flex items-center gap-2 mb-2">
             <Target className="h-4 w-4 text-primary" />
             <span className="font-medium text-sm">Objetivo</span>
@@ -63,7 +63,7 @@ export function StrategistSubTab({
           </p>
         </div>
 
-        <div className="p-4 bg-muted/30 rounded-lg">
+        <div className="p-4 bg-muted/30 rounded-sm">
           <div className="flex items-center gap-2 mb-2">
             <MessageCircle className="h-4 w-4 text-primary" />
             <span className="font-medium text-sm">Mensaje Clave</span>
@@ -73,7 +73,7 @@ export function StrategistSubTab({
           </p>
         </div>
 
-        <div className="p-4 bg-muted/30 rounded-lg">
+        <div className="p-4 bg-muted/30 rounded-sm">
           <div className="flex items-center gap-2 mb-2">
             <Lightbulb className="h-4 w-4 text-primary" />
             <span className="font-medium text-sm">Framework</span>
@@ -87,7 +87,7 @@ export function StrategistSubTab({
       {/* Sales Angle Display */}
       {formData.sales_angle && (
         <SectionCard title="Ángulo de Venta Asignado" iconEmoji="💡">
-          <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
+          <div className="p-3 bg-primary/5 border border-primary/20 rounded-sm">
             <p className="text-sm">{formData.sales_angle}</p>
           </div>
         </SectionCard>

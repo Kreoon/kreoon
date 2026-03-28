@@ -90,7 +90,7 @@ export function RoleLeaderboard({ role, currentUserId, maxItems = 10, showHeader
                   <div
                     key={entry.user_id}
                     className={cn(
-                      "flex items-center gap-3 p-2 rounded-lg transition-colors",
+                      "flex items-center gap-3 p-2 rounded-sm transition-colors",
                       isCurrentUser ? "bg-primary/10 border border-primary/30" : "hover:bg-muted/50"
                     )}
                   >

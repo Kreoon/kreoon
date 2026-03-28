@@ -181,7 +181,7 @@ export function ReferralManagement() {
               {referralsList.map((ref: any) => (
                 <div
                   key={ref.id}
-                  className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/5"
+                  className="flex items-center gap-3 px-3 py-2 rounded-sm bg-white/5"
                 >
                   {ref.referred?.avatar_url ? (
                     <img src={ref.referred.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
@@ -229,7 +229,7 @@ export function ReferralManagement() {
           <CardContent>
             <div className="space-y-2">
               {earningsList.slice(0, 20).map((e: any) => (
-                <div key={e.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/5">
+                <div key={e.id} className="flex items-center justify-between px-3 py-2 rounded-sm bg-white/5">
                   <div>
                     <p className="text-white text-sm">
                       {e.source_type === 'subscription' ? 'Suscripcion' : 'Transaccion'}
@@ -286,8 +286,8 @@ export function ReferralManagement() {
           <div className="space-y-2.5 text-xs text-white/50">
             <p>
               <strong className="text-white/70">Beneficio bilateral:</strong> Quien se registra con tu link recibe{' '}
-              {REFERRAL_BILATERAL.referred_discount_percent}% OFF + {REFERRAL_BILATERAL.referred_welcome_coins} Kreoon Coins.
-              Tu recibes {REFERRAL_BILATERAL.referrer_qualification_coins} Kreoon Coins cuando califican.
+              {REFERRAL_BILATERAL.referred_discount_percent}% OFF + {REFERRAL_BILATERAL.referred_welcome_coins} Tokens IA.
+              Tu recibes {REFERRAL_BILATERAL.referrer_qualification_coins} Tokens IA cuando califican.
             </p>
             <p>
               <strong className="text-white/70">Referido calificado:</strong> perfil activo en marketplace + foto de perfil + al menos 1 pieza en portafolio
@@ -325,7 +325,7 @@ function StatCard({
   return (
     <Card className="p-4">
       <div className="flex items-center gap-3">
-        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", c.bg)}>
+        <div className={cn("w-10 h-10 rounded-sm flex items-center justify-center", c.bg)}>
           <Icon className={cn("h-5 w-5", c.text)} />
         </div>
         <div className="min-w-0">

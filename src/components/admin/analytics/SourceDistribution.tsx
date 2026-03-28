@@ -1,7 +1,24 @@
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import {
+  LazyPieChart,
+  LazyChartContainer,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from '@/components/ui/lazy-charts';
 import type { SourceMetrics } from '@/analytics/types/dashboard';
 
-const COLORS = ['#8b5cf6', '#ec4899', '#3b82f6', '#10b981', '#f59e0b', '#06b6d4', '#ef4444'];
+// Usamos CSS variables para compatibilidad con dark/light mode
+const COLORS = [
+  'var(--nova-accent-primary)',     // Violeta
+  'var(--nova-aurora-2)',           // Rosa
+  'var(--nova-info)',               // Azul
+  'var(--nova-success)',            // Verde
+  'var(--nova-warning)',            // Amarillo
+  'var(--nova-accent-secondary)',   // Cyan
+  'var(--nova-error)',              // Rojo
+];
 
 interface SourceDistributionProps {
   data: SourceMetrics[];
@@ -20,44 +37,46 @@ export function SourceDistribution({ data }: SourceDistributionProps) {
   const hasRevenue = data.some(s => s.revenue > 0);
 
   return (
-    <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-gray-800">
-      <h3 className="text-lg font-semibold text-white mb-4">
+    <div className="bg-[var(--nova-bg-elevated)] dark:bg-[var(--nova-bg-elevated)] backdrop-blur-sm rounded-sm p-6 border border-[var(--nova-border-default)]">
+      <h3 className="text-lg font-semibold text-foreground mb-4">
         {hasRevenue ? 'Revenue por Fuente' : 'Visitantes por Fuente'}
       </h3>
       {chartData.length === 0 ? (
-        <div className="flex items-center justify-center h-[250px] text-gray-500 text-sm">
+        <div className="flex items-center justify-center h-[250px] text-muted-foreground text-sm">
           Sin datos en este periodo
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height={250}>
-          <PieChart>
-            <Pie
-              data={chartData}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              innerRadius={50}
-              outerRadius={85}
-              paddingAngle={2}
-              label={({ name, value }) =>
-                hasRevenue ? `${name}: $${value.toLocaleString()}` : `${name}: ${value.toLocaleString()}`
-              }
-            >
-              {chartData.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip
-              formatter={(value: number) => hasRevenue ? `$${value.toLocaleString()}` : value.toLocaleString()}
-              contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }}
-              labelStyle={{ color: '#fff' }}
-            />
-            <Legend
-              wrapperStyle={{ fontSize: 12, color: '#9ca3af' }}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+        <LazyChartContainer height={250}>
+          <ResponsiveContainer width="100%" height={250}>
+            <LazyPieChart>
+              <Pie
+                data={chartData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                innerRadius={50}
+                outerRadius={85}
+                paddingAngle={2}
+                label={({ name, value }) =>
+                  hasRevenue ? `${name}: $${value.toLocaleString()}` : `${name}: ${value.toLocaleString()}`
+                }
+              >
+                {chartData.map((_, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip
+                formatter={(value: number) => hasRevenue ? `$${value.toLocaleString()}` : value.toLocaleString()}
+                contentStyle={{ backgroundColor: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
+              />
+              <Legend
+                wrapperStyle={{ fontSize: 12, color: 'hsl(var(--muted-foreground))' }}
+              />
+            </LazyPieChart>
+          </ResponsiveContainer>
+        </LazyChartContainer>
       )}
     </div>
   );

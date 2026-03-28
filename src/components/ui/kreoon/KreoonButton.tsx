@@ -20,9 +20,9 @@ export interface KreoonButtonProps
 }
 
 const sizeClasses: Record<KreoonButtonSize, string> = {
-  sm: "h-8 px-3 text-xs rounded-lg",
-  md: "h-10 px-4 text-sm rounded-xl",
-  lg: "h-12 px-6 text-base rounded-xl",
+  sm: "h-8 px-3 text-xs rounded-sm",
+  md: "h-10 px-4 text-sm rounded-sm",
+  lg: "h-12 px-6 text-base rounded-sm",
 };
 
 const variantClasses: Record<KreoonButtonVariant, string> = {

@@ -44,7 +44,7 @@ export function ServiceTypeSelector({
   return (
     <div className="space-y-4">
       {/* Selection Counter */}
-      <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
+      <div className="flex items-center justify-between p-4 rounded-sm bg-white/5 border border-white/10">
         <div className="flex items-center gap-2">
           <AlertCircle className="w-4 h-4 text-purple-400" />
           <span className="text-sm text-gray-400">
@@ -79,7 +79,7 @@ export function ServiceTypeSelector({
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.05 }}
               onClick={() => toggleService(service)}
-              className={`relative p-4 rounded-xl border text-left transition-all ${
+              className={`relative p-4 rounded-sm border text-left transition-all ${
                 isSelected
                   ? 'border-purple-500/50 bg-purple-500/10'
                   : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20'
@@ -96,7 +96,7 @@ export function ServiceTypeSelector({
 
               <div className="flex items-start gap-3">
                 {/* Icon */}
-                <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${service.gradient}
+                <div className={`w-10 h-10 rounded-sm bg-gradient-to-br ${service.gradient}
                                 flex items-center justify-center flex-shrink-0`}>
                   <Icon className="w-5 h-5 text-white" />
                 </div>

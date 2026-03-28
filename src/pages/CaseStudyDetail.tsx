@@ -81,28 +81,28 @@ export default function CaseStudyDetail() {
         {/* Metrics dashboard */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
           {metrics.total_deliveries != null && (
-            <div className="bg-card/80 border border-white/5 rounded-xl p-4 text-center">
+            <div className="bg-card/80 border border-white/5 rounded-sm p-4 text-center">
               <Users className="h-5 w-5 text-purple-400 mx-auto mb-1" />
               <div className="text-2xl font-bold text-white">{metrics.total_deliveries}</div>
               <div className="text-xs text-gray-500">Entregas</div>
             </div>
           )}
           {metrics.avg_rating > 0 && (
-            <div className="bg-card/80 border border-white/5 rounded-xl p-4 text-center">
+            <div className="bg-card/80 border border-white/5 rounded-sm p-4 text-center">
               <Star className="h-5 w-5 text-amber-400 mx-auto mb-1" />
               <div className="text-2xl font-bold text-white">{metrics.avg_rating}</div>
               <div className="text-xs text-gray-500">Rating promedio</div>
             </div>
           )}
           {metrics.budget != null && (
-            <div className="bg-card/80 border border-white/5 rounded-xl p-4 text-center">
+            <div className="bg-card/80 border border-white/5 rounded-sm p-4 text-center">
               <DollarSign className="h-5 w-5 text-green-400 mx-auto mb-1" />
               <div className="text-2xl font-bold text-white">${Number(metrics.budget).toLocaleString()}</div>
               <div className="text-xs text-gray-500">Presupuesto</div>
             </div>
           )}
           {metrics.duration_days != null && (
-            <div className="bg-card/80 border border-white/5 rounded-xl p-4 text-center">
+            <div className="bg-card/80 border border-white/5 rounded-sm p-4 text-center">
               <Clock className="h-5 w-5 text-blue-400 mx-auto mb-1" />
               <div className="text-2xl font-bold text-white">{metrics.duration_days}</div>
               <div className="text-xs text-gray-500">Dias</div>
@@ -123,7 +123,7 @@ export default function CaseStudyDetail() {
             <h3 className="text-white font-semibold mb-3">Creadores destacados</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {caseStudy.creator_highlights.map((c, i) => (
-                <div key={i} className="bg-card/60 border border-white/5 rounded-xl p-3 flex items-center gap-3">
+                <div key={i} className="bg-card/60 border border-white/5 rounded-sm p-3 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
                     {c.avatar_url ? (
                       <img src={c.avatar_url} alt={c.name} className="w-full h-full object-cover" />
@@ -147,21 +147,21 @@ export default function CaseStudyDetail() {
             <h3 className="text-white font-semibold mb-3">Galeria</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {caseStudy.gallery_urls.map((url, i) => (
-                <img key={i} src={url} alt={`Gallery ${i + 1}`} className="rounded-xl w-full h-48 object-cover" />
+                <img key={i} src={url} alt={`Gallery ${i + 1}`} className="rounded-sm w-full h-48 object-cover" />
               ))}
             </div>
           </div>
         )}
 
         {/* Bottom CTA */}
-        <div className="bg-purple-500/10 border border-purple-500/20 rounded-2xl p-6 text-center">
+        <div className="bg-purple-500/10 border border-purple-500/20 rounded-sm p-6 text-center">
           <h3 className="text-white font-bold text-lg mb-2">Quieres resultados similares?</h3>
           <p className="text-gray-400 text-sm mb-4">
             Crea tu campana express y conecta con creadores en minutos.
           </p>
           <button
             onClick={() => navigate('/marketplace/campaigns/create?quick=true')}
-            className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+            className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold px-6 py-3 rounded-sm transition-colors"
           >
             <Zap className="h-4 w-4" />
             Crear Campana Similar

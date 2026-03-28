@@ -90,7 +90,7 @@ export function AchievementCard({
           <TooltipTrigger asChild>
             <motion.button
               className={cn(
-                'relative rounded-xl flex items-center justify-center',
+                'relative rounded-sm flex items-center justify-center',
                 config.container,
                 config.padding,
                 unlocked
@@ -125,7 +125,7 @@ export function AchievementCard({
               {/* Elite shimmer */}
               {unlocked && isElite && (
                 <motion.div
-                  className="absolute inset-0 rounded-xl overflow-hidden"
+                  className="absolute inset-0 rounded-sm overflow-hidden"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                 >
@@ -167,7 +167,7 @@ export function AchievementCard({
     return (
       <motion.div
         className={cn(
-          'relative rounded-xl overflow-hidden',
+          'relative rounded-sm overflow-hidden',
           config.container,
           config.padding,
           unlocked ? 'cursor-pointer' : 'cursor-default',
@@ -251,7 +251,7 @@ export function AchievementCard({
   return (
     <motion.div
       className={cn(
-        'relative rounded-2xl overflow-hidden',
+        'relative rounded-sm overflow-hidden',
         config.container,
         config.padding,
         unlocked ? 'cursor-pointer' : 'cursor-default',
@@ -284,7 +284,7 @@ export function AchievementCard({
       <div className={cn('flex flex-col items-center text-center gap-3', !unlocked && 'opacity-30')}>
         {/* Large icon circle */}
         <motion.div
-          className="relative w-16 h-16 rounded-2xl flex items-center justify-center"
+          className="relative w-16 h-16 rounded-sm flex items-center justify-center"
           style={{
             background: `linear-gradient(135deg, ${insignia.color}40 0%, ${insignia.color}20 100%)`,
             boxShadow: unlocked

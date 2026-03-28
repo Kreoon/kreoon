@@ -75,7 +75,7 @@ function StatCard({
   return (
     <Card className="p-4">
       <div className="flex items-center gap-3">
-        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", c.iconBg)}>
+        <div className={cn("w-10 h-10 rounded-sm flex items-center justify-center", c.iconBg)}>
           <Icon className={cn("h-5 w-5", c.text)} />
         </div>
         <div className="min-w-0">
@@ -172,7 +172,7 @@ function DashboardContent({ orgId, orgName }: { orgId: string; orgName: string |
         {/* ========== HEADER ========== */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 bg-purple-500/20 rounded-xl">
+            <div className="p-3 bg-purple-500/20 rounded-sm">
               <Building2 className="w-6 h-6 text-purple-400" />
             </div>
             <div>
@@ -287,9 +287,9 @@ function DashboardContent({ orgId, orgName }: { orgId: string; orgName: string |
                         <div className="w-24 text-sm text-white/70 truncate">
                           {stage.stage_name}
                         </div>
-                        <div className="flex-1 h-8 bg-white/5 rounded-lg overflow-hidden">
+                        <div className="flex-1 h-8 bg-white/5 rounded-sm overflow-hidden">
                           <div
-                            className="h-full rounded-lg flex items-center px-3 text-xs text-white font-medium"
+                            className="h-full rounded-sm flex items-center px-3 text-xs text-white font-medium"
                             style={{
                               width: `${Math.max(percentage, 10)}%`,
                               backgroundColor: stage.stage_color || "#A855F7",
@@ -337,7 +337,7 @@ function DashboardContent({ orgId, orgName }: { orgId: string; orgName: string |
                   recentContacts.slice(0, 5).map((contact) => (
                     <div
                       key={contact.id}
-                      className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+                      className="flex items-center justify-between p-3 bg-white/5 rounded-sm hover:bg-white/10 transition-colors cursor-pointer"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-300">
@@ -393,7 +393,7 @@ function DashboardContent({ orgId, orgName }: { orgId: string; orgName: string |
                   topCreators.slice(0, 5).map((rel: any, index: number) => (
                     <div
                       key={rel.creator_id}
-                      className="flex items-center justify-between p-2 bg-white/5 rounded-lg"
+                      className="flex items-center justify-between p-2 bg-white/5 rounded-sm"
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-white/30 text-sm w-4">{index + 1}</span>
@@ -449,11 +449,11 @@ function DashboardContent({ orgId, orgName }: { orgId: string; orgName: string |
                   upcomingActions.slice(0, 5).map((action) => (
                     <div
                       key={action.id}
-                      className="flex items-center gap-3 p-2 bg-white/5 rounded-lg"
+                      className="flex items-center gap-3 p-2 bg-white/5 rounded-sm"
                     >
                       <div
                         className={cn(
-                          "p-2 rounded-lg",
+                          "p-2 rounded-sm",
                           isOverdue(action.next_action_date)
                             ? "bg-red-500/20"
                             : "bg-blue-500/20"

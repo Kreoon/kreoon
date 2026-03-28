@@ -118,7 +118,7 @@ export function ContentCalendarTab({ contentCalendar }: ContentCalendarTabProps)
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="p-4 bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 rounded-lg border border-violet-500/20">
+      <div className="p-4 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-semibold text-sm mb-1 flex items-center gap-2">
@@ -140,7 +140,7 @@ export function ContentCalendarTab({ contentCalendar }: ContentCalendarTabProps)
       {weeklyThemes.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {weeklyThemes.map((wt: WeeklyTheme, idx: number) => (
-            <Card key={idx} className="cursor-pointer hover:border-primary/40 transition-colors"
+            <Card key={idx} className="cursor-pointer hover:border-primary/40 transition-colors duration-150"
               onClick={() => setSelectedWeek(selectedWeek === (wt.week || idx + 1) ? 0 : (wt.week || idx + 1))}>
               <CardContent className="p-3">
                 <p className="text-xs font-medium text-primary">{WEEK_LABELS[wt.week || idx + 1] || `Semana ${wt.week || idx + 1}`}</p>
@@ -200,7 +200,7 @@ export function ContentCalendarTab({ contentCalendar }: ContentCalendarTabProps)
           return (
             <Card key={idx} className="overflow-hidden">
               <div
-                className="p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                className="p-4 cursor-pointer hover:bg-muted/30 transition-colors duration-150"
                 onClick={() => setExpandedItem(isExpanded ? null : idx)}
               >
                 <div className="flex items-start justify-between gap-3">

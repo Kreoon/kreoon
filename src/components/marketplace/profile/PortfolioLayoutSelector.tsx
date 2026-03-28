@@ -27,7 +27,7 @@ export function PortfolioLayoutSelector({ value, onChange, className }: Portfoli
             type="button"
             onClick={() => onChange(layout.id)}
             className={cn(
-              'flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200',
+              'flex flex-col items-center gap-2 p-4 rounded-sm border-2 transition-all duration-200',
               isSelected
                 ? 'border-purple-500 bg-purple-500/10'
                 : 'border-white/10 hover:border-white/20 hover:bg-white/5'

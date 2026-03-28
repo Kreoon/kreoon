@@ -185,7 +185,7 @@ export function PendingWithdrawalsList({
           {isLoading ? (
             <div className="space-y-3 p-4">
               {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-[hsl(270,100%,60%,0.05)] animate-pulse">
+                <div key={i} className="flex items-center gap-4 p-3 rounded-sm bg-[hsl(270,100%,60%,0.05)] animate-pulse">
                   <div className="h-5 w-5 rounded bg-[hsl(270,100%,60%,0.1)]" />
                   <div className="h-10 w-10 rounded-full bg-[hsl(270,100%,60%,0.1)]" />
                   <div className="flex-1 space-y-2">

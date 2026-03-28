@@ -4,14 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useMediaUpload } from '@/hooks/useMediaUpload';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 export function GateProfileSetup() {
   const { user, profile } = useAuth();
-  const [uploading, setUploading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { uploadAvatar, isUploading, progress } = useMediaUpload();
 
   const hasAvatar = !!avatarUrl;
 
@@ -24,32 +25,26 @@ export function GateProfileSetup() {
       return;
     }
 
-    setUploading(true);
     try {
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const fileName = `${user.id}/avatar.${ext}`;
+      // Upload to Bunny CDN (optimized WebP, 256x256)
+      const result = await uploadAvatar(file, user.id);
 
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, file, { cacheControl: '3600', upsert: true });
+      if (!result) {
+        throw new Error('Error al subir la imagen');
+      }
 
-      if (uploadError) throw uploadError;
-
-      const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
-      const publicUrl = data.publicUrl;
+      const { cdnUrl } = result;
 
       // Update profiles table
-      await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id);
+      await supabase.from('profiles').update({ avatar_url: cdnUrl }).eq('id', user.id);
 
       // Also update creator_profiles if exists
-      await (supabase as any).from('creator_profiles').update({ avatar_url: publicUrl }).eq('user_id', user.id);
+      await (supabase as any).from('creator_profiles').update({ avatar_url: cdnUrl }).eq('user_id', user.id);
 
-      setAvatarUrl(publicUrl);
+      setAvatarUrl(cdnUrl);
       toast.success('Foto de perfil actualizada');
     } catch (err: any) {
       toast.error(err.message || 'Error al subir la imagen');
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -74,7 +69,7 @@ export function GateProfileSetup() {
           ) : (
             <Camera className="w-6 h-6 text-white/30" />
           )}
-          {uploading && (
+          {isUploading && (
             <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
               <Loader2 className="w-5 h-5 text-white animate-spin" />
             </div>
@@ -96,7 +91,7 @@ export function GateProfileSetup() {
             variant="outline"
             size="sm"
             onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
+            disabled={isUploading}
           >
             {hasAvatar ? 'Cambiar foto' : 'Subir foto'}
           </Button>

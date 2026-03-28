@@ -55,7 +55,7 @@ export function TikTokConfigForm({ data, onChange, hasExistingToken }: TikTokCon
         </p>
       </div>
 
-      <div className="flex items-center justify-between p-3 rounded-lg bg-gray-800/30 border border-gray-700/30">
+      <div className="flex items-center justify-between p-3 rounded-sm bg-gray-800/30 border border-gray-700/30">
         <div>
           <Label className="text-foreground/80">Modo Test</Label>
           <p className="text-xs text-gray-500 mt-0.5">

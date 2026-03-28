@@ -78,7 +78,7 @@ export function TierProgressCard({ currentTierKey, activeReferrals, effectiveRat
           return (
             <div
               key={key}
-              className="text-center p-1.5 rounded-lg transition-all"
+              className="text-center p-1.5 rounded-sm transition-all"
               style={{
                 backgroundColor: isActive ? `${t.badgeColor}20` : 'rgba(255,255,255,0.03)',
                 opacity: isActive ? 1 : 0.4,

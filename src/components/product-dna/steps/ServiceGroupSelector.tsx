@@ -24,7 +24,7 @@ export function ServiceGroupSelector({ groups, selectedGroup, onSelect }: Servic
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
             onClick={() => onSelect(group)}
-            className={`relative overflow-hidden p-6 rounded-2xl border text-left
+            className={`relative overflow-hidden p-6 rounded-sm border text-left
                        transition-all duration-300 group ${
               isSelected
                 ? 'border-purple-500/50 bg-purple-500/10'
@@ -46,7 +46,7 @@ export function ServiceGroupSelector({ groups, selectedGroup, onSelect }: Servic
 
             <div className="relative flex items-start gap-4">
               {/* Icon */}
-              <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${group.gradient}
+              <div className={`w-14 h-14 rounded-sm bg-gradient-to-br ${group.gradient}
                               flex items-center justify-center flex-shrink-0`}>
                 <Icon className="w-7 h-7 text-white" />
               </div>
@@ -83,7 +83,7 @@ export function ServiceGroupSelector({ groups, selectedGroup, onSelect }: Servic
             {isSelected && (
               <motion.div
                 layoutId="group-selection"
-                className="absolute inset-0 border-2 border-purple-500 rounded-2xl pointer-events-none"
+                className="absolute inset-0 border-2 border-purple-500 rounded-sm pointer-events-none"
               />
             )}
           </motion.button>

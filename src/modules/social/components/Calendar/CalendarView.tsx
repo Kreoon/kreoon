@@ -117,7 +117,7 @@ export function CalendarView({ onCreatePost, onViewPost }: CalendarViewProps) {
       </div>
 
       {/* Calendar grid */}
-      <div className="border rounded-lg overflow-hidden">
+      <div className="border rounded-sm overflow-hidden">
         {/* Day names header */}
         <div className="grid grid-cols-7 bg-muted/30">
           {DAY_NAMES.map(name => (

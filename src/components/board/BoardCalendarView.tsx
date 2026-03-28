@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Content, STATUS_COLORS, STATUS_LABELS } from "@/types/database";
 import { cn } from "@/lib/utils";
 import { OrganizationStatus, getStatusColorStyle, getStatusFallbackClass } from "@/lib/statusUtils";
+import { CardFieldsCustomizer } from "./CardFieldsCustomizer";
 
 interface BoardCalendarViewProps {
   content: Content[];
@@ -18,8 +19,11 @@ interface BoardCalendarViewProps {
   onContentClick: (content: Content) => void;
   cardSize?: 'compact' | 'normal' | 'large';
   visibleFields?: string[];
+  onVisibleFieldsChange?: (fields: string[]) => void;
   organizationStatuses?: OrganizationStatus[];
   ambassadorIds?: Set<string>;
+  /** Mostrar customizador de campos en header */
+  showFieldsCustomizer?: boolean;
 }
 
 export function BoardCalendarView({
@@ -29,8 +33,10 @@ export function BoardCalendarView({
   onContentClick,
   cardSize = 'normal',
   visibleFields = ['title', 'status', 'responsible'],
+  onVisibleFieldsChange,
   organizationStatuses = [],
-  ambassadorIds = new Set()
+  ambassadorIds = new Set(),
+  showFieldsCustomizer = true
 }: BoardCalendarViewProps) {
   const orgTz = useOrgTimezone();
   const monthStart = startOfMonth(currentDate);
@@ -73,27 +79,38 @@ export function BoardCalendarView({
         <h2 className="text-xl font-semibold capitalize">
           {format(currentDate, 'MMMM yyyy', { locale: es })}
         </h2>
-        <div className="flex items-center gap-1">
-          <Button variant="outline" size="icon" onClick={prevMonth}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => onDateChange(new Date())}
-          >
-            Hoy
-          </Button>
-          <Button variant="outline" size="icon" onClick={nextMonth}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+        <div className="flex items-center gap-2">
+          {/* Navegación de meses */}
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="icon" onClick={prevMonth}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onDateChange(new Date())}
+            >
+              Hoy
+            </Button>
+            <Button variant="outline" size="icon" onClick={nextMonth}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+          {/* Personalizador de campos - estilo Notion */}
+          {showFieldsCustomizer && onVisibleFieldsChange && (
+            <CardFieldsCustomizer
+              visibleFields={visibleFields}
+              onFieldsChange={onVisibleFieldsChange}
+              compact={true}
+            />
+          )}
         </div>
       </div>
 
-      {/* Calendar Grid */}
-      <div className="border rounded-xl overflow-hidden bg-card">
+      {/* Calendar Grid - Nova v2 */}
+      <div className="border border-zinc-200/80 dark:border-purple-500/15 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f22]">
         {/* Day headers */}
-        <div className="grid grid-cols-7 bg-muted/50">
+        <div className="grid grid-cols-7 bg-zinc-100 dark:bg-[#0a0a18]/60">
           {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
             <div key={day} className="p-2 text-center text-sm font-medium text-muted-foreground">
               {day}
@@ -105,7 +122,7 @@ export function BoardCalendarView({
         <div className="grid grid-cols-7">
           {/* Empty cells for offset */}
           {Array.from({ length: firstDayOffset }).map((_, i) => (
-            <div key={`empty-${i}`} className="min-h-24 border-t border-r bg-muted/20" />
+            <div key={`empty-${i}`} className="min-h-24 border-t border-r border-zinc-200/80 dark:border-purple-500/10 bg-zinc-50 dark:bg-[#050510]/40" />
           ))}
 
           {days.map(day => {
@@ -118,9 +135,13 @@ export function BoardCalendarView({
               <div
                 key={dateKey}
                 className={cn(
-                  "min-h-24 border-t border-r p-1 transition-colors",
-                  !isCurrentMonth && "bg-muted/30 text-muted-foreground",
-                  isTodayDate && "bg-primary/5"
+                  // Base styles - Nova v2
+                  "min-h-24 border-t border-r p-1 transition-all duration-200",
+                  "border-zinc-200/80 dark:border-purple-500/10",
+                  // Inactive month
+                  !isCurrentMonth && "bg-zinc-50 dark:bg-[#050510]/40 text-zinc-400 dark:text-[#52525b]",
+                  // Today highlight - Nova glow
+                  isTodayDate && "bg-purple-50 dark:bg-purple-500/8 dark:shadow-[inset_0_0_20px_rgba(139,92,246,0.1)]"
                 )}
               >
                 <div className={cn(

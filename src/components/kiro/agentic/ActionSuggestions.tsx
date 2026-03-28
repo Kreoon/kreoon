@@ -118,7 +118,7 @@ const ActionButton = memo(function ActionButton({
         variants={actionVariants}
         onClick={handleClick}
         className={cn(
-          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg',
+          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm',
           'bg-violet-500/10 border border-violet-500/20',
           'text-violet-300 text-xs font-medium',
           'hover:bg-violet-500/20 hover:border-violet-500/30',
@@ -136,14 +136,14 @@ const ActionButton = memo(function ActionButton({
       variants={actionVariants}
       onClick={handleClick}
       className={cn(
-        'group flex items-center gap-3 w-full p-3 rounded-xl',
+        'group flex items-center gap-3 w-full p-3 rounded-sm',
         'bg-white/5 border border-white/10',
         'hover:bg-white/10 hover:border-violet-500/30',
         'active:scale-[0.98] transition-all duration-150'
       )}
     >
       {/* Icono */}
-      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center text-xl">
+      <div className="flex-shrink-0 w-10 h-10 rounded-sm bg-violet-500/20 flex items-center justify-center text-xl">
         {action.icon}
       </div>
 
@@ -260,7 +260,7 @@ export const ActionSuggestions = memo(function ActionSuggestions({
         animate="visible"
         exit="exit"
         className={cn(
-          'rounded-xl border overflow-hidden',
+          'rounded-sm border overflow-hidden',
           'bg-gradient-to-br',
           intentColor,
           variant === 'floating' && 'shadow-xl shadow-black/20'

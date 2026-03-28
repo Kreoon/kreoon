@@ -110,7 +110,7 @@ export function CampaignStepReview({
       <ReviewSection title="Alcance y Visibilidad" onEdit={() => onEditStep(1)}>
         <div className="space-y-3 text-sm">
           <div className="flex items-center gap-2">
-            <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', visConfig.bgColor)}>
+            <div className={cn('w-8 h-8 rounded-sm flex items-center justify-center', visConfig.bgColor)}>
               <VisIcon className={cn('h-4 w-4', visConfig.color)} />
             </div>
             <div>
@@ -210,7 +210,7 @@ export function CampaignStepReview({
 
           {/* ── Financial breakdown (all paid modes) ── */}
           {maxCreatorAmount > 0 && (
-            <div className="mt-3 p-4 bg-background border border-white/10 rounded-xl space-y-2.5">
+            <div className="mt-3 p-4 bg-background border border-white/10 rounded-sm space-y-2.5">
               <h4 className="text-gray-400 text-xs font-semibold uppercase tracking-wide">
                 {pricingMode === 'fixed' ? 'Desglose de Pago' : 'Resumen de Costos'}
               </h4>
@@ -275,7 +275,7 @@ export function CampaignStepReview({
 
               {/* Escrow explanation for each mode */}
               {pricingMode === 'auction' && (
-                <div className="mt-2 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg space-y-1.5">
+                <div className="mt-2 p-3 bg-orange-500/10 border border-orange-500/20 rounded-sm space-y-1.5">
                   <div className="flex items-start gap-2">
                     <Info className="h-3.5 w-3.5 text-orange-300 mt-0.5 shrink-0" />
                     <div className="text-orange-200 text-[11px] leading-relaxed space-y-1">
@@ -290,7 +290,7 @@ export function CampaignStepReview({
                 </div>
               )}
               {pricingMode === 'range' && (
-                <div className="mt-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg space-y-1.5">
+                <div className="mt-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-sm space-y-1.5">
                   <div className="flex items-start gap-2">
                     <Info className="h-3.5 w-3.5 text-blue-300 mt-0.5 shrink-0" />
                     <div className="text-blue-200 text-[11px] leading-relaxed space-y-1">
@@ -304,7 +304,7 @@ export function CampaignStepReview({
                 </div>
               )}
               {pricingMode === 'fixed' && (
-                <div className="mt-2 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                <div className="mt-2 p-3 bg-purple-500/10 border border-purple-500/20 rounded-sm">
                   <div className="flex items-start gap-2">
                     <Info className="h-3.5 w-3.5 text-purple-300 mt-0.5 shrink-0" />
                     <p className="text-purple-200 text-[11px] leading-relaxed">
@@ -386,7 +386,7 @@ function ReviewSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+    <div className="bg-white/5 border border-white/10 rounded-sm p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-foreground/80 text-sm font-semibold">{title}</h3>
         <button

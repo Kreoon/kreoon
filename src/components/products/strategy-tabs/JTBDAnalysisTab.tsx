@@ -61,10 +61,10 @@ export function JTBDAnalysisTab({ jtbdData }: JTBDAnalysisTabProps) {
   return (
     <div className="space-y-6">
       {/* JTBD Explanation */}
-      <div className="p-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-lg border border-amber-500/20">
-        <h3 className="font-semibold text-sm mb-2">¿Qué es el Job To Be Done?</h3>
-        <p className="text-sm text-muted-foreground">
-          El JTBD es el trabajo que el cliente está "contratando" tu producto para realizar. 
+      <div className="p-4 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
+        <h3 className="font-semibold text-sm mb-2 text-zinc-100">¿Qué es el Job To Be Done?</h3>
+        <p className="text-sm text-zinc-400">
+          El JTBD es el trabajo que el cliente está "contratando" tu producto para realizar.
           No se trata del producto en sí, sino de la transformación o resultado que el cliente busca lograr.
         </p>
       </div>

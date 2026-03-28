@@ -58,7 +58,7 @@ export function CustomQuestionsForm({
               value={(answers[question.id] as string) || ''}
               onChange={(e) => onChange(question.id, e.target.value)}
               placeholder="Tu respuesta..."
-              className={`bg-white border-slate-200 rounded-xl h-11 ${
+              className={`bg-white border-slate-200 rounded-sm h-11 ${
                 errors[question.id] ? 'border-red-500' : ''
               }`}
             />
@@ -70,7 +70,7 @@ export function CustomQuestionsForm({
               onChange={(e) => onChange(question.id, e.target.value)}
               placeholder="Tu respuesta..."
               rows={3}
-              className={`bg-white border-slate-200 rounded-xl resize-none ${
+              className={`bg-white border-slate-200 rounded-sm resize-none ${
                 errors[question.id] ? 'border-red-500' : ''
               }`}
             />
@@ -82,7 +82,7 @@ export function CustomQuestionsForm({
               onValueChange={(value) => onChange(question.id, value)}
             >
               <SelectTrigger
-                className={`bg-white border-slate-200 rounded-xl h-11 ${
+                className={`bg-white border-slate-200 rounded-sm h-11 ${
                   errors[question.id] ? 'border-red-500' : ''
                 }`}
               >

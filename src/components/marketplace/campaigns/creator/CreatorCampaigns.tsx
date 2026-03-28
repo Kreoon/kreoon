@@ -120,7 +120,7 @@ export function CreatorCampaigns() {
             </div>
             <button
               onClick={() => navigate('/marketplace/campaigns')}
-              className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+              className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold px-4 py-2.5 rounded-sm transition-colors"
             >
               <Search className="h-4 w-4" />
               Explorar Campanas
@@ -144,7 +144,7 @@ export function CreatorCampaigns() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  'px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap',
+                  'px-4 py-2 rounded-sm text-sm font-medium transition-all whitespace-nowrap',
                   activeTab === tab.id
                     ? 'bg-purple-500/20 text-purple-300'
                     : 'text-gray-500 hover:text-foreground',
@@ -276,7 +276,7 @@ function CreatorCampaignRow({
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-card/80 border border-white/5 rounded-xl p-5 hover:border-purple-500/30 transition-all"
+      className="w-full text-left bg-card/80 border border-white/5 rounded-sm p-5 hover:border-purple-500/30 transition-all"
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -360,7 +360,7 @@ function AvailableCampaignRow({ campaign, onClick }: { campaign: Campaign; onCli
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-card/80 border border-white/5 rounded-xl p-5 hover:border-purple-500/30 transition-all"
+      className="w-full text-left bg-card/80 border border-white/5 rounded-sm p-5 hover:border-purple-500/30 transition-all"
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -415,7 +415,7 @@ function InvitationRow({
   const campaign = getCampaignById(invitation.campaign_id);
 
   return (
-    <div className="bg-card/80 border border-amber-500/20 rounded-xl p-5">
+    <div className="bg-card/80 border border-amber-500/20 rounded-sm p-5">
       <div className="flex items-start justify-between mb-2">
         <button onClick={onClick} className="flex items-center gap-2.5 min-w-0 text-left">
           <div className="w-9 h-9 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-300 flex-shrink-0">
@@ -431,19 +431,19 @@ function InvitationRow({
         </span>
       </div>
       {invitation.message && (
-        <p className="text-gray-400 text-xs mb-3 bg-white/5 rounded-lg p-2">{invitation.message}</p>
+        <p className="text-gray-400 text-xs mb-3 bg-white/5 rounded-sm p-2">{invitation.message}</p>
       )}
       <div className="flex items-center gap-2 mt-3">
         <button
           onClick={onAccept}
-          className="flex items-center gap-1.5 bg-green-600 hover:bg-green-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          className="flex items-center gap-1.5 bg-green-600 hover:bg-green-500 text-white text-sm font-medium px-4 py-2 rounded-sm transition-colors"
         >
           <CheckCircle2 className="h-3.5 w-3.5" />
           Aceptar
         </button>
         <button
           onClick={onDecline}
-          className="flex items-center gap-1.5 border border-white/10 text-gray-400 hover:text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          className="flex items-center gap-1.5 border border-white/10 text-gray-400 hover:text-white text-sm font-medium px-4 py-2 rounded-sm transition-colors"
         >
           <XCircle className="h-3.5 w-3.5" />
           Rechazar
@@ -480,7 +480,7 @@ function EmptyState({
       {showExploreButton && onExplore && (
         <button
           onClick={onExplore}
-          className="bg-purple-600 hover:bg-purple-500 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+          className="bg-purple-600 hover:bg-purple-500 text-white font-semibold px-6 py-3 rounded-sm transition-colors"
         >
           Explorar Campanas
         </button>

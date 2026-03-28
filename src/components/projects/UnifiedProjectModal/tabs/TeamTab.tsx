@@ -291,7 +291,7 @@ export default function TeamTab({ project, formData, setFormData, editMode, read
 
       {/* Ambassador / internal org banner */}
       {project.source === 'content' && isInternalOrgContent && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 p-4 space-y-2">
+        <div className="rounded-sm border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 p-4 space-y-2">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-amber-500" />
             <span className="font-medium text-amber-700 dark:text-amber-300">Contenido Interno</span>
@@ -319,7 +319,7 @@ export default function TeamTab({ project, formData, setFormData, editMode, read
           </Button>
 
           {showRolePicker && (
-            <div className="border rounded-lg p-4 bg-muted/30">
+            <div className="border rounded-sm p-4 bg-muted/30">
               <p className="text-xs text-muted-foreground mb-3">Selecciona los roles que necesitas:</p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {ORG_ASSIGNABLE_ROLES.map(roleId => {
@@ -331,7 +331,7 @@ export default function TeamTab({ project, formData, setFormData, editMode, read
                     <label
                       key={roleId}
                       className={`
-                        flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors text-sm
+                        flex items-center gap-2 p-3 rounded-sm border cursor-pointer transition-colors text-sm
                         ${isAssigned
                           ? 'bg-green-500/5 border-green-500/20 opacity-60 cursor-default'
                           : isSelected
@@ -376,7 +376,7 @@ export default function TeamTab({ project, formData, setFormData, editMode, read
             const isSaving = savingRole === roleId;
 
             return (
-              <div key={roleId} className="border rounded-lg p-4 space-y-3 bg-background">
+              <div key={roleId} className="border rounded-sm p-4 space-y-3 bg-background">
                 <div className="flex items-center justify-between">
                   <Badge variant="outline" className={`${colorClass} text-sm`}>
                     {getRoleLabel(roleId)}
@@ -503,15 +503,15 @@ export default function TeamTab({ project, formData, setFormData, editMode, read
             Resumen Financiero
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-            <div className="border rounded-lg p-3 text-center">
+            <div className="border rounded-sm p-3 text-center">
               <p className="text-xs text-muted-foreground">Total</p>
               <p className="text-sm font-bold mt-0.5">{formatCurrency(paymentTotals.total)}</p>
             </div>
-            <div className="border rounded-lg p-3 text-center">
+            <div className="border rounded-sm p-3 text-center">
               <p className="text-xs text-green-600">Pagado</p>
               <p className="text-sm font-bold mt-0.5 text-green-600">{formatCurrency(paymentTotals.paid)}</p>
             </div>
-            <div className="border rounded-lg p-3 text-center">
+            <div className="border rounded-sm p-3 text-center">
               <p className="text-xs text-amber-600">Pendiente</p>
               <p className="text-sm font-bold mt-0.5 text-amber-600">{formatCurrency(paymentTotals.pending)}</p>
             </div>
@@ -521,10 +521,10 @@ export default function TeamTab({ project, formData, setFormData, editMode, read
 
       {/* ============ INVOICE (content only) ============ */}
       {project.source === 'content' && (
-        <div className="border rounded-lg p-4">
+        <div className="border rounded-sm p-4">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10">
+              <div className="p-2 rounded-sm bg-blue-500/10">
                 <Receipt className="h-4 w-4 text-blue-500" />
               </div>
               <div>
@@ -553,19 +553,19 @@ export default function TeamTab({ project, formData, setFormData, editMode, read
         <div className="border-t pt-4 space-y-3">
           <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Desglose Marketplace</h4>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-            <div className="border rounded-lg p-3">
+            <div className="border rounded-sm p-3">
               <p className="text-xs text-muted-foreground">Total</p>
               <p className="text-lg font-bold mt-0.5">{formatCurrency(formData.total_price || project.totalPrice, project.currency)}</p>
             </div>
-            <div className="border rounded-lg p-3">
+            <div className="border rounded-sm p-3">
               <p className="text-xs text-muted-foreground">Pago Creador</p>
               <p className="text-sm font-semibold mt-0.5">{formatCurrency(formData.creator_payout || project.creatorPayment, project.currency)}</p>
             </div>
-            <div className="border rounded-lg p-3">
+            <div className="border rounded-sm p-3">
               <p className="text-xs text-muted-foreground">Pago Editor</p>
               <p className="text-sm font-semibold mt-0.5">{formatCurrency(formData.editor_payout || project.editorPayment, project.currency)}</p>
             </div>
-            <div className="border rounded-lg p-3">
+            <div className="border rounded-sm p-3">
               <p className="text-xs text-muted-foreground">Comision</p>
               <p className="text-sm font-semibold mt-0.5">{formatCurrency(formData.platform_fee || project.platformFee, project.currency)}</p>
             </div>
@@ -617,7 +617,7 @@ function ScalarMemberCard({
   const hasPaymentField = !!SCALAR_ROLE_FIELDS[member.roleId]?.paymentField;
 
   return (
-    <div className="border rounded-lg p-3 space-y-2 transition-all duration-200 hover:border-primary/20">
+    <div className="border rounded-sm p-3 space-y-2 transition-all duration-200 hover:border-primary/20">
       <div className="flex items-start gap-3">
         <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${color}`}>
           {(member.name || '?')[0]}
@@ -734,7 +734,7 @@ function AssignmentCard({
   const isEditing = editingPayment != null;
 
   return (
-    <div className="border rounded-lg p-3 space-y-2 transition-all duration-200 hover:border-primary/20">
+    <div className="border rounded-sm p-3 space-y-2 transition-all duration-200 hover:border-primary/20">
       {/* Row 1: Avatar + Name + Role + Status */}
       <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3">
         <div className="flex items-start gap-3 flex-1 min-w-0">

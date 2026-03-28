@@ -281,7 +281,7 @@ export function OrganizationProfileEditor({ organizationId, isRootAdmin = false,
     <div className="space-y-6">
       {/* Status Banner */}
       {profile.is_blocked && (
-        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 flex items-center gap-3">
+        <div className="bg-destructive/10 border border-destructive/20 rounded-sm p-4 flex items-center gap-3">
           <Ban className="h-5 w-5 text-destructive" />
           <div className="flex-1">
             <p className="font-medium text-destructive">Organización Bloqueada</p>
@@ -357,7 +357,7 @@ export function OrganizationProfileEditor({ organizationId, isRootAdmin = false,
             <Label>Logo de la Organización</Label>
             <div className="flex items-center gap-4">
               {profile.logo_url ? (
-                <div className="relative h-20 w-20 rounded-lg border overflow-hidden bg-muted">
+                <div className="relative h-20 w-20 rounded-sm border overflow-hidden bg-muted">
                   <img 
                     src={profile.logo_url} 
                     alt="Logo" 
@@ -365,7 +365,7 @@ export function OrganizationProfileEditor({ organizationId, isRootAdmin = false,
                   />
                 </div>
               ) : (
-                <div className="h-20 w-20 rounded-lg border border-dashed flex items-center justify-center bg-muted">
+                <div className="h-20 w-20 rounded-sm border border-dashed flex items-center justify-center bg-muted">
                   <ImageIcon className="h-8 w-8 text-muted-foreground" />
                 </div>
               )}

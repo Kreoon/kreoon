@@ -371,7 +371,7 @@ export function CompanyProfileEditor({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[95vh] p-0">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-2xl max-h-[95dvh] sm:max-h-[95vh] p-0">
         <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle className="flex items-center gap-2">
             <Building2 className="w-5 h-5" />
@@ -704,7 +704,7 @@ export function CompanyProfileEditor({
             <Separator />
 
             {/* Privacy */}
-            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-sm">
               <div className="flex items-center gap-3">
                 {isPublic ? (
                   <Globe className="w-5 h-5 text-primary" />

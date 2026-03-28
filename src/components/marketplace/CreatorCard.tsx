@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import type { MarketplaceCreator, PortfolioMedia } from './types/marketplace';
 import { getBunnyThumbnailUrl } from '@/hooks/useHLSPlayer';
 import { getOptimizedImageUrl } from '@/lib/imageOptimization';
+// Nova Design System
 
 // Card dimensions for image optimization
 const CARD_WIDTH = 180;
@@ -95,7 +96,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
     >
       {/* Media area — 9:16 aspect ratio, click opens profile */}
       <div
-        className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-card"
+        className="relative aspect-[9/16] rounded-sm overflow-hidden bg-[var(--nova-bg-surface)] border border-[var(--nova-border-subtle)]"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -148,8 +149,8 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-20 h-20 rounded-full bg-purple-500/20 flex items-center justify-center">
-                <span className="text-3xl text-purple-400 font-bold">
+              <div className="w-20 h-20 rounded-full bg-[var(--nova-accent-primary)]/20 flex items-center justify-center">
+                <span className="text-3xl text-[var(--nova-accent-primary)] font-bold">
                   {creator.display_name.charAt(0).toUpperCase()}
                 </span>
               </div>
@@ -247,7 +248,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
                   setCurrentSlide(i);
                 }}
                 className={cn(
-                  "w-12 h-16 rounded-lg overflow-hidden border-2 transition-all",
+                  "w-12 h-16 rounded-sm overflow-hidden border-2 transition-all",
                   i === currentSlide
                     ? "border-white scale-105"
                     : "border-white/30 hover:border-white/60"
@@ -282,7 +283,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
                 className="w-6 h-6 rounded-full object-cover flex-shrink-0 border border-white/30"
               />
             ) : (
-              <div className="w-6 h-6 rounded-full bg-purple-500/60 flex items-center justify-center flex-shrink-0 border border-white/30">
+              <div className="w-6 h-6 rounded-full bg-[var(--nova-accent-primary)]/60 flex items-center justify-center flex-shrink-0 border border-white/30">
                 <span className="text-[10px] text-white font-bold leading-none">
                   {creator.display_name.charAt(0).toUpperCase()}
                 </span>
@@ -292,7 +293,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
               {creator.display_name}
             </span>
             {creator.is_verified && (
-              <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+              <CheckCircle2 className="h-4 w-4 text-[var(--nova-success)] flex-shrink-0" />
             )}
           </div>
 
@@ -310,7 +311,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
                   className="w-4 h-4 rounded-full object-cover flex-shrink-0"
                 />
               ) : (
-                <Building2 className="h-3 w-3 text-purple-300 flex-shrink-0" />
+                <Building2 className="h-3 w-3 text-[var(--nova-accent-primary-hover)] flex-shrink-0" />
               )}
               <span className="text-[10px] text-white/90 font-medium truncate max-w-[100px]">
                 {creator.organization_name}
@@ -334,7 +335,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
           <div className="flex items-center gap-2 flex-wrap">
             {/* Rating con count */}
             <div className="flex items-center gap-1">
-              <Star className="h-3 w-3 text-purple-400 fill-purple-400" />
+              <Star className="h-3 w-3 text-[var(--nova-accent-primary)] fill-[var(--nova-accent-primary)]" />
               <span className="text-white text-xs font-medium drop-shadow-sm">
                 {creator.rating_avg.toFixed(1)}
               </span>
@@ -351,7 +352,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
 
             {/* Response time */}
             {creator.response_time_label && (
-              <div className="flex items-center gap-1 text-green-400 text-[10px]">
+              <div className="flex items-center gap-1 text-[var(--nova-success)] text-[10px]">
                 <Clock className="h-3 w-3" />
                 <span>{creator.response_time_label}</span>
               </div>
@@ -362,7 +363,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
           {creator.accepts_product_exchange && (
             <div className="flex items-center gap-1">
               <span
-                className="flex items-center gap-0.5 text-green-400 text-xs"
+                className="flex items-center gap-0.5 text-[var(--nova-success)] text-xs"
                 title="Acepta canje de producto"
               >
                 <Gift className="h-3 w-3" />

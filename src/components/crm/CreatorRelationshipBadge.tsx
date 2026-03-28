@@ -48,7 +48,7 @@ export function CreatorRelationshipBadge({
     <div
       onClick={() => onClick?.(relationship)}
       className={cn(
-        'group rounded-xl overflow-hidden cursor-pointer',
+        'group rounded-sm overflow-hidden cursor-pointer',
         'transition-all duration-200',
         'hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(168,85,247,0.15)]',
       )}

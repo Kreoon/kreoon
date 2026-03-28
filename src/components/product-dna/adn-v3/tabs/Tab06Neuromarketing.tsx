@@ -184,7 +184,7 @@ export function Tab06Neuromarketing({ data }: Tab06NeuromarketingProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {data.primary_biases.map((bias, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
+              <div key={idx} className="p-4 rounded-sm border bg-card">
                 <div className="flex items-start justify-between mb-2">
                   <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
                     {bias.bias}
@@ -240,20 +240,20 @@ export function Tab06Neuromarketing({ data }: Tab06NeuromarketingProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {data.decision_architecture.default_option && (
-              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <div className="p-3 rounded-sm bg-blue-500/10 border border-blue-500/20">
                 <p className="text-xs text-blue-400 mb-1">Opción por Defecto</p>
                 <p className="text-sm">{data.decision_architecture.default_option}</p>
               </div>
             )}
             {data.decision_architecture.choice_overload_prevention && (
-              <div className="p-3 rounded-lg bg-muted/50">
+              <div className="p-3 rounded-sm bg-muted/50">
                 <p className="text-xs text-muted-foreground mb-1">Prevención de Parálisis por Análisis</p>
                 <p className="text-sm">{data.decision_architecture.choice_overload_prevention}</p>
               </div>
             )}
             <div className="grid sm:grid-cols-2 gap-4">
               {data.decision_architecture.decoy_effect && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <div className="flex items-center gap-2 mb-2">
                     <Badge variant={data.decision_architecture.decoy_effect.applicable ? "default" : "secondary"}>
                       Efecto Señuelo
@@ -268,7 +268,7 @@ export function Tab06Neuromarketing({ data }: Tab06NeuromarketingProps) {
                 </div>
               )}
               {data.decision_architecture.anchoring && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <Badge className="mb-2">Anclaje de Precio</Badge>
                   <p className="text-sm font-medium text-green-400 mb-1">
                     {data.decision_architecture.anchoring.anchor_price}
@@ -298,25 +298,25 @@ export function Tab06Neuromarketing({ data }: Tab06NeuromarketingProps) {
           <CardContent>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {data.emotional_arc.hook_emotion && (
-                <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                <div className="p-3 rounded-sm bg-yellow-500/10 border border-yellow-500/20">
                   <p className="text-xs text-yellow-400 mb-1">Hook (Captura)</p>
                   <p className="text-sm font-medium">{data.emotional_arc.hook_emotion}</p>
                 </div>
               )}
               {data.emotional_arc.engagement_emotion && (
-                <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                <div className="p-3 rounded-sm bg-blue-500/10 border border-blue-500/20">
                   <p className="text-xs text-blue-400 mb-1">Engagement</p>
                   <p className="text-sm font-medium">{data.emotional_arc.engagement_emotion}</p>
                 </div>
               )}
               {data.emotional_arc.conversion_emotion && (
-                <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
                   <p className="text-xs text-green-400 mb-1">Conversión</p>
                   <p className="text-sm font-medium">{data.emotional_arc.conversion_emotion}</p>
                 </div>
               )}
               {data.emotional_arc.retention_emotion && (
-                <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                <div className="p-3 rounded-sm bg-purple-500/10 border border-purple-500/20">
                   <p className="text-xs text-purple-400 mb-1">Retención</p>
                   <p className="text-sm font-medium">{data.emotional_arc.retention_emotion}</p>
                 </div>
@@ -338,7 +338,7 @@ export function Tab06Neuromarketing({ data }: Tab06NeuromarketingProps) {
           <CardContent>
             <div className="grid sm:grid-cols-3 gap-4">
               {data.sensory_triggers.visual && (
-                <div className="p-4 rounded-lg border bg-blue-500/5 border-blue-500/20">
+                <div className="p-4 rounded-sm border bg-blue-500/5 border-blue-500/20">
                   <div className="flex items-center gap-2 mb-3">
                     <Eye className="w-4 h-4 text-blue-400" />
                     <p className="font-medium text-blue-400">Visual</p>
@@ -366,7 +366,7 @@ export function Tab06Neuromarketing({ data }: Tab06NeuromarketingProps) {
                 </div>
               )}
               {data.sensory_triggers.auditory && (
-                <div className="p-4 rounded-lg border bg-green-500/5 border-green-500/20">
+                <div className="p-4 rounded-sm border bg-green-500/5 border-green-500/20">
                   <div className="flex items-center gap-2 mb-3">
                     <Volume2 className="w-4 h-4 text-green-400" />
                     <p className="font-medium text-green-400">Auditivo</p>
@@ -389,7 +389,7 @@ export function Tab06Neuromarketing({ data }: Tab06NeuromarketingProps) {
                 </div>
               )}
               {data.sensory_triggers.kinesthetic && (
-                <div className="p-4 rounded-lg border bg-orange-500/5 border-orange-500/20">
+                <div className="p-4 rounded-sm border bg-orange-500/5 border-orange-500/20">
                   <div className="flex items-center gap-2 mb-3">
                     <Sparkles className="w-4 h-4 text-orange-400" />
                     <p className="font-medium text-orange-400">Kinestésico</p>
@@ -422,7 +422,7 @@ export function Tab06Neuromarketing({ data }: Tab06NeuromarketingProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             {data.attention_grabbers.map((grabber, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
+              <div key={idx} className="p-4 rounded-sm border bg-card">
                 <h4 className="font-medium text-yellow-400 mb-2">{grabber.technique}</h4>
                 {grabber.neuroscience && (
                   <p className="text-xs text-muted-foreground mb-2">
@@ -453,26 +453,26 @@ export function Tab06Neuromarketing({ data }: Tab06NeuromarketingProps) {
           <CardContent>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {data.color_psychology.primary_recommendation && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-1">Color Primario</p>
                   <p className="text-sm">{data.color_psychology.primary_recommendation}</p>
                 </div>
               )}
               {data.color_psychology.secondary_recommendation && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-1">Color Secundario</p>
                   <p className="text-sm">{data.color_psychology.secondary_recommendation}</p>
                 </div>
               )}
               {data.color_psychology.accent_for_cta && (
-                <div className="p-3 rounded-lg border bg-green-500/10 border-green-500/20">
+                <div className="p-3 rounded-sm border bg-green-500/10 border-green-500/20">
                   <p className="text-xs text-green-400 mb-1">Color CTA</p>
                   <p className="text-sm">{data.color_psychology.accent_for_cta}</p>
                 </div>
               )}
             </div>
             {data.color_psychology.colors_to_avoid && data.color_psychology.colors_to_avoid.length > 0 && (
-              <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+              <div className="mt-4 p-3 rounded-sm bg-red-500/10 border border-red-500/20">
                 <p className="text-xs text-red-400 mb-2">Colores a Evitar:</p>
                 <ul className="space-y-1">
                   {data.color_psychology.colors_to_avoid.map((c, i) => (
@@ -499,31 +499,31 @@ export function Tab06Neuromarketing({ data }: Tab06NeuromarketingProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             {data.neuro_copywriting.opening_pattern && (
-              <div className="p-3 rounded-lg border">
+              <div className="p-3 rounded-sm border">
                 <p className="text-xs text-yellow-400 mb-1">Apertura</p>
                 <p className="text-sm">{data.neuro_copywriting.opening_pattern}</p>
               </div>
             )}
             {data.neuro_copywriting.credibility_pattern && (
-              <div className="p-3 rounded-lg border">
+              <div className="p-3 rounded-sm border">
                 <p className="text-xs text-blue-400 mb-1">Credibilidad</p>
                 <p className="text-sm">{data.neuro_copywriting.credibility_pattern}</p>
               </div>
             )}
             {data.neuro_copywriting.desire_amplifier && (
-              <div className="p-3 rounded-lg border">
+              <div className="p-3 rounded-sm border">
                 <p className="text-xs text-pink-400 mb-1">Amplificador de Deseo</p>
                 <p className="text-sm">{data.neuro_copywriting.desire_amplifier}</p>
               </div>
             )}
             {data.neuro_copywriting.urgency_pattern && (
-              <div className="p-3 rounded-lg border">
+              <div className="p-3 rounded-sm border">
                 <p className="text-xs text-orange-400 mb-1">Urgencia</p>
                 <p className="text-sm">{data.neuro_copywriting.urgency_pattern}</p>
               </div>
             )}
             {data.neuro_copywriting.closing_pattern && (
-              <div className="p-3 rounded-lg border">
+              <div className="p-3 rounded-sm border">
                 <p className="text-xs text-green-400 mb-1">Cierre</p>
                 <p className="text-sm">{data.neuro_copywriting.closing_pattern}</p>
               </div>
@@ -545,7 +545,7 @@ export function Tab06Neuromarketing({ data }: Tab06NeuromarketingProps) {
             {data.trust_signals.neurological_trust_builders && data.trust_signals.neurological_trust_builders.length > 0 && (
               <div className="space-y-3">
                 {data.trust_signals.neurological_trust_builders.map((signal, idx) => (
-                  <div key={idx} className="p-3 rounded-lg border">
+                  <div key={idx} className="p-3 rounded-sm border">
                     <h4 className="font-medium text-green-400 text-sm mb-1">{signal.signal}</h4>
                     {signal.why_works && (
                       <p className="text-xs text-muted-foreground mb-1">
@@ -562,7 +562,7 @@ export function Tab06Neuromarketing({ data }: Tab06NeuromarketingProps) {
               </div>
             )}
             {data.trust_signals.reduce_cognitive_load && (
-              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+              <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
                 <p className="text-xs text-green-400 mb-1">Reducir Carga Cognitiva</p>
                 <p className="text-sm">{data.trust_signals.reduce_cognitive_load}</p>
               </div>
@@ -583,25 +583,25 @@ export function Tab06Neuromarketing({ data }: Tab06NeuromarketingProps) {
           <CardContent>
             <div className="grid sm:grid-cols-2 gap-4">
               {data.pricing_psychology.charm_pricing && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-1">Precios con Encanto</p>
                   <p className="text-sm">{data.pricing_psychology.charm_pricing}</p>
                 </div>
               )}
               {data.pricing_psychology.payment_pain_reduction && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-1">Reducir Dolor del Pago</p>
                   <p className="text-sm">{data.pricing_psychology.payment_pain_reduction}</p>
                 </div>
               )}
               {data.pricing_psychology.value_framing && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-1">Enmarcado de Valor</p>
                   <p className="text-sm">{data.pricing_psychology.value_framing}</p>
                 </div>
               )}
               {data.pricing_psychology.installment_psychology && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-1">Psicología de Cuotas</p>
                   <p className="text-sm">{data.pricing_psychology.installment_psychology}</p>
                 </div>
@@ -622,13 +622,13 @@ export function Tab06Neuromarketing({ data }: Tab06NeuromarketingProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {data.urgency_scarcity_neuro.loss_aversion_messaging && (
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+              <div className="p-3 rounded-sm bg-red-500/10 border border-red-500/20">
                 <p className="text-xs text-red-400 mb-1">Aversión a la Pérdida</p>
                 <p className="text-sm">{data.urgency_scarcity_neuro.loss_aversion_messaging}</p>
               </div>
             )}
             {data.urgency_scarcity_neuro.fomo_triggers && data.urgency_scarcity_neuro.fomo_triggers.length > 0 && (
-              <div className="p-3 rounded-lg border">
+              <div className="p-3 rounded-sm border">
                 <p className="text-xs text-orange-400 mb-2">Triggers FOMO:</p>
                 <ul className="space-y-1">
                   {data.urgency_scarcity_neuro.fomo_triggers.map((trigger, i) => (
@@ -638,7 +638,7 @@ export function Tab06Neuromarketing({ data }: Tab06NeuromarketingProps) {
               </div>
             )}
             {data.urgency_scarcity_neuro.ethical_boundaries && (
-              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+              <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
                 <p className="text-xs text-green-400 mb-1">Límites Éticos</p>
                 <p className="text-sm">{data.urgency_scarcity_neuro.ethical_boundaries}</p>
               </div>
@@ -658,19 +658,19 @@ export function Tab06Neuromarketing({ data }: Tab06NeuromarketingProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {data.memory_encoding.peak_end_rule && (
-              <div className="p-3 rounded-lg border">
+              <div className="p-3 rounded-sm border">
                 <p className="text-xs text-cyan-400 mb-1">Regla Peak-End</p>
                 <p className="text-sm">{data.memory_encoding.peak_end_rule}</p>
               </div>
             )}
             {data.memory_encoding.repetition_strategy && (
-              <div className="p-3 rounded-lg border">
+              <div className="p-3 rounded-sm border">
                 <p className="text-xs text-muted-foreground mb-1">Estrategia de Repetición</p>
                 <p className="text-sm">{data.memory_encoding.repetition_strategy}</p>
               </div>
             )}
             {data.memory_encoding.emotional_peaks && data.memory_encoding.emotional_peaks.length > 0 && (
-              <div className="p-3 rounded-lg border">
+              <div className="p-3 rounded-sm border">
                 <p className="text-xs text-pink-400 mb-2">Picos Emocionales:</p>
                 <ul className="space-y-1">
                   {data.memory_encoding.emotional_peaks.map((peak, i) => (
@@ -680,7 +680,7 @@ export function Tab06Neuromarketing({ data }: Tab06NeuromarketingProps) {
               </div>
             )}
             {data.memory_encoding.distinctiveness && (
-              <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+              <div className="p-3 rounded-sm bg-purple-500/10 border border-purple-500/20">
                 <p className="text-xs text-purple-400 mb-1">Distintividad vs Competencia</p>
                 <p className="text-sm">{data.memory_encoding.distinctiveness}</p>
               </div>

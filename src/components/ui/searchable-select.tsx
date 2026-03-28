@@ -48,7 +48,7 @@ export function SearchableSelect({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            'inline-flex items-center justify-between gap-1 rounded-md border border-input bg-background px-3 text-sm transition-colors',
+            'inline-flex items-center justify-between gap-1 rounded-sm border border-input bg-background px-3 text-sm transition-colors',
             'hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
             value === options[0]?.value ? 'text-muted-foreground' : 'text-foreground',
             triggerClassName,
@@ -59,7 +59,7 @@ export function SearchableSelect({
         </button>
       </PopoverTrigger>
       <PopoverContent className={cn('w-[220px] p-0', className)} align={align}>
-        <CommandPrimitive className="flex flex-col overflow-hidden rounded-md bg-popover text-popover-foreground">
+        <CommandPrimitive className="flex flex-col overflow-hidden rounded-sm bg-popover text-popover-foreground">
           {/* Minimal search input */}
           <div className="flex items-center gap-2 border-b border-border/50 px-3 py-2">
             <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
@@ -81,7 +81,7 @@ export function SearchableSelect({
                   setOpen(false);
                 }}
                 className={cn(
-                  'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer select-none',
+                  'flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer select-none',
                   'data-[selected=true]:bg-accent/60 data-[selected=true]:text-accent-foreground',
                 )}
               >

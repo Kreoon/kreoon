@@ -71,7 +71,7 @@ export function VideoUploader({
 
   if (uploadedFile) {
     return (
-      <div className={cn("relative rounded-lg border bg-card p-4", className)}>
+      <div className={cn("relative rounded-sm border bg-card p-4", className)}>
         <div className="flex items-center gap-4">
           <div className="flex-shrink-0">
             <img
@@ -109,7 +109,7 @@ export function VideoUploader({
       <div
         {...getRootProps()}
         className={cn(
-          "relative rounded-lg border-2 border-dashed p-8 text-center cursor-pointer transition-colors",
+          "relative rounded-sm border-2 border-dashed p-8 text-center cursor-pointer transition-colors",
           isDragActive && "border-primary bg-primary/5",
           isUploading && "pointer-events-none opacity-60",
           error && "border-destructive"

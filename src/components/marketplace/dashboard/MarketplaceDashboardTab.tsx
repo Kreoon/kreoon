@@ -106,7 +106,7 @@ function ProjectRow({ project, statusLabels }: { project: MarketplaceProject; st
   return (
     <button
       onClick={() => navigate('/board?view=marketplace')}
-      className="w-full bg-card/60 border border-white/5 rounded-xl p-4 flex items-center gap-4 hover:border-purple-500/30 transition-all text-left"
+      className="w-full bg-card/60 border border-white/5 rounded-sm p-4 flex items-center gap-4 hover:border-purple-500/30 transition-all text-left"
     >
       {project.creator.avatar_url ? (
         <img src={project.creator.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
@@ -182,9 +182,9 @@ export function MarketplaceDashboardTab({ role }: MarketplaceDashboardTabProps) 
       {/* KPIs */}
       <div className={`grid grid-cols-2 ${kpis.length > 4 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-3`}>
         {kpis.map(kpi => (
-          <div key={kpi.label} className="bg-card/80 backdrop-blur-xl border border-white/10 rounded-xl p-4">
+          <div key={kpi.label} className="bg-card/80 backdrop-blur-xl border border-white/10 rounded-sm p-4">
             <div className="flex items-center gap-3">
-              <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${kpi.color}`}>
+              <div className={`w-9 h-9 rounded-sm flex items-center justify-center ${kpi.color}`}>
                 <kpi.icon className="h-4 w-4" />
               </div>
               <div>
@@ -202,7 +202,7 @@ export function MarketplaceDashboardTab({ role }: MarketplaceDashboardTabProps) 
           <button
             key={action.label}
             onClick={action.onClick}
-            className={`flex items-center gap-2 font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors ${
+            className={`flex items-center gap-2 font-semibold px-5 py-2.5 rounded-sm text-sm transition-colors ${
               action.primary
                 ? 'bg-purple-600 hover:bg-purple-500 text-white'
                 : 'border border-white/20 text-white hover:bg-white/5'
@@ -223,7 +223,7 @@ export function MarketplaceDashboardTab({ role }: MarketplaceDashboardTabProps) 
           </h3>
 
           {overdueProjects.length > 0 && (
-            <div className="bg-red-500/5 border border-red-500/15 rounded-xl p-4 space-y-3">
+            <div className="bg-red-500/5 border border-red-500/15 rounded-sm p-4 space-y-3">
               <p className="text-red-300 text-xs font-semibold uppercase tracking-wide">
                 Vencidos ({overdueProjects.length})
               </p>
@@ -235,7 +235,7 @@ export function MarketplaceDashboardTab({ role }: MarketplaceDashboardTabProps) 
                   <button
                     key={project.id}
                     onClick={() => navigate('/board?view=marketplace')}
-                    className="w-full flex items-center gap-3 bg-white/5 rounded-lg p-3 hover:bg-white/10 transition-colors text-left"
+                    className="w-full flex items-center gap-3 bg-white/5 rounded-sm p-3 hover:bg-white/10 transition-colors text-left"
                   >
                     <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
                       <AlertTriangle className="h-3.5 w-3.5 text-red-400" />
@@ -260,7 +260,7 @@ export function MarketplaceDashboardTab({ role }: MarketplaceDashboardTabProps) 
           )}
 
           {urgentProjects.length > 0 && (
-            <div className="bg-amber-500/5 border border-amber-500/15 rounded-xl p-4 space-y-3">
+            <div className="bg-amber-500/5 border border-amber-500/15 rounded-sm p-4 space-y-3">
               <p className="text-amber-300 text-xs font-semibold uppercase tracking-wide">
                 Proximos a vencer ({urgentProjects.length})
               </p>
@@ -272,7 +272,7 @@ export function MarketplaceDashboardTab({ role }: MarketplaceDashboardTabProps) 
                   <button
                     key={project.id}
                     onClick={() => navigate('/board?view=marketplace')}
-                    className="w-full flex items-center gap-3 bg-white/5 rounded-lg p-3 hover:bg-white/10 transition-colors text-left"
+                    className="w-full flex items-center gap-3 bg-white/5 rounded-sm p-3 hover:bg-white/10 transition-colors text-left"
                   >
                     <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
                       <Calendar className="h-3.5 w-3.5 text-amber-400" />
@@ -305,7 +305,7 @@ export function MarketplaceDashboardTab({ role }: MarketplaceDashboardTabProps) 
         </div>
 
         {recentProjects.length === 0 ? (
-          <div className="bg-card/40 border border-white/5 rounded-xl p-8 text-center">
+          <div className="bg-card/40 border border-white/5 rounded-sm p-8 text-center">
             <FolderKanban className="h-10 w-10 mx-auto text-gray-600 mb-3" />
             <p className="text-gray-400 text-sm">Sin proyectos activos en el marketplace</p>
             <button

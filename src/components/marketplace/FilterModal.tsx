@@ -88,7 +88,7 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
       />
 
       {/* Modal */}
-      <div className="relative bg-card border border-white/10 rounded-t-2xl sm:rounded-2xl max-w-lg w-full max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-300 sm:animate-in sm:fade-in sm:zoom-in-95">
+      <div className="relative bg-card border border-white/10 rounded-t-2xl sm:rounded-sm max-w-lg w-full max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-300 sm:animate-in sm:fade-in sm:zoom-in-95">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
           <div className="w-8" />
@@ -144,7 +144,7 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
                 onChange={e =>
                   update('price_min', e.target.value ? Number(e.target.value) : null)
                 }
-                className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-500 outline-none focus:border-purple-500/50"
+                className="flex-1 bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-sm text-white placeholder:text-gray-500 outline-none focus:border-purple-500/50"
               />
               <span className="text-gray-500">—</span>
               <input
@@ -154,7 +154,7 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
                 onChange={e =>
                   update('price_max', e.target.value ? Number(e.target.value) : null)
                 }
-                className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-500 outline-none focus:border-purple-500/50"
+                className="flex-1 bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-sm text-white placeholder:text-gray-500 outline-none focus:border-purple-500/50"
               />
             </div>
           </div>
@@ -168,7 +168,7 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
                   key={opt.label}
                   onClick={() => update('rating_min', opt.value)}
                   className={cn(
-                    'px-4 py-2 rounded-lg text-sm transition-colors border',
+                    'px-4 py-2 rounded-sm text-sm transition-colors border',
                     local.rating_min === opt.value
                       ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
                       : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-white',
@@ -189,7 +189,7 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
                   key={l.id}
                   onClick={() => toggleArrayItem('level', l.id)}
                   className={cn(
-                    'px-4 py-2 rounded-lg text-sm transition-colors border',
+                    'px-4 py-2 rounded-sm text-sm transition-colors border',
                     local.level.includes(l.id)
                       ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
                       : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-white',
@@ -210,7 +210,7 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
                   key={l}
                   onClick={() => toggleArrayItem('languages', l)}
                   className={cn(
-                    'px-4 py-2 rounded-lg text-sm transition-colors border',
+                    'px-4 py-2 rounded-sm text-sm transition-colors border',
                     local.languages.includes(l)
                       ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
                       : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-white',
@@ -231,7 +231,7 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
                   key={ct}
                   onClick={() => toggleArrayItem('content_type', ct)}
                   className={cn(
-                    'px-4 py-2 rounded-lg text-sm transition-colors border',
+                    'px-4 py-2 rounded-sm text-sm transition-colors border',
                     local.content_type.includes(ct)
                       ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
                       : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-white',
@@ -256,7 +256,7 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
                   key={opt.id}
                   onClick={() => update('availability', opt.id)}
                   className={cn(
-                    'px-4 py-2 rounded-lg text-sm transition-colors border',
+                    'px-4 py-2 rounded-sm text-sm transition-colors border',
                     local.availability === opt.id
                       ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
                       : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-white',
@@ -279,7 +279,7 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
           </button>
           <button
             onClick={handleApply}
-            className="bg-purple-600 hover:bg-purple-500 text-white rounded-xl px-6 py-3 font-semibold text-sm transition-colors"
+            className="bg-purple-600 hover:bg-purple-500 text-white rounded-sm px-6 py-3 font-semibold text-sm transition-colors"
           >
             Mostrar {resultCount} resultados
           </button>
@@ -310,7 +310,7 @@ function AdaptiveSection({
         <button
           onClick={() => onUpdate(config.filterKey, isOn ? null : true)}
           className={cn(
-            'px-4 py-2 rounded-lg text-sm transition-colors border',
+            'px-4 py-2 rounded-sm text-sm transition-colors border',
             isOn
               ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
               : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-white',
@@ -332,7 +332,7 @@ function AdaptiveSection({
             key={opt.value}
             onClick={() => onToggle(config.filterKey, opt.value)}
             className={cn(
-              'px-3 py-1.5 rounded-lg text-xs transition-colors border',
+              'px-3 py-1.5 rounded-sm text-xs transition-colors border',
               selected.includes(opt.value)
                 ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
                 : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-white',

@@ -168,10 +168,10 @@ export function SocialSharePanel({
           {/* Kreoon Social Section */}
           {allowKreoonShare && contentId && (
             <>
-              <div className="space-y-4 p-4 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+              <div className="space-y-4 p-4 rounded-sm bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
+                    <div className="p-2 rounded-sm bg-gradient-to-br from-purple-500 to-pink-500">
                       <Sparkles className="h-4 w-4 text-white" />
                     </div>
                     <div>
@@ -273,13 +273,13 @@ export function SocialSharePanel({
           {/* External social networks */}
           <div>
             <h4 className="text-sm font-medium mb-3">Redes sociales externas</h4>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {socialLinks.map((link) => (
                 <button
                   key={link.id}
                   onClick={() => handleSocialShare(link.id)}
                   className={cn(
-                    "flex flex-col items-center justify-center p-3 rounded-lg border transition-colors",
+                    "flex flex-col items-center justify-center p-3 rounded-sm border transition-colors",
                     link.color
                   )}
                 >

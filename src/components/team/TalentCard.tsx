@@ -101,7 +101,7 @@ export function TalentCard({ talent, onClick, onAmbassadorToggle, isAdmin, showK
       <div 
         onClick={onClick}
         className={cn(
-          "group rounded-xl border bg-card p-5 transition-all duration-300 hover:shadow-lg cursor-pointer relative overflow-hidden",
+          "group rounded-sm border bg-card p-5 transition-all duration-300 hover:shadow-lg cursor-pointer relative overflow-hidden",
           talent.is_ambassador || ambassadorStyle
             ? "border-amber-500/50 shadow-[0_0_15px_-3px_rgba(245,158,11,0.3)] hover:shadow-[0_0_25px_-3px_rgba(245,158,11,0.5)] hover:border-amber-500 bg-gradient-to-br from-card via-card to-amber-500/5" 
             : riskStyle?.className === "text-destructive"
@@ -215,7 +215,7 @@ export function TalentCard({ talent, onClick, onAmbassadorToggle, isAdmin, showK
 
             {/* UP Points and Level */}
             {(talent.up_points !== undefined && talent.up_points > 0) && (
-              <div className="flex items-center justify-between p-2 rounded-lg bg-primary/5 border border-primary/10">
+              <div className="flex items-center justify-between p-2 rounded-sm bg-primary/5 border border-primary/10">
                 <div className="flex items-center gap-2">
                   <Zap className="h-4 w-4 text-primary" />
                   <span className="text-sm font-bold text-primary">{talent.up_points} UP</span>
@@ -255,7 +255,7 @@ export function TalentCard({ talent, onClick, onAmbassadorToggle, isAdmin, showK
             <div className="grid grid-cols-3 gap-2 text-center">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="p-2 rounded-lg bg-muted/50">
+                  <div className="p-2 rounded-sm bg-muted/50">
                     <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-0.5">
                       <Star className="h-3 w-3" />
                     </div>
@@ -267,7 +267,7 @@ export function TalentCard({ talent, onClick, onAmbassadorToggle, isAdmin, showK
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="p-2 rounded-lg bg-muted/50">
+                  <div className="p-2 rounded-sm bg-muted/50">
                     <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-0.5">
                       <Clock className="h-3 w-3" />
                     </div>
@@ -279,7 +279,7 @@ export function TalentCard({ talent, onClick, onAmbassadorToggle, isAdmin, showK
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="p-2 rounded-lg bg-muted/50">
+                  <div className="p-2 rounded-sm bg-muted/50">
                     <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-0.5">
                       <Zap className="h-3 w-3" />
                     </div>
@@ -323,7 +323,7 @@ export function TalentCard({ talent, onClick, onAmbassadorToggle, isAdmin, showK
                       onAmbassadorToggle(e);
                     }}
                     className={cn(
-                      "flex items-center justify-center h-6 w-6 rounded-md border transition-all cursor-pointer",
+                      "flex items-center justify-center h-6 w-6 rounded-sm border transition-all cursor-pointer",
                       talent.is_ambassador
                         ? "bg-amber-500 border-amber-500 text-white"
                         : "bg-muted/50 border-border hover:border-amber-500/50 hover:bg-amber-500/10"

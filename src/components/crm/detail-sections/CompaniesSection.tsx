@@ -86,7 +86,7 @@ export function CompaniesSection({ companies, userId, onActionComplete }: Compan
       <div className="space-y-2">
         {/* Link form */}
         {linkOpen && (
-          <div className="flex gap-2 items-end p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+          <div className="flex gap-2 items-end p-2 rounded-sm bg-white/[0.03] border border-white/[0.06]">
             <div className="flex-1">
               <label className="text-[10px] text-white/40 mb-1 block">Empresa</label>
               <Select value={selectedClient} onValueChange={setSelectedClient}>
@@ -119,7 +119,7 @@ export function CompaniesSection({ companies, userId, onActionComplete }: Compan
         {companies.map((company) => (
           <div
             key={company.client_id}
-            className="flex items-center justify-between gap-2 p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]"
+            className="flex items-center justify-between gap-2 p-2 rounded-sm bg-white/[0.03] border border-white/[0.06]"
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <Briefcase className="h-3.5 w-3.5 text-white/30 flex-shrink-0" />

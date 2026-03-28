@@ -429,7 +429,7 @@ export function AddCampaignDialog({ organizationId, onSuccess }: AddCampaignDial
           </div>
 
           {/* Configuración Avanzada para Trafficker */}
-          <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced} className="border rounded-lg">
+          <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced} className="border rounded-sm">
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full justify-between p-4 h-auto">
                 <span className="flex items-center gap-2 font-medium">

@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useRealtimeMarketplaceProjects } from '@/hooks/realtime/useRealtimeMarketplaceProjects';
+import { markLocalUpdate } from '@/hooks/realtime/useRealtimeDebounce';
 import type {
   MarketplaceProject,
   MarketplaceCreator,
@@ -271,6 +273,20 @@ export function useMarketplaceProjects(options: UseMarketplaceProjectsOptions = 
     fetchProjects();
   }, [fetchProjects]);
 
+  // Handler para cambios realtime
+  const handleRealtimeChange = useCallback((updater: (current: MarketplaceProject[]) => MarketplaceProject[]) => {
+    setProjects(updater);
+  }, []);
+
+  // Suscripción realtime para sincronización entre usuarios
+  useRealtimeMarketplaceProjects({
+    userId: user?.id || null,
+    role: options.role || 'brand',
+    brandId: options.brandId,
+    enabled: !!user?.id,
+    onProjectChange: handleRealtimeChange,
+  });
+
   // ── Create project from approved application ────────────────────────
 
   const createProject = useCallback(
@@ -325,24 +341,38 @@ export function useMarketplaceProjects(options: UseMarketplaceProjectsOptions = 
 
   const updateProjectStatus = useCallback(
     async (projectId: string, newStatus: ProjectStatus): Promise<boolean> => {
+      // Marcar como update local para evitar loops con realtime
+      markLocalUpdate(projectId, ['status', 'updated_at']);
+
+      // Guardar estado anterior para rollback
+      const previousProject = projects.find(p => p.id === projectId);
+      const now = new Date().toISOString();
+
+      // Optimistic update - actualiza UI inmediatamente
+      setProjects(prev =>
+        prev.map(p => (p.id === projectId ? { ...p, status: newStatus, updated_at: now } : p)),
+      );
+
       try {
         const { error: err } = await (supabase as any)
           .from('marketplace_projects')
-          .update({ status: newStatus, updated_at: new Date().toISOString() })
+          .update({ status: newStatus, updated_at: now })
           .eq('id', projectId);
 
         if (err) throw err;
-
-        setProjects(prev =>
-          prev.map(p => (p.id === projectId ? { ...p, status: newStatus, updated_at: new Date().toISOString() } : p)),
-        );
         return true;
       } catch (err) {
         console.error('[useMarketplaceProjects] Status update error:', err);
+        // Rollback en caso de error
+        if (previousProject) {
+          setProjects(prev =>
+            prev.map(p => (p.id === projectId ? previousProject : p)),
+          );
+        }
         return false;
       }
     },
-    [],
+    [projects],
   );
 
   const getProjectById = useCallback(

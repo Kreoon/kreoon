@@ -371,7 +371,7 @@ export function KiroChat({ onStateChange, currentZone = 'general', awardPoints, 
             disabled={isLoading}
             title="Limpiar historial"
             className={cn(
-              'p-2 rounded-lg min-w-[44px] min-h-[44px]',
+              'p-2 rounded-sm min-w-[44px] min-h-[44px]',
               'flex items-center justify-center',
               'text-gray-500 hover:text-red-400',
               'hover:bg-red-500/10 transition-all duration-150',

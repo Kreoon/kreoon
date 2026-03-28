@@ -58,7 +58,7 @@ export default function TalentListDetailPage() {
                 .split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
               return (
-                <div key={member.id} className="flex items-center gap-3 p-4 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
+                <div key={member.id} className="flex items-center gap-3 p-4 rounded-sm border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={member.creator?.avatar_url || ''} />
                     <AvatarFallback className="text-xs bg-purple-500/20 text-purple-400">{initials}</AvatarFallback>

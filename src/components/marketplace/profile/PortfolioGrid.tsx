@@ -108,7 +108,7 @@ export function PortfolioGrid({
               key={item.id}
               onClick={() => handleOpen(i)}
               className={cn(
-                'w-full rounded-xl overflow-hidden relative group cursor-pointer break-inside-avoid',
+                'w-full rounded-sm overflow-hidden relative group cursor-pointer break-inside-avoid',
                 size === 'large' ? 'aspect-[9/16]' : 'aspect-[3/4]',
               )}
             >

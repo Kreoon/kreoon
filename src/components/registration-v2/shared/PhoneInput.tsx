@@ -73,7 +73,7 @@ export function PhoneInput({
             onClick={() => !disabled && setIsOpen(!isOpen)}
             disabled={disabled}
             className={cn(
-              "flex items-center gap-1.5 h-11 px-3 rounded-lg border transition-all",
+              "flex items-center gap-1.5 h-11 px-3 rounded-sm border transition-all",
               "bg-white/5 hover:bg-white/10",
               isOpen
                 ? "border-primary ring-2 ring-primary/20"
@@ -93,7 +93,7 @@ export function PhoneInput({
 
           {/* Dropdown de países */}
           {isOpen && (
-            <div className="absolute z-50 mt-1 w-64 max-h-64 overflow-hidden rounded-lg border border-white/10 bg-slate-900 shadow-xl">
+            <div className="absolute z-50 mt-1 w-64 max-h-64 overflow-hidden rounded-sm border border-white/10 bg-slate-900 shadow-xl">
               {/* Búsqueda */}
               <div className="p-2 border-b border-white/10">
                 <input
@@ -101,7 +101,7 @@ export function PhoneInput({
                   placeholder="Buscar país..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full h-9 px-3 text-sm rounded-md bg-white/5 border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:border-primary"
+                  className="w-full h-9 px-3 text-sm rounded-sm bg-white/5 border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:border-primary"
                   autoFocus
                 />
               </div>
@@ -146,7 +146,7 @@ export function PhoneInput({
             disabled={disabled}
             placeholder="300 123 4567"
             className={cn(
-              "w-full h-11 pl-10 pr-4 rounded-lg border transition-all text-white",
+              "w-full h-11 pl-10 pr-4 rounded-sm border transition-all text-white",
               "bg-white/5 placeholder:text-white/40",
               "focus:outline-none focus:ring-2 focus:ring-primary/20",
               error

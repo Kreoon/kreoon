@@ -239,9 +239,9 @@ function CreatorUnifiedProfile({ roleArea }: { roleArea: RoleArea }) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-orange-500/10 p-6 border border-purple-500/20">
+      <div className="relative overflow-hidden rounded-sm bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-orange-500/10 p-6 border border-purple-500/20">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-purple-500/20">
+          <div className="p-2 rounded-sm bg-purple-500/20">
             <User className="h-6 w-6 text-purple-500" />
           </div>
           <div>
@@ -589,7 +589,7 @@ function PublicProfileTab() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Marketplace enabled */}
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+        <div className="flex items-center justify-between p-4 rounded-sm bg-muted">
           <div>
             <p className="font-medium">Visible en el Marketplace</p>
             <p className="text-sm text-muted-foreground">Aparecerás en las búsquedas de marcas</p>
@@ -600,7 +600,7 @@ function PublicProfileTab() {
         {/* Banner */}
         <div className="space-y-2">
           <Label>Banner de perfil</Label>
-          <div className="relative w-full h-36 rounded-xl overflow-hidden border border-border bg-muted group">
+          <div className="relative w-full h-36 rounded-sm overflow-hidden border border-border bg-muted group">
             {bannerUrl ? (
               <>
                 <img
@@ -776,7 +776,7 @@ function PublicProfileTab() {
                     updateProfileField('experience_level', level.value);
                   }}
                   className={cn(
-                    'p-3 rounded-lg border text-left transition-all',
+                    'p-3 rounded-sm border text-left transition-all',
                     isSelected
                       ? 'border-primary bg-primary/10'
                       : 'border-border bg-card hover:border-primary/50',
@@ -960,7 +960,7 @@ function TalentDNATab() {
     <Card>
       <CardHeader>
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/20">
+          <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/20">
             <Dna className="h-5 w-5 text-emerald-400" />
           </div>
           <div>
@@ -1058,7 +1058,7 @@ function AvailabilityAndPricingTab() {
           <CardDescription>Indica cuándo estás disponible para nuevos proyectos</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+          <div className="flex items-center justify-between p-4 rounded-sm bg-muted">
             <div>
               <p className="font-medium">Disponible para contratación</p>
               <p className="text-sm text-muted-foreground">Aparecerás como disponible en el marketplace</p>
@@ -1082,7 +1082,7 @@ function AvailabilityAndPricingTab() {
             </Select>
           </div>
 
-          <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+          <div className="p-4 rounded-sm bg-primary/10 border border-primary/20">
             <p className="text-sm">
               <strong>Tip:</strong> Los creadores con tiempos de respuesta más rápidos
               tienen un 40% más de probabilidades de ser contactados por marcas.
@@ -1111,13 +1111,13 @@ function AvailabilityAndPricingTab() {
                   className="pl-7"
                 />
               </div>
-              <span className="flex items-center justify-center px-4 py-2 bg-muted border rounded-md text-muted-foreground text-sm w-[120px]">
+              <span className="flex items-center justify-center px-4 py-2 bg-muted border rounded-sm text-muted-foreground text-sm w-[120px]">
                 USD
               </span>
             </div>
           </div>
 
-          <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+          <div className="flex items-center justify-between p-4 rounded-sm bg-muted">
             <div>
               <p className="font-medium">Acepta canje de producto</p>
               <p className="text-sm text-muted-foreground">Recibe productos en lugar de pago monetario</p>

@@ -76,7 +76,7 @@ function LazyCarouselComponent({
               key={i}
               className="snap-start flex-shrink-0 w-[180px] max-sm:w-[45vw]"
             >
-              <div className="aspect-[9/16] bg-white/5 rounded-2xl animate-pulse" />
+              <div className="aspect-[9/16] bg-white/5 rounded-sm animate-pulse" />
             </div>
           ))}
         </div>

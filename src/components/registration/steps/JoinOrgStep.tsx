@@ -106,13 +106,13 @@ export function JoinOrgStep({ data, onChange, onNext, onBack, mode }: StepCompon
               onChange={e => { onChange({ joinLink: e.target.value, foundOrg: null }); setError(''); }}
               onKeyDown={e => e.key === 'Enter' && searchOrg()}
               placeholder="kreoon.com/org/mi-org o código..."
-              className="w-full rounded-lg border border-border bg-white/5 pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/30"
+              className="w-full rounded-sm border border-border bg-white/5 pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/30"
             />
           </div>
           <button
             onClick={searchOrg}
             disabled={searching}
-            className="rounded-lg bg-blue-600 hover:bg-blue-700 px-4 py-2.5 text-sm text-white font-medium transition-colors disabled:opacity-50"
+            className="rounded-sm bg-blue-600 hover:bg-blue-700 px-4 py-2.5 text-sm text-white font-medium transition-colors disabled:opacity-50"
           >
             {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Buscar'}
           </button>
@@ -124,10 +124,10 @@ export function JoinOrgStep({ data, onChange, onNext, onBack, mode }: StepCompon
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-4 mb-5"
+          className="rounded-sm border border-blue-500/30 bg-blue-500/10 p-4 mb-5"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-white/10 overflow-hidden">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm bg-white/10 overflow-hidden">
               {data.foundOrg.logo_url ? (
                 <img src={data.foundOrg.logo_url} alt="" className="h-full w-full object-cover" />
               ) : (
@@ -148,7 +148,7 @@ export function JoinOrgStep({ data, onChange, onNext, onBack, mode }: StepCompon
       <button
         onClick={handleNext}
         disabled={!data.foundOrg}
-        className="w-full rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full rounded-sm bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         Continuar
       </button>

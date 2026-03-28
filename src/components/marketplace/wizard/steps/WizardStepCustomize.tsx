@@ -73,7 +73,7 @@ function SortableSectionRow({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'flex items-center justify-between p-3 rounded-xl border transition-all',
+        'flex items-center justify-between p-3 rounded-sm border transition-all',
         isDragging ? 'z-50 border-purple-500 bg-purple-500/10' : 'border-white/10 bg-white/5',
         !isVisible && 'opacity-50'
       )}
@@ -87,7 +87,7 @@ function SortableSectionRow({
       <button
         onClick={onToggleVisibility}
         className={cn(
-          'p-1.5 rounded-lg transition-colors',
+          'p-1.5 rounded-sm transition-colors',
           isVisible ? 'hover:bg-white/10' : 'hover:bg-white/10'
         )}
       >
@@ -150,7 +150,7 @@ export function WizardStepCustomize({ customization, onChange }: WizardStepCusto
               key={theme.id}
               onClick={() => onChange({ ...customization, theme: theme.id, primary_color: theme.primary, secondary_color: theme.secondary })}
               className={cn(
-                'relative rounded-xl overflow-hidden border-2 transition-all',
+                'relative rounded-sm overflow-hidden border-2 transition-all',
                 customization.theme === theme.id ? 'border-purple-500 shadow-lg shadow-purple-500/20' : 'border-white/10 hover:border-white/20'
               )}
             >
@@ -175,13 +175,13 @@ export function WizardStepCustomize({ customization, onChange }: WizardStepCusto
       {/* Card style */}
       <div>
         <label className="block text-sm font-medium text-foreground/80 mb-3">Estilo de tarjetas</label>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {CARD_STYLES.map(style => (
             <button
               key={style.id}
               onClick={() => onChange({ ...customization, card_style: style.id })}
               className={cn(
-                'p-3 rounded-xl border text-left transition-all',
+                'p-3 rounded-sm border text-left transition-all',
                 customization.card_style === style.id
                   ? 'border-purple-500 bg-purple-500/10'
                   : 'border-white/10 bg-white/5 hover:border-white/20'
@@ -197,13 +197,13 @@ export function WizardStepCustomize({ customization, onChange }: WizardStepCusto
       {/* Cover style */}
       <div>
         <label className="block text-sm font-medium text-foreground/80 mb-3">Estilo de portada</label>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {COVER_STYLES.map(style => (
             <button
               key={style.id}
               onClick={() => onChange({ ...customization, cover_style: style.id })}
               className={cn(
-                'p-3 rounded-xl border text-left transition-all',
+                'p-3 rounded-sm border text-left transition-all',
                 customization.cover_style === style.id
                   ? 'border-purple-500 bg-purple-500/10'
                   : 'border-white/10 bg-white/5 hover:border-white/20'

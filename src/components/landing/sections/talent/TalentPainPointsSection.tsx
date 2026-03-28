@@ -75,7 +75,7 @@ export default function TalentPainPointsSection({ id }: TalentPainPointsSectionP
                 className="p-6 h-full hover:border-kreoon-purple-400/30 transition-all group"
               >
                 {/* Icon */}
-                <div className={`inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${item.iconColor} mb-4`}>
+                <div className={`inline-flex h-12 w-12 items-center justify-center rounded-sm bg-gradient-to-br ${item.iconColor} mb-4`}>
                   <item.icon className="h-6 w-6 text-white" />
                 </div>
 

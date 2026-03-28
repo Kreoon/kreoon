@@ -84,7 +84,7 @@ export function LevelBadge({
       {/* Badge Container */}
       <motion.div
         className={cn(
-          'relative rounded-xl flex items-center justify-center',
+          'relative rounded-sm flex items-center justify-center',
           config.container,
           config.padding,
           'backdrop-blur-sm',
@@ -103,7 +103,7 @@ export function LevelBadge({
         {/* Glow Effect for High Levels */}
         {isHighLevel && (
           <motion.div
-            className="absolute inset-0 rounded-xl"
+            className="absolute inset-0 rounded-sm"
             style={{
               background: `radial-gradient(circle at center, ${nivelInfo.color}30 0%, transparent 70%)`,
             }}
@@ -121,7 +121,7 @@ export function LevelBadge({
         {/* Shimmer Effect for Max Level */}
         {isMaxLevel && (
           <motion.div
-            className="absolute inset-0 rounded-xl overflow-hidden"
+            className="absolute inset-0 rounded-sm overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >

@@ -49,7 +49,7 @@ export function CampaignStepCreatorProfile({ data, onChange }: CampaignStepCreat
               key={rating}
               onClick={() => onChange('min_rating', rating)}
               className={cn(
-                'px-4 py-2 rounded-lg text-sm font-medium border transition-all',
+                'px-4 py-2 rounded-sm text-sm font-medium border transition-all',
                 data.min_rating === rating
                   ? 'border-purple-500/50 bg-purple-500/10 text-purple-300'
                   : 'border-white/10 text-gray-400 hover:border-white/20',
@@ -69,7 +69,7 @@ export function CampaignStepCreatorProfile({ data, onChange }: CampaignStepCreat
           min="0"
           value={data.min_completed_projects}
           onChange={e => onChange('min_completed_projects', Math.max(0, parseInt(e.target.value) || 0))}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 max-w-xs"
+          className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 max-w-xs"
         />
       </div>
 
@@ -82,7 +82,7 @@ export function CampaignStepCreatorProfile({ data, onChange }: CampaignStepCreat
           value={data.min_followers ?? ''}
           onChange={e => onChange('min_followers', e.target.value ? parseInt(e.target.value) : undefined)}
           placeholder="Ej: 5000"
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500 max-w-xs"
+          className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500 max-w-xs"
         />
       </div>
 

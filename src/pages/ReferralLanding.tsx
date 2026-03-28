@@ -150,7 +150,7 @@ export default function ReferralLanding() {
 
             {/* Bilateral rewards */}
             {rewards && (
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-green-500/10 border border-white/10">
+              <div className="flex items-center gap-3 p-4 rounded-sm bg-gradient-to-r from-purple-500/10 to-green-500/10 border border-white/10">
                 <Gift className="w-8 h-8 text-purple-400 shrink-0" />
                 <div className="text-left">
                   <p className="text-white text-sm font-semibold">Al registrarte recibes:</p>
@@ -162,7 +162,7 @@ export default function ReferralLanding() {
                     )}
                     {rewards.bonus_coins > 0 && (
                       <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-xs font-medium">
-                        +{rewards.bonus_coins} Kreoon Coins
+                        +{rewards.bonus_coins} Tokens IA
                       </span>
                     )}
                     {activePromo?.referral_extra_free_months ? (
@@ -185,7 +185,7 @@ export default function ReferralLanding() {
             <div className="flex flex-col gap-3 w-full max-w-sm">
               <button
                 onClick={() => goRegister("talent")}
-                className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 font-semibold text-sm transition-all"
+                className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 font-semibold text-sm transition-all"
               >
                 <Sparkles className="h-4 w-4" />
                 Soy Talento
@@ -193,14 +193,14 @@ export default function ReferralLanding() {
               <div className="flex gap-3">
                 <button
                   onClick={() => goRegister("brand")}
-                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 font-semibold text-sm transition-all"
+                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 rounded-sm bg-white/10 hover:bg-white/15 border border-white/10 font-semibold text-sm transition-all"
                 >
                   <Building2 className="h-4 w-4" />
                   Soy Marca
                 </button>
                 <button
                   onClick={() => goRegister("organization")}
-                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 font-semibold text-sm transition-all"
+                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 rounded-sm bg-white/10 hover:bg-white/15 border border-white/10 font-semibold text-sm transition-all"
                 >
                   <Briefcase className="h-4 w-4" />
                   Soy Agencia
@@ -227,7 +227,7 @@ export default function ReferralLanding() {
             {/* Fallback CTA */}
             <button
               onClick={() => navigate("/register")}
-              className="px-8 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 font-semibold text-sm transition-all"
+              className="px-8 py-3 rounded-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 font-semibold text-sm transition-all"
             >
               Registrarse en KREOON
             </button>

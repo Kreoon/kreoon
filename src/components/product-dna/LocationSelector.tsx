@@ -134,7 +134,7 @@ export function LocationSelector({
 
       {/* Dropdown results */}
       {isOpen && results.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-64 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-sm shadow-lg max-h-64 overflow-y-auto">
           {results.map((loc) => (
             <button
               key={loc.id}
@@ -158,7 +158,7 @@ export function LocationSelector({
 
       {/* Empty state when searching */}
       {isOpen && query.length >= 2 && results.length === 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg p-4 text-center text-muted-foreground">
+        <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-sm shadow-lg p-4 text-center text-muted-foreground">
           No se encontraron ubicaciones para "{query}"
         </div>
       )}

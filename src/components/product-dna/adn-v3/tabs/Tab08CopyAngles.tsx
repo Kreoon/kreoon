@@ -119,7 +119,7 @@ function SalesAngleCard({ angle }: { angle: NonNullable<BackendCopyAnglesData['s
         )}
 
         {angle.example_hook && (
-          <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+          <div className="p-3 rounded-sm bg-yellow-500/10 border border-yellow-500/20">
             <p className="text-xs text-yellow-400 mb-1">Hook:</p>
             <p className="text-sm italic">"{angle.example_hook}"</p>
             <CopyButton text={angle.example_hook} size="sm" className="mt-1" />
@@ -146,7 +146,7 @@ function SalesAngleCard({ angle }: { angle: NonNullable<BackendCopyAnglesData['s
         </Button>
 
         {expanded && (
-          <div className="p-4 rounded-lg border bg-card space-y-3">
+          <div className="p-4 rounded-sm border bg-card space-y-3">
             {angle.example_body && (
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Body:</p>
@@ -283,7 +283,7 @@ export function Tab08CopyAngles({ data }: Tab08CopyAnglesProps) {
                 {data.hooks_bank?.map((hook, idx) => (
                   <div
                     key={idx}
-                    className="p-3 rounded-lg border bg-card flex items-start justify-between gap-2"
+                    className="p-3 rounded-sm border bg-card flex items-start justify-between gap-2"
                   >
                     <div className="flex gap-2">
                       <span className="text-xs text-muted-foreground flex-shrink-0">{idx + 1}.</span>
@@ -314,7 +314,7 @@ export function Tab08CopyAngles({ data }: Tab08CopyAnglesProps) {
                 {data.headlines_bank?.map((headline, idx) => (
                   <div
                     key={idx}
-                    className="p-3 rounded-lg border bg-card flex items-start justify-between gap-2"
+                    className="p-3 rounded-sm border bg-card flex items-start justify-between gap-2"
                   >
                     <div className="flex gap-2">
                       <span className="text-xs text-muted-foreground flex-shrink-0">{idx + 1}.</span>
@@ -343,7 +343,7 @@ export function Tab08CopyAngles({ data }: Tab08CopyAnglesProps) {
             <CardContent>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {data.ctas_bank?.map((cta, idx) => (
-                  <div key={idx} className="p-3 rounded-lg border bg-card flex items-center justify-between gap-2">
+                  <div key={idx} className="p-3 rounded-sm border bg-card flex items-center justify-between gap-2">
                     <Button size="sm" variant="outline" className="font-semibold text-xs">
                       {cta}
                     </Button>
@@ -363,15 +363,15 @@ export function Tab08CopyAngles({ data }: Tab08CopyAnglesProps) {
                 <CardTitle className="text-base">PAS (Problem - Agitation - Solution)</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                <div className="p-3 rounded-sm bg-red-500/10 border border-red-500/20">
                   <p className="text-xs text-red-400 mb-1">Problema</p>
                   <p className="text-sm">{data.copy_frameworks.pas.problem}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                <div className="p-3 rounded-sm bg-orange-500/10 border border-orange-500/20">
                   <p className="text-xs text-orange-400 mb-1">Agitación</p>
                   <p className="text-sm">{data.copy_frameworks.pas.agitation}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
                   <p className="text-xs text-green-400 mb-1">Solución</p>
                   <p className="text-sm">{data.copy_frameworks.pas.solution}</p>
                 </div>
@@ -388,19 +388,19 @@ export function Tab08CopyAngles({ data }: Tab08CopyAnglesProps) {
                 <CardTitle className="text-base">AIDA (Attention - Interest - Desire - Action)</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-yellow-400 mb-1">Atención</p>
                   <p className="text-sm">{data.copy_frameworks.aida.attention}</p>
                 </div>
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-blue-400 mb-1">Interés</p>
                   <p className="text-sm">{data.copy_frameworks.aida.interest}</p>
                 </div>
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-pink-400 mb-1">Deseo</p>
                   <p className="text-sm">{data.copy_frameworks.aida.desire}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
                   <p className="text-xs text-green-400 mb-1">Acción</p>
                   <p className="text-sm">{data.copy_frameworks.aida.action}</p>
                 </div>
@@ -414,15 +414,15 @@ export function Tab08CopyAngles({ data }: Tab08CopyAnglesProps) {
                 <CardTitle className="text-base">BAB (Before - After - Bridge)</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                <div className="p-3 rounded-sm bg-red-500/10 border border-red-500/20">
                   <p className="text-xs text-red-400 mb-1">Antes</p>
                   <p className="text-sm">{data.copy_frameworks.bab.before}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
                   <p className="text-xs text-green-400 mb-1">Después</p>
                   <p className="text-sm">{data.copy_frameworks.bab.after}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                <div className="p-3 rounded-sm bg-purple-500/10 border border-purple-500/20">
                   <p className="text-xs text-purple-400 mb-1">Puente</p>
                   <p className="text-sm">{data.copy_frameworks.bab.bridge}</p>
                 </div>
@@ -437,7 +437,7 @@ export function Tab08CopyAngles({ data }: Tab08CopyAnglesProps) {
               </CardHeader>
               <CardContent className="grid sm:grid-cols-2 gap-3">
                 {Object.entries(data.copy_frameworks.pastor).map(([key, value]) => (
-                  <div key={key} className="p-3 rounded-lg border">
+                  <div key={key} className="p-3 rounded-sm border">
                     <p className="text-xs text-muted-foreground mb-1 capitalize">{key}</p>
                     <p className="text-sm">{value}</p>
                   </div>
@@ -458,7 +458,7 @@ export function Tab08CopyAngles({ data }: Tab08CopyAnglesProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               {data.story_angles?.map((story, idx) => (
-                <div key={idx} className="p-4 rounded-lg border bg-card">
+                <div key={idx} className="p-4 rounded-sm border bg-card">
                   <h4 className="font-medium text-purple-400 mb-3">{story.angle}</h4>
                   <div className="space-y-2 text-sm">
                     {story.setup && (
@@ -500,7 +500,7 @@ export function Tab08CopyAngles({ data }: Tab08CopyAnglesProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               {data.objection_handlers?.map((item, idx) => (
-                <div key={idx} className="p-4 rounded-lg border bg-card space-y-3">
+                <div key={idx} className="p-4 rounded-sm border bg-card space-y-3">
                   <div className="flex items-start gap-3">
                     <Badge variant="destructive" className="flex-shrink-0">Objeción</Badge>
                     <p className="font-medium">{item.objection}</p>
@@ -533,7 +533,7 @@ export function Tab08CopyAngles({ data }: Tab08CopyAnglesProps) {
             <CardContent>
               <div className="grid sm:grid-cols-2 gap-4">
                 {data.email_subject_lines?.curiosity && (
-                  <div className="p-3 rounded-lg border">
+                  <div className="p-3 rounded-sm border">
                     <Badge className="bg-purple-500/20 text-purple-400 mb-2">Curiosidad</Badge>
                     <ul className="space-y-2">
                       {data.email_subject_lines.curiosity.map((subject, idx) => (
@@ -546,7 +546,7 @@ export function Tab08CopyAngles({ data }: Tab08CopyAnglesProps) {
                   </div>
                 )}
                 {data.email_subject_lines?.benefit && (
-                  <div className="p-3 rounded-lg border">
+                  <div className="p-3 rounded-sm border">
                     <Badge className="bg-green-500/20 text-green-400 mb-2">Beneficio</Badge>
                     <ul className="space-y-2">
                       {data.email_subject_lines.benefit.map((subject, idx) => (
@@ -559,7 +559,7 @@ export function Tab08CopyAngles({ data }: Tab08CopyAnglesProps) {
                   </div>
                 )}
                 {data.email_subject_lines?.urgency && (
-                  <div className="p-3 rounded-lg border">
+                  <div className="p-3 rounded-sm border">
                     <Badge className="bg-red-500/20 text-red-400 mb-2">Urgencia</Badge>
                     <ul className="space-y-2">
                       {data.email_subject_lines.urgency.map((subject, idx) => (
@@ -572,7 +572,7 @@ export function Tab08CopyAngles({ data }: Tab08CopyAnglesProps) {
                   </div>
                 )}
                 {data.email_subject_lines?.personal && (
-                  <div className="p-3 rounded-lg border">
+                  <div className="p-3 rounded-sm border">
                     <Badge className="bg-blue-500/20 text-blue-400 mb-2">Personal</Badge>
                     <ul className="space-y-2">
                       {data.email_subject_lines.personal.map((subject, idx) => (

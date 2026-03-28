@@ -32,7 +32,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
           return (
             <div
               key={service.id}
-              className="bg-white/5 border border-white/10 rounded-xl p-5 hover:border-purple-500/30 transition-all"
+              className="bg-white/5 border border-white/10 rounded-sm p-5 hover:border-purple-500/30 transition-all"
             >
               <Icon className="h-8 w-8 text-purple-400 mb-3" />
               <h3 className="text-white font-semibold text-sm mb-2">{service.title}</h3>

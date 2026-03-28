@@ -55,7 +55,7 @@ export function RecentTransactions({
         <CardContent>
           <div className="space-y-3">
             {[1, 2, 3, 4, 5].map(i => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-[hsl(270,100%,60%,0.05)]">
+              <div key={i} className="flex items-center gap-3 p-3 rounded-sm bg-[hsl(270,100%,60%,0.05)]">
                 <div className="h-10 w-10 rounded-full bg-[hsl(270,100%,60%,0.1)] animate-pulse" />
                 <div className="flex-1 space-y-2">
                   <div className="h-4 w-32 bg-[hsl(270,100%,60%,0.1)] rounded animate-pulse" />
@@ -101,7 +101,7 @@ export function RecentTransactions({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                   className={cn(
-                    'flex items-center gap-3 p-3 rounded-xl transition-all',
+                    'flex items-center gap-3 p-3 rounded-sm transition-all',
                     'bg-[hsl(270,100%,60%,0.03)] hover:bg-[hsl(270,100%,60%,0.08)]',
                     'border border-transparent hover:border-[hsl(270,100%,60%,0.1)]',
                     'cursor-pointer'

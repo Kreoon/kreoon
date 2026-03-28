@@ -31,24 +31,24 @@ export function ColorPicker({ value, onChange, className }: ColorPickerProps) {
           variant="outline"
           size="sm"
           className={cn(
-            "gap-2 border-white/20 bg-white/5 hover:bg-white/10",
-            "focus:ring-[#a855f7]/50 focus:border-[#a855f7]/50",
+            "gap-2 border-border/40 bg-background/50 hover:bg-background/80",
+            "focus:ring-primary/50 focus:border-primary/50",
             className
           )}
         >
           <div
-            className="h-4 w-4 rounded-full border-2 border-white/30"
+            className="h-4 w-4 rounded-full border-2 border-border/50"
             style={{ backgroundColor: value }}
           />
-          <span className="text-[#cbd5e1]">{value}</span>
+          <span className="text-muted-foreground">{value}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-72 p-4 bg-popover border-[#8b5cf6]/30"
+        className="w-72 p-4 bg-popover border-primary/30"
         align="start"
       >
         <div className="space-y-3">
-          <p className="text-xs font-medium text-[#94a3b8]">Presets tech</p>
+          <p className="text-xs font-medium text-muted-foreground">Presets tech</p>
           <div className="grid grid-cols-6 gap-1.5">
             {TECH_PRESETS.map((p) => (
               <button
@@ -56,31 +56,31 @@ export function ColorPicker({ value, onChange, className }: ColorPickerProps) {
                 type="button"
                 onClick={() => onChange(p.value)}
                 className={cn(
-                  "h-8 w-8 rounded-lg border-2 transition-all",
+                  "h-8 w-8 rounded-sm border-2 transition-all",
                   "hover:scale-110",
                   value === p.value
-                    ? "border-[#a855f7] ring-2 ring-[#a855f7]/50"
-                    : "border-white/20 hover:border-white/40"
+                    ? "border-primary ring-2 ring-primary/50"
+                    : "border-border/40 hover:border-border/60"
                 )}
                 style={{ backgroundColor: p.value }}
                 title={p.label}
               />
             ))}
           </div>
-          <div className="pt-2 border-t border-white/10">
-            <p className="text-xs font-medium text-[#94a3b8] mb-2">Custom</p>
+          <div className="pt-2 border-t border-border/20">
+            <p className="text-xs font-medium text-muted-foreground mb-2">Custom</p>
             <div className="flex gap-2">
               <input
                 type="color"
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="h-9 w-14 cursor-pointer rounded border border-white/20 bg-transparent"
+                className="h-9 w-14 cursor-pointer rounded border border-border/40 bg-transparent"
               />
               <Input
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder="#000000"
-                className="flex-1 h-9 bg-white/5 border-white/20 text-[#f8fafc] text-sm font-mono"
+                className="flex-1 h-9 bg-background/50 border-border/40 text-foreground text-sm font-mono"
               />
             </div>
           </div>

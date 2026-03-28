@@ -10,7 +10,7 @@ const TechCard = React.forwardRef<HTMLDivElement, TechCardProps>(
   ({ className, variant = "default", noBorder = false, ...props }, ref) => {
     const variants = {
       default: cn(
-        "rounded-2xl",
+        "rounded-sm",
         "bg-card text-card-foreground",
         "border border-border",
         "shadow-sm",
@@ -19,7 +19,7 @@ const TechCard = React.forwardRef<HTMLDivElement, TechCardProps>(
         "hover:shadow-md"
       ),
       glass: cn(
-        "rounded-2xl backdrop-blur-2xl",
+        "rounded-sm backdrop-blur-2xl",
         "bg-card/70",
         "border border-border/50",
         "shadow-md",
@@ -28,7 +28,7 @@ const TechCard = React.forwardRef<HTMLDivElement, TechCardProps>(
         "hover:border-primary/15"
       ),
       glow: cn(
-        "rounded-2xl",
+        "rounded-sm",
         "bg-card text-card-foreground",
         "border border-primary/20",
         "shadow-md dark:shadow-[0_0_50px_-10px_hsl(270,100%,60%,0.25)]",
@@ -37,7 +37,7 @@ const TechCard = React.forwardRef<HTMLDivElement, TechCardProps>(
         "hover:shadow-lg dark:hover:shadow-[0_0_70px_-10px_hsl(270,100%,60%,0.4)]"
       ),
       gradient: cn(
-        "rounded-2xl",
+        "rounded-sm",
         "bg-gradient-to-br from-primary/5 via-card to-background",
         "border border-primary/15",
         "shadow-lg",
@@ -45,7 +45,7 @@ const TechCard = React.forwardRef<HTMLDivElement, TechCardProps>(
         "hover:from-primary/10"
       ),
       neon: cn(
-        "rounded-2xl",
+        "rounded-sm",
         "bg-card text-card-foreground",
         "border-2 border-primary/35",
         "shadow-md dark:shadow-[0_0_30px_-5px_hsl(270,100%,60%,0.35)]",
@@ -54,7 +54,7 @@ const TechCard = React.forwardRef<HTMLDivElement, TechCardProps>(
         "hover:shadow-lg dark:hover:shadow-[0_0_50px_-5px_hsl(270,100%,60%,0.5)]"
       ),
       subtle: cn(
-        "rounded-2xl",
+        "rounded-sm",
         "bg-muted/50",
         "border border-border",
         "transition-all duration-300",

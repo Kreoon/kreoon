@@ -6,7 +6,7 @@ export function OrgProfileSkeleton() {
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 -mt-16 relative z-10">
         <div className="flex items-end gap-4">
-          <div className="h-20 w-20 md:h-24 md:w-24 rounded-2xl bg-white/10 border-4 border-[#0a0a0f]" />
+          <div className="h-20 w-20 md:h-24 md:w-24 rounded-sm bg-white/10 border-4 border-[#0a0a0f]" />
           <div className="flex-1 pb-1 space-y-2">
             <div className="h-7 w-48 bg-white/5 rounded" />
             <div className="h-4 w-80 bg-white/5 rounded" />

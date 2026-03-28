@@ -17,7 +17,7 @@ export default function Register() {
       <div className="w-full max-w-lg">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          <img src="/favicon.png" alt="KREOON" className="h-8 w-8 rounded-lg object-cover" />
+          <img src="/favicon.png" alt="KREOON" className="h-8 w-8 rounded-sm object-cover" />
           <span className="text-lg font-bold text-white tracking-tight">KREOON</span>
         </div>
 

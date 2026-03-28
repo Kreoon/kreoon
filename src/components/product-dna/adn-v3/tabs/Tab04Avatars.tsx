@@ -156,7 +156,7 @@ function MainAvatarCard({ avatar, isPrimary = true }: { avatar: MainAvatar; isPr
       <CardContent className="space-y-4">
         {/* Day in the Life / Quote */}
         {(avatar.day_in_the_life || avatar.quote) && (
-          <div className="p-3 rounded-lg bg-muted/50 italic text-sm">
+          <div className="p-3 rounded-sm bg-muted/50 italic text-sm">
             "{avatar.quote || avatar.day_in_the_life}"
           </div>
         )}
@@ -164,7 +164,7 @@ function MainAvatarCard({ avatar, isPrimary = true }: { avatar: MainAvatar; isPr
         {/* Goals & Fears */}
         <div className="grid sm:grid-cols-2 gap-4">
           {avatar.goals && avatar.goals.length > 0 && (
-            <div className="p-3 rounded-lg border bg-green-500/5 border-green-500/20">
+            <div className="p-3 rounded-sm border bg-green-500/5 border-green-500/20">
               <p className="text-xs text-green-400 mb-2 flex items-center gap-1">
                 <Heart className="w-3 h-3" /> Metas
               </p>
@@ -178,7 +178,7 @@ function MainAvatarCard({ avatar, isPrimary = true }: { avatar: MainAvatar; isPr
             </div>
           )}
           {avatar.fears && avatar.fears.length > 0 && (
-            <div className="p-3 rounded-lg border bg-red-500/5 border-red-500/20">
+            <div className="p-3 rounded-sm border bg-red-500/5 border-red-500/20">
               <p className="text-xs text-red-400 mb-2 flex items-center gap-1">
                 <AlertTriangle className="w-3 h-3" /> Miedos
               </p>
@@ -195,7 +195,7 @@ function MainAvatarCard({ avatar, isPrimary = true }: { avatar: MainAvatar; isPr
 
         {/* Messaging Tone */}
         {avatar.messaging_guidelines?.tone && (
-          <div className="p-4 rounded-lg bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+          <div className="p-4 rounded-sm bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-xs text-purple-400 mb-1">Tono de Comunicación</p>
@@ -380,7 +380,7 @@ function MainAvatarCard({ avatar, isPrimary = true }: { avatar: MainAvatar; isPr
             {avatar.messaging_guidelines && (
               <div className="grid sm:grid-cols-2 gap-4">
                 {avatar.messaging_guidelines.words_to_use && avatar.messaging_guidelines.words_to_use.length > 0 && (
-                  <div className="p-3 rounded-lg border bg-green-500/5 border-green-500/20">
+                  <div className="p-3 rounded-sm border bg-green-500/5 border-green-500/20">
                     <p className="text-xs text-green-400 mb-2">✓ Palabras a usar</p>
                     <div className="flex flex-wrap gap-1">
                       {avatar.messaging_guidelines.words_to_use.map((word, idx) => (
@@ -390,7 +390,7 @@ function MainAvatarCard({ avatar, isPrimary = true }: { avatar: MainAvatar; isPr
                   </div>
                 )}
                 {avatar.messaging_guidelines.words_to_avoid && avatar.messaging_guidelines.words_to_avoid.length > 0 && (
-                  <div className="p-3 rounded-lg border bg-red-500/5 border-red-500/20">
+                  <div className="p-3 rounded-sm border bg-red-500/5 border-red-500/20">
                     <p className="text-xs text-red-400 mb-2">✗ Palabras a evitar</p>
                     <div className="flex flex-wrap gap-1">
                       {avatar.messaging_guidelines.words_to_avoid.map((word, idx) => (
@@ -404,7 +404,7 @@ function MainAvatarCard({ avatar, isPrimary = true }: { avatar: MainAvatar; isPr
 
             {/* Emotional Triggers */}
             {avatar.messaging_guidelines?.emotional_triggers && avatar.messaging_guidelines.emotional_triggers.length > 0 && (
-              <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+              <div className="p-3 rounded-sm bg-purple-500/10 border border-purple-500/20">
                 <p className="text-xs text-purple-400 mb-2">
                   <Target className="w-3 h-3 inline mr-1" />
                   Triggers Emocionales
@@ -550,19 +550,19 @@ export function Tab04Avatars({ data }: Tab04AvatarsProps) {
           </CardHeader>
           <CardContent>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="p-3 rounded-lg border bg-blue-500/5 border-blue-500/20">
+              <div className="p-3 rounded-sm border bg-blue-500/5 border-blue-500/20">
                 <p className="text-xs text-blue-400 mb-2 font-medium">1. Awareness</p>
                 <p className="text-sm">{data.avatar_journey.awareness}</p>
               </div>
-              <div className="p-3 rounded-lg border bg-purple-500/5 border-purple-500/20">
+              <div className="p-3 rounded-sm border bg-purple-500/5 border-purple-500/20">
                 <p className="text-xs text-purple-400 mb-2 font-medium">2. Consideration</p>
                 <p className="text-sm">{data.avatar_journey.consideration}</p>
               </div>
-              <div className="p-3 rounded-lg border bg-green-500/5 border-green-500/20">
+              <div className="p-3 rounded-sm border bg-green-500/5 border-green-500/20">
                 <p className="text-xs text-green-400 mb-2 font-medium">3. Decision</p>
                 <p className="text-sm">{data.avatar_journey.decision}</p>
               </div>
-              <div className="p-3 rounded-lg border bg-yellow-500/5 border-yellow-500/20">
+              <div className="p-3 rounded-sm border bg-yellow-500/5 border-yellow-500/20">
                 <p className="text-xs text-yellow-400 mb-2 font-medium">4. Post-Purchase</p>
                 <p className="text-sm">{data.avatar_journey.post_purchase}</p>
               </div>

@@ -234,7 +234,7 @@ export default function OrgProfilePage() {
           <p className="text-gray-400">El perfil que buscas no existe o no está disponible.</p>
           <button
             onClick={() => navigate('/marketplace')}
-            className="bg-purple-600 hover:bg-purple-500 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+            className="bg-purple-600 hover:bg-purple-500 text-white font-semibold px-6 py-3 rounded-sm transition-colors"
           >
             Volver al Marketplace
           </button>

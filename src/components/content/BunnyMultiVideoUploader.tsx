@@ -495,7 +495,7 @@ export function BunnyMultiVideoUploader({
   return (
     <div className="space-y-4">
       {uploads.map((upload, index) => (
-        <div key={upload.id} className="space-y-2 p-3 rounded-lg border bg-muted/30">
+        <div key={upload.id} className="space-y-2 p-3 rounded-sm border bg-muted/30">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Variable {index + 1}</span>
             <div className="flex items-center gap-2">
@@ -531,7 +531,7 @@ export function BunnyMultiVideoUploader({
           {/* Video Preview - Vertical Format */}
           {showPreview && upload.embedUrl && upload.status === 'completed' && (
             <div
-              className="rounded-lg overflow-hidden bg-black flex items-center justify-center mx-auto"
+              className="rounded-sm overflow-hidden bg-black flex items-center justify-center mx-auto"
               style={{ aspectRatio: '9/16', maxHeight: '300px', width: 'auto' }}
             >
               {renderBunnyEmbed(upload.embedUrl)}

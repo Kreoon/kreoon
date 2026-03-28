@@ -199,7 +199,7 @@ export function ContentSelector({ open, onClose, onSelect }: ContentSelectorProp
                       key={idx}
                       onClick={() => setSelectedVariantIdx(idx)}
                       className={cn(
-                        'w-full rounded-lg overflow-hidden border transition-all',
+                        'w-full rounded-sm overflow-hidden border transition-all',
                         isActive
                           ? 'ring-2 ring-primary border-primary'
                           : 'border-border/50 hover:border-primary/40'
@@ -240,7 +240,7 @@ export function ContentSelector({ open, onClose, onSelect }: ContentSelectorProp
             {/* Preview (right) */}
             <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4">
               <div className="w-full max-w-xs">
-                <div className="aspect-[9/16] rounded-xl overflow-hidden bg-black relative shadow-2xl">
+                <div className="aspect-[9/16] rounded-sm overflow-hidden bg-black relative shadow-2xl">
                   {bunnyUrls?.mp4 ? (
                     <video
                       key={selectedUrl}
@@ -422,7 +422,7 @@ export function ContentSelector({ open, onClose, onSelect }: ContentSelectorProp
                     key={content.id}
                     onClick={() => handleSelectContent(content)}
                     className={cn(
-                      'group relative rounded-xl overflow-hidden border text-left transition-all',
+                      'group relative rounded-sm overflow-hidden border text-left transition-all',
                       'bg-card/50 backdrop-blur-sm',
                       'border-border/50 hover:border-primary/40 hover:shadow-md'
                     )}

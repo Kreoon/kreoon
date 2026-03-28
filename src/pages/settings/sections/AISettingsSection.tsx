@@ -39,11 +39,11 @@ export default function AISettingsSection() {
   return (
     <div className="space-y-6">
       {/* Header con gradiente */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary/10 via-purple-500/10 to-pink-500/10 p-6 border border-primary/20">
+      <div className="relative overflow-hidden rounded-sm bg-gradient-to-br from-primary/10 via-purple-500/10 to-pink-500/10 p-6 border border-primary/20">
         <div className="absolute inset-0 bg-grid-white/5" />
         <div className="relative">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-primary/20">
+            <div className="p-2 rounded-sm bg-primary/20">
               <Brain className="h-6 w-6 text-primary" />
             </div>
             <div>

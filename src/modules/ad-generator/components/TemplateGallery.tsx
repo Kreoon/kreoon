@@ -53,7 +53,7 @@ export function TemplateGallery({ open, onOpenChange, selectedId, onSelect }: Te
             <button
               onClick={() => { onSelect(null); onOpenChange(false); }}
               className={cn(
-                "rounded-lg border-2 p-3 text-center transition-colors",
+                "rounded-sm border-2 p-3 text-center transition-colors",
                 !selectedId ? "border-primary bg-primary/5" : "border-border hover:border-primary/40",
               )}
             >
@@ -66,7 +66,7 @@ export function TemplateGallery({ open, onOpenChange, selectedId, onSelect }: Te
                 key={tmpl.id}
                 onClick={() => { onSelect(tmpl); onOpenChange(false); }}
                 className={cn(
-                  "relative rounded-lg border-2 overflow-hidden transition-colors",
+                  "relative rounded-sm border-2 overflow-hidden transition-colors",
                   selectedId === tmpl.id ? "border-primary" : "border-border hover:border-primary/40",
                 )}
               >

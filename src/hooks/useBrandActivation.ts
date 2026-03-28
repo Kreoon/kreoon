@@ -111,7 +111,7 @@ export function useBrandActivation() {
     if (!user) return null;
     setLoading(true);
     try {
-      const { data: row, error } = await (supabase as any)
+      const { data: row, error } = await supabase
         .from('marketplace_campaigns')
         .insert({
           title: data.title,
@@ -155,7 +155,7 @@ export function useBrandActivation() {
   ): Promise<PublicationWithCreator[]> => {
     setLoading(true);
     try {
-      const { data: rows, error } = await (supabase as any)
+      const { data: rows, error } = await supabase
         .from('activation_publications')
         .select(`
           *,
@@ -196,7 +196,7 @@ export function useBrandActivation() {
   ): Promise<string | null> => {
     setLoading(true);
     try {
-      const { data: row, error } = await (supabase as any)
+      const { data: row, error } = await supabase
         .from('activation_publications')
         .insert({
           campaign_id: campaignId,
@@ -232,7 +232,7 @@ export function useBrandActivation() {
   ): Promise<boolean> => {
     setLoading(true);
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('activation_publications')
         .update({
           publication_url: data.publication_url,
@@ -280,7 +280,7 @@ export function useBrandActivation() {
         updatePayload.published_at = new Date().toISOString();
       }
 
-      const { error: updateError } = await (supabase as any)
+      const { error: updateError } = await supabase
         .from('activation_publications')
         .update(updatePayload)
         .eq('id', publicationId);
@@ -317,7 +317,7 @@ export function useBrandActivation() {
   ): Promise<boolean> => {
     setLoading(true);
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('activation_publications')
         .update({
           ...metrics,
@@ -355,7 +355,7 @@ export function useBrandActivation() {
   ): Promise<boolean> => {
     setLoading(true);
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('creator_social_stats')
         .upsert(
           {
@@ -396,7 +396,7 @@ export function useBrandActivation() {
   const getCreatorSocialStats = useCallback(async (
     creatorProfileId: string,
   ): Promise<CreatorSocialStats[]> => {
-    const { data: rows, error } = await (supabase as any)
+    const { data: rows, error } = await supabase
       .from('creator_social_stats')
       .select('*')
       .eq('creator_profile_id', creatorProfileId)
@@ -476,7 +476,7 @@ export function useBrandActivation() {
   const getPublication = useCallback(async (
     publicationId: string,
   ): Promise<ActivationPublication | null> => {
-    const { data: row, error } = await (supabase as any)
+    const { data: row, error } = await supabase
       .from('activation_publications')
       .select('*')
       .eq('id', publicationId)
@@ -498,7 +498,7 @@ export function useBrandActivation() {
   ): Promise<boolean> => {
     setLoading(true);
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('activation_publications')
         .update({ insights_screenshot_url: screenshotUrl })
         .eq('id', publicationId);
@@ -520,7 +520,7 @@ export function useBrandActivation() {
   ): Promise<boolean> => {
     setLoading(true);
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('activation_publications')
         .update({
           is_still_live: false,

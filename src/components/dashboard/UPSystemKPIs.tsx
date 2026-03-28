@@ -102,8 +102,8 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
     return (
       <div className="space-y-4">
         {/* Main KPIs */}
-        <div className="grid grid-cols-4 gap-2">
-          <div className={cn("p-3 rounded-lg border bg-gradient-to-br from-blue-500/10 to-transparent border-blue-500/20")}>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className={cn("p-3 rounded-sm border bg-gradient-to-br from-blue-500/10 to-transparent border-blue-500/20")}>
             <div className="flex items-center gap-1 mb-1">
               <Zap className="h-3 w-3 text-blue-500" />
               <span className="text-[10px] text-muted-foreground">Puntos</span>
@@ -111,7 +111,7 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
             <p className="text-xl font-bold text-blue-500">{stats.totalPoints.toLocaleString()}</p>
           </div>
 
-          <div className="p-3 rounded-lg border bg-gradient-to-br from-green-500/10 to-transparent border-green-500/20">
+          <div className="p-3 rounded-sm border bg-gradient-to-br from-green-500/10 to-transparent border-green-500/20">
             <div className="flex items-center gap-1 mb-1">
               <CheckCircle className="h-3 w-3 text-green-500" />
               <span className="text-[10px] text-muted-foreground">A tiempo</span>
@@ -119,7 +119,7 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
             <p className="text-xl font-bold text-green-500">{stats.onTimeTasks}</p>
           </div>
 
-          <div className="p-3 rounded-lg border bg-gradient-to-br from-yellow-500/10 to-transparent border-yellow-500/20">
+          <div className="p-3 rounded-sm border bg-gradient-to-br from-yellow-500/10 to-transparent border-yellow-500/20">
             <div className="flex items-center gap-1 mb-1">
               <Clock className="h-3 w-3 text-yellow-500" />
               <span className="text-[10px] text-muted-foreground">Tardías</span>
@@ -127,7 +127,7 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
             <p className="text-xl font-bold text-yellow-500">{stats.lateTasks}</p>
           </div>
 
-          <div className="p-3 rounded-lg border bg-gradient-to-br from-orange-500/10 to-transparent border-orange-500/20">
+          <div className="p-3 rounded-sm border bg-gradient-to-br from-orange-500/10 to-transparent border-orange-500/20">
             <div className="flex items-center gap-1 mb-1">
               <Flame className="h-3 w-3 text-orange-500" />
               <span className="text-[10px] text-muted-foreground">Racha Max</span>
@@ -138,7 +138,7 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
 
         {/* Progress and secondary metrics */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="p-3 rounded-lg border bg-card">
+          <div className="p-3 rounded-sm border bg-card">
             <div className="flex justify-between items-center mb-2">
               <span className="text-xs text-muted-foreground">Tasa de Puntualidad</span>
               <span className={cn(
@@ -149,7 +149,7 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
             <Progress value={stats.avgOnTimeRate} className="h-2" />
           </div>
 
-          <div className="p-3 rounded-lg border bg-card">
+          <div className="p-3 rounded-sm border bg-card">
             <div className="flex justify-between items-center mb-2">
               <span className="text-xs text-muted-foreground">Tareas Totales</span>
               <span className="text-sm font-bold text-foreground">{stats.totalTasks}</span>
@@ -163,7 +163,7 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
 
         {/* Top Performers */}
         {stats.topPerformers.length > 0 && (
-          <div className="p-3 rounded-lg border bg-card">
+          <div className="p-3 rounded-sm border bg-card">
             <h4 className="text-xs font-semibold mb-2 flex items-center gap-1">
               <Trophy className="h-3 w-3 text-primary" />
               Top {type === 'creator' ? 'Creadores' : 'Editores'}
@@ -212,9 +212,9 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
 
   if (loading) {
     return (
-      <div className={cn("rounded-xl border border-border/50 bg-card p-4", className)}>
+      <div className={cn("rounded-sm border border-border/50 bg-card p-4", className)}>
         <Skeleton className="h-6 w-40 mb-4" />
-        <div className="grid grid-cols-4 gap-2 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-20" />)}
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -226,7 +226,7 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
   }
 
   return (
-    <div className={cn("rounded-xl border border-border/50 bg-card", className)}>
+    <div className={cn("rounded-sm border border-border/50 bg-card", className)}>
       <Tabs defaultValue="creators" className="w-full">
         <div className="flex items-center justify-between p-3 border-b">
           <div className="flex items-center gap-2">

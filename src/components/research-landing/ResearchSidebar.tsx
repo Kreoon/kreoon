@@ -21,7 +21,7 @@ export function ResearchSidebar({ activeSectionId, onSectionClick }: ResearchSid
               key={section.id}
               onClick={() => onSectionClick(section.id)}
               className={cn(
-                'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition-all duration-200 text-left',
+                'w-full flex items-center gap-2.5 px-3 py-2 rounded-sm text-xs transition-all duration-200 text-left',
                 isActive
                   ? 'bg-purple-500/15 text-white border-l-2 border-purple-500 font-medium'
                   : 'text-white/50 hover:text-white/80 hover:bg-white/5 border-l-2 border-transparent'

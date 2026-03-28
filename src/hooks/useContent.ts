@@ -1,40 +1,19 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Content, ContentStatus } from '@/types/database';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { updateContentStatusWithUP } from '@/hooks/useContentStatusWithUP';
-
-// Global set to track content IDs recently updated by the current session
-// This prevents realtime events from triggering unnecessary refetches
-const recentLocalUpdates = new Set<string>();
-const localUpdateTimers = new Map<string, ReturnType<typeof setTimeout>>();
-const LOCAL_UPDATE_DEBOUNCE_MS = 3000;
+import { useRealtimeContent } from '@/hooks/realtime/useRealtimeContent';
+import { markLocalUpdate as markLocalUpdateNew } from '@/hooks/realtime/useRealtimeDebounce';
+import type { ProfileCache } from '@/hooks/realtime/types';
 
 // Default page size for content queries to prevent statement timeouts
 const CONTENT_PAGE_SIZE = 500;
 
-// Cooldown after errors before realtime can trigger refetches (30s)
-const ERROR_COOLDOWN_MS = 30_000;
-
-// Helper to mark a content as recently updated locally
-// Exported so other hooks (like useContentDetail) can use it
-// durationMs allows extending the window for long operations like video encoding
-export function markLocalUpdate(contentId: string, durationMs: number = LOCAL_UPDATE_DEBOUNCE_MS) {
-  recentLocalUpdates.add(contentId);
-  // Clear any existing timer for this content before setting a new one
-  const existingTimer = localUpdateTimers.get(contentId);
-  if (existingTimer) clearTimeout(existingTimer);
-  const timer = setTimeout(() => {
-    recentLocalUpdates.delete(contentId);
-    localUpdateTimers.delete(contentId);
-  }, durationMs);
-  localUpdateTimers.set(contentId, timer);
-}
-
-// Helper to check if we should skip realtime refetch for this content
-function shouldSkipRealtimeRefetch(contentId?: string): boolean {
-  if (!contentId) return false;
-  return recentLocalUpdates.has(contentId);
+// Re-export markLocalUpdate from new module for backward compatibility
+// This allows other hooks (like useContentDetail) to continue using it
+export function markLocalUpdate(contentId: string, durationMs: number = 3000) {
+  markLocalUpdateNew(contentId, ['*'], durationMs);
 }
 
 // Shared helper: fetch content via SECURITY DEFINER RPC (bypasses 18 RLS policies)
@@ -133,8 +112,14 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isPlatformRoot, currentOrgId, loading: orgLoading } = useOrgOwner();
-  const realtimeDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastErrorTimeRef = useRef<number>(0);
+
+  // Cache de profiles para enriquecimiento en realtime
+  const profileCacheRef = useRef<ProfileCache>({
+    clients: new Map(),
+    creators: new Map(),
+    editors: new Map(),
+  });
 
   const fetchContent = useCallback(async () => {
     // Wait for org context to resolve before fetching
@@ -147,6 +132,20 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
         role,
         userId,
       });
+
+      // Actualizar cache de profiles con los datos enriquecidos
+      for (const item of result) {
+        if (item.client && item.client_id) {
+          profileCacheRef.current.clients.set(item.client_id, item.client);
+        }
+        if (item.creator && item.creator_id) {
+          profileCacheRef.current.creators.set(item.creator_id, item.creator);
+        }
+        if (item.editor && item.editor_id) {
+          profileCacheRef.current.editors.set(item.editor_id, item.editor);
+        }
+      }
+
       setContent(result as unknown as Content[]);
       setError(null);
       lastErrorTimeRef.current = 0;
@@ -159,42 +158,93 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
     }
   }, [userId, role, isPlatformRoot, currentOrgId, orgLoading]);
 
+  // Handler para cambios realtime - actualiza state sin refetch completo
+  const handleRealtimeChange = useCallback((updater: (current: Content[]) => Content[]) => {
+    setContent(updater);
+  }, []);
+
+  // Suscripción realtime para sincronización entre usuarios
+  useRealtimeContent({
+    organizationId: currentOrgId,
+    enabled: !orgLoading && !!currentOrgId,
+    onContentChange: handleRealtimeChange,
+    profileCache: profileCacheRef.current,
+  });
+
   const updateContentStatus = async (contentId: string, newStatus: ContentStatus, oldStatus?: ContentStatus) => {
     markLocalUpdate(contentId);
-    if (oldStatus) {
-      await updateContentStatusWithUP({ contentId, oldStatus, newStatus });
-    } else {
-      // Fetch current status via RPC (bypasses 18 RLS policies)
-      const { data: contentArr, error: contentErr } = await supabase
-        .rpc('get_content_by_id', { p_content_id: contentId });
-      if (contentErr) throw contentErr;
-      const currentContent = contentArr?.[0];
-      if (currentContent) {
-        await updateContentStatusWithUP({ contentId, oldStatus: currentContent.status as ContentStatus, newStatus });
+
+    // Optimistic update - actualiza UI inmediatamente
+    setContent(prev => prev.map(c =>
+      c.id === contentId ? { ...c, status: newStatus, updated_at: new Date().toISOString() } : c
+    ));
+
+    try {
+      if (oldStatus) {
+        await updateContentStatusWithUP({ contentId, oldStatus, newStatus });
       } else {
-        await supabase.rpc('update_content_by_id', { p_content_id: contentId, p_updates: { status: newStatus } });
+        // Fetch current status via RPC (bypasses 18 RLS policies)
+        const { data: contentArr, error: contentErr } = await supabase
+          .rpc('get_content_by_id', { p_content_id: contentId });
+        if (contentErr) throw contentErr;
+        const currentContent = contentArr?.[0];
+        if (currentContent) {
+          await updateContentStatusWithUP({ contentId, oldStatus: currentContent.status as ContentStatus, newStatus });
+        } else {
+          await supabase.rpc('update_content_by_id', { p_content_id: contentId, p_updates: { status: newStatus } });
+        }
       }
+    } catch (err) {
+      // Rollback en caso de error
+      console.error('Error updating status:', err);
+      await fetchContent();
+      throw err;
     }
-    await fetchContent();
   };
 
   const updateContent = async (contentId: string, updates: Partial<Content>) => {
     markLocalUpdate(contentId);
-    const { error } = await supabase.rpc('update_content_by_id', { p_content_id: contentId, p_updates: updates as any });
-    if (error) throw error;
-    await fetchContent();
+
+    // Optimistic update
+    setContent(prev => prev.map(c =>
+      c.id === contentId ? { ...c, ...updates, updated_at: new Date().toISOString() } : c
+    ));
+
+    try {
+      const { error } = await supabase.rpc('update_content_by_id', { p_content_id: contentId, p_updates: updates as any });
+      if (error) throw error;
+    } catch (err) {
+      // Rollback en caso de error
+      console.error('Error updating content:', err);
+      await fetchContent();
+      throw err;
+    }
   };
 
   const deleteContent = async (contentId: string, reason?: string) => {
     markLocalUpdate(contentId);
-    // Usar soft delete - mueve a papelera en lugar de eliminar permanentemente
-    const { data, error } = await supabase.rpc('soft_delete_content', {
-      p_content_id: contentId,
-      p_reason: reason || null
-    });
-    if (error) throw error;
-    if (data && !data.success) throw new Error(data.error || 'Error al eliminar');
-    await fetchContent();
+
+    // Guardar item para posible rollback
+    const deletedItem = content.find(c => c.id === contentId);
+
+    // Optimistic update - remover de la lista
+    setContent(prev => prev.filter(c => c.id !== contentId));
+
+    try {
+      // Usar soft delete - mueve a papelera en lugar de eliminar permanentemente
+      const { data, error } = await supabase.rpc('soft_delete_content', {
+        p_content_id: contentId,
+        p_reason: reason || null
+      });
+      if (error) throw error;
+      if (data && !data.success) throw new Error(data.error || 'Error al eliminar');
+    } catch (err) {
+      // Rollback - restaurar item eliminado
+      if (deletedItem) {
+        setContent(prev => [deletedItem, ...prev]);
+      }
+      throw err;
+    }
   };
 
   // Restaurar contenido desde papelera
@@ -205,38 +255,60 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
     });
     if (error) throw error;
     if (data && !data.success) throw new Error(data.error || 'Error al restaurar');
+    // Refetch necesario porque el item no está en el state actual
     await fetchContent();
   };
 
   const approveContent = async (contentId: string, approverId: string) => {
     markLocalUpdate(contentId);
-    // Fetch current status via RPC (bypasses 18 RLS policies)
-    const { data: contentArr, error: approveErr } = await supabase
-      .rpc('get_content_by_id', { p_content_id: contentId });
-    if (approveErr) throw approveErr;
-    const currentContent = contentArr?.[0];
-    if (currentContent) {
-      await updateContentStatusWithUP({ contentId, oldStatus: currentContent.status as ContentStatus, newStatus: 'approved' });
+
+    // Optimistic update
+    setContent(prev => prev.map(c =>
+      c.id === contentId ? { ...c, status: 'approved' as ContentStatus, approved_by: approverId, updated_at: new Date().toISOString() } : c
+    ));
+
+    try {
+      // Fetch current status via RPC (bypasses 18 RLS policies)
+      const { data: contentArr, error: approveErr } = await supabase
+        .rpc('get_content_by_id', { p_content_id: contentId });
+      if (approveErr) throw approveErr;
+      const currentContent = contentArr?.[0];
+      if (currentContent) {
+        await updateContentStatusWithUP({ contentId, oldStatus: currentContent.status as ContentStatus, newStatus: 'approved' });
+      }
+      await supabase.rpc('update_content_by_id', { p_content_id: contentId, p_updates: { approved_by: approverId } });
+    } catch (err) {
+      console.error('Error approving content:', err);
+      await fetchContent();
+      throw err;
     }
-    await supabase.rpc('update_content_by_id', { p_content_id: contentId, p_updates: { approved_by: approverId } });
-    await fetchContent();
   };
 
   const approveScript = async (contentId: string, approverId: string) => {
     markLocalUpdate(contentId);
-    const { error } = await supabase.rpc('update_content_by_id', {
-      p_content_id: contentId,
-      p_updates: { status: 'script_approved', script_approved_at: new Date().toISOString(), script_approved_by: approverId }
-    });
-    if (error) throw error;
-    await fetchContent();
+
+    // Optimistic update
+    const now = new Date().toISOString();
+    setContent(prev => prev.map(c =>
+      c.id === contentId ? { ...c, status: 'script_approved' as ContentStatus, script_approved_at: now, script_approved_by: approverId, updated_at: now } : c
+    ));
+
+    try {
+      const { error } = await supabase.rpc('update_content_by_id', {
+        p_content_id: contentId,
+        p_updates: { status: 'script_approved', script_approved_at: now, script_approved_by: approverId }
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error approving script:', err);
+      await fetchContent();
+      throw err;
+    }
   };
 
   useEffect(() => {
     fetchContent();
   }, [fetchContent]);
-
-  // Realtime auto-refresh removed — content updates only on explicit user actions (refetch)
 
   return { content, loading, error, refetch: fetchContent, updateContentStatus, updateContent, deleteContent, restoreContent, approveContent, approveScript };
 }
@@ -247,8 +319,14 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isPlatformRoot, currentOrgId, loading: orgLoading } = useOrgOwner();
-  const realtimeDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastErrorTimeRef = useRef<number>(0);
+
+  // Cache de profiles para enriquecimiento en realtime
+  const profileCacheRef = useRef<ProfileCache>({
+    clients: new Map(),
+    creators: new Map(),
+    editors: new Map(),
+  });
 
   const fetchContent = useCallback(async () => {
     if (orgLoading) return;
@@ -263,6 +341,20 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
         creatorId: options.creatorId,
         editorId: options.editorId,
       });
+
+      // Actualizar cache de profiles
+      for (const item of result) {
+        if (item.client && item.client_id) {
+          profileCacheRef.current.clients.set(item.client_id, item.client);
+        }
+        if (item.creator && item.creator_id) {
+          profileCacheRef.current.creators.set(item.creator_id, item.creator);
+        }
+        if (item.editor && item.editor_id) {
+          profileCacheRef.current.editors.set(item.editor_id, item.editor);
+        }
+      }
+
       setContent(result as unknown as Content[]);
       setError(null);
       lastErrorTimeRef.current = 0;
@@ -275,38 +367,69 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
     }
   }, [options.userId, options.role, options.clientId, options.creatorId, options.editorId, options.showOnlyAssigned, isPlatformRoot, currentOrgId, orgLoading]);
 
+  // Handler para cambios realtime
+  const handleRealtimeChange = useCallback((updater: (current: Content[]) => Content[]) => {
+    setContent(updater);
+  }, []);
+
+  // Suscripción realtime para sincronización entre usuarios
+  useRealtimeContent({
+    organizationId: currentOrgId,
+    enabled: !orgLoading && !!currentOrgId,
+    onContentChange: handleRealtimeChange,
+    profileCache: profileCacheRef.current,
+  });
+
   const updateContentStatus = async (contentId: string, newStatus: ContentStatus, oldStatus?: ContentStatus) => {
     markLocalUpdate(contentId);
-    if (oldStatus) {
-      await updateContentStatusWithUP({ contentId, oldStatus, newStatus });
-    } else {
-      // Fetch current status via RPC (bypasses 18 RLS policies)
-      const { data: contentArr, error: statusErr } = await supabase
-        .rpc('get_content_by_id', { p_content_id: contentId });
-      if (statusErr) throw statusErr;
-      const currentContent = contentArr?.[0];
-      if (currentContent) {
-        await updateContentStatusWithUP({ contentId, oldStatus: currentContent.status as ContentStatus, newStatus });
+
+    // Optimistic update
+    setContent(prev => prev.map(c =>
+      c.id === contentId ? { ...c, status: newStatus, updated_at: new Date().toISOString() } : c
+    ));
+
+    try {
+      if (oldStatus) {
+        await updateContentStatusWithUP({ contentId, oldStatus, newStatus });
       } else {
-        await supabase.rpc('update_content_by_id', { p_content_id: contentId, p_updates: { status: newStatus } });
+        const { data: contentArr, error: statusErr } = await supabase
+          .rpc('get_content_by_id', { p_content_id: contentId });
+        if (statusErr) throw statusErr;
+        const currentContent = contentArr?.[0];
+        if (currentContent) {
+          await updateContentStatusWithUP({ contentId, oldStatus: currentContent.status as ContentStatus, newStatus });
+        } else {
+          await supabase.rpc('update_content_by_id', { p_content_id: contentId, p_updates: { status: newStatus } });
+        }
       }
+    } catch (err) {
+      console.error('Error updating status:', err);
+      await fetchContent();
+      throw err;
     }
-    await fetchContent();
   };
 
   const deleteContent = async (contentId: string, reason?: string) => {
     markLocalUpdate(contentId);
-    // Usar soft delete - mueve a papelera en lugar de eliminar permanentemente
-    const { data, error } = await supabase.rpc('soft_delete_content', {
-      p_content_id: contentId,
-      p_reason: reason || null
-    });
-    if (error) throw error;
-    if (data && !data.success) throw new Error(data.error || 'Error al eliminar');
-    await fetchContent();
+
+    const deletedItem = content.find(c => c.id === contentId);
+    setContent(prev => prev.filter(c => c.id !== contentId));
+
+    try {
+      const { data, error } = await supabase.rpc('soft_delete_content', {
+        p_content_id: contentId,
+        p_reason: reason || null
+      });
+      if (error) throw error;
+      if (data && !data.success) throw new Error(data.error || 'Error al eliminar');
+    } catch (err) {
+      if (deletedItem) {
+        setContent(prev => [deletedItem, ...prev]);
+      }
+      throw err;
+    }
   };
 
-  // Restaurar contenido desde papelera
   const restoreContent = async (contentId: string) => {
     markLocalUpdate(contentId);
     const { data, error } = await supabase.rpc('restore_content_from_trash', {
@@ -320,8 +443,6 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
   useEffect(() => {
     fetchContent();
   }, [fetchContent]);
-
-  // Realtime auto-refresh removed — content updates only on explicit user actions (refetch)
 
   return { content, loading, error, refetch: fetchContent, updateContentStatus, deleteContent, restoreContent };
 }

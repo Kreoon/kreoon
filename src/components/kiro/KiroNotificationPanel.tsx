@@ -98,7 +98,7 @@ const NotificationItem = memo(function NotificationItem({
         transition={{ duration: 0.2 }}
         onClick={handleClick}
         className={cn(
-          'relative group p-3 rounded-lg transition-colors duration-150',
+          'relative group p-3 rounded-sm transition-colors duration-150',
           'border-l-2 touch-pan-y',
           isUnread
             ? 'bg-violet-500/10 border-l-violet-500'
@@ -180,7 +180,7 @@ const NotificationItem = memo(function NotificationItem({
           onClick={handleDismiss}
           className={cn(
             'absolute top-1 right-1',
-            'w-8 h-8 rounded-lg flex items-center justify-center',
+            'w-8 h-8 rounded-sm flex items-center justify-center',
             'text-gray-500 hover:text-foreground',
             'bg-transparent hover:bg-red-500/20',
             'opacity-0 group-hover:opacity-100 transition-opacity',
@@ -338,7 +338,7 @@ export function KiroNotificationPanel({ awardPoints }: KiroNotificationPanelProp
             onClick={handleForceSync}
             disabled={isSyncing}
             className={cn(
-              'p-1.5 rounded-lg',
+              'p-1.5 rounded-sm',
               'text-gray-500 hover:text-violet-400',
               'hover:bg-violet-500/10 transition-colors',
               isSyncing && 'animate-spin'
@@ -355,7 +355,7 @@ export function KiroNotificationPanel({ awardPoints }: KiroNotificationPanelProp
                 markAllAsRead();
               }}
               className={cn(
-                'flex items-center gap-1 px-2 py-1.5 rounded-lg min-h-[44px]',
+                'flex items-center gap-1 px-2 py-1.5 rounded-sm min-h-[44px]',
                 'text-xs text-violet-400',
                 'hover:bg-violet-500/10 transition-colors'
               )}
@@ -401,7 +401,7 @@ export function KiroNotificationPanel({ awardPoints }: KiroNotificationPanelProp
               clearAllNotifications();
             }}
             className={cn(
-              'w-full flex items-center justify-center gap-1.5 py-2 rounded-lg min-h-[44px]',
+              'w-full flex items-center justify-center gap-1.5 py-2 rounded-sm min-h-[44px]',
               'text-xs text-red-400',
               'bg-red-500/10 border border-red-500/20',
               'hover:bg-red-500/20 transition-colors'

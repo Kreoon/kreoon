@@ -44,7 +44,7 @@ export function ContactCard({ contact, onEdit, onDelete, onClick }: ContactCardP
     <div
       onClick={() => onClick?.(contact)}
       className={cn(
-        'group relative rounded-xl overflow-hidden cursor-pointer',
+        'group relative rounded-sm overflow-hidden cursor-pointer',
         'transition-all duration-200',
         'hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(168,85,247,0.2)]',
         'hover:border-[rgba(168,85,247,0.5)]',
@@ -102,7 +102,7 @@ export function ContactCard({ contact, onEdit, onDelete, onClick }: ContactCardP
                   variant="ghost"
                   size="icon"
                   onClick={(e) => e.stopPropagation()}
-                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg bg-black/30 hover:bg-black/50 text-white"
+                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity rounded-sm bg-black/30 hover:bg-black/50 text-white"
                 >
                   <MoreVertical className="h-3.5 w-3.5" />
                 </Button>

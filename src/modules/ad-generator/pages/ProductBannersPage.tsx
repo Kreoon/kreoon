@@ -99,7 +99,7 @@ export default function ProductBannersPage() {
         </Button>
 
         {isEditing ? (
-          <div className="space-y-3 rounded-lg border border-border p-4 bg-muted/10">
+          <div className="space-y-3 rounded-sm border border-border p-4 bg-muted/10">
             <div className="space-y-1.5">
               <label className="text-xs font-medium">Nombre del producto</label>
               <Input
@@ -134,11 +134,11 @@ export default function ProductBannersPage() {
         ) : (
           <div className="flex items-center gap-3">
             {thumbnailUrl ? (
-              <div className="h-12 w-12 shrink-0 rounded-lg overflow-hidden border border-border/50">
+              <div className="h-12 w-12 shrink-0 rounded-sm overflow-hidden border border-border/50">
                 <img src={thumbnailUrl} alt={product.name} className="w-full h-full object-cover" />
               </div>
             ) : (
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm bg-primary/10 border border-primary/20">
                 <ImagePlus className="h-6 w-6 text-primary" />
               </div>
             )}

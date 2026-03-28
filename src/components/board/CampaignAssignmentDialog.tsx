@@ -168,12 +168,12 @@ export function CampaignAssignmentDialog({
           <div className="space-y-2">
             <Label>Campaña de Destino *</Label>
             {loading ? (
-              <div className="flex items-center gap-2 p-3 border rounded-md text-muted-foreground">
+              <div className="flex items-center gap-2 p-3 border rounded-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Cargando campañas...
               </div>
             ) : campaigns.length === 0 ? (
-              <div className="p-3 border rounded-md text-muted-foreground text-sm">
+              <div className="p-3 border rounded-sm text-muted-foreground text-sm">
                 No hay campañas activas para este cliente. Crea una campaña primero en el módulo de Marketing.
               </div>
             ) : (

@@ -232,7 +232,7 @@ export function AdminActionsSection({
               Cambiar rol {activeRole ? `(${getRoleLabel(activeRole as AppRole)})` : '(Sin rol)'}
             </Button>
           ) : (
-            <div className="space-y-2 p-2 rounded-lg bg-white/5 border border-white/10">
+            <div className="space-y-2 p-2 rounded-sm bg-white/5 border border-white/10">
               <p className="text-[10px] text-white/40">Seleccionar rol de plataforma</p>
               <Select value={selectedActiveRole} onValueChange={setSelectedActiveRole}>
                 <SelectTrigger className="h-8 text-xs bg-transparent border-white/10">
@@ -357,7 +357,7 @@ export function AdminActionsSection({
               {orgId ? 'Cambiar organización' : 'Asignar a organización'}
             </Button>
           ) : (
-            <div className="space-y-2 p-2 rounded-lg bg-white/5 border border-white/10">
+            <div className="space-y-2 p-2 rounded-sm bg-white/5 border border-white/10">
               <p className="text-[10px] text-white/40">Seleccionar organización y rol</p>
               <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
                 <SelectTrigger className="h-8 text-xs bg-transparent border-white/10">

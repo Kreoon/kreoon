@@ -67,7 +67,7 @@ export function PublicationMetricsPanel({ publication, onBack, onRefresh }: Publ
           Volver
         </button>
         <div className="flex items-center gap-3">
-          <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', platformInfo.bgColor)}>
+          <div className={cn('w-10 h-10 rounded-sm flex items-center justify-center', platformInfo.bgColor)}>
             <span className="text-white font-bold">{platformInfo.label.charAt(0)}</span>
           </div>
           <div>
@@ -84,7 +84,7 @@ export function PublicationMetricsPanel({ publication, onBack, onRefresh }: Publ
 
       {/* Engagement rate */}
       {publication.engagement_rate != null && (
-        <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-xl p-5 text-center">
+        <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-sm p-5 text-center">
           <p className="text-3xl font-bold text-white">{publication.engagement_rate}%</p>
           <p className="text-gray-400 text-sm mt-1">Tasa de Engagement</p>
           {publication.followers_at_post != null && (
@@ -97,7 +97,7 @@ export function PublicationMetricsPanel({ publication, onBack, onRefresh }: Publ
 
       {/* Bonus info */}
       {(publication.base_payment != null || publication.engagement_bonus != null) && (
-        <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-4 space-y-2">
+        <div className="bg-green-500/5 border border-green-500/20 rounded-sm p-4 space-y-2">
           <h3 className="text-sm font-semibold text-green-400 flex items-center gap-1.5">
             <Gift className="h-4 w-4" />
             Compensación
@@ -146,13 +146,13 @@ export function PublicationMetricsPanel({ publication, onBack, onRefresh }: Publ
               <button
                 onClick={handleSave}
                 disabled={loading}
-                className="text-xs bg-purple-600 text-white px-3 py-1 rounded-lg hover:bg-purple-500 disabled:opacity-50 flex items-center gap-1 transition-colors"
+                className="text-xs bg-purple-600 text-white px-3 py-1 rounded-sm hover:bg-purple-500 disabled:opacity-50 flex items-center gap-1 transition-colors"
               >
                 {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Guardar'}
               </button>
               <button
                 onClick={() => setEditing(false)}
-                className="text-xs text-gray-400 hover:text-white px-3 py-1 rounded-lg transition-colors"
+                className="text-xs text-gray-400 hover:text-white px-3 py-1 rounded-sm transition-colors"
               >
                 Cancelar
               </button>
@@ -162,7 +162,7 @@ export function PublicationMetricsPanel({ publication, onBack, onRefresh }: Publ
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {metrics.map(({ label, value, setter, icon: Icon, color }) => (
-            <div key={label} className="bg-white/5 border border-white/10 rounded-lg p-3">
+            <div key={label} className="bg-white/5 border border-white/10 rounded-sm p-3">
               <div className="flex items-center gap-1.5 mb-1">
                 <Icon className={cn('h-3.5 w-3.5', color)} />
                 <span className="text-gray-500 text-xs">{label}</span>

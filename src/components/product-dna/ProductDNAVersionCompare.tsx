@@ -212,7 +212,7 @@ const VersionSelector: React.FC<{
     <select
       value={selectedId}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+      className="w-full bg-muted/50 border border-border rounded-sm px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
     >
       {versions.map((v) => (
         <option key={v.id} value={v.id}>
@@ -255,7 +255,7 @@ const DiffRow: React.FC<{ diff: DiffResult; viewMode: ViewMode }> = ({ diff, vie
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-muted/30 rounded-xl overflow-hidden border border-border/50"
+      className="bg-muted/30 rounded-sm overflow-hidden border border-border/50"
     >
       <div
         className={`flex items-center justify-between p-4 ${isLong ? 'cursor-pointer hover:bg-muted/50' : ''}`}
@@ -302,7 +302,7 @@ const DiffRow: React.FC<{ diff: DiffResult; viewMode: ViewMode }> = ({ diff, vie
               ) : (
                 <div className="p-4 space-y-3">
                   {(diff.type === 'removed' || diff.type === 'changed') && diff.oldValue !== undefined && (
-                    <div className="bg-red-500/10 rounded-lg p-3 border-l-2 border-red-500">
+                    <div className="bg-red-500/10 rounded-sm p-3 border-l-2 border-red-500">
                       <span className="text-xs text-red-600 dark:text-red-400 uppercase block mb-1">- Eliminado</span>
                       <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-mono break-words">
                         {formatValue(diff.oldValue)}
@@ -310,7 +310,7 @@ const DiffRow: React.FC<{ diff: DiffResult; viewMode: ViewMode }> = ({ diff, vie
                     </div>
                   )}
                   {(diff.type === 'added' || diff.type === 'changed') && diff.newValue !== undefined && (
-                    <div className="bg-emerald-500/10 rounded-lg p-3 border-l-2 border-emerald-500">
+                    <div className="bg-emerald-500/10 rounded-sm p-3 border-l-2 border-emerald-500">
                       <span className="text-xs text-emerald-600 dark:text-emerald-400 uppercase block mb-1">+ Añadido</span>
                       <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-mono break-words">
                         {formatValue(diff.newValue)}
@@ -340,7 +340,7 @@ const DiffSummary: React.FC<{ diffs: DiffResult[] }> = ({ diffs }) => {
 
   if (total === 0) {
     return (
-      <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 flex items-center gap-3">
+      <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-sm p-4 flex items-center gap-3">
         <Check className="w-5 h-5 text-emerald-500" />
         <span className="text-emerald-600 dark:text-emerald-400">Las versiones son idénticas</span>
       </div>
@@ -375,7 +375,7 @@ const VersionInfo: React.FC<{
   onRestore?: () => void;
 }> = ({ version, isCurrent, onRestore }) => (
   <div
-    className={`rounded-xl p-4 ${
+    className={`rounded-sm p-4 ${
       isCurrent ? 'border-2 border-primary/50 bg-primary/5' : 'border border-border bg-muted/30'
     }`}
   >
@@ -466,7 +466,7 @@ export default function ProductDNAVersionCompare({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500">
+          <div className="p-3 rounded-sm bg-gradient-to-br from-purple-500 to-pink-500">
             <GitCompare className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -482,7 +482,7 @@ export default function ProductDNAVersionCompare({
       </div>
 
       {/* Version selectors */}
-      <div className="rounded-2xl border border-border bg-card p-6">
+      <div className="rounded-sm border border-border bg-card p-6">
         <div className="flex items-end gap-4">
           <VersionSelector
             versions={versions}
@@ -545,10 +545,10 @@ export default function ProductDNAVersionCompare({
           </label>
 
           {/* View mode toggle */}
-          <div className="flex items-center bg-muted rounded-lg p-1">
+          <div className="flex items-center bg-muted rounded-sm p-1">
             <button
               onClick={() => setViewMode('side-by-side')}
-              className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+              className={`px-3 py-1.5 rounded-sm text-sm transition-colors ${
                 viewMode === 'side-by-side'
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -558,7 +558,7 @@ export default function ProductDNAVersionCompare({
             </button>
             <button
               onClick={() => setViewMode('unified')}
-              className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+              className={`px-3 py-1.5 rounded-sm text-sm transition-colors ${
                 viewMode === 'unified'
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -573,7 +573,7 @@ export default function ProductDNAVersionCompare({
       {/* Grouped diffs */}
       <div className="space-y-4">
         {Object.entries(groupedDiffs).map(([section, sectionDiffs]) => (
-          <div key={section} className="rounded-2xl border border-border bg-card overflow-hidden">
+          <div key={section} className="rounded-sm border border-border bg-card overflow-hidden">
             <button
               onClick={() => setExpandedSection(expandedSection === section ? null : section)}
               className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
@@ -612,7 +612,7 @@ export default function ProductDNAVersionCompare({
         ))}
 
         {Object.keys(groupedDiffs).length === 0 && (
-          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-8 text-center">
+          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-sm p-8 text-center">
             <Check className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">Sin diferencias</h3>
             <p className="text-muted-foreground">Las versiones seleccionadas son idénticas.</p>

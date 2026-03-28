@@ -60,14 +60,14 @@ const sizeConfig = {
     text: 'text-sm',
     icon: 14,
     gap: 'gap-1.5',
-    rounded: 'rounded-lg',
+    rounded: 'rounded-sm',
   },
   lg: {
     padding: 'px-3 py-1.5',
     text: 'text-base',
     icon: 16,
     gap: 'gap-2',
-    rounded: 'rounded-lg',
+    rounded: 'rounded-sm',
   },
 };
 

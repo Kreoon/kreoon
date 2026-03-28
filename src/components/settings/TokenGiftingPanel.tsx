@@ -129,13 +129,13 @@ export function TokenGiftingPanel() {
         {users.length > 0 && (
           <div className="space-y-2">
             <Label>Resultados</Label>
-            <ScrollArea className="h-[200px] rounded-md border p-2">
+            <ScrollArea className="h-[200px] rounded-sm border p-2">
               <div className="space-y-2">
                 {users.map((user) => (
                   <div
                     key={user.id}
                     onClick={() => setSelectedUser(user)}
-                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                    className={`flex items-center gap-3 p-3 rounded-sm cursor-pointer transition-colors ${
                       selectedUser?.id === user.id 
                         ? 'bg-amber-500/20 border border-amber-500/50' 
                         : 'hover:bg-muted/50'
@@ -175,7 +175,7 @@ export function TokenGiftingPanel() {
 
         {/* Selected User & Token Amount */}
         {selectedUser && (
-          <div className="space-y-4 p-4 rounded-lg border border-amber-500/30 bg-amber-500/5">
+          <div className="space-y-4 p-4 rounded-sm border border-amber-500/30 bg-amber-500/5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Avatar className="h-12 w-12 ring-2 ring-amber-500/50">

@@ -128,7 +128,7 @@ const UnlockAccess = () => {
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => (
                 <div
                   key={i}
-                  className="rounded-xl bg-white/5 border border-white/10 overflow-hidden"
+                  className="rounded-sm bg-white/5 border border-white/10 overflow-hidden"
                 >
                   <div className="aspect-video bg-gradient-to-br from-purple-500/20 to-pink-500/20" />
                   <div className="p-4 space-y-2">
@@ -277,7 +277,7 @@ const UnlockAccess = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className={cn(
-                    'px-8 py-4 rounded-xl',
+                    'px-8 py-4 rounded-sm',
                     'bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500',
                     'text-white font-bold text-lg',
                     'shadow-lg shadow-amber-500/25',

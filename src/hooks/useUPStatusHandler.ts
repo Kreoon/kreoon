@@ -2,6 +2,7 @@ import { calculateDaysInColombia, calculateCreatorPoints, CREATOR_POINTS_CONFIG 
 import { calculateEditorPoints, EDITOR_POINTS_CONFIG } from './useUPEditores';
 import { logReputationEvent } from '@/hooks/useUnifiedReputation';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 /**
  * Get active season ID for an organization
@@ -51,12 +52,12 @@ export async function handleUPStatusChange(params: {
 
   const now = new Date();
 
-  console.log('[UP Handler] Status change:', { contentId, oldStatus, newStatus, creatorId, editorId });
+  logger.debug('UP Handler Status change', { contentId, oldStatus, newStatus, creatorId, editorId });
 
   try {
     // Get active season ID for this org
     const seasonId = await getActiveSeasonId(organizationId);
-    console.log('[UP Handler] Active season:', seasonId);
+    logger.debug('UP Handler Active season', { seasonId });
 
     // ============================================
     // CREATOR POINTS: recording → recorded OR assigned → recorded
@@ -67,7 +68,7 @@ export async function handleUPStatusChange(params: {
       const daysToDeliver = calculateDaysInColombia(startDate, recordedDate);
       const { eventType, points } = calculateCreatorPoints(daysToDeliver);
 
-      console.log('[UP Handler] Creator delivery:', { daysToDeliver, eventType, points });
+      logger.debug('UP Handler Creator delivery', { daysToDeliver, eventType, points });
 
       if (eventType !== 'reassignment') {
         await logReputationEvent({
@@ -99,7 +100,7 @@ export async function handleUPStatusChange(params: {
       const daysToDeliver = calculateDaysInColombia(startDate, deliveredDate);
       const { eventType, points } = calculateEditorPoints(daysToDeliver);
 
-      console.log('[UP Handler] Editor delivery:', { daysToDeliver, eventType, points });
+      logger.debug('UP Handler Editor delivery', { daysToDeliver, eventType, points });
 
       if (eventType !== 'reassignment') {
         await logReputationEvent({
@@ -126,7 +127,7 @@ export async function handleUPStatusChange(params: {
     // NOVEDAD PENALTY: Entregado/Corregido → Novedad
     // ============================================
     if ((oldStatus === 'delivered' || oldStatus === 'corrected') && newStatus === 'issue') {
-      console.log('[UP Handler] Issue penalty triggered');
+      logger.debug('UP Handler Issue penalty triggered');
 
       if (creatorId) {
         await logReputationEvent({
@@ -167,7 +168,7 @@ export async function handleUPStatusChange(params: {
       const approvedDate = approvedAt ? new Date(approvedAt) : now;
       const daysSinceIssue = calculateDaysInColombia(issueDateParsed, approvedDate);
 
-      console.log('[UP Handler] Issue recovery check:', { daysSinceIssue });
+      logger.debug('UP Handler Issue recovery check', { daysSinceIssue });
 
       if (daysSinceIssue <= 2) {
         if (creatorId) {
@@ -206,7 +207,7 @@ export async function handleUPStatusChange(params: {
     // CLEAN APPROVAL BONUS: Entregado/Corregido → Aprobado (sin pasar por Novedad)
     // ============================================
     if ((oldStatus === 'delivered' || oldStatus === 'corrected') && newStatus === 'approved') {
-      console.log('[UP Handler] Clean approval bonus');
+      logger.debug('UP Handler Clean approval bonus');
 
       if (creatorId) {
         await logReputationEvent({
@@ -241,7 +242,7 @@ export async function handleUPStatusChange(params: {
 
     return { success: true };
   } catch (error) {
-    console.error('[UP Handler] Error handling UP status change:', error);
+    logger.error('UP Handler Error handling UP status change', error);
     return { success: false, error };
   }
 }

@@ -59,7 +59,7 @@ function StatCard({
               </div>
             )}
           </div>
-          <div className={cn("w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center", colors[color])}>
+          <div className={cn("w-10 h-10 rounded-sm bg-gradient-to-br flex items-center justify-center", colors[color])}>
             <Icon className="w-5 h-5" />
           </div>
         </div>
@@ -87,7 +87,7 @@ function CampaignCard({ campaign, type }: { campaign: any; type: 'public' | 'app
   };
 
   return (
-    <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 hover:border-purple-500/30 transition-colors">
+    <div className="p-4 rounded-sm bg-white/[0.02] border border-white/10 hover:border-purple-500/30 transition-colors">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -126,7 +126,7 @@ function ProjectCard({ project }: { project: any }) {
     : 0;
 
   return (
-    <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10">
+    <div className="p-4 rounded-sm bg-white/[0.02] border border-white/10">
       <div className="flex items-start justify-between mb-3">
         <div>
           <h4 className="font-medium text-white">{project.title}</h4>
@@ -528,22 +528,22 @@ export default function FreelancerDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="p-3 rounded-lg bg-white/5">
+                  <div className="p-3 rounded-sm bg-white/5">
                     <p className="text-xs text-white/50">Posts este mes</p>
                     <p className="text-xl font-bold text-white">{socialStats?.posts_this_month || 0}</p>
                     {!isPro && (
                       <p className="text-xs text-amber-400">de 50 gratis</p>
                     )}
                   </div>
-                  <div className="p-3 rounded-lg bg-white/5">
+                  <div className="p-3 rounded-sm bg-white/5">
                     <p className="text-xs text-white/50">Alcance total</p>
                     <p className="text-xl font-bold text-white">{(socialStats?.total_reach || 0).toLocaleString()}</p>
                   </div>
-                  <div className="p-3 rounded-lg bg-white/5">
+                  <div className="p-3 rounded-sm bg-white/5">
                     <p className="text-xs text-white/50">Engagement</p>
                     <p className="text-xl font-bold text-white">{socialStats?.engagement_rate || 0}%</p>
                   </div>
-                  <div className="p-3 rounded-lg bg-white/5">
+                  <div className="p-3 rounded-sm bg-white/5">
                     <p className="text-xs text-white/50">Programados</p>
                     <p className="text-xl font-bold text-white">{socialStats?.scheduled || 0}</p>
                   </div>
@@ -662,7 +662,7 @@ export default function FreelancerDashboard() {
                 </div>
 
                 {!isPro && (
-                  <div className="p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+                  <div className="p-4 rounded-sm bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-medium text-white">Plan Gratuito: 50 posts/mes</p>

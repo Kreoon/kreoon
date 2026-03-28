@@ -1,9 +1,9 @@
 import { memo } from 'react';
-import { motion } from 'framer-motion';
 import { Star, Users, Briefcase, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MarketplaceOrg } from './types/marketplace';
 import { ORG_TYPE_LABELS, ORG_TYPE_COLORS, TEAM_SIZE_LABELS } from './types/marketplace';
+// Nova Design System - removed framer-motion for better performance
 
 interface OrgCardProps {
   org: MarketplaceOrg;
@@ -17,20 +17,15 @@ function OrgCardComponent({ org, onClick, className }: OrgCardProps) {
   const accentColor = org.portfolio_color || '#8B5CF6';
 
   return (
-    <motion.div
+    <div
       className={cn(
-        'group relative cursor-pointer overflow-hidden',
+        'group relative cursor-pointer overflow-hidden transition-all duration-200 hover:scale-[1.02] hover:-translate-y-1 active:scale-[0.98] nova-animate-fade-up',
         className,
       )}
       onClick={onClick}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02, y: -4 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.2 }}
     >
       {/* Vertical media area - 9:16 */}
-      <div className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-card border border-white/5">
+      <div className="relative aspect-[9/16] rounded-sm overflow-hidden bg-[var(--nova-bg-surface)] border border-[var(--nova-border-subtle)] group-hover:border-[var(--nova-border-accent)] transition-colors">
         {/* Cover image */}
         {org.org_cover_url ? (
           <img
@@ -63,11 +58,11 @@ function OrgCardComponent({ org, onClick, className }: OrgCardProps) {
               src={org.logo_url}
               alt={org.org_display_name}
               loading="lazy"
-              className="h-20 w-20 rounded-2xl border-2 border-white/20 object-cover shadow-2xl bg-gray-900"
+              className="h-20 w-20 rounded-sm border-2 border-white/20 object-cover shadow-2xl bg-gray-900"
             />
           ) : (
             <div
-              className="h-20 w-20 rounded-2xl border-2 border-white/20 flex items-center justify-center shadow-2xl"
+              className="h-20 w-20 rounded-sm border-2 border-white/20 flex items-center justify-center shadow-2xl"
               style={{ backgroundColor: `${accentColor}30` }}
             >
               <Building2 className="h-10 w-10" style={{ color: accentColor }} />
@@ -104,7 +99,7 @@ function OrgCardComponent({ org, onClick, className }: OrgCardProps) {
           {/* Stats */}
           <div className="flex items-center gap-3 text-xs">
             <div className="flex items-center gap-1">
-              <Star className="h-3 w-3 text-purple-400 fill-purple-400" />
+              <Star className="h-3 w-3 text-[var(--nova-accent-primary)] fill-[var(--nova-accent-primary)]" />
               <span className="text-white font-medium">{org.org_marketplace_rating_avg.toFixed(1)}</span>
             </div>
             {org.org_team_size_range && (
@@ -122,7 +117,7 @@ function OrgCardComponent({ org, onClick, className }: OrgCardProps) {
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 

@@ -143,7 +143,7 @@ export const AchievementModal = memo(function AchievementModal({
                 >
                   <div className={cn(
                     'inline-flex items-center justify-center',
-                    'w-24 h-24 rounded-2xl',
+                    'w-24 h-24 rounded-sm',
                     isLegendary
                       ? 'bg-gradient-to-br from-yellow-400 to-amber-500 shadow-lg shadow-yellow-500/50'
                       : 'bg-gradient-to-br from-purple-400 to-pink-500 shadow-lg shadow-purple-500/50'
@@ -190,7 +190,7 @@ export const AchievementModal = memo(function AchievementModal({
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', delay: 0.6 }}
                   className={cn(
-                    'inline-flex items-center gap-2 px-4 py-2 rounded-xl',
+                    'inline-flex items-center gap-2 px-4 py-2 rounded-sm',
                     'bg-white/10 border border-white/20'
                   )}
                 >
@@ -207,7 +207,7 @@ export const AchievementModal = memo(function AchievementModal({
                   transition={{ delay: 0.7 }}
                   onClick={onClose}
                   className={cn(
-                    'mt-8 w-full py-3 rounded-xl font-medium',
+                    'mt-8 w-full py-3 rounded-sm font-medium',
                     'transition-all',
                     isLegendary
                       ? 'bg-gradient-to-r from-yellow-500 to-amber-500 text-black hover:from-yellow-400 hover:to-amber-400'

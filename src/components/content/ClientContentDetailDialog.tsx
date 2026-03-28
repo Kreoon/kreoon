@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AutoPauseVideo } from "@/components/content/AutoPauseVideo";
-import { RichTextViewer } from "@/components/ui/rich-text-editor";
+import { LazyRichTextViewer as RichTextViewer } from "@/components/ui/lazy-rich-text-editor";
 import { ScriptViewer } from "@/components/content/ScriptViewer";
 import { StarRatingInput } from "@/components/ui/star-rating-input";
 import { Content, STATUS_LABELS, STATUS_COLORS, ContentStatus, ContentComment } from "@/types/database";
@@ -397,7 +397,7 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="rounded-lg border bg-muted/30 p-4">
+                    <div className="rounded-sm border bg-muted/30 p-4">
                       <RichTextViewer 
                         content={(content as any).editor_guidelines} 
                         className="prose prose-sm dark:prose-invert max-w-none"
@@ -467,7 +467,7 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
                   {comments.length > 0 && (
                     <div className="space-y-3 pt-4 border-t">
                       {comments.map((comment) => (
-                        <div key={comment.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                        <div key={comment.id} className="flex items-start gap-3 p-3 rounded-sm bg-muted/30">
                           <Avatar className="h-8 w-8 shrink-0">
                             {comment.profile?.avatar_url ? (
                               <img src={comment.profile.avatar_url} alt="" className="h-full w-full object-cover" />
@@ -584,7 +584,7 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
 
             {/* Action Buttons for delivered/corrected */}
             {(canApprove || canReportIssue) && (
-              <div className="flex flex-wrap gap-3 mt-4 p-4 rounded-xl bg-gradient-to-r from-success/5 via-warning/5 to-success/5 border">
+              <div className="flex flex-wrap gap-3 mt-4 p-4 rounded-sm bg-gradient-to-r from-success/5 via-warning/5 to-success/5 border">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium mb-1">¿Qué deseas hacer con este contenido?</p>
                   <p className="text-xs text-muted-foreground">Revisa los videos y el guión antes de tomar una decisión</p>
@@ -748,7 +748,7 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="rounded-lg border bg-muted/30 p-4">
+                      <div className="rounded-sm border bg-muted/30 p-4">
                         <RichTextViewer 
                           content={content.script} 
                           className="prose prose-sm dark:prose-invert max-w-none"
@@ -876,7 +876,7 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-xl">
+                    <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-sm">
                       <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-50" />
                       <p className="font-medium mb-1">No hay comentarios aún</p>
                       <p className="text-sm">
@@ -908,7 +908,7 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
 
             <div className="space-y-4">
               {content?.creator_id && (
-                <div className="p-4 rounded-lg border bg-muted/30">
+                <div className="p-4 rounded-sm border bg-muted/30">
                   <div className="flex items-center gap-2 mb-2">
                     <User className="h-4 w-4 text-info" />
                     <span className="text-sm font-medium">Creador de Contenido</span>
@@ -922,7 +922,7 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
               )}
 
               {content?.editor_id && (
-                <div className="p-4 rounded-lg border bg-muted/30">
+                <div className="p-4 rounded-sm border bg-muted/30">
                   <div className="flex items-center gap-2 mb-2">
                     <Video className="h-4 w-4 text-warning" />
                     <span className="text-sm font-medium">Editor de Video</span>

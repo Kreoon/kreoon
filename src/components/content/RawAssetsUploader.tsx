@@ -515,7 +515,7 @@ export function RawAssetsUploader({
         <Card className="border-dashed">
           <CardContent className="p-4 sm:p-6">
             <div
-              className={`border-2 border-dashed rounded-lg p-6 sm:p-8 text-center transition-colors ${
+              className={`border-2 border-dashed rounded-sm p-6 sm:p-8 text-center transition-colors ${
                 isDragging 
                   ? 'border-primary bg-primary/5' 
                   : 'border-muted-foreground/25 hover:border-muted-foreground/50'
@@ -600,7 +600,7 @@ export function RawAssetsUploader({
                 {filesToUpload.map((file) => (
                   <div 
                     key={file.id} 
-                    className={`flex items-start gap-2 p-2 sm:p-3 rounded-lg border ${
+                    className={`flex items-start gap-2 p-2 sm:p-3 rounded-sm border ${
                       file.status === 'error' ? 'border-destructive/50 bg-destructive/5' :
                       file.status === 'success' ? 'border-green-500/50 bg-green-500/5' :
                       'border-border bg-muted/30'
@@ -719,7 +719,7 @@ export function RawAssetsUploader({
                 {uploadedAssets.map((asset) => (
                   <div 
                     key={asset.id} 
-                    className="flex items-start gap-2 p-2 sm:p-3 rounded-lg border bg-muted/30"
+                    className="flex items-start gap-2 p-2 sm:p-3 rounded-sm border bg-muted/30"
                   >
                     <div className="pt-0.5">
                       {getFileIcon(asset.file_type)}

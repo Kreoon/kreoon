@@ -31,7 +31,7 @@ export default function NoOrganization() {
           </p>
 
           {/* RootOrgSwitcher con estilo mejorado */}
-          <div className="rounded-lg border border-kreoon-border bg-kreoon-bg-secondary p-4">
+          <div className="rounded-sm border border-kreoon-border bg-kreoon-bg-secondary p-4">
             <RootOrgSwitcher />
           </div>
         </div>

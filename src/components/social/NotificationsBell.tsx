@@ -46,7 +46,7 @@ function NotificationItem({
   return (
     <div 
       className={cn(
-        "flex items-start gap-3 p-3 hover:bg-social-muted/50 cursor-pointer transition-colors rounded-lg",
+        "flex items-start gap-3 p-3 hover:bg-social-muted/50 cursor-pointer transition-colors rounded-sm",
         !notification.is_read && "bg-social-accent/5"
       )}
       onClick={handleClick}

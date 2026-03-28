@@ -603,7 +603,7 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
     emptyText: string;
     color: string;
   }) => (
-    <div className={cn("rounded-xl border p-4", color)}>
+    <div className={cn("rounded-sm border p-4", color)}>
       <div className="flex items-center gap-2 mb-3">
         <Icon className="h-5 w-5" />
         <h4 className="font-semibold">{title}</h4>
@@ -625,7 +625,7 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[95vh] p-0 overflow-hidden flex flex-col" aria-describedby="script-review-desc">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-4xl max-h-[95dvh] sm:max-h-[95vh] p-0 overflow-hidden flex flex-col" aria-describedby="script-review-desc">
         <DialogDescription id="script-review-desc" className="sr-only">Revisión del guión del contenido</DialogDescription>
         {/* Fixed Header with Actions */}
         <div className="sticky top-0 z-20 bg-background border-b shrink-0">
@@ -699,7 +699,7 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
                     </Button>
                   </>
                 ) : (
-                  <div className="flex items-center gap-2 text-green-600 bg-green-50 dark:bg-green-950 px-3 py-2 rounded-lg">
+                  <div className="flex items-center gap-2 text-green-600 bg-green-50 dark:bg-green-950 px-3 py-2 rounded-sm">
                     <Lock className="h-4 w-4" />
                     <span className="text-sm font-medium hidden sm:inline">Guión bloqueado</span>
                   </div>
@@ -774,7 +774,7 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
               {content.script ? (
                 <>
                   {/* Single unified script container */}
-                  <div className="border rounded-xl overflow-hidden bg-card">
+                  <div className="border rounded-sm overflow-hidden bg-card">
                     <div className="flex items-center justify-between p-3 border-b bg-muted/30">
                       <span className="text-sm font-medium">Contenido del guión</span>
                       {!isApproved && !isEditingScript && (
@@ -845,7 +845,7 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
                     {getGeneralComments().length > 0 && (
                       <div className="space-y-3 mb-4">
                         {getGeneralComments().map((comment) => (
-                          <div key={comment.id} className="flex items-start gap-3 bg-muted/30 rounded-lg p-3">
+                          <div key={comment.id} className="flex items-start gap-3 bg-muted/30 rounded-sm p-3">
                             <Avatar className="h-8 w-8">
                               <AvatarImage src={comment.profile?.avatar_url} />
                               <AvatarFallback className="text-xs">
@@ -1013,7 +1013,7 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
             <TabsContent value="admin" className="m-0 p-4 sm:p-6 space-y-4">
               <div className="grid gap-4">
                 {/* Status Card */}
-                <div className="rounded-xl border p-4 bg-slate-50/50 dark:bg-slate-950/20 border-slate-200/50 dark:border-slate-800/50">
+                <div className="rounded-sm border p-4 bg-slate-50/50 dark:bg-slate-950/20 border-slate-200/50 dark:border-slate-800/50">
                   <div className="flex items-center gap-2 mb-3">
                     <CheckSquare className="h-5 w-5" />
                     <h4 className="font-semibold">Estado del guión</h4>
@@ -1069,7 +1069,7 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
         {/* Change Request Modal */}
         {showChangeRequest && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-background rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="bg-background rounded-sm p-6 max-w-md w-full mx-4 shadow-xl">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-lg">Solicitar Cambios</h3>
                 <Button
@@ -1087,7 +1087,7 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
                   <label
                     key={option.id}
                     className={cn(
-                      "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                      "flex items-center gap-3 p-3 rounded-sm border cursor-pointer transition-colors",
                       selectedChangeTypes.includes(option.id)
                         ? "border-primary bg-primary/5"
                         : "border-border hover:bg-muted/50"

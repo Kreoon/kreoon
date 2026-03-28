@@ -124,7 +124,7 @@ export function WithdrawalForm({
 
       <CardHeader>
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
+          <div className="p-2 rounded-sm bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
             <ArrowUpCircle className="h-6 w-6 text-primary" />
           </div>
           <div>
@@ -197,9 +197,9 @@ export function WithdrawalForm({
               </Button>
             </div>
             {isLoadingMethods ? (
-              <div className="h-12 bg-[hsl(270,100%,60%,0.05)] rounded-lg animate-pulse" />
+              <div className="h-12 bg-[hsl(270,100%,60%,0.05)] rounded-sm animate-pulse" />
             ) : methods.length === 0 ? (
-              <div className="p-4 rounded-lg bg-[hsl(270,100%,60%,0.05)] text-center">
+              <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] text-center">
                 <p className="text-sm text-muted-foreground">
                   No tienes métodos de pago configurados
                 </p>
@@ -247,7 +247,7 @@ export function WithdrawalForm({
 
           {/* Summary */}
           {selectedMethod && amount > 0 && (
-            <div className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)] space-y-3">
+            <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Monto solicitado</span>
                 <span className="text-white">{formatCurrency(amount, wallet.currency)}</span>

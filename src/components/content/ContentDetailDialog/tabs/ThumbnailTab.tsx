@@ -29,7 +29,7 @@ export default function ThumbnailTab({
       {/* Current thumbnail preview */}
       {content?.thumbnail_url && (
         <div className="flex items-start gap-4">
-          <div className="relative w-32 aspect-[9/16] rounded-lg overflow-hidden border bg-black shrink-0">
+          <div className="relative w-32 aspect-[9/16] rounded-sm overflow-hidden border bg-black shrink-0">
             <img
               src={content.thumbnail_url}
               alt="Miniatura actual"

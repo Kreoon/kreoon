@@ -185,7 +185,7 @@ export function AdnResearchV3Integration({
 
         {/* Dashboard Dialog */}
         <Dialog open={showDashboard} onOpenChange={setShowDashboard}>
-          <DialogContent className="max-w-[95vw] w-[1400px] max-h-[90vh] p-0">
+          <DialogContent className="w-[calc(100%-1rem)] sm:max-w-[95vw] sm:w-[1400px] max-h-[90dvh] sm:max-h-[90vh] p-0">
             <DialogHeader className="sr-only">
               <DialogTitle>ADN Recargado v3</DialogTitle>
             </DialogHeader>
@@ -206,13 +206,13 @@ export function AdnResearchV3Integration({
     return (
       <div
         className={cn(
-          "p-4 rounded-xl border bg-card space-y-3",
+          "p-4 rounded-sm border bg-card space-y-3",
           className
         )}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-sm bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -306,7 +306,7 @@ export function AdnResearchV3Integration({
 
         {/* Dashboard Dialog */}
         <Dialog open={showDashboard} onOpenChange={setShowDashboard}>
-          <DialogContent className="max-w-[95vw] w-[1400px] max-h-[90vh] p-0">
+          <DialogContent className="w-[calc(100%-1rem)] sm:max-w-[95vw] sm:w-[1400px] max-h-[90dvh] sm:max-h-[90vh] p-0">
             <DialogHeader className="sr-only">
               <DialogTitle>ADN Recargado v3</DialogTitle>
             </DialogHeader>

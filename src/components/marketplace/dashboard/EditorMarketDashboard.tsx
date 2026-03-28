@@ -26,9 +26,9 @@ const STATUS_LABELS: Record<ProjectStatus, string> = {
 
 function KpiCard({ icon: Icon, label, value, color }: { icon: React.ElementType; label: string; value: string | number; color: string }) {
   return (
-    <div className="bg-card/80 backdrop-blur-xl border border-white/10 rounded-xl p-5">
+    <div className="bg-card/80 backdrop-blur-xl border border-white/10 rounded-sm p-5">
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${color}`}>
+        <div className={`w-10 h-10 rounded-sm flex items-center justify-center ${color}`}>
           <Icon className="h-5 w-5" />
         </div>
         <div>
@@ -76,7 +76,7 @@ export function EditorMarketDashboard() {
         <div className="flex gap-3">
           <button
             onClick={() => navigate('/board?view=marketplace')}
-            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-foreground font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
+            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-foreground font-semibold px-5 py-2.5 rounded-sm text-sm transition-colors"
           >
             <FolderKanban className="h-4 w-4" />
             Proyectos por Editar
@@ -99,9 +99,9 @@ export function EditorMarketDashboard() {
               <div
                 key={project.id}
                 onClick={() => navigate('/board?view=marketplace')}
-                className="w-full bg-card/60 border border-white/5 rounded-xl p-4 flex items-center gap-4 hover:border-purple-500/30 transition-all cursor-pointer"
+                className="w-full bg-card/60 border border-white/5 rounded-sm p-4 flex items-center gap-4 hover:border-purple-500/30 transition-all cursor-pointer"
               >
-                <div className="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-300 flex-shrink-0">
+                <div className="w-10 h-10 rounded-sm bg-cyan-500/10 flex items-center justify-center text-cyan-300 flex-shrink-0">
                   <Film className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">

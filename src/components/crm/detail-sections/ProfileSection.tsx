@@ -45,7 +45,7 @@ export function ProfileSection({
 
         {/* Banner / Cover image */}
         {displayImage && (
-          <div className="rounded-lg overflow-hidden border border-white/10">
+          <div className="rounded-sm overflow-hidden border border-white/10">
             <img
               src={displayImage}
               alt="Banner"
@@ -60,7 +60,7 @@ export function ProfileSection({
             href={videoUrl}
             target="_blank"
             rel="noopener"
-            className="block relative rounded-lg overflow-hidden border border-white/10 group"
+            className="block relative rounded-sm overflow-hidden border border-white/10 group"
           >
             {videoThumb ? (
               <img

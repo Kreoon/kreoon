@@ -187,19 +187,19 @@ export function Tab09Offer({ data }: Tab09OfferProps) {
           <CardContent className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4">
               {data.dream_outcome && (
-                <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
                   <p className="text-xs text-green-400 mb-1">Resultado Soñado</p>
                   <p className="text-sm font-medium">{data.dream_outcome}</p>
                 </div>
               )}
               {data.perceived_likelihood && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-1">Probabilidad Percibida</p>
                   <p className="text-sm">{data.perceived_likelihood}</p>
                 </div>
               )}
               {data.time_to_achievement && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-1">Tiempo para Lograr</p>
                   <p className="text-sm flex items-center gap-1">
                     <Clock className="w-4 h-4" />
@@ -208,14 +208,14 @@ export function Tab09Offer({ data }: Tab09OfferProps) {
                 </div>
               )}
               {data.effort_required && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-1">Esfuerzo Requerido</p>
                   <p className="text-sm">{data.effort_required}</p>
                 </div>
               )}
             </div>
             {data.value_equation?.total_value_score && (
-              <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+              <div className="p-4 rounded-sm bg-purple-500/10 border border-purple-500/20">
                 <p className="text-sm">{data.value_equation.total_value_score}</p>
               </div>
             )}
@@ -233,7 +233,7 @@ export function Tab09Offer({ data }: Tab09OfferProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+            <div className="p-4 rounded-sm bg-purple-500/10 border border-purple-500/20">
               {data.core_offer.main_deliverable && (
                 <h3 className="text-xl font-bold mb-3">{data.core_offer.main_deliverable}</h3>
               )}
@@ -276,7 +276,7 @@ export function Tab09Offer({ data }: Tab09OfferProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {data.value_stack.map((component, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
+              <div key={idx} className="p-4 rounded-sm border bg-card">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-sm font-bold text-green-400">
@@ -323,7 +323,7 @@ export function Tab09Offer({ data }: Tab09OfferProps) {
               {data.bonuses.map((bonus, idx) => (
                 <div
                   key={idx}
-                  className="p-4 rounded-lg border bg-gradient-to-br from-yellow-500/5 to-orange-500/5 border-yellow-500/20"
+                  className="p-4 rounded-sm border bg-gradient-to-br from-yellow-500/5 to-orange-500/5 border-yellow-500/20"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <h4 className="font-semibold">{bonus.bonus_name}</h4>
@@ -383,7 +383,7 @@ export function Tab09Offer({ data }: Tab09OfferProps) {
               )}
             </div>
             {data.guarantee.copy && (
-              <div className="p-4 rounded-lg bg-background/50">
+              <div className="p-4 rounded-sm bg-background/50">
                 <p className="font-medium">{data.guarantee.copy}</p>
                 <CopyButton text={data.guarantee.copy} className="mt-2" size="sm" />
               </div>
@@ -408,7 +408,7 @@ export function Tab09Offer({ data }: Tab09OfferProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             {data.risk_reversal.map((item, idx) => (
-              <div key={idx} className="p-3 rounded-lg border">
+              <div key={idx} className="p-3 rounded-sm border">
                 <div className="flex items-start gap-3">
                   <Badge variant="destructive" className="flex-shrink-0 text-xs">Riesgo</Badge>
                   <p className="text-sm">{item.risk}</p>
@@ -464,7 +464,7 @@ export function Tab09Offer({ data }: Tab09OfferProps) {
                 <p className="text-sm font-medium mb-2">Opciones de Pago</p>
                 <div className="grid sm:grid-cols-3 gap-3">
                   {data.pricing_strategy.payment_options.map((option, idx) => (
-                    <div key={idx} className="p-3 rounded-lg border">
+                    <div key={idx} className="p-3 rounded-sm border">
                       <p className="font-medium text-sm">{option.option}</p>
                       <p className="text-lg font-bold text-green-400">{option.price}</p>
                       {option.savings && (
@@ -477,14 +477,14 @@ export function Tab09Offer({ data }: Tab09OfferProps) {
             )}
 
             {data.pricing_strategy.price_justification && (
-              <div className="p-3 rounded-lg bg-muted/50">
+              <div className="p-3 rounded-sm bg-muted/50">
                 <p className="text-xs text-muted-foreground mb-1">Justificación del Precio</p>
                 <p className="text-sm">{data.pricing_strategy.price_justification}</p>
               </div>
             )}
 
             {data.pricing_strategy.roi_calculation && (
-              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+              <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
                 <p className="text-xs text-green-400 mb-1">Cálculo de ROI</p>
                 <p className="text-sm">{data.pricing_strategy.roi_calculation}</p>
               </div>
@@ -507,7 +507,7 @@ export function Tab09Offer({ data }: Tab09OfferProps) {
               {data.offer_variations.map((tier, idx) => (
                 <div
                   key={idx}
-                  className={`p-4 rounded-lg border ${
+                  className={`p-4 rounded-sm border ${
                     tier.tier?.toLowerCase() === 'pro'
                       ? 'bg-purple-500/10 border-purple-500/30'
                       : 'bg-card'
@@ -554,26 +554,26 @@ export function Tab09Offer({ data }: Tab09OfferProps) {
           <CardContent className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4">
               {data.scarcity_urgency.real_scarcity && (
-                <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                <div className="p-3 rounded-sm bg-orange-500/10 border border-orange-500/20">
                   <p className="text-xs text-orange-400 mb-1">Escasez Real</p>
                   <p className="text-sm">{data.scarcity_urgency.real_scarcity}</p>
                 </div>
               )}
               {data.scarcity_urgency.deadline_type && (
-                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                <div className="p-3 rounded-sm bg-red-500/10 border border-red-500/20">
                   <p className="text-xs text-red-400 mb-1">Tipo de Deadline</p>
                   <p className="text-sm">{data.scarcity_urgency.deadline_type}</p>
                 </div>
               )}
             </div>
             {data.scarcity_urgency.consequence_of_waiting && (
-              <div className="p-3 rounded-lg border">
+              <div className="p-3 rounded-sm border">
                 <p className="text-xs text-muted-foreground mb-1">Consecuencia de Esperar</p>
                 <p className="text-sm">{data.scarcity_urgency.consequence_of_waiting}</p>
               </div>
             )}
             {data.scarcity_urgency.ethical_note && (
-              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+              <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
                 <p className="text-xs text-green-400 mb-1">Nota Ética</p>
                 <p className="text-sm">{data.scarcity_urgency.ethical_note}</p>
               </div>
@@ -594,7 +594,7 @@ export function Tab09Offer({ data }: Tab09OfferProps) {
           <CardContent>
             <div className="space-y-3">
               {data.comparison_to_alternatives.map((comp, idx) => (
-                <div key={idx} className="p-4 rounded-lg border bg-card">
+                <div key={idx} className="p-4 rounded-sm border bg-card">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-medium">{comp.alternative}</h4>
                     {comp.their_price && (
@@ -629,7 +629,7 @@ export function Tab09Offer({ data }: Tab09OfferProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             {data.objection_killers.map((item, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
+              <div key={idx} className="p-4 rounded-sm border bg-card">
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center">
                     <span className="text-xs text-red-400">?</span>
@@ -660,7 +660,7 @@ export function Tab09Offer({ data }: Tab09OfferProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="p-4 rounded-lg bg-muted/50">
+            <div className="p-4 rounded-sm bg-muted/50">
               <p className="whitespace-pre-line text-sm">{data.offer_summary_copy}</p>
             </div>
             <CopyButton text={data.offer_summary_copy} className="mt-3" />

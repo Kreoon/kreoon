@@ -115,7 +115,7 @@ function SequenceCard({ sequence, icon, color }: { sequence: BackendEmailSequenc
       <CardContent>
         <div className="space-y-3">
           {sequence.emails?.map((email, idx) => (
-            <div key={idx} className="p-3 rounded-lg border bg-card">
+            <div key={idx} className="p-3 rounded-sm border bg-card">
               <div className="flex items-center justify-between mb-2">
                 <Badge className={`${color || 'bg-blue-500/20 text-blue-400'}`}>
                   Día {email.day}
@@ -196,11 +196,11 @@ export function Tab17EmailMarketing({ data }: Tab17EmailMarketingProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid sm:grid-cols-2 gap-4">
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Frecuencia de Envío</p>
               <p className="font-medium">{data.strategy_overview?.email_frequency}</p>
             </div>
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Mejores Horarios</p>
               <div className="flex flex-wrap gap-1">
                 {data.strategy_overview?.best_send_times?.map((t, idx) => (
@@ -287,7 +287,7 @@ export function Tab17EmailMarketing({ data }: Tab17EmailMarketingProps) {
               <CardContent>
                 <div className="space-y-3">
                   {data.re_engagement_sequence.emails?.map((email, idx) => (
-                    <div key={idx} className="p-3 rounded-lg border bg-card">
+                    <div key={idx} className="p-3 rounded-sm border bg-card">
                       <div className="flex items-center justify-between mb-2">
                         <Badge className="bg-orange-500/20 text-orange-400">
                           Día {email.day}
@@ -315,7 +315,7 @@ export function Tab17EmailMarketing({ data }: Tab17EmailMarketingProps) {
               <CardContent>
                 <div className="space-y-3">
                   {data.post_purchase_sequence.emails?.map((email, idx) => (
-                    <div key={idx} className="p-3 rounded-lg border bg-card">
+                    <div key={idx} className="p-3 rounded-sm border bg-card">
                       <div className="flex items-center justify-between mb-2">
                         <Badge className="bg-emerald-500/20 text-emerald-400">
                           Día {email.day}
@@ -344,7 +344,7 @@ export function Tab17EmailMarketing({ data }: Tab17EmailMarketingProps) {
         <CardContent>
           <div className="grid sm:grid-cols-2 gap-3">
             {data.subject_line_formulas?.map((formula, idx) => (
-              <div key={idx} className="p-3 rounded-lg border bg-card flex items-center justify-between">
+              <div key={idx} className="p-3 rounded-sm border bg-card flex items-center justify-between">
                 <p className="font-mono text-sm">{formula}</p>
                 <CopyButton text={formula} size="sm" />
               </div>
@@ -364,7 +364,7 @@ export function Tab17EmailMarketing({ data }: Tab17EmailMarketingProps) {
         <CardContent>
           <div className="space-y-3">
             {data.segmentation_strategy?.map((seg, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
+              <div key={idx} className="p-4 rounded-sm border bg-card">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="font-medium">{seg.segment}</h4>
                   <Badge variant="outline">{seg.criteria}</Badge>
@@ -387,7 +387,7 @@ export function Tab17EmailMarketing({ data }: Tab17EmailMarketingProps) {
         <CardContent>
           <div className="grid sm:grid-cols-2 gap-3">
             {data.automation_triggers?.map((trigger, idx) => (
-              <div key={idx} className="p-3 rounded-lg border bg-card">
+              <div key={idx} className="p-3 rounded-sm border bg-card">
                 <p className="text-sm text-orange-400 mb-1">Trigger: {trigger.trigger}</p>
                 <p className="text-sm">→ {trigger.action}</p>
               </div>
@@ -407,7 +407,7 @@ export function Tab17EmailMarketing({ data }: Tab17EmailMarketingProps) {
         <CardContent>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {data.kpis?.map((kpi, idx) => (
-              <div key={idx} className="p-3 rounded-lg bg-muted/50 text-center">
+              <div key={idx} className="p-3 rounded-sm bg-muted/50 text-center">
                 <p className="text-xs text-muted-foreground mb-1">{kpi.metric}</p>
                 <p className="text-lg font-bold">{kpi.target}</p>
               </div>

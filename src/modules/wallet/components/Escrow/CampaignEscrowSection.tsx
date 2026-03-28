@@ -58,7 +58,7 @@ export function CampaignEscrowSection({
         <Card className={cn('', className)}>
           <CardHeader className="pb-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
+              <div className="p-2 rounded-sm bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
                 <DollarSign className="h-5 w-5 text-primary" />
               </div>
               <CardTitle>Estado del Pago</CardTitle>
@@ -96,7 +96,7 @@ export function CampaignEscrowSection({
     <Card className={cn('', className)}>
       <CardHeader className="pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10">
+          <div className="p-2 rounded-sm bg-gradient-to-br from-emerald-500/20 to-emerald-600/10">
             <DollarSign className="h-5 w-5 text-emerald-400" />
           </div>
           <CardTitle>Tu Pago por esta Campaña</CardTitle>
@@ -104,7 +104,7 @@ export function CampaignEscrowSection({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Amount */}
-        <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
+        <div className="p-4 rounded-sm bg-emerald-500/5 border border-emerald-500/10">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">
@@ -122,7 +122,7 @@ export function CampaignEscrowSection({
         </div>
 
         {/* Status message */}
-        <div className="flex items-start gap-3 p-3 rounded-lg bg-[hsl(270,100%,60%,0.03)]">
+        <div className="flex items-start gap-3 p-3 rounded-sm bg-[hsl(270,100%,60%,0.03)]">
           {escrow.status === 'released' ? (
             <>
               <CheckCircle className="h-5 w-5 text-emerald-400 flex-shrink-0 mt-0.5" />
@@ -191,12 +191,12 @@ function EscrowSectionSkeleton({
     <Card className={cn('', className)}>
       <CardHeader className="pb-4">
         <div className="flex items-center gap-3">
-          <Skeleton className="h-9 w-9 rounded-xl" />
+          <Skeleton className="h-9 w-9 rounded-sm" />
           <Skeleton className="h-5 w-40" />
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)]">
+        <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)]">
           <div className="flex items-center justify-between">
             <div>
               <Skeleton className="h-4 w-20 mb-2" />
@@ -221,7 +221,7 @@ function EscrowSectionSkeleton({
           </>
         )}
 
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-[hsl(270,100%,60%,0.03)]">
+        <div className="flex items-center gap-3 p-3 rounded-sm bg-[hsl(270,100%,60%,0.03)]">
           <Skeleton className="h-5 w-5 rounded-full" />
           <div className="flex-1">
             <Skeleton className="h-4 w-32 mb-1" />

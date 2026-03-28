@@ -51,7 +51,7 @@ export function AdPlatformsSettings() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
+        <div className="p-2 rounded-sm bg-purple-500/10 border border-purple-500/20">
           <Satellite className="h-5 w-5 text-purple-400" />
         </div>
         <div>
@@ -98,20 +98,20 @@ export function AdPlatformsSettings() {
       </div>
 
       {/* Summary stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-lg bg-gray-800/30 border border-gray-700/30 p-4 text-center">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="rounded-sm bg-gray-800/30 border border-gray-700/30 p-4 text-center">
           <p className="text-2xl font-bold text-white tabular-nums">
             {platforms.filter((p) => p.enabled).length}
           </p>
           <p className="text-xs text-gray-500 mt-1">Plataformas activas</p>
         </div>
-        <div className="rounded-lg bg-gray-800/30 border border-gray-700/30 p-4 text-center">
+        <div className="rounded-sm bg-gray-800/30 border border-gray-700/30 p-4 text-center">
           <p className="text-2xl font-bold text-white tabular-nums">
             {platforms.filter((p) => p.pixel_id && p.access_token).length}
           </p>
           <p className="text-xs text-gray-500 mt-1">Configuradas</p>
         </div>
-        <div className="rounded-lg bg-gray-800/30 border border-gray-700/30 p-4 text-center">
+        <div className="rounded-sm bg-gray-800/30 border border-gray-700/30 p-4 text-center">
           <p className="text-2xl font-bold text-white tabular-nums">
             {platforms.filter((p) => p.test_mode && p.enabled).length}
           </p>

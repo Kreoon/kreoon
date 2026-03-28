@@ -64,8 +64,8 @@ export function MarketOverviewTab({ marketResearch }: MarketOverviewTabProps) {
   return (
     <div className="space-y-6">
       {/* Market Overview Header */}
-      <div className="p-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg border border-primary/20">
-        <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+      <div className="p-4 bg-muted dark:bg-[var(--nova-bg-elevated)] rounded-lg border border-border dark:border-[var(--nova-border-default)]">
+        <h3 className="font-semibold text-sm mb-2 flex items-center gap-2 text-foreground">
           <Globe className="h-4 w-4 text-primary" />
           Panorama General del Mercado
         </h3>

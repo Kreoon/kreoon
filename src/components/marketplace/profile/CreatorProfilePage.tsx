@@ -186,13 +186,13 @@ export default function CreatorProfilePage() {
 
   if (!creator) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--nova-bg-void)] flex items-center justify-center">
         <div className="text-center space-y-4">
-          <h2 className="text-2xl font-bold text-white">Creador no encontrado</h2>
-          <p className="text-gray-400">El perfil que buscas no existe o fue removido.</p>
+          <h2 className="text-2xl font-bold text-[var(--nova-text-bright)]">Creador no encontrado</h2>
+          <p className="text-[var(--nova-text-secondary)]">El perfil que buscas no existe o fue removido.</p>
           <button
             onClick={() => navigate('/marketplace')}
-            className="bg-purple-600 hover:bg-purple-500 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+            className="bg-[var(--nova-gradient-primary)] hover:shadow-[var(--nova-shadow-glow)] text-[var(--nova-text-bright)] font-semibold px-6 py-3 rounded-sm transition-all"
           >
             Volver al Marketplace
           </button>
@@ -206,18 +206,18 @@ export default function CreatorProfilePage() {
 
   if (!hasMinimumRequirements) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--nova-bg-void)] flex items-center justify-center">
         <div className="text-center space-y-4 max-w-md mx-auto px-4">
-          <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/20 flex items-center justify-center">
-            <AlertCircle className="h-8 w-8 text-amber-400" />
+          <div className="w-16 h-16 mx-auto rounded-full bg-[var(--nova-warning-bg)] flex items-center justify-center">
+            <AlertCircle className="h-8 w-8 text-[var(--nova-warning)]" />
           </div>
-          <h2 className="text-2xl font-bold text-white">Perfil incompleto</h2>
-          <p className="text-gray-400">
-            Este creador aún no ha completado su perfil. Se requiere al menos un contenido en el portafolio para aparecer en el marketplace.
+          <h2 className="text-2xl font-bold text-[var(--nova-text-bright)]">Perfil incompleto</h2>
+          <p className="text-[var(--nova-text-secondary)]">
+            Este creador aun no ha completado su perfil. Se requiere al menos un contenido en el portafolio para aparecer en el marketplace.
           </p>
           <button
             onClick={() => navigate('/marketplace')}
-            className="bg-purple-600 hover:bg-purple-500 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+            className="bg-[var(--nova-gradient-primary)] hover:shadow-[var(--nova-shadow-glow)] text-[var(--nova-text-bright)] font-semibold px-6 py-3 rounded-sm transition-all"
           >
             Explorar Marketplace
           </button>
@@ -227,7 +227,7 @@ export default function CreatorProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24 lg:pb-8">
+    <div className="min-h-screen bg-[var(--nova-bg-void)] pb-24 lg:pb-8">
       {/* Hero banner */}
       {creator.banner_url ? (
         <div className="relative w-full h-48 md:h-64 overflow-hidden">
@@ -236,10 +236,10 @@ export default function CreatorProfilePage() {
             alt=""
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0f]/40 via-transparent to-[#0a0a0f]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[var(--nova-bg-void)]/40 via-transparent to-[var(--nova-bg-void)]" />
         </div>
       ) : (
-        <div className="w-full h-24 md:h-32 bg-gradient-to-r from-purple-900/30 via-pink-900/20 to-indigo-900/30" />
+        <div className="w-full h-24 md:h-32 bg-[var(--nova-gradient-aurora)]" />
       )}
 
       {/* Back button */}

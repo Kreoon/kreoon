@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { logger } from '@/lib/logger';
 
 export type OnboardingStep = 'loading' | 'profile_data' | 'legal_consents' | 'complete';
 
@@ -23,6 +24,8 @@ export interface PendingDocument {
   version: string;
   summary?: string;
   is_required: boolean;
+  trigger_event?: string; // 'registration' | 'role_assignment' | 'deprecated'
+  display_order?: number;
 }
 
 export interface Country {
@@ -109,7 +112,7 @@ export function useOnboardingGate() {
       if (error) {
         // Si la función no existe (migraciones no aplicadas), asumir completo
         if (error.code === 'PGRST202' || error.message?.includes('Could not find')) {
-          console.warn('[onboarding] RPC check_profile_completion not found. Assuming complete (migrations pending).');
+          logger.warn('onboarding RPC check_profile_completion not found. Assuming complete');
           return {
             complete: true,
             missing: [],
@@ -121,7 +124,7 @@ export function useOnboardingGate() {
             onboarding_completed: true,
           };
         }
-        console.error('[onboarding] Error checking profile completion:', error);
+        logger.error('onboarding Error checking profile completion', error);
         throw error;
       }
 
@@ -150,14 +153,13 @@ export function useOnboardingGate() {
 
         if (error) {
           // Cualquier error con esta RPC no debe bloquear el onboarding
-          console.warn('[onboarding] Error en get_pending_consents:', error.code, error.message);
-          console.warn('[onboarding] Continuando sin documentos pendientes...');
+          logger.warn('onboarding Error en get_pending_consents', { code: error.code, message: error.message });
           return [];
         }
 
         return (data || []) as PendingDocument[];
       } catch (e) {
-        console.warn('[onboarding] Excepción en get_pending_consents:', e);
+        logger.warn('onboarding Excepción en get_pending_consents', { error: e });
         return [];
       }
     },
@@ -178,7 +180,7 @@ export function useOnboardingGate() {
       if (error) {
         // Si la tabla no existe, devolver lista por defecto
         if (error.code === '42P01' || error.message?.includes('does not exist')) {
-          console.warn('[onboarding] Table countries not found. Using defaults.');
+          logger.warn('onboarding Table countries not found. Using defaults');
           return getDefaultCountries();
         }
         throw error;
@@ -201,7 +203,7 @@ export function useOnboardingGate() {
       if (error) {
         // Si la tabla no existe, devolver lista por defecto
         if (error.code === '42P01' || error.message?.includes('does not exist')) {
-          console.warn('[onboarding] Table document_types not found. Using defaults.');
+          logger.warn('onboarding Table document_types not found. Using defaults');
           return getDefaultDocumentTypes();
         }
         throw error;
@@ -223,7 +225,7 @@ export function useOnboardingGate() {
 
       if (error) {
         if (error.code === '42P01' || error.message?.includes('does not exist')) {
-          console.warn('[onboarding] Table cities not found. Using empty list.');
+          logger.warn('onboarding Table cities not found. Using empty list');
           return [];
         }
         throw error;
@@ -243,13 +245,11 @@ export function useOnboardingGate() {
   // Guardar datos del perfil
   const saveProfileMutation = useMutation({
     mutationFn: async (data: ProfileData) => {
-      console.log('[useOnboardingGate] saveProfileData llamado');
-      console.log('[useOnboardingGate] user.id:', user?.id);
-      console.log('[useOnboardingGate] data:', data);
+      logger.debug('useOnboardingGate saveProfileData llamado', { userId: user?.id });
 
       if (!user?.id) throw new Error('No user');
 
-      console.log('[useOnboardingGate] Llamando RPC save_profile_data...');
+      logger.debug('useOnboardingGate Llamando RPC save_profile_data');
       const { data: result, error } = await supabase.rpc('save_profile_data', {
         p_user_id: user.id,
         p_full_name: data.full_name,
@@ -271,31 +271,29 @@ export function useOnboardingGate() {
         p_gender: data.gender || null,
       });
 
-      console.log('[useOnboardingGate] RPC result:', result);
-      console.log('[useOnboardingGate] RPC error:', error);
+      logger.debug('useOnboardingGate RPC result', { hasResult: !!result, hasError: !!error });
 
       if (error) {
-        console.error('[useOnboardingGate] RPC error:', error);
+        logger.error('useOnboardingGate RPC error', error);
         throw error;
       }
 
       const res = result as { success: boolean; error?: string };
-      console.log('[useOnboardingGate] Parsed result:', res);
 
       if (!res.success) {
-        console.error('[useOnboardingGate] RPC returned success=false:', res.error);
+        logger.error('useOnboardingGate RPC returned success=false', new Error(res.error || 'Error saving profile'));
         throw new Error(res.error || 'Error saving profile');
       }
 
       return res;
     },
     onSuccess: () => {
-      console.log('[useOnboardingGate] Mutation success, refetching...');
+      logger.debug('useOnboardingGate Mutation success, refetching');
       refetchCompletion();
       queryClient.invalidateQueries({ queryKey: ['profile'] });
     },
     onError: (error) => {
-      console.error('[useOnboardingGate] Mutation error:', error);
+      logger.error('useOnboardingGate Mutation error', error);
     },
   });
 
@@ -329,7 +327,7 @@ export function useOnboardingGate() {
     });
 
     if (error) {
-      console.error('[onboarding] Error checking username:', error);
+      logger.error('onboarding Error checking username', error);
       return false;
     }
 
@@ -350,8 +348,10 @@ export function useOnboardingGate() {
       return 'profile_data';
     }
 
-    // Si hay documentos pendientes
-    const requiredPending = pendingDocuments?.filter(d => d.is_required) || [];
+    // Si hay documentos pendientes de REGISTRO (no de asignación de rol)
+    const requiredPending = pendingDocuments?.filter(
+      d => d.is_required && (d.trigger_event === 'registration' || !d.trigger_event)
+    ) || [];
     if (requiredPending.length > 0 || !completionStatus.legal_consents_completed) {
       return 'legal_consents';
     }
@@ -392,7 +392,9 @@ export function useOnboardingGate() {
     currentStep,
     completionStatus,
     pendingDocuments: pendingDocuments || [],
-    requiredPendingDocuments: (pendingDocuments || []).filter(d => d.is_required),
+    requiredPendingDocuments: (pendingDocuments || []).filter(
+      d => d.is_required && (d.trigger_event === 'registration' || !d.trigger_event)
+    ),
 
     // Datos de referencia
     countries: countries || [],

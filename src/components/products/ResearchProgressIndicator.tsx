@@ -101,7 +101,7 @@ export function ResearchProgressIndicator({ productId, isGenerating }: ResearchP
   };
 
   return (
-    <div className="w-full rounded-xl border border-purple-500/30 bg-card/95 backdrop-blur-sm p-5 shadow-lg">
+    <div className="w-full rounded-lg border border-purple-500/30 bg-white dark:bg-[#14141f] p-5 shadow-sm dark:shadow-none">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
@@ -142,7 +142,7 @@ export function ResearchProgressIndicator({ productId, isGenerating }: ResearchP
           return (
             <div
               key={section.key}
-              className={`flex items-center justify-between py-1.5 px-2 rounded-md text-xs transition-all duration-300 ${
+              className={`flex items-center justify-between py-1.5 px-2 rounded-lg text-xs transition-colors duration-150 ${
                 status === 'generating' ? 'bg-purple-500/10 border border-purple-500/20' : ''
               }`}
             >
@@ -166,7 +166,7 @@ export function ResearchProgressIndicator({ productId, isGenerating }: ResearchP
               </div>
               <span className={`text-[10px] ${
                 status === 'completed' ? 'text-green-500/70' :
-                status === 'generating' ? 'text-purple-400 animate-pulse' :
+                status === 'generating' ? 'text-purple-400' :
                 'text-muted-foreground/30'
               }`}>
                 {status === 'completed' && 'completado'}

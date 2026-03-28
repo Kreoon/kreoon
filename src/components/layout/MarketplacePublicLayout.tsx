@@ -56,7 +56,7 @@ function AnonymousMarketplaceShell({ children }: { children: ReactNode }) {
           onClick={() => navigate('/marketplace')}
           className="flex items-center gap-2"
         >
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg overflow-hidden">
+          <div className="flex h-7 w-7 items-center justify-center rounded-sm overflow-hidden">
             <img src={logoUrl} alt={platformName} className="h-7 w-7 object-cover" loading="lazy" />
           </div>
           <span className="text-sm font-bold text-white">{platformName}</span>

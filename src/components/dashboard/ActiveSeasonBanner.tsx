@@ -15,7 +15,7 @@ export function ActiveSeasonBanner({ className }: { className?: string }) {
 
   return (
     <div className={cn(
-      "flex items-center gap-3 px-4 py-2 rounded-lg border transition-all",
+      "flex items-center gap-3 px-4 py-2 rounded-sm border transition-all",
       isEndingSoon
         ? "bg-warning/10 border-warning/30 text-warning"
         : hasEnded
@@ -24,7 +24,7 @@ export function ActiveSeasonBanner({ className }: { className?: string }) {
       className
     )}>
       <div className={cn(
-        "p-1.5 rounded-lg",
+        "p-1.5 rounded-sm",
         isEndingSoon ? "bg-warning/20" : hasEnded ? "bg-muted" : "bg-primary/20"
       )}>
         {isEndingSoon ? (

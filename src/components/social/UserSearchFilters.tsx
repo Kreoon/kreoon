@@ -120,7 +120,7 @@ export function UserSearchFilters({
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setSearchFocused(false)}
             className={cn(
-              "pl-12 h-12 rounded-xl text-base",
+              "pl-12 h-12 rounded-sm text-base",
               "bg-social-card border-social-border",
               "focus:border-social-accent/50 focus:ring-2 focus:ring-social-accent/20",
               "transition-all duration-300"
@@ -146,7 +146,7 @@ export function UserSearchFilters({
               type="button"
               variant="outline"
               className={cn(
-                "h-12 px-4 rounded-xl border-social-border",
+                "h-12 px-4 rounded-sm border-social-border",
                 "hover:bg-social-muted hover:border-social-accent/30",
                 activeFiltersCount > 0 && "border-social-accent bg-social-accent/10"
               )}

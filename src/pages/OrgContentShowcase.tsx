@@ -131,7 +131,7 @@ const VideoCard = memo(function VideoCard({
 
   return (
     <div
-      className="group relative rounded-2xl overflow-hidden bg-card border border-white/[0.06] cursor-pointer hover:border-white/[0.12] transition-all duration-300 hover:shadow-2xl hover:shadow-black/20 hover:-translate-y-0.5"
+      className="group relative rounded-sm overflow-hidden bg-card border border-white/[0.06] cursor-pointer hover:border-white/[0.12] transition-all duration-300 hover:shadow-2xl hover:shadow-black/20 hover:-translate-y-0.5"
       onClick={onClick}
     >
       <div className="relative aspect-[9/16] bg-neutral-900">
@@ -263,9 +263,9 @@ export default function OrgContentShowcase() {
       <nav className="sticky top-0 z-40 bg-[#0a0a0b]/80 backdrop-blur-xl border-b border-white/[0.06]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
           {org.logo_url ? (
-            <img src={org.logo_url} alt={displayName} className="h-8 w-8 rounded-lg object-cover" />
+            <img src={org.logo_url} alt={displayName} className="h-8 w-8 rounded-sm object-cover" />
           ) : (
-            <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${accent}20` }}>
+            <div className="h-8 w-8 rounded-sm flex items-center justify-center" style={{ backgroundColor: `${accent}20` }}>
               <Building2 className="h-4 w-4" style={{ color: accent }} />
             </div>
           )}
@@ -274,17 +274,17 @@ export default function OrgContentShowcase() {
           {/* Social links in navbar */}
           <div className="hidden sm:flex items-center gap-1">
             {igHandle && (
-              <a href={`https://instagram.com/${igHandle}`} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg hover:bg-white/5 transition-colors text-white/40 hover:text-white/80">
+              <a href={`https://instagram.com/${igHandle}`} target="_blank" rel="noopener noreferrer" className="p-2 rounded-sm hover:bg-white/5 transition-colors text-white/40 hover:text-white/80">
                 <Instagram className="h-4 w-4" />
               </a>
             )}
             {tkHandle && (
-              <a href={`https://tiktok.com/@${tkHandle}`} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg hover:bg-white/5 transition-colors text-white/40 hover:text-white/80">
+              <a href={`https://tiktok.com/@${tkHandle}`} target="_blank" rel="noopener noreferrer" className="p-2 rounded-sm hover:bg-white/5 transition-colors text-white/40 hover:text-white/80">
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.88-2.88 2.89 2.89 0 012.88-2.88c.28 0 .56.04.81.13v-3.5a6.37 6.37 0 00-.81-.05A6.34 6.34 0 003.15 15.4a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V9.22a8.16 8.16 0 004.76 1.52V7.3a4.85 4.85 0 01-1-.61z"/></svg>
               </a>
             )}
             {webUrl && (
-              <a href={ensureUrl(webUrl)} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg hover:bg-white/5 transition-colors text-white/40 hover:text-white/80">
+              <a href={ensureUrl(webUrl)} target="_blank" rel="noopener noreferrer" className="p-2 rounded-sm hover:bg-white/5 transition-colors text-white/40 hover:text-white/80">
                 <Globe className="h-4 w-4" />
               </a>
             )}
@@ -321,12 +321,12 @@ export default function OrgContentShowcase() {
                 <img
                   src={org.logo_url}
                   alt={displayName}
-                  className="h-20 w-20 md:h-24 md:w-24 rounded-2xl object-cover border-2 shadow-2xl shrink-0"
+                  className="h-20 w-20 md:h-24 md:w-24 rounded-sm object-cover border-2 shadow-2xl shrink-0"
                   style={{ borderColor: `${accent}40` }}
                 />
               ) : (
                 <div
-                  className="h-20 w-20 md:h-24 md:w-24 rounded-2xl flex items-center justify-center border-2 shadow-2xl shrink-0"
+                  className="h-20 w-20 md:h-24 md:w-24 rounded-sm flex items-center justify-center border-2 shadow-2xl shrink-0"
                   style={{ backgroundColor: `${accent}15`, borderColor: `${accent}40` }}
                 >
                   <Building2 className="h-10 w-10" style={{ color: accent }} />

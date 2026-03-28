@@ -415,7 +415,7 @@ export function PlatformSecurityPanel() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
+            <div className="p-2 rounded-sm bg-primary/10">
               <Users className="h-5 w-5 text-primary" />
             </div>
             <div>
@@ -427,7 +427,7 @@ export function PlatformSecurityPanel() {
 
         <Card className={usersWithMFA > 0 ? "border-green-500/50" : "border-amber-500/50"}>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className={`p-2 rounded-lg ${usersWithMFA > 0 ? "bg-green-100 dark:bg-green-900" : "bg-amber-100 dark:bg-amber-900"}`}>
+            <div className={`p-2 rounded-sm ${usersWithMFA > 0 ? "bg-green-100 dark:bg-green-900" : "bg-amber-100 dark:bg-amber-900"}`}>
               <Smartphone className={`h-5 w-5 ${usersWithMFA > 0 ? "text-green-600" : "text-amber-600"}`} />
             </div>
             <div>
@@ -439,7 +439,7 @@ export function PlatformSecurityPanel() {
 
         <Card className={lockedAccounts === 0 ? "border-green-500/50" : "border-red-500/50"}>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className={`p-2 rounded-lg ${lockedAccounts === 0 ? "bg-green-100 dark:bg-green-900" : "bg-red-100 dark:bg-red-900"}`}>
+            <div className={`p-2 rounded-sm ${lockedAccounts === 0 ? "bg-green-100 dark:bg-green-900" : "bg-red-100 dark:bg-red-900"}`}>
               <Lock className={`h-5 w-5 ${lockedAccounts === 0 ? "text-green-600" : "text-red-600"}`} />
             </div>
             <div>
@@ -451,7 +451,7 @@ export function PlatformSecurityPanel() {
 
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900">
+            <div className="p-2 rounded-sm bg-blue-100 dark:bg-blue-900">
               <ShieldCheck className="h-5 w-5 text-blue-600" />
             </div>
             <div>
@@ -500,9 +500,9 @@ export function PlatformSecurityPanel() {
             </CardHeader>
             <CardContent className="space-y-4">
               {policies.map((policy) => (
-                <div key={policy.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div key={policy.id} className="flex items-center justify-between p-4 border rounded-sm">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-muted">
+                    <div className="p-2 rounded-sm bg-muted">
                       {getPolicyIcon(policy.setting_key)}
                     </div>
                     <div>
@@ -530,9 +530,9 @@ export function PlatformSecurityPanel() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+              <div className="flex items-center justify-between p-4 border rounded-sm bg-muted/30">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${talentGateConfig.enabled ? "bg-amber-100 dark:bg-amber-900" : "bg-muted"}`}>
+                  <div className={`p-2 rounded-sm ${talentGateConfig.enabled ? "bg-amber-100 dark:bg-amber-900" : "bg-muted"}`}>
                     <KeyRound className={`h-5 w-5 ${talentGateConfig.enabled ? "text-amber-600" : "text-muted-foreground"}`} />
                   </div>
                   <div>
@@ -563,9 +563,9 @@ export function PlatformSecurityPanel() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center justify-between p-4 border rounded-sm">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-muted">
+                  <div className="p-2 rounded-sm bg-muted">
                     <ShieldCheck className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <div>
@@ -591,7 +591,7 @@ export function PlatformSecurityPanel() {
               </div>
 
               {!talentGateConfig.enabled && (
-                <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-sm border border-amber-200 dark:border-amber-800">
                   <div className="flex items-start gap-2">
                     <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
                     <div className="text-sm text-amber-800 dark:text-amber-200">
@@ -622,28 +622,28 @@ export function PlatformSecurityPanel() {
             <CardContent>
               {/* Stats */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="p-3 rounded-lg bg-muted/50 border">
+                <div className="p-3 rounded-sm bg-muted/50 border">
                   <div className="flex items-center gap-2">
                     <Activity className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">Total eventos</span>
                   </div>
                   <p className="text-2xl font-bold mt-1">{securityEvents.length}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900">
+                <div className="p-3 rounded-sm bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900">
                   <div className="flex items-center gap-2">
                     <Bot className="h-4 w-4 text-red-600" />
                     <span className="text-sm text-red-600">Bots detectados</span>
                   </div>
                   <p className="text-2xl font-bold mt-1 text-red-600">{botsDetected}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900">
+                <div className="p-3 rounded-sm bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900">
                   <div className="flex items-center gap-2">
                     <Ban className="h-4 w-4 text-amber-600" />
                     <span className="text-sm text-amber-600">Bloqueados</span>
                   </div>
                   <p className="text-2xl font-bold mt-1 text-amber-600">{blockedEvents}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900">
+                <div className="p-3 rounded-sm bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
                     <span className="text-sm text-green-600">Permitidos</span>

@@ -247,7 +247,7 @@ const UnifiedTalentPage = () => {
         {/* Stats Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {canSeeInternal && (
-            <div className="rounded-xl border border-border bg-card p-3">
+            <div className="rounded-sm border border-border bg-card p-3">
               <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
                 <Users className="h-3.5 w-3.5" />
                 Equipo
@@ -255,7 +255,7 @@ const UnifiedTalentPage = () => {
               <p className="text-xl font-bold text-card-foreground">{stats.internal}</p>
             </div>
           )}
-          <div className="rounded-xl border border-border bg-card p-3">
+          <div className="rounded-sm border border-border bg-card p-3">
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
               <Sword className="h-3.5 w-3.5" />
               Externos
@@ -263,7 +263,7 @@ const UnifiedTalentPage = () => {
             <p className="text-xl font-bold text-card-foreground">{stats.external}</p>
           </div>
           {canSeeInternal && stats.leads > 0 && (
-            <div className="rounded-xl border border-border bg-card p-3">
+            <div className="rounded-sm border border-border bg-card p-3">
               <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
                 <UserPlus className="h-3.5 w-3.5" />
                 Leads
@@ -271,14 +271,14 @@ const UnifiedTalentPage = () => {
               <p className="text-xl font-bold text-card-foreground">{stats.leads}</p>
             </div>
           )}
-          <div className="rounded-xl border border-border bg-card p-3">
+          <div className="rounded-sm border border-border bg-card p-3">
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
               <Heart className="h-3.5 w-3.5" />
               Favoritos
             </div>
             <p className="text-xl font-bold text-card-foreground">{stats.favorites}</p>
           </div>
-          <div className="rounded-xl border border-border bg-card p-3">
+          <div className="rounded-sm border border-border bg-card p-3">
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
               <DollarSign className="h-3.5 w-3.5" />
               Invertido
@@ -295,7 +295,7 @@ const UnifiedTalentPage = () => {
                 key={tab.key}
                 onClick={() => setFilter(tab.key)}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
+                  'px-3 py-1.5 rounded-sm text-xs font-medium transition-all',
                   filter === tab.key
                     ? 'bg-primary text-white shadow-sm'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground',
@@ -335,11 +335,11 @@ const UnifiedTalentPage = () => {
               {isLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <Skeleton key={i} className="h-48 rounded-xl bg-muted" />
+                    <Skeleton key={i} className="h-48 rounded-sm bg-muted" />
                   ))}
                 </div>
               ) : filtered.length === 0 ? (
-                <div className="text-center py-16 border border-dashed border-border rounded-xl">
+                <div className="text-center py-16 border border-dashed border-border rounded-sm">
                   <Sword className="h-8 w-8 text-white/20 mx-auto mb-3" />
                   <p className="text-sm text-muted-foreground">No se encontr\u00f3 talento</p>
                   {search && (
@@ -368,7 +368,7 @@ const UnifiedTalentPage = () => {
                 </div>
               ) : (
                 /* Table view */
-                <div className="rounded-xl border border-border overflow-hidden overflow-x-auto">
+                <div className="rounded-sm border border-border overflow-hidden overflow-x-auto">
                   <table className="w-full text-xs min-w-[550px]">
                     <thead>
                       <tr className="bg-muted border-b border-border">

@@ -153,44 +153,44 @@ export function Tab07Positioning({ data }: Tab07PositioningProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {fullStatement && (
-              <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+              <div className="p-4 rounded-sm bg-purple-500/10 border border-purple-500/20">
                 <p className="text-sm leading-relaxed italic">"{fullStatement}"</p>
                 <CopyButton text={fullStatement} className="mt-2" size="sm" />
               </div>
             )}
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
               {data.positioning_statement.for && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-1">Para</p>
                   <p className="font-medium">{data.positioning_statement.for}</p>
                 </div>
               )}
               {data.positioning_statement.who && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-1">Que tiene</p>
                   <p className="font-medium">{data.positioning_statement.who}</p>
                 </div>
               )}
               {data.positioning_statement.product_is && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-1">El producto es</p>
                   <p className="font-medium">{data.positioning_statement.product_is}</p>
                 </div>
               )}
               {data.positioning_statement.that && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-1">Que proporciona</p>
                   <p className="font-medium">{data.positioning_statement.that}</p>
                 </div>
               )}
               {data.positioning_statement.unlike && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-1">A diferencia de</p>
                   <p className="font-medium">{data.positioning_statement.unlike}</p>
                 </div>
               )}
               {data.positioning_statement.our_product && (
-                <div className="p-3 rounded-lg border bg-green-500/10 border-green-500/20">
+                <div className="p-3 rounded-sm border bg-green-500/10 border-green-500/20">
                   <p className="text-xs text-green-400 mb-1">Nuestro producto</p>
                   <p className="font-medium">{data.positioning_statement.our_product}</p>
                 </div>
@@ -211,7 +211,7 @@ export function Tab07Positioning({ data }: Tab07PositioningProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {data.puv.headline && (
-              <div className="p-4 rounded-lg bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20">
+              <div className="p-4 rounded-sm bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20">
                 <h3 className="text-xl font-bold mb-2">{data.puv.headline}</h3>
                 {data.puv.subheadline && (
                   <p className="text-muted-foreground">{data.puv.subheadline}</p>
@@ -262,7 +262,7 @@ export function Tab07Positioning({ data }: Tab07PositioningProps) {
             )}
             <div className="grid sm:grid-cols-3 gap-4">
               {data.brand_archetype.voice_characteristics && data.brand_archetype.voice_characteristics.length > 0 && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-2">Características de Voz:</p>
                   <div className="flex flex-wrap gap-1">
                     {data.brand_archetype.voice_characteristics.map((char, idx) => (
@@ -272,7 +272,7 @@ export function Tab07Positioning({ data }: Tab07PositioningProps) {
                 </div>
               )}
               {data.brand_archetype.words_to_use && data.brand_archetype.words_to_use.length > 0 && (
-                <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
                   <p className="text-xs text-green-400 mb-2">Palabras a Usar:</p>
                   <div className="flex flex-wrap gap-1">
                     {data.brand_archetype.words_to_use.map((word, idx) => (
@@ -282,7 +282,7 @@ export function Tab07Positioning({ data }: Tab07PositioningProps) {
                 </div>
               )}
               {data.brand_archetype.words_to_avoid && data.brand_archetype.words_to_avoid.length > 0 && (
-                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                <div className="p-3 rounded-sm bg-red-500/10 border border-red-500/20">
                   <p className="text-xs text-red-400 mb-2">Palabras a Evitar:</p>
                   <div className="flex flex-wrap gap-1">
                     {data.brand_archetype.words_to_avoid.map((word, idx) => (
@@ -307,14 +307,14 @@ export function Tab07Positioning({ data }: Tab07PositioningProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {data.brand_territory.owns && (
-              <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+              <div className="p-4 rounded-sm bg-green-500/10 border border-green-500/20">
                 <p className="text-xs text-green-400 mb-1">Territorio que Poseemos</p>
                 <p className="font-medium">{data.brand_territory.owns}</p>
               </div>
             )}
             <div className="grid sm:grid-cols-2 gap-4">
               {data.brand_territory.adjacent_territories && data.brand_territory.adjacent_territories.length > 0 && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-2">Territorios Adyacentes:</p>
                   <ul className="space-y-1">
                     {data.brand_territory.adjacent_territories.map((t, idx) => (
@@ -324,7 +324,7 @@ export function Tab07Positioning({ data }: Tab07PositioningProps) {
                 </div>
               )}
               {data.brand_territory.territories_to_avoid && data.brand_territory.territories_to_avoid.length > 0 && (
-                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                <div className="p-3 rounded-sm bg-red-500/10 border border-red-500/20">
                   <p className="text-xs text-red-400 mb-2">Territorios a Evitar:</p>
                   <ul className="space-y-1">
                     {data.brand_territory.territories_to_avoid.map((t, idx) => (
@@ -350,19 +350,19 @@ export function Tab07Positioning({ data }: Tab07PositioningProps) {
           <CardContent>
             <div className="grid sm:grid-cols-3 gap-4">
               {data.competitive_frame.category && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-1">Categoría</p>
                   <p className="font-medium">{data.competitive_frame.category}</p>
                 </div>
               )}
               {data.competitive_frame.frame_of_reference && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-1">Marco de Referencia</p>
                   <p className="font-medium">{data.competitive_frame.frame_of_reference}</p>
                 </div>
               )}
               {data.competitive_frame.differentiation_angle && (
-                <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                <div className="p-3 rounded-sm bg-purple-500/10 border border-purple-500/20">
                   <p className="text-xs text-purple-400 mb-1">Ángulo de Diferenciación</p>
                   <p className="font-medium">{data.competitive_frame.differentiation_angle}</p>
                 </div>
@@ -383,26 +383,26 @@ export function Tab07Positioning({ data }: Tab07PositioningProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             {data.messaging_hierarchy.level_1_tagline && (
-              <div className="p-3 rounded-lg border border-l-4 border-l-indigo-500">
+              <div className="p-3 rounded-sm border border-l-4 border-l-indigo-500">
                 <p className="text-xs text-indigo-400 mb-1">Nivel 1: Tagline</p>
                 <p className="font-bold text-lg">{data.messaging_hierarchy.level_1_tagline}</p>
                 <CopyButton text={data.messaging_hierarchy.level_1_tagline} size="sm" className="mt-1" />
               </div>
             )}
             {data.messaging_hierarchy.level_2_value_prop && (
-              <div className="p-3 rounded-lg border">
+              <div className="p-3 rounded-sm border">
                 <p className="text-xs text-muted-foreground mb-1">Nivel 2: Propuesta de Valor</p>
                 <p className="font-medium">{data.messaging_hierarchy.level_2_value_prop}</p>
               </div>
             )}
             {data.messaging_hierarchy.level_3_proof && (
-              <div className="p-3 rounded-lg border">
+              <div className="p-3 rounded-sm border">
                 <p className="text-xs text-muted-foreground mb-1">Nivel 3: Prueba</p>
                 <p className="text-sm">{data.messaging_hierarchy.level_3_proof}</p>
               </div>
             )}
             {data.messaging_hierarchy.level_4_features && (
-              <div className="p-3 rounded-lg border">
+              <div className="p-3 rounded-sm border">
                 <p className="text-xs text-muted-foreground mb-1">Nivel 4: Features</p>
                 <p className="text-sm text-muted-foreground">{data.messaging_hierarchy.level_4_features}</p>
               </div>
@@ -422,7 +422,7 @@ export function Tab07Positioning({ data }: Tab07PositioningProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {data.key_messages.map((msg, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
+              <div key={idx} className="p-4 rounded-sm border bg-card">
                 <div className="flex items-center gap-2 mb-2">
                   <Badge variant="outline">{msg.audience}</Badge>
                 </div>
@@ -460,7 +460,7 @@ export function Tab07Positioning({ data }: Tab07PositioningProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {data.elevator_pitches["10_seconds"] && (
-              <div className="p-4 rounded-lg border">
+              <div className="p-4 rounded-sm border">
                 <div className="flex items-center justify-between mb-2">
                   <Badge className="bg-orange-500/20 text-orange-400">10 segundos</Badge>
                   <CopyButton text={data.elevator_pitches["10_seconds"]} size="sm" />
@@ -469,7 +469,7 @@ export function Tab07Positioning({ data }: Tab07PositioningProps) {
               </div>
             )}
             {data.elevator_pitches["30_seconds"] && (
-              <div className="p-4 rounded-lg border">
+              <div className="p-4 rounded-sm border">
                 <div className="flex items-center justify-between mb-2">
                   <Badge className="bg-yellow-500/20 text-yellow-400">30 segundos</Badge>
                   <CopyButton text={data.elevator_pitches["30_seconds"]} size="sm" />
@@ -478,7 +478,7 @@ export function Tab07Positioning({ data }: Tab07PositioningProps) {
               </div>
             )}
             {data.elevator_pitches["60_seconds"] && (
-              <div className="p-4 rounded-lg border">
+              <div className="p-4 rounded-sm border">
                 <div className="flex items-center justify-between mb-2">
                   <Badge className="bg-green-500/20 text-green-400">60 segundos</Badge>
                   <CopyButton text={data.elevator_pitches["60_seconds"]} size="sm" />
@@ -502,7 +502,7 @@ export function Tab07Positioning({ data }: Tab07PositioningProps) {
           <CardContent>
             <div className="grid sm:grid-cols-2 gap-3">
               {data.brand_mantras.map((mantra, idx) => (
-                <div key={idx} className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-start justify-between">
+                <div key={idx} className="p-3 rounded-sm bg-cyan-500/10 border border-cyan-500/20 flex items-start justify-between">
                   <p className="italic">"{mantra}"</p>
                   <CopyButton text={mantra} size="sm" />
                 </div>
@@ -523,7 +523,7 @@ export function Tab07Positioning({ data }: Tab07PositioningProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             {data.positioning_risks.map((risk, idx) => (
-              <div key={idx} className="p-4 rounded-lg border">
+              <div key={idx} className="p-4 rounded-sm border">
                 <div className="flex items-start gap-3 mb-2">
                   <Badge variant="destructive" className="flex-shrink-0">Riesgo</Badge>
                   <p className="text-sm font-medium">{risk.risk}</p>

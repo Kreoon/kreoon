@@ -60,12 +60,12 @@ export function DifferentiationTab({ differentiation }: DifferentiationTabProps)
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="p-4 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-lg border border-emerald-500/20">
-        <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+      <div className="p-4 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
+        <h3 className="font-semibold text-sm mb-2 flex items-center gap-2 text-zinc-100">
           <Sparkles className="h-4 w-4 text-emerald-500" />
           Vacíos y Oportunidades de Diferenciación
         </h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400">
           Áreas donde el mercado está fallando y oportunidades únicas de posicionamiento.
         </p>
       </div>

@@ -91,7 +91,7 @@ export function WizardStepServices({
       </div>
 
       {/* Pricing basics */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6 space-y-5">
+      <div className="bg-white/5 rounded-sm border border-white/10 p-6 space-y-5">
         <h3 className="text-white font-medium text-sm">Configuracion general</h3>
 
         <div className="grid grid-cols-2 gap-4">
@@ -104,20 +104,20 @@ export function WizardStepServices({
                 value={servicesData.base_price ?? ''}
                 onChange={(e) => onChange({ ...servicesData, base_price: e.target.value ? Number(e.target.value) : null })}
                 placeholder="0"
-                className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
+                className="w-full bg-white/5 border border-white/10 rounded-sm pl-9 pr-4 py-2.5 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
               />
             </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-400 mb-1.5">Moneda</label>
-            <div className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/60 text-sm">
+            <div className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-2.5 text-white/60 text-sm">
               USD
             </div>
           </div>
         </div>
 
         {/* Exchange toggle */}
-        <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
+        <div className="flex items-center justify-between p-4 rounded-sm bg-white/5 border border-white/10">
           <div className="flex items-center gap-3">
             <Gift className="h-5 w-5 text-green-400" />
             <div>
@@ -147,7 +147,7 @@ export function WizardStepServices({
               onChange={(e) => onChange({ ...servicesData, exchange_conditions: e.target.value })}
               placeholder="Ej: Acepto productos de moda y skincare con valor minimo de $150.000 COP"
               rows={2}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm resize-none"
+              className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-2.5 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm resize-none"
             />
           </div>
         )}
@@ -159,7 +159,7 @@ export function WizardStepServices({
           <h3 className="text-white font-medium text-sm">Tus servicios ({services.length})</h3>
           <button
             onClick={() => setShowForm(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-xl text-xs font-medium transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-sm text-xs font-medium transition-colors"
           >
             <Plus className="h-3.5 w-3.5" />
             Agregar servicio
@@ -169,7 +169,7 @@ export function WizardStepServices({
         {services.map(service => (
           <div
             key={service.id}
-            className="bg-white/5 rounded-xl border border-white/10 overflow-hidden"
+            className="bg-white/5 rounded-sm border border-white/10 overflow-hidden"
           >
             <button
               onClick={() => setExpandedService(expandedService === service.id ? null : service.id)}
@@ -188,7 +188,7 @@ export function WizardStepServices({
               <div className="flex items-center gap-2">
                 <button
                   onClick={(e) => { e.stopPropagation(); onDeleteService(service.id); }}
-                  className="p-1.5 hover:bg-red-500/20 rounded-lg transition-colors"
+                  className="p-1.5 hover:bg-red-500/20 rounded-sm transition-colors"
                 >
                   <Trash2 className="h-3.5 w-3.5 text-gray-500 hover:text-red-400" />
                 </button>
@@ -225,7 +225,7 @@ export function WizardStepServices({
 
       {/* Add service form */}
       {showForm && (
-        <div className="bg-white/5 rounded-2xl border border-purple-500/30 p-6 space-y-4">
+        <div className="bg-white/5 rounded-sm border border-purple-500/30 p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-white font-medium text-sm">Nuevo servicio</h3>
             <button onClick={() => setShowForm(false)} className="p-1 hover:bg-white/10 rounded">
@@ -241,7 +241,7 @@ export function WizardStepServices({
                 value={form.title}
                 onChange={(e) => setForm(prev => ({ ...prev, title: e.target.value }))}
                 placeholder="Ej: Video UGC Vertical"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white placeholder:text-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white placeholder:text-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
               />
             </div>
             <div>
@@ -249,7 +249,7 @@ export function WizardStepServices({
               <select
                 value={form.service_type}
                 onChange={(e) => setForm(prev => ({ ...prev, service_type: e.target.value }))}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
               >
                 <option value="" className="bg-card">Seleccionar...</option>
                 {Object.entries(SERVICE_TYPE_CATEGORIES).map(([, category]) => (
@@ -270,11 +270,11 @@ export function WizardStepServices({
               onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Describe que incluye este servicio..."
               rows={2}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white placeholder:text-gray-600 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+              className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white placeholder:text-gray-600 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/50"
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs text-gray-400 mb-1">Precio</label>
               <input
@@ -282,12 +282,12 @@ export function WizardStepServices({
                 value={form.price_amount}
                 onChange={(e) => setForm(prev => ({ ...prev, price_amount: e.target.value }))}
                 placeholder="0"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
               />
             </div>
             <div>
               <label className="block text-xs text-gray-400 mb-1">Moneda</label>
-              <div className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white/60 text-sm">
+              <div className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white/60 text-sm">
                 USD
               </div>
             </div>
@@ -298,7 +298,7 @@ export function WizardStepServices({
                 value={form.delivery_days}
                 onChange={(e) => setForm(prev => ({ ...prev, delivery_days: e.target.value }))}
                 placeholder="7"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
               />
             </div>
           </div>
@@ -323,9 +323,9 @@ export function WizardStepServices({
                 onChange={(e) => setNewInclude(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addInclude())}
                 placeholder="Ej: 1 video vertical 15-30s"
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white placeholder:text-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                className="flex-1 bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white placeholder:text-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
               />
-              <button onClick={addInclude} className="px-3 py-2 bg-white/10 hover:bg-white/15 rounded-xl text-xs text-foreground/80">
+              <button onClick={addInclude} className="px-3 py-2 bg-white/10 hover:bg-white/15 rounded-sm text-xs text-foreground/80">
                 <Plus className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -334,7 +334,7 @@ export function WizardStepServices({
           <button
             onClick={handleCreateService}
             disabled={!form.title || !form.service_type}
-            className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded-xl text-sm font-medium transition-colors"
+            className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded-sm text-sm font-medium transition-colors"
           >
             Crear servicio
           </button>

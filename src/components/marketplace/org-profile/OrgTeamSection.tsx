@@ -45,7 +45,7 @@ export function OrgTeamSection({ members, accentColor }: OrgTeamSectionProps) {
           return (
             <div
               key={member.user_id}
-              className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
+              className="flex items-center gap-3 p-3 rounded-sm border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
             >
               <Avatar className="h-10 w-10">
                 <AvatarImage src={member.avatar_url || ''} alt={member.full_name} />

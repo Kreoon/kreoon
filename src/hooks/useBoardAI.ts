@@ -122,8 +122,8 @@ export function useBoardAI(organizationId?: string) {
     try {
       data = await invokeAIWithTokens('board-ai', tokenAction, { action, organizationId, contentId, ...extra }, organizationId);
     } catch (err: any) {
-      if (err.message?.includes('Kreoon Coins insuficientes')) {
-        toast({ title: 'Coins insuficientes', description: err.message, variant: 'destructive' });
+      if (err.message?.includes('Tokens IA insuficientes')) {
+        toast({ title: 'Tokens insuficientes', description: err.message, variant: 'destructive' });
         return null;
       }
       error = err;

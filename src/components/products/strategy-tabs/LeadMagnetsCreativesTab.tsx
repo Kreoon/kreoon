@@ -67,7 +67,7 @@ export function LeadMagnetsCreativesTab({ salesAnglesData }: LeadMagnetsCreative
       {/* Lead Magnets Section */}
       {leadMagnets.length > 0 && (
         <>
-          <div className="p-4 bg-gradient-to-r from-pink-500/10 to-rose-500/10 rounded-lg border border-pink-500/20">
+          <div className="p-4 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
             <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
               <Gift className="h-4 w-4 text-pink-500" />
               3 Lead Magnets Estratégicos
@@ -129,7 +129,7 @@ export function LeadMagnetsCreativesTab({ salesAnglesData }: LeadMagnetsCreative
        {/* Creatives Section */}
        {videoCreatives.length > 0 && (
          <>
-           <div className="p-4 bg-gradient-to-r from-indigo-500/10 to-violet-500/10 rounded-lg border border-indigo-500/20">
+           <div className="p-4 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
              <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
                <Video className="h-4 w-4 text-indigo-500" />
                {videoCreatives.length} Creativos (multi-formato)
@@ -153,7 +153,7 @@ export function LeadMagnetsCreativesTab({ salesAnglesData }: LeadMagnetsCreative
                     return acc;
                   }, {} as Record<string, number>)
                 ).map(([phase, count]) => (
-                  <Badge key={phase} className={PHASE_COLORS[phase] || 'bg-gray-100 text-gray-700'}>
+                  <Badge key={phase} className={PHASE_COLORS[phase] || 'bg-zinc-100 text-zinc-700'}>
                     {phase}: {count}
                   </Badge>
                 ))}
@@ -185,7 +185,7 @@ export function LeadMagnetsCreativesTab({ salesAnglesData }: LeadMagnetsCreative
                       <TableRow key={idx}>
                         <TableCell className="font-bold">{idx + 1}</TableCell>
                         <TableCell>
-                          <Badge className={`text-xs ${PHASE_COLORS[vc.esferaPhase || ''] || 'bg-gray-100 text-gray-700'}`}>
+                          <Badge className={`text-xs ${PHASE_COLORS[vc.esferaPhase || ''] || 'bg-zinc-100 text-zinc-700'}`}>
                             {vc.esferaPhase || '-'}
                           </Badge>
                         </TableCell>

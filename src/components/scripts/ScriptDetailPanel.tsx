@@ -1,19 +1,18 @@
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { 
-  FileText, Video, BarChart3, Brain, Palette, Calendar, 
-  X, ExternalLink, Copy, Check, Sparkles 
+import {
+  FileText, Video, BarChart3, Brain, Palette, Calendar,
+  X, ExternalLink, Copy, Check, Sparkles
 } from "lucide-react";
 import { ScriptViewer } from "@/components/content/ScriptViewer";
 import { RichTextViewer } from "./RichTextViewer";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { NovaCard, NovaCardContent, NovaCardHeader, NovaCardTitle, NovaButton } from "@/components/ui/nova";
 
 interface ContentItem {
   id: string;
@@ -102,17 +101,17 @@ export function ScriptDetailPanel({ content, blockType, onClose, onRegenerate }:
 
   if (!content) {
     return (
-      <Card className="h-full flex items-center justify-center">
-        <CardContent className="text-center py-12">
-          <div className={cn("mx-auto w-16 h-16 rounded-xl flex items-center justify-center mb-4", config.bgColor)}>
+      <NovaCard variant="elevated" className="h-full flex items-center justify-center">
+        <NovaCardContent className="text-center py-12">
+          <div className={cn("mx-auto w-16 h-16 rounded-sm flex items-center justify-center mb-4", config.bgColor)}>
             <Icon className={cn("h-8 w-8", config.color)} />
           </div>
-          <h3 className="font-semibold mb-2">Selecciona un contenido</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="font-semibold mb-2 text-[var(--nova-text-bright)]">Selecciona un contenido</h3>
+          <p className="text-sm text-[var(--nova-text-muted)]">
             Elige un contenido de la lista para ver el {config.title.toLowerCase()}
           </p>
-        </CardContent>
-      </Card>
+        </NovaCardContent>
+      </NovaCard>
     );
   }
 
@@ -136,8 +135,8 @@ export function ScriptDetailPanel({ content, blockType, onClose, onRegenerate }:
   };
 
   return (
-    <Card className={cn("h-full flex flex-col", config.borderColor, "border-l-4")}>
-      <CardHeader className="flex-shrink-0 pb-3 border-b">
+    <NovaCard variant="elevated" className={cn("h-full flex flex-col", config.borderColor, "border-l-4")}>
+      <NovaCardHeader className="flex-shrink-0 pb-3 border-b border-[var(--nova-border-subtle)]">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <Avatar className="h-12 w-12 flex-shrink-0">
@@ -147,56 +146,56 @@ export function ScriptDetailPanel({ content, blockType, onClose, onRegenerate }:
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <CardTitle className="text-base font-semibold truncate">
+              <NovaCardTitle className="text-base font-semibold truncate">
                 {content.title}
-              </CardTitle>
-              <p className="text-sm text-muted-foreground truncate">
+              </NovaCardTitle>
+              <p className="text-sm text-[var(--nova-text-muted)] truncate">
                 {content.client?.name || 'Sin cliente'}
-                {content.product?.name && ` • ${content.product.name}`}
+                {content.product?.name && ` - ${content.product.name}`}
               </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-xs text-[var(--nova-text-muted)] mt-0.5">
                 {format(new Date(content.created_at), "d 'de' MMMM, yyyy", { locale: es })}
               </p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} className="flex-shrink-0">
+          <NovaButton variant="ghost" size="icon" onClick={onClose} className="flex-shrink-0">
             <X className="h-4 w-4" />
-          </Button>
+          </NovaButton>
         </div>
-        
+
         {/* Block header */}
-        <div className={cn("mt-4 p-3 rounded-lg flex items-center gap-3", config.bgColor)}>
+        <div className={cn("mt-4 p-3 rounded-sm flex items-center gap-3", config.bgColor)}>
           <Icon className={cn("h-5 w-5", config.color)} />
           <div>
             <h3 className={cn("font-semibold text-sm", config.color)}>{config.title}</h3>
-            <p className="text-xs text-muted-foreground">{config.subtitle}</p>
+            <p className="text-xs text-[var(--nova-text-muted)]">{config.subtitle}</p>
           </div>
         </div>
-      </CardHeader>
+      </NovaCardHeader>
       
-      <CardContent className="flex-1 overflow-hidden p-0">
+      <NovaCardContent className="flex-1 overflow-hidden p-0">
         {blockContent ? (
           <ScrollArea className="h-full">
             <div className="p-4">
               {/* Action buttons */}
               <div className="flex gap-2 mb-4">
-                <Button variant="outline" size="sm" onClick={handleCopy} className="gap-2">
+                <NovaButton variant="outline" size="sm" onClick={handleCopy} className="gap-2">
                   {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                   {copied ? "Copiado" : "Copiar"}
-                </Button>
+                </NovaButton>
                 {onRegenerate && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <NovaButton
+                    variant="outline"
+                    size="sm"
                     onClick={() => onRegenerate(content.id, blockType)}
                     className="gap-2"
                   >
                     <Sparkles className="h-3 w-3" />
                     Regenerar
-                  </Button>
+                  </NovaButton>
                 )}
               </div>
-              
+
               {/* Content viewer */}
               {blockType === 'creator' ? (
                 <ScriptViewer content={blockContent} maxHeight="max-h-none" />
@@ -208,23 +207,23 @@ export function ScriptDetailPanel({ content, blockType, onClose, onRegenerate }:
         ) : (
           <div className="h-full flex items-center justify-center p-8">
             <div className="text-center">
-              <div className={cn("mx-auto w-16 h-16 rounded-xl flex items-center justify-center mb-4", config.bgColor)}>
+              <div className={cn("mx-auto w-16 h-16 rounded-sm flex items-center justify-center mb-4", config.bgColor)}>
                 <Icon className={cn("h-8 w-8 opacity-50", config.color)} />
               </div>
-              <h3 className="font-semibold mb-2">Sin contenido generado</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Este bloque aún no ha sido generado
+              <h3 className="font-semibold mb-2 text-[var(--nova-text-bright)]">Sin contenido generado</h3>
+              <p className="text-sm text-[var(--nova-text-muted)] mb-4">
+                Este bloque aun no ha sido generado
               </p>
               {onRegenerate && (
-                <Button onClick={() => onRegenerate(content.id, blockType)} className="gap-2">
+                <NovaButton onClick={() => onRegenerate(content.id, blockType)} variant="primary" className="gap-2">
                   <Sparkles className="h-4 w-4" />
                   Generar con IA
-                </Button>
+                </NovaButton>
               )}
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </NovaCardContent>
+    </NovaCard>
   );
 }

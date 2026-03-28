@@ -66,7 +66,7 @@ export function LandingHeader({ onLogin, onRegister, activeSection, onSectionCli
             onClick={() => handleNavClick('inicio')}
             className="flex items-center gap-3 group"
           >
-            <div className="relative h-10 w-10 rounded-xl overflow-hidden bg-gradient-to-br from-primary/30 to-primary/10 border border-primary/30 shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-all">
+            <div className="relative h-10 w-10 rounded-sm overflow-hidden bg-gradient-to-br from-primary/30 to-primary/10 border border-primary/30 shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-all">
               <img src="/favicon.png" alt="KREOON" className="h-10 w-10 object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent" />
             </div>
@@ -169,7 +169,7 @@ export function LandingHeader({ onLogin, onRegister, activeSection, onSectionCli
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
                 className={cn(
-                  "w-full text-left px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200",
+                  "w-full text-left px-4 py-3 text-sm font-medium rounded-sm transition-all duration-200",
                   activeSection === item.id
                     ? "text-white bg-primary/20 border border-primary/30"
                     : "text-white/60 hover:text-white hover:bg-white/5"

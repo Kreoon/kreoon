@@ -201,7 +201,7 @@ export function TalentAITab({ userId, onUpdate }: TalentAITabProps) {
 
       {/* Level and Risk Cards */}
       <div className="grid grid-cols-2 gap-4">
-        <div className={cn("p-4 rounded-lg border", levelConfig.bgColor)}>
+        <div className={cn("p-4 rounded-sm border", levelConfig.bgColor)}>
           <div className="flex items-center gap-2 mb-2">
             <LevelIcon className={cn("h-5 w-5", levelConfig.color)} />
             <span className="text-sm font-medium text-muted-foreground">Nivel IA</span>
@@ -209,7 +209,7 @@ export function TalentAITab({ userId, onUpdate }: TalentAITabProps) {
           <p className={cn("text-xl font-bold", levelConfig.color)}>{levelConfig.label}</p>
         </div>
 
-        <div className={cn("p-4 rounded-lg border", riskConfig.bgColor)}>
+        <div className={cn("p-4 rounded-sm border", riskConfig.bgColor)}>
           <div className="flex items-center gap-2 mb-2">
             {profile?.ai_risk_flag !== 'none' && (
               <AlertTriangle className={cn("h-5 w-5", riskConfig.color)} />
@@ -221,7 +221,7 @@ export function TalentAITab({ userId, onUpdate }: TalentAITabProps) {
       </div>
 
       {/* Performance Scores */}
-      <div className="p-4 rounded-lg border bg-card space-y-4">
+      <div className="p-4 rounded-sm border bg-card space-y-4">
         <h5 className="font-medium flex items-center gap-2">
           <TrendingUp className="h-4 w-4 text-primary" />
           Performance Score
@@ -239,7 +239,7 @@ export function TalentAITab({ userId, onUpdate }: TalentAITabProps) {
           </div>
           <Progress value={overallScore} className="h-2" />
 
-          <div className="grid grid-cols-3 gap-4 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
             <div className="text-center">
               <p className="text-2xl font-bold">{profile?.quality_score_avg?.toFixed(1) || '0.0'}</p>
               <p className="text-xs text-muted-foreground">Calidad</p>
@@ -258,7 +258,7 @@ export function TalentAITab({ userId, onUpdate }: TalentAITabProps) {
 
       {/* Risk Analysis Results */}
       {riskAnalysis && (
-        <div className={cn("p-4 rounded-lg border", RISK_CONFIG[riskAnalysis.risk_level].bgColor)}>
+        <div className={cn("p-4 rounded-sm border", RISK_CONFIG[riskAnalysis.risk_level].bgColor)}>
           <h5 className="font-medium flex items-center gap-2 mb-3">
             <AlertTriangle className={cn("h-4 w-4", RISK_CONFIG[riskAnalysis.risk_level].color)} />
             Análisis de Riesgo
@@ -289,7 +289,7 @@ export function TalentAITab({ userId, onUpdate }: TalentAITabProps) {
 
       {/* Reputation Analysis Results */}
       {reputationAnalysis && (
-        <div className="p-4 rounded-lg border bg-card space-y-3">
+        <div className="p-4 rounded-sm border bg-card space-y-3">
           <h5 className="font-medium flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-amber-500" />
             Análisis de Reputación
@@ -349,7 +349,7 @@ export function TalentAITab({ userId, onUpdate }: TalentAITabProps) {
               <div 
                 key={rec.id}
                 className={cn(
-                  "flex items-center justify-between p-3 rounded-lg border",
+                  "flex items-center justify-between p-3 rounded-sm border",
                   rec.is_actioned ? "bg-muted/50 opacity-60" : "bg-card"
                 )}
               >

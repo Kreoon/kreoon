@@ -25,7 +25,7 @@ const FAQItem = memo(function FAQItem({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
       className={cn(
-        'rounded-xl overflow-hidden',
+        'rounded-sm overflow-hidden',
         'border transition-colors',
         isOpen
           ? 'bg-white/[0.05] border-purple-500/30'
@@ -105,7 +105,7 @@ export const GameFAQ = memo(function GameFAQ() {
 
       {/* FAQ container */}
       <div className={cn(
-        'rounded-2xl p-4 sm:p-6',
+        'rounded-sm p-4 sm:p-6',
         'bg-gradient-to-b from-slate-800/50 to-slate-900/50',
         'border border-white/10'
       )}>

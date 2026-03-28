@@ -38,7 +38,7 @@ export function CampaignStepContent({ requirements, onChange }: CampaignStepCont
 
       <div className="space-y-4">
         {requirements.map((req, index) => (
-          <div key={index} className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-4">
+          <div key={index} className="bg-white/5 border border-white/10 rounded-sm p-4 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Video className="h-4 w-4 text-purple-400" />
@@ -61,7 +61,7 @@ export function CampaignStepContent({ requirements, onChange }: CampaignStepCont
                 <select
                   value={req.content_type}
                   onChange={e => updateRequirement(index, { content_type: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500 appearance-none cursor-pointer"
+                  className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500 appearance-none cursor-pointer"
                 >
                   <option value="" className="bg-card">Seleccionar</option>
                   {CONTENT_TYPES.map(ct => (
@@ -78,7 +78,7 @@ export function CampaignStepContent({ requirements, onChange }: CampaignStepCont
                   min="1"
                   value={req.quantity}
                   onChange={e => updateRequirement(index, { quantity: Math.max(1, parseInt(e.target.value) || 1) })}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500"
+                  className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500"
                 />
               </div>
 
@@ -91,7 +91,7 @@ export function CampaignStepContent({ requirements, onChange }: CampaignStepCont
                   value={req.duration_seconds ?? ''}
                   onChange={e => updateRequirement(index, { duration_seconds: e.target.value ? parseInt(e.target.value) : undefined })}
                   placeholder="Opcional"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
+                  className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
                 />
               </div>
             </div>
@@ -104,7 +104,7 @@ export function CampaignStepContent({ requirements, onChange }: CampaignStepCont
                 onChange={e => updateRequirement(index, { description: e.target.value })}
                 placeholder="Describe que esperas para este tipo de contenido..."
                 rows={2}
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500 resize-none"
+                className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500 resize-none"
               />
             </div>
           </div>
@@ -113,7 +113,7 @@ export function CampaignStepContent({ requirements, onChange }: CampaignStepCont
 
       <button
         onClick={addRequirement}
-        className="w-full border border-dashed border-white/20 rounded-xl py-3 text-gray-400 text-sm hover:border-purple-500/50 hover:text-purple-300 transition-colors flex items-center justify-center gap-2"
+        className="w-full border border-dashed border-white/20 rounded-sm py-3 text-gray-400 text-sm hover:border-purple-500/50 hover:text-purple-300 transition-colors flex items-center justify-center gap-2"
       >
         <Plus className="h-4 w-4" />
         Agregar otro tipo de contenido

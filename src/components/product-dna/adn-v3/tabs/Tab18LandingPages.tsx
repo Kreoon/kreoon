@@ -173,11 +173,11 @@ function BackendLandingPagesView({ data }: { data: BackendLandingPagesData }) {
                 </p>
               </div>
             </div>
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Justificación</p>
               <p className="text-sm">{data.comparison.justification}</p>
             </div>
-            <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+            <div className="p-3 rounded-sm bg-purple-500/10 border border-purple-500/20">
               <p className="text-xs text-purple-400 mb-1">Hipótesis del Test</p>
               <p className="text-sm italic">{data.comparison.ab_test_hypothesis}</p>
             </div>
@@ -227,15 +227,15 @@ function LandingDesignCard({ design, variant }: { design: BackendLandingDesign; 
         </CardHeader>
         <CardContent>
           <div className="grid sm:grid-cols-3 gap-4">
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Mejor Para</p>
               <p className="font-medium text-sm">{design.best_for}</p>
             </div>
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">CVR Estimado</p>
               <p className="font-bold text-lg text-green-400">{design.estimated_cvr}</p>
             </div>
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Herramienta</p>
               <Badge variant="secondary">{design.tool_recommendation}</Badge>
             </div>
@@ -263,7 +263,7 @@ function LandingDesignCard({ design, variant }: { design: BackendLandingDesign; 
             <CardContent className="space-y-4">
               {/* Headline + Subheadline */}
               {(section.headline || section.subheadline) && (
-                <div className={`p-4 rounded-lg bg-${colorClass}-500/10 border border-${colorClass}-500/20`}>
+                <div className={`p-4 rounded-sm bg-${colorClass}-500/10 border border-${colorClass}-500/20`}>
                   {section.headline && (
                     <div className="mb-3">
                       <p className={`text-xs text-${colorClass}-400 mb-1`}>Headline</p>
@@ -284,7 +284,7 @@ function LandingDesignCard({ design, variant }: { design: BackendLandingDesign; 
               {section.copy && (
                 <div>
                   <p className="text-xs text-muted-foreground mb-2">Copy</p>
-                  <div className="p-3 rounded-lg bg-muted/50 whitespace-pre-wrap text-sm">
+                  <div className="p-3 rounded-sm bg-muted/50 whitespace-pre-wrap text-sm">
                     {section.copy}
                   </div>
                   <CopyButton text={section.copy} size="sm" className="mt-2" />
@@ -305,7 +305,7 @@ function LandingDesignCard({ design, variant }: { design: BackendLandingDesign; 
 
               {/* CTA */}
               {section.cta && (
-                <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
                   <p className="text-xs text-green-400 mb-1">CTA</p>
                   <Badge className="bg-green-500/20 text-green-400">{section.cta}</Badge>
                 </div>
@@ -313,7 +313,7 @@ function LandingDesignCard({ design, variant }: { design: BackendLandingDesign; 
 
               {/* Design Notes */}
               {section.design_notes && (
-                <div className="p-3 rounded-lg bg-muted/30 border-l-4 border-muted">
+                <div className="p-3 rounded-sm bg-muted/30 border-l-4 border-muted">
                   <p className="text-xs text-muted-foreground mb-1">Notas de Diseño</p>
                   <p className="text-sm italic">{section.design_notes}</p>
                 </div>
@@ -413,7 +413,7 @@ function LegacyLandingPagesView({ data }: { data: LegacyLandingPagesData }) {
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Hero Section */}
-              <div className="p-4 rounded-lg bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20">
+              <div className="p-4 rounded-sm bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20">
                 <p className="text-xs text-indigo-400 mb-2">Hero Section</p>
                 <div className="space-y-3">
                   <div>
@@ -443,7 +443,7 @@ function LegacyLandingPagesView({ data }: { data: LegacyLandingPagesData }) {
                 <p className="text-sm font-medium mb-2">Secciones de la Página</p>
                 <div className="space-y-2">
                   {template.sections?.map((section, sIdx) => (
-                    <div key={sIdx} className="p-3 rounded-lg border bg-card">
+                    <div key={sIdx} className="p-3 rounded-sm border bg-card">
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-medium text-sm">{section.section}</span>
                         <span className="text-xs text-muted-foreground">{section.purpose}</span>
@@ -473,7 +473,7 @@ function LegacyLandingPagesView({ data }: { data: LegacyLandingPagesData }) {
 
               {/* Trust & Urgency */}
               <div className="grid sm:grid-cols-3 gap-4">
-                <div className="p-3 rounded-lg bg-muted/50">
+                <div className="p-3 rounded-sm bg-muted/50">
                   <p className="text-xs text-muted-foreground mb-2">Social Proof</p>
                   <ul className="space-y-1">
                     {template.social_proof_elements?.map((el, elIdx) => (
@@ -481,7 +481,7 @@ function LegacyLandingPagesView({ data }: { data: LegacyLandingPagesData }) {
                     ))}
                   </ul>
                 </div>
-                <div className="p-3 rounded-lg bg-muted/50">
+                <div className="p-3 rounded-sm bg-muted/50">
                   <p className="text-xs text-muted-foreground mb-2">Urgencia</p>
                   <ul className="space-y-1">
                     {template.urgency_elements?.map((el, elIdx) => (
@@ -489,7 +489,7 @@ function LegacyLandingPagesView({ data }: { data: LegacyLandingPagesData }) {
                     ))}
                   </ul>
                 </div>
-                <div className="p-3 rounded-lg bg-muted/50">
+                <div className="p-3 rounded-sm bg-muted/50">
                   <p className="text-xs text-muted-foreground mb-2">Trust Signals</p>
                   <ul className="space-y-1">
                     {template.trust_signals?.map((el, elIdx) => (
@@ -541,7 +541,7 @@ function LegacyLandingPagesView({ data }: { data: LegacyLandingPagesData }) {
         <CardContent>
           <div className="grid sm:grid-cols-2 gap-4">
             {data.cta_variations?.map((group, idx) => (
-              <div key={idx} className="p-3 rounded-lg border bg-card">
+              <div key={idx} className="p-3 rounded-sm border bg-card">
                 <p className="text-xs text-muted-foreground mb-2">{group.context}</p>
                 <div className="flex flex-wrap gap-2">
                   {group.ctas?.map((cta, cIdx) => (

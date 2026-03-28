@@ -89,7 +89,7 @@ export function ChatBubble({
             'px-3.5 py-2.5',
             isKiro
               ? 'rounded-sm rounded-tr-xl rounded-br-xl rounded-bl-xl bg-violet-500/15 border border-violet-500/20'
-              : 'rounded-xl rounded-tr-sm bg-indigo-500/10 border border-indigo-500/15'
+              : 'rounded-sm rounded-tr-sm bg-indigo-500/10 border border-indigo-500/15'
           )}
         >
           {/* Header de KIRO */}

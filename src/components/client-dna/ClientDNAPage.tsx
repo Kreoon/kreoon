@@ -104,7 +104,7 @@ export function ClientDNAPage({ clientId }: ClientDNAPageProps) {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
-          <p className="text-gray-400">Cargando ADN del cliente...</p>
+          <p className="text-zinc-600 dark:text-zinc-400">Cargando ADN del cliente...</p>
         </div>
       </div>
     );
@@ -114,7 +114,7 @@ export function ClientDNAPage({ clientId }: ClientDNAPageProps) {
     <div className="space-y-6">
       {/* Error State */}
       {error && (
-        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400">
+        <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400">
           {error}
         </div>
       )}

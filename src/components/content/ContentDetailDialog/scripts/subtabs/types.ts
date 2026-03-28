@@ -1,7 +1,7 @@
 import { Content } from '@/types/database';
 import { ContentFormData } from '../../types';
 import { ScriptPermissionsHook } from '../types';
-import { TextEditorFeatures } from '@/components/ui/rich-text-editor';
+import { TextEditorFeatures } from '@/components/ui/lazy-rich-text-editor';
 
 export interface AdvancedConfigData {
   enable_comments: boolean;

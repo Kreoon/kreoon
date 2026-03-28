@@ -130,7 +130,7 @@ export function AIRecommendations({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-social-accent/20 to-purple-500/20">
+          <div className="p-2 rounded-sm bg-gradient-to-br from-social-accent/20 to-purple-500/20">
             <Sparkles className="h-5 w-5 text-social-accent" />
           </div>
           <div>
@@ -365,7 +365,7 @@ export function AIRecommendations({
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-4 rounded-lg bg-gradient-to-r from-social-accent/10 to-purple-500/10 border border-social-accent/20"
+          className="p-4 rounded-sm bg-gradient-to-r from-social-accent/10 to-purple-500/10 border border-social-accent/20"
         >
           <div className="flex items-start gap-3">
             <Sparkles className="h-5 w-5 text-social-accent mt-0.5" />

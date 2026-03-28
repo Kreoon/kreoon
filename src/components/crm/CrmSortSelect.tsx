@@ -42,7 +42,7 @@ export function CrmSortSelect({
       </Select>
       <button
         onClick={() => onChange(value, direction === 'asc' ? 'desc' : 'asc')}
-        className="p-2 rounded-md bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-white/60 hover:text-white/90"
+        className="p-2 rounded-sm bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-white/60 hover:text-white/90"
         title={direction === 'asc' ? 'Ascendente (A→Z, menor→mayor)' : 'Descendente (Z→A, mayor→menor)'}
       >
         {direction === 'asc' ? (

@@ -163,7 +163,7 @@ export function SuccessStep({ intent, mode, hasSession }: SuccessStepProps) {
       </p>
 
       {needsConfirmation && (
-        <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 max-w-sm mx-auto">
+        <div className="mb-6 p-4 rounded-sm bg-amber-500/10 border border-amber-500/20 max-w-sm mx-auto">
           <div className="flex items-start gap-3 text-left">
             <AlertCircle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
             <div className="space-y-1">
@@ -180,7 +180,7 @@ export function SuccessStep({ intent, mode, hasSession }: SuccessStepProps) {
 
       {/* Keys explanation for talent (only when confirmed) */}
       {!needsConfirmation && intent === 'talent' && (
-        <div className="mb-6 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 max-w-sm mx-auto text-left">
+        <div className="mb-6 p-4 rounded-sm bg-purple-500/10 border border-purple-500/20 max-w-sm mx-auto text-left">
           <div className="flex items-center gap-2 mb-2">
             <Key className="h-5 w-5 text-purple-400" />
             <span className="font-semibold text-white text-sm">Sistema de Llaves</span>
@@ -198,7 +198,7 @@ export function SuccessStep({ intent, mode, hasSession }: SuccessStepProps) {
           <>
             <button
               onClick={() => navigate('/auth', { replace: true })}
-              className="inline-flex items-center gap-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium px-6 py-2.5 text-sm transition-colors"
+              className="inline-flex items-center gap-2 rounded-sm bg-purple-600 hover:bg-purple-700 text-white font-medium px-6 py-2.5 text-sm transition-colors"
             >
               Ya confirmé, ir a iniciar sesión
               <ArrowRight className="h-4 w-4" />
@@ -206,7 +206,7 @@ export function SuccessStep({ intent, mode, hasSession }: SuccessStepProps) {
             <button
               onClick={handleResendEmail}
               disabled={resending || resendCooldown > 0}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-700 hover:bg-gray-800 text-gray-300 font-medium px-4 py-2 text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 rounded-sm border border-gray-700 hover:bg-gray-800 text-gray-300 font-medium px-4 py-2 text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RefreshCw className={cn("h-4 w-4", resending && "animate-spin")} />
               {resendCooldown > 0
@@ -220,7 +220,7 @@ export function SuccessStep({ intent, mode, hasSession }: SuccessStepProps) {
         ) : (
           <button
             onClick={() => navigate(config.route, { replace: true })}
-            className="inline-flex items-center gap-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium px-6 py-2.5 text-sm transition-colors"
+            className="inline-flex items-center gap-2 rounded-sm bg-purple-600 hover:bg-purple-700 text-white font-medium px-6 py-2.5 text-sm transition-colors"
           >
             {config.cta}
             {intent === 'talent' ? <Key className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}

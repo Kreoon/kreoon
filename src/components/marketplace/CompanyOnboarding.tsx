@@ -311,7 +311,7 @@ export function CompanyOnboarding({
                     key={industry.id}
                     onClick={() => updateField('industry', industry.id as IndustryId)}
                     className={cn(
-                      "p-4 rounded-xl border-2 text-left transition-all",
+                      "p-4 rounded-sm border-2 text-left transition-all",
                       formData.industry === industry.id
                         ? "border-social-accent bg-social-accent/10"
                         : "border-social-border bg-social-card hover:border-social-accent/50"
@@ -416,7 +416,7 @@ export function CompanyOnboarding({
                       key={voice.value}
                       onClick={() => updateField('brand_voice', voice.value)}
                       className={cn(
-                        "p-3 rounded-lg border text-left transition-all",
+                        "p-3 rounded-sm border text-left transition-all",
                         formData.brand_voice === voice.value
                           ? "border-social-accent bg-social-accent/10"
                           : "border-social-border bg-social-card hover:border-social-accent/50"

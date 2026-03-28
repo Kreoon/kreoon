@@ -275,9 +275,9 @@ export function CreatorProfileEditor() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-sm p-6">
         <div className="flex items-center gap-3 mb-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20">
+          <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-primary/20">
             <Sparkles className="h-5 w-5 text-primary" />
           </div>
           <div>
@@ -297,7 +297,7 @@ export function CreatorProfileEditor() {
         className="space-y-3"
       >
         {/* Section 1: Identity */}
-        <AccordionItem value="identity" className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl px-6">
+        <AccordionItem value="identity" className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-sm px-6">
           <AccordionTrigger className="hover:no-underline">
             <div className="flex items-center gap-2">
               <Camera className="h-4 w-4 text-primary" />
@@ -360,7 +360,7 @@ export function CreatorProfileEditor() {
         </AccordionItem>
 
         {/* Section 2: Media */}
-        <AccordionItem value="media" className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl px-6">
+        <AccordionItem value="media" className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-sm px-6">
           <AccordionTrigger className="hover:no-underline">
             <div className="flex items-center gap-2">
               <ImageIcon className="h-4 w-4 text-primary" />
@@ -408,7 +408,7 @@ export function CreatorProfileEditor() {
             <div className="space-y-2">
               <Label>Imagen de portada</Label>
               <div
-                className="relative group cursor-pointer rounded-xl overflow-hidden border border-white/10 h-32 bg-muted/20 flex items-center justify-center"
+                className="relative group cursor-pointer rounded-sm overflow-hidden border border-white/10 h-32 bg-muted/20 flex items-center justify-center"
                 onClick={() => bannerInputRef.current?.click()}
               >
                 {formData.banner_url ? (
@@ -454,7 +454,7 @@ export function CreatorProfileEditor() {
         </AccordionItem>
 
         {/* Section 3: Location */}
-        <AccordionItem value="location" className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl px-6">
+        <AccordionItem value="location" className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-sm px-6">
           <AccordionTrigger className="hover:no-underline">
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4 text-primary" />
@@ -494,7 +494,7 @@ export function CreatorProfileEditor() {
         </AccordionItem>
 
         {/* Section 4: Specialization */}
-        <AccordionItem value="specialization" className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl px-6">
+        <AccordionItem value="specialization" className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-sm px-6">
           <AccordionTrigger className="hover:no-underline">
             <div className="flex items-center gap-2">
               <Briefcase className="h-4 w-4 text-primary" />
@@ -624,7 +624,7 @@ export function CreatorProfileEditor() {
         </AccordionItem>
 
         {/* Section 5: Product Exchange */}
-        <AccordionItem value="exchange" className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl px-6">
+        <AccordionItem value="exchange" className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-sm px-6">
           <AccordionTrigger className="hover:no-underline">
             <div className="flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-primary" />
@@ -632,7 +632,7 @@ export function CreatorProfileEditor() {
             </div>
           </AccordionTrigger>
           <AccordionContent className="space-y-4 pb-6">
-            <div className="flex items-center justify-between p-4 rounded-xl bg-muted/10 border border-white/5">
+            <div className="flex items-center justify-between p-4 rounded-sm bg-muted/10 border border-white/5">
               <div>
                 <p className="text-sm font-medium">Acepta intercambio de producto</p>
                 <p className="text-xs text-muted-foreground">
@@ -660,7 +660,7 @@ export function CreatorProfileEditor() {
         </AccordionItem>
 
         {/* Section 6: Availability */}
-        <AccordionItem value="availability" className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl px-6">
+        <AccordionItem value="availability" className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-sm px-6">
           <AccordionTrigger className="hover:no-underline">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-primary" />
@@ -668,7 +668,7 @@ export function CreatorProfileEditor() {
             </div>
           </AccordionTrigger>
           <AccordionContent className="space-y-4 pb-6">
-            <div className="flex items-center justify-between p-4 rounded-xl bg-muted/10 border border-white/5">
+            <div className="flex items-center justify-between p-4 rounded-sm bg-muted/10 border border-white/5">
               <div>
                 <p className="text-sm font-medium">Disponible para contratación</p>
                 <p className="text-xs text-muted-foreground">
@@ -703,7 +703,7 @@ export function CreatorProfileEditor() {
         </AccordionItem>
 
         {/* Section 7: Social Links */}
-        <AccordionItem value="social" className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl px-6">
+        <AccordionItem value="social" className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-sm px-6">
           <AccordionTrigger className="hover:no-underline">
             <div className="flex items-center gap-2">
               <Share2 className="h-4 w-4 text-primary" />

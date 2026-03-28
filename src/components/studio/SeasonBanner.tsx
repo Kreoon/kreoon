@@ -105,7 +105,7 @@ export function SeasonBanner({
     return (
       <motion.div
         className={cn(
-          'flex items-center gap-3 px-4 py-2 rounded-xl',
+          'flex items-center gap-3 px-4 py-2 rounded-sm',
           'bg-gradient-to-r from-purple-500/10 to-transparent',
           'border',
           colors.border,
@@ -152,7 +152,7 @@ export function SeasonBanner({
   return (
     <motion.div
       className={cn(
-        'relative rounded-2xl overflow-hidden',
+        'relative rounded-sm overflow-hidden',
         'bg-gradient-to-br from-purple-900/20 via-zinc-900/80 to-zinc-900/90',
         'border',
         colors.border,
@@ -176,7 +176,7 @@ export function SeasonBanner({
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-3">
             <motion.div
-              className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center"
+              className="w-12 h-12 rounded-sm bg-purple-500/20 flex items-center justify-center"
               animate={{ rotate: [0, 5, -5, 0] }}
               transition={{ duration: 4, repeat: Infinity }}
             >
@@ -197,7 +197,7 @@ export function SeasonBanner({
 
           <motion.div
             className={cn(
-              'flex flex-col items-end px-4 py-2 rounded-xl',
+              'flex flex-col items-end px-4 py-2 rounded-sm',
               'bg-zinc-800/50 border border-zinc-700/50'
             )}
             animate={urgencia === 'critical' ? { scale: [1, 1.02, 1] } : undefined}
@@ -266,7 +266,7 @@ export function SeasonBanner({
                   <motion.div
                     key={index}
                     className={cn(
-                      'p-3 rounded-xl',
+                      'p-3 rounded-sm',
                       'bg-zinc-800/40 border border-zinc-700/30',
                       isComplete && 'border-emerald-500/30 bg-emerald-500/5'
                     )}

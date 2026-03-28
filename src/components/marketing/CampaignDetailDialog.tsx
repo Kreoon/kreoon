@@ -128,7 +128,7 @@ export function CampaignDetailDialog({ campaign, open, onOpenChange, onDelete, o
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh]">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-2xl max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div>
@@ -350,7 +350,7 @@ export function CampaignDetailDialog({ campaign, open, onOpenChange, onDelete, o
                     </h4>
                     <div className="space-y-2">
                       {campaign.objectives.map((obj, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                        <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded-sm">
                           <span className="capitalize">{obj.type}</span>
                           <div className="flex items-center gap-4">
                             <span className="text-muted-foreground">

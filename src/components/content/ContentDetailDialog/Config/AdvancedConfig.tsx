@@ -88,7 +88,7 @@ export function AdvancedConfig({ config, onUpdate }: AdvancedConfigProps) {
               className={`p-4 transition-all ${!isEnabled ? 'opacity-60' : ''}`}
             >
               <div className="flex items-center gap-4">
-                <div className={`p-2 rounded-lg ${isEnabled ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                <div className={`p-2 rounded-sm ${isEnabled ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
                   {option.icon}
                 </div>
                 <div className="flex-1">
@@ -116,7 +116,7 @@ export function AdvancedConfig({ config, onUpdate }: AdvancedConfigProps) {
       {/* Content Types */}
       <Card className="p-4">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-primary/10 text-primary">
+          <div className="p-2 rounded-sm bg-primary/10 text-primary">
             <Tags className="h-5 w-5" />
           </div>
           <div>
@@ -161,7 +161,7 @@ export function AdvancedConfig({ config, onUpdate }: AdvancedConfigProps) {
         </div>
       </Card>
 
-      <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg text-sm">
+      <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-sm text-sm">
         <span>⚙️</span>
         <p className="text-muted-foreground">
           Estas configuraciones afectan a todos los contenidos de la organización. 

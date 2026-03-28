@@ -208,7 +208,7 @@ export function CampaignCreator({ contentId, onSuccess, onBack }: CampaignCreato
                       setPlatform(account.platform);
                     }}
                     className={cn(
-                      'flex items-center gap-3 p-3 rounded-lg border transition-all text-left',
+                      'flex items-center gap-3 p-3 rounded-sm border transition-all text-left',
                       selectedAccountId === account.id
                         ? 'border-primary bg-primary/10'
                         : 'border-border bg-card hover:border-primary/30'
@@ -246,7 +246,7 @@ export function CampaignCreator({ contentId, onSuccess, onBack }: CampaignCreato
                   key={key}
                   onClick={() => setObjective(key)}
                   className={cn(
-                    'p-3 rounded-lg border text-left transition-all',
+                    'p-3 rounded-sm border text-left transition-all',
                     objective === key
                       ? 'border-primary bg-primary/10'
                       : 'border-border bg-card hover:border-primary/30'

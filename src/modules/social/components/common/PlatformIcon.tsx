@@ -74,7 +74,7 @@ export function PlatformIcon({ platform, size = 'md', showBg = false, className 
   if (showBg) {
     return (
       <div
-        className={cn('flex items-center justify-center rounded-lg', bgSizeMap[size], className)}
+        className={cn('flex items-center justify-center rounded-sm', bgSizeMap[size], className)}
         style={{ backgroundColor: config.bgColor }}
       >
         <div className={sizeMap[size]} style={{ color: config.color }}>

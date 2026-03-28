@@ -13,7 +13,7 @@ export function CaseStudyCard({ caseStudy }: CaseStudyCardProps) {
   return (
     <div
       onClick={() => navigate(`/casos-de-exito/${caseStudy.slug}`)}
-      className="bg-card/80 border border-white/5 rounded-xl p-5 hover:border-purple-500/30 transition-all cursor-pointer group"
+      className="bg-card/80 border border-white/5 rounded-sm p-5 hover:border-purple-500/30 transition-all cursor-pointer group"
     >
       {/* Title */}
       <h3 className="text-white font-semibold text-sm group-hover:text-purple-300 transition-colors line-clamp-2 mb-3">

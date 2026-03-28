@@ -123,7 +123,7 @@ function ReviewCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-muted/50 p-4">
+    <div className="rounded-sm border border-border bg-muted/50 p-4">
       <div className="flex items-center justify-between mb-3">
         <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">{title}</h4>
         <button

@@ -107,7 +107,7 @@ export function QuickActions({
             <motion.button
               key={action.action}
               className={cn(
-                'relative flex items-center gap-2 px-3 py-2 rounded-xl',
+                'relative flex items-center gap-2 px-3 py-2 rounded-sm',
                 'bg-zinc-900/60 hover:bg-zinc-800/80',
                 'border border-zinc-800/50 hover:border-zinc-700/50',
                 'transition-all'
@@ -153,7 +153,7 @@ export function QuickActions({
           <motion.button
             key={action.action}
             className={cn(
-              'relative flex flex-col items-center justify-center gap-3 p-4 rounded-2xl',
+              'relative flex flex-col items-center justify-center gap-3 p-4 rounded-sm',
               'bg-gradient-to-br from-zinc-900/80 to-zinc-900/40',
               'border border-zinc-800/50 hover:border-purple-500/30',
               'transition-all group'
@@ -189,7 +189,7 @@ export function QuickActions({
             {/* Icon */}
             <motion.div
               className={cn(
-                'w-12 h-12 rounded-xl flex items-center justify-center',
+                'w-12 h-12 rounded-sm flex items-center justify-center',
                 'group-hover:scale-110 transition-transform'
               )}
               style={{
@@ -210,7 +210,7 @@ export function QuickActions({
 
             {/* Hover glow effect */}
             <motion.div
-              className="absolute inset-0 rounded-2xl pointer-events-none"
+              className="absolute inset-0 rounded-sm pointer-events-none"
               style={{
                 background: `radial-gradient(circle at center, ${action.color}10 0%, transparent 70%)`,
               }}

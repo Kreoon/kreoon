@@ -292,7 +292,7 @@ export default function Team() {
 
   // Reusable user card component
   const UserCard = ({ profile, showAddRole = true }: { profile: Profile & { roles: AppRole[] }, showAddRole?: boolean }) => (
-    <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border/50">
+    <div className="flex items-center justify-between p-4 bg-muted/50 rounded-sm border border-border/50">
       <div className="flex items-center gap-3">
         <Avatar className="h-10 w-10">
           <AvatarImage src={profile.avatar_url || ''} />
@@ -626,7 +626,7 @@ export default function Team() {
           </DialogHeader>
           <div className="space-y-4">
             {selectedUser?.roles.length ? (
-              <div className="p-3 bg-muted/50 rounded-lg border">
+              <div className="p-3 bg-muted/50 rounded-sm border">
                 <p className="text-sm text-muted-foreground mb-2">Roles actuales:</p>
                 <div className="flex gap-2 flex-wrap">
                   {selectedUser.roles.map(role => (

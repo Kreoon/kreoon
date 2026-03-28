@@ -106,7 +106,7 @@ export function PlatformMetricsPanel() {
       <div className="space-y-6">
         <Skeleton className="h-32 w-full" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-24 rounded-lg" />)}
+          {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-24 rounded-sm" />)}
         </div>
       </div>
     );
@@ -186,7 +186,7 @@ export function PlatformMetricsPanel() {
               <div 
                 key={idx}
                 className={cn(
-                  "p-4 rounded-lg border transition-all hover:shadow-md",
+                  "p-4 rounded-sm border transition-all hover:shadow-md",
                   kpi.color
                 )}
               >
@@ -220,7 +220,7 @@ export function PlatformMetricsPanel() {
               <div 
                 key={idx}
                 className={cn(
-                  "p-4 rounded-lg border transition-all hover:shadow-md",
+                  "p-4 rounded-sm border transition-all hover:shadow-md",
                   kpi.color
                 )}
               >
@@ -239,7 +239,7 @@ export function PlatformMetricsPanel() {
           </div>
 
           {/* AI Success Rate */}
-          <div className="mt-6 p-4 rounded-lg border bg-muted/30">
+          <div className="mt-6 p-4 rounded-sm border bg-muted/30">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-primary" />

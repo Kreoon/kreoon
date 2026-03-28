@@ -65,7 +65,7 @@ export function IASubTab({
             </span>
           )}
         </FieldRow>
-        <div className="p-2 sm:p-3 bg-muted/50 rounded-lg text-xs sm:text-sm text-muted-foreground">
+        <div className="p-2 sm:p-3 bg-muted/50 rounded-sm text-xs sm:text-sm text-muted-foreground">
           <p className="flex items-center gap-1.5 sm:gap-2">
             <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
             <span>
@@ -99,7 +99,7 @@ export function IASubTab({
 
       {/* Read-only notice */}
       {isReadOnly && (
-        <div className="p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground text-center">
+        <div className="p-3 bg-muted/50 rounded-sm text-sm text-muted-foreground text-center">
           Solo puedes ver esta configuración, no editarla
         </div>
       )}

@@ -136,8 +136,8 @@ export function PortfolioHighlights({ userId, isOwner = false, onAddHighlight }:
                 </div>
               )}
             </div>
-            <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <Play className="h-5 w-5 text-white" />
+            <div className="absolute inset-0 rounded-full bg-zinc-900/60 dark:bg-[#0a0a0f]/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <Play className="h-5 w-5 text-zinc-100" />
             </div>
           </button>
         ))}
@@ -152,16 +152,16 @@ export function PortfolioHighlights({ userId, isOwner = false, onAddHighlight }:
 
       {/* Highlight Viewer Dialog */}
       <Dialog open={viewerOpen} onOpenChange={setViewerOpen}>
-        <DialogContent className="max-w-2xl p-0 gap-0 bg-black/95 border-none">
+        <DialogContent className="max-w-2xl p-0 gap-0 bg-white dark:bg-[#0a0a0f]/95 border border-zinc-200 dark:border-transparent">
           <DialogHeader className="absolute top-4 left-4 right-4 z-10">
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-white text-sm font-medium truncate pr-8">
+              <DialogTitle className="text-zinc-100 text-sm font-medium truncate pr-8">
                 {currentHighlight?.title}
               </DialogTitle>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-white hover:bg-white/20"
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-zinc-100 hover:bg-zinc-800/50"
                 onClick={() => setViewerOpen(false)}
               >
                 <X className="h-4 w-4" />
@@ -195,7 +195,7 @@ export function PortfolioHighlights({ userId, isOwner = false, onAddHighlight }:
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-white/50" />
+                <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
               </div>
             )}
 
@@ -204,7 +204,7 @@ export function PortfolioHighlights({ userId, isOwner = false, onAddHighlight }:
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute left-2 top-1/2 -translate-y-1/2 text-white hover:bg-white/20"
+                className="absolute left-2 top-1/2 -translate-y-1/2 text-zinc-100 hover:bg-zinc-800/50"
                 onClick={() => navigate('prev')}
               >
                 <ChevronLeft className="h-6 w-6" />
@@ -214,7 +214,7 @@ export function PortfolioHighlights({ userId, isOwner = false, onAddHighlight }:
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-white hover:bg-white/20"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-100 hover:bg-zinc-800/50"
                 onClick={() => navigate('next')}
               >
                 <ChevronRight className="h-6 w-6" />
@@ -222,7 +222,7 @@ export function PortfolioHighlights({ userId, isOwner = false, onAddHighlight }:
             )}
 
             {/* Stats */}
-            <div className="absolute bottom-4 left-4 flex items-center gap-4 text-white/80">
+            <div className="absolute bottom-4 left-4 flex items-center gap-4 text-zinc-300">
               <div className="flex items-center gap-1">
                 <Eye className="h-4 w-4" />
                 <span className="text-sm">{currentHighlight?.views_count || 0}</span>

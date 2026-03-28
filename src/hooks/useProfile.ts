@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { toast as sonnerToast } from 'sonner';
+import { uploadAvatar as bunnyUploadAvatar, uploadPortfolioImage } from '@/lib/bunnyUpload';
 
 // Complete profile interface with ALL fields from profiles table
 export interface ProfileData {
@@ -476,7 +477,7 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
     }
   };
 
-  // Upload avatar
+  // Upload avatar (Bunny CDN - optimized WebP, 256x256)
   const uploadAvatar = useCallback(async (file: File): Promise<string | null> => {
     if (!user?.id) return null;
 
@@ -491,31 +492,16 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
     }
 
     try {
-      const ext = file.name.split('.').pop();
-      const fileName = `${user.id}/avatar_${Date.now()}.${ext}`;
+      // Upload to Bunny CDN (auto-optimized to WebP, 256x256)
+      const result = await bunnyUploadAvatar(file, user.id);
+      const cdnUrl = result.cdnUrl;
 
-      // Delete old avatar if exists
-      if (profile?.avatar_url?.includes('avatars')) {
-        const oldPath = profile.avatar_url.split('/avatars/')[1];
-        if (oldPath) {
-          await supabase.storage.from('avatars').remove([oldPath]);
-        }
-      }
-
-      // Upload new
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, file, { cacheControl: '3600', upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
-      updateField('avatar_url', data.publicUrl);
+      updateField('avatar_url', cdnUrl);
 
       // Persist to profiles DB immediately (don't wait for "Save" button)
       const { error: dbError } = await supabase
         .from('profiles')
-        .update({ avatar_url: data.publicUrl })
+        .update({ avatar_url: cdnUrl })
         .eq('id', user.id);
 
       if (dbError) {
@@ -525,15 +511,15 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
       }
 
       showToast('Avatar actualizado');
-      return data.publicUrl;
+      return cdnUrl;
     } catch (error) {
       console.error('[useProfile] Error uploading avatar:', error);
       showToast('Error', 'No se pudo subir la imagen', 'destructive');
       return null;
     }
-  }, [user?.id, profile?.avatar_url, updateField, showToast]);
+  }, [user?.id, updateField, showToast]);
 
-  // Upload cover
+  // Upload cover (Bunny CDN - optimized WebP, max 1200px width)
   const uploadCover = useCallback(async (file: File): Promise<string | null> => {
     if (!user?.id) return null;
 
@@ -547,40 +533,26 @@ export function useProfile(options: UseProfileOptions = {}): UseProfileReturn {
     }
 
     try {
-      const ext = file.name.split('.').pop();
-      const fileName = `${user.id}/cover_${Date.now()}.${ext}`;
+      // Upload to Bunny CDN (auto-optimized to WebP, max 1200px)
+      const result = await uploadPortfolioImage(file, user.id);
+      const cdnUrl = result.cdnUrl;
 
-      // Delete old cover if exists (cleanup to avoid orphan files)
-      if (profile?.cover_url?.includes('portfolio')) {
-        const oldPath = profile.cover_url.split('/portfolio/')[1];
-        if (oldPath) {
-          await supabase.storage.from('portfolio').remove([oldPath]);
-        }
-      }
-
-      const { error: uploadError } = await supabase.storage
-        .from('portfolio')
-        .upload(fileName, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data } = supabase.storage.from('portfolio').getPublicUrl(fileName);
-      updateField('cover_url', data.publicUrl);
+      updateField('cover_url', cdnUrl);
 
       // Persist to profiles DB immediately (don't wait for "Save" button)
       await supabase
         .from('profiles')
-        .update({ cover_url: data.publicUrl })
+        .update({ cover_url: cdnUrl })
         .eq('id', user.id);
 
       showToast('Portada actualizada');
-      return data.publicUrl;
+      return cdnUrl;
     } catch (error) {
       console.error('[useProfile] Error uploading cover:', error);
       showToast('Error', 'No se pudo subir la imagen', 'destructive');
       return null;
     }
-  }, [user?.id, profile?.cover_url, updateField, showToast]);
+  }, [user?.id, updateField, showToast]);
 
   // Add tag
   const addTag = useCallback((field: keyof ProfileData, tag: string) => {

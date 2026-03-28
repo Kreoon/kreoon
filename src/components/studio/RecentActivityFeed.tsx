@@ -271,7 +271,7 @@ export function RecentActivityFeed({
                 exit={{ opacity: 0, y: 20 }}
                 transition={{ delay: index * 0.05 }}
                 className={cn(
-                  'flex items-start gap-3 p-3 rounded-xl',
+                  'flex items-start gap-3 p-3 rounded-sm',
                   'border-b border-zinc-800/50 last:border-0',
                   'hover:bg-zinc-800/30 transition-colors',
                   isRecent && 'bg-purple-500/5'
@@ -301,7 +301,7 @@ export function RecentActivityFeed({
                     })}
                   </span>
                   <div
-                    className="w-7 h-7 rounded-lg flex items-center justify-center"
+                    className="w-7 h-7 rounded-sm flex items-center justify-center"
                     style={{ backgroundColor: config.bgColor }}
                   >
                     <Icon size={14} style={{ color: config.color }} />
@@ -317,7 +317,7 @@ export function RecentActivityFeed({
       {showLoadMore && onLoadMore && filteredActividades.length > maxItems && (
         <motion.button
           className={cn(
-            'w-full py-2.5 rounded-xl text-sm font-medium',
+            'w-full py-2.5 rounded-sm text-sm font-medium',
             'bg-zinc-800/50 hover:bg-zinc-700/50',
             'text-zinc-400 hover:text-white',
             'border border-zinc-700/50 hover:border-zinc-600',

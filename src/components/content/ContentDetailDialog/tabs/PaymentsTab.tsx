@@ -43,7 +43,7 @@ export function PaymentsTab({
 
         {/* UP Reward Section */}
         <SectionCard title="Recompensa UP" iconEmoji="🏅">
-          <div className="p-4 rounded-lg bg-amber-500/5 border border-amber-500/20">
+          <div className="p-4 rounded-sm bg-amber-500/5 border border-amber-500/20">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 rounded-full bg-amber-500/20">
                 <Sparkles className="h-5 w-5 text-amber-500" />
@@ -57,14 +57,14 @@ export function PaymentsTab({
             </div>
             
             <div className="grid grid-cols-2 gap-4 mt-4">
-              <div className="p-3 rounded-lg bg-background/50 border">
+              <div className="p-3 rounded-sm bg-background/50 border">
                 <p className="text-xs text-muted-foreground mb-1">Tipo de Contenido</p>
                 <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30">
                   <Medal className="h-3 w-3 mr-1" />
                   Embajador Interno
                 </Badge>
               </div>
-              <div className="p-3 rounded-lg bg-background/50 border">
+              <div className="p-3 rounded-sm bg-background/50 border">
                 <p className="text-xs text-muted-foreground mb-1">Tipo de Recompensa</p>
                 <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
                   <Sparkles className="h-3 w-3 mr-1" />
@@ -82,7 +82,7 @@ export function PaymentsTab({
         {/* Payment Status - BLOCKED for Internal Content */}
         <SectionCard title="Estado de Pagos" iconEmoji="💰">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-3 rounded-lg bg-muted/30 border border-dashed">
+            <div className="p-3 rounded-sm bg-muted/30 border border-dashed">
               <div className="flex items-center gap-2 mb-1">
                 <Ban className="h-3 w-3 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">Pago Creador</p>
@@ -91,7 +91,7 @@ export function PaymentsTab({
                 No aplica (Contenido Interno)
               </Badge>
             </div>
-            <div className="p-3 rounded-lg bg-muted/30 border border-dashed">
+            <div className="p-3 rounded-sm bg-muted/30 border border-dashed">
               <div className="flex items-center gap-2 mb-1">
                 <Ban className="h-3 w-3 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">Pago Editor</p>
@@ -150,7 +150,7 @@ export function PaymentsTab({
               editComponent={
                 <input
                   type="number"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-10 w-full rounded-sm border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   value={formData.creator_payment || 0}
                   onChange={(e) => setFormData(prev => ({ ...prev, creator_payment: parseFloat(e.target.value) || 0 }))}
                 />
@@ -203,7 +203,7 @@ export function PaymentsTab({
               editComponent={
                 <input
                   type="number"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-10 w-full rounded-sm border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   value={formData.editor_payment || 0}
                   onChange={(e) => setFormData(prev => ({ ...prev, editor_payment: parseFloat(e.target.value) || 0 }))}
                 />

@@ -244,7 +244,7 @@ export function BookingSettingsPage() {
                   <p className="text-xs text-slate-400 mt-1">{item.sublabel}</p>
                 </div>
                 <div
-                  className="p-2.5 rounded-xl"
+                  className="p-2.5 rounded-sm"
                   style={{ backgroundColor: item.bgColor }}
                 >
                   <item.icon className="w-5 h-5" style={{ color: item.color }} />

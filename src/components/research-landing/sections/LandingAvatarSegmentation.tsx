@@ -19,7 +19,7 @@ function AvatarCard({ avatar, index, isExpanded, onToggle }: { avatar: any; inde
   const fears = safeArray(psychographics.deepestFears);
 
   return (
-    <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl overflow-hidden">
+    <div className="bg-white/[0.03] border border-white/[0.06] rounded-sm overflow-hidden">
       {/* Header - always visible */}
       <button onClick={onToggle} className="w-full flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors text-left">
         <div className="flex items-center gap-3">

@@ -104,7 +104,7 @@ export function ReferralStats() {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {[...Array(6)].map((_, i) => (
-          <Skeleton key={i} className="h-24 rounded-xl" />
+          <Skeleton key={i} className="h-24 rounded-sm" />
         ))}
       </div>
     );
@@ -112,85 +112,91 @@ export function ReferralStats() {
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-      <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+      {/* Total Users - Nova */}
+      <Card className="bg-[var(--nova-bg-elevated)] border-[var(--nova-border-accent)] nova-hover-glow">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/20">
-              <Users className="h-5 w-5 text-primary" />
+            <div className="p-2 rounded-sm bg-[rgba(139,92,246,0.2)]">
+              <Users className="h-5 w-5 text-[var(--nova-accent-primary)]" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{stats.totalUsers}</p>
-              <p className="text-xs text-muted-foreground">Total Usuarios</p>
+              <p className="text-2xl font-bold text-[var(--nova-text-bright)]">{stats.totalUsers}</p>
+              <p className="text-xs text-[var(--nova-text-secondary)]">Total Usuarios</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-br from-muted/50 to-muted/20 border-muted-foreground/20">
+      {/* Free Users - Nova */}
+      <Card className="bg-[var(--nova-bg-elevated)] border-[var(--nova-border-subtle)] nova-hover-glow">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-muted">
-              <User className="h-5 w-5 text-muted-foreground" />
+            <div className="p-2 rounded-sm bg-[var(--nova-bg-surface)]">
+              <User className="h-5 w-5 text-[var(--nova-text-secondary)]" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{stats.freeUsers}</p>
-              <p className="text-xs text-muted-foreground">Sin Plan</p>
+              <p className="text-2xl font-bold text-[var(--nova-text-bright)]">{stats.freeUsers}</p>
+              <p className="text-xs text-[var(--nova-text-secondary)]">Sin Plan</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+      {/* Subscribed Users - Nova */}
+      <Card className="bg-[var(--nova-bg-elevated)] border-[var(--nova-border-accent)] nova-hover-glow">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/20">
-              <Building2 className="h-5 w-5 text-primary" />
+            <div className="p-2 rounded-sm bg-[rgba(139,92,246,0.2)]">
+              <Building2 className="h-5 w-5 text-[var(--nova-accent-primary)]" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{stats.subscribedUsers}</p>
-              <p className="text-xs text-muted-foreground">Con Plan</p>
+              <p className="text-2xl font-bold text-[var(--nova-text-bright)]">{stats.subscribedUsers}</p>
+              <p className="text-xs text-[var(--nova-text-secondary)]">Con Plan</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-br from-info/10 to-info/5 border-info/20">
+      {/* Total Referrals - Nova */}
+      <Card className="bg-[var(--nova-bg-elevated)] border-[var(--nova-info-bg)] nova-hover-glow">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-info/20">
-              <CreditCard className="h-5 w-5 text-info" />
+            <div className="p-2 rounded-sm bg-[var(--nova-info-bg)]">
+              <CreditCard className="h-5 w-5 text-[var(--nova-info)]" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{stats.totalReferrals}</p>
-              <p className="text-xs text-muted-foreground">Referidos</p>
+              <p className="text-2xl font-bold text-[var(--nova-text-bright)]">{stats.totalReferrals}</p>
+              <p className="text-xs text-[var(--nova-text-secondary)]">Referidos</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-br from-warning/10 to-warning/5 border-warning/20">
+      {/* Pending Commissions - Nova */}
+      <Card className="bg-[var(--nova-bg-elevated)] border-[var(--nova-warning-bg)] nova-hover-glow">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-warning/20">
-              <Clock className="h-5 w-5 text-warning" />
+            <div className="p-2 rounded-sm bg-[var(--nova-warning-bg)]">
+              <Clock className="h-5 w-5 text-[var(--nova-warning)]" />
             </div>
             <div>
-              <p className="text-2xl font-bold">${stats.pendingCommissions.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Comisiones Pend.</p>
+              <p className="text-2xl font-bold text-[var(--nova-text-bright)]">${stats.pendingCommissions.toLocaleString()}</p>
+              <p className="text-xs text-[var(--nova-text-secondary)]">Comisiones Pend.</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-br from-success/10 to-success/5 border-success/20">
+      {/* Paid Commissions - Nova */}
+      <Card className="bg-[var(--nova-bg-elevated)] border-[var(--nova-success-bg)] nova-hover-glow">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-success/20">
-              <DollarSign className="h-5 w-5 text-success" />
+            <div className="p-2 rounded-sm bg-[var(--nova-success-bg)]">
+              <DollarSign className="h-5 w-5 text-[var(--nova-success)]" />
             </div>
             <div>
-              <p className="text-2xl font-bold">${stats.paidCommissions.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Comisiones Pag.</p>
+              <p className="text-2xl font-bold text-[var(--nova-text-bright)]">${stats.paidCommissions.toLocaleString()}</p>
+              <p className="text-xs text-[var(--nova-text-secondary)]">Comisiones Pag.</p>
             </div>
           </div>
         </CardContent>

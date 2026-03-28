@@ -14,7 +14,7 @@ export function ClientUserCard({ user, onClick, isSelected }: ClientUserCardProp
     <div
       onClick={onClick}
       className={cn(
-        'group rounded-xl border bg-card p-4 transition-all duration-300 hover:shadow-lg cursor-pointer relative overflow-hidden',
+        'group rounded-sm border bg-card p-4 transition-all duration-300 hover:shadow-lg cursor-pointer relative overflow-hidden',
         isSelected
           ? 'ring-2 ring-[#8b5cf6] border-[#8b5cf6]/50'
           : 'border-border hover:border-emerald-500/30',

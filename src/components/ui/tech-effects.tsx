@@ -159,7 +159,7 @@ export function GlowBorder({ children, className }: { children: ReactNode; class
   return (
     <div className={`relative ${className}`}>
       <motion.div
-        className="absolute -inset-px rounded-2xl opacity-50"
+        className="absolute -inset-px rounded-sm opacity-50"
         style={{
           background: "linear-gradient(90deg, hsl(270 100% 60%), hsl(300 100% 60%), hsl(270 100% 60%))",
           backgroundSize: "200% 100%",
@@ -173,7 +173,7 @@ export function GlowBorder({ children, className }: { children: ReactNode; class
           ease: "linear",
         }}
       />
-      <div className="relative bg-card rounded-2xl">
+      <div className="relative bg-card rounded-sm">
         {children}
       </div>
     </div>

@@ -144,7 +144,7 @@ export function OverlayEditor({
                 <div
                   key={overlay.id}
                   className={cn(
-                    'flex items-center gap-2 rounded-lg p-2 cursor-pointer transition-colors',
+                    'flex items-center gap-2 rounded-sm p-2 cursor-pointer transition-colors',
                     selectedOverlay?.id === overlay.id
                       ? 'bg-primary/10 border border-primary'
                       : 'hover:bg-muted'
@@ -189,7 +189,7 @@ export function OverlayEditor({
           {/* Add overlay buttons */}
           <div className="border-t p-4">
             <p className="text-sm font-medium mb-2">Añadir overlay</p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {OVERLAY_TYPES.slice(0, 3).map((type) => (
                 <Button
                   key={type.type}
@@ -315,7 +315,7 @@ export function OverlayEditor({
                       placeholder="https://..."
                     />
                     {editedContent.url && (
-                      <div className="mt-2 rounded-lg border p-2">
+                      <div className="mt-2 rounded-sm border p-2">
                         <img
                           src={editedContent.url as string}
                           alt="Preview"
@@ -405,7 +405,7 @@ export function OverlayEditor({
               <TabsContent value="position" className="mt-4 space-y-4">
                 <div className="space-y-2">
                   <Label>Posición predefinida</Label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     {POSITIONS.map((pos) => (
                       <Button
                         key={pos.value}

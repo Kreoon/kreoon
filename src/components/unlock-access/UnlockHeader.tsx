@@ -56,7 +56,7 @@ export const UnlockHeader = memo(function UnlockHeader({
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        'flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl',
+        'flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-sm',
         'bg-white/[0.03] border border-white/10 backdrop-blur-sm'
       )}
     >
@@ -103,7 +103,7 @@ export const UnlockHeader = memo(function UnlockHeader({
       <div className="flex items-center gap-4 w-full sm:w-auto">
         {/* Keys indicator */}
         <div className={cn(
-          'flex items-center gap-2 px-3 py-2 rounded-xl',
+          'flex items-center gap-2 px-3 py-2 rounded-sm',
           isComplete
             ? 'bg-amber-500/20 border border-amber-500/30'
             : 'bg-white/5 border border-white/10'
@@ -142,7 +142,7 @@ export const UnlockHeader = memo(function UnlockHeader({
       {/* Countdown */}
       {!time.isExpired && (
         <div className={cn(
-          'flex items-center gap-3 px-4 py-2 rounded-xl',
+          'flex items-center gap-3 px-4 py-2 rounded-sm',
           urgent
             ? 'bg-red-500/10 border border-red-500/30'
             : 'bg-white/5 border border-white/10'

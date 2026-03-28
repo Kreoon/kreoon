@@ -106,7 +106,7 @@ export function CreatorSocialStatsForm() {
         </div>
         <button
           onClick={loadStats}
-          className="p-2 text-gray-500 hover:text-foreground hover:bg-white/5 rounded-lg transition-colors"
+          className="p-2 text-gray-500 hover:text-foreground hover:bg-white/5 rounded-sm transition-colors"
         >
           <RefreshCw className="w-5 h-5" />
         </button>
@@ -122,7 +122,7 @@ export function CreatorSocialStatsForm() {
             <div
               key={platform}
               className={cn(
-                'border rounded-xl p-4 transition-all',
+                'border rounded-sm p-4 transition-all',
                 stat?.is_verified
                   ? 'border-green-500/30 bg-green-500/5'
                   : 'border-white/10 bg-white/5',
@@ -132,7 +132,7 @@ export function CreatorSocialStatsForm() {
               {/* Header */}
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', info.bgColor)}>
+                  <div className={cn('w-10 h-10 rounded-sm flex items-center justify-center', info.bgColor)}>
                     <span className="text-white font-bold">{info.label.charAt(0)}</span>
                   </div>
                   <div>
@@ -169,7 +169,7 @@ export function CreatorSocialStatsForm() {
                       value={formData.username || ''}
                       onChange={e => setFormData({ ...formData, username: e.target.value })}
                       placeholder="@tuusuario"
-                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm mt-1 placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
+                      className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm mt-1 placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
                     />
                   </div>
 
@@ -180,7 +180,7 @@ export function CreatorSocialStatsForm() {
                       value={formData.followers_count || ''}
                       onChange={e => setFormData({ ...formData, followers_count: parseInt(e.target.value) || 0 })}
                       placeholder="10000"
-                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm mt-1 placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
+                      className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm mt-1 placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
                     />
                   </div>
 
@@ -191,7 +191,7 @@ export function CreatorSocialStatsForm() {
                       value={formData.avg_likes_per_post || ''}
                       onChange={e => setFormData({ ...formData, avg_likes_per_post: parseInt(e.target.value) || 0 })}
                       placeholder="500"
-                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm mt-1 placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
+                      className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm mt-1 placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
                     />
                   </div>
 
@@ -202,7 +202,7 @@ export function CreatorSocialStatsForm() {
                       value={formData.profile_url || ''}
                       onChange={e => setFormData({ ...formData, profile_url: e.target.value })}
                       placeholder="https://instagram.com/tuusuario"
-                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm mt-1 placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
+                      className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm mt-1 placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
                     />
                   </div>
 
@@ -210,7 +210,7 @@ export function CreatorSocialStatsForm() {
                     <button
                       onClick={handleSave}
                       disabled={saving}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-sm hover:bg-purple-700 disabled:opacity-50 transition-colors"
                     >
                       {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Guardar'}
                     </button>
@@ -219,7 +219,7 @@ export function CreatorSocialStatsForm() {
                         setEditingPlatform(null);
                         setFormData(EMPTY_FORM);
                       }}
-                      className="px-4 py-2 border border-white/10 text-gray-400 rounded-lg hover:bg-white/5 transition-colors"
+                      className="px-4 py-2 border border-white/10 text-gray-400 rounded-sm hover:bg-white/5 transition-colors"
                     >
                       Cancelar
                     </button>
@@ -250,7 +250,7 @@ export function CreatorSocialStatsForm() {
 
                       <button
                         onClick={() => handleEdit(platform)}
-                        className="w-full mt-3 px-4 py-2 border border-purple-500/30 text-purple-400 rounded-lg hover:bg-purple-500/10 transition-colors text-sm"
+                        className="w-full mt-3 px-4 py-2 border border-purple-500/30 text-purple-400 rounded-sm hover:bg-purple-500/10 transition-colors text-sm"
                       >
                         Actualizar datos
                       </button>
@@ -262,7 +262,7 @@ export function CreatorSocialStatsForm() {
                       </p>
                       <button
                         onClick={() => handleEdit(platform)}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                        className="px-4 py-2 bg-purple-600 text-white rounded-sm hover:bg-purple-700 transition-colors text-sm"
                       >
                         Conectar cuenta
                       </button>
@@ -276,7 +276,7 @@ export function CreatorSocialStatsForm() {
       </div>
 
       {/* Info box */}
-      <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+      <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-sm">
         <div className="flex gap-3">
           <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
           <div>

@@ -162,6 +162,9 @@ verify_jwt = true
 [functions.bunny-raw-upload]
 verify_jwt = true
 
+[functions.bunny-media-upload]
+verify_jwt = true
+
 [functions.bunny-raw-download]
 verify_jwt = false
 
@@ -537,4 +540,29 @@ verify_jwt = false
 [functions.intelligence-gatherer]
 # Social + Ad Intelligence gathering
 # Llamado internamente por orchestrator
+verify_jwt = false
+
+# ── LinkedIn Ads Integration ──
+
+[functions.marketing-linkedin]
+# Integración con LinkedIn Ads API
+# OAuth flow, campañas, métricas y CAPI
+# JWT verificado internamente para mayor flexibilidad
+verify_jwt = true
+
+# ── Social Verification & Instagram/TikTok APIs ──
+
+[functions.social-instagram]
+# Instagram Basic Display + Graph API integration
+# OAuth flow requires verify_jwt = false
+verify_jwt = false
+
+[functions.social-tiktok]
+# TikTok API integration for creator verification
+# OAuth flow requires verify_jwt = false
+verify_jwt = false
+
+[functions.verify-influencer]
+# Influencer verification service
+# JWT verified internally
 verify_jwt = false

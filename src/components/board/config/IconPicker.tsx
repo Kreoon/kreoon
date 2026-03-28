@@ -111,7 +111,7 @@ export function IconPicker({ value, onChange, className }: IconPickerProps) {
                   setOpen(false);
                 }}
                 className={cn(
-                  "h-9 w-9 flex items-center justify-center rounded-lg transition-all",
+                  "h-9 w-9 flex items-center justify-center rounded-sm transition-all",
                   "hover:bg-white/10 hover:border-primary/50",
                   isSelected
                     ? "bg-primary/20 border border-primary text-primary"

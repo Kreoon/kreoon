@@ -55,7 +55,7 @@ export function OrgPortfolioSection({ gallery, memberContent = [], accentColor }
                     }
                   }}
                   className={cn(
-                    'w-full rounded-xl overflow-hidden relative group cursor-pointer break-inside-avoid',
+                    'w-full rounded-sm overflow-hidden relative group cursor-pointer break-inside-avoid',
                     size === 'large' ? 'aspect-[9/16]' : 'aspect-[3/4]',
                   )}
                 >
@@ -112,7 +112,7 @@ export function OrgPortfolioSection({ gallery, memberContent = [], accentColor }
           )}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {gallery.map((url, i) => (
-              <div key={i} className="aspect-square rounded-xl overflow-hidden bg-white/5">
+              <div key={i} className="aspect-square rounded-sm overflow-hidden bg-white/5">
                 <img
                   src={url}
                   alt=""

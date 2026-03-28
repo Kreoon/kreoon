@@ -200,7 +200,7 @@ export function ScriptAIChat({
 
   if (!currentScript) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground border border-dashed rounded-lg">
+      <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground border border-dashed rounded-sm">
         <Sparkles className="h-8 w-8 mb-2 opacity-50" />
         <p className="text-sm">Genera un guión primero para poder refinarlo con IA</p>
       </div>
@@ -208,7 +208,7 @@ export function ScriptAIChat({
   }
 
   return (
-    <div className="flex flex-col h-[400px] border rounded-lg bg-card">
+    <div className="flex flex-col h-[400px] border rounded-sm bg-card">
       {/* Header */}
       <div className="flex items-center gap-2 p-3 border-b bg-muted/30">
         <Bot className="h-5 w-5 text-primary" />
@@ -260,7 +260,7 @@ export function ScriptAIChat({
                 )}
                 <div
                   className={cn(
-                    'max-w-[85%] rounded-lg px-3 py-2 text-sm',
+                    'max-w-[85%] rounded-sm px-3 py-2 text-sm',
                     message.role === 'user'
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-muted'
@@ -309,7 +309,7 @@ export function ScriptAIChat({
                 <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
                   <Bot className="h-4 w-4 text-primary" />
                 </div>
-                <div className="bg-muted rounded-lg px-3 py-2">
+                <div className="bg-muted rounded-sm px-3 py-2">
                   <div className="flex items-center gap-1">
                     <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                     <div className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -324,7 +324,7 @@ export function ScriptAIChat({
 
       {/* Input */}
       <div className="p-3 border-t bg-muted/10 space-y-2">
-        <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-purple-500/5 border border-purple-500/10">
+        <div className="flex items-center justify-between gap-2 p-2 rounded-sm bg-purple-500/5 border border-purple-500/10">
           <div className="flex items-center gap-2">
             <Search className="w-4 h-4 text-purple-500" />
             <span className="text-xs font-medium">Incluir datos actuales (Perplexity)</span>

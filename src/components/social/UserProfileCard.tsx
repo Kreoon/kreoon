@@ -56,7 +56,7 @@ export function UserProfileCard({
     return (
       <div
         className={cn(
-          "flex items-center gap-3 p-3 rounded-xl cursor-pointer",
+          "flex items-center gap-3 p-3 rounded-sm cursor-pointer",
           "bg-social-card/50 hover:bg-social-card border border-social-border/50",
           "transition-all duration-200 hover:scale-[1.02]",
           className

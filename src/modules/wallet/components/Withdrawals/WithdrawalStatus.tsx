@@ -137,7 +137,7 @@ export function WithdrawalStatusCard({
 
         {/* Rejection reason */}
         {withdrawal.status === 'rejected' && withdrawal.rejection_reason && (
-          <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+          <div className="p-4 rounded-sm bg-red-500/10 border border-red-500/20">
             <p className="text-sm text-red-400 font-medium mb-1">Motivo del rechazo:</p>
             <p className="text-sm text-[hsl(270,30%,70%)]">{withdrawal.rejection_reason}</p>
           </div>
@@ -223,7 +223,7 @@ export function WithdrawalList({
         {[1, 2, 3].map(i => (
           <div
             key={i}
-            className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)] animate-pulse"
+            className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] animate-pulse"
           >
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-[hsl(270,100%,60%,0.1)]" />
@@ -260,7 +260,7 @@ export function WithdrawalList({
             transition={{ delay: index * 0.05 }}
             onClick={() => onSelect?.(withdrawal)}
             className={cn(
-              'p-4 rounded-xl cursor-pointer transition-all',
+              'p-4 rounded-sm cursor-pointer transition-all',
               'bg-[hsl(270,100%,60%,0.03)] hover:bg-[hsl(270,100%,60%,0.08)]',
               'border border-transparent hover:border-[hsl(270,100%,60%,0.1)]'
             )}

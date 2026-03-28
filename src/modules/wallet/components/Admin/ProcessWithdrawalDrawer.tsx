@@ -140,7 +140,7 @@ ${details}
 
           <div className="space-y-6">
             {/* User info */}
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)]">
+            <div className="flex items-center gap-4 p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)]">
               <Avatar className="h-14 w-14">
                 <AvatarImage src={profile?.avatar_url} />
                 <AvatarFallback>
@@ -160,7 +160,7 @@ ${details}
             </div>
 
             {/* Amount summary */}
-            <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
+            <div className="p-4 rounded-sm bg-emerald-500/5 border border-emerald-500/10">
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">Monto a pagar</p>
                 <p className="text-3xl font-bold text-emerald-400 mt-1">
@@ -185,7 +185,7 @@ ${details}
                 </Button>
               </div>
 
-              <div className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)] space-y-3">
+              <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Método</span>
                   <Badge variant="outline">{withdrawal.methodLabel}</Badge>
@@ -256,7 +256,7 @@ ${details}
 
               {/* Warning for large amounts */}
               {withdrawal.net_amount > 1000 && (
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <div className="flex items-start gap-3 p-3 rounded-sm bg-amber-500/10 border border-amber-500/20">
                   <AlertTriangle className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-[hsl(270,30%,70%)]">
                     <p className="font-medium text-amber-400">Monto considerable</p>

@@ -51,7 +51,7 @@ export function AudioStep({ audioUrl, onAudioComplete }: AudioStepProps) {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+      <div className="rounded-sm border border-white/10 bg-white/5 p-6">
         <div className="text-center mb-6">
           <p className="text-sm text-gray-400 leading-relaxed max-w-lg mx-auto">
             Graba un audio de 1-3 minutos explicando tu visión, producto y expectativas.
@@ -60,7 +60,7 @@ export function AudioStep({ audioUrl, onAudioComplete }: AudioStepProps) {
         </div>
 
         {/* Guide questions */}
-        <div className="mb-8 rounded-xl bg-white/5 border border-white/10 p-4">
+        <div className="mb-8 rounded-sm bg-white/5 border border-white/10 p-4">
           <p className="text-xs font-medium text-purple-400 uppercase tracking-wider mb-3">
             Puntos a cubrir en tu audio
           </p>

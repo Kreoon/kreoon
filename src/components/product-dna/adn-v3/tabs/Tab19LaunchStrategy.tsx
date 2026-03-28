@@ -149,23 +149,23 @@ export function Tab19LaunchStrategy({ data }: Tab19LaunchStrategyProps) {
         </CardHeader>
         <CardContent>
           <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Tipo de Lanzamiento</p>
               <p className="font-medium">{data.launch_overview?.launch_type}</p>
             </div>
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Duración Total</p>
               <p className="font-medium">{data.launch_overview?.total_duration}</p>
             </div>
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Objetivo Principal</p>
               <p className="font-medium">{data.launch_overview?.primary_goal}</p>
             </div>
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Revenue Target</p>
               <p className="font-bold text-green-400">{data.launch_overview?.target_revenue}</p>
             </div>
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Clientes Target</p>
               <p className="font-bold">{data.launch_overview?.target_customers}</p>
             </div>
@@ -333,7 +333,7 @@ export function Tab19LaunchStrategy({ data }: Tab19LaunchStrategyProps) {
         <CardContent>
           <div className="space-y-4">
             {data.launch_offers?.map((offer, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
+              <div key={idx} className="p-4 rounded-sm border bg-card">
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h4 className="font-medium">{offer.name}</h4>
@@ -372,7 +372,7 @@ export function Tab19LaunchStrategy({ data }: Tab19LaunchStrategyProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+            <div className="p-3 rounded-sm bg-blue-500/10 border border-blue-500/20">
               <p className="text-xs text-blue-400 mb-1">Incentivo de Registro</p>
               <p className="font-medium">{data.waitlist_strategy.incentive}</p>
             </div>
@@ -413,7 +413,7 @@ export function Tab19LaunchStrategy({ data }: Tab19LaunchStrategyProps) {
           <CardContent>
             <div className="space-y-2">
               {data.launch_content_calendar.map((item, idx) => (
-                <div key={idx} className="p-3 rounded-lg border bg-card">
+                <div key={idx} className="p-3 rounded-sm border bg-card">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <Badge className="bg-purple-500/20 text-purple-400">Día {item.day}</Badge>
@@ -443,7 +443,7 @@ export function Tab19LaunchStrategy({ data }: Tab19LaunchStrategyProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-3 rounded-lg bg-muted/50">
+            <div className="p-3 rounded-sm bg-muted/50">
               <p className="text-xs text-muted-foreground mb-1">Estructura de Comisiones</p>
               <p className="font-medium">{data.partner_strategy.affiliate_structure}</p>
             </div>
@@ -457,7 +457,7 @@ export function Tab19LaunchStrategy({ data }: Tab19LaunchStrategyProps) {
               </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+            <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
               <p className="text-xs text-green-400 mb-1">Template de Outreach</p>
               <p className="text-sm whitespace-pre-wrap">{data.partner_strategy.outreach_template}</p>
               <CopyButton text={data.partner_strategy.outreach_template} className="mt-2" />
@@ -497,7 +497,7 @@ export function Tab19LaunchStrategy({ data }: Tab19LaunchStrategyProps) {
           <CardContent>
             <div className="space-y-3">
               {data.contingency_plans?.map((plan, idx) => (
-                <div key={idx} className="p-3 rounded-lg border bg-card">
+                <div key={idx} className="p-3 rounded-sm border bg-card">
                   <div className="flex items-start gap-2 mb-2">
                     <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
                     <p className="text-sm font-medium text-yellow-400">{plan.risk}</p>
@@ -521,21 +521,21 @@ export function Tab19LaunchStrategy({ data }: Tab19LaunchStrategyProps) {
           </CardHeader>
           <CardContent>
             <div className="grid sm:grid-cols-3 gap-4">
-              <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+              <div className="p-4 rounded-sm bg-emerald-500/10 border border-emerald-500/20">
                 <div className="flex items-center gap-2 mb-2">
                   <Clock className="w-4 h-4 text-emerald-400" />
                   <p className="text-xs text-emerald-400 font-medium">Primeras 48 Horas</p>
                 </div>
                 <p className="text-sm">{data.post_launch_optimization.first_48_hours}</p>
               </div>
-              <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <div className="p-4 rounded-sm bg-blue-500/10 border border-blue-500/20">
                 <div className="flex items-center gap-2 mb-2">
                   <Calendar className="w-4 h-4 text-blue-400" />
                   <p className="text-xs text-blue-400 font-medium">Primera Semana</p>
                 </div>
                 <p className="text-sm">{data.post_launch_optimization.first_week}</p>
               </div>
-              <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+              <div className="p-4 rounded-sm bg-purple-500/10 border border-purple-500/20">
                 <div className="flex items-center gap-2 mb-2">
                   <Target className="w-4 h-4 text-purple-400" />
                   <p className="text-xs text-purple-400 font-medium">Primer Mes</p>

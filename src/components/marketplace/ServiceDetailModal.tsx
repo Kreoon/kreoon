@@ -58,12 +58,12 @@ export function ServiceDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg bg-social-card border-social-border p-0 gap-0">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-lg bg-social-card border-social-border p-0 gap-0">
         <ScrollArea className="max-h-[85vh]">
           <div className="p-6">
             <DialogHeader>
               <div className="flex items-start gap-4">
-                <div className="w-14 h-14 rounded-xl bg-social-muted flex items-center justify-center text-3xl">
+                <div className="w-14 h-14 rounded-sm bg-social-muted flex items-center justify-center text-3xl">
                   {SERVICE_TYPE_ICONS[service.service_type]}
                 </div>
                 <div>
@@ -80,7 +80,7 @@ export function ServiceDetailModal({
             {/* Portfolio carousel */}
             {service.portfolio_items.length > 0 && (
               <div className="mt-6 relative">
-                <div className="aspect-video rounded-lg bg-social-muted overflow-hidden">
+                <div className="aspect-video rounded-sm bg-social-muted overflow-hidden">
                   {/* This would show actual portfolio items */}
                   <div className="w-full h-full flex items-center justify-center">
                     <Play className="h-12 w-12 text-social-muted-foreground" />

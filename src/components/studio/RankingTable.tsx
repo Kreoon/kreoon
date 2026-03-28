@@ -196,7 +196,7 @@ function RankingRow({ user, index }: { user: RankingUser; index: number }) {
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.05 }}
       className={cn(
-        'flex items-center gap-3 p-3 rounded-xl',
+        'flex items-center gap-3 p-3 rounded-sm',
         'transition-all duration-200',
         medalStyle
           ? `${medalStyle.bg} border ${medalStyle.border}`

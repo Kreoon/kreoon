@@ -185,7 +185,7 @@ export function TalentDNAPage() {
     <div className="space-y-6">
       {/* Error State */}
       {error && (
-        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400">
+        <div className="p-4 rounded-sm bg-red-500/10 border border-red-500/20 text-red-400">
           {error}
         </div>
       )}

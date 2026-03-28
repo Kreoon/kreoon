@@ -6,9 +6,18 @@ import {
   MoreHorizontal, Check, Send,
 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, Legend,
-  PieChart, Pie, Cell, ResponsiveContainer,
-} from 'recharts';
+  LazyBarChart,
+  LazyPieChart,
+  LazyChartContainer,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+} from '@/components/ui/lazy-charts';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -128,10 +137,10 @@ const PlatformCRMFinances = () => {
       <div className="min-h-screen p-4 md:p-6">
         <div className="animate-pulse space-y-6">
           <div className="h-10 w-48 bg-white/10 rounded" />
-          <div className="grid grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-white/5 rounded-xl" />)}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-white/5 rounded-sm" />)}
           </div>
-          <div className="h-96 bg-white/5 rounded-xl" />
+          <div className="h-96 bg-white/5 rounded-sm" />
         </div>
       </div>
     );
@@ -168,7 +177,7 @@ const PlatformCRMFinances = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card className="bg-gradient-to-br from-green-500/20 to-green-600/10 border-green-500/20 p-6">
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-green-500/20 rounded-lg">
+              <div className="p-2 bg-green-500/20 rounded-sm">
                 <DollarSign className="w-5 h-5 text-green-400" />
               </div>
               <span className="text-white/60 text-sm">MRR</span>
@@ -181,7 +190,7 @@ const PlatformCRMFinances = () => {
 
           <Card className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 border-blue-500/20 p-6">
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-blue-500/20 rounded-lg">
+              <div className="p-2 bg-blue-500/20 rounded-sm">
                 <TrendingUp className="w-5 h-5 text-blue-400" />
               </div>
               <span className="text-white/60 text-sm">Ingresos ({period}d)</span>
@@ -194,7 +203,7 @@ const PlatformCRMFinances = () => {
 
           <Card className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 border-purple-500/20 p-6">
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-purple-500/20 rounded-lg">
+              <div className="p-2 bg-purple-500/20 rounded-sm">
                 <Wallet className="w-5 h-5 text-purple-400" />
               </div>
               <span className="text-white/60 text-sm">Pagos a Talento</span>
@@ -207,7 +216,7 @@ const PlatformCRMFinances = () => {
 
           <Card className="bg-gradient-to-br from-orange-500/20 to-orange-600/10 border-orange-500/20 p-6">
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-orange-500/20 rounded-lg">
+              <div className="p-2 bg-orange-500/20 rounded-sm">
                 <FileText className="w-5 h-5 text-orange-400" />
               </div>
               <span className="text-white/60 text-sm">Por Cobrar</span>
@@ -236,20 +245,22 @@ const PlatformCRMFinances = () => {
             {/* Revenue chart */}
             <Card className="lg:col-span-2 bg-white/5 border-white/10 p-6">
               <h3 className="text-lg font-semibold text-white mb-4">Ingresos vs Pagos (12 meses)</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={revenueData || []}>
-                  <XAxis dataKey="month" stroke="#ffffff60" fontSize={12} />
-                  <YAxis stroke="#ffffff60" fontSize={12} tickFormatter={(v: number) => `$${v / 1000}k`} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
-                    formatter={(value: number) => formatCurrency(value)}
-                    labelStyle={{ color: '#fff' }}
-                  />
-                  <Legend />
-                  <Bar dataKey="revenue" name="Ingresos" fill="#22C55E" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="payouts" name="Pagos" fill="#A855F7" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <LazyChartContainer height={300}>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LazyBarChart data={revenueData || []}>
+                    <XAxis dataKey="month" stroke="#ffffff60" fontSize={12} />
+                    <YAxis stroke="#ffffff60" fontSize={12} tickFormatter={(v: number) => `$${v / 1000}k`} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
+                      formatter={(value: number) => formatCurrency(value)}
+                      labelStyle={{ color: '#fff' }}
+                    />
+                    <Legend />
+                    <Bar dataKey="revenue" name="Ingresos" fill="#22C55E" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="payouts" name="Pagos" fill="#A855F7" radius={[4, 4, 0, 0]} />
+                  </LazyBarChart>
+                </ResponsiveContainer>
+              </LazyChartContainer>
             </Card>
 
             {/* Subscriptions by plan */}
@@ -274,24 +285,26 @@ const PlatformCRMFinances = () => {
 
               {(stats?.subscriptions_by_plan?.length || 0) > 0 && (
                 <div className="mt-6">
-                  <ResponsiveContainer width="100%" height={150}>
-                    <PieChart>
-                      <Pie
-                        data={stats?.subscriptions_by_plan || []}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={40}
-                        outerRadius={60}
-                        dataKey="mrr"
-                        nameKey="plan"
-                      >
-                        {(stats?.subscriptions_by_plan || []).map((entry, index) => (
-                          <Cell key={index} fill={PLAN_COLORS[entry.plan] || '#6B7280'} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(v: number) => formatCurrency(v)} />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <LazyChartContainer height={150}>
+                    <ResponsiveContainer width="100%" height={150}>
+                      <LazyPieChart>
+                        <Pie
+                          data={stats?.subscriptions_by_plan || []}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={60}
+                          dataKey="mrr"
+                          nameKey="plan"
+                        >
+                          {(stats?.subscriptions_by_plan || []).map((entry, index) => (
+                            <Cell key={index} fill={PLAN_COLORS[entry.plan] || '#6B7280'} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(v: number) => formatCurrency(v)} />
+                      </LazyPieChart>
+                    </ResponsiveContainer>
+                  </LazyChartContainer>
                 </div>
               )}
             </Card>

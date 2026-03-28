@@ -70,12 +70,12 @@ export function AvatarSegmentationTab({ avatarProfiles }: AvatarSegmentationTabP
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
-        <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+      <div className="p-4 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
+        <h3 className="font-semibold text-sm mb-2 flex items-center gap-2 text-zinc-100">
           <Users className="h-4 w-4 text-purple-500" />
           5 Avatares Estratégicos
         </h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400">
           Buyer personas creados a partir de la investigación de mercado con datos reales de comportamiento, sesgos cognitivos y frases textuales.
         </p>
       </div>
@@ -123,12 +123,12 @@ export function AvatarSegmentationTab({ avatarProfiles }: AvatarSegmentationTabP
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Drivers */}
                 {(avatar.drivers || avatar.psychographics?.drivers) && (
-                  <div className="p-3 bg-green-500/5 rounded-lg border border-green-500/20">
-                    <p className="text-xs font-medium text-green-600 mb-1 flex items-center gap-1">
+                  <div className="p-3 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
+                    <p className="text-xs font-medium text-green-500 mb-1 flex items-center gap-1">
                       <Brain className="h-3 w-3" />
                       Drivers Psicológicos
                     </p>
-                    <p className="text-sm">
+                    <p className="text-sm text-zinc-300">
                       {Array.isArray(avatar.psychographics?.drivers)
                         ? avatar.psychographics.drivers.join(', ')
                         : Array.isArray(avatar.drivers)
@@ -140,12 +140,12 @@ export function AvatarSegmentationTab({ avatarProfiles }: AvatarSegmentationTabP
 
                 {/* Biases */}
                 {(avatar.biases || avatar.psychographics?.biases) && (
-                  <div className="p-3 bg-purple-500/5 rounded-lg border border-purple-500/20">
-                    <p className="text-xs font-medium text-purple-600 mb-1 flex items-center gap-1">
+                  <div className="p-3 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
+                    <p className="text-xs font-medium text-purple-500 mb-1 flex items-center gap-1">
                       <Brain className="h-3 w-3" />
                       Sesgos Cognitivos
                     </p>
-                    <p className="text-sm">
+                    <p className="text-sm text-zinc-300">
                       {Array.isArray(avatar.psychographics?.biases)
                         ? avatar.psychographics.biases.join(', ')
                         : Array.isArray(avatar.biases)
@@ -158,12 +158,12 @@ export function AvatarSegmentationTab({ avatarProfiles }: AvatarSegmentationTabP
 
               {/* Objections */}
               {(avatar.objections || avatar.psychographics?.objections) && (
-                <div className="p-3 bg-amber-500/5 rounded-lg border border-amber-500/20">
-                  <p className="text-xs font-medium text-amber-600 mb-1 flex items-center gap-1">
+                <div className="p-3 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
+                  <p className="text-xs font-medium text-amber-500 mb-1 flex items-center gap-1">
                     <AlertTriangle className="h-3 w-3" />
                     Objeciones Clave
                   </p>
-                  <p className="text-sm">
+                  <p className="text-sm text-zinc-300">
                     {Array.isArray(avatar.psychographics?.objections)
                       ? avatar.psychographics.objections.join(', ')
                       : Array.isArray(avatar.objections)

@@ -54,7 +54,7 @@ export function LandingStrategicPlaybook({ contentStrategy }: Props) {
         const items = safeArray(data[phase.listKey]);
 
         return (
-          <div key={phase.key} className={`${colors.bg} border ${colors.border} rounded-xl p-4`}>
+          <div key={phase.key} className={`${colors.bg} border ${colors.border} rounded-sm p-4`}>
             <div className="flex items-center gap-2 mb-2">
               <div className={`h-2.5 w-2.5 rounded-full ${colors.dot}`} />
               <h4 className={`text-sm font-semibold ${colors.text}`}>{phase.label}</h4>

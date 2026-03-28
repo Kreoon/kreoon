@@ -168,15 +168,15 @@ export function Tab21OrganicContent({ data }: Tab21OrganicContentProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Objetivo Principal</p>
               <p className="font-medium">{data.content_strategy_overview?.primary_goal}</p>
             </div>
-            <div className="p-3 rounded-lg bg-background/50">
+            <div className="p-3 rounded-sm bg-background/50">
               <p className="text-xs text-muted-foreground mb-1">Frecuencia</p>
               <p className="font-medium">{data.content_strategy_overview?.content_frequency}</p>
             </div>
-            <div className="p-3 rounded-lg bg-background/50 col-span-2">
+            <div className="p-3 rounded-sm bg-background/50 col-span-2">
               <p className="text-xs text-muted-foreground mb-1">Canales Primarios</p>
               <div className="flex flex-wrap gap-1">
                 {data.content_strategy_overview?.primary_channels?.map((ch, idx) => (
@@ -266,7 +266,7 @@ export function Tab21OrganicContent({ data }: Tab21OrganicContentProps) {
             <p className="text-sm font-medium mb-2">Keywords Primarias</p>
             <div className="space-y-2">
               {data.seo_strategy?.primary_keywords?.map((kw, idx) => (
-                <div key={idx} className="p-3 rounded-lg border bg-card flex items-center justify-between">
+                <div key={idx} className="p-3 rounded-sm border bg-card flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="font-medium">{kw.keyword}</span>
                     <Badge variant="outline">{kw.intent}</Badge>
@@ -296,7 +296,7 @@ export function Tab21OrganicContent({ data }: Tab21OrganicContentProps) {
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
-            <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+            <div className="p-3 rounded-sm bg-orange-500/10 border border-orange-500/20">
               <p className="text-xs text-orange-400 mb-2">Content Gaps</p>
               <ul className="space-y-1">
                 {data.seo_strategy?.content_gaps?.map((gap, idx) => (
@@ -304,7 +304,7 @@ export function Tab21OrganicContent({ data }: Tab21OrganicContentProps) {
                 ))}
               </ul>
             </div>
-            <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+            <div className="p-3 rounded-sm bg-purple-500/10 border border-purple-500/20">
               <p className="text-xs text-purple-400 mb-2">Keywords de Competidores</p>
               <div className="flex flex-wrap gap-1">
                 {data.seo_strategy?.competitor_keywords?.map((kw, idx) => (
@@ -327,7 +327,7 @@ export function Tab21OrganicContent({ data }: Tab21OrganicContentProps) {
         <CardContent>
           <div className="space-y-4">
             {data.blog_content_plan?.map((post, idx) => (
-              <div key={idx} className="p-4 rounded-lg border bg-card">
+              <div key={idx} className="p-4 rounded-sm border bg-card">
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h4 className="font-medium">{post.title}</h4>
@@ -379,11 +379,11 @@ export function Tab21OrganicContent({ data }: Tab21OrganicContentProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid sm:grid-cols-3 gap-4">
-              <div className="p-3 rounded-lg bg-muted/50">
+              <div className="p-3 rounded-sm bg-muted/50">
                 <p className="text-xs text-muted-foreground mb-1">Frecuencia</p>
                 <p className="font-medium">{data.youtube_strategy.publishing_frequency}</p>
               </div>
-              <div className="p-3 rounded-lg bg-muted/50">
+              <div className="p-3 rounded-sm bg-muted/50">
                 <p className="text-xs text-muted-foreground mb-1">Tipos de Video</p>
                 <div className="flex flex-wrap gap-1">
                   {data.youtube_strategy.video_types?.map((type, idx) => (
@@ -391,7 +391,7 @@ export function Tab21OrganicContent({ data }: Tab21OrganicContentProps) {
                   ))}
                 </div>
               </div>
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+              <div className="p-3 rounded-sm bg-red-500/10 border border-red-500/20">
                 <p className="text-xs text-red-400 mb-1">Enfoque SEO</p>
                 <p className="text-sm">{data.youtube_strategy.seo_approach}</p>
               </div>
@@ -402,7 +402,7 @@ export function Tab21OrganicContent({ data }: Tab21OrganicContentProps) {
                 <p className="text-sm font-medium mb-2">Ideas de Videos</p>
                 <div className="space-y-2">
                   {data.youtube_strategy.video_ideas.map((video, idx) => (
-                    <div key={idx} className="p-3 rounded-lg border bg-card flex items-center justify-between">
+                    <div key={idx} className="p-3 rounded-sm border bg-card flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <Video className="w-4 h-4 text-red-400" />
                         <div>
@@ -431,11 +431,11 @@ export function Tab21OrganicContent({ data }: Tab21OrganicContentProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4">
-              <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+              <div className="p-3 rounded-sm bg-purple-500/10 border border-purple-500/20">
                 <p className="text-xs text-purple-400 mb-1">Formato</p>
                 <p className="font-medium capitalize">{data.podcast_opportunity.format}</p>
               </div>
-              <div className="p-3 rounded-lg bg-muted/50">
+              <div className="p-3 rounded-sm bg-muted/50">
                 <p className="text-xs text-muted-foreground mb-1">Distribución</p>
                 <p className="text-sm">{data.podcast_opportunity.distribution_strategy}</p>
               </div>
@@ -470,7 +470,7 @@ export function Tab21OrganicContent({ data }: Tab21OrganicContentProps) {
         <CardContent>
           <div className="space-y-3">
             {data.content_repurposing?.map((item, idx) => (
-              <div key={idx} className="p-3 rounded-lg border bg-card">
+              <div key={idx} className="p-3 rounded-sm border bg-card">
                 <div className="flex items-center gap-2 mb-2">
                   <Badge className="bg-orange-500/20 text-orange-400">{item.original_format}</Badge>
                   <span className="text-muted-foreground">→</span>
@@ -497,7 +497,7 @@ export function Tab21OrganicContent({ data }: Tab21OrganicContentProps) {
         <CardContent>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {data.content_distribution?.map((dist, idx) => (
-              <div key={idx} className="p-3 rounded-lg border bg-card">
+              <div key={idx} className="p-3 rounded-sm border bg-card">
                 <div className="flex items-center justify-between mb-2">
                   <Badge variant="outline">{dist.channel}</Badge>
                   <span className="text-xs text-muted-foreground">{dist.frequency}</span>
@@ -562,7 +562,7 @@ export function Tab21OrganicContent({ data }: Tab21OrganicContentProps) {
         </CardHeader>
         <CardContent>
           <div className="grid sm:grid-cols-3 gap-4">
-            <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+            <div className="p-3 rounded-sm bg-blue-500/10 border border-blue-500/20">
               <p className="text-xs text-blue-400 mb-2">Temas Semanales</p>
               <ul className="space-y-1">
                 {data.content_calendar_framework?.weekly_themes?.map((theme, idx) => (
@@ -570,7 +570,7 @@ export function Tab21OrganicContent({ data }: Tab21OrganicContentProps) {
                 ))}
               </ul>
             </div>
-            <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+            <div className="p-3 rounded-sm bg-purple-500/10 border border-purple-500/20">
               <p className="text-xs text-purple-400 mb-2">Series Mensuales</p>
               <ul className="space-y-1">
                 {data.content_calendar_framework?.monthly_series?.map((series, idx) => (
@@ -578,7 +578,7 @@ export function Tab21OrganicContent({ data }: Tab21OrganicContentProps) {
                 ))}
               </ul>
             </div>
-            <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+            <div className="p-3 rounded-sm bg-orange-500/10 border border-orange-500/20">
               <p className="text-xs text-orange-400 mb-2">Contenido Estacional</p>
               <ul className="space-y-1">
                 {data.content_calendar_framework?.seasonal_content?.map((content, idx) => (

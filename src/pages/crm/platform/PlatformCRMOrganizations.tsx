@@ -68,7 +68,7 @@ function StatCard({
   return (
     <Card className="p-4">
       <div className="flex items-center gap-3">
-        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", c.iconBg)}>
+        <div className={cn("w-10 h-10 rounded-sm flex items-center justify-center", c.iconBg)}>
           <Icon className={cn("h-5 w-5", c.text)} />
         </div>
         <div className="min-w-0">
@@ -246,9 +246,9 @@ const PlatformCRMOrganizations = () => {
                     onClick={() => handleSelectOrg(org)}
                   >
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0">
+                      <div className="w-12 h-12 rounded-sm bg-purple-500/20 flex items-center justify-center shrink-0">
                         {org.logo_url ? (
-                          <img src={org.logo_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                          <img src={org.logo_url} alt="" className="w-12 h-12 rounded-sm object-cover" />
                         ) : (
                           <Building2 className="w-6 h-6 text-purple-400" />
                         )}
@@ -261,7 +261,7 @@ const PlatformCRMOrganizations = () => {
                         {cfg.label}
                       </span>
                     </div>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       <div className="text-center">
                         <p className="text-white font-semibold text-sm">{org.member_count}</p>
                         <p className="text-[10px] text-white/40">Miembros</p>
@@ -293,14 +293,14 @@ const PlatformCRMOrganizations = () => {
                   <div
                     key={org.id}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-white/5 cursor-pointer transition-colors",
+                      "flex items-center gap-3 px-4 py-2.5 rounded-sm hover:bg-white/5 cursor-pointer transition-colors",
                       selectedOrg?.id === org.id && "bg-[#8b5cf6]/10 border border-[#8b5cf6]/30",
                     )}
                     onClick={() => handleSelectOrg(org)}
                   >
-                    <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-sm bg-purple-500/20 flex items-center justify-center shrink-0">
                       {org.logo_url ? (
-                        <img src={org.logo_url} alt="" className="w-8 h-8 rounded-lg object-cover" />
+                        <img src={org.logo_url} alt="" className="w-8 h-8 rounded-sm object-cover" />
                       ) : (
                         <span className="text-xs font-bold text-purple-400">{getInitials(org.name)}</span>
                       )}
@@ -347,9 +347,9 @@ const PlatformCRMOrganizations = () => {
                       >
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0">
+                            <div className="w-10 h-10 rounded-sm bg-purple-500/20 flex items-center justify-center shrink-0">
                               {org.logo_url ? (
-                                <img src={org.logo_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                                <img src={org.logo_url} alt="" className="w-10 h-10 rounded-sm object-cover" />
                               ) : (
                                 <Building2 className="w-5 h-5 text-purple-400" />
                               )}

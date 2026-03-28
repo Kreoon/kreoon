@@ -198,7 +198,7 @@ export function MarketingInfoPanel({ content, open, onClose }: MarketingInfoPane
               </CardHeader>
               <CardContent>
                 <div className={cn(
-                  "flex items-center gap-3 p-3 rounded-lg",
+                  "flex items-center gap-3 p-3 rounded-sm",
                   status.bgColor
                 )}>
                   <StatusIcon className={cn("h-5 w-5", status.color)} />
@@ -233,7 +233,7 @@ export function MarketingInfoPanel({ content, open, onClose }: MarketingInfoPane
                 </CardHeader>
                 <CardContent>
                   <div className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg",
+                    "flex items-center gap-3 p-3 rounded-sm",
                     spherePhase.bgColor
                   )}>
                     <SphereIcon className={cn("h-5 w-5", spherePhase.color)} />

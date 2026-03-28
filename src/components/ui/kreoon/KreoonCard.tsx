@@ -22,7 +22,7 @@ const KreoonCard = React.forwardRef<HTMLDivElement, KreoonCardProps>(
       <div
         ref={ref}
         className={cn(
-          "rounded-xl border border-kreoon-border bg-kreoon-bg-card/80 backdrop-blur-sm",
+          "rounded-sm border border-kreoon-border bg-kreoon-bg-card/80 backdrop-blur-sm",
           "transition-all duration-300 ease-out",
           glow && "shadow-kreoon-glow",
           hover && "hover:scale-[1.02]",

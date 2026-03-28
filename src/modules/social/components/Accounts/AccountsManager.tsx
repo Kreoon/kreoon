@@ -435,7 +435,7 @@ export function AccountsManager() {
             {/* Method 1: Facebook + Instagram */}
             <button
               onClick={() => handleInstagramConnect('facebook')}
-              className="w-full p-4 border border-border rounded-xl hover:bg-purple-500/10 hover:border-purple-500/30 text-left transition-colors"
+              className="w-full p-4 border border-border rounded-sm hover:bg-purple-500/10 hover:border-purple-500/30 text-left transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className="flex -space-x-2">
@@ -461,7 +461,7 @@ export function AccountsManager() {
             {/* Method 2: Direct Instagram */}
             <button
               onClick={() => handleInstagramConnect('direct')}
-              className="w-full p-4 border border-border rounded-xl hover:bg-purple-500/10 hover:border-purple-500/30 text-left transition-colors"
+              className="w-full p-4 border border-border rounded-sm hover:bg-purple-500/10 hover:border-purple-500/30 text-left transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex items-center justify-center">

@@ -172,7 +172,7 @@ export function PaymentMethodForm({
             </Button>
           )}
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
+            <div className="p-2 rounded-sm bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
               <CreditCard className="h-5 w-5 text-primary" />
             </div>
             <div>
@@ -402,7 +402,7 @@ export function PaymentMethodForm({
           )}
 
           {/* Default toggle */}
-          <div className="flex items-center justify-between p-4 rounded-lg bg-[hsl(270,100%,60%,0.05)]">
+          <div className="flex items-center justify-between p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)]">
             <div>
               <Label>Establecer como predeterminado</Label>
               <p className="text-xs text-muted-foreground">

@@ -214,7 +214,7 @@ export function DripSequenceEditor({ sequence, onBack }: DripSequenceEditorProps
       {enrollments.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-sm font-medium">Contactos inscritos ({enrollments.length})</h3>
-          <div className="border rounded-lg overflow-hidden">
+          <div className="border rounded-sm overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-muted/50">
                 <tr>
@@ -318,7 +318,7 @@ export function DripSequenceEditor({ sequence, onBack }: DripSequenceEditorProps
             <div className="space-y-2">
               <Label>Emails (uno por línea o separados por coma)</Label>
               <textarea
-                className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="flex min-h-[120px] w-full rounded-sm border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 value={enrollEmails}
                 onChange={(e) => setEnrollEmails(e.target.value)}
                 placeholder={"usuario1@ejemplo.com\nusuario2@ejemplo.com\nusuario3@ejemplo.com"}

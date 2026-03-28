@@ -141,6 +141,6 @@ export function FollowButton({
 function Skeleton({ size }: { size?: string }) {
   const sizeClass = size === 'sm' ? 'h-8 w-20' : size === 'lg' ? 'h-12 w-28' : 'h-10 w-24';
   return (
-    <div className={`${sizeClass} rounded-md bg-social-muted animate-pulse`} />
+    <div className={`${sizeClass} rounded-sm bg-social-muted animate-pulse`} />
   );
 }

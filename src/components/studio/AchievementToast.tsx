@@ -106,7 +106,7 @@ export function AchievementToast({
     >
       <div
         className={cn(
-          'relative rounded-2xl overflow-hidden',
+          'relative rounded-sm overflow-hidden',
           'bg-zinc-900/95 backdrop-blur-xl',
           'shadow-2xl'
         )}
@@ -156,7 +156,7 @@ function InsigniaContent({ insignia }: { insignia: Insignia }) {
     <div className="flex items-center gap-4">
       {/* Icon */}
       <motion.div
-        className="relative flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center"
+        className="relative flex-shrink-0 w-14 h-14 rounded-sm flex items-center justify-center"
         style={{
           background: `linear-gradient(135deg, ${insignia.color}30 0%, ${insignia.color}10 100%)`,
           boxShadow: `0 0 30px ${insignia.color}40`,
@@ -274,7 +274,7 @@ function CreditosContent({ creditos, mensaje }: { creditos: number; mensaje?: st
     <div className="flex items-center gap-4">
       {/* Icon */}
       <motion.div
-        className="relative flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500/30 to-emerald-600/10"
+        className="relative flex-shrink-0 w-14 h-14 rounded-sm flex items-center justify-center bg-gradient-to-br from-emerald-500/30 to-emerald-600/10"
         style={{ boxShadow: '0 0 30px rgba(16, 185, 129, 0.3)' }}
         animate={{ rotate: [0, 10, -10, 0] }}
         transition={{ duration: 0.5, delay: 0.2 }}

@@ -25,7 +25,7 @@ export function useCampaignInvitations() {
   const getInvitationsForCampaign = useCallback(async (campaignId: string): Promise<CampaignInvitation[]> => {
     setLoading(true);
     try {
-      const { data: rows, error: err } = await (supabase as any)
+      const { data: rows, error: err } = await supabase
         .from('campaign_invitations')
         .select('*')
         .eq('campaign_id', campaignId)
@@ -61,7 +61,7 @@ export function useCampaignInvitations() {
     if (!user?.id) return [];
     setLoading(true);
     try {
-      const { data: rows, error: err } = await (supabase as any)
+      const { data: rows, error: err } = await supabase
         .from('campaign_invitations')
         .select('*')
         .eq('invited_profile_id', user.id)
@@ -85,7 +85,7 @@ export function useCampaignInvitations() {
   ): Promise<string | null> => {
     if (!user?.id) return null;
     try {
-      const { data: result, error: err } = await (supabase as any)
+      const { data: result, error: err } = await supabase
         .from('campaign_invitations')
         .insert({
           campaign_id: campaignId,
@@ -118,7 +118,7 @@ export function useCampaignInvitations() {
         message: message || null,
       }));
 
-      const { error: err } = await (supabase as any)
+      const { error: err } = await supabase
         .from('campaign_invitations')
         .insert(rows);
 
@@ -135,7 +135,7 @@ export function useCampaignInvitations() {
     response: 'accepted' | 'declined',
   ): Promise<boolean> => {
     try {
-      const { error: err } = await (supabase as any)
+      const { error: err } = await supabase
         .from('campaign_invitations')
         .update({
           status: response,

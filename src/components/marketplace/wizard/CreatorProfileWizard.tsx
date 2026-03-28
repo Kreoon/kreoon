@@ -359,7 +359,7 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
           <div className="flex items-center gap-4">
             <button
               onClick={handleSaveAndExit}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              className="p-2 rounded-sm hover:bg-white/10 transition-colors"
             >
               <X className="h-5 w-5 text-gray-400" />
             </button>
@@ -375,7 +375,7 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
 
           <button
             onClick={handleSaveAndExit}
-            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-sm text-foreground/80 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-sm text-sm text-foreground/80 transition-colors"
           >
             <Save className="h-4 w-4" />
             <span className="hidden sm:inline">Guardar y salir</span>
@@ -402,7 +402,7 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
                 onClick={() => index <= currentStep && goToStep(index)}
                 disabled={index > currentStep}
                 className={cn(
-                  'flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-all',
+                  'flex-1 py-1.5 px-2 rounded-sm text-xs font-medium transition-all',
                   isCompleted && 'bg-purple-500/20 text-purple-300 cursor-pointer hover:bg-purple-500/30',
                   isCurrent && 'bg-white/10 text-white',
                   !isCompleted && !isCurrent && 'text-gray-600 cursor-not-allowed'
@@ -500,7 +500,7 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
             onClick={goBack}
             disabled={currentStep === 0}
             className={cn(
-              'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-colors',
+              'flex items-center gap-2 px-5 py-2.5 rounded-sm text-sm font-medium transition-colors',
               currentStep === 0
                 ? 'text-gray-600 cursor-not-allowed'
                 : 'text-foreground/80 hover:bg-white/10'
@@ -526,7 +526,7 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
           {currentStep < STEPS.length - 1 ? (
             <button
               onClick={goNext}
-              className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-sm font-semibold transition-colors"
+              className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-sm text-sm font-semibold transition-colors"
             >
               Siguiente
               <ChevronRight className="h-4 w-4" />

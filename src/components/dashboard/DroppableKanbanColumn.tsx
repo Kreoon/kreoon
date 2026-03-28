@@ -25,30 +25,31 @@ export function DroppableKanbanColumn({
   isDropTarget,
   canDrop = true
 }: DroppableKanbanColumnProps) {
+  // Mapa de colores usando CSS variables para dark/light mode
   const colorMap: Record<string, string> = {
-    "bg-muted-foreground": "#94a3b8",
-    "bg-cyan-500": "#06b6d4",
-    "bg-info": "#3b82f6",
-    "bg-warning": "#f59e0b",
-    "bg-blue-500": "#3b82f6",
-    "bg-success": "#22c55e",
-    "bg-destructive": "#ef4444",
-    "bg-muted": "#64748b",
+    "bg-muted-foreground": "var(--nova-text-secondary)",
+    "bg-cyan-500": "var(--nova-accent-secondary)",
+    "bg-info": "var(--nova-info)",
+    "bg-warning": "var(--nova-warning)",
+    "bg-blue-500": "var(--nova-info)",
+    "bg-success": "var(--nova-success)",
+    "bg-destructive": "var(--nova-error)",
+    "bg-muted": "var(--nova-text-muted)",
   };
-  const dotColor = color?.startsWith("#") ? color : (colorMap[color] || "#8b5cf6");
+  const dotColor = color?.startsWith("#") ? color : (colorMap[color] || "var(--nova-accent-primary)");
 
   return (
     <div 
       className={cn(
-        "flex flex-col shrink-0 w-[350px] h-full rounded-xl",
+        "flex flex-col shrink-0 w-[350px] h-full rounded-sm",
         "transition-all duration-300 ease-out backdrop-blur-xl border",
         isDropTarget && canDrop && "ring-2 ring-[#a855f7]/60 shadow-[0_0_30px_rgba(168,85,247,0.15)]",
         isDropTarget && !canDrop && "ring-2 ring-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.15)]"
       )}
       style={{
-        background: "rgba(255, 255, 255, 0.04)",
-        borderColor: isDropTarget && canDrop ? "rgba(168, 85, 247, 0.4)" : "rgba(139, 92, 246, 0.2)",
-        boxShadow: "0 0 20px rgba(139, 92, 246, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.03)",
+        background: "var(--nova-glass-bg-light)",
+        borderColor: isDropTarget && canDrop ? "var(--nova-border-accent)" : "var(--nova-border-default)",
+        boxShadow: "var(--nova-shadow-sm)",
       }}
       onDragOver={onDragOver}
       onDrop={(e) => onDrop(e, status)}
@@ -63,13 +64,13 @@ export function DroppableKanbanColumn({
               boxShadow: `0 0 8px ${dotColor}`,
             }}
           />
-          <h3 className="font-semibold text-[#f8fafc] text-xs md:text-sm">{title}</h3>
+          <h3 className="font-semibold text-foreground text-xs md:text-sm">{title}</h3>
           <span
-            className="flex items-center justify-center h-5 md:h-6 min-w-5 md:min-w-6 px-1.5 rounded-lg text-[10px] md:text-xs font-semibold"
+            className="flex items-center justify-center h-5 md:h-6 min-w-5 md:min-w-6 px-1.5 rounded-sm text-[10px] md:text-xs font-semibold"
             style={{
-              background: "rgba(168, 85, 247, 0.15)",
-              border: "1px solid rgba(168, 85, 247, 0.3)",
-              color: "#a78bfa",
+              background: "var(--nova-border-subtle)",
+              border: "1px solid var(--nova-border-default)",
+              color: "var(--nova-accent-primary-hover)",
             }}
           >
             {count}

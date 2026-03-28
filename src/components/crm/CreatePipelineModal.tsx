@@ -131,7 +131,7 @@ function StageRow({ stage, index, total, onChange, onRemove, onMoveUp, onMoveDow
         <button
           type="button"
           onClick={() => setShowColors(!showColors)}
-          className="w-7 h-7 rounded-md border border-white/10 flex items-center justify-center hover:border-white/30 transition-colors"
+          className="w-7 h-7 rounded-sm border border-white/10 flex items-center justify-center hover:border-white/30 transition-colors"
           style={{ backgroundColor: stage.color + '30' }}
         >
           <span
@@ -141,7 +141,7 @@ function StageRow({ stage, index, total, onChange, onRemove, onMoveUp, onMoveDow
         </button>
         {showColors && (
           <div
-            className="absolute top-full left-0 mt-1 z-10 p-2 rounded-lg grid grid-cols-5 gap-1"
+            className="absolute top-full left-0 mt-1 z-10 p-2 rounded-sm grid grid-cols-5 gap-1"
             style={{
               background: 'rgba(10, 1, 24, 0.98)',
               border: '1px solid rgba(139, 92, 246, 0.3)',
@@ -335,7 +335,7 @@ export function CreatePipelineModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-lg max-h-[85dvh] sm:max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-white">
             {isEditing ? 'Editar Pipeline' : 'Crear Pipeline'}
@@ -418,7 +418,7 @@ export function CreatePipelineModal({
             </div>
 
             <div
-              className="space-y-2 p-3 rounded-lg"
+              className="space-y-2 p-3 rounded-sm"
               style={{
                 background: 'rgba(255, 255, 255, 0.02)',
                 border: '1px solid rgba(255, 255, 255, 0.05)',

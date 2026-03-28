@@ -318,7 +318,7 @@ export function UnifiedBadgesShowcase({
             {/* Level indicator */}
             {upStats && (
               <div className={cn(
-                "h-14 w-14 rounded-xl flex items-center justify-center bg-gradient-to-br shadow-lg flex-shrink-0",
+                "h-14 w-14 rounded-sm flex items-center justify-center bg-gradient-to-br shadow-lg flex-shrink-0",
                 levelConfig.color
               )}>
                 <LevelIcon className="h-7 w-7 text-white" />
@@ -373,7 +373,7 @@ export function UnifiedBadgesShowcase({
       <CardHeader className="border-b border-primary/10 bg-primary/5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500/20 to-yellow-500/20">
+            <div className="p-2 rounded-sm bg-gradient-to-br from-amber-500/20 to-yellow-500/20">
               <Trophy className="w-6 h-6 text-amber-500" />
             </div>
             <div>
@@ -399,7 +399,7 @@ export function UnifiedBadgesShowcase({
           <div className="p-4 border-b border-primary/10">
             <div className="flex items-center gap-4">
               <div className={cn(
-                "h-16 w-16 rounded-xl flex items-center justify-center bg-gradient-to-br shadow-lg relative",
+                "h-16 w-16 rounded-sm flex items-center justify-center bg-gradient-to-br shadow-lg relative",
                 levelConfig.color
               )}>
                 <LevelIcon className="h-8 w-8 text-white" />
@@ -456,7 +456,7 @@ export function UnifiedBadgesShowcase({
                     <Tooltip>
                       <TooltipTrigger>
                         <div className={cn(
-                          "px-4 py-2 rounded-xl flex items-center gap-2 bg-gradient-to-r shadow-lg cursor-pointer hover:scale-105 transition-transform",
+                          "px-4 py-2 rounded-sm flex items-center gap-2 bg-gradient-to-r shadow-lg cursor-pointer hover:scale-105 transition-transform",
                           levelColor
                         )}>
                           <BadgeIcon className="h-5 w-5 text-white" />
@@ -560,7 +560,7 @@ function AchievementBadgeItem({
         <TooltipTrigger asChild>
           <div
             className={cn(
-              'relative w-14 h-14 rounded-xl border-2 flex items-center justify-center transition-all duration-300',
+              'relative w-14 h-14 rounded-sm border-2 flex items-center justify-center transition-all duration-300',
               isUnlocked ? [
                 'bg-gradient-to-br',
                 RARITY_COLORS[achievement.rarity],
@@ -573,7 +573,7 @@ function AchievementBadgeItem({
             )}
           >
             {isUnlocked && achievement.rarity === 'legendary' && (
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-amber-400/30 to-orange-500/30 blur-md -z-10" />
+              <div className="absolute inset-0 rounded-sm bg-gradient-to-br from-amber-400/30 to-orange-500/30 blur-md -z-10" />
             )}
             
             <IconComponent 
@@ -585,7 +585,7 @@ function AchievementBadgeItem({
             />
             
             {!isUnlocked && (
-              <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-background/50">
+              <div className="absolute inset-0 flex items-center justify-center rounded-sm bg-background/50">
                 <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
               </div>
             )}
@@ -632,7 +632,7 @@ function AchievementCard({
   return (
     <div
       className={cn(
-        'flex items-center gap-3 p-3 rounded-lg border transition-all',
+        'flex items-center gap-3 p-3 rounded-sm border transition-all',
         isUnlocked
           ? 'bg-primary/5 border-primary/20'
           : 'bg-muted/20 border-muted/20 opacity-60'
@@ -640,7 +640,7 @@ function AchievementCard({
     >
       <div
         className={cn(
-          'w-10 h-10 rounded-lg flex items-center justify-center',
+          'w-10 h-10 rounded-sm flex items-center justify-center',
           isUnlocked ? [
             'bg-gradient-to-br',
             RARITY_COLORS[achievement.rarity]

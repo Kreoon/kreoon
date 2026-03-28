@@ -33,7 +33,7 @@ export default function TourSection() {
         </Button>
       </div>
       
-      <div className="mt-8 p-4 rounded-lg bg-muted/50 border max-w-md mx-auto">
+      <div className="mt-8 p-4 rounded-sm bg-muted/50 border max-w-md mx-auto">
         <h3 className="font-medium text-sm text-foreground mb-2">El tour incluye:</h3>
         <ul className="text-sm text-muted-foreground space-y-1">
           <li>• Navegación por las secciones principales</li>

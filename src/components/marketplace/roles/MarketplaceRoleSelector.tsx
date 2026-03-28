@@ -71,7 +71,7 @@ export function MarketplaceRoleSelector({
       )}
 
       {showCategories ? (
-        <div className="border border-white/10 rounded-xl overflow-hidden divide-y divide-white/5">
+        <div className="border border-white/10 rounded-sm overflow-hidden divide-y divide-white/5">
           {categories.map(([catId, catInfo]) => {
             const isExpanded = expandedCategories.has(catId);
             const catRoles = MARKETPLACE_ROLES.filter(r => r.category === catId);
@@ -111,7 +111,7 @@ export function MarketplaceRoleSelector({
                           onClick={() => !isDisabled && toggleRole(role.id)}
                           disabled={isDisabled}
                           className={cn(
-                            'text-left p-3 rounded-lg border transition-all',
+                            'text-left p-3 rounded-sm border transition-all',
                             isSelected
                               ? 'border-purple-500/50 bg-purple-500/10'
                               : isDisabled
@@ -143,7 +143,7 @@ export function MarketplaceRoleSelector({
                 onClick={() => !isDisabled && toggleRole(role.id)}
                 disabled={isDisabled}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg border text-xs font-medium transition-all',
+                  'px-3 py-1.5 rounded-sm border text-xs font-medium transition-all',
                   isSelected
                     ? 'border-purple-500/50 bg-purple-500/10 text-white'
                     : isDisabled

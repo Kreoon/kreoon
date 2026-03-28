@@ -277,7 +277,7 @@ export default function WhiteLabelEmailTab() {
               </div>
             </>
           ) : (
-            <div className="rounded-lg border border-dashed border-muted-foreground/30 px-4 py-3 opacity-60">
+            <div className="rounded-sm border border-dashed border-muted-foreground/30 px-4 py-3 opacity-60">
               <p className="text-sm text-muted-foreground">
                 Nombre de remitente personalizado disponible desde plan Growth
               </p>
@@ -307,7 +307,7 @@ export default function WhiteLabelEmailTab() {
             <>
               {/* Domain status */}
               {settings.resend_domain_id ? (
-                <div className={`flex items-center gap-3 p-3 rounded-lg border ${
+                <div className={`flex items-center gap-3 p-3 rounded-sm border ${
                   settings.resend_domain_verified
                     ? 'bg-green-500/10 border-green-500/30'
                     : 'bg-amber-500/10 border-amber-500/30'
@@ -364,7 +364,7 @@ export default function WhiteLabelEmailTab() {
                     <h4 className="text-sm font-medium">Registros DNS a configurar</h4>
                     <div className="space-y-2">
                       {dnsRecords.map((record, i) => (
-                        <div key={i} className="bg-background rounded-md p-3 text-xs font-mono space-y-1">
+                        <div key={i} className="bg-background rounded-sm p-3 text-xs font-mono space-y-1">
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Tipo:</span>
                             <span>{record.type}</span>
@@ -421,7 +421,7 @@ export default function WhiteLabelEmailTab() {
               )}
             </>
           ) : (
-            <div className="flex items-center justify-between rounded-lg border border-dashed border-muted-foreground/30 px-4 py-6 opacity-60">
+            <div className="flex items-center justify-between rounded-sm border border-dashed border-muted-foreground/30 px-4 py-6 opacity-60">
               <div>
                 <p className="text-sm text-muted-foreground">Dominio de email personalizado</p>
                 <p className="text-xs text-muted-foreground mt-1">

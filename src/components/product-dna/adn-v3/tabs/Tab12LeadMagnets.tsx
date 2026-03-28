@@ -178,19 +178,19 @@ export function Tab12LeadMagnets({ data }: Tab12LeadMagnetsProps) {
           <CardContent>
             <div className="grid sm:grid-cols-3 gap-4">
               {data.funnel_strategy.awareness_magnet && (
-                <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                <div className="p-4 rounded-sm bg-blue-500/10 border border-blue-500/20">
                   <Badge className="bg-blue-500/20 text-blue-400 mb-2">Awareness</Badge>
                   <p className="text-sm">{data.funnel_strategy.awareness_magnet}</p>
                 </div>
               )}
               {data.funnel_strategy.consideration_magnet && (
-                <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                <div className="p-4 rounded-sm bg-yellow-500/10 border border-yellow-500/20">
                   <Badge className="bg-yellow-500/20 text-yellow-400 mb-2">Consideración</Badge>
                   <p className="text-sm">{data.funnel_strategy.consideration_magnet}</p>
                 </div>
               )}
               {data.funnel_strategy.decision_magnet && (
-                <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                <div className="p-4 rounded-sm bg-green-500/10 border border-green-500/20">
                   <Badge className="bg-green-500/20 text-green-400 mb-2">Decisión</Badge>
                   <p className="text-sm">{data.funnel_strategy.decision_magnet}</p>
                 </div>
@@ -215,7 +215,7 @@ export function Tab12LeadMagnets({ data }: Tab12LeadMagnetsProps) {
           <CardContent>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {data.quick_wins.map((item, idx) => (
-                <div key={idx} className="p-4 rounded-lg border bg-card">
+                <div key={idx} className="p-4 rounded-sm border bg-card">
                   <h4 className="font-medium mb-2">{item.idea}</h4>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">{item.format}</Badge>
@@ -239,7 +239,7 @@ export function Tab12LeadMagnets({ data }: Tab12LeadMagnetsProps) {
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-sm bg-purple-500/20 flex items-center justify-center">
                         <Icon className="w-6 h-6 text-purple-400" />
                       </div>
                       <div>
@@ -269,13 +269,13 @@ export function Tab12LeadMagnets({ data }: Tab12LeadMagnetsProps) {
 
                   <div className="grid sm:grid-cols-2 gap-4">
                     {magnet.target_avatar && (
-                      <div className="p-3 rounded-lg bg-muted/50">
+                      <div className="p-3 rounded-sm bg-muted/50">
                         <p className="text-xs text-muted-foreground mb-1">Avatar Target</p>
                         <p className="text-sm">{magnet.target_avatar}</p>
                       </div>
                     )}
                     {magnet.problem_solved && (
-                      <div className="p-3 rounded-lg bg-muted/50">
+                      <div className="p-3 rounded-sm bg-muted/50">
                         <p className="text-xs text-muted-foreground mb-1">Problema que Resuelve</p>
                         <p className="text-sm">{magnet.problem_solved}</p>
                       </div>
@@ -283,7 +283,7 @@ export function Tab12LeadMagnets({ data }: Tab12LeadMagnetsProps) {
                   </div>
 
                   {magnet.perceived_value && (
-                    <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
                       <p className="text-xs text-green-400 mb-1">Valor Percibido</p>
                       <p className="text-sm font-medium">{magnet.perceived_value}</p>
                     </div>
@@ -301,7 +301,7 @@ export function Tab12LeadMagnets({ data }: Tab12LeadMagnetsProps) {
                   )}
 
                   {magnet.landing_page_headline && (
-                    <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                    <div className="p-4 rounded-sm bg-purple-500/10 border border-purple-500/20">
                       <p className="text-xs text-purple-400 mb-1">Headline para Landing Page</p>
                       <p className="font-bold">{magnet.landing_page_headline}</p>
                       <CopyButton text={magnet.landing_page_headline} className="mt-2" size="sm" />
@@ -309,7 +309,7 @@ export function Tab12LeadMagnets({ data }: Tab12LeadMagnetsProps) {
                   )}
 
                   {magnet.email_sequence_hook && (
-                    <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                    <div className="p-3 rounded-sm bg-blue-500/10 border border-blue-500/20">
                       <p className="text-xs text-blue-400 mb-1">Hook para Secuencia de Email</p>
                       <p className="text-sm">{magnet.email_sequence_hook}</p>
                       <CopyButton text={magnet.email_sequence_hook} className="mt-2" size="sm" />
@@ -333,7 +333,7 @@ export function Tab12LeadMagnets({ data }: Tab12LeadMagnetsProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {data.quiz_funnel.quiz_title && (
-              <div className="p-4 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
+              <div className="p-4 rounded-sm bg-indigo-500/10 border border-indigo-500/20">
                 <h4 className="font-bold text-lg mb-1">{data.quiz_funnel.quiz_title}</h4>
                 {data.quiz_funnel.quiz_hook && (
                   <p className="text-sm text-muted-foreground">{data.quiz_funnel.quiz_hook}</p>
@@ -358,7 +358,7 @@ export function Tab12LeadMagnets({ data }: Tab12LeadMagnetsProps) {
                 <p className="text-sm font-medium mb-2">Tipos de Resultado</p>
                 <div className="grid sm:grid-cols-2 gap-3">
                   {data.quiz_funnel.result_types.map((r, i) => (
-                    <div key={i} className="p-3 rounded-lg border">
+                    <div key={i} className="p-3 rounded-sm border">
                       <p className="font-medium text-sm">{r.result}</p>
                       {r.description && (
                         <p className="text-xs text-muted-foreground mt-1">{r.description}</p>
@@ -388,7 +388,7 @@ export function Tab12LeadMagnets({ data }: Tab12LeadMagnetsProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {data.webinar_concept.title && (
-              <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+              <div className="p-4 rounded-sm bg-red-500/10 border border-red-500/20">
                 <h4 className="font-bold text-lg mb-1">{data.webinar_concept.title}</h4>
                 {data.webinar_concept.hook && (
                   <p className="text-sm text-muted-foreground">{data.webinar_concept.hook}</p>
@@ -403,7 +403,7 @@ export function Tab12LeadMagnets({ data }: Tab12LeadMagnetsProps) {
                 <p className="text-sm font-medium mb-2">Estructura</p>
                 <div className="space-y-2">
                   {data.webinar_concept.structure.map((s, i) => (
-                    <div key={i} className="p-3 rounded-lg border flex items-start gap-3">
+                    <div key={i} className="p-3 rounded-sm border flex items-start gap-3">
                       <Badge variant="outline" className="flex-shrink-0">{s.duration}</Badge>
                       <div>
                         <p className="font-medium text-sm">{s.section}</p>
@@ -417,7 +417,7 @@ export function Tab12LeadMagnets({ data }: Tab12LeadMagnetsProps) {
               </div>
             )}
             {data.webinar_concept.offer_transition && (
-              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+              <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
                 <p className="text-xs text-green-400 mb-1">Transición a la Oferta</p>
                 <p className="text-sm">{data.webinar_concept.offer_transition}</p>
               </div>
@@ -449,7 +449,7 @@ export function Tab12LeadMagnets({ data }: Tab12LeadMagnetsProps) {
                 <p className="text-sm font-medium mb-2">Estructura Diaria</p>
                 <div className="space-y-2">
                   {data.challenge_concept.daily_structure.map((d, i) => (
-                    <div key={i} className="p-3 rounded-lg border">
+                    <div key={i} className="p-3 rounded-sm border">
                       <div className="flex items-center gap-2 mb-1">
                         <Badge variant="outline">Día {d.day}</Badge>
                         <span className="font-medium text-sm">{d.theme}</span>
@@ -466,13 +466,13 @@ export function Tab12LeadMagnets({ data }: Tab12LeadMagnetsProps) {
               </div>
             )}
             {data.challenge_concept.community_element && (
-              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <div className="p-3 rounded-sm bg-blue-500/10 border border-blue-500/20">
                 <p className="text-xs text-blue-400 mb-1">Elemento de Comunidad</p>
                 <p className="text-sm">{data.challenge_concept.community_element}</p>
               </div>
             )}
             {data.challenge_concept.graduation_offer && (
-              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+              <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
                 <p className="text-xs text-green-400 mb-1">Oferta al Graduarse</p>
                 <p className="text-sm">{data.challenge_concept.graduation_offer}</p>
               </div>
@@ -493,7 +493,7 @@ export function Tab12LeadMagnets({ data }: Tab12LeadMagnetsProps) {
           <CardContent>
             <div className="grid sm:grid-cols-3 gap-4">
               {data.distribution_strategy.organic_channels && data.distribution_strategy.organic_channels.length > 0 && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-2">Canales Orgánicos</p>
                   <ul className="space-y-1">
                     {data.distribution_strategy.organic_channels.map((c, i) => (
@@ -503,7 +503,7 @@ export function Tab12LeadMagnets({ data }: Tab12LeadMagnetsProps) {
                 </div>
               )}
               {data.distribution_strategy.paid_channels && data.distribution_strategy.paid_channels.length > 0 && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-2">Canales Pagados</p>
                   <ul className="space-y-1">
                     {data.distribution_strategy.paid_channels.map((c, i) => (
@@ -513,7 +513,7 @@ export function Tab12LeadMagnets({ data }: Tab12LeadMagnetsProps) {
                 </div>
               )}
               {data.distribution_strategy.partnership_opportunities && data.distribution_strategy.partnership_opportunities.length > 0 && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-2">Partnerships</p>
                   <ul className="space-y-1">
                     {data.distribution_strategy.partnership_opportunities.map((c, i) => (
@@ -542,7 +542,7 @@ export function Tab12LeadMagnets({ data }: Tab12LeadMagnetsProps) {
           <CardContent>
             <div className="space-y-3">
               {data.content_upgrades.map((item, idx) => (
-                <div key={idx} className="p-4 rounded-lg border bg-card">
+                <div key={idx} className="p-4 rounded-sm border bg-card">
                   <p className="text-sm text-muted-foreground mb-1">Blog: {item.blog_topic}</p>
                   <p className="font-medium">→ {item.upgrade_idea}</p>
                 </div>

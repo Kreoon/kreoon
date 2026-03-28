@@ -129,9 +129,9 @@ const WelcomeTalent = () => {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.9 + i * 0.1 }}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.02] border border-white/5"
+                  className="flex items-center gap-3 p-3 rounded-sm bg-white/[0.02] border border-white/5"
                 >
-                  <div className={`w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center ${item.color}`}>
+                  <div className={`w-8 h-8 rounded-sm bg-white/5 flex items-center justify-center ${item.color}`}>
                     <item.icon className="w-4 h-4" />
                   </div>
                   <span className="text-sm text-white/70">{item.text}</span>

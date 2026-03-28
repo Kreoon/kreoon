@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
@@ -6,22 +6,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
-import { RichTextViewer } from '@/components/ui/rich-text-editor';
+import { LazyRichTextViewer as RichTextViewer } from '@/components/ui/lazy-rich-text-editor';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { updateContentStatusWithUP } from '@/hooks/useContentStatusWithUP';
 import { Content, ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, useSearchParams } from 'react-router-dom';
 import { useBrandClient } from '@/hooks/useBrandClient';
 import { useMarketplaceStats } from '@/hooks/useMarketplaceStats';
-import { ClientFinanceChart } from '@/components/dashboard/ClientFinanceChart';
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { FullscreenContentViewer } from '@/components/content/FullscreenContentViewer';
 import { AutoPauseVideo } from '@/components/content/AutoPauseVideo';
@@ -34,8 +32,8 @@ import { UnifiedContentModule } from '@/components/content/unified';
 import { ProductDNAWizard } from '@/components/product-dna';
 import { ClientDNATab } from '@/components/clients/dna';
 import { ProductDetailDialog } from '@/components/products/ProductDetailDialog';
-import { TechGrid, TechParticles, TechOrb } from '@/components/ui/tech-effects';
-import { TechKpiCard } from '@/components/dashboard/TechKpiCard';
+import { ClientDashboardOverview } from '@/components/client-dashboard';
+import { useClientPaymentStatus } from '@/hooks/useClientPaymentStatus';
 import {
   LogOut,
   Video,
@@ -53,11 +51,8 @@ import {
   DollarSign,
   Package,
   Settings,
-  Home,
   Heart,
   Building2,
-  ArrowUpRight,
-  ArrowDownRight,
   Edit,
   Save,
   X,
@@ -73,7 +68,6 @@ import {
   FileCheck,
   Maximize2,
   Plus,
-  Dna,
   Trash2,
   ShoppingBag,
   Megaphone,
@@ -130,144 +124,6 @@ interface Product {
   updated_at: string | null;
 }
 
-// Optimized animated number counter using requestAnimationFrame
-const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) => {
-  const [displayValue, setDisplayValue] = useState(value);
-  const prevValueRef = useRef(value);
-
-  useEffect(() => {
-    if (value === prevValueRef.current || value === 0) {
-      setDisplayValue(value);
-      prevValueRef.current = value;
-      return;
-    }
-
-    const startValue = prevValueRef.current;
-    const endValue = value;
-    const duration = 800;
-    let startTime: number | null = null;
-    let animationId: number;
-
-    const animate = (currentTime: number) => {
-      if (!startTime) startTime = currentTime;
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const easeOut = 1 - Math.pow(1 - progress, 3);
-      const currentValue = Math.floor(startValue + (endValue - startValue) * easeOut);
-
-      setDisplayValue(currentValue);
-
-      if (progress < 1) {
-        animationId = requestAnimationFrame(animate);
-      } else {
-        setDisplayValue(endValue);
-      }
-    };
-
-    animationId = requestAnimationFrame(animate);
-    prevValueRef.current = value;
-
-    return () => {
-      if (animationId) cancelAnimationFrame(animationId);
-    };
-  }, [value]);
-
-  return <span>{prefix}{displayValue.toLocaleString()}{suffix}</span>;
-};
-
-// Premium Stats Card
-const PremiumStatsCard = ({ 
-  title, 
-  value, 
-  icon: Icon, 
-  trend, 
-  color = "primary",
-  onClick,
-  subtitle,
-  prefix = "",
-  suffix = ""
-}: { 
-  title: string; 
-  value: number; 
-  icon: any; 
-  trend?: number;
-  color?: "primary" | "success" | "warning" | "info" | "destructive";
-  onClick?: () => void;
-  subtitle?: string;
-  prefix?: string;
-  suffix?: string;
-}) => {
-  const colorClasses = {
-    primary: "from-primary/20 to-primary/5 border-primary/30",
-    success: "from-success/20 to-success/5 border-success/30",
-    warning: "from-warning/20 to-warning/5 border-warning/30",
-    info: "from-info/20 to-info/5 border-info/30",
-    destructive: "from-destructive/20 to-destructive/5 border-destructive/30",
-  };
-
-  const iconColors = {
-    primary: "text-primary",
-    success: "text-success",
-    warning: "text-warning",
-    info: "text-info",
-    destructive: "text-destructive",
-  };
-
-  return (
-    <div 
-      onClick={onClick}
-      className={cn(
-        "group relative overflow-hidden rounded-2xl border-2 p-4 md:p-5",
-        "bg-gradient-to-br backdrop-blur-xl",
-        "transition-all duration-500 hover:scale-[1.02] hover:shadow-xl",
-        colorClasses[color],
-        onClick && "cursor-pointer"
-      )}
-    >
-      <div className={cn(
-        "absolute -right-8 -top-8 h-24 w-24 rounded-full opacity-20",
-        "bg-current blur-3xl transition-all duration-700 group-hover:scale-150",
-        iconColors[color]
-      )} />
-      
-      <div className={cn(
-        "absolute right-3 top-3 p-2 rounded-xl",
-        "bg-current/10 backdrop-blur-sm",
-        "transition-transform duration-500 group-hover:scale-110"
-      )}>
-        <Icon className={cn("h-5 w-5", iconColors[color])} />
-      </div>
-      
-      <div className="relative z-10">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
-          {title}
-        </p>
-        <p className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-          <AnimatedNumber value={value} prefix={prefix} suffix={suffix} />
-        </p>
-        {subtitle && (
-          <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
-        )}
-        {trend !== undefined && (
-          <div className="flex items-center gap-1 mt-2">
-            {trend > 0 ? (
-              <ArrowUpRight className="h-3 w-3 text-success" />
-            ) : trend < 0 ? (
-              <ArrowDownRight className="h-3 w-3 text-destructive" />
-            ) : null}
-            <span className={cn(
-              "text-xs font-medium",
-              trend > 0 ? "text-success" : trend < 0 ? "text-destructive" : "text-muted-foreground"
-            )}>
-              {trend > 0 && "+"}{trend}%
-            </span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
 export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
   const { isImpersonating, effectiveClientId } = useImpersonation();
@@ -295,12 +151,23 @@ export default function ClientDashboard() {
   const [userClients, setUserClients] = useState<ClientInfo[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [showClientSelector, setShowClientSelector] = useState(false);
+
+  // Estado de pagos del cliente (para bloquear descargas si hay pagos vencidos)
+  const paymentStatus = useClientPaymentStatus(selectedClientId);
   const [loading, setLoading] = useState(true);
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [feedback, setFeedback] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'overview';
+  const setActiveTab = (tab: string) => {
+    if (tab === 'overview') {
+      setSearchParams({});
+    } else {
+      setSearchParams({ tab });
+    }
+  };
   const [stageFilter, setStageFilter] = useState<string | null>(null);
   const [showFullscreenReview, setShowFullscreenReview] = useState(false);
   const [fullscreenStartIndex, setFullscreenStartIndex] = useState(0);
@@ -908,28 +775,11 @@ export default function ClientDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-        <TechGrid className="absolute inset-0" />
-        <TechParticles count={15} />
-        <motion.div
-          className="flex flex-col items-center gap-4"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-        >
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          >
-            <Loader2 className="w-10 h-10 text-[hsl(270,100%,60%)]" />
-          </motion.div>
-          <motion.span
-            className="text-primary text-sm font-medium"
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          >
-            Cargando portal...
-          </motion.span>
-        </motion.div>
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#0a0a0f]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+          <span className="text-sm text-zinc-500">Cargando portal...</span>
+        </div>
       </div>
     );
   }
@@ -955,9 +805,9 @@ export default function ClientDashboard() {
               }}
             >
               {client.logo_url ? (
-                <img src={client.logo_url} alt={client.name} className="h-10 w-10 rounded-lg object-cover mr-3" />
+                <img src={client.logo_url} alt={client.name} className="h-10 w-10 rounded-sm object-cover mr-3" />
               ) : (
-                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center mr-3">
+                <div className="h-10 w-10 rounded-sm bg-primary/10 flex items-center justify-center mr-3">
                   <Building2 className="h-5 w-5 text-primary" />
                 </div>
               )}
@@ -1100,740 +950,81 @@ export default function ClientDashboard() {
   }
 
   return (
-    <div className="min-h-screen relative">
-      {/* Tech Background Effects */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <TechGrid className="absolute inset-0" />
-        <TechParticles count={20} />
-        <TechOrb size="lg" position="top-right" />
-        <TechOrb size="md" position="bottom-left" delay={1} />
-      </div>
+    <div className="min-h-screen">
+      {/* Header - Client selector (only shows if multiple clients) */}
+      {userClients.length > 1 && (
+        <div className="sticky top-0 z-30 bg-white dark:bg-[#0f0f14] border-b border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center justify-end px-4 md:px-6">
+            <div className="flex items-center gap-2 py-3">
+              {/* Client Selector */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowClientSelector(!showClientSelector)}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  <Building2 className="h-4 w-4 text-zinc-500" />
+                  <span className="hidden md:inline text-zinc-700 dark:text-zinc-300 truncate max-w-[120px]">{clientInfo.name}</span>
+                  <svg className={cn("h-4 w-4 text-zinc-400 transition-transform", showClientSelector && "rotate-180")} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
 
-      {/* Header - Tech Style */}
-      <header className="sticky top-0 z-30 border-b border-border bg-card/90 backdrop-blur-xl relative overflow-hidden">
-        <div className="flex h-14 items-center justify-between px-4 md:px-6">
-          <div className="flex items-center gap-3">
-            {clientInfo.logo_url ? (
-              <img src={clientInfo.logo_url} alt={clientInfo.name} className="h-10 w-10 rounded-lg object-cover" />
-            ) : (
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Building2 className="h-5 w-5 text-primary" />
-              </div>
-            )}
-            <div className="min-w-0">
-              {userClients.length > 1 ? (
-                <div className="relative">
-                  <button
-                    onClick={() => setShowClientSelector(!showClientSelector)}
-                    className="flex items-center gap-2 hover:bg-muted/50 rounded-lg px-2 py-1 -mx-2 transition-colors"
-                  >
-                    <h1 className="text-lg font-bold truncate">{clientInfo.name}</h1>
-                    <svg 
-                      className={cn("h-4 w-4 text-muted-foreground transition-transform", showClientSelector && "rotate-180")}
-                      xmlns="http://www.w3.org/2000/svg" 
-                      viewBox="0 0 24 24" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      strokeWidth="2" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round"
-                    >
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </button>
-                  
-                  {showClientSelector && (
-                    <>
-                      <div 
-                        className="fixed inset-0 z-40" 
-                        onClick={() => setShowClientSelector(false)} 
-                      />
-                      <div className="absolute top-full left-0 mt-2 z-50 w-64 bg-popover border border-border rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2">
-                        <div className="p-2 border-b border-border/50 bg-muted/30">
-                          <p className="text-xs font-medium text-muted-foreground px-2">Cambiar empresa</p>
-                        </div>
-                        <div className="p-2 max-h-64 overflow-y-auto">
-                          {userClients.map(client => (
-                            <button
-                              key={client.id}
-                              onClick={() => {
-                                localStorage.setItem('selectedClientId', client.id);
-                                setSelectedClientId(client.id);
-                                setShowClientSelector(false);
-                              }}
-                              className={cn(
-                                "w-full flex items-center gap-3 p-2 rounded-lg transition-colors text-left",
-                                client.id === clientInfo.id 
-                                  ? "bg-primary/10 text-primary" 
-                                  : "hover:bg-muted"
-                              )}
-                            >
-                              {client.logo_url ? (
-                                <img src={client.logo_url} alt={client.name} className="h-8 w-8 rounded-lg object-cover" />
-                              ) : (
-                                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                                  <Building2 className="h-4 w-4 text-primary" />
-                                </div>
-                              )}
-                              <span className={cn(
-                                "font-medium text-sm truncate",
-                                client.id === clientInfo.id && "text-primary"
-                              )}>
-                                {client.name}
-                              </span>
-                              {client.id === clientInfo.id && (
-                                <CheckCircle2 className="h-4 w-4 text-primary ml-auto shrink-0" />
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                  <p className="text-xs text-muted-foreground hidden sm:block">Portal de Cliente • {userClients.length} empresas</p>
-                </div>
-              ) : (
-                <>
-                  <h1 className="text-lg font-bold truncate">{clientInfo.name}</h1>
-                  <p className="text-xs text-muted-foreground hidden sm:block">Portal de Cliente</p>
-                </>
-              )}
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {/* Portfolio Button */}
-            <PortfolioButton userId={clientInfo.id} />
-
-            {totalPendingReview > 0 && (
-              <Button size="sm" onClick={() => setActiveTab('review')} className="gap-1">
-                <Eye className="w-4 h-4" />
-                <span className="hidden sm:inline">{totalPendingReview} por revisar</span>
-                <span className="sm:hidden">{totalPendingReview}</span>
-              </Button>
-            )}
-            <div className="hidden md:flex items-center gap-2 px-2 py-1 rounded-lg bg-success/10 border border-success/20">
-              <Activity className="h-3 w-3 text-success animate-pulse" />
-              <span className="text-xs font-medium text-success">En vivo</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="flex overflow-x-auto border-t border-border/30 px-2">
-          {[
-            { id: 'overview', label: 'Dashboard', icon: Home },
-            { id: 'finance', label: 'Finanzas', icon: Wallet },
-            { id: 'dna', label: 'ADN de Marca', icon: Dna },
-            { id: 'products', label: 'ADN de Productos', icon: Package, badge: products.length },
-            { id: 'review', label: 'Revisar', icon: Eye, badge: totalPendingReview },
-            { id: 'content', label: 'Contenido', icon: Video },
-            { id: 'company', label: 'Empresa', icon: Building2 },
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors border-b-2 -mb-px whitespace-nowrap ${
-                activeTab === tab.id 
-                  ? 'text-primary border-primary' 
-                  : 'text-muted-foreground border-transparent hover:text-foreground'
-              }`}
-            >
-              <tab.icon className="h-4 w-4" />
-              {tab.label}
-              {tab.badge && tab.badge > 0 && (
-                <Badge variant="destructive" className="h-4 min-w-4 text-[10px] px-1">
-                  {tab.badge}
-                </Badge>
-              )}
-            </button>
-          ))}
-        </div>
-      </header>
-
-      <div className="relative z-10 p-4 md:p-6 space-y-6">
-        {/* Overview Tab */}
-        {activeTab === 'overview' && (
-          <div className="space-y-6">
-            {/* Welcome - Tech Style */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <h2 className="text-xl font-bold text-white">Hola, {profile?.full_name?.split(' ')[0] || 'Cliente'} 👋</h2>
-              <p className="text-sm text-muted-foreground">Aquí está el resumen de tu cuenta</p>
-            </motion.div>
-
-            {/* Main KPIs - Tech Style */}
-            <motion.div 
-              className="grid grid-cols-2 lg:grid-cols-4 gap-3"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <TechKpiCard
-                title="Inversión Total"
-                value={totalInvested}
-                prefix="$"
-                icon={DollarSign}
-                color="emerald"
-                subtitle={`de $${totalValue.toLocaleString()}`}
-                chartType="radial"
-                goalValue={totalValue}
-                size="sm"
-              />
-              <TechKpiCard
-                title="Videos"
-                value={content.length}
-                icon={Video}
-                color="violet"
-                subtitle={`${deliveredContentCount} aprobados`}
-                chartType="bar"
-                chartData={[inProgressContent.length, approvedContent.length, content.length]}
-                size="sm"
-              />
-              <TechKpiCard
-                title="Vistas Totales"
-                value={totalViews}
-                icon={TrendingUp}
-                color="cyan"
-                chartType="sparkline"
-                size="sm"
-              />
-              <TechKpiCard
-                title="Likes"
-                value={totalLikes}
-                icon={Heart}
-                color="rose"
-                chartType="sparkline"
-                size="sm"
-              />
-            </motion.div>
-
-            {/* Marketplace KPIs */}
-            {(marketplaceStats.activeProjects > 0 || marketplaceStats.activeCampaigns > 0 || marketplaceStats.completedProjects > 0) && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-              >
-                <Card className="border-border bg-gradient-to-br from-card to-background overflow-hidden relative">
-                  <motion.div
-                    className="absolute inset-0 opacity-30"
-                    style={{
-                      background: 'radial-gradient(circle at 50% 0%, hsl(280 100% 50% / 0.1), transparent 50%)',
-                    }}
-                  />
-                  <CardContent className="p-4 relative z-10">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <div className="p-2 rounded-lg bg-purple-500/15 border border-purple-500/30">
-                          <ShoppingBag className="h-4 w-4 text-purple-400" />
-                        </div>
-                        <h3 className="font-semibold text-white">Marketplace</h3>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-xs text-muted-foreground hover:text-purple-400"
-                        onClick={() => navigate('/marketplace')}
-                      >
-                        Ver todo
-                        <ArrowUpRight className="h-3 w-3 ml-1" />
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Megaphone className="h-4 w-4 text-purple-400" />
-                          <span className="text-xs text-muted-foreground">Campañas</span>
-                        </div>
-                        <p className="text-xl font-bold text-purple-400">{marketplaceStats.activeCampaigns}</p>
-                      </div>
-                      <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Briefcase className="h-4 w-4 text-blue-400" />
-                          <span className="text-xs text-muted-foreground">Proyectos Activos</span>
-                        </div>
-                        <p className="text-xl font-bold text-blue-400">{marketplaceStats.activeProjects}</p>
-                      </div>
-                      <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Eye className="h-4 w-4 text-amber-400" />
-                          <span className="text-xs text-muted-foreground">En Revisión</span>
-                        </div>
-                        <p className="text-xl font-bold text-amber-400">{marketplaceStats.inRevision}</p>
-                      </div>
-                      <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                        <div className="flex items-center gap-2 mb-1">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                          <span className="text-xs text-muted-foreground">Completados</span>
-                        </div>
-                        <p className="text-xl font-bold text-emerald-400">{marketplaceStats.completedProjects}</p>
-                      </div>
-                    </div>
-                    {marketplaceStats.totalInvested > 0 && (
-                      <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Total invertido en Marketplace</span>
-                        <span className="text-lg font-bold text-emerald-400">${marketplaceStats.totalInvested.toLocaleString()}</span>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
-
-            {/* Overall Progress Bar - Tech Style */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <Card className="border-border bg-gradient-to-br from-card to-background overflow-hidden relative">
-                <motion.div
-                  className="absolute inset-0 opacity-30"
-                  style={{
-                    background: 'radial-gradient(circle at 50% 0%, hsl(270 100% 60% / 0.1), transparent 50%)',
-                  }}
-                />
-                <CardContent className="p-4 md:p-6 relative z-10">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <motion.div 
-                        className="p-2 rounded-lg"
-                        style={{
-                          background: 'hsl(270 100% 60% / 0.15)',
-                          border: '1px solid hsl(270 100% 60% / 0.3)',
-                        }}
-                        animate={{
-                          boxShadow: [
-                            '0 0 10px hsl(270 100% 60% / 0.2)',
-                            '0 0 20px hsl(270 100% 60% / 0.4)',
-                            '0 0 10px hsl(270 100% 60% / 0.2)',
-                          ],
-                        }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      >
-                        <Target className="h-5 w-5 text-[hsl(270,100%,60%)]" />
-                      </motion.div>
-                      <div>
-                        <h3 className="font-semibold text-white">Progreso General</h3>
-                        <p className="text-xs text-muted-foreground">
-                          {content.length} contenidos en proceso
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <motion.span 
-                        className="text-3xl font-bold"
-                        style={{ 
-                          color: 'hsl(270 100% 60%)',
-                          textShadow: '0 0 20px hsl(270 100% 60% / 0.4)',
-                        }}
-                      >
-                        {overallProgress}%
-                      </motion.span>
-                      <p className="text-xs text-muted-foreground">completado</p>
-                    </div>
-                  </div>
-                  
-                  {/* Tech Progress Bar */}
-                  <div className="h-3 bg-muted rounded-full overflow-hidden border border-[hsl(270,100%,60%,0.2)]">
-                    <motion.div
-                      className="h-full relative overflow-hidden"
-                      style={{
-                        background: 'linear-gradient(90deg, hsl(270 100% 60%), hsl(300 100% 60%))',
-                        boxShadow: '0 0 20px hsl(270 100% 60% / 0.5)',
-                      }}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${overallProgress}%` }}
-                      transition={{ duration: 1.5, ease: "easeOut" }}
-                    >
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
-                        animate={{ x: ["-100%", "200%"] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      />
-                    </motion.div>
-                  </div>
-                  
-                  {/* Stage Buttons */}
-                  <div className="flex justify-between mt-4 gap-1 flex-wrap">
-                    {[
-                      { id: 'inicio', label: 'Inicio', statuses: ['draft', 'script_pending'], count: content.filter(c => ['draft', 'script_pending'].includes(c.status)).length },
-                      { id: 'guion', label: 'Guión', statuses: ['script_approved', 'assigned'], count: content.filter(c => ['script_approved', 'assigned'].includes(c.status)).length },
-                      { id: 'grabacion', label: 'Grabación', statuses: ['recording', 'recorded'], count: content.filter(c => ['recording', 'recorded'].includes(c.status)).length },
-                      { id: 'edicion', label: 'Edición', statuses: ['editing', 'review'], count: content.filter(c => ['editing', 'review'].includes(c.status)).length },
-                      { id: 'correccion', label: 'Corrección', statuses: ['issue'], count: content.filter(c => ['issue'].includes(c.status)).length },
-                      { id: 'entrega', label: 'Entrega', statuses: ['delivered', 'corrected'], count: content.filter(c => ['delivered', 'corrected'].includes(c.status)).length },
-                      { id: 'aprobado', label: 'Aprobado', statuses: ['approved', 'paid'], count: content.filter(c => ['approved', 'paid'].includes(c.status)).length },
-                    ].map((stage) => (
-                      <motion.button
-                        key={stage.id}
-                        onClick={() => {
-                          if (stage.count > 0) {
-                            const isToggleOff = stagePopup?.id === stage.id;
-                            setStagePopup(isToggleOff ? null : { id: stage.id, label: stage.label, statuses: stage.statuses });
-                            setStageFilter(isToggleOff ? null : stage.id);
-                          }
-                        }}
-                        disabled={stage.count === 0}
-                        className={cn(
-                          "flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg transition-all text-xs",
-                          "border backdrop-blur-sm",
-                          stage.count > 0 && "cursor-pointer",
-                          stage.count === 0 && "opacity-40 cursor-not-allowed",
-                          (stagePopup?.id === stage.id || stageFilter === stage.id)
-                            ? "bg-[hsl(270,100%,60%,0.2)] border-[hsl(270,100%,60%,0.5)] text-primary"
-                            : "border-[hsl(270,100%,60%,0.1)] hover:border-[hsl(270,100%,60%,0.3)] text-muted-foreground"
-                        )}
-                        whileHover={stage.count > 0 ? { scale: 1.05 } : {}}
-                        whileTap={stage.count > 0 ? { scale: 0.95 } : {}}
-                      >
-                        <span className={(stagePopup?.id === stage.id || stageFilter === stage.id) ? "text-primary" : ""}>
-                          {stage.label}
-                        </span>
-                        {stage.count > 0 && (
-                          <Badge
+                {showClientSelector && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowClientSelector(false)} />
+                    <div className="absolute top-full right-0 mt-1 z-50 w-56 bg-white dark:bg-[#14141f] border border-zinc-200 dark:border-zinc-800 rounded-sm shadow-lg overflow-hidden">
+                      <div className="p-2 max-h-64 overflow-y-auto">
+                        {userClients.map(client => (
+                          <button
+                            key={client.id}
+                            onClick={() => {
+                              localStorage.setItem('selectedClientId', client.id);
+                              setSelectedClientId(client.id);
+                              setShowClientSelector(false);
+                            }}
                             className={cn(
-                              "h-5 text-[10px] border",
-                              (stagePopup?.id === stage.id || stageFilter === stage.id)
-                                ? "bg-[hsl(270,100%,60%,0.3)] border-[hsl(270,100%,60%,0.5)] text-white"
-                                : "bg-muted border-[hsl(270,100%,60%,0.2)] text-[hsl(270,30%,70%)]"
+                              "w-full flex items-center gap-2 p-2 rounded-sm transition-colors text-left text-sm",
+                              client.id === clientInfo.id
+                                ? "bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400"
+                                : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
                             )}
                           >
-                            {stage.count}
-                          </Badge>
-                        )}
-                      </motion.button>
-                    ))}
-                  </div>
-
-                  {/* Stage Content Popup */}
-                  {stagePopup && (() => {
-                    const stageContent = content.filter(c => stagePopup.statuses.includes(c.status));
-                    return stageContent.length > 0 ? (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="mt-3 rounded-xl border border-[hsl(270,100%,60%,0.3)] bg-background/95 backdrop-blur-md shadow-xl overflow-hidden"
-                      >
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 bg-[hsl(270,100%,60%,0.05)]">
-                          <div className="flex items-center gap-2">
-                            <Video className="h-4 w-4 text-[hsl(270,100%,70%)]" />
-                            <span className="font-semibold text-sm">{stagePopup.label}</span>
-                            <Badge className="h-5 text-[10px] bg-[hsl(270,100%,60%,0.2)] border-[hsl(270,100%,60%,0.4)]">
-                              {stageContent.length}
-                            </Badge>
-                          </div>
-                          <button
-                            onClick={() => setStagePopup(null)}
-                            className="p-1 rounded-md hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            <X className="h-4 w-4" />
+                            {client.logo_url ? (
+                              <img src={client.logo_url} alt={client.name} className="h-6 w-6 rounded-sm object-cover" />
+                            ) : (
+                              <div className="h-6 w-6 rounded-sm bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                                <Building2 className="h-3 w-3 text-zinc-500" />
+                              </div>
+                            )}
+                            <span className="truncate">{client.name}</span>
+                            {client.id === clientInfo.id && (
+                              <CheckCircle2 className="h-4 w-4 ml-auto shrink-0" />
+                            )}
                           </button>
-                        </div>
-                        <ScrollArea className="max-h-[300px]">
-                          <div className="p-2 space-y-1">
-                            {stageContent.map((item) => (
-                              <button
-                                key={item.id}
-                                onClick={() => {
-                                  setStageScriptContent(item);
-                                  setStagePopup(null);
-                                }}
-                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left group"
-                              >
-                                <div className="shrink-0 w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center overflow-hidden">
-                                  {item.thumbnail_url ? (
-                                    <img src={item.thumbnail_url} alt="" className="w-full h-full object-cover" />
-                                  ) : (
-                                    <Video className="h-4 w-4 text-muted-foreground" />
-                                  )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium truncate group-hover:text-[hsl(270,100%,70%)] transition-colors">
-                                    {item.title}
-                                  </p>
-                                  <div className="flex items-center gap-2 mt-0.5">
-                                    <Badge className={cn("text-[10px] h-4", STATUS_COLORS[item.status])}>
-                                      {STATUS_LABELS[item.status]}
-                                    </Badge>
-                                    {item.product && (
-                                      <span className="text-[10px] text-muted-foreground truncate">{item.product}</span>
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="shrink-0 flex items-center gap-1">
-                                  {item.script && (
-                                    <FileText className="h-3.5 w-3.5 text-primary/60" />
-                                  )}
-                                  <Eye className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        </ScrollArea>
-                      </motion.div>
-                    ) : null;
-                  })()}
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Charts Row */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <Card className="border-border/50">
-                <CardContent className="p-4">
-                  <ClientFinanceChart
-                    packages={packages}
-                    content={content}
-                    chartType="content-status"
-                    title="Estado del Contenido"
-                  />
-                </CardContent>
-              </Card>
-              <Card className="border-border/50">
-                <CardContent className="p-4">
-                  <ClientFinanceChart
-                    packages={packages}
-                    content={content}
-                    chartType="engagement"
-                    title="Engagement Mensual"
-                  />
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Pending Reviews Alert */}
-            {totalPendingReview > 0 && (
-              <Card className="border-orange-500/30 bg-orange-500/5">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-full bg-orange-500/20">
-                        <Eye className="h-5 w-5 text-orange-500" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">
-                          Tienes {scriptReviewContent.length > 0 ? `${scriptReviewContent.length} guión(es)` : ''} 
-                          {scriptReviewContent.length > 0 && videoReviewContent.length > 0 ? ' y ' : ''}
-                          {videoReviewContent.length > 0 ? `${videoReviewContent.length} video(s)` : ''} por revisar
-                        </p>
-                        <p className="text-xs text-muted-foreground">Revisa y aprueba tu contenido</p>
+                        ))}
                       </div>
                     </div>
-                    <Button size="sm" onClick={() => setActiveTab('review')}>
-                      Ver
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Progress Card */}
-            <Card className="border-border/50">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-sm">Progreso del Paquete</h3>
-                  <span className="text-xs text-muted-foreground">
-                    {deliveredContentCount} de {totalContentPromised} videos
-                  </span>
-                </div>
-                <Progress 
-                  value={totalContentPromised > 0 ? (deliveredContentCount / totalContentPromised) * 100 : 0} 
-                  className="h-2"
-                />
-                <p className="text-xs text-muted-foreground mt-2">
-                  {contentPending > 0 ? `Faltan ${contentPending} videos por entregar` : 'Todos los videos entregados 🎉'}
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Contenido Aprobado Reciente */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold">Contenido Aprobado</h3>
-                <Button variant="ghost" size="sm" onClick={() => setActiveTab('content')}>
-                  Ver todo
-                </Button>
-              </div>
-              <div className="space-y-2">
-                {content.filter(c => c.status === 'approved').slice(0, 4).map(item => {
-                  // Resolve thumbnail: prefer thumbnail_url, fallback to Bunny video thumbnail
-                  let thumbUrl: string | null = null;
-                  if (item.thumbnail_url && !item.thumbnail_url.includes('iframe.mediadelivery.net')) {
-                    thumbUrl = item.thumbnail_url;
-                  } else {
-                    // Extract thumbnail from first video URL (Bunny embed → thumbnail.jpg)
-                    const videoUrl = (item.video_urls as string[] | undefined)?.find(u => u?.trim())
-                      || item.video_url || item.bunny_embed_url || '';
-                    const embedMatch = videoUrl.match(/iframe\.mediadelivery\.net\/embed\/(\d+)\/([a-f0-9-]+)/i);
-                    if (embedMatch) {
-                      thumbUrl = `https://vz-${embedMatch[1]}.b-cdn.net/${embedMatch[2]}/thumbnail.jpg`;
-                    }
-                  }
-                  return (
-                    <Card
-                      key={item.id}
-                      className="hover:bg-muted/50 transition-colors cursor-pointer"
-                      onClick={() => setSelectedContent(item)}
-                    >
-                      <CardContent className="p-3 flex items-center gap-3">
-                        <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                          {thumbUrl ? (
-                            <img src={thumbUrl} alt="" className="h-full w-full object-cover rounded-lg" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                          ) : (
-                            <Play className="h-5 w-5 text-muted-foreground" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{item.title}</p>
-                          <p className="text-xs text-muted-foreground">{formatDate(item.created_at || '')}</p>
-                        </div>
-                        <Badge className="bg-green-500/10 text-green-600" variant="secondary">
-                          Aprobado
-                        </Badge>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                  </>
+                )}
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Finance Tab */}
-        {activeTab === 'finance' && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-lg font-bold mb-1">Control Financiero</h2>
-              <p className="text-sm text-muted-foreground">Resumen de tu inversión y paquetes</p>
-            </div>
-
-            {/* Financial KPIs */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-              <PremiumStatsCard
-                title="Total Pagado"
-                value={totalInvested}
-                prefix="$"
-                icon={DollarSign}
-                color="success"
-              />
-              <PremiumStatsCard
-                title="Videos Aprobados"
-                value={Math.round(approvedVideosValue)}
-                prefix="$"
-                icon={CheckCircle2}
-                color="primary"
-                subtitle={`${deliveredContentCount} videos`}
-              />
-              <PremiumStatsCard
-                title={clientBalance >= 0 ? "Saldo a Favor" : "Saldo Pendiente"}
-                value={Math.abs(Math.round(clientBalance))}
-                prefix={clientBalance >= 0 ? "+$" : "-$"}
-                icon={Wallet}
-                color={clientBalance >= 0 ? "success" : "destructive"}
-                subtitle={clientBalance >= 0 ? "Tienes crédito disponible" : "Monto por regularizar"}
-              />
-              <PremiumStatsCard
-                title="Por Pagar"
-                value={pendingPayment > 0 ? pendingPayment : 0}
-                prefix="$"
-                icon={Clock}
-                color={pendingPayment > 0 ? "warning" : "success"}
-                subtitle={`de $${totalValue.toLocaleString()} total`}
-              />
-              <PremiumStatsCard
-                title="Costo por Video"
-                value={Math.round(costPerFinalVideo)}
-                prefix="$"
-                icon={BarChart3}
-                color="info"
-                subtitle={`${totalFinalVideos} videos finales`}
-              />
-            </div>
-
-            {/* Investment Chart */}
-            <Card className="border-border/50">
-              <CardContent className="p-4">
-                <ClientFinanceChart
-                  packages={packages}
-                  content={content}
-                  chartType="investment"
-                  title="Inversión Mensual"
-                />
-              </CardContent>
-            </Card>
-
-            {/* Packages List */}
-            <div>
-              <h3 className="font-semibold mb-3">Mis Paquetes</h3>
-              {packages.length === 0 ? (
-                <Card>
-                  <CardContent className="p-8 text-center">
-                    <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                    <h4 className="font-semibold mb-2">Sin paquetes</h4>
-                    <p className="text-sm text-muted-foreground">Contacta al equipo para contratar un paquete</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-3">
-                  {packages.map(pkg => (
-                    <Card key={pkg.id} className={pkg.is_active ? 'border-primary/30' : ''}>
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h4 className="font-semibold">{pkg.name}</h4>
-                            <p className="text-xs text-muted-foreground">{formatDate(pkg.created_at)}</p>
-                          </div>
-                          <Badge variant={pkg.is_active ? 'default' : 'secondary'}>
-                            {pkg.is_active ? 'Activo' : 'Completado'}
-                          </Badge>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                          <div>
-                            <p className="text-muted-foreground text-xs">Videos</p>
-                            <p className="font-semibold">{pkg.content_quantity}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground text-xs">Valor Total</p>
-                            <p className="font-semibold">${Number(pkg.total_value).toLocaleString()}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground text-xs">Pagado</p>
-                            <p className="font-semibold text-success">${Number(pkg.paid_amount).toLocaleString()}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground text-xs">Estado</p>
-                            <Badge variant={pkg.payment_status === 'paid' ? 'default' : 'outline'} className="text-xs">
-                              {pkg.payment_status === 'paid' ? 'Pagado' : pkg.payment_status === 'partial' ? 'Parcial' : 'Pendiente'}
-                            </Badge>
-                          </div>
-                        </div>
-
-                        {/* Progress bar for package */}
-                        <div className="mt-3">
-                          <div className="flex justify-between text-xs mb-1">
-                            <span className="text-muted-foreground">Pago</span>
-                            <span className="text-muted-foreground">
-                              {Math.round((Number(pkg.paid_amount) / Number(pkg.total_value)) * 100)}%
-                            </span>
-                          </div>
-                          <Progress 
-                            value={(Number(pkg.paid_amount) / Number(pkg.total_value)) * 100} 
-                            className="h-1.5"
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+      <div className="relative z-10 p-4 md:p-6 space-y-6">
+        {/* Overview Tab - Nova Design */}
+        {activeTab === 'overview' && (
+          <ClientDashboardOverview
+            clientName={clientInfo.name}
+            userName={profile?.full_name}
+            content={content}
+            packages={packages}
+            onVideoClick={(video) => setSelectedContent(video)}
+            onViewAllContent={() => setActiveTab('portfolio')}
+            hasExpiredPayment={paymentStatus.hasExpiredPayment}
+            expiredAmount={paymentStatus.expiredAmount}
+          />
         )}
 
         {/* DNA Tab */}
@@ -1882,7 +1073,7 @@ export default function ClientDashboard() {
                 {products.length === 0 ? (
                   <Card className="border-2 border-dashed border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
                     <CardContent className="p-8 text-center">
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-sm-full bg-primary/10 flex items-center justify-center">
                         <Package className="w-8 h-8 text-primary" />
                       </div>
                       <h4 className="font-semibold text-lg mb-2">¡Crea tu primer producto!</h4>
@@ -1913,7 +1104,7 @@ export default function ClientDashboard() {
                           <div className="p-4 bg-gradient-to-r from-primary/5 to-primary/10 border-b">
                             <div className="flex items-start justify-between">
                               <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-lg bg-primary/10">
+                                <div className="p-2 rounded-sm bg-primary/10">
                                   <Package className="h-5 w-5 text-primary" />
                                 </div>
                                 <div>
@@ -1972,7 +1163,7 @@ export default function ClientDashboard() {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   onClick={(e) => e.stopPropagation()}
-                                  className="flex items-center gap-1 text-xs text-primary hover:underline bg-primary/5 px-2 py-1 rounded"
+                                  className="flex items-center gap-1 text-xs text-primary hover:underline bg-primary/5 px-2 py-1 rounded-sm"
                                 >
                                   <FolderOpen className="h-3 w-3" /> Brief
                                 </a>
@@ -1983,7 +1174,7 @@ export default function ClientDashboard() {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   onClick={(e) => e.stopPropagation()}
-                                  className="flex items-center gap-1 text-xs text-primary hover:underline bg-primary/5 px-2 py-1 rounded"
+                                  className="flex items-center gap-1 text-xs text-primary hover:underline bg-primary/5 px-2 py-1 rounded-sm"
                                 >
                                   <FileText className="h-3 w-3" /> Onboarding
                                 </a>
@@ -1994,7 +1185,7 @@ export default function ClientDashboard() {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   onClick={(e) => e.stopPropagation()}
-                                  className="flex items-center gap-1 text-xs text-primary hover:underline bg-primary/5 px-2 py-1 rounded"
+                                  className="flex items-center gap-1 text-xs text-primary hover:underline bg-primary/5 px-2 py-1 rounded-sm"
                                 >
                                   <Target className="h-3 w-3" /> Investigación
                                 </a>
@@ -2137,8 +1328,8 @@ export default function ClientDashboard() {
           </div>
         )}
 
-        {/* Content Tab - Unified Module */}
-        {activeTab === 'content' && selectedClientId && (
+        {/* Portfolio Tab - Unified Module */}
+        {activeTab === 'portfolio' && selectedClientId && (
           <UnifiedContentModule
             clientId={selectedClientId}
             mode="client"
@@ -2225,9 +1416,9 @@ export default function ClientDashboard() {
                   <div className="space-y-4">
                     <div className="flex items-center gap-4">
                       {clientInfo.logo_url ? (
-                        <img src={clientInfo.logo_url} alt={clientInfo.name} className="h-16 w-16 rounded-xl object-cover" />
+                        <img src={clientInfo.logo_url} alt={clientInfo.name} className="h-16 w-16 rounded-sm object-cover" />
                       ) : (
-                        <div className="h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <div className="h-16 w-16 rounded-sm bg-primary/10 flex items-center justify-center">
                           <Building2 className="h-8 w-8 text-primary" />
                         </div>
                       )}
@@ -2329,7 +1520,7 @@ export default function ClientDashboard() {
                 {selectedContent.script && (
                   <div>
                     <Label className="text-xs text-muted-foreground">Guión</Label>
-                    <div className="mt-1 p-3 bg-muted rounded-lg whitespace-pre-wrap text-sm max-h-40 overflow-y-auto">
+                    <div className="mt-1 p-3 bg-muted rounded-sm whitespace-pre-wrap text-sm max-h-40 overflow-y-auto">
                       {selectedContent.script}
                     </div>
                   </div>
@@ -2347,7 +1538,7 @@ export default function ClientDashboard() {
                         {allUrls.length > 1 ? `Videos (${allUrls.length})` : 'Video'}
                       </Label>
                       {allUrls.map((url, i) => (
-                        <div key={i} className="rounded-lg overflow-hidden bg-black" style={{ aspectRatio: '9/16', maxHeight: '350px' }}>
+                        <div key={i} className="rounded-sm overflow-hidden bg-black" style={{ aspectRatio: '9/16', maxHeight: '350px' }}>
                           <AutoPauseVideo
                             src={url}
                             contentId={selectedContent.id}
@@ -2498,20 +1689,22 @@ export default function ClientDashboard() {
 }
 
 // Content List Component with Quick Actions
-function ContentList({ 
-  items, 
-  onSelect, 
+function ContentList({
+  items,
+  onSelect,
   onStatusChange,
   userId,
   onUpdate,
-  showRatings = false
-}: { 
-  items: Content[]; 
+  showRatings = false,
+  downloadBlocked = false
+}: {
+  items: Content[];
   onSelect: (c: Content) => void;
   onStatusChange?: (id: string, status: ContentStatus, notes?: string) => Promise<void>;
   userId?: string;
   onUpdate?: () => void;
   showRatings?: boolean;
+  downloadBlocked?: boolean;
 }) {
   if (items.length === 0) {
     return (
@@ -2534,6 +1727,7 @@ function ContentList({
           onStatusChange={onStatusChange}
           onUpdate={onUpdate}
           showRatings={showRatings}
+          downloadBlocked={downloadBlocked}
         />
       ))}
     </div>

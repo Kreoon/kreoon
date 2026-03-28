@@ -47,12 +47,12 @@ export function ProjectTypeSelector({ open, onOpenChange, onSelect, excludeTypes
                   onOpenChange(false);
                 }}
                 className={cn(
-                  'flex items-start gap-3 p-4 rounded-xl border text-left transition-all',
+                  'flex items-start gap-3 p-4 rounded-sm border text-left transition-all',
                   'hover:shadow-md hover:scale-[1.02] active:scale-[0.98]',
                   'border-border/50 hover:border-primary/40 bg-card hover:bg-accent/50',
                 )}
               >
-                <div className={cn('p-2 rounded-lg shrink-0', config.bgColor)}>
+                <div className={cn('p-2 rounded-sm shrink-0', config.bgColor)}>
                   <Icon className={cn('h-5 w-5', config.color)} />
                 </div>
                 <div className="min-w-0">

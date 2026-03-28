@@ -63,7 +63,7 @@ export function OrganizationsListSection({ organizations, userId, onActionComple
         {organizations.map((org) => (
           <div
             key={org.organization_id}
-            className="flex items-center justify-between gap-2 p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]"
+            className="flex items-center justify-between gap-2 p-2 rounded-sm bg-white/[0.03] border border-white/[0.06]"
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <Building2 className="h-3.5 w-3.5 text-white/30 flex-shrink-0" />

@@ -59,7 +59,7 @@ export function BookingSuccess({ booking, hostName }: BookingSuccessProps) {
 
         <CardContent className="space-y-6">
           {/* Detalles de la reserva */}
-          <div className="bg-muted/50 rounded-lg p-4 space-y-4">
+          <div className="bg-muted/50 rounded-sm p-4 space-y-4">
             <h3 className="font-semibold text-lg">
               {booking.event_type?.title || 'Cita'}
             </h3>

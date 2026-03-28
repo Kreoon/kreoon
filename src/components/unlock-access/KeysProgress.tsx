@@ -73,7 +73,7 @@ export const KeysProgress = memo(function KeysProgress({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        'rounded-2xl p-5 sm:p-6',
+        'rounded-sm p-5 sm:p-6',
         'bg-white/[0.03] border border-white/10'
       )}
     >

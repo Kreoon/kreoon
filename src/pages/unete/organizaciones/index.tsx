@@ -82,7 +82,7 @@ export default function OrganizacionesLanding() {
 
           <button
             onClick={scrollToForm}
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold text-lg transition-all hover:scale-[1.02]"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-sm bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold text-lg transition-all hover:scale-[1.02]"
           >
             Crear mi organización <ArrowRight className="w-5 h-5" />
           </button>
@@ -100,7 +100,7 @@ export default function OrganizacionesLanding() {
                 transition={{ delay: index * 0.1 }}
                 className="text-center p-4"
               >
-                <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-green-500/20 flex items-center justify-center">
+                <div className="w-12 h-12 mx-auto mb-3 rounded-sm bg-green-500/20 flex items-center justify-center">
                   <Icon className="w-6 h-6 text-green-400" />
                 </div>
                 <h3 className="font-medium mb-1">{benefit.title}</h3>
@@ -119,7 +119,7 @@ export default function OrganizacionesLanding() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 + index * 0.05 }}
-                className="flex items-center gap-2 p-3 rounded-lg bg-white/5 border border-white/10"
+                className="flex items-center gap-2 p-3 rounded-sm bg-white/5 border border-white/10"
               >
                 <div className="w-2 h-2 rounded-full bg-green-400" />
                 <span className="text-sm text-white/80">{feature}</span>
@@ -163,7 +163,7 @@ export default function OrganizacionesLanding() {
           transition={{ delay: 0.5 }}
           className="mt-8 max-w-md mx-auto"
         >
-          <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-center">
+          <div className="p-4 rounded-sm bg-green-500/10 border border-green-500/20 text-center">
             <p className="text-sm text-white/80">
               <strong className="text-green-400">Prueba de 30 días incluida</strong>
               <br />

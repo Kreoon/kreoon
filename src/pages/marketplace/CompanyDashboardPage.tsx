@@ -71,7 +71,7 @@ function StatCard({ title, value, icon: Icon, trend, description }: StatCardProp
               <p className="text-xs text-social-muted-foreground mt-1">{description}</p>
             )}
           </div>
-          <div className="p-3 rounded-lg bg-social-accent/10">
+          <div className="p-3 rounded-sm bg-social-accent/10">
             <Icon className="h-5 w-5 text-social-accent" />
           </div>
         </div>
@@ -189,7 +189,7 @@ export default function CompanyDashboardPage() {
             <div className="flex items-center gap-3">
               {/* Profile completion */}
               {profileProgress < 100 && (
-                <div className="hidden md:flex items-center gap-3 p-3 rounded-lg bg-social-muted">
+                <div className="hidden md:flex items-center gap-3 p-3 rounded-sm bg-social-muted">
                   <div className="flex-1">
                     <p className="text-sm font-medium text-social-foreground">
                       Perfil {profileProgress}% completo
@@ -290,7 +290,7 @@ export default function CompanyDashboardPage() {
                         key={proposal.id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="flex items-center gap-4 p-3 rounded-lg hover:bg-social-muted/50 transition-colors cursor-pointer"
+                        className="flex items-center gap-4 p-3 rounded-sm hover:bg-social-muted/50 transition-colors cursor-pointer"
                         onClick={() => navigate(`/marketplace/proposals/${proposal.id}`)}
                       >
                         <Avatar className="h-10 w-10">

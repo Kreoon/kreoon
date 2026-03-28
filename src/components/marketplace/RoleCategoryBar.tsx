@@ -81,7 +81,7 @@ export const RoleCategoryBar = memo(function RoleCategoryBar({ active, onChange 
               key={item.id}
               onClick={() => onChange(item.id)}
               className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all border',
+                'flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium whitespace-nowrap transition-all border',
                 isActive
                   ? 'bg-purple-500/15 border-purple-500/40 text-white shadow-[0_0_12px_-3px_rgba(139,92,246,0.3)]'
                   : 'border-white/5 text-gray-400 hover:bg-white/5 hover:text-white hover:border-white/10',

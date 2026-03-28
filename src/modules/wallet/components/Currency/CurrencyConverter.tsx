@@ -71,7 +71,7 @@ export function CurrencyConverter({
           <span>Convertir Moneda</span>
           <button
             onClick={() => refetch()}
-            className="p-1.5 rounded-lg hover:bg-[hsl(270,30%,15%)] transition-colors"
+            className="p-1.5 rounded-sm hover:bg-[hsl(270,30%,15%)] transition-colors"
             title="Actualizar tasa"
           >
             <RefreshCw className={cn('h-4 w-4 text-muted-foreground', isLoading && 'animate-spin')} />
@@ -95,7 +95,7 @@ export function CurrencyConverter({
                 />
               </div>
             ) : (
-              <div className="flex-1 flex items-center px-3 py-2 bg-[hsl(270,40%,8%)] border border-[hsl(270,30%,20%)] rounded-md">
+              <div className="flex-1 flex items-center px-3 py-2 bg-[hsl(270,40%,8%)] border border-[hsl(270,30%,20%)] rounded-sm">
                 <span className="text-lg font-medium">
                   {fromAmount ? formatAmount(fromAmount, fromCurrency) : '$0.00'}
                 </span>
@@ -127,7 +127,7 @@ export function CurrencyConverter({
         <div className="space-y-2">
           <Label className="text-xs text-muted-foreground">A</Label>
           <div className="flex gap-2">
-            <div className="flex-1 flex items-center px-3 py-2 bg-[hsl(270,30%,12%)] border border-[hsl(270,30%,20%)] rounded-md min-h-[42px]">
+            <div className="flex-1 flex items-center px-3 py-2 bg-[hsl(270,30%,12%)] border border-[hsl(270,30%,20%)] rounded-sm min-h-[42px]">
               {isLoading ? (
                 <Skeleton className="h-6 w-32" />
               ) : quote ? (

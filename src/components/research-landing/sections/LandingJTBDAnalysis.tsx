@@ -24,7 +24,7 @@ function JobCard({ title, color, data }: { title: string; color: string; data: a
   const textColor = color === 'blue' ? 'text-blue-300' : color === 'pink' ? 'text-pink-300' : 'text-purple-300';
 
   return (
-    <div className={`${bgColor} border ${borderColor} rounded-xl p-4`}>
+    <div className={`${bgColor} border ${borderColor} rounded-sm p-4`}>
       <h5 className={`text-xs font-semibold ${textColor} uppercase tracking-wider mb-2`}>{title}</h5>
       <p className="text-sm text-white/70 leading-relaxed">{desc}</p>
       {typeof data === 'object' && data.statement && data.statement !== desc && (
@@ -67,7 +67,7 @@ export function LandingJTBDAnalysis({ jtbdData, marketResearch }: Props) {
             <h4 className="text-xs font-semibold text-red-300/80 uppercase tracking-wider mb-3">Dolores</h4>
             <div className="space-y-2">
               {pains.slice(0, 10).map((p: any, i: number) => (
-                <div key={i} className="bg-red-500/5 border border-red-500/10 rounded-lg p-3">
+                <div key={i} className="bg-red-500/5 border border-red-500/10 rounded-sm p-3">
                   <p className="text-sm text-white/80">{safeStr(p.pain || p, '')}</p>
                   {p.impact && <p className="text-xs text-white/40 mt-0.5">{p.impact}</p>}
                 </div>
@@ -80,7 +80,7 @@ export function LandingJTBDAnalysis({ jtbdData, marketResearch }: Props) {
             <h4 className="text-xs font-semibold text-green-300/80 uppercase tracking-wider mb-3">Deseos</h4>
             <div className="space-y-2">
               {desires.slice(0, 10).map((d: any, i: number) => (
-                <div key={i} className="bg-green-500/5 border border-green-500/10 rounded-lg p-3">
+                <div key={i} className="bg-green-500/5 border border-green-500/10 rounded-sm p-3">
                   <p className="text-sm text-white/80">{safeStr(d.desire || d, '')}</p>
                   {d.idealState && <p className="text-xs text-white/40 mt-0.5">{d.idealState}</p>}
                 </div>
@@ -96,7 +96,7 @@ export function LandingJTBDAnalysis({ jtbdData, marketResearch }: Props) {
           <h4 className="text-xs font-semibold text-yellow-300/80 uppercase tracking-wider mb-3">Objeciones</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {objections.slice(0, 10).map((o: any, i: number) => (
-              <div key={i} className="bg-yellow-500/5 border border-yellow-500/10 rounded-lg p-3">
+              <div key={i} className="bg-yellow-500/5 border border-yellow-500/10 rounded-sm p-3">
                 <p className="text-sm text-white/80">{safeStr(o.objection || o, '')}</p>
                 {o.counter && <p className="text-xs text-yellow-400/50 mt-1">{o.counter}</p>}
               </div>
@@ -111,7 +111,7 @@ export function LandingJTBDAnalysis({ jtbdData, marketResearch }: Props) {
           <h4 className="text-xs font-semibold text-purple-300 uppercase tracking-wider mb-3">Insights</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {insights.slice(0, 10).map((ins: any, i: number) => (
-              <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-lg p-3">
+              <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-sm p-3">
                 <p className="text-sm text-white/80">{safeStr(ins.insight || ins, '')}</p>
                 {ins.actionable && <p className="text-xs text-purple-400/50 mt-1">{ins.actionable}</p>}
               </div>

@@ -70,7 +70,7 @@ export default function DocumentWorkspace({ formData, setFormData, editMode, rea
       ) : (
         <div className="space-y-3">
           {sections.map((section, index) => (
-            <div key={section.id} className="border rounded-lg overflow-hidden">
+            <div key={section.id} className="border rounded-sm overflow-hidden">
               {/* Section header */}
               <div
                 className={cn(

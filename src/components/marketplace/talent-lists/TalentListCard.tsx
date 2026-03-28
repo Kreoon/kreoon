@@ -12,11 +12,11 @@ export function TalentListCard({ list }: TalentListCardProps) {
   return (
     <div
       onClick={() => navigate(`/marketplace/talent-lists/${list.id}`)}
-      className="group cursor-pointer p-4 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all"
+      className="group cursor-pointer p-4 rounded-sm border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all"
     >
       <div className="flex items-start gap-3">
         <div
-          className="h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0"
+          className="h-10 w-10 rounded-sm flex items-center justify-center flex-shrink-0"
           style={{ backgroundColor: `${list.color}20` }}
         >
           <Users className="h-5 w-5" style={{ color: list.color }} />

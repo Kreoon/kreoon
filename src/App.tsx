@@ -20,6 +20,7 @@ import { AnalyticsProvider } from "@/contexts/AnalyticsContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { OnboardingGateProvider } from "@/providers/OnboardingGateProvider";
+import { RoleLegalGateProvider } from "@/providers/RoleLegalGateProvider";
 import { StrategistClientProvider } from "@/contexts/StrategistClientContext";
 import { KiroProvider } from "@/contexts/KiroContext";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
@@ -443,8 +444,8 @@ function AppRoutes() {
         <Route path="/wallet/settings" element={<Navigate to="/wallet" replace />} />
         <Route path="/admin/wallets" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><AdminWalletsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><KAEAnalyticsDashboard /></MainLayout></ProtectedRoute>} />
-        <Route path="/admin/ad-intelligence" element={<ProtectedRoute allowNoRoles><MainLayout><AdIntelligencePage /></MainLayout></ProtectedRoute>} />
-        <Route path="/admin/social-scraper" element={<ProtectedRoute allowNoRoles><MainLayout><SocialScraperPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/admin/ad-intelligence" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><AdIntelligencePage /></MainLayout></ProtectedRoute>} />
+        <Route path="/admin/social-scraper" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><SocialScraperPage /></MainLayout></ProtectedRoute>} />
         <Route path="/admin/papelera" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PapeleraPage /></MainLayout></ProtectedRoute>} />
         {/* Ad Generator Module */}
         <Route path="/ad-generator" element={<ProtectedRoute allowNoRoles><MainLayout><AdGeneratorPage /></MainLayout></ProtectedRoute>} />
@@ -479,6 +480,7 @@ function AppContent() {
       <BrandingProvider>
         <AuthProvider>
           <OnboardingGateProvider>
+            <RoleLegalGateProvider>
             <CurrencyProvider>
             <AnalyticsProvider>
               <ImpersonationProvider>
@@ -508,6 +510,7 @@ function AppContent() {
               </ImpersonationProvider>
             </AnalyticsProvider>
             </CurrencyProvider>
+            </RoleLegalGateProvider>
           </OnboardingGateProvider>
         </AuthProvider>
       </BrandingProvider>

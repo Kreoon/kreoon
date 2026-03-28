@@ -161,7 +161,7 @@ export function UnifiedProjectModal({
 
         {/* ============ COMPACT HEADER (mobile collapsed) ============ */}
         {isHeaderCollapsed && (
-          <div className="sm:hidden shrink-0 z-20 bg-card/95 backdrop-blur-sm border-b px-3 py-1.5 flex items-center gap-1.5 pr-10">
+          <div className="sm:hidden shrink-0 z-20 bg-white dark:bg-[#14141f] border-b border-zinc-200 dark:border-zinc-800 px-3 py-1.5 flex items-center gap-1.5 pr-10">
             {/* Sequence number */}
             {source === 'content' && !isCreateMode && project?.contentData?.sequence_number && (
               <Badge variant="outline" className="text-[10px] font-mono px-1 py-0 shrink-0 bg-primary/5 border-primary/20 text-primary">
@@ -194,7 +194,7 @@ export function UnifiedProjectModal({
 
         {/* ============ HERO HEADER ============ */}
         <div className={cn(
-          "relative bg-gradient-to-br from-primary/10 via-primary/5 to-background p-3 sm:p-6 border-b shrink-0 transition-all duration-200",
+          "relative bg-gradient-to-br from-primary/10 via-primary/5 to-background p-3 sm:p-6 border-b border-zinc-200 dark:border-zinc-800 shrink-0 transition-colors duration-150",
           isHeaderCollapsed && "max-sm:hidden"
         )}>
           <div className="absolute inset-0 opacity-5 hidden sm:block">
@@ -358,7 +358,7 @@ export function UnifiedProjectModal({
 
         {/* ============ WORKFLOW PROGRESS BAR ============ */}
         {!isCreateMode && project?.status && (
-          <div className={cn("px-4 sm:px-6 py-3 border-b bg-muted/10 shrink-0", isHeaderCollapsed && "max-sm:hidden")}>
+          <div className={cn("px-4 sm:px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/10 shrink-0", isHeaderCollapsed && "max-sm:hidden")}>
             <WorkflowProgressBar workflow={workflow} currentStatus={project.status} />
           </div>
         )}
@@ -372,8 +372,8 @@ export function UnifiedProjectModal({
           ) : (
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               {/* Sticky tab bar */}
-              <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm px-2 sm:px-6 pt-3 sm:pt-6 pb-2">
-                <TabsList className="w-full h-auto gap-0.5 sm:gap-1 grid grid-cols-3 sm:flex sm:flex-wrap sm:justify-start bg-muted/30 p-0.5 sm:p-1 rounded-lg">
+              <div className="sticky top-0 z-10 bg-white dark:bg-[#14141f] px-2 sm:px-6 pt-3 sm:pt-6 pb-2">
+                <TabsList className="w-full h-auto gap-0.5 sm:gap-1 grid grid-cols-3 sm:flex sm:flex-wrap sm:justify-start bg-zinc-100 dark:bg-zinc-800/50 p-0.5 sm:p-1 rounded-lg">
                   {displaySections.map(sectionKey => {
                     const config = SECTION_TAB_CONFIG[sectionKey];
                     const readOnly = permissions.isReadOnly(`project.${sectionKey}` as any);
@@ -383,9 +383,9 @@ export function UnifiedProjectModal({
                         key={sectionKey}
                         value={sectionKey}
                         className={cn(
-                          'text-[11px] sm:text-sm px-1.5 sm:px-3 py-1.5 sm:py-2 flex items-center justify-center gap-1 sm:gap-1.5 rounded-md transition-all duration-200',
-                          'data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-foreground',
-                          'hover:bg-background/50',
+                          'text-[11px] sm:text-sm px-1.5 sm:px-3 py-1.5 sm:py-2 flex items-center justify-center gap-1 sm:gap-1.5 rounded-lg transition-colors duration-150',
+                          'data-[state=active]:bg-white data-[state=active]:dark:bg-[#1a1a24] data-[state=active]:shadow-sm data-[state=active]:text-zinc-900 data-[state=active]:dark:text-zinc-100',
+                          'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100',
                         )}
                       >
                         {config.label}
@@ -404,7 +404,7 @@ export function UnifiedProjectModal({
                   return (
                     <TabsContent key={sectionKey} value={sectionKey} className="mt-4 relative">
                       {readOnly && (
-                        <div className="absolute top-0 right-0 z-10 flex items-center gap-1 px-2 py-1 text-xs rounded-bl-lg bg-muted/80 text-muted-foreground">
+                        <div className="absolute top-0 right-0 z-10 flex items-center gap-1 px-2 py-1 text-xs rounded-bl-lg bg-zinc-100 dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400">
                           <Eye className="h-3 w-3" />
                           Solo lectura
                         </div>
@@ -421,7 +421,7 @@ export function UnifiedProjectModal({
 
           {/* ============ FOOTER: DELETE (inside scroll) ============ */}
           {!isCreateMode && permissions.can('project.delete', 'edit') && (
-            <div className="border-t p-4 bg-muted/30">
+            <div className="border-t border-zinc-200 dark:border-zinc-800 p-4 bg-zinc-50 dark:bg-zinc-900/30">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm">

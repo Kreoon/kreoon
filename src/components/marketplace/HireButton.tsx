@@ -55,7 +55,7 @@ export function HireButton({
   if (isLoading) {
     return (
       <div className={cn("flex gap-2", className)}>
-        <div className="h-10 w-32 bg-social-muted rounded-lg animate-pulse" />
+        <div className="h-10 w-32 bg-social-muted rounded-sm animate-pulse" />
       </div>
     );
   }

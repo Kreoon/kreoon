@@ -22,7 +22,7 @@ export function CounterOfferModal({ application, onClose, onSubmit }: CounterOff
     <div className="fixed inset-0 z-[100]">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="absolute inset-0 flex items-center justify-center p-4">
-        <div className="relative bg-card border border-white/10 rounded-2xl w-full max-w-md">
+        <div className="relative bg-card border border-white/10 rounded-sm w-full max-w-md">
           {/* Header */}
           <div className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
             <div>
@@ -37,7 +37,7 @@ export function CounterOfferModal({ application, onClose, onSubmit }: CounterOff
           {/* Content */}
           <div className="px-6 py-5 space-y-4">
             {application.bid_amount && (
-              <div className="bg-white/5 rounded-lg p-3 flex justify-between items-center">
+              <div className="bg-white/5 rounded-sm p-3 flex justify-between items-center">
                 <span className="text-gray-400 text-sm">Oferta del creador</span>
                 <span className="text-white font-semibold">${application.bid_amount.toLocaleString()} COP</span>
               </div>
@@ -54,7 +54,7 @@ export function CounterOfferModal({ application, onClose, onSubmit }: CounterOff
                   value={amount}
                   onChange={e => setAmount(e.target.value)}
                   placeholder="250000"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
+                  className="w-full bg-white/5 border border-white/10 rounded-sm pl-10 pr-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
                 />
               </div>
             </div>
@@ -68,7 +68,7 @@ export function CounterOfferModal({ application, onClose, onSubmit }: CounterOff
                 onChange={e => setMessage(e.target.value)}
                 placeholder="Explica tu contraoferta al creador..."
                 rows={3}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500 resize-none"
+                className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500 resize-none"
               />
             </div>
 
@@ -79,14 +79,14 @@ export function CounterOfferModal({ application, onClose, onSubmit }: CounterOff
           <div className="border-t border-white/10 px-6 py-4 flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 border border-white/10 text-gray-400 py-3 rounded-xl hover:bg-white/5 transition-colors text-sm font-medium"
+              className="flex-1 border border-white/10 text-gray-400 py-3 rounded-sm hover:bg-white/5 transition-colors text-sm font-medium"
             >
               Cancelar
             </button>
             <button
               onClick={handleSubmit}
               disabled={!amount || Number(amount) <= 0}
-              className="flex-1 bg-orange-600 hover:bg-orange-500 disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-xl transition-colors text-sm font-semibold flex items-center justify-center gap-2"
+              className="flex-1 bg-orange-600 hover:bg-orange-500 disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-sm transition-colors text-sm font-semibold flex items-center justify-center gap-2"
             >
               <Send className="h-4 w-4" />
               Enviar Contraoferta

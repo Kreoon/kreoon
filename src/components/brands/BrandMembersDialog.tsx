@@ -74,7 +74,7 @@ export function BrandMembersDialog({ open, onOpenChange }: BrandMembersDialogPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-md max-h-[80dvh] sm:max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Miembros de {activeBrand?.name}</DialogTitle>
           <DialogDescription>Gestiona el equipo de tu marca</DialogDescription>
@@ -92,7 +92,7 @@ export function BrandMembersDialog({ open, onOpenChange }: BrandMembersDialogPro
                 <h4 className="text-sm font-semibold mb-3">Solicitudes pendientes ({pendingRequests.length})</h4>
                 <div className="space-y-2">
                   {pendingRequests.map(member => (
-                    <div key={member.id} className="flex items-center gap-3 p-3 rounded-lg border bg-amber-500/5 border-amber-500/20">
+                    <div key={member.id} className="flex items-center gap-3 p-3 rounded-sm border bg-amber-500/5 border-amber-500/20">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={member.profile?.avatar_url || undefined} />
                         <AvatarFallback className="text-xs">

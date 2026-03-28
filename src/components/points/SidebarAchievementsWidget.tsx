@@ -66,7 +66,7 @@ export function SidebarAchievementsWidget({ collapsed = false }: SidebarAchievem
                 <TooltipTrigger asChild>
                   <div 
                     className={cn(
-                      "flex h-9 w-9 items-center justify-center rounded-lg border-2 cursor-pointer",
+                      "flex h-9 w-9 items-center justify-center rounded-sm border-2 cursor-pointer",
                       "bg-gradient-to-br transition-transform hover:scale-110",
                       RARITY_COLORS[rarity],
                       RARITY_BORDERS[rarity]

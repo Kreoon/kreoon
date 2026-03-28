@@ -42,7 +42,7 @@ export default function VideoTab({
     <div className="space-y-6">
       {/* Publish to Portfolio */}
       {canPublish && (
-        <div className="flex items-center justify-between p-4 rounded-lg border bg-gradient-to-r from-primary/5 to-primary/10">
+        <div className="flex items-center justify-between p-4 rounded-sm border bg-gradient-to-r from-primary/5 to-primary/10">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-full bg-primary/10">
               <Share2 className="h-4 w-4 text-primary" />
@@ -67,7 +67,7 @@ export default function VideoTab({
 
       {/* Read-only notice */}
       {(!canEditVideo || readOnly) && effectiveEditMode && (
-        <div className="flex items-center gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg text-sm">
+        <div className="flex items-center gap-2 p-3 bg-warning/10 border border-warning/20 rounded-sm text-sm">
           <Lock className="h-4 w-4 text-warning" />
           <span>{readOnly ? 'Este tab es de solo lectura' : 'Solo el estratega o admin pueden editar videos'}</span>
         </div>
@@ -127,7 +127,7 @@ export default function VideoTab({
           ) : (
             <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
               {videoUrls.map((url: string, i: number) => (
-                <div key={i} className="space-y-2 p-3 rounded-lg border bg-muted/30">
+                <div key={i} className="space-y-2 p-3 rounded-sm border bg-muted/30">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Variable {i + 1}</span>
                     {url && (
@@ -139,11 +139,11 @@ export default function VideoTab({
                     )}
                   </div>
                   {url ? (
-                    <div className="aspect-[9/16] max-h-[300px] rounded-lg overflow-hidden bg-black">
+                    <div className="aspect-[9/16] max-h-[300px] rounded-sm overflow-hidden bg-black">
                       <AutoPauseVideo src={url} className="w-full h-full object-contain" />
                     </div>
                   ) : (
-                    <div className="aspect-[9/16] max-h-[300px] rounded-lg border-2 border-dashed flex items-center justify-center">
+                    <div className="aspect-[9/16] max-h-[300px] rounded-sm border-2 border-dashed flex items-center justify-center">
                       <p className="text-sm text-muted-foreground">Sin video</p>
                     </div>
                   )}
@@ -161,7 +161,7 @@ export default function VideoTab({
       </div>
 
       {/* Notes */}
-      <div className="rounded-lg border p-4 space-y-3">
+      <div className="rounded-sm border p-4 space-y-3">
         <h4 className="font-medium text-sm">Notas Adicionales</h4>
         {effectiveEditMode ? (
           <Textarea

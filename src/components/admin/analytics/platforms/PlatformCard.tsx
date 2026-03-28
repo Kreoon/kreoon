@@ -26,7 +26,7 @@ export function PlatformCard({ config, onConfigure, onToggle, onTest, testing, s
 
   return (
     <div
-      className={`rounded-xl border p-5 transition-all ${
+      className={`rounded-sm border p-5 transition-all ${
         config.enabled
           ? `${info.bgColor} ${info.borderColor}`
           : 'bg-gray-900/30 border-gray-800'
@@ -78,7 +78,7 @@ export function PlatformCard({ config, onConfigure, onToggle, onTest, testing, s
 
       {/* Credential summary */}
       {hasCredentials && (
-        <div className="bg-gray-800/40 rounded-lg p-3 mb-4 space-y-1">
+        <div className="bg-gray-800/40 rounded-sm p-3 mb-4 space-y-1">
           <div className="flex items-center justify-between text-xs">
             <span className="text-gray-500">Pixel/ID:</span>
             <span className="text-foreground/80 font-mono">{config.pixel_id}</span>
@@ -126,7 +126,7 @@ export function PlatformCard({ config, onConfigure, onToggle, onTest, testing, s
           href={info.docsUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center justify-center h-9 w-9 rounded-md border border-border bg-muted hover:bg-muted/80 text-gray-400 hover:text-white transition-colors"
+          className="inline-flex items-center justify-center h-9 w-9 rounded-sm border border-border bg-muted hover:bg-muted/80 text-gray-400 hover:text-white transition-colors"
         >
           <ExternalLink className="h-3.5 w-3.5" />
         </a>

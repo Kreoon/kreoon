@@ -20,7 +20,7 @@ const TimeBlock = memo(function TimeBlock({
         initial={{ scale: 1.1, opacity: 0.5 }}
         animate={{ scale: 1, opacity: 1 }}
         className={cn(
-          'w-14 h-14 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center text-2xl sm:text-3xl font-bold',
+          'w-14 h-14 sm:w-16 sm:h-16 rounded-sm flex items-center justify-center text-2xl sm:text-3xl font-bold',
           urgency
             ? 'bg-red-500/20 text-red-400 border border-red-500/30'
             : 'bg-white/5 text-white border border-white/10'
@@ -51,7 +51,7 @@ export function CountdownTimer() {
 
   if (time.isExpired) {
     return (
-      <div className="text-center py-4 px-6 rounded-xl bg-red-500/10 border border-red-500/30">
+      <div className="text-center py-4 px-6 rounded-sm bg-red-500/10 border border-red-500/30">
         <p className="text-red-400 font-semibold">El periodo Early Bird ha terminado</p>
       </div>
     );
@@ -62,7 +62,7 @@ export function CountdownTimer() {
       animate={isCritical ? { x: [0, -2, 2, -2, 2, 0] } : {}}
       transition={{ duration: 0.5, repeat: isCritical ? Infinity : 0, repeatDelay: 3 }}
       className={cn(
-        'rounded-2xl p-4 sm:p-6',
+        'rounded-sm p-4 sm:p-6',
         isCritical
           ? 'bg-gradient-to-r from-red-500/10 via-orange-500/10 to-red-500/10 border border-red-500/30'
           : 'bg-white/[0.03] border border-white/10'

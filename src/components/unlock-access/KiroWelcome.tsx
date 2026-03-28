@@ -32,7 +32,7 @@ export const KiroWelcome = memo(function KiroWelcome({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        'flex gap-3 p-4 rounded-2xl',
+        'flex gap-3 p-4 rounded-sm',
         'bg-gradient-to-r from-purple-500/10 via-transparent to-pink-500/10',
         'border border-purple-500/20'
       )}
@@ -44,7 +44,7 @@ export const KiroWelcome = memo(function KiroWelcome({
         className="shrink-0"
       >
         <div className={cn(
-          'w-12 h-12 rounded-xl',
+          'w-12 h-12 rounded-sm',
           'bg-gradient-to-br from-purple-500 to-pink-500',
           'flex items-center justify-center',
           'shadow-lg shadow-purple-500/30'

@@ -38,25 +38,25 @@ export function PortfolioHeader({
   };
 
   return (
-    <div className="sticky top-0 z-50 p-4 bg-gradient-to-b from-black via-black/90 to-transparent pointer-events-none">
+    <div className="sticky top-0 z-50 p-4 bg-gradient-to-b from-white dark:from-[#0a0a0f] via-white/90 dark:via-[#0a0a0f]/90 to-transparent pointer-events-none">
       <div className="flex items-center justify-between pointer-events-auto">
         <div className="flex items-center gap-2">
           {/* Back button when on profile page */}
           {isProfilePage && (
-            <button 
+            <button
               onClick={() => navigate('/marketplace')}
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-800/50 hover:bg-zinc-700/50 transition-colors"
             >
-              <ChevronLeft className="h-4 w-4 text-white" />
+              <ChevronLeft className="h-4 w-4 text-zinc-100" />
             </button>
           )}
           
           {/* Logo - Always visible */}
-          <button 
+          <button
             onClick={() => navigate('/marketplace')}
             className="h-8 w-8 rounded-lg bg-social-accent flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
           >
-            <span className="text-white font-bold text-xs">SC</span>
+            <span className="text-zinc-100 font-bold text-xs">SC</span>
           </button>
           
           {onRefresh && (
@@ -65,7 +65,7 @@ export function PortfolioHeader({
               size="icon"
               onClick={onRefresh}
               disabled={refreshing}
-              className="text-white hover:bg-white/20 h-8 w-8"
+              className="text-zinc-100 hover:bg-zinc-800/50 h-8 w-8"
             >
               <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             </Button>
@@ -74,11 +74,11 @@ export function PortfolioHeader({
         
         {/* Feed Tabs - Only show on main portfolio when logged in */}
         {showTabs && isLoggedIn && onTabChange && (
-          <div className="flex items-center bg-black/40 rounded-full p-1">
+          <div className="flex items-center bg-zinc-100 dark:bg-[#14141f]/80 rounded-full p-1">
             <button
               onClick={() => onTabChange('following')}
               className={`px-3 py-1 rounded-full text-xs font-medium transition ${
-                activeTab === 'following' ? 'bg-white text-black' : 'text-white/70'
+                activeTab === 'following' ? 'bg-white dark:bg-zinc-100 text-zinc-900' : 'text-zinc-500 dark:text-zinc-400'
               }`}
             >
               Siguiendo
@@ -86,7 +86,7 @@ export function PortfolioHeader({
             <button
               onClick={() => onTabChange('for-you')}
               className={`px-3 py-1 rounded-full text-xs font-medium transition ${
-                activeTab === 'for-you' ? 'bg-white text-black' : 'text-white/70'
+                activeTab === 'for-you' ? 'bg-white dark:bg-zinc-100 text-zinc-900' : 'text-zinc-500 dark:text-zinc-400'
               }`}
             >
               Para ti
@@ -104,7 +104,7 @@ export function PortfolioHeader({
                 variant="ghost"
                 size="icon"
                 onClick={() => user && navigate(`/p/${user.id}`)}
-                className="text-white hover:bg-white/20 h-8 w-8"
+                className="text-zinc-100 hover:bg-zinc-800/50 h-8 w-8"
               >
                 <User className="h-4 w-4" />
               </Button>
@@ -112,7 +112,7 @@ export function PortfolioHeader({
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate(getDashboardRoute())}
-                className="text-white hover:bg-white/20 h-8 w-8"
+                className="text-zinc-100 hover:bg-zinc-800/50 h-8 w-8"
               >
                 <Home className="h-4 w-4" />
               </Button>
@@ -121,7 +121,7 @@ export function PortfolioHeader({
             <Button
               size="sm"
               onClick={() => navigate('/auth')}
-              className="bg-gradient-gold text-black font-semibold text-xs px-3 h-8"
+              className="bg-gradient-gold text-zinc-900 font-semibold text-xs px-3 h-8"
             >
               Entrar
             </Button>

@@ -262,7 +262,7 @@ export const ContentGrid = memo(function ContentGrid({
 
             {/* View toggle */}
             {onVariantChange && (
-              <div className="flex items-center border rounded-lg">
+              <div className="flex items-center border rounded-sm">
                 <Button
                   variant={variant === 'grid' ? 'secondary' : 'ghost'}
                   size="sm"

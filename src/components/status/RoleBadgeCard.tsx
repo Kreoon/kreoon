@@ -161,7 +161,7 @@ export function RoleBadgeCard({
   return (
     <div
       className={cn(
-        "rounded-xl p-[2px] shadow-[0_0_24px_var(--role-glow)]",
+        "rounded-sm p-[2px] shadow-[0_0_24px_var(--role-glow)]",
         gradientClass,
         className,
       )}
@@ -187,7 +187,7 @@ export function RoleBadgeCard({
             <div className="min-w-0">
               <span
                 className={cn(
-                  "inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-semibold text-white",
+                  "inline-flex items-center rounded-sm px-2.5 py-1 text-xs font-semibold text-white",
                   gradientClass,
                 )}
               >

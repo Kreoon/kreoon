@@ -314,9 +314,9 @@ export function OrganizationRegistrations() {
     <Card className={`transition-all hover:shadow-md ${org.is_blocked ? 'border-destructive/50 bg-destructive/5' : ''}`}>
       <CardContent className="p-4">
         <div className="flex items-start gap-4">
-          <Avatar className="h-14 w-14 rounded-lg">
+          <Avatar className="h-14 w-14 rounded-sm">
             <AvatarImage src={org.logo_url || ''} />
-            <AvatarFallback className="rounded-lg bg-primary/10">
+            <AvatarFallback className="rounded-sm bg-primary/10">
               <Building2 className="h-6 w-6 text-primary" />
             </AvatarFallback>
           </Avatar>
@@ -363,7 +363,7 @@ export function OrganizationRegistrations() {
             </div>
 
             {org.owner && (
-              <div className="flex items-center gap-2 mt-2 p-2 bg-muted/50 rounded-md">
+              <div className="flex items-center gap-2 mt-2 p-2 bg-muted/50 rounded-sm">
                 <Crown className="h-4 w-4 text-yellow-500" />
                 <Avatar className="h-6 w-6">
                   <AvatarImage src={org.owner.avatar_url || ''} />
@@ -544,7 +544,7 @@ export function OrganizationRegistrations() {
 
       {/* Detail Dialog */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-4xl max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5" />

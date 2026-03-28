@@ -32,7 +32,7 @@ const KreoonGlassCard = React.forwardRef<HTMLDivElement, KreoonGlassCardProps>(
       <div
         ref={ref}
         className={cn(
-          "rounded-xl border",
+          "rounded-sm border",
           "bg-gradient-to-b from-white/[0.03] to-transparent",
           intensityClasses[intensity],
           "transition-all duration-200",

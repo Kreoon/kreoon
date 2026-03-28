@@ -54,7 +54,7 @@ export function LandingSalesAngles({ salesAnglesData }: Props) {
         {filtered.map((angle: any, i: number) => {
           const typeClass = TYPE_COLORS[angle.type?.toLowerCase()] || 'bg-white/10 text-white/60 border-white/10';
           return (
-            <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 space-y-2">
+            <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-sm p-4 space-y-2">
               <div className="flex items-start justify-between gap-2">
                 <p className="text-sm font-medium text-white/90">{safeStr(angle.angle, `Angulo ${i + 1}`)}</p>
                 {angle.type && (

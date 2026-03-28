@@ -20,9 +20,9 @@ export function BrandInfoCard({ brand, isOwner, onManageMembers, onSwitchBrand, 
     <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
       <CardContent className="p-5">
         <div className="flex items-start gap-4">
-          <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <div className="h-14 w-14 rounded-sm bg-primary/10 flex items-center justify-center flex-shrink-0">
             {brand.logo_url ? (
-              <img src={brand.logo_url} alt={brand.name} className="h-14 w-14 rounded-xl object-cover" />
+              <img src={brand.logo_url} alt={brand.name} className="h-14 w-14 rounded-sm object-cover" />
             ) : (
               <Building2 className="h-7 w-7 text-primary" />
             )}

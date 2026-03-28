@@ -128,7 +128,7 @@ const styles = {
 
   // Calendar
   calendarContainer: `
-    bg-white rounded-2xl
+    bg-white rounded-sm
     max-w-md
   `,
   calendarHeader: `
@@ -179,7 +179,7 @@ const styles = {
     pr-2
   `,
   timeSlot: (isSelected: boolean) => `
-    px-4 py-3 rounded-lg text-sm font-medium
+    px-4 py-3 rounded-sm text-sm font-medium
     border transition-all duration-200
     ${isSelected
       ? 'bg-[#8B5CF6] text-white border-[#8B5CF6] shadow-lg shadow-violet-500/20'
@@ -203,14 +203,14 @@ const styles = {
     block text-sm font-medium text-[#0F172A] mb-2
   `,
   formInput: `
-    w-full px-4 py-3 rounded-xl
+    w-full px-4 py-3 rounded-sm
     border border-[#E2E8F0] bg-white
     text-[#0F172A] placeholder:text-[#94A3B8]
     focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/20 focus:border-[#8B5CF6]
     transition-all duration-200
   `,
   formTextarea: `
-    w-full px-4 py-3 rounded-xl
+    w-full px-4 py-3 rounded-sm
     border border-[#E2E8F0] bg-white
     text-[#0F172A] placeholder:text-[#94A3B8]
     focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/20 focus:border-[#8B5CF6]
@@ -220,7 +220,7 @@ const styles = {
 
   // Buttons
   primaryBtn: `
-    w-full py-4 px-6 rounded-xl
+    w-full py-4 px-6 rounded-sm
     bg-[#8B5CF6] text-white font-semibold
     hover:bg-[#7C3AED] active:bg-[#6D28D9]
     transition-all duration-200
@@ -235,7 +235,7 @@ const styles = {
 
   // Event Type Cards
   eventTypeCard: (isSelected: boolean, color: string) => `
-    p-5 rounded-2xl border-2 cursor-pointer
+    p-5 rounded-sm border-2 cursor-pointer
     transition-all duration-200
     ${isSelected
       ? `border-[${color}] bg-[${color}]/5 shadow-lg`
@@ -265,7 +265,7 @@ const styles = {
     text-[#64748B] mb-8
   `,
   successDetail: `
-    flex items-center gap-3 p-4 rounded-xl bg-[#F8FAFC]
+    flex items-center gap-3 p-4 rounded-sm bg-[#F8FAFC]
     text-left mb-3
   `,
 
@@ -502,7 +502,7 @@ export function PublicBookingPage() {
           </p>
           <button
             onClick={() => navigate('/')}
-            className="px-6 py-3 bg-[#8B5CF6] text-white rounded-xl font-medium hover:bg-[#7C3AED] transition-colors"
+            className="px-6 py-3 bg-[#8B5CF6] text-white rounded-sm font-medium hover:bg-[#7C3AED] transition-colors"
           >
             Volver al inicio
           </button>
@@ -580,7 +580,7 @@ export function PublicBookingPage() {
             href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(selectedEventType?.title || 'Cita')}&dates=${format(new Date(createdBooking.start_time), "yyyyMMdd'T'HHmmss")}/${format(new Date(createdBooking.end_time), "yyyyMMdd'T'HHmmss")}&details=${encodeURIComponent(`Cita con ${host.display_name}`)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 w-full py-4 px-6 rounded-xl border-2 border-[#E2E8F0] text-[#0F172A] font-semibold hover:border-[#8B5CF6] hover:text-[#8B5CF6] transition-colors"
+            className="inline-flex items-center justify-center gap-2 w-full py-4 px-6 rounded-sm border-2 border-[#E2E8F0] text-[#0F172A] font-semibold hover:border-[#8B5CF6] hover:text-[#8B5CF6] transition-colors"
           >
             <CalendarIcon className="w-5 h-5" />
             Agregar a Google Calendar
@@ -672,7 +672,7 @@ export function PublicBookingPage() {
                           key={eventType.id}
                           variants={fadeInUp}
                           onClick={() => handleSelectEventType(eventType)}
-                          className="p-5 rounded-2xl border-2 border-[#E2E8F0] bg-white cursor-pointer hover:border-[#8B5CF6] hover:shadow-lg transition-all duration-200 group"
+                          className="p-5 rounded-sm border-2 border-[#E2E8F0] bg-white cursor-pointer hover:border-[#8B5CF6] hover:shadow-lg transition-all duration-200 group"
                         >
                           <div className="flex gap-4">
                             <div

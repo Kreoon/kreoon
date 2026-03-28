@@ -173,7 +173,7 @@ export function ProposalInbox({ className }: ProposalInboxProps) {
                         transition={{ delay: index * 0.05 }}
                         onClick={() => handleSelectProposal(proposal)}
                         className={cn(
-                          "p-4 rounded-xl border cursor-pointer transition-all duration-200",
+                          "p-4 rounded-sm border cursor-pointer transition-all duration-200",
                           "bg-social-card border-social-border",
                           "hover:border-social-accent/50 hover:shadow-lg",
                           proposal.status === 'pending' && "border-l-4 border-l-blue-500"
@@ -329,7 +329,7 @@ function ProposalDetail({ proposalId, onStatusUpdate }: ProposalDetailProps) {
         {proposal.service && (
           <div>
             <h4 className="text-sm font-medium text-social-foreground mb-2">Servicio solicitado</h4>
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-social-muted">
+            <div className="flex items-center gap-2 p-3 rounded-sm bg-social-muted">
               <span>{SERVICE_TYPE_ICONS[proposal.service.service_type]}</span>
               <span className="text-social-foreground">{proposal.service.title}</span>
             </div>
@@ -405,7 +405,7 @@ function ProposalDetail({ proposalId, onStatusUpdate }: ProposalDetailProps) {
                 <div
                   key={msg.id}
                   className={cn(
-                    "p-3 rounded-lg text-sm",
+                    "p-3 rounded-sm text-sm",
                     msg.sender_id === proposal.provider_id
                       ? "bg-social-accent/20 ml-8"
                       : "bg-social-muted mr-8"
@@ -429,7 +429,7 @@ function ProposalDetail({ proposalId, onStatusUpdate }: ProposalDetailProps) {
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
               placeholder="Escribe un mensaje..."
-              className="flex-1 px-3 py-2 rounded-lg bg-social-muted border border-social-border text-social-foreground placeholder:text-social-muted-foreground focus:outline-none focus:ring-2 focus:ring-social-accent"
+              className="flex-1 px-3 py-2 rounded-sm bg-social-muted border border-social-border text-social-foreground placeholder:text-social-muted-foreground focus:outline-none focus:ring-2 focus:ring-social-accent"
               onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
             />
             <Button onClick={handleSendMessage} disabled={isSending || !messageText.trim()}>

@@ -60,7 +60,7 @@ const KreoonBadge = React.forwardRef<HTMLSpanElement, KreoonBadgeProps>(
       <span
         ref={ref}
         className={cn(
-          "inline-flex items-center font-medium rounded-lg",
+          "inline-flex items-center font-medium rounded-sm",
           "transition-colors duration-200",
           sizeClasses[size],
           variantClasses[variant],

@@ -243,7 +243,7 @@ export function PaymentMethodDrawer({
         <SheetHeader className="pb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
+              <div className="p-2 rounded-sm bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
                 <CreditCard className="h-5 w-5 text-primary" />
               </div>
               <SheetTitle>
@@ -261,7 +261,7 @@ export function PaymentMethodDrawer({
           {!editingMethod && (
             <div className="space-y-3">
               <Label>Tipo de método</Label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {PAYMENT_METHODS.map((method) => {
                   const Icon = METHOD_ICONS[method];
                   const isSelected = selectedType === method;
@@ -272,7 +272,7 @@ export function PaymentMethodDrawer({
                       type="button"
                       onClick={() => setSelectedType(method)}
                       className={cn(
-                        'p-3 rounded-xl text-center transition-all',
+                        'p-3 rounded-sm text-center transition-all',
                         'border-2',
                         isSelected
                           ? 'border-[hsl(270,100%,60%)] bg-[hsl(270,100%,60%,0.1)]'
@@ -507,7 +507,7 @@ export function PaymentMethodDrawer({
               )}
 
               {/* Default toggle */}
-              <div className="flex items-center justify-between p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)]">
+              <div className="flex items-center justify-between p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)]">
                 <div>
                   <Label>Establecer como predeterminado</Label>
                   <p className="text-xs text-muted-foreground">

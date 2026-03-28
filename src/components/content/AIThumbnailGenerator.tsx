@@ -425,7 +425,7 @@ export function AIThumbnailGenerator({
   };
 
   return (
-    <div className="space-y-4 p-4 rounded-lg border bg-gradient-to-br from-primary/5 via-background to-purple-500/5">
+    <div className="space-y-4 p-4 rounded-sm border bg-gradient-to-br from-primary/5 via-background to-purple-500/5">
       <div className="flex items-center gap-2">
         <div className="p-2 rounded-full bg-primary/10">
           <Wand2 className="h-4 w-4 text-primary" />
@@ -454,7 +454,7 @@ export function AIThumbnailGenerator({
               
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {imageReferences.map((ref) => (
-                  <div key={ref.alias} className="space-y-2 p-3 border rounded-lg bg-card">
+                  <div key={ref.alias} className="space-y-2 p-3 border rounded-sm bg-card">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         {getImageIcon(ref.type)}
@@ -486,7 +486,7 @@ export function AIThumbnailGenerator({
                     />
                     
                     {ref.image ? (
-                      <div className="relative w-full aspect-square max-h-[100px] rounded-lg overflow-hidden border">
+                      <div className="relative w-full aspect-square max-h-[100px] rounded-sm overflow-hidden border">
                         <img src={ref.image} alt={ref.label} className="w-full h-full object-cover" />
                         <Button
                           variant="destructive"
@@ -515,7 +515,7 @@ export function AIThumbnailGenerator({
                 ))}
                 
                 {/* Add style reference button */}
-                <div className="p-3 border rounded-lg bg-card/50 border-dashed flex items-center justify-center">
+                <div className="p-3 border rounded-sm bg-card/50 border-dashed flex items-center justify-center">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -575,7 +575,7 @@ export function AIThumbnailGenerator({
                   </RadioGroup>
                 </div>
 
-                <div className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
+                <div className="flex items-center justify-between p-2 bg-muted/50 rounded-sm">
                   <Label className="text-xs">¿Mostrar marca/logo?</Label>
                   <Switch checked={showBrand} onCheckedChange={setShowBrand} />
                 </div>
@@ -700,7 +700,7 @@ export function AIThumbnailGenerator({
                   className="space-y-2"
                 >
                   {AI_MODELS.map(model => (
-                    <div key={model.value} className={`flex items-center space-x-2 p-2 rounded-md border ${model.recommended ? 'border-primary/50 bg-primary/5' : 'border-border'}`}>
+                    <div key={model.value} className={`flex items-center space-x-2 p-2 rounded-sm border ${model.recommended ? 'border-primary/50 bg-primary/5' : 'border-border'}`}>
                       <RadioGroupItem value={model.value} id={`model-${model.value}`} />
                       <Label htmlFor={`model-${model.value}`} className="cursor-pointer flex-1">
                         <div className="flex items-center gap-2">
@@ -725,7 +725,7 @@ export function AIThumbnailGenerator({
                   className="space-y-2"
                 >
                   {availableFormats.map(format => (
-                    <div key={format.value} className={`flex items-center space-x-2 p-2 rounded-md border ${format.recommended ? 'border-primary/50 bg-primary/5' : 'border-border'}`}>
+                    <div key={format.value} className={`flex items-center space-x-2 p-2 rounded-sm border ${format.recommended ? 'border-primary/50 bg-primary/5' : 'border-border'}`}>
                       <RadioGroupItem value={format.value} id={`format-${format.value}`} />
                       <Label htmlFor={`format-${format.value}`} className="cursor-pointer flex-1">
                         <div className="flex items-center gap-2">
@@ -800,7 +800,7 @@ export function AIThumbnailGenerator({
             </TabsContent>
             
             <TabsContent value="composition" className="mt-2">
-              <ScrollArea className="h-[250px] rounded-md border p-3">
+              <ScrollArea className="h-[250px] rounded-sm border p-3">
                 <div className="space-y-3 text-xs">
                   {promptJson.references && (
                     <div>
@@ -831,7 +831,7 @@ export function AIThumbnailGenerator({
             </TabsContent>
             
             <TabsContent value="context" className="mt-2">
-              <ScrollArea className="h-[250px] rounded-md border p-3">
+              <ScrollArea className="h-[250px] rounded-sm border p-3">
                 <div className="space-y-3 text-xs">
                   {promptJson.meta && (
                     <div>
@@ -862,7 +862,7 @@ export function AIThumbnailGenerator({
             </TabsContent>
             
             <TabsContent value="full" className="mt-2">
-              <ScrollArea className="h-[250px] rounded-md border">
+              <ScrollArea className="h-[250px] rounded-sm border">
                 <pre className="p-3 text-[10px] font-mono whitespace-pre-wrap">
                   {JSON.stringify(promptJson, null, 2)}
                 </pre>
@@ -871,7 +871,7 @@ export function AIThumbnailGenerator({
           </Tabs>
 
           {promptJson.negative_prompt && promptJson.negative_prompt.length > 0 && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-md p-2">
+            <div className="bg-red-500/10 border border-red-500/20 rounded-sm p-2">
               <h5 className="text-xs font-semibold text-red-600 dark:text-red-400 mb-1">Evitar:</h5>
               <p className="text-xs text-red-600/80 dark:text-red-400/80">
                 {promptJson.negative_prompt.join(" • ")}
@@ -913,7 +913,7 @@ export function AIThumbnailGenerator({
       {step === "result" && generatedThumbnail && (
         <div className="space-y-4">
           <div className="flex justify-center">
-            <div className="relative w-full max-w-[200px] aspect-[9/16] rounded-lg overflow-hidden border-2 border-primary/30 shadow-lg">
+            <div className="relative w-full max-w-[200px] aspect-[9/16] rounded-sm overflow-hidden border-2 border-primary/30 shadow-lg">
               <img 
                 src={generatedThumbnail} 
                 alt="Generated thumbnail" 

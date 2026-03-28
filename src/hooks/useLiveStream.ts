@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 import type {
   LiveStreamStatus,
   CreatorLiveStream,
@@ -58,11 +59,11 @@ class WHIPClient {
   }
 
   async connect(stream: MediaStream): Promise<void> {
-    console.log('[WHIP] Starting connection to:', this.whipUrl);
+    logger.debug('WHIP Starting connection', { url: this.whipUrl });
 
     // Verificar que hay tracks en el stream
     const tracks = stream.getTracks();
-    console.log('[WHIP] Stream tracks:', tracks.map(t => `${t.kind}:${t.readyState}`));
+    logger.debug('WHIP Stream tracks', { tracks: tracks.map(t => `${t.kind}:${t.readyState}`) });
 
     if (tracks.length === 0) {
       throw new Error('No hay tracks de audio/video en el stream');
@@ -101,20 +102,20 @@ class WHIPClient {
 
     // Logging detallado de estados
     this.peerConnection.onconnectionstatechange = () => {
-      console.log('[WHIP] Connection state:', this.peerConnection?.connectionState);
+      logger.debug('WHIP Connection state', { state: this.peerConnection?.connectionState });
     };
 
     this.peerConnection.oniceconnectionstatechange = () => {
-      console.log('[WHIP] ICE connection state:', this.peerConnection?.iceConnectionState);
+      logger.debug('WHIP ICE connection state', { state: this.peerConnection?.iceConnectionState });
     };
 
     this.peerConnection.onicecandidateerror = (event) => {
-      console.warn('[WHIP] ICE candidate error:', event);
+      logger.warn('WHIP ICE candidate error', { event });
     };
 
     // Agregar tracks usando addTrack (más compatible que addTransceiver)
     tracks.forEach((track) => {
-      console.log('[WHIP] Adding track:', track.kind, track.label);
+      logger.debug('WHIP Adding track', { kind: track.kind, label: track.label });
       this.peerConnection!.addTrack(track, stream);
     });
 
@@ -123,13 +124,13 @@ class WHIPClient {
       offerToReceiveAudio: false,
       offerToReceiveVideo: false,
     });
-    console.log('[WHIP] Created offer');
+    logger.debug('WHIP Created offer');
 
     // Configurar el local description - esto inicia ICE gathering
     // NOTA: Los listeners ya están configurados antes de esto
     await this.peerConnection.setLocalDescription(offer);
-    console.log('[WHIP] Local description set, ICE gathering started');
-    console.log('[WHIP] Initial gathering state:', this.peerConnection.iceGatheringState);
+    logger.debug('WHIP Local description set, ICE gathering started');
+    logger.debug('WHIP Initial gathering state', { state: this.peerConnection.iceGatheringState });
 
     // Esperar ICE gathering completo (MUY importante para WHIP)
     // La promesa ya fue configurada ANTES de setLocalDescription
@@ -138,20 +139,20 @@ class WHIPClient {
     // Obtener el SDP FINAL después de que ICE gathering terminó
     const finalSDP = this.peerConnection.localDescription?.sdp || '';
     const candidateCount = (finalSDP.match(/a=candidate:/g) || []).length;
-    console.log('[WHIP] Final SDP ready, candidates in SDP:', candidateCount);
-    console.log('[WHIP] Candidates captured via events:', this.iceCandidateCount);
+    logger.debug('WHIP Final SDP ready', { candidatesInSDP: candidateCount });
+    logger.debug('WHIP Candidates captured via events', { count: this.iceCandidateCount });
 
     if (candidateCount === 0) {
       // Cloudflare Stream soporta "trickle ICE" - podemos enviar el SDP sin candidates
       // y el servidor generará candidates del lado del servidor
-      console.warn('[WHIP] No local candidates (browser privacy mode). Using server-side ICE.');
-      console.log('[WHIP] This is normal if browser is hiding local IPs with mDNS.');
+      logger.warn('WHIP No local candidates (browser privacy mode). Using server-side ICE');
+      logger.debug('WHIP This is normal if browser is hiding local IPs with mDNS');
     }
 
     // Enviar offer al servidor WHIP
     const sdpToSend = this.peerConnection.localDescription?.sdp || '';
-    console.log('[WHIP] Sending offer to WHIP server...');
-    console.log('[WHIP] SDP preview:', sdpToSend.substring(0, 500));
+    logger.debug('WHIP Sending offer to server');
+    logger.debug('WHIP SDP preview', { preview: sdpToSend.substring(0, 200) });
 
     const response = await fetch(this.whipUrl, {
       method: 'POST',
@@ -163,22 +164,22 @@ class WHIPClient {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[WHIP] Server error:', response.status, errorText);
+      logger.error('WHIP Server error', new Error(errorText), { status: response.status });
       throw new Error(`WHIP error: ${response.status} - ${errorText}`);
     }
 
-    console.log('[WHIP] Server responded OK');
+    logger.debug('WHIP Server responded OK');
 
     // Guardar resource URL para DELETE después
     this.resourceUrl = response.headers.get('Location') || this.whipUrl;
 
     // Obtener answer
     const answerSDP = await response.text();
-    console.log('[WHIP] Got answer SDP, length:', answerSDP.length);
+    logger.debug('WHIP Got answer SDP', { length: answerSDP.length });
 
     // Log de los candidates en el answer
     const answerCandidates = (answerSDP.match(/a=candidate:/g) || []).length;
-    console.log('[WHIP] Candidates in answer SDP:', answerCandidates);
+    logger.debug('WHIP Candidates in answer SDP', { count: answerCandidates });
 
     await this.peerConnection.setRemoteDescription({
       type: 'answer',
@@ -186,13 +187,15 @@ class WHIPClient {
     });
 
     // Esperar a que la conexión se establezca realmente
-    console.log('[WHIP] Waiting for WebRTC connection...');
-    console.log('[WHIP] Current states - connection:', this.peerConnection.connectionState,
-                'ice:', this.peerConnection.iceConnectionState);
+    logger.debug('WHIP Waiting for WebRTC connection');
+    logger.debug('WHIP Current states', {
+      connection: this.peerConnection.connectionState,
+      ice: this.peerConnection.iceConnectionState
+    });
 
     await this.waitForConnection();
 
-    console.log('[WHIP] Connected successfully!');
+    logger.debug('WHIP Connected successfully');
   }
 
   /**
@@ -220,17 +223,16 @@ class WHIPClient {
         if (event.candidate) {
           this.iceCandidateCount++;
           const c = event.candidate;
-          console.log(`[WHIP] ICE candidate #${this.iceCandidateCount}:`,
-                      `type=${c.type}`,
-                      `protocol=${c.protocol}`,
-                      `address=${c.address || '(hidden)'}`,
-                      `port=${c.port}`,
-                      `foundation=${c.foundation}`);
-          // Log del candidate completo para diagnóstico
-          console.log('[WHIP] Candidate string:', c.candidate);
+          logger.debug(`WHIP ICE candidate #${this.iceCandidateCount}`, {
+            type: c.type,
+            protocol: c.protocol,
+            address: c.address || '(hidden)',
+            port: c.port,
+            foundation: c.foundation
+          });
         } else {
           // null candidate = ICE gathering completó
-          console.log('[WHIP] ICE gathering complete (null candidate), total:', this.iceCandidateCount);
+          logger.debug('WHIP ICE gathering complete (null candidate)', { total: this.iceCandidateCount });
           cleanup();
           resolve();
         }
@@ -239,10 +241,10 @@ class WHIPClient {
       // Handler para cambio de estado de gathering
       this.peerConnection!.onicegatheringstatechange = () => {
         const state = this.peerConnection?.iceGatheringState;
-        console.log('[WHIP] ICE gathering state changed:', state);
+        logger.debug('WHIP ICE gathering state changed', { state });
 
         if (state === 'complete') {
-          console.log('[WHIP] ICE gathering state=complete, candidates:', this.iceCandidateCount);
+          logger.debug('WHIP ICE gathering state=complete', { candidates: this.iceCandidateCount });
           cleanup();
           resolve();
         }
@@ -250,9 +252,10 @@ class WHIPClient {
 
       // Timeout de 15 segundos
       timeoutId = setTimeout(() => {
-        console.log('[WHIP] ICE gathering timeout after 15s');
-        console.log('[WHIP] Final state:', this.peerConnection?.iceGatheringState);
-        console.log('[WHIP] Candidates found:', this.iceCandidateCount);
+        logger.debug('WHIP ICE gathering timeout after 15s', {
+          finalState: this.peerConnection?.iceGatheringState,
+          candidatesFound: this.iceCandidateCount
+        });
         cleanup();
         resolve();
       }, 15000);
@@ -268,7 +271,7 @@ class WHIPClient {
 
       const connState = this.peerConnection.connectionState;
       const iceState = this.peerConnection.iceConnectionState;
-      console.log('[WHIP] Initial states - connection:', connState, 'ice:', iceState);
+      logger.debug('WHIP Initial states', { connection: connState, ice: iceState });
 
       // Si ya está conectado, resolver inmediatamente
       if (connState === 'connected' || iceState === 'connected') {
@@ -292,7 +295,7 @@ class WHIPClient {
         const currentConnState = this.peerConnection?.connectionState;
         const currentIceState = this.peerConnection?.iceConnectionState;
 
-        console.log('[WHIP] State check - connection:', currentConnState, 'ice:', currentIceState);
+        logger.debug('WHIP State check', { connection: currentConnState, ice: currentIceState });
 
         // Conectado por cualquier vía
         if (currentConnState === 'connected' || currentIceState === 'connected') {
@@ -312,12 +315,12 @@ class WHIPClient {
       };
 
       const onConnStateChange = () => {
-        console.log('[WHIP] Connection state changed:', this.peerConnection?.connectionState);
+        logger.debug('WHIP Connection state changed', { state: this.peerConnection?.connectionState });
         checkAndResolve();
       };
 
       const onIceStateChange = () => {
-        console.log('[WHIP] ICE state changed:', this.peerConnection?.iceConnectionState);
+        logger.debug('WHIP ICE state changed', { state: this.peerConnection?.iceConnectionState });
         checkAndResolve();
       };
 
@@ -330,7 +333,7 @@ class WHIPClient {
         const finalConnState = this.peerConnection?.connectionState;
         const finalIceState = this.peerConnection?.iceConnectionState;
 
-        console.log('[WHIP] Timeout - final states - connection:', finalConnState, 'ice:', finalIceState);
+        logger.debug('WHIP Timeout - final states', { connection: finalConnState, ice: finalIceState });
 
         // Aceptar cualquier estado excepto 'failed' o 'closed'
         // Trickle ICE puede tomar tiempo y el stream puede estar funcionando
@@ -339,7 +342,7 @@ class WHIPClient {
             finalConnState === 'closed' || finalIceState === 'closed') {
           reject(new Error(`WebRTC failed: conn=${finalConnState}, ice=${finalIceState}`));
         } else {
-          console.log('[WHIP] Accepting current state - stream may be working');
+          logger.debug('WHIP Accepting current state - stream may be working');
           resolve();
         }
       }, 30000);
@@ -347,15 +350,15 @@ class WHIPClient {
   }
 
   async disconnect(): Promise<void> {
-    console.log('[WHIP] Disconnecting...');
+    logger.debug('WHIP Disconnecting');
 
     // Notificar al servidor WHIP
     if (this.resourceUrl) {
       try {
         await fetch(this.resourceUrl, { method: 'DELETE' });
-        console.log('[WHIP] Server notified of disconnect');
+        logger.debug('WHIP Server notified of disconnect');
       } catch (err) {
-        console.warn('[WHIP] Error notifying server:', err);
+        logger.warn('WHIP Error notifying server', { error: err });
       }
     }
 
@@ -366,7 +369,7 @@ class WHIPClient {
     }
 
     this.resourceUrl = null;
-    console.log('[WHIP] Disconnected');
+    logger.debug('WHIP Disconnected');
   }
 
   getConnectionState(): RTCPeerConnectionState | null {
@@ -378,7 +381,7 @@ async function invokeCloudflareService<T>(
   action: string,
   params: Record<string, unknown> = {}
 ): Promise<T> {
-  console.log('[LiveStream] invokeCloudflareService START:', action);
+  logger.debug('LiveStream invokeCloudflareService START', { action });
   const startTime = Date.now();
 
   // Obtener sesión actual - con retry si no está disponible
@@ -386,18 +389,18 @@ async function invokeCloudflareService<T>(
   let retries = 3;
 
   while (retries > 0 && !session) {
-    console.log('[LiveStream] Getting session, attempt:', 4 - retries);
+    logger.debug('LiveStream Getting session', { attempt: 4 - retries });
     const { data, error: sessionError } = await supabase.auth.getSession();
 
     if (sessionError) {
-      console.error('[LiveStream] Error getting session:', sessionError);
+      logger.error('LiveStream Error getting session', sessionError);
       throw new Error('Error al obtener la sesión');
     }
 
     session = data.session;
 
     if (!session?.access_token) {
-      console.warn('[LiveStream] No session yet, retrying...', retries);
+      logger.warn('LiveStream No session yet, retrying', { retriesLeft: retries });
       retries--;
       if (retries > 0) {
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -406,10 +409,10 @@ async function invokeCloudflareService<T>(
   }
 
   if (!session?.access_token) {
-    console.error('[LiveStream] No access token after retries');
+    logger.error('LiveStream No access token after retries');
     throw new Error('No hay sesión activa. Inicia sesión para transmitir.');
   }
-  console.log('[LiveStream] Session obtained in', Date.now() - startTime, 'ms');
+  logger.debug('LiveStream Session obtained', { timeMs: Date.now() - startTime });
 
   // Verificar que el token no esté expirado
   const tokenParts = session.access_token.split('.');
@@ -418,29 +421,29 @@ async function invokeCloudflareService<T>(
       const payload = JSON.parse(atob(tokenParts[1]));
       const exp = payload.exp * 1000;
       const now = Date.now();
-      console.log('[LiveStream] Token expires in:', Math.round((exp - now) / 1000), 'seconds');
+      logger.debug('LiveStream Token expires in', { seconds: Math.round((exp - now) / 1000) });
 
       if (exp < now) {
-        console.error('[LiveStream] Token expired, refreshing...');
+        logger.error('LiveStream Token expired, refreshing');
         const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
         if (refreshError || !refreshData.session) {
           throw new Error('Sesión expirada. Por favor, recarga la página.');
         }
         session = refreshData.session;
-        console.log('[LiveStream] Token refreshed successfully');
+        logger.debug('LiveStream Token refreshed successfully');
       }
     } catch (e) {
-      console.warn('[LiveStream] Could not parse token expiry:', e);
+      logger.warn('LiveStream Could not parse token expiry', { error: e });
     }
   }
 
-  console.log('[LiveStream] Calling cloudflare-live-service:', action);
+  logger.debug('LiveStream Calling cloudflare-live-service', { action });
 
   // Usar fetch directamente para evitar problemas con supabase.functions.invoke
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const functionUrl = `${supabaseUrl}/functions/v1/cloudflare-live-service`;
 
-  console.log('[LiveStream] Fetching:', functionUrl);
+  logger.debug('LiveStream Fetching', { url: functionUrl });
   const fetchStart = Date.now();
 
   try {
@@ -453,26 +456,25 @@ async function invokeCloudflareService<T>(
       body: JSON.stringify({ action, ...params }),
     });
 
-    console.log('[LiveStream] Fetch completed in', Date.now() - fetchStart, 'ms, status:', response.status);
+    logger.debug('LiveStream Fetch completed', { timeMs: Date.now() - fetchStart, status: response.status });
 
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('[LiveStream] Edge function error:', response.status, data);
+      logger.error('LiveStream Edge function error', new Error(data.error), { status: response.status });
       throw new Error(data.error || `Error ${response.status}`);
     }
 
     // Check if data contains an error from the function itself
     if (data?.error) {
-      console.error('[LiveStream] Function returned error:', data.error);
+      logger.error('LiveStream Function returned error', new Error(data.error));
       throw new Error(data.error);
     }
 
-    console.log('[LiveStream] Response received, total time:', Date.now() - startTime, 'ms');
-    console.log('[LiveStream] Response data:', data);
+    logger.debug('LiveStream Response received', { totalTimeMs: Date.now() - startTime });
     return data as T;
   } catch (fetchError) {
-    console.error('[LiveStream] Fetch error after', Date.now() - fetchStart, 'ms:', fetchError);
+    logger.error('LiveStream Fetch error', fetchError, { timeMs: Date.now() - fetchStart });
     throw fetchError;
   }
 }
@@ -577,7 +579,7 @@ export function useLiveStream(): UseLiveStreamReturn {
       try {
         setError(null);
         setStatus('connecting'); // Mostrar estado de preparación
-        console.log('[LiveStream] prepareForLive called with:', form);
+        logger.debug('LiveStream prepareForLive called', { title: form.title });
 
         const result = await invokeCloudflareService<StreamCredentials>('prepare-for-live', {
           title: form.title,
@@ -586,10 +588,10 @@ export function useLiveStream(): UseLiveStreamReturn {
           isShoppingEnabled: form.isShoppingEnabled,
         });
 
-        console.log('[LiveStream] prepareForLive result:', result);
+        logger.debug('LiveStream prepareForLive result', { hasStreamId: !!result?.streamId });
 
         if (!result?.streamId || !result?.whipUrl) {
-          console.error('[LiveStream] Invalid credentials received:', result);
+          logger.error('LiveStream Invalid credentials received');
           toast.error('Error: credenciales inválidas del servidor');
           setStatus('idle');
           return null;
@@ -600,14 +602,11 @@ export function useLiveStream(): UseLiveStreamReturn {
         setPlaybackUrl(result.playbackUrl);
         setStatus('idle'); // Listo para conectar
 
-        console.log('[LiveStream] Stream prepared successfully:', {
-          streamId: result.streamId,
-          whipUrl: result.whipUrl,
-        });
+        logger.debug('LiveStream Stream prepared successfully', { streamId: result.streamId });
 
         return result;
       } catch (err) {
-        console.error('[LiveStream] Error preparing for live:', err);
+        logger.error('LiveStream Error preparing for live', err);
         setError(err instanceof Error ? err : new Error('Failed to prepare stream'));
         const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
         toast.error(`Error al preparar: ${errorMessage}`);
@@ -651,7 +650,7 @@ export function useLiveStream(): UseLiveStreamReturn {
 
         return true;
       } catch (err) {
-        console.error('Error going live:', err);
+        logger.error('Error going live', err);
         setError(err instanceof Error ? err : new Error('Failed to go live'));
         setStatus('idle');
         toast.error('Error al iniciar la transmisión');
@@ -687,7 +686,7 @@ export function useLiveStream(): UseLiveStreamReturn {
 
       return result;
     } catch (err) {
-      console.error('Error ending live:', err);
+      logger.error('Error ending live', err);
       setError(err instanceof Error ? err : new Error('Failed to end stream'));
       toast.error('Error al finalizar la transmisión');
       return null;
@@ -707,7 +706,7 @@ export function useLiveStream(): UseLiveStreamReturn {
 
         queryClient.invalidateQueries({ queryKey: ['my-active-stream'] });
       } catch (err) {
-        console.error('Error updating stream:', err);
+        logger.error('Error updating stream', err);
         toast.error('Error al actualizar la transmisión');
       }
     },
@@ -757,7 +756,7 @@ export function useActiveLives(options?: { category?: string; limit?: number }) 
       });
 
       if (error) {
-        console.error('Error fetching active streams:', error);
+        logger.error('Error fetching active streams', error);
         return [];
       }
 

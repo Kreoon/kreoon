@@ -90,7 +90,7 @@ function StatCard({
               <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
             )}
           </div>
-          <div className={cn('p-2 rounded-lg bg-current/10', iconColors[color])}>
+          <div className={cn('p-2 rounded-sm bg-current/10', iconColors[color])}>
             <Icon className={cn('h-5 w-5', iconColors[color])} />
           </div>
         </div>
@@ -194,7 +194,7 @@ export function BrandMemberDashboard() {
             {/* Header */}
             <div className="text-center space-y-3">
               <div className="flex justify-center mb-4">
-                <div className="p-4 rounded-2xl bg-purple-500/20 border border-purple-500/30">
+                <div className="p-4 rounded-sm bg-purple-500/20 border border-purple-500/30">
                   <Building2 className="h-12 w-12 text-purple-400" />
                 </div>
               </div>
@@ -316,10 +316,10 @@ export function BrandMemberDashboard() {
               <img
                 src={activeBrand.logo_url}
                 alt={activeBrand.name}
-                className="h-10 w-10 rounded-lg object-cover"
+                className="h-10 w-10 rounded-sm object-cover"
               />
             ) : (
-              <div className="h-10 w-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+              <div className="h-10 w-10 rounded-sm bg-purple-500/20 flex items-center justify-center">
                 <Building2 className="h-5 w-5 text-purple-400" />
               </div>
             )}
@@ -479,7 +479,7 @@ export function BrandMemberDashboard() {
                     {projects.slice(0, 5).map(project => (
                       <div
                         key={project.id}
-                        className="flex items-center justify-between p-3 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors"
+                        className="flex items-center justify-between p-3 rounded-sm border border-border/50 hover:bg-muted/50 transition-colors"
                       >
                         <div className="flex items-center gap-3">
                           <Avatar className="h-10 w-10">
@@ -715,10 +715,10 @@ export function BrandMemberDashboard() {
                     <img
                       src={activeBrand.logo_url}
                       alt={activeBrand.name}
-                      className="h-24 w-24 rounded-xl object-cover"
+                      className="h-24 w-24 rounded-sm object-cover"
                     />
                   ) : (
-                    <div className="h-24 w-24 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                    <div className="h-24 w-24 rounded-sm bg-purple-500/20 flex items-center justify-center">
                       <Building2 className="h-10 w-10 text-purple-400" />
                     </div>
                   )}

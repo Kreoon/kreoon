@@ -12,7 +12,7 @@ export function RichTextViewer({ content, className, maxHeight = "max-h-[600px]"
   if (!content || content.trim() === '' || content === '<p></p>') {
     return (
       <div className={cn(
-        "flex items-center justify-center p-8 rounded-xl border-2 border-dashed border-muted-foreground/20",
+        "flex items-center justify-center p-8 rounded-sm border-2 border-dashed border-muted-foreground/20",
         "bg-muted/20 text-muted-foreground text-sm",
         className
       )}>
@@ -29,7 +29,7 @@ export function RichTextViewer({ content, className, maxHeight = "max-h-[600px]"
     <ScrollArea className={cn(maxHeight, className)}>
       <div 
         className={cn(
-          "p-5 rounded-xl border bg-card",
+          "p-5 rounded-sm border bg-card",
           "prose prose-sm dark:prose-invert max-w-none",
           // Headers
           "[&_h2]:text-lg [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2 [&_h2]:text-foreground",

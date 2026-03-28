@@ -41,7 +41,7 @@ function RenderValue({ value, depth = 0, keyName = "" }: { value: unknown; depth
     if (isVeryLong) {
       return (
         <div className="space-y-2">
-          <div className="p-3 rounded-lg bg-muted/30 border">
+          <div className="p-3 rounded-sm bg-muted/30 border">
             <p className="text-sm whitespace-pre-wrap leading-relaxed">
               {expanded ? value : value.slice(0, 300) + "..."}
             </p>
@@ -62,7 +62,7 @@ function RenderValue({ value, depth = 0, keyName = "" }: { value: unknown; depth
 
     if (isLongText) {
       return (
-        <div className="p-3 rounded-lg bg-muted/20 border">
+        <div className="p-3 rounded-sm bg-muted/20 border">
           <p className="text-sm whitespace-pre-wrap leading-relaxed">{value}</p>
           <CopyButton text={value} size="sm" className="mt-2" />
         </div>
@@ -147,7 +147,7 @@ function RenderValue({ value, depth = 0, keyName = "" }: { value: unknown; depth
           <span>{value.length} elementos</span>
         </div>
         {value.slice(0, expanded ? undefined : 3).map((item, idx) => (
-          <div key={idx} className={cn("p-3 rounded-lg bg-muted/20 border-l-2", borderColor)}>
+          <div key={idx} className={cn("p-3 rounded-sm bg-muted/20 border-l-2", borderColor)}>
             <div className="flex items-center gap-2 mb-2">
               <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                 #{idx + 1}
@@ -218,7 +218,7 @@ export function GenericTabContent({ data, title, icon }: GenericTabContentProps)
       {/* Header con estadísticas */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-sm bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
             {icon || <Sparkles className="w-5 h-5 text-primary" />}
           </div>
           <div>
@@ -296,7 +296,7 @@ export function GenericTabContent({ data, title, icon }: GenericTabContentProps)
         {showRaw && (
           <CardContent>
             <div className="relative">
-              <pre className="p-4 bg-muted/50 rounded-lg text-xs overflow-auto max-h-96 font-mono">
+              <pre className="p-4 bg-muted/50 rounded-sm text-xs overflow-auto max-h-96 font-mono">
                 {JSON.stringify(data, null, 2)}
               </pre>
               <CopyButton

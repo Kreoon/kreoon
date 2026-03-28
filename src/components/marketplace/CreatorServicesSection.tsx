@@ -28,7 +28,7 @@ export function CreatorServicesSection({
         <div className="h-6 bg-social-muted rounded animate-pulse w-40" />
         <div className="space-y-3">
           {[1, 2].map((i) => (
-            <div key={i} className="h-32 bg-social-muted rounded-lg animate-pulse" />
+            <div key={i} className="h-32 bg-social-muted rounded-sm animate-pulse" />
           ))}
         </div>
       </div>
@@ -73,7 +73,7 @@ export function CreatorServicesSection({
               transition={{ delay: index * 0.1 }}
               onClick={() => setSelectedService(service)}
               className={cn(
-                "relative p-4 rounded-xl border cursor-pointer transition-all duration-200",
+                "relative p-4 rounded-sm border cursor-pointer transition-all duration-200",
                 "bg-social-card border-social-border",
                 "hover:border-social-accent/50 hover:shadow-lg hover:shadow-social-accent/5",
                 "group"
@@ -89,7 +89,7 @@ export function CreatorServicesSection({
 
               <div className="flex gap-4">
                 {/* Icon */}
-                <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-social-muted flex items-center justify-center text-2xl">
+                <div className="flex-shrink-0 w-12 h-12 rounded-sm bg-social-muted flex items-center justify-center text-2xl">
                   {SERVICE_TYPE_ICONS[service.service_type]}
                 </div>
 
@@ -160,7 +160,7 @@ export function CreatorServicesSection({
 
         {/* Empty state for owner */}
         {services.length === 0 && isOwner && (
-          <div className="text-center py-8 px-4 rounded-xl border border-dashed border-social-border">
+          <div className="text-center py-8 px-4 rounded-sm border border-dashed border-social-border">
             <p className="text-social-muted-foreground mb-3">
               Aún no has agregado servicios
             </p>
@@ -176,7 +176,7 @@ export function CreatorServicesSection({
           <button
             onClick={onRequestCustom}
             className={cn(
-              "w-full p-4 rounded-xl border border-dashed",
+              "w-full p-4 rounded-sm border border-dashed",
               "border-social-border hover:border-social-accent/50",
               "text-social-muted-foreground hover:text-social-foreground",
               "transition-all duration-200 text-center"

@@ -169,7 +169,7 @@ function StatCard({
   return (
     <Card className="p-4">
       <div className="flex items-center gap-3">
-        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", c.iconBg)}>
+        <div className={cn("w-10 h-10 rounded-sm flex items-center justify-center", c.iconBg)}>
           <Icon className={cn("h-5 w-5", c.text)} />
         </div>
         <div className="min-w-0">
@@ -392,7 +392,7 @@ function CommunityForm({
           <Gift className="h-4 w-4" />
           Beneficios
         </h4>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <Label className="text-xs text-muted-foreground">Meses gratis</Label>
             <Input
@@ -864,7 +864,7 @@ function LandingCustomizationForm({
         </div>
         <div className="space-y-3">
           {features.map((feature, index) => (
-            <div key={index} className="p-3 rounded-lg bg-muted/50 space-y-2">
+            <div key={index} className="p-3 rounded-sm bg-muted/50 space-y-2">
               <div className="flex items-center gap-2">
                 <Input
                   value={feature.title}
@@ -908,7 +908,7 @@ function LandingCustomizationForm({
         </div>
         <div className="space-y-3">
           {testimonials.map((testimonial, index) => (
-            <div key={index} className="p-3 rounded-lg bg-muted/50 space-y-2">
+            <div key={index} className="p-3 rounded-sm bg-muted/50 space-y-2">
               <div className="flex items-center gap-2">
                 <Input
                   value={testimonial.author}
@@ -1025,7 +1025,7 @@ function MembersTab({ community }: { community: CommunityWithMetrics }) {
         {members.map((member) => (
           <div
             key={member.id}
-            className="p-3 rounded-lg bg-muted/50 flex items-center gap-3"
+            className="p-3 rounded-sm bg-muted/50 flex items-center gap-3"
           >
             <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
               {member.brand_name ? (
@@ -1129,7 +1129,7 @@ function FinancesTab({ community }: { community: CommunityWithMetrics }) {
   return (
     <div className="space-y-6">
       {/* Owner info */}
-      <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
+      <div className="p-4 rounded-sm bg-amber-500/10 border border-amber-500/20">
         <div className="flex items-center gap-2 mb-2">
           <Crown className="h-4 w-4 text-amber-500" />
           <span className="text-sm font-medium text-amber-500">Owner de la comunidad</span>
@@ -1147,22 +1147,22 @@ function FinancesTab({ community }: { community: CommunityWithMetrics }) {
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="p-3 rounded-lg bg-muted/50 text-center">
+        <div className="p-3 rounded-sm bg-muted/50 text-center">
           <DollarSign className="h-5 w-5 text-green-500 mx-auto mb-1" />
           <p className="text-lg font-bold text-green-500">${totalTransactions.toLocaleString()}</p>
           <p className="text-[10px] text-muted-foreground">Transacciones totales</p>
         </div>
-        <div className="p-3 rounded-lg bg-muted/50 text-center">
+        <div className="p-3 rounded-sm bg-muted/50 text-center">
           <TrendingUp className="h-5 w-5 text-amber-500 mx-auto mb-1" />
           <p className="text-lg font-bold text-amber-500">${totalEarnings.toLocaleString()}</p>
           <p className="text-[10px] text-muted-foreground">Ganancias del owner</p>
         </div>
-        <div className="p-3 rounded-lg bg-muted/50 text-center">
+        <div className="p-3 rounded-sm bg-muted/50 text-center">
           <Clock className="h-5 w-5 text-blue-500 mx-auto mb-1" />
           <p className="text-lg font-bold text-blue-500">${pendingEarnings.toLocaleString()}</p>
           <p className="text-[10px] text-muted-foreground">Pendiente</p>
         </div>
-        <div className="p-3 rounded-lg bg-muted/50 text-center">
+        <div className="p-3 rounded-sm bg-muted/50 text-center">
           <CheckCircle className="h-5 w-5 text-emerald-500 mx-auto mb-1" />
           <p className="text-lg font-bold text-emerald-500">${paidEarnings.toLocaleString()}</p>
           <p className="text-[10px] text-muted-foreground">Pagado</p>
@@ -1181,7 +1181,7 @@ function FinancesTab({ community }: { community: CommunityWithMetrics }) {
             {earnings.slice(0, 10).map((earning) => (
               <div
                 key={earning.id}
-                className="p-2 rounded-lg bg-muted/30 flex items-center justify-between text-sm"
+                className="p-2 rounded-sm bg-muted/30 flex items-center justify-between text-sm"
               >
                 <div>
                   <p className="text-xs text-muted-foreground">
@@ -1236,11 +1236,11 @@ function CommunityDetailPanel({
       <SheetHeader>
         <SheetTitle className="flex items-center gap-3">
           <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center"
+            className="w-12 h-12 rounded-sm flex items-center justify-center"
             style={{ backgroundColor: community.custom_badge_color || '#8b5cf6' }}
           >
             {community.logo_url ? (
-              <img src={community.logo_url} alt="" className="w-12 h-12 rounded-xl object-cover" />
+              <img src={community.logo_url} alt="" className="w-12 h-12 rounded-sm object-cover" />
             ) : (
               <Users2 className="w-6 h-6 text-white" />
             )}
@@ -1253,7 +1253,7 @@ function CommunityDetailPanel({
       </SheetHeader>
 
       {/* Link copiable */}
-      <div className="mt-4 flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+      <div className="mt-4 flex items-center gap-2 p-2 rounded-sm bg-muted/50">
         <span className="text-xs text-muted-foreground flex-1 truncate">
           {window.location.origin}/comunidad/{community.slug}
         </span>
@@ -1316,18 +1316,18 @@ function CommunityDetailPanel({
           {/* Benefits */}
           <div>
             <h4 className="text-sm font-medium mb-3">Beneficios</h4>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="text-center p-3 rounded-lg bg-amber-500/10">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="text-center p-3 rounded-sm bg-amber-500/10">
                 <Gift className="h-5 w-5 text-amber-500 mx-auto mb-1" />
                 <p className="text-lg font-bold text-amber-500">{community.free_months}</p>
                 <p className="text-[10px] text-muted-foreground">Meses gratis</p>
               </div>
-              <div className="text-center p-3 rounded-lg bg-green-500/10">
+              <div className="text-center p-3 rounded-sm bg-green-500/10">
                 <Percent className="h-5 w-5 text-green-500 mx-auto mb-1" />
                 <p className="text-lg font-bold text-green-500">{community.commission_discount_points}%</p>
                 <p className="text-[10px] text-muted-foreground">Descuento</p>
               </div>
-              <div className="text-center p-3 rounded-lg bg-purple-500/10">
+              <div className="text-center p-3 rounded-sm bg-purple-500/10">
                 <Coins className="h-5 w-5 text-purple-500 mx-auto mb-1" />
                 <p className="text-lg font-bold text-purple-500">{community.bonus_ai_tokens}</p>
                 <p className="text-[10px] text-muted-foreground">Tokens</p>
@@ -1341,7 +1341,7 @@ function CommunityDetailPanel({
           <div>
             <h4 className="text-sm font-medium mb-3">Metricas</h4>
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 rounded-lg bg-muted/50">
+              <div className="p-3 rounded-sm bg-muted/50">
                 <p className="text-2xl font-bold">{community.current_redemptions}</p>
                 <p className="text-xs text-muted-foreground">Redenciones</p>
                 {community.max_redemptions && (
@@ -1350,7 +1350,7 @@ function CommunityDetailPanel({
                   </p>
                 )}
               </div>
-              <div className="p-3 rounded-lg bg-muted/50">
+              <div className="p-3 rounded-sm bg-muted/50">
                 <p className="text-2xl font-bold">{community.member_count}</p>
                 <p className="text-xs text-muted-foreground">Miembros</p>
                 <p className="text-[10px] text-muted-foreground">
@@ -1620,11 +1620,11 @@ const PlatformCRMCommunities = () => {
                 >
                   <div className="flex items-center gap-3 mb-3">
                     <div
-                      className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0"
+                      className="w-12 h-12 rounded-sm flex items-center justify-center shrink-0"
                       style={{ backgroundColor: community.custom_badge_color || '#f59e0b' }}
                     >
                       {community.logo_url ? (
-                        <img src={community.logo_url} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                        <img src={community.logo_url} alt="" className="w-12 h-12 rounded-sm object-cover" />
                       ) : (
                         <Users2 className="w-6 h-6 text-white" />
                       )}
@@ -1637,7 +1637,7 @@ const PlatformCRMCommunities = () => {
                       {cfg.label}
                     </span>
                   </div>
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     <div className="text-center">
                       <p className="text-white font-semibold text-sm">{community.member_count}</p>
                       <p className="text-[10px] text-white/40">Miembros</p>
@@ -1669,17 +1669,17 @@ const PlatformCRMCommunities = () => {
                 <div
                   key={community.id}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-white/5 cursor-pointer transition-colors",
+                    "flex items-center gap-3 px-4 py-2.5 rounded-sm hover:bg-white/5 cursor-pointer transition-colors",
                     selectedCommunity?.id === community.id && "bg-amber-500/10 border border-amber-500/30",
                   )}
                   onClick={() => handleSelectCommunity(community)}
                 >
                   <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                    className="w-8 h-8 rounded-sm flex items-center justify-center shrink-0"
                     style={{ backgroundColor: community.custom_badge_color || '#f59e0b' }}
                   >
                     {community.logo_url ? (
-                      <img src={community.logo_url} alt="" className="w-8 h-8 rounded-lg object-cover" />
+                      <img src={community.logo_url} alt="" className="w-8 h-8 rounded-sm object-cover" />
                     ) : (
                       <span className="text-xs font-bold text-white">{getInitials(community.name)}</span>
                     )}
@@ -1727,11 +1727,11 @@ const PlatformCRMCommunities = () => {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div
-                            className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                            className="w-10 h-10 rounded-sm flex items-center justify-center shrink-0"
                             style={{ backgroundColor: community.custom_badge_color || '#f59e0b' }}
                           >
                             {community.logo_url ? (
-                              <img src={community.logo_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                              <img src={community.logo_url} alt="" className="w-10 h-10 rounded-sm object-cover" />
                             ) : (
                               <Users2 className="w-5 h-5 text-white" />
                             )}

@@ -50,7 +50,7 @@ export function OrgServicesSection({ services, accentColor }: OrgServicesSection
 
 function ServiceCard({ service, accentColor, featured }: { service: OrgService; accentColor: string; featured?: boolean }) {
   return (
-    <div className={`p-4 rounded-xl border ${featured ? 'border-purple-500/20 bg-purple-500/5' : 'border-white/5 bg-white/[0.02]'}`}>
+    <div className={`p-4 rounded-sm border ${featured ? 'border-purple-500/20 bg-purple-500/5' : 'border-white/5 bg-white/[0.02]'}`}>
       <div className="flex items-start gap-3">
         <span className="text-2xl">{service.icon}</span>
         <div className="flex-1 min-w-0">

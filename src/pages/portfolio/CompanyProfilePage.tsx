@@ -557,7 +557,7 @@ export default function CompanyProfilePage() {
                   {creators.map(creator => (
                     <div 
                       key={creator.id}
-                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-social-muted cursor-pointer transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-sm hover:bg-social-muted cursor-pointer transition-colors"
                       onClick={() => navigate(`/profile/${creator.id}`)}
                     >
                       <Avatar className="w-12 h-12 border border-social-border">
@@ -591,7 +591,7 @@ export default function CompanyProfilePage() {
                 </div>
               ) : (
                 <>
-                  <div className="mb-4 p-4 rounded-lg bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+                  <div className="mb-4 p-4 rounded-sm bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
                     <div className="flex items-center gap-2 mb-2">
                       <Handshake className="h-5 w-5 text-purple-500" />
                       <span className="font-medium text-purple-400">Marketplace</span>

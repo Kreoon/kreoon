@@ -222,7 +222,7 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
         <RoleBadge role={testimonial.role} />
       </div>
       {testimonial.metric && (
-        <div className="mt-4 rounded-lg border border-kreoon-purple-500/20 bg-kreoon-purple-500/10 p-3">
+        <div className="mt-4 rounded-sm border border-kreoon-purple-500/20 bg-kreoon-purple-500/10 p-3">
           <p className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-kreoon-purple-400 to-kreoon-purple-300">
             {testimonial.metric.value}
           </p>

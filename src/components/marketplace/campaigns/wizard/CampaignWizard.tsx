@@ -528,13 +528,13 @@ export default function CampaignWizard({ editCampaignId }: { editCampaignId?: st
 
   if (isComplete) {
     return (
-      <div className="fixed inset-0 z-[100] bg-background overflow-y-auto">
+      <div className="fixed inset-0 z-[100] bg-[var(--nova-bg-void)] overflow-y-auto">
         <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-6">
-          <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto">
-            <CheckCircle2 className="h-8 w-8 text-green-400" />
+          <div className="w-16 h-16 rounded-full bg-[var(--nova-success-bg)] flex items-center justify-center mx-auto nova-glow">
+            <CheckCircle2 className="h-8 w-8 text-[var(--nova-success)]" />
           </div>
-          <h2 className="text-2xl font-bold text-white">Campana Publicada</h2>
-          <p className="text-gray-400 text-sm">
+          <h2 className="text-2xl font-bold text-[var(--nova-text-bright)]">Campana Publicada</h2>
+          <p className="text-[var(--nova-text-secondary)] text-sm">
             Tu campana ya esta visible{' '}
             {visibilityData.visibility === 'public' && 'para todos los creadores del marketplace.'}
             {visibilityData.visibility === 'internal' && 'para los miembros de tu organizacion.'}
@@ -543,31 +543,31 @@ export default function CampaignWizard({ editCampaignId }: { editCampaignId?: st
               ? ` Se notifico a ${notificationsSent} creador${notificationsSent !== 1 ? 'es' : ''} elegible${notificationsSent !== 1 ? 's' : ''}.`
               : ' Recibiras notificaciones cuando los creadores apliquen.'}
           </p>
-          <div className="bg-white/5 rounded-xl p-4 text-left space-y-3">
-            <h3 className="text-foreground/80 text-sm font-semibold">Proximos pasos</h3>
+          <div className="nova-glass rounded-sm p-4 text-left space-y-3">
+            <h3 className="text-[var(--nova-text-primary)] text-sm font-semibold">Proximos pasos</h3>
             <div className="flex items-start gap-2">
-              <div className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 text-xs flex-shrink-0 mt-0.5">1</div>
-              <p className="text-gray-400 text-xs">Los creadores encontraran tu campana y aplicaran</p>
+              <div className="w-5 h-5 rounded-full bg-[var(--nova-accent-primary)]/20 flex items-center justify-center text-[var(--nova-accent-primary-hover)] text-xs flex-shrink-0 mt-0.5">1</div>
+              <p className="text-[var(--nova-text-secondary)] text-xs">Los creadores encontraran tu campana y aplicaran</p>
             </div>
             <div className="flex items-start gap-2">
-              <div className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 text-xs flex-shrink-0 mt-0.5">2</div>
-              <p className="text-gray-400 text-xs">Revisa las aplicaciones y selecciona a los mejores creadores</p>
+              <div className="w-5 h-5 rounded-full bg-[var(--nova-accent-primary)]/20 flex items-center justify-center text-[var(--nova-accent-primary-hover)] text-xs flex-shrink-0 mt-0.5">2</div>
+              <p className="text-[var(--nova-text-secondary)] text-xs">Revisa las aplicaciones y selecciona a los mejores creadores</p>
             </div>
             <div className="flex items-start gap-2">
-              <div className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 text-xs flex-shrink-0 mt-0.5">3</div>
-              <p className="text-gray-400 text-xs">Los creadores aprobados comienzan a producir el contenido</p>
+              <div className="w-5 h-5 rounded-full bg-[var(--nova-accent-primary)]/20 flex items-center justify-center text-[var(--nova-accent-primary-hover)] text-xs flex-shrink-0 mt-0.5">3</div>
+              <p className="text-[var(--nova-text-secondary)] text-xs">Los creadores aprobados comienzan a producir el contenido</p>
             </div>
           </div>
           <div className="flex flex-col gap-2">
             <button
               onClick={() => navigate('/marketplace/my-campaigns')}
-              className="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-3 rounded-xl transition-colors"
+              className="w-full bg-[var(--nova-gradient-primary)] hover:shadow-[var(--nova-shadow-glow)] text-[var(--nova-text-bright)] font-semibold py-3 rounded-sm transition-all"
             >
               Ver mis campanas
             </button>
             <button
               onClick={() => navigate('/marketplace/campaigns')}
-              className="w-full border border-white/10 text-gray-400 py-3 rounded-xl hover:bg-white/5 transition-colors text-sm"
+              className="w-full border border-[var(--nova-border-default)] text-[var(--nova-text-secondary)] py-3 rounded-sm hover:bg-[var(--nova-bg-elevated)] transition-colors text-sm"
             >
               Ir al feed de campanas
             </button>
@@ -578,9 +578,9 @@ export default function CampaignWizard({ editCampaignId }: { editCampaignId?: st
   }
 
   return (
-    <div className="fixed inset-0 z-[100] bg-background overflow-y-auto">
+    <div className="fixed inset-0 z-[100] bg-[var(--nova-bg-void)] overflow-y-auto">
       {/* Header */}
-      <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-white/10 z-10">
+      <div className="sticky top-0 nova-glass border-b border-[var(--nova-border-subtle)] z-10">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-lg font-bold text-white">{isEditMode ? 'Editar Campana' : 'Crear Campana'}</h1>
@@ -593,9 +593,9 @@ export default function CampaignWizard({ editCampaignId }: { editCampaignId?: st
           </div>
 
           {/* Progress bar */}
-          <div className="w-full bg-white/5 rounded-full h-1.5 mb-4">
+          <div className="w-full bg-[var(--nova-bg-elevated)] rounded-full h-1.5 mb-4">
             <div
-              className="bg-gradient-to-r from-purple-600 to-purple-400 h-full rounded-full transition-all duration-300"
+              className="bg-[var(--nova-gradient-primary)] h-full rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -611,12 +611,12 @@ export default function CampaignWizard({ editCampaignId }: { editCampaignId?: st
                   key={step.id}
                   onClick={() => { if (i < currentStep) setCurrentStep(i); }}
                   className={cn(
-                    'flex-1 flex items-center justify-center gap-1.5 py-2 px-1 rounded-lg text-xs font-medium transition-all',
+                    'flex-1 flex items-center justify-center gap-1.5 py-2 px-1 rounded-sm text-xs font-medium transition-all',
                     isActive
-                      ? 'bg-purple-500/20 text-purple-300'
+                      ? 'bg-[var(--nova-accent-primary)]/20 text-[var(--nova-accent-primary-hover)]'
                       : isDone
-                        ? 'text-gray-400 hover:text-foreground cursor-pointer'
-                        : 'text-gray-600 cursor-default',
+                        ? 'text-[var(--nova-text-secondary)] hover:text-[var(--nova-text-primary)] cursor-pointer'
+                        : 'text-[var(--nova-text-disabled)] cursor-default',
                   )}
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -641,7 +641,7 @@ export default function CampaignWizard({ editCampaignId }: { editCampaignId?: st
                 <button
                   onClick={() => setCampaignPurpose('content')}
                   className={cn(
-                    'text-left p-4 rounded-xl border-2 transition-all relative overflow-hidden',
+                    'text-left p-4 rounded-sm border-2 transition-all relative overflow-hidden',
                     campaignPurpose === 'content'
                       ? 'border-purple-500 bg-purple-500/10 ring-1 ring-purple-500/30'
                       : 'border-white/10 bg-white/5 hover:border-white/20',
@@ -665,7 +665,7 @@ export default function CampaignWizard({ editCampaignId }: { editCampaignId?: st
                 <button
                   onClick={() => setCampaignPurpose('activation')}
                   className={cn(
-                    'text-left p-4 rounded-xl border-2 transition-all relative overflow-hidden',
+                    'text-left p-4 rounded-sm border-2 transition-all relative overflow-hidden',
                     campaignPurpose === 'activation'
                       ? 'border-green-500 bg-green-500/10 ring-1 ring-green-500/30'
                       : 'border-white/10 bg-white/5 hover:border-white/20',
@@ -693,7 +693,7 @@ export default function CampaignWizard({ editCampaignId }: { editCampaignId?: st
                 <button
                   onClick={() => setCampaignPurpose('talent')}
                   className={cn(
-                    'text-left p-4 rounded-xl border-2 transition-all relative overflow-hidden',
+                    'text-left p-4 rounded-sm border-2 transition-all relative overflow-hidden',
                     campaignPurpose === 'talent'
                       ? 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/30'
                       : 'border-white/10 bg-white/5 hover:border-white/20',
@@ -726,7 +726,7 @@ export default function CampaignWizard({ editCampaignId }: { editCampaignId?: st
                     window.location.href = '/streaming/hosting/new?channel=marketplace';
                   }}
                   className={cn(
-                    'text-left p-4 rounded-xl border-2 transition-all relative overflow-hidden',
+                    'text-left p-4 rounded-sm border-2 transition-all relative overflow-hidden',
                     campaignPurpose === 'live_shopping'
                       ? 'border-red-500 bg-red-500/10 ring-1 ring-red-500/30'
                       : 'border-white/10 bg-white/5 hover:border-white/20',
@@ -754,7 +754,7 @@ export default function CampaignWizard({ editCampaignId }: { editCampaignId?: st
 
             {/* Role selector (shown when talent purpose is selected) */}
             {campaignPurpose === 'talent' && (
-              <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-5">
+              <div className="bg-blue-500/5 border border-blue-500/20 rounded-sm p-5">
                 <MarketplaceRoleSelector
                   selectedRoles={creatorRequirements.desired_roles ?? []}
                   onChange={(roles: MarketplaceRoleId[]) => updateCreatorReqs('desired_roles', roles)}
@@ -787,7 +787,7 @@ export default function CampaignWizard({ editCampaignId }: { editCampaignId?: st
             {isBrandActivation && (
               <>
                 <div className="border-t border-white/10 pt-2" />
-                <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-4">
+                <div className="bg-green-500/5 border border-green-500/20 rounded-sm p-4">
                   <div className="flex items-center gap-2 mb-1">
                     <Radio className="h-4 w-4 text-green-400" />
                     <p className="text-green-300 text-sm font-semibold">Configuración de Activación de Marca</p>
@@ -851,14 +851,14 @@ export default function CampaignWizard({ editCampaignId }: { editCampaignId?: st
                 <button
                   onClick={handleSaveDraft}
                   disabled={isSubmitting}
-                  className="border border-white/10 text-gray-400 px-4 py-2.5 rounded-xl text-sm hover:bg-white/5 transition-colors disabled:opacity-40"
+                  className="border border-white/10 text-gray-400 px-4 py-2.5 rounded-sm text-sm hover:bg-white/5 transition-colors disabled:opacity-40"
                 >
                   Guardar Borrador
                 </button>
                 <button
                   onClick={handlePublish}
                   disabled={!isStepValid(5) || isSubmitting}
-                  className="bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-all flex items-center gap-1.5"
+                  className="bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold px-6 py-2.5 rounded-sm text-sm transition-all flex items-center gap-1.5"
                 >
                   {isSubmitting ? 'Procesando...' : needsImmediatePayment() ? 'Publicar y Pagar' : 'Publicar Campana'}
                 </button>
@@ -867,7 +867,7 @@ export default function CampaignWizard({ editCampaignId }: { editCampaignId?: st
               <button
                 onClick={() => setCurrentStep(prev => prev + 1)}
                 disabled={!isStepValid(currentStep)}
-                className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-all"
+                className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold px-6 py-2.5 rounded-sm text-sm transition-all"
               >
                 Siguiente
                 <ChevronRight className="h-4 w-4" />

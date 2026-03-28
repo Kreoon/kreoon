@@ -537,7 +537,7 @@ function TikTokSlideVideo({ item, bunnyVideoId, isActive }: TikTokSlideVideoProp
           <div className="relative w-full max-w-lg aspect-[9/16] max-h-full">
             <iframe
               src={iframeSrc}
-              className="absolute top-0 left-0 w-full h-full border-0 rounded-lg"
+              className="absolute top-0 left-0 w-full h-full border-0 rounded-sm"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
@@ -548,10 +548,10 @@ function TikTokSlideVideo({ item, bunnyVideoId, isActive }: TikTokSlideVideoProp
               <img
                 src={getBunnyThumbnailUrl(item.url) || item.thumbnail_url!}
                 alt=""
-                className="w-full h-full object-cover rounded-lg"
+                className="w-full h-full object-cover rounded-sm"
               />
             ) : (
-              <div className="w-full h-full bg-zinc-900 rounded-lg" />
+              <div className="w-full h-full bg-zinc-900 rounded-sm" />
             )}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-16 h-16 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
@@ -568,7 +568,7 @@ function TikTokSlideVideo({ item, bunnyVideoId, isActive }: TikTokSlideVideoProp
           controls
           playsInline
           loop
-          className="max-h-full max-w-full object-contain rounded-lg"
+          className="max-h-full max-w-full object-contain rounded-sm"
         />
       )}
     </div>

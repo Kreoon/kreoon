@@ -433,7 +433,7 @@ export default function LiveHostingRequest() {
                   </CardHeader>
                   <CardContent>
                     <HostProfileCard host={confirmedHost} showStatus={false} />
-                    <div className="mt-4 p-3 rounded-lg bg-green-50 dark:bg-green-950/20">
+                    <div className="mt-4 p-3 rounded-sm bg-green-50 dark:bg-green-950/20">
                       <p className="text-sm font-medium text-green-700 dark:text-green-400">
                         Tarifa acordada: ${confirmedHost.agreed_rate_usd} USD
                       </p>

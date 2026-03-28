@@ -388,7 +388,7 @@ export function OrgRegistrationSettings() {
         {config.is_registration_open && (
           <CardContent className="space-y-4">
             {/* URL de registro */}
-            <div className="p-4 rounded-lg bg-muted/50 space-y-3">
+            <div className="p-4 rounded-sm bg-muted/50 space-y-3">
               <Label className="text-sm font-medium">URL de Registro</Label>
               <div className="flex items-center gap-2">
                 <Input
@@ -441,7 +441,7 @@ export function OrgRegistrationSettings() {
           {config.registration_require_invite && (
             <CardContent className="space-y-4">
               {/* Código actual */}
-              <div className="p-4 rounded-lg border bg-card space-y-3">
+              <div className="p-4 rounded-sm border bg-card space-y-3">
                 <div className="flex items-center justify-between">
                   <Label className="text-sm font-medium">Código Actual</Label>
                   {config.registration_code_updated_at && (
@@ -452,7 +452,7 @@ export function OrgRegistrationSettings() {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="flex-1 flex items-center gap-2 p-3 rounded-md bg-muted font-mono text-lg tracking-widest">
+                  <div className="flex-1 flex items-center gap-2 p-3 rounded-sm bg-muted font-mono text-lg tracking-widest">
                     {config.registration_code || 'Sin código'}
                   </div>
                   <Button variant="outline" size="icon" onClick={copyCode} disabled={!config.registration_code}>
@@ -533,11 +533,11 @@ export function OrgRegistrationSettings() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Preview */}
-            <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
+            <div className="p-4 rounded-sm border bg-muted/30 space-y-3">
               <Label className="text-sm font-medium">Vista previa</Label>
-              <div className="rounded-lg border bg-card p-4 space-y-3">
+              <div className="rounded-sm border bg-card p-4 space-y-3">
                 {pageConfig.banner_url && (
-                  <div className="h-24 rounded-md overflow-hidden">
+                  <div className="h-24 rounded-sm overflow-hidden">
                     <img 
                       src={pageConfig.banner_url} 
                       alt="Banner" 
@@ -574,7 +574,7 @@ export function OrgRegistrationSettings() {
                   className="hidden"
                 />
                 {pageConfig.banner_url ? (
-                  <div className="relative h-20 w-40 rounded-md overflow-hidden border">
+                  <div className="relative h-20 w-40 rounded-sm overflow-hidden border">
                     <img 
                       src={pageConfig.banner_url} 
                       alt="Banner" 
@@ -582,7 +582,7 @@ export function OrgRegistrationSettings() {
                     />
                   </div>
                 ) : (
-                  <div className="h-20 w-40 rounded-md border-2 border-dashed flex items-center justify-center">
+                  <div className="h-20 w-40 rounded-sm border-2 border-dashed flex items-center justify-center">
                     <ImageIcon className="h-6 w-6 text-muted-foreground" />
                   </div>
                 )}
@@ -726,7 +726,7 @@ export function OrgRegistrationSettings() {
             {/* Current benefits */}
             <div className="space-y-2">
               {(pageConfig.benefits || []).map((benefit, index) => (
-                <div key={index} className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+                <div key={index} className="flex items-center gap-2 p-2 rounded-sm bg-muted/50">
                   <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
                   <span className="flex-1 text-sm">{benefit}</span>
                   <Button

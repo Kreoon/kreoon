@@ -126,12 +126,12 @@ export function CalendarIntegrations({
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="bg-white border border-slate-200 rounded-xl overflow-hidden"
+                className="bg-white border border-slate-200 rounded-sm overflow-hidden"
               >
                 <div className="p-4">
                   <div className="flex items-center gap-4">
                     <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center"
+                      className="w-12 h-12 rounded-sm flex items-center justify-center"
                       style={{ backgroundColor: `${provider?.color}15` }}
                     >
                       <Calendar
@@ -277,7 +277,7 @@ export function CalendarIntegrations({
                         </div>
 
                         {integration.sync_errors && (
-                          <div className="p-3 rounded-lg bg-red-50 border border-red-100">
+                          <div className="p-3 rounded-sm bg-red-50 border border-red-100">
                             <div className="flex items-start gap-2 text-red-600">
                               <AlertCircle className="w-4 h-4 mt-0.5" />
                               <div>
@@ -313,10 +313,10 @@ export function CalendarIntegrations({
                 whileTap={{ scale: 0.98 }}
                 onClick={() => handleConnect(provider.value)}
                 disabled={connectingProvider === provider.value}
-                className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-xl hover:border-violet-300 hover:shadow-md transition-all disabled:opacity-50 text-left group"
+                className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-sm hover:border-violet-300 hover:shadow-md transition-all disabled:opacity-50 text-left group"
               >
                 <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center"
+                  className="w-10 h-10 rounded-sm flex items-center justify-center"
                   style={{ backgroundColor: `${provider.color}15` }}
                 >
                   {connectingProvider === provider.value ? (
@@ -338,7 +338,7 @@ export function CalendarIntegrations({
 
       {/* Empty state */}
       {integrations.length === 0 && (
-        <div className="text-center py-8 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
+        <div className="text-center py-8 bg-slate-50 rounded-sm border-2 border-dashed border-slate-200">
           <Calendar className="w-12 h-12 mx-auto text-slate-300 mb-4" />
           <h4 className="font-medium text-slate-900 mb-2">
             Sin calendarios conectados

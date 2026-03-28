@@ -81,7 +81,7 @@ export const BenefitsGrid = memo(function BenefitsGrid({
               transition={{ delay: index * 0.08, type: 'spring' }}
               className={cn(
                 'relative group',
-                'rounded-2xl p-4',
+                'rounded-sm p-4',
                 'flex flex-col items-center text-center gap-2',
                 'transition-all duration-300',
                 isUnlocked
@@ -91,7 +91,7 @@ export const BenefitsGrid = memo(function BenefitsGrid({
             >
               {/* Glow effect on hover */}
               <div className={cn(
-                'absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity blur-xl',
+                'absolute inset-0 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity blur-xl',
                 `bg-gradient-to-br ${benefit.gradient}`
               )} style={{ filter: 'blur(20px)', opacity: 0.15 }} />
 
@@ -99,7 +99,7 @@ export const BenefitsGrid = memo(function BenefitsGrid({
               <motion.div
                 whileHover={{ scale: 1.1, rotate: 5 }}
                 className={cn(
-                  'relative w-12 h-12 rounded-xl',
+                  'relative w-12 h-12 rounded-sm',
                   'flex items-center justify-center',
                   isUnlocked
                     ? `bg-gradient-to-br ${benefit.gradient} shadow-lg ${benefit.glow}`

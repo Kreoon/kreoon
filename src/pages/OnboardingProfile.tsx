@@ -602,9 +602,9 @@ const OnboardingProfile = () => {
             {/* Talent Option */}
             <button
               onClick={() => setAccountType('talent')}
-              className="group p-6 rounded-2xl border-2 border-white/10 bg-white/[0.02] hover:border-purple-500/50 hover:bg-purple-500/10 transition-all text-left"
+              className="group p-6 rounded-sm border-2 border-white/10 bg-white/[0.02] hover:border-purple-500/50 hover:bg-purple-500/10 transition-all text-left"
             >
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-4">
+              <div className="w-14 h-14 rounded-sm bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-4">
                 <Video className="w-7 h-7 text-white" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-2">Soy Talento</h3>
@@ -621,9 +621,9 @@ const OnboardingProfile = () => {
             {/* Brand Option */}
             <button
               onClick={() => setAccountType('brand')}
-              className="group p-6 rounded-2xl border-2 border-white/10 bg-white/[0.02] hover:border-amber-500/50 hover:bg-amber-500/10 transition-all text-left"
+              className="group p-6 rounded-sm border-2 border-white/10 bg-white/[0.02] hover:border-amber-500/50 hover:bg-amber-500/10 transition-all text-left"
             >
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center mb-4">
+              <div className="w-14 h-14 rounded-sm bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center mb-4">
                 <Briefcase className="w-7 h-7 text-white" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-2">Soy Marca / Empresa</h3>
@@ -774,7 +774,7 @@ const OnboardingProfile = () => {
                     placeholder="Describe brevemente tu marca o negocio..."
                     rows={3}
                     maxLength={500}
-                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-amber-500/50 focus:outline-none resize-none"
+                    className="w-full rounded-sm border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-amber-500/50 focus:outline-none resize-none"
                   />
                 </div>
               </Card>
@@ -825,7 +825,7 @@ const OnboardingProfile = () => {
                     placeholder="Describe tu experiencia, estilo y lo que te hace único como creador..."
                     rows={4}
                     maxLength={500}
-                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-purple-500/50 focus:outline-none resize-none"
+                    className="w-full rounded-sm border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-purple-500/50 focus:outline-none resize-none"
                   />
                   <p className="text-xs text-white/40 text-right mt-1">{bio.length}/500</p>
                 </div>
@@ -857,13 +857,13 @@ const OnboardingProfile = () => {
                           type="button"
                           onClick={() => toggleArea(area.id)}
                           className={cn(
-                            'flex flex-col items-center gap-2 p-3 rounded-xl border transition-all',
+                            'flex flex-col items-center gap-2 p-3 rounded-sm border transition-all',
                             isSelected
                               ? 'border-purple-500/60 bg-purple-500/15'
                               : 'border-white/10 bg-white/5 hover:border-white/20'
                           )}
                         >
-                          <div className={cn('w-10 h-10 rounded-lg bg-gradient-to-br flex items-center justify-center', area.color)}>
+                          <div className={cn('w-10 h-10 rounded-sm bg-gradient-to-br flex items-center justify-center', area.color)}>
                             <Icon className="w-5 h-5 text-white" />
                           </div>
                           <span className="text-xs font-medium text-white/80">{area.label}</span>
@@ -972,7 +972,7 @@ const OnboardingProfile = () => {
                     <div
                       {...(creatorProfileId && !profileError ? getRootProps() : {})}
                       className={cn(
-                        'flex flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all p-8',
+                        'flex flex-col items-center justify-center rounded-sm border-2 border-dashed transition-all p-8',
                         profileError
                           ? 'border-red-500/50 bg-red-500/10'
                           : isDragActive
@@ -1037,7 +1037,7 @@ const OnboardingProfile = () => {
                         <div
                           key={uf.id}
                           className={cn(
-                            'flex items-center gap-3 p-3 rounded-lg border',
+                            'flex items-center gap-3 p-3 rounded-sm border',
                             uf.status === 'error'
                               ? 'bg-red-500/10 border-red-500/30'
                               : uf.status === 'success'
@@ -1046,7 +1046,7 @@ const OnboardingProfile = () => {
                           )}
                         >
                           {/* Preview/Icon */}
-                          <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center overflow-hidden shrink-0">
+                          <div className="w-12 h-12 rounded-sm bg-white/5 flex items-center justify-center overflow-hidden shrink-0">
                             {uf.preview ? (
                               <img src={uf.preview} alt="" className="w-full h-full object-cover" />
                             ) : uf.type === 'video' ? (
@@ -1101,7 +1101,7 @@ const OnboardingProfile = () => {
 
                   {/* Status message */}
                   <div className={cn(
-                    'mt-4 p-3 rounded-lg border',
+                    'mt-4 p-3 rounded-sm border',
                     totalItems >= 1
                       ? 'bg-emerald-500/10 border-emerald-500/20'
                       : 'bg-purple-500/10 border-purple-500/20'

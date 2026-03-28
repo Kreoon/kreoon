@@ -211,7 +211,7 @@ export function AssignStrategistDialog({
                 return (
                   <div
                     key={member.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                    className={`flex items-center gap-3 p-3 rounded-sm border transition-colors cursor-pointer ${
                       assigned ? 'bg-primary/5 border-primary/30' : 'hover:bg-muted/50'
                     }`}
                     onClick={() => toggleAssignment(member.id)}

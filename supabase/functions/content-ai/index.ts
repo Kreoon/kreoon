@@ -4,6 +4,7 @@ import { getKreoonClient, isKreoonConfigured } from "../_shared/kreoon-client.ts
 import { getModuleAIConfig } from "../_shared/get-module-ai-config.ts";
 import { callAIWithFallback, corsHeaders } from "../_shared/ai-providers.ts";
 import { PerplexitySearches, searchWithPerplexity } from "../_shared/perplexity-client.ts";
+import { errorResponse, successResponse, moduleInactiveResponse, validationErrorResponse } from "../_shared/error-response.ts";
 // Fallback legacy
 import { MASTER_SCRIPT_PROMPT } from "../_shared/prompts/scripts.ts";
 // Nuevo: Prompts desde DB con cache y fallback a hardcodeados
@@ -391,6 +392,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let body: ContentAIRequest | null = null;
+
   try {
     // Use Kreoon database if configured, otherwise fallback to default
     let supabase;
@@ -404,23 +407,20 @@ serve(async (req) => {
       supabase = createClient(supabaseUrl, supabaseKey);
     }
 
-    const body: ContentAIRequest = await req.json();
-    const { 
-      action, 
+    body = await req.json();
+    const {
+      action,
       organizationId,
-      data, 
-      prompt, 
-      product, 
+      data,
+      prompt,
+      product,
       generation_type
     } = body;
 
     console.log("Content AI Request:", { action, organizationId, generation_type });
 
     if (!organizationId) {
-      return new Response(
-        JSON.stringify({ error: "organizationId es requerido" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return validationErrorResponse("organizationId es requerido", "organizationId");
     }
 
     // Get module key for this action
@@ -434,14 +434,7 @@ serve(async (req) => {
     } catch (error: any) {
       if (error.message?.startsWith("MODULE_INACTIVE:")) {
         const module = error.message.split(":")[1];
-        return new Response(
-          JSON.stringify({ 
-            error: "MODULE_INACTIVE",
-            module,
-            message: `El módulo de IA "${module}" no está habilitado para tu organización. Actívalo en Configuración → IA & Modelos.`
-          }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return moduleInactiveResponse(module);
       }
       throw error;
     }
@@ -748,21 +741,17 @@ Devuelve el guion mejorado manteniendo el formato HTML estructurado.`;
       success: true
     });
 
-    return new Response(
-      JSON.stringify({ success: true, result, ai_provider: aiConfig.provider, ai_model: aiConfig.model, execution_id: executionId ?? undefined }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return successResponse({
+      success: true,
+      result,
+      ai_provider: aiConfig.provider,
+      ai_model: aiConfig.model,
+      execution_id: executionId ?? undefined
+    });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error("Error in content-ai function:", error);
-
-    let status = 500;
-    if (errorMessage.includes("Rate limit")) status = 429;
-    if (errorMessage.includes("Payment required")) status = 402;
-
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return errorResponse(error, {
+      action: `content-ai:${body?.action || 'unknown'}`,
+      resourceId: body?.product?.id,
+    });
   }
 });

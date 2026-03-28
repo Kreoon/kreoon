@@ -71,7 +71,7 @@ export function AuthModal({
           "border-kreoon-border bg-kreoon-bg-card p-0 gap-0 overflow-hidden overflow-y-auto",
           "shadow-kreoon-glow-sm border-kreoon-purple-500/30",
           "max-w-lg w-[calc(100%-2rem)] sm:w-full",
-          "h-[100dvh] sm:h-auto sm:max-h-[90vh] rounded-none sm:rounded-xl",
+          "h-[100dvh] sm:h-auto sm:max-h-[90vh] rounded-none sm:rounded-sm",
         )}
       >
         <DialogTitle className="sr-only">

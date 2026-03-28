@@ -86,7 +86,7 @@ function CreatorCardComponent({ creator, onClick }: CreatorCardProps) {
     <motion.div
       ref={cardRef}
       className={cn(
-        "relative bg-social-card rounded-xl overflow-hidden",
+        "relative bg-social-card rounded-sm overflow-hidden",
         "border border-social-border/50 transition-all duration-300",
         "hover:border-social-accent/30 hover:shadow-xl hover:shadow-social-accent/10"
       )}

@@ -84,7 +84,7 @@ export default function TechnicalWorkspace({ formData, setFormData, editMode, re
             className="mt-1 font-mono text-sm"
           />
         ) : (
-          <div className="mt-1 bg-muted/30 rounded-lg p-4">
+          <div className="mt-1 bg-muted/30 rounded-sm p-4">
             <pre className="whitespace-pre-wrap text-sm font-mono">
               {tech.specifications || 'Sin especificaciones'}
             </pre>

@@ -127,7 +127,7 @@ export function KiroActions({ onStateChange, onSendMessage, currentZone = 'gener
               setIsExpanded(!isExpanded);
             }}
             className={cn(
-              'w-full mt-2 py-2 px-3 rounded-lg min-h-[44px]',
+              'w-full mt-2 py-2 px-3 rounded-sm min-h-[44px]',
               'flex items-center justify-center gap-1',
               'text-xs text-violet-400',
               'bg-violet-500/5 border border-violet-500/10',

@@ -313,12 +313,12 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
       {/* Content selector */}
       <div className="space-y-2">
         {selectedContent ? (
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+          <div className="flex items-center gap-3 p-3 rounded-sm bg-primary/5 border border-primary/20">
             {selectedContent.thumbnail_url && (
               <img
                 src={selectedContent.thumbnail_url}
                 alt=""
-                className="w-12 h-12 rounded-md object-cover"
+                className="w-12 h-12 rounded-sm object-cover"
               />
             )}
             <div className="flex-1 min-w-0">
@@ -439,7 +439,7 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
       </button>
 
       {showAdvanced && (
-        <div className="space-y-4 p-4 rounded-lg bg-muted/30 border">
+        <div className="space-y-4 p-4 rounded-sm bg-muted/30 border">
           <div className="space-y-2">
             <Label className="text-xs">Primer comentario</Label>
             <Input
@@ -622,7 +622,7 @@ function AccountButton({
       disabled={disabled}
       title={disabled ? 'Ya hay una cuenta de esta red seleccionada para esta entidad' : undefined}
       className={cn(
-        'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm',
+        'flex items-center gap-2 px-3 py-2 rounded-sm border transition-all text-sm',
         selected
           ? 'border-primary bg-primary/10 text-primary'
           : disabled

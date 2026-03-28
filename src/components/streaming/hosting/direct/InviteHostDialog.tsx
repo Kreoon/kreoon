@@ -142,7 +142,7 @@ export function InviteHostDialog({
                   {creators.map((creator) => (
                     <div
                       key={creator.user_id}
-                      className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer"
+                      className="flex items-center gap-3 p-3 rounded-sm border hover:bg-muted/50 cursor-pointer"
                       onClick={() => setSelectedCreator(creator)}
                     >
                       <Avatar>
@@ -177,7 +177,7 @@ export function InviteHostDialog({
           ) : (
             <div className="space-y-4">
               {/* Selected creator */}
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-3 p-3 rounded-sm bg-muted/50">
                 <Avatar>
                   <AvatarImage src={selectedCreator.avatar_url} />
                   <AvatarFallback>

@@ -24,7 +24,7 @@ function LogoItem({
   if (isPlaceholder) {
     return (
       <div
-        className="flex h-12 w-28 shrink-0 items-center justify-center rounded-lg border border-dashed border-kreoon-border text-sm text-kreoon-text-muted transition-colors hover:border-kreoon-purple-500/40 hover:text-kreoon-text-secondary md:h-14 md:w-32"
+        className="flex h-12 w-28 shrink-0 items-center justify-center rounded-sm border border-dashed border-kreoon-border text-sm text-kreoon-text-muted transition-colors hover:border-kreoon-purple-500/40 hover:text-kreoon-text-secondary md:h-14 md:w-32"
         aria-hidden
       >
         {name}

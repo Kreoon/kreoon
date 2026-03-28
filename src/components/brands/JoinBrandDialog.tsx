@@ -49,7 +49,7 @@ export function JoinBrandDialog({ open, onOpenChange }: JoinBrandDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-lg max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Unirme a una marca</DialogTitle>
           <DialogDescription>
@@ -95,11 +95,11 @@ export function JoinBrandDialog({ open, onOpenChange }: JoinBrandDialogProps) {
                 {results.map((brand: Brand) => (
                   <div
                     key={brand.id}
-                    className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                    className="flex items-center gap-3 p-3 rounded-sm border bg-card hover:bg-accent/50 transition-colors"
                   >
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <div className="h-10 w-10 rounded-sm bg-primary/10 flex items-center justify-center flex-shrink-0">
                       {brand.logo_url ? (
-                        <img src={brand.logo_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                        <img src={brand.logo_url} alt="" className="h-10 w-10 rounded-sm object-cover" />
                       ) : (
                         <Building2 className="h-5 w-5 text-primary" />
                       )}

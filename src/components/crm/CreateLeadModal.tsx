@@ -322,7 +322,7 @@ export function CreateLeadModal({ open, onOpenChange }: CreateLeadModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-lg p-0 overflow-hidden">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-lg max-h-[90dvh] sm:max-h-[90vh] p-0 overflow-hidden">
         <div className="p-6 space-y-5">
           <DialogHeader>
             <DialogTitle className="text-white text-lg">Nuevo Lead</DialogTitle>
@@ -361,7 +361,7 @@ export function CreateLeadModal({ open, onOpenChange }: CreateLeadModalProps) {
                 {/* Lead Type */}
                 <div className="space-y-2">
                   <Label className="text-white/70 text-xs">Tipo de Lead *</Label>
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {LEAD_TYPES.map((t) => {
                       const Icon = t.icon;
                       const isSelected = leadType === t.value;
@@ -371,7 +371,7 @@ export function CreateLeadModal({ open, onOpenChange }: CreateLeadModalProps) {
                           type="button"
                           onClick={() => form.setValue('lead_type', t.value, { shouldValidate: true })}
                           className={cn(
-                            'flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all',
+                            'flex flex-col items-center gap-1.5 p-3 rounded-sm border transition-all',
                             isSelected
                               ? 'border-[#8b5cf6]/60 bg-[#8b5cf6]/10 shadow-[0_0_15px_rgba(139,92,246,0.15)]'
                               : 'border-white/10 bg-white/5 hover:bg-white/8 hover:border-white/20',
@@ -440,7 +440,7 @@ export function CreateLeadModal({ open, onOpenChange }: CreateLeadModalProps) {
                 {/* Talent Category */}
                 <div className="space-y-2">
                   <Label className="text-white/70 text-xs">Categoria</Label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     {TALENT_CATEGORIES.map((cat) => {
                       const Icon = CATEGORY_ICONS[cat];
                       const isSelected = talentCategory === cat;
@@ -450,7 +450,7 @@ export function CreateLeadModal({ open, onOpenChange }: CreateLeadModalProps) {
                           type="button"
                           onClick={() => handleCategoryChange(cat)}
                           className={cn(
-                            'flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all',
+                            'flex flex-col items-center gap-1.5 p-3 rounded-sm border transition-all',
                             isSelected
                               ? 'border-[#8b5cf6]/60 bg-[#8b5cf6]/10 shadow-[0_0_15px_rgba(139,92,246,0.15)]'
                               : 'border-white/10 bg-white/5 hover:bg-white/8 hover:border-white/20',
@@ -621,7 +621,7 @@ export function CreateLeadModal({ open, onOpenChange }: CreateLeadModalProps) {
                 {/* Social Profiles */}
                 <div className="space-y-2">
                   <Label className="text-white/70 text-xs">Redes sociales</Label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <Input
                       {...form.register('instagram')}
                       placeholder="@instagram"
@@ -705,7 +705,7 @@ export function CreateLeadModal({ open, onOpenChange }: CreateLeadModalProps) {
                     Avanzado (UTM)
                   </button>
                   {showAdvanced && (
-                    <div className="grid grid-cols-3 gap-2 mt-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
                       <div className="space-y-1">
                         <Label className="text-white/50 text-[10px]">utm_source</Label>
                         <Input

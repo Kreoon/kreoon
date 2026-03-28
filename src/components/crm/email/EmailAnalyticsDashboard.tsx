@@ -23,7 +23,7 @@ function StatCard({
           <p className="text-2xl font-bold mt-1">{value}</p>
           {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
         </div>
-        <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${color}`}>
+        <div className={`h-9 w-9 rounded-sm flex items-center justify-center ${color}`}>
           <Icon className="h-4 w-4" />
         </div>
       </div>

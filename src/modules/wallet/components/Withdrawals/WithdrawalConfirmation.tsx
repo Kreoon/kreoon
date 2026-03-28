@@ -95,10 +95,10 @@ export function WithdrawalConfirmation({
       </Card>
 
       {/* Payment method details */}
-      <div className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.03)] border border-[hsl(270,100%,60%,0.1)]">
+      <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.03)] border border-[hsl(270,100%,60%,0.1)]">
         <p className="text-xs text-muted-foreground mb-3">Destino del pago:</p>
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-[hsl(270,100%,60%,0.1)]">
+          <div className="p-2 rounded-sm bg-[hsl(270,100%,60%,0.1)]">
             <Icon className="h-5 w-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
@@ -114,7 +114,7 @@ export function WithdrawalConfirmation({
       </div>
 
       {/* Processing time */}
-      <div className="flex items-center gap-3 p-3 rounded-lg bg-[hsl(270,100%,60%,0.03)]">
+      <div className="flex items-center gap-3 p-3 rounded-sm bg-[hsl(270,100%,60%,0.03)]">
         <Clock className="h-4 w-4 text-primary" />
         <div>
           <p className="text-sm text-white">Tiempo estimado</p>

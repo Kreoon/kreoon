@@ -44,7 +44,7 @@ export function WizardStepBasicInfo({ data, avatarUrl, bannerUrl, onChange }: Wi
       </div>
 
       {/* Banner preview */}
-      <div className="relative rounded-2xl overflow-hidden">
+      <div className="relative rounded-sm overflow-hidden">
         <div
           className="h-40 md:h-48 bg-gradient-to-br from-purple-900/60 via-[#1a1a2e] to-blue-900/60"
           style={bannerUrl ? { backgroundImage: `url(${bannerUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
@@ -77,7 +77,7 @@ export function WizardStepBasicInfo({ data, avatarUrl, bannerUrl, onChange }: Wi
             value={data.display_name}
             onChange={(e) => update('display_name', e.target.value)}
             placeholder="Tu nombre o nombre artistico"
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
+            className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
           />
         </div>
 
@@ -88,7 +88,7 @@ export function WizardStepBasicInfo({ data, avatarUrl, bannerUrl, onChange }: Wi
             value={data.tagline}
             onChange={(e) => update('tagline', e.target.value.slice(0, 100))}
             placeholder="Ej: Creador de contenido lifestyle | Especialista en reels"
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
+            className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
             maxLength={100}
           />
           <p className="text-xs text-gray-600 mt-1 text-right">{data.tagline.length}/100</p>
@@ -101,7 +101,7 @@ export function WizardStepBasicInfo({ data, avatarUrl, bannerUrl, onChange }: Wi
             onChange={(e) => update('bio_full', e.target.value.slice(0, 1000))}
             placeholder="Cuenta tu historia, experiencia y que te hace unico como creador..."
             rows={5}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm resize-none"
+            className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm resize-none"
             maxLength={1000}
           />
           <p className="text-xs text-gray-600 mt-1 text-right">{data.bio_full.length}/1000</p>
@@ -119,7 +119,7 @@ export function WizardStepBasicInfo({ data, avatarUrl, bannerUrl, onChange }: Wi
               value={data.location_city}
               onChange={(e) => update('location_city', e.target.value)}
               placeholder="Tu ciudad"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
+              className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
             />
           </div>
           <div>
@@ -127,7 +127,7 @@ export function WizardStepBasicInfo({ data, avatarUrl, bannerUrl, onChange }: Wi
             <select
               value={data.location_country}
               onChange={(e) => update('location_country', e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
+              className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
             >
               {COUNTRIES.map(c => (
                 <option key={c.code} value={c.code} className="bg-card">{c.label}</option>

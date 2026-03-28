@@ -113,12 +113,12 @@ export function ProjectDNASection({ projectType, projectId, dnaData, onUpdate, e
   return (
     <div className="space-y-4">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <div className="rounded-xl border bg-card">
+        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#14141f]">
           {/* Header */}
-          <CollapsibleTrigger className="flex items-center justify-between w-full p-4 text-left hover:bg-accent/50 rounded-xl transition-colors">
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-4 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-lg transition-colors duration-150">
             <div className="flex items-center gap-2">
               <Dna className="h-5 w-5 text-primary" />
-              <span className="font-semibold text-sm">ADN del Proyecto</span>
+              <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">ADN del Proyecto</span>
               {isComplete && (
                 <span className="flex h-2 w-2 rounded-full bg-green-500" />
               )}
@@ -130,7 +130,7 @@ export function ProjectDNASection({ projectType, projectId, dnaData, onUpdate, e
               )}
             </div>
             <ChevronDown className={cn(
-              'h-4 w-4 text-muted-foreground transition-transform',
+              'h-4 w-4 text-zinc-500 dark:text-zinc-400 transition-transform duration-150',
               isOpen && 'rotate-180',
             )} />
           </CollapsibleTrigger>
@@ -139,7 +139,7 @@ export function ProjectDNASection({ projectType, projectId, dnaData, onUpdate, e
             <div className="px-4 pb-4 space-y-6">
               {/* Written questions */}
               <div className="space-y-4">
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
                   Responde estas preguntas clave para definir el proyecto.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -147,7 +147,7 @@ export function ProjectDNASection({ projectType, projectId, dnaData, onUpdate, e
                     const isFullWidth = q.type === 'textarea';
                     return (
                       <div key={q.key} className={isFullWidth ? 'md:col-span-2' : ''}>
-                        <label className="text-sm font-medium text-muted-foreground">
+                        <label className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
                           {q.label}
                           {q.required && <span className="text-destructive ml-0.5">*</span>}
                         </label>
@@ -169,8 +169,8 @@ export function ProjectDNASection({ projectType, projectId, dnaData, onUpdate, e
                             )}
                           </div>
                         ) : (
-                          <p className="mt-1 text-sm">
-                            {dnaData.responses[q.key] || <span className="text-muted-foreground">-</span>}
+                          <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+                            {dnaData.responses[q.key] || <span className="text-zinc-400 dark:text-zinc-500">-</span>}
                           </p>
                         )}
                       </div>
@@ -191,10 +191,10 @@ export function ProjectDNASection({ projectType, projectId, dnaData, onUpdate, e
               {isComplete && projectId && editing && (
                 <div className="pt-2">
                   {isAnalyzing ? (
-                    <div className="rounded-xl border bg-muted/50 p-6 text-center space-y-3">
+                    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 p-6 text-center space-y-3">
                       <Loader2 className="h-8 w-8 text-primary animate-spin mx-auto" />
-                      <p className="text-sm font-medium">Analizando proyecto...</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Analizando proyecto...</p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
                         {hasAudio
                           ? 'Transcribiendo audio y generando analisis estrategico...'
                           : 'Generando analisis estrategico...'}
@@ -219,7 +219,7 @@ export function ProjectDNASection({ projectType, projectId, dnaData, onUpdate, e
 
               {/* AI Analysis Button (read-only mode, for triggering if no analysis yet) */}
               {isComplete && projectId && !editing && !dnaData.ai_analysis && (
-                <p className="text-xs text-muted-foreground text-center py-2">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center py-2">
                   Activa el modo edicion para analizar con IA.
                 </p>
               )}
@@ -251,15 +251,15 @@ function AIAnalysisDisplay({ analysis }: { analysis: ProjectDNAAnalysis }) {
 
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-      <div className="rounded-xl border bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-950/20">
-        <CollapsibleTrigger className="flex items-center justify-between w-full p-4 text-left hover:bg-accent/30 rounded-xl transition-colors">
+      <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-purple-50/30 dark:bg-purple-950/10">
+        <CollapsibleTrigger className="flex items-center justify-between w-full p-4 text-left hover:bg-purple-100/30 dark:hover:bg-purple-900/20 rounded-lg transition-colors duration-150">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-            <span className="font-semibold text-sm">Analisis Estrategico</span>
+            <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">Analisis Estrategico</span>
             <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-purple-600 border-purple-300">IA</Badge>
           </div>
           <ChevronDown className={cn(
-            'h-4 w-4 text-muted-foreground transition-transform',
+            'h-4 w-4 text-zinc-500 dark:text-zinc-400 transition-transform duration-150',
             isExpanded && 'rotate-180',
           )} />
         </CollapsibleTrigger>
@@ -268,12 +268,12 @@ function AIAnalysisDisplay({ analysis }: { analysis: ProjectDNAAnalysis }) {
           <div className="px-4 pb-4 space-y-5">
             {/* 1. Project Summary */}
             <AnalysisSection icon={Target} title="Resumen del Proyecto">
-              <p className="text-sm">{analysis.project_summary}</p>
+              <p className="text-sm text-zinc-700 dark:text-zinc-300">{analysis.project_summary}</p>
             </AnalysisSection>
 
             {/* 2. Target Audience */}
             <AnalysisSection icon={Users} title="Audiencia Objetivo">
-              <p className="text-sm">{analysis.target_audience}</p>
+              <p className="text-sm text-zinc-700 dark:text-zinc-300">{analysis.target_audience}</p>
             </AnalysisSection>
 
             {/* 3. Key Objectives */}
@@ -281,7 +281,7 @@ function AIAnalysisDisplay({ analysis }: { analysis: ProjectDNAAnalysis }) {
               <AnalysisSection icon={CheckCircle2} title="Objetivos Clave">
                 <ul className="space-y-1.5">
                   {analysis.key_objectives.map((obj, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm">
+                    <li key={i} className="flex items-start gap-2 text-sm text-zinc-700 dark:text-zinc-300">
                       <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
                       {obj}
                     </li>
@@ -292,7 +292,7 @@ function AIAnalysisDisplay({ analysis }: { analysis: ProjectDNAAnalysis }) {
 
             {/* 4. Recommended Approach */}
             <AnalysisSection icon={Lightbulb} title="Enfoque Recomendado">
-              <p className="text-sm">{analysis.recommended_approach}</p>
+              <p className="text-sm text-zinc-700 dark:text-zinc-300">{analysis.recommended_approach}</p>
             </AnalysisSection>
 
             {/* 5. Action Plan */}
@@ -300,13 +300,13 @@ function AIAnalysisDisplay({ analysis }: { analysis: ProjectDNAAnalysis }) {
               <AnalysisSection icon={ListOrdered} title="Plan de Inicio">
                 <div className="space-y-2.5">
                   {analysis.action_plan.map((item) => (
-                    <div key={item.step} className="flex gap-3 p-3 bg-background/80 rounded-lg border">
+                    <div key={item.step} className="flex gap-3 p-3 bg-white dark:bg-[#1a1a24] rounded-lg border border-zinc-200 dark:border-zinc-800">
                       <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
                         {item.step}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{item.action}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{item.why}</p>
+                        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{item.action}</p>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{item.why}</p>
                       </div>
                     </div>
                   ))}
@@ -319,7 +319,7 @@ function AIAnalysisDisplay({ analysis }: { analysis: ProjectDNAAnalysis }) {
               <AnalysisSection icon={BarChart3} title="Metricas de Exito">
                 <ul className="space-y-1">
                   {analysis.success_metrics.map((metric, i) => (
-                    <li key={i} className="text-sm flex items-start gap-2">
+                    <li key={i} className="text-sm flex items-start gap-2 text-zinc-700 dark:text-zinc-300">
                       <span className="text-primary mt-0.5">&#8226;</span>
                       {metric}
                     </li>
@@ -333,7 +333,7 @@ function AIAnalysisDisplay({ analysis }: { analysis: ProjectDNAAnalysis }) {
               <AnalysisSection icon={AlertTriangle} title="Consideraciones y Riesgos">
                 <ul className="space-y-1.5">
                   {analysis.risks_and_considerations.map((risk, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm">
+                    <li key={i} className="flex items-start gap-2 text-sm text-zinc-700 dark:text-zinc-300">
                       <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 shrink-0" />
                       {risk}
                     </li>
@@ -348,13 +348,13 @@ function AIAnalysisDisplay({ analysis }: { analysis: ProjectDNAAnalysis }) {
                 <span className={cn('text-xs font-medium px-2.5 py-1 rounded-full', complexityColor)}>
                   {analysis.estimated_complexity}
                 </span>
-                <p className="text-sm text-muted-foreground">{analysis.complexity_justification}</p>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">{analysis.complexity_justification}</p>
               </div>
             </AnalysisSection>
 
             {/* Footer */}
             {analysis.generated_at && (
-              <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-2 border-t">
+              <div className="flex items-center justify-between text-[10px] text-zinc-500 dark:text-zinc-400 pt-2 border-t border-zinc-200 dark:border-zinc-800">
                 <span>Generado: {new Date(analysis.generated_at).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                 {analysis.ai_model && <span className="font-mono">{analysis.ai_model}</span>}
               </div>
@@ -426,25 +426,25 @@ function AudioDNASection({
   }, [onAudioComplete]);
 
   return (
-    <div className="rounded-xl border bg-muted/30 p-4 space-y-4">
+    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/30 p-4 space-y-4">
       {/* Header */}
       <div className="flex items-center gap-2">
         <Mic className="h-4 w-4 text-primary" />
-        <span className="text-sm font-medium">Cuentanos tu vision</span>
+        <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Cuentanos tu vision</span>
       </div>
 
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-zinc-500 dark:text-zinc-400">
         {config.audioDescription}
       </p>
 
       {/* Guide points */}
-      <div className="rounded-lg bg-background/50 border p-3">
+      <div className="rounded-lg bg-white dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-800 p-3">
         <p className="text-xs font-medium text-primary uppercase tracking-wider mb-2">
           Puntos a cubrir en tu audio
         </p>
         <ul className="space-y-1.5">
           {config.audioGuidePoints.map((point, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+            <li key={i} className="flex items-start gap-2 text-sm text-zinc-600 dark:text-zinc-400">
               <span className="text-primary font-mono text-xs mt-0.5">{i + 1}.</span>
               {point}
             </li>
@@ -455,7 +455,7 @@ function AudioDNASection({
       {/* Recorder / Player */}
       {audioUrl && !showReRecord && !isUploading ? (
         <div className="space-y-3">
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-background border">
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-white dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-800">
             <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
             <audio controls src={audioUrl} className="flex-1 h-8" />
           </div>
@@ -474,7 +474,7 @@ function AudioDNASection({
       ) : isUploading ? (
         <div className="flex flex-col items-center gap-3 py-6">
           <Loader2 className="h-6 w-6 text-primary animate-spin" />
-          <p className="text-sm text-muted-foreground">Subiendo audio...</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Subiendo audio...</p>
         </div>
       ) : editing ? (
         <div>
@@ -491,7 +491,7 @@ function AudioDNASection({
           )}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground py-4 text-center">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 py-4 text-center">
           No se ha grabado audio para este proyecto.
         </p>
       )}

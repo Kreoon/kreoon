@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Clock, Building2, ChevronRight, Video, FileText, Star, Crown } from "lucide-react";
+import { Clock, Building2, ChevronRight, Video, FileText, Star, Crown, Settings2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
@@ -8,14 +8,24 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Content, STATUS_COLORS, STATUS_LABELS } from "@/types/database";
 import { cn } from "@/lib/utils";
 import { OrganizationStatus, getStatusLabel, getStatusColorStyle, getStatusFallbackClass, getStatusProgress } from "@/lib/statusUtils";
+import { CardFieldsCustomizer } from "./CardFieldsCustomizer";
+import { GroupBySelector } from "./GroupBySelector";
+import { BOARD_FIELDS } from "./boardFieldsConfig";
 
 interface BoardListViewProps {
   content: Content[];
   onContentClick: (content: Content) => void;
   cardSize?: 'compact' | 'normal' | 'large';
   visibleFields?: string[];
+  onVisibleFieldsChange?: (fields: string[]) => void;
   organizationStatuses?: OrganizationStatus[];
   ambassadorIds?: Set<string>;
+  /** Mostrar header con controles de personalización */
+  showFieldsCustomizer?: boolean;
+  /** Campo por el cual agrupar (default: status, none = sin agrupar) */
+  groupBy?: string;
+  /** Callback cuando cambia el campo de agrupación */
+  onGroupByChange?: (field: string) => void;
 }
 
 // Size configurations
@@ -43,37 +53,101 @@ const SIZE_CONFIG = {
   },
 };
 
-export function BoardListView({ 
-  content, 
+export function BoardListView({
+  content,
   onContentClick,
   cardSize = 'normal',
   visibleFields = ['title', 'thumbnail', 'status', 'client', 'creator', 'editor', 'deadline'],
+  onVisibleFieldsChange,
   organizationStatuses = [],
-  ambassadorIds = new Set()
+  ambassadorIds = new Set(),
+  showFieldsCustomizer = true,
+  groupBy = 'status',
+  onGroupByChange
 }: BoardListViewProps) {
   const showField = (field: string) => visibleFields.includes(field);
   const sizeConfig = SIZE_CONFIG[cardSize] || SIZE_CONFIG.normal;
 
-  // Group by status
-  const groupedByStatus = content.reduce((acc, c) => {
-    if (!acc[c.status]) acc[c.status] = [];
-    acc[c.status].push(c);
+  // Función para obtener el valor de agrupación de un contenido
+  const getGroupKey = (c: Content): string => {
+    if (groupBy === 'none') return 'all';
+
+    switch (groupBy) {
+      case 'status':
+        return c.status;
+      case 'client':
+        return c.client?.name || 'Sin cliente';
+      case 'creator':
+        return c.creator?.full_name || 'Sin creador';
+      case 'editor':
+        return c.editor?.full_name || 'Sin editor';
+      case 'sphere_phase':
+        return c.sphere_phase || 'Sin fase';
+      case 'campaign_week':
+        return c.campaign_week ? `Semana ${c.campaign_week}` : 'Sin semana';
+      case 'deadline':
+        return c.deadline ? format(new Date(c.deadline), 'MMMM yyyy', { locale: es }) : 'Sin fecha';
+      default:
+        return c.status;
+    }
+  };
+
+  // Obtener etiqueta del grupo según el campo de agrupación
+  const getGroupLabel = (key: string): string => {
+    if (groupBy === 'none') return 'Todos los proyectos';
+    if (groupBy === 'status') {
+      return getStatusLabel(key as Content['status'], organizationStatuses);
+    }
+    return key;
+  };
+
+  // Agrupar contenido dinámicamente
+  const groupedContent = content.reduce((acc, c) => {
+    const key = getGroupKey(c);
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(c);
     return acc;
   }, {} as Record<string, Content[]>);
 
   return (
-    <div className="space-y-6">
-      {Object.entries(groupedByStatus).map(([status, items]) => {
-        const statusStyle = getStatusColorStyle(status as Content['status'], organizationStatuses);
-        const statusClass = getStatusFallbackClass(status as Content['status'], organizationStatuses);
-        const label = getStatusLabel(status as Content['status'], organizationStatuses);
-        
+    <div className="space-y-4">
+      {/* Header con controles de personalización - Nova v2 */}
+      {(showFieldsCustomizer || onGroupByChange) && (
+        <div className="flex items-center justify-between px-2 py-1.5 border-b border-zinc-200/80 dark:border-purple-500/10">
+          <div className="flex items-center gap-2">
+            {onGroupByChange && (
+              <GroupBySelector
+                currentGroupBy={groupBy}
+                onGroupByChange={onGroupByChange}
+              />
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {showFieldsCustomizer && onVisibleFieldsChange && (
+              <CardFieldsCustomizer
+                visibleFields={visibleFields}
+                onFieldsChange={onVisibleFieldsChange}
+                compact={true}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-6">
+      {Object.entries(groupedContent).map(([groupKey, items]) => {
+        // Estilos para grupos de status
+        const isStatusGroup = groupBy === 'status';
+        const statusStyle = isStatusGroup ? getStatusColorStyle(groupKey as Content['status'], organizationStatuses) : null;
+        const statusClass = isStatusGroup ? getStatusFallbackClass(groupKey as Content['status'], organizationStatuses) : '';
+        const label = getGroupLabel(groupKey);
+
         return (
-          <div key={status} className="space-y-2">
+          <div key={groupKey} className="space-y-2">
             <div className="flex items-center gap-2 px-2">
-              <Badge 
-                variant="secondary" 
-                className={cn("text-xs", statusClass)}
+              <Badge
+                variant="secondary"
+                className={cn("text-xs", isStatusGroup && statusClass)}
                 style={statusStyle || undefined}
               >
                 {label}
@@ -95,9 +169,17 @@ export function BoardListView({
                   key={c.id}
                   onClick={() => onContentClick(c)}
                   className={cn(
-                    "flex items-center rounded-lg border bg-card cursor-pointer",
-                    "hover:bg-muted/50 hover:border-primary/30 transition-all",
-                    isOverdue && "border-l-4 border-l-destructive",
+                    // Base styles - Nova v2
+                    "flex items-center rounded-lg border cursor-pointer",
+                    "bg-white dark:bg-[#0f0f22]",
+                    "border-zinc-200/80 dark:border-purple-500/15",
+                    // Hover state - Nova glow
+                    "hover:bg-zinc-50 dark:hover:bg-[#141428]",
+                    "hover:border-purple-300 dark:hover:border-purple-500/30",
+                    "dark:hover:shadow-[0_0_12px_rgba(139,92,246,0.15)]",
+                    "transition-all duration-200",
+                    // Overdue indicator
+                    isOverdue && "border-l-4 border-l-red-500",
                     sizeConfig.padding
                   )}
                 >
@@ -286,6 +368,7 @@ export function BoardListView({
           No hay contenido para mostrar
         </div>
       )}
+      </div>
     </div>
   );
 }

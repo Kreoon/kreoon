@@ -585,7 +585,7 @@ export function GoLiveModal({ open, onOpenChange, onLiveStarted }: GoLiveModalPr
                 </div>
               </div>
 
-              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-sm p-4">
                 <h4 className="font-medium text-sm mb-2">Configuración en OBS:</h4>
                 <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
                   <li>Ve a <strong>Configuración → Emisión</strong></li>

@@ -156,7 +156,7 @@ function StepVisual({
     return (
       <div
         className={cn(
-          "rounded-xl border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
+          "rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
           className,
         )}
       >
@@ -170,7 +170,7 @@ function StepVisual({
     return (
       <div
         className={cn(
-          "flex gap-2 rounded-xl border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
+          "flex gap-2 rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
           className,
         )}
       >
@@ -187,7 +187,7 @@ function StepVisual({
     return (
       <div
         className={cn(
-          "flex items-center justify-center rounded-xl border border-kreoon-border bg-kreoon-bg-card/60 p-6 backdrop-blur-sm",
+          "flex items-center justify-center rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-6 backdrop-blur-sm",
           className,
         )}
       >
@@ -201,7 +201,7 @@ function StepVisual({
     return (
       <div
         className={cn(
-          "flex h-20 items-end gap-1 rounded-xl border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
+          "flex h-20 items-end gap-1 rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
           className,
         )}
       >
@@ -224,7 +224,7 @@ function StepVisual({
     return (
       <div
         className={cn(
-          "rounded-xl border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
+          "rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
           className,
         )}
       >
@@ -240,7 +240,7 @@ function StepVisual({
     return (
       <div
         className={cn(
-          "space-y-2 rounded-xl border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
+          "space-y-2 rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
           className,
         )}
       >
@@ -258,7 +258,7 @@ function StepVisual({
     return (
       <div
         className={cn(
-          "rounded-xl border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
+          "rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
           className,
         )}
       >
@@ -282,7 +282,7 @@ function StepVisual({
     return (
       <div
         className={cn(
-          "flex gap-2 rounded-xl border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
+          "flex gap-2 rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
           className,
         )}
       >
@@ -307,7 +307,7 @@ function StepVisual({
     return (
       <div
         className={cn(
-          "rounded-xl border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
+          "rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
           className,
         )}
       >
@@ -377,7 +377,7 @@ export function HowItWorksSection({
 
         {/* Toggle perspectiva con iconos */}
         <div className="mb-12 flex justify-center">
-          <div className="inline-flex rounded-xl border border-kreoon-border bg-kreoon-bg-secondary/80 p-1 backdrop-blur-sm">
+          <div className="inline-flex rounded-sm border border-kreoon-border bg-kreoon-bg-secondary/80 p-1 backdrop-blur-sm">
             {(Object.keys(PERSPECTIVE_CONFIG) as HowItWorksPerspective[]).map((p) => {
               const config = PERSPECTIVE_CONFIG[p];
               const Icon = config.icon;
@@ -387,7 +387,7 @@ export function HowItWorksSection({
                   type="button"
                   onClick={() => setPerspective(p)}
                   className={cn(
-                    "flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all",
+                    "flex items-center gap-2 rounded-sm px-4 py-2.5 text-sm font-medium transition-all",
                     perspective === p
                       ? "bg-kreoon-purple-500/20 text-white shadow-sm"
                       : "text-kreoon-text-secondary hover:text-white",
@@ -469,7 +469,7 @@ export function HowItWorksSection({
                     >
                       <div
                         className={cn(
-                          "flex flex-1 flex-col rounded-xl border bg-kreoon-bg-card/50 p-5 transition-all duration-300 hover:-translate-y-1",
+                          "flex flex-1 flex-col rounded-sm border bg-kreoon-bg-card/50 p-5 transition-all duration-300 hover:-translate-y-1",
                           perspective === "agency"
                             ? "border-amber-500/20 hover:border-amber-500/40 hover:shadow-[0_0_30px_rgba(245,158,11,0.15)]"
                             : "border-kreoon-border hover:shadow-kreoon-glow",
@@ -561,7 +561,7 @@ export function HowItWorksSection({
                     </div>
                     <div
                       className={cn(
-                        "rounded-xl border bg-kreoon-bg-card/50 p-4 transition-all duration-300",
+                        "rounded-sm border bg-kreoon-bg-card/50 p-4 transition-all duration-300",
                         perspective === "agency"
                           ? "border-amber-500/20 active:shadow-[0_0_30px_rgba(245,158,11,0.15)]"
                           : "border-kreoon-border active:shadow-kreoon-glow",

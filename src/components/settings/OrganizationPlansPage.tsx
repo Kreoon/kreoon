@@ -74,7 +74,7 @@ function getPlanFeatures(plan: PlanDef): string[] {
   if (plan.storage && plan.storage !== '—') {
     features.push(`${plan.storage} almacenamiento`);
   }
-  features.push(`${plan.aiTokens >= 1000 ? `${(plan.aiTokens / 1000).toFixed(0)}k` : plan.aiTokens} Kreoon Coins/mes`);
+  features.push(`${plan.aiTokens >= 1000 ? `${(plan.aiTokens / 1000).toFixed(0)}k` : plan.aiTokens} Tokens IA/mes`);
 
   // Agency-specific: role-based limits
   if (plan.adminUsers !== undefined) {
@@ -532,12 +532,12 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
             </div>
           )}
 
-          {/* Kreoon Coins Balance */}
+          {/* Tokens IA Balance */}
           <Separator />
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500" />
-              <span className="text-sm font-medium">Kreoon Coins</span>
+              <span className="text-sm font-medium">Tokens IA</span>
             </div>
             <div className="text-right">
               {tokensLoading ? (
@@ -680,7 +680,7 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
               <Card
                 key={plan.id}
                 className={cn(
-                  "relative transition-all duration-200 flex flex-col",
+                  "relative transition-colors duration-150 flex flex-col",
                   isPopular && "border-primary shadow-lg",
                   (plan.highlighted && !isPopular) && "border-primary/50",
                   isCurrentPlan && isActive && "bg-primary/5"
@@ -738,42 +738,42 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
                     /* Agency plans: role-based grid */
                     <div className="space-y-2">
                       <div className="grid grid-cols-2 gap-2 text-center text-xs">
-                        <div className="p-2 rounded-lg bg-muted/50">
+                        <div className="p-2 rounded-lg bg-zinc-50 dark:bg-[#1a1a24]">
                           <Shield className="h-4 w-4 mx-auto mb-1 text-blue-500" />
-                          <span className="font-medium">{plan.adminUsers ?? '∞'}</span>
-                          <p className="text-muted-foreground">admins</p>
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100">{plan.adminUsers ?? '∞'}</span>
+                          <p className="text-zinc-500 dark:text-zinc-400">admins</p>
                         </div>
-                        <div className="p-2 rounded-lg bg-muted/50">
+                        <div className="p-2 rounded-lg bg-zinc-50 dark:bg-[#1a1a24]">
                           <Compass className="h-4 w-4 mx-auto mb-1 text-purple-500" />
-                          <span className="font-medium">{plan.strategists ?? '∞'}</span>
-                          <p className="text-muted-foreground">estrategas</p>
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100">{plan.strategists ?? '∞'}</span>
+                          <p className="text-zinc-500 dark:text-zinc-400">estrategas</p>
                         </div>
-                        <div className="p-2 rounded-lg bg-muted/50">
+                        <div className="p-2 rounded-lg bg-zinc-50 dark:bg-[#1a1a24]">
                           <Film className="h-4 w-4 mx-auto mb-1 text-orange-500" />
-                          <span className="font-medium">{plan.editors ?? '∞'}</span>
-                          <p className="text-muted-foreground">editores</p>
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100">{plan.editors ?? '∞'}</span>
+                          <p className="text-zinc-500 dark:text-zinc-400">editores</p>
                         </div>
-                        <div className="p-2 rounded-lg bg-muted/50">
+                        <div className="p-2 rounded-lg bg-zinc-50 dark:bg-[#1a1a24]">
                           <Camera className="h-4 w-4 mx-auto mb-1 text-green-500" />
-                          <span className="font-medium">{plan.creators ?? '∞'}</span>
-                          <p className="text-muted-foreground">creadores</p>
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100">{plan.creators ?? '∞'}</span>
+                          <p className="text-zinc-500 dark:text-zinc-400">creadores</p>
                         </div>
                       </div>
                       <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                        <div className="p-2 rounded-lg bg-muted/50">
-                          <Briefcase className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                          <span className="font-medium">{plan.clients ?? '∞'}</span>
-                          <p className="text-muted-foreground">clientes</p>
+                        <div className="p-2 rounded-lg bg-zinc-50 dark:bg-[#1a1a24]">
+                          <Briefcase className="h-4 w-4 mx-auto mb-1 text-zinc-500 dark:text-zinc-400" />
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100">{plan.clients ?? '∞'}</span>
+                          <p className="text-zinc-500 dark:text-zinc-400">clientes</p>
                         </div>
-                        <div className="p-2 rounded-lg bg-muted/50">
-                          <Sparkles className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                          <span className="font-medium">{plan.aiTokens >= 1000 ? `${(plan.aiTokens / 1000).toFixed(0)}k` : plan.aiTokens}</span>
-                          <p className="text-muted-foreground">coins</p>
+                        <div className="p-2 rounded-lg bg-zinc-50 dark:bg-[#1a1a24]">
+                          <Sparkles className="h-4 w-4 mx-auto mb-1 text-zinc-500 dark:text-zinc-400" />
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100">{plan.aiTokens >= 1000 ? `${(plan.aiTokens / 1000).toFixed(0)}k` : plan.aiTokens}</span>
+                          <p className="text-zinc-500 dark:text-zinc-400">coins</p>
                         </div>
-                        <div className="p-2 rounded-lg bg-muted/50">
-                          <Video className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                          <span className="font-medium">∞</span>
-                          <p className="text-muted-foreground">proyectos</p>
+                        <div className="p-2 rounded-lg bg-zinc-50 dark:bg-[#1a1a24]">
+                          <Video className="h-4 w-4 mx-auto mb-1 text-zinc-500 dark:text-zinc-400" />
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100">∞</span>
+                          <p className="text-zinc-500 dark:text-zinc-400">proyectos</p>
                         </div>
                       </div>
                     </div>
@@ -783,26 +783,26 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
                       "grid gap-2 text-center text-xs",
                       "grid-cols-3"
                     )}>
-                      <div className="p-2 rounded-lg bg-muted/50">
-                        <Users className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                        <span className="font-medium">
+                      <div className="p-2 rounded-lg bg-zinc-50 dark:bg-[#1a1a24]">
+                        <Users className="h-4 w-4 mx-auto mb-1 text-zinc-500 dark:text-zinc-400" />
+                        <span className="font-medium text-zinc-900 dark:text-zinc-100">
                           {plan.users ?? '∞'}
                         </span>
-                        <p className="text-muted-foreground">usuarios</p>
+                        <p className="text-zinc-500 dark:text-zinc-400">usuarios</p>
                       </div>
                       {plan.contentPerMonth !== undefined && (
-                        <div className="p-2 rounded-lg bg-muted/50">
-                          <Video className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                          <span className="font-medium">
+                        <div className="p-2 rounded-lg bg-zinc-50 dark:bg-[#1a1a24]">
+                          <Video className="h-4 w-4 mx-auto mb-1 text-zinc-500 dark:text-zinc-400" />
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100">
                             {plan.contentPerMonth ?? '∞'}
                           </span>
-                          <p className="text-muted-foreground">proyectos</p>
+                          <p className="text-zinc-500 dark:text-zinc-400">proyectos</p>
                         </div>
                       )}
-                      <div className="p-2 rounded-lg bg-muted/50">
-                        <Sparkles className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                        <span className="font-medium">{plan.aiTokens >= 1000 ? `${(plan.aiTokens / 1000).toFixed(0)}k` : plan.aiTokens}</span>
-                        <p className="text-muted-foreground">coins</p>
+                      <div className="p-2 rounded-lg bg-zinc-50 dark:bg-[#1a1a24]">
+                        <Sparkles className="h-4 w-4 mx-auto mb-1 text-zinc-500 dark:text-zinc-400" />
+                        <span className="font-medium text-zinc-900 dark:text-zinc-100">{plan.aiTokens >= 1000 ? `${(plan.aiTokens / 1000).toFixed(0)}k` : plan.aiTokens}</span>
+                        <p className="text-zinc-500 dark:text-zinc-400">coins</p>
                       </div>
                     </div>
                   )}
@@ -871,15 +871,15 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
       </div>
 
       {/* Info Card */}
-      <Card className="bg-muted/30">
+      <Card className="bg-zinc-50 dark:bg-[#14141f] border-zinc-200 dark:border-zinc-800">
         <CardContent className="pt-6">
           <div className="flex items-start gap-4">
             <div className="p-2 rounded-lg bg-primary/10">
               <CreditCard className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h4 className="font-medium">Pago seguro con Stripe</h4>
-              <p className="text-sm text-muted-foreground mt-1">
+              <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Pago seguro con Stripe</h4>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
                 Todos los pagos son procesados de forma segura a traves de Stripe.
                 Aceptamos tarjetas de credito/debito Visa, Mastercard y American Express.
                 Puedes cancelar en cualquier momento desde el portal de facturacion.

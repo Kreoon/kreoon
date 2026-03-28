@@ -191,8 +191,8 @@ function CreativeCard({ creative, index }: { creative: AdCreative; index: number
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Preview mockup */}
-        <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
-          <div className="aspect-square bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg flex items-center justify-center">
+        <div className="p-4 rounded-sm border bg-muted/30 space-y-3">
+          <div className="aspect-square bg-gradient-to-br from-gray-700 to-gray-800 rounded-sm flex items-center justify-center">
             <div className="text-center p-4">
               <Icon className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
               <p className="text-xs text-muted-foreground">
@@ -245,7 +245,7 @@ function CreativeCard({ creative, index }: { creative: AdCreative; index: number
         </Button>
 
         {expanded && (
-          <div className="space-y-3 p-4 rounded-lg border">
+          <div className="space-y-3 p-4 rounded-sm border">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <p className="text-xs text-muted-foreground mb-1">Primary Text:</p>
@@ -347,15 +347,15 @@ export function Tab14MetaAds({ data }: Tab14MetaAdsProps) {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid sm:grid-cols-3 gap-4">
-                    <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                    <div className="p-3 rounded-sm bg-blue-500/10 border border-blue-500/20">
                       <p className="text-xs text-blue-400 mb-1">Objetivo</p>
                       <p className="font-medium capitalize">{data.campaign_architecture.objective}</p>
                     </div>
-                    <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
                       <p className="text-xs text-green-400 mb-1">Presupuesto Diario</p>
                       <p className="font-medium">${data.campaign_architecture.daily_budget_usd} USD</p>
                     </div>
-                    <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                    <div className="p-3 rounded-sm bg-purple-500/10 border border-purple-500/20">
                       <p className="text-xs text-purple-400 mb-1">Budget Testing</p>
                       <p className="font-medium">${data.campaign_architecture.testing_budget_usd} USD</p>
                     </div>
@@ -367,7 +367,7 @@ export function Tab14MetaAds({ data }: Tab14MetaAdsProps) {
                       <p className="text-sm font-medium mb-3">Etapas del Funnel</p>
                       <div className="grid sm:grid-cols-3 gap-3">
                         {data.campaign_architecture.funnel_stages.map((stage, idx) => (
-                          <div key={idx} className="p-3 rounded-lg border bg-card">
+                          <div key={idx} className="p-3 rounded-sm border bg-card">
                             <Badge className={
                               stage.stage === "tofu" ? "bg-blue-500/20 text-blue-400" :
                               stage.stage === "mofu" ? "bg-purple-500/20 text-purple-400" :
@@ -399,7 +399,7 @@ export function Tab14MetaAds({ data }: Tab14MetaAdsProps) {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <div className="p-3 rounded-sm bg-green-500/10 border border-green-500/20">
                       <p className="font-medium capitalize">{data.bidding.strategy?.replace(/_/g, " ")}</p>
                       {data.bidding.target_cpa && (
                         <p className="text-sm text-muted-foreground mt-1">
@@ -481,7 +481,7 @@ export function Tab14MetaAds({ data }: Tab14MetaAdsProps) {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {data.audiences.cold.map((audience, idx) => (
-                    <div key={idx} className="p-4 rounded-lg border bg-card">
+                    <div key={idx} className="p-4 rounded-sm border bg-card">
                       <div className="flex items-center justify-between mb-2">
                         <p className="font-medium">{audience.name}</p>
                         <Badge variant="outline">{audience.age}</Badge>
@@ -520,7 +520,7 @@ export function Tab14MetaAds({ data }: Tab14MetaAdsProps) {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {data.audiences.warm.map((audience, idx) => (
-                    <div key={idx} className="p-3 rounded-lg border bg-orange-500/5 border-orange-500/20">
+                    <div key={idx} className="p-3 rounded-sm border bg-orange-500/5 border-orange-500/20">
                       <div className="flex items-center justify-between">
                         <p className="font-medium">{audience.name}</p>
                         <div className="flex items-center gap-2">
@@ -544,7 +544,7 @@ export function Tab14MetaAds({ data }: Tab14MetaAdsProps) {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {data.audiences.lookalikes.map((lal, idx) => (
-                    <div key={idx} className="p-3 rounded-lg border bg-purple-500/5 border-purple-500/20">
+                    <div key={idx} className="p-3 rounded-sm border bg-purple-500/5 border-purple-500/20">
                       <div className="flex items-center justify-between">
                         <p className="font-medium">LAL de {lal.source}</p>
                         <Badge className="bg-purple-500/20 text-purple-400">{lal.percentage}</Badge>
@@ -576,13 +576,13 @@ export function Tab14MetaAds({ data }: Tab14MetaAdsProps) {
                     </CardHeader>
                     <CardContent className="space-y-3">
                       {/* Hook */}
-                      <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                      <div className="p-3 rounded-sm bg-yellow-500/10 border border-yellow-500/20">
                         <p className="text-xs text-yellow-400 mb-1">Hook</p>
                         <p className="text-sm font-medium">{ad.hook}</p>
                       </div>
 
                       {/* Ad Preview */}
-                      <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
+                      <div className="p-4 rounded-sm border bg-muted/30 space-y-3">
                         <p className="text-sm leading-relaxed">{ad.primary_text}</p>
                         <div className="border-t pt-3">
                           <p className="font-semibold">{ad.headline}</p>
@@ -620,7 +620,7 @@ export function Tab14MetaAds({ data }: Tab14MetaAdsProps) {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {data.retargeting.map((rule, idx) => (
-                    <div key={idx} className="p-4 rounded-lg border bg-card">
+                    <div key={idx} className="p-4 rounded-sm border bg-card">
                       <div className="flex items-center justify-between mb-3">
                         <Badge className="bg-orange-500/20 text-orange-400">
                           {rule.trigger}
@@ -661,7 +661,7 @@ export function Tab14MetaAds({ data }: Tab14MetaAdsProps) {
                 <CardContent>
                   <div className="grid sm:grid-cols-3 gap-4">
                     {data.budget_scenarios.minimum && (
-                      <div className="p-4 rounded-lg border bg-blue-500/5 border-blue-500/20">
+                      <div className="p-4 rounded-sm border bg-blue-500/5 border-blue-500/20">
                         <Badge className="bg-blue-500/20 text-blue-400 mb-2">Mínimo</Badge>
                         <p className="text-2xl font-bold text-blue-400">{data.budget_scenarios.minimum.daily}</p>
                         <p className="text-xs text-muted-foreground mt-1">/día</p>
@@ -669,7 +669,7 @@ export function Tab14MetaAds({ data }: Tab14MetaAdsProps) {
                       </div>
                     )}
                     {data.budget_scenarios.growth && (
-                      <div className="p-4 rounded-lg border bg-green-500/5 border-green-500/20">
+                      <div className="p-4 rounded-sm border bg-green-500/5 border-green-500/20">
                         <Badge className="bg-green-500/20 text-green-400 mb-2">Crecimiento</Badge>
                         <p className="text-2xl font-bold text-green-400">{data.budget_scenarios.growth.daily}</p>
                         <p className="text-xs text-muted-foreground mt-1">/día</p>
@@ -677,7 +677,7 @@ export function Tab14MetaAds({ data }: Tab14MetaAdsProps) {
                       </div>
                     )}
                     {data.budget_scenarios.scale && (
-                      <div className="p-4 rounded-lg border bg-purple-500/5 border-purple-500/20">
+                      <div className="p-4 rounded-sm border bg-purple-500/5 border-purple-500/20">
                         <Badge className="bg-purple-500/20 text-purple-400 mb-2">Escala</Badge>
                         <p className="text-2xl font-bold text-purple-400">{data.budget_scenarios.scale.daily}</p>
                         <p className="text-xs text-muted-foreground mt-1">/día</p>
@@ -787,13 +787,13 @@ export function Tab14MetaAds({ data }: Tab14MetaAdsProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid sm:grid-cols-2 gap-4">
-                <div className="p-3 rounded-lg bg-muted/50">
+                <div className="p-3 rounded-sm bg-muted/50">
                   <p className="text-xs text-muted-foreground mb-1">Objetivo</p>
                   <p className="font-medium">
                     {data.campaign_structure?.campaign_objective}
                   </p>
                 </div>
-                <div className="p-3 rounded-lg bg-muted/50">
+                <div className="p-3 rounded-sm bg-muted/50">
                   <p className="text-xs text-muted-foreground mb-1">
                     Presupuesto Diario
                   </p>
@@ -806,7 +806,7 @@ export function Tab14MetaAds({ data }: Tab14MetaAdsProps) {
               <div className="space-y-3">
                 <p className="text-sm font-medium">Fases de Campaña</p>
                 {data.campaign_structure?.campaign_phases?.map((phase, idx) => (
-                  <div key={idx} className="p-4 rounded-lg border bg-card">
+                  <div key={idx} className="p-4 rounded-sm border bg-card">
                     <div className="flex items-center gap-3 mb-2">
                       <span className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold">
                         {idx + 1}
@@ -877,17 +877,17 @@ export function Tab14MetaAds({ data }: Tab14MetaAdsProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid sm:grid-cols-3 gap-4">
-                  <div className="p-3 rounded-lg bg-muted/50">
+                  <div className="p-3 rounded-sm bg-muted/50">
                     <p className="text-xs text-muted-foreground mb-1">Edad</p>
                     <p className="font-medium">
                       {audience.demographics?.age_range}
                     </p>
                   </div>
-                  <div className="p-3 rounded-lg bg-muted/50">
+                  <div className="p-3 rounded-sm bg-muted/50">
                     <p className="text-xs text-muted-foreground mb-1">Género</p>
                     <p className="font-medium">{audience.demographics?.gender}</p>
                   </div>
-                  <div className="p-3 rounded-lg bg-muted/50">
+                  <div className="p-3 rounded-sm bg-muted/50">
                     <p className="text-xs text-muted-foreground mb-1">
                       Tamaño Est.
                     </p>
@@ -956,7 +956,7 @@ export function Tab14MetaAds({ data }: Tab14MetaAdsProps) {
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="p-4 rounded-lg bg-muted/50 border-l-4 border-primary">
+                <div className="p-4 rounded-sm bg-muted/50 border-l-4 border-primary">
                   <p className="font-semibold mb-2">{variation.headline}</p>
                   <p className="text-sm text-muted-foreground whitespace-pre-line">
                     {variation.primary_text}

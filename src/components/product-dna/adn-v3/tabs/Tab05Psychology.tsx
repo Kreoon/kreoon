@@ -164,7 +164,7 @@ export function Tab05Psychology({ data }: Tab05PsychologyProps) {
           <CardContent className="space-y-4">
             {/* Root Pain */}
             {data.pain_map.root_pain && (
-              <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30">
+              <div className="p-4 rounded-sm bg-red-500/10 border border-red-500/30">
                 <p className="text-xs text-red-400 mb-1">Dolor Raíz Existencial</p>
                 <p className="text-sm font-medium">{data.pain_map.root_pain}</p>
                 <CopyButton text={data.pain_map.root_pain} className="mt-2" size="sm" />
@@ -177,7 +177,7 @@ export function Tab05Psychology({ data }: Tab05PsychologyProps) {
                 <p className="text-sm font-medium mb-2 text-blue-400">Dolores Funcionales</p>
                 <div className="space-y-2">
                   {data.pain_map.functional_pains.map((p, idx) => (
-                    <div key={idx} className="p-3 rounded-lg border bg-card">
+                    <div key={idx} className="p-3 rounded-sm border bg-card">
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <p className="text-sm font-medium">{p.pain}</p>
                         {p.intensity && (
@@ -200,7 +200,7 @@ export function Tab05Psychology({ data }: Tab05PsychologyProps) {
                 <p className="text-sm font-medium mb-2 text-pink-400">Dolores Emocionales</p>
                 <div className="grid sm:grid-cols-2 gap-2">
                   {data.pain_map.emotional_pains.map((p, idx) => (
-                    <div key={idx} className="p-3 rounded-lg border bg-card border-l-4 border-l-pink-500">
+                    <div key={idx} className="p-3 rounded-sm border bg-card border-l-4 border-l-pink-500">
                       <p className="text-sm font-medium mb-1">{p.emotion}</p>
                       {p.what_causes_it && (
                         <p className="text-xs text-muted-foreground">Causa: {p.what_causes_it}</p>
@@ -243,7 +243,7 @@ export function Tab05Psychology({ data }: Tab05PsychologyProps) {
           <CardContent className="space-y-4">
             {/* Deep Desire */}
             {data.desire_map.deep_desire && (
-              <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
+              <div className="p-4 rounded-sm bg-green-500/10 border border-green-500/30">
                 <p className="text-xs text-green-400 mb-1">Deseo Profundo</p>
                 <p className="text-sm font-medium italic">{data.desire_map.deep_desire}</p>
                 <CopyButton text={data.desire_map.deep_desire} className="mt-2" size="sm" />
@@ -256,7 +256,7 @@ export function Tab05Psychology({ data }: Tab05PsychologyProps) {
                 <p className="text-sm font-medium mb-2 text-blue-400">Deseos Funcionales</p>
                 <div className="space-y-2">
                   {data.desire_map.functional_desires.map((d, idx) => (
-                    <div key={idx} className="p-3 rounded-lg border bg-card">
+                    <div key={idx} className="p-3 rounded-sm border bg-card">
                       <div className="flex items-start justify-between gap-2">
                         <p className="text-sm">{d.desire}</p>
                         {d.urgency && (
@@ -280,7 +280,7 @@ export function Tab05Psychology({ data }: Tab05PsychologyProps) {
                 <p className="text-sm font-medium mb-2 text-pink-400">Deseos Emocionales</p>
                 <div className="grid sm:grid-cols-2 gap-2">
                   {data.desire_map.emotional_desires.map((d, idx) => (
-                    <div key={idx} className="p-3 rounded-lg border bg-card border-l-4 border-l-green-500">
+                    <div key={idx} className="p-3 rounded-sm border bg-card border-l-4 border-l-green-500">
                       <p className="text-sm font-medium mb-1">{d.state}</p>
                       {d.delivery && (
                         <p className="text-xs text-green-400">Cómo entregar: {d.delivery}</p>
@@ -321,7 +321,7 @@ export function Tab05Psychology({ data }: Tab05PsychologyProps) {
           <CardContent>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {data.cialdini_principles.reciprocity && (
-                <div className="p-4 rounded-lg border bg-card">
+                <div className="p-4 rounded-sm border bg-card">
                   <Badge className="bg-blue-500/20 text-blue-400 mb-2">Reciprocidad</Badge>
                   {data.cialdini_principles.reciprocity.what_to_give_first && (
                     <p className="text-sm mb-2">
@@ -337,7 +337,7 @@ export function Tab05Psychology({ data }: Tab05PsychologyProps) {
                 </div>
               )}
               {data.cialdini_principles.social_proof && (
-                <div className="p-4 rounded-lg border bg-card">
+                <div className="p-4 rounded-sm border bg-card">
                   <Badge className="bg-green-500/20 text-green-400 mb-2">Prueba Social</Badge>
                   {data.cialdini_principles.social_proof.most_powerful_type && (
                     <p className="text-sm mb-2">
@@ -353,7 +353,7 @@ export function Tab05Psychology({ data }: Tab05PsychologyProps) {
                 </div>
               )}
               {data.cialdini_principles.authority && (
-                <div className="p-4 rounded-lg border bg-card">
+                <div className="p-4 rounded-sm border bg-card">
                   <Badge className="bg-purple-500/20 text-purple-400 mb-2">Autoridad</Badge>
                   {data.cialdini_principles.authority.credibility_signals && (
                     <div className="flex flex-wrap gap-1 mb-2">
@@ -370,7 +370,7 @@ export function Tab05Psychology({ data }: Tab05PsychologyProps) {
                 </div>
               )}
               {data.cialdini_principles.scarcity && (
-                <div className="p-4 rounded-lg border bg-card">
+                <div className="p-4 rounded-sm border bg-card">
                   <Badge className="bg-red-500/20 text-red-400 mb-2">Escasez</Badge>
                   {data.cialdini_principles.scarcity.type && (
                     <p className="text-sm mb-2">
@@ -386,7 +386,7 @@ export function Tab05Psychology({ data }: Tab05PsychologyProps) {
                 </div>
               )}
               {data.cialdini_principles.liking && (
-                <div className="p-4 rounded-lg border bg-card">
+                <div className="p-4 rounded-sm border bg-card">
                   <Badge className="bg-yellow-500/20 text-yellow-400 mb-2">Simpatía</Badge>
                   {data.cialdini_principles.liking.similarity_factors && (
                     <div className="flex flex-wrap gap-1 mb-2">
@@ -398,7 +398,7 @@ export function Tab05Psychology({ data }: Tab05PsychologyProps) {
                 </div>
               )}
               {data.cialdini_principles.commitment_consistency && (
-                <div className="p-4 rounded-lg border bg-card">
+                <div className="p-4 rounded-sm border bg-card">
                   <Badge className="bg-orange-500/20 text-orange-400 mb-2">Compromiso</Badge>
                   {data.cialdini_principles.commitment_consistency.micro_commitment && (
                     <p className="text-sm mb-2">
@@ -425,7 +425,7 @@ export function Tab05Psychology({ data }: Tab05PsychologyProps) {
           <CardContent>
             <div className="space-y-3">
               {data.cognitive_biases.map((bias, idx) => (
-                <div key={idx} className="p-4 rounded-lg border bg-card">
+                <div key={idx} className="p-4 rounded-sm border bg-card">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <span className="font-medium text-sm">{bias.bias}</span>
                     {bias.relevance && (
@@ -463,7 +463,7 @@ export function Tab05Psychology({ data }: Tab05PsychologyProps) {
           <CardContent>
             <div className="grid sm:grid-cols-2 gap-3">
               {data.lifeforce_8.filter(l => l.relevance !== "no_aplica").map((lf, idx) => (
-                <div key={idx} className="p-3 rounded-lg border bg-card">
+                <div key={idx} className="p-3 rounded-sm border bg-card">
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-medium text-sm">{lf.desire}</span>
                     {lf.relevance && (
@@ -495,7 +495,7 @@ export function Tab05Psychology({ data }: Tab05PsychologyProps) {
           <CardContent>
             <div className="space-y-4">
               {data.objections_bank.map((obj, idx) => (
-                <div key={idx} className="p-4 rounded-lg border bg-card">
+                <div key={idx} className="p-4 rounded-sm border bg-card">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <p className="font-medium text-sm text-orange-400">"{obj.objection}"</p>
                     {obj.type && (

@@ -31,7 +31,7 @@ export const FounderKeyCard = memo(function FounderKeyCard({
       {isCurrent && (
         <motion.div
           className={cn(
-            'absolute inset-0 rounded-2xl bg-gradient-to-br',
+            'absolute inset-0 rounded-sm bg-gradient-to-br',
             keyData.color
           )}
           animate={{
@@ -44,7 +44,7 @@ export const FounderKeyCard = memo(function FounderKeyCard({
 
       <div
         className={cn(
-          'relative rounded-2xl p-4 sm:p-5 transition-all duration-300',
+          'relative rounded-sm p-4 sm:p-5 transition-all duration-300',
           isLocked && 'bg-white/[0.02] border border-white/5 opacity-60 grayscale',
           isCurrent && 'bg-white/[0.05] border-2 border-purple-500/50 shadow-lg shadow-purple-500/20',
           isUnlocked && 'bg-gradient-to-br border-2',
@@ -57,7 +57,7 @@ export const FounderKeyCard = memo(function FounderKeyCard({
           <div className="flex items-center gap-3">
             <div
               className={cn(
-                'w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center',
+                'w-10 h-10 sm:w-12 sm:h-12 rounded-sm flex items-center justify-center',
                 isLocked && 'bg-white/5',
                 isCurrent && `bg-gradient-to-br ${keyData.color}`,
                 isUnlocked && 'bg-white/20'

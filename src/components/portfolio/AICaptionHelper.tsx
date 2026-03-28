@@ -65,7 +65,7 @@ export function AICaptionHelper({ context, contentType = 'post', onApply, trigge
           {/* Context preview */}
           <div>
             <label className="text-sm font-medium text-muted-foreground">Contexto</label>
-            <div className="mt-1 p-3 bg-muted rounded-lg text-sm line-clamp-3">
+            <div className="mt-1 p-3 bg-muted rounded-sm text-sm line-clamp-3">
               {context || <span className="text-muted-foreground italic">Describe tu contenido...</span>}
             </div>
           </div>
@@ -96,7 +96,7 @@ export function AICaptionHelper({ context, contentType = 'post', onApply, trigge
                     key={index}
                     onClick={() => setSelectedIndex(index)}
                     className={cn(
-                      "p-3 rounded-lg border cursor-pointer transition-all",
+                      "p-3 rounded-sm border cursor-pointer transition-all",
                       selectedIndex === index
                         ? "border-primary bg-primary/5"
                         : "border-border hover:border-primary/50"

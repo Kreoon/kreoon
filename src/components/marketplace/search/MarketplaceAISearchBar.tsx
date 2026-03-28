@@ -49,7 +49,7 @@ export function MarketplaceAISearchBar({
     <div className={cn('relative w-full', className)}>
       {/* Input */}
       <div className={cn(
-        'flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all duration-200',
+        'flex items-center gap-3 px-4 py-3 rounded-sm border transition-all duration-200',
         'bg-white/5 backdrop-blur-sm',
         focused
           ? 'border-purple-500/60 shadow-[0_0_0_3px_rgba(139,92,246,0.15)]'
@@ -132,7 +132,7 @@ export function MarketplaceAISearchBar({
 
       {/* Sugerencias */}
       {showSuggestions && suggestions.length > 0 && !aiQuery && (
-        <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-[#111120] border border-white/10 rounded-xl shadow-2xl overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-[#111120] border border-white/10 rounded-sm shadow-2xl overflow-hidden">
           <div className="px-4 py-2 text-[10px] text-white/30 uppercase tracking-widest font-semibold border-b border-white/5">
             Sugerencias
           </div>

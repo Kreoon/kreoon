@@ -251,31 +251,31 @@ export function Tab22ExecutiveSummary({ data }: Tab22ExecutiveSummaryProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {execSummary.para_1_situation && (
-              <div className="p-4 rounded-lg border bg-muted/30">
+              <div className="p-4 rounded-sm border bg-muted/30">
                 <p className="text-xs text-blue-400 mb-2 font-medium">Situación Actual</p>
                 <p className="text-sm leading-relaxed">{execSummary.para_1_situation}</p>
               </div>
             )}
             {execSummary.para_2_opportunity && (
-              <div className="p-4 rounded-lg border bg-green-500/5 border-green-500/20">
+              <div className="p-4 rounded-sm border bg-green-500/5 border-green-500/20">
                 <p className="text-xs text-green-400 mb-2 font-medium">Oportunidad Identificada</p>
                 <p className="text-sm leading-relaxed">{execSummary.para_2_opportunity}</p>
               </div>
             )}
             {execSummary.para_3_strategy && (
-              <div className="p-4 rounded-lg border bg-purple-500/5 border-purple-500/20">
+              <div className="p-4 rounded-sm border bg-purple-500/5 border-purple-500/20">
                 <p className="text-xs text-purple-400 mb-2 font-medium">Estrategia Central</p>
                 <p className="text-sm leading-relaxed">{execSummary.para_3_strategy}</p>
               </div>
             )}
             {execSummary.para_4_execution && (
-              <div className="p-4 rounded-lg border bg-orange-500/5 border-orange-500/20">
+              <div className="p-4 rounded-sm border bg-orange-500/5 border-orange-500/20">
                 <p className="text-xs text-orange-400 mb-2 font-medium">Próximas 2 Semanas</p>
                 <p className="text-sm leading-relaxed">{execSummary.para_4_execution}</p>
               </div>
             )}
             {execSummary.para_5_projection && (
-              <div className="p-4 rounded-lg border bg-yellow-500/5 border-yellow-500/20">
+              <div className="p-4 rounded-sm border bg-yellow-500/5 border-yellow-500/20">
                 <p className="text-xs text-yellow-400 mb-2 font-medium">Proyección 90 Días</p>
                 <p className="text-sm leading-relaxed">{execSummary.para_5_projection}</p>
               </div>
@@ -327,7 +327,7 @@ export function Tab22ExecutiveSummary({ data }: Tab22ExecutiveSummaryProps) {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="text-sm leading-relaxed">{insight.insight}</p>
-                  <div className="p-3 rounded-lg bg-background/50 border">
+                  <div className="p-3 rounded-sm bg-background/50 border">
                     <div className="flex items-start gap-2">
                       <ArrowRight className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                       <div>
@@ -355,7 +355,7 @@ export function Tab22ExecutiveSummary({ data }: Tab22ExecutiveSummaryProps) {
           <CardContent>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {data.action_plan_90_days.week_1_2 && (
-                <div className="p-4 rounded-lg border bg-blue-500/5 border-blue-500/20">
+                <div className="p-4 rounded-sm border bg-blue-500/5 border-blue-500/20">
                   <Badge className="bg-blue-500/20 text-blue-400 mb-2">Semana 1-2</Badge>
                   <p className="font-medium text-sm mb-2">{data.action_plan_90_days.week_1_2.theme}</p>
                   <ul className="space-y-1 mb-3">
@@ -372,7 +372,7 @@ export function Tab22ExecutiveSummary({ data }: Tab22ExecutiveSummaryProps) {
                 </div>
               )}
               {data.action_plan_90_days.week_3_4 && (
-                <div className="p-4 rounded-lg border bg-purple-500/5 border-purple-500/20">
+                <div className="p-4 rounded-sm border bg-purple-500/5 border-purple-500/20">
                   <Badge className="bg-purple-500/20 text-purple-400 mb-2">Semana 3-4</Badge>
                   <p className="font-medium text-sm mb-2">{data.action_plan_90_days.week_3_4.theme}</p>
                   <ul className="space-y-1 mb-3">
@@ -389,7 +389,7 @@ export function Tab22ExecutiveSummary({ data }: Tab22ExecutiveSummaryProps) {
                 </div>
               )}
               {data.action_plan_90_days.week_5_8 && (
-                <div className="p-4 rounded-lg border bg-green-500/5 border-green-500/20">
+                <div className="p-4 rounded-sm border bg-green-500/5 border-green-500/20">
                   <Badge className="bg-green-500/20 text-green-400 mb-2">Semana 5-8</Badge>
                   <p className="font-medium text-sm mb-2">{data.action_plan_90_days.week_5_8.theme}</p>
                   <ul className="space-y-1 mb-3">
@@ -406,7 +406,7 @@ export function Tab22ExecutiveSummary({ data }: Tab22ExecutiveSummaryProps) {
                 </div>
               )}
               {data.action_plan_90_days.week_9_12 && (
-                <div className="p-4 rounded-lg border bg-orange-500/5 border-orange-500/20">
+                <div className="p-4 rounded-sm border bg-orange-500/5 border-orange-500/20">
                   <Badge className="bg-orange-500/20 text-orange-400 mb-2">Semana 9-12</Badge>
                   <p className="font-medium text-sm mb-2">{data.action_plan_90_days.week_9_12.theme}</p>
                   <ul className="space-y-1 mb-3">
@@ -446,7 +446,7 @@ export function Tab22ExecutiveSummary({ data }: Tab22ExecutiveSummaryProps) {
                 const winText = isObject ? winObj?.win : (win as string);
 
                 return (
-                  <div key={idx} className="p-4 rounded-lg border bg-yellow-500/5 border-yellow-500/20">
+                  <div key={idx} className="p-4 rounded-sm border bg-yellow-500/5 border-yellow-500/20">
                     <div className="flex items-start gap-2 mb-2">
                       <CheckCircle2 className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
                       <p className="font-medium text-sm">{winText}</p>
@@ -482,7 +482,7 @@ export function Tab22ExecutiveSummary({ data }: Tab22ExecutiveSummaryProps) {
             <div className="grid sm:grid-cols-2 gap-4">
               {data.emotional_audio_insights.founder_strengths_detected &&
                data.emotional_audio_insights.founder_strengths_detected.length > 0 && (
-                <div className="p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+                <div className="p-3 rounded-sm bg-green-500/5 border border-green-500/20">
                   <p className="text-xs text-green-400 mb-2 font-medium">Fortalezas Detectadas</p>
                   <ul className="space-y-1">
                     {data.emotional_audio_insights.founder_strengths_detected.map((s, i) => (
@@ -496,7 +496,7 @@ export function Tab22ExecutiveSummary({ data }: Tab22ExecutiveSummaryProps) {
               )}
               {data.emotional_audio_insights.blind_spots_to_address &&
                data.emotional_audio_insights.blind_spots_to_address.length > 0 && (
-                <div className="p-3 rounded-lg bg-yellow-500/5 border border-yellow-500/20">
+                <div className="p-3 rounded-sm bg-yellow-500/5 border border-yellow-500/20">
                   <p className="text-xs text-yellow-400 mb-2 font-medium">Puntos Ciegos a Abordar</p>
                   <ul className="space-y-1">
                     {data.emotional_audio_insights.blind_spots_to_address.map((s, i) => (
@@ -510,13 +510,13 @@ export function Tab22ExecutiveSummary({ data }: Tab22ExecutiveSummaryProps) {
               )}
             </div>
             {data.emotional_audio_insights.authentic_story_angle && (
-              <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+              <div className="p-4 rounded-sm bg-purple-500/10 border border-purple-500/20">
                 <p className="text-xs text-purple-400 mb-2">Ángulo de Historia Auténtico</p>
                 <p className="text-sm">{data.emotional_audio_insights.authentic_story_angle}</p>
               </div>
             )}
             {data.emotional_audio_insights.tone_recommendation && (
-              <div className="p-3 rounded-lg bg-muted/50">
+              <div className="p-3 rounded-sm bg-muted/50">
                 <p className="text-xs text-muted-foreground mb-1">Recomendación de Tono</p>
                 <p className="text-sm font-medium">{data.emotional_audio_insights.tone_recommendation}</p>
               </div>
@@ -555,7 +555,7 @@ export function Tab22ExecutiveSummary({ data }: Tab22ExecutiveSummaryProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             {data.key_insights.map((insight, idx) => (
-              <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+              <div key={idx} className="flex items-start gap-3 p-3 rounded-sm bg-muted/50">
                 <Badge variant="outline" className={impactColors[insight.impact]}>
                   {insight.category}
                 </Badge>
@@ -578,7 +578,7 @@ export function Tab22ExecutiveSummary({ data }: Tab22ExecutiveSummaryProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {data.strategic_priorities.map((priority, idx) => (
-              <div key={idx} className="flex gap-4 p-4 rounded-lg border bg-card">
+              <div key={idx} className="flex gap-4 p-4 rounded-sm border bg-card">
                 <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                   <span className="text-lg font-bold text-primary">{priority.priority}</span>
                 </div>

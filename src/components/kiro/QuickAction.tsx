@@ -47,7 +47,7 @@ export function QuickAction({
       disabled={disabled}
       className={cn(
         'flex flex-col items-start gap-0.5 p-2',
-        'bg-violet-500/5 border border-violet-500/15 rounded-lg',
+        'bg-violet-500/5 border border-violet-500/15 rounded-sm',
         'transition-all duration-150',
         'hover:bg-violet-500/12 hover:border-violet-500/25',
         'disabled:opacity-50 disabled:cursor-not-allowed',

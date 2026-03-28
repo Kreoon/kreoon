@@ -206,7 +206,7 @@ export function WeeklySchedule({
                             whileTap={{ scale: 0.9 }}
                             onClick={() => handleRemoveSlot(dayOfWeek, slotIndex)}
                             disabled={isLoading || copyingFrom !== null}
-                            className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 text-slate-400 hover:text-red-500"
+                            className="p-1.5 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 text-slate-400 hover:text-red-500"
                           >
                             <Trash2 className="w-4 h-4" />
                           </motion.button>
@@ -252,7 +252,7 @@ export function WeeklySchedule({
                             e.stopPropagation();
                             handleCopyToWeekdays();
                           }}
-                          className="h-7 text-xs rounded-lg border-violet-200 text-violet-600 hover:bg-violet-50"
+                          className="h-7 text-xs rounded-sm border-violet-200 text-violet-600 hover:bg-violet-50"
                         >
                           Lun-Vie
                         </Button>
@@ -261,7 +261,7 @@ export function WeeklySchedule({
                             e.stopPropagation();
                             setCopyingFrom(null);
                           }}
-                          className="p-1 rounded-lg hover:bg-slate-100"
+                          className="p-1 rounded-sm hover:bg-slate-100"
                         >
                           <X className="w-4 h-4 text-slate-400" />
                         </button>
@@ -277,7 +277,7 @@ export function WeeklySchedule({
                               handleCopyDayStart(dayOfWeek);
                             }}
                             disabled={isLoading}
-                            className="p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+                            className="p-2 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-100 text-slate-400 hover:text-slate-600"
                           >
                             <Copy className="w-4 h-4" />
                           </motion.button>
@@ -295,7 +295,7 @@ export function WeeklySchedule({
                     animate={{ opacity: 1, scale: 1 }}
                     className="flex-shrink-0"
                   >
-                    <div className="p-2 rounded-lg bg-violet-100">
+                    <div className="p-2 rounded-sm bg-violet-100">
                       <ChevronRight className="w-4 h-4 text-violet-500" />
                     </div>
                   </motion.div>
@@ -312,7 +312,7 @@ export function WeeklySchedule({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-violet-50 border border-violet-200"
+              className="flex items-center justify-center gap-2 py-3 px-4 rounded-sm bg-violet-50 border border-violet-200"
             >
               <span className="text-sm text-violet-700">
                 Haz clic en un día para copiar el horario de{' '}

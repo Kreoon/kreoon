@@ -148,7 +148,7 @@ export default function EditorDashboard() {
               <LevelBadge creditos={totalPaid + (approvedContent.length * 50)} size="sm" />
               <CreditsDisplay creditos={totalPaid + (approvedContent.length * 50)} size="sm" />
               <motion.div
-                className="flex items-center gap-2 px-4 py-2 rounded-xl border backdrop-blur-xl"
+                className="flex items-center gap-2 px-4 py-2 rounded-sm border backdrop-blur-xl"
                 style={{
                   background: 'linear-gradient(135deg, hsl(160 100% 45% / 0.15), hsl(160 100% 45% / 0.05))',
                   borderColor: 'hsl(160 100% 45% / 0.3)',
@@ -168,10 +168,10 @@ export default function EditorDashboard() {
         />
 
         {/* Dashboard Mode Toggle */}
-        <div className="flex gap-2 bg-white/5 p-1 rounded-xl w-fit">
+        <div className="flex gap-2 bg-white/5 p-1 rounded-sm w-fit">
           <button
             onClick={() => setDashboardTab('studio')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors ${
               dashboardTab === 'studio' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
             }`}
           >
@@ -180,7 +180,7 @@ export default function EditorDashboard() {
           </button>
           <button
             onClick={() => setDashboardTab('marketplace')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors ${
               dashboardTab === 'marketplace' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
             }`}
           >
@@ -321,7 +321,7 @@ export default function EditorDashboard() {
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <motion.div
-                        className="p-2 rounded-lg"
+                        className="p-2 rounded-sm"
                         style={{
                           background: 'hsl(270 100% 60% / 0.15)',
                           border: '1px solid hsl(270 100% 60% / 0.3)',
@@ -391,7 +391,7 @@ export default function EditorDashboard() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <motion.div 
-                      className="p-3 rounded-xl"
+                      className="p-3 rounded-sm"
                       style={{
                         background: 'hsl(190 100% 50% / 0.15)',
                         border: '1px solid hsl(190 100% 50% / 0.3)',
@@ -456,7 +456,7 @@ export default function EditorDashboard() {
                   onClick={() => setSelectedContent(item)}
                 >
                   <CardContent className="p-3 flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden border border-[hsl(270,100%,60%,0.2)]">
+                    <div className="h-10 w-10 rounded-sm bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden border border-[hsl(270,100%,60%,0.2)]">
                       {item.thumbnail_url ? (
                         <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover" />
                       ) : (

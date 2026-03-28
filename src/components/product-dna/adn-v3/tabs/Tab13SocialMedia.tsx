@@ -178,7 +178,7 @@ export function Tab13SocialMedia({ data }: Tab13SocialMediaProps) {
             </div>
 
             {data.overall_strategy.brand_voice && (
-              <div className="p-3 rounded-lg bg-background/50">
+              <div className="p-3 rounded-sm bg-background/50">
                 <p className="text-xs text-muted-foreground mb-1">Brand Voice</p>
                 <p className="text-sm">{data.overall_strategy.brand_voice}</p>
               </div>
@@ -215,7 +215,7 @@ export function Tab13SocialMedia({ data }: Tab13SocialMediaProps) {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-sm bg-muted flex items-center justify-center">
                         <Icon className="w-5 h-5" />
                       </div>
                       <div>
@@ -238,19 +238,19 @@ export function Tab13SocialMedia({ data }: Tab13SocialMediaProps) {
                 <CardContent className="space-y-4">
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {platform.posting_frequency && (
-                      <div className="p-3 rounded-lg bg-muted/50">
+                      <div className="p-3 rounded-sm bg-muted/50">
                         <p className="text-xs text-muted-foreground mb-1">Frecuencia</p>
                         <p className="text-sm font-medium">{platform.posting_frequency}</p>
                       </div>
                     )}
                     {platform.best_times && platform.best_times.length > 0 && (
-                      <div className="p-3 rounded-lg bg-muted/50">
+                      <div className="p-3 rounded-sm bg-muted/50">
                         <p className="text-xs text-muted-foreground mb-1">Mejores Horarios</p>
                         <p className="text-sm">{platform.best_times.join(", ")}</p>
                       </div>
                     )}
                     {platform.tone && (
-                      <div className="p-3 rounded-lg bg-muted/50">
+                      <div className="p-3 rounded-sm bg-muted/50">
                         <p className="text-xs text-muted-foreground mb-1">Tono</p>
                         <p className="text-sm">{platform.tone}</p>
                       </div>
@@ -285,7 +285,7 @@ export function Tab13SocialMedia({ data }: Tab13SocialMediaProps) {
                       <p className="text-xs text-muted-foreground mb-2">Pilares de Contenido</p>
                       <div className="space-y-2">
                         {platform.content_pillars.map((pillar, pIdx) => (
-                          <div key={pIdx} className="p-3 rounded-lg border bg-card">
+                          <div key={pIdx} className="p-3 rounded-sm border bg-card">
                             <div className="flex justify-between mb-1">
                               <span className="font-medium text-sm">{pillar.pillar}</span>
                               <span className="text-sm text-muted-foreground">{pillar.percentage}%</span>
@@ -378,19 +378,19 @@ export function Tab13SocialMedia({ data }: Tab13SocialMediaProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {data.ugc_strategy.branded_hashtag && (
-              <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+              <div className="p-3 rounded-sm bg-orange-500/10 border border-orange-500/20">
                 <p className="text-xs text-orange-400 mb-1">Hashtag de Marca</p>
                 <p className="font-bold text-lg">{data.ugc_strategy.branded_hashtag}</p>
               </div>
             )}
             {data.ugc_strategy.how_to_encourage && (
-              <div className="p-3 rounded-lg border">
+              <div className="p-3 rounded-sm border">
                 <p className="text-xs text-muted-foreground mb-1">Cómo Incentivar</p>
                 <p className="text-sm">{data.ugc_strategy.how_to_encourage}</p>
               </div>
             )}
             {data.ugc_strategy.repurposing_plan && (
-              <div className="p-3 rounded-lg border">
+              <div className="p-3 rounded-sm border">
                 <p className="text-xs text-muted-foreground mb-1">Plan de Reutilización</p>
                 <p className="text-sm">{data.ugc_strategy.repurposing_plan}</p>
               </div>
@@ -450,7 +450,7 @@ export function Tab13SocialMedia({ data }: Tab13SocialMediaProps) {
           <CardContent className="space-y-4">
             <div className="grid sm:grid-cols-3 gap-4">
               {data.analytics_focus.primary_metrics && data.analytics_focus.primary_metrics.length > 0 && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-2">Métricas Primarias</p>
                   <div className="flex flex-wrap gap-1">
                     {data.analytics_focus.primary_metrics.map((m, i) => (
@@ -460,7 +460,7 @@ export function Tab13SocialMedia({ data }: Tab13SocialMediaProps) {
                 </div>
               )}
               {data.analytics_focus.benchmarks && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-2">Benchmarks</p>
                   {data.analytics_focus.benchmarks.engagement_rate && (
                     <p className="text-sm">Engagement: {data.analytics_focus.benchmarks.engagement_rate}</p>
@@ -471,7 +471,7 @@ export function Tab13SocialMedia({ data }: Tab13SocialMediaProps) {
                 </div>
               )}
               {data.analytics_focus.reporting_frequency && (
-                <div className="p-3 rounded-lg border">
+                <div className="p-3 rounded-sm border">
                   <p className="text-xs text-muted-foreground mb-1">Frecuencia de Reportes</p>
                   <p className="text-sm font-medium">{data.analytics_focus.reporting_frequency}</p>
                 </div>
@@ -493,7 +493,7 @@ export function Tab13SocialMedia({ data }: Tab13SocialMediaProps) {
           <CardContent>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {data.content_ideas.map((idea, idx) => (
-                <div key={idx} className="p-3 rounded-lg border bg-card">
+                <div key={idx} className="p-3 rounded-sm border bg-card">
                   <p className="font-medium text-sm mb-2">{idea.idea}</p>
                   <div className="flex flex-wrap gap-1">
                     {idea.platform && (

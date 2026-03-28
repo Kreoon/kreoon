@@ -149,7 +149,7 @@ export function Tab01MarketOverview({ data }: Tab01MarketOverviewProps) {
           <CardContent>
             <ul className="space-y-3">
               {consumerBehavior.map((behavior, idx) => (
-                <li key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                <li key={idx} className="flex items-start gap-3 p-3 rounded-sm bg-muted/30">
                   <span className="text-blue-500 mt-0.5">•</span>
                   <span className="text-sm leading-relaxed">{behavior}</span>
                 </li>
@@ -176,7 +176,7 @@ export function Tab01MarketOverview({ data }: Tab01MarketOverviewProps) {
           <CardContent>
             <div className="space-y-3">
               {trends.map((trend, idx) => (
-                <div key={idx} className="flex items-start gap-3 p-3 rounded-lg border bg-card border-l-4 border-l-cyan-500">
+                <div key={idx} className="flex items-start gap-3 p-3 rounded-sm border bg-card border-l-4 border-l-cyan-500">
                   <Badge variant="secondary" className="shrink-0 mt-0.5">
                     {idx + 1}
                   </Badge>
@@ -205,7 +205,7 @@ export function Tab01MarketOverview({ data }: Tab01MarketOverviewProps) {
             </CardHeader>
             <CardContent className="space-y-3">
               {opportunities.map((opp, idx) => (
-                <div key={idx} className="p-3 rounded-lg border bg-card border-l-4 border-l-green-500">
+                <div key={idx} className="p-3 rounded-sm border bg-card border-l-4 border-l-green-500">
                   <div className="flex items-start gap-2">
                     <Badge className="bg-green-500/20 text-green-400 shrink-0">
                       {idx + 1}
@@ -234,7 +234,7 @@ export function Tab01MarketOverview({ data }: Tab01MarketOverviewProps) {
             </CardHeader>
             <CardContent className="space-y-3">
               {threats.map((threat, idx) => (
-                <div key={idx} className="p-3 rounded-lg border bg-card border-l-4 border-l-red-500">
+                <div key={idx} className="p-3 rounded-sm border bg-card border-l-4 border-l-red-500">
                   <div className="flex items-start gap-2">
                     <Badge variant="outline" className="border-red-500 text-red-400 shrink-0">
                       {idx + 1}
@@ -310,7 +310,7 @@ export function Tab01MarketOverview({ data }: Tab01MarketOverviewProps) {
           <CardContent>
             <div className="space-y-3">
               {data.macro_variables.map((mv, idx) => (
-                <div key={idx} className="p-3 rounded-lg border bg-card">
+                <div key={idx} className="p-3 rounded-sm border bg-card">
                   <div className="flex items-center justify-between mb-2">
                     <Badge variant="outline" className="capitalize">
                       {mv.factor}

@@ -18,7 +18,7 @@ const VIEWS: { value: BoardView; label: string; icon: typeof LayoutGrid }[] = [
 
 export function BoardViewSwitcher({ currentView, onViewChange }: BoardViewSwitcherProps) {
   return (
-    <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
+    <div className="flex items-center gap-1 bg-muted/50 rounded-sm p-1">
       {VIEWS.map(view => {
         const Icon = view.icon;
         return (

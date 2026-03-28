@@ -778,7 +778,7 @@ export function EnhancedContentCard({
 
       {/* Standalone Share Dialog (triggered by share button or approval toast) */}
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-lg max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
             <DialogTitle>Compartir en Redes Sociales</DialogTitle>
           </DialogHeader>

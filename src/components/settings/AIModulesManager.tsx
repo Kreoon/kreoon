@@ -107,7 +107,7 @@ export function AIModulesManager({ organizationId, enabledProviders }: AIModules
       </div>
 
       {/* Warning */}
-      <div className="rounded-lg border bg-amber-500/10 border-amber-500/30 p-4">
+      <div className="rounded-sm border bg-amber-500/10 border-amber-500/30 p-4">
         <div className="flex items-start gap-3">
           <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
           <div className="text-sm">
@@ -143,7 +143,7 @@ export function AIModulesManager({ organizationId, enabledProviders }: AIModules
                 return (
                   <div
                     key={mod.id}
-                    className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                    className={`flex items-center justify-between p-3 rounded-sm border transition-colors ${
                       mod.is_active 
                         ? 'border-primary/30 bg-primary/5' 
                         : 'border-border hover:border-border/80 opacity-75'

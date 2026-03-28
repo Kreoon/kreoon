@@ -151,7 +151,7 @@ export function ProposalForm({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg bg-social-card border-social-border p-0">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-lg bg-social-card border-social-border p-0">
         <ScrollArea className="max-h-[85vh]">
           <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
             <DialogHeader>
@@ -238,7 +238,7 @@ export function ProposalForm({
                     type="button"
                     onClick={() => setValue('budget_type', type)}
                     className={cn(
-                      "px-3 py-2 rounded-lg border text-sm transition-colors",
+                      "px-3 py-2 rounded-sm border text-sm transition-colors",
                       budgetType === type
                         ? "bg-social-accent/20 border-social-accent text-social-accent"
                         : "bg-social-muted border-social-border text-social-muted-foreground hover:border-social-accent/50"
@@ -314,7 +314,7 @@ export function ProposalForm({
                 {attachments.map((file, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-social-muted text-sm"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-social-muted text-sm"
                   >
                     <Paperclip className="h-3 w-3" />
                     <span className="max-w-[100px] truncate">{file.name}</span>
@@ -328,7 +328,7 @@ export function ProposalForm({
                   </div>
                 ))}
                 {attachments.length < 5 && (
-                  <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dashed border-social-border hover:border-social-accent/50 cursor-pointer text-sm text-social-muted-foreground hover:text-social-foreground transition-colors">
+                  <label className="flex items-center gap-2 px-3 py-1.5 rounded-sm border border-dashed border-social-border hover:border-social-accent/50 cursor-pointer text-sm text-social-muted-foreground hover:text-social-foreground transition-colors">
                     <Paperclip className="h-3 w-3" />
                     Adjuntar archivo
                     <input
