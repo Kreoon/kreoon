@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { AppRole, Profile } from '@/types/database';
+import { AppRole, Profile, UserType } from '@/types/database';
 import { getPermissionGroup, type PermissionGroup } from '@/lib/permissionGroups';
 import { logger } from '@/lib/logger';
 
@@ -29,6 +29,9 @@ interface AuthContextType {
   isStrategist: boolean;
   isTrafficker: boolean;
   isTeamLeader: boolean;
+  // User type helpers (talent vs client vs admin)
+  userType: UserType;
+  isTalent: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -628,16 +631,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Permission group for current active role
   const permissionGroup = activeRole ? getPermissionGroup(activeRole) : null;
 
-  // These check permission GROUP, not exact role string.
-  // e.g. isCreator is true for 'ugc_creator', 'photographer', etc.
+  // Permission groups: 'admin' | 'talent' | 'client'
+  // All creator/editor/strategist roles map to 'talent' group
   const isAdmin = permissionGroup === 'admin';
-  const isCreator = permissionGroup === 'creator';
-  const isEditor = permissionGroup === 'editor';
+  const isTalentGroup = permissionGroup === 'talent';
+  const isCreator = isTalentGroup;    // Legacy alias - all content roles are talent
+  const isEditor = isTalentGroup;     // Legacy alias - all production roles are talent
   const isClient = permissionGroup === 'client';
-  const isStrategist = permissionGroup === 'strategist';
-  const isTrafficker = permissionGroup === 'strategist'; // trafficker maps to strategist group
-  const isTeamLeader = permissionGroup === 'team_leader';
+  const isStrategist = isTalentGroup; // Legacy alias - all strategy roles are talent
+  const isTrafficker = isTalentGroup; // Legacy alias - trafficker is talent
+  const isTeamLeader = isAdmin;       // Legacy alias - team_leader maps to admin
   const isSuperadmin = profile?.is_superadmin === true; // Platform superadmin
+
+  // User type: talent (content creators, editors, etc.), client, or admin
+  // Priority: admin > client > talent
+  const getUserTypeFromRoles = (): UserType => {
+    if (roles.length === 0) return 'talent';
+    const groups = roles.map(r => getPermissionGroup(r));
+    if (groups.includes('admin')) return 'admin';
+    if (groups.includes('client')) return 'client';
+    return 'talent';
+  };
+
+  const userType = getUserTypeFromRoles();
+  const isTalent = userType === 'talent';
 
   return (
     <AuthContext.Provider value={{
@@ -663,7 +680,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isStrategist,
       isTrafficker,
       isTeamLeader,
-      isSuperadmin
+      isSuperadmin,
+      userType,
+      isTalent
     }}>
       {children}
     </AuthContext.Provider>

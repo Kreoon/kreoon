@@ -223,7 +223,6 @@ const UnifiedTalentPage = () => {
                       <UnifiedRolePicker
                         value={inviteData.role}
                         onChange={(v) => setInviteData({ ...inviteData, role: (Array.isArray(v) ? v[0] : v) as AppRole })}
-                        showSystemRoles={true}
                         showClientRoles={false}
                       />
                       <p className="text-xs text-muted-foreground mt-1">

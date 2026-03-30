@@ -175,10 +175,6 @@ export default function MarketplacePage() {
         updateFilter('platforms', filters.platforms.filter(p => p !== value));
       } else if (key === 'software' && value) {
         updateFilter('software', filters.software.filter(s => s !== value));
-      } else if (key === 'tech_stack' && value) {
-        updateFilter('tech_stack', filters.tech_stack.filter(t => t !== value));
-      } else if (key === 'education_format' && value) {
-        updateFilter('education_format', filters.education_format.filter(f => f !== value));
       } else if (key === 'accepts_exchange') {
         updateFilter('accepts_exchange', null);
       } else if (key === 'price_min' || key === 'price_max') {

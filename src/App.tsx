@@ -10,6 +10,7 @@ import { ErrorBoundary } from "@/components/error";
 import { useNewContentNotifications } from "@/hooks/useNewContentNotifications";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { TalentGate } from "@/components/TalentGate";
+import { RootOnlyRoute } from "@/components/RootOnlyRoute";
 import { AchievementNotificationProvider } from "@/components/points/AchievementNotificationProvider";
 import { UnsavedChangesProvider } from "@/contexts/UnsavedChangesContext";
 import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
@@ -142,6 +143,7 @@ const UneteTalento = lazyWithRetry(() => import("./pages/unete/talento"));
 const UneteMarcas = lazyWithRetry(() => import("./pages/unete/marcas"));
 const UneteOrganizaciones = lazyWithRetry(() => import("./pages/unete/organizaciones"));
 // CRM Platform
+const PlatformAdminDashboard = lazyWithRetry(() => import("./pages/crm/platform/PlatformAdminDashboard"));
 const PlatformCRMDashboard = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMDashboard"));
 const PlatformCRMLeads = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMLeads"));
 const PlatformCRMOrganizations = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMOrganizations"));
@@ -164,6 +166,7 @@ const KAEAnalyticsDashboard = lazyWithRetry(() => import("./components/admin/ana
 
 // Admin pages
 const PapeleraPage = lazyWithRetry(() => import("./pages/admin/PapeleraPage"));
+const DevModulesPage = lazyWithRetry(() => import("./pages/admin/DevModulesPage"));
 
 // Subscription pages
 const ReferralLanding = lazyWithRetry(() => import("./pages/ReferralLanding"));
@@ -403,19 +406,20 @@ function AppRoutes() {
         <Route path="/scripts" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'strategist']}><MainLayout><Scripts /></MainLayout></ProtectedRoute>} />
         <Route path="/team" element={<Navigate to="/talent" replace />} />
         {/* Streaming V2 - Unified Module (Admin Only - En Construcción para otros) */}
-        <Route path="/streaming" element={<ProtectedRoute allowNoRoles><MainLayout><AdminOnlyFeature featureName="Streaming" description="Estamos perfeccionando nuestro sistema de streaming para ofrecerte la mejor experiencia."><StreamingHubPage /></AdminOnlyFeature></MainLayout></ProtectedRoute>} />
-        <Route path="/streaming/studio/:sessionId" element={<ProtectedRoute allowNoRoles><MainLayout><AdminOnlyFeature featureName="Estudio de Streaming"><StreamingStudioPage /></AdminOnlyFeature></MainLayout></ProtectedRoute>} />
+        <Route path="/streaming" element={<RootOnlyRoute><ProtectedRoute allowNoRoles><MainLayout><AdminOnlyFeature featureName="Streaming" description="Estamos perfeccionando nuestro sistema de streaming para ofrecerte la mejor experiencia."><StreamingHubPage /></AdminOnlyFeature></MainLayout></ProtectedRoute></RootOnlyRoute>} />
+        <Route path="/streaming/studio/:sessionId" element={<RootOnlyRoute><ProtectedRoute allowNoRoles><MainLayout><AdminOnlyFeature featureName="Estudio de Streaming"><StreamingStudioPage /></AdminOnlyFeature></MainLayout></ProtectedRoute></RootOnlyRoute>} />
         {/* Live Broadcasting (Cloudflare Stream) - Admin Only */}
         <Route path="/live" element={<AdminOnlyFeature featureName="En Vivo" description="Muy pronto podrás ver y crear transmisiones en vivo. ¡Estamos trabajando en ello!"><LiveDiscoverPage /></AdminOnlyFeature>} />
         <Route path="/live/broadcast" element={<ProtectedRoute allowNoRoles><AdminOnlyFeature featureName="Transmisión en Vivo"><LiveBroadcastPage /></AdminOnlyFeature></ProtectedRoute>} />
         <Route path="/live/:creatorSlug" element={<AdminOnlyFeature featureName="Ver Transmisión"><LiveViewerPage /></AdminOnlyFeature>} />
-        <Route path="/streaming/recap/:sessionId" element={<ProtectedRoute allowNoRoles><MainLayout><AdminOnlyFeature featureName="Resumen de Stream"><StreamingRecapPage /></AdminOnlyFeature></MainLayout></ProtectedRoute>} />
-        <Route path="/streaming/hosting" element={<ProtectedRoute allowNoRoles><MainLayout><AdminOnlyFeature featureName="Live Hosting" description="Sistema de contratación de hosts para transmisiones en vivo."><LiveHostingDashboard /></AdminOnlyFeature></MainLayout></ProtectedRoute>} />
-        <Route path="/streaming/hosting/new" element={<ProtectedRoute allowNoRoles><MainLayout><AdminOnlyFeature featureName="Live Hosting"><LiveHostingRequest /></AdminOnlyFeature></MainLayout></ProtectedRoute>} />
-        <Route path="/streaming/hosting/:requestId" element={<ProtectedRoute allowNoRoles><MainLayout><AdminOnlyFeature featureName="Live Hosting"><LiveHostingRequest /></AdminOnlyFeature></MainLayout></ProtectedRoute>} />
-        <Route path="/marketing" element={<ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Marketing /></MainLayout></ProtectedRoute>} />
+        <Route path="/streaming/recap/:sessionId" element={<RootOnlyRoute><ProtectedRoute allowNoRoles><MainLayout><AdminOnlyFeature featureName="Resumen de Stream"><StreamingRecapPage /></AdminOnlyFeature></MainLayout></ProtectedRoute></RootOnlyRoute>} />
+        <Route path="/streaming/hosting" element={<RootOnlyRoute><ProtectedRoute allowNoRoles><MainLayout><AdminOnlyFeature featureName="Live Hosting" description="Sistema de contratación de hosts para transmisiones en vivo."><LiveHostingDashboard /></AdminOnlyFeature></MainLayout></ProtectedRoute></RootOnlyRoute>} />
+        <Route path="/streaming/hosting/new" element={<RootOnlyRoute><ProtectedRoute allowNoRoles><MainLayout><AdminOnlyFeature featureName="Live Hosting"><LiveHostingRequest /></AdminOnlyFeature></MainLayout></ProtectedRoute></RootOnlyRoute>} />
+        <Route path="/streaming/hosting/:requestId" element={<RootOnlyRoute><ProtectedRoute allowNoRoles><MainLayout><AdminOnlyFeature featureName="Live Hosting"><LiveHostingRequest /></AdminOnlyFeature></MainLayout></ProtectedRoute></RootOnlyRoute>} />
+        <Route path="/marketing" element={<RootOnlyRoute><ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Marketing /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
         {/* CRM Plataforma */}
-        <Route path="/crm" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMDashboard /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformAdminDashboard /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/overview" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/leads" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMLeads /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/organizaciones" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMOrganizations /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/marcas" element={<ProtectedRoute requirePlatformAdmin><MainLayout><BrandsCRM /></MainLayout></ProtectedRoute>} />
@@ -426,33 +430,34 @@ function AppRoutes() {
         <Route path="/crm/creadores" element={<Navigate to="/crm/personas?tab=freelancers" replace />} />
         <Route path="/crm/usuarios" element={<Navigate to="/crm/personas?tab=clientes" replace />} />
         <Route path="/crm/finanzas" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMFinances /></MainLayout></ProtectedRoute>} />
-        <Route path="/crm/email-marketing" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMEmailMarketing /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/email-marketing" element={<RootOnlyRoute><ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMEmailMarketing /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
         {/* CRM Organización */}
         <Route path="/org-crm" element={<Navigate to="/talent" replace />} />
         <Route path="/org-crm/contactos" element={<Navigate to="/clients-hub?tab=contactos" replace />} />
         <Route path="/org-crm/creadores" element={<Navigate to="/talent?tab=externo" replace />} />
-        <Route path="/org-crm/pipelines" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist']}><MainLayout><OrgCRMPipelines /></MainLayout></ProtectedRoute>} />
+        <Route path="/org-crm/pipelines" element={<RootOnlyRoute><ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist']}><MainLayout><OrgCRMPipelines /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
         <Route path="/org-crm/finanzas" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist']}><MainLayout><OrgCRMFinances /></MainLayout></ProtectedRoute>} />
         {/* Social Hub Module */}
         <Route path="/social-hub" element={<ProtectedRoute allowNoRoles><MainLayout><SocialHubPage /></MainLayout></ProtectedRoute>} />
-        <Route path="/marketing-ads" element={<ProtectedRoute allowNoRoles><MainLayout><MarketingAdsPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/marketing-ads" element={<RootOnlyRoute><ProtectedRoute allowNoRoles><MainLayout><MarketingAdsPage /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
         {/* Wallet Module Routes */}
-        <Route path="/wallet" element={<ProtectedRoute allowNoRoles><MainLayout><WalletPage /></MainLayout></ProtectedRoute>} />
-        <Route path="/wallet/transactions" element={<ProtectedRoute allowNoRoles><MainLayout><TransactionsPage /></MainLayout></ProtectedRoute>} />
-        <Route path="/wallet/withdrawals" element={<ProtectedRoute allowNoRoles><MainLayout><WithdrawalsPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/wallet" element={<RootOnlyRoute><ProtectedRoute allowNoRoles><MainLayout><WalletPage /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
+        <Route path="/wallet/transactions" element={<RootOnlyRoute><ProtectedRoute allowNoRoles><MainLayout><TransactionsPage /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
+        <Route path="/wallet/withdrawals" element={<RootOnlyRoute><ProtectedRoute allowNoRoles><MainLayout><WithdrawalsPage /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
         <Route path="/wallet/payment-methods" element={<Navigate to="/wallet?tab=payment-methods" replace />} />
         <Route path="/wallet/settings" element={<Navigate to="/wallet" replace />} />
-        <Route path="/admin/wallets" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><AdminWalletsPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/admin/wallets" element={<RootOnlyRoute><ProtectedRoute allowedRoles={['admin']}><MainLayout><AdminWalletsPage /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
         <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><KAEAnalyticsDashboard /></MainLayout></ProtectedRoute>} />
-        <Route path="/admin/ad-intelligence" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><AdIntelligencePage /></MainLayout></ProtectedRoute>} />
-        <Route path="/admin/social-scraper" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><SocialScraperPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/admin/ad-intelligence" element={<RootOnlyRoute><ProtectedRoute allowedRoles={['admin']}><MainLayout><AdIntelligencePage /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
+        <Route path="/admin/social-scraper" element={<RootOnlyRoute><ProtectedRoute allowedRoles={['admin']}><MainLayout><SocialScraperPage /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
         <Route path="/admin/papelera" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PapeleraPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/admin/dev-modules" element={<RootOnlyRoute><MainLayout><DevModulesPage /></MainLayout></RootOnlyRoute>} />
         {/* Ad Generator Module */}
-        <Route path="/ad-generator" element={<ProtectedRoute allowNoRoles><MainLayout><AdGeneratorPage /></MainLayout></ProtectedRoute>} />
-        <Route path="/ad-generator/:productId" element={<ProtectedRoute allowNoRoles><MainLayout><ProductBannersPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/ad-generator" element={<RootOnlyRoute><ProtectedRoute allowNoRoles><MainLayout><AdGeneratorPage /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
+        <Route path="/ad-generator/:productId" element={<RootOnlyRoute><ProtectedRoute allowNoRoles><MainLayout><ProductBannersPage /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
         {/* Booking Module */}
-        <Route path="/booking/settings" element={<ProtectedRoute allowNoRoles><MainLayout><BookingSettingsPage /></MainLayout></ProtectedRoute>} />
-        <Route path="/booking/calendar" element={<ProtectedRoute allowNoRoles><MainLayout><BookingCalendarPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/booking/settings" element={<RootOnlyRoute><ProtectedRoute allowNoRoles><MainLayout><BookingSettingsPage /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
+        <Route path="/booking/calendar" element={<RootOnlyRoute><ProtectedRoute allowNoRoles><MainLayout><BookingCalendarPage /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
         <Route path="/book/:username" element={<PublicBookingPage />} />
         <Route path="/book/:username/:eventSlug" element={<PublicBookingPage />} />
         <Route path="/book/cancel/:bookingId" element={<CancelBookingPage />} />
@@ -465,7 +470,7 @@ function AppRoutes() {
         <Route path="/strategist-dashboard" element={<ProtectedRoute allowedRoles={['strategist']}><MainLayout><StrategistDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/client-dashboard" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/client-board" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientContentBoard /></MainLayout></ProtectedRoute>} />
-        <Route path="/ranking" element={<ProtectedRoute allowedRoles={['admin', 'creator', 'editor']}><MainLayout><Ranking /></MainLayout></ProtectedRoute>} />
+        <Route path="/ranking" element={<RootOnlyRoute><ProtectedRoute allowedRoles={['admin', 'creator', 'editor']}><MainLayout><Ranking /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
         <Route path="/ambassador" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><AmbassadorPage /></MainLayout></ProtectedRoute>} />
         <Route path="/research/:productId" element={<ProtectedRoute allowNoRoles><ResearchLanding /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />

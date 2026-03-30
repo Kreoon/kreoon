@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 import type { MarketplaceCreator, PortfolioMedia } from './types/marketplace';
 import { getBunnyThumbnailUrl } from '@/hooks/useHLSPlayer';
 import { getOptimizedImageUrl } from '@/lib/imageOptimization';
+import { getSpecializationLabel, getSpecializationBgColor, getSpecializationColor } from '@/lib/specializations';
+import type { Specialization } from '@/types/database';
 // Nova Design System
 
 // Card dimensions for image optimization
@@ -369,6 +371,29 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
                 <Gift className="h-3 w-3" />
                 <span>Acepta canje</span>
               </span>
+            </div>
+          )}
+
+          {/* Specializations */}
+          {creator.specializations && creator.specializations.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {creator.specializations.slice(0, 3).map((spec) => (
+                <span
+                  key={spec}
+                  className={cn(
+                    "text-[10px] px-1.5 py-0.5 rounded-full backdrop-blur-sm",
+                    getSpecializationBgColor(spec as Specialization),
+                    getSpecializationColor(spec as Specialization)
+                  )}
+                >
+                  {getSpecializationLabel(spec as Specialization)}
+                </span>
+              ))}
+              {creator.specializations.length > 3 && (
+                <span className="text-[10px] text-white/60 px-1">
+                  +{creator.specializations.length - 3}
+                </span>
+              )}
             </div>
           )}
         </div>

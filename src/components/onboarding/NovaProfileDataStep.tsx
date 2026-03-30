@@ -68,26 +68,31 @@ interface NovaFieldProps {
   icon?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
+  htmlFor?: string;
+  errorId?: string;
 }
 
-function NovaField({ label, required, error, icon, children, className }: NovaFieldProps) {
+function NovaField({ label, required, error, icon, children, className, htmlFor, errorId }: NovaFieldProps) {
   return (
     <div className={cn("space-y-2", className)}>
-      <label className="block text-sm font-medium text-nova-text-primary dark:text-zinc-100 text-zinc-700">
+      <label
+        htmlFor={htmlFor}
+        className="block text-sm font-medium text-nova-text-primary dark:text-zinc-100 text-zinc-700"
+      >
         {label}
-        {required && <span className="ml-1 text-pink-500 dark:text-pink-500">*</span>}
+        {required && <span className="ml-1 text-pink-500 dark:text-pink-500" aria-hidden="true">*</span>}
       </label>
       <div className="relative">
         {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 dark:text-zinc-500">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 dark:text-zinc-500" aria-hidden="true">
             {icon}
           </div>
         )}
         {children}
       </div>
       {error && (
-        <p className="text-xs text-red-500 dark:text-red-400 flex items-center gap-1">
-          <AlertCircle className="w-3 h-3" />
+        <p id={errorId} className="text-xs text-red-500 dark:text-red-400 flex items-center gap-1" role="alert">
+          <AlertCircle className="w-3 h-3" aria-hidden="true" />
           {error}
         </p>
       )}
@@ -316,12 +321,30 @@ export function NovaProfileDataStep({ onComplete, onLogout }: NovaProfileDataSte
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               className="mb-6 p-4 rounded bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 flex items-start gap-3"
+              role="alert"
+              aria-live="assertive"
             >
-              <AlertTriangle className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              <AlertTriangle className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
               <div>
                 <p className="text-red-700 dark:text-red-400 font-medium">Faltan campos obligatorios</p>
                 <p className="text-red-600 dark:text-red-400/70 text-sm mt-1">
-                  Por favor completa todos los campos marcados con * antes de continuar.
+                  Por favor completa los siguientes campos: {Object.keys(errors).map(field => {
+                    const fieldLabels: Record<string, string> = {
+                      full_name: 'Nombre completo',
+                      username: 'Username',
+                      phone: 'Teléfono',
+                      email: 'Correo electrónico',
+                      country: 'País',
+                      city: 'Ciudad',
+                      address: 'Dirección',
+                      nationality: 'Nacionalidad',
+                      document_type: 'Tipo de documento',
+                      document_number: 'Número de documento',
+                      date_of_birth: 'Fecha de nacimiento',
+                      gender: 'Sexo',
+                    };
+                    return fieldLabels[field] || field;
+                  }).join(', ')}.
                 </p>
               </div>
             </motion.div>
@@ -339,23 +362,31 @@ export function NovaProfileDataStep({ onComplete, onLogout }: NovaProfileDataSte
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Nombre completo */}
-                <NovaField label="Nombre completo" required error={errors.full_name?.message} icon={<User className="w-5 h-5" />}>
+                <NovaField label="Nombre completo" required error={errors.full_name?.message} icon={<User className="w-5 h-5" />} htmlFor="full_name" errorId="full_name-error">
                   <input
                     {...register('full_name')}
+                    id="full_name"
                     placeholder="Tu nombre completo"
+                    aria-required="true"
+                    aria-invalid={!!errors.full_name}
+                    aria-describedby={errors.full_name ? "full_name-error" : undefined}
                     className={cn(inputClasses, "pl-11", errors.full_name && submitAttempted && "border-red-300 dark:border-red-500")}
                   />
                 </NovaField>
 
                 {/* Username */}
-                <NovaField label="Username" required error={errors.username?.message || (usernameStatus === 'taken' ? 'Username no disponible' : undefined)} icon={<AtSign className="w-5 h-5" />}>
+                <NovaField label="Username" required error={errors.username?.message || (usernameStatus === 'taken' ? 'Username no disponible' : undefined)} icon={<AtSign className="w-5 h-5" />} htmlFor="username" errorId="username-error">
                   <div className="relative">
                     <input
                       {...register('username')}
+                      id="username"
                       placeholder="tu_username"
+                      aria-required="true"
+                      aria-invalid={!!errors.username || usernameStatus === 'taken'}
+                      aria-describedby={errors.username || usernameStatus === 'taken' ? "username-error" : undefined}
                       className={cn(inputClasses, "pl-11 pr-10", errors.username && submitAttempted && "border-red-300 dark:border-red-500")}
                     />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2" aria-hidden="true">
                       {usernameStatus === 'checking' && <Loader2 className="w-5 h-5 text-zinc-400 animate-spin" />}
                       {usernameStatus === 'available' && <CheckCircle2 className="w-5 h-5 text-green-500" />}
                       {usernameStatus === 'taken' && <AlertCircle className="w-5 h-5 text-red-500" />}
@@ -364,36 +395,47 @@ export function NovaProfileDataStep({ onComplete, onLogout }: NovaProfileDataSte
                 </NovaField>
 
                 {/* Email */}
-                <NovaField label="Correo electrónico" required icon={<Mail className="w-5 h-5" />}>
+                <NovaField label="Correo electrónico" required icon={<Mail className="w-5 h-5" />} htmlFor="email">
                   <input
                     {...register('email')}
+                    id="email"
                     type="email"
                     disabled
+                    aria-required="true"
+                    aria-disabled="true"
                     className={cn(inputClasses, "pl-11 opacity-60 cursor-not-allowed")}
                   />
                 </NovaField>
 
                 {/* Teléfono */}
-                <NovaField label="Teléfono" required error={errors.phone?.message} icon={<Phone className="w-5 h-5" />}>
+                <NovaField label="Teléfono" required error={errors.phone?.message} icon={<Phone className="w-5 h-5" />} htmlFor="phone" errorId="phone-error">
                   <input
                     {...register('phone')}
+                    id="phone"
                     type="tel"
                     placeholder="+57 300 123 4567"
+                    aria-required="true"
+                    aria-invalid={!!errors.phone}
+                    aria-describedby={errors.phone ? "phone-error" : undefined}
                     className={cn(inputClasses, "pl-11", errors.phone && submitAttempted && "border-red-300 dark:border-red-500")}
                   />
                 </NovaField>
 
                 {/* Fecha de nacimiento */}
-                <NovaField label="Fecha de nacimiento" required error={errors.date_of_birth?.message} icon={<Calendar className="w-5 h-5" />}>
+                <NovaField label="Fecha de nacimiento" required error={errors.date_of_birth?.message} icon={<Calendar className="w-5 h-5" />} htmlFor="date_of_birth" errorId="date_of_birth-error">
                   <input
                     {...register('date_of_birth')}
+                    id="date_of_birth"
                     type="date"
+                    aria-required="true"
+                    aria-invalid={!!errors.date_of_birth}
+                    aria-describedby={errors.date_of_birth ? "date_of_birth-error" : undefined}
                     className={cn(inputClasses, "pl-11", errors.date_of_birth && submitAttempted && "border-red-300 dark:border-red-500")}
                   />
                 </NovaField>
 
                 {/* Sexo */}
-                <NovaField label="Sexo" required error={errors.gender?.message} icon={<User className="w-5 h-5" />}>
+                <NovaField label="Sexo" required error={errors.gender?.message} icon={<User className="w-5 h-5" />} htmlFor="gender" errorId="gender-error">
                   <NovaSelect
                     value={genderValue || ''}
                     onChange={(v) => setValue('gender', v as 'male' | 'female' | 'other')}
@@ -425,7 +467,7 @@ export function NovaProfileDataStep({ onComplete, onLogout }: NovaProfileDataSte
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* País */}
-                <NovaField label="País" required error={errors.country?.message} icon={<MapPin className="w-5 h-5" />}>
+                <NovaField label="País" required error={errors.country?.message} icon={<MapPin className="w-5 h-5" />} htmlFor="country" errorId="country-error">
                   <NovaSelect
                     value={countryValue}
                     onChange={(v) => setValue('country', v)}
@@ -437,7 +479,7 @@ export function NovaProfileDataStep({ onComplete, onLogout }: NovaProfileDataSte
                 </NovaField>
 
                 {/* Ciudad */}
-                <NovaField label="Ciudad" required error={errors.city?.message} icon={<MapPin className="w-5 h-5" />}>
+                <NovaField label="Ciudad" required error={errors.city?.message} icon={<MapPin className="w-5 h-5" />} htmlFor="city" errorId="city-error">
                   {availableCities.length > 0 ? (
                     <NovaSelect
                       value={watch('city')}
@@ -450,23 +492,31 @@ export function NovaProfileDataStep({ onComplete, onLogout }: NovaProfileDataSte
                   ) : (
                     <input
                       {...register('city')}
+                      id="city"
                       placeholder="Tu ciudad"
+                      aria-required="true"
+                      aria-invalid={!!errors.city}
+                      aria-describedby={errors.city ? "city-error" : undefined}
                       className={cn(inputClasses, "pl-11", errors.city && submitAttempted && "border-red-300 dark:border-red-500")}
                     />
                   )}
                 </NovaField>
 
                 {/* Dirección */}
-                <NovaField label="Dirección" required error={errors.address?.message} icon={<MapPin className="w-5 h-5" />} className="sm:col-span-2">
+                <NovaField label="Dirección" required error={errors.address?.message} icon={<MapPin className="w-5 h-5" />} className="sm:col-span-2" htmlFor="address" errorId="address-error">
                   <input
                     {...register('address')}
+                    id="address"
                     placeholder="Tu dirección completa"
+                    aria-required="true"
+                    aria-invalid={!!errors.address}
+                    aria-describedby={errors.address ? "address-error" : undefined}
                     className={cn(inputClasses, "pl-11", errors.address && submitAttempted && "border-red-300 dark:border-red-500")}
                   />
                 </NovaField>
 
                 {/* Nacionalidad */}
-                <NovaField label="Nacionalidad" required error={errors.nationality?.message} icon={<MapPin className="w-5 h-5" />}>
+                <NovaField label="Nacionalidad" required error={errors.nationality?.message} icon={<MapPin className="w-5 h-5" />} htmlFor="nationality" errorId="nationality-error">
                   <NovaSelect
                     value={watch('nationality')}
                     onChange={(v) => setValue('nationality', v)}
@@ -490,7 +540,7 @@ export function NovaProfileDataStep({ onComplete, onLogout }: NovaProfileDataSte
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Tipo de documento */}
-                <NovaField label="Tipo de documento" required error={errors.document_type?.message} icon={<FileText className="w-5 h-5" />}>
+                <NovaField label="Tipo de documento" required error={errors.document_type?.message} icon={<FileText className="w-5 h-5" />} htmlFor="document_type" errorId="document_type-error">
                   <NovaSelect
                     value={watch('document_type')}
                     onChange={(v) => setValue('document_type', v)}
@@ -502,10 +552,14 @@ export function NovaProfileDataStep({ onComplete, onLogout }: NovaProfileDataSte
                 </NovaField>
 
                 {/* Número de documento */}
-                <NovaField label="Número de documento" required error={errors.document_number?.message} icon={<FileText className="w-5 h-5" />}>
+                <NovaField label="Número de documento" required error={errors.document_number?.message} icon={<FileText className="w-5 h-5" />} htmlFor="document_number" errorId="document_number-error">
                   <input
                     {...register('document_number')}
+                    id="document_number"
                     placeholder="Tu número de documento"
+                    aria-required="true"
+                    aria-invalid={!!errors.document_number}
+                    aria-describedby={errors.document_number ? "document_number-error" : undefined}
                     className={cn(inputClasses, "pl-11", errors.document_number && submitAttempted && "border-red-300 dark:border-red-500")}
                   />
                 </NovaField>
@@ -516,6 +570,7 @@ export function NovaProfileDataStep({ onComplete, onLogout }: NovaProfileDataSte
             <button
               type="submit"
               disabled={isSavingProfile}
+              aria-label={isSavingProfile ? 'Guardando datos del perfil' : 'Continuar al siguiente paso'}
               className={cn(
                 "w-full h-12 sm:h-14 rounded font-semibold text-white",
                 "bg-gradient-to-r from-purple-600 to-purple-500",
@@ -523,18 +578,19 @@ export function NovaProfileDataStep({ onComplete, onLogout }: NovaProfileDataSte
                 "shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40",
                 "transition-all duration-200",
                 "flex items-center justify-center gap-2",
-                "disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                "disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none",
+                "focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-[#0a0a0f]"
               )}
             >
               {isSavingProfile ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
                   Guardando...
                 </>
               ) : (
                 <>
                   Continuar
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-5 h-5" aria-hidden="true" />
                 </>
               )}
             </button>

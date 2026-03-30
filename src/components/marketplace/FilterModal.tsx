@@ -5,6 +5,13 @@ import type { MarketplaceFilters, MarketplaceViewMode } from './types/marketplac
 import { CONTENT_TYPES } from './types/marketplace';
 import { getAdaptiveFilters } from './hooks/useAdaptiveFilters';
 import type { AdaptiveFilterConfig } from './hooks/useAdaptiveFilters';
+import type { Specialization, SpecializationCategory } from '@/types/database';
+import {
+  SPECIALIZATIONS_BY_ROLE,
+  getSpecializationLabel,
+  getSpecializationColor,
+  getSpecializationBgColor,
+} from '@/lib/specializations';
 
 interface FilterModalProps {
   open: boolean;
@@ -15,6 +22,28 @@ interface FilterModalProps {
   activeRoleCategory?: MarketplaceViewMode;
 }
 
+// --- Roles de Talento (5 roles sin client) ---
+const ROLE_FILTERS = [
+  { value: 'content_creator', label: 'Creador de Contenido' },
+  { value: 'editor', label: 'Editor/Produccion' },
+  { value: 'digital_strategist', label: 'Estratega Digital' },
+  { value: 'creative_strategist', label: 'Estratega Creativo' },
+  { value: 'community_manager', label: 'Community Manager' },
+];
+
+// --- Helper to get specializations for a role ---
+function getSpecializationsForRoleFilter(role: string): Specialization[] {
+  const roleMap: Record<string, SpecializationCategory> = {
+    content_creator: 'content_creator',
+    editor: 'editor',
+    digital_strategist: 'digital_strategist',
+    creative_strategist: 'creative_strategist',
+    community_manager: 'creative_strategist', // Map to creative_strategist
+  };
+  const category = roleMap[role];
+  return category ? SPECIALIZATIONS_BY_ROLE[category] || [] : [];
+}
+
 const LEVELS = [
   { id: 'bronze', label: 'Bronce' },
   { id: 'silver', label: 'Plata' },
@@ -22,7 +51,7 @@ const LEVELS = [
   { id: 'elite', label: 'Elite' },
 ];
 
-const LANGUAGES = ['Español', 'Inglés', 'Portugués'];
+const LANGUAGES = ['Espanol', 'Ingles', 'Portugues'];
 
 const RATING_OPTIONS = [
   { value: null, label: 'Cualquiera' },
@@ -34,6 +63,9 @@ const RATING_OPTIONS = [
 export function FilterModal({ open, onClose, filters, onApply, resultCount, activeRoleCategory }: FilterModalProps) {
   const [local, setLocal] = useState<MarketplaceFilters>(filters);
   const [expandedAdaptive, setExpandedAdaptive] = useState(true);
+  const [expandedRoles, setExpandedRoles] = useState(true);
+  const [expandedSpecializations, setExpandedSpecializations] = useState(true);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
 
   const adaptiveFilters = activeRoleCategory ? getAdaptiveFilters(activeRoleCategory) : [];
 
@@ -44,7 +76,7 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
     setLocal(prev => ({ ...prev, [key]: value }));
   }, []);
 
-  const toggleArrayItem = useCallback((key: 'content_type' | 'level' | 'languages' | 'platforms' | 'software' | 'tech_stack' | 'education_format', item: string) => {
+  const toggleArrayItem = useCallback((key: 'content_type' | 'level' | 'languages' | 'platforms' | 'software' | 'marketplace_roles' | 'specializations', item: string) => {
     setLocal(prev => {
       const arr = prev[key] as string[];
       return {
@@ -53,6 +85,11 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
       };
     });
   }, []);
+
+  const handleRoleSelect = useCallback((roleValue: string) => {
+    setSelectedRole(prev => prev === roleValue ? null : roleValue);
+    toggleArrayItem('marketplace_roles', roleValue);
+  }, [toggleArrayItem]);
 
   const handleClear = useCallback(() => {
     setLocal(prev => ({
@@ -67,9 +104,10 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
       platforms: [],
       software: [],
       accepts_exchange: null,
-      tech_stack: [],
-      education_format: [],
+      marketplace_roles: [],
+      specializations: [],
     }));
+    setSelectedRole(null);
   }, []);
 
   const handleApply = useCallback(() => {
@@ -103,6 +141,74 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6">
+          {/* Talent Role filters section */}
+          <div className="py-6 border-b border-white/10">
+            <button
+              onClick={() => setExpandedRoles(!expandedRoles)}
+              className="flex items-center justify-between w-full mb-4"
+            >
+              <h4 className="text-sm font-semibold text-purple-300">Tipo de Talento</h4>
+              {expandedRoles ? (
+                <ChevronUp className="h-4 w-4 text-gray-400" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-gray-400" />
+              )}
+            </button>
+            {expandedRoles && (
+              <div className="flex flex-wrap gap-2">
+                {ROLE_FILTERS.map(role => (
+                  <button
+                    key={role.value}
+                    onClick={() => handleRoleSelect(role.value)}
+                    className={cn(
+                      'px-4 py-2 rounded-sm text-sm transition-colors border',
+                      (local.marketplace_roles as string[]).includes(role.value)
+                        ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
+                        : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-white',
+                    )}
+                  >
+                    {role.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Specializations section (shows when a role is selected) */}
+          {selectedRole && getSpecializationsForRoleFilter(selectedRole).length > 0 && (
+            <div className="py-6 border-b border-white/10">
+              <button
+                onClick={() => setExpandedSpecializations(!expandedSpecializations)}
+                className="flex items-center justify-between w-full mb-4"
+              >
+                <h4 className="text-sm font-semibold text-purple-300">Especializacion</h4>
+                {expandedSpecializations ? (
+                  <ChevronUp className="h-4 w-4 text-gray-400" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                )}
+              </button>
+              {expandedSpecializations && (
+                <div className="flex flex-wrap gap-2">
+                  {getSpecializationsForRoleFilter(selectedRole).map(spec => (
+                    <button
+                      key={spec}
+                      onClick={() => toggleArrayItem('specializations', spec)}
+                      className={cn(
+                        'px-3 py-1.5 rounded-sm text-xs transition-colors border',
+                        local.specializations.includes(spec)
+                          ? cn(getSpecializationBgColor(spec), 'border-purple-500/40', getSpecializationColor(spec))
+                          : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-white',
+                      )}
+                    >
+                      {getSpecializationLabel(spec)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Adaptive filters section */}
           {adaptiveFilters.length > 0 && (
             <div className="py-6 border-b border-white/10">
@@ -110,7 +216,7 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
                 onClick={() => setExpandedAdaptive(!expandedAdaptive)}
                 className="flex items-center justify-between w-full mb-4"
               >
-                <h4 className="text-sm font-semibold text-purple-300">Filtros de especialidad</h4>
+                <h4 className="text-sm font-semibold text-purple-300">Filtros adicionales</h4>
                 {expandedAdaptive ? (
                   <ChevronUp className="h-4 w-4 text-gray-400" />
                 ) : (

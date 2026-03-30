@@ -403,7 +403,6 @@ export default function Team() {
                   <UnifiedRolePicker
                     value={inviteData.role}
                     onChange={(v) => setInviteData({ ...inviteData, role: (Array.isArray(v) ? v[0] : v) as AppRole })}
-                    showSystemRoles={true}
                     showClientRoles={false}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
@@ -643,7 +642,6 @@ export default function Team() {
               <UnifiedRolePicker
                 value={newRole}
                 onChange={(v) => setNewRole((Array.isArray(v) ? v[0] : v) as AppRole)}
-                showSystemRoles={true}
                 showClientRoles={false}
               />
               <p className="text-xs text-muted-foreground mt-1">

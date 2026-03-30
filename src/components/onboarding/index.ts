@@ -4,5 +4,6 @@ export { LegalConsentStep } from './LegalConsentStep';
 
 // Nova Design System versions
 export { NovaOnboardingWizard } from './NovaOnboardingWizard';
+export { NovaRoleSelectionStep } from './NovaRoleSelectionStep';
 export { NovaProfileDataStep } from './NovaProfileDataStep';
 export { NovaLegalConsentStep } from './NovaLegalConsentStep';

@@ -39,6 +39,10 @@ import {
   UserPlus,
 } from 'lucide-react';
 import { MARKETPLACE_ROLES } from '@/lib/talent-dna/constants';
+import { SpecializationPicker } from '@/components/roles/SpecializationPicker';
+import { useUserSpecializations } from '@/hooks/useUserSpecializations';
+import type { AppRole, Specialization } from '@/types/database';
+import { getBaseRole } from '@/lib/roles';
 
 const PLATFORM_OPTIONS = [
   { value: 'instagram', label: 'Instagram' },
@@ -155,6 +159,18 @@ export function CreatorProfileEditor() {
   const [creating, setCreating] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
+
+  // Hook para especializaciones del sistema
+  const {
+    specializations,
+    loading: specsLoading,
+    updateSpecializations,
+  } = useUserSpecializations();
+
+  // Derivar roles base de los marketplace_roles seleccionados
+  const derivedRoles: AppRole[] = (formData.marketplace_roles || [])
+    .map(role => getBaseRole(role))
+    .filter((role, index, arr) => arr.indexOf(role) === index); // unique
 
   const isNew = !exists;
 
@@ -519,6 +535,28 @@ export function CreatorProfileEditor() {
                 ))}
               </div>
             </div>
+
+            {/* Especializaciones detalladas */}
+            {derivedRoles.length > 0 && (
+              <div className="space-y-3 pt-4 border-t border-white/10">
+                <Label>Especializaciones detalladas</Label>
+                <p className="text-xs text-muted-foreground">
+                  Selecciona hasta 5 habilidades especificas (basadas en tus roles)
+                </p>
+                {specsLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <SpecializationPicker
+                    selectedRoles={derivedRoles}
+                    selectedSpecializations={specializations}
+                    onSpecializationsChange={updateSpecializations}
+                    maxSpecializations={5}
+                  />
+                )}
+              </div>
+            )}
 
             {/* Categories */}
             <div className="space-y-3">

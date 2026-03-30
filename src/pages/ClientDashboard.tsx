@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
@@ -30,8 +30,10 @@ import { ClientScriptReview } from '@/components/content/ClientScriptReview';
 import { UnifiedContentModule } from '@/components/content/unified';
 // Realtime removed — updates only on explicit user actions
 import { ProductDNAWizard } from '@/components/product-dna';
-import { ClientDNATab } from '@/components/clients/dna';
 import { ProductDetailDialog } from '@/components/products/ProductDetailDialog';
+
+// Lazy load ClientDNATab (424KB) - only loads when DNA tab is active
+const ClientDNATab = lazy(() => import('@/components/clients/dna/ClientDNATab').then(m => ({ default: m.ClientDNATab })));
 import { ClientDashboardOverview } from '@/components/client-dashboard';
 import { useClientPaymentStatus } from '@/hooks/useClientPaymentStatus';
 import {
@@ -1027,9 +1029,15 @@ export default function ClientDashboard() {
           />
         )}
 
-        {/* DNA Tab */}
+        {/* DNA Tab - lazy loaded */}
         {activeTab === 'dna' && selectedClientId && (
-          <ClientDNATab clientId={selectedClientId} />
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          }>
+            <ClientDNATab clientId={selectedClientId} />
+          </Suspense>
         )}
 
         {/* Products Tab */}

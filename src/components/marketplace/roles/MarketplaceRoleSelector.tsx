@@ -23,7 +23,7 @@ export function MarketplaceRoleSelector({
   label,
 }: MarketplaceRoleSelectorProps) {
   const [expandedCategories, setExpandedCategories] = useState<Set<MarketplaceRoleCategory>>(
-    new Set(['content_creation'])
+    new Set(['creators'])
   );
 
   const toggleCategory = (cat: MarketplaceRoleCategory) => {
@@ -63,7 +63,12 @@ export function MarketplaceRoleSelector({
       {selectedRoles.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {selectedRoles.map(roleId => (
-            <button key={roleId} onClick={() => toggleRole(roleId)} className="group">
+            <button
+              key={roleId}
+              onClick={() => toggleRole(roleId)}
+              className="group rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              aria-label={`Remover rol: ${MARKETPLACE_ROLES.find(r => r.id === roleId)?.label ?? roleId}`}
+            >
               <MarketplaceRoleBadge roleId={roleId} size="md" />
             </button>
           ))}
@@ -81,7 +86,9 @@ export function MarketplaceRoleSelector({
               <div key={catId}>
                 <button
                   onClick={() => toggleCategory(catId)}
-                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors"
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-inset"
+                  aria-expanded={isExpanded}
+                  aria-label={`Categoría ${catInfo.label}, ${isExpanded ? 'expandida' : 'colapsada'}`}
                 >
                   <div className="flex items-center gap-2">
                     {isExpanded ? (
@@ -110,8 +117,10 @@ export function MarketplaceRoleSelector({
                           key={role.id}
                           onClick={() => !isDisabled && toggleRole(role.id)}
                           disabled={isDisabled}
+                          aria-pressed={isSelected}
+                          aria-label={`Seleccionar rol: ${role.label}`}
                           className={cn(
-                            'text-left p-3 rounded-sm border transition-all',
+                            'text-left p-3 rounded-sm border transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500',
                             isSelected
                               ? 'border-purple-500/50 bg-purple-500/10'
                               : isDisabled
@@ -142,8 +151,10 @@ export function MarketplaceRoleSelector({
                 key={role.id}
                 onClick={() => !isDisabled && toggleRole(role.id)}
                 disabled={isDisabled}
+                aria-pressed={isSelected}
+                aria-label={`Seleccionar rol: ${role.label}`}
                 className={cn(
-                  'px-3 py-1.5 rounded-sm border text-xs font-medium transition-all',
+                  'px-3 py-1.5 rounded-sm border text-xs font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500',
                   isSelected
                     ? 'border-purple-500/50 bg-purple-500/10 text-white'
                     : isDisabled

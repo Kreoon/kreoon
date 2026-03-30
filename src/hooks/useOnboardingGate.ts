@@ -77,6 +77,33 @@ export interface ProfileData {
 }
 
 /**
+ * Campos extendidos del perfil que pueden existir en la BD pero no en el tipo base.
+ * Usamos esta interfaz para acceso seguro sin `as any`.
+ */
+interface ProfileExtendedFields {
+  nationality?: string | null;
+  date_of_birth?: string | null;
+  gender?: 'male' | 'female' | 'other' | null;
+  social_instagram?: string | null;
+  social_facebook?: string | null;
+  social_tiktok?: string | null;
+  social_x?: string | null;
+  social_youtube?: string | null;
+  social_linkedin?: string | null;
+}
+
+/**
+ * Helper para acceder a campos extendidos del perfil de forma segura.
+ */
+function getExtendedField<K extends keyof ProfileExtendedFields>(
+  profile: Record<string, unknown> | null | undefined,
+  field: K
+): ProfileExtendedFields[K] {
+  if (!profile || typeof profile !== 'object') return undefined;
+  return profile[field] as ProfileExtendedFields[K];
+}
+
+/**
  * Hook principal para el gate de onboarding obligatorio.
  * Verifica: perfil completo + documentos legales aceptados + edad verificada.
  */
@@ -105,30 +132,67 @@ export function useOnboardingGate() {
         };
       }
 
-      const { data, error } = await supabase.rpc('check_profile_completion', {
-        p_user_id: user.id,
-      });
+      // Retry logic: intentar hasta 3 veces antes de fallar
+      const MAX_RETRIES = 3;
+      let lastError: Error | null = null;
 
-      if (error) {
-        // Si la función no existe (migraciones no aplicadas), asumir completo
-        if (error.code === 'PGRST202' || error.message?.includes('Could not find')) {
-          logger.warn('onboarding RPC check_profile_completion not found. Assuming complete');
-          return {
-            complete: true,
-            missing: [],
-            has_social: true,
-            age_ok: true,
-            profile_completed: true,
-            age_verified: true,
-            legal_consents_completed: true,
-            onboarding_completed: true,
-          };
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        const { data, error } = await supabase.rpc('check_profile_completion', {
+          p_user_id: user.id,
+        });
+
+        if (!error && data) {
+          return data as ProfileCompletionStatus;
         }
-        logger.error('onboarding Error checking profile completion', error);
-        throw error;
+
+        if (error) {
+          lastError = error;
+
+          // Si la función RPC no existe, NO asumir completo - es un error crítico
+          if (error.code === 'PGRST202' || error.message?.includes('Could not find')) {
+            logger.error('onboarding RPC check_profile_completion not found. Database migration required.', {
+              errorCode: error.code,
+              errorMessage: error.message,
+            });
+            // Devolver incompleto con mensaje de error claro
+            return {
+              complete: false,
+              missing: ['rpc_not_found'],
+              has_social: false,
+              age_ok: false,
+              profile_completed: false,
+              age_verified: false,
+              legal_consents_completed: false,
+              onboarding_completed: false,
+            };
+          }
+
+          // Para otros errores, reintentar si no es el último intento
+          if (attempt < MAX_RETRIES) {
+            logger.warn(`onboarding Retry ${attempt}/${MAX_RETRIES} for check_profile_completion`, {
+              errorCode: error.code,
+              errorMessage: error.message,
+            });
+            // Esperar antes de reintentar (backoff exponencial)
+            await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 100));
+            continue;
+          }
+        }
       }
 
-      return data as ProfileCompletionStatus;
+      // Si llegamos aquí, todos los reintentos fallaron
+      logger.error('onboarding All retries failed for check_profile_completion', lastError);
+      // Devolver incompleto con error en lugar de lanzar excepción
+      return {
+        complete: false,
+        missing: ['check_failed'],
+        has_social: false,
+        age_ok: false,
+        profile_completed: false,
+        age_verified: false,
+        legal_consents_completed: false,
+        onboarding_completed: false,
+      };
     },
     enabled: !!user?.id,
     staleTime: 0, // Siempre fresco
@@ -245,13 +309,19 @@ export function useOnboardingGate() {
   // Guardar datos del perfil
   const saveProfileMutation = useMutation({
     mutationFn: async (data: ProfileData) => {
-      logger.debug('useOnboardingGate saveProfileData llamado', { userId: user?.id });
+      // Capturar user.id al inicio para evitar race conditions
+      const userId = user?.id;
+      logger.debug('useOnboardingGate saveProfileData llamado', { userId });
 
-      if (!user?.id) throw new Error('No user');
+      if (!userId) {
+        const error = new Error('No authenticated user. Please log in again.');
+        logger.error('useOnboardingGate No user ID available', error);
+        throw error;
+      }
 
       logger.debug('useOnboardingGate Llamando RPC save_profile_data');
       const { data: result, error } = await supabase.rpc('save_profile_data', {
-        p_user_id: user.id,
+        p_user_id: userId,
         p_full_name: data.full_name,
         p_username: data.username,
         p_phone: data.phone,
@@ -300,10 +370,17 @@ export function useOnboardingGate() {
   // Completar onboarding
   const completeOnboardingMutation = useMutation({
     mutationFn: async () => {
-      if (!user?.id) throw new Error('No user');
+      // Capturar user.id al inicio para evitar race conditions
+      const userId = user?.id;
+
+      if (!userId) {
+        const error = new Error('No authenticated user. Please log in again.');
+        logger.error('useOnboardingGate completeOnboarding No user ID available', error);
+        throw error;
+      }
 
       const { data, error } = await supabase.rpc('complete_onboarding', {
-        p_user_id: user.id,
+        p_user_id: userId,
       });
 
       if (error) throw error;
@@ -364,6 +441,8 @@ export function useOnboardingGate() {
   const isLoading = authLoading || isLoadingCompletion || isLoadingDocuments;
 
   // Datos del perfil actual para pre-llenar
+  // Usamos el helper getExtendedField para campos que pueden no estar en el tipo base
+  const profileRecord = profile as Record<string, unknown> | null;
   const existingProfileData: Partial<ProfileData> = {
     full_name: profile?.full_name || '',
     username: profile?.username || '',
@@ -372,17 +451,17 @@ export function useOnboardingGate() {
     country: profile?.country || '',
     city: profile?.city || '',
     address: profile?.address || '',
-    nationality: (profile as any)?.nationality || '',
+    nationality: getExtendedField(profileRecord, 'nationality') || '',
     document_type: profile?.document_type || '',
     document_number: profile?.document_number || '',
-    date_of_birth: (profile as any)?.date_of_birth || '',
-    gender: (profile as any)?.gender || undefined,
-    social_instagram: (profile as any)?.social_instagram || profile?.instagram || '',
-    social_facebook: (profile as any)?.social_facebook || profile?.facebook || '',
-    social_tiktok: (profile as any)?.social_tiktok || profile?.tiktok || '',
-    social_x: (profile as any)?.social_x || '',
-    social_youtube: (profile as any)?.social_youtube || '',
-    social_linkedin: (profile as any)?.social_linkedin || '',
+    date_of_birth: getExtendedField(profileRecord, 'date_of_birth') || '',
+    gender: getExtendedField(profileRecord, 'gender') || undefined,
+    social_instagram: getExtendedField(profileRecord, 'social_instagram') || profile?.instagram || '',
+    social_facebook: getExtendedField(profileRecord, 'social_facebook') || profile?.facebook || '',
+    social_tiktok: getExtendedField(profileRecord, 'social_tiktok') || profile?.tiktok || '',
+    social_x: getExtendedField(profileRecord, 'social_x') || '',
+    social_youtube: getExtendedField(profileRecord, 'social_youtube') || '',
+    social_linkedin: getExtendedField(profileRecord, 'social_linkedin') || '',
   };
 
   return {

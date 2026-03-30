@@ -75,6 +75,11 @@ export default defineConfig(({ mode }) => ({
           if (id.includes('node_modules/date-fns')) {
             return 'vendor-date';
           }
+
+          // HLS.js - large video streaming library (522KB), loaded dynamically
+          if (id.includes('node_modules/hls.js')) {
+            return 'hls';
+          }
         },
       },
     },

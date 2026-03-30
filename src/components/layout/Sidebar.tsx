@@ -40,7 +40,9 @@ import {
   Dna,
   Package,
   CircleUser,
+  Blocks,
 } from "lucide-react";
+import { filterDevModuleItems, DEVELOPMENT_MODULES, canAccessDevModule } from '@/lib/developmentModules';
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -135,6 +137,7 @@ const adminSections: NavSection[] = [
       { name: "Personas", href: "/crm/personas", icon: Users, tourId: "sidebar-crm-people" },
       { name: "Finanzas", href: "/crm/finanzas", icon: DollarSign, tourId: "sidebar-crm-finances" },
       { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone, tourId: "sidebar-crm-email" },
+      { name: "Módulos Dev", href: "/admin/dev-modules", icon: Blocks, tourId: "sidebar-dev-modules", platformRootOnly: true },
       { name: "Papelera", href: "/admin/papelera", icon: Trash2, tourId: "sidebar-trash", platformRootOnly: true },
     ]
   },
@@ -611,10 +614,9 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         if (section.label === 'CRM PLATAFORMA' && !isPlatformAdmin) return false;
         return true;
       })
-      .map(section => ({
-        ...section,
-        label: labelMap[section.label] || section.label,
-        items: section.items.filter(item => {
+      .map(section => {
+        // Primero aplicar filtros existentes
+        let filteredItems = section.items.filter(item => {
           if (!isPlatformRoot && item.platformRootOnly) return false;
           if (isPlatformRoot && !profile?.current_organization_id && item.requiresOrg) return false;
           // Hide adminOnly items (streaming/live) for non-admins - feature en construcción
@@ -623,8 +625,17 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           const effectiveMkt = activeIsClient ? clientMarketplaceEnabled : marketplaceEnabled;
           if (!effectiveMkt && item.href === '/marketplace') return false;
           return true;
-        })
-      })).filter(section => section.items.length > 0);
+        });
+
+        // Luego filtrar módulos en desarrollo para no-root users
+        filteredItems = filterDevModuleItems(filteredItems, user?.email);
+
+        return {
+          ...section,
+          label: labelMap[section.label] || section.label,
+          items: filteredItems
+        };
+      }).filter(section => section.items.length > 0);
 
     // For clients, marketplace visibility depends on org's client_marketplace_enabled flag
     const effectiveMktEnabled = activeIsClient ? clientMarketplaceEnabled : marketplaceEnabled;
@@ -651,11 +662,24 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     const configSection = filtered.find(s => s.label === 'CONFIG');
     const nonConfigSections = filtered.filter(s => s.label !== 'CONFIG');
 
+    // Build "EN DESARROLLO" section for root users from DEVELOPMENT_MODULES
+    const devModulesSection: NavSection | null = canAccessDevModule(user?.email) ? {
+      label: "EN DESARROLLO",
+      items: DEVELOPMENT_MODULES.map(mod => ({
+        name: mod.name,
+        href: mod.sidebarItems[0]?.path || mod.routes[0],
+        icon: mod.icon,
+        tourId: `sidebar-dev-${mod.id}`,
+      })),
+    } : null;
+
     return [
       ...nonConfigSections,
       ...mktSections,
       // Only add recruit section when marketplace is disabled (when enabled, /marketplace is already in mktSections)
       ...(!effectiveMktEnabled ? [recruitSection] : []),
+      // "EN DESARROLLO" section only for root users - separated from working features
+      ...(devModulesSection ? [devModulesSection] : []),
       ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" }] }]),
     ];
   }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, isFreelanceUser, activeGroup, isUnlocked, isGateLoading, shouldUseReducedMenu, isMultiRoleUser, allUserGroups]);

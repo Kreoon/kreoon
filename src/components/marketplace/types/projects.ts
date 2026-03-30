@@ -27,7 +27,7 @@ export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 
 // INTERFACES PRINCIPALES
 // ============================================================
 
-export type MarketplaceProjectType = 'content_creation' | 'post_production' | 'strategy_marketing' | 'technology' | 'education';
+export type MarketplaceProjectType = 'creators' | 'production' | 'strategy';
 
 export interface MarketplaceProject {
   id: string;
@@ -311,68 +311,55 @@ export interface RoleConfig {
 }
 
 export type RoleCategory =
-  | 'content_creation'
-  | 'post_production'
-  | 'strategy_marketing'
-  | 'technology'
-  | 'education'
+  | 'creators'
+  | 'production'
+  | 'strategy'
   | 'client';
 
 export const ROLE_CATEGORIES: Record<RoleCategory, { label: string; color: string }> = {
-  content_creation: { label: 'Creación de Contenido', color: 'purple' },
-  post_production: { label: 'Post-Producción', color: 'blue' },
-  strategy_marketing: { label: 'Estrategia & Marketing', color: 'green' },
-  technology: { label: 'Tecnología', color: 'cyan' },
-  education: { label: 'Educación', color: 'amber' },
+  creators: { label: 'Creadores', color: 'purple' },
+  production: { label: 'Produccion', color: 'blue' },
+  strategy: { label: 'Estrategas', color: 'green' },
   client: { label: 'Cliente', color: 'gray' },
 };
 
 export const MARKETPLACE_ROLES: RoleConfig[] = [
-  // Content Creation (12)
-  { id: 'ugc_creator', label: 'Creador UGC', category: 'content_creation', icon: 'Camera', color: 'purple' },
-  { id: 'lifestyle_creator', label: 'Creador Lifestyle', category: 'content_creation', icon: 'Heart', color: 'pink' },
-  { id: 'micro_influencer', label: 'Micro-Influencer (10K-100K)', category: 'content_creation', icon: 'Users', color: 'blue' },
-  { id: 'nano_influencer', label: 'Nano-Influencer (1K-10K)', category: 'content_creation', icon: 'Users', color: 'cyan' },
-  { id: 'macro_influencer', label: 'Macro-Influencer (100K-1M)', category: 'content_creation', icon: 'Megaphone', color: 'orange' },
-  { id: 'brand_ambassador', label: 'Embajador de Marca', category: 'content_creation', icon: 'Star', color: 'amber' },
-  { id: 'live_streamer', label: 'Streamer en Vivo', category: 'content_creation', icon: 'Radio', color: 'red' },
-  { id: 'podcast_host', label: 'Conductor de Podcast', category: 'content_creation', icon: 'Mic', color: 'green' },
-  { id: 'photographer', label: 'Fotógrafo Profesional', category: 'content_creation', icon: 'Camera', color: 'slate' },
-  { id: 'copywriter', label: 'Copywriter', category: 'content_creation', icon: 'PenTool', color: 'indigo' },
-  { id: 'graphic_designer', label: 'Diseñador Gráfico', category: 'content_creation', icon: 'Palette', color: 'fuchsia' },
-  { id: 'voice_artist', label: 'Locutor / Voz en Off', category: 'content_creation', icon: 'Mic', color: 'teal' },
+  // Creadores (12)
+  { id: 'ugc_creator', label: 'Creador UGC', category: 'creators', icon: 'Camera', color: 'purple' },
+  { id: 'lifestyle_creator', label: 'Creador Lifestyle', category: 'creators', icon: 'Heart', color: 'pink' },
+  { id: 'micro_influencer', label: 'Micro-Influencer (10K-100K)', category: 'creators', icon: 'Users', color: 'blue' },
+  { id: 'nano_influencer', label: 'Nano-Influencer (1K-10K)', category: 'creators', icon: 'Users', color: 'cyan' },
+  { id: 'macro_influencer', label: 'Macro-Influencer (100K-1M)', category: 'creators', icon: 'Megaphone', color: 'orange' },
+  { id: 'brand_ambassador', label: 'Embajador de Marca', category: 'creators', icon: 'Star', color: 'amber' },
+  { id: 'live_streamer', label: 'Streamer en Vivo', category: 'creators', icon: 'Radio', color: 'red' },
+  { id: 'podcast_host', label: 'Conductor de Podcast', category: 'creators', icon: 'Mic', color: 'green' },
+  { id: 'photographer', label: 'Fotografo Profesional', category: 'creators', icon: 'Camera', color: 'slate' },
+  { id: 'copywriter', label: 'Copywriter', category: 'creators', icon: 'PenTool', color: 'indigo' },
+  { id: 'graphic_designer', label: 'Disenador Grafico', category: 'creators', icon: 'Palette', color: 'fuchsia' },
+  { id: 'voice_artist', label: 'Locutor / Voz en Off', category: 'creators', icon: 'Mic', color: 'teal' },
 
-  // Post-Production (7)
-  { id: 'video_editor', label: 'Editor de Video', category: 'post_production', icon: 'Film', color: 'blue' },
-  { id: 'motion_graphics', label: 'Motion Graphics', category: 'post_production', icon: 'Sparkles', color: 'purple' },
-  { id: 'sound_designer', label: 'Diseñador de Sonido', category: 'post_production', icon: 'Music', color: 'cyan' },
-  { id: 'colorist', label: 'Colorista', category: 'post_production', icon: 'Palette', color: 'orange' },
-  { id: 'director', label: 'Director Creativo', category: 'post_production', icon: 'Film', color: 'slate' },
-  { id: 'producer', label: 'Productor Audiovisual', category: 'post_production', icon: 'Clapperboard', color: 'gray' },
-  { id: 'animator_2d3d', label: 'Animador 2D/3D', category: 'post_production', icon: 'Sparkles', color: 'pink' },
+  // Produccion (7)
+  { id: 'video_editor', label: 'Editor de Video', category: 'production', icon: 'Film', color: 'blue' },
+  { id: 'motion_graphics', label: 'Motion Graphics', category: 'production', icon: 'Sparkles', color: 'purple' },
+  { id: 'sound_designer', label: 'Disenador de Sonido', category: 'production', icon: 'Music', color: 'cyan' },
+  { id: 'colorist', label: 'Colorista', category: 'production', icon: 'Palette', color: 'orange' },
+  { id: 'director', label: 'Director Creativo', category: 'production', icon: 'Film', color: 'slate' },
+  { id: 'producer', label: 'Productor Audiovisual', category: 'production', icon: 'Clapperboard', color: 'gray' },
+  { id: 'animator_2d3d', label: 'Animador 2D/3D', category: 'production', icon: 'Sparkles', color: 'pink' },
 
-  // Strategy & Marketing (10)
-  { id: 'content_strategist', label: 'Estratega de Contenido', category: 'strategy_marketing', icon: 'Target', color: 'green' },
-  { id: 'social_media_manager', label: 'Social Media Manager', category: 'strategy_marketing', icon: 'Share2', color: 'blue' },
-  { id: 'community_manager', label: 'Community Manager', category: 'strategy_marketing', icon: 'Users', color: 'purple' },
-  { id: 'digital_strategist', label: 'Estratega Digital', category: 'strategy_marketing', icon: 'TrendingUp', color: 'cyan' },
-  { id: 'trafficker', label: 'Trafficker / Media Buyer', category: 'strategy_marketing', icon: 'Zap', color: 'orange' },
-  { id: 'seo_specialist', label: 'Especialista SEO/SEM', category: 'strategy_marketing', icon: 'Search', color: 'green' },
-  { id: 'email_marketer', label: 'Email Marketer', category: 'strategy_marketing', icon: 'Mail', color: 'red' },
-  { id: 'growth_hacker', label: 'Growth Hacker', category: 'strategy_marketing', icon: 'Rocket', color: 'purple' },
-  { id: 'crm_specialist', label: 'Especialista CRM', category: 'strategy_marketing', icon: 'Users', color: 'blue' },
-  { id: 'conversion_optimizer', label: 'Optimizador de Conversión', category: 'strategy_marketing', icon: 'Target', color: 'amber' },
+  // Estrategas (10)
+  { id: 'content_strategist', label: 'Estratega de Contenido', category: 'strategy', icon: 'Target', color: 'green' },
+  { id: 'social_media_manager', label: 'Social Media Manager', category: 'strategy', icon: 'Share2', color: 'blue' },
+  { id: 'community_manager', label: 'Community Manager', category: 'strategy', icon: 'Users', color: 'purple' },
+  { id: 'digital_strategist', label: 'Estratega Digital', category: 'strategy', icon: 'TrendingUp', color: 'cyan' },
+  { id: 'trafficker', label: 'Trafficker / Media Buyer', category: 'strategy', icon: 'Zap', color: 'orange' },
+  { id: 'seo_specialist', label: 'Especialista SEO/SEM', category: 'strategy', icon: 'Search', color: 'green' },
+  { id: 'email_marketer', label: 'Email Marketer', category: 'strategy', icon: 'Mail', color: 'red' },
+  { id: 'growth_hacker', label: 'Growth Hacker', category: 'strategy', icon: 'Rocket', color: 'purple' },
+  { id: 'crm_specialist', label: 'Especialista CRM', category: 'strategy', icon: 'Users', color: 'blue' },
+  { id: 'conversion_optimizer', label: 'Optimizador de Conversion', category: 'strategy', icon: 'Target', color: 'amber' },
 
-  // Technology (3)
-  { id: 'web_developer', label: 'Desarrollador Web', category: 'technology', icon: 'Code', color: 'cyan' },
-  { id: 'app_developer', label: 'Desarrollador de Apps', category: 'technology', icon: 'Smartphone', color: 'blue' },
-  { id: 'ai_specialist', label: 'Especialista en IA', category: 'technology', icon: 'Sparkles', color: 'purple' },
-
-  // Education (2)
-  { id: 'online_instructor', label: 'Instructor Online', category: 'education', icon: 'GraduationCap', color: 'amber' },
-  { id: 'workshop_facilitator', label: 'Facilitador de Talleres', category: 'education', icon: 'Users', color: 'green' },
-
-  // Client (2)
+  // Cliente (2)
   { id: 'brand_manager', label: 'Gerente de Marca', category: 'client', icon: 'Building2', color: 'gray' },
   { id: 'marketing_director', label: 'Director de Marketing', category: 'client', icon: 'Megaphone', color: 'slate' },
 ];

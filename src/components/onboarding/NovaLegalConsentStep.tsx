@@ -33,13 +33,16 @@ import { getSignatureMethodForDocument } from '@/types/digital-signature';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import type { AppRole } from '@/types/database';
+import { getPermissionGroup } from '@/lib/permissionGroups';
 
 interface NovaLegalConsentStepProps {
   onBack: () => void;
   onLogout?: () => void;
+  userRole?: AppRole; // Rol del usuario para filtrar documentos
 }
 
-export function NovaLegalConsentStep({ onBack, onLogout }: NovaLegalConsentStepProps) {
+export function NovaLegalConsentStep({ onBack, onLogout, userRole }: NovaLegalConsentStepProps) {
   const {
     requiredPendingDocuments,
     completionStatus,
@@ -72,10 +75,31 @@ export function NovaLegalConsentStep({ onBack, onLogout }: NovaLegalConsentStepP
   const [showReceipt, setShowReceipt] = useState<string | null>(null);
   const [signedDocuments, setSignedDocuments] = useState<Set<string>>(new Set());
 
-  // Filtrar solo documentos de registro (no los de asignación de rol)
-  const documentsToShow = requiredPendingDocuments.filter(
-    doc => doc.trigger_event === 'registration' || !doc.trigger_event
-  );
+  // Filtrar documentos de registro que corresponden al rol del usuario
+  // user_role puede ser: 'all', 'talent', 'client', o un rol específico
+  const userPermissionGroup = userRole ? getPermissionGroup(userRole) : 'talent';
+
+  const documentsToShow = requiredPendingDocuments.filter(doc => {
+    // Solo documentos de registro
+    if (doc.trigger_event && doc.trigger_event !== 'registration') return false;
+
+    // Obtener el user_role del documento (viene del backend)
+    const docUserRole = (doc as PendingDocument & { user_role?: string }).user_role;
+
+    // Si no hay user_role o es 'all', mostrar a todos
+    if (!docUserRole || docUserRole === 'all') return true;
+
+    // Si el doc es para 'talent' y el usuario es talent
+    if (docUserRole === 'talent' && userPermissionGroup === 'talent') return true;
+
+    // Si el doc es para 'client' y el usuario es client
+    if (docUserRole === 'client' && userPermissionGroup === 'client') return true;
+
+    // Si el doc es para un rol específico
+    if (docUserRole === userRole) return true;
+
+    return false;
+  });
 
   // Sincronizar documentos firmados al cargar
   useEffect(() => {
@@ -374,7 +398,7 @@ export function NovaLegalConsentStep({ onBack, onLogout }: NovaLegalConsentStepP
           </div>
 
           {/* Age Verification */}
-          <section className="mb-8">
+          <section className="mb-8" aria-labelledby="age-verification-heading">
             <div
               className={cn(
                 "p-4 rounded-sm border transition-colors",
@@ -383,18 +407,22 @@ export function NovaLegalConsentStep({ onBack, onLogout }: NovaLegalConsentStepP
                   : "border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30"
               )}
             >
-              <label className="flex items-start gap-3 cursor-pointer">
+              <label htmlFor="age-verification-checkbox" className="flex items-start gap-3 cursor-pointer">
                 <Checkbox
+                  id="age-verification-checkbox"
                   checked={ageConfirmed}
                   onCheckedChange={(checked) => handleAgeConfirm(checked === true)}
                   disabled={isVerifyingAge}
+                  aria-required="true"
+                  aria-describedby="age-verification-description"
                   className="mt-1"
                 />
                 <div>
-                  <p className="font-medium text-zinc-900 dark:text-white">
-                    Verificación de Edad <span className="text-red-500 dark:text-red-400">*</span>
+                  <p id="age-verification-heading" className="font-medium text-zinc-900 dark:text-white">
+                    Verificación de Edad <span className="text-red-500 dark:text-red-400" aria-hidden="true">*</span>
+                    <span className="sr-only">(campo requerido)</span>
                   </p>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                  <p id="age-verification-description" className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
                     <strong>Declaro bajo juramento que soy mayor de 18 años de edad</strong> o tengo la mayoría de edad legal en mi jurisdicción, y tengo capacidad legal para aceptar estos términos.
                   </p>
                 </div>
@@ -516,15 +544,18 @@ export function NovaLegalConsentStep({ onBack, onLogout }: NovaLegalConsentStepP
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
             <button
               onClick={onBack}
-              className="flex items-center justify-center gap-2 h-12 px-6 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
+              aria-label="Volver al paso anterior"
+              className="flex items-center justify-center gap-2 h-12 px-6 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-[#14141f]"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-4 h-4" aria-hidden="true" />
               Volver
             </button>
 
             <button
               onClick={handleComplete}
               disabled={!canComplete || isCompletingOnboarding || isAccepting}
+              aria-label={isCompletingOnboarding ? 'Procesando solicitud' : 'Completar verificacion y acceder a KREOON'}
+              aria-disabled={!canComplete || isCompletingOnboarding || isAccepting}
               className={cn(
                 "flex-1 h-12 sm:h-14 rounded font-semibold text-white",
                 "bg-gradient-to-r from-purple-600 to-purple-500",
@@ -532,17 +563,18 @@ export function NovaLegalConsentStep({ onBack, onLogout }: NovaLegalConsentStepP
                 "shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40",
                 "transition-all duration-200",
                 "flex items-center justify-center gap-2",
-                "disabled:opacity-50 disabled:cursor-not-allowed"
+                "disabled:opacity-50 disabled:cursor-not-allowed",
+                "focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-[#14141f]"
               )}
             >
               {isCompletingOnboarding ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
                   Procesando...
                 </>
               ) : (
                 <>
-                  <Lock className="w-5 h-5" />
+                  <Lock className="w-5 h-5" aria-hidden="true" />
                   Completar y acceder a KREOON
                 </>
               )}
@@ -550,8 +582,8 @@ export function NovaLegalConsentStep({ onBack, onLogout }: NovaLegalConsentStepP
           </div>
 
           {!canComplete && (
-            <p className="text-center text-sm text-amber-600 dark:text-amber-400 mt-4 flex items-center justify-center gap-2">
-              <AlertCircle className="w-4 h-4" />
+            <p className="text-center text-sm text-amber-600 dark:text-amber-400 mt-4 flex items-center justify-center gap-2" role="alert" aria-live="polite">
+              <AlertCircle className="w-4 h-4" aria-hidden="true" />
               Debes confirmar tu edad y aceptar todos los documentos
             </p>
           )}

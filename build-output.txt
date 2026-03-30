@@ -1,0 +1,371 @@
+
+> kreoon@1.0.0 build
+> vite build
+
+[36mvite v5.4.21 [32mbuilding for production...[36m[39m
+transforming...
+
+[1m[33mwarn[39m[22m - The class `duration-[${ANIMATION_DURATION}ms]` is ambiguous and matches multiple utilities.
+[1m[33mwarn[39m[22m - If this is content and not a class, replace it with `duration-&lsqb;${ANIMATION_DURATION}ms&rsqb;` to silence this warning.
+
+[1m[33mwarn[39m[22m - The class `ease-[cubic-bezier(0.4,0,0.2,1)]` is ambiguous and matches multiple utilities.
+[1m[33mwarn[39m[22m - If this is content and not a class, replace it with `ease-&lsqb;cubic-bezier(0.4,0,0.2,1)&rsqb;` to silence this warning.
+[32m✓[39m 5287 modules transformed.
+rendering chunks...
+[1m[33m[plugin:vite:reporter][39m[22m [33m[plugin vite:reporter] 
+(!) F:/Users/SICOMMER SAS/Documents/GitHub/kreoon/src/lib/services/adn-research-v3.service.ts is dynamically imported by F:/Users/SICOMMER SAS/Documents/GitHub/kreoon/src/components/adn-research/AdnResearchV3Section.tsx, F:/Users/SICOMMER SAS/Documents/GitHub/kreoon/src/hooks/use-adn-research-v3.ts but also statically imported by F:/Users/SICOMMER SAS/Documents/GitHub/kreoon/src/hooks/use-adn-research-v3.ts, dynamic import will not move module into another chunk.
+[39m
+computing gzip size...
+[2mdist/[22m[32mmanifest.webmanifest                                 [39m[1m[2m  0.48 kB[22m[1m[22m
+[2mdist/[22m[32mindex.html                                           [39m[1m[2m  3.93 kB[22m[1m[22m[2m │ gzip:   1.23 kB[22m
+[2mdist/[22m[35massets/index-BbgLrQOS.css                            [39m[1m[2m426.56 kB[22m[1m[22m[2m │ gzip:  57.21 kB[22m
+[2mdist/[22m[36massets/skeleton-RcJfcsyY.js                          [39m[1m[2m  0.21 kB[22m[1m[22m[2m │ gzip:   0.18 kB[22m
+[2mdist/[22m[36massets/useTimezone-CDB6UM5M.js                       [39m[1m[2m  0.31 kB[22m[1m[22m[2m │ gzip:   0.23 kB[22m
+[2mdist/[22m[36massets/live-streaming.types-DqvAahAo.js              [39m[1m[2m  0.46 kB[22m[1m[22m[2m │ gzip:   0.28 kB[22m
+[2mdist/[22m[36massets/formatters-U5t16FS5.js                        [39m[1m[2m  0.50 kB[22m[1m[22m[2m │ gzip:   0.34 kB[22m
+[2mdist/[22m[36massets/useRealtimeDebounce-F8zXE8Ue.js               [39m[1m[2m  0.55 kB[22m[1m[22m[2m │ gzip:   0.34 kB[22m
+[2mdist/[22m[36massets/TierBadge-Dys1CywA.js                         [39m[1m[2m  0.59 kB[22m[1m[22m[2m │ gzip:   0.40 kB[22m
+[2mdist/[22m[36massets/textarea-D6VHXlwl.js                          [39m[1m[2m  0.63 kB[22m[1m[22m[2m │ gzip:   0.39 kB[22m
+[2mdist/[22m[36massets/CopyButton-CX9lDc3g.js                        [39m[1m[2m  0.64 kB[22m[1m[22m[2m │ gzip:   0.44 kB[22m
+[2mdist/[22m[36massets/CampaignsFeedPage-C0PQItSg.js                 [39m[1m[2m  0.68 kB[22m[1m[22m[2m │ gzip:   0.36 kB[22m
+[2mdist/[22m[36massets/sanitizeHTML-Bhp2csdP.js                      [39m[1m[2m  0.69 kB[22m[1m[22m[2m │ gzip:   0.44 kB[22m
+[2mdist/[22m[36massets/OrganizationPlansSection-BO9uWWD2.js          [39m[1m[2m  0.70 kB[22m[1m[22m[2m │ gzip:   0.37 kB[22m
+[2mdist/[22m[36massets/useUnifiedClients-BWW_W8TT.js                 [39m[1m[2m  0.74 kB[22m[1m[22m[2m │ gzip:   0.31 kB[22m
+[2mdist/[22m[36massets/useDateRangePreset-CsMK4a9g.js                [39m[1m[2m  0.79 kB[22m[1m[22m[2m │ gzip:   0.43 kB[22m
+[2mdist/[22m[36massets/slider-CmThsL6_.js                            [39m[1m[2m  0.79 kB[22m[1m[22m[2m │ gzip:   0.45 kB[22m
+[2mdist/[22m[36massets/booking.types-DcchWpWn.js                     [39m[1m[2m  0.81 kB[22m[1m[22m[2m │ gzip:   0.44 kB[22m
+[2mdist/[22m[36massets/types-D9tjyd40.js                             [39m[1m[2m  0.81 kB[22m[1m[22m[2m │ gzip:   0.47 kB[22m
+[2mdist/[22m[36massets/MarketplaceDashboard-C9T8QGt9.js              [39m[1m[2m  0.82 kB[22m[1m[22m[2m │ gzip:   0.41 kB[22m
+[2mdist/[22m[36massets/radio-group-CcRqCR2J.js                       [39m[1m[2m  0.83 kB[22m[1m[22m[2m │ gzip:   0.44 kB[22m
+[2mdist/[22m[36massets/wallet.types-BgGnSab-.js                      [39m[1m[2m  0.84 kB[22m[1m[22m[2m │ gzip:   0.36 kB[22m
+[2mdist/[22m[36massets/ViewModeToggle-TSm9wpcB.js                    [39m[1m[2m  0.84 kB[22m[1m[22m[2m │ gzip:   0.50 kB[22m
+[2mdist/[22m[36massets/useTrialGuard-CQtR_lv0.js                     [39m[1m[2m  0.86 kB[22m[1m[22m[2m │ gzip:   0.42 kB[22m
+[2mdist/[22m[36massets/UnderConstructionGuard-DxO6PbRJ.js            [39m[1m[2m  0.86 kB[22m[1m[22m[2m │ gzip:   0.49 kB[22m
+[2mdist/[22m[36massets/alert-7QVKZ9A_.js                             [39m[1m[2m  0.95 kB[22m[1m[22m[2m │ gzip:   0.49 kB[22m
+[2mdist/[22m[36massets/PlanesPage-C9lVUI_j.js                        [39m[1m[2m  1.02 kB[22m[1m[22m[2m │ gzip:   0.55 kB[22m
+[2mdist/[22m[36massets/useTalentLists-DjKWOrfm.js                    [39m[1m[2m  1.03 kB[22m[1m[22m[2m │ gzip:   0.50 kB[22m
+[2mdist/[22m[36massets/accordion-Co7Ospzf.js                         [39m[1m[2m  1.05 kB[22m[1m[22m[2m │ gzip:   0.53 kB[22m
+[2mdist/[22m[36massets/card-6IpePOKk.js                              [39m[1m[2m  1.11 kB[22m[1m[22m[2m │ gzip:   0.43 kB[22m
+[2mdist/[22m[36massets/TabPlaceholder-5oH9YBts.js                    [39m[1m[2m  1.11 kB[22m[1m[22m[2m │ gzip:   0.60 kB[22m
+[2mdist/[22m[36massets/Register-CARVfcmH.js                          [39m[1m[2m  1.13 kB[22m[1m[22m[2m │ gzip:   0.59 kB[22m
+[2mdist/[22m[36massets/tabs-Dj4dQK6M.js                              [39m[1m[2m  1.15 kB[22m[1m[22m[2m │ gzip:   0.48 kB[22m
+[2mdist/[22m[36massets/MarketplaceRoleBadge-BOMpBrjX.js              [39m[1m[2m  1.16 kB[22m[1m[22m[2m │ gzip:   0.76 kB[22m
+[2mdist/[22m[36massets/bunnyUpload-Cpe-WNyR.js                       [39m[1m[2m  1.18 kB[22m[1m[22m[2m │ gzip:   0.63 kB[22m
+[2mdist/[22m[36massets/SessionStatusBadge-DcRhFEg_.js                [39m[1m[2m  1.21 kB[22m[1m[22m[2m │ gzip:   0.58 kB[22m
+[2mdist/[22m[36massets/useWallet-jld2jm0o.js                         [39m[1m[2m  1.32 kB[22m[1m[22m[2m │ gzip:   0.68 kB[22m
+[2mdist/[22m[36massets/SubscriptionCancel-DBaxEu8h.js                [39m[1m[2m  1.40 kB[22m[1m[22m[2m │ gzip:   0.67 kB[22m
+[2mdist/[22m[36massets/table-BCI0AztV.js                             [39m[1m[2m  1.53 kB[22m[1m[22m[2m │ gzip:   0.54 kB[22m
+[2mdist/[22m[36massets/SubscriptionSuccess-B02yhH_6.js               [39m[1m[2m  1.57 kB[22m[1m[22m[2m │ gzip:   0.77 kB[22m
+[2mdist/[22m[36massets/DetailPanelShell-BkBxfWEA.js                  [39m[1m[2m  1.68 kB[22m[1m[22m[2m │ gzip:   0.72 kB[22m
+[2mdist/[22m[36massets/CampaignPaymentCancel-DQxJp2cc.js             [39m[1m[2m  1.74 kB[22m[1m[22m[2m │ gzip:   0.88 kB[22m
+[2mdist/[22m[36massets/PageHeader-Dr-dAL8l.js                        [39m[1m[2m  1.75 kB[22m[1m[22m[2m │ gzip:   0.71 kB[22m
+[2mdist/[22m[36massets/finance.types-wz0zUVR0.js                     [39m[1m[2m  1.77 kB[22m[1m[22m[2m │ gzip:   0.68 kB[22m
+[2mdist/[22m[36massets/form-CqVyuVXn.js                              [39m[1m[2m  1.78 kB[22m[1m[22m[2m │ gzip:   0.77 kB[22m
+[2mdist/[22m[36massets/CampaignPaymentSuccess-DNLMbw3d.js            [39m[1m[2m  1.79 kB[22m[1m[22m[2m │ gzip:   0.82 kB[22m
+[2mdist/[22m[36massets/useOrgMemberActions-DOpTE828.js               [39m[1m[2m  1.82 kB[22m[1m[22m[2m │ gzip:   0.63 kB[22m
+[2mdist/[22m[36massets/useOrgTimezone-h0MiYK2m.js                    [39m[1m[2m  1.83 kB[22m[1m[22m[2m │ gzip:   0.76 kB[22m
+[2mdist/[22m[36massets/TourSection-CLPcswqi.js                       [39m[1m[2m  1.84 kB[22m[1m[22m[2m │ gzip:   0.84 kB[22m
+[2mdist/[22m[36massets/database-YSNGVXrG.js                          [39m[1m[2m  1.89 kB[22m[1m[22m[2m │ gzip:   0.63 kB[22m
+[2mdist/[22m[36massets/HLSVideoPlayer-C73hLvjx.js                    [39m[1m[2m  1.90 kB[22m[1m[22m[2m │ gzip:   0.97 kB[22m
+[2mdist/[22m[36massets/useMarketplaceStats-Bf-j1CM-.js               [39m[1m[2m  1.94 kB[22m[1m[22m[2m │ gzip:   0.82 kB[22m
+[2mdist/[22m[36massets/lazy-charts-DhTBd49V.js                       [39m[1m[2m  1.96 kB[22m[1m[22m[2m │ gzip:   0.73 kB[22m
+[2mdist/[22m[36massets/CampaignWizardPage-D794-c6I.js                [39m[1m[2m  2.01 kB[22m[1m[22m[2m │ gzip:   0.85 kB[22m
+[2mdist/[22m[36massets/ambassador-badge-NEiX1Zw4.js                  [39m[1m[2m  2.02 kB[22m[1m[22m[2m │ gzip:   0.91 kB[22m
+[2mdist/[22m[36massets/TransactionsPage-Bc3mROdP.js                  [39m[1m[2m  2.04 kB[22m[1m[22m[2m │ gzip:   0.88 kB[22m
+[2mdist/[22m[36massets/useUnifiedTalent-DPXoBiaA.js                  [39m[1m[2m  2.06 kB[22m[1m[22m[2m │ gzip:   0.88 kB[22m
+[2mdist/[22m[36massets/ai-matching-BrtxJuxm.js                       [39m[1m[2m  2.11 kB[22m[1m[22m[2m │ gzip:   0.97 kB[22m
+[2mdist/[22m[36massets/useUTMTracking-RHNyjlxE.js                    [39m[1m[2m  2.14 kB[22m[1m[22m[2m │ gzip:   0.80 kB[22m
+[2mdist/[22m[36massets/NoOrganization-uh3MXaGy.js                    [39m[1m[2m  2.15 kB[22m[1m[22m[2m │ gzip:   0.86 kB[22m
+[2mdist/[22m[36massets/currency-input-Db8OPwkt.js                    [39m[1m[2m  2.24 kB[22m[1m[22m[2m │ gzip:   0.95 kB[22m
+[2mdist/[22m[36massets/useStreamingAnalytics-cjj1dG0z.js             [39m[1m[2m  2.25 kB[22m[1m[22m[2m │ gzip:   0.98 kB[22m
+[2mdist/[22m[36massets/useCampaignInvitations-BhJmgvx7.js            [39m[1m[2m  2.25 kB[22m[1m[22m[2m │ gzip:   0.86 kB[22m
+[2mdist/[22m[36massets/config-Bp4aTu5U.js                            [39m[1m[2m  2.27 kB[22m[1m[22m[2m │ gzip:   0.97 kB[22m
+[2mdist/[22m[36massets/lazy-rich-text-editor-rE-bB4bs.js             [39m[1m[2m  2.33 kB[22m[1m[22m[2m │ gzip:   0.82 kB[22m
+[2mdist/[22m[36massets/useInternalOrgContent-uYCJq2g2.js             [39m[1m[2m  2.33 kB[22m[1m[22m[2m │ gzip:   1.11 kB[22m
+[2mdist/[22m[36massets/brandActivation-cnkUfKoB.js                   [39m[1m[2m  2.35 kB[22m[1m[22m[2m │ gzip:   0.73 kB[22m
+[2mdist/[22m[36massets/useUserSpecializations-CAVGKEoY.js            [39m[1m[2m  2.38 kB[22m[1m[22m[2m │ gzip:   0.83 kB[22m
+[2mdist/[22m[36massets/ChecklistWorkspace-CgOGkUg9.js                [39m[1m[2m  2.41 kB[22m[1m[22m[2m │ gzip:   1.12 kB[22m
+[2mdist/[22m[36massets/NotFound-Dx3ATh4f.js                          [39m[1m[2m  2.43 kB[22m[1m[22m[2m │ gzip:   1.08 kB[22m
+[2mdist/[22m[36massets/useSavedItems-DSuFukiN.js                     [39m[1m[2m  2.62 kB[22m[1m[22m[2m │ gzip:   0.92 kB[22m
+[2mdist/[22m[36massets/AuthLayout-dx2LEo5d.js                        [39m[1m[2m  2.64 kB[22m[1m[22m[2m │ gzip:   1.12 kB[22m
+[2mdist/[22m[36massets/CampaignEditWizardPage-C_7tiNBO.js            [39m[1m[2m  2.67 kB[22m[1m[22m[2m │ gzip:   1.08 kB[22m
+[2mdist/[22m[36massets/ReactionButton-CBlnUzLR.js                    [39m[1m[2m  2.73 kB[22m[1m[22m[2m │ gzip:   1.32 kB[22m
+[2mdist/[22m[36massets/PromoBanner-BmoO1AvS.js                       [39m[1m[2m  2.73 kB[22m[1m[22m[2m │ gzip:   1.11 kB[22m
+[2mdist/[22m[36massets/ShareButton-BjMEt7Dp.js                       [39m[1m[2m  2.75 kB[22m[1m[22m[2m │ gzip:   1.11 kB[22m
+[2mdist/[22m[36massets/marketplace-BwqVZ9MS.js                       [39m[1m[2m  2.76 kB[22m[1m[22m[2m │ gzip:   1.13 kB[22m
+[2mdist/[22m[36massets/tech-effects-CBJYZbIW.js                      [39m[1m[2m  2.94 kB[22m[1m[22m[2m │ gzip:   1.17 kB[22m
+[2mdist/[22m[36massets/DocumentWorkspace-ZN4374kY.js                 [39m[1m[2m  2.98 kB[22m[1m[22m[2m │ gzip:   1.28 kB[22m
+[2mdist/[22m[36massets/MarketplaceRoleSelector-BAfoNBDB.js           [39m[1m[2m  2.99 kB[22m[1m[22m[2m │ gzip:   1.19 kB[22m
+[2mdist/[22m[36massets/PersonalDataSection-DoRe2rJc.js               [39m[1m[2m  3.00 kB[22m[1m[22m[2m │ gzip:   1.44 kB[22m
+[2mdist/[22m[36massets/WorkspaceTab-BMTNkQDF.js                      [39m[1m[2m  3.05 kB[22m[1m[22m[2m │ gzip:   1.18 kB[22m
+[2mdist/[22m[36massets/date-range-preset-picker-ChQihJUb.js          [39m[1m[2m  3.11 kB[22m[1m[22m[2m │ gzip:   1.36 kB[22m
+[2mdist/[22m[36massets/TalentListDetailPage-CLBfquzb.js              [39m[1m[2m  3.11 kB[22m[1m[22m[2m │ gzip:   1.27 kB[22m
+[2mdist/[22m[36massets/useMarketplaceOrgInvitations-yHeyl_CJ.js      [39m[1m[2m  3.20 kB[22m[1m[22m[2m │ gzip:   0.97 kB[22m
+[2mdist/[22m[36massets/useUnifiedReputation-DZEMPqi8.js              [39m[1m[2m  3.24 kB[22m[1m[22m[2m │ gzip:   1.23 kB[22m
+[2mdist/[22m[36massets/useCampaignAnalytics-Dr3o1XRG.js              [39m[1m[2m  3.26 kB[22m[1m[22m[2m │ gzip:   0.78 kB[22m
+[2mdist/[22m[36massets/AIFeedbackWidget-Bu4x6YYb.js                  [39m[1m[2m  3.32 kB[22m[1m[22m[2m │ gzip:   1.47 kB[22m
+[2mdist/[22m[36massets/useSubscription-BsJZhSyV.js                   [39m[1m[2m  3.48 kB[22m[1m[22m[2m │ gzip:   1.33 kB[22m
+[2mdist/[22m[36massets/MarketplaceInquiriesPage-BLrQgplF.js          [39m[1m[2m  3.58 kB[22m[1m[22m[2m │ gzip:   1.50 kB[22m
+[2mdist/[22m[36massets/useFinance-BhIZN1kR.js                        [39m[1m[2m  3.63 kB[22m[1m[22m[2m │ gzip:   0.99 kB[22m
+[2mdist/[22m[36massets/TechnicalWorkspace-Cx2XrASA.js                [39m[1m[2m  3.75 kB[22m[1m[22m[2m │ gzip:   1.28 kB[22m
+[2mdist/[22m[36massets/RoleBadgeCard-Cy1F-JyB.js                     [39m[1m[2m  3.76 kB[22m[1m[22m[2m │ gzip:   1.70 kB[22m
+[2mdist/[22m[36massets/LiveDiscoverPage-DjqHV-Gs.js                  [39m[1m[2m  3.76 kB[22m[1m[22m[2m │ gzip:   1.60 kB[22m
+[2mdist/[22m[36massets/useBookings-BLu1kmep.js                       [39m[1m[2m  3.84 kB[22m[1m[22m[2m │ gzip:   1.23 kB[22m
+[2mdist/[22m[36massets/Auth-Dbf1Bjem.js                              [39m[1m[2m  3.88 kB[22m[1m[22m[2m │ gzip:   1.55 kB[22m
+[2mdist/[22m[36massets/Unauthorized-B96sQwfw.js                      [39m[1m[2m  3.90 kB[22m[1m[22m[2m │ gzip:   1.46 kB[22m
+[2mdist/[22m[36massets/CaseStudies-Bjno9P85.js                       [39m[1m[2m  3.97 kB[22m[1m[22m[2m │ gzip:   1.54 kB[22m
+[2mdist/[22m[36massets/marketplace-Bwre31Uf.js                       [39m[1m[2m  4.00 kB[22m[1m[22m[2m │ gzip:   1.86 kB[22m
+[2mdist/[22m[36massets/WelcomeNewMember-Dybrd1MZ.js                  [39m[1m[2m  4.15 kB[22m[1m[22m[2m │ gzip:   1.80 kB[22m
+[2mdist/[22m[36massets/ThumbnailSelector-DEknmsua.js                 [39m[1m[2m  4.19 kB[22m[1m[22m[2m │ gzip:   1.45 kB[22m
+[2mdist/[22m[36massets/TalentRanking-BALjvP_S.js                     [39m[1m[2m  4.26 kB[22m[1m[22m[2m │ gzip:   1.51 kB[22m
+[2mdist/[22m[36massets/SpecializationPicker-B1OmEUEK.js              [39m[1m[2m  4.39 kB[22m[1m[22m[2m │ gzip:   1.79 kB[22m
+[2mdist/[22m[36massets/InteractionTimeline-DyObSZVg.js               [39m[1m[2m  4.40 kB[22m[1m[22m[2m │ gzip:   1.64 kB[22m
+[2mdist/[22m[36massets/CommentsSection-BLpIJPW-.js                   [39m[1m[2m  4.49 kB[22m[1m[22m[2m │ gzip:   1.75 kB[22m
+[2mdist/[22m[36massets/UnifiedRolePicker-CJSptCE1.js                 [39m[1m[2m  4.58 kB[22m[1m[22m[2m │ gzip:   1.80 kB[22m
+[2mdist/[22m[36massets/DeliverablesTab-EVEceAZ_.js                   [39m[1m[2m  4.64 kB[22m[1m[22m[2m │ gzip:   1.65 kB[22m
+[2mdist/[22m[36massets/AutoPauseVideo-DGEnK1Mp.js                    [39m[1m[2m  4.72 kB[22m[1m[22m[2m │ gzip:   1.90 kB[22m
+[2mdist/[22m[36massets/CurriculumWorkspace-2n-rQLmZ.js               [39m[1m[2m  4.76 kB[22m[1m[22m[2m │ gzip:   1.76 kB[22m
+[2mdist/[22m[36massets/DevModulesPage-CujG0VL1.js                    [39m[1m[2m  4.83 kB[22m[1m[22m[2m │ gzip:   1.43 kB[22m
+[2mdist/[22m[36massets/CampaignCard-BzFh31SA.js                      [39m[1m[2m  4.87 kB[22m[1m[22m[2m │ gzip:   1.64 kB[22m
+[2mdist/[22m[36massets/TalentListsPage-CmYz0NJd.js                   [39m[1m[2m  4.89 kB[22m[1m[22m[2m │ gzip:   1.96 kB[22m
+[2mdist/[22m[36massets/OrgReferralsSection-LHoId-iM.js               [39m[1m[2m  5.23 kB[22m[1m[22m[2m │ gzip:   2.05 kB[22m
+[2mdist/[22m[36massets/ActiveLivesCarousel-BebYwg92.js               [39m[1m[2m  5.25 kB[22m[1m[22m[2m │ gzip:   1.92 kB[22m
+[2mdist/[22m[36massets/productResearchParser-XU_VzQ5m.js             [39m[1m[2m  5.27 kB[22m[1m[22m[2m │ gzip:   1.98 kB[22m
+[2mdist/[22m[36massets/useOrganizations-BR4FJqNN.js                  [39m[1m[2m  5.31 kB[22m[1m[22m[2m │ gzip:   1.84 kB[22m
+[2mdist/[22m[36massets/MarketplaceInvitationsPage-Drcl_Mdj.js        [39m[1m[2m  5.33 kB[22m[1m[22m[2m │ gzip:   1.86 kB[22m
+[2mdist/[22m[36massets/index-u5KHm5xR.js                             [39m[1m[2m  5.41 kB[22m[1m[22m[2m │ gzip:   1.99 kB[22m
+[2mdist/[22m[36massets/useCreatorProfile-BoR_nDVZ.js                 [39m[1m[2m  5.45 kB[22m[1m[22m[2m │ gzip:   1.87 kB[22m
+[2mdist/[22m[36massets/DatesTab-nX0i9t4M.js                          [39m[1m[2m  5.50 kB[22m[1m[22m[2m │ gzip:   2.20 kB[22m
+[2mdist/[22m[36massets/BunnyVideoPlayer-Bc5EQ5Y3.js                  [39m[1m[2m  5.54 kB[22m[1m[22m[2m │ gzip:   2.24 kB[22m
+[2mdist/[22m[36massets/SavedPage-CU30qidP.js                         [39m[1m[2m  5.54 kB[22m[1m[22m[2m │ gzip:   2.06 kB[22m
+[2mdist/[22m[36massets/TeleprompterMode-T2mPo2SR.js                  [39m[1m[2m  5.64 kB[22m[1m[22m[2m │ gzip:   2.09 kB[22m
+[2mdist/[22m[36massets/CaseStudyDetail-BbLVsmIJ.js                   [39m[1m[2m  5.68 kB[22m[1m[22m[2m │ gzip:   1.82 kB[22m
+[2mdist/[22m[36massets/useOrganizationAI-BBrLxeS_.js                 [39m[1m[2m  5.81 kB[22m[1m[22m[2m │ gzip:   2.10 kB[22m
+[2mdist/[22m[36massets/useAmbassador-CrgmQIUY.js                     [39m[1m[2m  5.84 kB[22m[1m[22m[2m │ gzip:   1.62 kB[22m
+[2mdist/[22m[36massets/LegalDocumentPage-Dv8HAtRS.js                 [39m[1m[2m  5.96 kB[22m[1m[22m[2m │ gzip:   2.21 kB[22m
+[2mdist/[22m[36massets/index-CZnfWy-f.js                             [39m[1m[2m  6.04 kB[22m[1m[22m[2m │ gzip:   2.25 kB[22m
+[2mdist/[22m[36massets/ReferralDetailList-B7dHRsda.js                [39m[1m[2m  6.24 kB[22m[1m[22m[2m │ gzip:   2.03 kB[22m
+[2mdist/[22m[36massets/ReferralLanding-dROeurTE.js                   [39m[1m[2m  6.30 kB[22m[1m[22m[2m │ gzip:   2.25 kB[22m
+[2mdist/[22m[36massets/ReferralShareCard-BX5RAEg7.js                 [39m[1m[2m  6.44 kB[22m[1m[22m[2m │ gzip:   2.50 kB[22m
+[2mdist/[22m[36massets/useWithdrawals-mvFSRbXF.js                    [39m[1m[2m  6.47 kB[22m[1m[22m[2m │ gzip:   2.31 kB[22m
+[2mdist/[22m[36massets/MembershipGate-B8TgEbBz.js                    [39m[1m[2m  6.49 kB[22m[1m[22m[2m │ gzip:   1.82 kB[22m
+[2mdist/[22m[36massets/react-confetti-8EfxAw0e.js                    [39m[1m[2m  6.54 kB[22m[1m[22m[2m │ gzip:   2.57 kB[22m
+[2mdist/[22m[36massets/AudioRecorder-C1EYWRyA.js                     [39m[1m[2m  6.59 kB[22m[1m[22m[2m │ gzip:   1.95 kB[22m
+[2mdist/[22m[36massets/CancelBookingPage-s3TFT0l8.js                 [39m[1m[2m  6.64 kB[22m[1m[22m[2m │ gzip:   2.32 kB[22m
+[2mdist/[22m[36massets/specializations-CUb19d4v.js                   [39m[1m[2m  6.68 kB[22m[1m[22m[2m │ gzip:   1.88 kB[22m
+[2mdist/[22m[36massets/ScriptViewer-CaUbWLKa.js                      [39m[1m[2m  6.70 kB[22m[1m[22m[2m │ gzip:   2.45 kB[22m
+[2mdist/[22m[36massets/StreamingRecapPage-DMqvvPWn.js                [39m[1m[2m  6.73 kB[22m[1m[22m[2m │ gzip:   2.17 kB[22m
+[2mdist/[22m[36massets/WithdrawalsPage-BcV52vU9.js                   [39m[1m[2m  6.85 kB[22m[1m[22m[2m │ gzip:   2.19 kB[22m
+[2mdist/[22m[36massets/PendingAccess-Cyeeh4Ri.js                     [39m[1m[2m  6.88 kB[22m[1m[22m[2m │ gzip:   2.61 kB[22m
+[2mdist/[22m[36massets/FeedGridModal-D2yrNHtR.js                     [39m[1m[2m  6.89 kB[22m[1m[22m[2m │ gzip:   2.62 kB[22m
+[2mdist/[22m[36massets/useBrandActivation-DWg4EnV7.js                [39m[1m[2m  7.13 kB[22m[1m[22m[2m │ gzip:   2.11 kB[22m
+[2mdist/[22m[36massets/useCreatorPublicProfile-CfDfW67M.js           [39m[1m[2m  7.19 kB[22m[1m[22m[2m │ gzip:   2.38 kB[22m
+[2mdist/[22m[36massets/useProfile-Dw4AvPW6.js                        [39m[1m[2m  7.22 kB[22m[1m[22m[2m │ gzip:   2.65 kB[22m
+[2mdist/[22m[36massets/OrgMarketplaceSection-BcRKYnBp.js             [39m[1m[2m  7.22 kB[22m[1m[22m[2m │ gzip:   2.21 kB[22m
+[2mdist/[22m[36massets/useHLSPlayer-cMiHEtEO.js                      [39m[1m[2m  7.25 kB[22m[1m[22m[2m │ gzip:   2.58 kB[22m
+[2mdist/[22m[36massets/GenericTabContent-DGj62EAE.js                 [39m[1m[2m  7.31 kB[22m[1m[22m[2m │ gzip:   2.14 kB[22m
+[2mdist/[22m[36massets/DataDeletion-D0JxnS4T.js                      [39m[1m[2m  7.45 kB[22m[1m[22m[2m │ gzip:   2.53 kB[22m
+[2mdist/[22m[36massets/BunnyImageUploader--6xomo0A.js                [39m[1m[2m  7.56 kB[22m[1m[22m[2m │ gzip:   2.86 kB[22m
+[2mdist/[22m[36massets/Tab01MarketOverview-MetYzpVz.js               [39m[1m[2m  7.68 kB[22m[1m[22m[2m │ gzip:   1.88 kB[22m
+[2mdist/[22m[36massets/LiveBroadcastPage-LwqIJO_m.js                 [39m[1m[2m  7.80 kB[22m[1m[22m[2m │ gzip:   2.54 kB[22m
+[2mdist/[22m[36massets/ClientCompanySection-B5JEaPpf.js              [39m[1m[2m  7.92 kB[22m[1m[22m[2m │ gzip:   2.58 kB[22m
+[2mdist/[22m[36massets/UGCPriceCalculator-DFdKmJug.js                [39m[1m[2m  7.93 kB[22m[1m[22m[2m │ gzip:   2.54 kB[22m
+[2mdist/[22m[36massets/useContent-CD6ghHmG.js                        [39m[1m[2m  8.11 kB[22m[1m[22m[2m │ gzip:   2.67 kB[22m
+[2mdist/[22m[36massets/CampaignsFeed-C6si9GsW.js                     [39m[1m[2m  8.13 kB[22m[1m[22m[2m │ gzip:   2.51 kB[22m
+[2mdist/[22m[36massets/TechKpiDialog-DSGJ6htM.js                     [39m[1m[2m  8.16 kB[22m[1m[22m[2m │ gzip:   2.65 kB[22m
+[2mdist/[22m[36massets/Unete-D_kdH-iq.js                             [39m[1m[2m  8.27 kB[22m[1m[22m[2m │ gzip:   3.04 kB[22m
+[2mdist/[22m[36massets/useMarketplaceProjects-D9z3sRxx.js            [39m[1m[2m  8.42 kB[22m[1m[22m[2m │ gzip:   2.87 kB[22m
+[2mdist/[22m[36massets/AmbassadorPage-B7zjxMrA.js                    [39m[1m[2m  8.48 kB[22m[1m[22m[2m │ gzip:   2.37 kB[22m
+[2mdist/[22m[36massets/AuditLogSection-BlPlzRXH.js                   [39m[1m[2m  8.54 kB[22m[1m[22m[2m │ gzip:   2.83 kB[22m
+[2mdist/[22m[36massets/types-BDUTOfRp.js                             [39m[1m[2m  8.56 kB[22m[1m[22m[2m │ gzip:   3.21 kB[22m
+[2mdist/[22m[36massets/TechKpiCard-Bun0OV_j.js                       [39m[1m[2m  8.63 kB[22m[1m[22m[2m │ gzip:   3.00 kB[22m
+[2mdist/[22m[36massets/config-BN6oQX_i.js                            [39m[1m[2m  8.65 kB[22m[1m[22m[2m │ gzip:   3.01 kB[22m
+[2mdist/[22m[36massets/live-hosting.types-BydZ-37c.js                [39m[1m[2m  9.10 kB[22m[1m[22m[2m │ gzip:   2.71 kB[22m
+[2mdist/[22m[36massets/OrgCRMPipelines-Bw6I_ffX.js                   [39m[1m[2m  9.14 kB[22m[1m[22m[2m │ gzip:   2.80 kB[22m
+[2mdist/[22m[36massets/PrivacyPolicy-4-QCCgxs.js                     [39m[1m[2m  9.24 kB[22m[1m[22m[2m │ gzip:   2.86 kB[22m
+[2mdist/[22m[36massets/TermsOfService-3Kz93gJR.js                    [39m[1m[2m  9.40 kB[22m[1m[22m[2m │ gzip:   2.92 kB[22m
+[2mdist/[22m[36massets/useCreatorServices-vi4kYKUH.js                [39m[1m[2m  9.49 kB[22m[1m[22m[2m │ gzip:   3.24 kB[22m
+[2mdist/[22m[36massets/Tab17EmailMarketing-BKOP57pZ.js               [39m[1m[2m  9.59 kB[22m[1m[22m[2m │ gzip:   2.35 kB[22m
+[2mdist/[22m[36massets/RescheduleBookingPage-BQ0RCY8Z.js             [39m[1m[2m  9.63 kB[22m[1m[22m[2m │ gzip:   2.98 kB[22m
+[2mdist/[22m[36massets/PapeleraPage-D0HEuIyG.js                      [39m[1m[2m  9.82 kB[22m[1m[22m[2m │ gzip:   3.60 kB[22m
+[2mdist/[22m[36massets/PromptsSection-B352O0BP.js                    [39m[1m[2m 10.30 kB[22m[1m[22m[2m │ gzip:   2.93 kB[22m
+[2mdist/[22m[36massets/AppearanceSettings-DwJ577pm.js                [39m[1m[2m 10.37 kB[22m[1m[22m[2m │ gzip:   3.68 kB[22m
+[2mdist/[22m[36massets/OrgRegister-CkGXooSf.js                       [39m[1m[2m 10.46 kB[22m[1m[22m[2m │ gzip:   3.62 kB[22m
+[2mdist/[22m[36massets/TestimonialsSection-ZtPmM3oq.js               [39m[1m[2m 10.49 kB[22m[1m[22m[2m │ gzip:   3.80 kB[22m
+[2mdist/[22m[36massets/rich-text-editor-R1o3SeWd.js                  [39m[1m[2m 10.62 kB[22m[1m[22m[2m │ gzip:   2.91 kB[22m
+[2mdist/[22m[36massets/ForgotPasswordForm-Boo6RdjY.js                [39m[1m[2m 10.74 kB[22m[1m[22m[2m │ gzip:   3.85 kB[22m
+[2mdist/[22m[36massets/MarketplaceDashboardTab-bhHRsxx9.js           [39m[1m[2m 10.92 kB[22m[1m[22m[2m │ gzip:   2.70 kB[22m
+[2mdist/[22m[36massets/Tab02Competition-CebYrK_h.js                  [39m[1m[2m 10.99 kB[22m[1m[22m[2m │ gzip:   2.59 kB[22m
+[2mdist/[22m[36massets/OrgCRMFinances-xdJYA9r3.js                    [39m[1m[2m 11.02 kB[22m[1m[22m[2m │ gzip:   2.66 kB[22m
+[2mdist/[22m[36massets/OrgPortfolioPage-FnUD8SXN.js                  [39m[1m[2m 11.06 kB[22m[1m[22m[2m │ gzip:   3.57 kB[22m
+[2mdist/[22m[36massets/LiveHostingDashboard-CdYeTkdh.js              [39m[1m[2m 11.47 kB[22m[1m[22m[2m │ gzip:   2.99 kB[22m
+[2mdist/[22m[36massets/useScriptPrompts-apqL-4eO.js                  [39m[1m[2m 11.58 kB[22m[1m[22m[2m │ gzip:   4.53 kB[22m
+[2mdist/[22m[36massets/Content-33htkM-5.js                           [39m[1m[2m 11.82 kB[22m[1m[22m[2m │ gzip:   4.21 kB[22m
+[2mdist/[22m[36massets/Tab03JTBD-B9mlXbAK.js                         [39m[1m[2m 11.90 kB[22m[1m[22m[2m │ gzip:   2.51 kB[22m
+[2mdist/[22m[36massets/CrmFieldsConfigDialog-DJDvOe_X.js             [39m[1m[2m 11.97 kB[22m[1m[22m[2m │ gzip:   3.62 kB[22m
+[2mdist/[22m[36massets/LiveBadge-CpWcHWQS.js                         [39m[1m[2m 12.11 kB[22m[1m[22m[2m │ gzip:   4.23 kB[22m
+[2mdist/[22m[36massets/vendor-react-BsHpZIvw.js                      [39m[1m[2m 12.30 kB[22m[1m[22m[2m │ gzip:   4.55 kB[22m
+[2mdist/[22m[36massets/AdGeneratorPage-C-Jo1Py9.js                   [39m[1m[2m 12.38 kB[22m[1m[22m[2m │ gzip:   3.94 kB[22m
+[2mdist/[22m[36massets/EditorDashboard-zFmgUgmk.js                   [39m[1m[2m 12.59 kB[22m[1m[22m[2m │ gzip:   4.08 kB[22m
+[2mdist/[22m[36massets/Tab13SocialMedia-CODQ_aPv.js                  [39m[1m[2m 12.79 kB[22m[1m[22m[2m │ gzip:   2.70 kB[22m
+[2mdist/[22m[36massets/NoCompany-CPF6zMKI.js                         [39m[1m[2m 12.87 kB[22m[1m[22m[2m │ gzip:   4.30 kB[22m
+[2mdist/[22m[36massets/Team-Dhv8lPIA.js                              [39m[1m[2m 12.94 kB[22m[1m[22m[2m │ gzip:   3.81 kB[22m
+[2mdist/[22m[36massets/BrandsCRM-s5IVmG3U.js                         [39m[1m[2m 13.04 kB[22m[1m[22m[2m │ gzip:   3.93 kB[22m
+[2mdist/[22m[36massets/OrganizationProfileEditor-CoeCb9lg.js         [39m[1m[2m 13.05 kB[22m[1m[22m[2m │ gzip:   3.62 kB[22m
+[2mdist/[22m[36massets/StrategistDashboard-ib-YqJA_.js               [39m[1m[2m 13.29 kB[22m[1m[22m[2m │ gzip:   4.45 kB[22m
+[2mdist/[22m[36massets/OrganizationRegistrationsSection-ouYd_sc0.js  [39m[1m[2m 13.39 kB[22m[1m[22m[2m │ gzip:   3.89 kB[22m
+[2mdist/[22m[36massets/Tab05Psychology-DKxlQK9D.js                   [39m[1m[2m 13.41 kB[22m[1m[22m[2m │ gzip:   2.74 kB[22m
+[2mdist/[22m[36massets/VideosPage-CG5eNNu1.js                        [39m[1m[2m 13.66 kB[22m[1m[22m[2m │ gzip:   4.74 kB[22m
+[2mdist/[22m[36massets/UnifiedBadgesShowcase-DBI2eraQ.js             [39m[1m[2m 13.72 kB[22m[1m[22m[2m │ gzip:   4.05 kB[22m
+[2mdist/[22m[36massets/Tab11Calendar-CIrmFe8F.js                     [39m[1m[2m 13.73 kB[22m[1m[22m[2m │ gzip:   3.30 kB[22m
+[2mdist/[22m[36massets/PlatformCRMDashboard-CijTLi2x.js              [39m[1m[2m 13.92 kB[22m[1m[22m[2m │ gzip:   4.14 kB[22m
+[2mdist/[22m[36massets/OrgCRMDashboard-ssaMlXaC.js                   [39m[1m[2m 14.10 kB[22m[1m[22m[2m │ gzip:   3.93 kB[22m
+[2mdist/[22m[36massets/Tab12LeadMagnets-uRsievh1.js                  [39m[1m[2m 14.19 kB[22m[1m[22m[2m │ gzip:   2.98 kB[22m
+[2mdist/[22m[36massets/CompanyProfileEditor-DLfsJ9mi.js              [39m[1m[2m 14.28 kB[22m[1m[22m[2m │ gzip:   4.25 kB[22m
+[2mdist/[22m[36massets/VideoTab-DtIwtwLh.js                          [39m[1m[2m 14.36 kB[22m[1m[22m[2m │ gzip:   5.14 kB[22m
+[2mdist/[22m[36massets/PlatformCRMOrganizations-BVXo4Nkq.js          [39m[1m[2m 14.49 kB[22m[1m[22m[2m │ gzip:   3.97 kB[22m
+[2mdist/[22m[36massets/PermissionsUnifiedSection-oUElVN-s.js         [39m[1m[2m 14.49 kB[22m[1m[22m[2m │ gzip:   4.43 kB[22m
+[2mdist/[22m[36massets/GoLiveModal-DJJB-Wr9.js                       [39m[1m[2m 14.57 kB[22m[1m[22m[2m │ gzip:   4.31 kB[22m
+[2mdist/[22m[36massets/PartnerCommunityLanding-B62Qm8DO.js           [39m[1m[2m 14.79 kB[22m[1m[22m[2m │ gzip:   4.19 kB[22m
+[2mdist/[22m[36massets/Tab08CopyAngles-CMgdTbW_.js                   [39m[1m[2m 14.95 kB[22m[1m[22m[2m │ gzip:   3.15 kB[22m
+[2mdist/[22m[36massets/OrgAgencyProfileSection-Cj-PoS7K.js           [39m[1m[2m 15.04 kB[22m[1m[22m[2m │ gzip:   4.14 kB[22m
+[2mdist/[22m[36massets/Tab07Positioning-B-4b34Rr.js                  [39m[1m[2m 15.09 kB[22m[1m[22m[2m │ gzip:   2.81 kB[22m
+[2mdist/[22m[36massets/Tab18LandingPages-CXRi5T0v.js                 [39m[1m[2m 15.28 kB[22m[1m[22m[2m │ gzip:   3.20 kB[22m
+[2mdist/[22m[36massets/CreateContactModal-DvGSx6Um.js                [39m[1m[2m 15.30 kB[22m[1m[22m[2m │ gzip:   3.92 kB[22m
+[2mdist/[22m[36massets/CampaignEditWizard-CHVSe9Yy.js                [39m[1m[2m 15.42 kB[22m[1m[22m[2m │ gzip:   4.98 kB[22m
+[2mdist/[22m[36massets/MaterialsTab-B6nbDpFE.js                      [39m[1m[2m 15.47 kB[22m[1m[22m[2m │ gzip:   5.40 kB[22m
+[2mdist/[22m[36massets/Tab19LaunchStrategy-FQj3k-R7.js               [39m[1m[2m 15.54 kB[22m[1m[22m[2m │ gzip:   2.80 kB[22m
+[2mdist/[22m[36massets/OrgContentShowcase-CijiVVl6.js                [39m[1m[2m 15.65 kB[22m[1m[22m[2m │ gzip:   4.74 kB[22m
+[2mdist/[22m[36massets/useMarketplaceCampaigns-CNf2grA8.js           [39m[1m[2m 15.66 kB[22m[1m[22m[2m │ gzip:   4.57 kB[22m
+[2mdist/[22m[36massets/AITokenizationPage-D56yCTQQ.js                [39m[1m[2m 15.66 kB[22m[1m[22m[2m │ gzip:   4.10 kB[22m
+[2mdist/[22m[36massets/Tab20KPIs-DZloLsQW.js                         [39m[1m[2m 15.72 kB[22m[1m[22m[2m │ gzip:   3.01 kB[22m
+[2mdist/[22m[36massets/Tab04Avatars-td-48GJG.js                      [39m[1m[2m 15.94 kB[22m[1m[22m[2m │ gzip:   3.27 kB[22m
+[2mdist/[22m[36massets/Tab15TikTokAds-9vxk9hMr.js                    [39m[1m[2m 16.13 kB[22m[1m[22m[2m │ gzip:   2.82 kB[22m
+[2mdist/[22m[36massets/BrandDetail-lJKAsl1V.js                       [39m[1m[2m 16.38 kB[22m[1m[22m[2m │ gzip:   4.06 kB[22m
+[2mdist/[22m[36massets/Tab09Offer-0EaMyhzs.js                        [39m[1m[2m 16.49 kB[22m[1m[22m[2m │ gzip:   3.43 kB[22m
+[2mdist/[22m[36massets/CreatorCampaignsPage-alVcY5o9.js              [39m[1m[2m 16.59 kB[22m[1m[22m[2m │ gzip:   4.23 kB[22m
+[2mdist/[22m[36massets/ReferralSection-CIXu4mxM.js                   [39m[1m[2m 17.11 kB[22m[1m[22m[2m │ gzip:   5.42 kB[22m
+[2mdist/[22m[36massets/LiveViewerPage-DaaAeRcv.js                    [39m[1m[2m 17.25 kB[22m[1m[22m[2m │ gzip:   5.74 kB[22m
+[2mdist/[22m[36massets/FreelancerDashboard-rLSpTUm-.js               [39m[1m[2m 17.28 kB[22m[1m[22m[2m │ gzip:   4.26 kB[22m
+[2mdist/[22m[36massets/WelcomeTalent-BfA1whWN.js                     [39m[1m[2m 17.32 kB[22m[1m[22m[2m │ gzip:   6.36 kB[22m
+[2mdist/[22m[36massets/Tab21OrganicContent-YcF_Aub9.js               [39m[1m[2m 17.33 kB[22m[1m[22m[2m │ gzip:   3.38 kB[22m
+[2mdist/[22m[36massets/CreatorDashboard-Bnjs3e2G.js                  [39m[1m[2m 17.41 kB[22m[1m[22m[2m │ gzip:   5.06 kB[22m
+[2mdist/[22m[36massets/WalletPage-C4kPYlED.js                        [39m[1m[2m 17.48 kB[22m[1m[22m[2m │ gzip:   4.52 kB[22m
+[2mdist/[22m[36massets/index-DV6Q482E.js                             [39m[1m[2m 17.96 kB[22m[1m[22m[2m │ gzip:   6.27 kB[22m
+[2mdist/[22m[36massets/Tab22ExecutiveSummary-aGYNl5nE.js             [39m[1m[2m 18.33 kB[22m[1m[22m[2m │ gzip:   3.74 kB[22m
+[2mdist/[22m[36massets/Settings-D6ISMN9L.js                          [39m[1m[2m 18.38 kB[22m[1m[22m[2m │ gzip:   5.84 kB[22m
+[2mdist/[22m[36massets/DetailSection-Cfj09thS.js                     [39m[1m[2m 19.32 kB[22m[1m[22m[2m │ gzip:   4.89 kB[22m
+[2mdist/[22m[36massets/StreamingHubPage-DqbJDSGx.js                  [39m[1m[2m 19.39 kB[22m[1m[22m[2m │ gzip:   5.68 kB[22m
+[2mdist/[22m[36massets/Tab16GoogleAds-CgyAS8-m.js                    [39m[1m[2m 19.57 kB[22m[1m[22m[2m │ gzip:   3.24 kB[22m
+[2mdist/[22m[36massets/Tab06Neuromarketing-DQAsTnBd.js               [39m[1m[2m 19.61 kB[22m[1m[22m[2m │ gzip:   3.44 kB[22m
+[2mdist/[22m[36massets/PlatformCRMFinances-DZiJ1n4y.js               [39m[1m[2m 19.70 kB[22m[1m[22m[2m │ gzip:   4.30 kB[22m
+[2mdist/[22m[36massets/NotificationsUnifiedSection-D2250aI2.js       [39m[1m[2m 19.80 kB[22m[1m[22m[2m │ gzip:   4.87 kB[22m
+[2mdist/[22m[36massets/CompanyProfilePage-B-xd7hxK.js                [39m[1m[2m 19.88 kB[22m[1m[22m[2m │ gzip:   5.36 kB[22m
+[2mdist/[22m[36massets/UPDocumentation-CeXH8lzY.js                   [39m[1m[2m 20.20 kB[22m[1m[22m[2m │ gzip:   3.44 kB[22m
+[2mdist/[22m[36massets/CreatorProfileSection-DIpxNtUS.js             [39m[1m[2m 20.23 kB[22m[1m[22m[2m │ gzip:   5.51 kB[22m
+[2mdist/[22m[36massets/KanbanCardVideoPreview-f4FqbAJQ.js            [39m[1m[2m 20.74 kB[22m[1m[22m[2m │ gzip:   6.54 kB[22m
+[2mdist/[22m[36massets/PublicBookingPage-DOiYHz_9.js                 [39m[1m[2m 20.87 kB[22m[1m[22m[2m │ gzip:   6.29 kB[22m
+[2mdist/[22m[36massets/TeamTab-hu2iMnmT.js                           [39m[1m[2m 20.89 kB[22m[1m[22m[2m │ gzip:   5.67 kB[22m
+[2mdist/[22m[36massets/CampaignWizard-C-MpF8ZD.js                    [39m[1m[2m 21.34 kB[22m[1m[22m[2m │ gzip:   6.14 kB[22m
+[2mdist/[22m[36massets/index-BgPgTtBS.js                             [39m[1m[2m 21.44 kB[22m[1m[22m[2m │ gzip:   6.41 kB[22m
+[2mdist/[22m[36massets/index-Ce4panxB.js                             [39m[1m[2m 22.58 kB[22m[1m[22m[2m │ gzip:   6.28 kB[22m
+[2mdist/[22m[36massets/vendor-router-BYyOSzE1.js                     [39m[1m[2m 23.09 kB[22m[1m[22m[2m │ gzip:   8.52 kB[22m
+[2mdist/[22m[36massets/useMarketplaceCreators-4h9ov0-R.js            [39m[1m[2m 23.38 kB[22m[1m[22m[2m │ gzip:   7.17 kB[22m
+[2mdist/[22m[36massets/LiveAnalyticsDashboard-CudzJNPF.js            [39m[1m[2m 23.83 kB[22m[1m[22m[2m │ gzip:   8.07 kB[22m
+[2mdist/[22m[36massets/KAEDashboard-BCvWTxGX.js                      [39m[1m[2m 24.13 kB[22m[1m[22m[2m │ gzip:   5.89 kB[22m
+[2mdist/[22m[36massets/unifiedProject.types-Bg3yqnGA.js              [39m[1m[2m 24.26 kB[22m[1m[22m[2m │ gzip:   5.63 kB[22m
+[2mdist/[22m[36massets/Tab14MetaAds-CO8yma8D.js                      [39m[1m[2m 24.79 kB[22m[1m[22m[2m │ gzip:   4.56 kB[22m
+[2mdist/[22m[36massets/PhoneMockupCarousel-BredMq1S.js               [39m[1m[2m 25.02 kB[22m[1m[22m[2m │ gzip:  10.21 kB[22m
+[2mdist/[22m[36massets/OrganizationPlansPage-f2Fn8U6A.js             [39m[1m[2m 25.12 kB[22m[1m[22m[2m │ gzip:   6.88 kB[22m
+[2mdist/[22m[36massets/OnboardingProfile-Dtuf9DZQ.js                 [39m[1m[2m 25.17 kB[22m[1m[22m[2m │ gzip:   7.31 kB[22m
+[2mdist/[22m[36massets/BookingCalendarPage-CQ0QPYpc.js               [39m[1m[2m 25.21 kB[22m[1m[22m[2m │ gzip:   6.83 kB[22m
+[2mdist/[22m[36massets/ThumbnailTab-DazNeWxd.js                      [39m[1m[2m 25.36 kB[22m[1m[22m[2m │ gzip:   6.86 kB[22m
+[2mdist/[22m[36massets/SecuritySection-DRo4BD5r.js                   [39m[1m[2m 25.74 kB[22m[1m[22m[2m │ gzip:   8.21 kB[22m
+[2mdist/[22m[36massets/CampaignDetailPage-C3BVUnzi.js                [39m[1m[2m 26.48 kB[22m[1m[22m[2m │ gzip:   6.44 kB[22m
+[2mdist/[22m[36massets/vendor-forms-SwFJL2B_.js                      [39m[1m[2m 27.27 kB[22m[1m[22m[2m │ gzip:  10.19 kB[22m
+[2mdist/[22m[36massets/SocialScraperPage-Ch_kWlXI.js                 [39m[1m[2m 28.27 kB[22m[1m[22m[2m │ gzip:   7.27 kB[22m
+[2mdist/[22m[36massets/AdminWalletsPage-DcaT8G14.js                  [39m[1m[2m 28.66 kB[22m[1m[22m[2m │ gzip:   7.39 kB[22m
+[2mdist/[22m[36massets/TalentDNAPage-B20i3C65.js                     [39m[1m[2m 29.15 kB[22m[1m[22m[2m │ gzip:   8.16 kB[22m
+[2mdist/[22m[36massets/OrganizationSection-DcyW8A77.js               [39m[1m[2m 29.79 kB[22m[1m[22m[2m │ gzip:   7.51 kB[22m
+[2mdist/[22m[36massets/Ranking-BAo6T2-v.js                           [39m[1m[2m 30.41 kB[22m[1m[22m[2m │ gzip:   7.62 kB[22m
+[2mdist/[22m[36massets/OrgProfilePage-BY4bF_ad.js                    [39m[1m[2m 30.66 kB[22m[1m[22m[2m │ gzip:   7.84 kB[22m
+[2mdist/[22m[36massets/HiringWizardPage-DyuXT9iN.js                  [39m[1m[2m 31.08 kB[22m[1m[22m[2m │ gzip:   6.82 kB[22m
+[2mdist/[22m[36massets/calendar-DLtaWHf6.js                          [39m[1m[2m 32.62 kB[22m[1m[22m[2m │ gzip:  10.37 kB[22m
+[2mdist/[22m[36massets/WhiteLabelSection-Bm5sm7QU.js                 [39m[1m[2m 33.07 kB[22m[1m[22m[2m │ gzip:   7.60 kB[22m
+[2mdist/[22m[36massets/AdminActionsSection-3Azj7e6H.js               [39m[1m[2m 33.37 kB[22m[1m[22m[2m │ gzip:   8.51 kB[22m
+[2mdist/[22m[36massets/PortfolioCommentsSection-7iilL2BH.js          [39m[1m[2m 33.67 kB[22m[1m[22m[2m │ gzip:  10.56 kB[22m
+[2mdist/[22m[36massets/BillingUnifiedSection-JKJ63yfr.js             [39m[1m[2m 34.81 kB[22m[1m[22m[2m │ gzip:   8.32 kB[22m
+[2mdist/[22m[36massets/PlatformCRMLeads-BOAy_ADm.js                  [39m[1m[2m 35.06 kB[22m[1m[22m[2m │ gzip:   8.60 kB[22m
+[2mdist/[22m[36massets/ProductBannersPage-0XR2Q415.js                [39m[1m[2m 35.11 kB[22m[1m[22m[2m │ gzip:  10.17 kB[22m
+[2mdist/[22m[36massets/BriefTab-CQjw7RN-.js                          [39m[1m[2m 35.72 kB[22m[1m[22m[2m │ gzip:  10.24 kB[22m
+[2mdist/[22m[36massets/MarketingPage-B9pUmN1D.js                     [39m[1m[2m 39.36 kB[22m[1m[22m[2m │ gzip:   9.36 kB[22m
+[2mdist/[22m[36massets/ClientDetailDialog-B8SKMCL7.js                [39m[1m[2m 39.85 kB[22m[1m[22m[2m │ gzip:   8.82 kB[22m
+[2mdist/[22m[36massets/AdIntelligencePage-BeUVxoLw.js                [39m[1m[2m 40.77 kB[22m[1m[22m[2m │ gzip:  10.16 kB[22m
+[2mdist/[22m[36massets/PlatformCRMCommunities-CFeiHxm4.js            [39m[1m[2m 40.81 kB[22m[1m[22m[2m │ gzip:   8.49 kB[22m
+[2mdist/[22m[36massets/TrackingSection-D28kzPMq.js                   [39m[1m[2m 40.82 kB[22m[1m[22m[2m │ gzip:   9.82 kB[22m
+[2mdist/[22m[36massets/Clients-BCpqtDbr.js                           [39m[1m[2m 42.92 kB[22m[1m[22m[2m │ gzip:  10.37 kB[22m
+[2mdist/[22m[36massets/vendor-query-jJ_7AoSM.js                      [39m[1m[2m 42.93 kB[22m[1m[22m[2m │ gzip:  12.70 kB[22m
+[2mdist/[22m[36massets/WizardContainer-CVv5wjBq.js                   [39m[1m[2m 43.70 kB[22m[1m[22m[2m │ gzip:  11.84 kB[22m
+[2mdist/[22m[36massets/vendor-date-RruJ3p-B.js                       [39m[1m[2m 44.08 kB[22m[1m[22m[2m │ gzip:  12.48 kB[22m
+[2mdist/[22m[36massets/Scripts-BTgVU0uL.js                           [39m[1m[2m 44.77 kB[22m[1m[22m[2m │ gzip:  11.81 kB[22m
+[2mdist/[22m[36massets/PlatformCRMEmailMarketing-CJTTeOqw.js         [39m[1m[2m 44.81 kB[22m[1m[22m[2m │ gzip:   9.97 kB[22m
+[2mdist/[22m[36massets/QuickActions-DFWATyU4.js                      [39m[1m[2m 45.67 kB[22m[1m[22m[2m │ gzip:  11.86 kB[22m
+[2mdist/[22m[36massets/sortable.esm-vFiECZ2E.js                      [39m[1m[2m 45.93 kB[22m[1m[22m[2m │ gzip:  15.29 kB[22m
+[2mdist/[22m[36massets/UnifiedClientsPage-ZuJ8G4DL.js                [39m[1m[2m 49.26 kB[22m[1m[22m[2m │ gzip:  11.31 kB[22m
+[2mdist/[22m[36massets/StreamingStudioPage-BNiyIsk0.js               [39m[1m[2m 49.54 kB[22m[1m[22m[2m │ gzip:  12.58 kB[22m
+[2mdist/[22m[36massets/BrandCampaignsPage-DFYA3QTw.js                [39m[1m[2m 50.86 kB[22m[1m[22m[2m │ gzip:  11.19 kB[22m
+[2mdist/[22m[36massets/UnifiedTalentPage-CiRTQece.js                 [39m[1m[2m 50.87 kB[22m[1m[22m[2m │ gzip:  12.95 kB[22m
+[2mdist/[22m[36massets/MarketplacePage-B-XbE7SF.js                   [39m[1m[2m 51.17 kB[22m[1m[22m[2m │ gzip:  14.69 kB[22m
+[2mdist/[22m[36massets/CreatorProfileSetup-CJF-Ud64.js               [39m[1m[2m 51.23 kB[22m[1m[22m[2m │ gzip:  12.20 kB[22m
+[2mdist/[22m[36massets/PaymentMethodList-BkMO5Y-z.js                 [39m[1m[2m 51.48 kB[22m[1m[22m[2m │ gzip:  11.60 kB[22m
+[2mdist/[22m[36massets/LiveHostingRequest-DHT5hKQG.js                [39m[1m[2m 52.42 kB[22m[1m[22m[2m │ gzip:  12.71 kB[22m
+[2mdist/[22m[36massets/vendor-zod-cS55WRNv.js                        [39m[1m[2m 53.67 kB[22m[1m[22m[2m │ gzip:  12.28 kB[22m
+[2mdist/[22m[36massets/PlatformAdminSection-BrprthkZ.js              [39m[1m[2m 53.83 kB[22m[1m[22m[2m │ gzip:  10.77 kB[22m
+[2mdist/[22m[36massets/productResearchPdfGenerator-BxZ85ZPp.js       [39m[1m[2m 55.08 kB[22m[1m[22m[2m │ gzip:  14.22 kB[22m
+[2mdist/[22m[36massets/Creators-BqZp2z3j.js                          [39m[1m[2m 55.24 kB[22m[1m[22m[2m │ gzip:  12.90 kB[22m
+[2mdist/[22m[36massets/ResearchLanding-D4gPGeW1.js                   [39m[1m[2m 58.27 kB[22m[1m[22m[2m │ gzip:  13.15 kB[22m
+[2mdist/[22m[36massets/ProfileSection-Cd8v5NZP.js                    [39m[1m[2m 58.29 kB[22m[1m[22m[2m │ gzip:  15.08 kB[22m
+[2mdist/[22m[36massets/index-BYzSSG1z.js                             [39m[1m[2m 60.10 kB[22m[1m[22m[2m │ gzip:  16.60 kB[22m
+[2mdist/[22m[36massets/ClientContentBoard-B8YqEW84.js                [39m[1m[2m 61.37 kB[22m[1m[22m[2m │ gzip:  16.71 kB[22m
+[2mdist/[22m[36massets/PlatformAdminDashboard-k8mrA9nn.js            [39m[1m[2m 63.25 kB[22m[1m[22m[2m │ gzip:  15.11 kB[22m
+[2mdist/[22m[36massets/CreatorProfilePage-BfOzFUqD.js                [39m[1m[2m 63.88 kB[22m[1m[22m[2m │ gzip:  16.73 kB[22m
+[2mdist/[22m[36massets/SocialHubPage-DXnqiOK5.js                     [39m[1m[2m 63.93 kB[22m[1m[22m[2m │ gzip:  15.97 kB[22m
+[2mdist/[22m[36massets/PostComposer-C5tQsnmE.js                      [39m[1m[2m 67.03 kB[22m[1m[22m[2m │ gzip:  19.69 kB[22m
+[2mdist/[22m[36massets/PlatformConfigSection-BFm3X-kS.js             [39m[1m[2m 68.16 kB[22m[1m[22m[2m │ gzip:  16.47 kB[22m
+[2mdist/[22m[36massets/HomePage-BmxM8U30.js                          [39m[1m[2m 68.39 kB[22m[1m[22m[2m │ gzip:  16.36 kB[22m
+[2mdist/[22m[36massets/PublicProfilePage-avFO4Axc.js                 [39m[1m[2m 69.35 kB[22m[1m[22m[2m │ gzip:  17.13 kB[22m
+[2mdist/[22m[36massets/BookingSettingsPage-V3fkCfJz.js               [39m[1m[2m 75.24 kB[22m[1m[22m[2m │ gzip:  16.89 kB[22m
+[2mdist/[22m[36massets/ActivationCampaignConfig-t682g5rc.js          [39m[1m[2m 75.31 kB[22m[1m[22m[2m │ gzip:  15.14 kB[22m
+[2mdist/[22m[36massets/index-B-V2q6dR.js                             [39m[1m[2m 76.28 kB[22m[1m[22m[2m │ gzip:  20.22 kB[22m
+[2mdist/[22m[36massets/UnifiedContentModule-ceZse0e8.js              [39m[1m[2m 79.70 kB[22m[1m[22m[2m │ gzip:  21.34 kB[22m
+[2mdist/[22m[36massets/UnlockAccess-D9T6MfN8.js                      [39m[1m[2m 83.49 kB[22m[1m[22m[2m │ gzip:  21.25 kB[22m
+[2mdist/[22m[36massets/ClientDashboard-yFAynb-a.js                   [39m[1m[2m 87.36 kB[22m[1m[22m[2m │ gzip:  22.14 kB[22m
+[2mdist/[22m[36massets/Dashboard-kUKBCsqq.js                         [39m[1m[2m 88.07 kB[22m[1m[22m[2m │ gzip:  17.50 kB[22m
+[2mdist/[22m[36massets/AISettingsSection-BsfOccjK.js                 [39m[1m[2m101.98 kB[22m[1m[22m[2m │ gzip:  23.88 kB[22m
+[2mdist/[22m[36massets/PlatformCRMPeople-BLWcGian.js                 [39m[1m[2m109.51 kB[22m[1m[22m[2m │ gzip:  23.15 kB[22m
+[2mdist/[22m[36massets/vendor-motion-C0wuojkb.js                     [39m[1m[2m119.88 kB[22m[1m[22m[2m │ gzip:  39.96 kB[22m
+[2mdist/[22m[36massets/vendor-react-dom-CCsBSxoW.js                  [39m[1m[2m129.74 kB[22m[1m[22m[2m │ gzip:  41.67 kB[22m
+[2mdist/[22m[36massets/vendor-icons-BQ1j2Vw5.js                      [39m[1m[2m138.74 kB[22m[1m[22m[2m │ gzip:  25.33 kB[22m
+[2mdist/[22m[36massets/ScriptWorkspace-q2dundon.js                   [39m[1m[2m140.09 kB[22m[1m[22m[2m │ gzip:  36.16 kB[22m
+[2mdist/[22m[36massets/Marketing-xJoXbuWk.js                         [39m[1m[2m140.43 kB[22m[1m[22m[2m │ gzip:  30.25 kB[22m
+[2mdist/[22m[36massets/vendor-radix-sDJ3ic_0.js                      [39m[1m[2m164.85 kB[22m[1m[22m[2m │ gzip:  51.30 kB[22m
+[2mdist/[22m[36massets/vendor-supabase-CY0iv8Qg.js                   [39m[1m[2m168.93 kB[22m[1m[22m[2m │ gzip:  43.39 kB[22m
+[2mdist/[22m[36massets/ContentBoard-C2Gq6-yd.js                      [39m[1m[2m242.14 kB[22m[1m[22m[2m │ gzip:  62.08 kB[22m
+[2mdist/[22m[36massets/vendor-editor-By325WsI.js                     [39m[1m[2m411.33 kB[22m[1m[22m[2m │ gzip: 130.15 kB[22m
+[2mdist/[22m[36massets/ClientDNATab-BGSX_3NN.js                      [39m[1m[2m424.51 kB[22m[1m[22m[2m │ gzip:  88.62 kB[22m
+[2mdist/[22m[36massets/vendor-charts-D0XRg2pK.js                     [39m[1m[2m503.41 kB[22m[1m[22m[2m │ gzip: 131.81 kB[22m
+[2mdist/[22m[36massets/hls-B-Ibl3_F.js                               [39m[1m[2m522.76 kB[22m[1m[22m[2m │ gzip: 161.66 kB[22m
+[2mdist/[22m[36massets/index-D3Zr6paK.js                             [39m[1m[33m669.55 kB[39m[22m[2m │ gzip: 190.05 kB[22m
+[33m
+(!) Some chunks are larger than 600 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+[32m✓ built in 2m 18s[39m
+
+PWA v1.2.0
+mode      generateSW
+precache  19 entries (1606.82 KiB)
+files generated
+  dist/sw.js
+  dist/workbox-828a086f.js

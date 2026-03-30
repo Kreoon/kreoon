@@ -55,10 +55,10 @@ export function TalentGate({ children }: TalentGateProps) {
     return <>{children}</>;
   }
 
-  // Check if user is a talent (creator/editor permission groups only)
+  // Check if user is a talent (all non-admin, non-client roles)
   const isTalentOnly = roles.length > 0 && roles.every(r => {
     const pg = getPermissionGroup(r);
-    return pg === 'creator' || pg === 'editor';
+    return pg === 'talent';
   });
 
   // Also check pure marketplace users (no org roles but has creator_profile)

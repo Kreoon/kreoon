@@ -1,13 +1,42 @@
 /**
  * LivePlayer - Reproductor de video HLS para viewers
+ * Optimizado: HLS.js se carga dinamicamente (ahorra 522KB del bundle inicial)
  */
 
 import { useRef, useEffect, useState } from 'react';
-import Hls from 'hls.js';
+import type Hls from 'hls.js';
 import { cn } from '@/lib/utils';
 import { Loader2, Volume2, VolumeX, Maximize, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+
+// Lazy-loaded HLS module reference
+let HlsModule: typeof import('hls.js').default | null = null;
+let hlsLoadPromise: Promise<typeof import('hls.js').default> | null = null;
+
+/**
+ * Dynamically load HLS.js only when needed
+ */
+async function loadHls(): Promise<typeof import('hls.js').default> {
+  if (HlsModule) return HlsModule;
+  if (hlsLoadPromise) return hlsLoadPromise;
+
+  hlsLoadPromise = import('hls.js').then(mod => {
+    HlsModule = mod.default;
+    return HlsModule;
+  });
+
+  return hlsLoadPromise;
+}
+
+/**
+ * Check if HLS.js is supported (without loading the full module)
+ */
+function isHlsSupported(): boolean {
+  const mediaSource = window.MediaSource || (window as any).WebKitMediaSource;
+  return !!mediaSource && typeof mediaSource.isTypeSupported === 'function' &&
+         mediaSource.isTypeSupported('video/mp4; codecs="avc1.42E01E,mp4a.40.2"');
+}
 
 interface LivePlayerProps {
   playbackUrl: string | null;
@@ -37,7 +66,7 @@ export function LivePlayer({
   const [showControls, setShowControls] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Inicializar HLS
+  // Inicializar HLS - carga dinamica
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !playbackUrl) return;
@@ -55,47 +84,70 @@ export function LivePlayer({
       return;
     }
 
-    // Usar hls.js para otros navegadores
-    if (Hls.isSupported()) {
-      const hls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: true,
-        backBufferLength: 30,
-      });
-
-      hlsRef.current = hls;
-
-      hls.loadSource(playbackUrl);
-      hls.attachMedia(video);
-
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        setIsLoading(false);
-        if (autoPlay) {
-          video.play().catch(() => {
-            // Autoplay bloqueado, necesita interacción del usuario
-            setIsPlaying(false);
-          });
-        }
-      });
-
-      hls.on(Hls.Events.ERROR, (event, data) => {
-        console.error('HLS error:', data);
-        if (data.fatal) {
-          setError('Error al cargar el stream');
-          onError?.(new Error(data.details));
-        }
-      });
-
-      return () => {
-        hls.destroy();
-        hlsRef.current = null;
-      };
-    } else {
+    // Verificar soporte antes de cargar HLS.js
+    if (!isHlsSupported()) {
       setError('Tu navegador no soporta streaming HLS');
+      return;
     }
+
+    // Cargar hls.js dinamicamente
+    let cancelled = false;
+
+    const initHls = async () => {
+      try {
+        const Hls = await loadHls();
+
+        if (cancelled) return;
+
+        if (!Hls.isSupported()) {
+          setError('Tu navegador no soporta streaming HLS');
+          return;
+        }
+
+        const hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+          backBufferLength: 30,
+        });
+
+        hlsRef.current = hls;
+
+        hls.loadSource(playbackUrl);
+        hls.attachMedia(video);
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          setIsLoading(false);
+          if (autoPlay) {
+            video.play().catch(() => {
+              // Autoplay bloqueado, necesita interaccion del usuario
+              setIsPlaying(false);
+            });
+          }
+        });
+
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          console.error('HLS error:', data);
+          if (data.fatal) {
+            setError('Error al cargar el stream');
+            onError?.(new Error(data.details));
+          }
+        });
+      } catch (err) {
+        console.error('[LivePlayer] Failed to load hls.js:', err);
+        setError('Error al cargar el reproductor de video');
+      }
+    };
+
+    initHls();
+
+    return () => {
+      cancelled = true;
+      hlsRef.current?.destroy();
+      hlsRef.current = null;
+    };
   }, [playbackUrl, autoPlay, onError]);
 
-  // Sincronizar estado de reproducción
+  // Sincronizar estado de reproduccion
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;

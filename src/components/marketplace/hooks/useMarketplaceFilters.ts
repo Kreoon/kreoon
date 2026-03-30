@@ -18,8 +18,6 @@ export function useMarketplaceFilters() {
         next.platforms = [];
         next.software = [];
         next.accepts_exchange = null;
-        next.tech_stack = [];
-        next.education_format = [];
       }
 
       return next;
@@ -46,8 +44,8 @@ export function useMarketplaceFilters() {
     if (filters.platforms.length > 0) count++;
     if (filters.software.length > 0) count++;
     if (filters.accepts_exchange != null) count++;
-    if (filters.tech_stack.length > 0) count++;
-    if (filters.education_format.length > 0) count++;
+    // Specializations
+    if (filters.specializations.length > 0) count++;
     return count;
   }, [filters]);
 

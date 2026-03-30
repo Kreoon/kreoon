@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,13 +19,15 @@ import { es } from "date-fns/locale";
 import {
   Building2, Video, Mail, Phone, Calendar, DollarSign,
   Package, Plus, Trash2, Edit2, ShoppingBag, CheckCircle,
-  Star, Eye, Settings, Radio, Dna, Sparkles, FolderOpen, FileText, Target
+  Star, Eye, Settings, Radio, Dna, Sparkles, FolderOpen, FileText, Target, Loader2
 } from "lucide-react";
 import { LazyRichTextViewer as RichTextViewer } from "@/components/ui/lazy-rich-text-editor";
 import { Card, CardContent } from "@/components/ui/card";
 import { ClientStreamingChannels } from "@/components/clients/ClientStreamingChannels";
-import { ClientDNATab } from "@/components/clients/dna";
 import { VipBadge } from "@/components/ui/vip-badge";
+
+// Lazy load ClientDNATab (424KB) - only loads when DNA tab is active
+const ClientDNATab = lazy(() => import('@/components/clients/dna/ClientDNATab').then(m => ({ default: m.ClientDNATab })));
 import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
 import { CompanyProfileEditor } from "@/components/portfolio/CompanyProfileEditor";
@@ -510,9 +512,15 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
             )}
           </TabsContent>
 
-          {/* DNA Tab */}
+          {/* DNA Tab - lazy loaded */}
           <TabsContent value="dna" className="mt-4">
-            <ClientDNATab clientId={client.id} />
+            <Suspense fallback={
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            }>
+              <ClientDNATab clientId={client.id} />
+            </Suspense>
           </TabsContent>
 
           {/* Packages Tab */}

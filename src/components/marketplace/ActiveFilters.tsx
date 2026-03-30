@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import type { MarketplaceFilters } from './types/marketplace';
 import { COUNTRIES, MARKETPLACE_CATEGORIES } from './types/marketplace';
 import { MARKETPLACE_ROLES_MAP } from './roles/marketplaceRoleConfig';
-import { PLATFORMS, SOFTWARE_TOOLS, TECH_STACKS, EDUCATION_FORMATS } from './hooks/useAdaptiveFilters';
+import { PLATFORMS, SOFTWARE_TOOLS } from './hooks/useAdaptiveFilters';
 
 interface ActiveFiltersProps {
   filters: MarketplaceFilters;
@@ -69,12 +69,10 @@ export const ActiveFilters = memo(function ActiveFilters({ filters, onRemoveFilt
       result.push({ key: 'marketplace_roles', label: role?.label || roleId, value: roleId });
     });
 
-    // Adaptive filter chips
+    // Adaptive filter chips (solo creators, production, strategy)
     const lookupMap: Record<string, { list: typeof PLATFORMS; key: keyof MarketplaceFilters }> = {
       platforms: { list: PLATFORMS, key: 'platforms' },
       software: { list: SOFTWARE_TOOLS, key: 'software' },
-      tech_stack: { list: TECH_STACKS, key: 'tech_stack' },
-      education_format: { list: EDUCATION_FORMATS, key: 'education_format' },
     };
 
     for (const [, { list, key }] of Object.entries(lookupMap)) {

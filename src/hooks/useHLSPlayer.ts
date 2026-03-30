@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
-import Hls from 'hls.js';
+import type Hls from 'hls.js';
 
 interface UseHLSPlayerOptions {
   autoPlay?: boolean;
@@ -32,6 +32,35 @@ type NetworkQuality = 'slow' | 'medium' | 'fast' | 'unknown';
 const preloadCache = new Map<string, Hls>();
 const MAX_PRELOAD_CACHE = 3;
 
+// Lazy-loaded HLS module reference
+let HlsModule: typeof import('hls.js').default | null = null;
+let hlsLoadPromise: Promise<typeof import('hls.js').default> | null = null;
+
+/**
+ * Dynamically load HLS.js only when needed (saves 522KB from initial bundle)
+ */
+async function loadHls(): Promise<typeof import('hls.js').default> {
+  if (HlsModule) return HlsModule;
+  if (hlsLoadPromise) return hlsLoadPromise;
+
+  hlsLoadPromise = import('hls.js').then(mod => {
+    HlsModule = mod.default;
+    return HlsModule;
+  });
+
+  return hlsLoadPromise;
+}
+
+/**
+ * Check if HLS.js is supported (without loading the full module)
+ */
+function isHlsSupported(): boolean {
+  // Basic check without loading HLS.js - works for most browsers
+  const mediaSource = window.MediaSource || (window as any).WebKitMediaSource;
+  return !!mediaSource && typeof mediaSource.isTypeSupported === 'function' &&
+         mediaSource.isTypeSupported('video/mp4; codecs="avc1.42E01E,mp4a.40.2"');
+}
+
 /**
  * Detect network quality based on connection API and bandwidth estimates
  */
@@ -62,8 +91,8 @@ function detectNetworkQuality(): NetworkQuality {
 /**
  * Get optimal HLS config based on network quality
  */
-function getOptimalHlsConfig(networkQuality: NetworkQuality, fastStart: boolean): Partial<Hls['config']> {
-  const baseConfig: Partial<Hls['config']> = {
+function getOptimalHlsConfig(networkQuality: NetworkQuality, fastStart: boolean): Record<string, any> {
+  const baseConfig = {
     enableWorker: true,
     lowLatencyMode: false,
   };
@@ -264,9 +293,10 @@ export function getBunnyVideoUrlCandidates(url: string): BunnyVideoUrls[] {
 
 /**
  * Preload an HLS video in the background (for next video in feed)
+ * Now loads HLS.js dynamically
  */
-export function preloadHLSVideo(url: string): void {
-  if (!Hls.isSupported()) return;
+export async function preloadHLSVideo(url: string): Promise<void> {
+  if (!isHlsSupported()) return;
 
   const urls = getBunnyVideoUrls(url);
   if (!urls?.hls) return;
@@ -274,24 +304,31 @@ export function preloadHLSVideo(url: string): void {
   // Check if already cached
   if (preloadCache.has(urls.hls)) return;
 
-  // Evict oldest if cache full
-  if (preloadCache.size >= MAX_PRELOAD_CACHE) {
-    const oldest = preloadCache.keys().next().value;
-    if (oldest) {
-      preloadCache.get(oldest)?.destroy();
-      preloadCache.delete(oldest);
+  try {
+    const Hls = await loadHls();
+    if (!Hls.isSupported()) return;
+
+    // Evict oldest if cache full
+    if (preloadCache.size >= MAX_PRELOAD_CACHE) {
+      const oldest = preloadCache.keys().next().value;
+      if (oldest) {
+        preloadCache.get(oldest)?.destroy();
+        preloadCache.delete(oldest);
+      }
     }
+
+    // Create HLS instance and load manifest only
+    const hls = new Hls({
+      enableWorker: true,
+      maxBufferLength: 0, // Don't buffer, just load manifest
+      maxMaxBufferLength: 0,
+    });
+
+    hls.loadSource(urls.hls);
+    preloadCache.set(urls.hls, hls);
+  } catch (error) {
+    console.warn('[HLS] Failed to preload:', error);
   }
-
-  // Create HLS instance and load manifest only
-  const hls = new Hls({
-    enableWorker: true,
-    maxBufferLength: 0, // Don't buffer, just load manifest
-    maxMaxBufferLength: 0,
-  });
-
-  hls.loadSource(urls.hls);
-  preloadCache.set(urls.hls, hls);
 }
 
 /**
@@ -312,7 +349,7 @@ export function clearPreloadCache(url?: string): void {
 
 /**
  * Custom hook for HLS video playback with Bunny.net
- * OPTIMIZED VERSION with fast start and adaptive quality
+ * OPTIMIZED VERSION with dynamic HLS.js loading (saves 522KB from initial bundle)
  */
 export function useHLSPlayer(
   videoUrl: string | null,
@@ -368,6 +405,40 @@ export function useHLSPlayer(
   // Check if it's a direct MP4 URL
   const isDirectMp4 = videoUrl && !getBunnyVideoUrls(videoUrl) && (videoUrl.endsWith('.mp4') || videoUrl.includes('.mp4?'));
 
+  // Helper: Play video with muted fallback
+  const playWithFallback = useCallback((video: HTMLVideoElement, mutedState: boolean) => {
+    video.muted = mutedState;
+    video.play().catch(() => {
+      video.muted = true;
+      setCurrentMuted(true);
+      video.play().catch(() => {
+        console.warn('[HLS] Autoplay completely blocked');
+      });
+    });
+  }, []);
+
+  // Helper: Fallback to MP4
+  const fallbackToMp4 = useCallback((video: HTMLVideoElement, mp4: string | null) => {
+    if (mp4) {
+      setError(null);
+      setIsLoading(true);
+      video.src = mp4;
+      video.load();
+
+      const handleCanPlay = () => {
+        setIsLoading(false);
+        if (autoPlay) {
+          playWithFallback(video, currentMuted);
+        }
+      };
+
+      video.addEventListener('canplay', handleCanPlay, { once: true });
+    } else {
+      setError('Video playback error');
+      setIsLoading(false);
+    }
+  }, [autoPlay, playWithFallback, currentMuted]);
+
   // Initialize HLS player with optimized config
   useEffect(() => {
     const video = videoRef.current;
@@ -389,7 +460,7 @@ export function useHLSPlayer(
       const handleCanPlay = () => {
         setIsLoading(false);
         if (autoPlay) {
-          playWithFallback(video);
+          playWithFallback(video, currentMuted);
         }
       };
 
@@ -420,12 +491,6 @@ export function useHLSPlayer(
     video.preload = fastStart ? 'auto' : 'metadata';
     video.muted = currentMuted;
 
-    // Check for preloaded HLS instance
-    let hls: Hls | null = preloadCache.get(hlsUrl) || null;
-    if (hls) {
-      preloadCache.delete(hlsUrl);
-    }
-
     // Check if browser natively supports HLS (Safari/iOS)
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = hlsUrl;
@@ -433,7 +498,7 @@ export function useHLSPlayer(
       const handleCanPlay = () => {
         setIsLoading(false);
         if (autoPlay) {
-          playWithFallback(video);
+          playWithFallback(video, currentMuted);
         }
       };
 
@@ -445,116 +510,133 @@ export function useHLSPlayer(
       };
     }
 
-    // Use hls.js for other browsers
-    if (Hls.isSupported()) {
-      // Get optimized config based on network and fast start preference
-      const hlsConfig = getOptimalHlsConfig(
-        connectionAware ? networkQuality : 'unknown',
-        fastStart
-      );
+    // Use hls.js for other browsers - LOAD DYNAMICALLY
+    if (!isHlsSupported()) {
+      // Fallback to MP4 for browsers without HLS support
+      fallbackToMp4(video, mp4Url);
+      return;
+    }
 
-      if (!hls) {
-        hls = new Hls(hlsConfig as any);
-        hls.loadSource(hlsUrl);
-      } else {
-        // Reconfigure preloaded instance
-        Object.assign(hls.config, hlsConfig);
-      }
+    // Load HLS.js dynamically and initialize
+    let cancelled = false;
 
-      hlsRef.current = hls;
-      hls.attachMedia(video);
+    const initHls = async () => {
+      try {
+        const Hls = await loadHls();
 
-      // Track quality level changes
-      hls.on(Hls.Events.LEVEL_SWITCHED, (_, data) => {
-        setCurrentQuality(data.level);
-      });
+        if (cancelled) return;
 
-      hls.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
-        setIsLoading(false);
-
-        // Log available qualities
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[HLS] Available qualities:', data.levels.map(l => `${l.height}p`));
-        }
-
-        if (autoPlay) {
-          playWithFallback(video);
-        }
-      });
-
-      // Can play through - buffer enough for smooth playback
-      hls.on(Hls.Events.FRAG_BUFFERED, () => {
-        if (!playbackStartedRef.current && autoPlay && video.paused) {
-          playbackStartedRef.current = true;
-          playWithFallback(video);
-        }
-      });
-
-      hls.on(Hls.Events.ERROR, (_, data) => {
-        if (!data.fatal) return;
-
-        console.warn('[HLS] Fatal error:', {
-          type: data.type,
-          details: data.details,
-          reason: data.reason,
-        });
-
-        // Try alternate CDN host
-        if (candidates.length > 0 && sourceIndex < candidates.length - 1) {
-          setSourceIndex((prev) => prev + 1);
+        if (!Hls.isSupported()) {
+          fallbackToMp4(video, mp4Url);
           return;
         }
 
-        fatalErrorCountRef.current += 1;
-
-        // Retry logic
-        switch (data.type) {
-          case Hls.ErrorTypes.NETWORK_ERROR:
-            if (fatalErrorCountRef.current <= 3) {
-              hls!.startLoad();
-              return;
-            }
-            break;
-          case Hls.ErrorTypes.MEDIA_ERROR:
-            if (fatalErrorCountRef.current <= 3) {
-              hls!.recoverMediaError();
-              return;
-            }
-            break;
-          default:
-            if (fatalErrorCountRef.current <= 2) {
-              hls!.stopLoad();
-              hls!.startLoad();
-              return;
-            }
-            break;
+        // Check for preloaded HLS instance
+        let hls: Hls | null = preloadCache.get(hlsUrl) || null;
+        if (hls) {
+          preloadCache.delete(hlsUrl);
         }
 
-        // Fallback to MP4
+        // Get optimized config based on network and fast start preference
+        const hlsConfig = getOptimalHlsConfig(
+          connectionAware ? networkQuality : 'unknown',
+          fastStart
+        );
+
+        if (!hls) {
+          hls = new Hls(hlsConfig as any);
+          hls.loadSource(hlsUrl);
+        } else {
+          // Reconfigure preloaded instance
+          Object.assign(hls.config, hlsConfig);
+        }
+
+        hlsRef.current = hls;
+        hls.attachMedia(video);
+
+        // Track quality level changes
+        hls.on(Hls.Events.LEVEL_SWITCHED, (_, data) => {
+          setCurrentQuality(data.level);
+        });
+
+        hls.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
+          setIsLoading(false);
+
+          // Log available qualities
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[HLS] Available qualities:', data.levels.map(l => `${l.height}p`));
+          }
+
+          if (autoPlay) {
+            playWithFallback(video, currentMuted);
+          }
+        });
+
+        // Can play through - buffer enough for smooth playback
+        hls.on(Hls.Events.FRAG_BUFFERED, () => {
+          if (!playbackStartedRef.current && autoPlay && video.paused) {
+            playbackStartedRef.current = true;
+            playWithFallback(video, currentMuted);
+          }
+        });
+
+        hls.on(Hls.Events.ERROR, (_, data) => {
+          if (!data.fatal) return;
+
+          console.warn('[HLS] Fatal error:', {
+            type: data.type,
+            details: data.details,
+            reason: data.reason,
+          });
+
+          // Try alternate CDN host
+          if (candidates.length > 0 && sourceIndex < candidates.length - 1) {
+            setSourceIndex((prev) => prev + 1);
+            return;
+          }
+
+          fatalErrorCountRef.current += 1;
+
+          // Retry logic
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              if (fatalErrorCountRef.current <= 3) {
+                hls!.startLoad();
+                return;
+              }
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              if (fatalErrorCountRef.current <= 3) {
+                hls!.recoverMediaError();
+                return;
+              }
+              break;
+            default:
+              if (fatalErrorCountRef.current <= 2) {
+                hls!.stopLoad();
+                hls!.startLoad();
+                return;
+              }
+              break;
+          }
+
+          // Fallback to MP4
+          fallbackToMp4(video, mp4Url);
+        });
+      } catch (err) {
+        console.error('[HLS] Failed to load hls.js:', err);
         fallbackToMp4(video, mp4Url);
-      });
+      }
+    };
 
-      return () => {
-        hls?.destroy();
-        hlsRef.current = null;
-      };
-    }
+    initHls();
 
-    // Fallback to MP4 for browsers without HLS support
-    fallbackToMp4(video, mp4Url);
-  }, [hlsUrl, mp4Url, loop, isDirectMp4, videoUrl, autoPlay, currentMuted, networkQuality, fastStart, connectionAware]);
-
-  // Helper: Play video with muted fallback
-  const playWithFallback = useCallback((video: HTMLVideoElement) => {
-    video.muted = currentMuted;
-    video.play().catch(() => {
-      video.muted = true;
-      setCurrentMuted(true);
-      video.play().catch(() => {
-        console.warn('[HLS] Autoplay completely blocked');
-      });
-    });
-  }, [currentMuted]);
+    return () => {
+      cancelled = true;
+      hlsRef.current?.destroy();
+      hlsRef.current = null;
+    };
+  }, [hlsUrl, mp4Url, loop, isDirectMp4, videoUrl, autoPlay, currentMuted, networkQuality, fastStart, connectionAware, fallbackToMp4, playWithFallback, candidates.length, sourceIndex]);
 
   // React to autoPlay changes
   useEffect(() => {
@@ -562,7 +644,7 @@ export function useHLSPlayer(
     if (!video) return;
 
     if (autoPlay) {
-      playWithFallback(video);
+      playWithFallback(video, currentMuted);
     } else {
       video.pause();
       try {
@@ -571,29 +653,7 @@ export function useHLSPlayer(
         // ignore
       }
     }
-  }, [autoPlay, hlsUrl, playWithFallback]);
-
-  // Helper: Fallback to MP4
-  const fallbackToMp4 = useCallback((video: HTMLVideoElement, mp4: string | null) => {
-    if (mp4) {
-      setError(null);
-      setIsLoading(true);
-      video.src = mp4;
-      video.load();
-
-      const handleCanPlay = () => {
-        setIsLoading(false);
-        if (autoPlay) {
-          playWithFallback(video);
-        }
-      };
-
-      video.addEventListener('canplay', handleCanPlay, { once: true });
-    } else {
-      setError('Video playback error');
-      setIsLoading(false);
-    }
-  }, [autoPlay, playWithFallback]);
+  }, [autoPlay, hlsUrl, playWithFallback, currentMuted]);
 
   // Clear error on successful playback
   useEffect(() => {

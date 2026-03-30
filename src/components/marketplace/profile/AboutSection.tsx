@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Globe, Clock, Smartphone, Award, Palette } from 'lucide-react';
+import { Globe, Clock, Smartphone, Award, Palette, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { CreatorFullProfile } from '../types/marketplace';
+import { getSpecializationLabel, getSpecializationColor, getSpecializationBgColor } from '@/lib/specializations';
 
 interface AboutSectionProps {
   creator: CreatorFullProfile;
@@ -104,6 +105,27 @@ export function AboutSection({ creator }: AboutSectionProps) {
                   className="px-2 py-0.5 rounded-full text-xs bg-white/5 text-gray-300 border border-white/10"
                 >
                   {style}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Specializations */}
+        {creator.specializations && creator.specializations.length > 0 && (
+          <div className="flex items-start gap-2.5 text-sm">
+            <Sparkles className="h-4 w-4 flex-shrink-0 text-gray-400 mt-0.5" />
+            <div className="flex flex-wrap gap-1.5">
+              {creator.specializations.map((spec) => (
+                <span
+                  key={spec}
+                  className={cn(
+                    'px-2.5 py-1 rounded-full text-xs font-medium border border-white/10',
+                    getSpecializationBgColor(spec),
+                    getSpecializationColor(spec)
+                  )}
+                >
+                  {getSpecializationLabel(spec)}
                 </span>
               ))}
             </div>

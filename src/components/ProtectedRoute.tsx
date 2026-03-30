@@ -208,7 +208,7 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
   const hasOrganization = !!(currentOrgId || profile?.current_organization_id);
   const isTalentRole = rolesToCheck.length > 0 && rolesToCheck.every(r => {
     const pg = getPermissionGroup(r);
-    return pg === 'creator' || pg === 'editor';
+    return pg === 'talent';
   });
   // Routes that talents without keys CAN access (onboarding flow)
   const isGateBypassRoute = location.pathname === '/unlock-access'

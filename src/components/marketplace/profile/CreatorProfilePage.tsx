@@ -156,6 +156,8 @@ function dbToCreatorFullProfile(
     has_talent_dna: profile.has_talent_dna,
     experience_level: profile.experience_level,
     content_style: profile.content_style,
+    // Specializations
+    specializations: data.specializations,
   } as CreatorFullProfile;
 }
 
