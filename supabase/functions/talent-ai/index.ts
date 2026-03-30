@@ -7,6 +7,7 @@ import { callAISingle } from "../_shared/ai-providers.ts";
 import { searchWithPerplexity } from "../_shared/perplexity-client.ts";
 // Nuevo: Prompts desde DB con cache y fallback
 import { getPrompt, interpolatePrompt } from "../_shared/prompts/db-prompts.ts";
+import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -265,7 +266,9 @@ Selecciona el mejor talento. Responde con JSON.`;
     }
   }];
 
+  const startTime = Date.now();
   const result = await callAISingle(provider, model, apiKey, systemPrompt, userPrompt, tools);
+  const response_time_ms = Date.now() - startTime;
 
   // Parse if string
   const parsed = typeof result === "string" ? JSON.parse(result) : result;
@@ -274,6 +277,19 @@ Selecciona el mejor talento. Responde con JSON.`;
   if (typeof parsed.fit_score !== "number") {
     parsed.fit_score = 50;
   }
+
+  logAIUsage(supabase, {
+    organization_id: req.organizationId || "00000000-0000-0000-0000-000000000000",
+    user_id: "00000000-0000-0000-0000-000000000000",
+    module: "talent.matching.ai",
+    provider,
+    model,
+    tokens_input: 0,
+    tokens_output: 0,
+    success: true,
+    edge_function: "talent-ai",
+    response_time_ms,
+  }).catch(console.error);
 
   // Update content with assignment reason if contentId provided
   if (req.contentId && parsed.selected_id) {
@@ -359,9 +375,24 @@ Responde en JSON con:
     }
   }];
 
+  const startTime = Date.now();
   const result = await callAISingle(provider, model, apiKey, systemPrompt, userPrompt, tools);
+  const response_time_ms = Date.now() - startTime;
 
   const parsed = typeof result === "string" ? JSON.parse(result) : result;
+
+  logAIUsage(supabase, {
+    organization_id: req.organizationId || "00000000-0000-0000-0000-000000000000",
+    user_id: req.userId || "00000000-0000-0000-0000-000000000000",
+    module: "talent.quality.ai",
+    provider,
+    model,
+    tokens_input: 0,
+    tokens_output: 0,
+    success: true,
+    edge_function: "talent-ai",
+    response_time_ms,
+  }).catch(console.error);
 
   // Update content with quality score
   await supabase
@@ -445,9 +476,24 @@ Responde en JSON con:
     }
   }];
 
+  const startTime = Date.now();
   const result = await callAISingle(provider, model, apiKey, systemPrompt, userPrompt, tools);
+  const response_time_ms = Date.now() - startTime;
 
   const parsed = typeof result === "string" ? JSON.parse(result) : result;
+
+  logAIUsage(supabase, {
+    organization_id: req.organizationId || "00000000-0000-0000-0000-000000000000",
+    user_id: req.userId || "00000000-0000-0000-0000-000000000000",
+    module: "talent.risk.ai",
+    provider,
+    model,
+    tokens_input: 0,
+    tokens_output: 0,
+    success: true,
+    edge_function: "talent-ai",
+    response_time_ms,
+  }).catch(console.error);
 
   // Update profile with risk flag
   await supabase
@@ -556,9 +602,24 @@ Responde en JSON con:
     }
   }];
 
+  const startTime = Date.now();
   const result = await callAISingle(provider, model, apiKey, systemPrompt, userPrompt, tools);
+  const response_time_ms = Date.now() - startTime;
 
   const parsed = typeof result === "string" ? JSON.parse(result) : result;
+
+  logAIUsage(supabase, {
+    organization_id: req.organizationId || "00000000-0000-0000-0000-000000000000",
+    user_id: req.userId || "00000000-0000-0000-0000-000000000000",
+    module: "talent.reputation.ai",
+    provider,
+    model,
+    tokens_input: 0,
+    tokens_output: 0,
+    success: true,
+    edge_function: "talent-ai",
+    response_time_ms,
+  }).catch(console.error);
 
   // Update profile with recommended level
   await supabase
@@ -739,9 +800,24 @@ Responde en JSON con:
     }
   }];
 
+  const startTime = Date.now();
   const result = await callAISingle(provider, model, apiKey, systemPrompt, userPrompt, tools);
+  const response_time_ms = Date.now() - startTime;
 
   const parsed = typeof result === "string" ? JSON.parse(result) : result;
+
+  logAIUsage(supabase, {
+    organization_id: req.organizationId || "00000000-0000-0000-0000-000000000000",
+    user_id: req.userId || "00000000-0000-0000-0000-000000000000",
+    module: "talent.ambassador.ai",
+    provider,
+    model,
+    tokens_input: 0,
+    tokens_output: 0,
+    success: true,
+    edge_function: "talent-ai",
+    response_time_ms,
+  }).catch(console.error);
 
   // Save evaluation to history
   await supabase
@@ -845,44 +921,12 @@ serve(async (req) => {
         throw new Error("Invalid action");
     }
 
-    // Log usage
-    const authHeader = req.headers.get("Authorization");
-    let userId = "system";
-    if (authHeader) {
-      if (isKreoonConfigured()) {
-        try {
-          const auth = await validateKreoonAuth(authHeader);
-          userId = auth.user.id;
-        } catch (e) {
-          // Silently continue with system user
-        }
-      } else {
-        const { data: { user } } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
-        if (user) userId = user.id;
-      }
-    }
-
-    const { data: logRow } = await supabase
-      .from("ai_usage_logs")
-      .insert({
-        organization_id: body.organizationId,
-        user_id: userId,
-        module: moduleKey,
-        action: body.action,
-        provider: aiConfig.provider,
-        model: aiConfig.model,
-        success: true,
-      })
-      .select("id")
-      .single();
-
     return new Response(
       JSON.stringify({
         success: true,
         ...result,
         provider: aiConfig.provider,
         model: aiConfig.model,
-        execution_id: logRow?.id ?? undefined,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

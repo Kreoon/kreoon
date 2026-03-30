@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.46.2";
 import { corsHeaders, getAPIKey } from "../_shared/ai-providers.ts";
+import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
 
 // ── JSON repair (from product-research pattern) ───────────────────────
 function repairJsonForParse(str: string): string {
@@ -44,12 +45,23 @@ function repairJsonForParse(str: string): string {
   }
 }
 
+// ── AI call result type ───────────────────────────────────────────────
+interface AICallResponse {
+  content: string;
+  provider: string;
+  model: string;
+  usage?: { prompt_tokens: number; completion_tokens: number };
+  response_time_ms: number;
+}
+
 // ── Perplexity AI call ────────────────────────────────────────────────
-async function callPerplexity(systemPrompt: string, userPrompt: string): Promise<string> {
+async function callPerplexity(systemPrompt: string, userPrompt: string): Promise<AICallResponse> {
   const apiKey = getAPIKey("perplexity");
   if (!apiKey) throw new Error("PERPLEXITY_API_KEY not configured");
 
+  const modelName = "llama-3.1-sonar-large-128k-online";
   console.log("[process-client-dna] Calling Perplexity for DNA analysis...");
+  const startTime = Date.now();
   const response = await fetch("https://api.perplexity.ai/chat/completions", {
     method: "POST",
     headers: {
@@ -57,7 +69,7 @@ async function callPerplexity(systemPrompt: string, userPrompt: string): Promise
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "llama-3.1-sonar-large-128k-online",
+      model: modelName,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
@@ -67,6 +79,7 @@ async function callPerplexity(systemPrompt: string, userPrompt: string): Promise
       return_citations: true,
     }),
   });
+  const response_time_ms = Date.now() - startTime;
 
   if (!response.ok) {
     const errText = await response.text();
@@ -75,22 +88,30 @@ async function callPerplexity(systemPrompt: string, userPrompt: string): Promise
   }
 
   const data = await response.json();
-  return data.choices?.[0]?.message?.content || "";
+  return {
+    content: data.choices?.[0]?.message?.content || "",
+    provider: "perplexity",
+    model: modelName,
+    usage: data.usage ? { prompt_tokens: data.usage.prompt_tokens || 0, completion_tokens: data.usage.completion_tokens || 0 } : undefined,
+    response_time_ms,
+  };
 }
 
 // ── Fallback: Gemini for DNA generation ───────────────────────────────
-async function callGeminiFallback(systemPrompt: string, userPrompt: string): Promise<string> {
+async function callGeminiFallback(systemPrompt: string, userPrompt: string): Promise<AICallResponse> {
   const apiKey = Deno.env.get("GOOGLE_AI_API_KEY") || Deno.env.get("GEMINI_API_KEY");
   if (!apiKey) throw new Error("GOOGLE_AI_API_KEY not configured");
 
+  const modelName = "gemini-2.5-flash";
   console.log("[process-client-dna] Falling back to Gemini for DNA analysis...");
+  const startTime = Date.now();
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "gemini-2.5-flash",
+        model: modelName,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -100,6 +121,7 @@ async function callGeminiFallback(systemPrompt: string, userPrompt: string): Pro
       }),
     }
   );
+  const response_time_ms = Date.now() - startTime;
 
   if (!response.ok) {
     const errText = await response.text();
@@ -108,7 +130,13 @@ async function callGeminiFallback(systemPrompt: string, userPrompt: string): Pro
   }
 
   const data = await response.json();
-  return data.choices?.[0]?.message?.content || "";
+  return {
+    content: data.choices?.[0]?.message?.content || "",
+    provider: "gemini",
+    model: modelName,
+    usage: data.usage ? { prompt_tokens: data.usage.prompt_tokens || 0, completion_tokens: data.usage.completion_tokens || 0 } : undefined,
+    response_time_ms,
+  };
 }
 
 // ── DNA System Prompt (comprehensive strategic analysis) ──────────────
@@ -269,8 +297,13 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Extract user from JWT
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user } } = await supabase.auth.getUser(token);
+    const userId = user?.id || "00000000-0000-0000-0000-000000000000";
+
     const body = await req.json();
-    const { clientId, transcription, emotional_analysis, locations } = body;
+    const { clientId, transcription, emotional_analysis, locations, organizationId } = body;
 
     if (!clientId) {
       return new Response(
@@ -338,16 +371,42 @@ Deno.serve(async (req: Request) => {
 
     const userPrompt = `Transcripción del audio del cliente describiendo su negocio:\n\n${transcription}${locationsContext}`;
 
-    let aiResponse: string;
+    const orgId = organizationId || "00000000-0000-0000-0000-000000000000";
+
+    let aiResult: AICallResponse;
     try {
-      aiResponse = await callPerplexity(DNA_SYSTEM_PROMPT, userPrompt);
+      aiResult = await callPerplexity(DNA_SYSTEM_PROMPT, userPrompt);
+      logAIUsage(supabase, {
+        organization_id: orgId,
+        user_id: userId,
+        module: "process-client-dna",
+        provider: aiResult.provider,
+        model: aiResult.model,
+        tokens_input: aiResult.usage?.prompt_tokens || 0,
+        tokens_output: aiResult.usage?.completion_tokens || 0,
+        success: true,
+        edge_function: "process-client-dna",
+        response_time_ms: aiResult.response_time_ms,
+      }).catch(console.error);
     } catch (err) {
       console.warn("[process-client-dna] Perplexity failed, trying Gemini fallback:", err);
-      aiResponse = await callGeminiFallback(DNA_SYSTEM_PROMPT, userPrompt);
+      aiResult = await callGeminiFallback(DNA_SYSTEM_PROMPT, userPrompt);
+      logAIUsage(supabase, {
+        organization_id: orgId,
+        user_id: userId,
+        module: "process-client-dna",
+        provider: aiResult.provider,
+        model: aiResult.model,
+        tokens_input: aiResult.usage?.prompt_tokens || 0,
+        tokens_output: aiResult.usage?.completion_tokens || 0,
+        success: true,
+        edge_function: "process-client-dna",
+        response_time_ms: aiResult.response_time_ms,
+      }).catch(console.error);
     }
 
     // Parse response
-    const repaired = repairJsonForParse(aiResponse);
+    const repaired = repairJsonForParse(aiResult.content);
     const dnaData = JSON.parse(repaired);
 
     console.log("[process-client-dna] DNA generated successfully, sections:", Object.keys(dnaData).join(", "));

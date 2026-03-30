@@ -4,6 +4,7 @@ import { corsHeaders, callAI } from "../_shared/ai-providers.ts";
 import { getModuleAIConfig } from "../_shared/get-module-ai-config.ts";
 // Nuevo: Prompts desde DB con cache y fallback
 import { getPrompt, combinePrompts } from "../_shared/prompts/db-prompts.ts";
+import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // KIRO CHAT — Super Brain IA de KIRO (Asistente de Plataforma Kreoon)
@@ -514,14 +515,30 @@ ${context.recentNotifications?.length > 0 ? `- Notificaciones recientes: ${conte
         }
       }
 
+      const startTime = Date.now();
       const result = await callAI(systemPrompt, userPrompt, {
         model: aiModel,
         provider: aiProvider,
         temperature: 0.7,
       });
+      const response_time_ms = Date.now() - startTime;
 
       replyText = typeof result.content === "string" ? result.content : null;
       console.log(`[kiro-chat] Response from ${result.provider}/${result.model} (${replyText?.length || 0} chars)`);
+
+      // Log AI usage
+      logAIUsage(supabase, {
+        organization_id: organizationId || "00000000-0000-0000-0000-000000000000",
+        user_id: userId || "00000000-0000-0000-0000-000000000000",
+        module: "kiro",
+        provider: result.provider,
+        model: result.model,
+        tokens_input: 0,
+        tokens_output: 0,
+        success: true,
+        edge_function: "kiro-chat",
+        response_time_ms,
+      }).catch(console.error);
     } catch (err) {
       console.error("[kiro-chat] All AI providers failed:", err);
     }

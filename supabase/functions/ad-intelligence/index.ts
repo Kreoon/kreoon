@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -409,7 +410,7 @@ async function updateSearchStats(supabase: SupabaseClient, searchId: string, fal
 
 // ── AI Analysis ─────────────────────────────────────────────
 
-async function analyzeAdWithAI(ad: Record<string, any>): Promise<Record<string, unknown>> {
+async function analyzeAdWithAI(ad: Record<string, any>, supabase?: SupabaseClient, organizationId?: string, userId?: string): Promise<Record<string, unknown>> {
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -443,6 +444,7 @@ REFERENCIA:
 ${adContext}`;
 
   const callMultiAI = async (prompt: string, label: string): Promise<Record<string, unknown> | null> => {
+    const startTime = Date.now();
     try {
       const resp = await fetchWithTimeout(`${SUPABASE_URL}/functions/v1/multi-ai`, {
         method: "POST",
@@ -453,9 +455,27 @@ ${adContext}`;
         body: JSON.stringify({ messages: [{ role: "user", content: prompt }], models: ["gemini"], mode: "first" }),
       }, AI_FETCH_TIMEOUT_MS);
 
+      const response_time_ms = Date.now() - startTime;
+
       if (!resp.ok) {
         const errBody = await resp.text().catch(() => "no body");
         console.error(`multi-ai [${label}] returned ${resp.status}:`, errBody.slice(0, 300));
+        if (supabase) {
+          logAIUsage(supabase, {
+            organization_id: organizationId || "00000000-0000-0000-0000-000000000000",
+            user_id: userId || "00000000-0000-0000-0000-000000000000",
+            module: "ad_generator",
+            action: label,
+            provider: "gemini",
+            model: "gemini-2.5-flash",
+            tokens_input: 0,
+            tokens_output: 0,
+            success: false,
+            error_message: `multi-ai returned ${resp.status}`,
+            edge_function: "ad-intelligence",
+            response_time_ms,
+          }).catch(console.error);
+        }
         return null;
       }
 
@@ -464,9 +484,43 @@ ${adContext}`;
       if (!parsed) {
         console.error(`multi-ai [${label}] returned unparseable response:`, (data.response || "").slice(0, 200));
       }
+
+      if (supabase) {
+        logAIUsage(supabase, {
+          organization_id: organizationId || "00000000-0000-0000-0000-000000000000",
+          user_id: userId || "00000000-0000-0000-0000-000000000000",
+          module: "ad_generator",
+          action: label,
+          provider: "gemini",
+          model: data.model || "gemini-2.5-flash",
+          tokens_input: data.usage?.prompt_tokens || 0,
+          tokens_output: data.usage?.completion_tokens || 0,
+          success: true,
+          edge_function: "ad-intelligence",
+          response_time_ms,
+        }).catch(console.error);
+      }
+
       return parsed;
     } catch (err) {
+      const response_time_ms = Date.now() - startTime;
       console.error(`multi-ai [${label}] exception:`, err instanceof Error ? err.message : err);
+      if (supabase) {
+        logAIUsage(supabase, {
+          organization_id: organizationId || "00000000-0000-0000-0000-000000000000",
+          user_id: userId || "00000000-0000-0000-0000-000000000000",
+          module: "ad_generator",
+          action: label,
+          provider: "gemini",
+          model: "gemini-2.5-flash",
+          tokens_input: 0,
+          tokens_output: 0,
+          success: false,
+          error_message: err instanceof Error ? err.message : String(err),
+          edge_function: "ad-intelligence",
+          response_time_ms,
+        }).catch(console.error);
+      }
       return null;
     }
   };
@@ -546,7 +600,7 @@ serve(async (req: Request) => {
       const { data: ad, error } = await supabase.from("ad_library_ads").select("*").eq("id", ad_id).single();
       if (error || !ad) return jsonError("Anuncio no encontrado", 404);
 
-      const result = await analyzeAdWithAI(ad);
+      const result = await analyzeAdWithAI(ad, supabase, params.organization_id, params.user_id);
       const { error: updateError } = await supabase.from("ad_library_ads")
         .update({ ai_analysis: result, ai_analyzed_at: result.analyzed_at, updated_at: new Date().toISOString() })
         .eq("id", ad_id);

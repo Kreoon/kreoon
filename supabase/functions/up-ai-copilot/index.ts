@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getModuleAIConfig } from "../_shared/get-module-ai-config.ts";
 import { callAISingle, corsHeaders } from "../_shared/ai-providers.ts";
+import { logAIUsage as logAIUsageShared, calculateCost } from "../_shared/ai-usage-logger.ts";
 // Nuevo: Prompts desde DB con cache y fallback
 import { getPrompt } from "../_shared/prompts/db-prompts.ts";
 
@@ -43,10 +44,10 @@ type RequestBody =
   | QuestGenerationRequest
   | RuleRecommendationsRequest;
 
-// Log AI usage; returns execution id for feedback loop
+// Log AI usage via shared logger; returns execution id for feedback loop
 async function logAIUsage(
-  supabase: any, 
-  organizationId: string, 
+  supabase: any,
+  organizationId: string,
   userId: string,
   provider: string,
   model: string,
@@ -55,34 +56,26 @@ async function logAIUsage(
   success: boolean,
   errorMessage?: string,
   tokensInput?: number,
-  tokensOutput?: number
+  tokensOutput?: number,
+  responseTimeMs?: number
 ): Promise<string | null> {
-  try {
-    const { data, error } = await supabase
-      .from("ai_usage_logs")
-      .insert({
-        organization_id: organizationId,
-        user_id: userId,
-        provider,
-        model,
-        module: "sistema_up",
-        action,
-        success,
-        error_message: errorMessage,
-        tokens_input: tokensInput,
-        tokens_output: tokensOutput
-      })
-      .select("id")
-      .single();
-    if (error) {
-      console.error("Error logging AI usage:", error);
-      return null;
-    }
-    return data?.id ?? null;
-  } catch (e) {
-    console.error("Error logging AI usage:", e);
+  return logAIUsageShared(supabase, {
+    organization_id: organizationId || "00000000-0000-0000-0000-000000000000",
+    user_id: userId || "00000000-0000-0000-0000-000000000000",
+    module: "up-ai-copilot",
+    action,
+    provider,
+    model,
+    tokens_input: tokensInput || 0,
+    tokens_output: tokensOutput || 0,
+    success,
+    error_message: errorMessage,
+    edge_function: "up-ai-copilot",
+    response_time_ms: responseTimeMs,
+  }).catch((err) => {
+    console.error("Error logging AI usage:", err);
     return null;
-  }
+  });
 }
 
 serve(async (req) => {
@@ -123,6 +116,8 @@ serve(async (req) => {
 
     let result: any;
 
+    const startTime = Date.now();
+
     switch (body.action) {
       case "quality_score":
         result = await evaluateQualityScore(supabase, body, provider, model, apiKey);
@@ -143,11 +138,13 @@ serve(async (req) => {
         throw new Error("Invalid action");
     }
 
+    const response_time_ms = Date.now() - startTime;
+
     // Add provider info and execution id for feedback loop
     result.aiProvider = provider;
     result.aiModel = model;
     const userId = (body as any).userId ?? "system";
-    const executionId = await logAIUsage(supabase, orgId, userId, provider, model, "sistema_up", body.action, true);
+    const executionId = await logAIUsage(supabase, orgId, userId, provider, model, "sistema_up", body.action, true, undefined, undefined, undefined, response_time_ms);
     result.execution_id = executionId ?? undefined;
 
     return new Response(JSON.stringify(result), {

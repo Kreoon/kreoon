@@ -8,6 +8,7 @@ import {
 } from "../_shared/ai-providers.ts";
 import { errorResponse, successResponse, moduleInactiveResponse } from "../_shared/error-response.ts";
 import { getModuleAIConfigsWithFallback } from "../_shared/get-module-ai-config.ts";
+import { logAIUsage as logSharedAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
 // Nuevo: Prompts desde DB con fallback a hardcodeados
 import { getPrompt, interpolatePrompt } from "../_shared/prompts/db-prompts.ts";
 // Fallback legacy (se usa internamente por db-prompts)
@@ -53,8 +54,8 @@ async function isModuleActive(supabase: any, organizationId: string, moduleKey: 
   return data?.is_active ?? false;
 }
 
-// Log AI usage; returns execution id for feedback loop
-async function logAIUsage(supabase: any, params: {
+// Log AI usage via shared logger; returns execution id for feedback loop
+async function logBoardAIUsage(supabase: any, params: {
   organizationId: string;
   userId: string;
   provider: string;
@@ -62,31 +63,27 @@ async function logAIUsage(supabase: any, params: {
   action: string;
   success: boolean;
   errorMessage?: string;
+  response_time_ms?: number;
+  tokens_input?: number;
+  tokens_output?: number;
 }): Promise<string | null> {
-  try {
-    const { data, error } = await supabase
-      .from("ai_usage_logs")
-      .insert({
-        organization_id: params.organizationId,
-        user_id: params.userId,
-        provider: params.provider,
-        model: params.model,
-        module: "tablero",
-        action: params.action,
-        success: params.success,
-        error_message: params.errorMessage,
-      })
-      .select("id")
-      .single();
-    if (error) {
-      console.error("Failed to log AI usage:", error);
-      return null;
-    }
-    return data?.id ?? null;
-  } catch (e) {
-    console.error("Failed to log AI usage:", e);
+  return logSharedAIUsage(supabase, {
+    organization_id: params.organizationId || "00000000-0000-0000-0000-000000000000",
+    user_id: params.userId || "00000000-0000-0000-0000-000000000000",
+    module: "board-ai",
+    action: params.action,
+    provider: params.provider,
+    model: params.model,
+    tokens_input: params.tokens_input || 0,
+    tokens_output: params.tokens_output || 0,
+    success: params.success,
+    error_message: params.errorMessage,
+    edge_function: "board-ai",
+    response_time_ms: params.response_time_ms,
+  }).catch((err) => {
+    console.error("Failed to log AI usage:", err);
     return null;
-  }
+  });
 }
 
 // Status labels in Spanish
@@ -278,15 +275,18 @@ ${p.market_research ? `- Research de mercado (resumen): ${String(p.market_resear
     }
   }];
 
+  const startTime = Date.now();
   const { result, usedProvider, usedModel } = await callAIWithFallback(configs, systemPrompt, userPrompt, tools);
+  const response_time_ms = Date.now() - startTime;
 
-  await logAIUsage(supabase, {
+  await logBoardAIUsage(supabase, {
     organizationId,
     userId,
     provider: usedProvider,
     model: usedModel,
     action: "analyze_card",
-    success: true
+    success: true,
+    response_time_ms,
   });
 
   return {
@@ -470,15 +470,18 @@ ${clientNames.size > 0 ? `\nClientes: ${[...clientNames].join(", ")}` : ""}
     }
   }];
 
+  const startTimeBoard = Date.now();
   const { result, usedProvider, usedModel } = await callAIWithFallback(configs, systemPrompt, userPrompt, tools);
+  const responseTimeMsBoard = Date.now() - startTimeBoard;
 
-  const executionId = await logAIUsage(supabase, {
+  const executionId = await logBoardAIUsage(supabase, {
     organizationId,
     userId,
     provider: usedProvider,
     model: usedModel,
     action: "analyze_board",
-    success: true
+    success: true,
+    response_time_ms: responseTimeMsBoard,
   });
 
   return {
@@ -544,15 +547,18 @@ async function suggestNextState(supabase: any, contentId: string, organizationId
     }
   }];
 
+  const startTimeSuggest = Date.now();
   const { result, usedProvider, usedModel } = await callAIWithFallback(configs, systemPrompt, userPrompt, tools);
+  const responseTimeMsSuggest = Date.now() - startTimeSuggest;
 
-  await logAIUsage(supabase, {
+  await logBoardAIUsage(supabase, {
     organizationId,
     userId,
     provider: usedProvider,
     model: usedModel,
     action: "suggest_next_state",
-    success: true
+    success: true,
+    response_time_ms: responseTimeMsSuggest,
   });
 
   return {
@@ -649,7 +655,9 @@ async function recommendAutomation(supabase: any, organizationId: string, userId
     },
   }];
 
+  const startTimeAuto = Date.now();
   const { result: rawResult, usedProvider, usedModel } = await callAIWithFallback(configs, systemPrompt, userPrompt, tools);
+  const responseTimeMsAuto = Date.now() - startTimeAuto;
 
   // Normalize result across providers (some providers may return plain text)
   let normalized: any = rawResult;
@@ -669,13 +677,14 @@ async function recommendAutomation(supabase: any, organizationId: string, userId
     normalized.automations = [];
   }
 
-  const executionId = await logAIUsage(supabase, {
+  const executionId = await logBoardAIUsage(supabase, {
     organizationId,
     userId,
     provider: usedProvider,
     model: usedModel,
     action: "recommend_automation",
     success: true,
+    response_time_ms: responseTimeMsAuto,
   });
 
   return {

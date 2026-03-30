@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -50,6 +51,15 @@ Deno.serve(async (req) => {
     const geminiKey = Deno.env.get('GEMINI_API_KEY')
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // Extraer userId del auth header si existe
+    const authHeader = req.headers.get('authorization')
+    let userId = '00000000-0000-0000-0000-000000000000'
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '')
+      const { data: { user } } = await supabase.auth.getUser(token)
+      if (user) userId = user.id
+    }
 
     const criteria: MatchingCriteria = await req.json()
     const limit = criteria.limit || 20
@@ -402,7 +412,9 @@ Deno.serve(async (req) => {
           criteria,
           matches.slice(0, 5),
           openaiKey,
-          geminiKey
+          geminiKey,
+          supabase,
+          userId
         )
       } catch (e) {
         console.error('[ai-creator-matching] AI summary error:', e)
@@ -469,7 +481,9 @@ async function generateAISummary(
   criteria: MatchingCriteria,
   topMatches: any[],
   openaiKey?: string,
-  geminiKey?: string
+  geminiKey?: string,
+  supabase?: any,
+  userId?: string
 ): Promise<string> {
   const prompt = `
 Eres un asistente de Kreoon, una plataforma que conecta marcas con creadores de contenido UGC.
@@ -489,6 +503,7 @@ Genera un resumen breve (2-3 oraciones en español) explicando por qué estos cr
   // Intentar con OpenAI primero
   if (openaiKey) {
     try {
+      const startTime = Date.now()
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -503,7 +518,24 @@ Genera un resumen breve (2-3 oraciones en español) explicando por qué estos cr
         }),
       })
 
+      const response_time_ms = Date.now() - startTime
       const data = await response.json()
+
+      if (supabase) {
+        logAIUsage(supabase, {
+          organization_id: "00000000-0000-0000-0000-000000000000",
+          user_id: userId || "00000000-0000-0000-0000-000000000000",
+          module: "talent.ambassador.ai",
+          provider: "openai",
+          model: "gpt-4o-mini",
+          tokens_input: data.usage?.prompt_tokens || 0,
+          tokens_output: data.usage?.completion_tokens || 0,
+          success: true,
+          edge_function: "ai-creator-matching",
+          response_time_ms,
+        }).catch(console.error)
+      }
+
       return data.choices?.[0]?.message?.content || ''
     } catch (e) {
       console.error('[ai-creator-matching] OpenAI error:', e)
@@ -513,6 +545,7 @@ Genera un resumen breve (2-3 oraciones en español) explicando por qué estos cr
   // Fallback a Gemini
   if (geminiKey) {
     try {
+      const startTime = Date.now()
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
         {
@@ -525,7 +558,24 @@ Genera un resumen breve (2-3 oraciones en español) explicando por qué estos cr
         }
       )
 
+      const response_time_ms = Date.now() - startTime
       const data = await response.json()
+
+      if (supabase) {
+        logAIUsage(supabase, {
+          organization_id: "00000000-0000-0000-0000-000000000000",
+          user_id: userId || "00000000-0000-0000-0000-000000000000",
+          module: "talent.ambassador.ai",
+          provider: "gemini",
+          model: "gemini-1.5-flash",
+          tokens_input: data.usageMetadata?.promptTokenCount || 0,
+          tokens_output: data.usageMetadata?.candidatesTokenCount || 0,
+          success: true,
+          edge_function: "ai-creator-matching",
+          response_time_ms,
+        }).catch(console.error)
+      }
+
       return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
     } catch (e) {
       console.error('[ai-creator-matching] Gemini error:', e)

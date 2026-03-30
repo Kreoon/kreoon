@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { callAIWithFallback, getAPIKey, corsHeaders } from "../_shared/ai-providers.ts";
 import { searchWithPerplexity } from "../_shared/perplexity-client.ts";
 import { checkAndDeductTokens, insufficientTokensResponse } from "../_shared/ai-token-guard.ts";
+import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -102,10 +103,26 @@ IMPORTANTE: Tu respuesta debe ser ÚNICAMENTE el guión completo modificado, sin
         ? messages.map((m: any) => `${m.role}: ${m.content || ""}`).join("\n\n")
         : "Usuario: Por favor mejora el guión.";
 
-    const { result, usedProvider } = await callAIWithFallback(configs, systemPrompt, userPrompt);
+    const startTime = Date.now();
+    const { result, usedProvider, usedModel } = await callAIWithFallback(configs, systemPrompt, userPrompt);
+    const response_time_ms = Date.now() - startTime;
     const assistantContent = typeof result === "string" ? result : String(result ?? "No se pudo generar una respuesta");
 
     console.log(`[script-chat] Success using ${usedProvider}`);
+
+    // Registrar uso de IA
+    logAIUsage(supabase, {
+      organization_id: organizationId || "00000000-0000-0000-0000-000000000000",
+      user_id: "00000000-0000-0000-0000-000000000000",
+      module: "script_generator",
+      provider: usedProvider,
+      model: usedModel,
+      tokens_input: 0,
+      tokens_output: 0,
+      success: true,
+      edge_function: "script-chat",
+      response_time_ms,
+    }).catch(console.error);
 
     // Nota: los tokens ya se dedujeron al inicio con checkAndDeductTokens
 

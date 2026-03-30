@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
+import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
 
 const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -44,6 +45,7 @@ serve(async (req) => {
   }
 
   try {
+    const startTime = Date.now();
     const { user_id, following_ids = [], liked_content_ids = [], viewed_content_ids = [], limit = 50, refresh_seed } = await req.json() as RecommendationRequest;
     
     // Generate a unique session seed for randomization
@@ -305,9 +307,24 @@ serve(async (req) => {
       .slice(0, limit)
       .map(({ score, ...item }) => item);
 
+    const response_time_ms = Date.now() - startTime;
+
+    logAIUsage(supabase, {
+      organization_id: "00000000-0000-0000-0000-000000000000",
+      user_id: user_id || "00000000-0000-0000-0000-000000000000",
+      module: "feed-recommendations",
+      provider: "gemini",
+      model: "feed-scoring-algorithm",
+      tokens_input: 0,
+      tokens_output: 0,
+      success: true,
+      edge_function: "feed-recommendations",
+      response_time_ms,
+    }).catch(console.error);
+
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         recommendations: recommended,
         has_personalization: !!userInterests || recentlyEngagedCreators.length > 0,
       }),

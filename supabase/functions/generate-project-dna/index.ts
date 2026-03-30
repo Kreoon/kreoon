@@ -4,6 +4,7 @@ import {
   checkAndDeductTokens,
   insufficientTokensResponse,
 } from "../_shared/ai-token-guard.ts";
+import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
 
 // ── JSON repair ─────────────────────────────────────────────────────────
 function repairJsonForParse(str: string): string {
@@ -66,11 +67,12 @@ async function transcribeWithWhisper(audioBlob: Blob): Promise<string> {
 }
 
 // ── Perplexity AI call ──────────────────────────────────────────────────
-async function callPerplexity(systemPrompt: string, userPrompt: string): Promise<string> {
+async function callPerplexity(systemPrompt: string, userPrompt: string): Promise<{ content: string; usage?: any; response_time_ms: number }> {
   const apiKey = getAPIKey("perplexity");
   if (!apiKey) throw new Error("PERPLEXITY_API_KEY not configured");
 
   console.log("[generate-project-dna] Calling Perplexity...");
+  const startTime = Date.now();
   const response = await fetch("https://api.perplexity.ai/chat/completions", {
     method: "POST",
     headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
@@ -85,6 +87,7 @@ async function callPerplexity(systemPrompt: string, userPrompt: string): Promise
       return_citations: true,
     }),
   });
+  const response_time_ms = Date.now() - startTime;
 
   if (!response.ok) {
     const errText = await response.text();
@@ -93,15 +96,20 @@ async function callPerplexity(systemPrompt: string, userPrompt: string): Promise
   }
 
   const data = await response.json();
-  return data.choices?.[0]?.message?.content || "";
+  return {
+    content: data.choices?.[0]?.message?.content || "",
+    usage: data.usage,
+    response_time_ms,
+  };
 }
 
 // ── Gemini fallback ─────────────────────────────────────────────────────
-async function callGeminiFallback(systemPrompt: string, userPrompt: string): Promise<string> {
+async function callGeminiFallback(systemPrompt: string, userPrompt: string): Promise<{ content: string; usage?: any; response_time_ms: number }> {
   const apiKey = Deno.env.get("GOOGLE_AI_API_KEY") || Deno.env.get("GEMINI_API_KEY");
   if (!apiKey) throw new Error("GOOGLE_AI_API_KEY not configured");
 
   console.log("[generate-project-dna] Falling back to Gemini...");
+  const startTime = Date.now();
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions?key=${apiKey}`,
     {
@@ -118,6 +126,7 @@ async function callGeminiFallback(systemPrompt: string, userPrompt: string): Pro
       }),
     }
   );
+  const response_time_ms = Date.now() - startTime;
 
   if (!response.ok) {
     const errText = await response.text();
@@ -126,7 +135,11 @@ async function callGeminiFallback(systemPrompt: string, userPrompt: string): Pro
   }
 
   const data = await response.json();
-  return data.choices?.[0]?.message?.content || "";
+  return {
+    content: data.choices?.[0]?.message?.content || "",
+    usage: data.usage,
+    response_time_ms,
+  };
 }
 
 // ── Project-type specific prompt focus ──────────────────────────────────
@@ -303,13 +316,47 @@ Deno.serve(async (req: Request) => {
     // ── 5. Generate analysis with Perplexity (fallback to Gemini) ─────────
     let aiResponse: string;
     let usedProvider = "perplexity";
+    let usedModel = "sonar-pro";
+    let aiUsage: any;
+    let aiResponseTimeMs = 0;
     try {
-      aiResponse = await callPerplexity(systemPrompt, userPrompt);
+      const result = await callPerplexity(systemPrompt, userPrompt);
+      aiResponse = result.content;
+      aiUsage = result.usage;
+      aiResponseTimeMs = result.response_time_ms;
     } catch (err) {
       console.warn("[generate-project-dna] Perplexity failed, trying Gemini:", err);
-      aiResponse = await callGeminiFallback(systemPrompt, userPrompt);
+      const result = await callGeminiFallback(systemPrompt, userPrompt);
+      aiResponse = result.content;
+      aiUsage = result.usage;
+      aiResponseTimeMs = result.response_time_ms;
       usedProvider = "gemini";
+      usedModel = "gemini-2.5-flash";
     }
+
+    // ── 5b. Log AI usage ──────────────────────────────────────────────────
+    const organizationId = project.organization_id || "00000000-0000-0000-0000-000000000000";
+    const authHeader = req.headers.get("Authorization");
+    let userId = "00000000-0000-0000-0000-000000000000";
+    if (authHeader) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+        if (user?.id) userId = user.id;
+      } catch { /* ignore */ }
+    }
+
+    logAIUsage(supabase, {
+      organization_id: organizationId,
+      user_id: userId,
+      module: "generate-project-dna",
+      provider: usedProvider,
+      model: usedModel,
+      tokens_input: aiUsage?.prompt_tokens || 0,
+      tokens_output: aiUsage?.completion_tokens || 0,
+      success: true,
+      edge_function: "generate-project-dna",
+      response_time_ms: aiResponseTimeMs,
+    }).catch(console.error);
 
     // ── 6. Parse AI response ──────────────────────────────────────────────
     const repaired = repairJsonForParse(aiResponse);
@@ -331,7 +378,7 @@ Deno.serve(async (req: Request) => {
         ...analysisData,
         generated_at: new Date().toISOString(),
         ai_provider: usedProvider,
-        ai_model: usedProvider === "perplexity" ? "sonar-pro" : "gemini-2.5-flash",
+        ai_model: usedModel,
       },
       transcription: transcription || dna.transcription || null,
     };

@@ -10,6 +10,7 @@ import { MASTER_SCRIPT_PROMPT } from "../_shared/prompts/scripts.ts";
 // Nuevo: Prompts desde DB con cache y fallback a hardcodeados
 import { getPrompt, interpolatePrompt } from "../_shared/prompts/db-prompts.ts";
 import { checkAndDeductTokens, insufficientTokensResponse } from "../_shared/ai-token-guard.ts";
+import { logAIUsage as sharedLogAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
 
 interface ContentAIRequest {
   action: "generate_script" | "analyze_content" | "chat" | "improve_script" | "research_and_generate";
@@ -187,7 +188,7 @@ function getAllAvailableFallbacks(primaryProvider: string): Array<{ provider: st
   return fallbacks;
 }
 
-// Log AI usage; returns execution id for feedback loop
+// Log AI usage via shared logger; returns execution id for feedback loop
 async function logAIUsage(supabase: any, params: {
   organizationId: string;
   userId: string;
@@ -196,31 +197,24 @@ async function logAIUsage(supabase: any, params: {
   action: string;
   success: boolean;
   errorMessage?: string;
+  tokens_input?: number;
+  tokens_output?: number;
+  response_time_ms?: number;
 }): Promise<string | null> {
-  try {
-    const { data, error } = await supabase
-      .from("ai_usage_logs")
-      .insert({
-        organization_id: params.organizationId,
-        user_id: params.userId,
-        provider: params.provider,
-        model: params.model,
-        module: "content",
-        action: params.action,
-        success: params.success,
-        error_message: params.errorMessage,
-      })
-      .select("id")
-      .single();
-    if (error) {
-      console.error("Failed to log AI usage:", error);
-      return null;
-    }
-    return data?.id ?? null;
-  } catch (e) {
-    console.error("Failed to log AI usage:", e);
-    return null;
-  }
+  return sharedLogAIUsage(supabase, {
+    organization_id: params.organizationId,
+    user_id: params.userId,
+    module: "content-ai",
+    action: params.action,
+    provider: params.provider,
+    model: params.model,
+    tokens_input: params.tokens_input || 0,
+    tokens_output: params.tokens_output || 0,
+    success: params.success,
+    error_message: params.errorMessage,
+    edge_function: "content-ai",
+    response_time_ms: params.response_time_ms,
+  });
 }
 
 // Usa prompt maestro centralizado desde _shared/prompts/scripts.ts
@@ -440,6 +434,7 @@ serve(async (req) => {
     }
 
     let result: string;
+    const startTime = Date.now();
 
     switch (action) {
       case "research_and_generate":
@@ -653,7 +648,9 @@ IMPORTANTE:
           console.log("[content-ai] Full system prompt length:", fullSystemPrompt.length);
           console.log("[content-ai] Template variables replaced, Perplexity:", usePerplexity);
 
+          const startTime1 = Date.now();
           result = await callAI(aiConfig.provider, aiConfig.apiKey, aiConfig.model, fullSystemPrompt, prompt, fallbacks);
+          const responseTime1 = Date.now() - startTime1;
 
           await logAIUsage(supabase, {
             organizationId,
@@ -661,7 +658,8 @@ IMPORTANTE:
             provider: aiConfig.provider,
             model: aiConfig.model,
             action: usePerplexity ? "generate_script_with_research" : "generate_script",
-            success: true
+            success: true,
+            response_time_ms: responseTime1,
           });
 
           return new Response(
@@ -738,7 +736,8 @@ Devuelve el guion mejorado manteniendo el formato HTML estructurado.`;
       provider: aiConfig.provider,
       model: aiConfig.model,
       action,
-      success: true
+      success: true,
+      response_time_ms: Date.now() - startTime,
     });
 
     return successResponse({

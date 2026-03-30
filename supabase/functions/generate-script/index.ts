@@ -6,6 +6,7 @@ import { makeAIRequest, corsHeaders } from "../_shared/ai-providers.ts";
 // Nuevo: Prompts desde DB con fallback a V2 hardcodeados
 import { getPrompt } from "../_shared/prompts/db-prompts.ts";
 import { errorResponse, successResponse, moduleInactiveResponse, validationErrorResponse } from "../_shared/error-response.ts";
+import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
 
 interface ScriptRequest {
   organizationId: string;
@@ -295,6 +296,7 @@ Formato: HTML limpio (h2, h3, p, strong). NO markdown.`;
     // Llamada a IA con temperatura 0.7 (V2)
     // ============================================
     let script: string;
+    const startTime = Date.now();
     try {
       const aiResult = await makeAIRequest({
         provider: aiConfig.provider,
@@ -341,22 +343,23 @@ Formato: HTML limpio (h2, h3, p, strong). NO markdown.`;
       throw err;
     }
 
+    const response_time_ms = Date.now() - startTime;
     console.log("Script generated successfully with provider:", aiConfig.provider);
 
-    // Log usage
-    try {
-      await supabase.from("ai_usage_logs").insert({
-        organization_id: organizationId,
-        user_id: "system",
-        provider: aiConfig.provider,
-        model: aiConfig.model,
-        module: "scripts",
-        action: "generate_script",
-        success: true
-      });
-    } catch (e) {
-      console.error("Failed to log AI usage:", e);
-    }
+    // Log usage con logger compartido
+    logAIUsage(supabase, {
+      organization_id: organizationId,
+      user_id: "system",
+      module: "generate-script",
+      action: "generate_script",
+      provider: aiConfig.provider,
+      model: aiConfig.model,
+      tokens_input: 0,
+      tokens_output: 0,
+      success: true,
+      edge_function: "generate-script",
+      response_time_ms,
+    }).catch(console.error);
 
     return successResponse({
       script,
