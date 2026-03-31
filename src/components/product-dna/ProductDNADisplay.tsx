@@ -431,7 +431,7 @@ export default function ProductDNADisplay({
 
       {/* Audio */}
       {productDna.audio_url && (
-        <div className="bg-muted/50 backdrop-blur-sm rounded-sm p-4 border border-border">
+        <div className="bg-muted/50 rounded-sm p-4 border border-border">
           <div className="flex items-center gap-3">
             <button
               onClick={toggleAudio}
@@ -761,7 +761,7 @@ function HeaderSection({
   onToggleEdit?: () => void;
 }) {
   return (
-    <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 backdrop-blur-sm rounded-sm p-6 border border-border">
+    <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 rounded-sm p-6 border border-border">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         {/* Info */}
         <div className="flex items-start gap-4">
@@ -857,7 +857,7 @@ function SectionCard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-muted/50 backdrop-blur-sm rounded-sm border border-border overflow-hidden"
+      className="bg-muted/50 rounded-sm border border-border overflow-hidden"
     >
       <button
         onClick={() => setIsExpanded(!isExpanded)}

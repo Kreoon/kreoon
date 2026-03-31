@@ -202,7 +202,7 @@ export function FeaturesSection() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="order-1 lg:order-2"
           >
-            <div className="overflow-hidden rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-6 shadow-kreoon-glow-sm backdrop-blur-sm">
+            <div className="overflow-hidden rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-6 shadow-kreoon-glow-sm">
               <div className="mb-4 flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-kreoon-purple-400" />
                 <span className="text-sm font-medium text-kreoon-purple-400">

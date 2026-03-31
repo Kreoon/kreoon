@@ -26,6 +26,8 @@ export interface PendingDocument {
   is_required: boolean;
   trigger_event?: string; // 'registration' | 'role_assignment' | 'deprecated'
   display_order?: number;
+  user_role?: string; // 'all' | 'talent' | 'client' | rol específico
+  account_type?: string; // 'talent' | 'client' | 'organization' | null (para filtrar por tipo de cuenta)
 }
 
 export interface Country {

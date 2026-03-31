@@ -124,7 +124,7 @@ export function TransactionList({
     <div className={cn('space-y-6', className)}>
       {Object.entries(groupedTransactions).map(([date, dayTransactions]) => (
         <div key={date}>
-          <h3 className="text-sm font-medium text-muted-foreground mb-3 sticky top-0 bg-background/80 backdrop-blur-sm py-2">
+          <h3 className="text-sm font-medium text-muted-foreground mb-3 sticky top-0 bg-background/80 py-2">
             {date}
           </h3>
           <div className="space-y-2">

@@ -392,7 +392,7 @@ export function AdnResearchV3Dashboard({
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Content Header */}
-        <div className="border-b px-6 py-4 flex items-center justify-between bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="border-b px-6 py-4 flex items-center justify-between bg-background/95 supports-[backdrop-filter]:bg-background/60">
           <div>
             <h1 className="text-xl font-semibold">
               {activeTabConfig?.name || "Resumen"}

@@ -201,7 +201,7 @@ export default function HiringWizard({ creatorId, onClose }: HiringWizardProps) 
   return (
     <div className="fixed inset-0 z-[100] bg-background overflow-y-auto">
       {/* Header */}
-      <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-white/10 z-10">
+      <div className="sticky top-0 bg-background/95 border-b border-white/10 z-10">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-lg font-bold text-white">Contratar a {creator.display_name}</h1>

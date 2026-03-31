@@ -636,7 +636,7 @@ export default function CampaignEditWizard({ campaignId, onClose }: CampaignEdit
     return (
       <div className="relative">
         <div className="opacity-50 pointer-events-none select-none">{children}</div>
-        <div className="absolute inset-0 bg-background/60 backdrop-blur-[1px] rounded-sm flex items-center justify-center">
+        <div className="absolute inset-0 bg-background/60-[1px] rounded-sm flex items-center justify-center">
           <div className="flex items-center gap-2 bg-background/90 px-4 py-2 rounded-sm border border-white/10">
             <Lock className="h-4 w-4 text-gray-400" />
             <span className="text-gray-400 text-sm">
@@ -653,7 +653,7 @@ export default function CampaignEditWizard({ campaignId, onClose }: CampaignEdit
   return (
     <div className="fixed inset-0 z-[100] bg-background overflow-y-auto">
       {/* Header */}
-      <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-white/10 z-10">
+      <div className="sticky top-0 bg-background/95 border-b border-white/10 z-10">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { AppRole, Profile, UserType } from '@/types/database';
+import { AppRole, Profile, UserType, AccountType } from '@/types/database';
 import { getPermissionGroup, type PermissionGroup } from '@/lib/permissionGroups';
 import { logger } from '@/lib/logger';
 
@@ -32,6 +32,8 @@ interface AuthContextType {
   // User type helpers (talent vs client vs admin)
   userType: UserType;
   isTalent: boolean;
+  // Account type from profile (talent, organization, client)
+  accountType: AccountType | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -656,6 +658,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const userType = getUserTypeFromRoles();
   const isTalent = userType === 'talent';
 
+  // Account type from profile (set during onboarding)
+  const accountType: AccountType | null = (profile?.user_type as AccountType) || null;
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -682,7 +687,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isTeamLeader,
       isSuperadmin,
       userType,
-      isTalent
+      isTalent,
+      accountType
     }}>
       {children}
     </AuthContext.Provider>

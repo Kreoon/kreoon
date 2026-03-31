@@ -198,7 +198,7 @@ function ScriptSection({
       <div className={cn(
         "relative flex items-center gap-3 px-4 py-3 border-b",
         config.borderColor,
-        "bg-background/50 backdrop-blur-sm"
+        "bg-background/50"
       )}>
         <div className={cn(
           "flex items-center justify-center w-10 h-10 rounded-sm text-xl",

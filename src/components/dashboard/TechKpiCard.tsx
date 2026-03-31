@@ -377,7 +377,7 @@ export function TechKpiCard({
             >
               <div className={cn(
                 "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium",
-                "border backdrop-blur-sm",
+                "border",
                 trend > 0
                   ? "bg-[var(--nova-success-bg)] border-[var(--nova-success)] text-[var(--nova-success)]"
                   : "bg-[var(--nova-error-bg)] border-[var(--nova-error)] text-[var(--nova-error)]"

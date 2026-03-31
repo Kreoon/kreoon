@@ -261,7 +261,7 @@ export function ProductionCard({
       {/* Thumbnail placeholder */}
       <div className="relative h-32 bg-gradient-to-br from-purple-900/30 to-zinc-900">
         {/* Type badge */}
-        <div className="absolute top-3 left-3 px-2 py-1 rounded-sm bg-black/50 backdrop-blur-sm flex items-center gap-1.5">
+        <div className="absolute top-3 left-3 px-2 py-1 rounded-sm bg-black/50 flex items-center gap-1.5">
           <TipoIcon className="w-3.5 h-3.5 text-purple-400" />
           <span className="text-xs text-white font-medium">{produccion.tipo}</span>
         </div>

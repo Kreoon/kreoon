@@ -107,7 +107,7 @@ export function AchievementToast({
       <div
         className={cn(
           'relative rounded-sm overflow-hidden',
-          'bg-zinc-900/95 backdrop-blur-xl',
+          'bg-zinc-900/95',
           'shadow-2xl'
         )}
         style={{

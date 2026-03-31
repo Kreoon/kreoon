@@ -109,7 +109,7 @@ export function ProgressToNextLevel({
               </div>
             </div>
           </TooltipTrigger>
-          <TooltipContent className="bg-zinc-900/95 backdrop-blur-sm border-white/10">
+          <TooltipContent className="bg-zinc-900/95 border-white/10">
             <div className="flex flex-col gap-1">
               <span className="font-medium">
                 Nivel {actual.nivel} → {siguiente.nivel}
@@ -131,7 +131,7 @@ export function ProgressToNextLevel({
         config.padding,
         'bg-gradient-to-br from-zinc-900/80 to-zinc-900/40',
         'border border-white/5',
-        'backdrop-blur-sm',
+        '',
         className
       )}
       initial={{ opacity: 0, y: 10 }}

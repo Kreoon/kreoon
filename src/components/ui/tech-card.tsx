@@ -19,7 +19,7 @@ const TechCard = React.forwardRef<HTMLDivElement, TechCardProps>(
         "hover:shadow-md"
       ),
       glass: cn(
-        "rounded-sm backdrop-blur-2xl",
+        "rounded-sm-2xl",
         "bg-card/70",
         "border border-border/50",
         "shadow-md",

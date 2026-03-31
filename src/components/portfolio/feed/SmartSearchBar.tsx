@@ -96,7 +96,7 @@ export default function SmartSearchBar({ className, onSearch }: SmartSearchBarPr
       
       {/* AI Search indicator */}
       {aiSearchEnabled && isExpanded && (
-        <div className="absolute top-full left-0 right-0 mt-1 p-2 bg-muted/80 backdrop-blur rounded-sm border text-xs text-muted-foreground flex items-center gap-2">
+        <div className="absolute top-full left-0 right-0 mt-1 p-2 bg-muted/80 rounded-sm border text-xs text-muted-foreground flex items-center gap-2">
           <Sparkles className="h-3 w-3 text-primary" />
           Búsqueda inteligente activa - prueba "creadores de fitness en Medellín"
         </div>

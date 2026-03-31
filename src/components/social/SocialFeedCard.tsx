@@ -338,7 +338,7 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
         {/* Play/Pause indicator */}
         {showPauseIcon && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-            <div className="p-6 rounded-full bg-black/50 backdrop-blur-sm animate-scale-in">
+            <div className="p-6 rounded-full bg-black/50 animate-scale-in">
               {isPaused ? (
                 <Pause className="h-16 w-16 text-white" />
               ) : (
@@ -355,7 +355,7 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
         {isVideo && (
           <button
             onClick={handleMuteToggle}
-            className="absolute top-4 right-4 z-30 p-2.5 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
+            className="absolute top-4 right-4 z-30 p-2.5 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
           >
             {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
           </button>
@@ -388,7 +388,7 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
                 "p-3 rounded-full transition-all duration-200 active:scale-90",
                 item.isLiked 
                   ? "bg-red-500 text-white" 
-                  : "bg-black/40 backdrop-blur-sm text-white"
+                  : "bg-black/40 text-white"
               )}>
                 <Heart className="h-7 w-7" fill={item.isLiked ? "currentColor" : "none"} />
               </div>
@@ -402,7 +402,7 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
               onClick={(e) => { e.stopPropagation(); onComment(); }}
               className="flex flex-col items-center gap-1"
             >
-              <div className="p-3 rounded-full bg-black/40 backdrop-blur-sm text-white active:scale-90 transition-transform">
+              <div className="p-3 rounded-full bg-black/40 text-white active:scale-90 transition-transform">
                 <MessageCircle className="h-7 w-7" />
               </div>
               {item.commentsCount !== undefined && (
@@ -417,7 +417,7 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
               onClick={(e) => { e.stopPropagation(); onShare(); }}
               className="flex flex-col items-center gap-1"
             >
-              <div className="p-3 rounded-full bg-black/40 backdrop-blur-sm text-white active:scale-90 transition-transform">
+              <div className="p-3 rounded-full bg-black/40 text-white active:scale-90 transition-transform">
                 <Share2 className="h-7 w-7" />
               </div>
             </button>

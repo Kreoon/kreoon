@@ -399,7 +399,7 @@ export function ContentVideoCard({
                   className="absolute inset-0 flex items-center justify-center cursor-pointer"
                   onClick={togglePlayPause}
                 >
-                  <div className="h-14 w-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <div className="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center">
                     <Play className="h-6 w-6 text-white fill-white ml-1" />
                   </div>
                 </div>
@@ -427,7 +427,7 @@ export function ContentVideoCard({
 
           {/* Variant selector */}
           {hasMultipleVariants && (
-            <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full">
+            <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-black/60 px-2 py-1 rounded-full">
               <button
                 onClick={() => {
                   setCurrentVariantIndex(prev => {

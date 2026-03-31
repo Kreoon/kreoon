@@ -287,7 +287,7 @@ export const ContentCard = memo(function ContentCard({
       {/* Play icon overlay */}
       {isVideo && !isHovered && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="p-3 rounded-full bg-black/40 backdrop-blur-sm">
+          <div className="p-3 rounded-full bg-black/40">
             <Play className="h-6 w-6 text-white fill-white" />
           </div>
         </div>

@@ -239,14 +239,14 @@ export function FullscreenContentViewer({
       {/* Close button */}
       <button
         onClick={onClose}
-        className="absolute top-[calc(env(safe-area-inset-top)+1rem)] right-4 z-50 p-3 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/40 transition-all shadow-lg border border-white/20 pointer-events-auto"
+        className="absolute top-[calc(env(safe-area-inset-top)+1rem)] right-4 z-50 p-3 rounded-full bg-white/20 text-white hover:bg-white/40 transition-all shadow-lg border border-white/20 pointer-events-auto"
         aria-label="Cerrar"
       >
         <X className="h-7 w-7" />
       </button>
 
       {/* Counter */}
-      <div className="absolute top-[calc(env(safe-area-inset-top)+1rem)] left-4 z-50 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm text-white text-sm font-medium pointer-events-none">
+      <div className="absolute top-[calc(env(safe-area-inset-top)+1rem)] left-4 z-50 px-3 py-1.5 rounded-full bg-black/50 text-white text-sm font-medium pointer-events-none">
         {currentIndex + 1} / {items.length}
       </div>
 
@@ -256,7 +256,7 @@ export function FullscreenContentViewer({
           onClick={goToPrevious}
           disabled={currentIndex === 0}
           className={cn(
-            "p-3 rounded-full bg-black/50 backdrop-blur-sm text-white transition-all",
+            "p-3 rounded-full bg-black/50 text-white transition-all",
             currentIndex === 0 ? "opacity-30 cursor-not-allowed" : "hover:bg-black/70"
           )}
         >
@@ -266,7 +266,7 @@ export function FullscreenContentViewer({
           onClick={goToNext}
           disabled={currentIndex === items.length - 1}
           className={cn(
-            "p-3 rounded-full bg-black/50 backdrop-blur-sm text-white transition-all",
+            "p-3 rounded-full bg-black/50 text-white transition-all",
             currentIndex === items.length - 1 ? "opacity-30 cursor-not-allowed" : "hover:bg-black/70"
           )}
         >
@@ -313,7 +313,7 @@ export function FullscreenContentViewer({
           
           {/* Variant selector */}
           {hasMultipleVariants && (
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full z-20">
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 px-4 py-2 rounded-full z-20">
               <button
                 onClick={() => setCurrentVariantIndex(prev => Math.max(0, prev - 1))}
                 disabled={currentVariantIndex === 0}
@@ -344,7 +344,7 @@ export function FullscreenContentViewer({
           {/* Mute toggle */}
           <button
             onClick={() => setMuted(!muted)}
-            className="p-3 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors"
+            className="p-3 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors"
           >
             {muted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
           </button>
@@ -353,7 +353,7 @@ export function FullscreenContentViewer({
           <Drawer open={showComments} onOpenChange={setShowComments}>
             <DrawerTrigger asChild>
               <button className="flex flex-col items-center gap-1">
-                <div className="p-3 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors">
+                <div className="p-3 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors">
                   <MessageCircle className="h-6 w-6" />
                 </div>
               </button>
@@ -367,7 +367,7 @@ export function FullscreenContentViewer({
           {onDownload && (
             <button
               onClick={() => onDownload(currentItem)}
-              className="p-3 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors"
+              className="p-3 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors"
             >
               <Download className="h-6 w-6" />
             </button>
@@ -405,7 +405,7 @@ export function FullscreenContentViewer({
         {mode === 'review' && showActions && (onApprove || onReject) && (
           <div className="absolute inset-x-0 bottom-0 z-30">
             {showFeedbackInput ? (
-              <div className="bg-black/90 backdrop-blur-xl p-4 space-y-3">
+              <div className="bg-black/90 p-4 space-y-3">
                 <Textarea
                   ref={textareaRef}
                   placeholder="Escribe tus comentarios o correcciones..."

@@ -48,12 +48,12 @@ interface StatCardProps {
 
 function StatCard({ title, value, icon: Icon, trend, description }: StatCardProps) {
   return (
-    <Card className="bg-social-card border-social-border">
+    <Card className="bg-card border-border">
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-sm text-social-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold text-social-foreground mt-1">{value}</p>
+            <p className="text-sm text-muted-foreground">{title}</p>
+            <p className="text-2xl font-bold text-foreground mt-1">{value}</p>
             {trend && (
               <div className={cn(
                 "flex items-center gap-1 text-sm mt-1",
@@ -68,11 +68,11 @@ function StatCard({ title, value, icon: Icon, trend, description }: StatCardProp
               </div>
             )}
             {description && (
-              <p className="text-xs text-social-muted-foreground mt-1">{description}</p>
+              <p className="text-xs text-muted-foreground mt-1">{description}</p>
             )}
           </div>
-          <div className="p-3 rounded-sm bg-social-accent/10">
-            <Icon className="h-5 w-5 text-social-accent" />
+          <div className="p-3 rounded-sm bg-secondary">
+            <Icon className="h-5 w-5 text-primary" />
           </div>
         </div>
       </CardContent>
@@ -124,7 +124,7 @@ export default function CompanyDashboardPage() {
   // Show onboarding if requested
   if (showOnboarding) {
     return (
-      <div className="min-h-screen bg-social-background p-6">
+      <div className="min-h-screen bg-background p-6">
         <CompanyOnboarding
           onComplete={() => setShowOnboarding(false)}
           onSkip={() => setShowOnboarding(false)}
@@ -136,21 +136,21 @@ export default function CompanyDashboardPage() {
   // Show prompt to create profile
   if (!hasProfile) {
     return (
-      <div className="min-h-screen bg-social-background flex items-center justify-center p-6">
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <div className="max-w-md text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-social-accent/20 mb-6">
-            <LayoutDashboard className="h-10 w-10 text-social-accent" />
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/20 mb-6">
+            <LayoutDashboard className="h-10 w-10 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-social-foreground mb-2">
+          <h1 className="text-2xl font-bold text-foreground mb-2">
             Bienvenido al Marketplace
           </h1>
-          <p className="text-social-muted-foreground mb-6">
+          <p className="text-muted-foreground mb-6">
             Configura tu perfil de empresa para empezar a encontrar creadores
             y gestionar colaboraciones
           </p>
           <Button
             onClick={() => setShowOnboarding(true)}
-            className="gap-2 bg-gradient-to-r from-social-accent to-purple-600"
+            className="gap-2 bg-gradient-to-r from-primary to-purple-600"
           >
             <Sparkles className="h-4 w-4" />
             Configurar perfil de empresa
@@ -161,9 +161,9 @@ export default function CompanyDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-social-background">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-social-border bg-social-card/50 backdrop-blur-sm">
+      <div className="border-b border-border bg-card/50">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
@@ -171,16 +171,16 @@ export default function CompanyDashboardPage() {
                 {companyProfile?.company_logo_url ? (
                   <AvatarImage src={companyProfile.company_logo_url} />
                 ) : (
-                  <AvatarFallback className="bg-social-accent/20 text-social-accent text-xl">
+                  <AvatarFallback className="bg-primary/20 text-primary text-xl">
                     {companyProfile?.company_name?.[0] || 'C'}
                   </AvatarFallback>
                 )}
               </Avatar>
               <div>
-                <h1 className="text-2xl font-bold text-social-foreground">
+                <h1 className="text-2xl font-bold text-foreground">
                   {companyProfile?.company_name || 'Mi Empresa'}
                 </h1>
-                <p className="text-social-muted-foreground">
+                <p className="text-muted-foreground">
                   Dashboard del Marketplace
                 </p>
               </div>
@@ -189,9 +189,9 @@ export default function CompanyDashboardPage() {
             <div className="flex items-center gap-3">
               {/* Profile completion */}
               {profileProgress < 100 && (
-                <div className="hidden md:flex items-center gap-3 p-3 rounded-sm bg-social-muted">
+                <div className="hidden md:flex items-center gap-3 p-3 rounded-sm bg-background">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-social-foreground">
+                    <p className="text-sm font-medium text-foreground">
                       Perfil {profileProgress}% completo
                     </p>
                     <Progress value={profileProgress} className="h-1.5 mt-1 w-32" />
@@ -208,7 +208,7 @@ export default function CompanyDashboardPage() {
 
               <Button
                 onClick={() => navigate('/marketplace/explore')}
-                className="gap-2 bg-gradient-to-r from-social-accent to-purple-600"
+                className="gap-2 bg-gradient-to-r from-primary to-purple-600"
               >
                 <Sparkles className="h-4 w-4" />
                 Buscar creadores
@@ -250,10 +250,10 @@ export default function CompanyDashboardPage() {
           {/* Main column */}
           <div className="lg:col-span-2 space-y-6">
             {/* Recent proposals */}
-            <Card className="bg-social-card border-social-border">
+            <Card className="bg-card border-border">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-social-foreground flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-social-accent" />
+                <CardTitle className="text-foreground flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
                   Propuestas recientes
                 </CardTitle>
                 <Button
@@ -268,11 +268,11 @@ export default function CompanyDashboardPage() {
               <CardContent>
                 {proposalsLoading ? (
                   <div className="text-center py-8">
-                    <div className="animate-spin h-6 w-6 border-2 border-social-accent border-t-transparent rounded-full mx-auto" />
+                    <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto" />
                   </div>
                 ) : proposals.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-social-muted-foreground">
+                    <p className="text-muted-foreground">
                       No tienes propuestas aún
                     </p>
                     <Button
@@ -290,7 +290,7 @@ export default function CompanyDashboardPage() {
                         key={proposal.id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="flex items-center gap-4 p-3 rounded-sm hover:bg-social-muted/50 transition-colors cursor-pointer"
+                        className="flex items-center gap-4 p-3 rounded-sm hover:bg-background/50 transition-colors cursor-pointer"
                         onClick={() => navigate(`/marketplace/proposals/${proposal.id}`)}
                       >
                         <Avatar className="h-10 w-10">
@@ -300,10 +300,10 @@ export default function CompanyDashboardPage() {
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-social-foreground truncate">
+                          <p className="font-medium text-foreground truncate">
                             {proposal.title}
                           </p>
-                          <p className="text-sm text-social-muted-foreground">
+                          <p className="text-sm text-muted-foreground">
                             {proposal.creator?.full_name}
                           </p>
                         </div>
@@ -321,7 +321,7 @@ export default function CompanyDashboardPage() {
                             {proposal.status === 'cancelled' && 'Cancelado'}
                           </Badge>
                           {proposal.budget_amount && (
-                            <p className="text-sm font-medium text-social-foreground mt-1">
+                            <p className="text-sm font-medium text-foreground mt-1">
                               ${proposal.budget_amount}
                             </p>
                           )}
@@ -334,10 +334,10 @@ export default function CompanyDashboardPage() {
             </Card>
 
             {/* Top matches */}
-            <Card className="bg-social-card border-social-border">
+            <Card className="bg-card border-border">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-social-foreground flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-social-accent" />
+                <CardTitle className="text-foreground flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
                   Creadores recomendados
                 </CardTitle>
                 <Button
@@ -352,14 +352,14 @@ export default function CompanyDashboardPage() {
               <CardContent>
                 {isSearching ? (
                   <div className="text-center py-8">
-                    <div className="animate-spin h-6 w-6 border-2 border-social-accent border-t-transparent rounded-full mx-auto" />
-                    <p className="text-sm text-social-muted-foreground mt-2">
+                    <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto" />
+                    <p className="text-sm text-muted-foreground mt-2">
                       Buscando los mejores matches...
                     </p>
                   </div>
                 ) : topMatches.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-social-muted-foreground">
+                    <p className="text-muted-foreground">
                       Completa tu perfil para ver recomendaciones
                     </p>
                   </div>
@@ -382,9 +382,9 @@ export default function CompanyDashboardPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Quick actions */}
-            <Card className="bg-social-card border-social-border">
+            <Card className="bg-card border-border">
               <CardHeader>
-                <CardTitle className="text-social-foreground text-base">
+                <CardTitle className="text-foreground text-base">
                   Acciones rápidas
                 </CardTitle>
               </CardHeader>
@@ -394,7 +394,7 @@ export default function CompanyDashboardPage() {
                   className="w-full justify-start gap-3"
                   onClick={() => navigate('/marketplace/explore')}
                 >
-                  <Sparkles className="h-4 w-4 text-social-accent" />
+                  <Sparkles className="h-4 w-4 text-primary" />
                   Buscar creadores
                 </Button>
                 <Button
@@ -402,7 +402,7 @@ export default function CompanyDashboardPage() {
                   className="w-full justify-start gap-3"
                   onClick={() => navigate('/marketplace/favorites')}
                 >
-                  <Heart className="h-4 w-4 text-social-accent" />
+                  <Heart className="h-4 w-4 text-primary" />
                   Favoritos
                   <Badge variant="secondary" className="ml-auto">
                     {favorites.length}
@@ -412,33 +412,33 @@ export default function CompanyDashboardPage() {
             </Card>
 
             {/* Activity */}
-            <Card className="bg-social-card border-social-border">
+            <Card className="bg-card border-border">
               <CardHeader>
-                <CardTitle className="text-social-foreground text-base flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-social-accent" />
+                <CardTitle className="text-foreground text-base flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-primary" />
                   Tu actividad
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-social-muted-foreground">
+                    <span className="text-sm text-muted-foreground">
                       Perfiles vistos
                     </span>
-                    <span className="font-medium text-social-foreground">
+                    <span className="font-medium text-foreground">
                       {Math.floor(Math.random() * 50) + 10}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-social-muted-foreground">
+                    <span className="text-sm text-muted-foreground">
                       Mensajes enviados
                     </span>
-                    <span className="font-medium text-social-foreground">
+                    <span className="font-medium text-foreground">
                       {conversations.length * 3}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-social-muted-foreground">
+                    <span className="text-sm text-muted-foreground">
                       Tasa de respuesta
                     </span>
                     <span className="font-medium text-green-500">

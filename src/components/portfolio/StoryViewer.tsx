@@ -355,7 +355,7 @@ export function StoryViewer({
 
       {/* Volume Controls Panel */}
       {showVolumeControls && (
-        <div className="absolute top-20 right-4 z-30 bg-black/80 backdrop-blur-lg rounded-sm p-4 space-y-4 min-w-[200px]">
+        <div className="absolute top-20 right-4 z-30 bg-black/80 rounded-sm p-4 space-y-4 min-w-[200px]">
           {/* Video Volume */}
           {isVideo && (
             <div className="space-y-2">

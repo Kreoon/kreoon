@@ -59,7 +59,7 @@ export function HeroSection({ onRegister }: SectionProps) {
       <div className="relative max-w-5xl mx-auto text-center z-10">
         {/* Badge with glow */}
         <div className="animate-fade-in">
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-xl text-primary text-sm font-medium shadow-lg shadow-primary/10">
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-sm font-medium shadow-lg shadow-primary/10">
             <Sparkles className="h-4 w-4" />
             <span>Creative Operating System</span>
             <span className="h-1.5 w-1.5 bg-green-500 rounded-full animate-pulse" />
@@ -96,7 +96,7 @@ export function HeroSection({ onRegister }: SectionProps) {
             size="lg" 
             variant="outline"
             onClick={() => scrollToSection('modulos')}
-            className="w-full sm:w-auto text-lg px-8 py-6 border-white/20 bg-white/5 backdrop-blur-xl text-white hover:bg-white/10 hover:border-primary/30 transition-all duration-300"
+            className="w-full sm:w-auto text-lg px-8 py-6 border-white/20 bg-white/5 text-white hover:bg-white/10 hover:border-primary/30 transition-all duration-300"
           >
             Explorar módulos
           </Button>
@@ -122,7 +122,7 @@ export function HeroSection({ onRegister }: SectionProps) {
 
       {/* Scroll Indicator - Tech style */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-        <div className="w-6 h-10 rounded-full border-2 border-primary/30 flex items-start justify-center p-2 bg-primary/5 backdrop-blur">
+        <div className="w-6 h-10 rounded-full border-2 border-primary/30 flex items-start justify-center p-2 bg-primary/5">
           <div className="w-1 h-2 bg-primary rounded-full animate-pulse" />
         </div>
       </div>
@@ -333,7 +333,7 @@ export function WhatIsSection() {
           
           <div className="relative">
             <div className="aspect-square rounded-sm bg-gradient-to-br from-primary/20 via-primary/10 to-transparent p-8 border border-border/50">
-              <div className="h-full w-full rounded-sm bg-card/80 backdrop-blur border border-border/50 p-6 flex flex-col justify-center items-center text-center">
+              <div className="h-full w-full rounded-sm bg-card/80 border border-border/50 p-6 flex flex-col justify-center items-center text-center">
                 <div className="h-20 w-20 rounded-sm bg-primary flex items-center justify-center mb-6 shadow-xl shadow-primary/25">
                   <span className="text-primary-foreground font-bold text-4xl">K</span>
                 </div>
@@ -521,7 +521,7 @@ export function SistemaUPSection() {
           
           <div className="relative">
             <div className="aspect-[4/3] rounded-sm bg-gradient-to-br from-amber-500/20 via-amber-500/10 to-transparent p-8 border border-amber-500/20">
-              <div className="h-full w-full rounded-sm bg-card/80 backdrop-blur border border-border/50 flex items-center justify-center">
+              <div className="h-full w-full rounded-sm bg-card/80 border border-border/50 flex items-center justify-center">
                 <div className="text-center">
                   <div className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600">
                     UP

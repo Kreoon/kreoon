@@ -131,7 +131,7 @@ export function MarketplaceKanbanBoard({ columns, viewRole }: MarketplaceKanbanB
   return (
     <div className="bg-background min-h-[calc(100vh-3.5rem)]">
       {/* Header */}
-      <div className="border-b border-white/10 bg-background/95 backdrop-blur-sm sticky top-0 z-10">
+      <div className="border-b border-white/10 bg-background/95 sticky top-0 z-10">
         <div className="max-w-[1600px] mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -194,7 +194,7 @@ export function MarketplaceKanbanBoard({ columns, viewRole }: MarketplaceKanbanB
                       draggable
                       onDragStart={e => handleDragStart(e, project.id)}
                       onClick={() => setSelectedProjectId(project.id)}
-                      className="bg-card/80 backdrop-blur border border-white/5 rounded-sm overflow-hidden cursor-pointer hover:border-purple-500/30 transition-all group"
+                      className="bg-card/80 border border-white/5 rounded-sm overflow-hidden cursor-pointer hover:border-purple-500/30 transition-all group"
                     >
                       {/* Vertical thumbnail preview */}
                       <div className="flex gap-3 p-3">

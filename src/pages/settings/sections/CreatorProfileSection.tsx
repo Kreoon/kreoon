@@ -37,7 +37,7 @@ export default function CreatorProfileSection() {
         </TabsContent>
 
         <TabsContent value="talent-dna" className="mt-0">
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-sm p-6 mb-6">
+          <div className="bg-white/5 border border-white/10 rounded-sm p-6 mb-6">
             <div className="flex items-start gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/20">
                 <Dna className="h-6 w-6 text-emerald-400" />

@@ -128,7 +128,7 @@ const PremiumStatsCard = ({
       onClick={onClick}
       className={cn(
         "group relative overflow-hidden rounded-sm border p-6",
-        "bg-[var(--nova-bg-elevated)] backdrop-blur-xl",
+        "bg-[var(--nova-bg-elevated)]",
         "transition-all duration-500 hover:scale-[1.02] nova-hover-glow",
         onClick && "cursor-pointer"
       )}
@@ -140,7 +140,7 @@ const PremiumStatsCard = ({
       />
 
       <div
-        className="absolute right-4 top-4 p-3 rounded-sm backdrop-blur-sm transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6"
+        className="absolute right-4 top-4 p-3 rounded-sm transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6"
         style={{ background: novaColors.bg }}
       >
         <Icon className="h-6 w-6" style={{ color: novaColors.text }} />
@@ -221,7 +221,7 @@ const LargeKpiCard = ({
       onClick={onClick}
       className={cn(
         "group relative overflow-hidden rounded-sm border p-8",
-        "bg-[var(--nova-bg-elevated)] backdrop-blur-xl",
+        "bg-[var(--nova-bg-elevated)]",
         "border-[var(--nova-border-default)]",
         "transition-all duration-500 nova-hover-glow",
         onClick && "cursor-pointer"
@@ -232,7 +232,7 @@ const LargeKpiCard = ({
       <div className="relative z-10 flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 rounded-sm bg-[rgba(139,92,246,0.1)] backdrop-blur-sm">
+            <div className="p-3 rounded-sm bg-[rgba(139,92,246,0.1)]">
               <Icon className="h-8 w-8 text-[var(--nova-accent-primary)]" />
             </div>
             <p className="text-lg font-medium text-[var(--nova-text-secondary)]">{title}</p>
@@ -778,7 +778,7 @@ export default function Dashboard() {
       </div>
 
       {/* Filters section */}
-      <div className="sticky top-0 z-30 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+      <div className="sticky top-0 z-30 border-b border-border/50 bg-background/80">
 
         {/* Filters - Mobile optimized */}
         {isAdmin && (

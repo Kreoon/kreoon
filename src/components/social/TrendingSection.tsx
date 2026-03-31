@@ -99,16 +99,16 @@ export function TrendingSection({ className, variant = 'sidebar' }: TrendingSect
     return (
       <div className={cn("glass-card p-4", className)}>
         <div className="flex items-center gap-2 mb-4">
-          <div className="p-2 rounded-full bg-gradient-to-r from-social-accent to-pink-500">
+          <div className="p-2 rounded-full bg-gradient-to-r from-primary to-pink-500">
             <TrendingUp className="h-4 w-4 text-white" />
           </div>
-          <h3 className="font-semibold text-social-foreground">Tendencias</h3>
+          <h3 className="font-semibold text-foreground">Tendencias</h3>
         </div>
 
         {loading ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-10 bg-social-muted" />
+              <Skeleton key={i} className="h-10 bg-background" />
             ))}
           </div>
         ) : (
@@ -125,12 +125,12 @@ export function TrendingSection({ className, variant = 'sidebar' }: TrendingSect
                   className="flex items-center justify-between p-2 rounded-sm hover:bg-white/5 transition-colors group"
                 >
                   <div className="flex items-center gap-2">
-                    <Hash className="h-4 w-4 text-social-accent" />
-                    <span className="font-medium text-social-foreground group-hover:text-social-accent transition-colors">
+                    <Hash className="h-4 w-4 text-primary" />
+                    <span className="font-medium text-foreground group-hover:text-primary transition-colors">
                       {hashtag.tag}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-social-muted-foreground">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <span>{formatCount(hashtag.count)}</span>
                     {hashtag.change > 0 && (
                       <span className="text-green-500 text-xs">+{hashtag.change}%</span>
@@ -144,7 +144,7 @@ export function TrendingSection({ className, variant = 'sidebar' }: TrendingSect
 
         <Link
           to="/marketplace"
-          className="flex items-center justify-center gap-1 mt-4 text-sm text-social-accent hover:underline"
+          className="flex items-center justify-center gap-1 mt-4 text-sm text-primary hover:underline"
         >
           Ver más <ChevronRight className="h-3 w-3" />
         </Link>
@@ -155,14 +155,14 @@ export function TrendingSection({ className, variant = 'sidebar' }: TrendingSect
   return (
     <div className={cn("space-y-4", className)}>
       {/* Tabs */}
-      <div className="flex gap-1 p-1 glass-social rounded-sm">
+      <div className="flex gap-1 p-1 bg-card/95 border border-border rounded-sm">
         <button
           onClick={() => setActiveTab('hashtags')}
           className={cn(
             "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-sm text-sm font-medium transition-all",
             activeTab === 'hashtags'
-              ? "bg-social-accent text-white"
-              : "text-social-muted-foreground hover:text-social-foreground hover:bg-white/5"
+              ? "bg-primary text-white"
+              : "text-muted-foreground hover:text-foreground hover:bg-white/5"
           )}
         >
           <Hash className="h-4 w-4" />
@@ -173,8 +173,8 @@ export function TrendingSection({ className, variant = 'sidebar' }: TrendingSect
           className={cn(
             "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-sm text-sm font-medium transition-all",
             activeTab === 'creators'
-              ? "bg-social-accent text-white"
-              : "text-social-muted-foreground hover:text-social-foreground hover:bg-white/5"
+              ? "bg-primary text-white"
+              : "text-muted-foreground hover:text-foreground hover:bg-white/5"
           )}
         >
           <Users className="h-4 w-4" />
@@ -186,7 +186,7 @@ export function TrendingSection({ className, variant = 'sidebar' }: TrendingSect
       <div className="space-y-2">
         {loading ? (
           Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-12 bg-social-muted rounded-sm" />
+            <Skeleton key={i} className="h-12 bg-background rounded-sm" />
           ))
         ) : activeTab === 'hashtags' ? (
           hashtags.map((hashtag, index) => (
@@ -200,14 +200,14 @@ export function TrendingSection({ className, variant = 'sidebar' }: TrendingSect
                 to={`/marketplace?tag=${hashtag.tag}`}
                 className="flex items-center gap-3 p-3 rounded-sm glass-card-hover group"
               >
-                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-social-accent/20 to-pink-500/20 group-hover:from-social-accent/30 group-hover:to-pink-500/30 transition-colors">
-                  <Hash className="h-5 w-5 text-social-accent" />
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-pink-500/20 group-hover:from-primary/30 group-hover:to-pink-500/30 transition-colors">
+                  <Hash className="h-5 w-5 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-social-foreground group-hover:text-social-accent transition-colors">
+                  <p className="font-semibold text-foreground group-hover:text-primary transition-colors">
                     #{hashtag.tag}
                   </p>
-                  <p className="text-sm text-social-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     {formatCount(hashtag.count)} publicaciones
                   </p>
                 </div>
@@ -218,7 +218,7 @@ export function TrendingSection({ className, variant = 'sidebar' }: TrendingSect
                       <span className="text-xs font-medium">+{hashtag.change}%</span>
                     </div>
                   ) : (
-                    <span className="text-xs text-social-muted-foreground">{hashtag.change}%</span>
+                    <span className="text-xs text-muted-foreground">{hashtag.change}%</span>
                   )}
                 </div>
               </Link>
@@ -237,31 +237,31 @@ export function TrendingSection({ className, variant = 'sidebar' }: TrendingSect
                 className="flex items-center gap-3 p-3 rounded-sm glass-card-hover group"
               >
                 <div className="relative">
-                  <Avatar className="h-10 w-10 ring-2 ring-social-border group-hover:ring-social-accent/50 transition-all">
+                  <Avatar className="h-10 w-10 ring-2 ring-border group-hover:ring-primary/50 transition-all">
                     <AvatarImage src={creator.avatar_url || undefined} />
-                    <AvatarFallback className="bg-social-muted text-social-foreground">
+                    <AvatarFallback className="bg-background text-foreground">
                       {creator.name?.[0] || creator.username?.[0] || '?'}
                     </AvatarFallback>
                   </Avatar>
                   {creator.is_verified && (
-                    <div className="absolute -bottom-0.5 -right-0.5 p-0.5 rounded-full bg-social-background">
-                      <Sparkles className="h-3 w-3 text-social-accent" />
+                    <div className="absolute -bottom-0.5 -right-0.5 p-0.5 rounded-full bg-background">
+                      <Sparkles className="h-3 w-3 text-primary" />
                     </div>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-social-foreground truncate group-hover:text-social-accent transition-colors">
+                  <p className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
                     {creator.name || creator.username}
                   </p>
-                  <p className="text-sm text-social-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     @{creator.username}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium text-social-foreground">
+                  <p className="text-sm font-medium text-foreground">
                     {formatCount(creator.followers_count)}
                   </p>
-                  <p className="text-xs text-social-muted-foreground">seguidores</p>
+                  <p className="text-xs text-muted-foreground">seguidores</p>
                 </div>
               </Link>
             </motion.div>

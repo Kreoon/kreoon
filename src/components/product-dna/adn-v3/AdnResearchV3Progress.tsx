@@ -417,7 +417,7 @@ export function AdnResearchV3Progress({
         className={`
           w-full max-w-2xl mx-auto rounded-sm border border-green-500/30
           bg-gradient-to-b from-green-500/[0.08] to-white/[0.02]
-          backdrop-blur-xl overflow-hidden text-center
+          overflow-hidden text-center
           ${className}
         `}
       >
@@ -507,7 +507,7 @@ export function AdnResearchV3Progress({
         animate={{ opacity: 1 }}
         className={`
           w-full max-w-2xl mx-auto rounded-sm border border-red-500/30
-          bg-red-500/5 backdrop-blur-xl p-8 text-center
+          bg-red-500/5 p-8 text-center
           ${className}
         `}
       >
@@ -538,7 +538,7 @@ export function AdnResearchV3Progress({
       className={`
         w-full max-w-2xl mx-auto rounded-sm border border-white/10
         bg-gradient-to-b from-white/[0.06] to-white/[0.02]
-        backdrop-blur-xl overflow-hidden
+        overflow-hidden
         ${className}
       `}
     >

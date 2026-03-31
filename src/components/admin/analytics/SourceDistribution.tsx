@@ -37,7 +37,7 @@ export function SourceDistribution({ data }: SourceDistributionProps) {
   const hasRevenue = data.some(s => s.revenue > 0);
 
   return (
-    <div className="bg-[var(--nova-bg-elevated)] dark:bg-[var(--nova-bg-elevated)] backdrop-blur-sm rounded-sm p-6 border border-[var(--nova-border-default)]">
+    <div className="bg-[var(--nova-bg-elevated)] dark:bg-[var(--nova-bg-elevated)] rounded-sm p-6 border border-[var(--nova-border-default)]">
       <h3 className="text-lg font-semibold text-foreground mb-4">
         {hasRevenue ? 'Revenue por Fuente' : 'Visitantes por Fuente'}
       </h3>

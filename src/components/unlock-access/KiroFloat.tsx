@@ -77,7 +77,7 @@ export const KiroFloat = memo(function KiroFloat({
               'bg-gradient-to-br from-slate-800/95 via-purple-900/30 to-slate-900/95',
               'border border-purple-500/30',
               'shadow-xl shadow-purple-500/20',
-              'backdrop-blur-lg'
+              ''
             )}
           >
             {/* Header */}

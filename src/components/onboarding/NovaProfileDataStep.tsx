@@ -16,12 +16,13 @@ import { z } from 'zod';
 import { motion } from 'framer-motion';
 import {
   User, Mail, Phone, MapPin, FileText, Calendar,
-  AtSign, ChevronDown, AlertCircle, CheckCircle2, Loader2,
-  AlertTriangle, ArrowRight, LogOut
+  AtSign, AlertCircle, CheckCircle2, Loader2,
+  AlertTriangle, ArrowRight, ArrowLeft
 } from 'lucide-react';
 import { useOnboardingGate, ProfileData, City } from '@/hooks/useOnboardingGate';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { OnboardingShell, TALENT_STEPS, CLIENT_STEPS } from './OnboardingShell';
 
 // ─── Schema ─────────────────────────────────────────────────────
 const profileSchema = z.object({
@@ -57,7 +58,9 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 interface NovaProfileDataStepProps {
   onComplete: () => void;
+  onBack?: () => void;
   onLogout?: () => void;
+  isTalentFlow?: boolean;
 }
 
 // ─── Nova Input Component ───────────────────────────────────────
@@ -77,21 +80,21 @@ function NovaField({ label, required, error, icon, children, className, htmlFor,
     <div className={cn("space-y-2", className)}>
       <label
         htmlFor={htmlFor}
-        className="block text-sm font-medium text-nova-text-primary dark:text-zinc-100 text-zinc-700"
+        className="block text-sm font-medium text-foreground"
       >
         {label}
-        {required && <span className="ml-1 text-pink-500 dark:text-pink-500" aria-hidden="true">*</span>}
+        {required && <span className="ml-1 text-destructive" aria-hidden="true">*</span>}
       </label>
       <div className="relative">
         {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 dark:text-zinc-500" aria-hidden="true">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground" aria-hidden="true">
             {icon}
           </div>
         )}
         {children}
       </div>
       {error && (
-        <p id={errorId} className="text-xs text-red-500 dark:text-red-400 flex items-center gap-1" role="alert">
+        <p id={errorId} className="text-xs text-destructive flex items-center gap-1" role="alert">
           <AlertCircle className="w-3 h-3" aria-hidden="true" />
           {error}
         </p>
@@ -116,13 +119,12 @@ function NovaSelect({ value, onChange, options, placeholder, hasIcon, error }: N
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className={cn(
-        "w-full h-12 rounded-sm cursor-pointer",
-        "bg-white text-zinc-900",
-        "dark:bg-zinc-900 dark:text-white",
-        "border border-zinc-200 dark:border-zinc-700",
-        "focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20",
+        "w-full h-12 rounded-[0.125rem] cursor-pointer",
+        "bg-background text-foreground",
+        "border border-border",
+        "focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20",
         hasIcon ? "pl-11 pr-4" : "pl-4 pr-4",
-        error && "border-red-500"
+        error && "border-destructive"
       )}
     >
       {placeholder && <option value="">{placeholder}</option>}
@@ -136,7 +138,10 @@ function NovaSelect({ value, onChange, options, placeholder, hasIcon, error }: N
 }
 
 // ─── Main Component ─────────────────────────────────────────────
-export function NovaProfileDataStep({ onComplete, onLogout }: NovaProfileDataStepProps) {
+export function NovaProfileDataStep({ onComplete, onBack, onLogout, isTalentFlow = true }: NovaProfileDataStepProps) {
+  // Para talento: paso 3 de 4, para cliente: paso 2 de 3
+  const steps = isTalentFlow ? TALENT_STEPS : CLIENT_STEPS;
+  const currentStep = isTalentFlow ? 3 : 2;
   const {
     existingProfileData,
     countries,
@@ -225,92 +230,61 @@ export function NovaProfileDataStep({ onComplete, onLogout }: NovaProfileDataSte
       await saveProfileData(data as ProfileData);
       toast.success('Datos guardados correctamente');
       onComplete();
-    } catch (error: any) {
-      if (error.message === 'username_taken') {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      if (errorMessage === 'username_taken') {
         toast.error('El username ya está en uso');
         setUsernameStatus('taken');
       } else {
-        toast.error(`Error al guardar: ${error?.message || 'Error desconocido'}`);
+        toast.error(`Error al guardar: ${errorMessage}`);
       }
     }
   }, [saveProfileData, usernameStatus, onComplete]);
 
   // Input base classes - optimized hierarchy
   const inputClasses = cn(
-    "w-full h-12 rounded",
-    "bg-white dark:bg-[#1a1a24]",
-    "border border-zinc-200 dark:border-zinc-700/50",
-    "text-zinc-900 dark:text-zinc-100",
-    "placeholder:text-zinc-400 dark:placeholder:text-zinc-500",
+    "w-full h-12 rounded-[0.125rem]",
+    "bg-background",
+    "border border-border",
+    "text-foreground",
+    "placeholder:text-muted-foreground",
     "transition-colors duration-150",
-    "focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+    "focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
   );
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0a0a0f]">
-
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white dark:bg-[#0f0f14] border-b border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-xl font-bold text-zinc-900 dark:text-white">KREOON</span>
-            <span className="px-2.5 py-1 text-xs font-medium bg-purple-600 text-white rounded-full">
-              Verificación
-            </span>
-          </div>
-          {onLogout && (
-            <button
-              onClick={onLogout}
-              className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Cerrar sesión</span>
-            </button>
-          )}
+    <OnboardingShell currentStep={currentStep} steps={steps} onLogout={onLogout}>
+      {/* Back Button */}
+      {onBack && (
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {isTalentFlow ? 'Volver' : 'Cambiar tipo de cuenta'}
+          </button>
         </div>
-      </header>
-
-      {/* Progress Steps */}
-      <div className="max-w-md mx-auto px-4 py-6">
-        <div className="flex items-center justify-center gap-4">
-          {/* Step 1 - Active */}
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white text-sm font-medium">
-              1
-            </div>
-            <span className="text-sm font-medium text-zinc-900 dark:text-white hidden sm:inline">Datos personales</span>
-          </div>
-          {/* Line */}
-          <div className="w-12 sm:w-16 h-px bg-zinc-300 dark:bg-zinc-700" />
-          {/* Step 2 - Pending */}
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 dark:text-zinc-500 text-sm font-medium">
-              2
-            </div>
-            <span className="text-sm text-zinc-500 dark:text-zinc-500 hidden sm:inline">Términos legales</span>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Main Card */}
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 pb-12">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
           className={cn(
-            "rounded-sm p-6 sm:p-8 md:p-10",
-            "bg-white dark:bg-[#14141f]",
-            "border border-zinc-200 dark:border-zinc-800",
-            "shadow-sm dark:shadow-none"
+            "rounded-[0.125rem] p-6 sm:p-8 md:p-10",
+            "bg-card",
+            "border border-border"
           )}
         >
           {/* Title */}
           <div className="text-center mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white mb-3">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
               Completa tu perfil
             </h1>
-            <p className="text-zinc-600 dark:text-zinc-400 text-sm sm:text-base max-w-lg mx-auto">
+            <p className="text-muted-foreground text-sm sm:text-base max-w-lg mx-auto">
               Para usar KREOON necesitas completar tu información. Esto nos ayuda a protegerte y garantizar la seguridad de la comunidad.
             </p>
           </div>
@@ -353,9 +327,9 @@ export function NovaProfileDataStep({ onComplete, onLogout }: NovaProfileDataSte
           <form ref={formRef} onSubmit={handleSubmit(onSubmit, () => setSubmitAttempted(true))} className="space-y-8">
             {/* Section: Información Personal */}
             <section>
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
-                <div className="p-1.5 rounded bg-purple-100 dark:bg-purple-500/10">
-                  <User className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+              <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                <div className="p-1.5 rounded-[0.125rem] bg-primary/10">
+                  <User className="w-4 h-4 text-primary" />
                 </div>
                 Información Personal
               </h2>
@@ -387,7 +361,7 @@ export function NovaProfileDataStep({ onComplete, onLogout }: NovaProfileDataSte
                       className={cn(inputClasses, "pl-11 pr-10", errors.username && submitAttempted && "border-red-300 dark:border-red-500")}
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2" aria-hidden="true">
-                      {usernameStatus === 'checking' && <Loader2 className="w-5 h-5 text-zinc-400 animate-spin" />}
+                      {usernameStatus === 'checking' && <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />}
                       {usernameStatus === 'available' && <CheckCircle2 className="w-5 h-5 text-green-500" />}
                       {usernameStatus === 'taken' && <AlertCircle className="w-5 h-5 text-red-500" />}
                     </div>
@@ -451,16 +425,16 @@ export function NovaProfileDataStep({ onComplete, onLogout }: NovaProfileDataSte
                 </NovaField>
               </div>
 
-              <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-500">
+              <p className="mt-3 text-xs text-muted-foreground">
                 Debes ser mayor de 18 años para usar KREOON
               </p>
             </section>
 
             {/* Section: Ubicación */}
             <section>
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
-                <div className="p-1.5 rounded bg-cyan-100 dark:bg-cyan-500/10">
-                  <MapPin className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+              <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                <div className="p-1.5 rounded-[0.125rem] bg-cyan-500/10">
+                  <MapPin className="w-4 h-4 text-cyan-500" />
                 </div>
                 Ubicación
               </h2>
@@ -531,9 +505,9 @@ export function NovaProfileDataStep({ onComplete, onLogout }: NovaProfileDataSte
 
             {/* Section: Documento de Identidad */}
             <section>
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
-                <div className="p-1.5 rounded bg-emerald-100 dark:bg-emerald-500/10">
-                  <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                <div className="p-1.5 rounded-[0.125rem] bg-emerald-500/10">
+                  <FileText className="w-4 h-4 text-emerald-500" />
                 </div>
                 Documento de Identidad
               </h2>
@@ -572,14 +546,12 @@ export function NovaProfileDataStep({ onComplete, onLogout }: NovaProfileDataSte
               disabled={isSavingProfile}
               aria-label={isSavingProfile ? 'Guardando datos del perfil' : 'Continuar al siguiente paso'}
               className={cn(
-                "w-full h-12 sm:h-14 rounded font-semibold text-white",
-                "bg-gradient-to-r from-purple-600 to-purple-500",
-                "hover:from-purple-500 hover:to-purple-400",
-                "shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40",
+                "w-full h-12 sm:h-14 rounded-[0.125rem] font-semibold text-primary-foreground",
+                "bg-primary hover:bg-primary/90",
                 "transition-all duration-200",
                 "flex items-center justify-center gap-2",
-                "disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none",
-                "focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-[#0a0a0f]"
+                "disabled:opacity-50 disabled:cursor-not-allowed",
+                "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
               )}
             >
               {isSavingProfile ? (
@@ -596,15 +568,7 @@ export function NovaProfileDataStep({ onComplete, onLogout }: NovaProfileDataSte
             </button>
           </form>
         </motion.div>
-
-        {/* Footer */}
-        <footer className="mt-8 text-center">
-          <p className="text-xs text-zinc-400 dark:text-zinc-500">
-            © 2026 KREOON TECH LLC. Todos los derechos reservados.
-          </p>
-        </footer>
-      </main>
-    </div>
+    </OnboardingShell>
   );
 }
 

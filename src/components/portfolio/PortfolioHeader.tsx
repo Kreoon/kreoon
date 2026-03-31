@@ -54,7 +54,7 @@ export function PortfolioHeader({
           {/* Logo - Always visible */}
           <button
             onClick={() => navigate('/marketplace')}
-            className="h-8 w-8 rounded-lg bg-social-accent flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
+            className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
           >
             <span className="text-zinc-100 font-bold text-xs">SC</span>
           </button>

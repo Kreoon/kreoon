@@ -95,7 +95,7 @@ export function DashboardKpiCard({
           >
             <div className={cn(
               "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
-              "border backdrop-blur-sm",
+              "border",
               trend > 0
                 ? "bg-[var(--nova-success-bg)] border-[var(--nova-success)] text-[var(--nova-success)]"
                 : "bg-[var(--nova-error-bg)] border-[var(--nova-error)] text-[var(--nova-error)]"
@@ -191,7 +191,7 @@ export function PipelineItem({
       onClick={onClick}
       className={cn(
         "p-3 rounded-sm text-center transition-all cursor-pointer",
-        "border border-[var(--nova-border-default)] backdrop-blur-sm",
+        "border border-[var(--nova-border-default)]",
         "bg-[var(--nova-bg-elevated)]",
         "hover:border-[var(--nova-border-accent)]"
       )}

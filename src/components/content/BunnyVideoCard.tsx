@@ -242,7 +242,7 @@ export function BunnyVideoCard({
             </button>
             
             {/* Variation indicator */}
-            <div className="absolute top-3 left-3 z-30 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
+            <div className="absolute top-3 left-3 z-30 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
               {currentIndex + 1}/{videoUrls.length}
             </div>
           </>

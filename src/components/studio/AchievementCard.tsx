@@ -142,7 +142,7 @@ export function AchievementCard({
             </motion.button>
           </TooltipTrigger>
           <TooltipContent
-            className="bg-zinc-900/95 backdrop-blur-sm border-white/10 max-w-[200px]"
+            className="bg-zinc-900/95 border-white/10 max-w-[200px]"
           >
             <div className="flex flex-col gap-1">
               <span className="font-semibold" style={{ color: insignia.color }}>
@@ -191,7 +191,7 @@ export function AchievementCard({
       >
         {/* Locked overlay */}
         {!unlocked && (
-          <div className="absolute inset-0 bg-zinc-900/60 backdrop-blur-[1px] z-10 flex items-center justify-center">
+          <div className="absolute inset-0 bg-zinc-900/60-[1px] z-10 flex items-center justify-center">
             <Lock className="w-5 h-5 text-zinc-600" />
           </div>
         )}
@@ -275,7 +275,7 @@ export function AchievementCard({
     >
       {/* Locked overlay */}
       {!unlocked && (
-        <div className="absolute inset-0 bg-zinc-900/70 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center gap-2">
+        <div className="absolute inset-0 bg-zinc-900/70-[2px] z-10 flex flex-col items-center justify-center gap-2">
           <Lock className="w-8 h-8 text-zinc-600" />
           <span className="text-xs text-zinc-500">Bloqueado</span>
         </div>

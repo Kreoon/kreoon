@@ -93,6 +93,11 @@ export const DOCUMENT_SIGNATURE_METHODS: Record<string, SignatureMethod> = {
   escrow_payment_terms: 'typed_name',
   data_processing_agreement: 'typed_name',
   white_label_agreement: 'drawn_signature',
+
+  // Documentos unificados por tipo de cuenta (v1.0 - Marzo 2026)
+  talent_agreement: 'typed_name',
+  client_agreement: 'typed_name',
+  organization_agreement: 'drawn_signature',
 };
 
 export function getSignatureMethodForDocument(documentType: string): SignatureMethod {

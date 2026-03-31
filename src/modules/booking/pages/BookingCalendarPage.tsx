@@ -163,7 +163,7 @@ export function BookingCalendarPage() {
             >
               <Link
                 to="/booking/settings"
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-sm bg-white/15 backdrop-blur text-white font-medium text-sm hover:bg-white/25 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-sm bg-white/15 text-white font-medium text-sm hover:bg-white/25 transition-colors"
               >
                 <Settings className="w-4 h-4" />
                 Configuración

@@ -6,7 +6,7 @@ import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { useOrgMarketplace } from '@/hooks/useOrgMarketplace';
 import { useTalentGateConfig } from '@/hooks/useTalentGateConfig';
 import { AppRole } from '@/types/database';
-import { getPermissionGroup, getDashboardForRole, type PermissionGroup } from '@/lib/permissionGroups';
+import { getPermissionGroup, getDashboardForRole, getDashboardForAccountType, type PermissionGroup } from '@/lib/permissionGroups';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -76,7 +76,7 @@ const FREELANCE_ALLOWED_ROUTES = ['/board', '/scripts', '/freelancer-dashboard',
 const CLIENT_ALLOWED_ROUTES = ['/client-dashboard', '/board', '/marketplace', '/wallet', '/planes', '/social-hub', '/live', '/marketing-ads', '/ad-generator'];
 
 export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRoles, requirePlatformAdmin }: ProtectedRouteProps) {
-  const { user, profile, roles: realRoles, activeRole, loading, rolesLoaded, isPlatformAdmin } = useAuth();
+  const { user, profile, roles: realRoles, activeRole, loading, rolesLoaded, isPlatformAdmin, accountType } = useAuth();
   const { isImpersonating, effectiveRoles, isRootAdmin } = useImpersonation();
   const { isPlatformRoot, currentOrgId, loading: orgLoading } = useOrgOwner();
   const { marketplaceEnabled, clientMarketplaceEnabled, loading: mktLoading } = useOrgMarketplace();
@@ -191,6 +191,41 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
   if (requirePlatformAdmin && !isPlatformAdmin) {
     const correctDashboard = getDashboardPath(rolesToCheck, activeRole);
     return <Navigate to={correctDashboard} replace />;
+  }
+
+  // ─── ACCOUNT TYPE VALIDATION ───────────────────────────────────────────
+  // Validate routes based on user's account type (set during onboarding)
+  // This ensures users only access routes appropriate to their account type
+  const TALENT_ROUTES = ['/talent-dashboard', '/freelancer-dashboard', '/scripts', '/wallet'];
+  const ORG_ROUTES = ['/dashboard', '/board', '/content', '/talent', '/scripts', '/clients-hub', '/team', '/ranking'];
+  const CLIENT_ROUTES = ['/client-dashboard', '/ad-generator', '/marketing-ads'];
+  const SHARED_ROUTES = ['/marketplace', '/social', '/explore', '/profile', '/settings', '/onboarding', '/unlock-access', '/live', '/social-hub', '/planes', '/wallet'];
+
+  // Only enforce account type validation if user has a set account type
+  // and is not a platform admin/root
+  if (accountType && !isPlatformAdmin && !isPlatformRoot && !isImpersonating) {
+    const isSharedRoute = SHARED_ROUTES.some(route => location.pathname.startsWith(route));
+
+    if (!isSharedRoute) {
+      const isTalentRoute = TALENT_ROUTES.some(route => location.pathname.startsWith(route));
+      const isOrgRoute = ORG_ROUTES.some(route => location.pathname.startsWith(route));
+      const isClientRoute = CLIENT_ROUTES.some(route => location.pathname.startsWith(route));
+
+      // Talent users blocked from org-only and client-only routes
+      if (accountType === 'talent' && (isOrgRoute || isClientRoute) && !isTalentRoute) {
+        return <Navigate to={getDashboardForAccountType(accountType)} replace />;
+      }
+
+      // Organization users blocked from talent-only and client-only routes
+      if (accountType === 'organization' && !isOrgRoute && (isTalentRoute || isClientRoute)) {
+        return <Navigate to={getDashboardForAccountType(accountType)} replace />;
+      }
+
+      // Client users blocked from talent-only and org-only routes
+      if (accountType === 'client' && (isTalentRoute || isOrgRoute) && !isClientRoute) {
+        return <Navigate to={getDashboardForAccountType(accountType)} replace />;
+      }
+    }
   }
 
   // Check if current route is a social route (accessible without roles)

@@ -8,7 +8,7 @@ export function ConversionFunnel({ data }: ConversionFunnelProps) {
   const maxCount = data[0]?.count || 1;
 
   return (
-    <div className="bg-gray-900/50 backdrop-blur-sm rounded-sm p-6 border border-gray-800">
+    <div className="bg-gray-900/50 rounded-sm p-6 border border-gray-800">
       <h3 className="text-lg font-semibold text-white mb-6">Funnel de Conversión</h3>
       <div className="space-y-5">
         {data.map((stage, index) => {

@@ -8,7 +8,7 @@ interface ResearchSidebarProps {
 
 export function ResearchSidebar({ activeSectionId, onSectionClick }: ResearchSidebarProps) {
   return (
-    <aside className="hidden lg:block w-[220px] shrink-0 sticky top-[57px] h-[calc(100vh-57px)] overflow-y-auto bg-black/60 backdrop-blur-md border-r border-white/10">
+    <aside className="hidden lg:block w-[220px] shrink-0 sticky top-[57px] h-[calc(100vh-57px)] overflow-y-auto bg-black/60 border-r border-white/10">
       <nav className="py-4 px-2 space-y-0.5">
         <p className="px-3 mb-3 text-[10px] font-semibold text-white/30 uppercase tracking-wider">
           Secciones

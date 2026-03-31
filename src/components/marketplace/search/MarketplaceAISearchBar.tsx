@@ -50,7 +50,7 @@ export function MarketplaceAISearchBar({
       {/* Input */}
       <div className={cn(
         'flex items-center gap-3 px-4 py-3 rounded-sm border transition-all duration-200',
-        'bg-white/5 backdrop-blur-sm',
+        'bg-white/5',
         focused
           ? 'border-purple-500/60 shadow-[0_0_0_3px_rgba(139,92,246,0.15)]'
           : 'border-white/10 hover:border-white/20'

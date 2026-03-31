@@ -45,7 +45,7 @@ export function KanbanVideoModal({
         >
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-popover/90 backdrop-blur-xl"
+            className="absolute inset-0 bg-popover/90"
             style={{ background: "rgba(10, 1, 24, 0.92)" }}
           />
           {/* Modal */}

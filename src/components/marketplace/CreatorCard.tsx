@@ -98,7 +98,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
     >
       {/* Media area — 9:16 aspect ratio, click opens profile */}
       <div
-        className="relative aspect-[9/16] rounded-sm overflow-hidden bg-[var(--nova-bg-surface)] border border-[var(--nova-border-subtle)]"
+        className="relative aspect-[9/16] rounded-sm overflow-hidden bg-card border border-border"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -111,7 +111,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
             {media.map((item, i) => (
               <div key={item.id} className="w-full h-full flex-shrink-0 relative">
                 {!imgLoaded[i] && (
-                  <div className="absolute inset-0 bg-white/5 animate-pulse" />
+                  <div className="absolute inset-0 bg-secondary animate-pulse" />
                 )}
                 <img
                   src={resolveThumb(item)}
@@ -129,8 +129,8 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
                 />
                 {item.type === 'video' && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
-                      <Play className="h-5 w-5 text-white fill-white ml-0.5" />
+                    <div className="w-12 h-12 rounded-[0.125rem] bg-card/80 flex items-center justify-center">
+                      <Play className="h-5 w-5 text-foreground fill-primary ml-0.5" />
                     </div>
                   </div>
                 )}
@@ -151,8 +151,8 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-20 h-20 rounded-full bg-[var(--nova-accent-primary)]/20 flex items-center justify-center">
-                <span className="text-3xl text-[var(--nova-accent-primary)] font-bold">
+              <div className="w-20 h-20 rounded-[0.125rem] bg-primary/20 flex items-center justify-center">
+                <span className="text-3xl text-primary font-bold">
                   {creator.display_name.charAt(0).toUpperCase()}
                 </span>
               </div>
@@ -173,8 +173,8 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
             className={cn(
               'h-6 w-6 drop-shadow-lg transition-all duration-200',
               isFavorite
-                ? 'text-pink-500 fill-pink-500 scale-110'
-                : 'text-white hover:text-pink-300',
+                ? 'text-destructive fill-destructive scale-110'
+                : 'text-foreground hover:text-primary',
             )}
           />
         </button>
@@ -182,12 +182,12 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
         {/* Badges */}
         <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
           {badge && (
-            <div className="bg-white text-black text-xs font-semibold px-3 py-1 rounded-full shadow-lg w-fit">
+            <div className="bg-card text-foreground text-xs font-semibold px-3 py-1 rounded-[0.125rem] w-fit">
               {badge.icon} {badge.label}
             </div>
           )}
           {hasDiscount && (
-            <div className="bg-green-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1 w-fit">
+            <div className="bg-green-600 text-foreground text-[10px] font-bold px-2.5 py-1 rounded-[0.125rem] flex items-center gap-1 w-fit">
               <Percent className="h-3 w-3" />
               -{creator.introductory_discount_pct}% intro
             </div>
@@ -200,19 +200,19 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
             {currentSlide > 0 && (
               <button
                 onClick={handlePrev}
-                className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/80 backdrop-blur flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white"
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-[0.125rem] bg-card/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-card"
                 aria-label="Anterior"
               >
-                <ChevronLeft className="h-4 w-4 text-gray-800" />
+                <ChevronLeft className="h-4 w-4 text-foreground" />
               </button>
             )}
             {currentSlide < media.length - 1 && (
               <button
                 onClick={handleNext}
-                className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/80 backdrop-blur flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white"
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-[0.125rem] bg-card/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-card"
                 aria-label="Siguiente"
               >
-                <ChevronRight className="h-4 w-4 text-gray-800" />
+                <ChevronRight className="h-4 w-4 text-foreground" />
               </button>
             )}
           </>
@@ -225,8 +225,8 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
               <span
                 key={i}
                 className={cn(
-                  'w-1.5 h-1.5 rounded-full transition-all duration-200',
-                  i === currentSlide ? 'bg-white w-2.5' : 'bg-white/50',
+                  'w-1.5 h-1.5 rounded-[0.125rem] transition-all duration-200',
+                  i === currentSlide ? 'bg-foreground w-2.5' : 'bg-foreground/50',
                 )}
               />
             ))}
@@ -252,8 +252,8 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
                 className={cn(
                   "w-12 h-16 rounded-sm overflow-hidden border-2 transition-all",
                   i === currentSlide
-                    ? "border-white scale-105"
-                    : "border-white/30 hover:border-white/60"
+                    ? "border-foreground scale-105"
+                    : "border-foreground/30 hover:border-foreground/60"
                 )}
               >
                 <img
@@ -282,26 +282,26 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
                 height={24}
                 loading="lazy"
                 decoding="async"
-                className="w-6 h-6 rounded-full object-cover flex-shrink-0 border border-white/30"
+                className="w-6 h-6 rounded-[0.125rem] object-cover flex-shrink-0 border border-foreground/30"
               />
             ) : (
-              <div className="w-6 h-6 rounded-full bg-[var(--nova-accent-primary)]/60 flex items-center justify-center flex-shrink-0 border border-white/30">
-                <span className="text-[10px] text-white font-bold leading-none">
+              <div className="w-6 h-6 rounded-[0.125rem] bg-primary/60 flex items-center justify-center flex-shrink-0 border border-foreground/30">
+                <span className="text-[10px] text-foreground font-bold leading-none">
                   {creator.display_name.charAt(0).toUpperCase()}
                 </span>
               </div>
             )}
-            <span className="font-semibold text-white text-sm truncate drop-shadow-md">
+            <span className="font-semibold text-foreground text-sm truncate drop-shadow-md">
               {creator.display_name}
             </span>
             {creator.is_verified && (
-              <CheckCircle2 className="h-4 w-4 text-[var(--nova-success)] flex-shrink-0" />
+              <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
             )}
           </div>
 
           {/* Organization badge */}
           {creator.organization_id && creator.organization_name && (
-            <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm rounded-full px-2 py-0.5 w-fit">
+            <div className="flex items-center gap-1.5 bg-foreground/10 rounded-[0.125rem] px-2 py-0.5 w-fit">
               {creator.organization_logo ? (
                 <img
                   src={getOptimizedImageUrl(creator.organization_logo, { width: 32, quality: 70 })}
@@ -310,12 +310,12 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
                   height={16}
                   loading="lazy"
                   decoding="async"
-                  className="w-4 h-4 rounded-full object-cover flex-shrink-0"
+                  className="w-4 h-4 rounded-[0.125rem] object-cover flex-shrink-0"
                 />
               ) : (
-                <Building2 className="h-3 w-3 text-[var(--nova-accent-primary-hover)] flex-shrink-0" />
+                <Building2 className="h-3 w-3 text-primary flex-shrink-0" />
               )}
-              <span className="text-[10px] text-white/90 font-medium truncate max-w-[100px]">
+              <span className="text-[10px] text-foreground/90 font-medium truncate max-w-[100px]">
                 {creator.organization_name}
               </span>
             </div>
@@ -323,7 +323,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
 
           {/* Location */}
           {(creator.location_city || creator.location_country) && (
-            <div className="flex items-center gap-1 text-white/70 text-xs">
+            <div className="flex items-center gap-1 text-foreground/70 text-xs">
               <MapPin className="h-3 w-3 flex-shrink-0" />
               <span className="truncate drop-shadow-sm">
                 {[creator.location_city, creator.location_country]
@@ -337,16 +337,16 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
           <div className="flex items-center gap-2 flex-wrap">
             {/* Rating con count */}
             <div className="flex items-center gap-1">
-              <Star className="h-3 w-3 text-[var(--nova-accent-primary)] fill-[var(--nova-accent-primary)]" />
-              <span className="text-white text-xs font-medium drop-shadow-sm">
+              <Star className="h-3 w-3 text-primary fill-primary" />
+              <span className="text-foreground text-xs font-medium drop-shadow-sm">
                 {creator.rating_avg.toFixed(1)}
               </span>
-              <span className="text-white/50 text-[10px]">({creator.rating_count})</span>
+              <span className="text-foreground/50 text-[10px]">({creator.rating_count})</span>
             </div>
 
             {/* Projects completed */}
             {creator.completed_projects > 0 && (
-              <div className="flex items-center gap-1 text-white/70 text-xs">
+              <div className="flex items-center gap-1 text-foreground/70 text-xs">
                 <Package className="h-3 w-3" />
                 <span>{creator.completed_projects}</span>
               </div>
@@ -354,7 +354,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
 
             {/* Response time */}
             {creator.response_time_label && (
-              <div className="flex items-center gap-1 text-[var(--nova-success)] text-[10px]">
+              <div className="flex items-center gap-1 text-green-500 text-[10px]">
                 <Clock className="h-3 w-3" />
                 <span>{creator.response_time_label}</span>
               </div>
@@ -365,7 +365,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
           {creator.accepts_product_exchange && (
             <div className="flex items-center gap-1">
               <span
-                className="flex items-center gap-0.5 text-[var(--nova-success)] text-xs"
+                className="flex items-center gap-0.5 text-green-500 text-xs"
                 title="Acepta canje de producto"
               >
                 <Gift className="h-3 w-3" />
@@ -381,7 +381,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
                 <span
                   key={spec}
                   className={cn(
-                    "text-[10px] px-1.5 py-0.5 rounded-full backdrop-blur-sm",
+                    "text-[10px] px-1.5 py-0.5 rounded-[0.125rem]",
                     getSpecializationBgColor(spec as Specialization),
                     getSpecializationColor(spec as Specialization)
                   )}
@@ -390,7 +390,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
                 </span>
               ))}
               {creator.specializations.length > 3 && (
-                <span className="text-[10px] text-white/60 px-1">
+                <span className="text-[10px] text-foreground/60 px-1">
                   +{creator.specializations.length - 3}
                 </span>
               )}

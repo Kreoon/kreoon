@@ -146,7 +146,7 @@ const UnlockAccess = () => {
         </div>
 
         {/* Blur overlay */}
-        <div className="absolute inset-0 backdrop-blur-md bg-black/60" />
+        <div className="absolute inset-0 bg-black/60" />
       </div>
 
       {/* Animated background effects on top of blur */}
@@ -187,7 +187,7 @@ const UnlockAccess = () => {
           transition={{ duration: 0.3, ease: 'easeOut' }}
           className={cn(
             'relative w-full max-w-2xl mx-4',
-            'bg-background/95 backdrop-blur-xl',
+            'bg-background/95',
             'rounded-3xl border border-white/10',
             'shadow-2xl shadow-purple-500/10'
           )}

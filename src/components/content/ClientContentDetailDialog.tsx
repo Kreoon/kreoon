@@ -307,7 +307,7 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
           <div className="relative border-b bg-gradient-to-r from-primary/5 via-background to-primary/5">
             <button
               onClick={() => onOpenChange(false)}
-              className="absolute top-4 right-4 z-20 p-2 rounded-full bg-background/80 backdrop-blur-sm hover:bg-muted transition-colors"
+              className="absolute top-4 right-4 z-20 p-2 rounded-full bg-background/80 hover:bg-muted transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
@@ -533,7 +533,7 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
         <div className="relative border-b bg-gradient-to-r from-primary/5 via-background to-primary/5">
           <button
             onClick={() => onOpenChange(false)}
-            className="absolute top-4 right-4 z-20 p-2 rounded-full bg-background/80 backdrop-blur-sm hover:bg-muted transition-colors"
+            className="absolute top-4 right-4 z-20 p-2 rounded-full bg-background/80 hover:bg-muted transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -681,7 +681,7 @@ export function ClientContentDetailDialog({ content, open, onOpenChange, onUpdat
                                 className="w-full h-full object-cover"
                               />
                             </div>
-                            <div className="absolute top-3 left-3 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-sm text-white text-sm font-medium">
+                            <div className="absolute top-3 left-3 px-3 py-1.5 rounded-full bg-black/70 text-white text-sm font-medium">
                               Video {idx + 1}
                             </div>
                           </div>

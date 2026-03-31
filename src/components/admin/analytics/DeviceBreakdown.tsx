@@ -16,7 +16,7 @@ interface DeviceBreakdownProps {
 
 export function DeviceBreakdown({ data }: DeviceBreakdownProps) {
   return (
-    <div className="bg-[var(--nova-bg-elevated)] dark:bg-[var(--nova-bg-elevated)] backdrop-blur-sm rounded-sm p-6 border border-[var(--nova-border-default)]">
+    <div className="bg-[var(--nova-bg-elevated)] dark:bg-[var(--nova-bg-elevated)] rounded-sm p-6 border border-[var(--nova-border-default)]">
       <h3 className="text-lg font-semibold text-foreground mb-4">Dispositivos</h3>
       {data.length === 0 ? (
         <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">

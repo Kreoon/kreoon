@@ -241,7 +241,7 @@ export default function TalentBenefitsSection() {
                 )}
 
                 <div className="text-center">
-                  <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-sm border border-kreoon-purple-500/30 bg-kreoon-bg-card/60 backdrop-blur-sm">
+                  <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-sm border border-kreoon-purple-500/30 bg-kreoon-bg-card/60">
                     <step.icon className="h-8 w-8 text-kreoon-purple-400" />
                   </div>
                   <span className="text-xs font-bold text-kreoon-purple-400 tracking-widest uppercase">

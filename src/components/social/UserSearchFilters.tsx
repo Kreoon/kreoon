@@ -112,7 +112,7 @@ export function UserSearchFilters({
           "relative flex-1 transition-all duration-300",
           searchFocused && "scale-[1.01]"
         )}>
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-social-muted-foreground" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
             placeholder="Buscar creadores por nombre o username..."
             value={filters.query}
@@ -121,8 +121,8 @@ export function UserSearchFilters({
             onBlur={() => setSearchFocused(false)}
             className={cn(
               "pl-12 h-12 rounded-sm text-base",
-              "bg-social-card border-social-border",
-              "focus:border-social-accent/50 focus:ring-2 focus:ring-social-accent/20",
+              "bg-card border-border",
+              "focus:border-primary/50 focus:ring-2 focus:ring-primary/20",
               "transition-all duration-300"
             )}
           />
@@ -131,7 +131,7 @@ export function UserSearchFilters({
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-social-muted-foreground"
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground"
               onClick={() => updateFilter('query', '')}
             >
               <X className="h-4 w-4" />
@@ -146,9 +146,9 @@ export function UserSearchFilters({
               type="button"
               variant="outline"
               className={cn(
-                "h-12 px-4 rounded-sm border-social-border",
-                "hover:bg-social-muted hover:border-social-accent/30",
-                activeFiltersCount > 0 && "border-social-accent bg-social-accent/10"
+                "h-12 px-4 rounded-sm border-border",
+                "hover:bg-background hover:border-primary/30",
+                activeFiltersCount > 0 && "border-primary bg-secondary"
               )}
             >
               <SlidersHorizontal className="h-5 w-5 mr-2" />
@@ -156,17 +156,17 @@ export function UserSearchFilters({
               {activeFiltersCount > 0 && (
                 <Badge 
                   variant="secondary" 
-                  className="ml-2 h-5 w-5 p-0 justify-center bg-social-accent text-social-accent-foreground"
+                  className="ml-2 h-5 w-5 p-0 justify-center bg-primary text-primary-foreground"
                 >
                   {activeFiltersCount}
                 </Badge>
               )}
             </Button>
           </SheetTrigger>
-          <SheetContent className="bg-social-card border-social-border">
+          <SheetContent className="bg-card border-border">
             <SheetHeader>
-              <SheetTitle className="text-social-foreground">Filtros de búsqueda</SheetTitle>
-              <SheetDescription className="text-social-muted-foreground">
+              <SheetTitle className="text-foreground">Filtros de búsqueda</SheetTitle>
+              <SheetDescription className="text-muted-foreground">
                 Refina tu búsqueda de creadores
               </SheetDescription>
             </SheetHeader>
@@ -174,15 +174,15 @@ export function UserSearchFilters({
             <div className="space-y-6 mt-6">
               {/* Category */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-social-foreground flex items-center gap-2">
-                  <Briefcase className="h-4 w-4 text-social-accent" />
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Briefcase className="h-4 w-4 text-primary" />
                   Categoría
                 </label>
                 <Select
                   value={filters.category}
                   onValueChange={(value) => updateFilter('category', value)}
                 >
-                  <SelectTrigger className="bg-social-muted border-social-border">
+                  <SelectTrigger className="bg-background border-border">
                     <SelectValue placeholder="Todas las categorías" />
                   </SelectTrigger>
                   <SelectContent>
@@ -196,15 +196,15 @@ export function UserSearchFilters({
 
               {/* Country */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-social-foreground flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-social-accent" />
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-primary" />
                   País
                 </label>
                 <Select
                   value={filters.country}
                   onValueChange={(value) => updateFilter('country', value)}
                 >
-                  <SelectTrigger className="bg-social-muted border-social-border">
+                  <SelectTrigger className="bg-background border-border">
                     <SelectValue placeholder="Todos los países" />
                   </SelectTrigger>
                   <SelectContent>
@@ -219,12 +219,12 @@ export function UserSearchFilters({
               {/* City (if country selected) */}
               {filters.country && cities.length > 0 && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-social-foreground">Ciudad</label>
+                  <label className="text-sm font-medium text-foreground">Ciudad</label>
                   <Select
                     value={filters.city}
                     onValueChange={(value) => updateFilter('city', value)}
                   >
-                    <SelectTrigger className="bg-social-muted border-social-border">
+                    <SelectTrigger className="bg-background border-border">
                       <SelectValue placeholder="Todas las ciudades" />
                     </SelectTrigger>
                     <SelectContent>
@@ -239,12 +239,12 @@ export function UserSearchFilters({
 
               {/* Sort by */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-social-foreground">Ordenar por</label>
+                <label className="text-sm font-medium text-foreground">Ordenar por</label>
                 <Select
                   value={filters.sortBy}
                   onValueChange={(value: SearchFilters['sortBy']) => updateFilter('sortBy', value)}
                 >
-                  <SelectTrigger className="bg-social-muted border-social-border">
+                  <SelectTrigger className="bg-background border-border">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -258,15 +258,15 @@ export function UserSearchFilters({
 
               {/* Toggle filters */}
               <div className="space-y-3">
-                <label className="text-sm font-medium text-social-foreground">Filtros adicionales</label>
+                <label className="text-sm font-medium text-foreground">Filtros adicionales</label>
                 <div className="flex flex-wrap gap-2">
                   <Badge
                     variant={filters.hasContent ? "default" : "outline"}
                     className={cn(
                       "cursor-pointer px-3 py-1.5 transition-colors",
                       filters.hasContent 
-                        ? "bg-social-accent text-social-accent-foreground" 
-                        : "border-social-border hover:bg-social-muted"
+                        ? "bg-primary text-primary-foreground" 
+                        : "border-border hover:bg-background"
                     )}
                     onClick={() => updateFilter('hasContent', !filters.hasContent)}
                   >
@@ -277,8 +277,8 @@ export function UserSearchFilters({
                     className={cn(
                       "cursor-pointer px-3 py-1.5 transition-colors",
                       filters.isVerified 
-                        ? "bg-social-accent text-social-accent-foreground" 
-                        : "border-social-border hover:bg-social-muted"
+                        ? "bg-primary text-primary-foreground" 
+                        : "border-border hover:bg-background"
                     )}
                     onClick={() => updateFilter('isVerified', !filters.isVerified)}
                   >
@@ -291,13 +291,13 @@ export function UserSearchFilters({
               <div className="flex gap-3 pt-4">
                 <Button
                   variant="outline"
-                  className="flex-1 border-social-border"
+                  className="flex-1 border-border"
                   onClick={clearFilters}
                 >
                   Limpiar
                 </Button>
                 <Button
-                  className="flex-1 bg-social-accent hover:bg-social-accent/90"
+                  className="flex-1 bg-primary hover:bg-primary/90"
                   onClick={() => {
                     onSearch();
                     setIsFiltersOpen(false);
@@ -315,7 +315,7 @@ export function UserSearchFilters({
       {activeFiltersCount > 0 && (
         <div className="flex flex-wrap gap-2 animate-fade-in">
           {filters.category && (
-            <Badge variant="secondary" className="bg-social-muted text-social-foreground gap-1.5">
+            <Badge variant="secondary" className="bg-background text-foreground gap-1.5">
               {filters.category}
               <X 
                 className="h-3 w-3 cursor-pointer" 
@@ -324,7 +324,7 @@ export function UserSearchFilters({
             </Badge>
           )}
           {filters.country && (
-            <Badge variant="secondary" className="bg-social-muted text-social-foreground gap-1.5">
+            <Badge variant="secondary" className="bg-background text-foreground gap-1.5">
               {filters.country}
               <X 
                 className="h-3 w-3 cursor-pointer" 
@@ -333,7 +333,7 @@ export function UserSearchFilters({
             </Badge>
           )}
           {filters.city && (
-            <Badge variant="secondary" className="bg-social-muted text-social-foreground gap-1.5">
+            <Badge variant="secondary" className="bg-background text-foreground gap-1.5">
               {filters.city}
               <X 
                 className="h-3 w-3 cursor-pointer" 
@@ -342,7 +342,7 @@ export function UserSearchFilters({
             </Badge>
           )}
           {filters.hasContent && (
-            <Badge variant="secondary" className="bg-social-muted text-social-foreground gap-1.5">
+            <Badge variant="secondary" className="bg-background text-foreground gap-1.5">
               Con contenido
               <X 
                 className="h-3 w-3 cursor-pointer" 
@@ -351,7 +351,7 @@ export function UserSearchFilters({
             </Badge>
           )}
           {filters.isVerified && (
-            <Badge variant="secondary" className="bg-social-muted text-social-foreground gap-1.5">
+            <Badge variant="secondary" className="bg-background text-foreground gap-1.5">
               Verificados
               <X 
                 className="h-3 w-3 cursor-pointer" 
@@ -362,7 +362,7 @@ export function UserSearchFilters({
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 px-2 text-xs text-social-muted-foreground hover:text-social-foreground"
+            className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
             onClick={clearFilters}
           >
             Limpiar todo

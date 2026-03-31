@@ -248,7 +248,7 @@ export default function CreatorProfilePage() {
       <div className={creator.banner_url ? 'max-w-7xl mx-auto px-4 md:px-6 lg:px-8 -mt-10 relative z-10 pb-4' : 'max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-6 pb-4'}>
         <button
           onClick={() => navigate(-1)}
-          className="w-9 h-9 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 flex items-center justify-center transition-colors"
+          className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
         >
           <ArrowLeft className="h-4 w-4 text-white" />
         </button>

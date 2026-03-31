@@ -128,9 +128,8 @@ export function LoginForm({
   };
 
   return (
-    <KreoonGlassCard intensity="strong" className="p-6 sm:p-8 shadow-kreoon-glow overflow-hidden">
-      {/* Subtle inner gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-kreoon-purple-500/[0.03] to-transparent pointer-events-none rounded-sm" aria-hidden />
+    <KreoonGlassCard intensity="strong" className="p-6 sm:p-8 shadow-none overflow-hidden">
+      {/* Removed gradient overlay for solid Neo-Studio aesthetic */}
       <form onSubmit={handleSubmit} className="relative space-y-6">
         <KreoonSectionTitle
           title="Bienvenido de nuevo"
@@ -142,7 +141,7 @@ export function LoginForm({
         {error ? (
           <div
             role="alert"
-            className="text-sm text-destructive bg-destructive/10 backdrop-blur-sm border border-destructive/30 rounded-sm px-4 py-2.5"
+            className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-sm px-4 py-2.5"
           >
             {error}
           </div>
@@ -157,7 +156,7 @@ export function LoginForm({
           onChange={(e) => setEmail(e.target.value)}
           disabled={loading}
           icon={<Mail className="h-4 w-4" />}
-          className="[&_input]:bg-white/[0.04] [&_input]:backdrop-blur-sm"
+          className="[&_input]:bg-background [&_input]:border-border"
         />
 
         <div className="space-y-1.5">
@@ -183,10 +182,10 @@ export function LoginForm({
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
               className={cn(
-                "flex h-10 w-full rounded-sm border bg-white/[0.04] backdrop-blur-sm pl-10 pr-10 py-2 text-sm text-kreoon-text-primary",
-                "placeholder:text-kreoon-text-muted/70",
-                "border-kreoon-border hover:border-kreoon-purple-400/30",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kreoon-purple-500/50 focus-visible:border-kreoon-purple-400 focus-visible:shadow-kreoon-glow-sm",
+                "flex h-10 w-full rounded-[0.125rem] border bg-background pl-10 pr-10 py-2 text-sm text-foreground",
+                "placeholder:text-muted-foreground/70",
+                "border-border hover:border-purple-400/30",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:border-purple-400",
                 "disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 ease-out",
               )}
             />
@@ -241,7 +240,7 @@ export function LoginForm({
           size="lg"
           loading={googleLoading}
           disabled={loading || googleLoading}
-          className="w-full gap-2 bg-white/[0.04] backdrop-blur-sm hover:bg-white/[0.08]"
+          className="w-full gap-2 bg-white/[0.04] hover:bg-white/[0.08]"
           onClick={handleGoogleSignIn}
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden>

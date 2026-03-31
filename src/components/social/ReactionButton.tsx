@@ -97,7 +97,7 @@ export function ReactionButton({
         onClick={handleQuickReact}
         className={cn(
           "flex items-center gap-1 transition-all duration-200 hover:scale-110 active:scale-95",
-          currentReactionData?.color || "text-social-muted-foreground hover:text-red-400"
+          currentReactionData?.color || "text-muted-foreground hover:text-red-400"
         )}
       >
         {currentReactionData ? (
@@ -131,7 +131,7 @@ export function ReactionButton({
             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
             className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50"
           >
-            <div className="glass-social-strong rounded-full px-2 py-1.5 flex items-center gap-1 shadow-lg">
+            <div className="bg-card border border-border rounded-full px-2 py-1.5 flex items-center gap-1 shadow-lg">
               {reactions.map((reaction, index) => (
                 <motion.button
                   key={reaction.type}
@@ -157,7 +157,7 @@ export function ReactionButton({
               ))}
             </div>
             {/* Arrow */}
-            <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-social-card rotate-45 border-r border-b border-white/10" />
+            <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-card rotate-45 border-r border-b border-white/10" />
           </motion.div>
         )}
       </AnimatePresence>

@@ -167,7 +167,7 @@ export function CookieConsentBanner() {
         className="fixed bottom-0 left-0 right-0 z-[9999] p-4 md:p-6"
       >
         <div className="max-w-4xl mx-auto">
-          <div className="bg-[#0f0a1f]/95 backdrop-blur-xl border border-[#8b5cf6]/30 rounded-sm shadow-2xl shadow-purple-500/10 overflow-hidden">
+          <div className="bg-[#0f0a1f]/95 border border-[#8b5cf6]/30 rounded-sm shadow-2xl shadow-purple-500/10 overflow-hidden">
             {/* Header */}
             <div className="p-4 md:p-6">
               <div className="flex items-start gap-4">

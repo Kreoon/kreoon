@@ -228,7 +228,7 @@ export function CreatorOnboarding({
       {/* Progress header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-social-foreground">
+          <h1 className="text-2xl font-bold text-foreground">
             Configura tu perfil de creador
           </h1>
           {onSkip && currentStep !== 'complete' && (
@@ -245,8 +245,8 @@ export function CreatorOnboarding({
               className={cn(
                 "flex items-center gap-1 text-xs",
                 idx <= stepIndex
-                  ? "text-social-accent"
-                  : "text-social-muted-foreground"
+                  ? "text-primary"
+                  : "text-muted-foreground"
               )}
             >
               <step.icon className="h-3 w-3" />
@@ -270,54 +270,54 @@ export function CreatorOnboarding({
           {currentStep === 'basics' && (
             <div className="space-y-6">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-social-accent/20 mb-4">
-                  <User className="h-8 w-8 text-social-accent" />
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-4">
+                  <User className="h-8 w-8 text-primary" />
                 </div>
-                <h2 className="text-xl font-semibold text-social-foreground">
+                <h2 className="text-xl font-semibold text-foreground">
                   Tu perfil profesional
                 </h2>
-                <p className="text-social-muted-foreground mt-2">
+                <p className="text-muted-foreground mt-2">
                   Preséntate ante las marcas que buscan talento
                 </p>
               </div>
 
               {/* Tagline */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-social-foreground">
+                <label className="text-sm font-medium text-foreground">
                   Tu tagline profesional *
                 </label>
                 <Input
                   placeholder="Ej: Creador de contenido lifestyle | Especialista en reels"
                   value={formData.tagline}
                   onChange={(e) => updateField('tagline', e.target.value)}
-                  className="bg-social-muted border-social-border"
+                  className="bg-background border-border"
                   maxLength={100}
                 />
-                <p className="text-xs text-social-muted-foreground text-right">
+                <p className="text-xs text-muted-foreground text-right">
                   {formData.tagline.length}/100
                 </p>
               </div>
 
               {/* Extended bio */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-social-foreground">
+                <label className="text-sm font-medium text-foreground">
                   Biografía extendida
                 </label>
                 <Textarea
                   placeholder="Cuéntanos tu historia, experiencia y qué te hace único como creador..."
                   value={formData.bio_extended}
                   onChange={(e) => updateField('bio_extended', e.target.value)}
-                  className="bg-social-muted border-social-border min-h-[150px]"
+                  className="bg-background border-border min-h-[150px]"
                   maxLength={1000}
                 />
-                <p className="text-xs text-social-muted-foreground text-right">
+                <p className="text-xs text-muted-foreground text-right">
                   {formData.bio_extended.length}/1000
                 </p>
               </div>
 
               {/* Experience level */}
               <div className="space-y-3">
-                <label className="text-sm font-medium text-social-foreground">
+                <label className="text-sm font-medium text-foreground">
                   Nivel de experiencia
                 </label>
                 <div className="grid grid-cols-2 gap-3">
@@ -336,14 +336,14 @@ export function CreatorOnboarding({
                         (formData.years_experience >= 2 && formData.years_experience < 4 && level.value === 'intermediate') ||
                         (formData.years_experience >= 4 && formData.years_experience < 6 && level.value === 'advanced') ||
                         (formData.years_experience >= 6 && level.value === 'expert')
-                          ? "border-social-accent bg-social-accent/10"
-                          : "border-social-border bg-social-card hover:border-social-accent/50"
+                          ? "border-primary bg-secondary"
+                          : "border-border bg-card hover:border-primary/50"
                       )}
                     >
-                      <p className="font-medium text-social-foreground text-sm">
+                      <p className="font-medium text-foreground text-sm">
                         {level.label}
                       </p>
-                      <p className="text-xs text-social-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         {level.desc}
                       </p>
                     </button>
@@ -357,20 +357,20 @@ export function CreatorOnboarding({
           {currentStep === 'expertise' && (
             <div className="space-y-6">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-social-accent/20 mb-4">
-                  <Briefcase className="h-8 w-8 text-social-accent" />
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-4">
+                  <Briefcase className="h-8 w-8 text-primary" />
                 </div>
-                <h2 className="text-xl font-semibold text-social-foreground">
+                <h2 className="text-xl font-semibold text-foreground">
                   Tu área de especialización
                 </h2>
-                <p className="text-social-muted-foreground mt-2">
+                <p className="text-muted-foreground mt-2">
                   Define en qué industrias y estilos te especializas
                 </p>
               </div>
 
               {/* Primary category */}
               <div className="space-y-3">
-                <label className="text-sm font-medium text-social-foreground">
+                <label className="text-sm font-medium text-foreground">
                   Categoría principal *
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -381,12 +381,12 @@ export function CreatorOnboarding({
                       className={cn(
                         "p-3 rounded-sm border-2 text-left transition-all",
                         formData.primary_category === industry.id
-                          ? "border-social-accent bg-social-accent/10"
-                          : "border-social-border bg-social-card hover:border-social-accent/50"
+                          ? "border-primary bg-secondary"
+                          : "border-border bg-card hover:border-primary/50"
                       )}
                     >
                       <span className="text-xl mb-1 block">{industry.icon}</span>
-                      <p className="font-medium text-social-foreground text-xs">
+                      <p className="font-medium text-foreground text-xs">
                         {industry.name_es}
                       </p>
                     </button>
@@ -397,7 +397,7 @@ export function CreatorOnboarding({
               {/* Expertise tags */}
               {selectedIndustry && (
                 <div className="space-y-3">
-                  <label className="text-sm font-medium text-social-foreground">
+                  <label className="text-sm font-medium text-foreground">
                     Etiquetas de especialización
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -420,7 +420,7 @@ export function CreatorOnboarding({
                       value={customTag}
                       onChange={(e) => setCustomTag(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && addCustomTag()}
-                      className="bg-social-muted border-social-border"
+                      className="bg-background border-border"
                     />
                     <Button variant="outline" onClick={addCustomTag}>
                       Agregar
@@ -452,7 +452,7 @@ export function CreatorOnboarding({
 
               {/* Content styles */}
               <div className="space-y-3">
-                <label className="text-sm font-medium text-social-foreground">
+                <label className="text-sm font-medium text-foreground">
                   Tu estilo de contenido
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -471,7 +471,7 @@ export function CreatorOnboarding({
 
               {/* Platforms */}
               <div className="space-y-3">
-                <label className="text-sm font-medium text-social-foreground">
+                <label className="text-sm font-medium text-foreground">
                   Plataformas donde creas
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -494,27 +494,27 @@ export function CreatorOnboarding({
           {currentStep === 'services' && (
             <div className="space-y-6">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-social-accent/20 mb-4">
-                  <Star className="h-8 w-8 text-social-accent" />
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-4">
+                  <Star className="h-8 w-8 text-primary" />
                 </div>
-                <h2 className="text-xl font-semibold text-social-foreground">
+                <h2 className="text-xl font-semibold text-foreground">
                   Tus servicios
                 </h2>
-                <p className="text-social-muted-foreground mt-2">
+                <p className="text-muted-foreground mt-2">
                   Define qué servicios ofreces y sus precios
                 </p>
               </div>
 
               {/* Min budget */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-social-foreground">
+                <label className="text-sm font-medium text-foreground">
                   Presupuesto mínimo por proyecto
                 </label>
                 <Select
                   value={formData.min_budget}
                   onValueChange={(v) => updateField('min_budget', v as BudgetRange)}
                 >
-                  <SelectTrigger className="bg-social-muted border-social-border">
+                  <SelectTrigger className="bg-background border-border">
                     <SelectValue placeholder="Selecciona un rango" />
                   </SelectTrigger>
                   <SelectContent>
@@ -530,20 +530,20 @@ export function CreatorOnboarding({
               {/* Services list */}
               {services.length > 0 && (
                 <div className="space-y-3">
-                  <label className="text-sm font-medium text-social-foreground">
+                  <label className="text-sm font-medium text-foreground">
                     Servicios agregados
                   </label>
                   <div className="space-y-2">
                     {services.map((service, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between p-3 rounded-sm bg-social-muted"
+                        className="flex items-center justify-between p-3 rounded-sm bg-background"
                       >
                         <div>
-                          <p className="font-medium text-social-foreground">
+                          <p className="font-medium text-foreground">
                             {service.title}
                           </p>
-                          <p className="text-sm text-social-muted-foreground">
+                          <p className="text-sm text-muted-foreground">
                             {SERVICE_TYPE_LABELS[service.type as keyof typeof SERVICE_TYPE_LABELS] || service.type} · ${service.price}
                           </p>
                         </div>
@@ -561,8 +561,8 @@ export function CreatorOnboarding({
               )}
 
               {/* Add service form */}
-              <div className="space-y-3 p-4 rounded-sm border border-dashed border-social-border">
-                <p className="text-sm font-medium text-social-foreground">
+              <div className="space-y-3 p-4 rounded-sm border border-dashed border-border">
+                <p className="text-sm font-medium text-foreground">
                   Agregar servicio
                 </p>
                 <div className="grid grid-cols-2 gap-3">
@@ -570,13 +570,13 @@ export function CreatorOnboarding({
                     placeholder="Título del servicio"
                     value={newService.title}
                     onChange={(e) => setNewService((p) => ({ ...p, title: e.target.value }))}
-                    className="bg-social-muted border-social-border"
+                    className="bg-background border-border"
                   />
                   <Select
                     value={newService.type}
                     onValueChange={(v) => setNewService((p) => ({ ...p, type: v }))}
                   >
-                    <SelectTrigger className="bg-social-muted border-social-border">
+                    <SelectTrigger className="bg-background border-border">
                       <SelectValue placeholder="Tipo" />
                     </SelectTrigger>
                     <SelectContent>
@@ -595,13 +595,13 @@ export function CreatorOnboarding({
                 </div>
                 <div className="flex gap-3">
                   <div className="relative flex-1">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-social-muted-foreground" />
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="number"
                       placeholder="Precio"
                       value={newService.price}
                       onChange={(e) => setNewService((p) => ({ ...p, price: e.target.value }))}
-                      className="bg-social-muted border-social-border pl-9"
+                      className="bg-background border-border pl-9"
                     />
                   </div>
                   <Button
@@ -622,24 +622,24 @@ export function CreatorOnboarding({
           {currentStep === 'availability' && (
             <div className="space-y-6">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-social-accent/20 mb-4">
-                  <Calendar className="h-8 w-8 text-social-accent" />
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-4">
+                  <Calendar className="h-8 w-8 text-primary" />
                 </div>
-                <h2 className="text-xl font-semibold text-social-foreground">
+                <h2 className="text-xl font-semibold text-foreground">
                   Tu disponibilidad
                 </h2>
-                <p className="text-social-muted-foreground mt-2">
+                <p className="text-muted-foreground mt-2">
                   Indica cuándo estás disponible para nuevos proyectos
                 </p>
               </div>
 
               {/* Available for hire */}
-              <div className="flex items-center justify-between p-4 rounded-sm bg-social-card border border-social-border">
+              <div className="flex items-center justify-between p-4 rounded-sm bg-card border border-border">
                 <div>
-                  <p className="font-medium text-social-foreground">
+                  <p className="font-medium text-foreground">
                     Disponible para contratación
                   </p>
-                  <p className="text-sm text-social-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     Aparecerás en las búsquedas de marcas
                   </p>
                 </div>
@@ -651,14 +651,14 @@ export function CreatorOnboarding({
 
               {/* Response time */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-social-foreground">
+                <label className="text-sm font-medium text-foreground">
                   Tiempo de respuesta típico
                 </label>
                 <Select
                   value={formData.response_time_hours.toString()}
                   onValueChange={(v) => updateField('response_time_hours', parseInt(v))}
                 >
-                  <SelectTrigger className="bg-social-muted border-social-border">
+                  <SelectTrigger className="bg-background border-border">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -673,14 +673,14 @@ export function CreatorOnboarding({
 
               {/* Preferred project duration */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-social-foreground">
+                <label className="text-sm font-medium text-foreground">
                   Duración preferida de proyectos
                 </label>
                 <Select
                   value={formData.preferred_project_duration}
                   onValueChange={(v) => updateField('preferred_project_duration', v)}
                 >
-                  <SelectTrigger className="bg-social-muted border-social-border">
+                  <SelectTrigger className="bg-background border-border">
                     <SelectValue placeholder="Selecciona una opción" />
                   </SelectTrigger>
                   <SelectContent>
@@ -694,8 +694,8 @@ export function CreatorOnboarding({
               </div>
 
               {/* Info box */}
-              <div className="p-4 rounded-sm bg-social-accent/10 border border-social-accent/20">
-                <p className="text-sm text-social-foreground">
+              <div className="p-4 rounded-sm bg-secondary border border-primary/20">
+                <p className="text-sm text-foreground">
                   💡 <strong>Tip:</strong> Los creadores con tiempos de respuesta más rápidos
                   tienen un 40% más de probabilidades de ser contactados por marcas.
                 </p>
@@ -713,10 +713,10 @@ export function CreatorOnboarding({
               >
                 <Check className="h-10 w-10 text-green-500" />
               </motion.div>
-              <h2 className="text-2xl font-bold text-social-foreground mb-2">
+              <h2 className="text-2xl font-bold text-foreground mb-2">
                 ¡Perfil de creador listo!
               </h2>
-              <p className="text-social-muted-foreground">
+              <p className="text-muted-foreground">
                 Las marcas ya pueden encontrarte y contactarte para colaboraciones
               </p>
             </div>
@@ -726,7 +726,7 @@ export function CreatorOnboarding({
 
       {/* Navigation */}
       {currentStep !== 'complete' && (
-        <div className="flex justify-between mt-8 pt-6 border-t border-social-border">
+        <div className="flex justify-between mt-8 pt-6 border-t border-border">
           <Button
             variant="ghost"
             onClick={prevStep}
@@ -741,7 +741,7 @@ export function CreatorOnboarding({
             <Button
               onClick={handleComplete}
               disabled={isUpdating}
-              className="gap-2 bg-gradient-to-r from-social-accent to-purple-600"
+              className="gap-2 bg-gradient-to-r from-primary to-purple-600"
             >
               {isUpdating ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

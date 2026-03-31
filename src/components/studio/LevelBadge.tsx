@@ -87,7 +87,7 @@ export function LevelBadge({
           'relative rounded-sm flex items-center justify-center',
           config.container,
           config.padding,
-          'backdrop-blur-sm',
+          '',
           'border border-white/10',
           'shadow-lg'
         )}
@@ -157,7 +157,7 @@ export function LevelBadge({
         <div
           className={cn(
             'absolute -top-1 -right-1 rounded-full p-0.5',
-            'backdrop-blur-sm'
+            ''
           )}
           style={{
             background: `linear-gradient(135deg, ${nivelInfo.color} 0%, ${nivelInfo.color}cc 100%)`,
@@ -205,7 +205,7 @@ export function LevelBadge({
         </TooltipTrigger>
         <TooltipContent
           side="top"
-          className="bg-zinc-900/95 backdrop-blur-sm border-white/10 px-3 py-2"
+          className="bg-zinc-900/95 border-white/10 px-3 py-2"
         >
           <div className="flex flex-col gap-1">
             <span

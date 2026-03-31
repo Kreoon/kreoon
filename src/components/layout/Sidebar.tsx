@@ -724,18 +724,18 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 h-screen",
-        "border-r border-zinc-200 dark:border-zinc-800",
-        "transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-        "bg-white dark:bg-[#0f0f14]",
-        collapsed ? "w-20" : "w-64"
+        "fixed left-4 top-4 bottom-4 z-40 flex flex-col",
+        "rounded-2xl border border-white/5",
+        "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+        "bg-card/40-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)]",
+        collapsed ? "w-[72px]" : "w-64"
       )}
     >
 
       <div className="h-full flex flex-col">
         {/* Logo - fixed at top */}
         <div className={cn(
-          "shrink-0 flex h-16 items-center border-b border-zinc-200 dark:border-zinc-800 px-4 bg-white dark:bg-[#0f0f14]",
+          "shrink-0 flex h-16 items-center border-b border-white/5 px-4 bg-transparent",
           collapsed ? "justify-center" : "justify-between"
         )}>
           {!collapsed && (

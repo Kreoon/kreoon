@@ -218,7 +218,7 @@ export function LiveShoppingComingSoon({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           className={cn(
-            "relative overflow-hidden rounded-sm border border-kreoon-purple-500/30 bg-gradient-to-r from-kreoon-purple-900/30 via-kreoon-bg-card to-kreoon-purple-900/30 px-4 py-3 backdrop-blur-sm",
+            "relative overflow-hidden rounded-sm border border-kreoon-purple-500/30 bg-gradient-to-r from-kreoon-purple-900/30 via-kreoon-bg-card to-kreoon-purple-900/30 px-4 py-3",
             className,
           )}
         >
@@ -314,7 +314,7 @@ export function LiveShoppingComingSoon({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className={cn(
-          "fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm",
+          "fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4",
           className,
         )}
         onClick={(e) => {

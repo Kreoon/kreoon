@@ -647,10 +647,10 @@ export function MobileNav() {
           <span className="sr-only">Toggle menu</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-72 p-0 bg-white dark:bg-[#0f0f14] border-zinc-200 dark:border-zinc-800">
+      <SheetContent side="left" className="w-72 p-0 bg-background border-border">
         <div className="flex h-full flex-col">
           {/* Logo */}
-          <div className="flex h-16 items-center border-b border-zinc-200 dark:border-zinc-800 px-4">
+          <div className="flex h-16 items-center border-b border-border px-4">
             <div className="flex items-center gap-3">
               <div className="relative flex h-10 w-10 items-center justify-center rounded-sm overflow-hidden bg-purple-500/10 border border-purple-500/20">
                 <img src={effectiveLogoUrl} alt={effectivePlatformName} className="h-8 w-8 object-cover" />
@@ -668,21 +668,21 @@ export function MobileNav() {
 
           {/* Root Admin Organization Switcher */}
           {isPlatformRoot && (
-            <div className="px-3 py-2 border-b border-zinc-200 dark:border-zinc-800">
+            <div className="px-3 py-2 border-b border-border">
               <RootOrgSwitcher />
             </div>
           )}
 
           {/* Regular User Organization Switcher - for users with multiple orgs (not clients) */}
           {!isPlatformRoot && !activeIsClient && (
-            <div className="px-3 py-2 border-b border-zinc-200 dark:border-zinc-800">
+            <div className="px-3 py-2 border-b border-border">
               <UserOrgSwitcher />
             </div>
           )}
 
           {/* User Info */}
           {profile && (
-            <div className="p-4 border-b border-zinc-200 dark:border-zinc-800">
+            <div className="p-4 border-b border-border">
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={profile.avatar_url || undefined} />
@@ -792,7 +792,7 @@ export function MobileNav() {
 
           {/* Achievements Widget - hide for freelancers */}
           {!isFreelanceUser && (
-            <div className="border-t border-zinc-200 dark:border-zinc-800">
+            <div className="border-t border-border">
               <SidebarAchievementsWidget collapsed={false} />
             </div>
           )}

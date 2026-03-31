@@ -66,7 +66,7 @@ export function VipBadge({
         "bg-gradient-to-r from-purple-500/20 via-violet-400/20 to-purple-500/20",
         "border-2 border-purple-500/50",
         "text-purple-500",
-        "backdrop-blur-sm",
+        "",
         "transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 hover:scale-105",
         sizeClasses[size],
         className

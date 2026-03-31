@@ -85,7 +85,7 @@ export function CrmFieldsConfigDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-popover/95 border-white/10 backdrop-blur-xl">
+      <DialogContent className="sm:max-w-md bg-popover/95 border-white/10">
         <DialogHeader>
           <DialogTitle className="text-white text-base">Configurar campos personalizados</DialogTitle>
         </DialogHeader>

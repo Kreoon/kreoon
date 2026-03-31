@@ -153,7 +153,7 @@ export function ContentStatusBadge({
           {badgeContent}
         </TooltipTrigger>
         <TooltipContent
-          className="bg-zinc-900/95 backdrop-blur-sm border-white/10 max-w-[200px]"
+          className="bg-zinc-900/95 border-white/10 max-w-[200px]"
         >
           <div className="flex flex-col gap-1">
             <span className="font-semibold" style={{ color: estado.color }}>
@@ -218,7 +218,7 @@ export function ContentStatusDot({
         <TooltipTrigger asChild>
           {dot}
         </TooltipTrigger>
-        <TooltipContent className="bg-zinc-900/95 backdrop-blur-sm border-white/10">
+        <TooltipContent className="bg-zinc-900/95 border-white/10">
           <span style={{ color: estado.color }}>{estado.nombre}</span>
         </TooltipContent>
       </Tooltip>

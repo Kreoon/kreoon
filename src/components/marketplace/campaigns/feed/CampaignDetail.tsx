@@ -86,7 +86,7 @@ export function CampaignDetail({ campaignId }: CampaignDetailProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Top nav */}
-      <div className="border-b border-white/10 bg-background/95 backdrop-blur-sm sticky top-0 z-10">
+      <div className="border-b border-white/10 bg-background/95 sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center gap-3">
             <button

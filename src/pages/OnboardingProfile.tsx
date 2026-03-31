@@ -587,22 +587,19 @@ const OnboardingProfile = () => {
   if (!accountType) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="fixed inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/15 rounded-full blur-[120px]" />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-500/10 rounded-full blur-[120px]" />
-        </div>
+        <div className="fixed inset-0 pointer-events-none bg-background" />
 
         <div className="relative max-w-2xl mx-auto px-4 py-12">
           <div className="text-center mb-10">
-            <h1 className="text-3xl font-bold text-white mb-3">¡Bienvenido a KREOON!</h1>
-            <p className="text-white/60">¿Cómo quieres usar la plataforma?</p>
+            <h1 className="text-3xl font-bold text-foreground mb-3 font-mono tracking-tighter uppercase">¡Bienvenido a KREOON!</h1>
+            <p className="text-muted-foreground font-mono">¿Cómo quieres usar la plataforma?</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
             {/* Talent Option */}
             <button
               onClick={() => setAccountType('talent')}
-              className="group p-6 rounded-sm border-2 border-white/10 bg-white/[0.02] hover:border-purple-500/50 hover:bg-purple-500/10 transition-all text-left"
+              className="group p-6 rounded-sm border border-border bg-card hover:border-purple-500/50 hover:bg-purple-500/10 transition-all text-left"
             >
               <div className="w-14 h-14 rounded-sm bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-4">
                 <Video className="w-7 h-7 text-white" />
@@ -621,7 +618,7 @@ const OnboardingProfile = () => {
             {/* Brand Option */}
             <button
               onClick={() => setAccountType('brand')}
-              className="group p-6 rounded-sm border-2 border-white/10 bg-white/[0.02] hover:border-amber-500/50 hover:bg-amber-500/10 transition-all text-left"
+              className="group p-6 rounded-sm border border-border bg-card hover:border-amber-500/50 hover:bg-amber-500/10 transition-all text-left"
             >
               <div className="w-14 h-14 rounded-sm bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center mb-4">
                 <Briefcase className="w-7 h-7 text-white" />
@@ -645,10 +642,7 @@ const OnboardingProfile = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/15 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-500/10 rounded-full blur-[120px]" />
-      </div>
+      <div className="fixed inset-0 pointer-events-none bg-background" />
 
       <div className="relative max-w-2xl mx-auto px-4 py-8">
         {/* Header */}
@@ -704,7 +698,7 @@ const OnboardingProfile = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
-              <Card className="!bg-white/[0.03] !border-white/10 p-6 space-y-6">
+              <Card className="bg-card border-border shadow-none p-6 space-y-6 rounded-[0.125rem]">
                 <div>
                   <label className="block text-sm font-medium text-white/80 mb-3">
                     <Camera className="w-4 h-4 inline mr-2" />
@@ -734,7 +728,7 @@ const OnboardingProfile = () => {
                     value={brandName}
                     onChange={e => setBrandName(e.target.value)}
                     placeholder="Ej: Mi Empresa S.A.S"
-                    className="bg-white/5 border-white/10"
+                    className="bg-background border-border"
                   />
                 </div>
 
@@ -746,7 +740,7 @@ const OnboardingProfile = () => {
                     value={brandIndustry}
                     onChange={e => setBrandIndustry(e.target.value)}
                     placeholder="Ej: Moda, Tecnología, Alimentos..."
-                    className="bg-white/5 border-white/10"
+                    className="bg-background border-border"
                   />
                 </div>
 
@@ -759,7 +753,7 @@ const OnboardingProfile = () => {
                     value={brandWebsite}
                     onChange={e => setBrandWebsite(e.target.value)}
                     placeholder="https://..."
-                    className="bg-white/5 border-white/10"
+                    className="bg-background border-border"
                   />
                 </div>
 
@@ -774,7 +768,7 @@ const OnboardingProfile = () => {
                     placeholder="Describe brevemente tu marca o negocio..."
                     rows={3}
                     maxLength={500}
-                    className="w-full rounded-sm border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-amber-500/50 focus:outline-none resize-none"
+                    className="w-full rounded-[0.125rem] border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:outline-none resize-none"
                   />
                 </div>
               </Card>
@@ -790,7 +784,7 @@ const OnboardingProfile = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
-              <Card className="!bg-white/[0.03] !border-white/10 p-6 space-y-6">
+              <Card className="bg-card border-border shadow-none p-6 space-y-6 rounded-[0.125rem]">
                 <div>
                   <label className="block text-sm font-medium text-white/80 mb-3">
                     <Camera className="w-4 h-4 inline mr-2" />
@@ -825,7 +819,7 @@ const OnboardingProfile = () => {
                     placeholder="Describe tu experiencia, estilo y lo que te hace único como creador..."
                     rows={4}
                     maxLength={500}
-                    className="w-full rounded-sm border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-purple-500/50 focus:outline-none resize-none"
+                    className="w-full rounded-[0.125rem] border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-purple-500/50 focus:outline-none resize-none"
                   />
                   <p className="text-xs text-white/40 text-right mt-1">{bio.length}/500</p>
                 </div>
@@ -841,7 +835,7 @@ const OnboardingProfile = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
-              <Card className="!bg-white/[0.03] !border-white/10 p-6 space-y-6">
+              <Card className="bg-card border-border shadow-none p-6 space-y-6 rounded-[0.125rem]">
                 <div>
                   <label className="block text-sm font-medium text-white/80 mb-3">
                     <Briefcase className="w-4 h-4 inline mr-2" />
@@ -957,7 +951,7 @@ const OnboardingProfile = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
-              <Card className="!bg-white/[0.03] !border-white/10 p-6 space-y-4">
+              <Card className="bg-card border-border shadow-none p-6 space-y-4 rounded-[0.125rem]">
                 <div>
                   <label className="block text-sm font-medium text-white/80 mb-2">
                     <Film className="w-4 h-4 inline mr-2" />
@@ -1133,7 +1127,7 @@ const OnboardingProfile = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
-              <Card className="!bg-white/[0.03] !border-white/10 p-6 space-y-4">
+              <Card className="bg-card border-border shadow-none p-6 space-y-4 rounded-[0.125rem]">
                 <label className="block text-sm font-medium text-white/80 mb-2">
                   <Globe className="w-4 h-4 inline mr-2" />
                   Redes sociales <span className="text-white/40">(opcional)</span>
@@ -1148,7 +1142,7 @@ const OnboardingProfile = () => {
                       value={socialLinks.instagram}
                       onChange={e => setSocialLinks({ ...socialLinks, instagram: e.target.value })}
                       placeholder="@usuario"
-                      className="bg-white/5 border-white/10"
+                      className="bg-background border-border"
                     />
                   </div>
                   <div>
@@ -1162,7 +1156,7 @@ const OnboardingProfile = () => {
                       value={socialLinks.tiktok}
                       onChange={e => setSocialLinks({ ...socialLinks, tiktok: e.target.value })}
                       placeholder="@usuario"
-                      className="bg-white/5 border-white/10"
+                      className="bg-background border-border"
                     />
                   </div>
                   <div>
@@ -1173,7 +1167,7 @@ const OnboardingProfile = () => {
                       value={socialLinks.youtube}
                       onChange={e => setSocialLinks({ ...socialLinks, youtube: e.target.value })}
                       placeholder="URL del canal"
-                      className="bg-white/5 border-white/10"
+                      className="bg-background border-border"
                     />
                   </div>
                   <div>
@@ -1184,7 +1178,7 @@ const OnboardingProfile = () => {
                       value={socialLinks.website}
                       onChange={e => setSocialLinks({ ...socialLinks, website: e.target.value })}
                       placeholder="https://..."
-                      className="bg-white/5 border-white/10"
+                      className="bg-background border-border"
                     />
                   </div>
                 </div>

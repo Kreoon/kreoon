@@ -156,21 +156,21 @@ export function MarketplaceSearchBar({
       {/* Main bar */}
       <div
         className={cn(
-          'flex items-center rounded-full border transition-all duration-300',
+          'flex items-center rounded-[0.125rem] border transition-all duration-300',
           activeSection
-            ? 'bg-white/10 border-purple-500/40 shadow-lg shadow-purple-500/10'
-            : 'bg-white/5 border-white/10 hover:border-white/20',
+            ? 'bg-secondary border-primary/40'
+            : 'bg-secondary border-border hover:border-border',
         )}
       >
         {/* Search section */}
         <button
           className={cn(
-            'flex-1 flex items-center gap-3 px-5 py-3.5 rounded-l-full transition-colors',
-            activeSection === 'search' && 'bg-white/5',
+            'flex-1 flex items-center gap-3 px-5 py-3.5 rounded-l-[0.125rem] transition-colors',
+            activeSection === 'search' && 'bg-secondary',
           )}
           onClick={() => setActiveSection('search')}
         >
-          <Search className="h-4 w-4 text-gray-400 flex-shrink-0" />
+          <Search className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           <div className="text-left min-w-0">
             <p className="text-xs font-medium text-foreground/80">¿Qué buscas?</p>
             {activeSection === 'search' ? (
@@ -180,49 +180,49 @@ export function MarketplaceSearchBar({
                 onChange={e => onSearchChange(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Creadores, estilos..."
-                className="w-full bg-transparent text-sm text-white placeholder:text-gray-500 outline-none"
+                className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
               />
             ) : (
-              <p className="text-sm text-gray-500 truncate">
+              <p className="text-sm text-muted-foreground truncate">
                 {search || 'Creadores, estilos...'}
               </p>
             )}
           </div>
         </button>
 
-        <div className="w-px h-8 bg-white/10" />
+        <div className="w-px h-8 bg-border" />
 
         {/* Country section */}
         <button
           className={cn(
             'flex-1 flex items-center gap-3 px-5 py-3.5 transition-colors hidden md:flex',
-            activeSection === 'country' && 'bg-white/5',
+            activeSection === 'country' && 'bg-secondary',
           )}
           onClick={() => setActiveSection(prev => (prev === 'country' ? null : 'country'))}
         >
-          <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+          <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           <div className="text-left min-w-0">
             <p className="text-xs font-medium text-foreground/80">País/Ciudad</p>
-            <p className="text-sm text-gray-500 truncate">
+            <p className="text-sm text-muted-foreground truncate">
               {selectedCountry ? `${selectedCountry.flag} ${selectedCountry.label}` : 'Cualquier lugar'}
             </p>
           </div>
         </button>
 
-        <div className="w-px h-8 bg-white/10 hidden md:block" />
+        <div className="w-px h-8 bg-border hidden md:block" />
 
         {/* Content type section */}
         <button
           className={cn(
             'flex-1 flex items-center gap-3 px-5 py-3.5 transition-colors hidden md:flex',
-            activeSection === 'content' && 'bg-white/5',
+            activeSection === 'content' && 'bg-secondary',
           )}
           onClick={() => setActiveSection(prev => (prev === 'content' ? null : 'content'))}
         >
-          <Film className="h-4 w-4 text-gray-400 flex-shrink-0" />
+          <Film className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           <div className="text-left min-w-0">
             <p className="text-xs font-medium text-foreground/80">Tipo contenido</p>
-            <p className="text-sm text-gray-500 truncate">
+            <p className="text-sm text-muted-foreground truncate">
               {contentTypes.length > 0
                 ? contentTypes.slice(0, 2).join(', ') + (contentTypes.length > 2 ? '...' : '')
                 : 'UGC, Reels, VSL...'}
@@ -237,9 +237,9 @@ export function MarketplaceSearchBar({
               setActiveSection(null);
               onSubmit();
             }}
-            className="w-10 h-10 rounded-full bg-purple-600 hover:bg-purple-500 flex items-center justify-center transition-colors"
+            className="w-10 h-10 rounded-[0.125rem] bg-primary hover:bg-primary/90 flex items-center justify-center transition-colors"
           >
-            <Search className="h-4 w-4 text-white" />
+            <Search className="h-4 w-4 text-foreground" />
           </button>
         </div>
       </div>
@@ -251,20 +251,20 @@ export function MarketplaceSearchBar({
             <span
               key={i}
               className={cn(
-                'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium',
-                chip.type === 'role' && 'bg-purple-500/15 border border-purple-500/25 text-purple-300',
-                chip.type === 'location' && 'bg-blue-500/15 border border-blue-500/20 text-blue-300',
-                chip.type === 'category' && 'bg-pink-500/15 border border-pink-500/20 text-pink-300',
+                'inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.125rem] text-[11px] font-medium',
+                chip.type === 'role' && 'bg-primary/15 border border-primary/25 text-primary',
+                chip.type === 'location' && 'bg-primary/15 border border-primary/20 text-primary',
+                chip.type === 'category' && 'bg-primary/15 border border-primary/20 text-primary',
               )}
             >
-              {chip.type === 'role' && <span className="w-1.5 h-1.5 rounded-full bg-purple-400 inline-block" />}
+              {chip.type === 'role' && <span className="w-1.5 h-1.5 rounded-[0.125rem] bg-primary inline-block" />}
               {chip.type === 'location' && '📍'}
               {chip.type === 'category' && '#'}
               {chip.label}
             </span>
           ))}
           {isAIParsing && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] text-white/30">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[0.125rem] text-[11px] text-muted-foreground">
               <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
@@ -277,7 +277,7 @@ export function MarketplaceSearchBar({
 
       {/* Dropdowns */}
       {activeSection === 'country' && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-white/10 rounded-sm shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-sm shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="space-y-1">
             <button
               onClick={() => {
@@ -287,8 +287,8 @@ export function MarketplaceSearchBar({
               className={cn(
                 'w-full flex items-center gap-3 px-3 py-2.5 rounded-sm transition-colors text-sm',
                 country === null
-                  ? 'bg-purple-500/20 text-purple-300'
-                  : 'text-foreground/80 hover:bg-white/5',
+                  ? 'bg-primary/20 text-primary'
+                  : 'text-foreground/80 hover:bg-secondary',
               )}
             >
               🌎 Todos los países
@@ -303,8 +303,8 @@ export function MarketplaceSearchBar({
                 className={cn(
                   'w-full flex items-center gap-3 px-3 py-2.5 rounded-sm transition-colors text-sm',
                   country === c.code
-                    ? 'bg-purple-500/20 text-purple-300'
-                    : 'text-foreground/80 hover:bg-white/5',
+                    ? 'bg-primary/20 text-primary'
+                    : 'text-foreground/80 hover:bg-secondary',
                 )}
               >
                 {c.flag} {c.label}
@@ -315,7 +315,7 @@ export function MarketplaceSearchBar({
       )}
 
       {activeSection === 'content' && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-white/10 rounded-sm shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-sm shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="grid grid-cols-2 gap-2">
             {CONTENT_TYPES.map(ct => (
               <button
@@ -324,8 +324,8 @@ export function MarketplaceSearchBar({
                 className={cn(
                   'flex items-center gap-2 px-3 py-2.5 rounded-sm transition-colors text-sm',
                   contentTypes.includes(ct)
-                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                    : 'text-foreground/80 hover:bg-white/5 border border-transparent',
+                    ? 'bg-primary/20 text-primary border border-primary/30'
+                    : 'text-foreground/80 hover:bg-secondary border border-transparent',
                 )}
               >
                 {contentTypes.includes(ct) && <X className="h-3 w-3" />}

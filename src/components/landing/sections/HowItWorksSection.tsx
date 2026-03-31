@@ -156,7 +156,7 @@ function StepVisual({
     return (
       <div
         className={cn(
-          "rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
+          "rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3",
           className,
         )}
       >
@@ -170,7 +170,7 @@ function StepVisual({
     return (
       <div
         className={cn(
-          "flex gap-2 rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
+          "flex gap-2 rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3",
           className,
         )}
       >
@@ -187,7 +187,7 @@ function StepVisual({
     return (
       <div
         className={cn(
-          "flex items-center justify-center rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-6 backdrop-blur-sm",
+          "flex items-center justify-center rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-6",
           className,
         )}
       >
@@ -201,7 +201,7 @@ function StepVisual({
     return (
       <div
         className={cn(
-          "flex h-20 items-end gap-1 rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
+          "flex h-20 items-end gap-1 rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3",
           className,
         )}
       >
@@ -224,7 +224,7 @@ function StepVisual({
     return (
       <div
         className={cn(
-          "rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
+          "rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3",
           className,
         )}
       >
@@ -240,7 +240,7 @@ function StepVisual({
     return (
       <div
         className={cn(
-          "space-y-2 rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
+          "space-y-2 rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3",
           className,
         )}
       >
@@ -258,7 +258,7 @@ function StepVisual({
     return (
       <div
         className={cn(
-          "rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
+          "rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3",
           className,
         )}
       >
@@ -282,7 +282,7 @@ function StepVisual({
     return (
       <div
         className={cn(
-          "flex gap-2 rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
+          "flex gap-2 rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3",
           className,
         )}
       >
@@ -307,7 +307,7 @@ function StepVisual({
     return (
       <div
         className={cn(
-          "rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3 backdrop-blur-sm",
+          "rounded-sm border border-kreoon-border bg-kreoon-bg-card/60 p-3",
           className,
         )}
       >
@@ -377,7 +377,7 @@ export function HowItWorksSection({
 
         {/* Toggle perspectiva con iconos */}
         <div className="mb-12 flex justify-center">
-          <div className="inline-flex rounded-sm border border-kreoon-border bg-kreoon-bg-secondary/80 p-1 backdrop-blur-sm">
+          <div className="inline-flex rounded-sm border border-kreoon-border bg-kreoon-bg-secondary/80 p-1">
             {(Object.keys(PERSPECTIVE_CONFIG) as HowItWorksPerspective[]).map((p) => {
               const config = PERSPECTIVE_CONFIG[p];
               const Icon = config.icon;

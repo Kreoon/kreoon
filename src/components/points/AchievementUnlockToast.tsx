@@ -56,7 +56,7 @@ export function AchievementUnlockToast({ achievement, onClose }: AchievementUnlo
           </button>
 
           <div className="flex items-start gap-4">
-            <div className="p-3 rounded-sm bg-white/20 backdrop-blur-sm">
+            <div className="p-3 rounded-sm bg-white/20">
               <Trophy className="w-8 h-8 text-white" />
             </div>
 

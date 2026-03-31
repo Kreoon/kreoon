@@ -73,7 +73,7 @@ export function CreditsDisplay({
         config.padding,
         'bg-gradient-to-r from-purple-500/10 to-purple-600/5',
         'border border-purple-500/20',
-        'backdrop-blur-sm',
+        '',
         className
       )}
       initial={animated ? { scale: 0.9, opacity: 0 } : undefined}

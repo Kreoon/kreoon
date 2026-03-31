@@ -9,12 +9,13 @@
  * - Firma digital y aceptación de documentos
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft, Lock, FileText, CheckCircle2,
-  Loader2, AlertCircle, ScrollText, PenTool, Shield, LogOut, ArrowRight
+  Loader2, AlertCircle, ScrollText, PenTool, Shield
 } from 'lucide-react';
+import { OnboardingShell, TALENT_STEPS, CLIENT_STEPS } from './OnboardingShell';
 import {
   Sheet,
   SheetContent,
@@ -33,16 +34,21 @@ import { getSignatureMethodForDocument } from '@/types/digital-signature';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import type { AppRole } from '@/types/database';
+import type { AppRole, AccountType } from '@/types/database';
 import { getPermissionGroup } from '@/lib/permissionGroups';
 
 interface NovaLegalConsentStepProps {
   onBack: () => void;
   onLogout?: () => void;
   userRole?: AppRole; // Rol del usuario para filtrar documentos
+  accountType?: AccountType; // Tipo de cuenta: 'talent' | 'client' | 'organization'
 }
 
-export function NovaLegalConsentStep({ onBack, onLogout, userRole }: NovaLegalConsentStepProps) {
+export function NovaLegalConsentStep({ onBack, onLogout, userRole, accountType }: NovaLegalConsentStepProps) {
+  // Determinar si es flujo de talento o cliente
+  const isTalentFlow = userRole !== 'client';
+  const steps = isTalentFlow ? TALENT_STEPS : CLIENT_STEPS;
+  const currentStep = isTalentFlow ? 4 : 3; // Último paso en ambos flujos
   const {
     requiredPendingDocuments,
     completionStatus,
@@ -75,17 +81,26 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole }: NovaLegalCo
   const [showReceipt, setShowReceipt] = useState<string | null>(null);
   const [signedDocuments, setSignedDocuments] = useState<Set<string>>(new Set());
 
-  // Filtrar documentos de registro que corresponden al rol del usuario
+  // Filtrar documentos de registro que corresponden al rol y tipo de cuenta del usuario
   // user_role puede ser: 'all', 'talent', 'client', o un rol específico
+  // account_type puede ser: 'talent', 'client', 'organization', o null
   const userPermissionGroup = userRole ? getPermissionGroup(userRole) : 'talent';
 
   const documentsToShow = requiredPendingDocuments.filter(doc => {
     // Solo documentos de registro
     if (doc.trigger_event && doc.trigger_event !== 'registration') return false;
 
-    // Obtener el user_role del documento (viene del backend)
-    const docUserRole = (doc as PendingDocument & { user_role?: string }).user_role;
+    // Obtener user_role y account_type del documento
+    const docUserRole = doc.user_role;
+    const docAccountType = doc.account_type;
 
+    // PRIORIDAD 1: Filtrar por account_type si existe
+    // Si el documento tiene account_type, SOLO mostrarlo si coincide con el del usuario
+    if (docAccountType) {
+      return docAccountType === accountType;
+    }
+
+    // PRIORIDAD 2: Filtrar por user_role (sistema legacy)
     // Si no hay user_role o es 'all', mostrar a todos
     if (!docUserRole || docUserRole === 'all') return true;
 
@@ -118,10 +133,17 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole }: NovaLegalCo
     }
   }, [mySignatures, documentsToShow]);
 
-  const allDocsAccepted = documentsToShow.every(
-    doc => acceptedDocs.has(doc.document_id) || signedDocuments.has(doc.document_id)
+  const allDocsAccepted = useMemo(
+    () => documentsToShow.every(
+      doc => acceptedDocs.has(doc.document_id) || signedDocuments.has(doc.document_id)
+    ),
+    [documentsToShow, acceptedDocs, signedDocuments]
   );
-  const canComplete = ageConfirmed && allDocsAccepted;
+
+  const canComplete = useMemo(
+    () => ageConfirmed && allDocsAccepted,
+    [ageConfirmed, allDocsAccepted]
+  );
 
   // Cargar contenido del documento
   const loadDocumentContent = useCallback(async (doc: PendingDocument) => {
@@ -304,8 +326,9 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole }: NovaLegalCo
         toast.error('Error: Verifica que hayas completado tu perfil y aceptado todos los documentos requeridos.');
         refetch();
       }
-    } catch (error: any) {
-      toast.error(`Error al completar: ${error?.message || 'Error desconocido'}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      toast.error(`Error al completar: ${errorMessage}`);
       refetch();
     }
   };
@@ -324,75 +347,32 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole }: NovaLegalCo
       escrow_payment_terms: 'Términos de Escrow y Pagos',
       white_label_agreement: 'Acuerdo de Organización',
       data_processing_agreement: 'Acuerdo de Procesamiento de Datos (DPA)',
+      // Documentos unificados por tipo de cuenta (v1.0 - Marzo 2026)
+      talent_agreement: 'Acuerdo de Talento KREOON',
+      client_agreement: 'Acuerdo de Cliente KREOON',
+      organization_agreement: 'Acuerdo de Organización KREOON',
     };
     return labels[type] || type;
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-[#0a0a0f]">
-
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white dark:bg-[#0f0f14] border-b border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-xl font-bold text-zinc-900 dark:text-white">KREOON</span>
-            <span className="px-2.5 py-1 text-xs font-medium bg-purple-600 text-white rounded-full">
-              Verificación
-            </span>
-          </div>
-          {onLogout && (
-            <button
-              onClick={onLogout}
-              className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Cerrar sesión</span>
-            </button>
-          )}
-        </div>
-      </header>
-
-      {/* Progress Steps */}
-      <div className="max-w-md mx-auto px-4 py-6">
-        <div className="flex items-center justify-center gap-4">
-          {/* Step 1 - Completed */}
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white">
-              <CheckCircle2 className="w-4 h-4" />
-            </div>
-            <span className="text-sm text-zinc-500 dark:text-zinc-400 hidden sm:inline">Datos personales</span>
-          </div>
-          {/* Line */}
-          <div className="w-12 sm:w-16 h-px bg-zinc-300 dark:bg-zinc-700" />
-          {/* Step 2 - Active */}
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white text-sm font-medium">
-              2
-            </div>
-            <span className="text-sm font-medium text-zinc-900 dark:text-white hidden sm:inline">Términos legales</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Card */}
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 pb-12">
+    <OnboardingShell currentStep={currentStep} steps={steps} onLogout={onLogout}>
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
           className={cn(
-            "rounded-sm p-6 sm:p-8 md:p-10",
-            "bg-white dark:bg-[#14141f]",
-            "border border-zinc-200 dark:border-zinc-800",
-            "shadow-sm dark:shadow-none"
+            "rounded-[0.125rem] p-6 sm:p-8 md:p-10",
+            "bg-card",
+            "border border-border"
           )}
         >
           {/* Title */}
           <div className="text-center mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white mb-3">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
               Términos y Condiciones
             </h1>
-            <p className="text-zinc-600 dark:text-zinc-400 text-sm sm:text-base max-w-lg mx-auto">
+            <p className="text-muted-foreground text-sm sm:text-base max-w-lg mx-auto">
               Los siguientes documentos regulan tu uso de la plataforma KREOON, operada por KREOON TECH LLC. Lee cada uno antes de aceptar.
             </p>
           </div>
@@ -401,10 +381,10 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole }: NovaLegalCo
           <section className="mb-8" aria-labelledby="age-verification-heading">
             <div
               className={cn(
-                "p-4 rounded-sm border transition-colors",
+                "p-4 rounded-[0.125rem] border transition-colors",
                 ageConfirmed
-                  ? "border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/30"
-                  : "border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30"
+                  ? "border-green-500/30 bg-green-500/5"
+                  : "border-amber-500/30 bg-amber-500/5"
               )}
             >
               <label htmlFor="age-verification-checkbox" className="flex items-start gap-3 cursor-pointer">
@@ -418,11 +398,11 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole }: NovaLegalCo
                   className="mt-1"
                 />
                 <div>
-                  <p id="age-verification-heading" className="font-medium text-zinc-900 dark:text-white">
-                    Verificación de Edad <span className="text-red-500 dark:text-red-400" aria-hidden="true">*</span>
+                  <p id="age-verification-heading" className="font-medium text-foreground">
+                    Verificación de Edad <span className="text-destructive" aria-hidden="true">*</span>
                     <span className="sr-only">(campo requerido)</span>
                   </p>
-                  <p id="age-verification-description" className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                  <p id="age-verification-description" className="text-sm text-muted-foreground mt-1">
                     <strong>Declaro bajo juramento que soy mayor de 18 años de edad</strong> o tengo la mayoría de edad legal en mi jurisdicción, y tengo capacidad legal para aceptar estos términos.
                   </p>
                 </div>
@@ -445,33 +425,33 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole }: NovaLegalCo
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.15 }}
                   className={cn(
-                    "p-4 rounded-sm border transition-colors",
+                    "p-4 rounded-[0.125rem] border transition-colors",
                     isAccepted
-                      ? "border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/30"
-                      : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-[#1a1a24]"
+                      ? "border-green-500/30 bg-green-500/5"
+                      : "border-border bg-secondary/50"
                   )}
                 >
                   <div className="flex items-start gap-3">
                     <div className="mt-1">
                       {isAccepted ? (
-                        <CheckCircle2 className="w-5 h-5 text-green-500 dark:text-green-400" />
+                        <CheckCircle2 className="w-5 h-5 text-green-500" />
                       ) : (
-                        <div className="w-5 h-5 rounded-full border-2 border-zinc-300 dark:border-white/30" />
+                        <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />
                       )}
                     </div>
 
                     <div className="flex-1">
                       <div className="flex items-center justify-between flex-wrap gap-2">
-                        <p className="font-medium text-zinc-900 dark:text-white flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+                        <p className="font-medium text-foreground flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-primary" />
                           {doc.title || getDocTypeLabel(doc.document_type)}
                           {doc.is_required && (
-                            <span className="text-xs bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full">
+                            <span className="text-xs font-mono bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-[0.125rem]">
                               Requerido
                             </span>
                           )}
                           {requiresSignature && (
-                            <span className="text-xs bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <span className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded-[0.125rem] flex items-center gap-1">
                               <PenTool className="w-3 h-3" />
                               Firma
                             </span>
@@ -481,7 +461,7 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole }: NovaLegalCo
                         <div className="flex gap-2">
                           <button
                             onClick={() => openDocumentDrawer(doc)}
-                            className="flex items-center gap-1 px-3 py-1.5 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded transition-colors"
+                            className="flex items-center gap-1 px-3 py-1.5 text-sm text-primary hover:bg-primary/10 rounded-[0.125rem] transition-colors"
                           >
                             <ScrollText className="w-4 h-4" />
                             Leer
@@ -491,8 +471,8 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole }: NovaLegalCo
                             <button
                               onClick={() => requiresSignature ? openSignatureModal(doc) : openDocumentDrawer(doc)}
                               className={cn(
-                                "flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white rounded",
-                                "bg-purple-600 hover:bg-purple-500",
+                                "flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-primary-foreground rounded-[0.125rem]",
+                                "bg-primary hover:bg-primary/90",
                                 "transition-colors"
                               )}
                             >
@@ -513,13 +493,13 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole }: NovaLegalCo
                       </div>
 
                       {doc.summary && (
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">{doc.summary}</p>
+                        <p className="text-sm text-muted-foreground mt-1">{doc.summary}</p>
                       )}
 
                       <div className="flex items-center gap-3 mt-2">
-                        <p className="text-xs text-zinc-400 dark:text-zinc-500">Versión {doc.version}</p>
+                        <p className="text-xs font-mono text-muted-foreground">Versión {doc.version}</p>
                         {isSigned && (
-                          <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                          <p className="text-xs text-green-500 flex items-center gap-1">
                             <Shield className="w-3 h-3" />
                             Firmado digitalmente
                           </p>
@@ -533,8 +513,8 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole }: NovaLegalCo
           </section>
 
           {/* Legal Note */}
-          <div className="mt-6 p-4 rounded-sm bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700">
-            <p className="text-xs text-zinc-500 dark:text-zinc-500 flex items-start gap-2">
+          <div className="mt-6 p-4 rounded-[0.125rem] bg-secondary border border-border">
+            <p className="text-xs text-muted-foreground flex items-start gap-2">
               <Lock className="w-4 h-4 mt-0.5 flex-shrink-0" />
               Tu aceptación se registra con fecha, hora, dirección IP y navegador para cumplimiento legal. Esta información se almacena de forma segura y solo se utiliza para demostrar tu consentimiento.
             </p>
@@ -545,7 +525,7 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole }: NovaLegalCo
             <button
               onClick={onBack}
               aria-label="Volver al paso anterior"
-              className="flex items-center justify-center gap-2 h-12 px-6 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-[#14141f]"
+              className="flex items-center justify-center gap-2 h-12 px-6 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-[0.125rem] transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
             >
               <ChevronLeft className="w-4 h-4" aria-hidden="true" />
               Volver
@@ -557,14 +537,12 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole }: NovaLegalCo
               aria-label={isCompletingOnboarding ? 'Procesando solicitud' : 'Completar verificacion y acceder a KREOON'}
               aria-disabled={!canComplete || isCompletingOnboarding || isAccepting}
               className={cn(
-                "flex-1 h-12 sm:h-14 rounded font-semibold text-white",
-                "bg-gradient-to-r from-purple-600 to-purple-500",
-                "hover:from-purple-500 hover:to-purple-400",
-                "shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40",
+                "flex-1 h-12 sm:h-14 rounded-[0.125rem] font-semibold text-primary-foreground",
+                "bg-primary hover:bg-primary/90",
                 "transition-all duration-200",
                 "flex items-center justify-center gap-2",
                 "disabled:opacity-50 disabled:cursor-not-allowed",
-                "focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-[#14141f]"
+                "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
               )}
             >
               {isCompletingOnboarding ? (
@@ -582,32 +560,24 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole }: NovaLegalCo
           </div>
 
           {!canComplete && (
-            <p className="text-center text-sm text-amber-600 dark:text-amber-400 mt-4 flex items-center justify-center gap-2" role="alert" aria-live="polite">
+            <p className="text-center text-sm text-amber-500 mt-4 flex items-center justify-center gap-2" role="alert" aria-live="polite">
               <AlertCircle className="w-4 h-4" aria-hidden="true" />
               Debes confirmar tu edad y aceptar todos los documentos
             </p>
           )}
         </motion.div>
 
-        {/* Footer */}
-        <footer className="mt-8 text-center">
-          <p className="text-xs text-zinc-400 dark:text-zinc-500">
-            © 2026 KREOON TECH LLC. Todos los derechos reservados.
-          </p>
-        </footer>
-      </main>
-
       {/* Document Drawer */}
       <Sheet open={!!openDocument} onOpenChange={(open) => !open && closeDocumentDrawer()}>
         <SheetContent
           side="right"
-          className="w-full sm:max-w-2xl bg-white dark:bg-[#0F0F23] border-zinc-200 dark:border-white/10 p-0 z-[200] flex flex-col h-full"
+          className="w-full sm:max-w-2xl bg-background border-border p-0 z-[200] flex flex-col h-full"
         >
-          <SheetHeader className="p-4 sm:p-6 border-b border-zinc-200 dark:border-white/10 flex-shrink-0">
-            <SheetTitle className="text-zinc-900 dark:text-white text-base sm:text-lg">
+          <SheetHeader className="p-4 sm:p-6 border-b border-border flex-shrink-0">
+            <SheetTitle className="text-foreground text-base sm:text-lg">
               {openDocument?.title || getDocTypeLabel(openDocument?.document_type || '')}
             </SheetTitle>
-            <SheetDescription className="text-zinc-500 dark:text-white/60 text-xs sm:text-sm">
+            <SheetDescription className="text-muted-foreground text-xs sm:text-sm">
               Versión {openDocument?.version} — Lee el documento completo
             </SheetDescription>
           </SheetHeader>
@@ -627,7 +597,7 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole }: NovaLegalCo
             </div>
           </ScrollArea>
 
-          <div className="p-4 sm:p-6 border-t border-zinc-200 dark:border-white/10 flex-shrink-0 bg-white dark:bg-[#0F0F23]">
+          <div className="p-4 sm:p-6 border-t border-border flex-shrink-0 bg-background">
             {openDocument && getSignatureMethodForDocument(openDocument.document_type) !== 'clickwrap' ? (
               <button
                 onClick={() => {
@@ -636,8 +606,8 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole }: NovaLegalCo
                 }}
                 disabled={!hasReadToBottom}
                 className={cn(
-                  "w-full h-12 rounded font-semibold text-white",
-                  "bg-purple-600 hover:bg-purple-500",
+                  "w-full h-12 rounded-[0.125rem] font-semibold text-primary-foreground",
+                  "bg-primary hover:bg-primary/90",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
                   "flex items-center justify-center gap-2",
                   "transition-colors"
@@ -660,8 +630,8 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole }: NovaLegalCo
                 onClick={() => openDocument && handleAcceptDocument(openDocument.document_id)}
                 disabled={!hasReadToBottom || isAccepting}
                 className={cn(
-                  "w-full h-12 rounded font-semibold text-white",
-                  "bg-purple-600 hover:bg-purple-500",
+                  "w-full h-12 rounded-[0.125rem] font-semibold text-primary-foreground",
+                  "bg-primary hover:bg-primary/90",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
                   "flex items-center justify-center gap-2",
                   "transition-colors"
@@ -686,7 +656,7 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole }: NovaLegalCo
               </button>
             )}
             {!hasReadToBottom && (
-              <p className="text-xs text-zinc-400 dark:text-white/40 text-center mt-2">
+              <p className="text-xs text-muted-foreground text-center mt-2">
                 Desplázate hasta el final del documento para habilitarlo
               </p>
             )}
@@ -722,12 +692,12 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole }: NovaLegalCo
           onClose={() => setShowReceipt(null)}
         />
       )}
-    </div>
+    </OnboardingShell>
   );
 }
 
 // Document Content Component
-function DocumentContent({
+const DocumentContent = memo(function DocumentContent({
   html,
   onScrollEnd,
 }: {
@@ -753,25 +723,25 @@ function DocumentContent({
   }, [onScrollEnd]);
 
   return (
-    <div className="prose prose-zinc dark:prose-invert prose-purple max-w-none">
+    <div className="prose prose-neutral dark:prose-invert max-w-none">
       <div
         dangerouslySetInnerHTML={{ __html: html }}
         className={cn(
-          "[&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:text-zinc-900 dark:[&_h1]:text-white",
-          "[&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:text-zinc-900 dark:[&_h2]:text-white",
-          "[&_h3]:text-lg [&_h3]:font-medium [&_h3]:mt-4 [&_h3]:mb-2 [&_h3]:text-zinc-900 dark:[&_h3]:text-white",
-          "[&_p]:text-zinc-700 dark:[&_p]:text-white/80 [&_p]:leading-relaxed [&_p]:mb-3",
+          "[&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:text-foreground",
+          "[&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:text-foreground",
+          "[&_h3]:text-lg [&_h3]:font-medium [&_h3]:mt-4 [&_h3]:mb-2 [&_h3]:text-foreground",
+          "[&_p]:text-muted-foreground [&_p]:leading-relaxed [&_p]:mb-3",
           "[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-3",
           "[&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-3",
-          "[&_li]:text-zinc-700 dark:[&_li]:text-white/80 [&_li]:mb-1",
-          "[&_a]:text-purple-600 dark:[&_a]:text-purple-400 [&_a]:underline",
-          "[&_strong]:text-zinc-900 dark:[&_strong]:text-white [&_strong]:font-semibold",
-          "[&_address]:text-zinc-600 dark:[&_address]:text-white/70 [&_address]:not-italic"
+          "[&_li]:text-muted-foreground [&_li]:mb-1",
+          "[&_a]:text-primary [&_a]:underline",
+          "[&_strong]:text-foreground [&_strong]:font-semibold",
+          "[&_address]:text-muted-foreground [&_address]:not-italic"
         )}
       />
       <div ref={sentinelRef} className="h-1" />
     </div>
   );
-}
+});
 
 export default NovaLegalConsentStep;

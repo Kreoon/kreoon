@@ -120,7 +120,7 @@ export function CTASection({
       </div>
 
       <div className="relative mx-auto max-w-5xl px-4 lg:px-8">
-        <div className="overflow-hidden rounded-3xl border border-kreoon-purple-500/20 bg-kreoon-bg-card/40 px-6 py-12 shadow-kreoon-glow-sm backdrop-blur-xl sm:px-8 md:px-12 md:py-16 lg:px-16 lg:py-20">
+        <div className="overflow-hidden rounded-3xl border border-kreoon-purple-500/20 bg-kreoon-bg-card/40 px-6 py-12 shadow-kreoon-glow-sm sm:px-8 md:px-12 md:py-16 lg:px-16 lg:py-20">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}

@@ -159,7 +159,7 @@ export function SeasonUrgencyBanner({ className, compact = false }: SeasonUrgenc
               animate={urgency === 'critical' ? { scale: [1, 1.1, 1] } : {}}
               transition={{ duration: 1, repeat: Infinity }}
               className={cn(
-                'p-3 rounded-sm bg-background/50 backdrop-blur-sm',
+                'p-3 rounded-sm bg-background/50',
                 'border',
                 config.border
               )}
@@ -192,7 +192,7 @@ export function SeasonUrgencyBanner({ className, compact = false }: SeasonUrgenc
           <div className="flex items-center gap-4">
             <div className={cn(
               'px-4 py-2 rounded-sm',
-              'bg-background/50 backdrop-blur-sm',
+              'bg-background/50',
               'border',
               config.border
             )}>

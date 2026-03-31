@@ -32,6 +32,14 @@ export type TalentRole = Exclude<AppRole, 'admin' | 'client'>;
 export type UserType = 'talent' | 'client' | 'admin';
 
 /**
+ * Tipo de cuenta - define la version de plataforma que ve el usuario
+ * - talent: Creador independiente con especialidades
+ * - organization: Agencia que gestiona equipos
+ * - client: Marca/empresa que contrata talento
+ */
+export type AccountType = 'talent' | 'organization' | 'client';
+
+/**
  * Especializaciones - metadata adicional para cada rol
  * Un usuario puede tener hasta 5 especializaciones
  */
@@ -167,6 +175,7 @@ export interface Profile {
   current_organization_id: string | null;
   organization_status?: string;
   active_role?: AppRole | string | null;
+  user_type?: AccountType | null;
   active_brand_id?: string | null;
   platform_access_unlocked?: boolean;
   display_currency?: string | null;

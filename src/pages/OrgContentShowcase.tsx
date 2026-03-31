@@ -260,7 +260,7 @@ export default function OrgContentShowcase() {
   return (
     <div className="min-h-screen bg-[#0a0a0b] text-white">
       {/* ═══ NAVBAR ═══ */}
-      <nav className="sticky top-0 z-40 bg-[#0a0a0b]/80 backdrop-blur-xl border-b border-white/[0.06]">
+      <nav className="sticky top-0 z-40 bg-[#0a0a0b]/80 border-b border-white/[0.06]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
           {org.logo_url ? (
             <img src={org.logo_url} alt={displayName} className="h-8 w-8 rounded-sm object-cover" />

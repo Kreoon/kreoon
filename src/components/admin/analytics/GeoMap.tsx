@@ -19,7 +19,7 @@ export function GeoMap({ data }: GeoMapProps) {
   const maxVisitors = data[0]?.visitors || 1;
 
   return (
-    <div className="bg-[var(--nova-bg-elevated)] backdrop-blur-sm rounded-sm p-6 border border-[var(--nova-border-default)]">
+    <div className="bg-[var(--nova-bg-elevated)] rounded-sm p-6 border border-[var(--nova-border-default)]">
       <div className="flex items-center gap-2 mb-4">
         <Globe className="h-5 w-5 text-[var(--nova-accent-secondary)]" />
         <h3 className="text-lg font-semibold text-foreground">Top Países</h3>

@@ -233,9 +233,9 @@ export function ProfileTrustBadges({ userId, compact = false }: ProfileTrustBadg
   if (loading) {
     return (
       <div className="flex gap-2">
-        <Skeleton className="h-8 w-20 rounded-full bg-social-muted" />
-        <Skeleton className="h-8 w-8 rounded-full bg-social-muted" />
-        <Skeleton className="h-8 w-8 rounded-full bg-social-muted" />
+        <Skeleton className="h-8 w-20 rounded-full bg-background" />
+        <Skeleton className="h-8 w-8 rounded-full bg-background" />
+        <Skeleton className="h-8 w-8 rounded-full bg-background" />
       </div>
     );
   }
@@ -274,8 +274,8 @@ export function ProfileTrustBadges({ userId, compact = false }: ProfileTrustBadg
                   {overallStarRating.toFixed(1)}
                 </Badge>
               </TooltipTrigger>
-              <TooltipContent className="bg-social-card border-social-border">
-                <div className="space-y-1 text-social-foreground">
+              <TooltipContent className="bg-card border-border">
+                <div className="space-y-1 text-foreground">
                   {userRatings?.avg_creator_rating && (
                     <p className="text-xs">Creación: {userRatings.avg_creator_rating.toFixed(1)} ⭐</p>
                   )}
@@ -285,7 +285,7 @@ export function ProfileTrustBadges({ userId, compact = false }: ProfileTrustBadg
                   {userRatings?.avg_strategy_rating && (
                     <p className="text-xs">Estrategia: {userRatings.avg_strategy_rating.toFixed(1)} ⭐</p>
                   )}
-                  <p className="text-xs text-social-muted-foreground">{userRatings?.total_rated} proyectos calificados</p>
+                  <p className="text-xs text-muted-foreground">{userRatings?.total_rated} proyectos calificados</p>
                 </div>
               </TooltipContent>
             </Tooltip>
@@ -306,8 +306,8 @@ export function ProfileTrustBadges({ userId, compact = false }: ProfileTrustBadg
                   {levelConfig.label}
                 </Badge>
               </TooltipTrigger>
-              <TooltipContent className="bg-social-card border-social-border">
-                <p className="text-social-foreground">{userPoints.total_points} UP • Nivel {levelConfig.label}</p>
+              <TooltipContent className="bg-card border-border">
+                <p className="text-foreground">{userPoints.total_points} UP • Nivel {levelConfig.label}</p>
               </TooltipContent>
             </Tooltip>
           )}
@@ -329,8 +329,8 @@ export function ProfileTrustBadges({ userId, compact = false }: ProfileTrustBadg
                   {badge.badge === 'ambassador' ? 'Embajador' : badge.badge}
                 </Badge>
               </TooltipTrigger>
-              <TooltipContent className="bg-social-card border-social-border">
-                <p className="text-social-foreground">
+              <TooltipContent className="bg-card border-border">
+                <p className="text-foreground">
                   Embajador {badge.level?.charAt(0).toUpperCase()}{badge.level?.slice(1)}
                 </p>
               </TooltipContent>
@@ -350,16 +350,16 @@ export function ProfileTrustBadges({ userId, compact = false }: ProfileTrustBadg
                     <IconComponent className="h-3.5 w-3.5 text-white" />
                   </div>
                 </TooltipTrigger>
-                <TooltipContent className="bg-social-card border-social-border">
-                  <p className="font-medium text-social-foreground">{ua.achievement.name}</p>
-                  <p className="text-xs text-social-muted-foreground">{ua.achievement.description}</p>
+                <TooltipContent className="bg-card border-border">
+                  <p className="font-medium text-foreground">{ua.achievement.name}</p>
+                  <p className="text-xs text-muted-foreground">{ua.achievement.description}</p>
                 </TooltipContent>
               </Tooltip>
             );
           })}
 
           {achievements.length > 3 && (
-            <Badge variant="outline" className="bg-social-muted text-social-muted-foreground border-social-border text-xs">
+            <Badge variant="outline" className="bg-background text-muted-foreground border-border text-xs">
               +{achievements.length - 3}
             </Badge>
           )}
@@ -382,11 +382,11 @@ export function ProfileTrustBadges({ userId, compact = false }: ProfileTrustBadg
 function StatBlock({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {
   return (
     <div className="text-center">
-      <div className="flex items-center justify-center gap-1 text-social-muted-foreground mb-1">
+      <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
         {icon}
       </div>
-      <p className="text-lg font-bold text-social-foreground">{value}</p>
-      <p className="text-xs text-social-muted-foreground">{label}</p>
+      <p className="text-lg font-bold text-foreground">{value}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
     </div>
   );
 }

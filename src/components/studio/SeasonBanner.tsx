@@ -82,7 +82,7 @@ export function SeasonBanner({
               </span>
             </motion.div>
           </TooltipTrigger>
-          <TooltipContent className="bg-zinc-900/95 backdrop-blur-sm border-white/10">
+          <TooltipContent className="bg-zinc-900/95 border-white/10">
             <div className="flex flex-col gap-1">
               <span className="font-semibold text-white">
                 {temporada.nombre} - {temporada.año}

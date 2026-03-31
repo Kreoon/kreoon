@@ -691,7 +691,7 @@ export function KiroWidget() {
               className={cn(
                 'absolute bottom-full mb-3 right-0',
                 'max-w-[200px] px-3 py-2 rounded-sm',
-                'bg-card/95 backdrop-blur-xl',
+                'bg-card/95',
                 'border border-violet-500/30',
                 'shadow-lg shadow-violet-500/20'
               )}
@@ -732,7 +732,7 @@ export function KiroWidget() {
                   }}
                   className={cn(
                     'max-w-[220px] px-3 py-2 rounded-sm cursor-pointer',
-                    'bg-card/95 backdrop-blur-xl',
+                    'bg-card/95',
                     'border border-red-500/30',
                     'shadow-lg shadow-red-500/10',
                     'hover:border-red-500/50 transition-colors'

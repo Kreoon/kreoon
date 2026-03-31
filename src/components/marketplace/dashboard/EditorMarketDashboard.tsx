@@ -26,7 +26,7 @@ const STATUS_LABELS: Record<ProjectStatus, string> = {
 
 function KpiCard({ icon: Icon, label, value, color }: { icon: React.ElementType; label: string; value: string | number; color: string }) {
   return (
-    <div className="bg-card/80 backdrop-blur-xl border border-white/10 rounded-sm p-5">
+    <div className="bg-card/80 border border-white/10 rounded-sm p-5">
       <div className="flex items-center gap-3">
         <div className={`w-10 h-10 rounded-sm flex items-center justify-center ${color}`}>
           <Icon className="h-5 w-5" />

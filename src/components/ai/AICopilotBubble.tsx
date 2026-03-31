@@ -86,7 +86,7 @@ export function AICopilotBubble({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="absolute bottom-20 right-0 w-80 max-h-96 overflow-hidden rounded-sm border border-border bg-card/95 backdrop-blur-lg shadow-2xl"
+            className="absolute bottom-20 right-0 w-80 max-h-96 overflow-hidden rounded-sm border border-border bg-card/95 shadow-2xl"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-3 border-b border-border bg-muted/50">

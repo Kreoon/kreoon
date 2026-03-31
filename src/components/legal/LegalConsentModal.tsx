@@ -115,7 +115,7 @@ export function LegalConsentModal({
         className={cn(
           "sm:max-w-[600px] max-h-[90vh] overflow-hidden",
           "bg-gradient-to-br from-background/95 via-background/98 to-background/95",
-          "backdrop-blur-xl border-white/10"
+          "border-white/10"
         )}
         onPointerDownOutside={(e) => {
           if (blockClose && requiredDocs.length > 0) {

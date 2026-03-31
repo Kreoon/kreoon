@@ -5,60 +5,57 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-sm text-sm font-medium ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(270,100%,60%,0.5)] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[var(--radius)] text-sm font-semibold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(270,100%,60%,0.5)] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default: cn(
-          "bg-primary text-primary-foreground",
-          "shadow-sm",
-          "hover:bg-primary/90",
+          "bg-primary text-primary-foreground font-mono uppercase tracking-widest text-xs",
+          "hover:bg-primary/90 hover:shadow-[0_0_15px_var(--shadow-neon)]",
           "active:scale-[0.98]",
-          "border border-primary/30"
+          "border border-primary-foreground/20"
         ),
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline: cn(
-          "border border-input bg-transparent",
+          "border border-border bg-transparent font-mono uppercase tracking-widest text-xs",
           "text-foreground",
-          "hover:bg-accent",
-          "hover:text-accent-foreground",
-          "hover:border-primary/40"
+          "hover:bg-accent hover:text-accent-foreground",
+          "active:scale-[0.98]"
         ),
         secondary: cn(
           "bg-secondary",
           "text-secondary-foreground",
           "border border-border",
-          "hover:bg-secondary/80"
+          "hover:bg-secondary/80 active:scale-[0.98]"
         ),
         ghost: cn(
-          "text-muted-foreground",
-          "hover:bg-accent",
-          "hover:text-accent-foreground"
+          "text-muted-foreground font-mono uppercase tracking-widest text-xs",
+          "hover:bg-accent hover:text-foreground",
+          "active:scale-[0.98]"
         ),
         link: "text-primary underline-offset-4 hover:underline",
         glow: cn(
-          "bg-primary text-primary-foreground",
-          "shadow-md dark:shadow-[0_0_40px_-5px_hsl(270,100%,60%,0.6)]",
-          "hover:bg-primary/90",
-          "hover:shadow-lg dark:hover:shadow-[0_0_60px_-5px_hsl(270,100%,60%,0.8)]",
+          "bg-primary text-primary-foreground font-mono uppercase tracking-widest text-xs",
+          "shadow-[0_0_20px_hsl(270,100%,60%,0.4)]",
+          "hover:bg-primary/90 hover:shadow-[0_0_40px_hsl(270,100%,60%,0.6)]",
           "active:scale-[0.98]",
           "border border-primary/40"
         ),
-        success: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm",
+        success: "bg-success text-success-foreground hover:bg-success/90",
         tech: cn(
-          "bg-card",
-          "text-secondary-foreground",
+          "bg-card font-mono text-xs uppercase tracking-widest",
+          "text-foreground",
           "border border-border",
-          "hover:bg-muted",
-          "hover:border-primary/20"
+          "hover:bg-accent hover:border-primary/40",
+          "active:scale-[0.98]"
         ),
       },
       size: {
-        default: "h-10 px-5 py-2",
-        sm: "h-9 rounded-sm px-4 text-xs",
-        lg: "h-12 rounded-sm px-8 text-base",
-        xl: "h-14 rounded-sm px-10 text-lg",
-        icon: "h-10 w-10",
+        default: "h-10 px-6 py-2",
+        sm: "h-9 px-4 text-xs",
+        lg: "h-12 px-8 text-base",
+        xl: "h-14 px-10 text-lg",
+        icon: "h-10 w-10 flex items-center justify-center",
       },
     },
     defaultVariants: {

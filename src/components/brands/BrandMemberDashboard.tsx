@@ -256,7 +256,7 @@ export function BrandMemberDashboard() {
             </div>
 
             {/* Explore Option */}
-            <Card className="border border-border/50 bg-card/50 backdrop-blur">
+            <Card className="border border-border/50 bg-card/50">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -309,7 +309,7 @@ export function BrandMemberDashboard() {
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-border bg-card/90 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 border-b border-border bg-card/90">
         <div className="flex h-14 items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-3">
             {activeBrand.logo_url ? (

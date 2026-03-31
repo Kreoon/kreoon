@@ -316,7 +316,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="w-full max-w-[95vw] sm:max-w-3xl md:max-w-4xl lg:max-w-5xl p-0 gap-0 overflow-hidden flex flex-col bg-[#0a0a18]/95 backdrop-blur-xl border-purple-500/15"
+        className="w-full max-w-[95vw] sm:max-w-3xl md:max-w-4xl lg:max-w-5xl p-0 gap-0 overflow-hidden flex flex-col bg-[#0a0a18]/95 border-purple-500/15"
         aria-describedby="board-config-description"
       >
         <Tabs defaultValue="statuses" className="flex h-full overflow-hidden">

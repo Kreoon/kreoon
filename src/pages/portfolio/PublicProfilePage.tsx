@@ -65,14 +65,14 @@ export default function PublicProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-social-background">
+      <div className="min-h-screen bg-background">
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="flex items-start gap-6">
-            <Skeleton className="w-24 h-24 rounded-full bg-social-muted" />
+            <Skeleton className="w-24 h-24 rounded-full bg-background" />
             <div className="flex-1 space-y-3">
-              <Skeleton className="h-6 w-48 bg-social-muted" />
-              <Skeleton className="h-4 w-32 bg-social-muted" />
-              <Skeleton className="h-4 w-64 bg-social-muted" />
+              <Skeleton className="h-6 w-48 bg-background" />
+              <Skeleton className="h-4 w-32 bg-background" />
+              <Skeleton className="h-4 w-64 bg-background" />
             </div>
           </div>
         </div>
@@ -82,14 +82,14 @@ export default function PublicProfilePage() {
 
   if (notFound || !profileExists || !resolvedUserId) {
     return (
-      <div className="min-h-screen bg-social-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <User className="h-16 w-16 mx-auto text-social-muted-foreground" />
-          <h1 className="text-xl font-semibold text-social-foreground">Usuario no encontrado</h1>
-          <p className="text-social-muted-foreground">Este perfil no existe.</p>
+          <User className="h-16 w-16 mx-auto text-muted-foreground" />
+          <h1 className="text-xl font-semibold text-foreground">Usuario no encontrado</h1>
+          <p className="text-muted-foreground">Este perfil no existe.</p>
           <Button 
             onClick={() => navigate('/marketplace')}
-            className="bg-social-accent hover:bg-social-accent/90 text-social-accent-foreground"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver al feed
@@ -100,16 +100,16 @@ export default function PublicProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-social-background pb-20">
+    <div className="min-h-screen bg-background pb-20">
       {/* Back button header */}
-      <header className="sticky top-0 z-30 bg-social-background/95 backdrop-blur-lg border-b border-social-border">
+      <header className="sticky top-0 z-30 bg-background/95 border-b border-border">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button 
               variant="ghost" 
               size="icon" 
               onClick={() => navigate(-1)}
-              className="text-social-foreground hover:bg-social-muted"
+              className="text-foreground hover:bg-background"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>

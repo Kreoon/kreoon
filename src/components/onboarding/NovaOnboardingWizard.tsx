@@ -1,53 +1,102 @@
 /**
- * NovaOnboardingWizard - Wizard de onboarding con diseño Nova
+ * NovaOnboardingWizard - Wizard de onboarding con diseno Nova
  *
- * Flujo: Rol -> Datos Personales -> Documentos Legales
- * El rol se selecciona primero para filtrar los documentos legales correspondientes.
+ * Flujo segun tipo de cuenta:
+ * - Cliente: Tipo de cuenta -> Datos Personales -> Documentos Legales
+ * - Organizacion: Tipo de cuenta -> Datos Personales -> Documentos Legales
+ * - Talento: Tipo de cuenta -> Especialidades -> Datos Personales -> Documentos Legales
  */
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Loader2, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboardingGate } from '@/hooks/useOnboardingGate';
+import { supabase } from '@/integrations/supabase/client';
 import { NovaRoleSelectionStep } from './NovaRoleSelectionStep';
+import { TalentSpecializationsStep } from './TalentSpecializationsStep';
 import { NovaProfileDataStep } from './NovaProfileDataStep';
 import { NovaLegalConsentStep } from './NovaLegalConsentStep';
-import { cn } from '@/lib/utils';
-import type { AppRole } from '@/types/database';
+import type { AccountType, AppRole } from '@/types/database';
 
-type OnboardingDisplayStep = 'role_selection' | 'profile_data' | 'legal_consents';
+type OnboardingDisplayStep =
+  | 'account_type_selection'
+  | 'talent_specializations'
+  | 'profile_data'
+  | 'legal_consents';
 
 export function NovaOnboardingWizard() {
-  const { signOut, profile } = useAuth();
+  const { signOut, profile, user } = useAuth();
   const { completionStatus, isLoading } = useOnboardingGate();
-  const [activeStep, setActiveStep] = useState<OnboardingDisplayStep>('role_selection');
-  const [selectedRole, setSelectedRole] = useState<AppRole | null>(null);
-  const [roleSaved, setRoleSaved] = useState(false);
+  const [activeStep, setActiveStep] = useState<OnboardingDisplayStep>('account_type_selection');
+  const [accountType, setAccountType] = useState<AccountType | null>(null);
+  const [accountTypeSaved, setAccountTypeSaved] = useState(false);
+  const [specializationsSaved, setSpecializationsSaved] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
 
-  // Si el usuario ya tiene rol, saltar al siguiente paso
+  // Si el usuario ya tiene user_type, saltar al siguiente paso
   useEffect(() => {
-    if (profile?.active_role && !roleSaved) {
-      setSelectedRole(profile.active_role as AppRole);
-      setRoleSaved(true);
-      // Si ya tiene rol pero no perfil completo, ir a profile_data
+    if (profile?.user_type && !accountTypeSaved) {
+      setAccountType(profile.user_type as AccountType);
+      setAccountTypeSaved(true);
+
+      // Si es talento y no tiene especialidades, ir a especialidades
+      // Si ya tiene todo, ir a profile_data
       if (!completionStatus?.profile_completed) {
-        setActiveStep('profile_data');
+        // Para talento, verificar si ya tiene especialidades
+        if (profile.user_type === 'talent') {
+          // Por ahora asumimos que si tiene user_type='talent' pero no profile_completed,
+          // puede necesitar elegir especialidades (el componente verificara)
+          setActiveStep('talent_specializations');
+        } else {
+          setActiveStep('profile_data');
+        }
       }
     }
-  }, [profile?.active_role, roleSaved, completionStatus?.profile_completed]);
+  }, [profile?.user_type, accountTypeSaved, completionStatus?.profile_completed]);
 
   const handleLogout = async () => {
     await signOut();
   };
 
-  const handleRoleSelected = (role: AppRole) => {
-    setSelectedRole(role);
-    setRoleSaved(true);
+  // Callback cuando se selecciona tipo de cuenta
+  const handleAccountTypeSelected = (type: AccountType) => {
+    setAccountType(type);
+    setAccountTypeSaved(true);
+    // Para talento ya redirige a especialidades desde NovaRoleSelectionStep
+    // Para otros tipos, ir a profile_data
+    if (type !== 'talent') {
+      setActiveStep('profile_data');
+    }
+  };
+
+  // Callback para ir a especialidades (solo talento)
+  const handleGoToSpecializations = () => {
+    setAccountType('talent');
+    setAccountTypeSaved(true);
+    setActiveStep('talent_specializations');
+  };
+
+  // Callback cuando se completan especialidades
+  const handleSpecializationsComplete = () => {
+    setSpecializationsSaved(true);
     setActiveStep('profile_data');
   };
 
+  // Callback para volver desde especialidades
+  const handleBackFromSpecializations = async () => {
+    // Resetear user_type en BD para poder volver a elegir
+    if (user?.id) {
+      await supabase
+        .from('profiles')
+        .update({ user_type: null })
+        .eq('id', user.id);
+    }
+    setActiveStep('account_type_selection');
+    setAccountType(null);
+    setAccountTypeSaved(false);
+  };
+
+  // Callback cuando se completa el perfil
   const goToLegalStep = () => {
     setProfileSaved(true);
     setActiveStep('legal_consents');
@@ -57,20 +106,43 @@ export function NovaOnboardingWizard() {
     setActiveStep('profile_data');
   };
 
-  const goToRoleStep = () => {
-    setActiveStep('role_selection');
+  // Callback para volver desde el paso de perfil
+  const handleBackFromProfile = async () => {
+    // Si es talento, volver a especialidades
+    if (accountType === 'talent') {
+      setActiveStep('talent_specializations');
+      setSpecializationsSaved(false);
+    } else {
+      // Para cliente/organizacion, resetear user_type y volver a seleccion
+      if (user?.id) {
+        await supabase
+          .from('profiles')
+          .update({ user_type: null })
+          .eq('id', user.id);
+      }
+      setActiveStep('account_type_selection');
+      setAccountType(null);
+      setAccountTypeSaved(false);
+    }
   };
 
   // Determinar el paso a mostrar basado en el estado
   const getDisplayStep = (): OnboardingDisplayStep => {
-    // Si no tiene rol seleccionado, mostrar seleccion de rol
-    if (!roleSaved && !profile?.active_role) {
-      return 'role_selection';
+    // Si no tiene tipo de cuenta, mostrar seleccion
+    if (!accountTypeSaved && !profile?.user_type) {
+      return 'account_type_selection';
     }
-    // Si tiene rol pero no perfil completo
+
+    // Si es talento y no ha guardado especialidades
+    if (accountType === 'talent' && !specializationsSaved && activeStep === 'talent_specializations') {
+      return 'talent_specializations';
+    }
+
+    // Si tiene tipo pero no perfil completo
     if (!profileSaved && !completionStatus?.profile_completed) {
-      return activeStep === 'role_selection' ? 'profile_data' : activeStep;
+      return activeStep === 'account_type_selection' ? 'profile_data' : activeStep;
     }
+
     return activeStep;
   };
 
@@ -80,18 +152,56 @@ export function NovaOnboardingWizard() {
     return <NovaOnboardingSplash />;
   }
 
+  // Calcular paso actual para mostrar en header
+  const getTotalSteps = () => (accountType === 'talent' ? 4 : 3);
+  const getCurrentStepNumber = () => {
+    switch (displayStep) {
+      case 'account_type_selection':
+        return 1;
+      case 'talent_specializations':
+        return 2;
+      case 'profile_data':
+        return accountType === 'talent' ? 3 : 2;
+      case 'legal_consents':
+        return accountType === 'talent' ? 4 : 3;
+      default:
+        return 1;
+    }
+  };
+
   return (
     <AnimatePresence mode="wait">
-      {displayStep === 'role_selection' && (
+      {displayStep === 'account_type_selection' && (
         <motion.div
-          key="role_selection"
+          key="account_type_selection"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: 20 }}
           transition={{ duration: 0.3 }}
           className="min-h-screen"
         >
-          <NovaRoleSelectionStep onComplete={handleRoleSelected} onLogout={handleLogout} />
+          <NovaRoleSelectionStep
+            onComplete={handleAccountTypeSelected}
+            onContinueToSpecializations={handleGoToSpecializations}
+            onLogout={handleLogout}
+          />
+        </motion.div>
+      )}
+
+      {displayStep === 'talent_specializations' && (
+        <motion.div
+          key="talent_specializations"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 20 }}
+          transition={{ duration: 0.3 }}
+          className="min-h-screen"
+        >
+          <TalentSpecializationsStep
+            onComplete={handleSpecializationsComplete}
+            onBack={handleBackFromSpecializations}
+            onLogout={handleLogout}
+          />
         </motion.div>
       )}
 
@@ -104,7 +214,12 @@ export function NovaOnboardingWizard() {
           transition={{ duration: 0.3 }}
           className="min-h-screen"
         >
-          <NovaProfileDataStep onComplete={goToLegalStep} onLogout={handleLogout} />
+          <NovaProfileDataStep
+            onComplete={goToLegalStep}
+            onBack={handleBackFromProfile}
+            onLogout={handleLogout}
+            isTalentFlow={accountType === 'talent'}
+          />
         </motion.div>
       )}
 
@@ -120,7 +235,14 @@ export function NovaOnboardingWizard() {
           <NovaLegalConsentStep
             onBack={goToProfileStep}
             onLogout={handleLogout}
-            userRole={selectedRole || (profile?.active_role as AppRole) || undefined}
+            userRole={
+              accountType === 'client'
+                ? 'client'
+                : accountType === 'talent'
+                ? 'content_creator'
+                : (profile?.active_role as AppRole) || undefined
+            }
+            accountType={accountType || (profile?.user_type as AccountType) || undefined}
           />
         </motion.div>
       )}
@@ -130,28 +252,28 @@ export function NovaOnboardingWizard() {
 
 function NovaOnboardingSplash() {
   return (
-    <div className="fixed inset-0 z-[100] bg-zinc-200 dark:bg-[#030308] flex items-center justify-center">
+    <div className="fixed inset-0 z-[100] bg-background flex items-center justify-center">
       <div className="text-center relative z-10">
         {/* Logo */}
         <motion.div
           animate={{ scale: [1, 1.03, 1] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="w-20 h-20 mx-auto mb-6 rounded bg-purple-600 flex items-center justify-center"
+          className="mx-auto mb-6 flex justify-center"
         >
-          <Shield className="w-10 h-10 text-white" />
+          <img src="/logo.png" alt="KREOON" className="h-16 object-contain" />
         </motion.div>
 
-        <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">
+        <h2 className="text-xl font-semibold text-foreground mb-2 font-mono uppercase">
           Verificando tu cuenta...
         </h2>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="text-sm text-muted-foreground font-mono">
           Por favor espera un momento
         </p>
 
         {/* Loading bar */}
-        <div className="mt-6 w-48 h-1 mx-auto bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+        <div className="mt-6 w-48 h-1 mx-auto bg-secondary rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-purple-600"
+            className="h-full bg-primary"
             animate={{ x: ['-100%', '100%'] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
             style={{ width: '50%' }}

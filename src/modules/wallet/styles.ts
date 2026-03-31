@@ -3,9 +3,9 @@
 
 export const walletStyles = {
   // Cards
-  card: 'bg-white/5 backdrop-blur-xl border border-white/10 rounded-sm p-6',
+  card: 'bg-white/5 border border-white/10 rounded-sm p-6',
   cardHover: 'hover:bg-white/10 hover:border-[hsl(270,100%,60%,0.3)] transition-all duration-300',
-  cardGlass: 'bg-[hsl(270,100%,60%,0.05)] backdrop-blur-xl border border-[hsl(270,100%,60%,0.1)] rounded-sm',
+  cardGlass: 'bg-[hsl(270,100%,60%,0.05)] border border-[hsl(270,100%,60%,0.1)] rounded-sm',
 
   // Gradients
   gradientPurple: 'bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]',

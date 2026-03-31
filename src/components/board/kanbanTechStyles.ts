@@ -370,7 +370,7 @@ export const BOARD_CLASSES = {
   dropZoneActive: "bg-purple-100/50 dark:bg-purple-500/15 border-purple-300 dark:border-purple-500/40",
 
   // Glass effect (for overlays/modals)
-  glass: "bg-white/90 dark:bg-[#0a0a18]/70 backdrop-blur-xl border-zinc-200/50 dark:border-purple-500/10",
+  glass: "bg-white/90 dark:bg-[#0a0a18]/70 border-zinc-200/50 dark:border-purple-500/10",
 
   // Glow effects (dark mode only)
   glowSm: "dark:shadow-[0_0_12px_rgba(139,92,246,0.15)]",

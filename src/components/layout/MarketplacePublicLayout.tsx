@@ -51,7 +51,7 @@ function AnonymousMarketplaceShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-[#0a0a0f] relative">
       {/* Minimal header */}
-      <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-white/5 bg-[#0a0a0f]/90 backdrop-blur-md px-4 md:px-6">
+      <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-white/5 bg-[#0a0a0f]/90 px-4 md:px-6">
         <button
           onClick={() => navigate('/marketplace')}
           className="flex items-center gap-2"

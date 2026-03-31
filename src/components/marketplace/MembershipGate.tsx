@@ -147,7 +147,7 @@ export function MembershipGate({ children, feature = 'crear campañas' }: Member
 
           <div className="grid md:grid-cols-3 gap-4 mb-8">
             {/* Starter */}
-            <div className="bg-white/10 backdrop-blur rounded-sm p-4 text-left">
+            <div className="bg-white/10 rounded-sm p-4 text-left">
               <h3 className="font-semibold mb-2">Starter</h3>
               <p className="text-2xl font-bold mb-3">
                 $49<span className="text-sm font-normal">/mes</span>
@@ -182,7 +182,7 @@ export function MembershipGate({ children, feature = 'crear campañas' }: Member
             </div>
 
             {/* Enterprise */}
-            <div className="bg-white/10 backdrop-blur rounded-sm p-4 text-left">
+            <div className="bg-white/10 rounded-sm p-4 text-left">
               <h3 className="font-semibold mb-2">Enterprise</h3>
               <p className="text-2xl font-bold mb-3">
                 $399<span className="text-sm font-normal">/mes</span>

@@ -169,17 +169,17 @@ export function FeaturedVideoUploader({
       <Button 
         variant="outline" 
         onClick={() => setOpen(true)}
-        className="border-social-border text-social-foreground hover:bg-social-muted"
+        className="border-border text-foreground hover:bg-background"
       >
         <Video className="h-4 w-4 mr-2" />
         {currentVideoUrl ? 'Cambiar video' : 'Subir video'}
       </Button>
 
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-lg bg-social-card border-social-border">
+        <DialogContent className="sm:max-w-lg bg-card border-border">
           <DialogHeader>
-            <DialogTitle className="text-social-foreground">Video de presentación</DialogTitle>
-            <DialogDescription className="text-social-muted-foreground">
+            <DialogTitle className="text-foreground">Video de presentación</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
               Sube un video horizontal (16:9) que destaque tu perfil
             </DialogDescription>
           </DialogHeader>
@@ -207,13 +207,13 @@ export function FeaturedVideoUploader({
               </div>
             ) : (
               <div
-                className="aspect-video rounded-sm border-2 border-dashed border-social-border hover:border-social-accent/50 transition-colors cursor-pointer flex flex-col items-center justify-center gap-4 bg-social-muted/30"
+                className="aspect-video rounded-sm border-2 border-dashed border-border hover:border-primary/50 transition-colors cursor-pointer flex flex-col items-center justify-center gap-4 bg-background/30"
                 onClick={() => inputRef.current?.click()}
               >
-                <Upload className="h-12 w-12 text-social-muted-foreground" />
+                <Upload className="h-12 w-12 text-muted-foreground" />
                 <div className="text-center">
-                  <p className="text-social-foreground font-medium">Arrastra o haz clic para subir</p>
-                  <p className="text-sm text-social-muted-foreground">MP4, MOV, WebM (max 100MB)</p>
+                  <p className="text-foreground font-medium">Arrastra o haz clic para subir</p>
+                  <p className="text-sm text-muted-foreground">MP4, MOV, WebM (max 100MB)</p>
                 </div>
               </div>
             )}
@@ -229,7 +229,7 @@ export function FeaturedVideoUploader({
             {uploading && (
               <div className="space-y-2">
                 <Progress value={progress} className="h-2" />
-                <p className="text-sm text-center text-social-muted-foreground">
+                <p className="text-sm text-center text-muted-foreground">
                   Subiendo... {progress}%
                 </p>
               </div>
@@ -240,14 +240,14 @@ export function FeaturedVideoUploader({
                 variant="ghost"
                 onClick={handleClose}
                 disabled={uploading}
-                className="text-social-foreground hover:bg-social-muted"
+                className="text-foreground hover:bg-background"
               >
                 Cancelar
               </Button>
               <Button
                 onClick={handleUpload}
                 disabled={!selectedFile || uploading}
-                className="bg-social-accent hover:bg-social-accent/90 text-social-accent-foreground"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 {uploading ? (
                   <>

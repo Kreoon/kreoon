@@ -116,7 +116,7 @@ export function LegalDocumentPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-white/10">
+      <header className="sticky top-0 z-50 bg-background/80 border-b border-white/10">
         <div className="container max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Button variant="ghost" size="sm" asChild>

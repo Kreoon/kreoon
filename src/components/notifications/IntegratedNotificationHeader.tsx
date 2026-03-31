@@ -252,10 +252,9 @@ export function IntegratedNotificationHeader({
     <div
       className={cn(
         "fixed right-0 z-40 h-14 flex items-center gap-3 px-4",
-        "bg-white dark:bg-[#0f0f14]",
-        "border-b border-zinc-200 dark:border-zinc-800",
-        "transition-all duration-300",
-        sidebarCollapsed ? "left-20" : "left-64"
+        "bg-background border-b border-border",
+        "transition-none", /* Removes transition delay that causes glitches on mobile */
+        sidebarCollapsed ? "md:left-[104px] left-0" : "md:left-[288px] left-0"
       )}
       style={{ top: topOffset }}
     >

@@ -62,7 +62,7 @@ export function HeroStatsBar({ userName, avatar, keysCollected }: HeroStatsBarPr
       className={cn(
         'flex flex-wrap items-center justify-between gap-3 p-4 rounded-sm',
         'bg-gradient-to-r from-white/[0.03] via-white/[0.05] to-white/[0.03]',
-        'border border-white/10 backdrop-blur-xl'
+        'border border-white/10'
       )}
     >
       {/* Hero Info */}

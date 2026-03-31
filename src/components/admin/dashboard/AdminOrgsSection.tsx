@@ -55,7 +55,7 @@ function PieTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   const data = payload[0];
   return (
-    <div className="rounded-sm px-3 py-2 text-xs bg-[#0f0f14]/95 border border-purple-500/30 backdrop-blur-xl">
+    <div className="rounded-sm px-3 py-2 text-xs bg-[#0f0f14]/95 border border-purple-500/30">
       <div className="flex items-center gap-2">
         <span className="w-2 h-2 rounded-full" style={{ background: data.payload.fill }} />
         <span className="text-white/70">{data.name}:</span>

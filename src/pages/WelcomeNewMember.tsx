@@ -53,14 +53,14 @@ function NextStepItem({ number, title, description, completed }: NextStepItemPro
           "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
           completed
             ? "bg-green-500 text-white"
-            : "border border-kreoon-border bg-kreoon-bg-secondary text-kreoon-text-secondary",
+            : "border border-border bg-secondary text-muted-foreground",
         )}
       >
         {completed ? <Check className="h-4 w-4" /> : number}
       </div>
       <div>
-        <p className="font-medium text-white">{title}</p>
-        <p className="text-sm text-kreoon-text-secondary">{description}</p>
+        <p className="font-medium text-foreground">{title}</p>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
     </div>
   );
@@ -120,8 +120,8 @@ export default function WelcomeNewMember() {
 
   if (loading || !rolesLoaded || loadingOrg) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-kreoon-bg-primary">
-        <Loader2 className="h-8 w-8 animate-spin text-kreoon-purple-500" />
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
       </div>
     );
   }

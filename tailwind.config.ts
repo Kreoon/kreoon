@@ -15,22 +15,23 @@ export default {
   	extend: {
   		fontFamily: {
   			sans: [
-  				'Inter',
-  				'Satoshi',
+  				'Manrope',
   				'-apple-system',
   				'BlinkMacSystemFont',
   				'Segoe UI',
   				'sans-serif'
   			],
   			display: [
-  				'Inter',
-  				'Satoshi',
+  				'Outfit',
   				'sans-serif'
   			],
   			body: [
-  				'Inter',
-  				'Satoshi',
+  				'Manrope',
   				'sans-serif'
+  			],
+  			mono: [
+  				'JetBrains Mono',
+  				'monospace'
   			]
   		},
   		colors: {

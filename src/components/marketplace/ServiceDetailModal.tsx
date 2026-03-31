@@ -58,19 +58,19 @@ export function ServiceDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-lg bg-social-card border-social-border p-0 gap-0">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-lg bg-card border-border p-0 gap-0">
         <ScrollArea className="max-h-[85vh]">
           <div className="p-6">
             <DialogHeader>
               <div className="flex items-start gap-4">
-                <div className="w-14 h-14 rounded-sm bg-social-muted flex items-center justify-center text-3xl">
+                <div className="w-14 h-14 rounded-sm bg-background flex items-center justify-center text-3xl">
                   {SERVICE_TYPE_ICONS[service.service_type]}
                 </div>
                 <div>
-                  <DialogTitle className="text-xl text-social-foreground text-left">
+                  <DialogTitle className="text-xl text-foreground text-left">
                     {service.title}
                   </DialogTitle>
-                  <p className="text-sm text-social-muted-foreground mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     {PRICE_TYPE_LABELS[service.price_type]}
                   </p>
                 </div>
@@ -80,10 +80,10 @@ export function ServiceDetailModal({
             {/* Portfolio carousel */}
             {service.portfolio_items.length > 0 && (
               <div className="mt-6 relative">
-                <div className="aspect-video rounded-sm bg-social-muted overflow-hidden">
+                <div className="aspect-video rounded-sm bg-background overflow-hidden">
                   {/* This would show actual portfolio items */}
                   <div className="w-full h-full flex items-center justify-center">
-                    <Play className="h-12 w-12 text-social-muted-foreground" />
+                    <Play className="h-12 w-12 text-muted-foreground" />
                   </div>
                 </div>
                 {service.portfolio_items.length > 1 && (
@@ -121,7 +121,7 @@ export function ServiceDetailModal({
                     </div>
                   </>
                 )}
-                <p className="text-xs text-center text-social-muted-foreground mt-2">
+                <p className="text-xs text-center text-muted-foreground mt-2">
                   ← Desliza para ver ejemplos →
                 </p>
               </div>
@@ -129,10 +129,10 @@ export function ServiceDetailModal({
 
             {/* Description */}
             <div className="mt-6">
-              <h4 className="text-sm font-medium text-social-foreground mb-2">
+              <h4 className="text-sm font-medium text-foreground mb-2">
                 Descripción
               </h4>
-              <p className="text-sm text-social-muted-foreground leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {service.description || 'Sin descripción'}
               </p>
             </div>
@@ -140,16 +140,16 @@ export function ServiceDetailModal({
             {/* Deliverables */}
             {service.deliverables.length > 0 && (
               <div className="mt-6">
-                <h4 className="text-sm font-medium text-social-foreground mb-2">
+                <h4 className="text-sm font-medium text-foreground mb-2">
                   Lo que incluye
                 </h4>
                 <ul className="space-y-2">
                   {service.deliverables.map((d, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm">
                       <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                      <span className="text-social-muted-foreground">
+                      <span className="text-muted-foreground">
                         {d.quantity > 1 && (
-                          <span className="font-medium text-social-foreground">
+                          <span className="font-medium text-foreground">
                             {d.quantity}x{' '}
                           </span>
                         )}
@@ -164,24 +164,24 @@ export function ServiceDetailModal({
             {/* Requirements */}
             {service.requirements && (
               <div className="mt-6">
-                <h4 className="text-sm font-medium text-social-foreground mb-2">
+                <h4 className="text-sm font-medium text-foreground mb-2">
                   Lo que necesito de ti
                 </h4>
-                <p className="text-sm text-social-muted-foreground leading-relaxed">
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   {service.requirements}
                 </p>
               </div>
             )}
 
             {/* Divider */}
-            <hr className="my-6 border-social-border" />
+            <hr className="my-6 border-border" />
 
             {/* Price and details */}
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold text-social-foreground">
+              <div className="text-2xl font-bold text-foreground">
                 {formatPrice()}
               </div>
-              <div className="flex items-center gap-4 text-sm text-social-muted-foreground">
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 {service.delivery_days && (
                   <span className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />
@@ -199,7 +199,7 @@ export function ServiceDetailModal({
 
             {/* CTA Button */}
             <Button
-              className="w-full mt-4 bg-gradient-to-r from-social-accent to-purple-600 hover:opacity-90"
+              className="w-full mt-4 bg-gradient-to-r from-primary to-purple-600 hover:opacity-90"
               size="lg"
               onClick={() => onHire?.(service)}
             >
@@ -208,17 +208,17 @@ export function ServiceDetailModal({
 
             {/* Reviews section */}
             {reviews.length > 0 && (
-              <div className="mt-6 pt-6 border-t border-social-border">
+              <div className="mt-6 pt-6 border-t border-border">
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-sm font-medium text-social-foreground">
+                  <h4 className="text-sm font-medium text-foreground">
                     Reviews de este servicio
                   </h4>
                   <div className="flex items-center gap-1 text-sm">
                     <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                    <span className="font-medium text-social-foreground">
+                    <span className="font-medium text-foreground">
                       {stats.average}
                     </span>
-                    <span className="text-social-muted-foreground">
+                    <span className="text-muted-foreground">
                       ({stats.total} reviews)
                     </span>
                   </div>
@@ -236,16 +236,16 @@ export function ServiceDetailModal({
                                 "h-3 w-3",
                                 star <= review.overall_rating
                                   ? "fill-amber-400 text-amber-400"
-                                  : "text-social-muted"
+                                  : "text-muted-foreground"
                               )}
                             />
                           ))}
                         </div>
-                        <span className="text-social-muted-foreground">
+                        <span className="text-muted-foreground">
                           — @{review.reviewer?.username || 'anónimo'}
                         </span>
                       </div>
-                      <p className="text-social-muted-foreground line-clamp-2">
+                      <p className="text-muted-foreground line-clamp-2">
                         "{review.review_text}"
                       </p>
                     </div>

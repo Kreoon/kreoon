@@ -7,7 +7,7 @@ interface TopCampaignsCardProps {
 
 export function TopCampaignsCard({ data }: TopCampaignsCardProps) {
   return (
-    <div className="bg-gray-900/50 backdrop-blur-sm rounded-sm p-6 border border-gray-800">
+    <div className="bg-gray-900/50 rounded-sm p-6 border border-gray-800">
       <div className="flex items-center gap-2 mb-4">
         <Megaphone className="h-5 w-5 text-purple-400" />
         <h3 className="text-lg font-semibold text-white">Top Campañas UTM</h3>

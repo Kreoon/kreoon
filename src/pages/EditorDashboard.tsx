@@ -148,7 +148,7 @@ export default function EditorDashboard() {
               <LevelBadge creditos={totalPaid + (approvedContent.length * 50)} size="sm" />
               <CreditsDisplay creditos={totalPaid + (approvedContent.length * 50)} size="sm" />
               <motion.div
-                className="flex items-center gap-2 px-4 py-2 rounded-sm border backdrop-blur-xl"
+                className="flex items-center gap-2 px-4 py-2 rounded-sm border"
                 style={{
                   background: 'linear-gradient(135deg, hsl(160 100% 45% / 0.15), hsl(160 100% 45% / 0.05))',
                   borderColor: 'hsl(160 100% 45% / 0.3)',

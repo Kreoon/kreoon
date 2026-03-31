@@ -22,7 +22,7 @@ export function ResearchMobileTabs({ activeSectionId, onSectionClick }: Research
   }, [activeSectionId]);
 
   return (
-    <div className="lg:hidden sticky top-[57px] z-40 bg-black/80 backdrop-blur-xl border-b border-white/10">
+    <div className="lg:hidden sticky top-[57px] z-40 bg-black/80 border-b border-white/10">
       <div
         ref={scrollRef}
         className="flex overflow-x-auto gap-1 px-3 py-2 no-scrollbar"

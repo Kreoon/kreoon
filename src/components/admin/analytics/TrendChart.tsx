@@ -19,7 +19,7 @@ interface TrendChartProps {
 
 export function TrendChart({ data }: TrendChartProps) {
   return (
-    <div className="bg-[var(--nova-bg-elevated)] dark:bg-[var(--nova-bg-elevated)] light:bg-white/80 backdrop-blur-sm rounded-sm p-6 border border-[var(--nova-border-default)] dark:border-[var(--nova-border-default)] light:border-gray-200">
+    <div className="bg-[var(--nova-bg-elevated)] dark:bg-[var(--nova-bg-elevated)] light:bg-white/80 rounded-sm p-6 border border-[var(--nova-border-default)] dark:border-[var(--nova-border-default)] light:border-gray-200">
       <h3 className="text-lg font-semibold text-foreground mb-4">Conversiones por Día</h3>
       {data.length === 0 ? (
         <div className="flex items-center justify-center h-[300px] text-muted-foreground text-sm">

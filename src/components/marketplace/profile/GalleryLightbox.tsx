@@ -554,7 +554,7 @@ function TikTokSlideVideo({ item, bunnyVideoId, isActive }: TikTokSlideVideoProp
               <div className="w-full h-full bg-zinc-900 rounded-sm" />
             )}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-16 h-16 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+              <div className="w-16 h-16 rounded-full bg-black/40 flex items-center justify-center">
                 <Play className="h-8 w-8 text-white fill-white ml-1" />
               </div>
             </div>

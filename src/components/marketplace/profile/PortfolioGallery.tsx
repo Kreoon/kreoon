@@ -91,7 +91,7 @@ export const PortfolioGallery = memo(function PortfolioGallery({
           />
           {desktopItems[0].type === 'video' && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-14 h-14 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+              <div className="w-14 h-14 rounded-full bg-black/40 flex items-center justify-center">
                 <Play className="h-6 w-6 text-white fill-white ml-0.5" />
               </div>
             </div>
@@ -123,7 +123,7 @@ export const PortfolioGallery = memo(function PortfolioGallery({
                     />
                     {item.type === 'video' && (
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full bg-black/40 flex items-center justify-center">
                           <Play className="h-4 w-4 text-white fill-white ml-0.5" />
                         </div>
                       </div>
@@ -166,7 +166,7 @@ export const PortfolioGallery = memo(function PortfolioGallery({
                       />
                       {item.type === 'video' && (
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-black/40 flex items-center justify-center">
                             <Play className="h-4 w-4 text-white fill-white ml-0.5" />
                           </div>
                         </div>
@@ -208,7 +208,7 @@ export const PortfolioGallery = memo(function PortfolioGallery({
             />
             {item.type === 'video' && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-black/40 flex items-center justify-center">
                   <Play className="h-3.5 w-3.5 text-white fill-white ml-0.5" />
                 </div>
               </div>

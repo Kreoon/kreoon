@@ -133,7 +133,7 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
 
   return (
     <Card
-      className="border-2 bg-gradient-to-br backdrop-blur-xl overflow-hidden"
+      className="border-2 bg-gradient-to-br overflow-hidden"
       style={{
         backgroundColor: `${levelMeta.bgColor}33`,
         borderColor: `${levelMeta.color}4D`,

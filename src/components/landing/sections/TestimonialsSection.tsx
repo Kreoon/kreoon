@@ -336,7 +336,7 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
                 type="button"
                 aria-label="Anterior"
                 onClick={goPrev}
-                className="absolute -left-4 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-kreoon-border bg-kreoon-bg-card/80 text-kreoon-text-secondary shadow-lg backdrop-blur-sm transition-colors hover:border-kreoon-purple-400/50 hover:text-white lg:flex"
+                className="absolute -left-4 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-kreoon-border bg-kreoon-bg-card/80 text-kreoon-text-secondary shadow-lg transition-colors hover:border-kreoon-purple-400/50 hover:text-white lg:flex"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
@@ -344,7 +344,7 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
                 type="button"
                 aria-label="Siguiente"
                 onClick={goNext}
-                className="absolute -right-4 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-kreoon-border bg-kreoon-bg-card/80 text-kreoon-text-secondary shadow-lg backdrop-blur-sm transition-colors hover:border-kreoon-purple-400/50 hover:text-white lg:flex"
+                className="absolute -right-4 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-kreoon-border bg-kreoon-bg-card/80 text-kreoon-text-secondary shadow-lg transition-colors hover:border-kreoon-purple-400/50 hover:text-white lg:flex"
               >
                 <ChevronRight className="h-5 w-5" />
               </button>

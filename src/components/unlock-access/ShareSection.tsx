@@ -105,7 +105,7 @@ export const ShareSection = memo(function ShareSection({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowOptions(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+              className="fixed inset-0 bg-black/60 z-50"
             />
 
             {/* Modal */}

@@ -230,7 +230,7 @@ export function ComingSoonOverlay({
       <div className="opacity-60 pointer-events-none select-none">{children}</div>
 
       {/* Overlay */}
-      <div className="absolute inset-0 flex items-center justify-center bg-[hsl(270,50%,5%,0.3)] backdrop-blur-[1px] rounded-sm">
+      <div className="absolute inset-0 flex items-center justify-center bg-[hsl(270,50%,5%,0.3)]-[1px] rounded-sm">
         <div className="text-center p-4">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/30">
             <Construction className="h-4 w-4 text-amber-400" />

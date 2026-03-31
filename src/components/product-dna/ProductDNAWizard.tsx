@@ -262,7 +262,7 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
   // Full-screen processing state
   if (processingStep !== 'idle' && processingStep !== 'error') {
     return (
-      <div className="relative overflow-hidden rounded-sm border border-white/10 bg-black/40 backdrop-blur-xl p-8">
+      <div className="relative overflow-hidden rounded-sm border border-white/10 bg-black/40 p-8">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-transparent to-pink-600/10" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl" />
 
@@ -337,7 +337,7 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
         {/* Left Panel: Questions */}
         <div className="relative overflow-hidden rounded-sm border border-white/10">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-purple-500/10 to-pink-500/20" />
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-xl" />
+          <div className="absolute inset-0 bg-black/40" />
 
           <div className="relative p-6 h-full flex flex-col justify-center">
             <div className="flex items-center gap-2 mb-5">
@@ -368,7 +368,7 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
         {/* Right Panel: Audio */}
         <div className="relative overflow-hidden rounded-sm border border-white/10">
           <div className="absolute inset-0 bg-gradient-to-br from-pink-600/20 via-pink-500/10 to-purple-500/20" />
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-xl" />
+          <div className="absolute inset-0 bg-black/40" />
 
           <div className="relative p-6 h-full flex flex-col">
             <div className="flex items-center gap-2 mb-5">
@@ -479,7 +479,7 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
 
       {/* Error */}
       {error && (
-        <div className="p-4 rounded-sm bg-red-500/10 border border-red-500/20 backdrop-blur-xl">
+        <div className="p-4 rounded-sm bg-red-500/10 border border-red-500/20">
           <p className="text-sm text-red-400">{error}</p>
         </div>
       )}

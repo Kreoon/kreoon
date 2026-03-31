@@ -117,8 +117,8 @@ export function FollowButton({
       onClick={handleFollow}
       disabled={actionLoading}
       className={isFollowing 
-        ? `border-social-border text-social-foreground hover:bg-social-muted hover:text-red-500 ${className}`
-        : `bg-social-accent hover:bg-social-accent/90 text-social-accent-foreground ${className}`
+        ? `border-border text-foreground hover:bg-background hover:text-red-500 ${className}`
+        : `bg-primary hover:bg-primary/90 text-primary-foreground ${className}`
       }
     >
       {actionLoading ? (
@@ -141,6 +141,6 @@ export function FollowButton({
 function Skeleton({ size }: { size?: string }) {
   const sizeClass = size === 'sm' ? 'h-8 w-20' : size === 'lg' ? 'h-12 w-28' : 'h-10 w-24';
   return (
-    <div className={`${sizeClass} rounded-sm bg-social-muted animate-pulse`} />
+    <div className={`${sizeClass} rounded-sm bg-background animate-pulse`} />
   );
 }

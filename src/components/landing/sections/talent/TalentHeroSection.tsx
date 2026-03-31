@@ -119,7 +119,7 @@ export default function TalentHeroSection({ onScrollToForm, onScrollToInterest }
               <motion.div
                 animate={{ y: [0, -8, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                className="rounded-sm border border-kreoon-purple-500/30 bg-kreoon-bg-card/80 p-6 shadow-kreoon-glow-sm backdrop-blur-xl"
+                className="rounded-sm border border-kreoon-purple-500/30 bg-kreoon-bg-card/80 p-6 shadow-kreoon-glow-sm"
               >
                 <div className="flex items-center gap-4">
                   <div className="h-14 w-14 rounded-full bg-gradient-to-br from-kreoon-purple-500 to-pink-500 flex items-center justify-center text-xl font-bold text-white">
@@ -150,7 +150,7 @@ export default function TalentHeroSection({ onScrollToForm, onScrollToInterest }
               <motion.div
                 animate={{ y: [0, 6, 0] }}
                 transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
-                className="absolute -bottom-8 -right-8 rounded-sm border border-emerald-500/30 bg-kreoon-bg-card/90 p-4 shadow-lg backdrop-blur-xl"
+                className="absolute -bottom-8 -right-8 rounded-sm border border-emerald-500/30 bg-kreoon-bg-card/90 p-4 shadow-lg"
               >
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
@@ -167,7 +167,7 @@ export default function TalentHeroSection({ onScrollToForm, onScrollToInterest }
               <motion.div
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-                className="absolute -top-6 -left-6 rounded-sm border border-kreoon-purple-500/30 bg-kreoon-bg-card/90 p-3 shadow-lg backdrop-blur-xl"
+                className="absolute -top-6 -left-6 rounded-sm border border-kreoon-purple-500/30 bg-kreoon-bg-card/90 p-3 shadow-lg"
               >
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-kreoon-purple-500/20 flex items-center justify-center">
@@ -192,7 +192,7 @@ export default function TalentHeroSection({ onScrollToForm, onScrollToInterest }
           {STATS.map((stat) => (
             <div
               key={stat.label}
-              className="flex items-center gap-3 rounded-sm border border-kreoon-border bg-kreoon-bg-card/40 p-4 backdrop-blur-sm"
+              className="flex items-center gap-3 rounded-sm border border-kreoon-border bg-kreoon-bg-card/40 p-4"
             >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-kreoon-purple-500/10">
                 <stat.icon className="h-5 w-5 text-kreoon-purple-400" />

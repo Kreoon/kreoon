@@ -295,7 +295,7 @@ function DeliverableCard({
             onClick={() => window.open(deliverable.file_url, '_blank')}
             className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity"
           >
-            <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
               <Play className="w-5 h-5 text-white ml-0.5" />
             </div>
           </button>
@@ -603,7 +603,7 @@ export function ProjectDetailModal({
 
   return (
     <div className="fixed inset-0 z-[100]">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="absolute inset-y-0 right-0 w-full max-w-2xl bg-card border-l border-white/10 overflow-hidden flex flex-col animate-in slide-in-from-right duration-300">
         {/* ========== HEADER ========== */}
         <div className="relative bg-gradient-to-br from-purple-600/80 via-purple-700/80 to-pink-600/80 text-white p-5 flex-shrink-0">

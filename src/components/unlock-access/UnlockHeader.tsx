@@ -57,7 +57,7 @@ export const UnlockHeader = memo(function UnlockHeader({
       animate={{ opacity: 1, y: 0 }}
       className={cn(
         'flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-sm',
-        'bg-white/[0.03] border border-white/10 backdrop-blur-sm'
+        'bg-white/[0.03] border border-white/10'
       )}
     >
       {/* User info */}

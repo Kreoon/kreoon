@@ -231,7 +231,7 @@ export function PricingSidebar({
   if (mobileInline) {
     return (
       <>
-        <div className="bg-card/80 backdrop-blur-xl border border-white/10 rounded-sm p-5 space-y-5">
+        <div className="bg-card/80 border border-white/10 rounded-sm p-5 space-y-5">
           {/* Exchange option */}
           {acceptsExchange && (
             <>
@@ -279,7 +279,7 @@ export function PricingSidebar({
     <>
       {/* Desktop sidebar */}
       <div className="hidden lg:block sticky top-24">
-        <div className="bg-card/80 backdrop-blur-xl border border-white/10 rounded-sm p-6 shadow-xl shadow-purple-500/5 space-y-6">
+        <div className="bg-card/80 border border-white/10 rounded-sm p-6 shadow-xl shadow-purple-500/5 space-y-6">
           {/* Exchange option (gated) */}
           {acceptsExchange && (
             <>

@@ -235,9 +235,9 @@ export default function CreatorDashboard() {
 
         {/* Dashboard Content */}
         <div className="space-y-6">
-          {/* Stats Grid with Charts */}
-          <StaggerContainer className="grid grid-cols-2 lg:grid-cols-3 gap-4" staggerDelay={0.08}>
-            <StaggerItem>
+          {/* Bento-Box Stats Grid */}
+          <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-[minmax(140px,auto)]" staggerDelay={0.08}>
+            <StaggerItem className="md:col-span-2 md:row-span-2">
               <TechKpiCard
                 title="Total Asignados"
                 value={content.length}
@@ -249,7 +249,7 @@ export default function CreatorDashboard() {
                 size="md"
               />
             </StaggerItem>
-            <StaggerItem>
+            <StaggerItem className="md:col-span-1 lg:col-span-2">
               <TechKpiCard
                 title="En Progreso"
                 value={inProgressContent.length}
@@ -261,7 +261,7 @@ export default function CreatorDashboard() {
                 size="md"
               />
             </StaggerItem>
-            <StaggerItem>
+            <StaggerItem className="md:col-span-1 md:row-span-2">
               <TechKpiCard
                 title="Aprobados"
                 value={approvedContent.length}
@@ -274,7 +274,7 @@ export default function CreatorDashboard() {
                 size="md"
               />
             </StaggerItem>
-            <StaggerItem>
+            <StaggerItem className="md:col-span-2 lg:col-span-1">
               <TechKpiCard
                 title="Embajador"
                 value={ambassadorContent.length}
@@ -286,7 +286,7 @@ export default function CreatorDashboard() {
                 size="md"
               />
             </StaggerItem>
-            <StaggerItem>
+            <StaggerItem className="md:col-span-1 lg:col-span-2">
               <TechKpiCard
                 title="Por Pagar"
                 value={unpaidContent.length}
@@ -299,7 +299,7 @@ export default function CreatorDashboard() {
                 size="md"
               />
             </StaggerItem>
-            <StaggerItem>
+            <StaggerItem className="md:col-span-1 lg:col-span-2">
               <TechKpiCard
                 title="Pagados"
                 value={paidContent.length}

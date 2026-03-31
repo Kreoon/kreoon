@@ -54,14 +54,14 @@ export function CategoryBar({
   }, []);
 
   return (
-    <div className="relative flex items-center gap-3 border-b border-white/10">
+    <div className="relative flex items-center gap-3 border-b border-border">
       {/* Left arrow */}
       {showLeft && (
         <button
           onClick={() => scroll('left')}
-          className="absolute left-0 z-10 w-8 h-8 rounded-full bg-black/60 backdrop-blur border border-white/20 flex items-center justify-center hover:bg-black/80 transition-colors"
+          className="absolute left-0 z-10 w-8 h-8 rounded-[0.125rem] bg-card border border-border flex items-center justify-center hover:bg-secondary transition-colors"
         >
-          <ChevronLeft className="h-4 w-4 text-white" />
+          <ChevronLeft className="h-4 w-4 text-foreground" />
         </button>
       )}
 
@@ -83,8 +83,8 @@ export function CategoryBar({
               className={cn(
                 'flex flex-col items-center gap-1.5 min-w-[56px] pb-2 border-b-2 transition-all duration-200',
                 isActive
-                  ? 'border-purple-500 text-white'
-                  : 'border-transparent text-gray-400 hover:text-white hover:border-gray-600',
+                  ? 'border-primary text-white'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border',
               )}
             >
               {Icon && <Icon className="h-6 w-6" />}
@@ -98,9 +98,9 @@ export function CategoryBar({
       {showRight && (
         <button
           onClick={() => scroll('right')}
-          className="absolute right-20 z-10 w-8 h-8 rounded-full bg-black/60 backdrop-blur border border-white/20 flex items-center justify-center hover:bg-black/80 transition-colors"
+          className="absolute right-20 z-10 w-8 h-8 rounded-[0.125rem] bg-card border border-border flex items-center justify-center hover:bg-secondary transition-colors"
         >
-          <ChevronRight className="h-4 w-4 text-white" />
+          <ChevronRight className="h-4 w-4 text-foreground" />
         </button>
       )}
 
@@ -110,14 +110,14 @@ export function CategoryBar({
         className={cn(
           'flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-sm border transition-colors text-sm font-medium',
           activeFilterCount > 0
-            ? 'border-purple-500/50 bg-purple-500/10 text-purple-300'
-            : 'border-white/20 text-foreground/80 hover:border-white/40 hover:text-white',
+            ? 'border-primary/50 bg-primary/10 text-primary'
+            : 'border-border text-foreground/80 hover:border-border hover:text-foreground',
         )}
       >
         <SlidersHorizontal className="h-4 w-4" />
         <span className="hidden sm:inline">Filtros</span>
         {activeFilterCount > 0 && (
-          <span className="w-5 h-5 rounded-full bg-purple-500 text-white text-xs flex items-center justify-center">
+          <span className="w-5 h-5 rounded-[0.125rem] bg-primary text-white text-xs flex items-center justify-center">
             {activeFilterCount}
           </span>
         )}

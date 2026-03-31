@@ -35,11 +35,11 @@ export function OrgInviteModal({ creatorUserId, creatorName, onClose }: OrgInvit
 
   return (
     <div className="fixed inset-0 z-[100]">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="absolute inset-0 flex items-center justify-center p-4">
         <div className="relative bg-card border border-white/10 rounded-sm w-full max-w-md max-h-[90vh] overflow-y-auto">
           {/* Header */}
-          <div className="sticky top-0 bg-card/95 backdrop-blur-sm border-b border-white/10 px-6 py-4 flex items-center justify-between">
+          <div className="sticky top-0 bg-card/95 border-b border-white/10 px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-purple-500/20 flex items-center justify-center">
                 <UserPlus className="h-4 w-4 text-purple-400" />

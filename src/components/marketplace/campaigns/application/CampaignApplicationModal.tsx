@@ -137,11 +137,11 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
 
   return (
     <div className="fixed inset-0 z-[100]">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="absolute inset-0 flex items-center justify-center p-4">
         <div className="relative bg-card border border-white/10 rounded-sm w-full max-w-lg max-h-[90vh] overflow-y-auto">
           {/* Header */}
-          <div className="sticky top-0 bg-card/95 backdrop-blur-sm border-b border-white/10 px-6 py-4 flex items-center justify-between">
+          <div className="sticky top-0 bg-card/95 border-b border-white/10 px-6 py-4 flex items-center justify-between">
             <div>
               <h2 className="text-white font-semibold">
                 {isBidMode ? 'Hacer Oferta' : 'Aplicar a Campana'}

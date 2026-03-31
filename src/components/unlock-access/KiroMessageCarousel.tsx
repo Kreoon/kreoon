@@ -36,7 +36,7 @@ export function KiroMessageCarousel({ qualifiedCount }: KiroMessageCarouselProps
 
   return (
     <div className={cn(
-      'rounded-sm p-5 sm:p-6 border backdrop-blur-xl',
+      'rounded-sm p-5 sm:p-6 border',
       isComplete
         ? 'bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-emerald-500/10 border-emerald-500/30'
         : 'bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-amber-500/10 border-purple-500/20'

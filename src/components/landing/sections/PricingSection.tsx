@@ -331,7 +331,7 @@ export function PricingSection({
 
         {/* Billing toggle */}
         <div className="mb-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-          <div className="inline-flex rounded-sm border border-kreoon-border bg-kreoon-bg-secondary/80 p-1 backdrop-blur-sm">
+          <div className="inline-flex rounded-sm border border-kreoon-border bg-kreoon-bg-secondary/80 p-1">
             <button
               type="button"
               onClick={() => setBilling("monthly")}
@@ -364,7 +364,7 @@ export function PricingSection({
 
         {/* Segment tabs with icons */}
         <div className="mb-10 flex justify-center">
-          <div className="inline-flex rounded-sm border border-kreoon-border bg-kreoon-bg-secondary/80 p-1 backdrop-blur-sm">
+          <div className="inline-flex rounded-sm border border-kreoon-border bg-kreoon-bg-secondary/80 p-1">
             {(Object.keys(SEGMENT_CONFIG) as PricingSegment[]).map((s) => {
               const config = SEGMENT_CONFIG[s];
               const Icon = config.icon;

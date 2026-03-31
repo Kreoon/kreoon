@@ -55,7 +55,7 @@ export function HireButton({
   if (isLoading) {
     return (
       <div className={cn("flex gap-2", className)}>
-        <div className="h-10 w-32 bg-social-muted rounded-sm animate-pulse" />
+        <div className="h-10 w-32 bg-background rounded-sm animate-pulse" />
       </div>
     );
   }
@@ -67,7 +67,7 @@ export function HireButton({
   if (!isIndependent && organizationId) {
     return (
       <div className={cn("space-y-2", className)}>
-        <div className="flex items-center gap-2 text-sm text-social-muted-foreground">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Building2 className="h-4 w-4" />
           <span>Trabaja con @{organizationName || 'Organización'}</span>
         </div>
@@ -96,7 +96,7 @@ export function HireButton({
           <Button
             size={size}
             onClick={onHire}
-            className="flex-1 gap-2 bg-gradient-to-r from-social-accent to-purple-600 hover:opacity-90"
+            className="flex-1 gap-2 bg-gradient-to-r from-primary to-purple-600 hover:opacity-90"
           >
             <Briefcase className="h-4 w-4" />
             Contratar
@@ -132,7 +132,7 @@ export function HireButton({
           <span className="text-yellow-500 font-medium">
             Ocupado
             {availability.typical_response_hours && (
-              <span className="text-social-muted-foreground font-normal">
+              <span className="text-muted-foreground font-normal">
                 {' '}· Responde en ~{availability.typical_response_hours}h
               </span>
             )}
@@ -188,7 +188,7 @@ export function HireButton({
           <span className="text-blue-500 font-medium">
             De vacaciones
             {formattedDate && (
-              <span className="text-social-muted-foreground font-normal">
+              <span className="text-muted-foreground font-normal">
                 {' '}hasta {formattedDate}
               </span>
             )}
@@ -240,7 +240,7 @@ export function HireButtonCompact({
   if (user?.id === creatorId) return null;
 
   if (isLoading) {
-    return <div className="h-8 w-20 bg-social-muted rounded animate-pulse" />;
+    return <div className="h-8 w-20 bg-background rounded animate-pulse" />;
   }
 
   if (!isIndependent && organizationId) {
@@ -277,7 +277,7 @@ export function HireButtonCompact({
       disabled={!accepting}
       className={cn(
         "text-xs gap-1",
-        status === 'available' && "bg-gradient-to-r from-social-accent to-purple-600",
+        status === 'available' && "bg-gradient-to-r from-primary to-purple-600",
         className
       )}
     >

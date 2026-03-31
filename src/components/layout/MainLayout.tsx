@@ -97,7 +97,7 @@ export function MainLayout({
         </div>
         
         {/* Editor Mobile Header */}
-        <header className="sticky top-0 z-50 flex h-14 items-center border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0f0f14] px-3 md:hidden">
+        <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background px-3 md:hidden">
           <div className="flex-1 flex items-center gap-2 min-w-0">
             <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-blue-500 flex-shrink-0">
               <Scissors className="h-4 w-4 text-white" />
@@ -132,7 +132,7 @@ export function MainLayout({
         </header>
 
         {/* Editor Mobile Bottom Navigation */}
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#0f0f14] border-t border-zinc-200 dark:border-zinc-800 md:hidden">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden">
           <div className="flex justify-around py-2">
             {editorMobileNavigation.filter(item => item.href !== '/marketplace' || marketplaceEnabled).map((item) => {
               const isActive = item.href.startsWith('/marketplace')
@@ -167,7 +167,7 @@ export function MainLayout({
           id="main-content"
           className={cn(
             "pb-16 md:pb-0 transition-all duration-300",
-            sidebarCollapsed ? "md:ml-20" : "md:ml-64",
+            sidebarCollapsed ? "md:ml-[104px]" : "md:ml-[288px]",
             "md:pt-14"
           )}
         >
@@ -204,7 +204,7 @@ export function MainLayout({
           <div className={cn(
             "fixed top-0 right-0 z-[60] h-11",
             "bg-gradient-to-r from-purple-600 via-purple-500 to-white dark:from-purple-600 dark:via-purple-800 dark:to-zinc-950",
-            sidebarCollapsed ? "left-0 md:left-20" : "left-0 md:left-64"
+            sidebarCollapsed ? "left-0 md:left-[104px]" : "left-0 md:left-[288px]"
           )}>
             <div className="h-full px-4 flex items-center">
               <div className="flex items-center justify-between gap-4 w-full">
@@ -241,7 +241,7 @@ export function MainLayout({
 
         {/* Client Mobile Header */}
         <header
-          className="sticky z-50 flex h-14 items-center border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0f0f14] px-3 md:hidden"
+          className="sticky z-50 flex h-14 items-center border-b border-border bg-background px-3 md:hidden"
           style={{ top: hasBanner ? bannerHeight : 0 }}
         >
           <MobileNav />
@@ -293,7 +293,7 @@ export function MainLayout({
           id="main-content"
           className={cn(
             "transition-all duration-300",
-            sidebarCollapsed ? "md:ml-20" : "md:ml-64"
+            sidebarCollapsed ? "md:ml-[104px]" : "md:ml-[288px]"
           )}
           style={{ paddingTop: hasBanner ? bannerHeight + 56 : 56 }} // 56px = h-14 del header
         >
@@ -335,7 +335,7 @@ export function MainLayout({
       </div>
       
       {/* Mobile Header */}
-      <header className="sticky top-0 z-50 flex h-14 items-center border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0f0f14] px-3 md:hidden">
+      <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background px-3 md:hidden">
         <MobileNav />
         <div className="flex-1 flex justify-center min-w-0">
           <div className="flex items-center gap-2">
@@ -382,7 +382,7 @@ export function MainLayout({
         id="main-content"
         className={cn(
           "transition-all duration-300",
-          sidebarCollapsed ? "md:ml-20" : "md:ml-64",
+          sidebarCollapsed ? "md:ml-[104px]" : "md:ml-[288px]",
           "md:pt-14"
         )}
       >

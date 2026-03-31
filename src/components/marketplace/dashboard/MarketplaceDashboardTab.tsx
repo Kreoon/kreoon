@@ -182,7 +182,7 @@ export function MarketplaceDashboardTab({ role }: MarketplaceDashboardTabProps) 
       {/* KPIs */}
       <div className={`grid grid-cols-2 ${kpis.length > 4 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-3`}>
         {kpis.map(kpi => (
-          <div key={kpi.label} className="bg-card/80 backdrop-blur-xl border border-white/10 rounded-sm p-4">
+          <div key={kpi.label} className="bg-card/80 border border-white/10 rounded-sm p-4">
             <div className="flex items-center gap-3">
               <div className={`w-9 h-9 rounded-sm flex items-center justify-center ${kpi.color}`}>
                 <kpi.icon className="h-4 w-4" />

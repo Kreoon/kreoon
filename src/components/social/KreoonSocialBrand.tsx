@@ -36,7 +36,7 @@ export function KreoonSocialBrand({
         'font-bold tracking-tight',
         sizeClasses[size]
       )}>
-        <span className="text-social-foreground">KREOON</span>
+        <span className="text-foreground">KREOON</span>
       </span>
     </div>
   );
@@ -52,7 +52,7 @@ export function KreoonSocialLogo({ className }: { className?: string }) {
         className="h-7 w-7 rounded-sm"
       />
       <span className="font-bold text-lg tracking-tight">
-        <span className="text-social-foreground">KREOON</span>
+        <span className="text-foreground">KREOON</span>
       </span>
     </div>
   );

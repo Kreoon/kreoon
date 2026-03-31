@@ -94,8 +94,8 @@ export function ShareButton({
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            "flex items-center gap-1 text-social-muted-foreground transition-all duration-200",
-            "hover:text-social-foreground hover:scale-110 active:scale-95",
+            "flex items-center gap-1 text-muted-foreground transition-all duration-200",
+            "hover:text-foreground hover:scale-110 active:scale-95",
             className
           )}
         >
@@ -103,7 +103,7 @@ export function ShareButton({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
-        className="glass-social-strong border-white/10 min-w-[200px]"
+        className="bg-card border border-border border-white/10 min-w-[200px]"
         align="center"
         side="top"
         sideOffset={8}

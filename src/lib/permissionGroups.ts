@@ -10,6 +10,8 @@
  * instead of checking individual role strings.
  */
 
+import type { AccountType } from '@/types/database';
+
 export type PermissionGroup = 'admin' | 'talent' | 'client';
 
 // 7 base roles mapped to 3 permission levels
@@ -239,6 +241,22 @@ export const GROUP_DASHBOARD_PATHS: Record<PermissionGroup, string> = {
 export function getDashboardForRole(role: string | null | undefined): string {
   const group = getPermissionGroup(role);
   return GROUP_DASHBOARD_PATHS[group];
+}
+
+// ─── Account Type Dashboards ─────────────────────────────────────────────
+// Dashboard paths based on account type (set during onboarding)
+
+/** Dashboard path for each account type */
+export const ACCOUNT_TYPE_DASHBOARDS: Record<AccountType, string> = {
+  talent: '/talent-dashboard',
+  organization: '/dashboard',
+  client: '/client-dashboard',
+};
+
+/** Get the dashboard path for an account type */
+export function getDashboardForAccountType(accountType: AccountType | string | null | undefined): string {
+  if (!accountType) return '/marketplace';
+  return ACCOUNT_TYPE_DASHBOARDS[accountType as AccountType] || '/marketplace';
 }
 
 // ─── Role Labels (for UI display) ────────────────────────────────────────

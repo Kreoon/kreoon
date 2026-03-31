@@ -362,13 +362,13 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
 
   return (
     <>
-      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-sm p-6 md:p-8">
+      <div className="bg-card border border-border rounded-sm p-6 md:p-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-white mb-2">
+          <h1 className="text-2xl font-bold text-foreground mb-2">
             Términos y Condiciones
           </h1>
-          <p className="text-white/60">
+          <p className="text-muted-foreground">
             Los siguientes documentos regulan tu uso de la plataforma KREOON,
             operada por SICOMMER INT LLC. Lee cada uno antes de aceptar.
           </p>
@@ -392,10 +392,10 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
                 className="mt-1"
               />
               <div>
-                <p className="font-medium text-white">
+                <p className="font-medium text-foreground">
                   Verificación de Edad <span className="text-red-400">*</span>
                 </p>
-                <p className="text-sm text-white/60 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   <strong>Declaro bajo juramento que soy mayor de 18 años de edad</strong> o
                   tengo la mayoría de edad legal en mi jurisdicción, y tengo capacidad
                   legal para aceptar estos términos.
@@ -419,34 +419,34 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={cn(
-                  "p-4 rounded-sm border transition-all",
+                  "p-4 rounded-[0.125rem] border transition-all",
                   isAccepted
                     ? "border-green-500/30 bg-green-500/5"
-                    : "border-white/10 bg-white/5"
+                    : "border-border bg-secondary/50"
                 )}
               >
                 <div className="flex items-start gap-3">
                   {/* Icono de estado */}
                   <div className="mt-1">
                     {isAccepted ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-400" />
+                      <CheckCircle2 className="w-5 h-5 text-green-500" />
                     ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-white/30" />
+                      <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />
                     )}
                   </div>
 
                   <div className="flex-1">
                     <div className="flex items-center justify-between flex-wrap gap-2">
-                      <p className="font-medium text-white flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-purple-400" />
+                      <p className="font-medium text-foreground flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-primary" />
                         {doc.title || getDocTypeLabel(doc.document_type)}
                         {doc.is_required && (
-                          <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full">
+                          <span className="text-xs font-mono bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-[0.125rem]">
                             Requerido
                           </span>
                         )}
                         {requiresSignature && (
-                          <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <span className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded-[0.125rem] flex items-center gap-1">
                             <PenTool className="w-3 h-3" />
                             Firma
                           </span>
@@ -468,10 +468,7 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
                           <Button
                             size="sm"
                             onClick={() => requiresSignature ? openSignatureModal(doc) : openDocumentDrawer(doc)}
-                            className={cn(
-                              "bg-gradient-to-r from-purple-600 to-pink-600",
-                              "hover:from-purple-500 hover:to-pink-500"
-                            )}
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
                           >
                             {requiresSignature ? (
                               <>
@@ -490,11 +487,11 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
                     </div>
 
                     {doc.summary && (
-                      <p className="text-sm text-white/60 mt-1">{doc.summary}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{doc.summary}</p>
                     )}
 
                     <div className="flex items-center gap-3 mt-2">
-                      <p className="text-xs text-white/40">Versión {doc.version}</p>
+                      <p className="text-xs text-muted-foreground">Versión {doc.version}</p>
                       {isSigned && (
                         <p className="text-xs text-green-400 flex items-center gap-1">
                           <Shield className="w-3 h-3" />
@@ -510,8 +507,8 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
         </section>
 
         {/* Nota legal */}
-        <div className="mt-6 p-4 rounded-sm bg-white/5 border border-white/10">
-          <p className="text-xs text-white/60 flex items-start gap-2">
+        <div className="mt-6 p-4 rounded-sm bg-card border border-border">
+          <p className="text-xs text-muted-foreground flex items-start gap-2">
             <Lock className="w-4 h-4 mt-0.5 flex-shrink-0" />
             Tu aceptación se registra con fecha, hora, dirección IP y navegador
             para cumplimiento legal. Esta información se almacena de forma segura
@@ -524,7 +521,7 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
           <Button
             variant="ghost"
             onClick={onBack}
-            className="text-white/60 hover:text-white"
+            className="text-muted-foreground hover:text-foreground hover:bg-secondary"
           >
             <ChevronLeft className="w-4 h-4 mr-2" />
             Volver
@@ -535,8 +532,7 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
             disabled={!canComplete || isCompletingOnboarding || isAccepting}
             className={cn(
               "flex-1 h-12 text-base font-semibold",
-              "bg-gradient-to-r from-purple-600 to-pink-600",
-              "hover:from-purple-500 hover:to-pink-500",
+              "bg-primary text-primary-foreground hover:bg-primary/90",
               "disabled:opacity-50"
             )}
           >
@@ -566,13 +562,13 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
       <Sheet open={!!openDocument} onOpenChange={(open) => !open && closeDocumentDrawer()}>
         <SheetContent
           side="right"
-          className="w-full sm:max-w-2xl bg-[#0F0F23] border-white/10 p-0 z-[200] flex flex-col h-full"
+          className="w-full sm:max-w-2xl bg-background border-border p-0 z-[200] flex flex-col h-full"
         >
-          <SheetHeader className="p-4 sm:p-6 border-b border-white/10 flex-shrink-0">
-            <SheetTitle className="text-white text-base sm:text-lg">
+          <SheetHeader className="p-4 sm:p-6 border-b border-border flex-shrink-0">
+            <SheetTitle className="text-foreground text-base sm:text-lg">
               {openDocument?.title || getDocTypeLabel(openDocument?.document_type || '')}
             </SheetTitle>
-            <SheetDescription className="text-white/60 text-xs sm:text-sm">
+            <SheetDescription className="text-muted-foreground text-xs sm:text-sm">
               Versión {openDocument?.version} — Lee el documento completo
             </SheetDescription>
           </SheetHeader>
@@ -592,7 +588,7 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
             </div>
           </ScrollArea>
 
-          <div className="p-4 sm:p-6 border-t border-white/10 flex-shrink-0 bg-[#0F0F23]">
+          <div className="p-4 sm:p-6 border-t border-border flex-shrink-0 bg-background">
             {openDocument && getSignatureMethodForDocument(openDocument.document_type) !== 'clickwrap' ? (
               <Button
                 onClick={() => {
@@ -602,8 +598,7 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
                 disabled={!hasReadToBottom}
                 className={cn(
                   "w-full h-12 text-base font-semibold",
-                  "bg-gradient-to-r from-purple-600 to-pink-600",
-                  "hover:from-purple-500 hover:to-pink-500",
+                  "bg-primary hover:bg-primary/90 text-primary-foreground",
                   "disabled:opacity-50"
                 )}
               >
@@ -625,8 +620,7 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
                 disabled={!hasReadToBottom || isAccepting}
                 className={cn(
                   "w-full h-12 text-base font-semibold",
-                  "bg-gradient-to-r from-purple-600 to-pink-600",
-                  "hover:from-purple-500 hover:to-pink-500",
+                  "bg-primary hover:bg-primary/90 text-primary-foreground",
                   "disabled:opacity-50"
                 )}
               >
@@ -649,7 +643,7 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
               </Button>
             )}
             {!hasReadToBottom && (
-              <p className="text-xs text-white/40 text-center mt-2">
+              <p className="text-xs text-muted-foreground text-center mt-2">
                 Desplázate hasta el final del documento para habilitarlo
               </p>
             )}
@@ -720,16 +714,16 @@ function DocumentContent({
       <div
         dangerouslySetInnerHTML={{ __html: html }}
         className={cn(
-          "[&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:text-white",
-          "[&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:text-white",
-          "[&_h3]:text-lg [&_h3]:font-medium [&_h3]:mt-4 [&_h3]:mb-2 [&_h3]:text-white",
-          "[&_p]:text-white/80 [&_p]:leading-relaxed [&_p]:mb-3",
-          "[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-3",
-          "[&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-3",
-          "[&_li]:text-white/80 [&_li]:mb-1",
-          "[&_a]:text-purple-400 [&_a]:underline",
-          "[&_strong]:text-white [&_strong]:font-semibold",
-          "[&_address]:text-white/70 [&_address]:not-italic"
+          "[&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:text-foreground",
+          "[&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:text-foreground",
+          "[&_h3]:text-lg [&_h3]:font-medium [&_h3]:mt-4 [&_h3]:mb-2 [&_h3]:text-foreground",
+          "[&_p]:text-foreground [&_p]:leading-relaxed [&_p]:mb-3",
+          "[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-3 [&_ul]:text-foreground",
+          "[&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-3 [&_ol]:text-foreground",
+          "[&_li]:text-foreground [&_li]:mb-1",
+          "[&_a]:text-primary [&_a]:underline",
+          "[&_strong]:text-foreground [&_strong]:font-semibold",
+          "[&_address]:text-muted-foreground [&_address]:not-italic"
         )}
       />
       {/* Sentinel para detectar scroll al final */}

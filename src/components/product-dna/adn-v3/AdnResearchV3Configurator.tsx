@@ -412,7 +412,7 @@ export function AdnResearchV3Configurator({
       className={`
         w-full max-w-2xl mx-auto rounded-sm border border-white/10
         bg-gradient-to-b from-white/[0.06] to-white/[0.02]
-        backdrop-blur-xl overflow-hidden
+        overflow-hidden
         ${className}
       `}
     >

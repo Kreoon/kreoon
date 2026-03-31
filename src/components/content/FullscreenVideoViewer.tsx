@@ -657,7 +657,7 @@ export function FullscreenVideoViewer({
 
           {/* Variation count */}
           {hasMultipleVariations && (
-            <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-white/10 backdrop-blur-sm rounded-full">
+            <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-white/10 rounded-full">
               <span className="text-white/90 text-xs">{currentVariation + 1}/{currentVideo.videoUrls.length} variaciones</span>
             </div>
           )}
