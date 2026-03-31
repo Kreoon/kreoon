@@ -119,7 +119,7 @@ export function AchievementCard({
                   style={{ color: insignia.color }}
                 />
               ) : (
-                <Lock size={config.icon} className="text-zinc-600" />
+                <Lock size={config.icon} className="text-muted-foreground" />
               )}
 
               {/* Elite shimmer */}
@@ -142,15 +142,15 @@ export function AchievementCard({
             </motion.button>
           </TooltipTrigger>
           <TooltipContent
-            className="bg-zinc-900/95 border-white/10 max-w-[200px]"
+            className="bg-popover border-border max-w-[200px]"
           >
             <div className="flex flex-col gap-1">
               <span className="font-semibold" style={{ color: insignia.color }}>
                 {insignia.nombre}
               </span>
-              <span className="text-xs text-zinc-400">{insignia.descripcion}</span>
+              <span className="text-xs text-muted-foreground">{insignia.descripcion}</span>
               {!unlocked && (
-                <span className="text-xs text-zinc-500 italic">Bloqueado</span>
+                <span className="text-xs text-muted-foreground italic">Bloqueado</span>
               )}
               {unlocked && showCredits && (
                 <span className="text-xs text-purple-400">+{insignia.creditos} CR</span>
@@ -191,8 +191,8 @@ export function AchievementCard({
       >
         {/* Locked overlay */}
         {!unlocked && (
-          <div className="absolute inset-0 bg-zinc-900/60-[1px] z-10 flex items-center justify-center">
-            <Lock className="w-5 h-5 text-zinc-600" />
+          <div className="absolute inset-0 bg-card/60 z-10 flex items-center justify-center">
+            <Lock className="w-5 h-5 text-muted-foreground" />
           </div>
         )}
 
@@ -211,7 +211,7 @@ export function AchievementCard({
           {/* Text content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-white truncate">
+              <span className="font-semibold text-foreground truncate">
                 {insignia.nombre}
               </span>
               {showCredits && unlocked && (
@@ -220,7 +220,7 @@ export function AchievementCard({
                 </span>
               )}
             </div>
-            <p className="text-xs text-zinc-500 truncate">
+            <p className="text-xs text-muted-foreground truncate">
               {insignia.descripcion}
             </p>
           </div>
@@ -275,9 +275,9 @@ export function AchievementCard({
     >
       {/* Locked overlay */}
       {!unlocked && (
-        <div className="absolute inset-0 bg-zinc-900/70-[2px] z-10 flex flex-col items-center justify-center gap-2">
-          <Lock className="w-8 h-8 text-zinc-600" />
-          <span className="text-xs text-zinc-500">Bloqueado</span>
+        <div className="absolute inset-0 bg-card/70 z-10 flex flex-col items-center justify-center gap-2">
+          <Lock className="w-8 h-8 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">Bloqueado</span>
         </div>
       )}
 
@@ -298,12 +298,12 @@ export function AchievementCard({
         </motion.div>
 
         {/* Name */}
-        <h3 className="font-bold text-white text-lg">
+        <h3 className="font-bold text-foreground text-lg">
           {insignia.nombre}
         </h3>
 
         {/* Description */}
-        <p className="text-sm text-zinc-400 leading-relaxed">
+        <p className="text-sm text-muted-foreground leading-relaxed">
           {insignia.descripcion}
         </p>
 
@@ -322,7 +322,7 @@ export function AchievementCard({
 
         {/* Unlock date */}
         {unlocked && unlockedAt && (
-          <span className="text-xs text-zinc-600">
+          <span className="text-xs text-muted-foreground">
             Desbloqueado {formatDistanceToNow(unlockedAt, { addSuffix: true, locale: es })}
           </span>
         )}

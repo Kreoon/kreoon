@@ -202,46 +202,59 @@ export default function FreelancerDashboard() {
 
   // Fetch campaign applications
   const { data: applications } = useQuery({
-    queryKey: ['campaign-applications', user?.id],
+    queryKey: ['campaign-applications', creatorProfile?.id],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      // Primero obtener las aplicaciones
+      const { data: apps, error } = await (supabase as any)
         .from('campaign_applications')
-        .select(`
-          *,
-          campaign:marketplace_campaigns(id, title, budget, deadline, status)
-        `)
+        .select('id, campaign_id, status, created_at, cover_letter, proposed_price')
         .eq('creator_id', creatorProfile?.id)
         .order('created_at', { ascending: false })
         .limit(10);
-      return data || [];
+
+      if (error || !apps?.length) return [];
+
+      // Luego obtener los datos de las campañas
+      const campaignIds = [...new Set(apps.map((a: any) => a.campaign_id))];
+      const { data: campaigns } = await (supabase as any)
+        .from('marketplace_campaigns')
+        .select('id, title, total_budget, deadline, status')
+        .in('id', campaignIds);
+
+      const campaignsMap = new Map((campaigns || []).map((c: any) => [c.id, c]));
+
+      return apps.map((app: any) => ({
+        ...app,
+        campaign: campaignsMap.get(app.campaign_id) || null,
+      }));
     },
     enabled: !!creatorProfile?.id,
   });
 
-  // Fetch active projects
+  // Fetch active projects (creator_id references auth.users.id, not creator_profiles.id)
   const { data: projects } = useQuery({
     queryKey: ['marketplace-projects', user?.id],
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from('marketplace_projects')
-        .select('*')
-        .eq('creator_id', creatorProfile?.id)
+        .select('id, title, status, created_at, deadline, total_price, currency')
+        .eq('creator_id', user?.id) // Usa user.id, no creatorProfile.id
         .in('status', ['in_progress', 'pending_delivery', 'revision'])
         .order('created_at', { ascending: false })
         .limit(5);
       return data || [];
     },
-    enabled: !!creatorProfile?.id,
+    enabled: !!user?.id,
   });
 
-  // Fetch public campaigns
+  // Fetch public campaigns (status 'open' o 'active' son visibles públicamente)
   const { data: publicCampaigns } = useQuery({
     queryKey: ['public-campaigns'],
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from('marketplace_campaigns')
-        .select('*')
-        .eq('status', 'open')
+        .select('id, title, description, status, deadline, total_budget, currency, cover_image_url')
+        .in('status', ['open', 'active'])
         .eq('visibility', 'public')
         .order('created_at', { ascending: false })
         .limit(5);

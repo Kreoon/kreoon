@@ -177,7 +177,7 @@ export function UPSystemKPIs({ organizationId, className }: UPSystemKPIsProps) {
                       <span className={cn(
                         "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold",
                         idx === 0 ? "bg-yellow-500/20 text-yellow-500" :
-                        idx === 1 ? "bg-gray-400/20 text-gray-400" :
+                        idx === 1 ? "bg-muted text-muted-foreground" :
                         idx === 2 ? "bg-orange-500/20 text-orange-500" :
                         "bg-muted text-muted-foreground"
                       )}>

@@ -79,7 +79,7 @@ const getDeadlineInfo = (fecha?: Date) => {
   else if (dias <= 3) urgencia = 'warning';
 
   const colors = {
-    normal: 'text-zinc-400',
+    normal: 'text-muted-foreground',
     warning: 'text-amber-400',
     danger: 'text-orange-400',
     critical: 'text-red-400',
@@ -112,15 +112,15 @@ export function ProductionCard({
       <motion.div
         className={cn(
           'flex items-center gap-3 p-2 rounded-sm',
-          'bg-zinc-900/40 hover:bg-zinc-800/40',
-          'border border-zinc-800/50 hover:border-zinc-700/50',
+          'bg-card hover:bg-secondary',
+          'border border-border hover:border-border',
           'cursor-pointer transition-all',
           className
         )}
         onClick={onClick}
         whileHover={{ x: 2 }}
       >
-        <span className="text-sm text-white font-medium truncate flex-1">
+        <span className="text-sm text-foreground font-medium truncate flex-1">
           {produccion.titulo}
         </span>
         <ContentStatusBadge status={produccion.estado} size="sm" showTooltip={false} />
@@ -139,8 +139,8 @@ export function ProductionCard({
       <motion.div
         className={cn(
           'flex items-center gap-4 p-3 rounded-sm',
-          'bg-zinc-900/40 hover:bg-zinc-800/40',
-          'border border-zinc-800/50 hover:border-zinc-700/50',
+          'bg-card hover:bg-secondary',
+          'border border-border hover:border-border',
           'cursor-pointer transition-all',
           className
         )}
@@ -156,8 +156,8 @@ export function ProductionCard({
 
         {/* Title + Client */}
         <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-white truncate">{produccion.titulo}</h4>
-          <p className="text-xs text-zinc-500 truncate">{produccion.cliente.nombre}</p>
+          <h4 className="font-medium text-foreground truncate">{produccion.titulo}</h4>
+          <p className="text-xs text-muted-foreground truncate">{produccion.cliente.nombre}</p>
         </div>
 
         {/* Status */}
@@ -166,13 +166,13 @@ export function ProductionCard({
         {/* Progress */}
         {produccion.piezasTotal && (
           <div className="hidden sm:flex flex-col items-center w-20">
-            <div className="w-full h-1 bg-zinc-700 rounded-full overflow-hidden">
+            <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
               <div
                 className="h-full bg-purple-500 rounded-full"
                 style={{ width: `${piezasProgreso}%` }}
               />
             </div>
-            <span className="text-xs text-zinc-500 mt-1">
+            <span className="text-xs text-muted-foreground mt-1">
               {produccion.piezasCompletadas}/{produccion.piezasTotal}
             </span>
           </div>
@@ -198,7 +198,7 @@ export function ProductionCard({
         {produccion.asignados && produccion.asignados.length > 0 && (
           <div className="hidden md:flex -space-x-2">
             {produccion.asignados.slice(0, 3).map((asignado) => (
-              <Avatar key={asignado.id} className="w-7 h-7 border-2 border-zinc-900">
+              <Avatar key={asignado.id} className="w-7 h-7 border-2 border-background">
                 <AvatarImage src={asignado.avatar} />
                 <AvatarFallback className="bg-purple-500/20 text-purple-400 text-xs">
                   {asignado.nombre.slice(0, 2).toUpperCase()}
@@ -206,7 +206,7 @@ export function ProductionCard({
               </Avatar>
             ))}
             {produccion.asignados.length > 3 && (
-              <div className="w-7 h-7 rounded-full bg-zinc-700 border-2 border-zinc-900 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-full bg-muted border-2 border-background flex items-center justify-center">
                 <span className="text-xs text-foreground/80">+{produccion.asignados.length - 3}</span>
               </div>
             )}
@@ -218,13 +218,13 @@ export function ProductionCard({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className="p-1.5 rounded-sm hover:bg-zinc-700 transition-colors"
+                className="p-1.5 rounded-sm hover:bg-muted transition-colors"
                 onClick={(e) => e.stopPropagation()}
               >
-                <MoreHorizontal className="w-4 h-4 text-zinc-400" />
+                <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-700">
+            <DropdownMenuContent align="end" className="bg-popover border-border">
               <DropdownMenuItem onClick={() => onAction?.('ver')}>
                 <Eye className="w-4 h-4 mr-2" />
                 Ver detalles
@@ -245,8 +245,8 @@ export function ProductionCard({
     <motion.div
       className={cn(
         'relative rounded-sm overflow-hidden',
-        'bg-gradient-to-b from-zinc-900/80 to-zinc-900/40',
-        'border border-zinc-800/50 hover:border-purple-500/30',
+        'bg-gradient-to-b from-card/80 to-card/40',
+        'border border-border hover:border-purple-500/30',
         'cursor-pointer transition-all group',
         className
       )}
@@ -259,11 +259,11 @@ export function ProductionCard({
       }}
     >
       {/* Thumbnail placeholder */}
-      <div className="relative h-32 bg-gradient-to-br from-purple-900/30 to-zinc-900">
+      <div className="relative h-32 bg-gradient-to-br from-purple-900/30 to-card">
         {/* Type badge */}
         <div className="absolute top-3 left-3 px-2 py-1 rounded-sm bg-black/50 flex items-center gap-1.5">
           <TipoIcon className="w-3.5 h-3.5 text-purple-400" />
-          <span className="text-xs text-white font-medium">{produccion.tipo}</span>
+          <span className="text-xs text-foreground font-medium">{produccion.tipo}</span>
         </div>
 
         {/* Status badge */}
@@ -272,7 +272,7 @@ export function ProductionCard({
         </div>
 
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
       </div>
 
       {/* Content */}
@@ -281,28 +281,28 @@ export function ProductionCard({
         <div className="flex items-center gap-2 mb-2">
           <Avatar className="w-5 h-5">
             <AvatarImage src={produccion.cliente.logo} />
-            <AvatarFallback className="bg-zinc-700 text-zinc-300 text-xs">
+            <AvatarFallback className="bg-secondary text-foreground/90 text-xs">
               {produccion.cliente.nombre.slice(0, 1).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <span className="text-xs text-zinc-400 truncate">
+          <span className="text-xs text-muted-foreground truncate">
             {produccion.cliente.nombre}
           </span>
         </div>
 
         {/* Title */}
-        <h4 className="font-semibold text-white text-lg line-clamp-2 mb-3">
+        <h4 className="font-semibold text-foreground text-lg line-clamp-2 mb-3">
           {produccion.titulo}
         </h4>
 
         {/* Progress */}
         {produccion.piezasTotal && (
           <div className="mb-3">
-            <div className="flex justify-between text-xs text-zinc-500 mb-1">
+            <div className="flex justify-between text-xs text-muted-foreground mb-1">
               <span>Progreso</span>
               <span>{produccion.piezasCompletadas}/{produccion.piezasTotal} piezas</span>
             </div>
-            <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+            <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
               <motion.div
                 className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full"
                 initial={{ width: 0 }}
@@ -326,7 +326,7 @@ export function ProductionCard({
                   ? 'bg-orange-500/10'
                   : deadlineInfo.urgencia === 'warning'
                   ? 'bg-amber-500/10'
-                  : 'bg-zinc-800/50'
+                  : 'bg-secondary'
               )}
               animate={deadlineInfo.urgencia === 'critical' ? {
                 scale: [1, 1.02, 1],
@@ -351,7 +351,7 @@ export function ProductionCard({
           {produccion.asignados && produccion.asignados.length > 0 && (
             <div className="flex -space-x-2">
               {produccion.asignados.slice(0, 3).map((asignado) => (
-                <Avatar key={asignado.id} className="w-7 h-7 border-2 border-zinc-900">
+                <Avatar key={asignado.id} className="w-7 h-7 border-2 border-background">
                   <AvatarImage src={asignado.avatar} />
                   <AvatarFallback className="bg-purple-500/20 text-purple-400 text-xs">
                     {asignado.nombre.slice(0, 2).toUpperCase()}
@@ -359,7 +359,7 @@ export function ProductionCard({
                 </Avatar>
               ))}
               {produccion.asignados.length > 3 && (
-                <div className="w-7 h-7 rounded-full bg-zinc-700 border-2 border-zinc-900 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-full bg-muted border-2 border-background flex items-center justify-center">
                   <span className="text-xs text-foreground/80">+{produccion.asignados.length - 3}</span>
                 </div>
               )}

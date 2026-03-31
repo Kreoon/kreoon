@@ -13,29 +13,42 @@ import type {
 
 // ── Kanban column configs (previously in mockProjectData) ──────────────
 
+// ── Columnas Kanban unificadas con Board de Organización ───────────────
+
 export const BRAND_COLUMNS: KanbanColumnConfig[] = [
-  { id: 'pending', label: 'Pendientes', color: '#a855f7', allowedTransitions: ['briefing', 'cancelled'] },
-  { id: 'briefing', label: 'En Brief', color: '#3b82f6', allowedTransitions: ['in_progress', 'cancelled'] },
-  { id: 'in_progress', label: 'En Producción', color: '#eab308', allowedTransitions: [] },
-  { id: 'revision', label: 'En Revisión', color: '#ec4899', allowedTransitions: ['approved', 'in_progress'] },
-  { id: 'overdue', label: 'Vencidos', color: '#ef4444', allowedTransitions: ['in_progress', 'cancelled'] },
-  { id: 'approved', label: 'Aprobados', color: '#22c55e', allowedTransitions: ['completed'] },
-  { id: 'completed', label: 'Completados', color: '#06b6d4', allowedTransitions: [] },
+  { id: 'draft', label: 'Creado', color: '#6b7280', allowedTransitions: ['script_pending', 'cancelled'] },
+  { id: 'script_pending', label: 'Guion Creado', color: '#6b7280', allowedTransitions: ['script_approved', 'draft'] },
+  { id: 'script_approved', label: 'Guión Aprobado', color: '#3b82f6', allowedTransitions: ['assigned'] },
+  { id: 'assigned', label: 'Asignado', color: '#8b5cf6', allowedTransitions: ['recording'] },
+  { id: 'recording', label: 'En Grabación', color: '#f59e0b', allowedTransitions: ['recorded', 'issue'] },
+  { id: 'recorded', label: 'Grabado', color: '#10b981', allowedTransitions: ['editing'] },
+  { id: 'editing', label: 'En Edición', color: '#ec4899', allowedTransitions: ['delivered', 'issue'] },
+  { id: 'delivered', label: 'Entregado', color: '#14b8a6', allowedTransitions: ['approved', 'issue', 'corrected'] },
+  { id: 'issue', label: 'Novedad', color: '#ef4444', allowedTransitions: ['corrected', 'editing', 'recording'] },
+  { id: 'corrected', label: 'Corregido', color: '#f97316', allowedTransitions: ['delivered', 'approved'] },
+  { id: 'approved', label: 'Aprobado', color: '#22c55e', allowedTransitions: ['paid', 'en_campaa'] },
+  { id: 'paid', label: 'Pagado', color: '#059669', allowedTransitions: ['en_campaa'] },
+  { id: 'en_campaa', label: 'En Campaña', color: '#a855f7', allowedTransitions: [] },
 ];
 
 export const CREATOR_COLUMNS: KanbanColumnConfig[] = [
-  { id: 'pending', label: 'Nuevas Ofertas', color: '#a855f7', allowedTransitions: ['briefing'] },
-  { id: 'briefing', label: 'En Brief', color: '#3b82f6', allowedTransitions: ['in_progress'] },
-  { id: 'in_progress', label: 'En Producción', color: '#eab308', allowedTransitions: ['revision'] },
-  { id: 'revision', label: 'En Revisión', color: '#ec4899', allowedTransitions: [] },
-  { id: 'overdue', label: 'Vencidos', color: '#ef4444', allowedTransitions: ['in_progress'] },
-  { id: 'approved', label: 'Aprobados', color: '#22c55e', allowedTransitions: ['completed'] },
-  { id: 'completed', label: 'Completados', color: '#06b6d4', allowedTransitions: [] },
+  { id: 'draft', label: 'Nuevos', color: '#6b7280', allowedTransitions: [] },
+  { id: 'script_approved', label: 'Guión Listo', color: '#3b82f6', allowedTransitions: [] },
+  { id: 'assigned', label: 'Asignados', color: '#8b5cf6', allowedTransitions: ['recording'] },
+  { id: 'recording', label: 'En Grabación', color: '#f59e0b', allowedTransitions: ['recorded'] },
+  { id: 'recorded', label: 'Grabado', color: '#10b981', allowedTransitions: [] },
+  { id: 'issue', label: 'Novedad', color: '#ef4444', allowedTransitions: ['corrected'] },
+  { id: 'corrected', label: 'Corregido', color: '#f97316', allowedTransitions: [] },
+  { id: 'approved', label: 'Aprobados', color: '#22c55e', allowedTransitions: [] },
+  { id: 'paid', label: 'Pagados', color: '#059669', allowedTransitions: [] },
 ];
 
 export const EDITOR_COLUMNS: KanbanColumnConfig[] = [
-  { id: 'in_progress', label: 'Por Editar', color: '#eab308', allowedTransitions: ['revision'] },
-  { id: 'revision', label: 'Entregados', color: '#ec4899', allowedTransitions: [] },
+  { id: 'recorded', label: 'Por Editar', color: '#10b981', allowedTransitions: ['editing'] },
+  { id: 'editing', label: 'En Edición', color: '#ec4899', allowedTransitions: ['delivered'] },
+  { id: 'delivered', label: 'Entregados', color: '#14b8a6', allowedTransitions: [] },
+  { id: 'issue', label: 'Novedad', color: '#ef4444', allowedTransitions: ['corrected'] },
+  { id: 'corrected', label: 'Corregido', color: '#f97316', allowedTransitions: ['delivered'] },
   { id: 'approved', label: 'Aprobados', color: '#22c55e', allowedTransitions: [] },
 ];
 
@@ -135,9 +148,18 @@ export function useMarketplaceProjects(options: UseMarketplaceProjectsOptions = 
 
     try {
       // NOTE: marketplace_projects.creator_id references auth.users(id), NOT creator_profiles(id)
+      // Select solo campos necesarios (evita traer campos JSONB pesados no usados)
+      const projectFields = `
+        id, creator_id, brand_id, organization_id, service_id, package_name,
+        payment_method, payment_status, status, brief, total_price, currency,
+        created_at, updated_at, deadline, deliverables_count, deliverables_approved,
+        last_message_at, unread_brand_messages, unread_creator_messages,
+        requires_editor, editor_id, editor_payout, creator_payout, platform_fee,
+        delivery_days, overdue_at, overdue_action, overdue_notes, deadline_extension_reason
+      `;
       let query = (supabase as any)
         .from('marketplace_projects')
-        .select('*')
+        .select(projectFields)
         .order('updated_at', { ascending: false });
 
       if (options.role === 'creator') {
@@ -184,9 +206,16 @@ export function useMarketplaceProjects(options: UseMarketplaceProjectsOptions = 
       const creatorsMap = new Map<string, MarketplaceCreator>();
 
       if (creatorUserIds.length > 0) {
+        // Select solo campos necesarios (evita portfolio_media JSONB pesado)
+        const creatorFields = `
+          id, user_id, display_name, avatar_url, bio, location_city, location_country,
+          country_flag, categories, content_types, level, is_verified, rating_avg,
+          rating_count, base_price, currency, is_available, languages,
+          completed_projects, created_at, accepts_product_exchange, marketplace_roles
+        `;
         const { data: creators } = await (supabase as any)
           .from('creator_profiles')
-          .select('*')
+          .select(creatorFields)
           .in('user_id', creatorUserIds);
         for (const c of creators || []) {
           creatorsMap.set(c.user_id, mapCreatorRow(c));

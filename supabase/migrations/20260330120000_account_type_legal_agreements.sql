@@ -23,6 +23,42 @@ COMMENT ON COLUMN legal_consent_requirements.account_type IS
 'Tipo de cuenta al que aplica el documento: talent, client, organization, o NULL para todos';
 
 -- -----------------------------------------------------------------------------
+-- PARTE 1.5: Actualizar constraint de document_type en legal_documents
+-- Agregar nuevos tipos: talent_agreement, client_agreement, organization_agreement
+-- -----------------------------------------------------------------------------
+
+ALTER TABLE legal_documents
+DROP CONSTRAINT IF EXISTS legal_documents_document_type_check;
+
+ALTER TABLE legal_documents
+ADD CONSTRAINT legal_documents_document_type_check
+CHECK (document_type IN (
+  -- Tipos existentes en produccion
+  'terms_of_service',
+  'privacy_policy',
+  'cookie_policy',
+  'creator_agreement',
+  'brand_agreement',
+  'acceptable_use_policy',
+  'dmca_policy',
+  'content_moderation_policy',
+  'escrow_payment_terms',
+  'age_verification_policy',
+  'age_declaration',
+  'general_terms',
+  -- Tipos adicionales del schema original
+  'live_shopping_terms',
+  'referral_terms',
+  'data_processing_agreement',
+  'white_label_agreement',
+  'ai_usage_disclosure',
+  -- Nuevos tipos unificados por account_type
+  'talent_agreement',
+  'client_agreement',
+  'organization_agreement'
+));
+
+-- -----------------------------------------------------------------------------
 -- PARTE 2: Crear tabla de bloqueos por incumplimiento de pago
 -- -----------------------------------------------------------------------------
 
@@ -100,10 +136,14 @@ COMMENT ON TABLE account_payment_blocks IS
 -- PARTE 3: Insertar nuevos documentos legales en legal_documents
 -- -----------------------------------------------------------------------------
 
+-- Limpiar documentos existentes con los mismos tipos (si existen)
+DELETE FROM legal_documents WHERE document_type IN ('talent_agreement', 'client_agreement', 'organization_agreement');
+
 -- Documento unificado de Talento
 INSERT INTO legal_documents (
   document_type,
   version,
+  version_date,
   title,
   summary,
   content_html,
@@ -114,6 +154,7 @@ INSERT INTO legal_documents (
 ) VALUES (
   'talent_agreement',
   '1.0',
+  '2026-03-30',
   'Acuerdo de Talento KREOON',
   'Acuerdo unificado para todos los roles de talento. Incluye cesion de derechos de imagen ilimitada, propiedad del contenido al cliente, y condiciones de pago a mes vencido.',
   '<!-- El contenido HTML se carga desde el archivo talent_agreement_v1.html -->',
@@ -121,16 +162,13 @@ INSERT INTO legal_documents (
   true,
   NOW(),
   NOW()
-) ON CONFLICT (document_type, version) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  is_current = EXCLUDED.is_current,
-  updated_at = NOW();
+);
 
 -- Documento unificado de Cliente
 INSERT INTO legal_documents (
   document_type,
   version,
+  version_date,
   title,
   summary,
   content_html,
@@ -141,6 +179,7 @@ INSERT INTO legal_documents (
 ) VALUES (
   'client_agreement',
   '1.0',
+  '2026-03-30',
   'Acuerdo de Cliente KREOON',
   'Acuerdo para clientes. Establece pago anticipado obligatorio, condiciones de acuerdos especiales, y consecuencias por incumplimiento incluyendo bloqueo de plataforma.',
   '<!-- El contenido HTML se carga desde el archivo client_agreement_v1.html -->',
@@ -148,16 +187,13 @@ INSERT INTO legal_documents (
   true,
   NOW(),
   NOW()
-) ON CONFLICT (document_type, version) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  is_current = EXCLUDED.is_current,
-  updated_at = NOW();
+);
 
 -- Documento unificado de Organizacion
 INSERT INTO legal_documents (
   document_type,
   version,
+  version_date,
   title,
   summary,
   content_html,
@@ -168,6 +204,7 @@ INSERT INTO legal_documents (
 ) VALUES (
   'organization_agreement',
   '1.0',
+  '2026-03-30',
   'Acuerdo de Organizacion KREOON',
   'Acuerdo para organizaciones. Requiere metodo de pago valido para membresias. Bloqueo total de plataforma si no hay pagos al dia.',
   '<!-- El contenido HTML se carga desde el archivo organization_agreement_v1.html -->',
@@ -175,15 +212,15 @@ INSERT INTO legal_documents (
   true,
   NOW(),
   NOW()
-) ON CONFLICT (document_type, version) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  is_current = EXCLUDED.is_current,
-  updated_at = NOW();
+);
 
 -- -----------------------------------------------------------------------------
 -- PARTE 4: Configurar requirements por account_type
 -- -----------------------------------------------------------------------------
+
+-- Limpiar requirements existentes para los nuevos document_types
+DELETE FROM legal_consent_requirements
+WHERE document_type IN ('talent_agreement', 'client_agreement', 'organization_agreement');
 
 -- Requirement para Talento
 INSERT INTO legal_consent_requirements (
@@ -200,12 +237,7 @@ INSERT INTO legal_consent_requirements (
   true,
   'registration',
   10
-) ON CONFLICT (document_type, user_role)
-WHERE user_role = 'all' AND trigger_event = 'registration'
-DO UPDATE SET
-  account_type = 'talent',
-  is_required = true,
-  display_order = 10;
+);
 
 -- Requirement para Cliente
 INSERT INTO legal_consent_requirements (
@@ -222,12 +254,7 @@ INSERT INTO legal_consent_requirements (
   true,
   'registration',
   10
-) ON CONFLICT (document_type, user_role)
-WHERE user_role = 'all' AND trigger_event = 'registration'
-DO UPDATE SET
-  account_type = 'client',
-  is_required = true,
-  display_order = 10;
+);
 
 -- Requirement para Organizacion
 INSERT INTO legal_consent_requirements (
@@ -244,12 +271,7 @@ INSERT INTO legal_consent_requirements (
   true,
   'registration',
   10
-) ON CONFLICT (document_type, user_role)
-WHERE user_role = 'all' AND trigger_event = 'registration'
-DO UPDATE SET
-  account_type = 'organization',
-  is_required = true,
-  display_order = 10;
+);
 
 -- -----------------------------------------------------------------------------
 -- PARTE 5: RPC para verificar bloqueos de cuenta
@@ -376,8 +398,8 @@ COMMENT ON FUNCTION unblock_account IS
 -- PARTE 8: Actualizar RPC get_pending_consents para incluir account_type
 -- -----------------------------------------------------------------------------
 
--- Primero verificamos si la funcion existe y su estructura
--- Luego la actualizamos para incluir account_type en el resultado
+-- Eliminar funcion existente para poder cambiar el tipo de retorno
+DROP FUNCTION IF EXISTS get_pending_consents(UUID);
 
 CREATE OR REPLACE FUNCTION get_pending_consents(p_user_id UUID)
 RETURNS TABLE (

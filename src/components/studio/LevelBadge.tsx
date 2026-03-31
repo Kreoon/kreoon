@@ -87,9 +87,7 @@ export function LevelBadge({
           'relative rounded-sm flex items-center justify-center',
           config.container,
           config.padding,
-          '',
-          'border border-white/10',
-          'shadow-lg'
+          'border border-border'
         )}
         style={{
           background: `linear-gradient(135deg, ${nivelInfo.color}20 0%, ${nivelInfo.color}10 100%)`,
@@ -156,8 +154,7 @@ export function LevelBadge({
         {/* Icon Badge */}
         <div
           className={cn(
-            'absolute -top-1 -right-1 rounded-full p-0.5',
-            ''
+            'absolute -top-1 -right-1 rounded-full p-0.5'
           )}
           style={{
             background: `linear-gradient(135deg, ${nivelInfo.color} 0%, ${nivelInfo.color}cc 100%)`,
@@ -185,7 +182,7 @@ export function LevelBadge({
           >
             {nivelInfo.nombre}
           </span>
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-muted-foreground">
             {nivelInfo.descripcion}
           </span>
         </motion.div>
@@ -205,7 +202,7 @@ export function LevelBadge({
         </TooltipTrigger>
         <TooltipContent
           side="top"
-          className="bg-zinc-900/95 border-white/10 px-3 py-2"
+          className="bg-popover border-border px-3 py-2"
         >
           <div className="flex flex-col gap-1">
             <span
@@ -214,11 +211,11 @@ export function LevelBadge({
             >
               Nivel {nivelInfo.nivel}: {nivelInfo.nombre}
             </span>
-            <span className="text-xs text-zinc-400">
+            <span className="text-xs text-muted-foreground">
               {nivelInfo.descripcion}
             </span>
             {nivelInfo.nivel < 10 && (
-              <span className="text-xs text-zinc-500">
+              <span className="text-xs text-muted-foreground">
                 Siguiente: {NIVELES[nivelInfo.nivel].xpRequerido.toLocaleString()} CR
               </span>
             )}

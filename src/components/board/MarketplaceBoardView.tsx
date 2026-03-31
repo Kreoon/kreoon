@@ -14,23 +14,53 @@ const UnifiedProjectModal = lazy(() => import('@/components/projects/UnifiedProj
 // ── Status styling ─────────────────────────────────────────────────────
 
 const STATUS_COLORS: Record<ProjectStatus, string> = {
+  // Legacy
   pending: 'bg-purple-500/20 text-purple-300',
   briefing: 'bg-blue-500/20 text-blue-300',
   in_progress: 'bg-yellow-500/20 text-yellow-300',
+  review: 'bg-cyan-500/20 text-cyan-300',
   revision: 'bg-pink-500/20 text-pink-300',
   approved: 'bg-green-500/20 text-green-300',
   completed: 'bg-cyan-500/20 text-cyan-300',
   cancelled: 'bg-red-500/20 text-red-300',
+  // Board de Organización
+  draft: 'bg-gray-500/20 text-gray-300',
+  script_pending: 'bg-gray-500/20 text-gray-300',
+  script_approved: 'bg-blue-500/20 text-blue-300',
+  assigned: 'bg-violet-500/20 text-violet-300',
+  recording: 'bg-amber-500/20 text-amber-300',
+  recorded: 'bg-emerald-500/20 text-emerald-300',
+  editing: 'bg-pink-500/20 text-pink-300',
+  delivered: 'bg-teal-500/20 text-teal-300',
+  issue: 'bg-red-500/20 text-red-300',
+  corrected: 'bg-orange-500/20 text-orange-300',
+  paid: 'bg-emerald-500/20 text-emerald-300',
+  en_campaa: 'bg-purple-500/20 text-purple-300',
 };
 
 const STATUS_LABELS: Record<ProjectStatus, string> = {
+  // Legacy
   pending: 'Pendiente',
   briefing: 'En Brief',
   in_progress: 'En Producción',
-  revision: 'En Revisión',
+  review: 'En Revisión',
+  revision: 'Revisiones',
   approved: 'Aprobado',
   completed: 'Completado',
   cancelled: 'Cancelado',
+  // Board de Organización
+  draft: 'Creado',
+  script_pending: 'Guion Creado',
+  script_approved: 'Guión Aprobado',
+  assigned: 'Asignado',
+  recording: 'En Grabación',
+  recorded: 'Grabado',
+  editing: 'En Edición',
+  delivered: 'Entregado',
+  issue: 'Novedad',
+  corrected: 'Corregido',
+  paid: 'Pagado',
+  en_campaa: 'En Campaña',
 };
 
 // ── Project Card ───────────────────────────────────────────────────────

@@ -11,7 +11,7 @@ export default function CreatorProfileSection() {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-white/5 border border-white/10 p-1 rounded-sm mb-6">
+        <TabsList className="bg-card border border-border p-1 rounded-sm mb-6">
           <TabsTrigger
             value="profile"
             className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-primary rounded-sm"
@@ -37,7 +37,7 @@ export default function CreatorProfileSection() {
         </TabsContent>
 
         <TabsContent value="talent-dna" className="mt-0">
-          <div className="bg-white/5 border border-white/10 rounded-sm p-6 mb-6">
+          <div className="bg-card border border-border rounded-sm p-6 mb-6">
             <div className="flex items-start gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/20">
                 <Dna className="h-6 w-6 text-emerald-400" />

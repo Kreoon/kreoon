@@ -1,16 +1,30 @@
 // ============================================================
-// ESTADOS DE PROYECTO
+// ESTADOS DE PROYECTO (Unificados con Board de Organización)
 // ============================================================
 
 export type ProjectStatus =
-  | 'pending'      // Esperando que el creador acepte
-  | 'briefing'     // En fase de brief
-  | 'in_progress'  // En producción
-  | 'review'       // En revisión por la marca
-  | 'revision'     // Necesita revisiones
-  | 'approved'     // Aprobado, pendiente pago
-  | 'completed'    // Completado y pagado
-  | 'cancelled';   // Cancelado
+  // Estados heredados del marketplace (compatibilidad)
+  | 'pending'         // Esperando que el creador acepte
+  | 'briefing'        // En fase de brief
+  | 'in_progress'     // En producción (legacy, usar 'editing')
+  | 'review'          // En revisión por la marca
+  | 'revision'        // Necesita revisiones (legacy, usar 'issue')
+  | 'approved'        // Aprobado, pendiente pago
+  | 'completed'       // Completado (legacy, usar 'paid')
+  | 'cancelled'       // Cancelado
+  // Estados del board de organización (nuevos)
+  | 'draft'           // Creado / Pendiente de guion
+  | 'script_pending'  // Guion creado
+  | 'script_approved' // Guión aprobado
+  | 'assigned'        // Asignado a creador/editor
+  | 'recording'       // En grabación
+  | 'recorded'        // Grabado
+  | 'editing'         // En edición
+  | 'delivered'       // Entregado
+  | 'issue'           // Novedad / Problema
+  | 'corrected'       // Corregido
+  | 'paid'            // Pagado
+  | 'en_campaa';      // En campaña
 
 export type DeliverableStatus =
   | 'pending'
@@ -201,6 +215,7 @@ export interface StatusConfig {
 }
 
 export const PROJECT_STATUS_CONFIG: Record<ProjectStatus, StatusConfig> = {
+  // ─── Estados Legacy (compatibilidad) ───────────────────────────
   pending: {
     label: 'Pendiente',
     color: 'text-amber-600',
@@ -256,6 +271,91 @@ export const PROJECT_STATUS_CONFIG: Record<ProjectStatus, StatusConfig> = {
     bgColor: 'bg-red-100',
     icon: 'XCircle',
     description: 'Proyecto cancelado',
+  },
+  // ─── Estados del Board de Organización ─────────────────────────
+  draft: {
+    label: 'Creado',
+    color: 'text-gray-600',
+    bgColor: 'bg-gray-100',
+    icon: 'FilePlus',
+    description: 'Proyecto creado, pendiente de guion',
+  },
+  script_pending: {
+    label: 'Guion Creado',
+    color: 'text-gray-600',
+    bgColor: 'bg-gray-100',
+    icon: 'FileText',
+    description: 'Guion creado, pendiente de aprobación',
+  },
+  script_approved: {
+    label: 'Guión Aprobado',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-100',
+    icon: 'CheckCircle',
+    description: 'Guion aprobado, listo para asignar',
+  },
+  assigned: {
+    label: 'Asignado',
+    color: 'text-violet-600',
+    bgColor: 'bg-violet-100',
+    icon: 'UserCheck',
+    description: 'Asignado a creador/editor',
+  },
+  recording: {
+    label: 'En Grabación',
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-100',
+    icon: 'Video',
+    description: 'Creador grabando contenido',
+  },
+  recorded: {
+    label: 'Grabado',
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-100',
+    icon: 'VideoOff',
+    description: 'Grabación completada',
+  },
+  editing: {
+    label: 'En Edición',
+    color: 'text-pink-600',
+    bgColor: 'bg-pink-100',
+    icon: 'Scissors',
+    description: 'Editor trabajando en el contenido',
+  },
+  delivered: {
+    label: 'Entregado',
+    color: 'text-teal-600',
+    bgColor: 'bg-teal-100',
+    icon: 'Package',
+    description: 'Contenido entregado al cliente',
+  },
+  issue: {
+    label: 'Novedad',
+    color: 'text-red-600',
+    bgColor: 'bg-red-100',
+    icon: 'AlertTriangle',
+    description: 'Hay un problema o novedad por resolver',
+  },
+  corrected: {
+    label: 'Corregido',
+    color: 'text-orange-600',
+    bgColor: 'bg-orange-100',
+    icon: 'Check',
+    description: 'Correcciones aplicadas',
+  },
+  paid: {
+    label: 'Pagado',
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-100',
+    icon: 'DollarSign',
+    description: 'Proyecto pagado y finalizado',
+  },
+  en_campaa: {
+    label: 'En Campaña',
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-100',
+    icon: 'Megaphone',
+    description: 'Contenido publicado en campaña',
   },
 };
 

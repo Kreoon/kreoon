@@ -107,7 +107,7 @@ export function AchievementToast({
       <div
         className={cn(
           'relative rounded-sm overflow-hidden',
-          'bg-zinc-900/95',
+          'bg-card',
           'shadow-2xl'
         )}
         style={{
@@ -118,9 +118,9 @@ export function AchievementToast({
         {/* Close button */}
         <button
           onClick={() => onClose(id)}
-          className="absolute top-3 right-3 z-10 p-1 rounded-full hover:bg-white/10 transition-colors"
+          className="absolute top-3 right-3 z-10 p-1 rounded-full hover:bg-secondary transition-colors"
         >
-          <X className="w-4 h-4 text-zinc-400" />
+          <X className="w-4 h-4 text-muted-foreground" />
         </button>
 
         {/* Content */}
@@ -137,7 +137,7 @@ export function AchievementToast({
         </div>
 
         {/* Progress bar */}
-        <div className="h-1 bg-zinc-800">
+        <div className="h-1 bg-secondary">
           <motion.div
             className="h-full"
             style={{ background: borderColor, width: `${progress}%` }}
@@ -195,7 +195,7 @@ function InsigniaContent({ insignia }: { insignia: Insignia }) {
           ¡Nueva Insignia!
         </motion.p>
         <motion.h4
-          className="font-bold text-white text-lg truncate"
+          className="font-bold text-foreground text-lg truncate"
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
@@ -260,10 +260,10 @@ function NivelContent({ nivelAnterior, nivelNuevo }: { nivelAnterior: number; ni
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.7 }}
       >
-        <p className="text-white font-semibold">
+        <p className="text-foreground font-semibold">
           Ahora eres <span style={{ color: nivelInfo.color }}>{nivelInfo.nombre}</span>
         </p>
-        <p className="text-xs text-zinc-500">{nivelInfo.descripcion}</p>
+        <p className="text-xs text-muted-foreground">{nivelInfo.descripcion}</p>
       </motion.div>
     </div>
   );
@@ -285,7 +285,7 @@ function CreditosContent({ creditos, mensaje }: { creditos: number; mensaje?: st
       {/* Text */}
       <div className="flex-1">
         <motion.h4
-          className="font-bold text-white text-2xl"
+          className="font-bold text-foreground text-2xl"
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: 'spring', stiffness: 300 }}
@@ -294,7 +294,7 @@ function CreditosContent({ creditos, mensaje }: { creditos: number; mensaje?: st
         </motion.h4>
         {mensaje && (
           <motion.p
-            className="text-sm text-zinc-400"
+            className="text-sm text-muted-foreground"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}

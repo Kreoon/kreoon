@@ -124,7 +124,6 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
                   )}
                   loading={(priority && i === 0) ? 'eager' : 'lazy'}
                   decoding={(priority && i === 0) ? 'sync' : 'async'}
-                  fetchPriority={(priority && i === 0) ? 'high' : 'auto'}
                   onLoad={() => setImgLoaded(prev => ({ ...prev, [i]: true }))}
                 />
                 {item.type === 'video' && (

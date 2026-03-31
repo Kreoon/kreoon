@@ -157,7 +157,7 @@ export default function CreatorDashboard() {
             <div className="flex flex-wrap items-center gap-3">
               <ThisMonthFilter isActive={thisMonthActive} onToggle={setThisMonthActive} />
               <CreditsDisplay creditos={totalPaid + (approvedContent.length * 50)} size="sm" />
-              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-success/20 to-success/10 border border-success/30 rounded-sm shadow-lg shadow-success/10">
+              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-success/20 to-success/10 border border-success/30 rounded-sm">
                 <DollarSign className="w-4 h-4 text-success" />
                 <span className="font-bold text-success">
                   ${pendingPayment.toLocaleString()}
@@ -170,11 +170,11 @@ export default function CreatorDashboard() {
         />
 
         {/* Dashboard Mode Toggle */}
-        <div className="flex gap-2 bg-white/5 p-1 rounded-sm w-fit">
+        <div className="flex gap-2 bg-secondary p-1 rounded-sm w-fit">
           <button
             onClick={() => setDashboardTab('studio')}
             className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors ${
-              dashboardTab === 'studio' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
+              dashboardTab === 'studio' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <Clapperboard className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
@@ -183,7 +183,7 @@ export default function CreatorDashboard() {
           <button
             onClick={() => setDashboardTab('marketplace')}
             className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors ${
-              dashboardTab === 'marketplace' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
+              dashboardTab === 'marketplace' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <Store className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
