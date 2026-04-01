@@ -1,19 +1,16 @@
-import { useReducer, useCallback, useEffect } from 'react';
+import { useReducer, useCallback } from 'react';
 import {
   DndContext,
   DragOverlay,
   closestCenter,
+  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-  arrayMove,
-} from '@dnd-kit/sortable';
+import { sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable';
 import { Settings2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -22,7 +19,7 @@ import { cn } from '@/lib/utils';
 import { BuilderToolbar } from './BuilderToolbar';
 import { BuilderSidebar } from './BuilderSidebar';
 import { BlockSettingsPanel } from './BlockSettingsPanel';
-import { ResponsivePreview } from './ResponsivePreview';
+import { BuilderCanvas } from './BuilderCanvas';
 import {
   DEFAULT_BUILDER_CONFIG,
   createBlock,
@@ -141,72 +138,17 @@ interface ProfileBuilderProps {
   profileId: string;
 }
 
-// ─── Placeholder Canvas ───────────────────────────────────────────────────────
-// Este componente puede reemplazarse por el canvas real con bloques renderizados
-
-function CanvasPlaceholder({
-  blocks,
-  selectedBlockId,
-  onSelectBlock,
-}: {
-  blocks: ProfileBlock[];
-  selectedBlockId: string | null;
-  onSelectBlock: (id: string) => void;
-}) {
-  if (blocks.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-border rounded-lg text-center p-8">
-        <p className="text-sm font-medium text-muted-foreground">
-          Tu perfil está vacío
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          Arrastra bloques desde el panel izquierdo para comenzar
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
-      {blocks.map((block) => (
-        <div
-          key={block.id}
-          role="button"
-          tabIndex={0}
-          onClick={() => onSelectBlock(block.id)}
-          onKeyDown={(e) => e.key === 'Enter' && onSelectBlock(block.id)}
-          aria-label={`Seleccionar bloque ${block.type}`}
-          aria-pressed={selectedBlockId === block.id}
-          className={cn(
-            'p-4 rounded-sm border transition-all cursor-pointer',
-            selectedBlockId === block.id
-              ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
-              : 'border-border bg-card hover:border-primary/40',
-            !block.isVisible && 'opacity-50'
-          )}
-        >
-          <p className="text-xs font-medium">{block.type}</p>
-          <p className="text-[10px] text-muted-foreground">orderIndex: {block.orderIndex}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
   const [state, dispatch] = useReducer(builderReducer, INITIAL_STATE);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
   // ── Handlers ──────────────────────────────────────────────────────────────
-
-  const handleDragStart = useCallback((_event: DragStartEvent) => {
-    // Podría usarse para mostrar overlay de drag
-  }, []);
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
@@ -216,36 +158,38 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
       const isFromPalette = active.data.current?.fromPalette === true;
 
       if (isFromPalette) {
-        // Añadir nuevo bloque al canvas
+        // Añadir nuevo bloque al canvas desde la paleta
         const blockType = active.data.current?.type as BlockType;
         const newBlock = createBlock(blockType, state.blocks.length);
         dispatch({ type: 'ADD_BLOCK', payload: { block: newBlock } });
         dispatch({ type: 'SELECT_BLOCK', payload: newBlock.id });
-      } else {
-        // Reordenar bloques existentes
-        if (active.id !== over.id) {
-          dispatch({
-            type: 'REORDER_BLOCKS',
-            payload: { activeId: String(active.id), overId: String(over.id) },
-          });
-        }
+      } else if (active.id !== over.id) {
+        // Reordenar bloques existentes en el canvas
+        dispatch({
+          type: 'REORDER_BLOCKS',
+          payload: { activeId: String(active.id), overId: String(over.id) },
+        });
       }
     },
     [state.blocks.length]
   );
 
+  const handleDragStart = useCallback((_event: DragStartEvent) => {
+    // Reservado para feedback visual futuro
+  }, []);
+
   const handleSaveDraft = useCallback(async () => {
     dispatch({ type: 'SET_SAVING', payload: true });
-    // TODO: integrar con hook de Supabase cuando esté disponible
-    await new Promise((r) => setTimeout(r, 800));
+    // TODO: conectar con useProfileBuilder hook cuando esté disponible
+    await new Promise<void>((r) => setTimeout(r, 800));
     dispatch({ type: 'SET_SAVING', payload: false });
     dispatch({ type: 'SET_DIRTY', payload: false });
   }, []);
 
   const handlePublish = useCallback(async () => {
     dispatch({ type: 'SET_SAVING', payload: true });
-    // TODO: integrar lógica de publicación
-    await new Promise((r) => setTimeout(r, 800));
+    // TODO: conectar lógica de publicación
+    await new Promise<void>((r) => setTimeout(r, 800));
     dispatch({ type: 'SET_SAVING', payload: false });
     dispatch({ type: 'SET_DIRTY', payload: false });
   }, []);
@@ -261,13 +205,17 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
     []
   );
 
+  const handleDeleteBlock = useCallback((id: string) => {
+    dispatch({ type: 'REMOVE_BLOCK', payload: id });
+  }, []);
+
   const handleConfigChange = useCallback((updates: Partial<BuilderConfig>) => {
     dispatch({ type: 'SET_BUILDER_CONFIG', payload: updates });
   }, []);
 
   const selectedBlock = state.blocks.find((b) => b.id === state.selectedBlockId) ?? null;
 
-  // ── Layout mobile vs desktop ───────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <DndContext
@@ -291,7 +239,7 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
           }
         />
 
-        {/* Body: 3 columnas en desktop, 1 columna en mobile */}
+        {/* Body: sidebar | canvas | settings */}
         <div className="flex flex-1 overflow-hidden">
           {/* Sidebar izquierdo — oculto en mobile */}
           <div className="hidden md:flex">
@@ -303,9 +251,9 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
           </div>
 
           {/* Canvas central */}
-          <main className="flex-1 overflow-hidden bg-muted/30 flex flex-col">
-            {/* Botones mobile: acceso a sidebar y settings */}
-            <div className="flex md:hidden items-center gap-2 px-3 py-2 border-b border-border bg-background">
+          <main className="flex-1 overflow-hidden bg-muted/20 flex flex-col">
+            {/* Controles mobile: acceso a sidebar y panel de bloque */}
+            <div className="flex md:hidden items-center gap-2 px-3 py-2 border-b border-border bg-background flex-shrink-0">
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="outline" size="sm" className="text-xs">
@@ -339,37 +287,31 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
               )}
             </div>
 
-            {/* Área de preview con scroll */}
-            <ScrollArea className="flex-1">
-              <div className="p-6 min-h-full">
-                <ResponsivePreview device={state.previewDevice}>
-                  <SortableContext
-                    items={state.blocks.map((b) => b.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <CanvasPlaceholder
-                      blocks={state.blocks}
-                      selectedBlockId={state.selectedBlockId}
-                      onSelectBlock={(id) =>
-                        dispatch({ type: 'SELECT_BLOCK', payload: id })
-                      }
-                    />
-                  </SortableContext>
-                </ResponsivePreview>
-              </div>
-            </ScrollArea>
+            {/* Canvas real con bloques */}
+            <BuilderCanvas
+              blocks={state.blocks}
+              selectedBlockId={state.selectedBlockId}
+              onSelectBlock={(id) => dispatch({ type: 'SELECT_BLOCK', payload: id })}
+              onUpdateBlock={handleUpdateBlock}
+              onReorderBlocks={(activeId, overId) =>
+                dispatch({ type: 'REORDER_BLOCKS', payload: { activeId, overId } })
+              }
+              onDeleteBlock={handleDeleteBlock}
+              previewDevice={state.previewDevice}
+            />
           </main>
 
-          {/* Panel derecho de settings — solo desktop */}
+          {/* Panel derecho de settings — solo desktop, con animación */}
           <aside
             className={cn(
-              'hidden md:flex flex-col w-72 border-l border-border bg-background overflow-hidden transition-all duration-200',
-              !selectedBlock && 'w-0 border-0'
+              'hidden md:flex flex-col border-l border-border bg-background overflow-hidden',
+              'transition-[width] duration-200 ease-in-out',
+              selectedBlock ? 'w-72' : 'w-0 border-0'
             )}
-            aria-label="Panel de configuración del bloque"
+            aria-label="Panel de configuración del bloque seleccionado"
           >
-            {selectedBlock ? (
-              <div className="flex flex-col h-full">
+            {selectedBlock && (
+              <div className="flex flex-col h-full w-72">
                 <div className="flex items-center justify-between px-3 py-2 border-b border-border flex-shrink-0">
                   <span className="text-xs text-muted-foreground font-medium">
                     Configurar bloque
@@ -385,22 +327,23 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
                   </Button>
                 </div>
                 <div className="flex-1 overflow-hidden">
-                  <BlockSettingsPanel
-                    block={selectedBlock}
-                    onUpdate={(updates) => handleUpdateBlock(selectedBlock.id, updates)}
-                  />
+                  <ScrollArea className="h-full">
+                    <BlockSettingsPanel
+                      block={selectedBlock}
+                      onUpdate={(updates) => handleUpdateBlock(selectedBlock.id, updates)}
+                    />
+                  </ScrollArea>
                 </div>
               </div>
-            ) : null}
+            )}
           </aside>
         </div>
       </div>
 
-      {/* DragOverlay: feedback visual durante el arrastre */}
-      <DragOverlay>
-        {/* Overlay genérico — se puede mejorar con el bloque arrastrado */}
-        <div className="p-3 rounded-sm border border-primary bg-primary/10 shadow-lg text-xs font-medium text-primary">
-          Soltando aquí...
+      {/* DragOverlay: feedback visual al arrastrar desde la paleta */}
+      <DragOverlay dropAnimation={{ duration: 150, easing: 'ease' }}>
+        <div className="px-3 py-2 rounded-sm border border-primary bg-primary/10 shadow-lg text-xs font-medium text-primary pointer-events-none">
+          Suelta para agregar
         </div>
       </DragOverlay>
     </DndContext>
