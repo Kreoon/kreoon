@@ -1,32 +1,25 @@
 import { useState, useRef, useCallback, memo } from 'react';
-import { Heart, ChevronLeft, ChevronRight, Star, MapPin, CheckCircle2, Play, Gift, Percent, Package, Clock, Building2 } from 'lucide-react';
-// Removed framer-motion for better performance - using CSS transitions instead
+import { Heart, ChevronLeft, ChevronRight, Star, MapPin, CheckCircle2, Play, Gift, Percent, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MarketplaceCreator, PortfolioMedia } from './types/marketplace';
 import { getBunnyThumbnailUrl } from '@/hooks/useHLSPlayer';
 import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 import { getSpecializationLabel, getSpecializationBgColor, getSpecializationColor } from '@/lib/specializations';
 import type { Specialization } from '@/types/database';
-// Nova Design System
 
 // Card dimensions for image optimization
 const CARD_WIDTH = 180;
 const CARD_HEIGHT = 320; // 9:16 aspect ratio
 
 function resolveThumb(item: PortfolioMedia, optimize = true): string {
-  // For videos: prefer Bunny Stream CDN thumbnail (always reliable)
   if (item.type === 'video') {
     const bunnyThumb = getBunnyThumbnailUrl(item.url);
     if (bunnyThumb) return bunnyThumb;
   }
-
   const baseUrl = item.thumbnail_url || item.url;
-
-  // Optimize non-Bunny images (e.g., Supabase Storage)
   if (optimize && baseUrl && !baseUrl.includes('b-cdn.net')) {
     return getOptimizedImageUrl(baseUrl, { width: CARD_WIDTH * 2, quality: 75 });
   }
-
   return baseUrl;
 }
 
@@ -34,7 +27,6 @@ interface CreatorCardProps {
   creator: MarketplaceCreator;
   onClick?: () => void;
   className?: string;
-  /** Priority loading for LCP optimization */
   priority?: boolean;
 }
 
@@ -44,8 +36,6 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
   const [imgLoaded, setImgLoaded] = useState<Record<number, boolean>>({});
   const touchStartX = useRef(0);
   const media = creator.portfolio_media;
-
-  const currentItem = media[currentSlide];
 
   const handlePrev = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -80,29 +70,37 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
   const isNew = isNewCreator(creator.joined_at);
   const hasDiscount = creator.introductory_discount_pct && creator.introductory_discount_pct > 0;
 
+  // Badge priority: Elite > Gold > New
   const badge = creator.level === 'elite'
-    ? { label: 'Top', icon: '🔥' }
+    ? { label: 'Top', bg: 'bg-gradient-to-r from-amber-500 to-orange-500', text: 'text-white' }
     : creator.level === 'gold'
-      ? { label: 'Destacado', icon: '⭐' }
+      ? { label: 'Pro', bg: 'bg-gradient-to-r from-purple-500 to-pink-500', text: 'text-white' }
       : isNew
-        ? { label: 'Nuevo', icon: '🆕' }
+        ? { label: 'Nuevo', bg: 'bg-primary/90', text: 'text-white' }
         : null;
+
+  // Primary category/specialization to show
+  const primarySpec = creator.specializations?.[0];
+  const primaryCategory = creator.categories?.[0];
 
   return (
     <div
       className={cn(
-        'group relative cursor-pointer transition-transform duration-200 hover:scale-[1.02] hover:-translate-y-1 active:scale-[0.98]',
+        'group relative cursor-pointer',
+        'transition-all duration-300 ease-out',
+        'hover:scale-[1.03] hover:-translate-y-1',
+        'active:scale-[0.98]',
         className,
       )}
       onClick={onClick}
     >
-      {/* Media area — 9:16 aspect ratio, click opens profile */}
+      {/* Media container — 9:16 aspect ratio */}
       <div
-        className="relative aspect-[9/16] rounded-sm overflow-hidden bg-card border border-border"
+        className="relative aspect-[9/16] rounded-lg overflow-hidden bg-card/50"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Media slides (static thumbnails only) */}
+        {/* Media slides */}
         {media.length > 0 ? (
           <div
             className="flex h-full transition-transform duration-300 ease-out"
@@ -111,7 +109,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
             {media.map((item, i) => (
               <div key={item.id} className="w-full h-full flex-shrink-0 relative">
                 {!imgLoaded[i] && (
-                  <div className="absolute inset-0 bg-secondary animate-pulse" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-secondary to-secondary/50 animate-pulse" />
                 )}
                 <img
                   src={resolveThumb(item)}
@@ -128,8 +126,8 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
                 />
                 {item.type === 'video' && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-[0.125rem] bg-card/80 flex items-center justify-center">
-                      <Play className="h-5 w-5 text-foreground fill-primary ml-0.5" />
+                    <div className="w-11 h-11 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center border border-white/20">
+                      <Play className="h-5 w-5 text-white fill-white ml-0.5" />
                     </div>
                   </div>
                 )}
@@ -137,21 +135,17 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
             ))}
           </div>
         ) : (
-          /* Fallback: avatar as main image when no portfolio media */
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
             {creator.avatar_url ? (
               <img
                 src={getOptimizedImageUrl(creator.avatar_url, { width: CARD_WIDTH * 2, quality: 75 })}
                 alt={creator.display_name}
-                width={CARD_WIDTH}
-                height={CARD_HEIGHT}
-                loading="lazy"
-                decoding="async"
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             ) : (
-              <div className="w-20 h-20 rounded-[0.125rem] bg-primary/20 flex items-center justify-center">
-                <span className="text-3xl text-primary font-bold">
+              <div className="w-16 h-16 rounded-full bg-primary/30 flex items-center justify-center">
+                <span className="text-2xl text-primary font-bold">
                   {creator.display_name.charAt(0).toUpperCase()}
                 </span>
               </div>
@@ -159,242 +153,202 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
           </div>
         )}
 
-        {/* Bottom gradient for text legibility */}
-        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+        {/* Subtle gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
 
-        {/* Favorite button */}
+        {/* Top left: Badge */}
+        {badge && (
+          <div className={cn(
+            'absolute top-2.5 left-2.5 z-10 px-2 py-0.5 rounded-full text-[10px] font-semibold shadow-lg',
+            badge.bg, badge.text
+          )}>
+            {badge.label}
+          </div>
+        )}
+
+        {/* Top right: Favorite */}
         <button
           onClick={handleFavorite}
-          className="absolute top-3 right-3 z-10 transition-transform duration-150 active:scale-125"
+          className="absolute top-2.5 right-2.5 z-10 w-8 h-8 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center transition-all hover:bg-black/50 active:scale-90"
           aria-label="Favorito"
         >
           <Heart
             className={cn(
-              'h-6 w-6 drop-shadow-lg transition-all duration-200',
-              isFavorite
-                ? 'text-destructive fill-destructive scale-110'
-                : 'text-foreground hover:text-primary',
+              'h-4 w-4 transition-all',
+              isFavorite ? 'text-red-500 fill-red-500' : 'text-white',
             )}
           />
         </button>
 
-        {/* Badges */}
-        <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
-          {badge && (
-            <div className="bg-card text-foreground text-xs font-semibold px-3 py-1 rounded-[0.125rem] w-fit">
-              {badge.icon} {badge.label}
-            </div>
-          )}
-          {hasDiscount && (
-            <div className="bg-green-600 text-foreground text-[10px] font-bold px-2.5 py-1 rounded-[0.125rem] flex items-center gap-1 w-fit">
-              <Percent className="h-3 w-3" />
-              -{creator.introductory_discount_pct}% intro
-            </div>
-          )}
-        </div>
+        {/* Discount badge */}
+        {hasDiscount && (
+          <div className="absolute top-11 left-2.5 z-10 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 shadow-lg">
+            <Percent className="h-2.5 w-2.5" />
+            {creator.introductory_discount_pct}% OFF
+          </div>
+        )}
 
-        {/* Navigation arrows (desktop hover only) */}
+        {/* Navigation arrows */}
         {media.length > 1 && (
           <>
             {currentSlide > 0 && (
               <button
                 onClick={handlePrev}
-                className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-[0.125rem] bg-card/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-card"
+                className="absolute left-1.5 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60"
                 aria-label="Anterior"
               >
-                <ChevronLeft className="h-4 w-4 text-foreground" />
+                <ChevronLeft className="h-4 w-4 text-white" />
               </button>
             )}
             {currentSlide < media.length - 1 && (
               <button
                 onClick={handleNext}
-                className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-[0.125rem] bg-card/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-card"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60"
                 aria-label="Siguiente"
               >
-                <ChevronRight className="h-4 w-4 text-foreground" />
+                <ChevronRight className="h-4 w-4 text-white" />
               </button>
             )}
           </>
         )}
 
-        {/* Dots */}
+        {/* Dots indicator */}
         {media.length > 1 && (
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
-            {media.map((_, i) => (
+          <div className="absolute bottom-[72px] left-1/2 -translate-x-1/2 z-10 flex gap-1">
+            {media.slice(0, 5).map((_, i) => (
               <span
                 key={i}
                 className={cn(
-                  'w-1.5 h-1.5 rounded-[0.125rem] transition-all duration-200',
-                  i === currentSlide ? 'bg-foreground w-2.5' : 'bg-foreground/50',
+                  'h-1 rounded-full transition-all duration-200',
+                  i === currentSlide ? 'bg-white w-3' : 'bg-white/50 w-1',
                 )}
               />
             ))}
+            {media.length > 5 && <span className="text-white/50 text-[8px] ml-0.5">+{media.length - 5}</span>}
           </div>
         )}
 
-        {/* Hover mini-gallery - hidden on mobile for performance */}
-        {media.length >= 3 && (
-          <div
-            className={cn(
-              "absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex gap-1 transition-all duration-300",
-              "opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0",
-              "hidden sm:flex" // Hide on mobile
-            )}
-          >
-            {media.slice(0, 3).map((item, i) => (
-              <button
-                key={item.id}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentSlide(i);
-                }}
-                className={cn(
-                  "w-12 h-16 rounded-sm overflow-hidden border-2 transition-all",
-                  i === currentSlide
-                    ? "border-foreground scale-105"
-                    : "border-foreground/30 hover:border-foreground/60"
-                )}
-              >
+        {/* Bottom info panel - SIMPLIFIED */}
+        <div className="absolute bottom-0 inset-x-0 z-10 p-2.5">
+          {/* Row 1: Avatar + Name + Verified */}
+          <div className="flex items-center gap-2 mb-1.5">
+            {/* Avatar */}
+            <div className="relative flex-shrink-0">
+              {creator.avatar_url ? (
                 <img
-                  src={resolveThumb(item)}
+                  src={getOptimizedImageUrl(creator.avatar_url, { width: 64, quality: 75 })}
                   alt=""
-                  width={48}
-                  height={64}
+                  className="w-7 h-7 rounded-full object-cover ring-2 ring-white/30"
                   loading="lazy"
-                  decoding="async"
-                  className="w-full h-full object-cover"
-                />
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Creator info overlay at bottom of card */}
-        <div className="absolute bottom-0 inset-x-0 z-10 p-3 space-y-1.5">
-          {/* Name + verified */}
-          <div className="flex items-center gap-1.5">
-            {creator.avatar_url ? (
-              <img
-                src={getOptimizedImageUrl(creator.avatar_url, { width: 48, quality: 70 })}
-                alt=""
-                width={24}
-                height={24}
-                loading="lazy"
-                decoding="async"
-                className="w-6 h-6 rounded-[0.125rem] object-cover flex-shrink-0 border border-foreground/30"
-              />
-            ) : (
-              <div className="w-6 h-6 rounded-[0.125rem] bg-primary/60 flex items-center justify-center flex-shrink-0 border border-foreground/30">
-                <span className="text-[10px] text-foreground font-bold leading-none">
-                  {creator.display_name.charAt(0).toUpperCase()}
-                </span>
-              </div>
-            )}
-            <span className="font-semibold text-foreground text-sm truncate drop-shadow-md">
-              {creator.display_name}
-            </span>
-            {creator.is_verified && (
-              <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
-            )}
-          </div>
-
-          {/* Organization badge */}
-          {creator.organization_id && creator.organization_name && (
-            <div className="flex items-center gap-1.5 bg-foreground/10 rounded-[0.125rem] px-2 py-0.5 w-fit">
-              {creator.organization_logo ? (
-                <img
-                  src={getOptimizedImageUrl(creator.organization_logo, { width: 32, quality: 70 })}
-                  alt={creator.organization_name}
-                  width={16}
-                  height={16}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-4 h-4 rounded-[0.125rem] object-cover flex-shrink-0"
                 />
               ) : (
-                <Building2 className="h-3 w-3 text-primary flex-shrink-0" />
+                <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center ring-2 ring-white/30">
+                  <span className="text-[10px] text-white font-bold">
+                    {creator.display_name.charAt(0).toUpperCase()}
+                  </span>
+                </div>
               )}
-              <span className="text-[10px] text-foreground/90 font-medium truncate max-w-[100px]">
-                {creator.organization_name}
-              </span>
-            </div>
-          )}
-
-          {/* Location */}
-          {(creator.location_city || creator.location_country) && (
-            <div className="flex items-center gap-1 text-foreground/70 text-xs">
-              <MapPin className="h-3 w-3 flex-shrink-0" />
-              <span className="truncate drop-shadow-sm">
-                {[creator.location_city, creator.location_country]
-                  .filter(Boolean)
-                  .join(', ')}
-              </span>
-            </div>
-          )}
-
-          {/* Social Proof Row */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Rating con count */}
-            <div className="flex items-center gap-1">
-              <Star className="h-3 w-3 text-primary fill-primary" />
-              <span className="text-foreground text-xs font-medium drop-shadow-sm">
-                {creator.rating_avg.toFixed(1)}
-              </span>
-              <span className="text-foreground/50 text-[10px]">({creator.rating_count})</span>
+              {creator.is_verified && (
+                <CheckCircle2 className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 text-green-400 fill-green-400 bg-black rounded-full" />
+              )}
             </div>
 
-            {/* Projects completed */}
-            {creator.completed_projects > 0 && (
-              <div className="flex items-center gap-1 text-foreground/70 text-xs">
-                <Package className="h-3 w-3" />
-                <span>{creator.completed_projects}</span>
+            {/* Name + Org */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1">
+                <span className="font-semibold text-white text-sm truncate">
+                  {creator.display_name}
+                </span>
               </div>
-            )}
+              {creator.organization_name && (
+                <div className="flex items-center gap-1">
+                  {creator.organization_logo ? (
+                    <img
+                      src={getOptimizedImageUrl(creator.organization_logo, { width: 24, quality: 70 })}
+                      alt=""
+                      className="w-3 h-3 rounded-full object-cover"
+                    />
+                  ) : (
+                    <Building2 className="h-3 w-3 text-white/60" />
+                  )}
+                  <span className="text-[10px] text-white/60 truncate">{creator.organization_name}</span>
+                </div>
+              )}
+            </div>
+          </div>
 
-            {/* Response time */}
-            {creator.response_time_label && (
-              <div className="flex items-center gap-1 text-green-500 text-[10px]">
-                <Clock className="h-3 w-3" />
-                <span>{creator.response_time_label}</span>
+          {/* Row 2: Category/Spec + Rating + Price */}
+          <div className="flex items-center justify-between gap-2">
+            {/* Left: Category or Specialization */}
+            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+              {primarySpec ? (
+                <span className={cn(
+                  "text-[10px] px-1.5 py-0.5 rounded truncate",
+                  getSpecializationBgColor(primarySpec as Specialization),
+                  getSpecializationColor(primarySpec as Specialization)
+                )}>
+                  {getSpecializationLabel(primarySpec as Specialization)}
+                </span>
+              ) : primaryCategory ? (
+                <span className="text-[10px] text-white/70 bg-white/10 px-1.5 py-0.5 rounded truncate">
+                  {primaryCategory}
+                </span>
+              ) : null}
+
+              {/* Rating */}
+              <div className="flex items-center gap-0.5">
+                <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+                <span className="text-white text-[11px] font-medium">
+                  {creator.rating_avg.toFixed(1)}
+                </span>
+                {creator.rating_count > 0 && (
+                  <span className="text-white/50 text-[10px]">({creator.rating_count})</span>
+                )}
+              </div>
+            </div>
+
+            {/* Right: Price */}
+            {creator.base_price != null && (
+              <div className="flex-shrink-0 bg-white/10 backdrop-blur-sm px-2 py-0.5 rounded">
+                <span className="text-white text-xs font-semibold">
+                  ${creator.base_price.toLocaleString()}
+                </span>
+                <span className="text-white/50 text-[10px] ml-0.5">
+                  {creator.currency}
+                </span>
               </div>
             )}
           </div>
 
-          {/* Exchange badge */}
-          {creator.accepts_product_exchange && (
-            <div className="flex items-center gap-1">
-              <span
-                className="flex items-center gap-0.5 text-green-500 text-xs"
-                title="Acepta canje de producto"
-              >
-                <Gift className="h-3 w-3" />
-                <span>Acepta canje</span>
-              </span>
-            </div>
-          )}
+          {/* Row 3: Hover-only extra info */}
+          <div className="overflow-hidden max-h-0 group-hover:max-h-20 transition-all duration-300 ease-out">
+            <div className="flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-white/10 mt-1.5">
+              {/* Location */}
+              {(creator.location_city || creator.location_country) && (
+                <div className="flex items-center gap-0.5 text-white/60 text-[10px]">
+                  <MapPin className="h-2.5 w-2.5" />
+                  <span className="truncate max-w-[80px]">
+                    {creator.location_city || creator.location_country}
+                  </span>
+                </div>
+              )}
 
-          {/* Specializations */}
-          {creator.specializations && creator.specializations.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1">
-              {creator.specializations.slice(0, 3).map((spec) => (
-                <span
-                  key={spec}
-                  className={cn(
-                    "text-[10px] px-1.5 py-0.5 rounded-[0.125rem]",
-                    getSpecializationBgColor(spec as Specialization),
-                    getSpecializationColor(spec as Specialization)
-                  )}
-                >
-                  {getSpecializationLabel(spec as Specialization)}
-                </span>
-              ))}
-              {creator.specializations.length > 3 && (
-                <span className="text-[10px] text-foreground/60 px-1">
-                  +{creator.specializations.length - 3}
+              {/* Accepts exchange */}
+              {creator.accepts_product_exchange && (
+                <div className="flex items-center gap-0.5 text-green-400 text-[10px]">
+                  <Gift className="h-2.5 w-2.5" />
+                  <span>Canje</span>
+                </div>
+              )}
+
+              {/* Additional specs on hover */}
+              {creator.specializations && creator.specializations.length > 1 && (
+                <span className="text-white/40 text-[10px]">
+                  +{creator.specializations.length - 1} skills
                 </span>
               )}
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

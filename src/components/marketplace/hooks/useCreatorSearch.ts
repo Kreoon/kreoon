@@ -10,6 +10,8 @@ export function useCreatorSearch(filters: MarketplaceFilters) {
     featured: rawFeatured,
     newTalent: rawNewTalent,
     topRated: rawTopRated,
+    topPerformers: rawTopPerformers,
+    organizations,
     isLoading,
     totalCount,
   } = useMarketplaceCreators(filters);
@@ -87,6 +89,11 @@ export function useCreatorSearch(filters: MarketplaceFilters) {
     return scoreCreators(rawTopRated).slice(0, 12);
   }, [rawTopRated, scoreCreators]);
 
+  // Top Performers: mantener orden por performance score (proyectos * calidad)
+  const topPerformers = useMemo(() => {
+    return rawTopPerformers.slice(0, 12);
+  }, [rawTopPerformers]);
+
   // Personalized "Recomendados para ti" section from all creators
   const recommended = useMemo(() => {
     if (!isPersonalized) return [];
@@ -98,7 +105,9 @@ export function useCreatorSearch(filters: MarketplaceFilters) {
     featured,
     newTalent,
     topRated,
+    topPerformers,
     recommended,
+    organizations,
     isLoading,
     totalCount,
     isPersonalized,

@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2, ArrowLeft, Download, Calendar, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { sanitizeHTML } from '@/lib/sanitizeHTML';
 
 // Mapeo de rutas a tipos de documento
 const ROUTE_TO_TYPE: Record<string, string> = {
@@ -148,7 +149,7 @@ export function LegalDocumentPage() {
           {/* Si el contenido es HTML, renderizarlo */}
           {htmlContent && htmlContent.startsWith('<') ? (
             <div
-              dangerouslySetInnerHTML={{ __html: htmlContent }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHTML(htmlContent) }}
               className={cn(
                 // Estilos para el contenido HTML legal
                 "[&_h1]:text-3xl [&_h1]:font-bold [&_h1]:mb-6 [&_h1]:text-foreground",

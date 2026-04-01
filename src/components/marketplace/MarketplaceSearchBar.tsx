@@ -1,15 +1,19 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Search, MapPin, Film, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { COUNTRIES, CONTENT_TYPES } from './types/marketplace';
+import { CONTENT_TYPES } from './types/marketplace';
 import { supabase } from '@/integrations/supabase/client';
+import { useMarketplaceFilterOptions } from '@/hooks/useMarketplaceFilterOptions';
+import { LocationAutocomplete } from './filters/LocationAutocomplete';
+import { ContentTypeSelector } from './filters/ContentTypeSelector';
 
 interface MarketplaceSearchBarProps {
   search: string;
   country: string | null;
+  city: string | null;
   contentTypes: string[];
   onSearchChange: (value: string) => void;
-  onCountryChange: (value: string | null) => void;
+  onLocationChange: (location: { country: string | null; city: string | null }) => void;
   onContentTypesChange: (value: string[]) => void;
   onSubmit: () => void;
   onAIFiltersChange?: (filters: {
@@ -26,15 +30,19 @@ type ActiveSection = 'search' | 'country' | 'content' | null;
 export function MarketplaceSearchBar({
   search,
   country,
+  city,
   contentTypes,
   onSearchChange,
-  onCountryChange,
+  onLocationChange,
   onContentTypesChange,
   onSubmit,
   onAIFiltersChange,
 }: MarketplaceSearchBarProps) {
   const [activeSection, setActiveSection] = useState<ActiveSection>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Obtener opciones dinámicas de filtros
+  const { data: filterOptions } = useMarketplaceFilterOptions();
 
   // --- AI: parseo silencioso en segundo plano ---
   const [aiChips, setAiChips] = useState<{ label: string; type: 'role' | 'location' | 'category' }[]>([]);
@@ -138,18 +146,19 @@ export function MarketplaceSearchBar({
     [onSubmit],
   );
 
-  const toggleContentType = useCallback(
-    (ct: string) => {
-      onContentTypesChange(
-        contentTypes.includes(ct)
-          ? contentTypes.filter(t => t !== ct)
-          : [...contentTypes, ct],
-      );
-    },
-    [contentTypes, onContentTypesChange],
-  );
-
-  const selectedCountry = COUNTRIES.find(c => c.code === country);
+  // Obtener label de ubicación actual
+  const locationLabel = (() => {
+    if (!country) return 'Cualquier lugar';
+    const loc = filterOptions?.locations.find(
+      (l) => l.country_code === country && l.city === city
+    );
+    if (loc) {
+      return city
+        ? `${loc.country_flag} ${city}, ${loc.country_name}`
+        : `${loc.country_flag} ${loc.country_name}`;
+    }
+    return country;
+  })();
 
   return (
     <div ref={containerRef} className="relative w-full max-w-3xl mx-auto">
@@ -202,9 +211,9 @@ export function MarketplaceSearchBar({
         >
           <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           <div className="text-left min-w-0">
-            <p className="text-xs font-medium text-foreground/80">País/Ciudad</p>
+            <p className="text-xs font-medium text-foreground/80">Pais/Ciudad</p>
             <p className="text-sm text-muted-foreground truncate">
-              {selectedCountry ? `${selectedCountry.flag} ${selectedCountry.label}` : 'Cualquier lugar'}
+              {locationLabel}
             </p>
           </div>
         </button>
@@ -278,61 +287,25 @@ export function MarketplaceSearchBar({
       {/* Dropdowns */}
       {activeSection === 'country' && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-sm shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="space-y-1">
-            <button
-              onClick={() => {
-                onCountryChange(null);
-                setActiveSection(null);
-              }}
-              className={cn(
-                'w-full flex items-center gap-3 px-3 py-2.5 rounded-sm transition-colors text-sm',
-                country === null
-                  ? 'bg-primary/20 text-primary'
-                  : 'text-foreground/80 hover:bg-secondary',
-              )}
-            >
-              🌎 Todos los países
-            </button>
-            {COUNTRIES.map(c => (
-              <button
-                key={c.code}
-                onClick={() => {
-                  onCountryChange(c.code);
-                  setActiveSection(null);
-                }}
-                className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-sm transition-colors text-sm',
-                  country === c.code
-                    ? 'bg-primary/20 text-primary'
-                    : 'text-foreground/80 hover:bg-secondary',
-                )}
-              >
-                {c.flag} {c.label}
-              </button>
-            ))}
-          </div>
+          <LocationAutocomplete
+            value={{ country, city }}
+            onChange={(loc) => {
+              onLocationChange(loc);
+              setActiveSection(null);
+            }}
+            locations={filterOptions?.locations ?? []}
+            placeholder="Buscar pais o ciudad..."
+          />
         </div>
       )}
 
       {activeSection === 'content' && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-sm shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="grid grid-cols-2 gap-2">
-            {CONTENT_TYPES.map(ct => (
-              <button
-                key={ct}
-                onClick={() => toggleContentType(ct)}
-                className={cn(
-                  'flex items-center gap-2 px-3 py-2.5 rounded-sm transition-colors text-sm',
-                  contentTypes.includes(ct)
-                    ? 'bg-primary/20 text-primary border border-primary/30'
-                    : 'text-foreground/80 hover:bg-secondary border border-transparent',
-                )}
-              >
-                {contentTypes.includes(ct) && <X className="h-3 w-3" />}
-                {ct}
-              </button>
-            ))}
-          </div>
+          <ContentTypeSelector
+            value={contentTypes}
+            onChange={onContentTypesChange}
+            availableTypes={filterOptions?.content_types ?? CONTENT_TYPES as unknown as string[]}
+          />
         </div>
       )}
     </div>

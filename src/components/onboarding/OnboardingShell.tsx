@@ -8,6 +8,7 @@
  */
 
 import { LogOut, CheckCircle2 } from 'lucide-react';
+import { KreoonLogo } from '@/components/ui/kreoon-logo';
 import { cn } from '@/lib/utils';
 import type { ReactNode } from 'react';
 
@@ -38,7 +39,7 @@ export function OnboardingShell({
       <header className="sticky top-0 z-50 bg-card border-b border-border">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="KREOON" className="h-8 object-contain" />
+            <KreoonLogo heightClass="h-8" />
             <span className="text-lg font-semibold text-foreground tracking-tight">
               KREOON
             </span>

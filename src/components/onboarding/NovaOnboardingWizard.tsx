@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { KreoonLogo } from '@/components/ui/kreoon-logo';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboardingGate } from '@/hooks/useOnboardingGate';
@@ -260,7 +261,7 @@ function NovaOnboardingSplash() {
           transition={{ duration: 2, repeat: Infinity }}
           className="mx-auto mb-6 flex justify-center"
         >
-          <img src="/logo.png" alt="KREOON" className="h-16 object-contain" />
+          <KreoonLogo heightClass="h-16" />
         </motion.div>
 
         <h2 className="text-xl font-semibold text-foreground mb-2 font-mono uppercase">

@@ -130,6 +130,7 @@ const CampaignEditWizardPage = lazyWithRetry(() => import("./pages/CampaignEditW
 const BrandCampaignsPage = lazyWithRetry(() => import("./pages/BrandCampaignsPage"));
 const CreatorCampaignsPage = lazyWithRetry(() => import("./pages/CreatorCampaignsPage"));
 const MarketplaceBrowse = lazyWithRetry(() => import("./components/marketplace/MarketplacePage"));
+const MarketplaceExplorePage = lazyWithRetry(() => import("./pages/MarketplaceExplore"));
 const OrgProfilePage_Marketplace = lazyWithRetry(() => import("./components/marketplace/org-profile/OrgProfilePage"));
 const TalentListsPage = lazyWithRetry(() => import("./pages/marketplace/TalentListsPage"));
 const TalentListDetailPage = lazyWithRetry(() => import("./pages/marketplace/TalentListDetailPage"));
@@ -341,7 +342,7 @@ function AppRoutes() {
         <Route path="/social/*" element={<Navigate to="/marketplace" replace />} />
         {/* Marketplace routes — PUBLIC browse/view, PROTECTED actions */}
         {/* Public routes wrapped with TalentGate: blocks talents without keys */}
-        <Route path="/marketplace" element={<TalentGate><MarketplaceLayout><MarketplaceBrowse /></MarketplaceLayout></TalentGate>} />
+        <Route path="/marketplace" element={<TalentGate><MainLayout><MarketplaceExplorePage /></MainLayout></TalentGate>} />
         <Route path="/marketplace/creator/:id" element={<TalentGate><CreatorProfilePage_Marketplace /></TalentGate>} />
         <Route path="/marketplace/org/:slug" element={<TalentGate><OrgProfilePage_Marketplace /></TalentGate>} />
         <Route path="/marketplace/campaigns" element={<TalentGate><MarketplaceLayout><CampaignsFeedPage /></MarketplaceLayout></TalentGate>} />
@@ -352,6 +353,7 @@ function AppRoutes() {
         <Route path="/marketplace/hire/:creatorId" element={<ProtectedRoute allowNoRoles><HiringWizardPage /></ProtectedRoute>} />
         <Route path="/marketplace/profile/setup" element={<ProtectedRoute allowNoRoles><CreatorProfileSetup /></ProtectedRoute>} />
         <Route path="/marketplace/dashboard" element={<ProtectedRoute allowNoRoles><MainLayout><MarketplaceDashboard /></MainLayout></ProtectedRoute>} />
+        <Route path="/marketplace/explore" element={<Navigate to="/marketplace" replace />} />
         <Route path="/marketplace/projects" element={<Navigate to="/board?view=marketplace" replace />} />
         <Route path="/marketplace/content" element={<Navigate to="/content?view=marketplace" replace />} />
         <Route path="/marketplace/campaigns/create" element={<ProtectedRoute allowNoRoles><MainLayout><CampaignWizardPage /></MainLayout></ProtectedRoute>} />

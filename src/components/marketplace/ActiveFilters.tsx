@@ -32,6 +32,10 @@ export const ActiveFilters = memo(function ActiveFilters({ filters, onRemoveFilt
       result.push({ key: 'country', label: c ? `${c.flag} ${c.label}` : filters.country });
     }
 
+    if (filters.city) {
+      result.push({ key: 'city', label: `📍 ${filters.city}` });
+    }
+
     filters.content_type.forEach(ct => {
       result.push({ key: 'content_type', label: ct, value: ct });
     });

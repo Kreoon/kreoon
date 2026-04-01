@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { KreoonLogo } from '@/components/ui/kreoon-logo';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -52,7 +53,7 @@ export function OnboardingWizard() {
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="KREOON" className="h-8 object-contain" />
+            <KreoonLogo heightClass="h-8" />
             <div>
               <span className="font-bold text-lg text-foreground tracking-widest uppercase font-mono">KREOON</span>
               <span className="ml-2 text-xs text-muted-foreground font-mono">Verificación</span>
@@ -166,7 +167,7 @@ function OnboardingSplash() {
           transition={{ duration: 2, repeat: Infinity }}
           className="mx-auto mb-6 flex justify-center"
         >
-          <img src="/logo.png" alt="KREOON" className="h-16 object-contain" />
+          <KreoonLogo heightClass="h-16" />
         </motion.div>
 
         <h2 className="text-xl font-semibold text-foreground mb-2 font-mono uppercase">

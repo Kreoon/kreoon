@@ -1,5 +1,20 @@
 import type { Specialization } from '@/types/database';
 
+// --- Dynamic Filter Options (from RPC) ---
+
+export interface LocationOption {
+  country_code: string;
+  country_name: string;
+  country_flag: string;
+  city: string | null;
+}
+
+export interface MarketplaceFilterOptions {
+  locations: LocationOption[];
+  content_types: string[];
+  categories: string[];
+}
+
 export interface MarketplaceCreator {
   id: string;
   user_id: string;
@@ -61,6 +76,7 @@ export interface MarketplaceFilters {
   search: string;
   category: string | null;
   country: string | null;
+  city: string | null;
   content_type: string[];
   price_min: number | null;
   price_max: number | null;
@@ -78,6 +94,8 @@ export interface MarketplaceFilters {
   accepts_exchange: boolean | null;
   // Specialization filters
   specializations: Specialization[];
+  // Organization filter
+  organization_id: string | null;
 }
 
 export interface MarketplaceSection {
@@ -322,6 +340,7 @@ export const DEFAULT_FILTERS: MarketplaceFilters = {
   search: '',
   category: null,
   country: null,
+  city: null,
   content_type: [],
   price_min: null,
   price_max: null,
@@ -339,6 +358,8 @@ export const DEFAULT_FILTERS: MarketplaceFilters = {
   accepts_exchange: null,
   // Specialization filters
   specializations: [],
+  // Organization filter
+  organization_id: null,
 };
 
 // --- Phase 5: Marketplace Specialization Roles ---

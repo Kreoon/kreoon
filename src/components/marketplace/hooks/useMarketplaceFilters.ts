@@ -32,6 +32,7 @@ export function useMarketplaceFilters() {
     let count = 0;
     if (filters.category) count++;
     if (filters.country) count++;
+    if (filters.city) count++; // Ciudad específica
     if (filters.content_type.length > 0) count++;
     if (filters.price_min != null || filters.price_max != null) count++;
     if (filters.rating_min != null) count++;

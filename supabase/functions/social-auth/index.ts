@@ -63,7 +63,7 @@ h2{font-size:18px;font-weight:600;margin-bottom:8px;color:${success ? "#e5e5e5" 
 <a class="link" href="${fallbackUrl}">Ir al Social Hub</a>
 </div>
 <script>
-try { if (window.opener) window.opener.postMessage(${payload}, "${frontendUrl}"); } catch(e) {}
+try { if (window.opener) window.opener.postMessage(${payload}, "${frontendUrl}"); } catch(e) { console.error("[social-auth] postMessage failed:", e); }
 var t = 5;
 var interval = setInterval(function() {
   t--;
@@ -71,7 +71,7 @@ var interval = setInterval(function() {
   if (el) el.textContent = t;
   if (t <= 0) {
     clearInterval(interval);
-    try { window.close(); } catch(e) {}
+    try { window.close(); } catch(e) { console.error("[social-auth] window.close failed:", e); }
     setTimeout(function() {
       var cd = document.getElementById("countdown");
       if (cd) cd.textContent = "No se pudo cerrar automaticamente.";

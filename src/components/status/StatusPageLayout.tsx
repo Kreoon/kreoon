@@ -1,4 +1,5 @@
 import * as React from "react";
+import { KreoonLogo } from '@/components/ui/kreoon-logo';
 import { motion } from "framer-motion";
 import { KreoonPageWrapper } from "@/components/ui/kreoon";
 import { cn } from "@/lib/utils";
@@ -140,11 +141,7 @@ export function StatusPageLayout({
       <header className="sticky top-0 z-10 border-b border-border bg-background">
         <div className="flex items-center justify-between px-4 py-3 lg:px-6">
           <div className="flex items-center gap-3">
-            <img
-              src="/logo.png"
-              alt="KREOON"
-              className="h-8 object-contain"
-            />
+            <KreoonLogo heightClass="h-8" />
             <span className="text-lg font-bold tracking-tight text-foreground uppercase tracking-widest font-mono">
               KREOON
             </span>

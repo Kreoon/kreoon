@@ -104,11 +104,12 @@ export function CategoryBar({
         </button>
       )}
 
-      {/* Filters button */}
+      {/* Filters button - solo visible en mobile/tablet, oculto en desktop (lg+) donde hay sidebar */}
       <button
         onClick={onOpenFilters}
         className={cn(
           'flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-sm border transition-colors text-sm font-medium',
+          'lg:hidden', // Oculto en desktop
           activeFilterCount > 0
             ? 'border-primary/50 bg-primary/10 text-primary'
             : 'border-border text-foreground/80 hover:border-border hover:text-foreground',

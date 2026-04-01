@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { X, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MarketplaceFilters, MarketplaceViewMode } from './types/marketplace';
 import { CONTENT_TYPES } from './types/marketplace';
@@ -12,6 +12,13 @@ import {
   getSpecializationColor,
   getSpecializationBgColor,
 } from '@/lib/specializations';
+import { getOptimizedImageUrl } from '@/lib/imageOptimization';
+
+export interface OrganizationOption {
+  id: string;
+  name: string;
+  logo_url: string | null;
+}
 
 interface FilterModalProps {
   open: boolean;
@@ -20,6 +27,7 @@ interface FilterModalProps {
   onApply: (filters: MarketplaceFilters) => void;
   resultCount: number;
   activeRoleCategory?: MarketplaceViewMode;
+  organizations?: OrganizationOption[];
 }
 
 // --- Roles de Talento (5 roles sin client) ---
@@ -60,11 +68,12 @@ const RATING_OPTIONS = [
   { value: 4.8, label: '4.8+' },
 ];
 
-export function FilterModal({ open, onClose, filters, onApply, resultCount, activeRoleCategory }: FilterModalProps) {
+export function FilterModal({ open, onClose, filters, onApply, resultCount, activeRoleCategory, organizations = [] }: FilterModalProps) {
   const [local, setLocal] = useState<MarketplaceFilters>(filters);
   const [expandedAdaptive, setExpandedAdaptive] = useState(true);
   const [expandedRoles, setExpandedRoles] = useState(true);
   const [expandedSpecializations, setExpandedSpecializations] = useState(true);
+  const [expandedOrganizations, setExpandedOrganizations] = useState(true);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
 
   const adaptiveFilters = activeRoleCategory ? getAdaptiveFilters(activeRoleCategory) : [];
@@ -106,6 +115,7 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
       accepts_exchange: null,
       marketplace_roles: [],
       specializations: [],
+      organization_id: null,
     }));
     setSelectedRole(null);
   }, []);
@@ -173,6 +183,61 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
               </div>
             )}
           </div>
+
+          {/* Organization/Agency filter */}
+          {organizations.length > 0 && (
+            <div className="py-6 border-b border-border">
+              <button
+                onClick={() => setExpandedOrganizations(!expandedOrganizations)}
+                className="flex items-center justify-between w-full mb-4"
+              >
+                <h4 className="text-sm font-semibold text-primary">Agencia / Organizacion</h4>
+                {expandedOrganizations ? (
+                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                )}
+              </button>
+              {expandedOrganizations && (
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => update('organization_id', null)}
+                    className={cn(
+                      'px-4 py-2 rounded-sm text-sm transition-colors border',
+                      local.organization_id === null
+                        ? 'bg-primary/20 border-primary/40 text-primary'
+                        : 'border-border text-muted-foreground hover:bg-secondary hover:text-foreground',
+                    )}
+                  >
+                    Todas
+                  </button>
+                  {organizations.map(org => (
+                    <button
+                      key={org.id}
+                      onClick={() => update('organization_id', org.id)}
+                      className={cn(
+                        'px-3 py-2 rounded-sm text-sm transition-colors border flex items-center gap-2',
+                        local.organization_id === org.id
+                          ? 'bg-primary/20 border-primary/40 text-primary'
+                          : 'border-border text-muted-foreground hover:bg-secondary hover:text-foreground',
+                      )}
+                    >
+                      {org.logo_url ? (
+                        <img
+                          src={getOptimizedImageUrl(org.logo_url, { width: 40, quality: 70 })}
+                          alt={org.name}
+                          className="w-5 h-5 rounded-full object-cover"
+                        />
+                      ) : (
+                        <Building2 className="w-4 h-4" />
+                      )}
+                      {org.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Specializations section (shows when a role is selected) */}
           {selectedRole && getSpecializationsForRoleFilter(selectedRole).length > 0 && (
