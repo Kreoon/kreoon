@@ -1,8 +1,10 @@
-import { Settings2, Wand2 } from 'lucide-react';
+import { useState, useMemo, useCallback } from 'react';
+import { Settings2, Wand2, Monitor, Tablet, Smartphone, RotateCcw } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -10,11 +12,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import {
   BLOCK_DEFINITIONS,
   type ProfileBlock,
   type BlockStyles,
+  type DeviceType,
+  resolveBlockForDevice,
+  updateDeviceOverrides,
+  hasDeviceOverrides,
 } from './types/profile-builder';
 import { getConfigLabel, OPTION_LABELS } from './config-labels';
 import { AdvancedStylesTab } from './design-controls';
@@ -24,6 +36,84 @@ interface BlockSettingsPanelProps {
   onUpdate: (updates: Partial<ProfileBlock>) => void;
   userId?: string;
   creatorProfileId?: string;
+  /** Dispositivo actual del preview (sincronizado con BuilderToolbar) */
+  previewDevice?: DeviceType;
+}
+
+// ─── Selector de dispositivo ────────────────────────────────────────────────
+
+const DEVICES: { id: DeviceType; icon: typeof Monitor; label: string }[] = [
+  { id: 'desktop', icon: Monitor, label: 'Escritorio (base)' },
+  { id: 'tablet', icon: Tablet, label: 'Tablet' },
+  { id: 'mobile', icon: Smartphone, label: 'Móvil' },
+];
+
+function DeviceSelector({
+  currentDevice,
+  onDeviceChange,
+  block,
+  onResetDevice,
+}: {
+  currentDevice: DeviceType;
+  onDeviceChange: (device: DeviceType) => void;
+  block: ProfileBlock;
+  onResetDevice: (device: DeviceType) => void;
+}) {
+  return (
+    <TooltipProvider>
+      <div className="flex items-center gap-2 p-3 border-b border-border bg-muted/30">
+        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+          Editar para:
+        </span>
+        <div className="flex items-center gap-0.5 bg-background rounded-md p-0.5 flex-1">
+          {DEVICES.map(({ id, icon: Icon, label }) => {
+            const hasOverrides = hasDeviceOverrides(block, id);
+            return (
+              <Tooltip key={id}>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => onDeviceChange(id)}
+                    className={cn(
+                      'flex-1 flex items-center justify-center gap-1 p-1.5 rounded transition-colors relative',
+                      currentDevice === id
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {hasOverrides && (
+                      <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-amber-500" />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">
+                  {label}
+                  {hasOverrides && ' (personalizado)'}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
+        {currentDevice !== 'desktop' && hasDeviceOverrides(block, currentDevice) && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={() => onResetDevice(currentDevice)}
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              Resetear a valores de escritorio
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </div>
+    </TooltipProvider>
+  );
 }
 
 // ─── Subcomponentes de campos ────────────────────────────────────────────────
@@ -458,8 +548,107 @@ function StyleFields({
 
 // ─── Componente principal ────────────────────────────────────────────────────
 
-export function BlockSettingsPanel({ block, onUpdate, userId, creatorProfileId }: BlockSettingsPanelProps) {
+export function BlockSettingsPanel({ block, onUpdate, userId, creatorProfileId, previewDevice = 'desktop' }: BlockSettingsPanelProps) {
   const definition = BLOCK_DEFINITIONS[block.type];
+  const [editingDevice, setEditingDevice] = useState<DeviceType>(previewDevice);
+
+  // Resolver config/content/styles para el dispositivo actual
+  const resolved = useMemo(
+    () => resolveBlockForDevice(block, editingDevice),
+    [block, editingDevice]
+  );
+
+  // Handler para actualizar config (respeta dispositivo)
+  const handleConfigUpdate = useCallback(
+    (configUpdates: Record<string, unknown>) => {
+      if (editingDevice === 'desktop') {
+        // Actualizar base directamente
+        onUpdate({ config: { ...block.config, ...configUpdates } });
+      } else {
+        // Actualizar override del dispositivo
+        const newOverrides = updateDeviceOverrides(block, editingDevice, {
+          config: configUpdates,
+        });
+        onUpdate({ deviceOverrides: newOverrides });
+      }
+    },
+    [block, editingDevice, onUpdate]
+  );
+
+  // Handler para actualizar content (respeta dispositivo)
+  const handleContentUpdate = useCallback(
+    (contentUpdates: Record<string, unknown>) => {
+      if (editingDevice === 'desktop') {
+        onUpdate({ content: { ...block.content, ...contentUpdates } });
+      } else {
+        const newOverrides = updateDeviceOverrides(block, editingDevice, {
+          content: contentUpdates,
+        });
+        onUpdate({ deviceOverrides: newOverrides });
+      }
+    },
+    [block, editingDevice, onUpdate]
+  );
+
+  // Handler para actualizar styles (respeta dispositivo)
+  const handleStylesUpdate = useCallback(
+    (styleUpdates: Partial<BlockStyles>) => {
+      if (editingDevice === 'desktop') {
+        onUpdate({ styles: { ...block.styles, ...styleUpdates } });
+      } else {
+        const newOverrides = updateDeviceOverrides(block, editingDevice, {
+          styles: styleUpdates,
+        });
+        onUpdate({ deviceOverrides: newOverrides });
+      }
+    },
+    [block, editingDevice, onUpdate]
+  );
+
+  // Handler para resetear dispositivo a valores base
+  const handleResetDevice = useCallback(
+    (device: DeviceType) => {
+      if (device === 'desktop') return;
+      const currentOverrides = block.deviceOverrides || {};
+      const { [device]: _, ...rest } = currentOverrides;
+      onUpdate({
+        deviceOverrides: Object.keys(rest).length > 0 ? rest : undefined,
+      });
+    },
+    [block.deviceOverrides, onUpdate]
+  );
+
+  // Crear un bloque virtual con los valores resueltos para pasar a los campos
+  const resolvedBlock: ProfileBlock = useMemo(
+    () => ({
+      ...block,
+      config: resolved.config,
+      content: resolved.content,
+      styles: resolved.styles,
+    }),
+    [block, resolved]
+  );
+
+  // Wrapper para onUpdate que maneja dispositivos
+  const deviceAwareUpdate = useCallback(
+    (updates: Partial<ProfileBlock>) => {
+      if (updates.config) {
+        handleConfigUpdate(updates.config);
+      }
+      if (updates.content) {
+        handleContentUpdate(updates.content);
+      }
+      if (updates.styles) {
+        handleStylesUpdate(updates.styles);
+      }
+      // Otras propiedades se actualizan normalmente
+      const { config: _, content: __, styles: ___, ...otherUpdates } = updates;
+      if (Object.keys(otherUpdates).length > 0) {
+        onUpdate(otherUpdates);
+      }
+    },
+    [handleConfigUpdate, handleContentUpdate, handleStylesUpdate, onUpdate]
+  );
 
   return (
     <div className="flex flex-col h-full">
@@ -471,6 +660,24 @@ export function BlockSettingsPanel({ block, onUpdate, userId, creatorProfileId }
           <p className="text-[10px] text-muted-foreground truncate">{definition.description}</p>
         </div>
       </div>
+
+      {/* Selector de dispositivo */}
+      <DeviceSelector
+        currentDevice={editingDevice}
+        onDeviceChange={setEditingDevice}
+        block={block}
+        onResetDevice={handleResetDevice}
+      />
+
+      {/* Indicador de modo */}
+      {editingDevice !== 'desktop' && (
+        <div className="px-4 py-2 bg-amber-500/10 border-b border-amber-500/20">
+          <p className="text-[10px] text-amber-600 dark:text-amber-400">
+            Editando para {editingDevice === 'tablet' ? 'Tablet' : 'Móvil'}.
+            Los valores vacíos heredan de Escritorio.
+          </p>
+        </div>
+      )}
 
       {/* Tabs */}
       <Tabs defaultValue="content" className="flex-1 flex flex-col overflow-hidden">
@@ -497,17 +704,22 @@ export function BlockSettingsPanel({ block, onUpdate, userId, creatorProfileId }
         </TabsList>
 
         <TabsContent value="content" className="flex-1 overflow-y-auto p-4 mt-0">
-          <ContentFields block={block} onUpdate={onUpdate} userId={userId} creatorProfileId={creatorProfileId} />
+          <ContentFields
+            block={resolvedBlock}
+            onUpdate={deviceAwareUpdate}
+            userId={userId}
+            creatorProfileId={creatorProfileId}
+          />
         </TabsContent>
 
         <TabsContent value="styles" className="flex-1 overflow-y-auto p-4 mt-0">
-          <StyleFields block={block} onUpdate={onUpdate} />
+          <StyleFields block={resolvedBlock} onUpdate={deviceAwareUpdate} />
         </TabsContent>
 
         <TabsContent value="advanced" className="flex-1 overflow-y-auto p-4 mt-0">
           <AdvancedStylesTab
-            styles={block.styles}
-            onStylesChange={(updates) => onUpdate({ styles: { ...block.styles, ...updates } })}
+            styles={resolved.styles}
+            onStylesChange={handleStylesUpdate}
             userId={userId}
             creatorProfileId={creatorProfileId}
           />

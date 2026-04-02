@@ -10,7 +10,7 @@ import { BlockWrapper } from './BlockWrapper';
 import { BlockRenderer } from './BlockRenderer';
 import { DropZone } from './DropZone';
 import { useCreatorPlanFeatures } from '@/hooks/useCreatorPlanFeatures';
-import type { ProfileBlock } from './types/profile-builder';
+import type { ProfileBlock, DeviceType } from './types/profile-builder';
 import { BLOCK_DEFINITIONS } from './types/profile-builder';
 
 // Anchos de canvas según device
@@ -63,6 +63,7 @@ export function BuilderCanvas({
         onUpdate={(updates) => onUpdateBlock(child.id, updates)}
         userId={userId}
         creatorProfileId={creatorProfileId}
+        currentDevice={previewDevice}
         renderChild={renderChild}
         onRemoveChild={
           child.parentId && onRemoveFromContainer
@@ -71,7 +72,7 @@ export function BuilderCanvas({
         }
       />
     ),
-    [selectedBlockId, onSelectBlock, onUpdateBlock, userId, creatorProfileId, onRemoveFromContainer]
+    [selectedBlockId, onSelectBlock, onUpdateBlock, userId, creatorProfileId, onRemoveFromContainer, previewDevice]
   );
 
   // Todos los bloques son movibles - sin restricciones
@@ -221,6 +222,7 @@ export function BuilderCanvas({
                         onUpdate={(updates) => onUpdateBlock(block.id, updates)}
                         userId={userId}
                         creatorProfileId={creatorProfileId}
+                        currentDevice={previewDevice}
                         renderChild={renderChild}
                         onAddBlockToColumn={
                           onAddBlockToContainer

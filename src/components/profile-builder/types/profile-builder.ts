@@ -120,10 +120,33 @@ export interface BlockStyles {
   paddingCustom?: { top: string; right: string; bottom: string; left: string };
   marginCustom?: { top: string; right: string; bottom: string; left: string };
 
-  // Responsive overrides
+  // Responsive overrides (solo para estilos)
   responsiveOverrides?: {
     mobile?: Partial<Omit<BlockStyles, 'responsiveOverrides'>>;
     tablet?: Partial<Omit<BlockStyles, 'responsiveOverrides'>>;
+  };
+}
+
+// =====================================================
+// Sistema Responsive por Dispositivo
+// =====================================================
+
+export type DeviceType = 'desktop' | 'tablet' | 'mobile';
+
+/**
+ * Overrides completos por dispositivo
+ * Permite personalizar config, content y styles para cada breakpoint
+ */
+export interface DeviceOverrides {
+  tablet?: {
+    config?: Record<string, unknown>;
+    content?: Record<string, unknown>;
+    styles?: Partial<BlockStyles>;
+  };
+  mobile?: {
+    config?: Record<string, unknown>;
+    content?: Record<string, unknown>;
+    styles?: Partial<BlockStyles>;
   };
 }
 
@@ -177,6 +200,8 @@ export interface ProfileBlock {
   parentId?: string;
   /** Indice de columna dentro de un contenedor columns */
   columnIndex?: number;
+  /** Overrides por dispositivo (tablet/mobile) */
+  deviceOverrides?: DeviceOverrides;
 }
 
 export interface BuilderConfig {
@@ -994,3 +1019,150 @@ export const DEFAULT_BUILDER_CONFIG: BuilderConfig = {
 
 // Constante de limite de bloques
 export const MAX_BLOCKS = 15;
+
+// =====================================================
+// Helpers para Sistema Responsive
+// =====================================================
+
+/**
+ * Resuelve la configuración efectiva de un bloque según el dispositivo
+ * Herencia: desktop (base) -> tablet -> mobile
+ */
+export function resolveBlockForDevice(
+  block: ProfileBlock,
+  device: DeviceType
+): { config: Record<string, unknown>; content: Record<string, unknown>; styles: BlockStyles } {
+  // Desktop es la base
+  if (device === 'desktop') {
+    return {
+      config: { ...block.config },
+      content: { ...block.content },
+      styles: { ...block.styles },
+    };
+  }
+
+  const overrides = block.deviceOverrides?.[device];
+
+  // Si no hay overrides para este dispositivo, heredar de desktop
+  if (!overrides) {
+    return {
+      config: { ...block.config },
+      content: { ...block.content },
+      styles: { ...block.styles },
+    };
+  }
+
+  return {
+    config: { ...block.config, ...overrides.config },
+    content: { ...block.content, ...overrides.content },
+    styles: { ...block.styles, ...overrides.styles },
+  };
+}
+
+/**
+ * Actualiza los overrides de un dispositivo específico
+ */
+export function updateDeviceOverrides(
+  block: ProfileBlock,
+  device: DeviceType,
+  updates: {
+    config?: Record<string, unknown>;
+    content?: Record<string, unknown>;
+    styles?: Partial<BlockStyles>;
+  }
+): DeviceOverrides {
+  if (device === 'desktop') {
+    // Desktop no tiene overrides, es la base
+    return block.deviceOverrides || {};
+  }
+
+  const currentOverrides = block.deviceOverrides || {};
+  const deviceOverrides = currentOverrides[device] || {};
+
+  return {
+    ...currentOverrides,
+    [device]: {
+      config: updates.config
+        ? { ...deviceOverrides.config, ...updates.config }
+        : deviceOverrides.config,
+      content: updates.content
+        ? { ...deviceOverrides.content, ...updates.content }
+        : deviceOverrides.content,
+      styles: updates.styles
+        ? { ...deviceOverrides.styles, ...updates.styles }
+        : deviceOverrides.styles,
+    },
+  };
+}
+
+/**
+ * Verifica si un bloque tiene overrides para un dispositivo
+ */
+export function hasDeviceOverrides(block: ProfileBlock, device: DeviceType): boolean {
+  if (device === 'desktop') return false;
+  const overrides = block.deviceOverrides?.[device];
+  if (!overrides) return false;
+  return !!(
+    (overrides.config && Object.keys(overrides.config).length > 0) ||
+    (overrides.content && Object.keys(overrides.content).length > 0) ||
+    (overrides.styles && Object.keys(overrides.styles).length > 0)
+  );
+}
+
+/**
+ * Limpia overrides vacíos o iguales al base
+ */
+export function cleanDeviceOverrides(
+  block: ProfileBlock,
+  device: DeviceType
+): DeviceOverrides | undefined {
+  if (device === 'desktop') return block.deviceOverrides;
+
+  const overrides = block.deviceOverrides?.[device];
+  if (!overrides) return block.deviceOverrides;
+
+  // Filtrar valores que son iguales al base
+  const cleanConfig = overrides.config
+    ? Object.fromEntries(
+        Object.entries(overrides.config).filter(
+          ([key, value]) => block.config[key] !== value
+        )
+      )
+    : undefined;
+
+  const cleanContent = overrides.content
+    ? Object.fromEntries(
+        Object.entries(overrides.content).filter(
+          ([key, value]) => block.content[key] !== value
+        )
+      )
+    : undefined;
+
+  const cleanStyles = overrides.styles
+    ? Object.fromEntries(
+        Object.entries(overrides.styles).filter(
+          ([key, value]) => (block.styles as Record<string, unknown>)[key] !== value
+        )
+      ) as Partial<BlockStyles>
+    : undefined;
+
+  const hasClean =
+    (cleanConfig && Object.keys(cleanConfig).length > 0) ||
+    (cleanContent && Object.keys(cleanContent).length > 0) ||
+    (cleanStyles && Object.keys(cleanStyles).length > 0);
+
+  if (!hasClean) {
+    // No hay overrides significativos, eliminar el dispositivo
+    const { [device]: _, ...rest } = block.deviceOverrides || {};
+    return Object.keys(rest).length > 0 ? rest : undefined;
+  }
+
+  return {
+    ...block.deviceOverrides,
+    [device]: {
+      ...(cleanConfig && Object.keys(cleanConfig).length > 0 && { config: cleanConfig }),
+      ...(cleanContent && Object.keys(cleanContent).length > 0 && { content: cleanContent }),
+      ...(cleanStyles && Object.keys(cleanStyles).length > 0 && { styles: cleanStyles }),
+    },
+  };
+}

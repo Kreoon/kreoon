@@ -546,6 +546,7 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
                       onUpdate={(updates) => handleUpdateBlock(selectedBlock.id, updates)}
                       userId={profile?.user_id}
                       creatorProfileId={profileId}
+                      previewDevice={state.previewDevice}
                     />
                   </SheetContent>
                 </Sheet>
@@ -602,6 +603,7 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
                       onUpdate={(updates) => handleUpdateBlock(selectedBlock.id, updates)}
                       userId={profile?.user_id}
                       creatorProfileId={profileId}
+                      previewDevice={state.previewDevice}
                     />
                   </ScrollArea>
                 </div>
