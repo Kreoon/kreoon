@@ -1,5 +1,12 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  optimizeImage,
+  isImageFile,
+  OPTIMIZE_PRESETS,
+  type OptimizeOptions,
+  type OptimizeResult,
+} from '@/lib/imageOptimizer';
 
 export type MediaType = 'image' | 'asset' | 'avatar' | 'portfolio' | 'chat';
 
@@ -8,18 +15,30 @@ interface UploadOptions {
   userId?: string;
   organizationId?: string;
   onProgress?: (progress: number) => void;
+  /** Desactivar optimizacion (default: false) */
+  skipOptimization?: boolean;
+  /** Opciones personalizadas de optimizacion */
+  optimizeOptions?: OptimizeOptions;
 }
 
 interface UploadResult {
   cdnUrl: string;
   path: string;
   zone: string;
+  /** Info de optimizacion (si se aplico) */
+  optimization?: {
+    originalSize: number;
+    compressedSize: number;
+    compressionRatio: number;
+  };
 }
 
 interface UploadState {
   isUploading: boolean;
   progress: number;
   error: string | null;
+  /** Estado de optimizacion */
+  optimizing: boolean;
 }
 
 /**
@@ -37,25 +56,47 @@ export function useMediaUpload() {
     isUploading: false,
     progress: 0,
     error: null,
+    optimizing: false,
   });
 
   const upload = useCallback(async (
     file: File,
     options: UploadOptions
   ): Promise<UploadResult | null> => {
-    const { type, userId, organizationId, onProgress } = options;
+    const { type, userId, organizationId, onProgress, skipOptimization = false, optimizeOptions } = options;
 
-    setState({ isUploading: true, progress: 0, error: null });
+    setState({ isUploading: true, progress: 0, error: null, optimizing: false });
+
+    let fileToUpload = file;
+    let optimizationResult: OptimizeResult | null = null;
 
     try {
+      // Step 0: Optimize image if applicable
+      if (isImageFile(file) && !skipOptimization) {
+        setState(prev => ({ ...prev, optimizing: true }));
+
+        // Seleccionar preset segun tipo
+        const preset = OPTIMIZE_PRESETS[type] || OPTIMIZE_PRESETS.general;
+        const mergedOptions = { ...preset, ...optimizeOptions };
+
+        optimizationResult = await optimizeImage(file, mergedOptions);
+        fileToUpload = optimizationResult.file;
+
+        console.log(
+          `[useMediaUpload] Optimized: ${(optimizationResult.originalSize / 1024).toFixed(0)}KB → ${(optimizationResult.compressedSize / 1024).toFixed(0)}KB (${optimizationResult.compressionRatio}% reduction)`
+        );
+
+        setState(prev => ({ ...prev, optimizing: false }));
+      }
+
       // Step 1: Get upload credentials from edge function
       const { data: credentials, error: credError } = await supabase.functions.invoke(
         'bunny-media-upload',
         {
           body: {
             type,
-            fileName: file.name,
-            contentType: file.type,
+            fileName: fileToUpload.name,
+            contentType: fileToUpload.type,
             userId,
             organizationId,
           },
@@ -96,22 +137,31 @@ export function useMediaUpload() {
 
         xhr.open('PUT', uploadUrl);
         xhr.setRequestHeader('AccessKey', accessKey);
-        xhr.setRequestHeader('Content-Type', file.type);
-        xhr.send(file);
+        xhr.setRequestHeader('Content-Type', fileToUpload.type);
+        xhr.send(fileToUpload);
       });
 
       if (!uploadResponse.ok) {
         throw new Error('Upload to Bunny CDN failed');
       }
 
-      setState({ isUploading: false, progress: 100, error: null });
+      setState({ isUploading: false, progress: 100, error: null, optimizing: false });
       onProgress?.(100);
 
-      return { cdnUrl, path, zone };
+      return {
+        cdnUrl,
+        path,
+        zone,
+        optimization: optimizationResult ? {
+          originalSize: optimizationResult.originalSize,
+          compressedSize: optimizationResult.compressedSize,
+          compressionRatio: optimizationResult.compressionRatio,
+        } : undefined,
+      };
 
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Upload failed';
-      setState({ isUploading: false, progress: 0, error: message });
+      setState({ isUploading: false, progress: 0, error: message, optimizing: false });
       console.error('useMediaUpload error:', error);
       return null;
     }
@@ -138,12 +188,13 @@ export function useMediaUpload() {
   }, [upload]);
 
   const reset = useCallback(() => {
-    setState({ isUploading: false, progress: 0, error: null });
+    setState({ isUploading: false, progress: 0, error: null, optimizing: false });
   }, []);
 
   return {
     // State
     isUploading: state.isUploading,
+    isOptimizing: state.optimizing,
     progress: state.progress,
     error: state.error,
     // Generic upload

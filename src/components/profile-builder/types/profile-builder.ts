@@ -3,39 +3,87 @@
 // =====================================================
 
 export type BlockType =
-  // Obligatorios
-  | 'hero_banner'
+  // Obligatorios (fijos)
+  | 'hero_banner'           // Fijo arriba - todos los planes
+  | 'recommended_talent'    // Fijo abajo - FREE obligatorio, pagos pueden eliminar
   // Core (ocultables, no eliminables)
   | 'about'
   | 'portfolio'
   | 'services'
   | 'stats'
   | 'reviews'
+  | 'verified_reviews'     // Reseñas verificadas de clientes reales
   | 'pricing'
-  | 'contact'
-  // Opcionales
+  // Premium Only
+  | 'contact'               // Solo Premium
+  | 'social_links'          // Solo Premium
+  // Opcionales (contenido basico)
   | 'text_block'
   | 'video_embed'
   | 'image_gallery'
-  | 'social_links'
   | 'faq'
   | 'testimonials'
   | 'brands'
   | 'skills'
   | 'timeline'
   | 'divider'
-  | 'spacer';
+  | 'spacer'
+  // === NUEVOS BLOQUES AVANZADOS v3 ===
+  // Layout avanzado
+  | 'section'               // Contenedor con fondo personalizable
+  | 'columns'               // Grid de 2-6 columnas responsivas
+  | 'container'             // Wrapper con ancho maximo
+  | 'tabs'                  // Contenido en pestanas
+  | 'accordion_group'       // Grupo de acordeones
+  // Contenido avanzado
+  | 'headline'              // Titulo con animacion y gradiente
+  | 'button'                // CTA personalizable
+  | 'icon_list'             // Lista con iconos
+  | 'countdown'             // Contador regresivo
+  | 'embed'                 // HTML/iframe embed
+  // Conversion (landing page)
+  | 'cta_banner'            // Banner de llamada a accion
+  | 'lead_form'             // Formulario de captura
+  | 'whatsapp_button'       // Boton flotante WhatsApp
+  | 'social_proof'          // Logos + testimonios rapidos
+  | 'case_study'            // Casos de exito con metricas (vertical)
+  // Media avanzado
+  | 'video_hero'            // Video de fondo con overlay
+  | 'before_after'          // Comparador deslizable
+  | 'lightbox_gallery'      // Galeria con zoom
+  | 'carousel';
 
-export type BlockCategory = 'required' | 'core' | 'content' | 'media' | 'layout';
+export type BlockCategory = 'required' | 'core' | 'content' | 'media' | 'layout' | 'conversion';
 
 export interface BlockStyles {
+  // Layout basico
   backgroundColor?: string;
   textColor?: string;
   padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
   margin?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
   borderRadius?: 'none' | 'sm' | 'md' | 'lg' | 'full';
-  shadow?: 'none' | 'sm' | 'md' | 'lg';
-  width?: 'full' | 'wide' | 'normal' | 'narrow';
+  shadow?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  width?: 'full' | 'wide' | 'normal' | 'narrow' | 'custom';
+  customWidth?: string;
+  maxWidth?: string;
+  // Fondos avanzados (v3)
+  backgroundGradient?: string;
+  backgroundImage?: string;
+  backgroundOverlay?: string;
+  backgroundPosition?: 'center' | 'top' | 'bottom';
+  backgroundSize?: 'cover' | 'contain' | 'auto';
+  // Texto avanzado
+  textAlign?: 'left' | 'center' | 'right';
+  // Bordes
+  borderWidth?: string;
+  borderColor?: string;
+  // Animaciones (v3)
+  animation?: 'none' | 'fade-in' | 'slide-up' | 'slide-down' | 'scale-in' | 'bounce';
+  animationDelay?: number;
+  // Responsivo
+  hideOnMobile?: boolean;
+  hideOnDesktop?: boolean;
+  mobileOrder?: number;
 }
 
 export interface BlockDefinition {
@@ -49,6 +97,11 @@ export interface BlockDefinition {
   maxInstances: number; // 0 = ilimitadas
   defaultConfig: Record<string, unknown>;
   defaultStyles: BlockStyles;
+  // Nuevas propiedades v2
+  isFixed?: boolean;              // No se puede mover de posición
+  fixedPosition?: 'top' | 'bottom'; // Posición fija (si isFixed=true)
+  requiresPlan?: 'creator_pro' | 'creator_premium'; // Plan mínimo requerido
+  freeCanDelete?: boolean;        // Si FREE puede eliminar (default: true si isDeletable)
 }
 
 export interface ProfileBlock {
@@ -79,7 +132,7 @@ export interface ProfileBuilderData {
     display_name: string;
     bio: string | null;
     avatar_url: string | null;
-    cover_url: string | null;
+    banner_url: string | null;
     builder_config: BuilderConfig;
     builder_template: string | null;
     builder_has_draft: boolean;
@@ -131,6 +184,9 @@ export interface BlockProps {
   isSelected: boolean;
   onSelect: () => void;
   onUpdate: (updates: Partial<ProfileBlock>) => void;
+  // Para MediaLibraryPicker
+  userId?: string;
+  creatorProfileId?: string;
 }
 
 export interface BlockWrapperProps {
@@ -168,6 +224,35 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
       padding: 'lg',
       margin: 'none',
     },
+    // v2: Fijo arriba, no movible
+    isFixed: true,
+    fixedPosition: 'top',
+  },
+  recommended_talent: {
+    type: 'recommended_talent',
+    label: 'Talento Similar',
+    icon: 'Users',
+    description: 'Muestra creadores similares - ayuda al descubrimiento',
+    category: 'required',
+    isRequired: true,
+    isDeletable: true, // Técnicamente eliminable...
+    maxInstances: 1,
+    defaultConfig: {
+      maxItems: 4,
+      layout: 'horizontal',
+      showRating: true,
+      showCategory: true,
+    },
+    defaultStyles: {
+      padding: 'lg',
+      margin: 'lg',
+      backgroundColor: 'rgba(139, 92, 246, 0.05)',
+      borderRadius: 'lg',
+    },
+    // v2: Fijo abajo, FREE no puede eliminar
+    isFixed: true,
+    fixedPosition: 'bottom',
+    freeCanDelete: false, // Solo planes pagos pueden eliminar
   },
   about: {
     type: 'about',
@@ -293,6 +378,8 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
       padding: 'lg',
       margin: 'md',
     },
+    // v2: Solo Premium puede usar contacto directo
+    requiresPlan: 'creator_premium',
   },
   text_block: {
     type: 'text_block',
@@ -350,7 +437,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     type: 'social_links',
     label: 'Redes Sociales',
     icon: 'Share2',
-    description: 'Links a redes sociales',
+    description: 'Links a redes sociales clickeables',
     category: 'content',
     isRequired: false,
     isDeletable: true,
@@ -363,6 +450,8 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
       padding: 'sm',
       margin: 'sm',
     },
+    // v2: Solo Premium puede mostrar links clickeables
+    requiresPlan: 'creator_premium',
   },
   faq: {
     type: 'faq',
@@ -479,6 +568,510 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
       height: 'md',
     },
     defaultStyles: {},
+  },
+
+  // =====================================================
+  // BLOQUES AVANZADOS v3 - Layout
+  // =====================================================
+
+  section: {
+    type: 'section',
+    label: 'Seccion',
+    icon: 'LayoutTemplate',
+    description: 'Contenedor con fondo personalizable (imagen, video, gradiente)',
+    category: 'layout',
+    isRequired: false,
+    isDeletable: true,
+    maxInstances: 0,
+    defaultConfig: {
+      backgroundType: 'color', // color | gradient | image | video
+      fullWidth: true,
+      minHeight: 'auto',
+    },
+    defaultStyles: {
+      padding: 'lg',
+      margin: 'none',
+    },
+    requiresPlan: 'creator_pro',
+  },
+
+  columns: {
+    type: 'columns',
+    label: 'Columnas',
+    icon: 'Columns3',
+    description: 'Grid de 2-6 columnas responsivas',
+    category: 'layout',
+    isRequired: false,
+    isDeletable: true,
+    maxInstances: 0,
+    defaultConfig: {
+      columns: 2,
+      gap: 'md',
+      mobileStack: true,
+      equalHeight: true,
+    },
+    defaultStyles: {
+      padding: 'md',
+      margin: 'md',
+    },
+    requiresPlan: 'creator_pro',
+  },
+
+  container: {
+    type: 'container',
+    label: 'Contenedor',
+    icon: 'BoxSelect',
+    description: 'Wrapper con ancho maximo centrado',
+    category: 'layout',
+    isRequired: false,
+    isDeletable: true,
+    maxInstances: 0,
+    defaultConfig: {
+      maxWidth: '1200px',
+      centered: true,
+    },
+    defaultStyles: {
+      padding: 'md',
+      margin: 'none',
+    },
+  },
+
+  tabs: {
+    type: 'tabs',
+    label: 'Pestanas',
+    icon: 'PanelTop',
+    description: 'Contenido organizado en pestanas clickeables',
+    category: 'layout',
+    isRequired: false,
+    isDeletable: true,
+    maxInstances: 0,
+    defaultConfig: {
+      tabs: [
+        { id: '1', label: 'Tab 1', content: '' },
+        { id: '2', label: 'Tab 2', content: '' },
+      ],
+      defaultTab: '1',
+      variant: 'underline', // underline | pills | boxed
+    },
+    defaultStyles: {
+      padding: 'md',
+      margin: 'md',
+    },
+    requiresPlan: 'creator_pro',
+  },
+
+  accordion_group: {
+    type: 'accordion_group',
+    label: 'Acordeon',
+    icon: 'ChevronDown',
+    description: 'Grupo de secciones colapsables',
+    category: 'layout',
+    isRequired: false,
+    isDeletable: true,
+    maxInstances: 0,
+    defaultConfig: {
+      items: [
+        { id: '1', title: 'Pregunta 1', content: 'Respuesta 1' },
+        { id: '2', title: 'Pregunta 2', content: 'Respuesta 2' },
+      ],
+      allowMultiple: false,
+      defaultOpen: null,
+    },
+    defaultStyles: {
+      padding: 'md',
+      margin: 'md',
+    },
+  },
+
+  // =====================================================
+  // BLOQUES AVANZADOS v3 - Contenido
+  // =====================================================
+
+  headline: {
+    type: 'headline',
+    label: 'Titulo Grande',
+    icon: 'Heading1',
+    description: 'Titulo destacado con animacion y gradiente opcional',
+    category: 'content',
+    isRequired: false,
+    isDeletable: true,
+    maxInstances: 0,
+    defaultConfig: {
+      text: 'Tu titulo aqui',
+      size: 'xl', // sm | md | lg | xl | 2xl
+      tag: 'h2', // h1 | h2 | h3
+      gradient: false,
+      gradientColors: ['#8B5CF6', '#EC4899'],
+    },
+    defaultStyles: {
+      padding: 'md',
+      margin: 'sm',
+      textAlign: 'center',
+      animation: 'fade-in',
+    },
+  },
+
+  button: {
+    type: 'button',
+    label: 'Boton CTA',
+    icon: 'MousePointerClick',
+    description: 'Boton de accion personalizable con icono',
+    category: 'content',
+    isRequired: false,
+    isDeletable: true,
+    maxInstances: 0,
+    defaultConfig: {
+      text: 'Click aqui',
+      url: '#',
+      target: '_self', // _self | _blank
+      variant: 'primary', // primary | secondary | outline | ghost
+      size: 'md', // sm | md | lg
+      icon: null, // nombre de icono Lucide
+      iconPosition: 'left', // left | right
+      fullWidth: false,
+    },
+    defaultStyles: {
+      padding: 'sm',
+      margin: 'sm',
+      textAlign: 'center',
+    },
+  },
+
+  icon_list: {
+    type: 'icon_list',
+    label: 'Lista con Iconos',
+    icon: 'ListChecks',
+    description: 'Lista de items con iconos personalizables',
+    category: 'content',
+    isRequired: false,
+    isDeletable: true,
+    maxInstances: 0,
+    defaultConfig: {
+      items: [
+        { id: '1', icon: 'Check', text: 'Beneficio 1' },
+        { id: '2', icon: 'Check', text: 'Beneficio 2' },
+        { id: '3', icon: 'Check', text: 'Beneficio 3' },
+      ],
+      iconColor: '#8B5CF6',
+      layout: 'vertical', // vertical | horizontal | grid
+      columns: 1,
+    },
+    defaultStyles: {
+      padding: 'md',
+      margin: 'md',
+    },
+  },
+
+  countdown: {
+    type: 'countdown',
+    label: 'Contador',
+    icon: 'Timer',
+    description: 'Contador regresivo para urgencia',
+    category: 'content',
+    isRequired: false,
+    isDeletable: true,
+    maxInstances: 1,
+    defaultConfig: {
+      targetDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      showDays: true,
+      showHours: true,
+      showMinutes: true,
+      showSeconds: true,
+      completedText: 'Oferta terminada',
+      style: 'cards', // cards | inline | minimal
+    },
+    defaultStyles: {
+      padding: 'md',
+      margin: 'md',
+      textAlign: 'center',
+    },
+    requiresPlan: 'creator_pro',
+  },
+
+  embed: {
+    type: 'embed',
+    label: 'Embed',
+    icon: 'Code',
+    description: 'Codigo HTML o iframe embebido',
+    category: 'content',
+    isRequired: false,
+    isDeletable: true,
+    maxInstances: 0,
+    defaultConfig: {
+      code: '',
+      aspectRatio: '16:9', // 16:9 | 4:3 | 1:1 | auto
+      maxWidth: '100%',
+    },
+    defaultStyles: {
+      padding: 'md',
+      margin: 'md',
+      borderRadius: 'md',
+    },
+    requiresPlan: 'creator_premium',
+  },
+
+  // =====================================================
+  // BLOQUES AVANZADOS v3 - Conversion
+  // =====================================================
+
+  cta_banner: {
+    type: 'cta_banner',
+    label: 'Banner CTA',
+    icon: 'Megaphone',
+    description: 'Banner de llamada a accion con gradiente',
+    category: 'conversion',
+    isRequired: false,
+    isDeletable: true,
+    maxInstances: 0,
+    defaultConfig: {
+      headline: 'Listo para comenzar?',
+      subtext: 'Contactame hoy y hagamos realidad tu proyecto',
+      buttonText: 'Contactar ahora',
+      buttonUrl: '#contact',
+      showSecondaryButton: false,
+      secondaryButtonText: 'Ver portfolio',
+      secondaryButtonUrl: '#portfolio',
+    },
+    defaultStyles: {
+      padding: 'xl',
+      margin: 'lg',
+      borderRadius: 'lg',
+      backgroundGradient: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
+      textAlign: 'center',
+    },
+    requiresPlan: 'creator_pro',
+  },
+
+  lead_form: {
+    type: 'lead_form',
+    label: 'Formulario',
+    icon: 'ClipboardList',
+    description: 'Formulario de captura de leads',
+    category: 'conversion',
+    isRequired: false,
+    isDeletable: true,
+    maxInstances: 1,
+    defaultConfig: {
+      fields: [
+        { id: '1', type: 'text', label: 'Nombre', required: true },
+        { id: '2', type: 'email', label: 'Email', required: true },
+        { id: '3', type: 'textarea', label: 'Mensaje', required: false },
+      ],
+      submitText: 'Enviar mensaje',
+      successMessage: 'Gracias! Te contactare pronto.',
+      redirectUrl: null,
+      webhookUrl: null, // Para n8n/Zapier
+    },
+    defaultStyles: {
+      padding: 'lg',
+      margin: 'md',
+      borderRadius: 'md',
+      backgroundColor: 'rgba(255,255,255,0.05)',
+    },
+    requiresPlan: 'creator_premium',
+  },
+
+  whatsapp_button: {
+    type: 'whatsapp_button',
+    label: 'WhatsApp',
+    icon: 'MessageCircle',
+    description: 'Boton flotante de WhatsApp',
+    category: 'conversion',
+    isRequired: false,
+    isDeletable: true,
+    maxInstances: 1,
+    defaultConfig: {
+      phone: '',
+      message: 'Hola! Vi tu perfil en Kreoon y me gustaria contactarte',
+      position: 'bottom-right', // bottom-right | bottom-left
+      showOnMobile: true,
+      showOnDesktop: true,
+      pulseAnimation: true,
+    },
+    defaultStyles: {},
+    requiresPlan: 'creator_premium',
+  },
+
+  social_proof: {
+    type: 'social_proof',
+    label: 'Social Proof',
+    icon: 'Trophy',
+    description: 'Logos de marcas + mini testimonios',
+    category: 'conversion',
+    isRequired: false,
+    isDeletable: true,
+    maxInstances: 1,
+    defaultConfig: {
+      headline: 'Confian en mi',
+      logos: [],
+      showTestimonials: true,
+      testimonials: [
+        { id: '1', text: 'Excelente trabajo', author: 'Cliente 1' },
+      ],
+      layout: 'horizontal', // horizontal | grid
+      grayscale: true,
+    },
+    defaultStyles: {
+      padding: 'lg',
+      margin: 'md',
+      textAlign: 'center',
+    },
+    requiresPlan: 'creator_pro',
+  },
+
+  case_study: {
+    type: 'case_study',
+    label: 'Casos de Exito',
+    icon: 'Trophy',
+    description: 'Muestra resultados con metricas y testimonios',
+    category: 'conversion',
+    isRequired: false,
+    isDeletable: true,
+    maxInstances: 1,
+    defaultConfig: {
+      layout: 'carousel', // carousel | grid
+      showMetrics: true,
+      showTestimonials: true,
+      autoplay: false,
+      autoplayInterval: 5000,
+    },
+    defaultStyles: {
+      padding: 'lg',
+      margin: 'md',
+    },
+    requiresPlan: 'creator_pro',
+  },
+
+  verified_reviews: {
+    type: 'verified_reviews',
+    label: 'Reseñas Verificadas',
+    icon: 'BadgeCheck',
+    description: 'Reseñas reales de clientes verificados',
+    category: 'conversion',
+    isRequired: false,
+    isDeletable: true,
+    maxInstances: 1,
+    defaultConfig: {
+      layout: 'grid', // grid | carousel | featured
+      maxItems: 6,
+      showStats: true,
+      showCompany: true,
+      showDate: true,
+    },
+    defaultStyles: {
+      padding: 'md',
+      margin: 'md',
+    },
+    requiresPlan: 'creator_pro',
+  },
+
+  // =====================================================
+  // BLOQUES AVANZADOS v3 - Media
+  // =====================================================
+
+  video_hero: {
+    type: 'video_hero',
+    label: 'Video Hero',
+    icon: 'Film',
+    description: 'Video de fondo con overlay y contenido encima',
+    category: 'media',
+    isRequired: false,
+    isDeletable: true,
+    maxInstances: 1,
+    defaultConfig: {
+      videoUrl: '',
+      posterUrl: '',
+      autoplay: true,
+      loop: true,
+      muted: true,
+      overlay: true,
+      overlayColor: 'rgba(0,0,0,0.5)',
+      headline: '',
+      subtext: '',
+      ctaText: '',
+      ctaUrl: '',
+    },
+    defaultStyles: {
+      padding: 'xl',
+      margin: 'none',
+      textAlign: 'center',
+    },
+    requiresPlan: 'creator_premium',
+  },
+
+  before_after: {
+    type: 'before_after',
+    label: 'Antes/Despues',
+    icon: 'ArrowLeftRight',
+    description: 'Comparador deslizable de imagenes',
+    category: 'media',
+    isRequired: false,
+    isDeletable: true,
+    maxInstances: 0,
+    defaultConfig: {
+      beforeImage: '',
+      afterImage: '',
+      beforeLabel: 'Antes',
+      afterLabel: 'Despues',
+      orientation: 'horizontal', // horizontal | vertical
+      initialPosition: 50,
+    },
+    defaultStyles: {
+      padding: 'md',
+      margin: 'md',
+      borderRadius: 'md',
+    },
+    requiresPlan: 'creator_pro',
+  },
+
+  lightbox_gallery: {
+    type: 'lightbox_gallery',
+    label: 'Galeria Lightbox',
+    icon: 'Expand',
+    description: 'Galeria de imagenes con zoom y navegacion',
+    category: 'media',
+    isRequired: false,
+    isDeletable: true,
+    maxInstances: 0,
+    defaultConfig: {
+      images: [],
+      columns: 3,
+      gap: 'md',
+      aspectRatio: '1:1', // 1:1 | 4:3 | 16:9 | auto
+      showCaptions: true,
+      enableZoom: true,
+    },
+    defaultStyles: {
+      padding: 'md',
+      margin: 'md',
+    },
+    requiresPlan: 'creator_pro',
+  },
+
+  carousel: {
+    type: 'carousel',
+    label: 'Carrusel',
+    icon: 'GalleryHorizontal',
+    description: 'Carrusel multiproposito con autoplay',
+    category: 'media',
+    isRequired: false,
+    isDeletable: true,
+    maxInstances: 0,
+    defaultConfig: {
+      items: [],
+      autoplay: true,
+      autoplayInterval: 5000,
+      showDots: true,
+      showArrows: true,
+      loop: true,
+      slidesPerView: 1,
+      gap: 'md',
+    },
+    defaultStyles: {
+      padding: 'md',
+      margin: 'md',
+    },
+    requiresPlan: 'creator_pro',
   },
 };
 

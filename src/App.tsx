@@ -177,6 +177,7 @@ const OnboardingProfile = lazyWithRetry(() => import("./pages/OnboardingProfile"
 const SubscriptionSuccess = lazyWithRetry(() => import("./pages/subscription/SubscriptionSuccess"));
 const SubscriptionCancel = lazyWithRetry(() => import("./pages/subscription/SubscriptionCancel"));
 const PlanesPage = lazyWithRetry(() => import("./pages/PlanesPage"));
+const CreatorPricingPage = lazyWithRetry(() => import("./pages/CreatorPricingPage"));
 const FreelancerDashboard = lazyWithRetry(() => import("./pages/FreelancerDashboard"));
 const PartnerCommunityLanding = lazyWithRetry(() => import("./pages/PartnerCommunityLanding"));
 
@@ -220,6 +221,12 @@ const RescheduleBookingPage = lazy(() => import("./modules/booking/pages/Resched
 
 // Ambassador Module
 const AmbassadorPage = lazyWithRetry(() => import("./pages/AmbassadorPage"));
+
+// Profile Builder
+const ProfileBuilderPage = lazyWithRetry(() => import("./pages/ProfileBuilderPage"));
+const ProfilePreviewPage = lazyWithRetry(() => import("./pages/ProfilePreviewPage"));
+const PublicCreatorPage = lazyWithRetry(() => import("./pages/PublicCreatorPage"));
+const PublicReviewPage = lazyWithRetry(() => import("./pages/PublicReviewPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -328,6 +335,8 @@ function AppRoutes() {
     <Suspense fallback={<PageLoader />}>
       <Routes key={impersonationKey}>
         {/* Campaign optimization: public pages */}
+        {/* Pricing pages (public) */}
+        <Route path="/pricing/creators" element={<CreatorPricingPage />} />
         <Route path="/calculadora-ugc" element={<UGCPriceCalculator />} />
         <Route path="/casos-de-exito" element={<CaseStudies />} />
         <Route path="/casos-de-exito/:slug" element={<CaseStudyDetail />} />
@@ -369,6 +378,8 @@ function AppRoutes() {
         <Route path="/company/:username" element={<CompanyProfilePage />} />
         <Route path="/profile/:userId" element={<PublicProfilePage />} />
         <Route path="/profile" element={<ProfileRedirect />} />
+        <Route path="/p/:username" element={<PublicCreatorPage />} />
+        <Route path="/review/:token" element={<PublicReviewPage />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/no-company" element={<NoCompany />} />
         <Route path="/no-organization" element={<NoOrganization />} />
@@ -475,6 +486,9 @@ function AppRoutes() {
         <Route path="/ranking" element={<RootOnlyRoute><ProtectedRoute allowedRoles={['admin', 'creator', 'editor']}><MainLayout><Ranking /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
         <Route path="/ambassador" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><AmbassadorPage /></MainLayout></ProtectedRoute>} />
         <Route path="/research/:productId" element={<ProtectedRoute allowNoRoles><ResearchLanding /></ProtectedRoute>} />
+        {/* Profile Builder */}
+        <Route path="/profile-builder" element={<ProtectedRoute allowNoRoles><ProfileBuilderPage /></ProtectedRoute>} />
+        <Route path="/preview/:token" element={<ProfilePreviewPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>

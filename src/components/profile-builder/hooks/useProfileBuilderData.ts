@@ -27,10 +27,8 @@ interface GeneratePreviewTokenParams {
   profileId: string;
 }
 
-interface GeneratePreviewTokenResult {
-  token: string;
-  expiresAt: string;
-}
+// El RPC devuelve solo el token como string
+type GeneratePreviewTokenResult = string;
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
@@ -55,7 +53,6 @@ export function useProfileBuilderData(profileId: string | undefined) {
       );
 
       if (rpcError) {
-        console.error('[useProfileBuilderData] Error al cargar datos:', rpcError);
         throw rpcError;
       }
 
@@ -76,7 +73,6 @@ export function useProfileBuilderData(profileId: string | undefined) {
       });
 
       if (rpcError) {
-        console.error('[useProfileBuilderData] Error al guardar bloques:', rpcError);
         throw rpcError;
       }
     },
@@ -103,7 +99,6 @@ export function useProfileBuilderData(profileId: string | undefined) {
       });
 
       if (rpcError) {
-        console.error('[useProfileBuilderData] Error al publicar:', rpcError);
         throw rpcError;
       }
     },
@@ -137,7 +132,6 @@ export function useProfileBuilderData(profileId: string | undefined) {
       );
 
       if (rpcError) {
-        console.error('[useProfileBuilderData] Error al generar token:', rpcError);
         throw rpcError;
       }
 
@@ -174,6 +168,15 @@ export function useProfileBuilderData(profileId: string | undefined) {
     generatePreviewTokenMutation.mutate({ profileId });
   };
 
+  const generatePreviewTokenAsync = async (): Promise<GeneratePreviewTokenResult | null> => {
+    if (!profileId) return null;
+    try {
+      return await generatePreviewTokenMutation.mutateAsync({ profileId });
+    } catch {
+      return null;
+    }
+  };
+
   return {
     // Datos
     data,
@@ -193,6 +196,7 @@ export function useProfileBuilderData(profileId: string | undefined) {
     saveBlocksAsync,
     publishBlocks,
     generatePreviewToken,
+    generatePreviewTokenAsync,
     refetch,
   };
 }

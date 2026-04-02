@@ -61,6 +61,18 @@ export function BlockWrapper({
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
+        // No interceptar teclas si el foco está en un elemento editable
+        const target = e.target as HTMLElement;
+        const isEditable =
+          target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable ||
+          target.closest('[contenteditable="true"]') ||
+          target.closest('.ProseMirror') ||
+          target.closest('[role="dialog"]');
+
+        if (isEditable) return;
+
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           onSelect();

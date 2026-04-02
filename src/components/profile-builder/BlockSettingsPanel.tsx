@@ -9,6 +9,7 @@ import {
   type ProfileBlock,
   type BlockStyles,
 } from './types/profile-builder';
+import { getConfigLabel } from './config-labels';
 
 interface BlockSettingsPanelProps {
   block: ProfileBlock;
@@ -59,8 +60,8 @@ function ContentFields({
         if (typeof defaultValue === 'boolean') {
           return (
             <div key={key} className="flex items-center justify-between">
-              <Label htmlFor={`config-${key}`} className="text-xs capitalize">
-                {key.replace(/([A-Z])/g, ' $1').trim()}
+              <Label htmlFor={`config-${key}`} className="text-xs">
+                {getConfigLabel(key)}
               </Label>
               <Switch
                 id={`config-${key}`}
@@ -73,7 +74,7 @@ function ContentFields({
 
         if (typeof defaultValue === 'number') {
           return (
-            <FieldRow key={key} label={key.replace(/([A-Z])/g, ' $1').trim()}>
+            <FieldRow key={key} label={getConfigLabel(key)}>
               <Input
                 type="number"
                 value={String(currentValue)}
@@ -86,7 +87,7 @@ function ContentFields({
 
         // string: texto libre o selector si es enum conocido
         return (
-          <FieldRow key={key} label={key.replace(/([A-Z])/g, ' $1').trim()}>
+          <FieldRow key={key} label={getConfigLabel(key)}>
             <Input
               value={String(currentValue)}
               onChange={(e) => handleConfigChange(key, e.target.value)}

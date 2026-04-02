@@ -3,7 +3,7 @@ import {
   User, Bell, Shield, HelpCircle, Building2, History,
   Landmark, Users, Share2, CreditCard, Settings2, ShieldCheck,
   Bot, UserCog, ChevronRight, LockKeyhole, BarChart3, Brain, Store, Paintbrush,
-  MessageSquareCode
+  MessageSquareCode, Palette, ExternalLink
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SettingsPermissions, SettingsSectionKey } from '@/hooks/useSettingsPermissions';
@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useNavigate } from 'react-router-dom';
 
 interface SectionItem {
   key: SettingsSectionKey;
@@ -90,6 +91,7 @@ export const SettingsSidebar = memo(({
   permissions,
   variant = 'nav' 
 }: SettingsSidebarProps) => {
+  const navigate = useNavigate();
   // Filter groups based on permissions
   const visibleGroups = useMemo(() => {
     return ALL_SECTIONS.map(group => ({

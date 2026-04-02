@@ -566,3 +566,24 @@ verify_jwt = false
 # Influencer verification service
 # JWT verified internally
 verify_jwt = false
+
+# ── Profile AI Premium (Creator Premium Features) ──
+
+[functions.profile-ai-bio]
+# Genera bio optimizada para conversiones - requiere Creator Premium
+# JWT verificado en gateway y también internamente
+verify_jwt = true
+
+[functions.profile-ai-seo]
+# Análisis SEO del perfil con sugerencias accionables - requiere Creator Premium
+verify_jwt = true
+
+[functions.profile-ai-suggestions]
+# Sugiere bloques de perfil basado en objetivo del creador - requiere Creator Premium
+verify_jwt = true
+
+# ── Reviews System ──
+
+[functions.send-review-request]
+# Envia solicitud de resena a cliente por email/WhatsApp
+verify_jwt = true

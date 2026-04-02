@@ -1,21 +1,30 @@
-import { LayoutGrid, Palette } from 'lucide-react';
+import { LayoutGrid, Palette, AlertTriangle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { BlockPalette } from './BlockPalette';
 import { StylesPanel } from './StylesPanel';
+import { useCreatorPlanFeatures } from '@/hooks/useCreatorPlanFeatures';
+import { cn } from '@/lib/utils';
 import type { BuilderConfig, ProfileBlock } from './types/profile-builder';
 
 interface BuilderSidebarProps {
   blocks: ProfileBlock[];
   builderConfig: BuilderConfig;
   onConfigChange: (updates: Partial<BuilderConfig>) => void;
+  onUpgradeClick?: () => void;
 }
 
 export function BuilderSidebar({
   blocks,
   builderConfig,
   onConfigChange,
+  onUpgradeClick,
 }: BuilderSidebarProps) {
+  const { maxBlocks } = useCreatorPlanFeatures();
+  const blocksRemaining = maxBlocks - blocks.length;
+  const isNearLimit = blocksRemaining <= 2 && blocksRemaining > 0;
+  const isAtLimit = blocksRemaining <= 0;
+
   return (
     <aside
       className="w-64 border-r border-border bg-background flex flex-col flex-shrink-0 overflow-hidden"
@@ -41,7 +50,27 @@ export function BuilderSidebar({
 
         <TabsContent value="blocks" className="flex-1 overflow-hidden mt-0">
           <ScrollArea className="h-full">
-            <BlockPalette existingBlocks={blocks} />
+            {/* Contador de bloques */}
+            <div
+              className={cn(
+                'mx-3 mt-3 mb-2 px-3 py-2 rounded-md text-xs flex items-center gap-2',
+                isAtLimit && 'bg-red-500/10 text-red-400',
+                isNearLimit && !isAtLimit && 'bg-amber-500/10 text-amber-400',
+                !isNearLimit && !isAtLimit && 'bg-muted/50 text-muted-foreground'
+              )}
+            >
+              {(isAtLimit || isNearLimit) && (
+                <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+              )}
+              <span>
+                {isAtLimit
+                  ? 'Limite alcanzado'
+                  : isNearLimit
+                    ? `Solo ${blocksRemaining} bloque${blocksRemaining > 1 ? 's' : ''} restante${blocksRemaining > 1 ? 's' : ''}`
+                    : `${blocks.length}/${maxBlocks} bloques usados`}
+              </span>
+            </div>
+            <BlockPalette existingBlocks={blocks} onUpgradeClick={onUpgradeClick} />
           </ScrollArea>
         </TabsContent>
 

@@ -135,7 +135,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 7. Función para obtener datos del builder
-CREATE OR REPLACE FUNCTION get_profile_builder_data(profile_uuid uuid)
+CREATE OR REPLACE FUNCTION get_profile_builder_data(profile_id uuid)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -151,13 +151,13 @@ BEGIN
         'display_name', cp.display_name,
         'bio', cp.bio,
         'avatar_url', cp.avatar_url,
-        'cover_url', cp.cover_url,
+        'banner_url', cp.banner_url,
         'builder_config', COALESCE(cp.builder_config, '{}'::jsonb),
         'builder_template', cp.builder_template,
         'builder_has_draft', COALESCE(cp.builder_has_draft, false)
       )
       FROM creator_profiles cp
-      WHERE cp.id = profile_uuid
+      WHERE cp.id = profile_id
     ),
     'blocks', COALESCE(
       (SELECT jsonb_agg(
@@ -173,7 +173,7 @@ BEGIN
         ) ORDER BY b.order_index
       )
       FROM profile_builder_blocks b
-      WHERE b.profile_id = profile_uuid),
+      WHERE b.profile_id = get_profile_builder_data.profile_id),
       '[]'::jsonb
     )
   ) INTO result;
@@ -184,9 +184,9 @@ $$;
 
 -- 8. Función para guardar bloques (batch)
 CREATE OR REPLACE FUNCTION save_profile_blocks(
-  profile_uuid uuid,
-  blocks_data jsonb,
-  save_as_draft boolean DEFAULT false
+  profile_id uuid,
+  blocks jsonb,
+  is_draft boolean DEFAULT false
 )
 RETURNS boolean
 LANGUAGE plpgsql
@@ -196,23 +196,23 @@ BEGIN
   -- Verificar que el usuario es dueño del perfil
   IF NOT EXISTS (
     SELECT 1 FROM creator_profiles
-    WHERE id = profile_uuid AND user_id = auth.uid()
+    WHERE id = save_profile_blocks.profile_id AND user_id = auth.uid()
   ) THEN
     RAISE EXCEPTION 'No autorizado';
   END IF;
 
   -- Validar límite de 15 bloques
-  IF jsonb_array_length(blocks_data) > 15 THEN
+  IF jsonb_array_length(blocks) > 15 THEN
     RAISE EXCEPTION 'Máximo 15 bloques permitidos';
   END IF;
 
   -- Eliminar bloques existentes (del tipo correspondiente: draft o published)
-  IF save_as_draft THEN
+  IF is_draft THEN
     DELETE FROM profile_builder_blocks
-    WHERE profile_id = profile_uuid AND is_draft = true;
+    WHERE profile_builder_blocks.profile_id = save_profile_blocks.profile_id AND profile_builder_blocks.is_draft = true;
   ELSE
     DELETE FROM profile_builder_blocks
-    WHERE profile_id = profile_uuid;
+    WHERE profile_builder_blocks.profile_id = save_profile_blocks.profile_id;
   END IF;
 
   -- Insertar nuevos bloques
@@ -220,27 +220,27 @@ BEGIN
     profile_id, block_type, order_index, is_visible, is_draft, config, styles, content
   )
   SELECT
-    profile_uuid,
+    save_profile_blocks.profile_id,
     b->>'type',
     (b->>'orderIndex')::int,
     COALESCE((b->>'isVisible')::boolean, true),
-    save_as_draft,
+    save_profile_blocks.is_draft,
     COALESCE(b->'config', '{}'::jsonb),
     COALESCE(b->'styles', '{}'::jsonb),
     COALESCE(b->'content', '{}'::jsonb)
-  FROM jsonb_array_elements(blocks_data) b;
+  FROM jsonb_array_elements(blocks) b;
 
   -- Actualizar flag de draft en el perfil
   UPDATE creator_profiles
-  SET builder_has_draft = save_as_draft
-  WHERE id = profile_uuid;
+  SET builder_has_draft = save_profile_blocks.is_draft
+  WHERE id = save_profile_blocks.profile_id;
 
   RETURN true;
 END;
 $$;
 
 -- 9. Función para publicar cambios (convertir draft a published)
-CREATE OR REPLACE FUNCTION publish_profile_blocks(profile_uuid uuid)
+CREATE OR REPLACE FUNCTION publish_profile_blocks(profile_id uuid)
 RETURNS boolean
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -249,31 +249,31 @@ BEGIN
   -- Verificar propiedad
   IF NOT EXISTS (
     SELECT 1 FROM creator_profiles
-    WHERE id = profile_uuid AND user_id = auth.uid()
+    WHERE id = publish_profile_blocks.profile_id AND user_id = auth.uid()
   ) THEN
     RAISE EXCEPTION 'No autorizado';
   END IF;
 
   -- Eliminar bloques publicados anteriores
   DELETE FROM profile_builder_blocks
-  WHERE profile_id = profile_uuid AND is_draft = false;
+  WHERE profile_builder_blocks.profile_id = publish_profile_blocks.profile_id AND is_draft = false;
 
   -- Convertir drafts a publicados
   UPDATE profile_builder_blocks
   SET is_draft = false
-  WHERE profile_id = profile_uuid AND is_draft = true;
+  WHERE profile_builder_blocks.profile_id = publish_profile_blocks.profile_id AND is_draft = true;
 
   -- Limpiar flag
   UPDATE creator_profiles
   SET builder_has_draft = false
-  WHERE id = profile_uuid;
+  WHERE id = publish_profile_blocks.profile_id;
 
   RETURN true;
 END;
 $$;
 
 -- 10. Función para generar token de preview
-CREATE OR REPLACE FUNCTION generate_preview_token(profile_uuid uuid)
+CREATE OR REPLACE FUNCTION generate_preview_token(profile_id uuid)
 RETURNS text
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -284,7 +284,7 @@ BEGIN
   -- Verificar propiedad
   IF NOT EXISTS (
     SELECT 1 FROM creator_profiles
-    WHERE id = profile_uuid AND user_id = auth.uid()
+    WHERE id = generate_preview_token.profile_id AND user_id = auth.uid()
   ) THEN
     RAISE EXCEPTION 'No autorizado';
   END IF;
@@ -293,11 +293,11 @@ BEGIN
   new_token := encode(gen_random_bytes(32), 'hex');
 
   -- Limpiar tokens anteriores del mismo perfil
-  DELETE FROM profile_preview_tokens WHERE profile_id = profile_uuid;
+  DELETE FROM profile_preview_tokens WHERE profile_preview_tokens.profile_id = generate_preview_token.profile_id;
 
   -- Insertar nuevo token
   INSERT INTO profile_preview_tokens (profile_id, token)
-  VALUES (profile_uuid, new_token);
+  VALUES (generate_preview_token.profile_id, new_token);
 
   RETURN new_token;
 END;
@@ -321,7 +321,7 @@ END;
 $$;
 
 -- 12. Función para inicializar bloques default
-CREATE OR REPLACE FUNCTION initialize_default_blocks(profile_uuid uuid, template_name text DEFAULT NULL)
+CREATE OR REPLACE FUNCTION initialize_default_blocks(profile_id uuid, template_name text DEFAULT NULL)
 RETURNS boolean
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -344,7 +344,7 @@ BEGIN
   IF template_name IS NOT NULL THEN
     UPDATE creator_profiles
     SET builder_template = template_name
-    WHERE id = profile_uuid;
+    WHERE id = initialize_default_blocks.profile_id;
   END IF;
 
   -- Insertar bloques
@@ -352,7 +352,7 @@ BEGIN
     profile_id, block_type, order_index, is_visible, config, styles, content
   )
   SELECT
-    profile_uuid,
+    initialize_default_blocks.profile_id,
     b->>'type',
     (b->>'orderIndex')::int,
     true,

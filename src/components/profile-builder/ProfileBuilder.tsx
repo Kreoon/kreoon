@@ -1,4 +1,4 @@
-import { useReducer, useCallback } from 'react';
+import { useReducer, useCallback, useState, useEffect } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -16,10 +16,16 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { useCreatorPlanFeatures } from '@/hooks/useCreatorPlanFeatures';
+import { useProfileBuilderData } from './hooks/useProfileBuilderData';
 import { BuilderToolbar } from './BuilderToolbar';
 import { BuilderSidebar } from './BuilderSidebar';
 import { BlockSettingsPanel } from './BlockSettingsPanel';
 import { BuilderCanvas } from './BuilderCanvas';
+import { PlanStatusBar } from './PlanStatusBar';
+import { TemplateSelector } from './templates/TemplateSelector';
+import { UpgradeModal } from '@/components/premium/UpgradeModal';
 import {
   DEFAULT_BUILDER_CONFIG,
   createBlock,
@@ -28,6 +34,7 @@ import {
   type ProfileBlock,
   type BuilderConfig,
   type BlockType,
+  type ProfileTemplate,
 } from './types/profile-builder';
 
 // ─── Reducer ─────────────────────────────────────────────────────────────────
@@ -142,6 +149,32 @@ interface ProfileBuilderProps {
 
 export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
   const [state, dispatch] = useReducer(builderReducer, INITIAL_STATE);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [currentTemplate, setCurrentTemplate] = useState<string | undefined>(undefined);
+  const { toast } = useToast();
+  const { tier, maxBlocks, canUseBlock } = useCreatorPlanFeatures();
+
+  // Hook para operaciones de perfil (preview, guardar, publicar)
+  const {
+    profile,
+    blocks: savedBlocks,
+    generatePreviewTokenAsync,
+    saveBlocksAsync,
+    publishBlocks,
+    isSaving: hookIsSaving,
+    isPublishing,
+    isLoading: dataLoading,
+  } = useProfileBuilderData(profileId);
+
+  // Cargar bloques desde la BD al iniciar
+  const [hasLoadedBlocks, setHasLoadedBlocks] = useState(false);
+  useEffect(() => {
+    if (!hasLoadedBlocks && savedBlocks.length > 0 && state.blocks.length === 0) {
+      dispatch({ type: 'SET_BLOCKS', payload: savedBlocks });
+      setHasLoadedBlocks(true);
+    }
+  }, [savedBlocks, hasLoadedBlocks, state.blocks.length]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -158,8 +191,31 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
       const isFromPalette = active.data.current?.fromPalette === true;
 
       if (isFromPalette) {
-        // Añadir nuevo bloque al canvas desde la paleta
         const blockType = active.data.current?.type as BlockType;
+
+        // Validar limite de bloques
+        if (state.blocks.length >= maxBlocks) {
+          toast({
+            title: 'Limite de bloques alcanzado',
+            description: `Tu plan permite maximo ${maxBlocks} bloques. Upgrade para agregar mas.`,
+            variant: 'destructive',
+          });
+          setShowUpgradeModal(true);
+          return;
+        }
+
+        // Validar si puede usar este tipo de bloque
+        if (!canUseBlock(blockType)) {
+          toast({
+            title: 'Bloque no disponible',
+            description: 'Este bloque requiere un plan superior.',
+            variant: 'destructive',
+          });
+          setShowUpgradeModal(true);
+          return;
+        }
+
+        // Añadir nuevo bloque al canvas desde la paleta
         const newBlock = createBlock(blockType, state.blocks.length);
         dispatch({ type: 'ADD_BLOCK', payload: { block: newBlock } });
         dispatch({ type: 'SELECT_BLOCK', payload: newBlock.id });
@@ -171,7 +227,7 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
         });
       }
     },
-    [state.blocks.length]
+    [state.blocks.length, maxBlocks, canUseBlock, toast]
   );
 
   const handleDragStart = useCallback((_event: DragStartEvent) => {
@@ -180,23 +236,46 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
 
   const handleSaveDraft = useCallback(async () => {
     dispatch({ type: 'SET_SAVING', payload: true });
-    // TODO: conectar con useProfileBuilder hook cuando esté disponible
-    await new Promise<void>((r) => setTimeout(r, 800));
-    dispatch({ type: 'SET_SAVING', payload: false });
-    dispatch({ type: 'SET_DIRTY', payload: false });
-  }, []);
+    try {
+      await saveBlocksAsync(state.blocks, true);
+      dispatch({ type: 'SET_DIRTY', payload: false });
+      toast({
+        title: 'Borrador guardado',
+        description: 'Tus cambios se guardaron como borrador.',
+      });
+    } catch (err) {
+      console.error('Error saving draft:', err);
+    } finally {
+      dispatch({ type: 'SET_SAVING', payload: false });
+    }
+  }, [state.blocks, saveBlocksAsync, toast]);
 
   const handlePublish = useCallback(async () => {
     dispatch({ type: 'SET_SAVING', payload: true });
-    // TODO: conectar lógica de publicación
-    await new Promise<void>((r) => setTimeout(r, 800));
-    dispatch({ type: 'SET_SAVING', payload: false });
-    dispatch({ type: 'SET_DIRTY', payload: false });
-  }, []);
+    try {
+      // Primero guardar como publicado, luego ejecutar la publicación
+      await saveBlocksAsync(state.blocks, false);
+      publishBlocks();
+      dispatch({ type: 'SET_DIRTY', payload: false });
+    } catch (err) {
+      console.error('Error publishing:', err);
+    } finally {
+      dispatch({ type: 'SET_SAVING', payload: false });
+    }
+  }, [state.blocks, saveBlocksAsync, publishBlocks]);
 
-  const handlePreview = useCallback(() => {
-    window.open(`/p/${profileId}`, '_blank', 'noopener,noreferrer');
-  }, [profileId]);
+  const handlePreview = useCallback(async () => {
+    const token = await generatePreviewTokenAsync();
+    if (token) {
+      window.open(`/preview/${token}`, '_blank', 'noopener,noreferrer');
+    } else {
+      toast({
+        title: 'Error',
+        description: 'No se pudo generar el enlace de vista previa.',
+        variant: 'destructive',
+      });
+    }
+  }, [generatePreviewTokenAsync, toast]);
 
   const handleUpdateBlock = useCallback(
     (id: string, updates: Partial<ProfileBlock>) => {
@@ -213,7 +292,42 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
     dispatch({ type: 'SET_BUILDER_CONFIG', payload: updates });
   }, []);
 
+  // Handler para seleccionar una plantilla
+  const handleSelectTemplate = useCallback(
+    (template: ProfileTemplate) => {
+      // Convertir bloques de plantilla a bloques con IDs unicos
+      const newBlocks: ProfileBlock[] = template.blocks.map((templateBlock, index) => ({
+        ...templateBlock,
+        id: crypto.randomUUID(),
+        isDraft: false,
+        orderIndex: index,
+      }));
+
+      // Aplicar bloques de la plantilla
+      dispatch({ type: 'SET_BLOCKS', payload: newBlocks });
+
+      // Aplicar configuracion de la plantilla
+      dispatch({ type: 'SET_BUILDER_CONFIG', payload: template.config });
+
+      // Guardar nombre de plantilla actual
+      setCurrentTemplate(template.name);
+
+      toast({
+        title: 'Plantilla aplicada',
+        description: `Se ha aplicado la plantilla "${template.label}" con ${newBlocks.length} bloques.`,
+      });
+    },
+    [toast]
+  );
+
   const selectedBlock = state.blocks.find((b) => b.id === state.selectedBlockId) ?? null;
+
+  // Handler para seleccionar plan desde el modal
+  const handleSelectPlan = useCallback((selectedTier: typeof tier) => {
+    // TODO: Integrar con checkout de Stripe
+    setShowUpgradeModal(false);
+    window.open('/pricing?plan=' + selectedTier, '_blank');
+  }, []);
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -225,6 +339,12 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
       onDragEnd={handleDragEnd}
     >
       <div className="flex flex-col h-screen overflow-hidden bg-background">
+        {/* Barra de estado del plan */}
+        <PlanStatusBar
+          currentBlockCount={state.blocks.length}
+          onUpgradeClick={() => setShowUpgradeModal(true)}
+        />
+
         {/* Toolbar */}
         <BuilderToolbar
           isDirty={state.isDirty}
@@ -237,6 +357,7 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
           onDeviceChange={(device) =>
             dispatch({ type: 'SET_PREVIEW_DEVICE', payload: device })
           }
+          onOpenTemplates={() => setShowTemplateSelector(true)}
         />
 
         {/* Body: sidebar | canvas | settings */}
@@ -247,6 +368,7 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
               blocks={state.blocks}
               builderConfig={state.builderConfig}
               onConfigChange={handleConfigChange}
+              onUpgradeClick={() => setShowUpgradeModal(true)}
             />
           </div>
 
@@ -265,6 +387,7 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
                     blocks={state.blocks}
                     builderConfig={state.builderConfig}
                     onConfigChange={handleConfigChange}
+                    onUpgradeClick={() => setShowUpgradeModal(true)}
                   />
                 </SheetContent>
               </Sheet>
@@ -298,6 +421,8 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
               }
               onDeleteBlock={handleDeleteBlock}
               previewDevice={state.previewDevice}
+              userId={profile?.user_id}
+              creatorProfileId={profileId}
             />
           </main>
 
@@ -346,6 +471,26 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
           Suelta para agregar
         </div>
       </DragOverlay>
+
+      {/* Modal de upgrade */}
+      <UpgradeModal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        currentPlan={tier}
+        onSelectPlan={handleSelectPlan}
+      />
+
+      {/* Selector de plantillas */}
+      <TemplateSelector
+        open={showTemplateSelector}
+        onOpenChange={setShowTemplateSelector}
+        currentTemplate={currentTemplate}
+        onSelectTemplate={handleSelectTemplate}
+        onUpgradeClick={() => {
+          setShowTemplateSelector(false);
+          setShowUpgradeModal(true);
+        }}
+      />
     </DndContext>
   );
 }

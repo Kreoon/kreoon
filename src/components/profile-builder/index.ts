@@ -5,4 +5,6 @@ export { BlockPalette } from './BlockPalette';
 export { BlockSettingsPanel } from './BlockSettingsPanel';
 export { StylesPanel } from './StylesPanel';
 export { ResponsivePreview } from './ResponsivePreview';
+export { PlanStatusBar } from './PlanStatusBar';
 export * from './types/profile-builder';
+export * from './templates';

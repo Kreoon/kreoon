@@ -1,4 +1,4 @@
-import { Monitor, Tablet, Smartphone, Save, Eye, Cloud } from 'lucide-react';
+import { Monitor, Tablet, Smartphone, Save, Eye, Cloud, LayoutTemplate } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -12,6 +12,7 @@ interface BuilderToolbarProps {
   onPublish: () => void;
   onPreview: () => void;
   onDeviceChange: (device: 'desktop' | 'tablet' | 'mobile') => void;
+  onOpenTemplates?: () => void;
 }
 
 const DEVICES = [
@@ -28,6 +29,7 @@ export function BuilderToolbar({
   onPublish,
   onPreview,
   onDeviceChange,
+  onOpenTemplates,
 }: BuilderToolbarProps) {
   return (
     <TooltipProvider>
@@ -81,6 +83,25 @@ export function BuilderToolbar({
 
         {/* Derecha: acciones */}
         <div className="flex items-center gap-2">
+          {onOpenTemplates && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onOpenTemplates}
+                  aria-label="Elegir plantilla"
+                >
+                  <LayoutTemplate className="h-4 w-4 mr-1.5" />
+                  Plantillas
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>Elige una plantilla prediseñada</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

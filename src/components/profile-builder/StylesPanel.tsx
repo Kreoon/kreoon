@@ -1,7 +1,9 @@
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Crown } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useCreatorPlanFeatures } from '@/hooks/useCreatorPlanFeatures';
 import type { BuilderConfig } from './types/profile-builder';
 
 interface StylesPanelProps {
@@ -50,6 +52,8 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 export function StylesPanel({ config, onChange }: StylesPanelProps) {
+  const { canHideBranding } = useCreatorPlanFeatures();
+
   return (
     <div className="space-y-5 p-4">
       {/* Tema */}
@@ -197,7 +201,7 @@ export function StylesPanel({ config, onChange }: StylesPanelProps) {
         </div>
       </div>
 
-      {/* Branding Kreoon */}
+      {/* Branding Kreoon - Solo Premium puede desactivar */}
       <div className="flex items-center justify-between py-1">
         <div>
           <Label htmlFor="kreoon-branding" className="text-sm font-medium">
@@ -207,12 +211,27 @@ export function StylesPanel({ config, onChange }: StylesPanelProps) {
             Mostrar "Creado con Kreoon" en tu perfil
           </p>
         </div>
-        <Switch
-          id="kreoon-branding"
-          checked={config.showKreoonBranding}
-          onCheckedChange={(checked) => onChange({ showKreoonBranding: checked })}
-          aria-label="Mostrar branding de Kreoon"
-        />
+        {canHideBranding ? (
+          <Switch
+            id="kreoon-branding"
+            checked={config.showKreoonBranding}
+            onCheckedChange={(checked) => onChange({ showKreoonBranding: checked })}
+            aria-label="Mostrar branding de Kreoon"
+          />
+        ) : (
+          <div className="flex items-center gap-2">
+            <Switch
+              id="kreoon-branding"
+              checked
+              disabled
+              aria-label="Solo disponible en Premium"
+            />
+            <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/50 text-amber-400">
+              <Crown className="h-3 w-3" />
+              Premium
+            </Badge>
+          </div>
+        )}
       </div>
     </div>
   );

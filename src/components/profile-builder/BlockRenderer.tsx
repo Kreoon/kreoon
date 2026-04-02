@@ -60,10 +60,14 @@ const DividerBlock = lazy(() =>
 const SpacerBlock = lazy(() =>
   import('./blocks/SpacerBlock').then((m) => ({ default: m.SpacerBlock })),
 );
+const RecommendedTalentBlock = lazy(() =>
+  import('./blocks/RecommendedTalentBlock').then((m) => ({ default: m.RecommendedTalentBlock })),
+);
 
 // Mapa de tipo de bloque a componente lazy
 const BLOCK_COMPONENT_MAP: Record<BlockType, React.LazyExoticComponent<React.ComponentType<BlockProps>>> = {
   hero_banner: HeroBannerBlock,
+  recommended_talent: RecommendedTalentBlock,
   about: AboutBlock,
   portfolio: PortfolioBlock,
   services: ServicesBlock,
