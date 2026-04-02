@@ -40,7 +40,7 @@ const SocialLinksBlock = lazy(() =>
   import('./blocks/SocialLinksBlock').then((m) => ({ default: m.SocialLinksBlock })),
 );
 const FaqBlock = lazy(() =>
-  import('./blocks/FaqBlock').then((m) => ({ default: m.FaqBlock })),
+  import('./blocks/FAQBlock').then((m) => ({ default: m.FAQBlock })),
 );
 const TestimonialsBlock = lazy(() =>
   import('./blocks/TestimonialsBlock').then((m) => ({ default: m.TestimonialsBlock })),
