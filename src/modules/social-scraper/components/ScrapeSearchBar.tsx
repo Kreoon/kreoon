@@ -51,7 +51,7 @@ export function ScrapeSearchBar({ onScrape, onSaveTarget, isScraping, isSaving }
           <button
             key={p}
             onClick={() => setPlatform(p)}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-sm text-sm font-medium transition-colors ${
               platform === p
                 ? `${SOCIAL_PLATFORM_CONFIG[p].bgColor} ${SOCIAL_PLATFORM_CONFIG[p].color} ring-1 ring-current`
                 : "text-muted-foreground hover:text-foreground hover:bg-accent"

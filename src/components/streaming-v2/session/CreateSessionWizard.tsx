@@ -214,7 +214,7 @@ export function CreateSessionWizard({
                       key={type.value}
                       htmlFor={type.value}
                       className={cn(
-                        'flex flex-col items-center justify-center rounded-lg border-2 p-4 cursor-pointer transition-all',
+                        'flex flex-col items-center justify-center rounded-sm border-2 p-4 cursor-pointer transition-all',
                         selectedType === type.value
                           ? 'border-primary bg-primary/5'
                           : 'border-muted hover:border-muted-foreground/50'
@@ -237,7 +237,7 @@ export function CreateSessionWizard({
 
               {/* Auto-enable shopping for shopping type */}
               {selectedType === 'shopping' && (
-                <div className="rounded-lg bg-green-500/10 p-3 text-sm text-green-400">
+                <div className="rounded-sm bg-green-500/10 p-3 text-sm text-green-400">
                   <ShoppingBag className="inline-block mr-2 h-4 w-4" />
                   Live Shopping habilitado automáticamente
                 </div>
@@ -272,7 +272,7 @@ export function CreateSessionWizard({
                       key={channel.id}
                       htmlFor={`channel-${channel.id}`}
                       className={cn(
-                        'flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-all',
+                        'flex items-center gap-3 rounded-sm border p-3 cursor-pointer transition-all',
                         selectedChannels.includes(channel.id)
                           ? 'border-primary bg-primary/5'
                           : 'border-muted hover:border-muted-foreground/50'
@@ -333,7 +333,7 @@ export function CreateSessionWizard({
               >
                 <Label
                   htmlFor="now"
-                  className="flex items-center gap-3 rounded-lg border p-4 cursor-pointer"
+                  className="flex items-center gap-3 rounded-sm border p-4 cursor-pointer"
                 >
                   <RadioGroupItem value="now" id="now" />
                   <div>
@@ -346,7 +346,7 @@ export function CreateSessionWizard({
 
                 <Label
                   htmlFor="scheduled"
-                  className="flex items-center gap-3 rounded-lg border p-4 cursor-pointer"
+                  className="flex items-center gap-3 rounded-sm border p-4 cursor-pointer"
                 >
                   <RadioGroupItem value="scheduled" id="scheduled" />
                   <div className="flex-1">
@@ -403,7 +403,7 @@ export function CreateSessionWizard({
               </Popover>
 
               {/* Summary */}
-              <div className="rounded-lg bg-muted/50 p-4 space-y-2">
+              <div className="rounded-sm bg-muted/50 p-4 space-y-2">
                 <h4 className="font-medium">Resumen</h4>
                 <div className="text-sm space-y-1">
                   <p>

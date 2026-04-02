@@ -8,7 +8,7 @@ export function ConversionFunnel({ data }: ConversionFunnelProps) {
   const maxCount = data[0]?.count || 1;
 
   return (
-    <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-gray-800">
+    <div className="bg-gray-900/50 rounded-sm p-6 border border-gray-800">
       <h3 className="text-lg font-semibold text-white mb-6">Funnel de Conversión</h3>
       <div className="space-y-5">
         {data.map((stage, index) => {
@@ -28,9 +28,9 @@ export function ConversionFunnel({ data }: ConversionFunnelProps) {
                   )}
                 </div>
               </div>
-              <div className="h-9 bg-gray-800/80 rounded-lg overflow-hidden">
+              <div className="h-9 bg-gray-800/80 rounded-sm overflow-hidden">
                 <div
-                  className="h-full rounded-lg transition-all duration-700 ease-out"
+                  className="h-full rounded-sm transition-all duration-700 ease-out"
                   style={{
                     width: `${widthPct}%`,
                     background: `linear-gradient(90deg, ${stage.color} 0%, ${stage.color}60 100%)`,

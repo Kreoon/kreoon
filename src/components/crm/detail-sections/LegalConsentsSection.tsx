@@ -190,7 +190,7 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
                 {consents?.map((consent) => (
                   <div
                     key={consent.id}
-                    className="flex items-center justify-between p-2 rounded-lg bg-white/5 text-xs"
+                    className="flex items-center justify-between p-2 rounded-sm bg-white/5 text-xs"
                   >
                     <div className="flex items-center gap-2">
                       {consent.accepted ? (
@@ -233,7 +233,7 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
                 {signatures?.map((sig) => (
                   <div
                     key={sig.id}
-                    className="flex items-center justify-between p-2 rounded-lg bg-purple-500/10 border border-purple-500/20 text-xs"
+                    className="flex items-center justify-between p-2 rounded-sm bg-purple-500/10 border border-purple-500/20 text-xs"
                   >
                     <div className="flex items-center gap-2">
                       <PenTool className="h-3.5 w-3.5 text-purple-400" />
@@ -327,7 +327,7 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
               {selectedSignature.signature_image_url && (
                 <div>
                   <p className="text-white/40 text-xs mb-2">Firma Dibujada</p>
-                  <div className="bg-white rounded-lg p-3">
+                  <div className="bg-white rounded-sm p-3">
                     <img
                       src={selectedSignature.signature_image_url}
                       alt="Firma digital"
@@ -339,7 +339,7 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
 
               <div>
                 <p className="text-white/40 text-xs">Declaración</p>
-                <p className="text-white/80 text-xs italic bg-white/5 p-3 rounded-lg">
+                <p className="text-white/80 text-xs italic bg-white/5 p-3 rounded-sm">
                   "{selectedSignature.declaration_text}"
                 </p>
               </div>
@@ -434,7 +434,7 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
                 </p>
 
                 <div className="space-y-3">
-                  <div className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
+                  <div className="flex items-start gap-3 p-3 rounded-sm bg-white/5">
                     <Globe className="h-4 w-4 text-blue-400 mt-0.5 shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="text-white/40 text-xs">Dirección IP</p>
@@ -442,7 +442,7 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
+                  <div className="flex items-start gap-3 p-3 rounded-sm bg-white/5">
                     <Monitor className="h-4 w-4 text-purple-400 mt-0.5 shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="text-white/40 text-xs">User Agent (Navegador/Dispositivo)</p>

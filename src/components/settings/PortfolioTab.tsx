@@ -330,7 +330,7 @@ function PortfolioItemCard({
     : null;
 
   return (
-    <div className="relative group rounded-lg overflow-hidden border border-border bg-black aspect-[9/16]">
+    <div className="relative group rounded-sm overflow-hidden border border-border bg-black aspect-[9/16]">
       {/* Content */}
       {item.media_type === 'video' ? (
         embedUrl ? (

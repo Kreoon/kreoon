@@ -49,19 +49,19 @@ function ProfileItem({ profile, onClose, showUnfollow, onUnfollow }: ProfileItem
 
   return (
     <div 
-      className="flex items-center gap-3 p-3 rounded-lg hover:bg-social-muted/50 cursor-pointer transition-colors"
+      className="flex items-center gap-3 p-3 rounded-sm hover:bg-background/50 cursor-pointer transition-colors"
       onClick={handleClick}
     >
       <Avatar className="h-12 w-12">
         <AvatarImage src={profile.avatar_url || undefined} />
-        <AvatarFallback className="bg-social-muted text-social-foreground">
+        <AvatarFallback className="bg-background text-foreground">
           {profile.full_name?.charAt(0) || 'U'}
         </AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-social-foreground truncate">{profile.full_name}</p>
+        <p className="font-medium text-foreground truncate">{profile.full_name}</p>
         {profile.username && (
-          <p className="text-sm text-social-muted-foreground truncate">@{profile.username}</p>
+          <p className="text-sm text-muted-foreground truncate">@{profile.username}</p>
         )}
       </div>
       <div className="flex items-center gap-2">
@@ -114,7 +114,7 @@ function EmptyState({ type }: { type: 'followers' | 'following' | 'likers' }) {
   const { icon: Icon, text } = messages[type];
 
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-social-muted-foreground">
+    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
       <Icon className="h-12 w-12 mb-4 opacity-50" />
       <p>{text}</p>
     </div>
@@ -172,22 +172,22 @@ export function FollowersModal({ isOpen, onClose, userId, initialTab = 'follower
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md bg-social-card border-social-border">
+      <DialogContent className="sm:max-w-md bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-social-foreground">Conexiones</DialogTitle>
+          <DialogTitle className="text-foreground">Conexiones</DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="w-full bg-social-muted">
-            <TabsTrigger value="followers" className="flex-1 data-[state=active]:bg-social-accent data-[state=active]:text-white">
+          <TabsList className="w-full bg-background">
+            <TabsTrigger value="followers" className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-white">
               <Users className="h-4 w-4 mr-2" />
               Seguidores ({followers.length})
             </TabsTrigger>
-            <TabsTrigger value="following" className="flex-1 data-[state=active]:bg-social-accent data-[state=active]:text-white">
+            <TabsTrigger value="following" className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-white">
               <UserPlus className="h-4 w-4 mr-2" />
               Siguiendo ({following.length})
             </TabsTrigger>
-            <TabsTrigger value="likers" className="flex-1 data-[state=active]:bg-social-accent data-[state=active]:text-white">
+            <TabsTrigger value="likers" className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-white">
               <Heart className="h-4 w-4 mr-2" />
               Likes ({likers.length})
             </TabsTrigger>

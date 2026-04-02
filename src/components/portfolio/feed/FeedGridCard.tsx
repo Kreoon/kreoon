@@ -84,9 +84,9 @@ function FeedGridCardComponent({ item, onClick, priority = false }: FeedGridCard
     // Don't render media until in view (lazy loading)
     if (!isInView) {
       return (
-        <div className="w-full h-full flex items-center justify-center bg-social-muted animate-pulse">
+        <div className="w-full h-full flex items-center justify-center bg-background animate-pulse">
           {item.media_type === 'video' && (
-            <Play className="h-8 w-8 text-social-muted-foreground/50" />
+            <Play className="h-8 w-8 text-muted-foreground/50" />
           )}
         </div>
       );
@@ -112,32 +112,32 @@ function FeedGridCardComponent({ item, onClick, priority = false }: FeedGridCard
               />
 
               {!imageLoaded && (
-                <div className="absolute inset-0 flex items-center justify-center bg-social-muted">
-                  <Play className="h-8 w-8 text-social-muted-foreground" />
+                <div className="absolute inset-0 flex items-center justify-center bg-background">
+                  <Play className="h-8 w-8 text-muted-foreground" />
                 </div>
               )}
             </>
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-social-muted">
-              <Play className="h-8 w-8 text-social-muted-foreground" />
+            <div className="w-full h-full flex items-center justify-center bg-background">
+              <Play className="h-8 w-8 text-muted-foreground" />
             </div>
           )}
 
           {/* Video indicator - glassmorphism */}
-          <div className="absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-md bg-black/30 border border-white/10">
+          <div className="absolute top-2 right-2 p-1.5 rounded-full bg-black/30 border border-white/10">
             <Play className="h-3.5 w-3.5 text-white fill-white" />
           </div>
 
           {/* Collaborative badge */}
           {item.is_collaborative && (
-            <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md bg-gradient-to-r from-purple-500/80 to-pink-500/80 border border-white/20">
+            <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-purple-500/80 to-pink-500/80 border border-white/20">
               <Handshake className="h-3 w-3 text-white" />
               <span className="text-white text-[10px] font-medium">Collab</span>
             </div>
           )}
 
           {/* Views count - glassmorphism */}
-          <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md bg-black/40 border border-white/10">
+          <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full bg-black/40 border border-white/10">
             <Eye className="h-3 w-3 text-white/80" />
             <span className="text-white text-xs font-medium">{formatCount(item.views_count)}</span>
           </div>
@@ -162,14 +162,14 @@ function FeedGridCardComponent({ item, onClick, priority = false }: FeedGridCard
             decoding="async"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-social-muted">
-            <span className="text-sm text-social-muted-foreground">No se pudo cargar</span>
+          <div className="w-full h-full flex items-center justify-center bg-background">
+            <span className="text-sm text-muted-foreground">No se pudo cargar</span>
           </div>
         )}
 
         {/* Loading skeleton */}
         {!imageLoaded && !imageError && (
-          <div className="absolute inset-0 bg-social-muted animate-pulse" />
+          <div className="absolute inset-0 bg-background animate-pulse" />
         )}
       </>
     );
@@ -178,7 +178,7 @@ function FeedGridCardComponent({ item, onClick, priority = false }: FeedGridCard
   return (
     <motion.div
       ref={cardRef}
-      className="aspect-[4/5] relative group cursor-pointer overflow-hidden bg-social-muted rounded-sm"
+      className="aspect-[4/5] relative group cursor-pointer overflow-hidden bg-background rounded-sm"
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -197,7 +197,7 @@ function FeedGridCardComponent({ item, onClick, priority = false }: FeedGridCard
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
         {/* Stats with glassmorphism */}
-        <div className="relative flex items-center gap-4 px-4 py-2 rounded-full backdrop-blur-xl bg-white/10 border border-white/20 shadow-lg">
+        <div className="relative flex items-center gap-4 px-4 py-2 rounded-full bg-white/10 border border-white/20 shadow-lg">
           {item.likes_count >= 0 && (
             <motion.div
               className="flex items-center gap-1.5"
@@ -228,7 +228,7 @@ function FeedGridCardComponent({ item, onClick, priority = false }: FeedGridCard
         className={cn(
           "absolute inset-0 rounded-sm pointer-events-none transition-opacity duration-300",
           "ring-1 ring-inset",
-          isHovered ? "ring-social-accent/30" : "ring-transparent"
+          isHovered ? "ring-primary/30" : "ring-transparent"
         )}
       />
     </motion.div>

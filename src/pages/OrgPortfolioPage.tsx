@@ -100,9 +100,9 @@ export default function OrgPortfolioPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <Building2 className="h-16 w-16 mx-auto text-gray-500" />
-          <h1 className="text-xl font-semibold text-white">Portafolio no encontrado</h1>
-          <p className="text-gray-400">Esta organización no tiene un portafolio público activo.</p>
+          <Building2 className="h-16 w-16 mx-auto text-zinc-500" />
+          <h1 className="text-xl font-semibold text-zinc-100">Portafolio no encontrado</h1>
+          <p className="text-zinc-400">Esta organización no tiene un portafolio público activo.</p>
           <Button
             variant="outline"
             onClick={() => window.location.href = '/'}
@@ -147,22 +147,22 @@ export default function OrgPortfolioPage() {
               <img
                 src={org.logo_url}
                 alt={org.name}
-                className="h-20 w-20 md:h-24 md:w-24 rounded-2xl border-4 border-border object-cover shadow-xl"
+                className="h-20 w-20 md:h-24 md:w-24 rounded-lg border-4 border-zinc-800 object-cover shadow-xl"
               />
             ) : (
               <div
-                className="h-20 w-20 md:h-24 md:w-24 rounded-2xl border-4 border-border flex items-center justify-center shadow-xl"
+                className="h-20 w-20 md:h-24 md:w-24 rounded-lg border-4 border-zinc-800 flex items-center justify-center shadow-xl"
                 style={{ backgroundColor: `${accentColor}30` }}
               >
                 <Building2 className="h-10 w-10" style={{ color: accentColor }} />
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl md:text-3xl font-bold text-white truncate">
+              <h1 className="text-2xl md:text-3xl font-bold text-zinc-100 truncate">
                 {org.portfolio_title || org.name}
               </h1>
               {org.portfolio_description && (
-                <p className="text-gray-400 mt-1 line-clamp-2 max-w-2xl">
+                <p className="text-zinc-400 mt-1 line-clamp-2 max-w-2xl">
                   {org.portfolio_description}
                 </p>
               )}
@@ -180,9 +180,9 @@ export default function OrgPortfolioPage() {
       </div>
 
       {/* Stats bar */}
-      <div className="border-b border-gray-800">
+      <div className="border-b border-zinc-800">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-6">
-          <div className="flex items-center gap-2 text-gray-400">
+          <div className="flex items-center gap-2 text-zinc-400">
             <Users className="h-4 w-4" />
             <span className="text-sm">{creators.length} profesionales</span>
           </div>
@@ -203,8 +203,8 @@ export default function OrgPortfolioPage() {
       <div className="max-w-6xl mx-auto px-6 py-8">
         {creators.length === 0 ? (
           <div className="text-center py-16">
-            <Users className="h-12 w-12 mx-auto text-gray-600 mb-4" />
-            <p className="text-gray-400">Aún no hay miembros visibles en este portafolio</p>
+            <Users className="h-12 w-12 mx-auto text-zinc-600 mb-4" />
+            <p className="text-zinc-400">Aún no hay miembros visibles en este portafolio</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -220,15 +220,15 @@ export default function OrgPortfolioPage() {
       </div>
 
       {/* Footer */}
-      <div className="border-t border-gray-800 py-8">
+      <div className="border-t border-zinc-800 py-8">
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-gray-500 text-sm">
-            <img src="/favicon.png" alt="KREOON" className="h-5 w-5 rounded" />
+          <div className="flex items-center gap-2 text-zinc-500 text-sm">
+            <img src="/favicon.png" alt="KREOON" className="h-5 w-5 rounded-lg" />
             <span>Powered by KREOON</span>
           </div>
           <a
             href="/"
-            className="text-sm text-gray-500 hover:text-foreground flex items-center gap-1"
+            className="text-sm text-zinc-500 hover:text-foreground flex items-center gap-1"
           >
             kreoon.com <ExternalLink className="h-3 w-3" />
           </a>
@@ -258,9 +258,9 @@ function CreatorCard({ creator, accentColor }: { creator: PortfolioCreator; acce
     .toUpperCase() || '?';
 
   return (
-    <div className="group rounded-xl border border-gray-800 bg-background p-4 hover:border-border transition-all hover:shadow-lg">
+    <div className="group rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#14141f] p-4 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors duration-150 hover:shadow-lg">
       <div className="flex flex-col items-center text-center">
-        <Avatar className="h-20 w-20 mb-3 ring-2 ring-gray-800 group-hover:ring-gray-700 transition-all">
+        <Avatar className="h-20 w-20 mb-3 ring-2 ring-zinc-800 group-hover:ring-zinc-700 transition-all">
           <AvatarImage src={creator.avatar_url || ''} alt={creator.full_name} />
           <AvatarFallback
             className="text-lg font-semibold"
@@ -269,7 +269,7 @@ function CreatorCard({ creator, accentColor }: { creator: PortfolioCreator; acce
             {initials}
           </AvatarFallback>
         </Avatar>
-        <h3 className="font-semibold text-white truncate w-full">{creator.full_name}</h3>
+        <h3 className="font-semibold text-zinc-100 truncate w-full">{creator.full_name}</h3>
         <Badge
           variant="secondary"
           className="mt-1 text-xs"

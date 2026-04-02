@@ -25,10 +25,10 @@ export function CreatorServicesSection({
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="h-6 bg-social-muted rounded animate-pulse w-40" />
+        <div className="h-6 bg-background rounded animate-pulse w-40" />
         <div className="space-y-3">
           {[1, 2].map((i) => (
-            <div key={i} className="h-32 bg-social-muted rounded-lg animate-pulse" />
+            <div key={i} className="h-32 bg-background rounded-sm animate-pulse" />
           ))}
         </div>
       </div>
@@ -51,7 +51,7 @@ export function CreatorServicesSection({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-social-foreground">
+        <h3 className="text-lg font-semibold text-foreground">
           Servicios que ofrezco
         </h3>
         {isOwner && (
@@ -73,9 +73,9 @@ export function CreatorServicesSection({
               transition={{ delay: index * 0.1 }}
               onClick={() => setSelectedService(service)}
               className={cn(
-                "relative p-4 rounded-xl border cursor-pointer transition-all duration-200",
-                "bg-social-card border-social-border",
-                "hover:border-social-accent/50 hover:shadow-lg hover:shadow-social-accent/5",
+                "relative p-4 rounded-sm border cursor-pointer transition-all duration-200",
+                "bg-card border-border",
+                "hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5",
                 "group"
               )}
             >
@@ -89,7 +89,7 @@ export function CreatorServicesSection({
 
               <div className="flex gap-4">
                 {/* Icon */}
-                <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-social-muted flex items-center justify-center text-2xl">
+                <div className="flex-shrink-0 w-12 h-12 rounded-sm bg-background flex items-center justify-center text-2xl">
                   {SERVICE_TYPE_ICONS[service.service_type]}
                 </div>
 
@@ -97,14 +97,14 @@ export function CreatorServicesSection({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h4 className="font-medium text-social-foreground group-hover:text-social-accent transition-colors">
+                      <h4 className="font-medium text-foreground group-hover:text-primary transition-colors">
                         {service.title}
                       </h4>
-                      <p className="text-sm text-social-muted-foreground mt-0.5 line-clamp-2">
+                      <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">
                         {service.description || SERVICE_TYPE_LABELS[service.service_type]}
                       </p>
                     </div>
-                    <ChevronRight className="h-5 w-5 text-social-muted-foreground group-hover:text-social-accent transition-colors flex-shrink-0" />
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
                   </div>
 
                   {/* Deliverables preview */}
@@ -113,13 +113,13 @@ export function CreatorServicesSection({
                       {service.deliverables.slice(0, 3).map((d, i) => (
                         <span
                           key={i}
-                          className="text-xs px-2 py-0.5 rounded-full bg-social-muted text-social-muted-foreground"
+                          className="text-xs px-2 py-0.5 rounded-full bg-background text-muted-foreground"
                         >
                           {d.quantity > 1 ? `${d.quantity}x ` : ''}{d.item}
                         </span>
                       ))}
                       {service.deliverables.length > 3 && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-social-muted text-social-muted-foreground">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-background text-muted-foreground">
                           +{service.deliverables.length - 3} más
                         </span>
                       )}
@@ -128,7 +128,7 @@ export function CreatorServicesSection({
 
                   {/* Footer info */}
                   <div className="mt-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-sm text-social-muted-foreground">
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
                       {service.delivery_days && (
                         <span className="flex items-center gap-1">
                           <Clock className="h-3.5 w-3.5" />
@@ -148,7 +148,7 @@ export function CreatorServicesSection({
                         </span>
                       )}
                     </div>
-                    <span className="font-semibold text-social-foreground">
+                    <span className="font-semibold text-foreground">
                       {formatPrice(service)}
                     </span>
                   </div>
@@ -160,8 +160,8 @@ export function CreatorServicesSection({
 
         {/* Empty state for owner */}
         {services.length === 0 && isOwner && (
-          <div className="text-center py-8 px-4 rounded-xl border border-dashed border-social-border">
-            <p className="text-social-muted-foreground mb-3">
+          <div className="text-center py-8 px-4 rounded-sm border border-dashed border-border">
+            <p className="text-muted-foreground mb-3">
               Aún no has agregado servicios
             </p>
             <Button variant="outline" size="sm" className="gap-2">
@@ -176,9 +176,9 @@ export function CreatorServicesSection({
           <button
             onClick={onRequestCustom}
             className={cn(
-              "w-full p-4 rounded-xl border border-dashed",
-              "border-social-border hover:border-social-accent/50",
-              "text-social-muted-foreground hover:text-social-foreground",
+              "w-full p-4 rounded-sm border border-dashed",
+              "border-border hover:border-primary/50",
+              "text-muted-foreground hover:text-foreground",
               "transition-all duration-200 text-center"
             )}
           >

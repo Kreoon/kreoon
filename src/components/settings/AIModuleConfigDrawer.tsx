@@ -121,7 +121,7 @@ export function AIModuleConfigDrawer({
 
         <div className="space-y-6 mt-6">
           {/* Module Info */}
-          <div className="p-4 rounded-lg bg-muted/50 space-y-2">
+          <div className="p-4 rounded-sm bg-muted/50 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">{module.module_name}</span>
               {categoryInfo && (
@@ -241,7 +241,7 @@ export function AIModuleConfigDrawer({
                     return (
                       <div
                         key={level.value}
-                        className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                        className={`flex items-center gap-3 p-3 rounded-sm border cursor-pointer transition-colors ${
                           permissionLevel === level.value 
                             ? 'border-primary bg-primary/5' 
                             : 'border-border hover:border-primary/50'

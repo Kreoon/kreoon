@@ -55,7 +55,7 @@ function StatCard({
 }) {
   return (
     <div
-      className="rounded-xl p-4"
+      className="rounded-sm p-4"
       style={{
         background: "rgba(255, 255, 255, 0.05)",
         backdropFilter: "blur(16px) saturate(180%)",
@@ -64,7 +64,7 @@ function StatCard({
       }}
     >
       <div className="flex items-center gap-3">
-        <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", color)}>
+        <div className={cn("w-10 h-10 rounded-sm flex items-center justify-center", color)}>
           <Icon className="h-5 w-5" />
         </div>
         <div>
@@ -177,7 +177,7 @@ export function TalentContent({ orgId }: { orgId: string }) {
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-20 rounded-xl bg-white/5" />
+              <Skeleton key={i} className="h-20 rounded-sm bg-white/5" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
@@ -290,7 +290,7 @@ export function TalentContent({ orgId }: { orgId: string }) {
                     key={rel.id}
                     onClick={() => handleSelect(rel)}
                     className={cn(
-                      "flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-white/5 cursor-pointer transition-colors border border-transparent",
+                      "flex items-center gap-4 px-4 py-3 rounded-sm hover:bg-white/5 cursor-pointer transition-colors border border-transparent",
                       selectedCreator?.id === rel.id && "bg-[#8b5cf6]/10 border-[#8b5cf6]/30"
                     )}
                   >

@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
+import { logger } from '@/lib/logger';
 
 // Helper to check and refresh session if needed
 async function ensureValidSession(): Promise<boolean> {
@@ -9,12 +10,12 @@ async function ensureValidSession(): Promise<boolean> {
     const { data: { session }, error } = await supabase.auth.getSession();
 
     if (error) {
-      console.warn('[useDownload] Error getting session:', error);
+      logger.warn('useDownload Error getting session', { error });
       return false;
     }
 
     if (!session) {
-      console.warn('[useDownload] No active session');
+      logger.warn('useDownload No active session');
       return false;
     }
 
@@ -23,18 +24,18 @@ async function ensureValidSession(): Promise<boolean> {
     const now = Math.floor(Date.now() / 1000);
 
     if (expiresAt && expiresAt - now < 60) {
-      console.log('[useDownload] Session expiring soon, refreshing...');
+      logger.debug('useDownload Session expiring soon, refreshing');
       const { data, error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError || !data.session) {
-        console.warn('[useDownload] Failed to refresh session:', refreshError);
+        logger.warn('useDownload Failed to refresh session', { error: refreshError });
         return false;
       }
-      console.log('[useDownload] Session refreshed successfully');
+      logger.debug('useDownload Session refreshed successfully');
     }
 
     return true;
   } catch (e) {
-    console.error('[useDownload] Session check error:', e);
+    logger.error('useDownload Session check error', e);
     return false;
   }
 }
@@ -114,7 +115,7 @@ export function useDownload(): UseDownloadReturn {
         if (hasValidSession) {
           // Try Edge Function (provides best quality + auth)
           try {
-            console.log('[useDownload] Calling bunny-download with valid session');
+            logger.debug('useDownload Calling bunny-download with valid session');
             const { data, error } = await supabase.functions.invoke('bunny-download', {
               body: {
                 content_id: contentId,
@@ -125,28 +126,28 @@ export function useDownload(): UseDownloadReturn {
             if (!error && data?.download_url) {
               finalDownloadUrl = data.download_url;
               usedEdgeFunction = true;
-              console.log(`[useDownload] Edge Function OK: ${finalDownloadUrl} (quality: ${data.quality}p)`);
+              logger.debug('useDownload Edge Function OK', { quality: data.quality });
             } else {
-              console.warn('[useDownload] Edge Function error:', error);
+              logger.warn('useDownload Edge Function error', { error });
               throw error || new Error('No download URL returned');
             }
           } catch (edgeFnError) {
             // Fallback to direct CDN URL if Edge Function fails
-            console.warn('[useDownload] Edge Function failed, using direct CDN fallback:', edgeFnError);
+            logger.warn('useDownload Edge Function failed, using direct CDN fallback', { error: edgeFnError });
 
             const bunnyUrls = getBunnyVideoUrls(urlToDownload);
             if (bunnyUrls?.mp4) {
               finalDownloadUrl = bunnyUrls.mp4;
-              console.log(`[useDownload] Direct CDN fallback: ${finalDownloadUrl}`);
+              logger.debug('useDownload Direct CDN fallback');
             }
           }
         } else {
           // No valid session - use direct CDN fallback
-          console.log('[useDownload] No valid session, using direct CDN download');
+          logger.debug('useDownload No valid session, using direct CDN download');
           const bunnyUrls = getBunnyVideoUrls(urlToDownload);
           if (bunnyUrls?.mp4) {
             finalDownloadUrl = bunnyUrls.mp4;
-            console.log(`[useDownload] Direct CDN: ${finalDownloadUrl}`);
+            logger.debug('useDownload Direct CDN');
           }
         }
       }
@@ -238,7 +239,7 @@ export function useDownload(): UseDownloadReturn {
 
       toast.success(usedEdgeFunction ? 'Descarga completada (mejor calidad)' : 'Descarga completada');
     } catch (error) {
-      console.error('[useDownload] Error:', error);
+      logger.error('useDownload Error', error);
       setProgress(prev =>
         prev.map(p => p.contentId === contentId
           ? { ...p, status: 'error' }
@@ -295,7 +296,7 @@ export function useDownload(): UseDownloadReturn {
         throw new Error('No se pudo generar el archivo ZIP');
       }
     } catch (error) {
-      console.error('[useDownload] Batch error:', error);
+      logger.error('useDownload Batch error', error);
       // Fallback to sequential downloads
       toast.info('Descargando videos individualmente...');
       for (const item of items) {

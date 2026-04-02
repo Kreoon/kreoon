@@ -170,7 +170,7 @@ export function CurrencyManagement() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-center gap-4 p-4 bg-muted/50 rounded-lg">
+          <div className="flex items-center justify-center gap-4 p-4 bg-muted/50 rounded-sm">
             <div className="text-center">
               <p className="text-2xl font-bold">1 USD</p>
               <p className="text-xs text-muted-foreground">Dólar</p>
@@ -276,7 +276,7 @@ export function CurrencyManagement() {
               </div>
 
               {estimatedTransfer !== null && transferFrom !== transferTo && (
-                <div className="p-3 bg-muted/50 rounded-lg text-center">
+                <div className="p-3 bg-muted/50 rounded-sm text-center">
                   <p className="text-sm text-muted-foreground">Recibirás aproximadamente</p>
                   <p className="text-xl font-bold text-primary">
                     <CurrencyDisplay value={estimatedTransfer} currency={transferTo} />
@@ -396,7 +396,7 @@ export function CurrencyManagement() {
               {transfers.slice(0, 10).map((transfer) => (
                 <div 
                   key={transfer.id}
-                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                  className="flex items-center justify-between p-3 border rounded-sm hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-full bg-primary/10">

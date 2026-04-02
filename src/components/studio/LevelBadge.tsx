@@ -84,12 +84,10 @@ export function LevelBadge({
       {/* Badge Container */}
       <motion.div
         className={cn(
-          'relative rounded-xl flex items-center justify-center',
+          'relative rounded-sm flex items-center justify-center',
           config.container,
           config.padding,
-          'backdrop-blur-sm',
-          'border border-white/10',
-          'shadow-lg'
+          'border border-border'
         )}
         style={{
           background: `linear-gradient(135deg, ${nivelInfo.color}20 0%, ${nivelInfo.color}10 100%)`,
@@ -103,7 +101,7 @@ export function LevelBadge({
         {/* Glow Effect for High Levels */}
         {isHighLevel && (
           <motion.div
-            className="absolute inset-0 rounded-xl"
+            className="absolute inset-0 rounded-sm"
             style={{
               background: `radial-gradient(circle at center, ${nivelInfo.color}30 0%, transparent 70%)`,
             }}
@@ -121,7 +119,7 @@ export function LevelBadge({
         {/* Shimmer Effect for Max Level */}
         {isMaxLevel && (
           <motion.div
-            className="absolute inset-0 rounded-xl overflow-hidden"
+            className="absolute inset-0 rounded-sm overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
@@ -156,8 +154,7 @@ export function LevelBadge({
         {/* Icon Badge */}
         <div
           className={cn(
-            'absolute -top-1 -right-1 rounded-full p-0.5',
-            'backdrop-blur-sm'
+            'absolute -top-1 -right-1 rounded-full p-0.5'
           )}
           style={{
             background: `linear-gradient(135deg, ${nivelInfo.color} 0%, ${nivelInfo.color}cc 100%)`,
@@ -185,7 +182,7 @@ export function LevelBadge({
           >
             {nivelInfo.nombre}
           </span>
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-muted-foreground">
             {nivelInfo.descripcion}
           </span>
         </motion.div>
@@ -205,7 +202,7 @@ export function LevelBadge({
         </TooltipTrigger>
         <TooltipContent
           side="top"
-          className="bg-zinc-900/95 backdrop-blur-sm border-white/10 px-3 py-2"
+          className="bg-popover border-border px-3 py-2"
         >
           <div className="flex flex-col gap-1">
             <span
@@ -214,11 +211,11 @@ export function LevelBadge({
             >
               Nivel {nivelInfo.nivel}: {nivelInfo.nombre}
             </span>
-            <span className="text-xs text-zinc-400">
+            <span className="text-xs text-muted-foreground">
               {nivelInfo.descripcion}
             </span>
             {nivelInfo.nivel < 10 && (
-              <span className="text-xs text-zinc-500">
+              <span className="text-xs text-muted-foreground">
                 Siguiente: {NIVELES[nivelInfo.nivel].xpRequerido.toLocaleString()} CR
               </span>
             )}

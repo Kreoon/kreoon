@@ -31,6 +31,7 @@ import { FollowButton } from '@/components/social/FollowButton';
 import { FeaturedVideoUploader } from '@/components/social/FeaturedVideoUploader';
 import { FounderBadge, FounderAvatarRing } from '@/components/social/FounderBadge';
 import { getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
+import { uploadPortfolioImage } from '@/lib/bunnyUpload';
 
 // FeedItem interface for modal compatibility
 interface FeedItem {
@@ -238,7 +239,7 @@ export const PortfolioProfile = memo(function PortfolioProfile({
   }
 
   return (
-    <div className="min-h-screen bg-social-background text-social-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Hero Banner Section */}
       <section className="relative">
         {/* Cover Image */}
@@ -250,16 +251,16 @@ export const PortfolioProfile = memo(function PortfolioProfile({
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-social-accent/30 via-social-accent/20 to-social-muted" />
+            <div className="w-full h-full bg-gradient-to-br from-primary/30 via-primary/20 to-secondary" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-social-background via-social-background/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
           
           {/* Edit Cover Button */}
           {isOwner && (
             <Button
               variant="secondary"
               size="sm"
-              className="absolute top-4 right-4 bg-social-card/80 backdrop-blur-sm text-social-foreground border-social-border hover:bg-social-muted"
+              className="absolute top-4 right-4 bg-card/80 text-foreground border-border hover:bg-secondary"
               onClick={onEditProfile}
             >
               <Camera className="h-4 w-4 mr-2" />
@@ -279,7 +280,7 @@ export const PortfolioProfile = memo(function PortfolioProfile({
             >
               {profile.is_platform_founder ? (
                 <FounderAvatarRing badgeType={profile.founder_badge_type}>
-                  <Avatar className="h-28 w-28 sm:h-36 sm:w-36 ring-4 ring-social-background shadow-2xl">
+                  <Avatar className="h-28 w-28 sm:h-36 sm:w-36 ring-4 ring-background shadow-2xl">
                     <AvatarImage src={profile.avatar_url || undefined} />
                     <AvatarFallback className="text-4xl bg-gradient-to-br from-amber-400 to-orange-500 text-white">
                       {profile.full_name?.[0]?.toUpperCase() || 'U'}
@@ -288,14 +289,14 @@ export const PortfolioProfile = memo(function PortfolioProfile({
                 </FounderAvatarRing>
               ) : (
                 <>
-                  <Avatar className="h-28 w-28 sm:h-36 sm:w-36 ring-4 ring-social-background shadow-2xl">
+                  <Avatar className="h-28 w-28 sm:h-36 sm:w-36 ring-4 ring-background shadow-2xl">
                     <AvatarImage src={profile.avatar_url || undefined} />
-                    <AvatarFallback className="text-4xl bg-gradient-to-br from-social-accent to-social-accent/60 text-social-accent-foreground">
+                    <AvatarFallback className="text-4xl bg-gradient-to-br from-primary to-primary/60 text-primary-foreground">
                       {profile.full_name?.[0]?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   {/* Online indicator */}
-                  <div className="absolute bottom-2 right-2 h-5 w-5 rounded-full bg-green-500 ring-4 ring-social-background" />
+                  <div className="absolute bottom-2 right-2 h-5 w-5 rounded-full bg-green-500 ring-4 ring-background" />
                 </>
               )}
             </motion.div>
@@ -318,12 +319,12 @@ export const PortfolioProfile = memo(function PortfolioProfile({
                   </div>
                   
                   {/* Username, Role & Organization in one line */}
-                  <div className="flex items-center gap-2 flex-wrap text-sm text-social-muted-foreground">
+                  <div className="flex items-center gap-2 flex-wrap text-sm text-muted-foreground">
                     {profile.username && (
                       <span>@{profile.username}</span>
                     )}
                     {profile.username && (membership.role || membership.organization || membership.is_independent) && (
-                      <span className="text-social-muted-foreground/50">•</span>
+                      <span className="text-muted-foreground/50">•</span>
                     )}
                     {membership.role && (
                       <span className="flex items-center gap-1">
@@ -335,7 +336,7 @@ export const PortfolioProfile = memo(function PortfolioProfile({
                       </span>
                     )}
                     {membership.role && (membership.organization || membership.is_independent) && (
-                      <span className="text-social-muted-foreground/50">•</span>
+                      <span className="text-muted-foreground/50">•</span>
                     )}
                     {membership.is_independent ? (
                       <span className="flex items-center gap-1">
@@ -359,13 +360,13 @@ export const PortfolioProfile = memo(function PortfolioProfile({
                   </div>
 
                   {profile.tagline && (
-                    <p className="text-lg text-social-foreground/80 mt-2 max-w-xl">
+                    <p className="text-lg text-foreground/80 mt-2 max-w-xl">
                       {profile.tagline}
                     </p>
                   )}
                   
                   {/* Location & Links */}
-                  <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-social-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-muted-foreground">
                     {(profile.city || profile.country) && (
                       <span className="flex items-center gap-1">
                         <MapPin className="h-4 w-4" />
@@ -377,7 +378,7 @@ export const PortfolioProfile = memo(function PortfolioProfile({
                         href={profile.portfolio_url} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1 hover:text-social-accent transition-colors"
+                        className="flex items-center gap-1 hover:text-primary transition-colors"
                       >
                         <Link2 className="h-4 w-4" />
                         Portfolio
@@ -390,20 +391,20 @@ export const PortfolioProfile = memo(function PortfolioProfile({
                 <div className="flex items-center gap-2 flex-wrap">
                   {isOwner ? (
                     <>
-                      <Button onClick={() => setShowUploadDialog(true)} className="bg-social-accent hover:bg-social-accent/90 text-social-accent-foreground">
+                      <Button onClick={() => setShowUploadDialog(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                         <Plus className="h-4 w-4 mr-2" />
                         Subir contenido
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => setShowAIProfileDialog(true)} className="border-social-border text-social-foreground hover:bg-social-muted">
+                      <Button variant="outline" size="sm" onClick={() => setShowAIProfileDialog(true)} className="border-border text-foreground hover:bg-secondary">
                         <Sparkles className="h-4 w-4 mr-2" />
                         IA Perfil
                       </Button>
-                      <Button variant="outline" size="sm" onClick={onEditProfile} className="border-social-border text-social-foreground hover:bg-social-muted">
+                      <Button variant="outline" size="sm" onClick={onEditProfile} className="border-border text-foreground hover:bg-secondary">
                         <Edit className="h-4 w-4 mr-2" />
                         Editar
                       </Button>
                       {onEditBlocks && (
-                        <Button variant="ghost" size="icon" onClick={onEditBlocks} className="text-social-foreground hover:bg-social-muted">
+                        <Button variant="ghost" size="icon" onClick={onEditBlocks} className="text-foreground hover:bg-secondary">
                           <Settings className="h-4 w-4" />
                         </Button>
                       )}
@@ -445,14 +446,14 @@ export const PortfolioProfile = memo(function PortfolioProfile({
             icon={<Users className="h-4 w-4" />} 
             value={stats.followers_count} 
             label="Seguidores" 
-            className="cursor-pointer hover:text-social-accent"
+            className="cursor-pointer hover:text-primary"
             onClick={() => { setFollowersModalTab('followers'); setFollowersModalOpen(true); }}
           />
           <StatItem 
             icon={<Users className="h-4 w-4" />} 
             value={stats.following_count} 
             label="Siguiendo" 
-            className="hidden sm:block cursor-pointer hover:text-social-accent"
+            className="hidden sm:block cursor-pointer hover:text-primary"
             onClick={() => { setFollowersModalTab('following'); setFollowersModalOpen(true); }}
           />
           <StatItem icon={<Eye className="h-4 w-4" />} value={stats.views_count} label="Vistas" className="hidden sm:block" />
@@ -460,7 +461,7 @@ export const PortfolioProfile = memo(function PortfolioProfile({
             icon={<Heart className="h-4 w-4" />} 
             value={stats.likes_count} 
             label="Likes" 
-            className="hidden sm:block cursor-pointer hover:text-social-accent"
+            className="hidden sm:block cursor-pointer hover:text-primary"
             onClick={() => { setFollowersModalTab('likers'); setFollowersModalOpen(true); }}
           />
         </div>
@@ -477,38 +478,38 @@ export const PortfolioProfile = memo(function PortfolioProfile({
       {/* Content Tabs - Glassmorphism */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 mt-8">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-          <TabsList className="w-full justify-start glass-social rounded-xl p-1 h-auto gap-1 overflow-x-auto border border-white/10">
+          <TabsList className="w-full justify-start bg-card/95 border border-border rounded-sm p-1 h-auto gap-1 overflow-x-auto border border-white/10">
             <TabsTrigger 
               value="portfolio" 
-              className="rounded-lg px-3 py-2 data-[state=active]:bg-social-accent data-[state=active]:text-white data-[state=active]:shadow-lg text-social-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-social-foreground hover:bg-white/5"
+              className="rounded-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-foreground hover:bg-white/5"
             >
               <FolderOpen className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Portafolio</span>
             </TabsTrigger>
             <TabsTrigger 
               value="posts" 
-              className="rounded-lg px-3 py-2 data-[state=active]:bg-social-accent data-[state=active]:text-white data-[state=active]:shadow-lg text-social-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-social-foreground hover:bg-white/5"
+              className="rounded-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-foreground hover:bg-white/5"
             >
               <Grid className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Posts</span>
             </TabsTrigger>
             <TabsTrigger 
               value="videos"
-              className="rounded-lg px-3 py-2 data-[state=active]:bg-social-accent data-[state=active]:text-white data-[state=active]:shadow-lg text-social-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-social-foreground hover:bg-white/5"
+              className="rounded-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-foreground hover:bg-white/5"
             >
               <Play className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Videos</span>
             </TabsTrigger>
             <TabsTrigger 
               value="badges"
-              className="rounded-lg px-3 py-2 data-[state=active]:bg-social-accent data-[state=active]:text-white data-[state=active]:shadow-lg text-social-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-social-foreground hover:bg-white/5"
+              className="rounded-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-foreground hover:bg-white/5"
             >
               <Star className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Logros</span>
             </TabsTrigger>
             <TabsTrigger 
               value="about"
-              className="rounded-lg px-3 py-2 data-[state=active]:bg-social-accent data-[state=active]:text-white data-[state=active]:shadow-lg text-social-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-social-foreground hover:bg-white/5"
+              className="rounded-sm px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg text-muted-foreground whitespace-nowrap transition-all duration-200 hover:text-foreground hover:bg-white/5"
             >
               <Briefcase className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Sobre mí</span>
@@ -552,7 +553,7 @@ export const PortfolioProfile = memo(function PortfolioProfile({
               }}
             />
             <div className="mt-8">
-              <h3 className="text-lg font-semibold text-social-foreground mb-4">Todos los videos</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-4">Todos los videos</h3>
               <VideoGallery 
                 userId={userId} 
                 onSelect={(items, index) => {
@@ -617,11 +618,11 @@ function StatItem({ icon, value, label, className, onClick }: { icon: React.Reac
 
   return (
     <div className={cn("text-center group", onClick ? "cursor-pointer" : "cursor-default", className)} onClick={onClick}>
-      <div className="flex items-center justify-center gap-1 text-social-muted-foreground mb-1 group-hover:text-social-accent transition-colors duration-200">
+      <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1 group-hover:text-primary transition-colors duration-200">
         {icon}
       </div>
-      <div className="text-lg sm:text-xl font-bold text-social-foreground group-hover:scale-105 transition-transform duration-200">{formatNumber(value)}</div>
-      <div className="text-xs text-social-muted-foreground">{label}</div>
+      <div className="text-lg sm:text-xl font-bold text-foreground group-hover:scale-105 transition-transform duration-200">{formatNumber(value)}</div>
+      <div className="text-xs text-muted-foreground">{label}</div>
     </div>
   );
 }
@@ -733,12 +734,12 @@ function PortfolioWorkSection({ userId, isOwner, onSelect, onUpload }: { userId:
                     </div>
                   )}
                   {/* Video indicator - glassmorphism style */}
-                  <div className="absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-md bg-black/30 border border-white/10">
+                  <div className="absolute top-2 right-2 p-1.5 rounded-full bg-black/30 border border-white/10">
                     <Play className="h-3.5 w-3.5 text-white fill-white" />
                   </div>
                   {/* Views count */}
                   {(post.views_count ?? 0) > 0 && (
-                    <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md bg-black/40 border border-white/10">
+                    <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full bg-black/40 border border-white/10">
                       <Eye className="h-3 w-3 text-white/80" />
                       <span className="text-white text-xs font-medium">{formatCount(post.views_count || 0)}</span>
                     </div>
@@ -755,7 +756,7 @@ function PortfolioWorkSection({ userId, isOwner, onSelect, onUpload }: { userId:
               {/* Pinned badge */}
               {post.is_pinned && (
                 <div className="absolute top-2 left-2 z-10">
-                  <div className="bg-amber-500 text-white p-1 rounded-full backdrop-blur-md">
+                  <div className="bg-amber-500 text-white p-1 rounded-full">
                     <Pin className="h-3 w-3" />
                   </div>
                 </div>
@@ -775,7 +776,7 @@ function PortfolioWorkSection({ userId, isOwner, onSelect, onUpload }: { userId:
 
               {/* Hover overlay with stats - glassmorphism style */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                <div className="flex items-center gap-4 px-4 py-2 rounded-full backdrop-blur-xl bg-white/10 border border-white/20">
+                <div className="flex items-center gap-4 px-4 py-2 rounded-full bg-white/10 border border-white/20">
                   {(post.likes_count || 0) >= 0 && (
                     <span className="flex items-center gap-1.5 text-white text-sm font-semibold">
                       <Heart className="h-4 w-4 text-red-400 fill-red-400" />
@@ -898,12 +899,12 @@ function PersonalFeedSection({ userId, isOwner, onSelect, onUpload }: { userId: 
                     </div>
                   )}
                   {/* Video indicator - glassmorphism style */}
-                  <div className="absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-md bg-black/30 border border-white/10">
+                  <div className="absolute top-2 right-2 p-1.5 rounded-full bg-black/30 border border-white/10">
                     <Play className="h-3.5 w-3.5 text-white fill-white" />
                   </div>
                   {/* Views count */}
                   {(post.views_count ?? 0) > 0 && (
-                    <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md bg-black/40 border border-white/10">
+                    <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full bg-black/40 border border-white/10">
                       <Eye className="h-3 w-3 text-white/80" />
                       <span className="text-white text-xs font-medium">{formatCount(post.views_count || 0)}</span>
                     </div>
@@ -920,7 +921,7 @@ function PersonalFeedSection({ userId, isOwner, onSelect, onUpload }: { userId: 
               {/* Pinned badge */}
               {post.is_pinned && (
                 <div className="absolute top-2 left-2 z-10">
-                  <div className="bg-amber-500 text-white p-1 rounded-full backdrop-blur-md">
+                  <div className="bg-amber-500 text-white p-1 rounded-full">
                     <Pin className="h-3 w-3" />
                   </div>
                 </div>
@@ -940,7 +941,7 @@ function PersonalFeedSection({ userId, isOwner, onSelect, onUpload }: { userId: 
 
               {/* Hover overlay with stats - glassmorphism style */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                <div className="flex items-center gap-4 px-4 py-2 rounded-full backdrop-blur-xl bg-white/10 border border-white/20">
+                <div className="flex items-center gap-4 px-4 py-2 rounded-full bg-white/10 border border-white/20">
                   {(post.likes_count || 0) >= 0 && (
                     <span className="flex items-center gap-1.5 text-white text-sm font-semibold">
                       <Heart className="h-4 w-4 text-red-400 fill-red-400" />
@@ -983,11 +984,11 @@ function PresentationVideoSection({
 
   if (!videoUrl) {
     return (
-      <Card className="aspect-video flex items-center justify-center bg-gradient-to-br from-social-muted to-social-muted/50 border-dashed border-social-border">
+      <Card className="aspect-video flex items-center justify-center bg-gradient-to-br from-secondary to-secondary/50 border-dashed border-border">
         <div className="text-center p-8">
-          <Play className="h-16 w-16 mx-auto text-social-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2 text-social-foreground">Video de presentación</h3>
-          <p className="text-sm text-social-muted-foreground mb-4">
+          <Play className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2 text-foreground">Video de presentación</h3>
+          <p className="text-sm text-muted-foreground mb-4">
             Sube un video horizontal (16:9) que destaque tu perfil
           </p>
           {onVideoUpdate && (
@@ -1002,14 +1003,14 @@ function PresentationVideoSection({
   }
 
   return (
-    <div className="relative aspect-video rounded-xl overflow-hidden bg-black">
+    <div className="relative aspect-video rounded-sm overflow-hidden bg-black">
       <video
         src={videoUrl}
         poster={thumbnailUrl}
         controls
         className="w-full h-full object-contain"
       />
-      <Badge className="absolute top-4 left-4 bg-social-accent/90 text-social-accent-foreground">
+      <Badge className="absolute top-4 left-4 bg-primary/90 text-primary-foreground">
         <Star className="h-3 w-3 mr-1" />
         Video destacado
       </Badge>
@@ -1049,7 +1050,7 @@ function VideoGallery({ userId, onSelect }: { userId: string; onSelect: (items: 
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="aspect-[9/16] rounded-lg" />
+          <Skeleton key={i} className="aspect-[9/16] rounded-sm" />
         ))}
       </div>
     );
@@ -1103,13 +1104,13 @@ function VideoGallery({ userId, onSelect }: { userId: string; onSelect: (items: 
             )}
             
             {/* Video indicator - glassmorphism style */}
-            <div className="absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-md bg-black/30 border border-white/10">
+            <div className="absolute top-2 right-2 p-1.5 rounded-full bg-black/30 border border-white/10">
               <Play className="h-3.5 w-3.5 text-white fill-white" />
             </div>
             
             {/* Views count */}
             {(video.views_count ?? 0) > 0 && (
-              <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md bg-black/40 border border-white/10">
+              <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full bg-black/40 border border-white/10">
                 <Eye className="h-3 w-3 text-white/80" />
                 <span className="text-white text-xs font-medium">{formatCount(video.views_count || 0)}</span>
               </div>
@@ -1117,7 +1118,7 @@ function VideoGallery({ userId, onSelect }: { userId: string; onSelect: (items: 
 
             {/* Hover overlay with stats - glassmorphism style */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-              <div className="flex items-center gap-4 px-4 py-2 rounded-full backdrop-blur-xl bg-white/10 border border-white/20">
+              <div className="flex items-center gap-4 px-4 py-2 rounded-full bg-white/10 border border-white/20">
                 {(video.likes_count || 0) >= 0 && (
                   <span className="flex items-center gap-1.5 text-white text-sm font-semibold">
                     <Heart className="h-4 w-4 text-red-400 fill-red-400" />
@@ -1298,23 +1299,14 @@ function UploadContentDialog({ open, onOpenChange, userId }: { open: boolean; on
           description: 'El video se está procesando para mejor compatibilidad.'
         });
       } else {
-        // Upload image to Supabase storage (images don't need Bunny processing)
-        const ext = selectedFile.name.split('.').pop();
-        const fileName = `${userId}/${Date.now()}.${ext}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('portfolio')
-          .upload(fileName, selectedFile);
-
-        if (uploadError) throw uploadError;
-
-        const { data: urlData } = supabase.storage.from('portfolio').getPublicUrl(fileName);
+        // Upload image to Bunny CDN (WebP optimized, max 1200px width)
+        const result = await uploadPortfolioImage(selectedFile, userId);
 
         const { error: insertError } = await supabase
           .from('portfolio_posts')
           .insert({
             user_id: userId,
-            media_url: urlData.publicUrl,
+            media_url: result.cdnUrl,
             media_type: 'image',
             post_type: postType,
             caption: caption || null,
@@ -1372,7 +1364,7 @@ function UploadContentDialog({ open, onOpenChange, userId }: { open: boolean; on
           <div
             onClick={() => fileInputRef.current?.click()}
             className={cn(
-              "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
+              "border-2 border-dashed rounded-sm p-8 text-center cursor-pointer transition-colors",
               preview ? "border-primary" : "border-muted-foreground/25 hover:border-primary/50"
             )}
           >
@@ -1629,7 +1621,7 @@ function ProfileSkeleton() {
         </div>
       </div>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 mt-8">
-        <Skeleton className="h-16 w-full rounded-xl" />
+        <Skeleton className="h-16 w-full rounded-sm" />
       </div>
     </div>
   );

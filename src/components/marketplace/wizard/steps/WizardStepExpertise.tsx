@@ -124,7 +124,7 @@ export function WizardStepExpertise({ data, onChange }: WizardStepExpertiseProps
               key={p.id}
               onClick={() => toggle('platforms', p.id)}
               className={cn(
-                'px-3 py-2 rounded-xl text-xs font-medium transition-all border text-center',
+                'px-3 py-2 rounded-sm text-xs font-medium transition-all border text-center',
                 data.platforms.includes(p.id)
                   ? 'bg-pink-500/20 text-pink-300 border-pink-500/40'
                   : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'
@@ -145,7 +145,7 @@ export function WizardStepExpertise({ data, onChange }: WizardStepExpertiseProps
               key={level.value}
               onClick={() => onChange({ ...data, experience_level: level.value })}
               className={cn(
-                'p-3 rounded-xl border text-left transition-all',
+                'p-3 rounded-sm border text-left transition-all',
                 data.experience_level === level.value
                   ? 'border-purple-500 bg-purple-500/10'
                   : 'border-white/10 bg-white/5 hover:border-white/20'
@@ -202,12 +202,12 @@ export function WizardStepExpertise({ data, onChange }: WizardStepExpertiseProps
             onChange={(e) => setCustomTag(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomTag())}
             placeholder="Ej: Animacion 3D, Storytelling..."
-            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
+            className="flex-1 bg-white/5 border border-white/10 rounded-sm px-4 py-2.5 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
           />
           <button
             onClick={addCustomTag}
             disabled={!customTag.trim()}
-            className="px-4 py-2.5 bg-white/10 hover:bg-white/15 text-foreground/80 rounded-xl text-sm transition-colors disabled:opacity-50"
+            className="px-4 py-2.5 bg-white/10 hover:bg-white/15 text-foreground/80 rounded-sm text-sm transition-colors disabled:opacity-50"
           >
             <Plus className="h-4 w-4" />
           </button>

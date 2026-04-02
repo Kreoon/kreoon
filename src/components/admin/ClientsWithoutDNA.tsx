@@ -49,10 +49,10 @@ export function ClientsWithoutDNA({ onSelectClient }: ClientsWithoutDNAProps) {
   if (loading || clients.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-orange-500/20 bg-orange-500/5 overflow-hidden">
+    <div className="rounded-sm border border-orange-500/20 bg-orange-500/5 overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b border-orange-500/20 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-sm bg-orange-500/20 flex items-center justify-center">
           <AlertCircle className="w-5 h-5 text-orange-400" />
         </div>
         <div>
@@ -70,7 +70,7 @@ export function ClientsWithoutDNA({ onSelectClient }: ClientsWithoutDNAProps) {
             className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors text-left"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-sm bg-white/10 flex items-center justify-center">
                 <User className="w-4 h-4 text-gray-400" />
               </div>
               <div>

@@ -90,7 +90,7 @@ export function PricingSidebar({
               key={pkg.id}
               onClick={() => setSelectedPkg(pkg.id)}
               className={cn(
-                'w-full text-left border rounded-xl p-4 transition-all',
+                'w-full text-left border rounded-sm p-4 transition-all',
                 selectedPkg === pkg.id
                   ? 'border-purple-500 bg-purple-500/10'
                   : 'border-white/10 hover:border-purple-500/50',
@@ -136,7 +136,7 @@ export function PricingSidebar({
 
       {/* Package details */}
       {selected && selected.includes.length > 0 && (
-        <div className="bg-white/5 rounded-lg p-3 space-y-1.5">
+        <div className="bg-white/5 rounded-sm p-3 space-y-1.5">
           <p className="text-gray-400 text-xs font-medium">Incluye:</p>
           {selected.includes.map((item, i) => (
             <div key={i} className="flex items-start gap-2 text-foreground/80 text-xs">
@@ -152,7 +152,7 @@ export function PricingSidebar({
       {/* CTA */}
       <button
         onClick={handleHire}
-        className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white font-semibold py-4 rounded-xl text-base transition-all hover:shadow-lg hover:shadow-purple-500/25"
+        className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white font-semibold py-4 rounded-sm text-base transition-all hover:shadow-lg hover:shadow-purple-500/25"
       >
         Contratar Ahora
       </button>
@@ -160,7 +160,7 @@ export function PricingSidebar({
         <div>
           <button
             onClick={handleMessage}
-            className="w-full bg-transparent border border-white/20 text-white font-semibold py-4 rounded-xl text-base hover:bg-white/5 transition-all flex items-center justify-center gap-2"
+            className="w-full bg-transparent border border-white/20 text-white font-semibold py-4 rounded-sm text-base hover:bg-white/5 transition-all flex items-center justify-center gap-2"
           >
             <MessageSquare className="h-5 w-5" />
             Chat Seguro
@@ -177,7 +177,7 @@ export function PricingSidebar({
           onClick={() => hasPendingInvite ? undefined : setShowInviteModal(true)}
           disabled={hasPendingInvite}
           className={cn(
-            'w-full border font-semibold py-3.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2',
+            'w-full border font-semibold py-3.5 rounded-sm text-sm transition-all flex items-center justify-center gap-2',
             hasPendingInvite
               ? 'border-green-500/30 bg-green-500/10 text-green-400 cursor-default'
               : 'border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 hover:border-amber-500/50',
@@ -231,14 +231,14 @@ export function PricingSidebar({
   if (mobileInline) {
     return (
       <>
-        <div className="bg-card/80 backdrop-blur-xl border border-white/10 rounded-2xl p-5 space-y-5">
+        <div className="bg-card/80 border border-white/10 rounded-sm p-5 space-y-5">
           {/* Exchange option */}
           {acceptsExchange && (
             <>
               <button
                 onClick={handleExchange}
                 className={cn(
-                  'w-full text-left border rounded-xl p-3 transition-all',
+                  'w-full text-left border rounded-sm p-3 transition-all',
                   hasPaidPlan
                     ? 'border-green-500/30 bg-green-500/5'
                     : 'border-white/10 bg-white/5 opacity-60',
@@ -279,7 +279,7 @@ export function PricingSidebar({
     <>
       {/* Desktop sidebar */}
       <div className="hidden lg:block sticky top-24">
-        <div className="bg-card/80 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-xl shadow-purple-500/5 space-y-6">
+        <div className="bg-card/80 border border-white/10 rounded-sm p-6 shadow-xl shadow-purple-500/5 space-y-6">
           {/* Exchange option (gated) */}
           {acceptsExchange && (
             <>
@@ -287,7 +287,7 @@ export function PricingSidebar({
                 <button
                   onClick={handleExchange}
                   className={cn(
-                    'w-full text-left border rounded-xl p-4 transition-all',
+                    'w-full text-left border rounded-sm p-4 transition-all',
                     hasPaidPlan
                       ? 'border-green-500/30 bg-green-500/5 hover:border-green-500/50'
                       : 'border-white/10 bg-white/5 opacity-60 cursor-not-allowed',

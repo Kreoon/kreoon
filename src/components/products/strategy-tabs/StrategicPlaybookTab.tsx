@@ -153,7 +153,7 @@ const SCHWARTZ_LEVELS = [
     spanish: 'Inconsciente',
     description: 'No saben que tienen un problema',
     strategy: 'Contenido educativo, storytelling, hooks de curiosidad',
-    color: 'bg-gray-500',
+    color: 'bg-zinc-500',
     icon: Eye,
   },
   {
@@ -276,7 +276,7 @@ export function StrategicPlaybookTab({
   return (
     <div className="space-y-6">
       {/* Header Principal */}
-      <div className="p-5 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 rounded-xl border border-purple-500/20">
+      <div className="p-5 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
         <div className="flex items-start justify-between">
           <div>
             <h3 className="font-bold text-lg flex items-center gap-2">
@@ -435,7 +435,7 @@ export function StrategicPlaybookTab({
           </div>
 
           {/* Visual Journey */}
-          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-500/10 via-yellow-500/10 to-green-500/10 rounded-xl border">
+          <div className="flex items-center justify-between p-4 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
             {SCHWARTZ_LEVELS.map((level, idx) => (
               <div key={level.name} className="flex items-center">
                 <div className={cn(
@@ -466,7 +466,7 @@ export function StrategicPlaybookTab({
 
               return (
                 <Card key={level.name} className={cn(
-                  "transition-all",
+                  "transition-colors duration-150",
                   isActive && "ring-2 ring-primary"
                 )}>
                   <CardContent className="p-4">
@@ -566,7 +566,7 @@ export function StrategicPlaybookTab({
                   </div>
                 )}
                 {puv.statement && (
-                  <div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
+                  <div className="p-4 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
                     <p className="text-[10px] font-semibold text-purple-500 uppercase mb-1">Tu PUV</p>
                     <p className="text-base font-medium">{puv.statement}</p>
                   </div>

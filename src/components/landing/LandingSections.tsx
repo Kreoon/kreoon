@@ -59,7 +59,7 @@ export function HeroSection({ onRegister }: SectionProps) {
       <div className="relative max-w-5xl mx-auto text-center z-10">
         {/* Badge with glow */}
         <div className="animate-fade-in">
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-xl text-primary text-sm font-medium shadow-lg shadow-primary/10">
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-sm font-medium shadow-lg shadow-primary/10">
             <Sparkles className="h-4 w-4" />
             <span>Creative Operating System</span>
             <span className="h-1.5 w-1.5 bg-green-500 rounded-full animate-pulse" />
@@ -96,7 +96,7 @@ export function HeroSection({ onRegister }: SectionProps) {
             size="lg" 
             variant="outline"
             onClick={() => scrollToSection('modulos')}
-            className="w-full sm:w-auto text-lg px-8 py-6 border-white/20 bg-white/5 backdrop-blur-xl text-white hover:bg-white/10 hover:border-primary/30 transition-all duration-300"
+            className="w-full sm:w-auto text-lg px-8 py-6 border-white/20 bg-white/5 text-white hover:bg-white/10 hover:border-primary/30 transition-all duration-300"
           >
             Explorar módulos
           </Button>
@@ -122,7 +122,7 @@ export function HeroSection({ onRegister }: SectionProps) {
 
       {/* Scroll Indicator - Tech style */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-        <div className="w-6 h-10 rounded-full border-2 border-primary/30 flex items-start justify-center p-2 bg-primary/5 backdrop-blur">
+        <div className="w-6 h-10 rounded-full border-2 border-primary/30 flex items-start justify-center p-2 bg-primary/5">
           <div className="w-1 h-2 bg-primary rounded-full animate-pulse" />
         </div>
       </div>
@@ -226,7 +226,7 @@ export function ModulesSection() {
             <Card key={i} className="bg-card/50 border-border/50 hover:border-primary/30 transition-all duration-300 group hover:shadow-lg hover:shadow-primary/5">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <div className="h-10 w-10 rounded-sm bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                     <module.icon className="h-5 w-5 text-primary" />
                   </div>
                   <Badge variant="outline" className="text-[10px] border-green-500/30 text-green-500 bg-green-500/10">
@@ -280,7 +280,7 @@ export function SecuritySection() {
           {features.map((feature, i) => (
             <Card key={i} className="bg-card/50 border-border/50 hover:border-primary/30 transition-all duration-300 group">
               <CardContent className="p-6">
-                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                <div className="h-12 w-12 rounded-sm bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                   <feature.icon className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
@@ -323,7 +323,7 @@ export function WhatIsSection() {
             </p>
             <div className="grid grid-cols-2 gap-3">
               {capabilities.map((cap, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-card/50 border border-border/50 hover:border-primary/30 transition-colors">
+                <div key={i} className="flex items-center gap-3 p-3 rounded-sm bg-card/50 border border-border/50 hover:border-primary/30 transition-colors">
                   <cap.icon className="h-5 w-5 text-primary shrink-0" />
                   <span className="text-sm text-foreground">{cap.text}</span>
                 </div>
@@ -332,9 +332,9 @@ export function WhatIsSection() {
           </div>
           
           <div className="relative">
-            <div className="aspect-square rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent p-8 border border-border/50">
-              <div className="h-full w-full rounded-xl bg-card/80 backdrop-blur border border-border/50 p-6 flex flex-col justify-center items-center text-center">
-                <div className="h-20 w-20 rounded-2xl bg-primary flex items-center justify-center mb-6 shadow-xl shadow-primary/25">
+            <div className="aspect-square rounded-sm bg-gradient-to-br from-primary/20 via-primary/10 to-transparent p-8 border border-border/50">
+              <div className="h-full w-full rounded-sm bg-card/80 border border-border/50 p-6 flex flex-col justify-center items-center text-center">
+                <div className="h-20 w-20 rounded-sm bg-primary flex items-center justify-center mb-6 shadow-xl shadow-primary/25">
                   <span className="text-primary-foreground font-bold text-4xl">K</span>
                 </div>
                 <h3 className="text-2xl font-bold text-foreground mb-2">KREOON</h3>
@@ -405,7 +405,7 @@ export function ForWhomSection() {
             <Card key={i} className="bg-card/50 border-border/50 hover:border-primary/30 transition-all duration-300 overflow-hidden group">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <div className="h-10 w-10 rounded-sm bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                     <aud.icon className="h-5 w-5 text-primary" />
                   </div>
                   <h3 className="text-lg font-semibold text-foreground">{aud.title}</h3>
@@ -461,7 +461,7 @@ export function HowItWorksSection() {
             {steps.map((step, i) => (
               <div key={i} className="flex gap-6 items-start group">
                 <div className="relative shrink-0">
-                  <div className="h-16 w-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <div className="h-16 w-16 rounded-sm bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                     <step.icon className="h-7 w-7 text-primary" />
                   </div>
                   <span className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">
@@ -510,7 +510,7 @@ export function SistemaUPSection() {
             
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {features.map((f, i) => (
-                <div key={i} className="p-4 rounded-xl bg-card/50 border border-border/50 text-center hover:border-amber-500/30 transition-colors">
+                <div key={i} className="p-4 rounded-sm bg-card/50 border border-border/50 text-center hover:border-amber-500/30 transition-colors">
                   <f.icon className="h-6 w-6 text-amber-500 mx-auto mb-2" />
                   <div className="font-semibold text-foreground text-sm">{f.title}</div>
                   <div className="text-xs text-muted-foreground mt-1">{f.desc}</div>
@@ -520,8 +520,8 @@ export function SistemaUPSection() {
           </div>
           
           <div className="relative">
-            <div className="aspect-[4/3] rounded-2xl bg-gradient-to-br from-amber-500/20 via-amber-500/10 to-transparent p-8 border border-amber-500/20">
-              <div className="h-full w-full rounded-xl bg-card/80 backdrop-blur border border-border/50 flex items-center justify-center">
+            <div className="aspect-[4/3] rounded-sm bg-gradient-to-br from-amber-500/20 via-amber-500/10 to-transparent p-8 border border-amber-500/20">
+              <div className="h-full w-full rounded-sm bg-card/80 border border-border/50 flex items-center justify-center">
                 <div className="text-center">
                   <div className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600">
                     UP
@@ -607,7 +607,7 @@ export function KreoonLiveSection() {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {features.map((f, i) => (
-            <div key={i} className="rounded-xl p-6 bg-card/50 border border-border/50 hover:border-red-500/30 transition-all duration-300 text-center group">
+            <div key={i} className="rounded-sm p-6 bg-card/50 border border-border/50 hover:border-red-500/30 transition-all duration-300 text-center group">
               <f.icon className="h-8 w-8 text-red-500 mx-auto mb-3 group-hover:scale-110 transition-transform" />
               <span className="text-foreground font-medium block">{f.label}</span>
               <span className="text-xs text-muted-foreground">{f.desc}</span>
@@ -705,7 +705,7 @@ export function RoadmapSection() {
                   )}>
                     <CardContent className="p-4 flex items-start gap-3">
                       <div className={cn(
-                        "h-10 w-10 rounded-lg flex items-center justify-center shrink-0",
+                        "h-10 w-10 rounded-sm flex items-center justify-center shrink-0",
                         quarter.status === 'in-progress' ? "bg-green-500/10" : "bg-primary/10"
                       )}>
                         <feature.icon className={cn(
@@ -836,7 +836,7 @@ export function PricingSection({ onRegister }: SectionProps) {
             <div 
               key={i} 
               className={cn(
-                "relative rounded-xl p-6 transition-all duration-300 group",
+                "relative rounded-sm p-6 transition-all duration-300 group",
                 "bg-[#12121A] border border-border/30",
                 "hover:shadow-[0_0_30px_hsl(252_100%_68%/0.15)] hover:border-primary/40",
                 plan.featured && "border-primary/50 shadow-[0_0_40px_hsl(252_100%_68%/0.2)]"
@@ -964,7 +964,7 @@ export function IndividualPlansSection({ onRegister }: SectionProps) {
             <div 
               key={i} 
               className={cn(
-                "relative rounded-xl p-8 transition-all duration-300 group",
+                "relative rounded-sm p-8 transition-all duration-300 group",
                 "bg-[#12121A] border border-border/30",
                 "hover:shadow-[0_0_30px_hsl(252_100%_68%/0.15)] hover:border-primary/40",
                 plan.featured && "border-primary/50"
@@ -1058,9 +1058,9 @@ export function TalentAccessSection() {
           {rules.map((rule, i) => (
             <div 
               key={i} 
-              className="rounded-xl p-6 bg-[#12121A] border border-border/30 hover:border-primary/40 transition-all duration-300 group"
+              className="rounded-sm p-6 bg-[#12121A] border border-border/30 hover:border-primary/40 transition-all duration-300 group"
             >
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+              <div className="h-12 w-12 rounded-sm bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                 <rule.icon className="h-6 w-6 text-primary" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">{rule.title}</h3>
@@ -1097,7 +1097,7 @@ export function TokenSystemSection({ onRegister }: SectionProps) {
             Accede a datos de contacto de forma profesional.
           </p>
           
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-sm bg-amber-500/10 border border-amber-500/20">
             <Ban className="h-4 w-4 text-amber-500" />
             <span className="text-sm text-amber-400">Los tokens no hacen parte del periodo de prueba</span>
           </div>
@@ -1107,7 +1107,7 @@ export function TokenSystemSection({ onRegister }: SectionProps) {
           {tokenPackages.map((pkg, i) => (
             <div 
               key={i} 
-              className="rounded-xl p-6 bg-[#12121A] border border-amber-500/20 hover:border-amber-500/40 transition-all text-center"
+              className="rounded-sm p-6 bg-[#12121A] border border-amber-500/20 hover:border-amber-500/40 transition-all text-center"
             >
               <Badge variant="outline" className="mb-4 border-amber-500/30 text-amber-500">
                 {pkg.name}
@@ -1158,8 +1158,8 @@ export function WhyThisModelSection() {
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {reasons.map((reason, i) => (
-            <div key={i} className="rounded-xl p-5 bg-[#12121A] border border-border/30 text-center hover:border-primary/40 transition-all">
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-3">
+            <div key={i} className="rounded-sm p-5 bg-[#12121A] border border-border/30 text-center hover:border-primary/40 transition-all">
+              <div className="h-10 w-10 rounded-sm bg-primary/10 flex items-center justify-center mx-auto mb-3">
                 <reason.icon className="h-5 w-5 text-primary" />
               </div>
               <h3 className="text-sm font-semibold text-foreground mb-1">{reason.title}</h3>
@@ -1198,7 +1198,7 @@ export function PrivacySection() {
           {features.map((f, i) => (
             <Card key={i} className="bg-card/50 border-border/50 hover:border-green-500/30 transition-all group">
               <CardContent className="p-6 flex items-start gap-4">
-                <div className="h-12 w-12 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0 group-hover:bg-green-500/20 transition-colors">
+                <div className="h-12 w-12 rounded-sm bg-green-500/10 flex items-center justify-center shrink-0 group-hover:bg-green-500/20 transition-colors">
                   <f.icon className="h-6 w-6 text-green-500" />
                 </div>
                 <div>
@@ -1266,7 +1266,7 @@ export function LandingFooter() {
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center">
+            <div className="h-8 w-8 rounded-sm bg-primary flex items-center justify-center">
               <span className="text-primary-foreground font-bold">K</span>
             </div>
             <span className="text-foreground font-semibold">KREOON</span>

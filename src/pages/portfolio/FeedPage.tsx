@@ -450,9 +450,9 @@ export default function FeedPage() {
   };
 
   return (
-    <div ref={containerRef} className="h-full overflow-y-auto md:pl-20 lg:pl-64 bg-social-background">
+    <div ref={containerRef} className="h-full overflow-y-auto md:pl-20 lg:pl-64 bg-background">
       {/* Header with glassmorphism */}
-      <header className="sticky top-0 z-30 glass-social-strong border-b border-white/5">
+      <header className="sticky top-0 z-30 bg-card border border-border border-b border-white/5">
         <div className="max-w-6xl mx-auto px-4 py-3">
           {/* Search + actions (desktop) */}
           <div className="flex items-center gap-2 mb-3">
@@ -461,7 +461,7 @@ export default function FeedPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 text-social-foreground hover:bg-white/10 rounded-xl"
+                className="h-9 w-9 text-foreground hover:bg-white/10 rounded-sm"
                 onClick={() => navigate('/explore')}
                 aria-label="Explorar"
               >
@@ -474,10 +474,10 @@ export default function FeedPage() {
           {/* Tab switcher with glassmorphism */}
           <div className="flex items-center justify-between">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FeedTab)}>
-              <TabsList className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl">
+              <TabsList className="bg-white/5 border border-white/10 rounded-sm">
                 <TabsTrigger
                   value="for-you"
-                  className="text-sm flex items-center gap-1.5 data-[state=active]:bg-social-accent data-[state=active]:text-white rounded-lg transition-all"
+                  className="text-sm flex items-center gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-white rounded-sm transition-all"
                 >
                   Para Ti
                   {hasPersonalization && activeTab === 'for-you' && (
@@ -486,13 +486,13 @@ export default function FeedPage() {
                 </TabsTrigger>
                 <TabsTrigger
                   value="following"
-                  className="text-sm data-[state=active]:bg-social-accent data-[state=active]:text-white rounded-lg transition-all"
+                  className="text-sm data-[state=active]:bg-primary data-[state=active]:text-white rounded-sm transition-all"
                 >
                   Siguiendo
                 </TabsTrigger>
                 <TabsTrigger
                   value="collaborations"
-                  className="text-sm flex items-center gap-1.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white rounded-lg transition-all"
+                  className="text-sm flex items-center gap-1.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white rounded-sm transition-all"
                 >
                   <Handshake className="h-3.5 w-3.5" />
                   Colaboraciones
@@ -579,7 +579,7 @@ export default function FeedPage() {
                 ))}
               </div>
             ) : items.length === 0 ? (
-              <div className="text-center py-12 text-social-muted-foreground">
+              <div className="text-center py-12 text-muted-foreground">
                 {activeTab === 'following'
                   ? 'Sigue a creadores para ver su contenido aquí'
                   : activeTab === 'collaborations'
@@ -604,10 +604,10 @@ export default function FeedPage() {
           <aside className="hidden lg:block w-80 shrink-0">
             <div className="sticky top-20 space-y-4">
               <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-social-accent to-pink-500">
+                <div className="p-2 rounded-sm bg-gradient-to-br from-primary to-pink-500">
                   <TrendingUp className="h-4 w-4 text-white" />
                 </div>
-                <h3 className="font-semibold text-social-foreground">Tendencias</h3>
+                <h3 className="font-semibold text-foreground">Tendencias</h3>
               </div>
               <TrendingSection variant="sidebar" />
             </div>

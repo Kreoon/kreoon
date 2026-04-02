@@ -63,7 +63,7 @@ function StatCard({
 }) {
   return (
     <div
-      className="rounded-xl p-4"
+      className="rounded-sm p-4"
       style={{
         background: "rgba(255, 255, 255, 0.05)",
         backdropFilter: "blur(16px) saturate(180%)",
@@ -72,7 +72,7 @@ function StatCard({
       }}
     >
       <div className="flex items-center gap-3">
-        <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", color)}>
+        <div className={cn("w-10 h-10 rounded-sm flex items-center justify-center", color)}>
           <Icon className="h-5 w-5" />
         </div>
         <div>
@@ -271,7 +271,7 @@ const PlatformCRMLeads = () => {
                     key={lead.id}
                     onClick={() => handleLeadClick(lead)}
                     className={cn(
-                      "flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-white/5 cursor-pointer transition-colors border border-transparent",
+                      "flex items-center gap-4 px-4 py-3 rounded-sm hover:bg-white/5 cursor-pointer transition-colors border border-transparent",
                       selectedLead?.id === lead.id && "bg-[#8b5cf6]/10 border-[#8b5cf6]/30"
                     )}
                   >

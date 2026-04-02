@@ -109,7 +109,7 @@ export function RatingStars({
               {/* Background star (empty) */}
               <Star
                 size={config.star}
-                className="absolute inset-0 text-zinc-600"
+                className="absolute inset-0 text-muted-foreground"
                 strokeWidth={1.5}
               />
 
@@ -142,7 +142,7 @@ export function RatingStars({
       {/* Rating value */}
       {showValue && (
         <motion.span
-          className={cn('font-medium text-white ml-1', config.text)}
+          className={cn('font-medium text-foreground ml-1', config.text)}
           key={rating}
           initial={{ opacity: 0, y: -5 }}
           animate={{ opacity: 1, y: 0 }}
@@ -153,7 +153,7 @@ export function RatingStars({
 
       {/* Review count */}
       {showCount && count !== undefined && (
-        <span className={cn('text-zinc-500', config.countText)}>
+        <span className={cn('text-muted-foreground', config.countText)}>
           ({count.toLocaleString()} {count === 1 ? 'review' : 'reviews'})
         </span>
       )}
@@ -176,7 +176,7 @@ export function RatingStarsInline({
         className="text-amber-400"
         fill="#fbbf24"
       />
-      <span className="text-xs font-medium text-white">
+      <span className="text-xs font-medium text-foreground">
         {rating.toFixed(1)}
       </span>
     </div>

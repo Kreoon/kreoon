@@ -12,7 +12,7 @@ export function WizardStepRoles({ selectedRoles, onChange }: WizardStepRolesProp
     <div className="max-w-2xl mx-auto space-y-8">
       {/* Header */}
       <div className="text-center space-y-3">
-        <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+        <div className="w-16 h-16 mx-auto rounded-sm bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
           <Sparkles className="h-8 w-8 text-purple-400" />
         </div>
         <h2 className="text-2xl md:text-3xl font-bold text-white">
@@ -24,7 +24,7 @@ export function WizardStepRoles({ selectedRoles, onChange }: WizardStepRolesProp
       </div>
 
       {/* Role selector */}
-      <div className="bg-white/5 rounded-2xl border border-white/10 p-6">
+      <div className="bg-white/5 rounded-sm border border-white/10 p-6">
         <MarketplaceRoleSelector
           selectedRoles={selectedRoles}
           onChange={onChange}
@@ -44,7 +44,7 @@ export function WizardStepRoles({ selectedRoles, onChange }: WizardStepRolesProp
       )}
 
       {selectedRoles.length > 0 && (
-        <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 text-center">
+        <div className="p-4 rounded-sm bg-purple-500/10 border border-purple-500/20 text-center">
           <p className="text-purple-300 text-sm">
             {selectedRoles.length} {selectedRoles.length === 1 ? 'rol seleccionado' : 'roles seleccionados'} — Las marcas veran estos roles en tu perfil
           </p>

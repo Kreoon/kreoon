@@ -147,7 +147,7 @@ export function QuickCampaignWizard({ onClose, isFirstCampaign = false, brandId 
       </div>
 
       {isFirstCampaign && (
-        <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 mb-6 flex items-center gap-3">
+        <div className="bg-green-500/10 border border-green-500/20 rounded-sm p-4 mb-6 flex items-center gap-3">
           <Sparkles className="h-5 w-5 text-green-400 flex-shrink-0" />
           <div>
             <p className="text-green-300 font-semibold text-sm">{FIRST_CAMPAIGN_PROMO.badge_text}</p>
@@ -173,7 +173,7 @@ export function QuickCampaignWizard({ onClose, isFirstCampaign = false, brandId 
                       setBudgetOverride(t.default_budget_min);
                     }}
                     className={cn(
-                      'p-4 rounded-xl border text-left transition-all',
+                      'p-4 rounded-sm border text-left transition-all',
                       selectedTemplate?.id === t.id
                         ? 'border-purple-500 bg-purple-500/10'
                         : 'border-white/10 bg-card/60 hover:border-white/20',
@@ -203,7 +203,7 @@ export function QuickCampaignWizard({ onClose, isFirstCampaign = false, brandId 
                   value={campaignName}
                   onChange={e => setCampaignName(e.target.value)}
                   placeholder="ej: Lanzamiento Verano 2026"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50"
+                  className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50"
                   maxLength={120}
                 />
               </div>
@@ -213,7 +213,7 @@ export function QuickCampaignWizard({ onClose, isFirstCampaign = false, brandId 
                   value={briefDescription}
                   onChange={e => setBriefDescription(e.target.value)}
                   placeholder="Describe brevemente que buscas con esta campana..."
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 min-h-[100px] resize-none"
+                  className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 min-h-[100px] resize-none"
                   maxLength={1000}
                 />
               </div>
@@ -244,7 +244,7 @@ export function QuickCampaignWizard({ onClose, isFirstCampaign = false, brandId 
               onClick={() => setStep(1)}
               disabled={!canProceed}
               className={cn(
-                'flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all',
+                'flex items-center gap-2 px-6 py-3 rounded-sm font-semibold text-sm transition-all',
                 canProceed ? 'bg-purple-600 hover:bg-purple-500 text-white' : 'bg-white/5 text-gray-600 cursor-not-allowed',
               )}
             >
@@ -258,7 +258,7 @@ export function QuickCampaignWizard({ onClose, isFirstCampaign = false, brandId 
       {step === 1 && (
         <div className="space-y-6">
           {/* Review summary */}
-          <div className="bg-card/80 border border-white/10 rounded-xl p-5 space-y-3">
+          <div className="bg-card/80 border border-white/10 rounded-sm p-5 space-y-3">
             <h2 className="text-white font-semibold">Resumen de tu campana</h2>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
@@ -306,14 +306,14 @@ export function QuickCampaignWizard({ onClose, isFirstCampaign = false, brandId 
               <button
                 onClick={handleSaveDraft}
                 disabled={submitting}
-                className="px-5 py-2.5 rounded-xl text-sm font-medium bg-white/5 hover:bg-white/10 text-gray-300 transition-colors"
+                className="px-5 py-2.5 rounded-sm text-sm font-medium bg-white/5 hover:bg-white/10 text-gray-300 transition-colors"
               >
                 Guardar Borrador
               </button>
               <button
                 onClick={handlePublish}
                 disabled={submitting}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold bg-purple-600 hover:bg-purple-500 text-white transition-colors"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-sm text-sm font-semibold bg-purple-600 hover:bg-purple-500 text-white transition-colors"
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                 Publicar Campana

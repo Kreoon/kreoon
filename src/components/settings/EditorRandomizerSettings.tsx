@@ -256,7 +256,7 @@ export function EditorRandomizerSettings() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Enable/Disable Toggle */}
-        <div className="flex items-center justify-between p-4 border rounded-lg">
+        <div className="flex items-center justify-between p-4 border rounded-sm">
           <div>
             <Label htmlFor="randomizer-toggle" className="text-base font-medium">
               Activar aleatorizador
@@ -278,7 +278,7 @@ export function EditorRandomizerSettings() {
           <h4 className="font-medium">Editores en el Pool ({editorsInPool.length})</h4>
           
           {editorsInPool.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center border rounded-lg">
+            <p className="text-sm text-muted-foreground py-4 text-center border rounded-sm">
               No hay editores en el pool. Agrega editores para que puedan ser asignados automáticamente.
             </p>
           ) : (
@@ -286,7 +286,7 @@ export function EditorRandomizerSettings() {
               {editorsInPool.map(editor => (
                 <div
                   key={editor.id}
-                  className="flex items-center justify-between p-3 border rounded-lg bg-muted/30"
+                  className="flex items-center justify-between p-3 border rounded-sm bg-muted/30"
                 >
                   <div className="flex items-center gap-3">
                     <Avatar className="h-9 w-9">
@@ -333,7 +333,7 @@ export function EditorRandomizerSettings() {
               {editorsNotInPool.map(editor => (
                 <label
                   key={editor.id}
-                  className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer"
+                  className="flex items-center gap-3 p-3 border rounded-sm hover:bg-muted/50 cursor-pointer"
                 >
                   <Checkbox
                     checked={selectedEditors.includes(editor.id)}

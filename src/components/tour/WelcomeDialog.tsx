@@ -32,7 +32,7 @@ export function WelcomeDialog({
         {/* Header gradient */}
         <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-transparent p-6 pb-4">
           <DialogHeader className="text-center sm:text-center">
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/30 animate-in zoom-in duration-500">
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-sm bg-primary shadow-lg shadow-primary/30 animate-in zoom-in duration-500">
               <Sparkles className="h-10 w-10 text-primary-foreground" />
             </div>
             <DialogTitle className="text-2xl font-bold">
@@ -49,7 +49,7 @@ export function WelcomeDialog({
 
         <div className="p-6 pt-2 space-y-5">
           {/* Role description */}
-          <div className="p-4 rounded-xl bg-muted/50 border border-border/50">
+          <div className="p-4 rounded-sm bg-muted/50 border border-border/50">
             <p className="text-sm text-muted-foreground leading-relaxed">
               {roleDescription}
             </p>

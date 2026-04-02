@@ -13,11 +13,12 @@ interface CreatorHeaderProps {
   hasPaidPlan?: boolean;
 }
 
+// Nova Design System level styles
 const LEVEL_STYLES: Record<string, string> = {
-  elite: 'bg-gradient-to-r from-purple-600 to-pink-500 text-white',
-  gold: 'bg-gradient-to-r from-yellow-600 to-amber-500 text-white',
-  silver: 'bg-gray-500/30 text-foreground/80 border border-gray-500/50',
-  bronze: 'bg-amber-900/30 text-amber-400 border border-amber-700/50',
+  elite: 'bg-[var(--nova-gradient-aurora)] text-[var(--nova-text-bright)]',
+  gold: 'bg-gradient-to-r from-yellow-600 to-amber-500 text-[var(--nova-text-bright)]',
+  silver: 'bg-[var(--nova-bg-elevated)] text-[var(--nova-text-primary)] border border-[var(--nova-border-default)]',
+  bronze: 'bg-amber-900/30 text-[var(--nova-warning)] border border-amber-700/50',
 };
 
 const LEVEL_LABELS: Record<string, string> = {
@@ -98,7 +99,7 @@ export function CreatorHeader({ creator, hasPaidPlan = false }: CreatorHeaderPro
     .map(([k]) => k);
 
   return (
-    <div className="space-y-4 pb-8 border-b border-white/10">
+    <div className="space-y-4 pb-8 border-b border-[var(--nova-border-subtle)]">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div className="flex items-start gap-4">
           {/* Avatar */}
@@ -106,10 +107,10 @@ export function CreatorHeader({ creator, hasPaidPlan = false }: CreatorHeaderPro
             <img
               src={creator.avatar_url}
               alt={creator.display_name}
-              className="w-16 h-16 rounded-full border-2 border-purple-500 object-cover flex-shrink-0"
+              className="w-16 h-16 rounded-full border-2 border-[var(--nova-accent-primary)] object-cover flex-shrink-0"
             />
           ) : (
-            <div className="w-16 h-16 rounded-full border-2 border-purple-500 bg-purple-500/20 flex items-center justify-center text-purple-300 font-bold text-xl flex-shrink-0">
+            <div className="w-16 h-16 rounded-full border-2 border-[var(--nova-accent-primary)] bg-[var(--nova-accent-primary)]/20 flex items-center justify-center text-[var(--nova-accent-primary-hover)] font-bold text-xl flex-shrink-0">
               {initials}
             </div>
           )}
@@ -117,9 +118,9 @@ export function CreatorHeader({ creator, hasPaidPlan = false }: CreatorHeaderPro
           <div className="space-y-1.5">
             {/* Name + verified + level */}
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl font-bold text-white">{creator.display_name}</h1>
+              <h1 className="text-2xl font-bold text-[var(--nova-text-bright)]">{creator.display_name}</h1>
               {creator.is_verified && (
-                <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
+                <CheckCircle2 className="h-5 w-5 text-[var(--nova-success)] flex-shrink-0" />
               )}
               <span
                 className={cn(
@@ -168,12 +169,12 @@ export function CreatorHeader({ creator, hasPaidPlan = false }: CreatorHeaderPro
             {/* Rating + projects */}
             <div className="flex items-center gap-3 text-sm flex-wrap">
               <div className="flex items-center gap-1">
-                <Star className="h-4 w-4 text-purple-400 fill-purple-400" />
-                <span className="text-white font-medium">{creator.rating_avg.toFixed(1)}</span>
-                <span className="text-gray-500">({creator.rating_count} reseñas)</span>
+                <Star className="h-4 w-4 text-[var(--nova-accent-primary)] fill-[var(--nova-accent-primary)]" />
+                <span className="text-[var(--nova-text-bright)] font-medium">{creator.rating_avg.toFixed(1)}</span>
+                <span className="text-[var(--nova-text-muted)]">({creator.rating_count} resenas)</span>
               </div>
-              <span className="text-gray-600">·</span>
-              <span className="text-gray-400">{creator.completed_projects} proyectos</span>
+              <span className="text-[var(--nova-text-disabled)]">.</span>
+              <span className="text-[var(--nova-text-secondary)]">{creator.completed_projects} proyectos</span>
             </div>
 
             {/* Platform icons — non-clickable indicators */}
@@ -230,7 +231,7 @@ export function CreatorHeader({ creator, hasPaidPlan = false }: CreatorHeaderPro
                   {/* Tooltip for non-paid users */}
                   {!hasPaidPlan && (
                     <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-50">
-                      <div className="bg-card border border-white/10 rounded-lg shadow-xl px-3 py-2 text-xs text-foreground/80 w-56">
+                      <div className="bg-card border border-white/10 rounded-sm shadow-xl px-3 py-2 text-xs text-foreground/80 w-56">
                         Actualiza tu plan para acceder al canje de producto y ahorrar en campañas.
                       </div>
                     </div>
@@ -246,22 +247,22 @@ export function CreatorHeader({ creator, hasPaidPlan = false }: CreatorHeaderPro
           <div className="relative">
             <button
               onClick={() => setShowShareMenu(!showShareMenu)}
-              className="flex items-center gap-2 border border-white/20 rounded-lg px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors"
+              className="flex items-center gap-2 border border-white/20 rounded-sm px-4 py-2 text-sm text-white hover:bg-white/5 transition-colors"
             >
               <Share2 className="h-4 w-4" />
               Compartir
             </button>
             {showShareMenu && (
-              <div className="absolute right-0 top-full mt-2 bg-card border border-white/10 rounded-xl shadow-xl p-2 z-50 min-w-[180px] animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="absolute right-0 top-full mt-2 bg-card border border-white/10 rounded-sm shadow-xl p-2 z-50 min-w-[180px] animate-in fade-in slide-in-from-top-2 duration-200">
                 <button
                   onClick={() => handleShare('copy')}
-                  className="w-full text-left px-3 py-2 rounded-lg text-sm text-foreground/80 hover:bg-white/5"
+                  className="w-full text-left px-3 py-2 rounded-sm text-sm text-foreground/80 hover:bg-white/5"
                 >
                   Copiar enlace
                 </button>
                 <button
                   onClick={() => handleShare('whatsapp')}
-                  className="w-full text-left px-3 py-2 rounded-lg text-sm text-foreground/80 hover:bg-white/5"
+                  className="w-full text-left px-3 py-2 rounded-sm text-sm text-foreground/80 hover:bg-white/5"
                 >
                   WhatsApp
                 </button>
@@ -271,7 +272,7 @@ export function CreatorHeader({ creator, hasPaidPlan = false }: CreatorHeaderPro
           <button
             onClick={() => setIsSaved(!isSaved)}
             className={cn(
-              'flex items-center gap-2 border rounded-lg px-4 py-2 text-sm transition-colors',
+              'flex items-center gap-2 border rounded-sm px-4 py-2 text-sm transition-colors',
               isSaved
                 ? 'border-pink-500/50 text-pink-400 bg-pink-500/10'
                 : 'border-white/20 text-white hover:bg-white/5',
@@ -287,14 +288,14 @@ export function CreatorHeader({ creator, hasPaidPlan = false }: CreatorHeaderPro
               onClick={() => setShowRecruitDialog(true)}
               disabled={hasPendingInvitation}
               className={cn(
-                'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors',
+                'flex items-center gap-2 rounded-sm px-4 py-2 text-sm font-medium transition-all',
                 hasPendingInvitation
-                  ? 'bg-gray-500/20 text-gray-500 cursor-not-allowed'
-                  : 'bg-purple-600 hover:bg-purple-700 text-white',
+                  ? 'bg-[var(--nova-bg-elevated)] text-[var(--nova-text-muted)] cursor-not-allowed'
+                  : 'bg-[var(--nova-gradient-primary)] hover:shadow-[var(--nova-shadow-glow)] text-[var(--nova-text-bright)]',
               )}
             >
               <UserPlus className="h-4 w-4" />
-              {hasPendingInvitation ? 'Invitación enviada' : 'Reclutar'}
+              {hasPendingInvitation ? 'Invitacion enviada' : 'Reclutar'}
             </button>
           )}
         </div>

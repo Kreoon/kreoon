@@ -254,7 +254,7 @@ export function UserManagement() {
                 filteredUsers.map((user) => (
                   <div 
                     key={user.id}
-                    className="flex items-center justify-between p-4 rounded-lg border border-border bg-card hover:bg-muted/50 transition-colors"
+                    className="flex items-center justify-between p-4 rounded-sm border border-border bg-card hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <Avatar>

@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { CrmCustomFieldDefinition, CrmEntityType, CrmCustomFieldType } from '@/types/crm.types';
+import { uploadAvatar } from '@/lib/bunnyUpload';
 
 export async function getCrmCustomFieldDefs(
   orgId: string,
@@ -157,7 +158,7 @@ export async function updateCreatorProfileByUserId(
   if (error) throw error;
 }
 
-// Upload avatar and update both profiles and creator_profiles
+// Upload avatar and update both profiles and creator_profiles (Bunny CDN)
 export async function uploadCreatorAvatar(
   userId: string,
   file: File,
@@ -170,18 +171,9 @@ export async function uploadCreatorAvatar(
     throw new Error('La imagen no debe superar los 5MB');
   }
 
-  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-  const fileName = `${userId}/avatar_${Date.now()}.${ext}`;
-
-  // Upload to storage
-  const { error: uploadError } = await supabase.storage
-    .from('avatars')
-    .upload(fileName, file, { cacheControl: '3600', upsert: true });
-
-  if (uploadError) throw uploadError;
-
-  const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
-  const avatarUrl = data.publicUrl;
+  // Upload to Bunny CDN (auto-optimized to WebP, 256x256)
+  const result = await uploadAvatar(file, userId);
+  const avatarUrl = result.cdnUrl;
 
   // Update both tables
   await Promise.all([

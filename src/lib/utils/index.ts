@@ -5,6 +5,7 @@
 export {
   formatDate,
   formatDateTime,
+  formatTime,
   formatNumber,
   formatCurrency,
   formatCompactNumber,

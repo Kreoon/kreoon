@@ -132,7 +132,7 @@ export function ProductDocumentUploader({
       <div className="space-y-2">
         {/* File upload area */}
         {!hasFile ? (
-          <div className="border-2 border-dashed rounded-lg p-4 transition-colors hover:border-primary/50">
+          <div className="border-2 border-dashed rounded-sm p-4 transition-colors hover:border-primary/50">
             <input
               ref={fileInputRef}
               type="file"
@@ -181,7 +181,7 @@ export function ProductDocumentUploader({
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border">
+          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-sm border">
             <div className="flex-shrink-0">
               <CheckCircle className="h-5 w-5 text-green-500" />
             </div>

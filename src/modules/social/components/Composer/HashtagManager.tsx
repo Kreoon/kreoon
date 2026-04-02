@@ -99,7 +99,7 @@ export function HashtagManager({ hashtags, onChange, maxHashtags = 30 }: Hashtag
 
       {/* Suggestions */}
       {showSuggestions && (
-        <div className="p-3 rounded-lg bg-muted/30 border space-y-3">
+        <div className="p-3 rounded-sm bg-muted/30 border space-y-3">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Sugerencias</p>
           {Object.entries(SUGGESTED_GROUPS).map(([group, tags]) => (
             <div key={group} className="space-y-1">

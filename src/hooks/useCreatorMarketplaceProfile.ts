@@ -15,38 +15,79 @@ export function useCreatorMarketplaceProfile(userId: string | undefined) {
     queryFn: async () => {
       if (!userId) return null;
 
-      // Fetch profile
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          full_name,
-          username,
-          avatar_url,
-          bio,
-          is_available_for_hire,
-          marketplace_enabled,
-          minimum_budget,
-          preferred_contact_method,
-          is_featured_creator,
-          featured_until,
-          total_contracts_completed,
-          total_earnings,
-          avg_rating,
-          response_rate,
-          on_time_delivery_rate,
-          is_independent
-        `)
-        .eq('id', userId)
-        .single();
-
-      if (profileError) throw profileError;
-
-      // Fetch organization if not independent
-      let organizationName = null;
-      let organizationId = null;
-      if (!profile.is_independent) {
-        const { data: membership } = await supabase
+      // Batch 1: Fetch all independent queries in parallel
+      const [
+        profileResult,
+        servicesResult,
+        availabilityResult,
+        verificationResult,
+        reviewsResult,
+        reviewsCountResult,
+        membershipResult,
+      ] = await Promise.all([
+        // Profile
+        supabase
+          .from('profiles')
+          .select(`
+            id,
+            full_name,
+            username,
+            avatar_url,
+            bio,
+            is_available_for_hire,
+            marketplace_enabled,
+            minimum_budget,
+            preferred_contact_method,
+            is_featured_creator,
+            featured_until,
+            total_contracts_completed,
+            total_earnings,
+            avg_rating,
+            response_rate,
+            on_time_delivery_rate,
+            is_independent
+          `)
+          .eq('id', userId)
+          .single(),
+        // Services
+        supabase
+          .from('creator_services')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('is_active', true)
+          .order('is_featured', { ascending: false })
+          .order('display_order', { ascending: true }),
+        // Availability
+        supabase
+          .from('creator_availability')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle(),
+        // Verification
+        supabase
+          .from('marketplace_verifications')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle(),
+        // Recent reviews
+        supabase
+          .from('marketplace_reviews')
+          .select(`
+            *,
+            reviewer:profiles!reviewer_id (id, full_name, avatar_url, username)
+          `)
+          .eq('reviewed_id', userId)
+          .eq('is_public', true)
+          .order('created_at', { ascending: false })
+          .limit(5),
+        // Reviews count
+        supabase
+          .from('marketplace_reviews')
+          .select('id', { count: 'exact', head: true })
+          .eq('reviewed_id', userId)
+          .eq('is_public', true),
+        // Organization membership (fetch always, filter later based on is_independent)
+        supabase
           .from('organization_members')
           .select(`
             organization_id,
@@ -54,36 +95,36 @@ export function useCreatorMarketplaceProfile(userId: string | undefined) {
           `)
           .eq('user_id', userId)
           .eq('status', 'active')
-          .maybeSingle();
+          .maybeSingle(),
+      ]);
 
-        if (membership) {
-          organizationId = membership.organization_id;
-          organizationName = (membership.organizations as any)?.name || null;
-        }
+      // Handle profile error (critical)
+      if (profileResult.error) throw profileResult.error;
+      const profile = profileResult.data;
+
+      // Extract data from parallel results
+      const servicesData = servicesResult.data;
+      const availabilityData = availabilityResult.data;
+      const verification = verificationResult.data;
+      const reviewsData = reviewsResult.data;
+      const reviewsCount = reviewsCountResult.count;
+
+      // Process organization data (only use if not independent)
+      let organizationName = null;
+      let organizationId = null;
+      if (!profile.is_independent && membershipResult.data) {
+        organizationId = membershipResult.data.organization_id;
+        organizationName = (membershipResult.data.organizations as any)?.name || null;
       }
 
-      // Fetch services
-      const { data: servicesData } = await (supabase as any)
-        .from('creator_services')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('is_active', true)
-        .order('is_featured', { ascending: false })
-        .order('display_order', { ascending: true });
-
+      // Process services
       const services: CreatorService[] = (servicesData || []).map((s: any) => ({
         ...s,
         deliverables: s.deliverables || [],
         portfolio_items: s.portfolio_items || [],
       }));
 
-      // Fetch availability
-      const { data: availabilityData } = await (supabase as any)
-        .from('creator_availability')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
-
+      // Process availability
       const availability: CreatorAvailability | null = availabilityData
         ? {
             ...availabilityData,
@@ -92,33 +133,7 @@ export function useCreatorMarketplaceProfile(userId: string | undefined) {
           }
         : null;
 
-      // Fetch verification
-      const { data: verification } = await (supabase as any)
-        .from('marketplace_verifications')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      // Fetch recent reviews
-      const { data: reviewsData } = await (supabase as any)
-        .from('marketplace_reviews')
-        .select(`
-          *,
-          reviewer:profiles!reviewer_id (id, full_name, avatar_url, username)
-        `)
-        .eq('reviewed_id', userId)
-        .eq('is_public', true)
-        .order('created_at', { ascending: false })
-        .limit(5);
-
       const recentReviews: MarketplaceReview[] = reviewsData || [];
-
-      // Count total reviews
-      const { count: reviewsCount } = await (supabase as any)
-        .from('marketplace_reviews')
-        .select('id', { count: 'exact', head: true })
-        .eq('reviewed_id', userId)
-        .eq('is_public', true);
 
       // Build stats
       const stats: MarketplaceProfileStats = {
@@ -177,7 +192,7 @@ export function useTrackProfileView(profileId: string | undefined) {
       if (user?.id === profileId) return null;
 
       // Insert view
-      await (supabase as any)
+      await supabase
         .from('profile_views')
         .insert({
           profile_id: profileId,
@@ -206,41 +221,46 @@ export function useProfileViewStats(profileId: string | undefined) {
       const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-      // Total views
-      const { count: totalViews } = await (supabase as any)
-        .from('profile_views')
-        .select('id', { count: 'exact', head: true })
-        .eq('profile_id', profileId);
-
-      // Views last 7 days
-      const { count: views7Days } = await (supabase as any)
-        .from('profile_views')
-        .select('id', { count: 'exact', head: true })
-        .eq('profile_id', profileId)
-        .gte('viewed_at', last7Days.toISOString());
-
-      // Views last 30 days
-      const { count: views30Days } = await (supabase as any)
-        .from('profile_views')
-        .select('id', { count: 'exact', head: true })
-        .eq('profile_id', profileId)
-        .gte('viewed_at', last30Days.toISOString());
-
-      // Unique viewers last 30 days
-      const { data: uniqueViewers } = await (supabase as any)
-        .from('profile_views')
-        .select('viewer_id, viewer_anon_id')
-        .eq('profile_id', profileId)
-        .gte('viewed_at', last30Days.toISOString());
+      // Fetch all stats in parallel
+      const [
+        totalViewsResult,
+        views7DaysResult,
+        views30DaysResult,
+        uniqueViewersResult,
+      ] = await Promise.all([
+        // Total views
+        supabase
+          .from('profile_views')
+          .select('id', { count: 'exact', head: true })
+          .eq('profile_id', profileId),
+        // Views last 7 days
+        supabase
+          .from('profile_views')
+          .select('id', { count: 'exact', head: true })
+          .eq('profile_id', profileId)
+          .gte('viewed_at', last7Days.toISOString()),
+        // Views last 30 days
+        supabase
+          .from('profile_views')
+          .select('id', { count: 'exact', head: true })
+          .eq('profile_id', profileId)
+          .gte('viewed_at', last30Days.toISOString()),
+        // Unique viewers last 30 days
+        supabase
+          .from('profile_views')
+          .select('viewer_id, viewer_anon_id')
+          .eq('profile_id', profileId)
+          .gte('viewed_at', last30Days.toISOString()),
+      ]);
 
       const uniqueCount = new Set(
-        (uniqueViewers || []).map((v: any) => v.viewer_id || v.viewer_anon_id)
+        (uniqueViewersResult.data || []).map((v: any) => v.viewer_id || v.viewer_anon_id)
       ).size;
 
       return {
-        total: totalViews || 0,
-        last7Days: views7Days || 0,
-        last30Days: views30Days || 0,
+        total: totalViewsResult.count || 0,
+        last7Days: views7DaysResult.count || 0,
+        last30Days: views30DaysResult.count || 0,
         uniqueLast30Days: uniqueCount,
       };
     },

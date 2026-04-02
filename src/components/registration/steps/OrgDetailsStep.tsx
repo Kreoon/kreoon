@@ -97,7 +97,7 @@ export function OrgDetailsStep({ data, onChange, onNext, onBack, mode }: StepCom
                 key={t.id}
                 onClick={() => onChange({ orgSubType: t.id })}
                 className={cn(
-                  'flex flex-col items-center gap-1 rounded-lg border p-3 text-xs transition-all',
+                  'flex flex-col items-center gap-1 rounded-sm border p-3 text-xs transition-all',
                   selected
                     ? 'border-amber-500/50 bg-amber-500/15 text-amber-300'
                     : 'border-border bg-muted/20 text-muted-foreground hover:border-border',
@@ -120,14 +120,14 @@ export function OrgDetailsStep({ data, onChange, onNext, onBack, mode }: StepCom
           value={data.orgName}
           onChange={e => onChange({ orgName: e.target.value })}
           placeholder="Mi Organización"
-          className="w-full rounded-lg border border-border bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
+          className="w-full rounded-sm border border-border bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
         />
       </div>
 
       {/* Slug */}
       <div className="mb-4">
         <label className="block text-xs font-medium text-foreground/80 mb-1">URL de tu organización</label>
-        <div className="flex items-center rounded-lg border border-border bg-white/5 overflow-hidden">
+        <div className="flex items-center rounded-sm border border-border bg-white/5 overflow-hidden">
           <span className="px-3 text-xs text-gray-500 border-r border-border">kreoon.com/org/</span>
           <input
             type="text"
@@ -155,7 +155,7 @@ export function OrgDetailsStep({ data, onChange, onNext, onBack, mode }: StepCom
                 key={plan.id}
                 onClick={() => onChange({ selectedPlan: plan.id })}
                 className={cn(
-                  'w-full text-left rounded-lg border p-3 transition-all',
+                  'w-full text-left rounded-sm border p-3 transition-all',
                   selected
                     ? 'border-amber-500/50 bg-amber-500/10'
                     : 'border-border bg-muted/20 hover:border-border',
@@ -183,7 +183,7 @@ export function OrgDetailsStep({ data, onChange, onNext, onBack, mode }: StepCom
 
       <button
         onClick={handleNext}
-        className="w-full rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-medium py-2.5 text-sm transition-colors"
+        className="w-full rounded-sm bg-amber-600 hover:bg-amber-700 text-white font-medium py-2.5 text-sm transition-colors"
       >
         Continuar
       </button>

@@ -136,7 +136,7 @@ export function ChatInput({
     <div
       className={cn(
         'flex items-end gap-2',
-        'p-2 rounded-xl',
+        'p-2 rounded-sm',
         'bg-card/80 border border-violet-500/15',
         'transition-colors duration-150',
         'focus-within:border-violet-500/30'
@@ -149,7 +149,7 @@ export function ChatInput({
           onClick={handleAttachmentClick}
           disabled={isLoading || disabled}
           className={cn(
-            'p-2 rounded-lg transition-all duration-150',
+            'p-2 rounded-sm transition-all duration-150',
             'text-muted-foreground opacity-50',
             'hover:bg-primary/10 hover:text-muted-foreground',
             'disabled:cursor-not-allowed'
@@ -164,7 +164,7 @@ export function ChatInput({
           <div
             className={cn(
               'absolute bottom-full left-0 mb-2',
-              'px-2 py-1 rounded-md',
+              'px-2 py-1 rounded-sm',
               'bg-card border border-violet-500/30',
               'text-[10px] text-violet-300 whitespace-nowrap',
               'shadow-lg animate-fade-in'
@@ -204,7 +204,7 @@ export function ChatInput({
         onClick={handleSend}
         disabled={isLoading || disabled || !text.trim()}
         className={cn(
-          'p-2 rounded-lg transition-all duration-150',
+          'p-2 rounded-sm transition-all duration-150',
           text.trim() && !isLoading && !disabled
             ? 'bg-violet-500/20 text-violet-300 hover:bg-violet-500/30'
             : 'text-muted-foreground/50 cursor-not-allowed',

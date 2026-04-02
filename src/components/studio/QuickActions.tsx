@@ -107,9 +107,9 @@ export function QuickActions({
             <motion.button
               key={action.action}
               className={cn(
-                'relative flex items-center gap-2 px-3 py-2 rounded-xl',
-                'bg-zinc-900/60 hover:bg-zinc-800/80',
-                'border border-zinc-800/50 hover:border-zinc-700/50',
+                'relative flex items-center gap-2 px-3 py-2 rounded-sm',
+                'bg-card hover:bg-secondary',
+                'border border-border hover:border-border',
                 'transition-all'
               )}
               onClick={() => onAction(action.action)}
@@ -120,7 +120,7 @@ export function QuickActions({
               transition={{ delay: index * 0.05 }}
             >
               <Icon className="w-4 h-4" style={{ color: action.color }} />
-              <span className="text-sm text-white font-medium">{action.label}</span>
+              <span className="text-sm text-foreground font-medium">{action.label}</span>
 
               {count !== undefined && count > 0 && (
                 <span
@@ -153,9 +153,9 @@ export function QuickActions({
           <motion.button
             key={action.action}
             className={cn(
-              'relative flex flex-col items-center justify-center gap-3 p-4 rounded-2xl',
-              'bg-gradient-to-br from-zinc-900/80 to-zinc-900/40',
-              'border border-zinc-800/50 hover:border-purple-500/30',
+              'relative flex flex-col items-center justify-center gap-3 p-4 rounded-sm',
+              'bg-card',
+              'border border-border hover:border-purple-500/30',
               'transition-all group'
             )}
             onClick={() => onAction(action.action)}
@@ -189,7 +189,7 @@ export function QuickActions({
             {/* Icon */}
             <motion.div
               className={cn(
-                'w-12 h-12 rounded-xl flex items-center justify-center',
+                'w-12 h-12 rounded-sm flex items-center justify-center',
                 'group-hover:scale-110 transition-transform'
               )}
               style={{
@@ -204,13 +204,13 @@ export function QuickActions({
             </motion.div>
 
             {/* Label */}
-            <span className="text-sm font-medium text-white text-center">
+            <span className="text-sm font-medium text-foreground text-center">
               {action.label}
             </span>
 
             {/* Hover glow effect */}
             <motion.div
-              className="absolute inset-0 rounded-2xl pointer-events-none"
+              className="absolute inset-0 rounded-sm pointer-events-none"
               style={{
                 background: `radial-gradient(circle at center, ${action.color}10 0%, transparent 70%)`,
               }}

@@ -27,7 +27,7 @@ const CountdownDisplay = memo(function CountdownDisplay() {
       animate={urgency === 'critical' ? { scale: [1, 1.02, 1] } : {}}
       transition={{ duration: 2, repeat: Infinity }}
       className={cn(
-        'flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm',
+        'flex items-center gap-2 px-3 py-2 rounded-sm text-xs sm:text-sm',
         urgency === 'critical' && 'bg-red-500/20 border border-red-500/30',
         urgency === 'high' && 'bg-orange-500/10 border border-orange-500/20',
         urgency === 'normal' && 'bg-white/5 border border-white/10'
@@ -60,16 +60,16 @@ export function HeroStatsBar({ userName, avatar, keysCollected }: HeroStatsBarPr
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        'flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl',
+        'flex flex-wrap items-center justify-between gap-3 p-4 rounded-sm',
         'bg-gradient-to-r from-white/[0.03] via-white/[0.05] to-white/[0.03]',
-        'border border-white/10 backdrop-blur-xl'
+        'border border-white/10'
       )}
     >
       {/* Hero Info */}
       <div className="flex items-center gap-3">
         {/* Avatar */}
         <div className={cn(
-          'relative w-12 h-12 rounded-xl overflow-hidden',
+          'relative w-12 h-12 rounded-sm overflow-hidden',
           'border-2',
           level.borderColor,
           isFounder && 'ring-2 ring-yellow-400/50 ring-offset-2 ring-offset-background'
@@ -111,7 +111,7 @@ export function HeroStatsBar({ userName, avatar, keysCollected }: HeroStatsBarPr
       {/* Keys Progress */}
       <div className="flex items-center gap-2">
         <div className={cn(
-          'flex items-center gap-1.5 px-3 py-2 rounded-xl',
+          'flex items-center gap-1.5 px-3 py-2 rounded-sm',
           isFounder ? 'bg-yellow-500/20 border border-yellow-500/30' : 'bg-purple-500/10 border border-purple-500/20'
         )}>
           <Key className={cn('w-4 h-4', isFounder ? 'text-yellow-400' : 'text-purple-400')} />

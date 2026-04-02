@@ -50,7 +50,7 @@ export function KpiListDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh]">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-2xl max-h-[80dvh] sm:max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {title}
@@ -70,7 +70,7 @@ export function KpiListDialog({
                 <div
                   key={client.id}
                   onClick={() => onSelectClient?.(client)}
-                  className="p-4 rounded-lg border bg-card hover:bg-accent/50 cursor-pointer transition-colors"
+                  className="p-4 rounded-sm border bg-card hover:bg-accent/50 cursor-pointer transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
@@ -104,7 +104,7 @@ export function KpiListDialog({
               {(type === 'creators' || type === 'editors') && profiles.map((profile) => (
                 <div
                   key={profile.id}
-                  className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                  className="p-4 rounded-sm border bg-card hover:bg-accent/50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
@@ -135,7 +135,7 @@ export function KpiListDialog({
               {(type === 'packages-sold' || type === 'packages-paid' || type === 'packages-pending') && packages.map((pkg) => (
                 <div
                   key={pkg.id}
-                  className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                  className="p-4 rounded-sm border bg-card hover:bg-accent/50 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">

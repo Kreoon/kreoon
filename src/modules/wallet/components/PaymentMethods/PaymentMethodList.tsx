@@ -58,7 +58,7 @@ export function PaymentMethodList({ className }: PaymentMethodListProps) {
       <Card className={cn('', className)}>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
+            <div className="p-2 rounded-sm bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
               <CreditCard className="h-5 w-5 text-primary" />
             </div>
             <CardTitle>Métodos de Pago</CardTitle>
@@ -69,10 +69,10 @@ export function PaymentMethodList({ className }: PaymentMethodListProps) {
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)] animate-pulse"
+                className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] animate-pulse"
               >
                 <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-xl bg-[hsl(270,100%,60%,0.1)]" />
+                  <div className="h-12 w-12 rounded-sm bg-[hsl(270,100%,60%,0.1)]" />
                   <div className="flex-1">
                     <div className="h-4 w-32 bg-[hsl(270,100%,60%,0.1)] rounded mb-2" />
                     <div className="h-3 w-24 bg-[hsl(270,100%,60%,0.05)] rounded" />
@@ -94,7 +94,7 @@ export function PaymentMethodList({ className }: PaymentMethodListProps) {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/10">
+                <div className="p-2 rounded-sm bg-gradient-to-br from-indigo-500/20 to-purple-500/10">
                   <CreditCard className="h-5 w-5 text-indigo-400" />
                 </div>
                 <div>
@@ -120,7 +120,7 @@ export function PaymentMethodList({ className }: PaymentMethodListProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
+              <div className="p-2 rounded-sm bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
                 <CreditCard className="h-5 w-5 text-primary" />
               </div>
               <div>

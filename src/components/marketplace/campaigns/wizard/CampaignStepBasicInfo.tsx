@@ -33,92 +33,92 @@ export function CampaignStepBasicInfo({ data, onChange }: CampaignStepBasicInfoP
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold text-white mb-1">Informacion Basica</h2>
-        <p className="text-gray-500 text-sm">Define los datos principales de tu campana</p>
+        <h2 className="text-lg font-bold text-[var(--nova-text-bright)] mb-1">Informacion Basica</h2>
+        <p className="text-[var(--nova-text-muted)] text-sm">Define los datos principales de tu campana</p>
       </div>
 
       {/* Title */}
       <div>
-        <label className="text-foreground/80 text-sm font-medium block mb-1.5">
-          Titulo de la Campana <span className="text-red-400">*</span>
+        <label className="text-[var(--nova-text-primary)] text-sm font-medium block mb-1.5">
+          Titulo de la Campana <span className="text-[var(--nova-error)]">*</span>
         </label>
         <input
           value={data.title}
           onChange={e => onChange('title', e.target.value)}
           placeholder="Ej: Lanzamiento Proteina Vegana 2026"
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
+          className="w-full bg-[var(--nova-bg-elevated)] border border-[var(--nova-border-default)] rounded-sm px-4 py-3 text-[var(--nova-text-bright)] text-sm placeholder:text-[var(--nova-text-disabled)] focus:outline-none focus:border-[var(--nova-accent-primary)] transition-colors"
         />
       </div>
 
       {/* Description */}
       <div>
-        <label className="text-foreground/80 text-sm font-medium block mb-1.5">
-          Descripcion <span className="text-red-400">*</span>
+        <label className="text-[var(--nova-text-primary)] text-sm font-medium block mb-1.5">
+          Descripcion <span className="text-[var(--nova-error)]">*</span>
         </label>
         <textarea
           value={data.description}
           onChange={e => onChange('description', e.target.value)}
           placeholder="Describe el objetivo de la campana, que tipo de contenido buscas y que esperas de los creadores..."
           rows={5}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500 resize-none"
+          className="w-full bg-[var(--nova-bg-elevated)] border border-[var(--nova-border-default)] rounded-sm px-4 py-3 text-[var(--nova-text-bright)] text-sm placeholder:text-[var(--nova-text-disabled)] focus:outline-none focus:border-[var(--nova-accent-primary)] resize-none transition-colors"
         />
-        <p className="text-gray-600 text-xs mt-1">{data.description.length}/1000 caracteres</p>
+        <p className="text-[var(--nova-text-disabled)] text-xs mt-1">{data.description.length}/1000 caracteres</p>
       </div>
 
       {/* Category */}
       <div>
-        <label className="text-foreground/80 text-sm font-medium block mb-1.5">
-          Categoria <span className="text-red-400">*</span>
+        <label className="text-[var(--nova-text-primary)] text-sm font-medium block mb-1.5">
+          Categoria <span className="text-[var(--nova-error)]">*</span>
         </label>
         <select
           value={data.category}
           onChange={e => onChange('category', e.target.value)}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 appearance-none cursor-pointer"
+          className="w-full bg-[var(--nova-bg-elevated)] border border-[var(--nova-border-default)] rounded-sm px-4 py-3 text-[var(--nova-text-bright)] text-sm focus:outline-none focus:border-[var(--nova-accent-primary)] appearance-none cursor-pointer transition-colors"
         >
-          <option value="" className="bg-card">Selecciona una categoria</option>
+          <option value="" className="bg-[var(--nova-bg-surface)]">Selecciona una categoria</option>
           {MARKETPLACE_CATEGORIES.filter(c => c.id !== 'all').map(cat => (
-            <option key={cat.id} value={cat.id} className="bg-card">{cat.label}</option>
+            <option key={cat.id} value={cat.id} className="bg-[var(--nova-bg-surface)]">{cat.label}</option>
           ))}
         </select>
       </div>
 
       {/* Deadline */}
       <div>
-        <label className="text-foreground/80 text-sm font-medium block mb-1.5">Fecha Limite</label>
+        <label className="text-[var(--nova-text-primary)] text-sm font-medium block mb-1.5">Fecha Limite</label>
         <input
           type="date"
           value={data.deadline}
           onChange={e => onChange('deadline', e.target.value)}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500"
+          className="w-full bg-[var(--nova-bg-elevated)] border border-[var(--nova-border-default)] rounded-sm px-4 py-3 text-[var(--nova-text-bright)] text-sm focus:outline-none focus:border-[var(--nova-accent-primary)] transition-colors"
         />
-        <p className="text-gray-600 text-xs mt-1">Hasta cuando se aceptan aplicaciones</p>
+        <p className="text-[var(--nova-text-disabled)] text-xs mt-1">Hasta cuando se aceptan aplicaciones</p>
       </div>
 
       {/* Tags */}
       <div>
-        <label className="text-foreground/80 text-sm font-medium block mb-1.5">Tags</label>
+        <label className="text-[var(--nova-text-primary)] text-sm font-medium block mb-1.5">Tags</label>
         <div className="flex gap-2">
           <input
             value={tagInput}
             onChange={e => setTagInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}
             placeholder="Agregar tag y presiona Enter"
-            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
+            className="flex-1 bg-[var(--nova-bg-elevated)] border border-[var(--nova-border-default)] rounded-sm px-4 py-3 text-[var(--nova-text-bright)] text-sm placeholder:text-[var(--nova-text-disabled)] focus:outline-none focus:border-[var(--nova-accent-primary)] transition-colors"
           />
           <button
             onClick={addTag}
             disabled={!tagInput.trim()}
-            className="bg-white/5 border border-white/10 hover:bg-white/10 disabled:opacity-40 px-3 rounded-xl transition-colors"
+            className="bg-[var(--nova-bg-elevated)] border border-[var(--nova-border-default)] hover:bg-[var(--nova-bg-hover)] disabled:opacity-40 px-3 rounded-sm transition-colors"
           >
-            <Plus className="h-4 w-4 text-gray-400" />
+            <Plus className="h-4 w-4 text-[var(--nova-text-secondary)]" />
           </button>
         </div>
         {data.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-2">
             {data.tags.map(tag => (
-              <span key={tag} className="flex items-center gap-1 bg-purple-500/15 text-purple-300 text-xs px-2.5 py-1 rounded-full">
+              <span key={tag} className="flex items-center gap-1 bg-[var(--nova-accent-primary)]/15 text-[var(--nova-accent-primary-hover)] text-xs px-2.5 py-1 rounded-full">
                 #{tag}
-                <button onClick={() => removeTag(tag)} className="hover:text-white"><X className="h-3 w-3" /></button>
+                <button onClick={() => removeTag(tag)} className="hover:text-[var(--nova-text-bright)]"><X className="h-3 w-3" /></button>
               </span>
             ))}
           </div>

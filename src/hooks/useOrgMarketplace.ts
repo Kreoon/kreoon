@@ -10,6 +10,9 @@ import { useOrgOwner } from './useOrgOwner';
  * For users without an organization, marketplace is always enabled.
  */
 export function useOrgMarketplace() {
-  const { marketplaceEnabled, clientMarketplaceEnabled, loading } = useOrgOwner();
+  const { marketplaceEnabled, loading } = useOrgOwner();
+  // clientMarketplaceEnabled defaults to true (marketplace enabled for clients by default)
+  // TODO: Add client_marketplace_enabled column to organizations if granular control needed
+  const clientMarketplaceEnabled = marketplaceEnabled;
   return { marketplaceEnabled, clientMarketplaceEnabled, loading };
 }

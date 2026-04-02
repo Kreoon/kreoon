@@ -46,7 +46,7 @@ export const RewardChest = memo(function RewardChest({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className={cn(
-          'relative rounded-2xl overflow-hidden',
+          'relative rounded-sm overflow-hidden',
           'bg-gradient-to-b from-white/[0.05] to-white/[0.02]',
           'border',
           isUnlocked ? 'border-amber-500/30' : 'border-white/10'
@@ -75,7 +75,7 @@ export const RewardChest = memo(function RewardChest({
                 } : {}}
                 transition={{ duration: 1.5, repeat: Infinity }}
                 className={cn(
-                  'w-12 h-12 rounded-xl flex items-center justify-center',
+                  'w-12 h-12 rounded-sm flex items-center justify-center',
                   isUnlocked ? 'bg-amber-500/20' : 'bg-white/5'
                 )}
               >
@@ -124,7 +124,7 @@ export const RewardChest = memo(function RewardChest({
                 animate={isOpen ? { opacity: 1, x: 0 } : {}}
                 transition={{ delay: index * 0.1 }}
                 className={cn(
-                  'flex items-center gap-3 p-3 rounded-xl',
+                  'flex items-center gap-3 p-3 rounded-sm',
                   'transition-all',
                   isUnlocked
                     ? 'bg-white/[0.05]'
@@ -147,7 +147,7 @@ export const RewardChest = memo(function RewardChest({
                   </p>
                 </div>
                 <div className={cn(
-                  'text-xs font-medium px-2 py-1 rounded-lg',
+                  'text-xs font-medium px-2 py-1 rounded-sm',
                   isUnlocked
                     ? 'bg-amber-500/20 text-amber-300'
                     : 'bg-white/5 text-white/30'
@@ -179,7 +179,7 @@ export const RewardChest = memo(function RewardChest({
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className={cn(
-                      'w-full py-3 rounded-xl font-medium',
+                      'w-full py-3 rounded-sm font-medium',
                       'bg-gradient-to-r from-amber-500 to-yellow-500',
                       'text-black',
                       'shadow-lg shadow-amber-500/20'

@@ -104,7 +104,7 @@ export function ExecutiveSummaryTab({ contentStrategy, productName }: ExecutiveS
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="p-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg border border-primary/20">
+      <div className="p-4 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
         <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
           <FileText className="h-5 w-5 text-primary" />
           Conclusión Ejecutiva
@@ -118,7 +118,7 @@ export function ExecutiveSummaryTab({ contentStrategy, productName }: ExecutiveS
 
       {/* Opportunity Score */}
       {summary?.opportunityScore != null && (
-        <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
+        <Card className="border-primary/30 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <div className="flex flex-col items-center">
@@ -301,7 +301,7 @@ export function ExecutiveSummaryTab({ contentStrategy, productName }: ExecutiveS
                 {summary.quickWins.map((item, idx) => {
                   const win = extractQuickWin(item);
                   return (
-                    <div key={idx} className="p-3 bg-background rounded-lg border">
+                    <div key={idx} className="p-3 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
                       <p className="text-sm">{win.text}</p>
                       {(win.effort || win.impact) && (
                         <div className="flex gap-2 mt-2">
@@ -340,7 +340,7 @@ export function ExecutiveSummaryTab({ contentStrategy, productName }: ExecutiveS
                 {summary.risksToAvoid.map((item, idx) => {
                   const risk = extractRisk(item);
                   return (
-                    <div key={idx} className="p-3 bg-background rounded-lg border border-red-500/30">
+                    <div key={idx} className="p-3 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50 border-red-500/30">
                       <p className="text-sm font-medium text-red-600">{risk.text}</p>
                       {risk.why && (
                         <p className="text-xs text-muted-foreground mt-1">{risk.why}</p>
@@ -356,7 +356,7 @@ export function ExecutiveSummaryTab({ contentStrategy, productName }: ExecutiveS
 
       {/* Final Recommendation */}
       {summary?.finalRecommendation && (
-        <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
+        <Card className="border-primary/30 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               🎯 Recomendación Final

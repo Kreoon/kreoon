@@ -302,7 +302,7 @@ export function TalentDNADisplay({ dna, onUpdate, onDelete, onRegenerate, onAppl
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-emerald-600 to-cyan-600 flex items-center justify-center">
+          <div className="h-8 w-8 rounded-sm bg-gradient-to-br from-emerald-600 to-cyan-600 flex items-center justify-center">
             <Dna className="h-4 w-4 text-white" />
           </div>
           <div>
@@ -404,13 +404,13 @@ export function TalentDNADisplay({ dna, onUpdate, onDelete, onRegenerate, onAppl
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
               {emotionalData.overall_mood && (
-                <div className="bg-background/50 rounded-md p-2 border border-border/30">
+                <div className="bg-background/50 rounded-sm p-2 border border-border/30">
                   <span className="text-muted-foreground block">Estado</span>
                   <span className="font-medium capitalize">{emotionalData.overall_mood as string}</span>
                 </div>
               )}
               {emotionalData.confidence_level != null && (
-                <div className="bg-background/50 rounded-md p-2 border border-border/30">
+                <div className="bg-background/50 rounded-sm p-2 border border-border/30">
                   <span className="text-muted-foreground block">Confianza</span>
                   <div className="flex items-center gap-1.5">
                     <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">

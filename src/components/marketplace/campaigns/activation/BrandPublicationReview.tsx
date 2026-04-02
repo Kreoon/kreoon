@@ -122,19 +122,19 @@ export function BrandPublicationReview({ campaignId, onBack }: BrandPublicationR
 
       {/* Summary cards */}
       <div className="flex gap-4">
-        <div className="bg-purple-500/10 rounded-lg px-4 py-2">
+        <div className="bg-purple-500/10 rounded-sm px-4 py-2">
           <p className="text-purple-300 text-lg font-bold">{statusCounts.pending_verification}</p>
           <p className="text-gray-500 text-xs">Por verificar</p>
         </div>
-        <div className="bg-green-500/10 rounded-lg px-4 py-2">
+        <div className="bg-green-500/10 rounded-sm px-4 py-2">
           <p className="text-green-300 text-lg font-bold">{statusCounts.verified}</p>
           <p className="text-gray-500 text-xs">Verificadas</p>
         </div>
-        <div className="bg-red-500/10 rounded-lg px-4 py-2">
+        <div className="bg-red-500/10 rounded-sm px-4 py-2">
           <p className="text-red-300 text-lg font-bold">{statusCounts.violation}</p>
           <p className="text-gray-500 text-xs">Violaciones</p>
         </div>
-        <div className="bg-white/5 rounded-lg px-4 py-2">
+        <div className="bg-white/5 rounded-sm px-4 py-2">
           <p className="text-white text-lg font-bold">{publications.length}</p>
           <p className="text-gray-500 text-xs">Total</p>
         </div>
@@ -205,7 +205,7 @@ function PublicationCard({
   const showRemoveReport = publication.verification_status === 'verified' && publication.is_still_live;
 
   return (
-    <div className="bg-card/80 border border-white/5 rounded-xl p-5 space-y-4">
+    <div className="bg-card/80 border border-white/5 rounded-sm p-5 space-y-4">
       {/* Creator + Platform + Status */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
@@ -233,7 +233,7 @@ function PublicationCard({
 
       {/* Publication URL */}
       {publication.publication_url && (
-        <div className="bg-white/5 rounded-lg p-3">
+        <div className="bg-white/5 rounded-sm p-3">
           <a
             href={publication.publication_url}
             target="_blank"
@@ -286,14 +286,14 @@ function PublicationCard({
           <>
             <button
               onClick={onVerify}
-              className="flex-1 flex items-center justify-center gap-1.5 bg-green-600/20 hover:bg-green-600/30 text-green-300 py-2.5 rounded-lg text-sm font-medium transition-colors"
+              className="flex-1 flex items-center justify-center gap-1.5 bg-green-600/20 hover:bg-green-600/30 text-green-300 py-2.5 rounded-sm text-sm font-medium transition-colors"
             >
               <Check className="h-4 w-4" />
               Verificar
             </button>
             <button
               onClick={onReject}
-              className="flex-1 flex items-center justify-center gap-1.5 bg-red-600/20 hover:bg-red-600/30 text-red-300 py-2.5 rounded-lg text-sm font-medium transition-colors"
+              className="flex-1 flex items-center justify-center gap-1.5 bg-red-600/20 hover:bg-red-600/30 text-red-300 py-2.5 rounded-sm text-sm font-medium transition-colors"
             >
               <X className="h-4 w-4" />
               Rechazar
@@ -304,7 +304,7 @@ function PublicationCard({
         {showRemoveReport && (
           <button
             onClick={onReportRemoved}
-            className="flex items-center gap-1.5 bg-red-600/20 hover:bg-red-600/30 text-red-300 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-1.5 bg-red-600/20 hover:bg-red-600/30 text-red-300 py-2.5 px-4 rounded-sm text-sm font-medium transition-colors"
           >
             <AlertTriangle className="h-4 w-4" />
             Reportar eliminado
@@ -313,7 +313,7 @@ function PublicationCard({
 
         <button
           onClick={onViewMetrics}
-          className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-foreground/80 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ml-auto"
+          className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-foreground/80 py-2.5 px-4 rounded-sm text-sm font-medium transition-colors ml-auto"
         >
           <BarChart3 className="h-4 w-4" />
           Métricas

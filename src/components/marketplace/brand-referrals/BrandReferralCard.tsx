@@ -34,9 +34,9 @@ export function BrandReferralCard({ brandId, brandSlug }: BrandReferralCardProps
   };
 
   return (
-    <div className="bg-card/80 border border-white/10 rounded-xl p-5 space-y-4">
+    <div className="bg-card/80 border border-white/10 rounded-sm p-5 space-y-4">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-green-500/15 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-sm bg-green-500/15 flex items-center justify-center">
           <Gift className="h-5 w-5 text-green-400" />
         </div>
         <div>
@@ -46,7 +46,7 @@ export function BrandReferralCard({ brandId, brandSlug }: BrandReferralCardProps
       </div>
 
       {/* Credit balance */}
-      <div className="bg-white/5 rounded-xl p-4 flex items-center justify-between">
+      <div className="bg-white/5 rounded-sm p-4 flex items-center justify-between">
         <div>
           <p className="text-gray-400 text-xs">Credito disponible</p>
           <p className="text-2xl font-bold text-green-400">
@@ -64,11 +64,11 @@ export function BrandReferralCard({ brandId, brandSlug }: BrandReferralCardProps
             type="text"
             value={referralLink}
             readOnly
-            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-300 truncate"
+            className="flex-1 bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-sm text-gray-300 truncate"
           />
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1 bg-white/10 hover:bg-white/15 text-white text-sm px-3 py-2 rounded-lg transition-colors"
+            className="flex items-center gap-1 bg-white/10 hover:bg-white/15 text-white text-sm px-3 py-2 rounded-sm transition-colors"
           >
             {copied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
           </button>
@@ -79,14 +79,14 @@ export function BrandReferralCard({ brandId, brandSlug }: BrandReferralCardProps
       <div className="flex gap-2">
         <button
           onClick={handleShareWhatsApp}
-          className="flex-1 flex items-center justify-center gap-1.5 bg-green-600/20 hover:bg-green-600/30 text-green-300 text-sm py-2.5 rounded-lg transition-colors"
+          className="flex-1 flex items-center justify-center gap-1.5 bg-green-600/20 hover:bg-green-600/30 text-green-300 text-sm py-2.5 rounded-sm transition-colors"
         >
           <Share2 className="h-3.5 w-3.5" />
           WhatsApp
         </button>
         <button
           onClick={handleShareLinkedIn}
-          className="flex-1 flex items-center justify-center gap-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 text-sm py-2.5 rounded-lg transition-colors"
+          className="flex-1 flex items-center justify-center gap-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 text-sm py-2.5 rounded-sm transition-colors"
         >
           <Share2 className="h-3.5 w-3.5" />
           LinkedIn

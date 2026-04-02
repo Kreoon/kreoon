@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { LazyRichTextEditor as RichTextEditor } from '@/components/ui/lazy-rich-text-editor';
 import { RichTextViewer } from '@/components/scripts/RichTextViewer';
 import { TeleprompterMode } from '@/components/content/TeleprompterMode';
 import { CommentsSection } from '@/components/content/CommentsSection';
@@ -96,7 +96,7 @@ export function ScriptSubTab({
           
           
           ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-center bg-muted/30 rounded-lg">
+            <div className="flex flex-col items-center justify-center py-12 text-center bg-muted/30 rounded-sm">
               <FileText className="h-12 w-12 text-muted-foreground/50 mb-3" />
               <p className="text-muted-foreground">No hay guión todavía</p>
               <p className="text-xs text-muted-foreground mt-1">
@@ -140,7 +140,7 @@ export function ScriptSubTab({
       )}
 
       {content?.script_approved_at && (
-        <div className="flex items-center gap-2 p-3 bg-success/10 border border-success/20 rounded-lg">
+        <div className="flex items-center gap-2 p-3 bg-success/10 border border-success/20 rounded-sm">
           <CheckCircle className="h-4 w-4 text-success" />
           <span className="text-sm">Guión aprobado</span>
           <Badge variant="secondary" className="ml-auto">

@@ -39,7 +39,7 @@ export default function PlatformConfigSection() {
           </TabsTrigger>
           <TabsTrigger value="tokens" className="gap-2">
             <Coins className="h-4 w-4" />
-            <span className="hidden sm:inline">Kreoon Coins</span>
+            <span className="hidden sm:inline">Tokens IA</span>
           </TabsTrigger>
           <TabsTrigger value="appearance" className="gap-2">
             <Palette className="h-4 w-4" />

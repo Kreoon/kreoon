@@ -82,7 +82,7 @@ export function CampaignStepMedia({ data, campaignId, onChange, onTempFile }: Ca
       </div>
 
       {/* Tips */}
-      <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4 space-y-2">
+      <div className="bg-purple-500/10 border border-purple-500/20 rounded-sm p-4 space-y-2">
         <div className="flex items-center gap-2">
           <Lightbulb className="w-4 h-4 text-purple-400" />
           <span className="text-purple-300 text-sm font-medium">Consejos</span>

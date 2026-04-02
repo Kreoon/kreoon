@@ -13,7 +13,7 @@ export function TransactionsPage() {
       <div className="container mx-auto py-6 px-4 max-w-7xl">
         <div className="animate-pulse space-y-4">
           <div className="h-8 w-64 bg-[hsl(270,100%,60%,0.1)] rounded" />
-          <div className="h-[600px] bg-[hsl(270,100%,60%,0.05)] rounded-2xl" />
+          <div className="h-[600px] bg-[hsl(270,100%,60%,0.05)] rounded-sm" />
         </div>
       </div>
     );

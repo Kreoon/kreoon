@@ -141,7 +141,7 @@ export function PermissionsConfig({ permissions, visibleBlocks, onUpdate }: Perm
         ))}
       </Tabs>
 
-      <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg text-sm">
+      <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-sm text-sm">
         <span>⚠️</span>
         <p className="text-muted-foreground">
           Los cambios en permisos afectan a todos los usuarios con ese rol en la organización. 

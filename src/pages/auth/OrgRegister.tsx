@@ -253,11 +253,11 @@ export default function OrgRegister() {
             <img
               src={organization.logo_url}
               alt={organization.name}
-              className="h-14 w-14 rounded-xl object-cover ring-2 ring-white/20"
+              className="h-14 w-14 rounded-sm object-cover ring-2 ring-white/20"
             />
           ) : (
             <div
-              className="flex h-14 w-14 items-center justify-center rounded-xl ring-2 ring-white/20"
+              className="flex h-14 w-14 items-center justify-center rounded-sm ring-2 ring-white/20"
               style={{ backgroundColor: `${primaryColor}40` }}
             >
               <Building2 className="h-7 w-7" style={{ color: primaryColor }} />
@@ -308,10 +308,10 @@ export default function OrgRegister() {
 
           {/* Stats section */}
           {showStats && (
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {pageConfig.stats_members && (
                 <div
-                  className="rounded-xl p-4 text-center"
+                  className="rounded-sm p-4 text-center"
                   style={{ backgroundColor: `${primaryColor}15` }}
                 >
                   <div
@@ -325,7 +325,7 @@ export default function OrgRegister() {
               )}
               {pageConfig.stats_campaigns && (
                 <div
-                  className="rounded-xl p-4 text-center"
+                  className="rounded-sm p-4 text-center"
                   style={{ backgroundColor: `${primaryColor}15` }}
                 >
                   <div
@@ -339,7 +339,7 @@ export default function OrgRegister() {
               )}
               {pageConfig.stats_videos && (
                 <div
-                  className="rounded-xl p-4 text-center"
+                  className="rounded-sm p-4 text-center"
                   style={{ backgroundColor: `${primaryColor}15` }}
                 >
                   <div
@@ -432,7 +432,7 @@ export default function OrgRegister() {
               </>
             ) : (
               <>
-                <div className="h-12 w-12 animate-pulse rounded-xl bg-kreoon-bg-secondary" />
+                <div className="h-12 w-12 animate-pulse rounded-sm bg-kreoon-bg-secondary" />
                 <div className="h-6 w-48 animate-pulse rounded bg-kreoon-bg-secondary" />
                 <div className="h-4 w-64 animate-pulse rounded bg-kreoon-bg-secondary" />
               </>

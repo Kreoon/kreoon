@@ -2,7 +2,7 @@ import { ReactNode, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboardingGate } from '@/hooks/useOnboardingGate';
-import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
+import { NovaOnboardingWizard } from '@/components/onboarding/NovaOnboardingWizard';
 
 // Rutas que NO requieren onboarding completado
 const EXEMPT_ROUTES = [
@@ -94,7 +94,7 @@ export function OnboardingGateProvider({ children }: OnboardingGateProviderProps
   // Si el onboarding no está completo, mostrar el wizard
   // BLOQUEA toda la app hasta completar
   if (!isComplete && currentStep !== 'complete') {
-    return <OnboardingWizard />;
+    return <NovaOnboardingWizard />;
   }
 
   // Onboarding completo, renderizar la app normalmente
@@ -103,8 +103,8 @@ export function OnboardingGateProvider({ children }: OnboardingGateProviderProps
 
 function OnboardingLoadingScreen() {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+    <div className="min-h-screen bg-zinc-200 dark:bg-[#030308] flex items-center justify-center">
+      <div className="animate-spin h-8 w-8 border-2 border-purple-600 border-t-transparent rounded-full" />
     </div>
   );
 }

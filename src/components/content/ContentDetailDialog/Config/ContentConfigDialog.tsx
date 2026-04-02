@@ -42,7 +42,7 @@ export function ContentConfigDialog({ open, onOpenChange, organizationId }: Cont
   if (loading) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl" aria-describedby="content-config-desc">
+        <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-4xl" aria-describedby="content-config-desc">
           <DialogDescription id="content-config-desc" className="sr-only">Configuración del contenido</DialogDescription>
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -54,7 +54,7 @@ export function ContentConfigDialog({ open, onOpenChange, organizationId }: Cont
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col" aria-describedby="content-config-desc">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-4xl max-h-[90dvh] sm:max-h-[90vh] overflow-hidden flex flex-col" aria-describedby="content-config-desc">
         <DialogDescription id="content-config-desc" className="sr-only">Configuración del contenido</DialogDescription>
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2">

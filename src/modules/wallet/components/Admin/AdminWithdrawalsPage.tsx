@@ -42,7 +42,7 @@ export function AdminWithdrawalsPage({ className }: AdminWithdrawalsPageProps) {
     <div className={cn('space-y-6', className)}>
       {/* Header */}
       <div className="flex items-center gap-4">
-        <div className="p-3 rounded-2xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
+        <div className="p-3 rounded-sm bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
           <Shield className="h-8 w-8 text-primary" />
         </div>
         <div>

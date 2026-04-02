@@ -100,7 +100,7 @@ export function RegistrationFormStep({
             disabled={isSubmitting}
             placeholder="Tu nombre completo"
             className={cn(
-              "w-full h-11 pl-10 pr-4 rounded-lg border transition-all text-white",
+              "w-full h-11 pl-10 pr-4 rounded-sm border transition-all text-white",
               "bg-white/5 placeholder:text-white/40",
               "focus:outline-none focus:ring-2 focus:ring-primary/20",
               errors.fullName
@@ -129,7 +129,7 @@ export function RegistrationFormStep({
             disabled={isSubmitting}
             placeholder="tu@email.com"
             className={cn(
-              "w-full h-11 pl-10 pr-4 rounded-lg border transition-all text-white",
+              "w-full h-11 pl-10 pr-4 rounded-sm border transition-all text-white",
               "bg-white/5 placeholder:text-white/40",
               "focus:outline-none focus:ring-2 focus:ring-primary/20",
               errors.email
@@ -159,7 +159,7 @@ export function RegistrationFormStep({
               disabled={isSubmitting}
               placeholder={`Nombre de tu ${userType === 'organization' ? 'organización' : 'empresa'}`}
               className={cn(
-                "w-full h-11 pl-10 pr-4 rounded-lg border transition-all text-white",
+                "w-full h-11 pl-10 pr-4 rounded-sm border transition-all text-white",
                 "bg-white/5 placeholder:text-white/40",
                 "focus:outline-none focus:ring-2 focus:ring-primary/20",
                 errors.companyName
@@ -228,7 +228,7 @@ export function RegistrationFormStep({
 
       {/* Error de submit */}
       {submitError && (
-        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+        <div className="p-3 rounded-sm bg-red-500/10 border border-red-500/30">
           <p className="text-sm text-red-400">{submitError}</p>
         </div>
       )}
@@ -238,7 +238,7 @@ export function RegistrationFormStep({
         type="submit"
         disabled={isSubmitting}
         className={cn(
-          "w-full h-12 rounded-xl font-semibold transition-all",
+          "w-full h-12 rounded-sm font-semibold transition-all",
           "flex items-center justify-center gap-2",
           isSubmitting
             ? "bg-primary/50 cursor-not-allowed"

@@ -29,7 +29,7 @@ export function SortableStatusRow({ id, children, isActive = true }: SortableSta
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex items-center gap-3 p-3 rounded-lg border bg-card transition-shadow",
+        "flex items-center gap-3 p-3 rounded-sm border bg-card transition-shadow",
         !isActive && "opacity-50",
         isDragging && "opacity-90 shadow-lg ring-2 ring-[#a855f7]/50 z-50"
       )}

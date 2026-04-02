@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { makeAIRequest, getAPIKey, corsHeaders } from "../_shared/ai-providers.ts";
+import { logAIUsage } from "../_shared/ai-usage-logger.ts";
 // Fallback legacy
 import { PORTFOLIO_PROMPTS } from "../_shared/portfolio-prompts.ts";
 // Nuevo: Prompts desde DB con cache y fallback
@@ -10,6 +11,7 @@ interface AIRequest {
   action: "search" | "caption" | "bio" | "recommendations" | "moderation" | "blocks";
   payload: Record<string, unknown>;
   organizationId?: string;
+  userId?: string;
   prompts?: {
     system: string;
     user: string;
@@ -72,7 +74,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { action, payload, organizationId, prompts } = (await req.json()) as AIRequest;
+    const { action, payload, organizationId, userId, prompts } = (await req.json()) as AIRequest;
 
     console.log(`[portfolio-ai] Action: ${action}, Org: ${organizationId}, promptsFromFrontend: ${!!prompts}`);
 
@@ -91,8 +93,11 @@ serve(async (req) => {
 
     let result: any;
     let usedProvider = "";
+    let usedModel = "";
 
     const config = { systemPrompt, userPrompt, temperature: 0.7 };
+
+    const startTime = Date.now();
 
     let aiResult = googleKey
       ? await makeAIRequest({ provider: "gemini", model: "gemini-2.5-flash", apiKey: googleKey, ...config })
@@ -107,12 +112,33 @@ serve(async (req) => {
         ...config,
       });
       usedProvider = "openai";
+      usedModel = "gpt-4o-mini";
     } else if (aiResult.success) {
       usedProvider = "gemini";
+      usedModel = "gemini-2.5-flash";
     }
+
+    const response_time_ms = Date.now() - startTime;
 
     if (!aiResult.success) {
       const err = aiResult.error ?? "AI error";
+
+      // Log failed AI call
+      logAIUsage(supabase, {
+        organization_id: organizationId || "00000000-0000-0000-0000-000000000000",
+        user_id: userId || "00000000-0000-0000-0000-000000000000",
+        module: "portfolio-ai",
+        action,
+        provider: usedProvider || "unknown",
+        model: usedModel || "unknown",
+        tokens_input: 0,
+        tokens_output: 0,
+        success: false,
+        error_message: err,
+        edge_function: "portfolio-ai",
+        response_time_ms,
+      }).catch(console.error);
+
       if (err.includes("429")) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
           status: 429,
@@ -139,6 +165,21 @@ serve(async (req) => {
     }
 
     console.log(`[portfolio-ai] Success for action: ${action} using ${usedProvider}`);
+
+    // Log successful AI call
+    logAIUsage(supabase, {
+      organization_id: organizationId || "00000000-0000-0000-0000-000000000000",
+      user_id: userId || "00000000-0000-0000-0000-000000000000",
+      module: "portfolio-ai",
+      action,
+      provider: usedProvider,
+      model: usedModel,
+      tokens_input: 0,
+      tokens_output: 0,
+      success: true,
+      edge_function: "portfolio-ai",
+      response_time_ms,
+    }).catch(console.error);
 
     return new Response(JSON.stringify({ success: true, data: result, provider: usedProvider }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

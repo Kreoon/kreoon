@@ -142,7 +142,7 @@ export function NotificationPreferencesSettings() {
           {EVENT_TYPES.map(event => {
             const pref = orgPreferences.find(p => p.event_type === event.key);
             return (
-              <div key={event.key} className="border rounded-lg p-4 space-y-4">
+              <div key={event.key} className="border rounded-sm p-4 space-y-4">
                 <div>
                   <Label className="text-base">{event.label}</Label>
                   <p className="text-sm text-muted-foreground">{event.description}</p>

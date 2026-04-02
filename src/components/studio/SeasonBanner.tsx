@@ -82,12 +82,12 @@ export function SeasonBanner({
               </span>
             </motion.div>
           </TooltipTrigger>
-          <TooltipContent className="bg-zinc-900/95 backdrop-blur-sm border-white/10">
+          <TooltipContent className="bg-popover border-border">
             <div className="flex flex-col gap-1">
-              <span className="font-semibold text-white">
+              <span className="font-semibold text-foreground">
                 {temporada.nombre} - {temporada.año}
               </span>
-              <span className="text-xs text-zinc-400">
+              <span className="text-xs text-muted-foreground">
                 {format(temporada.fechaInicio, "d MMM", { locale: es })} - {format(temporada.fechaFin, "d MMM", { locale: es })}
               </span>
               <span className={cn('text-xs', colors.text)}>
@@ -105,7 +105,7 @@ export function SeasonBanner({
     return (
       <motion.div
         className={cn(
-          'flex items-center gap-3 px-4 py-2 rounded-xl',
+          'flex items-center gap-3 px-4 py-2 rounded-sm',
           'bg-gradient-to-r from-purple-500/10 to-transparent',
           'border',
           colors.border,
@@ -116,14 +116,14 @@ export function SeasonBanner({
       >
         <div className="flex items-center gap-2">
           <Clapperboard className="w-4 h-4 text-purple-400" />
-          <span className="text-sm font-medium text-white">
+          <span className="text-sm font-medium text-foreground">
             {temporada.nombre}
           </span>
         </div>
 
         {showProgress && (
           <div className="flex-1 max-w-[200px]">
-            <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+            <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
               <motion.div
                 className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full"
                 initial={{ width: 0 }}
@@ -152,8 +152,8 @@ export function SeasonBanner({
   return (
     <motion.div
       className={cn(
-        'relative rounded-2xl overflow-hidden',
-        'bg-gradient-to-br from-purple-900/20 via-zinc-900/80 to-zinc-900/90',
+        'relative rounded-sm overflow-hidden',
+        'bg-gradient-to-br from-purple-900/20 via-card/80 to-card/90',
         'border',
         colors.border,
         className
@@ -176,17 +176,17 @@ export function SeasonBanner({
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-3">
             <motion.div
-              className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center"
+              className="w-12 h-12 rounded-sm bg-purple-500/20 flex items-center justify-center"
               animate={{ rotate: [0, 5, -5, 0] }}
               transition={{ duration: 4, repeat: Infinity }}
             >
               <Clapperboard className="w-6 h-6 text-purple-400" />
             </motion.div>
             <div>
-              <h3 className="text-xl font-bold text-white">
+              <h3 className="text-xl font-bold text-foreground">
                 {temporada.nombre} - {temporada.año}
               </h3>
-              <div className="flex items-center gap-2 text-sm text-zinc-400">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="w-4 h-4" />
                 <span>
                   {format(temporada.fechaInicio, "d MMM", { locale: es })} - {format(temporada.fechaFin, "d MMM", { locale: es })}
@@ -197,8 +197,8 @@ export function SeasonBanner({
 
           <motion.div
             className={cn(
-              'flex flex-col items-end px-4 py-2 rounded-xl',
-              'bg-zinc-800/50 border border-zinc-700/50'
+              'flex flex-col items-end px-4 py-2 rounded-sm',
+              'bg-secondary border border-border'
             )}
             animate={urgencia === 'critical' ? { scale: [1, 1.02, 1] } : undefined}
             transition={{ duration: 1.5, repeat: Infinity }}
@@ -206,18 +206,18 @@ export function SeasonBanner({
             <span className={cn('text-2xl font-bold', colors.text)}>
               {diasRestantes}
             </span>
-            <span className="text-xs text-zinc-400">días restantes</span>
+            <span className="text-xs text-muted-foreground">días restantes</span>
           </motion.div>
         </div>
 
         {/* Progress bar */}
         {showProgress && (
           <div className="mb-6">
-            <div className="flex justify-between text-xs text-zinc-500 mb-2">
+            <div className="flex justify-between text-xs text-muted-foreground mb-2">
               <span>Progreso de temporada</span>
               <span>{Math.round(progreso)}%</span>
             </div>
-            <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+            <div className="h-2 bg-secondary rounded-full overflow-hidden">
               <motion.div
                 className="h-full rounded-full relative"
                 style={{
@@ -244,7 +244,7 @@ export function SeasonBanner({
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Target className="w-4 h-4 text-purple-400" />
-                <span className="text-sm font-medium text-white">Metas de Temporada</span>
+                <span className="text-sm font-medium text-foreground">Metas de Temporada</span>
               </div>
               {onVerMetas && (
                 <button
@@ -266,18 +266,18 @@ export function SeasonBanner({
                   <motion.div
                     key={index}
                     className={cn(
-                      'p-3 rounded-xl',
-                      'bg-zinc-800/40 border border-zinc-700/30',
+                      'p-3 rounded-sm',
+                      'bg-secondary border border-border',
                       isComplete && 'border-emerald-500/30 bg-emerald-500/5'
                     )}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
                   >
-                    <p className="text-xs text-zinc-400 truncate mb-2">
+                    <p className="text-xs text-muted-foreground truncate mb-2">
                       {meta.nombre}
                     </p>
-                    <div className="h-1 bg-zinc-700 rounded-full overflow-hidden mb-2">
+                    <div className="h-1 bg-muted rounded-full overflow-hidden mb-2">
                       <motion.div
                         className={cn(
                           'h-full rounded-full',
@@ -291,11 +291,11 @@ export function SeasonBanner({
                     <div className="flex items-baseline justify-between">
                       <span className={cn(
                         'text-sm font-bold',
-                        isComplete ? 'text-emerald-400' : 'text-white'
+                        isComplete ? 'text-emerald-400' : 'text-foreground'
                       )}>
                         {meta.actual.toLocaleString()}
                       </span>
-                      <span className="text-xs text-zinc-500">
+                      <span className="text-xs text-muted-foreground">
                         / {meta.objetivo.toLocaleString()}
                       </span>
                     </div>

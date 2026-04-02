@@ -101,7 +101,7 @@ export function TransactionDetail({
           <div className="flex items-center gap-4">
             <div
               className={cn(
-                'flex items-center justify-center h-14 w-14 rounded-2xl',
+                'flex items-center justify-center h-14 w-14 rounded-sm',
                 transaction.isCredit
                   ? 'bg-emerald-500/10'
                   : 'bg-[hsl(270,100%,60%,0.1)]'
@@ -138,7 +138,7 @@ export function TransactionDetail({
         {/* Amount highlight */}
         <div
           className={cn(
-            'p-4 rounded-xl',
+            'p-4 rounded-sm',
             transaction.isCredit
               ? 'bg-emerald-500/10'
               : 'bg-[hsl(270,100%,60%,0.05)]'
@@ -208,7 +208,7 @@ export function TransactionDetail({
             <Separator className="bg-[hsl(270,100%,60%,0.1)]" />
             <div>
               <p className="text-sm text-muted-foreground mb-2">Información Adicional</p>
-              <div className="p-3 rounded-lg bg-[hsl(270,100%,60%,0.05)] text-xs font-mono text-[hsl(270,30%,70%)] overflow-auto">
+              <div className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.05)] text-xs font-mono text-[hsl(270,30%,70%)] overflow-auto">
                 <pre>{JSON.stringify(transaction.metadata, null, 2)}</pre>
               </div>
             </div>

@@ -110,19 +110,19 @@ export function ContentSelector({
 
   if (content.length === 0) {
     return (
-      <div className="text-sm text-muted-foreground py-4 text-center border rounded-md">
+      <div className="text-sm text-muted-foreground py-4 text-center border rounded-sm">
         No hay contenido aprobado disponible
       </div>
     );
   }
 
   return (
-    <ScrollArea className="h-48 border rounded-md p-2">
+    <ScrollArea className="h-48 border rounded-sm p-2">
       <div className="space-y-2">
         {content.map((item) => (
           <div
             key={item.id}
-            className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${
+            className={`flex items-center gap-3 p-2 rounded-sm cursor-pointer transition-colors ${
               selectedContentIds.includes(item.id)
                 ? 'bg-primary/10 border border-primary/30'
                 : 'hover:bg-muted/50 border border-transparent'

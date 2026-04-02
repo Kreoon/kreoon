@@ -134,7 +134,7 @@ export function KiroProgressBar({
             <div
               className={cn(
                 'absolute bottom-full left-1/2 -translate-x-1/2 mb-2',
-                'px-2 py-1 rounded-md',
+                'px-2 py-1 rounded-sm',
                 'bg-card border border-violet-500/30',
                 'text-[10px] text-violet-200 whitespace-nowrap',
                 'shadow-lg z-50',

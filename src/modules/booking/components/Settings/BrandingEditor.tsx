@@ -106,7 +106,7 @@ export function BrandingEditor({
           </p>
         </div>
         {previewUrl && (
-          <Button variant="outline" asChild className="rounded-lg">
+          <Button variant="outline" asChild className="rounded-sm">
             <a href={previewUrl} target="_blank" rel="noopener noreferrer">
               <Eye className="w-4 h-4 mr-2" />
               Vista previa
@@ -120,10 +120,10 @@ export function BrandingEditor({
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white border border-slate-200 rounded-xl p-5"
+        className="bg-white border border-slate-200 rounded-sm p-5"
       >
         <div className="flex items-start gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-violet-50">
+          <div className="p-2 rounded-sm bg-violet-50">
             <Image className="w-5 h-5 text-violet-600" />
           </div>
           <div>
@@ -140,7 +140,7 @@ export function BrandingEditor({
               <img
                 src={logoUrl}
                 alt="Logo"
-                className="w-20 h-20 object-contain rounded-lg border border-slate-200 bg-slate-50"
+                className="w-20 h-20 object-contain rounded-sm border border-slate-200 bg-slate-50"
               />
               <button
                 onClick={() => setLogoUrl('')}
@@ -150,7 +150,7 @@ export function BrandingEditor({
               </button>
             </div>
           ) : (
-            <div className="w-20 h-20 rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center">
+            <div className="w-20 h-20 rounded-sm border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center">
               <Image className="w-8 h-8 text-slate-300" />
             </div>
           )}
@@ -163,7 +163,7 @@ export function BrandingEditor({
               className="hidden"
               disabled={uploading || !onUploadLogo}
             />
-            <div className="px-4 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700 flex items-center gap-2">
+            <div className="px-4 py-2 rounded-sm border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700 flex items-center gap-2">
               {uploading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
@@ -180,10 +180,10 @@ export function BrandingEditor({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-white border border-slate-200 rounded-xl p-5"
+        className="bg-white border border-slate-200 rounded-sm p-5"
       >
         <div className="flex items-start gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-violet-50">
+          <div className="p-2 rounded-sm bg-violet-50">
             <Palette className="w-5 h-5 text-violet-600" />
           </div>
           <div>
@@ -204,7 +204,7 @@ export function BrandingEditor({
                 <button
                   key={color}
                   onClick={() => setPrimaryColor(color)}
-                  className="w-8 h-8 rounded-lg transition-transform hover:scale-110"
+                  className="w-8 h-8 rounded-sm transition-transform hover:scale-110"
                   style={{
                     backgroundColor: color,
                     border: primaryColor === color ? '3px solid #000' : '2px solid transparent',
@@ -270,10 +270,10 @@ export function BrandingEditor({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-white border border-slate-200 rounded-xl p-5"
+        className="bg-white border border-slate-200 rounded-sm p-5"
       >
         <div className="flex items-start gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-violet-50">
+          <div className="p-2 rounded-sm bg-violet-50">
             <Type className="w-5 h-5 text-violet-600" />
           </div>
           <div>
@@ -316,11 +316,11 @@ export function BrandingEditor({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-white border border-slate-200 rounded-xl p-5"
+        className="bg-white border border-slate-200 rounded-sm p-5"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-slate-100">
+            <div className="p-2 rounded-sm bg-slate-100">
               <span className="text-lg font-bold text-slate-700">K</span>
             </div>
             <div>
@@ -350,7 +350,7 @@ export function BrandingEditor({
           <Button
             onClick={handleSave}
             disabled={saving || isLoading}
-            className="bg-violet-600 hover:bg-violet-700 rounded-lg px-6"
+            className="bg-violet-600 hover:bg-violet-700 rounded-sm px-6"
           >
             {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Guardar cambios

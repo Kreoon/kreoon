@@ -97,7 +97,7 @@ export function ErrorFallback({
                 {error.message}
               </p>
               {isDev && error.stack && (
-                <pre className="mt-3 max-h-40 overflow-auto rounded-lg border border-kreoon-border bg-kreoon-bg-secondary p-3 text-xs text-kreoon-text-muted">
+                <pre className="mt-3 max-h-40 overflow-auto rounded-sm border border-kreoon-border bg-kreoon-bg-secondary p-3 text-xs text-kreoon-text-muted">
                   {error.stack}
                 </pre>
               )}

@@ -120,7 +120,7 @@ export function KaePlatformLogsTab() {
               {filteredLogs.map((log) => (
                 <div
                   key={log.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-sm border bg-card hover:bg-accent/50 transition-colors"
                 >
                   {log.success ? (
                     <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />

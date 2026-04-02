@@ -643,7 +643,7 @@ export function LegalConsentsAdminPanel() {
               {selectedSignature.signature_image_url && (
                 <div>
                   <p className="text-sm text-muted-foreground mb-2">Firma Dibujada</p>
-                  <div className="bg-white rounded-lg p-4 border">
+                  <div className="bg-white rounded-sm p-4 border">
                     <img
                       src={selectedSignature.signature_image_url}
                       alt="Firma digital"
@@ -654,7 +654,7 @@ export function LegalConsentsAdminPanel() {
               )}
               <div>
                 <p className="text-sm text-muted-foreground">Declaración</p>
-                <p className="text-sm italic bg-muted/50 p-3 rounded-lg">
+                <p className="text-sm italic bg-muted/50 p-3 rounded-sm">
                   "{selectedSignature.declaration_text}"
                 </p>
               </div>

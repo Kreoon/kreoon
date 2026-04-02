@@ -1,4 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -304,6 +306,24 @@ NO generar imagen horizontal bajo ninguna circunstancia.` : ''}
 
 GENERA EL JSON ESTRUCTURADO COMPLETO.`;
 
+    // Initialize Supabase client for logging
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Extract user/org info from auth header if available
+    let userId = "00000000-0000-0000-0000-000000000000";
+    let organizationId = "00000000-0000-0000-0000-000000000000";
+    const authHeader = req.headers.get("authorization");
+    if (authHeader) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+        if (user?.id) userId = user.id;
+      } catch (_) { /* ignore auth errors for logging */ }
+    }
+
+    const startTime = Date.now();
+
     // Call Gemini API to build the prompt
     const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
       method: "POST",
@@ -322,9 +342,24 @@ GENERA EL JSON ESTRUCTURADO COMPLETO.`;
     });
 
     if (!response.ok) {
+      const errorTimeMs = Date.now() - startTime;
       const errorText = await response.text();
       console.error("AI Gateway error:", response.status, errorText);
-      
+
+      // Log failed AI call
+      logAIUsage(supabase, {
+        organization_id: organizationId,
+        user_id: userId,
+        module: "build-image-prompt",
+        action: "build-prompt",
+        provider: "gemini",
+        model: "gemini-2.5-flash",
+        success: false,
+        error_message: `AI Gateway error: ${response.status}`,
+        edge_function: "build-image-prompt",
+        response_time_ms: errorTimeMs,
+      }).catch(console.error);
+
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: "Rate limit exceeded. Please try again." }),
@@ -337,13 +372,32 @@ GENERA EL JSON ESTRUCTURADO COMPLETO.`;
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      
+
       throw new Error(`AI Gateway error: ${response.status}`);
     }
 
+    const responseTimeMs = Date.now() - startTime;
     const aiResponse = await response.json();
     const content = aiResponse.choices?.[0]?.message?.content;
-    
+
+    // Log AI usage
+    const usage = aiResponse.usage;
+    logAIUsage(supabase, {
+      organization_id: organizationId,
+      user_id: userId,
+      module: "build-image-prompt",
+      action: "build-prompt",
+      provider: "gemini",
+      model: "gemini-2.5-flash",
+      tokens_input: usage?.prompt_tokens || 0,
+      tokens_output: usage?.completion_tokens || 0,
+      estimated_cost: usage ? calculateCost("gemini-2.5-flash", usage.prompt_tokens || 0, usage.completion_tokens || 0) : undefined,
+      success: !!content,
+      error_message: content ? undefined : "No content in AI response",
+      edge_function: "build-image-prompt",
+      response_time_ms: responseTimeMs,
+    }).catch(console.error);
+
     if (!content) {
       throw new Error("No content in AI response");
     }

@@ -262,7 +262,7 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
   // Full-screen processing state
   if (processingStep !== 'idle' && processingStep !== 'error') {
     return (
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-8">
+      <div className="relative overflow-hidden rounded-sm border border-white/10 bg-black/40 p-8">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-transparent to-pink-600/10" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl" />
 
@@ -312,8 +312,8 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="relative">
-            <div className="absolute inset-0 bg-purple-500/30 rounded-xl blur-lg" />
-            <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+            <div className="absolute inset-0 bg-purple-500/30 rounded-sm blur-lg" />
+            <div className="relative w-12 h-12 rounded-sm bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
               <Dna className="w-6 h-6 text-white" />
             </div>
           </div>
@@ -335,13 +335,13 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
       {/* Grid: Preguntas + Audio */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Left Panel: Questions */}
-        <div className="relative overflow-hidden rounded-2xl border border-white/10">
+        <div className="relative overflow-hidden rounded-sm border border-white/10">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-purple-500/10 to-pink-500/20" />
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-xl" />
+          <div className="absolute inset-0 bg-black/40" />
 
           <div className="relative p-6 h-full flex flex-col justify-center">
             <div className="flex items-center gap-2 mb-5">
-              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-sm bg-white/10 flex items-center justify-center">
                 <span className="text-lg">💬</span>
               </div>
               <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">Responde en tu audio</h3>
@@ -366,13 +366,13 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
         </div>
 
         {/* Right Panel: Audio */}
-        <div className="relative overflow-hidden rounded-2xl border border-white/10">
+        <div className="relative overflow-hidden rounded-sm border border-white/10">
           <div className="absolute inset-0 bg-gradient-to-br from-pink-600/20 via-pink-500/10 to-purple-500/20" />
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-xl" />
+          <div className="absolute inset-0 bg-black/40" />
 
           <div className="relative p-6 h-full flex flex-col">
             <div className="flex items-center gap-2 mb-5">
-              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-sm bg-white/10 flex items-center justify-center">
                 <span className="text-lg">🎤</span>
               </div>
               <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">Graba tu audio</h3>
@@ -479,7 +479,7 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
 
       {/* Error */}
       {error && (
-        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 backdrop-blur-xl">
+        <div className="p-4 rounded-sm bg-red-500/10 border border-red-500/20">
           <p className="text-sm text-red-400">{error}</p>
         </div>
       )}
@@ -488,7 +488,7 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
       <button
         onClick={handleSubmit}
         disabled={!canSubmit || buttonTranscribing}
-        className="relative w-full group overflow-hidden rounded-xl"
+        className="relative w-full group overflow-hidden rounded-sm"
       >
         <div className={cn(
           "absolute inset-0 transition-all duration-300",
@@ -543,7 +543,7 @@ function SelectionPanel({ title, emoji, subtitle, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-xl border border-white/10 p-4">
+    <div className="relative overflow-hidden rounded-sm border border-white/10 p-4">
       <div className="absolute inset-0 bg-white/5" />
       <div className="relative">
         <div className="flex items-center gap-2 mb-3">

@@ -162,6 +162,10 @@ verify_jwt = true
 [functions.bunny-raw-upload]
 verify_jwt = true
 
+[functions.bunny-media-upload]
+# JWT verification handled internally - gateway verify_jwt causes 401 issues
+verify_jwt = false
+
 [functions.bunny-raw-download]
 verify_jwt = false
 
@@ -516,3 +520,71 @@ verify_jwt = false
 # Worker de recálculo de scores de ranking
 # Ejecutar como cron diario
 verify_jwt = false
+
+# ── ADN Recargado v3 ──
+
+[functions.adn-orchestrator]
+# Entry point para ADN Recargado v3
+# JWT verificado internamente
+verify_jwt = false
+
+[functions.adn-orchestrator-lite]
+# Versión simplificada que dispara n8n webhook
+# JWT verificado internamente
+verify_jwt = false
+
+[functions.adn-research-v3]
+# Worker de 22 pasos de research
+# Llamado internamente por orchestrator
+verify_jwt = false
+
+[functions.intelligence-gatherer]
+# Social + Ad Intelligence gathering
+# Llamado internamente por orchestrator
+verify_jwt = false
+
+# ── LinkedIn Ads Integration ──
+
+[functions.marketing-linkedin]
+# Integración con LinkedIn Ads API
+# OAuth flow, campañas, métricas y CAPI
+# JWT verificado internamente para mayor flexibilidad
+verify_jwt = true
+
+# ── Social Verification & Instagram/TikTok APIs ──
+
+[functions.social-instagram]
+# Instagram Basic Display + Graph API integration
+# OAuth flow requires verify_jwt = false
+verify_jwt = false
+
+[functions.social-tiktok]
+# TikTok API integration for creator verification
+# OAuth flow requires verify_jwt = false
+verify_jwt = false
+
+[functions.verify-influencer]
+# Influencer verification service
+# JWT verified internally
+verify_jwt = false
+
+# ── Profile AI Premium (Creator Premium Features) ──
+
+[functions.profile-ai-bio]
+# Genera bio optimizada para conversiones - requiere Creator Premium
+# JWT verificado en gateway y también internamente
+verify_jwt = true
+
+[functions.profile-ai-seo]
+# Análisis SEO del perfil con sugerencias accionables - requiere Creator Premium
+verify_jwt = true
+
+[functions.profile-ai-suggestions]
+# Sugiere bloques de perfil basado en objetivo del creador - requiere Creator Premium
+verify_jwt = true
+
+# ── Reviews System ──
+
+[functions.send-review-request]
+# Envia solicitud de resena a cliente por email/WhatsApp
+verify_jwt = true

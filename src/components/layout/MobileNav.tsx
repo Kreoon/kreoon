@@ -33,6 +33,9 @@ import {
   Radar,
   ImagePlus,
   Key,
+  Dna,
+  Package,
+  CircleUser,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -189,23 +192,17 @@ const creatorSections: NavSection[] = [
 
 const clientSections: NavSection[] = [
   {
-    label: "MI MARCA",
+    label: "", // Sin título de sección - MVP simplificado
     items: [
-      { name: "Portal", href: "/client-dashboard", icon: LayoutDashboard },
+      { name: "Inicio", href: "/client-dashboard", icon: LayoutDashboard },
+      { name: "ADN de Marca", href: "/client-dashboard?tab=dna", icon: Dna },
+      { name: "Productos", href: "/client-dashboard?tab=products", icon: Package },
+      { name: "Portafolio", href: "/client-dashboard?tab=portfolio", icon: FileText },
       { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban },
-      { name: "Mis Campañas", href: "/marketplace/my-campaigns", icon: Megaphone },
+      { name: "Plan", href: "/planes", icon: Crown },
+      { name: "Settings", href: "/settings", icon: Settings },
     ]
   },
-  {
-    label: "MARKETING & MEDIA",
-    items: [
-      { name: "Social Hub", href: "/social-hub", icon: Share2 },
-      { name: "Streaming", href: "/streaming", icon: Video },
-      { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3 },
-      { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus },
-    ]
-  },
-  { label: "CONFIG", items: CONFIG_ITEMS }
 ];
 
 // Freelance users (no org) - full talent navigation
@@ -390,9 +387,11 @@ export function MobileNav() {
     ? (effectiveRoles.length > 0 ? getPermissionGroup(effectiveRoles[0]) : null)
     : (activeRole ? getPermissionGroup(activeRole) : null);
 
-  // Detect client/brand member: by profile flags
+  // Detect client/brand member: by profile flags OR having 'client' role
+  const hasClientRole = (isImpersonating ? effectiveRoles : roles)?.includes('client');
   const isBrandMember = !!(profile as any)?.active_brand_id ||
-    (profile as any)?.active_role === 'client';
+    (profile as any)?.active_role === 'client' ||
+    hasClientRole;
 
   // For brand members without org roles, treat them as 'client' group
   const activeGroup: PermissionGroup | null = rawActiveGroup || (isBrandMember ? 'client' : null);
@@ -416,8 +415,11 @@ export function MobileNav() {
   const activeIsAdmin = activeGroup === 'admin' || allUserGroups.includes('admin');
   const activeIsStrategist = activeGroup === 'strategist' || allUserGroups.includes('strategist');
   const activeIsEditor = activeGroup === 'editor' || allUserGroups.includes('editor');
-  const activeIsCreator = activeGroup === 'creator';
-  const activeIsClient = activeGroup === 'client';
+  // Client detection FIRST: if user has client role and no admin/strategist/editor, they're a client
+  // (ignore 'creator' ghost role from organization_members default)
+  const activeIsClient = activeGroup === 'client' || (hasClientRole && !activeIsAdmin && !activeIsStrategist && !activeIsEditor);
+  // Creator only if not already detected as client
+  const activeIsCreator = !activeIsClient && activeGroup === 'creator';
 
   // Fetch current client name and count for client users (with brand fallback)
   useEffect(() => {
@@ -515,7 +517,8 @@ export function MobileNav() {
     }
 
     // Talent in org with basic/free personal plan - limited menu
-    if (shouldUseReducedMenu && !isPlatformAdmin && !isPlatformRoot) {
+    // BUT clients always get their own sections regardless of plan
+    if (shouldUseReducedMenu && !isPlatformAdmin && !isPlatformRoot && !activeIsClient) {
       return basicTalentInOrgSections;
     }
 
@@ -596,13 +599,18 @@ export function MobileNav() {
       items: [{ name: "Buscar Talento", href: "/marketplace", icon: Search }],
     };
 
+    // For clients, return sections as-is (already unified with all items including config)
+    if (activeIsClient) {
+      return filtered;
+    }
+
     const configSection = filtered.find(s => s.label === 'CONFIG');
     const nonConfigSections = filtered.filter(s => s.label !== 'CONFIG');
 
     return [
       ...nonConfigSections,
       ...mktSections,
-      ...(!effectiveMktEnabled && !activeIsClient ? [recruitSection] : []),
+      ...(!effectiveMktEnabled ? [recruitSection] : []),
       ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Settings", href: "/settings", icon: Settings }] }]),
     ];
   }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, activeGroup, isUnlocked, isGateLoading, isFreelanceUser, shouldUseReducedMenu, isMultiRoleUser, allUserGroups]);
@@ -639,20 +647,20 @@ export function MobileNav() {
           <span className="sr-only">Toggle menu</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-72 p-0 bg-sidebar border-sidebar-border">
+      <SheetContent side="left" className="w-72 p-0 bg-background border-border">
         <div className="flex h-full flex-col">
           {/* Logo */}
-          <div className="flex h-16 items-center border-b border-sidebar-border px-4">
+          <div className="flex h-16 items-center border-b border-border px-4">
             <div className="flex items-center gap-3">
-              <div className="relative flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden bg-primary/10 border border-primary/20 shadow-sm">
+              <div className="relative flex h-10 w-10 items-center justify-center rounded-sm overflow-hidden bg-purple-500/10 border border-purple-500/20">
                 <img src={effectiveLogoUrl} alt={effectivePlatformName} className="h-8 w-8 object-cover" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-sm font-bold text-sidebar-foreground">{effectivePlatformName}</h1>
+                <h1 className="text-sm font-bold text-zinc-900 dark:text-white">{effectivePlatformName}</h1>
                 {currentOrgName && !isWhiteLabelActive ? (
-                  <p className="text-xs text-primary/80 truncate font-medium">{currentOrgName}</p>
+                  <p className="text-xs text-purple-600 dark:text-purple-400 truncate font-medium">{currentOrgName}</p>
                 ) : isWhiteLabelActive ? null : (
-                  <p className="text-[10px] uppercase tracking-widest text-sidebar-foreground/60">AI Content Platform</p>
+                  <p className="text-[10px] uppercase tracking-widest text-zinc-500">AI Content Platform</p>
                 )}
               </div>
             </div>
@@ -660,33 +668,33 @@ export function MobileNav() {
 
           {/* Root Admin Organization Switcher */}
           {isPlatformRoot && (
-            <div className="px-3 py-2 border-b border-sidebar-border">
+            <div className="px-3 py-2 border-b border-border">
               <RootOrgSwitcher />
             </div>
           )}
 
-          {/* Regular User Organization Switcher - for users with multiple orgs */}
-          {!isPlatformRoot && (
-            <div className="px-3 py-2 border-b border-sidebar-border">
+          {/* Regular User Organization Switcher - for users with multiple orgs (not clients) */}
+          {!isPlatformRoot && !activeIsClient && (
+            <div className="px-3 py-2 border-b border-border">
               <UserOrgSwitcher />
             </div>
           )}
 
           {/* User Info */}
           {profile && (
-            <div className="p-4 border-b border-sidebar-border">
+            <div className="p-4 border-b border-border">
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={profile.avatar_url || undefined} />
-                  <AvatarFallback className="bg-primary/10 text-primary">
+                  <AvatarFallback className="bg-purple-500/10 text-purple-500">
                     {profile.full_name?.charAt(0) || 'U'}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-sidebar-foreground truncate">
+                  <p className="text-sm font-medium text-zinc-900 dark:text-white truncate">
                     {profile.full_name}
                   </p>
-                  <p className="text-xs text-sidebar-foreground/60 truncate">
+                  <p className="text-xs text-zinc-500 truncate">
                     {profile.email}
                   </p>
                 </div>
@@ -704,26 +712,28 @@ export function MobileNav() {
             {filteredSections.map((section, sectionIndex) => {
               const isSectionCollapsed = !!collapsedSections[section.label];
               return (
-                <div key={section.label} className={cn(sectionIndex > 0 && "mt-4")}>
-                  {/* Section Label — clickable to toggle */}
-                  <button
-                    onClick={() => toggleSection(section.label)}
-                    className="w-full flex items-center justify-between px-3 mb-1.5 group/section cursor-pointer"
-                  >
-                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-sidebar-foreground/40 group-hover/section:text-sidebar-foreground/70 transition-colors">
-                      {section.label}
-                    </span>
-                    <ChevronDown className={cn(
-                      "h-3 w-3 text-sidebar-foreground/40 group-hover/section:text-sidebar-foreground/70 transition-all duration-200",
-                      isSectionCollapsed && "-rotate-90"
-                    )} />
-                  </button>
+                <div key={section.label || `section-${sectionIndex}`} className={cn(sectionIndex > 0 && section.label && "mt-4")}>
+                  {/* Section Label — clickable to toggle (only if label exists) */}
+                  {section.label && (
+                    <button
+                      onClick={() => toggleSection(section.label)}
+                      className="w-full flex items-center justify-between px-3 mb-1.5 group/section cursor-pointer"
+                    >
+                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 group-hover/section:text-zinc-700 dark:group-hover/section:text-zinc-400 transition-colors">
+                        {section.label}
+                      </span>
+                      <ChevronDown className={cn(
+                        "h-3 w-3 text-zinc-400 group-hover/section:text-zinc-600 dark:text-zinc-600 dark:group-hover/section:text-zinc-400 transition-all duration-150",
+                        isSectionCollapsed && "-rotate-90"
+                      )} />
+                    </button>
+                  )}
 
-                  {/* Section Items — collapsible */}
+                  {/* Section Items — collapsible only if section has label */}
                   <div className={cn(
                     "space-y-1 overflow-hidden transition-all duration-200",
-                    isSectionCollapsed && "max-h-0 opacity-0",
-                    !isSectionCollapsed && "max-h-[500px] opacity-100"
+                    section.label && isSectionCollapsed && "max-h-0 opacity-0",
+                    (!section.label || !isSectionCollapsed) && "max-h-[500px] opacity-100"
                   )}>
                     {section.items.map((item) => {
                       const itemPath = item.href.split('?')[0];
@@ -747,18 +757,18 @@ export function MobileNav() {
                           to={item.href}
                           onClick={() => setOpen(false)}
                           className={cn(
-                            "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                            "group relative flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm font-medium transition-colors duration-150",
                             isActive
-                              ? "bg-primary/10 text-sidebar-foreground border border-primary/25 shadow-sm"
-                              : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground border border-transparent"
+                              ? "bg-purple-500/10 text-zinc-900 dark:text-white"
+                              : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white"
                           )}
                         >
                           {isActive && (
-                            <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-full shadow-sm" />
+                            <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 w-1 h-5 bg-purple-500 rounded-full" />
                           )}
                           <item.icon className={cn(
-                            "h-5 w-5 shrink-0 transition-colors",
-                            isActive ? "text-primary" : "text-sidebar-foreground/50 group-hover:text-primary"
+                            "h-5 w-5 shrink-0 transition-colors duration-150",
+                            isActive ? "text-purple-500" : "text-zinc-500 group-hover:text-purple-500"
                           )} />
                           <span>{item.name}</span>
                         </NavLink>
@@ -772,7 +782,7 @@ export function MobileNav() {
 
           {/* AI Tokens — only if has org and not client (use personal coins if usePersonalCoins is true) */}
           {profile?.current_organization_id && !activeIsClient && (
-            <div className="border-t border-sidebar-border px-3 py-2">
+            <div className="border-t border-zinc-200 dark:border-zinc-800 px-3 py-2">
               <AITokensPanelTrigger
                 organizationId={usePersonalCoins ? null : profile.current_organization_id}
                 variant="header"
@@ -782,15 +792,15 @@ export function MobileNav() {
 
           {/* Achievements Widget - hide for freelancers */}
           {!isFreelanceUser && (
-            <div className="border-t border-sidebar-border">
+            <div className="border-t border-border">
               <SidebarAchievementsWidget collapsed={false} />
             </div>
           )}
 
           {/* User & Actions */}
-          <div className="border-t border-sidebar-border p-3 space-y-2 bg-gradient-to-t from-muted/50 to-transparent">
-            {/* Role Switcher - hide for freelancers and multi-role users (they have combined nav) */}
-            {!isImpersonating && !isFreelanceUser && !isMultiRoleUser && (
+          <div className="border-t border-zinc-200 dark:border-zinc-800 p-3 space-y-2">
+            {/* Role Switcher - hide for freelancers, multi-role users, and clients */}
+            {!isImpersonating && !isFreelanceUser && !isMultiRoleUser && !activeIsClient && (
               <RoleSwitcher collapsed={false} />
             )}
 
@@ -816,7 +826,7 @@ export function MobileNav() {
                       setOpen(false);
                       setShowClientSelector(true);
                     }}
-                    className="w-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground justify-start rounded-xl"
+                    className="w-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground justify-start rounded-sm"
                   >
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Cambiar Empresa
@@ -829,7 +839,7 @@ export function MobileNav() {
               variant="ghost"
               size="sm"
               onClick={handleSignOut}
-              className="w-full text-sidebar-foreground/70 hover:bg-destructive/10 hover:text-destructive justify-start rounded-xl"
+              className="w-full text-sidebar-foreground/70 hover:bg-destructive/10 hover:text-destructive justify-start rounded-sm"
             >
               <LogOut className="h-4 w-4 mr-2" />
               Cerrar sesión

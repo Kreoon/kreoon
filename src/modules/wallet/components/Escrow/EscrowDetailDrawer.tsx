@@ -105,7 +105,7 @@ export function EscrowDetailDrawer({
           <SheetHeader className="pb-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
+                <div className="p-2 rounded-sm bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
                   <Lock className="h-6 w-6 text-primary" />
                 </div>
                 <div>
@@ -142,7 +142,7 @@ export function EscrowDetailDrawer({
                 <DollarSign className="h-4 w-4 text-primary" />
                 <h3 className="text-sm font-medium text-white">Resumen Financiero</h3>
               </div>
-              <div className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)] text-center">
+              <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] text-center">
                 <p className="text-sm text-muted-foreground">Total bloqueado</p>
                 <p className="text-3xl font-bold text-white mt-1">{escrow.formattedTotal}</p>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -182,10 +182,10 @@ export function EscrowDetailDrawer({
 
               <div className="space-y-3">
                 {/* Payer (Brand) */}
-                <div className="p-3 rounded-xl bg-[hsl(270,100%,60%,0.03)]">
+                <div className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.03)]">
                   <p className="text-xs text-muted-foreground mb-2">Pagador (Marca)</p>
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-[hsl(270,100%,60%,0.1)]">
+                    <div className="p-2 rounded-sm bg-[hsl(270,100%,60%,0.1)]">
                       <Building2 className="h-5 w-5 text-primary" />
                     </div>
                     <div>
@@ -198,7 +198,7 @@ export function EscrowDetailDrawer({
                 </div>
 
                 {/* Creator */}
-                <div className="p-3 rounded-xl bg-[hsl(270,100%,60%,0.03)]">
+                <div className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.03)]">
                   <p className="text-xs text-emerald-400 mb-2">Creador</p>
                   <div className="flex items-center gap-3">
                     {creator ? (
@@ -226,7 +226,7 @@ export function EscrowDetailDrawer({
 
                 {/* Editor */}
                 {escrow.editor_percentage > 0 && (
-                  <div className="p-3 rounded-xl bg-[hsl(270,100%,60%,0.03)]">
+                  <div className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.03)]">
                     <p className="text-xs text-blue-400 mb-2">Editor</p>
                     <div className="flex items-center gap-3">
                       {editor ? (
@@ -282,7 +282,7 @@ export function EscrowDetailDrawer({
                     rows={3}
                   />
                   {escrow.notes && (
-                    <div className="p-3 rounded-lg bg-[hsl(270,100%,60%,0.03)]">
+                    <div className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.03)]">
                       <p className="text-xs text-muted-foreground mb-1">Notas previas:</p>
                       <p className="text-sm text-[hsl(270,30%,70%)]">{escrow.notes}</p>
                     </div>

@@ -58,10 +58,10 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
       {(primaryColors.length > 0 || secondaryColors.length > 0 || isEditing) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {(primaryColors.length > 0 || isEditing) && (
-            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+            <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
               <div className="flex items-center gap-2 mb-4">
-                <Palette className="w-4 h-4 text-purple-400" />
-                <p className="text-sm font-medium text-purple-400">Colores Primarios</p>
+                <Palette className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Colores Primarios</p>
               </div>
               {isEditing ? (
                 <EditableTags items={data.primary_colors || data.brand_colors?.slice(0, Math.ceil((data.brand_colors?.length || 0) / 2)) || []} onChange={change('primary_colors') as (v: string[]) => void} color="purple" placeholder="#hex o nombre..." />
@@ -76,10 +76,10 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
           )}
 
           {(secondaryColors.length > 0 || isEditing) && (
-            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+            <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
               <div className="flex items-center gap-2 mb-4">
-                <Palette className="w-4 h-4 text-pink-400" />
-                <p className="text-sm font-medium text-pink-400">Colores Secundarios</p>
+                <Palette className="w-4 h-4 text-pink-600 dark:text-pink-400" />
+                <p className="text-sm font-medium text-pink-600 dark:text-pink-400">Colores Secundarios</p>
               </div>
               {isEditing ? (
                 <EditableTags items={data.secondary_colors || data.brand_colors?.slice(Math.ceil((data.brand_colors?.length || 0) / 2)) || []} onChange={change('secondary_colors') as (v: string[]) => void} color="pink" placeholder="#hex o nombre..." />
@@ -97,16 +97,15 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
 
       {/* Color Psychology */}
       {(colorPsychology || isEditing) && (
-        <div className="p-4 rounded-xl bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10
-                        border border-purple-500/20">
+        <div className="p-4 rounded-lg bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800">
           <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="w-4 h-4 text-purple-400" />
-            <p className="text-sm font-medium text-purple-400">Psicología del Color</p>
+            <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+            <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Psicología del Color</p>
           </div>
           {isEditing ? (
             <EditableText value={data.color_psychology || data.color_meaning} onChange={change('color_psychology') as (v: string) => void} multiline placeholder="Psicología del color..." />
           ) : (
-            <p className="text-sm text-foreground/80">{colorPsychology}</p>
+            <p className="text-sm text-zinc-700 dark:text-zinc-300">{colorPsychology}</p>
           )}
         </div>
       )}
@@ -115,29 +114,29 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
       {(typographyStyle || imageryStyle || isEditing) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {(typographyStyle || isEditing) && (
-            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+            <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
               <div className="flex items-center gap-2 mb-3">
-                <Type className="w-4 h-4 text-blue-400" />
-                <p className="text-sm font-medium text-blue-400">Estilo Tipográfico</p>
+                <Type className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Estilo Tipográfico</p>
               </div>
               {isEditing ? (
                 <EditableText value={data.typography_style} onChange={change('typography_style') as (v: string) => void} placeholder="Estilo tipográfico..." />
               ) : (
-                <p className="text-sm text-white">{typographyStyle}</p>
+                <p className="text-sm text-zinc-900 dark:text-zinc-100">{typographyStyle}</p>
               )}
             </div>
           )}
 
           {(imageryStyle || isEditing) && (
-            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+            <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
               <div className="flex items-center gap-2 mb-3">
-                <Image className="w-4 h-4 text-emerald-400" />
-                <p className="text-sm font-medium text-emerald-400">Estilo de Imágenes</p>
+                <Image className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Estilo de Imágenes</p>
               </div>
               {isEditing ? (
                 <EditableText value={data.imagery_style || data.photography_style} onChange={change('imagery_style') as (v: string) => void} placeholder="Estilo de imágenes..." />
               ) : (
-                <p className="text-sm text-white">{imageryStyle}</p>
+                <p className="text-sm text-zinc-900 dark:text-zinc-100">{imageryStyle}</p>
               )}
             </div>
           )}
@@ -146,8 +145,8 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
 
       {/* Mood Keywords */}
       {(moodKeywords.length > 0 || isEditing) && (
-        <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-4">Palabras Clave del Mood</p>
+        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
+          <p className="text-xs text-zinc-500 uppercase tracking-wider mb-4">Palabras Clave del Mood</p>
           {isEditing ? (
             <EditableTags items={data.mood_keywords || []} onChange={change('mood_keywords') as (v: string[]) => void} color="emerald" placeholder="Agregar keyword..." />
           ) : (
@@ -155,8 +154,7 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
               {moodKeywords.map((keyword, i) => (
                 <span
                   key={i}
-                  className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500/20 to-teal-500/20
-                             border border-emerald-500/30 text-sm text-emerald-300"
+                  className="px-3 py-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/30 text-sm text-emerald-600 dark:text-emerald-300"
                 >
                   {keyword}
                 </span>
@@ -168,20 +166,20 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
 
       {/* Visual Preview Mockup (display only) */}
       {!isEditing && primaryColors.length > 0 && (
-        <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-4">Vista Previa de Paleta</p>
-          <div className="relative h-32 rounded-xl overflow-hidden">
+        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
+          <p className="text-xs text-zinc-500 uppercase tracking-wider mb-4">Vista Previa de Paleta</p>
+          <div className="relative h-32 rounded-lg overflow-hidden">
             <div
               className="absolute inset-0"
               style={{
                 background: `linear-gradient(135deg, ${primaryColors[0] || '#8B5CF6'} 0%, ${primaryColors[1] || '#EC4899'} 50%, ${secondaryColors[0] || '#06B6D4'} 100%)`
               }}
             />
-            <div className="absolute inset-0 bg-black/20" />
+            <div className="absolute inset-0 bg-zinc-900/20" />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
                 <p className="text-white/80 text-sm font-medium mb-1">Tu Marca</p>
-                <p className="text-white text-lg font-bold tracking-wide">IDENTIDAD VISUAL</p>
+                <p className="text-zinc-100 text-lg font-bold tracking-wide">IDENTIDAD VISUAL</p>
               </div>
             </div>
           </div>
@@ -205,10 +203,10 @@ function ColorSwatch({ color, size = 'medium' }: { color: string; size?: 'small'
   return (
     <div className="flex flex-col items-center gap-2">
       <div
-        className={`${sizeClasses[size]} rounded-xl border-2 border-white/20 shadow-lg ${bgClass}`}
+        className={`${sizeClasses[size]} rounded-lg border-2 border-zinc-300 dark:border-white/20 shadow-lg ${bgClass}`}
         style={bgStyle}
       />
-      <span className="text-xs text-gray-400 font-mono">{color}</span>
+      <span className="text-xs text-zinc-400 font-mono">{color}</span>
     </div>
   );
 }

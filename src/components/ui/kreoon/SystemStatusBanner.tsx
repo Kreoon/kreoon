@@ -92,7 +92,7 @@ export function SystemStatusBanner({
           exit={{ y: -100, opacity: 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
           className={cn(
-            "sticky top-0 z-[10000] w-full border-b backdrop-blur-sm",
+            "sticky top-0 z-[10000] w-full border-b",
             config.bg,
             config.border
           )}

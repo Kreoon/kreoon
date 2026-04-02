@@ -167,19 +167,19 @@ export function StreamingSessionCard({
           )}
 
           {/* Stats grid */}
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="rounded-lg bg-muted/50 p-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+            <div className="rounded-sm bg-muted/50 p-2">
               <Eye className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
               <p className="text-lg font-semibold">{session.peak_viewers || 0}</p>
               <p className="text-xs text-muted-foreground">Viewers</p>
             </div>
-            <div className="rounded-lg bg-muted/50 p-2">
+            <div className="rounded-sm bg-muted/50 p-2">
               <Users className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
               <p className="text-lg font-semibold">{session.total_messages || 0}</p>
               <p className="text-xs text-muted-foreground">Mensajes</p>
             </div>
             {session.is_shopping_enabled && (
-              <div className="rounded-lg bg-muted/50 p-2">
+              <div className="rounded-sm bg-muted/50 p-2">
                 <ShoppingBag className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
                 <p className="text-lg font-semibold">
                   ${session.total_revenue_usd?.toFixed(0) || 0}
@@ -188,7 +188,7 @@ export function StreamingSessionCard({
               </div>
             )}
             {!session.is_shopping_enabled && (
-              <div className="rounded-lg bg-muted/50 p-2">
+              <div className="rounded-sm bg-muted/50 p-2">
                 <Clock className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
                 <p className="text-lg font-semibold">
                   {session.started_at

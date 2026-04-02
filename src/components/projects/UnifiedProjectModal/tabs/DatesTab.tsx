@@ -145,7 +145,7 @@ export default function DatesTab({ project, formData, setFormData, editMode, rea
         {dateFields.map(field => {
           const Icon = field.icon;
           return (
-            <div key={field.key} className="border rounded-lg p-4">
+            <div key={field.key} className="border rounded-sm p-4">
               <label className="text-sm font-medium text-muted-foreground flex items-center gap-1.5 mb-2">
                 <Icon className="h-4 w-4" />
                 {field.label}

@@ -131,7 +131,7 @@ export function ImpersonationPanel() {
     <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
       <CardHeader>
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
+          <div className="p-2 rounded-sm bg-primary/10">
             <Eye className="h-5 w-5 text-primary" />
           </div>
           <div>
@@ -289,7 +289,7 @@ export function ImpersonationPanel() {
             </div>
 
             {/* Info */}
-            <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
+            <div className="rounded-sm bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
               <p className="font-medium">Información importante:</p>
               <ul className="list-disc list-inside space-y-0.5">
                 <li>Puedes realizar cambios como el usuario simulado</li>

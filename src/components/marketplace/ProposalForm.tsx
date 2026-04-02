@@ -151,11 +151,11 @@ export function ProposalForm({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg bg-social-card border-social-border p-0">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-lg bg-card border-border p-0">
         <ScrollArea className="max-h-[85vh]">
           <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
             <DialogHeader>
-              <DialogTitle className="text-xl text-social-foreground">
+              <DialogTitle className="text-xl text-foreground">
                 Enviar propuesta
               </DialogTitle>
               <DialogDescription className="flex items-center gap-2 mt-2">
@@ -175,7 +175,7 @@ export function ProposalForm({
                   value={selectedServiceId}
                   onValueChange={(value) => setValue('service_id', value)}
                 >
-                  <SelectTrigger className="bg-social-muted border-social-border">
+                  <SelectTrigger className="bg-background border-border">
                     <SelectValue placeholder="Selecciona un servicio o deja vacío" />
                   </SelectTrigger>
                   <SelectContent>
@@ -186,7 +186,7 @@ export function ProposalForm({
                           <span>{SERVICE_TYPE_ICONS[service.service_type]}</span>
                           <span>{service.title}</span>
                           {service.price_amount && (
-                            <span className="text-social-muted-foreground">
+                            <span className="text-muted-foreground">
                               - ${service.price_amount}
                             </span>
                           )}
@@ -205,7 +205,7 @@ export function ProposalForm({
                 id="title"
                 {...register('title')}
                 placeholder="Ej: Video UGC para lanzamiento de producto"
-                className="bg-social-muted border-social-border"
+                className="bg-background border-border"
               />
               {errors.title && (
                 <p className="text-sm text-red-500">{errors.title.message}</p>
@@ -220,7 +220,7 @@ export function ProposalForm({
                 {...register('description')}
                 placeholder="Cuéntale al creador qué necesitas, el contexto de tu marca, y cualquier detalle relevante..."
                 rows={4}
-                className="bg-social-muted border-social-border resize-none"
+                className="bg-background border-border resize-none"
               />
               {errors.description && (
                 <p className="text-sm text-red-500">{errors.description.message}</p>
@@ -238,10 +238,10 @@ export function ProposalForm({
                     type="button"
                     onClick={() => setValue('budget_type', type)}
                     className={cn(
-                      "px-3 py-2 rounded-lg border text-sm transition-colors",
+                      "px-3 py-2 rounded-sm border text-sm transition-colors",
                       budgetType === type
-                        ? "bg-social-accent/20 border-social-accent text-social-accent"
-                        : "bg-social-muted border-social-border text-social-muted-foreground hover:border-social-accent/50"
+                        ? "bg-secondary border-primary text-primary"
+                        : "bg-background border-border text-muted-foreground hover:border-primary/50"
                     )}
                   >
                     {type === 'fixed' && 'Precio fijo'}
@@ -255,22 +255,22 @@ export function ProposalForm({
               {budgetType !== 'open' && (
                 <div className="flex gap-2">
                   <div className="relative flex-1">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-social-muted-foreground" />
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="number"
                       {...register('proposed_budget', { valueAsNumber: true })}
                       placeholder={budgetType === 'range' ? 'Mínimo' : 'Monto'}
-                      className="bg-social-muted border-social-border pl-9"
+                      className="bg-background border-border pl-9"
                     />
                   </div>
                   {budgetType === 'range' && (
                     <div className="relative flex-1">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-social-muted-foreground" />
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         type="number"
                         {...register('budget_max', { valueAsNumber: true })}
                         placeholder="Máximo"
-                        className="bg-social-muted border-social-border pl-9"
+                        className="bg-background border-border pl-9"
                       />
                     </div>
                   )}
@@ -278,7 +278,7 @@ export function ProposalForm({
                     value={watch('budget_currency')}
                     onValueChange={(value) => setValue('budget_currency', value)}
                   >
-                    <SelectTrigger className="w-24 bg-social-muted border-social-border">
+                    <SelectTrigger className="w-24 bg-background border-border">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -296,12 +296,12 @@ export function ProposalForm({
             <div className="space-y-2">
               <Label htmlFor="deadline">Fecha límite deseada (opcional)</Label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-social-muted-foreground" />
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="deadline"
                   type="date"
                   {...register('desired_deadline')}
-                  className="bg-social-muted border-social-border pl-9"
+                  className="bg-background border-border pl-9"
                   min={new Date().toISOString().split('T')[0]}
                 />
               </div>
@@ -314,21 +314,21 @@ export function ProposalForm({
                 {attachments.map((file, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-social-muted text-sm"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-background text-sm"
                   >
                     <Paperclip className="h-3 w-3" />
                     <span className="max-w-[100px] truncate">{file.name}</span>
                     <button
                       type="button"
                       onClick={() => removeAttachment(index)}
-                      className="text-social-muted-foreground hover:text-red-500"
+                      className="text-muted-foreground hover:text-red-500"
                     >
                       <X className="h-3 w-3" />
                     </button>
                   </div>
                 ))}
                 {attachments.length < 5 && (
-                  <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dashed border-social-border hover:border-social-accent/50 cursor-pointer text-sm text-social-muted-foreground hover:text-social-foreground transition-colors">
+                  <label className="flex items-center gap-2 px-3 py-1.5 rounded-sm border border-dashed border-border hover:border-primary/50 cursor-pointer text-sm text-muted-foreground hover:text-foreground transition-colors">
                     <Paperclip className="h-3 w-3" />
                     Adjuntar archivo
                     <input
@@ -340,7 +340,7 @@ export function ProposalForm({
                   </label>
                 )}
               </div>
-              <p className="text-xs text-social-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Máximo 5 archivos. Formatos: PDF, DOC, imágenes, videos.
               </p>
             </div>
@@ -358,7 +358,7 @@ export function ProposalForm({
               <Button
                 type="submit"
                 disabled={isCreating || isUploadingFile}
-                className="flex-1 gap-2 bg-gradient-to-r from-social-accent to-purple-600 hover:opacity-90"
+                className="flex-1 gap-2 bg-gradient-to-r from-primary to-purple-600 hover:opacity-90"
               >
                 {isCreating || isUploadingFile ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

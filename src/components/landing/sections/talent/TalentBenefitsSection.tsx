@@ -159,7 +159,7 @@ export default function TalentBenefitsSection() {
                 {/* Glow accent */}
                 <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-amber-500/5 blur-2xl" aria-hidden />
                 <div className="relative">
-                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 mb-4">
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-sm bg-gradient-to-br from-amber-500 to-orange-500 mb-4">
                     <perk.icon className="h-6 w-6 text-white" />
                   </div>
                   <h3 className="text-lg font-semibold text-kreoon-text-primary mb-2">
@@ -203,7 +203,7 @@ export default function TalentBenefitsSection() {
                 intensity="light"
                 className="p-6 h-full hover:border-kreoon-purple-400/20 transition-all"
               >
-                <div className={`inline-flex h-11 w-11 items-center justify-center rounded-lg ${item.color} mb-4`}>
+                <div className={`inline-flex h-11 w-11 items-center justify-center rounded-sm ${item.color} mb-4`}>
                   <item.icon className="h-5 w-5" />
                 </div>
                 <h3 className="text-base font-semibold text-kreoon-text-primary mb-2">
@@ -241,7 +241,7 @@ export default function TalentBenefitsSection() {
                 )}
 
                 <div className="text-center">
-                  <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl border border-kreoon-purple-500/30 bg-kreoon-bg-card/60 backdrop-blur-sm">
+                  <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-sm border border-kreoon-purple-500/30 bg-kreoon-bg-card/60">
                     <step.icon className="h-8 w-8 text-kreoon-purple-400" />
                   </div>
                   <span className="text-xs font-bold text-kreoon-purple-400 tracking-widest uppercase">

@@ -1,5 +1,16 @@
 import { useMemo } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
+import {
+  LazyBarChart,
+  LazyChartContainer,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Cell,
+} from "@/components/ui/lazy-charts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface GoalData {
@@ -98,23 +109,23 @@ export function GoalsChart({ goals, actuals, metric, title, startMonth = 1, endM
       const isMoney = metric === 'revenue';
       const prefix = isMoney ? (currency === 'USD' ? '$' : '$') : '';
       const suffix = isMoney && currency !== 'USD' ? ' COP' : (isMoney ? ' USD' : '');
-      
+
       return (
-        <div className="bg-popover border border-border rounded-lg p-3 shadow-xl">
-          <p className="font-semibold text-foreground mb-2">{label}</p>
+        <div className="bg-[var(--nova-bg-elevated)] border border-[var(--nova-border-default)] rounded-sm p-3 shadow-xl nova-glass">
+          <p className="font-semibold text-[var(--nova-text-bright)] mb-2">{label}</p>
           <div className="space-y-1 text-sm">
-            <p className="text-muted-foreground">
-              Meta: <span className="font-medium text-primary">
+            <p className="text-[var(--nova-text-secondary)]">
+              Meta: <span className="font-medium text-[var(--nova-accent-primary)]">
                 {prefix}{meta.toLocaleString()}{suffix}
               </span>
             </p>
-            <p className="text-muted-foreground">
-              Real: <span className="font-medium text-success">
+            <p className="text-[var(--nova-text-secondary)]">
+              Real: <span className="font-medium text-[var(--nova-success)]">
                 {prefix}{real.toLocaleString()}{suffix}
               </span>
             </p>
-            <p className="text-muted-foreground">
-              Cumplimiento: <span className={`font-medium ${percentage >= 100 ? 'text-success' : percentage >= 75 ? 'text-warning' : 'text-destructive'}`}>
+            <p className="text-[var(--nova-text-secondary)]">
+              Cumplimiento: <span className={`font-medium ${percentage >= 100 ? 'text-[var(--nova-success)]' : percentage >= 75 ? 'text-[var(--nova-warning)]' : 'text-[var(--nova-error)]'}`}>
                 {percentage}%
               </span>
             </p>
@@ -126,51 +137,53 @@ export function GoalsChart({ goals, actuals, metric, title, startMonth = 1, endM
   };
 
   const renderChart = (data: any[], currency?: 'COP' | 'USD') => (
-    <ResponsiveContainer width="100%" height={220}>
-      <BarChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-        <XAxis 
-          dataKey="name" 
-          tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-          axisLine={{ stroke: 'hsl(var(--border))' }}
-        />
-        <YAxis 
-          tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-          axisLine={{ stroke: 'hsl(var(--border))' }}
-          tickFormatter={(value) => {
-            if (metric === 'revenue') {
-              if (currency === 'USD') {
-                return `$${value >= 1000 ? (value / 1000).toFixed(0) + 'k' : value}`;
+    <LazyChartContainer height={220}>
+      <ResponsiveContainer width="100%" height={220}>
+        <LazyBarChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+          <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+          <XAxis
+            dataKey="name"
+            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+            axisLine={{ stroke: 'hsl(var(--border))' }}
+          />
+          <YAxis
+            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+            axisLine={{ stroke: 'hsl(var(--border))' }}
+            tickFormatter={(value) => {
+              if (metric === 'revenue') {
+                if (currency === 'USD') {
+                  return `$${value >= 1000 ? (value / 1000).toFixed(0) + 'k' : value}`;
+                }
+                return `$${(value / 1000000).toFixed(1)}M`;
               }
-              return `$${(value / 1000000).toFixed(1)}M`;
-            }
-            return value;
-          }}
-        />
-        <Tooltip content={(props) => <CustomTooltip {...props} currency={currency} />} />
-        <Legend 
-          formatter={(value) => value === 'meta' ? 'Meta' : 'Real'}
-          wrapperStyle={{ paddingTop: '10px' }}
-        />
-        <Bar 
-          dataKey="meta" 
-          fill="hsl(var(--primary))" 
-          radius={[4, 4, 0, 0]}
-          opacity={0.6}
-        />
-        <Bar 
-          dataKey="real" 
-          radius={[4, 4, 0, 0]}
-        >
-          {data.map((entry, index) => (
-            <Cell 
-              key={`cell-${index}`}
-              fill={entry.percentage >= 100 ? 'hsl(var(--success))' : entry.percentage >= 75 ? 'hsl(var(--warning))' : 'hsl(var(--info))'}
-            />
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+              return value;
+            }}
+          />
+          <Tooltip content={(props) => <CustomTooltip {...props} currency={currency} />} />
+          <Legend
+            formatter={(value) => value === 'meta' ? 'Meta' : 'Real'}
+            wrapperStyle={{ paddingTop: '10px' }}
+          />
+          <Bar
+            dataKey="meta"
+            fill="hsl(var(--primary))"
+            radius={[4, 4, 0, 0]}
+            opacity={0.6}
+          />
+          <Bar
+            dataKey="real"
+            radius={[4, 4, 0, 0]}
+          >
+            {data.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={entry.percentage >= 100 ? 'hsl(var(--success))' : entry.percentage >= 75 ? 'hsl(var(--warning))' : 'hsl(var(--info))'}
+              />
+            ))}
+          </Bar>
+        </LazyBarChart>
+      </ResponsiveContainer>
+    </LazyChartContainer>
   );
 
   if (isRevenue) {

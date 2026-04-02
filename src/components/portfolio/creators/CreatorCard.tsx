@@ -86,16 +86,16 @@ function CreatorCardComponent({ creator, onClick }: CreatorCardProps) {
     <motion.div
       ref={cardRef}
       className={cn(
-        "relative bg-social-card rounded-xl overflow-hidden",
-        "border border-social-border/50 transition-all duration-300",
-        "hover:border-social-accent/30 hover:shadow-xl hover:shadow-social-accent/10"
+        "relative bg-card rounded-sm overflow-hidden",
+        "border border-border/50 transition-all duration-300",
+        "hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10"
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       whileHover={{ scale: 1.02 }}
     >
       {/* Video Container - 9:16 aspect ratio */}
-      <div className="relative aspect-[9/16] bg-social-muted overflow-hidden">
+      <div className="relative aspect-[9/16] bg-background overflow-hidden">
         {/* Thumbnail */}
         {thumbnailUrl && !imageError && (
           <img
@@ -113,15 +113,15 @@ function CreatorCardComponent({ creator, onClick }: CreatorCardProps) {
 
         {/* Loading placeholder */}
         {!imageLoaded && !imageError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-social-muted animate-pulse">
-            <Play className="h-10 w-10 text-social-muted-foreground/50" />
+          <div className="absolute inset-0 flex items-center justify-center bg-background animate-pulse">
+            <Play className="h-10 w-10 text-muted-foreground/50" />
           </div>
         )}
 
         {/* Fallback placeholder */}
         {imageError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-social-muted to-social-background">
-            <Play className="h-12 w-12 text-social-muted-foreground/30" />
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-background to-background">
+            <Play className="h-12 w-12 text-muted-foreground/30" />
           </div>
         )}
 
@@ -152,7 +152,7 @@ function CreatorCardComponent({ creator, onClick }: CreatorCardProps) {
           animate={{ opacity: isHovered && !videoLoaded ? 0.8 : 0 }}
           transition={{ duration: 0.2 }}
         >
-          <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+          <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center">
             <Play className="h-6 w-6 text-white fill-white ml-1" />
           </div>
         </motion.div>
@@ -161,13 +161,13 @@ function CreatorCardComponent({ creator, onClick }: CreatorCardProps) {
       {/* Creator Info */}
       <div className="p-4 space-y-2">
         {/* Name - Full, not truncated */}
-        <h3 className="font-semibold text-social-foreground text-base leading-tight">
+        <h3 className="font-semibold text-foreground text-base leading-tight">
           {creator.full_name}
         </h3>
 
         {/* Location */}
         {(creator.city || creator.country) && (
-          <div className="flex items-center gap-1.5 text-social-muted-foreground">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
             <MapPin className="h-3.5 w-3.5 shrink-0" />
             <span className="text-sm">
               {[creator.city, creator.country].filter(Boolean).join(', ')}
@@ -178,8 +178,8 @@ function CreatorCardComponent({ creator, onClick }: CreatorCardProps) {
         {/* Niche/Category */}
         {primaryNiche && (
           <div className="flex items-center gap-1.5">
-            <Tag className="h-3.5 w-3.5 text-social-muted-foreground shrink-0" />
-            <span className="text-sm text-social-muted-foreground">{primaryNiche}</span>
+            <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span className="text-sm text-muted-foreground">{primaryNiche}</span>
           </div>
         )}
 
@@ -198,8 +198,8 @@ function CreatorCardComponent({ creator, onClick }: CreatorCardProps) {
           variant="outline"
           size="sm"
           className={cn(
-            "w-full mt-2 border-social-accent/30 text-social-accent",
-            "hover:bg-social-accent/10 hover:border-social-accent/50",
+            "w-full mt-2 border-primary/30 text-primary",
+            "hover:bg-secondary hover:border-primary/50",
             "transition-all duration-200 pointer-events-none text-xs px-2"
           )}
         >

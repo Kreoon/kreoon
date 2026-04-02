@@ -52,7 +52,7 @@ const KreoonInput = React.forwardRef<HTMLInputElement, KreoonInputProps>(
             aria-invalid={hasError}
             aria-describedby={hasError ? `${id}-error` : undefined}
             className={cn(
-              "flex h-10 w-full rounded-xl border bg-kreoon-bg-secondary px-3 py-2 text-sm text-kreoon-text-primary",
+              "flex h-10 w-full rounded-sm border bg-kreoon-bg-secondary px-3 py-2 text-sm text-kreoon-text-primary",
               "placeholder:text-kreoon-text-muted/70",
               "transition-all duration-200 ease-out",
               icon && "pl-10",

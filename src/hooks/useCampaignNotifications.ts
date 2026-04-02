@@ -86,7 +86,7 @@ export function useCampaignNotifications() {
 
     setLoading(true);
     try {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('campaign_notifications')
         .select('*')
         .eq('user_id', user.id)
@@ -110,7 +110,7 @@ export function useCampaignNotifications() {
     if (!user) return;
 
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('campaign_notifications')
         .update({
           read_at: new Date().toISOString(),
@@ -140,7 +140,7 @@ export function useCampaignNotifications() {
     if (!user) return;
 
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('campaign_notifications')
         .update({
           read_at: new Date().toISOString(),
@@ -169,7 +169,7 @@ export function useCampaignNotifications() {
 
   const fetchPreferences = useCallback(async (creatorProfileId: string) => {
     try {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('creator_notification_preferences')
         .select('*')
         .eq('creator_profile_id', creatorProfileId)
@@ -189,7 +189,7 @@ export function useCampaignNotifications() {
     newPreferences: Partial<NotificationPreferences>,
   ): Promise<boolean> => {
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('creator_notification_preferences')
         .upsert(
           {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RichTextEditor, RichTextViewer } from '@/components/ui/rich-text-editor';
+import { LazyRichTextEditor as RichTextEditor, LazyRichTextViewer as RichTextViewer } from '@/components/ui/lazy-rich-text-editor';
 import { Button } from '@/components/ui/button';
 import { SectionCard } from './SectionCard';
 import { PermissionsGate, EditableField } from './PermissionsGate';

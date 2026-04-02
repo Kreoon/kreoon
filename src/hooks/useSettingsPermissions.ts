@@ -12,6 +12,7 @@ export type SettingsSectionKey =
   | 'security'
   | 'tour'
   | 'marketplace'        // Marketplace profile, roles, services, availability
+  | 'client_company'     // Client company info (for client role)
   // Organization level
   | 'organization'
   | 'org_registration_settings' // Registration & invite settings
@@ -64,6 +65,7 @@ const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'plat
   security: 'user',
   tour: 'user',
   marketplace: 'user',
+  client_company: 'user', // Client company info
   // Organization level - org admin/owner only
   organization: 'organization',
   org_registration_settings: 'organization',

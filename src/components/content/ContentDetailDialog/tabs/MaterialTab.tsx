@@ -93,7 +93,7 @@ export function MaterialTab({
       {/* Reference Video */}
       <SectionCard title="Video de Referencia" iconEmoji="🎬">
         {content?.reference_url ? (
-          <div className="aspect-video max-h-[400px] rounded-lg overflow-hidden bg-black">
+          <div className="aspect-video max-h-[400px] rounded-sm overflow-hidden bg-black">
             {renderVideoEmbed(content.reference_url)}
           </div>
         ) : (

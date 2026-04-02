@@ -45,7 +45,7 @@ export function KanbanVideoModal({
         >
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-popover/90 backdrop-blur-xl"
+            className="absolute inset-0 bg-popover/90"
             style={{ background: "rgba(10, 1, 24, 0.92)" }}
           />
           {/* Modal */}
@@ -54,7 +54,7 @@ export function KanbanVideoModal({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="relative w-full max-w-4xl rounded-xl overflow-hidden"
+            className="relative w-full max-w-4xl rounded-sm overflow-hidden"
             onClick={(e) => e.stopPropagation()}
             style={{
               background: "rgba(255, 255, 255, 0.05)",
@@ -73,7 +73,7 @@ export function KanbanVideoModal({
                 variant="ghost"
                 size="icon"
                 onClick={onClose}
-                className="h-8 w-8 rounded-lg text-[#cbd5e1] hover:text-[#f8fafc] hover:bg-white/10"
+                className="h-8 w-8 rounded-sm text-[#cbd5e1] hover:text-[#f8fafc] hover:bg-white/10"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -93,10 +93,10 @@ export function KanbanVideoModal({
                   poster={posterUrl || undefined}
                   showControls={true}
                   aspectRatio="16:9"
-                  className="w-full rounded-lg overflow-hidden bg-black"
+                  className="w-full rounded-sm overflow-hidden bg-black"
                 />
               ) : (
-                <div className="aspect-video rounded-lg bg-black/50 flex items-center justify-center text-[#cbd5e1] text-sm">
+                <div className="aspect-video rounded-sm bg-black/50 flex items-center justify-center text-[#cbd5e1] text-sm">
                   No hay video disponible
                 </div>
               )}

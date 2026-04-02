@@ -194,7 +194,7 @@ export default function FeedCard({ item, onSave, isSaved, onOpenComments }: Feed
   const shareTitle = item.title || item.caption || 'Mira este post';
 
   return (
-    <article className="glass-card rounded-2xl overflow-hidden border border-white/10 animate-fade-in">
+    <article className="glass-card rounded-sm overflow-hidden border border-white/10 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3 p-4">
         <Avatar 

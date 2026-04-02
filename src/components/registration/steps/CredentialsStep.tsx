@@ -55,7 +55,7 @@ export function CredentialsStep({ data, onChange, onNext, onBack, mode }: StepCo
                 value={data.brandName}
                 onChange={e => onChange({ brandName: e.target.value })}
                 placeholder="Mi Marca"
-                className="w-full rounded-lg border border-border bg-white/5 pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30"
+                className="w-full rounded-sm border border-border bg-white/5 pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30"
               />
             </div>
           </div>
@@ -71,7 +71,7 @@ export function CredentialsStep({ data, onChange, onNext, onBack, mode }: StepCo
               value={data.fullName}
               onChange={e => onChange({ fullName: e.target.value })}
               placeholder="Tu nombre"
-              className="w-full rounded-lg border border-border bg-white/5 pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30"
+              className="w-full rounded-sm border border-border bg-white/5 pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30"
             />
           </div>
         </div>
@@ -86,7 +86,7 @@ export function CredentialsStep({ data, onChange, onNext, onBack, mode }: StepCo
               value={data.email}
               onChange={e => onChange({ email: e.target.value })}
               placeholder="tu@email.com"
-              className="w-full rounded-lg border border-border bg-white/5 pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30"
+              className="w-full rounded-sm border border-border bg-white/5 pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30"
             />
           </div>
         </div>
@@ -101,7 +101,7 @@ export function CredentialsStep({ data, onChange, onNext, onBack, mode }: StepCo
               value={data.password}
               onChange={e => onChange({ password: e.target.value })}
               placeholder="Mínimo 8 caracteres"
-              className="w-full rounded-lg border border-border bg-white/5 pl-10 pr-10 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30"
+              className="w-full rounded-sm border border-border bg-white/5 pl-10 pr-10 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30"
             />
             <button
               type="button"
@@ -134,7 +134,7 @@ export function CredentialsStep({ data, onChange, onNext, onBack, mode }: StepCo
               value={data.confirmPassword}
               onChange={e => onChange({ confirmPassword: e.target.value })}
               placeholder="Repite la contraseña"
-              className="w-full rounded-lg border border-border bg-white/5 pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30"
+              className="w-full rounded-sm border border-border bg-white/5 pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30"
             />
           </div>
         </div>
@@ -146,7 +146,7 @@ export function CredentialsStep({ data, onChange, onNext, onBack, mode }: StepCo
 
       <button
         onClick={handleNext}
-        className="w-full mt-5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 text-sm transition-colors"
+        className="w-full mt-5 rounded-sm bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 text-sm transition-colors"
       >
         Continuar
       </button>

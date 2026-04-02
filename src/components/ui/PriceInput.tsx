@@ -71,7 +71,7 @@ export function PriceInput({
           onChange={handleChange}
           placeholder={placeholder}
           className={cn(
-            'w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500',
+            'w-full bg-white/5 border border-white/10 rounded-sm pl-8 pr-3 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500',
             inputClassName,
           )}
         />

@@ -208,7 +208,7 @@ export function CancelBookingPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden"
+          className="bg-white rounded-sm shadow-lg border border-slate-200 overflow-hidden"
         >
           {/* Header */}
           <div className="p-6 bg-gradient-to-r from-red-500 to-rose-500 text-white">
@@ -278,7 +278,7 @@ export function CancelBookingPage() {
                 <Button
                   onClick={handleCancel}
                   disabled={cancelling}
-                  className="w-full bg-red-500 hover:bg-red-600 text-white rounded-lg py-3"
+                  className="w-full bg-red-500 hover:bg-red-600 text-white rounded-sm py-3"
                 >
                   {cancelling ? (
                     <>
@@ -300,7 +300,7 @@ export function CancelBookingPage() {
                 )}
               </div>
             ) : (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-sm p-4">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
                   <div>

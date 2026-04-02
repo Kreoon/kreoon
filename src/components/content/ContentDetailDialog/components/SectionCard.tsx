@@ -24,7 +24,7 @@ export function SectionCard({
   return (
     <div
       className={cn(
-        'rounded-lg border bg-card',
+        'rounded-sm border bg-card',
         variant === 'compact' && 'p-2.5 sm:p-3',
         variant === 'default' && 'p-3 sm:p-4',
         variant === 'highlight' && 'p-3 sm:p-4 bg-gradient-to-r from-primary/5 to-primary/10',

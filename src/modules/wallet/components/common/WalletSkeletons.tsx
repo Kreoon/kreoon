@@ -20,7 +20,7 @@ export function WalletDashboardSkeleton() {
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <Skeleton className="h-5 w-32" />
-            <Skeleton className="h-8 w-8 rounded-lg" />
+            <Skeleton className="h-8 w-8 rounded-sm" />
           </div>
         </CardHeader>
         <CardContent>
@@ -29,11 +29,11 @@ export function WalletDashboardSkeleton() {
               <SkeletonSubtle className="h-4 w-24 mb-2" />
               <Skeleton className="h-12 w-48" />
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="p-3 rounded-xl bg-[hsl(270,100%,60%,0.05)]"
+                  className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.05)]"
                 >
                   <SkeletonSubtle className="h-3 w-16 mb-2" />
                   <Skeleton className="h-6 w-24" />
@@ -57,7 +57,7 @@ export function WalletDashboardSkeleton() {
               {[1, 2, 3].map((i) => (
                 <div key={i} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Skeleton className="h-10 w-10 rounded-lg" />
+                    <Skeleton className="h-10 w-10 rounded-sm" />
                     <div>
                       <Skeleton className="h-4 w-20 mb-1" />
                       <SkeletonSubtle className="h-3 w-16" />
@@ -80,7 +80,7 @@ export function WalletDashboardSkeleton() {
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div
                   key={i}
-                  className="h-20 rounded-lg bg-[hsl(270,100%,60%,0.05)] flex flex-col items-center justify-center gap-2"
+                  className="h-20 rounded-sm bg-[hsl(270,100%,60%,0.05)] flex flex-col items-center justify-center gap-2"
                 >
                   <Skeleton className="h-5 w-5 rounded" />
                   <SkeletonSubtle className="h-3 w-12" />
@@ -104,7 +104,7 @@ export function WalletDashboardSkeleton() {
             {[1, 2, 3, 4, 5].map((i) => (
               <div
                 key={i}
-                className="flex items-center gap-3 p-3 rounded-xl bg-[hsl(270,100%,60%,0.03)]"
+                className="flex items-center gap-3 p-3 rounded-sm bg-[hsl(270,100%,60%,0.03)]"
               >
                 <Skeleton className="h-10 w-10 rounded-full" />
                 <div className="flex-1">
@@ -128,7 +128,7 @@ export function TransactionListSkeleton({ count = 10 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="flex items-center gap-3 p-3 rounded-xl bg-[hsl(270,100%,60%,0.03)]"
+          className="flex items-center gap-3 p-3 rounded-sm bg-[hsl(270,100%,60%,0.03)]"
         >
           <Skeleton className="h-10 w-10 rounded-full" />
           <div className="flex-1">

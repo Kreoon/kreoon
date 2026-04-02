@@ -8,19 +8,19 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import {
-  LineChart,
+  LazyAreaChart,
+  LazyPieChart,
+  LazyChartContainer,
   Line,
-  AreaChart,
   Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
   Pie,
   Cell,
-} from 'recharts';
+} from '@/components/ui/lazy-charts';
 import {
   Eye,
   Users,
@@ -48,6 +48,8 @@ interface LiveAnalyticsDashboardProps {
   className?: string;
 }
 
+// Colores de plataforma - estos son colores de marca que deben mantenerse
+// pero se pueden usar CSS variables para el fallback
 const PLATFORM_COLORS: Record<StreamingPlatform, string> = {
   youtube: '#FF0000',
   tiktok: '#00F2EA',
@@ -56,7 +58,7 @@ const PLATFORM_COLORS: Record<StreamingPlatform, string> = {
   twitch: '#9146FF',
   linkedin: '#0A66C2',
   twitter: '#1DA1F2',
-  custom_rtmp: '#6B7280',
+  custom_rtmp: 'var(--nova-text-muted)',
 };
 
 export function LiveAnalyticsDashboard({
@@ -147,9 +149,9 @@ export function LiveAnalyticsDashboard({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[200px]">
+            <LazyChartContainer height={200}>
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={viewerChartData}>
+                <LazyAreaChart data={viewerChartData}>
                   <defs>
                     <linearGradient id="viewerGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3} />
@@ -173,9 +175,9 @@ export function LiveAnalyticsDashboard({
                     strokeWidth={2}
                     fill="url(#viewerGradient)"
                   />
-                </AreaChart>
+                </LazyAreaChart>
               </ResponsiveContainer>
-            </div>
+            </LazyChartContainer>
           </CardContent>
         </Card>
 
@@ -187,9 +189,9 @@ export function LiveAnalyticsDashboard({
           <CardContent>
             {platformChartData.length > 0 ? (
               <>
-                <div className="h-[120px]">
+                <LazyChartContainer height={120}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
+                    <LazyPieChart>
                       <Pie
                         data={platformChartData}
                         cx="50%"
@@ -210,9 +212,9 @@ export function LiveAnalyticsDashboard({
                           borderRadius: '8px',
                         }}
                       />
-                    </PieChart>
+                    </LazyPieChart>
                   </ResponsiveContainer>
-                </div>
+                </LazyChartContainer>
                 <div className="space-y-2 mt-2">
                   {platformChartData.map((platform) => (
                     <div
@@ -348,7 +350,7 @@ function StatCard({ title, value, icon: Icon, trend, color }: StatCardProps) {
     <Card>
       <CardContent className="pt-6">
         <div className="flex items-center justify-between">
-          <div className={cn('rounded-lg p-2', colorClasses[color])}>
+          <div className={cn('rounded-sm p-2', colorClasses[color])}>
             <Icon className="h-5 w-5" />
           </div>
           {trend !== undefined && (

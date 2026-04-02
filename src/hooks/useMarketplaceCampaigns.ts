@@ -285,9 +285,23 @@ export function useMarketplaceCampaigns(options: UseMarketplaceCampaignsOptions 
     setError(null);
 
     try {
+      // Select solo campos necesarios para mapCampaignRow (evita traer JSONB pesados innecesarios)
+      const campaignFields = `
+        id, brand_id, title, description, category, campaign_type,
+        budget_mode, budget_per_video, total_budget, currency, platform_fee_pct,
+        content_requirements, creator_requirements, max_creators,
+        applications_count, approved_count, status, deadline,
+        created_at, updated_at, exchange_product_name, exchange_product_value,
+        exchange_product_description, tags, pricing_mode, min_bid, max_bid,
+        bid_deadline, bid_visibility, desired_roles, visibility, organization_id,
+        brief, cover_image_url, brand_name_override, brand_logo_override,
+        compensation_type, compensation_description, product_value,
+        application_deadline, content_deadline, campaign_start_date, campaign_end_date
+      `;
+
       let query = (supabase as any)
         .from('marketplace_campaigns')
-        .select('*')
+        .select(campaignFields)
         .order('updated_at', { ascending: false });
 
       if (options.brandId) {
@@ -692,9 +706,16 @@ export function useMarketplaceCampaigns(options: UseMarketplaceCampaignsOptions 
   const getApplicationsForCampaign = useCallback(
     async (campaignId: string): Promise<CampaignApplication[]> => {
       try {
+        // Select solo campos necesarios para mapApplicationRow
+        const applicationFields = `
+          id, campaign_id, creator_id, status, cover_letter, proposed_price,
+          portfolio_links, availability_date, created_at, updated_at, brand_notes,
+          bid_amount, bid_message, counter_offer_amount, counter_offer_message,
+          counter_offer_response, counter_offer_response_at
+        `;
         const { data: appRows, error: err } = await (supabase as any)
           .from('campaign_applications')
-          .select('*')
+          .select(applicationFields)
           .eq('campaign_id', campaignId)
           .order('created_at', { ascending: false });
 
@@ -705,9 +726,17 @@ export function useMarketplaceCampaigns(options: UseMarketplaceCampaignsOptions 
         const creatorsMap = new Map<string, MarketplaceCreator>();
 
         if (creatorIds.length > 0) {
+          // Select solo campos necesarios (evita portfolio_media JSONB pesado)
+          const creatorFields = `
+            id, user_id, slug, display_name, avatar_url, bio, location_city,
+            location_country, country_flag, categories, content_types, level,
+            is_verified, rating_avg, rating_count, base_price, currency,
+            is_available, languages, completed_projects, created_at,
+            accepts_product_exchange, marketplace_roles
+          `;
           const { data: creators } = await (supabase as any)
             .from('creator_profiles')
-            .select('*')
+            .select(creatorFields)
             .in('id', creatorIds);
           for (const c of creators || []) {
             creatorsMap.set(c.id, {
@@ -753,18 +782,33 @@ export function useMarketplaceCampaigns(options: UseMarketplaceCampaignsOptions 
   const getApplicationsForCreator = useCallback(
     async (creatorProfileId: string): Promise<CampaignApplication[]> => {
       try {
+        // Select solo campos necesarios para mapApplicationRow
+        const applicationFields = `
+          id, campaign_id, creator_id, status, cover_letter, proposed_price,
+          portfolio_links, availability_date, created_at, updated_at, brand_notes,
+          bid_amount, bid_message, counter_offer_amount, counter_offer_message,
+          counter_offer_response, counter_offer_response_at
+        `;
         const { data: appRows, error: err } = await (supabase as any)
           .from('campaign_applications')
-          .select('*')
+          .select(applicationFields)
           .eq('creator_id', creatorProfileId)
           .order('created_at', { ascending: false });
 
         if (err) throw err;
         if (!appRows?.length) return [];
 
+        // Select solo campos necesarios (evita portfolio_media JSONB pesado)
+        const creatorFields = `
+          id, user_id, slug, display_name, avatar_url, bio, location_city,
+          location_country, country_flag, categories, content_types, level,
+          is_verified, rating_avg, rating_count, base_price, currency,
+          is_available, languages, completed_projects, created_at,
+          accepts_product_exchange, marketplace_roles
+        `;
         const { data: creatorRow } = await (supabase as any)
           .from('creator_profiles')
-          .select('*')
+          .select(creatorFields)
           .eq('id', creatorProfileId)
           .maybeSingle();
 

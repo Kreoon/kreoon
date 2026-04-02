@@ -70,14 +70,14 @@ export function HiringSuccess({ creatorName, packageName }: HiringSuccessProps) 
       <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm pt-4">
         <button
           onClick={() => navigate('/board?view=marketplace')}
-          className="flex-1 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white font-semibold py-3 px-5 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
+          className="flex-1 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white font-semibold py-3 px-5 rounded-sm text-sm transition-all flex items-center justify-center gap-2"
         >
           <ShoppingBag className="h-4 w-4" />
           Ver mis proyectos
         </button>
         <button
           onClick={() => navigate('/marketplace')}
-          className="flex-1 border border-white/20 text-white font-semibold py-3 px-5 rounded-xl text-sm hover:bg-white/5 transition-all flex items-center justify-center gap-2"
+          className="flex-1 border border-white/20 text-white font-semibold py-3 px-5 rounded-sm text-sm hover:bg-white/5 transition-all flex items-center justify-center gap-2"
         >
           Marketplace
           <ArrowRight className="h-4 w-4" />

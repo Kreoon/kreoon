@@ -185,7 +185,7 @@ function ScriptSection({
   return (
     <div 
       className={cn(
-        "relative rounded-xl border-2 overflow-hidden transition-all duration-200",
+        "relative rounded-sm border-2 overflow-hidden transition-all duration-200",
         "hover:shadow-lg hover:scale-[1.01]",
         config.borderColor
       )}
@@ -198,10 +198,10 @@ function ScriptSection({
       <div className={cn(
         "relative flex items-center gap-3 px-4 py-3 border-b",
         config.borderColor,
-        "bg-background/50 backdrop-blur-sm"
+        "bg-background/50"
       )}>
         <div className={cn(
-          "flex items-center justify-center w-10 h-10 rounded-lg text-xl",
+          "flex items-center justify-center w-10 h-10 rounded-sm text-xl",
           config.iconBg
         )}>
           {config.icon}
@@ -248,7 +248,7 @@ export function ScriptViewer({
   if (!content || content.trim() === '' || content === '<p></p>') {
     return (
       <div className={cn(
-        "flex items-center justify-center p-8 rounded-xl border-2 border-dashed border-muted-foreground/20",
+        "flex items-center justify-center p-8 rounded-sm border-2 border-dashed border-muted-foreground/20",
         "bg-muted/20 text-muted-foreground text-sm",
         className
       )}>
@@ -283,7 +283,7 @@ export function ScriptViewer({
           <div className={cn("overflow-y-auto", maxHeight, className)}>
             <div 
               className={cn(
-                "p-5 rounded-xl border bg-card",
+                "p-5 rounded-sm border bg-card",
                 "prose prose-sm dark:prose-invert max-w-none",
                 "[&_p]:leading-relaxed [&_p]:mb-3",
                 "[&_strong]:font-bold",

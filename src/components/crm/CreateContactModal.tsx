@@ -190,7 +190,7 @@ export function CreateContactModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-lg p-0 overflow-hidden">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-lg max-h-[90dvh] sm:max-h-[90vh] p-0 overflow-hidden">
         <div className="p-6 space-y-5">
           <DialogHeader>
             <DialogTitle className="text-white text-lg">Nuevo Contacto</DialogTitle>
@@ -225,7 +225,7 @@ export function CreateContactModal({
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-white/70 text-xs">Teléfono</Label>
                 <Input
@@ -285,7 +285,7 @@ export function CreateContactModal({
                         type="button"
                         onClick={() => form.setValue('relationship_strength', opt.value)}
                         className={cn(
-                          'flex-1 flex flex-col items-center gap-1 py-2 rounded-lg border transition-all',
+                          'flex-1 flex flex-col items-center gap-1 py-2 rounded-sm border transition-all',
                           isActive
                             ? opt.activeColor
                             : 'border-white/10 bg-white/5 hover:bg-white/8 hover:border-white/20',
@@ -305,11 +305,11 @@ export function CreateContactModal({
             {/* ---- Pipeline (only for leads) ---- */}
             {isLead && pipelineStages.length > 0 && (
               <div
-                className="p-3 rounded-lg space-y-3"
+                className="p-3 rounded-sm space-y-3"
                 style={{ background: 'rgba(139, 92, 246, 0.06)', border: '1px solid rgba(139, 92, 246, 0.15)' }}
               >
                 <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold">Pipeline</p>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-white/70 text-xs">Etapa</Label>
                     <Select
@@ -421,7 +421,7 @@ export function CreateContactModal({
                 Redes sociales
               </button>
               {showSocial && (
-                <div className="grid grid-cols-3 gap-2 mt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
                   <div className="space-y-1">
                     <Label className="text-white/50 text-[10px]">Instagram</Label>
                     <Input

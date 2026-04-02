@@ -65,7 +65,7 @@ export function LandingContentCalendar({ contentCalendar }: Props) {
       {weeklyThemes.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {weeklyThemes.map((wt: any, i: number) => (
-            <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-lg p-2.5 text-center">
+            <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-sm p-2.5 text-center">
               <p className="text-[10px] text-white/30 uppercase">Semana {wt.week || i + 1}</p>
               <p className="text-xs font-medium text-white/70 mt-0.5">{wt.theme || '-'}</p>
             </div>
@@ -94,7 +94,7 @@ export function LandingContentCalendar({ contentCalendar }: Props) {
           const esferaClass = ESFERA_COLORS[item.esferaPhase?.toLowerCase()] || 'text-white/40';
 
           return (
-            <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-xl overflow-hidden">
+            <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-sm overflow-hidden">
               <button
                 onClick={() => setExpandedItem(isExpanded ? null : i)}
                 className="w-full flex items-center gap-3 p-3 hover:bg-white/[0.02] transition-colors text-left"

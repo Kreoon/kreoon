@@ -268,7 +268,7 @@ export function ApplicationReviewPanel({ requestId }: ApplicationReviewPanelProp
                       host={host}
                       onClick={() => setSelectedHost(host)}
                     />
-                    <div className="mt-2 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900">
+                    <div className="mt-2 p-3 rounded-sm bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900">
                       <p className="text-sm text-green-700 dark:text-green-400 font-medium">
                         Host confirmado - Tarifa acordada: ${host.agreed_rate_usd} USD
                       </p>

@@ -1,5 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  checkRateLimit,
+  rateLimitResponse,
+  getClientIp,
+  RATE_LIMIT_PRESETS,
+} from "../_shared/rate-limiter.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -98,7 +104,14 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // --- Rate limiting: 10 requests/min por IP ---
+    const ip = getClientIp(req);
+    const rateLimit = await checkRateLimit(supabaseAdmin, ip, { limit: 10, windowMs: 60_000 });
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(req, rateLimit, 10);
+    }
 
     const data: LeadData = await req.json();
 
@@ -119,130 +132,98 @@ serve(async (req) => {
       );
     }
 
-    // Verificar si ya existe el email
-    const { data: existingLead } = await supabase
+    const normalizedEmail = data.email.toLowerCase().trim();
+    const leadScore = calculateInitialScore(data);
+    const source = determineSource(data);
+
+    // UPSERT atómico: elimina la race condition del patrón SELECT + INSERT.
+    // onConflict: 'email' actualiza el registro si el email ya existe,
+    // preservando campos existentes donde el nuevo valor sea null.
+    const { data: lead, error: upsertError } = await supabaseAdmin
       .from('platform_leads')
+      .upsert(
+        {
+          full_name: data.full_name.trim(),
+          email: normalizedEmail,
+          phone: data.phone?.trim() || null,
+          city: data.city?.trim() || null,
+          country: data.country?.trim() || 'CO',
+
+          lead_type: data.lead_type || 'talent',
+          talent_category: data.talent_category || null,
+          specific_role: data.specific_role || null,
+          talent_subtype: data.talent_subtype || null,
+          registration_intent: data.registration_intent || data.lead_type,
+          experience_level: data.experience_level || null,
+
+          lead_source: source,
+          utm_source: data.utm_source || null,
+          utm_medium: data.utm_medium || null,
+          utm_campaign: data.utm_campaign || null,
+
+          lead_score: leadScore,
+          // stage solo se actualiza si el lead estaba en 'lost' (el trigger
+          // de la BD lo maneja); para leads nuevos se establece 'new'.
+          stage: 'new',
+
+          portfolio_url: data.portfolio_url || null,
+          social_profiles: data.social_profiles || null,
+
+          custom_fields: {
+            ...(data.custom_fields || {}),
+            utm_content: data.utm_content,
+            utm_term: data.utm_term,
+            referrer_url: data.referrer_url,
+            landing_page: data.landing_page,
+            interests: data.interests,
+            initial_message: data.message,
+            referral_code: data.referral_code,
+            captured_at: new Date().toISOString(),
+          },
+
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'email',
+          ignoreDuplicates: false,
+        }
+      )
       .select('id, stage')
-      .eq('email', data.email.toLowerCase())
       .single();
 
-    if (existingLead) {
-      // Si ya existe pero está en stage 'lost', permitir re-registro
-      if (existingLead.stage === 'lost') {
-        const { data: updatedLead, error: updateError } = await supabase
-          .from('platform_leads')
-          .update({
-            stage: 'new',
-            lead_source: determineSource(data),
-            utm_source: data.utm_source,
-            utm_medium: data.utm_medium,
+    if (upsertError) throw upsertError;
+
+    // Determinar si fue inserción o actualización consultando created_at vs updated_at
+    // El campo `stage` devuelto refleja el valor real post-upsert en la BD.
+    // Si el lead ya existía, el upsert devuelve el registro actualizado.
+    const isNew = lead.stage === 'new';
+
+    // Registrar interacción (solo en inserción real — evitar duplicados en re-submits)
+    if (isNew) {
+      await supabaseAdmin
+        .from('platform_lead_interactions')
+        .insert({
+          lead_id: lead.id,
+          interaction_type: 'form_submitted',
+          subject: 'Registro desde landing',
+          content: `Nuevo lead capturado desde ${data.landing_page || 'landing'}`,
+          metadata: {
+            source,
             utm_campaign: data.utm_campaign,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existingLead.id)
-          .select()
-          .single();
-
-        if (updateError) throw updateError;
-
-        return new Response(
-          JSON.stringify({
-            success: true,
-            lead_id: updatedLead.id,
-            message: 'Lead reactivado',
-            is_reactivation: true
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Si existe y no está lost, retornar como existente
-      return new Response(
-        JSON.stringify({
-          success: true,
-          lead_id: existingLead.id,
-          message: 'Ya estás registrado',
-          already_exists: true
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+            initial_score: leadScore,
+          },
+        });
     }
 
-    // Calcular score
-    const leadScore = calculateInitialScore(data);
-
-    // Preparar datos para inserción
-    const leadRecord = {
-      full_name: data.full_name.trim(),
-      email: data.email.toLowerCase().trim(),
-      phone: data.phone?.trim() || null,
-      city: data.city?.trim() || null,
-      country: data.country?.trim() || 'CO',
-
-      lead_type: data.lead_type || 'talent',
-      talent_category: data.talent_category || null,
-      specific_role: data.specific_role || null,
-      talent_subtype: data.talent_subtype || null,
-      registration_intent: data.registration_intent || data.lead_type,
-      experience_level: data.experience_level || null,
-
-      lead_source: determineSource(data),
-      utm_source: data.utm_source || null,
-      utm_medium: data.utm_medium || null,
-      utm_campaign: data.utm_campaign || null,
-
-      lead_score: leadScore,
-      stage: 'new',
-
-      portfolio_url: data.portfolio_url || null,
-      social_profiles: data.social_profiles || null,
-
-      custom_fields: {
-        ...(data.custom_fields || {}),
-        utm_content: data.utm_content,
-        utm_term: data.utm_term,
-        referrer_url: data.referrer_url,
-        landing_page: data.landing_page,
-        interests: data.interests,
-        initial_message: data.message,
-        referral_code: data.referral_code,
-        captured_at: new Date().toISOString()
-      }
-    };
-
-    // Insertar lead
-    const { data: newLead, error: insertError } = await supabase
-      .from('platform_leads')
-      .insert(leadRecord)
-      .select()
-      .single();
-
-    if (insertError) throw insertError;
-
-    // Registrar interacción inicial
-    await supabase
-      .from('platform_lead_interactions')
-      .insert({
-        lead_id: newLead.id,
-        interaction_type: 'form_submitted',
-        subject: 'Registro desde landing',
-        content: `Nuevo lead capturado desde ${data.landing_page || 'landing'}`,
-        metadata: {
-          source: determineSource(data),
-          utm_campaign: data.utm_campaign,
-          initial_score: leadScore
-        }
-      });
-
     // TODO: Trigger notificación (Discord/Slack webhook)
-    // await notifyNewLead(newLead);
+    // await notifyNewLead(lead);
 
     return new Response(
       JSON.stringify({
         success: true,
-        lead_id: newLead.id,
+        lead_id: lead.id,
         score: leadScore,
-        message: '¡Registro exitoso!'
+        message: '¡Registro exitoso!',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

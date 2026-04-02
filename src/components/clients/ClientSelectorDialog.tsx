@@ -149,10 +149,10 @@ export function ClientSelectorDialog({ open, onOpenChange, onSelectClient }: Pro
                         <img
                           src={item.client.logo_url}
                           alt={item.client.name}
-                          className="h-10 w-10 rounded-lg object-cover"
+                          className="h-10 w-10 rounded-sm object-cover"
                         />
                       ) : (
-                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <div className="h-10 w-10 rounded-sm bg-primary/10 flex items-center justify-center">
                           <Building2 className="h-5 w-5 text-primary" />
                         </div>
                       )}

@@ -65,7 +65,7 @@ export function MarketplaceSearchToggle({ hook, className }: Props) {
           aiIntent={aiIntent}
         />
       ) : (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-white/10 bg-white/5 hover:border-white/20 transition-colors focus-within:border-purple-500/60 focus-within:shadow-[0_0_0_3px_rgba(139,92,246,0.15)]">
+        <div className="flex items-center gap-3 px-4 py-3 rounded-sm border border-white/10 bg-white/5 hover:border-white/20 transition-colors focus-within:border-purple-500/60 focus-within:shadow-[0_0_0_3px_rgba(139,92,246,0.15)]">
           <Search className="h-4 w-4 text-white/40 flex-shrink-0" />
           <input
             value={filters.query}

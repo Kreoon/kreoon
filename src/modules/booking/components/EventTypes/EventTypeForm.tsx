@@ -197,7 +197,7 @@ export function EventTypeForm({
                   <FormControl>
                     <Input
                       placeholder="Ej: Llamada de descubrimiento"
-                      className="bg-slate-50 border-slate-200 focus:border-violet-500 focus:ring-violet-500/20 h-11 rounded-lg"
+                      className="bg-slate-50 border-slate-200 focus:border-violet-500 focus:ring-violet-500/20 h-11 rounded-sm"
                       {...field}
                     />
                   </FormControl>
@@ -217,7 +217,7 @@ export function EventTypeForm({
                   <FormControl>
                     <Textarea
                       placeholder="Describe brevemente de qué trata esta cita..."
-                      className="bg-slate-50 border-slate-200 focus:border-violet-500 focus:ring-violet-500/20 resize-none rounded-lg"
+                      className="bg-slate-50 border-slate-200 focus:border-violet-500 focus:ring-violet-500/20 resize-none rounded-sm"
                       rows={3}
                       {...field}
                     />
@@ -254,7 +254,7 @@ export function EventTypeForm({
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => field.onChange(duration)}
-                      className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                      className={`px-4 py-2.5 rounded-sm text-sm font-medium transition-all ${
                         selectedDuration === duration
                           ? 'bg-violet-500 text-white shadow-md'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -269,7 +269,7 @@ export function EventTypeForm({
                       min={5}
                       max={480}
                       placeholder="Otro"
-                      className="w-24 h-10 bg-slate-50 border-slate-200 rounded-lg text-center"
+                      className="w-24 h-10 bg-slate-50 border-slate-200 rounded-sm text-center"
                       value={!DURATION_PRESETS.includes(selectedDuration) ? selectedDuration : ''}
                       onChange={(e) => field.onChange(parseInt(e.target.value) || 30)}
                     />
@@ -312,7 +312,7 @@ export function EventTypeForm({
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={() => field.onChange(type)}
-                          className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
+                          className={`flex items-center gap-2 px-4 py-3 rounded-sm text-sm font-medium transition-all ${
                             isSelected
                               ? 'bg-violet-50 text-violet-600 border-2 border-violet-500'
                               : 'bg-slate-50 text-slate-600 border border-slate-200 hover:border-slate-300'
@@ -346,7 +346,7 @@ export function EventTypeForm({
                             ? 'Ej: Calle 123 #45-67, Bogotá'
                             : 'Ej: URL o instrucciones personalizadas'
                         }
-                        className="bg-slate-50 border-slate-200 h-11 rounded-lg"
+                        className="bg-slate-50 border-slate-200 h-11 rounded-sm"
                         {...field}
                       />
                     </FormControl>
@@ -385,7 +385,7 @@ export function EventTypeForm({
                         type="number"
                         min={0}
                         max={120}
-                        className="bg-slate-50 border-slate-200 h-10 rounded-lg pr-12"
+                        className="bg-slate-50 border-slate-200 h-10 rounded-sm pr-12"
                         {...field}
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">
@@ -414,7 +414,7 @@ export function EventTypeForm({
                         type="number"
                         min={0}
                         max={120}
-                        className="bg-slate-50 border-slate-200 h-10 rounded-lg pr-12"
+                        className="bg-slate-50 border-slate-200 h-10 rounded-sm pr-12"
                         {...field}
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">
@@ -458,7 +458,7 @@ export function EventTypeForm({
                         type="number"
                         min={0}
                         max={720}
-                        className="bg-slate-50 border-slate-200 h-10 rounded-lg pr-10"
+                        className="bg-slate-50 border-slate-200 h-10 rounded-sm pr-10"
                         {...field}
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
@@ -484,7 +484,7 @@ export function EventTypeForm({
                         type="number"
                         min={1}
                         max={365}
-                        className="bg-slate-50 border-slate-200 h-10 rounded-lg pr-12"
+                        className="bg-slate-50 border-slate-200 h-10 rounded-sm pr-12"
                         {...field}
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">
@@ -510,7 +510,7 @@ export function EventTypeForm({
                       min={1}
                       max={50}
                       placeholder="∞"
-                      className="bg-slate-50 border-slate-200 h-10 rounded-lg text-center"
+                      className="bg-slate-50 border-slate-200 h-10 rounded-sm text-center"
                       {...field}
                       value={field.value ?? ''}
                       onChange={(e) =>
@@ -574,7 +574,7 @@ export function EventTypeForm({
               type="button"
               variant="outline"
               onClick={onCancel}
-              className="px-6 h-11 rounded-lg"
+              className="px-6 h-11 rounded-sm"
             >
               Cancelar
             </Button>

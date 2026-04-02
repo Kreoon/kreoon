@@ -46,14 +46,14 @@ function NotificationItem({
   return (
     <div 
       className={cn(
-        "flex items-start gap-3 p-3 hover:bg-social-muted/50 cursor-pointer transition-colors rounded-lg",
-        !notification.is_read && "bg-social-accent/5"
+        "flex items-start gap-3 p-3 hover:bg-background/50 cursor-pointer transition-colors rounded-sm",
+        !notification.is_read && "bg-primary/5"
       )}
       onClick={handleClick}
     >
       <Avatar className="h-10 w-10 shrink-0">
         <AvatarImage src={notification.actor?.avatar_url || undefined} />
-        <AvatarFallback className="bg-social-muted text-social-foreground text-sm">
+        <AvatarFallback className="bg-background text-foreground text-sm">
           {notification.actor?.full_name?.charAt(0) || '?'}
         </AvatarFallback>
       </Avatar>
@@ -61,21 +61,21 @@ function NotificationItem({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           {notificationIcons[(notification as any).notification_type || notification.type] || notificationIcons.follow}
-          <p className="text-sm text-social-foreground">
+          <p className="text-sm text-foreground">
             <span className="font-semibold">{notification.actor?.full_name || 'Alguien'}</span>
             {' '}
-            <span className="text-social-muted-foreground">
+            <span className="text-muted-foreground">
               {notification.message || notificationMessages[(notification as any).notification_type || notification.type]}
             </span>
           </p>
         </div>
-        <p className="text-xs text-social-muted-foreground mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: es })}
         </p>
       </div>
 
       {!notification.is_read && (
-        <div className="h-2 w-2 rounded-full bg-social-accent shrink-0 mt-2" />
+        <div className="h-2 w-2 rounded-full bg-primary shrink-0 mt-2" />
       )}
     </div>
   );
@@ -102,7 +102,7 @@ export function NotificationsBell() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative text-social-muted-foreground hover:text-social-foreground">
+        <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
             <Badge 
@@ -116,15 +116,15 @@ export function NotificationsBell() {
 
       <PopoverContent 
         align="end" 
-        className="w-96 p-0 bg-social-card border-social-border"
+        className="w-96 p-0 bg-card border-border"
       >
-        <div className="flex items-center justify-between p-4 border-b border-social-border">
-          <h3 className="font-semibold text-social-foreground">Notificaciones</h3>
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h3 className="font-semibold text-foreground">Notificaciones</h3>
           {unreadCount > 0 && (
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-xs text-social-muted-foreground hover:text-social-foreground"
+              className="text-xs text-muted-foreground hover:text-foreground"
               onClick={() => markAllAsRead()}
             >
               <CheckCheck className="h-4 w-4 mr-1" />
@@ -136,10 +136,10 @@ export function NotificationsBell() {
         <ScrollArea className="h-[400px]">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="h-6 w-6 border-2 border-social-accent border-t-transparent rounded-full animate-spin" />
+              <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           ) : notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-social-muted-foreground">
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <Bell className="h-12 w-12 mb-4 opacity-50" />
               <p>No tienes notificaciones</p>
             </div>

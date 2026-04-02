@@ -1,7 +1,7 @@
 import { memo, useRef, useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, LayoutGrid, Video, Film, Target, Code, GraduationCap, Megaphone } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Video, Film, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { MarketplaceViewMode, MarketplaceRoleCategory } from './types/marketplace';
+import type { MarketplaceViewMode } from './types/marketplace';
 
 interface RoleCategoryBarProps {
   active: MarketplaceViewMode;
@@ -9,23 +9,21 @@ interface RoleCategoryBarProps {
 }
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  LayoutGrid, Video, Film, Target, Code, GraduationCap, Megaphone,
+  Video, Film, Target,
 };
 
 interface CategoryItem {
   id: MarketplaceViewMode;
   label: string;
-  icon: string;
+  icon: string | null;
   color: string;
 }
 
 const ITEMS: CategoryItem[] = [
-  { id: 'all', label: 'Todos', icon: 'LayoutGrid', color: 'text-purple-400' },
-  { id: 'content_creation', label: 'Creación de Contenido', icon: 'Video', color: 'text-pink-400' },
-  { id: 'post_production', label: 'Post-Producción', icon: 'Film', color: 'text-blue-400' },
-  { id: 'strategy_marketing', label: 'Estrategia & Marketing', icon: 'Target', color: 'text-green-400' },
-  { id: 'technology', label: 'Tecnología', icon: 'Code', color: 'text-cyan-400' },
-  { id: 'education', label: 'Educación', icon: 'GraduationCap', color: 'text-yellow-400' },
+  { id: 'all', label: 'Todos', icon: null, color: 'text-purple-400' },
+  { id: 'creators', label: 'Creadores', icon: 'Video', color: 'text-pink-400' },
+  { id: 'production', label: 'Produccion', icon: 'Film', color: 'text-blue-400' },
+  { id: 'strategy', label: 'Estrategas', icon: 'Target', color: 'text-green-400' },
 ];
 
 export const RoleCategoryBar = memo(function RoleCategoryBar({ active, onChange }: RoleCategoryBarProps) {
@@ -74,14 +72,14 @@ export const RoleCategoryBar = memo(function RoleCategoryBar({ active, onChange 
       >
         {ITEMS.map(item => {
           const isActive = active === item.id;
-          const Icon = ICON_MAP[item.icon];
+          const Icon = item.icon ? ICON_MAP[item.icon] : null;
 
           return (
             <button
               key={item.id}
               onClick={() => onChange(item.id)}
               className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all border',
+                'flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium whitespace-nowrap transition-all border',
                 isActive
                   ? 'bg-purple-500/15 border-purple-500/40 text-white shadow-[0_0_12px_-3px_rgba(139,92,246,0.3)]'
                   : 'border-white/5 text-gray-400 hover:bg-white/5 hover:text-white hover:border-white/10',

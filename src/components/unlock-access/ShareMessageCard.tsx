@@ -40,7 +40,7 @@ function MessageCard({
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.99 }}
       className={cn(
-        'w-full text-left p-4 rounded-xl border transition-all duration-200',
+        'w-full text-left p-4 rounded-sm border transition-all duration-200',
         copied
           ? 'bg-emerald-500/10 border-emerald-500/30'
           : 'bg-white/[0.03] border-white/10 hover:bg-white/[0.05] hover:border-white/20'
@@ -62,7 +62,7 @@ function MessageCard({
           </p>
         </div>
         <div className={cn(
-          'shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors',
+          'shrink-0 w-8 h-8 rounded-sm flex items-center justify-center transition-colors',
           copied ? 'bg-emerald-500/30' : 'bg-white/5'
         )}>
           {copied ? (

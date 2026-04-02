@@ -32,7 +32,7 @@ export function ApplicationCard({ application, onApprove, onReject, showActions,
   const priceValue = hasBid ? application.bid_amount : application.proposed_price;
 
   return (
-    <div className="bg-card/80 border border-white/5 rounded-xl p-5 space-y-4">
+    <div className="bg-card/80 border border-white/5 rounded-sm p-5 space-y-4">
       {/* Creator info */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
@@ -81,7 +81,7 @@ export function ApplicationCard({ application, onApprove, onReject, showActions,
 
       {/* Bid message (auction/range) */}
       {application.bid_message && (
-        <div className="bg-orange-500/5 border border-orange-500/10 rounded-lg p-3">
+        <div className="bg-orange-500/5 border border-orange-500/10 rounded-sm p-3">
           <p className="text-orange-400 text-xs mb-1 flex items-center gap-1">
             <Gavel className="h-3 w-3" />
             Mensaje de oferta
@@ -133,7 +133,7 @@ export function ApplicationCard({ application, onApprove, onReject, showActions,
 
       {/* Counter offer section */}
       {hasCounterOffer && application.counter_offer && (
-        <div className="bg-blue-500/5 border border-blue-500/10 rounded-lg p-3 space-y-1.5">
+        <div className="bg-blue-500/5 border border-blue-500/10 rounded-sm p-3 space-y-1.5">
           <div className="flex items-center justify-between">
             <p className="text-blue-400 text-xs font-medium flex items-center gap-1">
               <ArrowLeftRight className="h-3 w-3" />
@@ -182,7 +182,7 @@ export function ApplicationCard({ application, onApprove, onReject, showActions,
 
       {/* Brand notes */}
       {application.brand_notes && (
-        <div className="bg-white/5 rounded-lg p-3">
+        <div className="bg-white/5 rounded-sm p-3">
           <p className="text-gray-500 text-xs">Nota:</p>
           <p className="text-gray-400 text-xs">{application.brand_notes}</p>
         </div>
@@ -193,7 +193,7 @@ export function ApplicationCard({ application, onApprove, onReject, showActions,
         <div className="flex gap-2 pt-2 border-t border-white/5">
           <button
             onClick={() => onApprove(application.id)}
-            className="flex-1 flex items-center justify-center gap-1.5 bg-green-600/20 hover:bg-green-600/30 text-green-300 py-2.5 rounded-lg text-sm font-medium transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 bg-green-600/20 hover:bg-green-600/30 text-green-300 py-2.5 rounded-sm text-sm font-medium transition-colors"
           >
             <CheckCircle2 className="h-4 w-4" />
             Aprobar
@@ -202,7 +202,7 @@ export function ApplicationCard({ application, onApprove, onReject, showActions,
           {isBidMode && onCounterOffer && !hasCounterOffer && (
             <button
               onClick={() => onCounterOffer(application.id)}
-              className="flex-1 flex items-center justify-center gap-1.5 bg-orange-600/20 hover:bg-orange-600/30 text-orange-300 py-2.5 rounded-lg text-sm font-medium transition-colors"
+              className="flex-1 flex items-center justify-center gap-1.5 bg-orange-600/20 hover:bg-orange-600/30 text-orange-300 py-2.5 rounded-sm text-sm font-medium transition-colors"
             >
               <DollarSign className="h-4 w-4" />
               Contraoferta
@@ -210,7 +210,7 @@ export function ApplicationCard({ application, onApprove, onReject, showActions,
           )}
           <button
             onClick={() => onReject(application.id)}
-            className="flex-1 flex items-center justify-center gap-1.5 bg-red-600/20 hover:bg-red-600/30 text-red-300 py-2.5 rounded-lg text-sm font-medium transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 bg-red-600/20 hover:bg-red-600/30 text-red-300 py-2.5 rounded-sm text-sm font-medium transition-colors"
           >
             <XCircle className="h-4 w-4" />
             Rechazar

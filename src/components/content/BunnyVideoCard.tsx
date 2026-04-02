@@ -189,7 +189,7 @@ export function BunnyVideoCard({
     <div 
       ref={containerRef}
       className={cn(
-        "group relative rounded-2xl overflow-hidden bg-card border border-border",
+        "group relative rounded-sm overflow-hidden bg-card border border-border",
         "hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10",
         isPinned && "ring-2 ring-primary/50",
         className
@@ -242,7 +242,7 @@ export function BunnyVideoCard({
             </button>
             
             {/* Variation indicator */}
-            <div className="absolute top-3 left-3 z-30 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
+            <div className="absolute top-3 left-3 z-30 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
               {currentIndex + 1}/{videoUrls.length}
             </div>
           </>
@@ -351,7 +351,7 @@ export function BunnyVideoCard({
               e.stopPropagation();
               onApprove();
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-500 rounded-lg text-xs font-medium transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-500 rounded-sm text-xs font-medium transition-colors"
           >
             <Check className="h-3.5 w-3.5" />
             <span>Aprobar</span>
@@ -373,7 +373,7 @@ export function BunnyVideoCard({
                   e.stopPropagation();
                   onCreatorStatusChange('recording');
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-500 rounded-lg text-xs font-medium transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-500 rounded-sm text-xs font-medium transition-colors"
               >
                 <Circle className="h-3.5 w-3.5 fill-current animate-pulse" />
                 <span>Iniciar Grabación</span>
@@ -385,7 +385,7 @@ export function BunnyVideoCard({
                   e.stopPropagation();
                   onCreatorStatusChange('recorded');
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-500 rounded-lg text-xs font-medium transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-500 rounded-sm text-xs font-medium transition-colors"
               >
                 <Video className="h-3.5 w-3.5" />
                 <span>Marcar como Grabado</span>

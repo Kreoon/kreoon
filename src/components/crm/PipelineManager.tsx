@@ -52,7 +52,7 @@ function PipelineCard({
 
   return (
     <div
-      className="group rounded-xl p-4 cursor-pointer transition-all hover:scale-[1.01]"
+      className="group rounded-sm p-4 cursor-pointer transition-all hover:scale-[1.01]"
       style={{
         background: 'rgba(255, 255, 255, 0.03)',
         backdropFilter: 'blur(16px)',
@@ -219,7 +219,7 @@ function PipelineDetail({ pipeline, contactCountByStage, onBack, onEdit }: Pipel
           return (
             <div
               key={i}
-              className="flex-shrink-0 w-48 rounded-xl overflow-hidden"
+              className="flex-shrink-0 w-48 rounded-sm overflow-hidden"
               style={{
                 background: 'rgba(255, 255, 255, 0.03)',
                 border: '1px solid rgba(255, 255, 255, 0.06)',
@@ -333,7 +333,7 @@ export function PipelineManager({ organizationId }: PipelineManagerProps) {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {Array.from({ length: 2 }).map((_, i) => (
-            <Skeleton key={i} className="h-32 rounded-xl bg-white/5" />
+            <Skeleton key={i} className="h-32 rounded-sm bg-white/5" />
           ))}
         </div>
       </div>

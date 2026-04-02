@@ -2,7 +2,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Textarea } from '@/components/ui/textarea';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { BunnyMultiVideoUploader } from '@/components/content/BunnyMultiVideoUploader';
 import { AutoPauseVideo } from '@/components/content/AutoPauseVideo';
@@ -14,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { markLocalUpdate } from '@/hooks/useContent';
 import { Video, Share2, Lock, ExternalLink } from 'lucide-react';
+import { NovaTextarea, NovaButton } from '@/components/ui/nova';
 
 interface VideoTabProps extends TabProps {
   selectedProduct: any;
@@ -39,14 +39,14 @@ export function VideoTab({
     <div className="space-y-6">
       {/* Publish to Portfolio */}
       <PermissionsGate permissions={permissions} resource="content.video.thumbnail" action="edit" showLockOnReadOnly={false}>
-        <div className="flex items-center justify-between p-4 rounded-lg border bg-gradient-to-r from-primary/5 to-primary/10">
+        <div className="flex items-center justify-between p-4 rounded-sm border border-[var(--nova-border-accent)] bg-gradient-to-r from-[var(--nova-accent-primary)]/5 to-[var(--nova-accent-secondary)]/10">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-full bg-primary/10">
-              <Share2 className="h-4 w-4 text-primary" />
+            <div className="p-2 rounded-full bg-[var(--nova-accent-primary)]/10">
+              <Share2 className="h-4 w-4 text-[var(--nova-accent-primary)]" />
             </div>
             <div>
-              <p className="font-medium">Publicar en Portafolio</p>
-              <p className="text-xs text-muted-foreground">Visible públicamente en la red social</p>
+              <p className="font-medium text-[var(--nova-text-bright)]">Publicar en Portafolio</p>
+              <p className="text-xs text-[var(--nova-text-muted)]">Visible publicamente en la red social</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -64,8 +64,8 @@ export function VideoTab({
 
       {/* Read-only notice */}
       {(!canEditVideo || readOnly) && effectiveEditMode && (
-        <div className="flex items-center gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg text-sm">
-          <Lock className="h-4 w-4 text-warning" />
+        <div className="flex items-center gap-2 p-3 bg-[var(--nova-warning)]/10 border border-[var(--nova-warning)]/20 rounded-sm text-sm text-[var(--nova-text-secondary)]">
+          <Lock className="h-4 w-4 text-[var(--nova-warning)]" />
           <span>{readOnly ? 'Este tab es de solo lectura' : 'Solo el estratega o admin pueden editar videos'}</span>
         </div>
       )}
@@ -75,8 +75,8 @@ export function VideoTab({
         {/* Videos */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium flex items-center gap-2">
-              <Video className="h-4 w-4" /> Videos Finales
+            <h4 className="font-medium flex items-center gap-2 text-[var(--nova-text-bright)]">
+              <Video className="h-4 w-4 text-[var(--nova-accent-primary)]" /> Videos Finales
             </h4>
             {effectiveEditMode && canEditVideo && (
               <div className="flex items-center gap-2">
@@ -134,26 +134,26 @@ export function VideoTab({
           ) : (
             <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
               {formData.video_urls.map((url, i) => (
-                <div key={i} className="space-y-2 p-3 rounded-lg border bg-muted/30">
+                <div key={i} className="space-y-2 p-3 rounded-sm border border-[var(--nova-border-subtle)] bg-[var(--nova-bg-elevated)]/30">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Variable {i + 1}</span>
+                    <span className="text-sm font-medium text-[var(--nova-text-primary)]">Variable {i + 1}</span>
                     <div className="flex items-center gap-2">
                       {url && (
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
+                        <NovaButton variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
                           <a href={url} target="_blank" rel="noopener noreferrer">
                             <ExternalLink className="h-3 w-3 mr-1" />Abrir
                           </a>
-                        </Button>
+                        </NovaButton>
                       )}
                     </div>
                   </div>
                   {url ? (
-                    <div className="aspect-[9/16] max-h-[300px] rounded-lg overflow-hidden bg-black">
+                    <div className="aspect-[9/16] max-h-[300px] rounded-sm overflow-hidden bg-black">
                       <AutoPauseVideo src={url} className="w-full h-full object-contain" />
                     </div>
                   ) : (
-                    <div className="aspect-[9/16] max-h-[300px] rounded-lg border-2 border-dashed flex items-center justify-center">
-                      <p className="text-sm text-muted-foreground">Sin video</p>
+                    <div className="aspect-[9/16] max-h-[300px] rounded-sm border-2 border-dashed border-[var(--nova-border-default)] flex items-center justify-center">
+                      <p className="text-sm text-[var(--nova-text-muted)]">Sin video</p>
                     </div>
                   )}
                 </div>
@@ -177,14 +177,14 @@ export function VideoTab({
           editMode={effectiveEditMode}
           readOnly={readOnly}
           editComponent={
-            <Textarea
+            <NovaTextarea
               value={formData.notes || ''}
               onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
               placeholder="Notas adicionales..."
               className="min-h-[100px]"
             />
           }
-          viewComponent={<p className="text-sm">{formData.notes || 'Sin notas'}</p>}
+          viewComponent={<p className="text-sm text-[var(--nova-text-secondary)]">{formData.notes || 'Sin notas'}</p>}
         />
       </SectionCard>
     </div>

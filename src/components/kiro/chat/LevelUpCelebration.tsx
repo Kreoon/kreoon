@@ -213,7 +213,7 @@ export function LevelUpCelebration({
           <button
             onClick={handleClose}
             className={cn(
-              'px-6 py-3 rounded-xl min-h-[48px]',
+              'px-6 py-3 rounded-sm min-h-[48px]',
               'bg-violet-500/30 border border-violet-500/50',
               'text-violet-200 font-medium',
               'hover:bg-violet-500/40 transition-colors',

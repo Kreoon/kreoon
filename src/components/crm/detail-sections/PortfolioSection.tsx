@@ -25,10 +25,10 @@ export function PortfolioSection({ portfolio }: PortfolioSectionProps) {
 
   return (
     <DetailSection title="Portafolio">
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         {portfolio.map((item) => (
           <div key={item.id} className="relative group">
-            <div className="aspect-video rounded-lg bg-white/5 overflow-hidden">
+            <div className="aspect-video rounded-sm bg-white/5 overflow-hidden">
               {hasValidUrl(item.thumbnail_url) ? (
                 <img
                   src={item.thumbnail_url}

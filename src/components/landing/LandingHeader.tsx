@@ -55,7 +55,7 @@ export function LandingHeader({ onLogin, onRegister, activeSection, onSectionCli
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
         isScrolled 
-          ? "bg-[hsl(240,15%,4%)]/95 backdrop-blur-2xl border-b border-primary/10 shadow-2xl shadow-primary/5" 
+          ? "bg-[hsl(240,15%,4%)]/95-2xl border-b border-primary/10 shadow-2xl shadow-primary/5" 
           : "bg-transparent"
       )}
     >
@@ -66,7 +66,7 @@ export function LandingHeader({ onLogin, onRegister, activeSection, onSectionCli
             onClick={() => handleNavClick('inicio')}
             className="flex items-center gap-3 group"
           >
-            <div className="relative h-10 w-10 rounded-xl overflow-hidden bg-gradient-to-br from-primary/30 to-primary/10 border border-primary/30 shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-all">
+            <div className="relative h-10 w-10 rounded-sm overflow-hidden bg-gradient-to-br from-primary/30 to-primary/10 border border-primary/30 shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-all">
               <img src="/favicon.png" alt="KREOON" className="h-10 w-10 object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent" />
             </div>
@@ -77,7 +77,7 @@ export function LandingHeader({ onLogin, onRegister, activeSection, onSectionCli
           </button>
 
           {/* Desktop Navigation - Tech Style */}
-          <nav className="hidden lg:flex items-center gap-1 bg-white/5 backdrop-blur-xl rounded-full px-2 py-1.5 border border-white/10">
+          <nav className="hidden lg:flex items-center gap-1 bg-white/5 rounded-full px-2 py-1.5 border border-white/10">
             {MAIN_NAV.map((item) => (
               <button
                 key={item.id}
@@ -108,7 +108,7 @@ export function LandingHeader({ onLogin, onRegister, activeSection, onSectionCli
                   <ChevronDown className="h-4 w-4" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-[hsl(240,15%,8%)]/95 backdrop-blur-xl border-primary/20">
+              <DropdownMenuContent align="end" className="w-48 bg-[hsl(240,15%,8%)]/95 border-primary/20">
                 {MORE_NAV.map((item) => (
                   <DropdownMenuItem
                     key={item.id}
@@ -162,14 +162,14 @@ export function LandingHeader({ onLogin, onRegister, activeSection, onSectionCli
         "lg:hidden overflow-hidden transition-all duration-300",
         mobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
       )}>
-        <div className="bg-[hsl(240,15%,4%)]/98 backdrop-blur-2xl border-b border-primary/10">
+        <div className="bg-[hsl(240,15%,4%)]/98-2xl border-b border-primary/10">
           <nav className="max-w-7xl mx-auto px-4 py-4 space-y-1">
             {[...MAIN_NAV, ...MORE_NAV].map((item) => (
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
                 className={cn(
-                  "w-full text-left px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200",
+                  "w-full text-left px-4 py-3 text-sm font-medium rounded-sm transition-all duration-200",
                   activeSection === item.id
                     ? "text-white bg-primary/20 border border-primary/30"
                     : "text-white/60 hover:text-white hover:bg-white/5"

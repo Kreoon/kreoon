@@ -196,12 +196,12 @@ export const CollaborativeStats = memo(function CollaborativeStats({
 
   if (loading) {
     return (
-      <Card className={className}>
+      <Card className={cn("bg-[var(--nova-bg-elevated)] border-[var(--nova-border-default)]", className)}>
         <CardHeader>
           <Skeleton className="h-6 w-48" />
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Skeleton className="h-20" />
             <Skeleton className="h-20" />
             <Skeleton className="h-20" />
@@ -214,17 +214,17 @@ export const CollaborativeStats = memo(function CollaborativeStats({
 
   if (!stats || stats.totalCollaborations === 0) {
     return (
-      <Card className={className}>
+      <Card className={cn("bg-[var(--nova-bg-elevated)] border-[var(--nova-border-default)]", className)}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Handshake className="h-5 w-5 text-purple-500" />
+          <CardTitle className="flex items-center gap-2 text-lg text-[var(--nova-text-bright)]">
+            <Handshake className="h-5 w-5 text-[var(--nova-accent-primary)]" />
             Marketplace
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="text-center py-8 text-[var(--nova-text-secondary)]">
             <Handshake className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p className="text-sm">No hay contenido colaborativo aún</p>
+            <p className="text-sm">No hay contenido colaborativo aun</p>
             <p className="text-xs mt-1">Comparte contenido con clientes para empezar</p>
           </div>
         </CardContent>
@@ -234,25 +234,25 @@ export const CollaborativeStats = memo(function CollaborativeStats({
 
   if (variant === 'compact') {
     return (
-      <Card className={cn("bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/20", className)}>
+      <Card className={cn("bg-[var(--nova-bg-elevated)] border-[var(--nova-border-accent)] nova-glow", className)}>
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
-                <Handshake className="h-5 w-5 text-white" />
+              <div className="p-2 rounded-sm" style={{ background: "linear-gradient(135deg, var(--nova-accent-primary), var(--nova-aurora-2))" }}>
+                <Handshake className="h-5 w-5 text-[var(--nova-text-bright)]" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats.totalCollaborations}</p>
-                <p className="text-xs text-muted-foreground">Colaboraciones</p>
+                <p className="text-2xl font-bold text-[var(--nova-text-bright)]">{stats.totalCollaborations}</p>
+                <p className="text-xs text-[var(--nova-text-secondary)]">Colaboraciones</p>
               </div>
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate('/marketplace')}
-              className="gap-1"
+              className="gap-1 text-[var(--nova-text-secondary)] hover:text-[var(--nova-text-bright)]"
             >
-              Ver más
+              Ver mas
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
@@ -262,12 +262,12 @@ export const CollaborativeStats = memo(function CollaborativeStats({
   }
 
   return (
-    <Card className={className}>
+    <Card className={cn("bg-[var(--nova-bg-elevated)] border-[var(--nova-border-default)]", className)}>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
-              <Handshake className="h-4 w-4 text-white" />
+          <CardTitle className="flex items-center gap-2 text-lg text-[var(--nova-text-bright)]">
+            <div className="p-1.5 rounded-sm" style={{ background: "linear-gradient(135deg, var(--nova-accent-primary), var(--nova-aurora-2))" }}>
+              <Handshake className="h-4 w-4 text-[var(--nova-text-bright)]" />
             </div>
             Marketplace
           </CardTitle>
@@ -275,7 +275,7 @@ export const CollaborativeStats = memo(function CollaborativeStats({
             variant="ghost"
             size="sm"
             onClick={() => navigate('/marketplace')}
-            className="gap-1 text-xs"
+            className="gap-1 text-xs text-[var(--nova-text-secondary)] hover:text-[var(--nova-text-bright)]"
           >
             Ver todo
             <ArrowRight className="h-3 w-3" />
@@ -283,25 +283,25 @@ export const CollaborativeStats = memo(function CollaborativeStats({
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Stats row */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="text-center p-3 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10">
-            <p className="text-2xl font-bold">{stats.totalCollaborations}</p>
-            <p className="text-xs text-muted-foreground">Colaboraciones</p>
+        {/* Stats row - Nova */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="text-center p-3 rounded-sm bg-[rgba(139,92,246,0.1)] border border-[var(--nova-border-accent)]">
+            <p className="text-2xl font-bold text-[var(--nova-text-bright)]">{stats.totalCollaborations}</p>
+            <p className="text-xs text-[var(--nova-text-secondary)]">Colaboraciones</p>
           </div>
-          <div className="text-center p-3 rounded-lg bg-muted/50">
-            <p className="text-2xl font-bold flex items-center justify-center gap-1">
-              <Eye className="h-4 w-4 text-muted-foreground" />
+          <div className="text-center p-3 rounded-sm bg-[var(--nova-bg-surface)] border border-[var(--nova-border-subtle)]">
+            <p className="text-2xl font-bold flex items-center justify-center gap-1 text-[var(--nova-text-bright)]">
+              <Eye className="h-4 w-4 text-[var(--nova-text-secondary)]" />
               {stats.totalViews >= 1000 ? `${(stats.totalViews / 1000).toFixed(1)}K` : stats.totalViews}
             </p>
-            <p className="text-xs text-muted-foreground">Vistas</p>
+            <p className="text-xs text-[var(--nova-text-secondary)]">Vistas</p>
           </div>
-          <div className="text-center p-3 rounded-lg bg-muted/50">
-            <p className="text-2xl font-bold flex items-center justify-center gap-1">
-              <Heart className="h-4 w-4 text-red-400" />
+          <div className="text-center p-3 rounded-sm bg-[var(--nova-bg-surface)] border border-[var(--nova-border-subtle)]">
+            <p className="text-2xl font-bold flex items-center justify-center gap-1 text-[var(--nova-text-bright)]">
+              <Heart className="h-4 w-4 text-[var(--nova-error)]" />
               {stats.totalLikes >= 1000 ? `${(stats.totalLikes / 1000).toFixed(1)}K` : stats.totalLikes}
             </p>
-            <p className="text-xs text-muted-foreground">Likes</p>
+            <p className="text-xs text-[var(--nova-text-secondary)]">Likes</p>
           </div>
         </div>
 
@@ -369,7 +369,7 @@ export const CollaborativeStats = memo(function CollaborativeStats({
                   className="flex-shrink-0 w-32 cursor-pointer group"
                   onClick={() => navigate(`/content/${collab.id}`)}
                 >
-                  <div className="aspect-[4/5] rounded-md overflow-hidden bg-muted mb-1">
+                  <div className="aspect-[4/5] rounded-sm overflow-hidden bg-muted mb-1">
                     {collab.thumbnail ? (
                       <img
                         src={collab.thumbnail}

@@ -94,7 +94,7 @@ function KanbanCard({ contact, onClick, onDragStart }: KanbanCardProps) {
       onDragStart={(e) => onDragStart(e, contact)}
       onClick={() => onClick(contact)}
       className={cn(
-        'group rounded-lg p-3 cursor-grab active:cursor-grabbing',
+        'group rounded-sm p-3 cursor-grab active:cursor-grabbing',
         'transition-all duration-150',
         'hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(168,85,247,0.15)]',
       )}
@@ -211,7 +211,7 @@ function KanbanColumn({
   return (
     <div
       className={cn(
-        'flex-shrink-0 w-[280px] flex flex-col rounded-xl overflow-hidden transition-all',
+        'flex-shrink-0 w-[280px] flex flex-col rounded-sm overflow-hidden transition-all',
         isDragOver && 'ring-2 ring-[#8b5cf6]/50',
       )}
       style={{
@@ -431,7 +431,7 @@ export function ContactKanban({ organizationId, onContactClick }: ContactKanbanP
         <Skeleton className="h-10 w-64 bg-white/5" />
         <div className="flex gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-[300px] w-[280px] bg-white/5 rounded-xl" />
+            <Skeleton key={i} className="h-[300px] w-[280px] bg-white/5 rounded-sm" />
           ))}
         </div>
       </div>

@@ -31,10 +31,10 @@ export default function NotFound() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.2 }}
       >
-        <div className="relative flex h-24 w-24 items-center justify-center rounded-2xl border border-kreoon-border bg-kreoon-bg-card/50">
+        <div className="relative flex h-24 w-24 items-center justify-center rounded-sm border border-kreoon-border bg-kreoon-bg-card/50">
           <span className="text-4xl font-bold text-kreoon-text-muted">404</span>
           <motion.div
-            className="absolute -inset-1 -z-10 rounded-2xl bg-kreoon-purple-500/10"
+            className="absolute -inset-1 -z-10 rounded-sm bg-kreoon-purple-500/10"
             animate={{ opacity: [0.3, 0.6, 0.3] }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -48,7 +48,7 @@ export default function NotFound() {
             <li key={to}>
               <Link
                 to={to}
-                className="rounded-lg border border-kreoon-border bg-kreoon-bg-secondary/50 px-3 py-2 text-sm text-kreoon-text-primary transition-colors hover:border-kreoon-purple-500/50 hover:bg-kreoon-purple-500/10 hover:text-kreoon-purple-400"
+                className="rounded-sm border border-kreoon-border bg-kreoon-bg-secondary/50 px-3 py-2 text-sm text-kreoon-text-primary transition-colors hover:border-kreoon-purple-500/50 hover:bg-kreoon-purple-500/10 hover:text-kreoon-purple-400"
               >
                 {label}
               </Link>

@@ -1,4 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,6 +17,9 @@ interface AIResponse {
   content: string;
   success: boolean;
   error?: string;
+  tokens_input?: number;
+  tokens_output?: number;
+  response_time_ms?: number;
 }
 
 interface ProviderStatus {
@@ -35,7 +40,8 @@ function getAvailableProviders(): ProviderStatus {
 // Llamar a Gemini directamente
 async function callGemini(messages: Message[], model: string = "gemini-2.5-flash"): Promise<AIResponse> {
   const GOOGLE_AI_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
-  
+  const startTime = Date.now();
+
   if (!GOOGLE_AI_API_KEY) {
     return { model, content: "", success: false, error: "GOOGLE_AI_API_KEY not configured" };
   }
@@ -53,27 +59,39 @@ async function callGemini(messages: Message[], model: string = "gemini-2.5-flash
       }),
     });
 
+    const response_time_ms = Date.now() - startTime;
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`Error with Gemini ${model}:`, errorText);
-      return { model, content: "", success: false, error: `HTTP ${response.status}` };
+      return { model, content: "", success: false, error: `HTTP ${response.status}`, response_time_ms };
     }
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "";
-    
-    return { model: `gemini/${model}`, content, success: true };
+    const tokens_input = data.usage?.prompt_tokens || 0;
+    const tokens_output = data.usage?.completion_tokens || 0;
+
+    return {
+      model: `gemini/${model}`,
+      content,
+      success: true,
+      tokens_input,
+      tokens_output,
+      response_time_ms,
+    };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error(`Error calling Gemini ${model}:`, error);
-    return { model, content: "", success: false, error: errorMessage };
+    return { model, content: "", success: false, error: errorMessage, response_time_ms: Date.now() - startTime };
   }
 }
 
 // Llamar a OpenAI directamente
 async function callOpenAI(messages: Message[], model: string = "gpt-4o-mini"): Promise<AIResponse> {
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-  
+  const startTime = Date.now();
+
   if (!OPENAI_API_KEY) {
     return { model, content: "", success: false, error: "OPENAI_API_KEY not configured" };
   }
@@ -91,27 +109,39 @@ async function callOpenAI(messages: Message[], model: string = "gpt-4o-mini"): P
       }),
     });
 
+    const response_time_ms = Date.now() - startTime;
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`Error with OpenAI ${model}:`, errorText);
-      return { model, content: "", success: false, error: `HTTP ${response.status}` };
+      return { model, content: "", success: false, error: `HTTP ${response.status}`, response_time_ms };
     }
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "";
-    
-    return { model: `openai/${model}`, content, success: true };
+    const tokens_input = data.usage?.prompt_tokens || 0;
+    const tokens_output = data.usage?.completion_tokens || 0;
+
+    return {
+      model: `openai/${model}`,
+      content,
+      success: true,
+      tokens_input,
+      tokens_output,
+      response_time_ms,
+    };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error(`Error calling OpenAI ${model}:`, error);
-    return { model, content: "", success: false, error: errorMessage };
+    return { model, content: "", success: false, error: errorMessage, response_time_ms: Date.now() - startTime };
   }
 }
 
 // Llamar a Claude (Anthropic)
 async function callClaude(messages: Message[]): Promise<AIResponse> {
   const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-  
+  const startTime = Date.now();
+
   if (!ANTHROPIC_API_KEY) {
     return { model: "claude", content: "", success: false, error: "ANTHROPIC_API_KEY not configured" };
   }
@@ -138,20 +168,31 @@ async function callClaude(messages: Message[]): Promise<AIResponse> {
       }),
     });
 
+    const response_time_ms = Date.now() - startTime;
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Error with Claude:", errorText);
-      return { model: "claude", content: "", success: false, error: `HTTP ${response.status}` };
+      return { model: "claude", content: "", success: false, error: `HTTP ${response.status}`, response_time_ms };
     }
 
     const data = await response.json();
     const content = data.content?.[0]?.text || "";
-    
-    return { model: "claude", content, success: true };
+    const tokens_input = data.usage?.input_tokens || 0;
+    const tokens_output = data.usage?.output_tokens || 0;
+
+    return {
+      model: "anthropic/claude-sonnet-4",
+      content,
+      success: true,
+      tokens_input,
+      tokens_output,
+      response_time_ms,
+    };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error calling Claude:", error);
-    return { model: "claude", content: "", success: false, error: errorMessage };
+    return { model: "claude", content: "", success: false, error: errorMessage, response_time_ms: Date.now() - startTime };
   }
 }
 
@@ -317,8 +358,40 @@ serve(async (req) => {
     }
 
     const responses = await Promise.all(promises);
-    
+
     console.log("Responses received:", responses.map(r => ({ model: r.model, success: r.success, error: r.error })));
+
+    // Log AI usage for each response (fire and forget)
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+    const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+
+    if (SUPABASE_URL && SUPABASE_SERVICE_KEY) {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+      // Log each model's response asynchronously
+      for (const r of responses) {
+        const provider = r.model.split("/")[0] || "unknown";
+        const modelName = r.model.split("/")[1] || r.model;
+
+        logAIUsage(supabase, {
+          organization_id: "00000000-0000-0000-0000-000000000000", // System-level usage
+          user_id: "00000000-0000-0000-0000-000000000000",
+          module: "multi-ai",
+          action: mode,
+          provider,
+          model: modelName,
+          tokens_input: r.tokens_input,
+          tokens_output: r.tokens_output,
+          estimated_cost: r.tokens_input && r.tokens_output
+            ? calculateCost(modelName, r.tokens_input, r.tokens_output)
+            : undefined,
+          success: r.success,
+          error_message: r.error,
+          edge_function: "multi-ai",
+          response_time_ms: r.response_time_ms,
+        }).catch(err => console.error("[multi-ai] Error logging usage:", err));
+      }
+    }
 
     const userMessage = messages.find(m => m.role === "user")?.content || "";
 

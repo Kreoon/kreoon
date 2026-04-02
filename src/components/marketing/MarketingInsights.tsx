@@ -340,7 +340,7 @@ export function MarketingInsights({ organizationId, selectedClientId }: Marketin
                 <Card key={insight.id} className={`relative overflow-hidden ${severityConfig.bg}`}>
                   <CardContent className="py-4">
                     <div className="flex items-start gap-4">
-                      <div className={`p-2 rounded-lg ${severityConfig.bg} ${severityConfig.color}`}>
+                      <div className={`p-2 rounded-sm ${severityConfig.bg} ${severityConfig.color}`}>
                         {INSIGHT_ICONS[insight.insight_type] || <Lightbulb className="h-5 w-5" />}
                       </div>
                       <div className="flex-1 min-w-0">

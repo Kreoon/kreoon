@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -340,6 +341,7 @@ Genera el análisis completo con la recomendación de fase, 5 copys para ads y e
     console.log("[analyze-video-content] Context length:", fullContext.length);
 
     // Call Gemini API directly
+    const startTime = Date.now();
     const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
       method: "POST",
       headers: {
@@ -354,6 +356,8 @@ Genera el análisis completo con la recomendación de fase, 5 copys para ads y e
         ],
       }),
     });
+
+    const response_time_ms = Date.now() - startTime;
 
     if (!response.ok) {
       if (response.status === 429) {
@@ -392,20 +396,20 @@ Genera el análisis completo con la recomendación de fase, 5 copys para ads y e
       throw new Error("Error al procesar la respuesta de la IA");
     }
 
-    // Log usage
-    try {
-      await supabase.from("ai_usage_logs").insert({
-        organization_id: organizationId,
-        user_id: user.id,
-        provider: "kreoon",
-        model: "gemini-2.5-flash",
-        module: "content_analysis",
-        action: "analyze_video",
-        success: true,
-      });
-    } catch (e) {
-      console.error("[analyze-video-content] Failed to log usage:", e);
-    }
+    // Log usage with shared logger
+    logAIUsage(supabase, {
+      organization_id: organizationId || "00000000-0000-0000-0000-000000000000",
+      user_id: user.id || "00000000-0000-0000-0000-000000000000",
+      module: "content_analysis",
+      action: "analyze_video",
+      provider: "gemini",
+      model: "gemini-2.5-flash",
+      tokens_input: aiData.usage?.prompt_tokens || 0,
+      tokens_output: aiData.usage?.completion_tokens || 0,
+      success: true,
+      edge_function: "analyze-video-content",
+      response_time_ms,
+    }).catch(console.error);
 
     return new Response(JSON.stringify(analysisResult), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

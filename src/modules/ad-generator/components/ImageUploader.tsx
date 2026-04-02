@@ -61,7 +61,7 @@ export function ImageUploader({ value, onChange, label, storagePath, className }
     return (
       <div className={cn("relative group", className)}>
         {label && <p className="text-xs font-medium text-muted-foreground mb-1.5">{label}</p>}
-        <div className="relative rounded-lg overflow-hidden border border-border bg-muted/30">
+        <div className="relative rounded-sm overflow-hidden border border-border bg-muted/30">
           <img src={value} alt="Preview" className="w-full h-32 object-cover" />
           <button
             onClick={() => onChange(undefined)}
@@ -80,7 +80,7 @@ export function ImageUploader({ value, onChange, label, storagePath, className }
       <div
         {...getRootProps()}
         className={cn(
-          "border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors h-32 flex flex-col items-center justify-center gap-2",
+          "border-2 border-dashed rounded-sm p-4 text-center cursor-pointer transition-colors h-32 flex flex-col items-center justify-center gap-2",
           isDragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary/40",
           uploading && "pointer-events-none opacity-60",
         )}

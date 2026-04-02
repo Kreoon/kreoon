@@ -14,6 +14,7 @@ const CreatorProfileSection = lazy(() => import('./sections/CreatorProfileSectio
 const NotificationsUnifiedSection = lazy(() => import('./sections/NotificationsUnifiedSection'));
 const SecuritySection = lazy(() => import('./sections/SecuritySection'));
 const TourSection = lazy(() => import('./sections/TourSection'));
+const ClientCompanySection = lazy(() => import('./sections/ClientCompanySection'));
 // MarketplaceSection merged into ProfileSection (unified profile)
 
 // Organization level - CONSOLIDATED
@@ -54,6 +55,7 @@ const SECTION_COMPONENTS: Record<SettingsSectionKey, React.LazyExoticComponent<R
   security: SecuritySection,
   tour: TourSection,
   marketplace: ProfileSection, // Redirect: marketplace merged into profile
+  client_company: ClientCompanySection, // Client company info
   // Organization level
   organization: OrganizationSection,
   org_registration_settings: OrganizationSection, // Redirect: merged into organization
@@ -172,7 +174,7 @@ const SettingsPage = memo(() => {
       <div className="flex">
         {/* Sidebar - hidden on mobile when section is active */}
         <aside className={cn(
-          "w-64 border-r border-border min-h-[calc(100vh-4rem)] p-4",
+          "w-64 border-r border-zinc-200 dark:border-zinc-800 min-h-[calc(100vh-4rem)] p-4",
           activeSection ? "hidden md:block" : "hidden md:block"
         )}>
           <SettingsSidebar 

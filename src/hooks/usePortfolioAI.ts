@@ -54,7 +54,7 @@ export function usePortfolioAI(): UsePortfolioAIResult {
 
         return data?.data as T;
     } catch (error: any) {
-      if (error.message?.includes('Kreoon Coins insuficientes')) {
+      if (error.message?.includes('Tokens IA insuficientes')) {
         toast.error(error.message);
       } else {
         console.error('[usePortfolioAI] Exception:', error);

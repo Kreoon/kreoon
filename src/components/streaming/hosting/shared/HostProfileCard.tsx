@@ -38,7 +38,7 @@ export function HostProfileCard({
   if (compact) {
     return (
       <div
-        className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+        className="flex items-center gap-3 p-2 rounded-sm hover:bg-muted/50 cursor-pointer transition-colors"
         onClick={onClick}
       >
         <Avatar className="h-10 w-10">

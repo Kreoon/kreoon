@@ -312,7 +312,7 @@ Frases: ${avatar.phrases?.join('; ') || ''}
 
   if (products.length === 0) {
     return (
-      <div className="p-4 bg-muted/50 rounded-lg border border-dashed text-center">
+      <div className="p-4 bg-muted/50 rounded-sm border border-dashed text-center">
         <Package className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
           No hay productos con investigación de mercado.
@@ -373,7 +373,7 @@ Frases: ${avatar.phrases?.join('; ') || ''}
         <div className="space-y-2 pt-2 border-t">
           {/* Quick info bar */}
           {avatarProfiles.length === 0 && salesAngles.length === 0 && (
-            <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-sm text-amber-700 dark:text-amber-400">
+            <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-sm text-sm text-amber-700 dark:text-amber-400">
               <p className="font-medium">Sin investigación completa</p>
               <p className="text-xs mt-1">Genera el Brief IA en este producto.</p>
             </div>
@@ -382,7 +382,7 @@ Frases: ${avatar.phrases?.join('; ') || ''}
           {/* Avatars Collapsible */}
           {avatarProfiles.length > 0 && (
             <Collapsible open={avatarsOpen} onOpenChange={setAvatarsOpen}>
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg border bg-background hover:bg-accent/50 transition-colors">
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-sm border bg-background hover:bg-accent/50 transition-colors">
                 <span className="flex items-center gap-2 font-medium text-sm">
                   <Users className="h-4 w-4 text-purple-500" />
                   Avatares Estratégicos ({avatarProfiles.length})
@@ -394,7 +394,7 @@ Frases: ${avatar.phrases?.join('; ') || ''}
                   {avatarProfiles.map((avatar, idx) => (
                     <div
                       key={idx}
-                      className="p-3 border rounded-lg bg-card hover:bg-accent/30 cursor-pointer transition-colors group"
+                      className="p-3 border rounded-sm bg-card hover:bg-accent/30 cursor-pointer transition-colors group"
                       onClick={() => handleSelectAvatar(avatar)}
                     >
                       <div className="flex items-start justify-between gap-2 mb-1">
@@ -428,7 +428,7 @@ Frases: ${avatar.phrases?.join('; ') || ''}
           {/* Sales Angles Collapsible */}
           {salesAngles.length > 0 && (
             <Collapsible open={anglesOpen} onOpenChange={setAnglesOpen}>
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg border bg-background hover:bg-accent/50 transition-colors">
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-sm border bg-background hover:bg-accent/50 transition-colors">
                 <span className="flex items-center gap-2 font-medium text-sm">
                   <Sparkles className="h-4 w-4 text-amber-500" />
                   Ángulos de Venta ({salesAngles.length})
@@ -451,7 +451,7 @@ Frases: ${avatar.phrases?.join('; ') || ''}
                   {salesAngles.map((angle, idx) => (
                     <div
                       key={idx}
-                      className="p-3 border rounded-lg bg-card hover:bg-accent/30 cursor-pointer transition-colors group"
+                      className="p-3 border rounded-sm bg-card hover:bg-accent/30 cursor-pointer transition-colors group"
                       onClick={() => handleSelectAngle(angle)}
                     >
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -477,7 +477,7 @@ Frases: ${avatar.phrases?.join('; ') || ''}
           {/* Insights Collapsible */}
           {contentStrategy?.executiveSummary?.keyInsights?.length > 0 && (
             <Collapsible open={insightsOpen} onOpenChange={setInsightsOpen}>
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg border bg-background hover:bg-accent/50 transition-colors">
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-sm border bg-background hover:bg-accent/50 transition-colors">
                 <span className="flex items-center gap-2 font-medium text-sm">
                   <Brain className="h-4 w-4 text-blue-500" />
                   Insights Clave ({contentStrategy.executiveSummary.keyInsights.length})
@@ -487,7 +487,7 @@ Frases: ${avatar.phrases?.join('; ') || ''}
               <CollapsibleContent className="pt-2">
                 <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
                   {contentStrategy.executiveSummary.keyInsights.map((insight: any, idx: number) => (
-                    <div key={idx} className="p-2 border rounded-lg bg-card text-sm">
+                    <div key={idx} className="p-2 border rounded-sm bg-card text-sm">
                       <p className="font-medium">{insight.insight}</p>
                       <p className="text-xs text-muted-foreground mt-1">{insight.action}</p>
                     </div>
@@ -500,7 +500,7 @@ Frases: ${avatar.phrases?.join('; ') || ''}
           {/* Competition Collapsible */}
           {competitors.length > 0 && (
             <Collapsible open={competitionOpen} onOpenChange={setCompetitionOpen}>
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg border bg-background hover:bg-accent/50 transition-colors">
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-sm border bg-background hover:bg-accent/50 transition-colors">
                 <span className="flex items-center gap-2 font-medium text-sm">
                   <Swords className="h-4 w-4 text-red-500" />
                   Competencia ({competitors.length})
@@ -510,7 +510,7 @@ Frases: ${avatar.phrases?.join('; ') || ''}
               <CollapsibleContent className="pt-2">
                 <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
                   {competitors.map((comp: any, idx: number) => (
-                    <div key={idx} className="p-2 border rounded-lg bg-card text-sm">
+                    <div key={idx} className="p-2 border rounded-sm bg-card text-sm">
                       <div className="flex items-center justify-between">
                         <span className="font-medium">{comp.name}</span>
                         <Badge variant="outline" className="text-xs">{comp.price || 'N/A'}</Badge>

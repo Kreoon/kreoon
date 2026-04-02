@@ -225,7 +225,7 @@ function FileUploadZone({
       onDragLeave={() => setIsDragging(false)}
       onDrop={handleDrop}
       className={cn(
-        'relative border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer',
+        'relative border-2 border-dashed rounded-sm p-6 text-center transition-all cursor-pointer',
         isDragging
           ? 'border-purple-500 bg-purple-500/10'
           : 'border-white/10 hover:border-purple-500/30 hover:bg-white/5',
@@ -246,7 +246,7 @@ function FileUploadZone({
         </div>
       ) : (
         <div className="flex flex-col items-center gap-2">
-          <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-sm bg-purple-500/10 flex items-center justify-center">
             <Upload className="w-6 h-6 text-purple-400" />
           </div>
           <p className="text-foreground/80 text-sm font-medium">Arrastra tu archivo aqui</p>
@@ -275,7 +275,7 @@ function DeliverableCard({
   const config = DELIVERABLE_STATUS_CONFIG[deliverable.status] || DELIVERABLE_STATUS_CONFIG.pending;
 
   return (
-    <div className="bg-white/5 border border-white/5 rounded-xl overflow-hidden hover:border-white/10 transition-colors">
+    <div className="bg-white/5 border border-white/5 rounded-sm overflow-hidden hover:border-white/10 transition-colors">
       {/* Preview */}
       <div className="relative aspect-video bg-black/30">
         {deliverable.thumbnail_url || (isImage && deliverable.file_url) ? (
@@ -295,7 +295,7 @@ function DeliverableCard({
             onClick={() => window.open(deliverable.file_url, '_blank')}
             className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity"
           >
-            <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
               <Play className="w-5 h-5 text-white ml-0.5" />
             </div>
           </button>
@@ -333,7 +333,7 @@ function DeliverableCard({
             href={deliverable.file_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-1.5 text-gray-500 hover:text-purple-400 hover:bg-purple-500/10 rounded-lg transition-colors"
+            className="p-1.5 text-gray-500 hover:text-purple-400 hover:bg-purple-500/10 rounded-sm transition-colors"
           >
             <Download className="w-4 h-4" />
           </a>
@@ -341,7 +341,7 @@ function DeliverableCard({
 
         {/* Brand feedback */}
         {deliverable.brand_feedback && (
-          <div className="mt-2 p-2 bg-orange-500/10 rounded-lg border border-orange-500/10">
+          <div className="mt-2 p-2 bg-orange-500/10 rounded-sm border border-orange-500/10">
             <p className="text-orange-300 text-xs">
               <strong>Feedback:</strong> {deliverable.brand_feedback}
             </p>
@@ -358,7 +358,7 @@ function DeliverableCard({
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
                   placeholder="Describe los cambios que necesitas..."
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-600 resize-none focus:outline-none focus:border-purple-500"
+                  className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-sm text-white placeholder:text-gray-600 resize-none focus:outline-none focus:border-purple-500"
                   rows={2}
                 />
                 <div className="flex gap-2">
@@ -368,13 +368,13 @@ function DeliverableCard({
                       setShowFeedbackInput(false);
                       setFeedback('');
                     }}
-                    className="flex-1 px-2 py-1.5 bg-orange-500/15 text-orange-300 rounded-lg text-xs font-medium hover:bg-orange-500/25 transition-colors"
+                    className="flex-1 px-2 py-1.5 bg-orange-500/15 text-orange-300 rounded-sm text-xs font-medium hover:bg-orange-500/25 transition-colors"
                   >
                     Solicitar Cambios
                   </button>
                   <button
                     onClick={() => setShowFeedbackInput(false)}
-                    className="px-2 py-1.5 text-gray-500 hover:bg-white/5 rounded-lg text-xs"
+                    className="px-2 py-1.5 text-gray-500 hover:bg-white/5 rounded-sm text-xs"
                   >
                     Cancelar
                   </button>
@@ -384,14 +384,14 @@ function DeliverableCard({
               <div className="flex gap-2">
                 <button
                   onClick={() => onReview?.('approved')}
-                  className="flex-1 flex items-center justify-center gap-1 bg-green-500/15 hover:bg-green-500/25 text-green-300 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                  className="flex-1 flex items-center justify-center gap-1 bg-green-500/15 hover:bg-green-500/25 text-green-300 py-1.5 rounded-sm text-xs font-medium transition-colors"
                 >
                   <Check className="w-3.5 h-3.5" />
                   Aprobar
                 </button>
                 <button
                   onClick={() => setShowFeedbackInput(true)}
-                  className="flex-1 flex items-center justify-center gap-1 bg-orange-500/15 hover:bg-orange-500/25 text-orange-300 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                  className="flex-1 flex items-center justify-center gap-1 bg-orange-500/15 hover:bg-orange-500/25 text-orange-300 py-1.5 rounded-sm text-xs font-medium transition-colors"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   Cambios
@@ -603,7 +603,7 @@ export function ProjectDetailModal({
 
   return (
     <div className="fixed inset-0 z-[100]">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="absolute inset-y-0 right-0 w-full max-w-2xl bg-card border-l border-white/10 overflow-hidden flex flex-col animate-in slide-in-from-right duration-300">
         {/* ========== HEADER ========== */}
         <div className="relative bg-gradient-to-br from-purple-600/80 via-purple-700/80 to-pink-600/80 text-white p-5 flex-shrink-0">
@@ -693,7 +693,7 @@ export function ProjectDetailModal({
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                  'flex items-center gap-1.5 px-4 py-2 rounded-sm text-sm font-medium transition-all',
                   isActive
                     ? 'bg-purple-500/20 text-purple-300'
                     : 'text-gray-500 hover:text-foreground',
@@ -731,7 +731,7 @@ export function ProjectDetailModal({
                       <button
                         key={status}
                         onClick={() => onStatusChange(project.id, status)}
-                        className="flex items-center gap-1 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                        className="flex items-center gap-1 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold px-3 py-1.5 rounded-sm transition-colors"
                       >
                         {STATUS_LABELS[status]}
                         <ArrowRight className="h-3 w-3" />
@@ -744,13 +744,13 @@ export function ProjectDetailModal({
               {/* Participants */}
               <div className="grid grid-cols-2 gap-3">
                 {/* Brand / Org */}
-                <div className="bg-white/5 rounded-xl p-3">
+                <div className="bg-white/5 rounded-sm p-3">
                   <p className="text-gray-500 text-[10px] uppercase tracking-wide mb-2">Cliente</p>
                   <div className="flex items-center gap-2">
                     {project.brand_logo ? (
-                      <img src={project.brand_logo} alt="" className="w-9 h-9 rounded-lg object-cover" />
+                      <img src={project.brand_logo} alt="" className="w-9 h-9 rounded-sm object-cover" />
                     ) : (
-                      <div className="w-9 h-9 rounded-lg bg-purple-500/15 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-sm bg-purple-500/15 flex items-center justify-center">
                         <Building2 className="w-4 h-4 text-purple-400" />
                       </div>
                     )}
@@ -761,13 +761,13 @@ export function ProjectDetailModal({
                 </div>
 
                 {/* Creator */}
-                <div className="bg-white/5 rounded-xl p-3">
+                <div className="bg-white/5 rounded-sm p-3">
                   <p className="text-gray-500 text-[10px] uppercase tracking-wide mb-2">Creador</p>
                   <div className="flex items-center gap-2">
                     {project.creator.avatar_url ? (
-                      <img src={project.creator.avatar_url} alt="" className="w-9 h-9 rounded-lg object-cover" />
+                      <img src={project.creator.avatar_url} alt="" className="w-9 h-9 rounded-sm object-cover" />
                     ) : (
-                      <div className="w-9 h-9 rounded-lg bg-cyan-500/15 flex items-center justify-center text-cyan-300 font-bold text-sm">
+                      <div className="w-9 h-9 rounded-sm bg-cyan-500/15 flex items-center justify-center text-cyan-300 font-bold text-sm">
                         {project.creator.display_name.charAt(0)}
                       </div>
                     )}
@@ -784,7 +784,7 @@ export function ProjectDetailModal({
               </div>
 
               {/* Payment info */}
-              <div className="bg-white/5 rounded-xl p-4 space-y-3">
+              <div className="bg-white/5 rounded-sm p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {project.payment_method === 'exchange' ? (
@@ -833,14 +833,14 @@ export function ProjectDetailModal({
 
               {/* Editor info (when project requires editor) */}
               {project.requires_editor && (
-                <div className="bg-white/5 rounded-xl p-4">
+                <div className="bg-white/5 rounded-sm p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Scissors className="h-4 w-4 text-cyan-400" />
                     <span className="text-sm font-semibold text-foreground/80">Editor Asignado</span>
                   </div>
                   {project.editor_id ? (
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-cyan-500/15 flex items-center justify-center text-cyan-300 font-bold text-xs">
+                      <div className="w-8 h-8 rounded-sm bg-cyan-500/15 flex items-center justify-center text-cyan-300 font-bold text-xs">
                         E
                       </div>
                       <div>
@@ -856,7 +856,7 @@ export function ProjectDetailModal({
 
               {/* Overdue alert + actions */}
               {project.status === 'overdue' && (
-                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 space-y-3">
+                <div className="bg-red-500/10 border border-red-500/20 rounded-sm p-4 space-y-3">
                   <div className="flex items-center gap-2">
                     <AlertTriangle className="h-5 w-5 text-red-400" />
                     <div>
@@ -870,30 +870,30 @@ export function ProjectDetailModal({
                   </div>
 
                   {project.overdue_notes && (
-                    <p className="text-gray-400 text-xs bg-white/5 rounded-lg p-2">{project.overdue_notes}</p>
+                    <p className="text-gray-400 text-xs bg-white/5 rounded-sm p-2">{project.overdue_notes}</p>
                   )}
 
                   {viewRole === 'brand' && !project.overdue_action && (
                     <div className="space-y-2">
                       <p className="text-gray-400 text-xs">Selecciona una accion:</p>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <button
                           onClick={() => handleOverdueAction('extend')}
-                          className="flex flex-col items-center gap-1 p-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-lg transition-colors"
+                          className="flex flex-col items-center gap-1 p-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-sm transition-colors"
                         >
                           <CalendarPlus className="h-4 w-4 text-amber-400" />
                           <span className="text-amber-300 text-[10px] font-medium">Extender</span>
                         </button>
                         <button
                           onClick={() => handleOverdueAction('reassign')}
-                          className="flex flex-col items-center gap-1 p-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-lg transition-colors"
+                          className="flex flex-col items-center gap-1 p-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 rounded-sm transition-colors"
                         >
                           <UserPlus className="h-4 w-4 text-blue-400" />
                           <span className="text-blue-300 text-[10px] font-medium">Reasignar</span>
                         </button>
                         <button
                           onClick={() => handleOverdueAction('cancel')}
-                          className="flex flex-col items-center gap-1 p-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg transition-colors"
+                          className="flex flex-col items-center gap-1 p-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-sm transition-colors"
                         >
                           <Ban className="h-4 w-4 text-red-400" />
                           <span className="text-red-300 text-[10px] font-medium">Cancelar</span>
@@ -903,7 +903,7 @@ export function ProjectDetailModal({
                   )}
 
                   {project.overdue_action && (
-                    <div className="bg-white/5 rounded-lg p-2 text-xs">
+                    <div className="bg-white/5 rounded-sm p-2 text-xs">
                       <span className="text-gray-500">Accion tomada: </span>
                       <span className="text-white font-medium">
                         {project.overdue_action === 'extend' ? 'Plazo extendido' :
@@ -918,7 +918,7 @@ export function ProjectDetailModal({
               )}
 
               {/* Deliverables summary */}
-              <div className="bg-white/5 rounded-xl p-4">
+              <div className="bg-white/5 rounded-sm p-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-gray-400 text-sm">Progreso de entregables</span>
                   <span className="text-white text-sm font-medium">
@@ -968,7 +968,7 @@ export function ProjectDetailModal({
           {/* BRIEF TAB */}
           {activeTab === 'brief' && (
             <div className="space-y-5">
-              <div className="bg-white/5 rounded-xl p-4 space-y-3 text-sm">
+              <div className="bg-white/5 rounded-sm p-4 space-y-3 text-sm">
                 <div>
                   <span className="text-gray-500">Producto:</span>
                   <span className="text-white ml-2">{brief.product_name}</span>
@@ -1138,7 +1138,7 @@ export function ProjectDetailModal({
             {viewRole === 'creator' && project.status === 'in_progress' && deliverables.length > 0 && (
               <button
                 onClick={() => onStatusChange(project.id, 'revision')}
-                className="flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-medium transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-sm text-xs font-medium transition-colors"
               >
                 <Send className="w-3.5 h-3.5" />
                 Enviar a Revision
@@ -1152,7 +1152,7 @@ export function ProjectDetailModal({
              deliverables.every(d => d.status === 'approved') && (
               <button
                 onClick={() => onStatusChange(project.id, 'approved')}
-                className="flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg text-xs font-medium transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-sm text-xs font-medium transition-colors"
               >
                 <Check className="w-3.5 h-3.5" />
                 Aprobar Proyecto

@@ -76,7 +76,7 @@ export const ShareSection = memo(function ShareSection({
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         className={cn(
-          'w-full py-4 px-6 rounded-2xl',
+          'w-full py-4 px-6 rounded-sm',
           'bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500',
           'bg-[length:200%_100%]',
           'animate-gradient-x',
@@ -105,7 +105,7 @@ export const ShareSection = memo(function ShareSection({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowOptions(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+              className="fixed inset-0 bg-black/60 z-50"
             />
 
             {/* Modal */}
@@ -116,7 +116,7 @@ export const ShareSection = memo(function ShareSection({
               className={cn(
                 'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50',
                 'w-[90%] max-w-sm p-5',
-                'bg-background border border-white/10 rounded-2xl',
+                'bg-background border border-white/10 rounded-sm',
                 'shadow-2xl'
               )}
             >
@@ -132,13 +132,13 @@ export const ShareSection = memo(function ShareSection({
                 Compartir en
               </h3>
 
-              <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                 {/* WhatsApp */}
                 <motion.button
                   onClick={shareOnWhatsApp}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex flex-col items-center gap-2 p-3 rounded-xl bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 transition-colors"
+                  className="flex flex-col items-center gap-2 p-3 rounded-sm bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 transition-colors"
                 >
                   <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
                     <MessageCircle className="w-5 h-5 text-white" />
@@ -151,7 +151,7 @@ export const ShareSection = memo(function ShareSection({
                   onClick={shareOnTelegram}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex flex-col items-center gap-2 p-3 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 transition-colors"
+                  className="flex flex-col items-center gap-2 p-3 rounded-sm bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 transition-colors"
                 >
                   <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
                     <Send className="w-5 h-5 text-white" />
@@ -164,7 +164,7 @@ export const ShareSection = memo(function ShareSection({
                   onClick={shareOnTwitter}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+                  className="flex flex-col items-center gap-2 p-3 rounded-sm bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
                 >
                   <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center border border-white/20">
                     <span className="text-white font-bold text-lg">𝕏</span>
@@ -178,7 +178,7 @@ export const ShareSection = memo(function ShareSection({
                 onClick={handleCopyLink}
                 whileTap={{ scale: 0.98 }}
                 className={cn(
-                  'w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl',
+                  'w-full flex items-center justify-center gap-2 py-3 px-4 rounded-sm',
                   'bg-white/5 hover:bg-white/10 border border-white/10',
                   'transition-colors',
                   copied && 'bg-green-500/10 border-green-500/20'

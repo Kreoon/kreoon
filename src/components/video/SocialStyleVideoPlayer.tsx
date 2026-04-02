@@ -99,7 +99,7 @@ export function SocialStyleVideoPlayer({
       {/* Play/Pause indicator */}
       {showPauseIcon && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-          <div className="p-6 rounded-full bg-black/50 backdrop-blur-sm animate-scale-in">
+          <div className="p-6 rounded-full bg-black/50 animate-scale-in">
             {isPaused ? (
               <Play className="h-16 w-16 text-white" fill="white" />
             ) : (
@@ -116,7 +116,7 @@ export function SocialStyleVideoPlayer({
       {showControls && (
         <button
           onClick={handleMuteToggle}
-          className="absolute top-3 right-3 z-30 p-2 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
+          className="absolute top-3 right-3 z-30 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
         >
           {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
         </button>
@@ -125,7 +125,7 @@ export function SocialStyleVideoPlayer({
       {/* Play button overlay when paused */}
       {isPaused && !showPauseIcon && !isLoading && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="p-4 rounded-full bg-black/40 backdrop-blur-sm">
+          <div className="p-4 rounded-full bg-black/40">
             <Play className="h-12 w-12 text-white" fill="white" />
           </div>
         </div>

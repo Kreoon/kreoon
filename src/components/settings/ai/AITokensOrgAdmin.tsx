@@ -136,7 +136,7 @@ export function AITokensOrgAdmin() {
         throw new Error(res?.error || "Error al agregar coins");
       }
 
-      toast.success(`${formatTokens(amount)} Kreoon Coins agregados correctamente`);
+      toast.success(`${formatTokens(amount)} Tokens IA agregados correctamente`);
       setTokenAmount("1000");
       // Refresh balance
       setBalance((prev) =>
@@ -161,10 +161,10 @@ export function AITokensOrgAdmin() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
-          Kreoon Coins por organización
+          Tokens IA por organización
         </CardTitle>
         <CardDescription>
-          Agrega Kreoon Coins manualmente a cualquier organización
+          Agrega Tokens IA manualmente a cualquier organización
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -206,7 +206,7 @@ export function AITokensOrgAdmin() {
         </div>
 
         {selectedOrgId && balance && (
-          <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
+          <div className="rounded-sm border bg-muted/30 p-4 space-y-2">
             <p className="text-sm font-medium">Balance actual</p>
             <div className="flex flex-wrap gap-4 text-sm">
               <span>

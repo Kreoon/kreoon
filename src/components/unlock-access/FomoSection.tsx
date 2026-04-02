@@ -7,10 +7,10 @@ export function FomoSection() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl p-5 sm:p-6 bg-gradient-to-br from-red-500/5 via-orange-500/5 to-red-500/5 border border-red-500/20"
+      className="rounded-sm p-5 sm:p-6 bg-gradient-to-br from-red-500/5 via-orange-500/5 to-red-500/5 border border-red-500/20"
     >
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-sm bg-red-500/20 flex items-center justify-center">
           <AlertTriangle className="w-5 h-5 text-red-400" />
         </div>
         <div>
@@ -34,7 +34,7 @@ export function FomoSection() {
         ))}
       </ul>
 
-      <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+      <div className="mt-4 p-3 rounded-sm bg-red-500/10 border border-red-500/20">
         <p className="text-xs text-red-300 text-center">
           No hay segunda oportunidad. Los beneficios de fundador son exclusivos para los primeros 500.
         </p>

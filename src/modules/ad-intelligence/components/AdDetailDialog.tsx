@@ -55,7 +55,7 @@ export function AdDetailDialog({ ad, open, onOpenChange, onAnalyze, isAnalyzing 
             <div className="space-y-4">
               {/* Snapshot */}
               {ad.ad_snapshot_url && (
-                <div className="relative w-full aspect-[4/3] bg-muted rounded-lg overflow-hidden">
+                <div className="relative w-full aspect-[4/3] bg-muted rounded-sm overflow-hidden">
                   <iframe
                     src={ad.ad_snapshot_url}
                     className="w-full h-full border-0"

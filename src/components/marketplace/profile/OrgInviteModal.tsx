@@ -35,11 +35,11 @@ export function OrgInviteModal({ creatorUserId, creatorName, onClose }: OrgInvit
 
   return (
     <div className="fixed inset-0 z-[100]">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="absolute inset-0 flex items-center justify-center p-4">
-        <div className="relative bg-card border border-white/10 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="relative bg-card border border-white/10 rounded-sm w-full max-w-md max-h-[90vh] overflow-y-auto">
           {/* Header */}
-          <div className="sticky top-0 bg-card/95 backdrop-blur-sm border-b border-white/10 px-6 py-4 flex items-center justify-between">
+          <div className="sticky top-0 bg-card/95 border-b border-white/10 px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-purple-500/20 flex items-center justify-center">
                 <UserPlus className="h-4 w-4 text-purple-400" />
@@ -67,7 +67,7 @@ export function OrgInviteModal({ creatorUserId, creatorName, onClose }: OrgInvit
                     key={role.value}
                     onClick={() => setSelectedRole(role.value)}
                     className={cn(
-                      'w-full text-left border rounded-xl p-3 transition-all',
+                      'w-full text-left border rounded-sm p-3 transition-all',
                       selectedRole === role.value
                         ? 'border-purple-500 bg-purple-500/10'
                         : 'border-white/10 hover:border-purple-500/30',
@@ -104,7 +104,7 @@ export function OrgInviteModal({ creatorUserId, creatorName, onClose }: OrgInvit
                 onChange={e => setMessage(e.target.value)}
                 placeholder="Cuéntale por qué quieres que se una a tu equipo..."
                 rows={4}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500 resize-none"
+                className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500 resize-none"
               />
               <p className="text-gray-600 text-xs mt-1">{message.length}/300 caracteres</p>
             </div>
@@ -114,14 +114,14 @@ export function OrgInviteModal({ creatorUserId, creatorName, onClose }: OrgInvit
           <div className="border-t border-white/10 px-6 py-4 flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 border border-white/10 text-gray-400 py-3 rounded-xl hover:bg-white/5 transition-colors text-sm font-medium"
+              className="flex-1 border border-white/10 text-gray-400 py-3 rounded-sm hover:bg-white/5 transition-colors text-sm font-medium"
             >
               Cancelar
             </button>
             <button
               onClick={handleSubmit}
               disabled={sendRecruitment.isPending}
-              className="flex-1 bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-xl transition-colors text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+              className="flex-1 bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-sm transition-colors text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {sendRecruitment.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               {sendRecruitment.isPending ? 'Enviando...' : 'Enviar Invitación'}

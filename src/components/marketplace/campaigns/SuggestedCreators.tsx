@@ -39,7 +39,7 @@ export function SuggestedCreators({ campaignId, limit = 10, onInvite }: Suggeste
         {displayed.map(creator => (
           <div
             key={creator.creator_id}
-            className="flex items-center gap-3 p-3 bg-card/60 border border-white/5 rounded-xl hover:border-white/10 transition-all"
+            className="flex items-center gap-3 p-3 bg-card/60 border border-white/5 rounded-sm hover:border-white/10 transition-all"
           >
             {/* Avatar */}
             <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -83,7 +83,7 @@ export function SuggestedCreators({ campaignId, limit = 10, onInvite }: Suggeste
               {onInvite && (
                 <button
                   onClick={() => onInvite(creator.creator_id)}
-                  className="flex items-center gap-1 text-xs bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 px-3 py-1.5 rounded-lg transition-colors"
+                  className="flex items-center gap-1 text-xs bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 px-3 py-1.5 rounded-sm transition-colors"
                 >
                   <UserPlus className="h-3 w-3" />
                   Invitar

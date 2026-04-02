@@ -78,8 +78,15 @@ function resolveContentVideoUrl(row: Record<string, unknown>): string {
 
 // ── Main hook ──────────────────────────────────────────────────────────
 
+export interface MarketplaceOrganization {
+  id: string;
+  name: string;
+  logo_url: string | null;
+}
+
 export function useMarketplaceCreators(filters?: MarketplaceFilters) {
   const [allCreators, setAllCreators] = useState<MarketplaceCreator[]>([]);
+  const [organizations, setOrganizations] = useState<MarketplaceOrganization[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -113,11 +120,19 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
       }
 
       // ── 1. Fetch from creator_profiles (marketplace-native) ──────────
+      // Select solo campos necesarios (evita portfolio_media y otros JSONB pesados)
+      const creatorFields = `
+        id, user_id, slug, display_name, avatar_url, bio, location_city,
+        location_country, country_flag, categories, content_types, level,
+        is_verified, rating_avg, rating_count, base_price, currency,
+        is_available, languages, completed_projects, created_at,
+        accepts_product_exchange, marketplace_roles
+      `;
       const { data: rows, error: err } = await (supabase as any)
         .from('creator_profiles')
-        .select('*')
+        .select(creatorFields)
         .eq('is_active', true)
-        .order('rating_avg', { ascending: false });
+        .order('rating_avg', { ascending: false }); // Sin LIMIT para mostrar todos los creators
 
       if (err) throw err;
 
@@ -126,35 +141,12 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
       const creatorIds = creatorRows.map((r: any) => r.id);
       const creatorUserIds = creatorRows.map((r: any) => r.user_id);
 
-      // ── 1b. Fetch org project counts usando RPC (más preciso que query directa) ──
+      // ── 1b. Stats maps (valores por defecto, sin loop de RPCs para performance) ──
+      // NOTA: Eliminado el loop de RPCs get_creator_unified_stats que causaba N+1 queries
+      // Las stats detalladas se cargan on-demand cuando se abre el perfil del creator
       const orgProjectsMap = new Map<string, number>();
       const onTimeDeliveryMap = new Map<string, number>();
       const responseTimeMap = new Map<string, number>();
-
-      // Obtener stats unificadas para creadores que pertenecen a organizaciones
-      // (donde es más probable que tengan proyectos de org)
-      if (creatorUserIds.length > 0) {
-        // Batch de llamadas RPC en paralelo (máximo 10 a la vez para no saturar)
-        const batchSize = 10;
-        for (let i = 0; i < creatorUserIds.length; i += batchSize) {
-          const batch = creatorUserIds.slice(i, i + batchSize);
-          const results = await Promise.all(
-            batch.map(userId =>
-              supabase.rpc('get_creator_unified_stats', { p_user_id: userId })
-                .then(({ data }) => ({ userId, data }))
-                .catch(() => ({ userId, data: null }))
-            )
-          );
-
-          for (const { userId, data } of results) {
-            if (data) {
-              orgProjectsMap.set(userId, data.org_projects || 0);
-              onTimeDeliveryMap.set(userId, data.on_time_delivery_pct || 100);
-              responseTimeMap.set(userId, data.response_time_hours || 24);
-            }
-          }
-        }
-      }
 
       // ── 1c. Fetch real registration dates from profiles ──
       const registrationDateMap = new Map<string, string>();
@@ -179,15 +171,34 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
       }
 
       if (creatorIds.length > 0) {
-        // 2a. Fetch portfolio_items (marketplace-native uploads)
-        const { data: portfolioRows } = await (supabase as any)
-          .from('portfolio_items')
-          .select('id, creator_id, media_url, thumbnail_url, media_type')
-          .in('creator_id', creatorIds)
-          .eq('is_public', true)
-          .order('is_featured', { ascending: false })
-          .order('display_order', { ascending: true });
+        // ── Fetch portfolio data en PARALELO para mejor performance ──
+        const [{ data: portfolioRows }, { data: contentRows }, { data: postRows }] = await Promise.all([
+          // 2a. Fetch portfolio_items (marketplace-native uploads)
+          (supabase as any)
+            .from('portfolio_items')
+            .select('id, creator_id, media_url, thumbnail_url, media_type')
+            .in('creator_id', creatorIds)
+            .eq('is_public', true)
+            .order('is_featured', { ascending: false })
+            .order('display_order', { ascending: true })
+            .limit(500), // Max 500 items totales
+          // 2b. Fetch published content (videos from content creation workflow)
+          supabase
+            .from('content')
+            .select('id, video_url, bunny_embed_url, video_urls, thumbnail_url, creator_id')
+            .in('creator_id', creatorUserIds)
+            .eq('is_published', true)
+            .limit(500),
+          // 2c. Fetch portfolio_posts (social feed content)
+          supabase
+            .from('portfolio_posts')
+            .select('id, media_url, media_type, thumbnail_url, user_id')
+            .in('user_id', creatorUserIds)
+            .order('created_at', { ascending: false })
+            .limit(500),
+        ]);
 
+        // Process portfolio_items
         for (const item of portfolioRows || []) {
           if (!portfolioMap.has(item.creator_id)) {
             portfolioMap.set(item.creator_id, []);
@@ -203,19 +214,13 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
           }
         }
 
-        // 2b. Fetch published content (videos from content creation workflow)
-        const { data: contentRows } = await supabase
-          .from('content')
-          .select('id, title, video_url, bunny_embed_url, video_urls, thumbnail_url, creator_id')
-          .in('creator_id', creatorUserIds)
-          .eq('is_published', true);
-
         // Track URLs already in portfolio to avoid duplicates
         const seenUrls = new Map<string, Set<string>>();
         for (const [cid, items] of portfolioMap) {
           seenUrls.set(cid, new Set(items.map(i => i.url)));
         }
 
+        // Process content rows
         for (const c of contentRows || []) {
           const userId = (c as any).creator_id as string;
           const cid = userIdToCreatorId.get(userId);
@@ -236,13 +241,7 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
           }
         }
 
-        // 2c. Fetch portfolio_posts (social feed content)
-        const { data: postRows } = await supabase
-          .from('portfolio_posts')
-          .select('id, media_url, media_type, thumbnail_url, user_id')
-          .in('user_id', creatorUserIds)
-          .order('created_at', { ascending: false });
-
+        // Process portfolio_posts
         for (const p of postRows || []) {
           const cid = userIdToCreatorId.get(p.user_id);
           if (!cid) continue;
@@ -265,57 +264,72 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
         }
       }
 
-      // ── 2d. Fetch avatar fallbacks from profiles table for creators missing avatar ──
+      // ── 2d & 2e. Fetch avatar fallbacks AND organization memberships en PARALELO ──
       const missingAvatarUserIds = creatorRows
         .filter((r: any) => !r.avatar_url)
         .map((r: any) => r.user_id as string);
 
       const avatarFallbackMap = new Map<string, string>();
-      if (missingAvatarUserIds.length > 0) {
-        const { data: avatarRows } = await supabase
-          .from('profiles')
-          .select('id, avatar_url')
-          .in('id', missingAvatarUserIds)
-          .not('avatar_url', 'is', null)
-          .neq('avatar_url', '');
+      const orgMemberMap = new Map<string, { org_id: string; org_name: string; org_logo: string | null }>();
 
-        for (const r of avatarRows || []) {
-          if (r.avatar_url) avatarFallbackMap.set(r.id, r.avatar_url);
-        }
+      // Ejecutar ambas queries en paralelo
+      const [avatarResult, orgMemberResult] = await Promise.all([
+        // Avatar fallbacks
+        missingAvatarUserIds.length > 0
+          ? supabase
+              .from('profiles')
+              .select('id, avatar_url')
+              .in('id', missingAvatarUserIds)
+              .not('avatar_url', 'is', null)
+              .neq('avatar_url', '')
+          : Promise.resolve({ data: [] }),
+        // Organization memberships (sin JOIN - PostgREST cache issue)
+        creatorUserIds.length > 0
+          ? supabase
+              .from('organization_members')
+              .select('user_id, organization_id')
+              .in('user_id', creatorUserIds)
+          : Promise.resolve({ data: [] }),
+      ]);
+
+      // Process avatar fallbacks
+      for (const r of avatarResult.data || []) {
+        if (r.avatar_url) avatarFallbackMap.set(r.id, r.avatar_url);
       }
 
-      // ── 2e. Fetch organization memberships for creators ──
-      const orgMemberMap = new Map<string, { org_id: string; org_name: string; org_logo: string | null }>();
-      if (creatorUserIds.length > 0) {
-        // First get memberships
-        const { data: memberRows, error: memberErr } = await supabase
-          .from('organization_members')
-          .select('user_id, organization_id')
-          .in('user_id', creatorUserIds);
+      // Collect unique organization IDs from memberships
+      const orgIds = new Set<string>();
+      const userOrgMap = new Map<string, string>(); // user_id -> org_id
+      for (const m of orgMemberResult.data || []) {
+        orgIds.add(m.organization_id);
+        userOrgMap.set(m.user_id, m.organization_id);
+      }
 
-        if (memberRows && memberRows.length > 0) {
-          // Then get org details
-          const orgIds = [...new Set(memberRows.map(m => m.organization_id))];
-          const { data: orgRows } = await supabase
-            .from('organizations')
-            .select('id, name, logo_url')
-            .in('id', orgIds);
+      // Fetch organization details in a separate query
+      const orgDetailsMap = new Map<string, { name: string; logo_url: string | null }>();
+      const orgList: MarketplaceOrganization[] = [];
+      if (orgIds.size > 0) {
+        const { data: orgs } = await supabase
+          .from('organizations')
+          .select('id, name, logo_url')
+          .in('id', Array.from(orgIds));
+        for (const org of orgs || []) {
+          orgDetailsMap.set(org.id, { name: org.name, logo_url: org.logo_url });
+          orgList.push({ id: org.id, name: org.name, logo_url: org.logo_url });
+        }
+      }
+      // Update organizations state for filter UI
+      setOrganizations(orgList);
 
-          const orgDetailsMap = new Map<string, { name: string; logo_url: string | null }>();
-          for (const org of orgRows || []) {
-            orgDetailsMap.set(org.id, { name: org.name, logo_url: org.logo_url });
-          }
-
-          for (const m of memberRows) {
-            const orgDetail = orgDetailsMap.get(m.organization_id);
-            if (orgDetail) {
-              orgMemberMap.set(m.user_id, {
-                org_id: m.organization_id,
-                org_name: orgDetail.name,
-                org_logo: orgDetail.logo_url,
-              });
-            }
-          }
+      // Build final orgMemberMap combining both queries
+      for (const [userId, orgId] of userOrgMap) {
+        const orgDetails = orgDetailsMap.get(orgId);
+        if (orgDetails) {
+          orgMemberMap.set(userId, {
+            org_id: orgId,
+            org_name: orgDetails.name,
+            org_logo: orgDetails.logo_url,
+          });
         }
       }
 
@@ -619,6 +633,15 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
       });
     }
 
+    // City - filtro específico por ciudad
+    if (filters.city) {
+      const citySearch = filters.city.toLowerCase();
+      result = result.filter(c => {
+        const city = c.location_city?.toLowerCase() || '';
+        return city.includes(citySearch) || city === citySearch;
+      });
+    }
+
     // Content types
     // Include freelancers without content_types configured (they're not excluded)
     if (filters.content_type.length > 0) {
@@ -660,6 +683,11 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
       result = result.filter(c => c.is_available);
     }
 
+    // Organization filter
+    if (filters.organization_id) {
+      result = result.filter(c => c.organization_id === filters.organization_id);
+    }
+
     // Sort
     switch (filters.sort_by) {
       case 'rating':
@@ -686,15 +714,31 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
 
   // Curated sections
 
-  // Destacados: rating >= 4.8 OR (subscribed + rating >= 3.5) — all roles
+  // Destacados: Creadores que cumplen AL MENOS UNO de estos criterios:
+  // 1. Tiene proyectos completados (pagados en plataforma)
+  // 2. Es suscriptor (plan de pago)
+  // 3. Tiene portfolio de calidad (5+ items) con buen rating
+  // Prioridad: proyectos > suscripción > portfolio
   const featured = useMemo(
     () =>
       allCreators
         .filter(c =>
-          c.rating_avg >= 4.8 ||
-          (c.is_subscribed && c.rating_avg >= 3.5),
+          c.completed_projects >= 1 ||  // Tiene proyectos pagados
+          c.is_subscribed ||             // Es suscriptor premium/pro
+          (c.portfolio_media.length >= 5 && c.rating_avg >= 4.0), // Portfolio destacado
         )
-        .sort((a, b) => b.rating_avg - a.rating_avg)
+        .sort((a, b) => {
+          // Priorizar por proyectos completados
+          const projectsDiff = b.completed_projects - a.completed_projects;
+          if (projectsDiff !== 0) return projectsDiff;
+          // Luego por suscripción
+          if (a.is_subscribed !== b.is_subscribed) return b.is_subscribed ? 1 : -1;
+          // Luego por rating
+          const ratingDiff = b.rating_avg - a.rating_avg;
+          if (ratingDiff !== 0) return ratingDiff;
+          // Finalmente por portfolio
+          return b.portfolio_media.length - a.portfolio_media.length;
+        })
         .slice(0, 12),
     [allCreators],
   );
@@ -718,6 +762,42 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
     [allCreators],
   );
 
+  // Top Performers: Los que más proyectos han entregado con buena calidad
+  // Criterio adaptativo:
+  // - Si hay creadores con >= 1 proyecto: mostrar los mejores por performance
+  // - Si no hay proyectos: mostrar los mejores por portfolio + engagement
+  const topPerformers = useMemo(() => {
+    const withProjects = allCreators.filter(c => c.completed_projects >= 1);
+
+    if (withProjects.length > 0) {
+      // Hay creadores con proyectos: ordenar por performance score
+      return withProjects
+        .map(c => {
+          // Score: proyectos * (1 + rating/5 + portfolio_bonus)
+          const ratingFactor = c.rating_avg / 5;
+          const portfolioBonus = Math.min(c.portfolio_media.length / 5, 1) * 0.5;
+          const performanceScore = c.completed_projects * (1 + ratingFactor + portfolioBonus);
+          return { ...c, _performanceScore: performanceScore };
+        })
+        .sort((a, b) => b._performanceScore - a._performanceScore)
+        .slice(0, 12);
+    }
+
+    // Fallback: nadie tiene proyectos aún, mostrar los mejores portfolios
+    // Esto permite que la sección aparezca en plataformas nuevas
+    return allCreators
+      .filter(c => c.portfolio_media.length >= 3) // Mínimo 3 items en portfolio
+      .map(c => {
+        // Score basado en portfolio y rating
+        const portfolioScore = c.portfolio_media.length * 2;
+        const ratingBonus = c.rating_avg * 2;
+        const performanceScore = portfolioScore + ratingBonus;
+        return { ...c, _performanceScore: performanceScore };
+      })
+      .sort((a, b) => b._performanceScore - a._performanceScore)
+      .slice(0, 12);
+  }, [allCreators]);
+
   // Get similar creators by categories
   const getSimilarCreators = useCallback(
     (categories: string[], excludeId?: string, limit = 6): MarketplaceCreator[] => {
@@ -735,6 +815,8 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
     featured,
     newTalent,
     topRated,
+    topPerformers,
+    organizations,
     isLoading: loading,
     error,
     totalCount: filtered.length,

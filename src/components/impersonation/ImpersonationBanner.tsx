@@ -83,7 +83,7 @@ export function ImpersonationBanner() {
       <div className={cn("transition-all", isEditing ? "h-24" : "h-12")} />
       
       <div className={cn(
-        "fixed top-0 left-0 right-0 z-[100] bg-amber-500/95 backdrop-blur-sm",
+        "fixed top-0 left-0 right-0 z-[100] bg-amber-500/95",
         "border-b-2 border-amber-600 shadow-lg"
       )}>
         <div className="max-w-screen-2xl mx-auto px-4 py-2">

@@ -130,13 +130,13 @@ export function ActivationCampaignConfig({ config, onChange }: ActivationCampaig
                 type="button"
                 onClick={() => togglePlatform(platform)}
                 className={cn(
-                  'p-3 rounded-xl border transition-all text-left',
+                  'p-3 rounded-sm border transition-all text-left',
                   isSelected
                     ? 'border-purple-500/60 bg-purple-500/10'
                     : 'border-white/10 bg-white/5 hover:border-white/20',
                 )}
               >
-                <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center mb-2', info.bgColor)}>
+                <div className={cn('w-8 h-8 rounded-sm flex items-center justify-center mb-2', info.bgColor)}>
                   <span className="text-white text-xs font-bold">
                     {info.label.charAt(0)}
                   </span>
@@ -167,7 +167,7 @@ export function ActivationCampaignConfig({ config, onChange }: ActivationCampaig
 
               return (
                 <div key={baseKey} className="flex items-center gap-3">
-                  <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center shrink-0', info.bgColor)}>
+                  <div className={cn('w-10 h-10 rounded-sm flex items-center justify-center shrink-0', info.bgColor)}>
                     <span className="text-white text-sm font-bold">{baseName.charAt(0)}</span>
                   </div>
                   <div className="flex-1">
@@ -179,7 +179,7 @@ export function ActivationCampaignConfig({ config, onChange }: ActivationCampaig
                         step={1000}
                         value={config.min_followers?.[baseKey] || 0}
                         onChange={e => updateMinFollowers(baseKey, parseInt(e.target.value) || 0)}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
+                        className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
                         placeholder="Ej: 5000"
                       />
                       <span className="text-xs text-gray-500 shrink-0">seguidores</span>
@@ -209,12 +209,12 @@ export function ActivationCampaignConfig({ config, onChange }: ActivationCampaig
             onChange={e => setNewHashtag(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addHashtag())}
             placeholder="#ad, #publi, #tumarca"
-            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
+            className="flex-1 bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
           />
           <button
             type="button"
             onClick={addHashtag}
-            className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            className="px-3 py-2 bg-purple-600 text-white rounded-sm hover:bg-purple-700 transition-colors"
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -237,7 +237,7 @@ export function ActivationCampaignConfig({ config, onChange }: ActivationCampaig
           )}
         </div>
 
-        <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-xs text-amber-300">
+        <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-sm text-xs text-amber-300">
           <Info className="w-3.5 h-3.5 inline mr-1.5" />
           Recuerda incluir #ad o #publi para cumplir con regulaciones de publicidad
         </div>
@@ -260,12 +260,12 @@ export function ActivationCampaignConfig({ config, onChange }: ActivationCampaig
             onChange={e => setNewMention(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addMention())}
             placeholder="@tumarca"
-            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
+            className="flex-1 bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
           />
           <button
             type="button"
             onClick={addMention}
-            className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            className="px-3 py-2 bg-purple-600 text-white rounded-sm hover:bg-purple-700 transition-colors"
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -306,7 +306,7 @@ export function ActivationCampaignConfig({ config, onChange }: ActivationCampaig
             max={365}
             value={config.min_post_duration_days || 30}
             onChange={e => onChange({ ...config, min_post_duration_days: parseInt(e.target.value) || 30 })}
-            className="w-24 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500"
+            className="w-24 bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500"
           />
           <span className="text-sm text-gray-400">días mínimo</span>
         </div>
@@ -332,7 +332,7 @@ export function ActivationCampaignConfig({ config, onChange }: ActivationCampaig
             max={3650}
             value={config.usage_rights_duration_days || 90}
             onChange={e => onChange({ ...config, usage_rights_duration_days: parseInt(e.target.value) || 90 })}
-            className="w-24 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500"
+            className="w-24 bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500"
           />
           <span className="text-sm text-gray-400">días de licencia</span>
         </div>
@@ -358,7 +358,7 @@ export function ActivationCampaignConfig({ config, onChange }: ActivationCampaig
               type="button"
               onClick={() => onChange({ ...config, verification_method: value })}
               className={cn(
-                'p-3 rounded-xl border transition-all text-center',
+                'p-3 rounded-sm border transition-all text-center',
                 config.verification_method === value
                   ? 'border-purple-500/60 bg-purple-500/10'
                   : 'border-white/10 bg-white/5 hover:border-white/20',
@@ -372,7 +372,7 @@ export function ActivationCampaignConfig({ config, onChange }: ActivationCampaig
       </section>
 
       {/* ── Bonus por engagement ────────────────────────────────────────── */}
-      <section className="p-5 bg-green-500/5 border border-green-500/20 rounded-xl">
+      <section className="p-5 bg-green-500/5 border border-green-500/20 rounded-sm">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-semibold text-green-400 flex items-center gap-2">
             <Gift className="w-4 h-4" />
@@ -427,7 +427,7 @@ export function ActivationCampaignConfig({ config, onChange }: ActivationCampaig
         <h3 className="text-base font-semibold text-white mb-4">Opciones adicionales</h3>
 
         <div className="space-y-3">
-          <label className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-lg cursor-pointer hover:border-white/20 transition-colors">
+          <label className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-sm cursor-pointer hover:border-white/20 transition-colors">
             <input
               type="checkbox"
               checked={config.content_approval_required}
@@ -440,7 +440,7 @@ export function ActivationCampaignConfig({ config, onChange }: ActivationCampaig
             </div>
           </label>
 
-          <label className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-lg cursor-pointer hover:border-white/20 transition-colors">
+          <label className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-sm cursor-pointer hover:border-white/20 transition-colors">
             <input
               type="checkbox"
               checked={config.allow_reshare_brand}
@@ -453,7 +453,7 @@ export function ActivationCampaignConfig({ config, onChange }: ActivationCampaig
             </div>
           </label>
 
-          <label className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-lg cursor-pointer hover:border-white/20 transition-colors">
+          <label className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-sm cursor-pointer hover:border-white/20 transition-colors">
             <input
               type="checkbox"
               checked={config.requires_insights_screenshot}

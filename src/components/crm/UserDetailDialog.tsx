@@ -328,16 +328,16 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
             <div className="p-6">
               {fullLoading && (
                 <div className="space-y-4">
-                  <Skeleton className="h-20 rounded-lg bg-white/5" />
-                  <Skeleton className="h-16 rounded-lg bg-white/5" />
-                  <Skeleton className="h-24 rounded-lg bg-white/5" />
+                  <Skeleton className="h-20 rounded-sm bg-white/5" />
+                  <Skeleton className="h-16 rounded-sm bg-white/5" />
+                  <Skeleton className="h-24 rounded-sm bg-white/5" />
                 </div>
               )}
 
               {/* GENERAL TAB */}
               <TabsContent value="general" className="mt-0 space-y-6">
                 {/* Personal Data */}
-                <div className="rounded-lg border border-white/10 p-4">
+                <div className="rounded-sm border border-white/10 p-4">
                   <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
                     <User className="h-4 w-4 text-purple-400" />
                     Datos Personales
@@ -443,7 +443,7 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
                 </div>
 
                 {/* Social Links */}
-                <div className="rounded-lg border border-white/10 p-4">
+                <div className="rounded-sm border border-white/10 p-4">
                   <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
                     <Link2 className="h-4 w-4 text-purple-400" />
                     Redes Sociales
@@ -507,27 +507,27 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
                 </div>
 
                 {/* Activity Stats */}
-                <div className="rounded-lg border border-white/10 p-4">
+                <div className="rounded-sm border border-white/10 p-4">
                   <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
                     <Settings className="h-4 w-4 text-purple-400" />
                     Actividad
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-3 rounded-lg bg-white/5">
+                    <div className="text-center p-3 rounded-sm bg-white/5">
                       <p className="text-2xl font-bold text-white">{user.total_logins}</p>
                       <p className="text-xs text-white/50">Logins totales</p>
                     </div>
-                    <div className="text-center p-3 rounded-lg bg-white/5">
+                    <div className="text-center p-3 rounded-sm bg-white/5">
                       <p className="text-2xl font-bold text-white">{user.total_actions}</p>
                       <p className="text-xs text-white/50">Acciones</p>
                     </div>
-                    <div className="text-center p-3 rounded-lg bg-white/5">
+                    <div className="text-center p-3 rounded-sm bg-white/5">
                       <p className="text-2xl font-bold text-white">
                         {user.days_since_last_activity ?? '—'}
                       </p>
                       <p className="text-xs text-white/50">Días inactivo</p>
                     </div>
-                    <div className="text-center p-3 rounded-lg bg-white/5">
+                    <div className="text-center p-3 rounded-sm bg-white/5">
                       <p className="text-sm font-medium text-white">
                         {user.last_login_at
                           ? format(new Date(user.last_login_at), 'd MMM yyyy', { locale: es })
@@ -539,7 +539,7 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
                 </div>
 
                 {/* Legal Consents */}
-                <div className="rounded-lg border border-white/10 p-4">
+                <div className="rounded-sm border border-white/10 p-4">
                   <LegalConsentsSection
                     userId={user.id}
                     onboardingCompleted={full?.onboarding_completed}
@@ -550,7 +550,7 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
               {/* PROFESSIONAL TAB */}
               <TabsContent value="professional" className="mt-0 space-y-6">
                 {/* Bio */}
-                <div className="rounded-lg border border-white/10 p-4">
+                <div className="rounded-sm border border-white/10 p-4">
                   <h3 className="text-sm font-semibold text-white mb-4">Biografía</h3>
                   <EditableField
                     label="Bio corta"
@@ -574,7 +574,7 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
 
                 {/* Categories & Roles */}
                 {(full?.categories?.length || full?.marketplace_roles?.length) && (
-                  <div className="rounded-lg border border-white/10 p-4">
+                  <div className="rounded-sm border border-white/10 p-4">
                     <h3 className="text-sm font-semibold text-white mb-4">Especialización</h3>
                     {full?.categories?.length > 0 && (
                       <div className="mb-4">
@@ -605,31 +605,31 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
 
                 {/* Creator Profile Stats */}
                 {full?.creator_profile_id && (
-                  <div className="rounded-lg border border-white/10 p-4">
+                  <div className="rounded-sm border border-white/10 p-4">
                     <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
                       <BadgeCheck className="h-4 w-4 text-blue-400" />
                       Perfil de Creador
                     </h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="text-center p-3 rounded-lg bg-white/5">
+                      <div className="text-center p-3 rounded-sm bg-white/5">
                         <p className="text-xl font-bold text-yellow-400">
                           {full.rating_avg?.toFixed(1) || '—'}
                         </p>
                         <p className="text-xs text-white/50">Rating</p>
                       </div>
-                      <div className="text-center p-3 rounded-lg bg-white/5">
+                      <div className="text-center p-3 rounded-sm bg-white/5">
                         <p className="text-xl font-bold text-white">
                           {full.completed_projects ?? 0}
                         </p>
                         <p className="text-xs text-white/50">Proyectos</p>
                       </div>
-                      <div className="text-center p-3 rounded-lg bg-white/5">
+                      <div className="text-center p-3 rounded-sm bg-white/5">
                         <p className="text-xl font-bold text-green-400">
                           ${full.total_earned?.toLocaleString() ?? 0}
                         </p>
                         <p className="text-xs text-white/50">Ganado</p>
                       </div>
-                      <div className="text-center p-3 rounded-lg bg-white/5">
+                      <div className="text-center p-3 rounded-sm bg-white/5">
                         <p className="text-sm font-medium text-white capitalize">
                           {full.level || 'Starter'}
                         </p>
@@ -654,7 +654,7 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
                 )}
 
                 {/* Meta */}
-                <div className="rounded-lg border border-white/10 p-4">
+                <div className="rounded-sm border border-white/10 p-4">
                   <h3 className="text-sm font-semibold text-white mb-4">Información del Sistema</h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
@@ -689,7 +689,7 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
               <TabsContent value="organization" className="mt-0 space-y-6">
                 {/* Roles & Badges */}
                 {full && (
-                  <div className="rounded-lg border border-white/10 p-4">
+                  <div className="rounded-sm border border-white/10 p-4">
                     <RolesBadgesSection
                       roles={full.roles}
                       badges={full.badges}
@@ -700,7 +700,7 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
 
                 {/* Organizations */}
                 {full && (
-                  <div className="rounded-lg border border-white/10 p-4">
+                  <div className="rounded-sm border border-white/10 p-4">
                     <OrganizationsListSection
                       organizations={full.organizations || []}
                       userId={user.id}
@@ -711,7 +711,7 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
 
                 {/* Companies */}
                 {full && (
-                  <div className="rounded-lg border border-white/10 p-4">
+                  <div className="rounded-sm border border-white/10 p-4">
                     <CompaniesSection
                       companies={full.companies || []}
                       userId={user.id}
@@ -724,7 +724,7 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
               {/* ADMIN TAB */}
               {isRoot && (
                 <TabsContent value="admin" className="mt-0">
-                  <div className="rounded-lg border border-red-500/20 p-4 bg-red-500/5">
+                  <div className="rounded-sm border border-red-500/20 p-4 bg-red-500/5">
                     <div className="flex items-center gap-2 mb-4">
                       <AlertTriangle className="h-5 w-5 text-red-400" />
                       <h3 className="text-sm font-semibold text-red-400">

@@ -277,13 +277,13 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
   }, [errors, submitAttempted]);
 
   return (
-    <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 md:p-8">
+    <div className="bg-card border border-border rounded-[0.125rem] p-6 md:p-8">
       {/* Header */}
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-white mb-2">
+        <h1 className="text-2xl font-bold text-foreground mb-2">
           Completa tu perfil
         </h1>
-        <p className="text-white/60">
+        <p className="text-muted-foreground">
           Para usar KREOON necesitas completar tu información.
           Esto nos ayuda a protegerte y garantizar la seguridad de la comunidad.
         </p>
@@ -295,9 +295,9 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-start gap-3"
+            className="bg-destructive/10 border border-destructive/30 rounded-[0.125rem] p-4 flex items-start gap-3"
           >
-            <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-red-400 font-medium">Faltan campos obligatorios</p>
               <p className="text-red-400/70 text-sm mt-1">
@@ -309,7 +309,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
         )}
         {/* Sección: Información Personal */}
         <section>
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
             <User className="w-5 h-5 text-purple-400" />
             Información Personal
           </h2>
@@ -317,14 +317,14 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Nombre completo */}
             <div className="space-y-2" data-field="full_name">
-              <Label className="text-white/90">
+              <Label className="text-foreground">
                 Nombre completo <span className="text-red-400">*</span>
               </Label>
               <Input
                 {...register('full_name')}
                 placeholder="Tu nombre completo"
                 className={cn(
-                  "bg-white/5 border-white/10 text-white placeholder:text-white/40",
+                  "bg-background border-border text-foreground placeholder:text-muted-foreground",
                   errors.full_name && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
                 )}
               />
@@ -338,16 +338,16 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
 
             {/* Username */}
             <div className="space-y-2" data-field="username">
-              <Label className="text-white/90">
+              <Label className="text-foreground">
                 Username <span className="text-red-400">*</span>
               </Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">@</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
                 <Input
                   {...register('username')}
                   placeholder="tu_username"
                   className={cn(
-                    "bg-white/5 border-white/10 text-white placeholder:text-white/40 pl-8 pr-10",
+                    "bg-background border-border text-foreground placeholder:text-muted-foreground pl-8 pr-10",
                     (errors.username || usernameStatus === 'taken') && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
                   )}
                   onChange={(e) => {
@@ -357,7 +357,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                   {usernameStatus === 'checking' && (
-                    <Loader2 className="w-4 h-4 animate-spin text-white/40" />
+                    <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                   )}
                   {usernameStatus === 'available' && (
                     <CheckCircle2 className="w-4 h-4 text-green-400" />
@@ -383,16 +383,16 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
 
             {/* Email */}
             <div className="space-y-2" data-field="email">
-              <Label className="text-white/90">
+              <Label className="text-foreground">
                 Correo electrónico <span className="text-red-400">*</span>
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   {...register('email')}
                   type="email"
                   placeholder="tu@email.com"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40 pl-10"
+                  className="bg-background border-border text-foreground placeholder:text-muted-foreground pl-10"
                   readOnly
                 />
               </div>
@@ -406,17 +406,17 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
 
             {/* Teléfono */}
             <div className="space-y-2" data-field="phone">
-              <Label className="text-white/90">
+              <Label className="text-foreground">
                 Teléfono <span className="text-red-400">*</span>
               </Label>
               <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   {...register('phone')}
                   type="tel"
                   placeholder="+57 300 123 4567"
                   className={cn(
-                    "bg-white/5 border-white/10 text-white placeholder:text-white/40 pl-10",
+                    "bg-background border-border text-foreground placeholder:text-muted-foreground pl-10",
                     errors.phone && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
                   )}
                 />
@@ -431,14 +431,14 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
 
             {/* Fecha de nacimiento */}
             <div className="space-y-2" data-field="date_of_birth">
-              <Label className="text-white/90">
+              <Label className="text-foreground">
                 Fecha de nacimiento <span className="text-red-400">*</span>
               </Label>
               <Input
                 {...register('date_of_birth')}
                 type="date"
                 className={cn(
-                  "bg-white/5 border-white/10 text-white [&::-webkit-calendar-picker-indicator]:invert",
+                  "bg-background border-border text-foreground [&::-webkit-calendar-picker-indicator]:invert",
                   errors.date_of_birth && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
                 )}
                 max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
@@ -449,12 +449,12 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                   {errors.date_of_birth.message}
                 </p>
               )}
-              <p className="text-xs text-white/40">Debes ser mayor de 18 años para usar KREOON</p>
+              <p className="text-xs text-muted-foreground">Debes ser mayor de 18 años para usar KREOON</p>
             </div>
 
             {/* Sexo */}
             <div className="space-y-2" data-field="gender">
-              <Label className="text-white/90">
+              <Label className="text-foreground">
                 Sexo <span className="text-red-400">*</span>
               </Label>
               <Select
@@ -462,7 +462,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                 onValueChange={(value) => setValue('gender', value as 'male' | 'female' | 'other')}
               >
                 <SelectTrigger className={cn(
-                  "bg-white/5 border-white/10 text-white",
+                  "bg-background border-border text-foreground",
                   errors.gender && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
                 )}>
                   <SelectValue placeholder="Selecciona tu sexo" />
@@ -485,7 +485,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
 
         {/* Sección: Ubicación */}
         <section>
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
             <MapPin className="w-5 h-5 text-purple-400" />
             Ubicación
           </h2>
@@ -493,7 +493,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* País */}
             <div className="space-y-2" data-field="country">
-              <Label className="text-white/90">
+              <Label className="text-foreground">
                 País <span className="text-red-400">*</span>
               </Label>
               <Select
@@ -501,7 +501,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                 onValueChange={(v) => setValue('country', v)}
               >
                 <SelectTrigger className={cn(
-                  "bg-white/5 border-white/10 text-white",
+                  "bg-background border-border text-foreground",
                   errors.country && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
                 )}>
                   <SelectValue placeholder="Selecciona tu país" />
@@ -525,7 +525,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
 
             {/* Ciudad */}
             <div className="space-y-2" data-field="city">
-              <Label className="text-white/90">
+              <Label className="text-foreground">
                 Ciudad <span className="text-red-400">*</span>
               </Label>
               {availableCities.length > 0 && !showCustomCity ? (
@@ -543,7 +543,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                     disabled={!countryValue}
                   >
                     <SelectTrigger className={cn(
-                      "bg-white/5 border-white/10 text-white",
+                      "bg-background border-border text-foreground",
                       errors.city && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
                     )}>
                       <SelectValue placeholder={countryValue ? "Selecciona tu ciudad" : "Primero selecciona país"} />
@@ -567,7 +567,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                       setValue('city', e.target.value);
                     }}
                     placeholder={countryValue ? "Escribe tu ciudad" : "Primero selecciona país"}
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                    className="bg-background border-border text-foreground placeholder:text-muted-foreground"
                     disabled={!countryValue}
                   />
                   {availableCities.length > 0 && (
@@ -594,14 +594,14 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
 
             {/* Dirección */}
             <div className="space-y-2" data-field="address">
-              <Label className="text-white/90">
+              <Label className="text-foreground">
                 Dirección <span className="text-red-400">*</span>
               </Label>
               <Input
                 {...register('address')}
                 placeholder="Tu dirección completa"
                 className={cn(
-                  "bg-white/5 border-white/10 text-white placeholder:text-white/40",
+                  "bg-background border-border text-foreground placeholder:text-muted-foreground",
                   errors.address && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
                 )}
               />
@@ -615,7 +615,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
 
             {/* Nacionalidad */}
             <div className="space-y-2" data-field="nationality">
-              <Label className="text-white/90">
+              <Label className="text-foreground">
                 Nacionalidad <span className="text-red-400">*</span>
               </Label>
               <Select
@@ -623,7 +623,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                 onValueChange={(v) => setValue('nationality', v)}
               >
                 <SelectTrigger className={cn(
-                  "bg-white/5 border-white/10 text-white",
+                  "bg-background border-border text-foreground",
                   errors.nationality && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
                 )}>
                   <SelectValue placeholder="Selecciona tu nacionalidad" />
@@ -649,7 +649,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
 
         {/* Sección: Documento de Identidad */}
         <section>
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
             <FileText className="w-5 h-5 text-purple-400" />
             Documento de Identidad
           </h2>
@@ -657,7 +657,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Tipo de documento */}
             <div className="space-y-2" data-field="document_type">
-              <Label className="text-white/90">
+              <Label className="text-foreground">
                 Tipo de documento <span className="text-red-400">*</span>
               </Label>
               <Select
@@ -666,7 +666,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                 disabled={!countryValue}
               >
                 <SelectTrigger className={cn(
-                  "bg-white/5 border-white/10 text-white",
+                  "bg-background border-border text-foreground",
                   errors.document_type && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
                 )}>
                   <SelectValue placeholder={countryValue ? "Selecciona tipo" : "Primero selecciona país"} />
@@ -689,7 +689,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
 
             {/* Número de documento */}
             <div className="space-y-2" data-field="document_number">
-              <Label className="text-white/90">
+              <Label className="text-foreground">
                 Número de documento <span className="text-red-400">*</span>
               </Label>
               <Input
@@ -699,7 +699,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
                   'Número de documento'
                 }
                 className={cn(
-                  "bg-white/5 border-white/10 text-white placeholder:text-white/40",
+                  "bg-background border-border text-foreground placeholder:text-muted-foreground",
                   errors.document_number && submitAttempted && "border-red-500/50 ring-1 ring-red-500/30"
                 )}
               />
@@ -715,99 +715,99 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
 
         {/* Sección: Redes Sociales */}
         <section>
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
             <Globe className="w-5 h-5 text-purple-400" />
             Redes Sociales
-            <span className="text-xs text-white/40 font-normal">(mínimo 1 requerida)</span>
+            <span className="text-xs text-muted-foreground font-normal">(mínimo 1 requerida)</span>
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Instagram */}
             <div className="space-y-2">
-              <Label className="text-white/90 flex items-center gap-2">
+              <Label className="text-foreground flex items-center gap-2">
                 <Instagram className="w-4 h-4 text-pink-400" />
                 Instagram
               </Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">@</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
                 <Input
                   {...register('social_instagram')}
                   placeholder="tu_usuario"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40 pl-8"
+                  className="bg-background border-border text-foreground placeholder:text-muted-foreground pl-8"
                 />
               </div>
             </div>
 
             {/* TikTok */}
             <div className="space-y-2">
-              <Label className="text-white/90 flex items-center gap-2">
+              <Label className="text-foreground flex items-center gap-2">
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
                 </svg>
                 TikTok
               </Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">@</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
                 <Input
                   {...register('social_tiktok')}
                   placeholder="tu_usuario"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40 pl-8"
+                  className="bg-background border-border text-foreground placeholder:text-muted-foreground pl-8"
                 />
               </div>
             </div>
 
             {/* Facebook */}
             <div className="space-y-2">
-              <Label className="text-white/90 flex items-center gap-2">
+              <Label className="text-foreground flex items-center gap-2">
                 <Facebook className="w-4 h-4 text-blue-400" />
                 Facebook
               </Label>
               <Input
                 {...register('social_facebook')}
                 placeholder="facebook.com/tu_perfil"
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                className="bg-background border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
 
             {/* X (Twitter) */}
             <div className="space-y-2">
-              <Label className="text-white/90 flex items-center gap-2">
+              <Label className="text-foreground flex items-center gap-2">
                 <Twitter className="w-4 h-4" />
                 X (Twitter)
               </Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">@</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
                 <Input
                   {...register('social_x')}
                   placeholder="tu_usuario"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40 pl-8"
+                  className="bg-background border-border text-foreground placeholder:text-muted-foreground pl-8"
                 />
               </div>
             </div>
 
             {/* YouTube */}
             <div className="space-y-2">
-              <Label className="text-white/90 flex items-center gap-2">
+              <Label className="text-foreground flex items-center gap-2">
                 <Youtube className="w-4 h-4 text-red-400" />
                 YouTube
               </Label>
               <Input
                 {...register('social_youtube')}
                 placeholder="youtube.com/@tu_canal"
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                className="bg-background border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
 
             {/* LinkedIn */}
             <div className="space-y-2">
-              <Label className="text-white/90 flex items-center gap-2">
+              <Label className="text-foreground flex items-center gap-2">
                 <Linkedin className="w-4 h-4 text-blue-500" />
                 LinkedIn
               </Label>
               <Input
                 {...register('social_linkedin')}
                 placeholder="linkedin.com/in/tu_perfil"
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                className="bg-background border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>

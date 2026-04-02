@@ -113,7 +113,7 @@ export const KiroGuide = memo(function KiroGuide({
               className="flex-shrink-0"
             >
               <div className={cn(
-                'w-16 h-16 sm:w-20 sm:h-20 rounded-2xl',
+                'w-16 h-16 sm:w-20 sm:h-20 rounded-sm',
                 'bg-gradient-to-br from-purple-500 to-pink-500',
                 'flex items-center justify-center',
                 'border-2 border-purple-400/50',
@@ -130,7 +130,7 @@ export const KiroGuide = memo(function KiroGuide({
             <div className="flex-1 min-w-0">
               {/* Speech bubble */}
               <div className={cn(
-                'relative rounded-2xl p-4',
+                'relative rounded-sm p-4',
                 'bg-white/[0.05] border border-white/10',
                 'before:absolute before:left-[-8px] before:top-6',
                 'before:w-0 before:h-0',
@@ -155,7 +155,7 @@ export const KiroGuide = memo(function KiroGuide({
                 <div className="flex items-center justify-between mt-4">
                   <button
                     onClick={prevDialogue}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                    className="p-1.5 rounded-sm bg-white/5 hover:bg-white/10 transition-colors"
                   >
                     <ChevronLeft className="w-4 h-4 text-white/50" />
                   </button>
@@ -177,7 +177,7 @@ export const KiroGuide = memo(function KiroGuide({
 
                   <button
                     onClick={nextDialogue}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                    className="p-1.5 rounded-sm bg-white/5 hover:bg-white/10 transition-colors"
                   >
                     <ChevronRight className="w-4 h-4 text-white/50" />
                   </button>
@@ -190,7 +190,7 @@ export const KiroGuide = memo(function KiroGuide({
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   className={cn(
-                    'mt-3 p-3 rounded-xl text-xs',
+                    'mt-3 p-3 rounded-sm text-xs',
                     urgency === 'critical' && 'bg-red-500/20 border border-red-500/30 text-red-300',
                     urgency === 'high' && 'bg-orange-500/20 border border-orange-500/30 text-orange-300'
                   )}
@@ -215,7 +215,7 @@ export const KiroGuide = memo(function KiroGuide({
                 )}
               >
                 <div className={cn(
-                  'p-3 rounded-xl',
+                  'p-3 rounded-sm',
                   'bg-gradient-to-r from-amber-500/20 to-yellow-500/20',
                   'border border-yellow-500/30',
                   'shadow-lg shadow-yellow-500/10'

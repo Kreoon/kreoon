@@ -131,7 +131,7 @@ export function MarketplaceKanbanBoard({ columns, viewRole }: MarketplaceKanbanB
   return (
     <div className="bg-background min-h-[calc(100vh-3.5rem)]">
       {/* Header */}
-      <div className="border-b border-white/10 bg-background/95 backdrop-blur-sm sticky top-0 z-10">
+      <div className="border-b border-white/10 bg-background/95 sticky top-0 z-10">
         <div className="max-w-[1600px] mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -152,7 +152,7 @@ export function MarketplaceKanbanBoard({ columns, viewRole }: MarketplaceKanbanB
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Buscar proyectos..."
-                className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-foreground text-sm placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
+                className="w-full bg-white/5 border border-white/10 rounded-sm pl-9 pr-3 py-2 text-foreground text-sm placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
               />
             </div>
           </div>
@@ -170,7 +170,7 @@ export function MarketplaceKanbanBoard({ columns, viewRole }: MarketplaceKanbanB
               <div
                 key={column.id}
                 className={cn(
-                  'w-[320px] flex-shrink-0 rounded-xl transition-all',
+                  'w-[320px] flex-shrink-0 rounded-sm transition-all',
                   isDropTarget ? 'ring-2 ring-purple-500/50' : '',
                 )}
                 onDragOver={e => handleDragOver(e, column.id)}
@@ -194,11 +194,11 @@ export function MarketplaceKanbanBoard({ columns, viewRole }: MarketplaceKanbanB
                       draggable
                       onDragStart={e => handleDragStart(e, project.id)}
                       onClick={() => setSelectedProjectId(project.id)}
-                      className="bg-card/80 backdrop-blur border border-white/5 rounded-xl overflow-hidden cursor-pointer hover:border-purple-500/30 transition-all group"
+                      className="bg-card/80 border border-white/5 rounded-sm overflow-hidden cursor-pointer hover:border-purple-500/30 transition-all group"
                     >
                       {/* Vertical thumbnail preview */}
                       <div className="flex gap-3 p-3">
-                        <div className="w-16 flex-shrink-0 aspect-[9/16] rounded-lg bg-gradient-to-br from-purple-900/40 to-blue-900/40 flex items-center justify-center relative overflow-hidden">
+                        <div className="w-16 flex-shrink-0 aspect-[9/16] rounded-sm bg-gradient-to-br from-purple-900/40 to-blue-900/40 flex items-center justify-center relative overflow-hidden">
                           <Film className="h-4 w-4 text-gray-600" />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                             <Play className="h-3.5 w-3.5 text-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-0.5" />

@@ -164,7 +164,7 @@ export const AutoPauseVideo = forwardRef<HTMLDivElement, AutoPauseVideoProps>(
                     onError={() => setThumbnailError(true)}
                   />
                   <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover/thumb:bg-black/40 transition-colors">
-                    <div className="p-3 rounded-full bg-white/20 backdrop-blur-sm group-hover/thumb:bg-white/30 transition-all group-hover/thumb:scale-110">
+                    <div className="p-3 rounded-full bg-white/20 group-hover/thumb:bg-white/30 transition-all group-hover/thumb:scale-110">
                       <Play className="h-8 w-8 text-white" fill="currentColor" />
                     </div>
                     <p className="absolute bottom-3 text-white text-xs">Scroll para reproducir</p>
@@ -242,7 +242,7 @@ function VolumeToggle({
         e.stopPropagation();
         setIsMuted((v) => !v);
       }}
-      className="absolute top-2 right-2 z-20 p-2 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
+      className="absolute top-2 right-2 z-20 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
       aria-label={isMuted ? "Activar volumen" : "Silenciar"}
     >
       {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}

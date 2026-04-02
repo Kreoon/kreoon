@@ -81,7 +81,7 @@ export function MarketingClientSwitcher({
 
   if (clients.length === 0) {
     return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg px-4 py-3 border border-dashed">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-sm px-4 py-3 border border-dashed">
         <Building2 className="h-4 w-4" />
         <span>Sin clientes con servicios activos</span>
       </div>

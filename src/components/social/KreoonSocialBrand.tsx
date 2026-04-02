@@ -29,14 +29,14 @@ export function KreoonSocialBrand({
         <img
           src="/favicon.png"
           alt="KREOON"
-          className={cn('rounded-md', symbolSizes[size])}
+          className={cn('rounded-sm', symbolSizes[size])}
         />
       )}
       <span className={cn(
         'font-bold tracking-tight',
         sizeClasses[size]
       )}>
-        <span className="text-social-foreground">KREOON</span>
+        <span className="text-foreground">KREOON</span>
       </span>
     </div>
   );
@@ -49,10 +49,10 @@ export function KreoonSocialLogo({ className }: { className?: string }) {
       <img
         src="/favicon.png"
         alt="KREOON"
-        className="h-7 w-7 rounded-md"
+        className="h-7 w-7 rounded-sm"
       />
       <span className="font-bold text-lg tracking-tight">
-        <span className="text-social-foreground">KREOON</span>
+        <span className="text-foreground">KREOON</span>
       </span>
     </div>
   );

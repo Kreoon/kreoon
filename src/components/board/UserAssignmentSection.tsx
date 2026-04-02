@@ -18,6 +18,10 @@ interface UserAssignmentSectionProps {
   onAssignEditor?: (userId: string) => Promise<void>;
   onUpdate?: () => void;
   compact?: boolean;
+  /** Control de campos visibles - estilo Notion */
+  showCreator?: boolean;
+  showEditor?: boolean;
+  showClient?: boolean;
 }
 
 export function UserAssignmentSection({
@@ -29,6 +33,9 @@ export function UserAssignmentSection({
   onAssignEditor,
   onUpdate,
   compact,
+  showCreator = true,
+  showEditor = true,
+  showClient = true,
 }: UserAssignmentSectionProps) {
   const canAssign =
     userRole && CAN_ASSIGN_ROLES.includes(userRole) && (!!onAssignCreator || !!onAssignEditor);
@@ -56,130 +63,134 @@ export function UserAssignmentSection({
   return (
     <div
       data-no-click
-      className="mt-3 rounded-lg p-3 space-y-3"
+      className="mt-3 rounded-sm p-3 space-y-3"
       style={{
         background: "rgba(255, 255, 255, 0.03)",
         border: "1px solid rgba(255, 255, 255, 0.06)",
       }}
     >
-      {/* Creador */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-[#94a3b8] shrink-0">
-          <Video className="h-4 w-4 text-[#06b6d4]" />
-          <span className="text-xs font-medium">Creador</span>
-        </div>
-        {content.creator ? (
-          canAssign ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div>
-                  <UserChip
-                    name={content.creator.full_name || ""}
-                    avatarUrl={content.creator.avatar_url}
-                    borderColor="#06b6d4"
-                  />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>Creador asignado</TooltipContent>
-            </Tooltip>
-          ) : (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div>
-                  <UserChip
-                    name={content.creator.full_name || ""}
-                    avatarUrl={content.creator.avatar_url}
-                    borderColor="#06b6d4"
-                  />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>No tienes permisos para asignar</TooltipContent>
-            </Tooltip>
-          )
-        ) : canAssign && onAssignCreator ? (
-          <AssignUserDropdown
-            users={creators}
-            currentUserId={content.creator_id}
-            onSelect={handleAssignCreator}
-            trigger={
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 text-xs border-primary/40 text-primary hover:bg-[#a855f7]/10 hover:border-[#a855f7]/60 hover:shadow-[0_0_12px_rgba(168,85,247,0.2)]"
-                onClick={(e) => e.stopPropagation()}
-              >
-                + Asignar
-              </Button>
-            }
-          />
-        ) : (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="text-xs text-[#64748b]">Sin asignar</span>
-            </TooltipTrigger>
-            <TooltipContent>No tienes permisos para asignar</TooltipContent>
-          </Tooltip>
-        )}
-      </div>
-
-      {/* Editor */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-[#94a3b8] shrink-0">
-          <Scissors className="h-4 w-4 text-[#a855f7]" />
-          <span className="text-xs font-medium">Editor</span>
-        </div>
-        {content.editor ? (
-          canAssign ? (
-            <UserChip
-              name={content.editor.full_name || ""}
-              avatarUrl={content.editor.avatar_url}
-              borderColor="#a855f7"
+      {/* Creador - condicional */}
+      {showCreator && (
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-[#94a3b8] shrink-0">
+            <Video className="h-4 w-4 text-[#06b6d4]" />
+            <span className="text-xs font-medium">Creador</span>
+          </div>
+          {content.creator ? (
+            canAssign ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <UserChip
+                      name={content.creator.full_name || ""}
+                      avatarUrl={content.creator.avatar_url}
+                      borderColor="#06b6d4"
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>Creador asignado</TooltipContent>
+              </Tooltip>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <UserChip
+                      name={content.creator.full_name || ""}
+                      avatarUrl={content.creator.avatar_url}
+                      borderColor="#06b6d4"
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>No tienes permisos para asignar</TooltipContent>
+              </Tooltip>
+            )
+          ) : canAssign && onAssignCreator ? (
+            <AssignUserDropdown
+              users={creators}
+              currentUserId={content.creator_id}
+              onSelect={handleAssignCreator}
+              trigger={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs border-primary/40 text-primary hover:bg-[#a855f7]/10 hover:border-[#a855f7]/60 hover:shadow-[0_0_12px_rgba(168,85,247,0.2)]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  + Asignar
+                </Button>
+              }
             />
           ) : (
             <Tooltip>
               <TooltipTrigger asChild>
-                <div>
-                  <UserChip
-                    name={content.editor.full_name || ""}
-                    avatarUrl={content.editor.avatar_url}
-                    borderColor="#a855f7"
-                  />
-                </div>
+                <span className="text-xs text-[#64748b]">Sin asignar</span>
               </TooltipTrigger>
               <TooltipContent>No tienes permisos para asignar</TooltipContent>
             </Tooltip>
-          )
-        ) : canAssign && onAssignEditor ? (
-          <AssignUserDropdown
-            users={editors}
-            currentUserId={content.editor_id}
-            onSelect={handleAssignEditor}
-            trigger={
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 text-xs border-primary/40 text-primary hover:bg-[#a855f7]/10 hover:border-[#a855f7]/60 hover:shadow-[0_0_12px_rgba(168,85,247,0.2)]"
-                onClick={(e) => e.stopPropagation()}
-              >
-                + Asignar
-              </Button>
-            }
-          />
-        ) : (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="text-xs text-[#64748b]">Sin asignar</span>
-            </TooltipTrigger>
-            <TooltipContent>No tienes permisos para asignar</TooltipContent>
-          </Tooltip>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
-      {/* Metadata: Cliente, fechas */}
-      {!compact && (
+      {/* Editor - condicional */}
+      {showEditor && (
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-[#94a3b8] shrink-0">
+            <Scissors className="h-4 w-4 text-[#a855f7]" />
+            <span className="text-xs font-medium">Editor</span>
+          </div>
+          {content.editor ? (
+            canAssign ? (
+              <UserChip
+                name={content.editor.full_name || ""}
+                avatarUrl={content.editor.avatar_url}
+                borderColor="#a855f7"
+              />
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <UserChip
+                      name={content.editor.full_name || ""}
+                      avatarUrl={content.editor.avatar_url}
+                      borderColor="#a855f7"
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>No tienes permisos para asignar</TooltipContent>
+              </Tooltip>
+            )
+          ) : canAssign && onAssignEditor ? (
+            <AssignUserDropdown
+              users={editors}
+              currentUserId={content.editor_id}
+              onSelect={handleAssignEditor}
+              trigger={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs border-primary/40 text-primary hover:bg-[#a855f7]/10 hover:border-[#a855f7]/60 hover:shadow-[0_0_12px_rgba(168,85,247,0.2)]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  + Asignar
+                </Button>
+              }
+            />
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-xs text-[#64748b]">Sin asignar</span>
+              </TooltipTrigger>
+              <TooltipContent>No tienes permisos para asignar</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+      )}
+
+      {/* Metadata: Cliente, fechas - condicional */}
+      {!compact && (showClient || content.created_at || content.deadline) && (
         <div className="pt-2 border-t border-white/5">
           <ProjectMetadata
-            clientName={content.client?.name}
+            clientName={showClient ? content.client?.name : undefined}
             createdAt={content.created_at}
             deadline={content.deadline}
             isOverdue={isOverdue}

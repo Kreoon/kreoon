@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Video, Package, FileText, Pencil, Target, TrendingUp, Medal, Info, Sparkles, Zap, Lightbulb, RefreshCw, Heart } from "lucide-react";
+import { Loader2, Video, Package, FileText, Pencil, Target, TrendingUp, Medal, Info, Sparkles, Zap, Lightbulb, RefreshCw, Heart, RotateCcw } from "lucide-react";
 import { ScriptGenerator } from "./ScriptGenerator";
 import { useInternalBrandClient } from "@/hooks/useInternalBrandClient";
 import { useInternalOrgContent } from "@/hooks/useInternalOrgContent";
@@ -46,11 +47,53 @@ interface Product {
   brief_url: string | null;
 }
 
+const DRAFT_KEY = 'kreoon_content_draft';
+
+// Helper para mostrar tiempo transcurrido
+function getTimeAgo(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return 'hace unos segundos';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `hace ${minutes} ${minutes === 1 ? 'minuto' : 'minutos'}`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `hace ${hours} ${hours === 1 ? 'hora' : 'horas'}`;
+  const days = Math.floor(hours / 24);
+  return `hace ${days} ${days === 1 ? 'día' : 'días'}`;
+}
+
+interface DraftData {
+  title: string;
+  productId: string;
+  clientId: string;
+  creatorId: string;
+  editorId: string;
+  strategistId: string;
+  deadline: string;
+  startDate: string;
+  campaignWeek: string;
+  referenceUrl: string;
+  script: string;
+  description: string;
+  creatorPayment: string;
+  editorPayment: string;
+  hooksCount: number;
+  packageId: string;
+  spherePhase: string;
+  editorGuidelines: string;
+  strategistGuidelines: string;
+  traffickerGuidelines: string;
+  savedAt: number;
+}
+
 export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateContentDialogProps) {
   const { toast } = useToast();
   const { internalBrandClient, isInternalBrand, currentOrgId } = useInternalBrandClient();
   const { guardAction, isReadOnly } = useTrialGuard();
   const [loading, setLoading] = useState(false);
+
+  // UX: Confirm dialog al cerrar con cambios sin guardar
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [pendingClose, setPendingClose] = useState(false);
   
   // Form state
   const [title, setTitle] = useState("");
@@ -98,6 +141,161 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
   } = useInternalOrgContent(clientId || null);
 
   const ambassadorOptions = internalAmbassadors.map(a => ({ id: a.id, name: a.name }));
+
+  // UX: Detectar si hay cambios sin guardar
+  const formValues = useMemo<DraftData>(() => ({
+    title,
+    productId,
+    clientId,
+    creatorId,
+    editorId,
+    strategistId,
+    deadline,
+    startDate,
+    campaignWeek,
+    referenceUrl,
+    script,
+    description,
+    creatorPayment,
+    editorPayment,
+    hooksCount,
+    packageId,
+    spherePhase,
+    editorGuidelines,
+    strategistGuidelines,
+    traffickerGuidelines,
+    savedAt: Date.now(),
+  }), [
+    title, productId, clientId, creatorId, editorId, strategistId,
+    deadline, startDate, campaignWeek, referenceUrl, script, description,
+    creatorPayment, editorPayment, hooksCount, packageId, spherePhase,
+    editorGuidelines, strategistGuidelines, traffickerGuidelines
+  ]);
+
+  const hasUnsavedChanges = useMemo(() => {
+    return !!(
+      title.trim() ||
+      productId ||
+      clientId ||
+      creatorId ||
+      editorId ||
+      strategistId ||
+      deadline ||
+      startDate ||
+      campaignWeek.trim() ||
+      referenceUrl.trim() ||
+      script.trim() ||
+      description.trim() ||
+      creatorPayment ||
+      editorPayment ||
+      hooksCount !== 1 ||
+      packageId ||
+      spherePhase ||
+      editorGuidelines.trim() ||
+      strategistGuidelines.trim() ||
+      traffickerGuidelines.trim()
+    );
+  }, [formValues]);
+
+  // UX: Restaurar borrador desde localStorage
+  const restoreDraft = useCallback((draft: DraftData) => {
+    setTitle(draft.title || "");
+    setProductId(draft.productId || "");
+    setClientId(draft.clientId || "");
+    setCreatorId(draft.creatorId || "");
+    setEditorId(draft.editorId || "");
+    setStrategistId(draft.strategistId || "");
+    setDeadline(draft.deadline || "");
+    setStartDate(draft.startDate || "");
+    setCampaignWeek(draft.campaignWeek || "");
+    setReferenceUrl(draft.referenceUrl || "");
+    setScript(draft.script || "");
+    setDescription(draft.description || "");
+    setCreatorPayment(draft.creatorPayment || "");
+    setEditorPayment(draft.editorPayment || "");
+    setHooksCount(draft.hooksCount || 1);
+    setPackageId(draft.packageId || "");
+    setSpherePhase(draft.spherePhase || "");
+    setEditorGuidelines(draft.editorGuidelines || "");
+    setStrategistGuidelines(draft.strategistGuidelines || "");
+    setTraffickerGuidelines(draft.traffickerGuidelines || "");
+
+    toast({
+      title: "Borrador restaurado",
+      description: "Se ha recuperado tu trabajo anterior",
+    });
+  }, [toast]);
+
+  // UX: Cargar borrador al abrir el dialog
+  useEffect(() => {
+    if (open) {
+      const draftStr = localStorage.getItem(DRAFT_KEY);
+      if (draftStr) {
+        try {
+          const draft: DraftData = JSON.parse(draftStr);
+          // Solo mostrar si el borrador tiene al menos un campo con contenido
+          const hasDraftContent = draft.title?.trim() || draft.script?.trim() || draft.clientId;
+          if (hasDraftContent) {
+            const savedDate = new Date(draft.savedAt);
+            const timeAgo = getTimeAgo(savedDate);
+            toast({
+              title: "Borrador encontrado",
+              description: `Guardado ${timeAgo}. ¿Restaurar tu trabajo?`,
+              action: (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => restoreDraft(draft)}
+                  className="gap-1"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  Restaurar
+                </Button>
+              ),
+              duration: 10000,
+            });
+          }
+        } catch (e) {
+          // Borrador corrupto, ignorar
+          localStorage.removeItem(DRAFT_KEY);
+        }
+      }
+    }
+  }, [open, restoreDraft, toast]);
+
+  // UX: Guardar borrador automáticamente (debounce 2s)
+  useEffect(() => {
+    if (!open || !hasUnsavedChanges) return;
+
+    const timer = setTimeout(() => {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(formValues));
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [open, formValues, hasUnsavedChanges]);
+
+  // UX: Manejar cierre con confirmación
+  const handleDialogChange = useCallback((newOpen: boolean) => {
+    if (!newOpen && hasUnsavedChanges) {
+      setPendingClose(true);
+      setShowExitConfirm(true);
+    } else {
+      onOpenChange(newOpen);
+    }
+  }, [hasUnsavedChanges, onOpenChange]);
+
+  const confirmDiscard = useCallback(() => {
+    localStorage.removeItem(DRAFT_KEY);
+    setShowExitConfirm(false);
+    setPendingClose(false);
+    resetForm();
+    onOpenChange(false);
+  }, [onOpenChange]);
+
+  const cancelDiscard = useCallback(() => {
+    setShowExitConfirm(false);
+    setPendingClose(false);
+  }, []);
 
   // Detect if client is the organization (ambassador content)
   useEffect(() => {
@@ -366,9 +564,12 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
 
       if (error) throw error;
 
+      // Limpiar borrador al guardar exitosamente
+      localStorage.removeItem(DRAFT_KEY);
+
       toast({
         title: isAmbassadorContent ? "Proyecto de Embajador creado" : "Proyecto creado",
-        description: isAmbassadorContent 
+        description: isAmbassadorContent
           ? "El proyecto de marca interna se ha creado. La recompensa será en puntos UP."
           : "El proyecto se ha creado exitosamente"
       });
@@ -389,8 +590,9 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="create-content-desc">
+    <>
+    <Dialog open={open} onOpenChange={handleDialogChange}>
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-4xl max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto" aria-describedby="create-content-desc">
         <DialogHeader>
           <DialogTitle>Nuevo Proyecto</DialogTitle>
           <DialogDescription className="sr-only">Crear un nuevo proyecto de contenido</DialogDescription>
@@ -521,7 +723,7 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
           <Separator />
 
           {/* Variables count selector */}
-          <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
+          <div className="p-4 rounded-sm border bg-muted/30 space-y-3">
             <div className="flex items-center gap-2">
               <Video className="h-4 w-4 text-primary" />
               <Label className="font-medium">Cantidad de Variables (Videos Finales)</Label>
@@ -731,7 +933,7 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
                 <Sparkles className="h-4 w-4 text-amber-500" />
                 Recompensa UP
               </h3>
-              <div className="p-4 rounded-lg border border-amber-500/30 bg-amber-500/5">
+              <div className="p-4 rounded-sm border border-amber-500/30 bg-amber-500/5">
                 <p className="text-sm text-muted-foreground">
                   Este contenido no genera pago monetario. El embajador recibirá puntos UP según las reglas configuradas en la organización.
                 </p>
@@ -851,7 +1053,7 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => handleDialogChange(false)}>
               Cancelar
             </Button>
             <Button type="submit" disabled={loading}>
@@ -862,5 +1064,30 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
         </form>
       </DialogContent>
     </Dialog>
+
+    {/* UX: Confirm dialog al cerrar con cambios sin guardar */}
+    <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>¿Descartar cambios?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Tienes cambios sin guardar. Si cierras ahora, perderás todo el progreso.
+            Tu borrador se guarda automáticamente, pero si descartas, se eliminará.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={cancelDiscard}>
+            Seguir editando
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={confirmDiscard}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Descartar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

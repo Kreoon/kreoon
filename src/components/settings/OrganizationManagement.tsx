@@ -165,7 +165,7 @@ function InvitationCard({
   const isExpired = new Date(invitation.expires_at) < new Date();
 
   return (
-    <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
+    <div className="flex items-center justify-between p-4 rounded-sm border bg-card">
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
           <Mail className="h-5 w-5 text-muted-foreground" />

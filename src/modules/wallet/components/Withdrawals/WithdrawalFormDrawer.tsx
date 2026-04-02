@@ -121,7 +121,7 @@ export function WithdrawalFormDrawer({
             className="space-y-6"
           >
             {/* Available balance */}
-            <div className="text-center p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)]">
+            <div className="text-center p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)]">
               <p className="text-sm text-muted-foreground mb-1">Disponible para retiro</p>
               <p className="text-2xl font-bold text-white">{wallet.formattedAvailable}</p>
             </div>
@@ -162,7 +162,7 @@ export function WithdrawalFormDrawer({
             {/* Quick percentages */}
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Monto rápido:</Label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {QUICK_PERCENTAGES.map((pct) => (
                   <Button
                     key={pct}
@@ -190,7 +190,7 @@ export function WithdrawalFormDrawer({
 
             {/* Summary preview */}
             {amount > 0 && selectedMethod && (
-              <div className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)] space-y-2">
+              <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Comisión estimada</span>
                   <span className="text-amber-400">-{formatCurrency(fee, wallet.currency)}</span>
@@ -334,7 +334,7 @@ export function WithdrawalFormDrawer({
               </p>
             </div>
 
-            <div className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)] text-left space-y-2">
+            <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] text-left space-y-2">
               <p className="text-sm text-muted-foreground">
                 <span className="text-white">¿Qué sigue?</span>
               </p>
@@ -358,7 +358,7 @@ export function WithdrawalFormDrawer({
       <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
         <SheetHeader className="pb-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
+            <div className="p-2 rounded-sm bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
               <ArrowUpCircle className="h-6 w-6 text-primary" />
             </div>
             <div>

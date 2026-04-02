@@ -94,7 +94,7 @@ export function WithdrawalHistory({ walletId, className }: WithdrawalHistoryProp
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
+            <div className="p-2 rounded-sm bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
               <ArrowUpCircle className="h-5 w-5 text-primary" />
             </div>
             <CardTitle>Mis Solicitudes de Retiro</CardTitle>
@@ -161,7 +161,7 @@ export function WithdrawalHistory({ walletId, className }: WithdrawalHistoryProp
                   transition={{ delay: index * 0.05 }}
                   onClick={() => handleSelectWithdrawal(withdrawal)}
                   className={cn(
-                    'p-4 rounded-xl cursor-pointer transition-all',
+                    'p-4 rounded-sm cursor-pointer transition-all',
                     'bg-[hsl(270,100%,60%,0.03)] hover:bg-[hsl(270,100%,60%,0.08)]',
                     'border border-transparent hover:border-[hsl(270,100%,60%,0.1)]'
                   )}

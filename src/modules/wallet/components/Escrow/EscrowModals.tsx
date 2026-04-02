@@ -206,7 +206,7 @@ export function RequestChangesModal({
 
         <div className="space-y-4 py-4">
           {/* Revisions count */}
-          <div className="flex items-center justify-between p-3 rounded-lg bg-[hsl(270,100%,60%,0.05)]">
+          <div className="flex items-center justify-between p-3 rounded-sm bg-[hsl(270,100%,60%,0.05)]">
             <span className="text-sm text-muted-foreground">Revisiones restantes</span>
             <span
               className={cn(
@@ -374,7 +374,7 @@ export function OpenDisputeModal({
           </div>
 
           {/* Evidence upload hint */}
-          <div className="p-3 rounded-lg bg-[hsl(270,100%,60%,0.05)] border border-dashed border-[hsl(270,100%,60%,0.2)]">
+          <div className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.05)] border border-dashed border-[hsl(270,100%,60%,0.2)]">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Upload className="h-4 w-4" />
               <span className="text-sm">Adjuntar evidencia (opcional)</span>

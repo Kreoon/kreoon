@@ -121,7 +121,7 @@ export function ReputationBadge({ userId, compact = false, showScore = false }: 
   }
 
   return (
-    <div className={cn("flex items-center gap-3 px-3 py-2 rounded-lg border", config.bg)}>
+    <div className={cn("flex items-center gap-3 px-3 py-2 rounded-sm border", config.bg)}>
       <div className="text-2xl">{config.icon}</div>
       <div className="flex-1">
         <div className="flex items-center gap-2">

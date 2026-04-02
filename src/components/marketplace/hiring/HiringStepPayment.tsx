@@ -19,7 +19,7 @@ export function HiringStepPayment({
       {paymentMethod === 'payment' ? (
         <>
           {/* Escrow explanation */}
-          <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-5 space-y-4">
+          <div className="bg-purple-500/10 border border-purple-500/20 rounded-sm p-5 space-y-4">
             <div className="flex items-start gap-3">
               <Shield className="h-6 w-6 text-purple-400 flex-shrink-0 mt-0.5" />
               <div>
@@ -52,7 +52,7 @@ export function HiringStepPayment({
           </div>
 
           {/* Amount */}
-          <div className="bg-white/5 rounded-xl p-5 flex items-center justify-between">
+          <div className="bg-white/5 rounded-sm p-5 flex items-center justify-between">
             <span className="text-gray-400">Total a pagar</span>
             <span className="text-3xl font-bold text-white">
               ${selectedPackage.price.toLocaleString()} {selectedPackage.currency}
@@ -62,7 +62,7 @@ export function HiringStepPayment({
       ) : (
         <>
           {/* Exchange explanation */}
-          <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-5 space-y-4">
+          <div className="bg-green-500/10 border border-green-500/20 rounded-sm p-5 space-y-4">
             <div className="flex items-start gap-3">
               <Gift className="h-6 w-6 text-green-400 flex-shrink-0 mt-0.5" />
               <div>
@@ -95,7 +95,7 @@ export function HiringStepPayment({
           </div>
 
           {/* Exchange info */}
-          <div className="bg-white/5 rounded-xl p-5 flex items-center gap-4">
+          <div className="bg-white/5 rounded-sm p-5 flex items-center gap-4">
             <Package className="h-8 w-8 text-green-400 flex-shrink-0" />
             <div>
               <p className="text-white font-semibold">Sin costo monetario</p>
@@ -130,7 +130,7 @@ export function HiringStepPayment({
         type="button"
         onClick={onConfirm}
         disabled={isSubmitting}
-        className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-xl text-base transition-all hover:shadow-lg hover:shadow-purple-500/25"
+        className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-sm text-base transition-all hover:shadow-lg hover:shadow-purple-500/25"
       >
         {isSubmitting
           ? 'Procesando...'

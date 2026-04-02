@@ -75,7 +75,7 @@ export function PortfolioAISettings() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Master Toggle */}
-        <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50">
+        <div className="flex items-center justify-between p-4 rounded-sm border bg-muted/50">
           <div>
             <Label className="text-base font-medium">Habilitar IA</Label>
             <p className="text-sm text-muted-foreground">Activar todas las funciones de IA en este módulo</p>
@@ -114,10 +114,10 @@ export function PortfolioAISettings() {
               {AI_FEATURES.map(feature => (
                 <div 
                   key={feature.key}
-                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/30 transition-colors"
+                  className="flex items-center justify-between p-3 rounded-sm border hover:bg-muted/30 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-md bg-primary/10 text-primary">
+                    <div className="p-2 rounded-sm bg-primary/10 text-primary">
                       {feature.icon}
                     </div>
                     <div>

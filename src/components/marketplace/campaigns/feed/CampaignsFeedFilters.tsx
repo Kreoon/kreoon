@@ -38,7 +38,7 @@ export function CampaignsFeedFilters({ filters, onFiltersChange, isOpen, onToggl
       {/* Toggle button (mobile) */}
       <button
         onClick={onToggle}
-        className="lg:hidden flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-gray-400 text-sm"
+        className="lg:hidden flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-sm text-gray-400 text-sm"
       >
         <SlidersHorizontal className="h-4 w-4" />
         Filtros
@@ -72,7 +72,7 @@ export function CampaignsFeedFilters({ filters, onFiltersChange, isOpen, onToggl
                 key={cat.id}
                 onClick={() => update({ category: filters.category === cat.id ? null : cat.id })}
                 className={cn(
-                  'w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors',
+                  'w-full text-left px-3 py-1.5 rounded-sm text-sm transition-colors',
                   filters.category === cat.id
                     ? 'bg-purple-500/20 text-purple-300'
                     : 'text-gray-400 hover:bg-white/5',
@@ -93,7 +93,7 @@ export function CampaignsFeedFilters({ filters, onFiltersChange, isOpen, onToggl
                 key={mode.value}
                 onClick={() => update({ pricing_mode: filters.pricing_mode === mode.value ? null : mode.value })}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
+                  'px-3 py-1.5 rounded-sm text-xs font-medium transition-colors',
                   filters.pricing_mode === mode.value
                     ? mode.value === 'auction'
                       ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30'
@@ -118,14 +118,14 @@ export function CampaignsFeedFilters({ filters, onFiltersChange, isOpen, onToggl
               placeholder="Min"
               value={filters.budget_min ?? ''}
               onChange={e => update({ budget_min: e.target.value ? Number(e.target.value) : null })}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
+              className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
             />
             <input
               type="number"
               placeholder="Max"
               value={filters.budget_max ?? ''}
               onChange={e => update({ budget_max: e.target.value ? Number(e.target.value) : null })}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
+              className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
             />
           </div>
         </div>

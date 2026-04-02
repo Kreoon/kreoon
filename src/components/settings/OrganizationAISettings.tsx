@@ -209,7 +209,7 @@ export function OrganizationAISettings({ organizationId, initialTab }: Organizat
           <TabsContent value="overview" className="mt-6">
             <div className="space-y-6">
               {/* Default Model Selector */}
-              <div className="p-4 rounded-lg border bg-gradient-to-r from-primary/5 to-purple-500/5">
+              <div className="p-4 rounded-sm border bg-gradient-to-r from-primary/5 to-purple-500/5">
                 <div className="flex items-center gap-2 mb-3">
                   <Zap className="h-5 w-5 text-primary" />
                   <h3 className="font-medium">Modelo IA Predeterminado</h3>
@@ -289,12 +289,12 @@ export function OrganizationAISettings({ organizationId, initialTab }: Organizat
                     return (
                       <div 
                         key={config.key}
-                        className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                        className={`flex items-center justify-between p-3 rounded-sm border transition-colors ${
                           isEnabled ? 'border-primary/30 bg-primary/5' : 'border-border'
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${isEnabled ? 'bg-primary/10' : 'bg-muted'}`}>
+                          <div className={`p-2 rounded-sm ${isEnabled ? 'bg-primary/10' : 'bg-muted'}`}>
                             <Sparkles className={`h-4 w-4 ${isEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
                           </div>
                           <div>
@@ -422,7 +422,7 @@ export function OrganizationAISettings({ organizationId, initialTab }: Organizat
                     <p className="font-medium">¿Dónde usar Perplexity?</p>
                     <div className="space-y-2">
                       {PERPLEXITY_FEATURES.map((feature) => (
-                        <div key={feature.key} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                        <div key={feature.key} className="flex items-center justify-between p-3 bg-muted/50 rounded-sm">
                           <div>
                             <p className="font-medium text-sm">{feature.label}</p>
                             <p className="text-xs text-muted-foreground">{feature.description}</p>
@@ -482,7 +482,7 @@ export function OrganizationAISettings({ organizationId, initialTab }: Organizat
                   <CardContent className="pt-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3">
-                        <div className={`p-2 rounded-lg ${isEnabled ? 'bg-primary/10' : 'bg-muted'}`}>
+                        <div className={`p-2 rounded-sm ${isEnabled ? 'bg-primary/10' : 'bg-muted'}`}>
                           <Sparkles className={`h-5 w-5 ${isEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
                         </div>
                         <div>
@@ -624,7 +624,7 @@ export function OrganizationAISettings({ organizationId, initialTab }: Organizat
                       {usageLogs.map(log => (
                         <div 
                           key={log.id} 
-                          className="flex items-center justify-between p-3 rounded-lg bg-muted/50 text-sm"
+                          className="flex items-center justify-between p-3 rounded-sm bg-muted/50 text-sm"
                         >
                           <div className="flex items-center gap-3">
                             <div className={`w-2 h-2 rounded-full ${log.success ? 'bg-green-500' : 'bg-red-500'}`} />

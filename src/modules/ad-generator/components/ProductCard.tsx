@@ -46,7 +46,7 @@ export function ProductCard({ product, onDelete }: ProductCardProps) {
               Manual
             </Badge>
           )}
-          <div className="px-2 py-0.5 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 text-[11px] font-medium">
+          <div className="px-2 py-0.5 rounded-full bg-background/80 border border-border/50 text-[11px] font-medium">
             {product.banners_count} {product.banners_count === 1 ? 'banner' : 'banners'}
           </div>
         </div>

@@ -115,7 +115,7 @@ export function CampaignEditor({ open, onOpenChange, campaign }: CampaignEditorP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-2xl max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditing ? "Editar Campaña" : "Nueva Campaña"}</DialogTitle>
           <DialogDescription>

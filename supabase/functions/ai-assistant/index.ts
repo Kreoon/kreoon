@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getKreoonClient, isKreoonConfigured, validateKreoonAuth } from "../_shared/kreoon-client.ts";
+import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -562,6 +563,7 @@ ${!userAccessLevels.has('financials') ? '- Información financiera detallada, pa
 
     let aiResponse: Response;
     let assistantResponse = '';
+    const startTime = Date.now();
 
     if (provider === 'gemini') {
       const geminiMessages = aiMessages.map(m => ({
@@ -581,6 +583,19 @@ ${!userAccessLevels.has('financials') ? '- Información financiera detallada, pa
       if (aiResponse.ok) {
         const aiData = await aiResponse.json();
         assistantResponse = aiData.candidates?.[0]?.content?.parts?.[0]?.text || fallbackMessage;
+        const response_time_ms = Date.now() - startTime;
+        logAIUsage(supabase, {
+          organization_id: organizationId,
+          user_id: user.id,
+          module: "ai-assistant",
+          provider: "gemini",
+          model: config.model,
+          tokens_input: aiData.usageMetadata?.promptTokenCount || 0,
+          tokens_output: aiData.usageMetadata?.candidatesTokenCount || 0,
+          success: true,
+          edge_function: "ai-assistant",
+          response_time_ms,
+        }).catch(console.error);
       }
     } else if (provider === 'anthropic') {
       const systemContent = aiMessages.find(m => m.role === 'system')?.content || '';
@@ -603,6 +618,19 @@ ${!userAccessLevels.has('financials') ? '- Información financiera detallada, pa
       if (aiResponse.ok) {
         const aiData = await aiResponse.json();
         assistantResponse = aiData.content?.[0]?.text || fallbackMessage;
+        const response_time_ms = Date.now() - startTime;
+        logAIUsage(supabase, {
+          organization_id: organizationId,
+          user_id: user.id,
+          module: "ai-assistant",
+          provider: "anthropic",
+          model: config.model,
+          tokens_input: aiData.usage?.input_tokens || 0,
+          tokens_output: aiData.usage?.output_tokens || 0,
+          success: true,
+          edge_function: "ai-assistant",
+          response_time_ms,
+        }).catch(console.error);
       }
     } else {
       aiResponse = await fetch(apiUrl, {
@@ -617,13 +645,41 @@ ${!userAccessLevels.has('financials') ? '- Información financiera detallada, pa
       if (aiResponse.ok) {
         const aiData = await aiResponse.json();
         assistantResponse = aiData.choices?.[0]?.message?.content || fallbackMessage;
+        const response_time_ms = Date.now() - startTime;
+        logAIUsage(supabase, {
+          organization_id: organizationId,
+          user_id: user.id,
+          module: "ai-assistant",
+          provider: provider === 'kreoon' ? 'gemini' : provider,
+          model: config.model || 'google/gemini-2.5-flash',
+          tokens_input: aiData.usage?.prompt_tokens || 0,
+          tokens_output: aiData.usage?.completion_tokens || 0,
+          success: true,
+          edge_function: "ai-assistant",
+          response_time_ms,
+        }).catch(console.error);
       }
     }
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
       console.error('AI gateway error:', aiResponse.status, errorText);
-      
+
+      const response_time_ms = Date.now() - startTime;
+      logAIUsage(supabase, {
+        organization_id: organizationId,
+        user_id: user.id,
+        module: "ai-assistant",
+        provider: provider === 'kreoon' ? 'gemini' : provider,
+        model: config.model || 'unknown',
+        tokens_input: 0,
+        tokens_output: 0,
+        success: false,
+        error_message: `${aiResponse.status}: ${errorText.slice(0, 500)}`,
+        edge_function: "ai-assistant",
+        response_time_ms,
+      }).catch(console.error);
+
       if (aiResponse.status === 429) {
         return new Response(JSON.stringify({ error: 'Límite de solicitudes excedido. Intenta de nuevo en unos momentos.' }), {
           status: 429,

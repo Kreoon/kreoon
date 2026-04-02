@@ -73,11 +73,11 @@ export const KiroFloat = memo(function KiroFloat({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
             className={cn(
-              'rounded-2xl overflow-hidden',
+              'rounded-sm overflow-hidden',
               'bg-gradient-to-br from-slate-800/95 via-purple-900/30 to-slate-900/95',
               'border border-purple-500/30',
               'shadow-xl shadow-purple-500/20',
-              'backdrop-blur-lg'
+              ''
             )}
           >
             {/* Header */}
@@ -95,13 +95,13 @@ export const KiroFloat = memo(function KiroFloat({
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setIsMinimized(true)}
-                  className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                  className="p-1.5 rounded-sm hover:bg-white/10 transition-colors"
                 >
                   <span className="text-white/50 text-xs">−</span>
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                  className="p-1.5 rounded-sm hover:bg-white/10 transition-colors"
                 >
                   <X className="w-4 h-4 text-white/50" />
                 </button>

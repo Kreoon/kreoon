@@ -71,7 +71,7 @@ export function AssignUserDropdown({
                 type="button"
                 onClick={() => handleSelect(user)}
                 className={cn(
-                  "w-full flex items-center gap-2 px-2 py-2 rounded-lg text-left transition-colors",
+                  "w-full flex items-center gap-2 px-2 py-2 rounded-sm text-left transition-colors",
                   "hover:bg-white/10 text-[#f8fafc]",
                   currentUserId === user.id && "bg-primary/20"
                 )}

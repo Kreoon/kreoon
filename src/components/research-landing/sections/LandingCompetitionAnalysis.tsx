@@ -14,10 +14,10 @@ function CompetitorCard({ competitor, index }: { competitor: any; index: number 
   const weaknesses = safeArray(competitor.weaknesses);
 
   return (
-    <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl overflow-hidden">
+    <div className="bg-white/[0.03] border border-white/[0.06] rounded-sm overflow-hidden">
       <button onClick={() => setExpanded(!expanded)} className="w-full flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors text-left">
         <div className="flex items-center gap-3">
-          <div className="h-7 w-7 rounded-lg bg-white/10 flex items-center justify-center text-white/50 text-xs font-bold shrink-0">
+          <div className="h-7 w-7 rounded-sm bg-white/10 flex items-center justify-center text-white/50 text-xs font-bold shrink-0">
             {index + 1}
           </div>
           <div>

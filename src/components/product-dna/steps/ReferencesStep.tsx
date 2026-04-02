@@ -114,7 +114,7 @@ function LinkSection({
   };
 
   return (
-    <div className={`rounded-xl border ${colors.border} p-4`}>
+    <div className={`rounded-sm border ${colors.border} p-4`}>
       <div className="flex items-center gap-2 mb-1">
         <span className={colors.icon}>{icon}</span>
         <h3 className="text-sm font-medium text-white">{title}</h3>
@@ -129,14 +129,14 @@ function LinkSection({
           onChange={(e) => setInputUrl(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="flex-1 px-3 py-2 rounded-lg bg-muted/50 border border-border
+          className="flex-1 px-3 py-2 rounded-sm bg-muted/50 border border-border
                      text-sm text-white placeholder:text-gray-500
                      focus:outline-none focus:border-purple-500/50"
         />
         <button
           onClick={addLink}
           disabled={!inputUrl.trim()}
-          className={`px-3 py-2 rounded-lg ${colors.bg} ${colors.text}
+          className={`px-3 py-2 rounded-sm ${colors.bg} ${colors.text}
                      text-sm font-medium
                      disabled:opacity-50 disabled:cursor-not-allowed
                      hover:opacity-80 transition-all`}
@@ -151,7 +151,7 @@ function LinkSection({
           {links.map((link, index) => (
             <div
               key={index}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border"
+              className="flex items-center gap-2 px-3 py-2 rounded-sm bg-muted/50 border border-border"
             >
               <LinkIcon className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
               <span className="text-xs text-foreground/80 truncate flex-1">

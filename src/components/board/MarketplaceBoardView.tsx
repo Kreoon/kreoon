@@ -14,23 +14,53 @@ const UnifiedProjectModal = lazy(() => import('@/components/projects/UnifiedProj
 // ── Status styling ─────────────────────────────────────────────────────
 
 const STATUS_COLORS: Record<ProjectStatus, string> = {
+  // Legacy
   pending: 'bg-purple-500/20 text-purple-300',
   briefing: 'bg-blue-500/20 text-blue-300',
   in_progress: 'bg-yellow-500/20 text-yellow-300',
+  review: 'bg-cyan-500/20 text-cyan-300',
   revision: 'bg-pink-500/20 text-pink-300',
   approved: 'bg-green-500/20 text-green-300',
   completed: 'bg-cyan-500/20 text-cyan-300',
   cancelled: 'bg-red-500/20 text-red-300',
+  // Board de Organización
+  draft: 'bg-gray-500/20 text-gray-300',
+  script_pending: 'bg-gray-500/20 text-gray-300',
+  script_approved: 'bg-blue-500/20 text-blue-300',
+  assigned: 'bg-violet-500/20 text-violet-300',
+  recording: 'bg-amber-500/20 text-amber-300',
+  recorded: 'bg-emerald-500/20 text-emerald-300',
+  editing: 'bg-pink-500/20 text-pink-300',
+  delivered: 'bg-teal-500/20 text-teal-300',
+  issue: 'bg-red-500/20 text-red-300',
+  corrected: 'bg-orange-500/20 text-orange-300',
+  paid: 'bg-emerald-500/20 text-emerald-300',
+  en_campaa: 'bg-purple-500/20 text-purple-300',
 };
 
 const STATUS_LABELS: Record<ProjectStatus, string> = {
+  // Legacy
   pending: 'Pendiente',
   briefing: 'En Brief',
   in_progress: 'En Producción',
-  revision: 'En Revisión',
+  review: 'En Revisión',
+  revision: 'Revisiones',
   approved: 'Aprobado',
   completed: 'Completado',
   cancelled: 'Cancelado',
+  // Board de Organización
+  draft: 'Creado',
+  script_pending: 'Guion Creado',
+  script_approved: 'Guión Aprobado',
+  assigned: 'Asignado',
+  recording: 'En Grabación',
+  recorded: 'Grabado',
+  editing: 'En Edición',
+  delivered: 'Entregado',
+  issue: 'Novedad',
+  corrected: 'Corregido',
+  paid: 'Pagado',
+  en_campaa: 'En Campaña',
 };
 
 // ── Project Card ───────────────────────────────────────────────────────
@@ -48,9 +78,13 @@ function MarketplaceProjectCard({
     <div
       draggable
       onDragStart={(e) => onDragStart(e, project)}
-      className={`bg-card/80 border border-white/10 rounded-xl p-4 cursor-grab active:cursor-grabbing transition-all hover:border-purple-500/30 ${
-        isDragging ? 'opacity-40 scale-95' : ''
-      }`}
+      className={`
+        bg-[#0f0f22] border border-purple-500/15 rounded-md p-4
+        cursor-grab active:cursor-grabbing
+        transition-all duration-200
+        hover:border-purple-500/30 hover:shadow-[0_0_12px_rgba(139,92,246,0.15)]
+        ${isDragging ? 'opacity-40 scale-95' : ''}
+      `}
     >
       {/* Header: title + status */}
       <div className="flex items-start justify-between gap-2 mb-3">
@@ -232,7 +266,7 @@ export function MarketplaceBoardView() {
             placeholder="Buscar proyecto..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="h-9 w-full rounded-xl border border-white/10 bg-card pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all placeholder:text-gray-500"
+            className="h-9 w-full rounded-sm border border-white/10 bg-card pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all placeholder:text-gray-500"
           />
         </div>
         <Badge variant="outline" className="text-xs whitespace-nowrap">
@@ -252,11 +286,11 @@ export function MarketplaceBoardView() {
         )}
       </div>
 
-      {/* Kanban columns */}
+      {/* Kanban columns - Nova v2 */}
       <div
-        className="flex overflow-x-auto gap-4 p-5 rounded-xl"
+        className="flex overflow-x-auto gap-4 p-5 rounded-lg"
         style={{
-          background: 'linear-gradient(180deg, #0a0118 0%, #0d0220 100%)',
+          background: 'linear-gradient(180deg, var(--nova-bg-surface, #0a0a18) 0%, var(--nova-bg-deep, #050510) 100%)',
           height: 'calc(100vh - 280px)',
         }}
       >
@@ -270,10 +304,10 @@ export function MarketplaceBoardView() {
           return (
             <div
               key={col.id}
-              className={`flex-shrink-0 w-72 rounded-xl border transition-all ${
+              className={`flex-shrink-0 w-72 rounded-lg border transition-all duration-200 ${
                 isOver && canDrop
-                  ? 'border-purple-500/50 bg-purple-500/5'
-                  : 'border-white/5 bg-white/[0.02]'
+                  ? 'border-purple-500/40 bg-purple-500/8 shadow-[0_0_20px_rgba(139,92,246,0.15)]'
+                  : 'border-purple-500/10 bg-[#0f0f22]/60'
               }`}
               onDragOver={(e) => {
                 handleDragOver(e);
@@ -282,19 +316,22 @@ export function MarketplaceBoardView() {
               onDragLeave={() => setDropTarget(null)}
               onDrop={(e) => handleDrop(e, col.id)}
             >
-              {/* Column header */}
-              <div className="p-3 border-b border-white/5 flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: col.color }} />
-                <span className="text-sm font-medium text-white">{col.label}</span>
-                <Badge variant="secondary" className="text-[10px] ml-auto h-5 px-1.5">
+              {/* Column header - Nova v2 */}
+              <div className="p-3 border-b border-purple-500/10 flex items-center gap-2 bg-[#0f0f22] rounded-t-lg">
+                <div
+                  className="w-2.5 h-2.5 rounded-full shadow-sm"
+                  style={{ backgroundColor: col.color }}
+                />
+                <span className="text-sm font-medium text-[#e4e4e7]">{col.label}</span>
+                <Badge variant="secondary" className="text-[10px] ml-auto h-5 px-1.5 bg-purple-500/15 border-purple-500/25 text-purple-300">
                   {colProjects.length}
                 </Badge>
               </div>
 
               {/* Cards */}
-              <div className="p-2 space-y-2 overflow-y-auto" style={{ maxHeight: 'calc(100% - 48px)' }}>
+              <div className="kanban-column-cards p-2 space-y-2 overflow-y-auto" style={{ maxHeight: 'calc(100% - 48px)' }}>
                 {colProjects.length === 0 ? (
-                  <div className="text-center py-8 text-gray-600 text-xs">Sin proyectos</div>
+                  <div className="text-center py-8 text-[#52525b] text-xs">Sin proyectos</div>
                 ) : (
                   colProjects.map(project => (
                     <MarketplaceProjectCard

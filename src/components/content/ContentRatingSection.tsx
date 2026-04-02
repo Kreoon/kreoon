@@ -150,7 +150,7 @@ export function ContentRatingSection({
                        (strategyRating && strategyRating > 0);
 
   return (
-    <div className="space-y-3 p-3 bg-muted/30 rounded-lg border">
+    <div className="space-y-3 p-3 bg-muted/30 rounded-sm border">
       <div className="flex items-center justify-between">
         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           Calificar Proyecto

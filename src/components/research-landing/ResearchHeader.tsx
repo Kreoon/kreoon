@@ -47,7 +47,7 @@ export function ResearchHeader({ productName, generatedAt, product }: ResearchHe
     : null;
 
   return (
-    <header className="sticky top-0 z-50 bg-black/80 backdrop-blur-xl border-b border-white/10">
+    <header className="sticky top-0 z-50 bg-black/80 border-b border-white/10">
       <div className="flex items-center justify-between px-4 md:px-6 py-3">
         <div className="flex items-center gap-3 min-w-0">
           <Button

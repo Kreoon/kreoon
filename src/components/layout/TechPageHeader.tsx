@@ -28,7 +28,7 @@ export function TechPageHeader({
           {Icon && (
             <div className={cn(
               "flex items-center justify-center",
-              "w-14 h-14 rounded-2xl",
+              "w-14 h-14 rounded-sm",
               "bg-primary/10",
               "border border-primary/20",
               "shadow-sm",

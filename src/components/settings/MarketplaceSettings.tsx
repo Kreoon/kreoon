@@ -98,10 +98,10 @@ export function MarketplaceSettings() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-orange-500/10 p-6 border border-purple-500/20">
+      <div className="relative overflow-hidden rounded-sm bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-orange-500/10 p-6 border border-purple-500/20">
         <div className="relative">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-purple-500/20">
+            <div className="p-2 rounded-sm bg-purple-500/20">
               <Store className="h-6 w-6 text-purple-500" />
             </div>
             <div>
@@ -249,7 +249,7 @@ function CreatorProfileTab() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Marketplace enabled */}
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+        <div className="flex items-center justify-between p-4 rounded-sm bg-muted">
           <div>
             <p className="font-medium">Visible en el Marketplace</p>
             <p className="text-sm text-muted-foreground">Aparecerás en las búsquedas de marcas</p>
@@ -298,7 +298,7 @@ function CreatorProfileTab() {
                   key={level.value}
                   onClick={() => setYearsExperience(level.years)}
                   className={cn(
-                    'p-3 rounded-lg border text-left transition-all',
+                    'p-3 rounded-sm border text-left transition-all',
                     isSelected
                       ? 'border-primary bg-primary/10'
                       : 'border-border bg-card hover:border-primary/50',
@@ -411,7 +411,7 @@ export function CreatorExpertiseTab() {
           <CardDescription>Selecciona hasta 5 roles que describan tus especialidades</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="bg-[#0a0a0f] rounded-xl p-4">
+          <div className="bg-[#0a0a0f] rounded-sm p-4">
             <MarketplaceRoleSelector
               selectedRoles={marketplaceRoles}
               onChange={setMarketplaceRoles}
@@ -617,7 +617,7 @@ export function CreatorServicesTab() {
         {services.length > 0 && (
           <div className="space-y-2">
             {services.map(service => (
-              <div key={service.id} className="rounded-lg bg-muted overflow-hidden">
+              <div key={service.id} className="rounded-sm bg-muted overflow-hidden">
                 <div
                   className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/80 transition-colors"
                   onClick={() => setExpandedService(expandedService === service.id ? null : service.id)}
@@ -649,7 +649,7 @@ export function CreatorServicesTab() {
         )}
 
         {/* Add service form */}
-        <div className="space-y-3 p-4 rounded-lg border border-dashed border-border">
+        <div className="space-y-3 p-4 rounded-sm border border-dashed border-border">
           <p className="text-sm font-medium">Agregar servicio</p>
           <div className="grid grid-cols-2 gap-3">
             <Input
@@ -791,7 +791,7 @@ export function CreatorAvailabilityTab() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Available for hire */}
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+        <div className="flex items-center justify-between p-4 rounded-sm bg-muted">
           <div>
             <p className="font-medium">Disponible para contratación</p>
             <p className="text-sm text-muted-foreground">Aparecerás en las búsquedas de marcas</p>
@@ -817,7 +817,7 @@ export function CreatorAvailabilityTab() {
         </div>
 
         {/* Tip */}
-        <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+        <div className="p-4 rounded-sm bg-primary/10 border border-primary/20">
           <p className="text-sm">
             <strong>Tip:</strong> Los creadores con tiempos de respuesta más rápidos
             tienen un 40% más de probabilidades de ser contactados por marcas.
@@ -930,7 +930,7 @@ export function CreatorPricingTab() {
         </div>
 
         {/* Accepts product exchange */}
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+        <div className="flex items-center justify-between p-4 rounded-sm bg-muted">
           <div className="flex items-center gap-3">
             <Gift className="h-5 w-5 text-green-500" />
             <div>

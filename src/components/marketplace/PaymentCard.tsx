@@ -140,8 +140,8 @@ export function PaymentCard({
     <>
       <motion.div
         className={cn(
-          "p-4 rounded-xl bg-social-card border border-social-border",
-          "hover:border-social-accent/30 transition-all cursor-pointer",
+          "p-4 rounded-sm bg-card border border-border",
+          "hover:border-primary/30 transition-all cursor-pointer",
           className
         )}
         onClick={onViewDetails}
@@ -157,10 +157,10 @@ export function PaymentCard({
               </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium text-social-foreground">
+              <p className="font-medium text-foreground">
                 {otherUser?.full_name}
               </p>
-              <p className="text-sm text-social-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 {payment.description || 'Proyecto'}
               </p>
             </div>
@@ -175,11 +175,11 @@ export function PaymentCard({
         {/* Amount */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-2xl font-bold text-social-foreground">
+            <p className="text-2xl font-bold text-foreground">
               ${viewAs === 'creator' ? payment.net_amount.toLocaleString() : payment.gross_amount.toLocaleString()}
             </p>
             {viewAs === 'company' && (
-              <p className="text-xs text-social-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 ${payment.net_amount.toLocaleString()} al creador + ${payment.platform_fee.toLocaleString()} fee
               </p>
             )}
@@ -197,10 +197,10 @@ export function PaymentCard({
         {totalMilestones > 0 && (
           <div className="mb-4">
             <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-social-muted-foreground">
+              <span className="text-muted-foreground">
                 Milestones
               </span>
-              <span className="text-social-foreground">
+              <span className="text-foreground">
                 {completedMilestones}/{totalMilestones}
               </span>
             </div>
@@ -209,7 +209,7 @@ export function PaymentCard({
         )}
 
         {/* Actions */}
-        <div className="flex gap-2 mt-4 pt-4 border-t border-social-border">
+        <div className="flex gap-2 mt-4 pt-4 border-t border-border">
           {/* Company actions */}
           {viewAs === 'company' && payment.status === 'funded' && (
             <Button
@@ -255,9 +255,9 @@ export function PaymentCard({
 
       {/* Release dialog */}
       <Dialog open={showReleaseDialog} onOpenChange={setShowReleaseDialog}>
-        <DialogContent className="bg-social-card border-social-border">
+        <DialogContent className="bg-card border-border">
           <DialogHeader>
-            <DialogTitle className="text-social-foreground">
+            <DialogTitle className="text-foreground">
               Liberar pago
             </DialogTitle>
             <DialogDescription>
@@ -267,14 +267,14 @@ export function PaymentCard({
           </DialogHeader>
 
           <div className="py-4">
-            <div className="p-4 rounded-lg bg-social-muted">
+            <div className="p-4 rounded-sm bg-background">
               <div className="flex items-center justify-between">
-                <span className="text-social-muted-foreground">Monto a liberar</span>
-                <span className="text-xl font-bold text-social-foreground">
+                <span className="text-muted-foreground">Monto a liberar</span>
+                <span className="text-xl font-bold text-foreground">
                   ${payment.net_amount.toLocaleString()}
                 </span>
               </div>
-              <p className="text-sm text-social-muted-foreground mt-2">
+              <p className="text-sm text-muted-foreground mt-2">
                 Para: {payment.creator_user?.full_name}
               </p>
             </div>
@@ -305,9 +305,9 @@ export function PaymentCard({
 
       {/* Dispute dialog */}
       <Dialog open={showDisputeDialog} onOpenChange={setShowDisputeDialog}>
-        <DialogContent className="bg-social-card border-social-border">
+        <DialogContent className="bg-card border-border">
           <DialogHeader>
-            <DialogTitle className="text-social-foreground">
+            <DialogTitle className="text-foreground">
               Abrir disputa
             </DialogTitle>
             <DialogDescription>
@@ -317,13 +317,13 @@ export function PaymentCard({
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-social-foreground">
+              <label className="text-sm font-medium text-foreground">
                 Motivo de la disputa
               </label>
               <select
                 value={disputeReason}
                 onChange={(e) => setDisputeReason(e.target.value as DisputeReason)}
-                className="w-full p-2 rounded-lg bg-social-muted border border-social-border text-social-foreground"
+                className="w-full p-2 rounded-sm bg-background border border-border text-foreground"
               >
                 {Object.entries(DISPUTE_REASON_LABELS).map(([key, label]) => (
                   <option key={key} value={key}>
@@ -334,14 +334,14 @@ export function PaymentCard({
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-social-foreground">
+              <label className="text-sm font-medium text-foreground">
                 Descripción detallada
               </label>
               <Textarea
                 placeholder="Explica el problema con el mayor detalle posible..."
                 value={disputeDescription}
                 onChange={(e) => setDisputeDescription(e.target.value)}
-                className="bg-social-muted border-social-border min-h-[100px]"
+                className="bg-background border-border min-h-[100px]"
               />
             </div>
           </div>

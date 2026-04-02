@@ -181,14 +181,14 @@ export function CampaignStepVisibility({
               key={opt.value}
               onClick={() => onChange('visibility', opt.value)}
               className={cn(
-                'w-full text-left p-4 rounded-xl border-2 transition-all',
+                'w-full text-left p-4 rounded-sm border-2 transition-all',
                 isSelected
                   ? `${opt.border} ${config.bgColor}`
                   : 'border-white/10 hover:border-white/20',
               )}
             >
               <div className="flex items-start gap-3">
-                <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0', config.bgColor)}>
+                <div className={cn('w-10 h-10 rounded-sm flex items-center justify-center flex-shrink-0', config.bgColor)}>
                   <Icon className={cn('h-5 w-5', config.color)} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -230,7 +230,7 @@ export function CampaignStepVisibility({
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Buscar por nombre..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
+              className="w-full bg-white/5 border border-white/10 rounded-sm pl-10 pr-4 py-2.5 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
             />
           </div>
 
@@ -239,7 +239,7 @@ export function CampaignStepVisibility({
             <button
               onClick={() => setInviteTab('team')}
               className={cn(
-                'px-4 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all',
+                'px-4 py-2 rounded-sm text-xs font-medium flex items-center gap-1.5 transition-all',
                 inviteTab === 'team'
                   ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
                   : 'text-gray-500 border border-white/10 hover:border-white/20',
@@ -251,7 +251,7 @@ export function CampaignStepVisibility({
             <button
               onClick={() => setInviteTab('marketplace')}
               className={cn(
-                'px-4 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all',
+                'px-4 py-2 rounded-sm text-xs font-medium flex items-center gap-1.5 transition-all',
                 inviteTab === 'marketplace'
                   ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
                   : 'text-gray-500 border border-white/10 hover:border-white/20',
@@ -263,13 +263,13 @@ export function CampaignStepVisibility({
           </div>
 
           {/* Creator list */}
-          <div className="max-h-48 overflow-y-auto space-y-1 rounded-xl border border-white/10 p-2">
+          <div className="max-h-48 overflow-y-auto space-y-1 rounded-sm border border-white/10 p-2">
             {inviteTab === 'team' && filteredTeamMembers.map(member => (
               <button
                 key={member.id}
                 onClick={() => toggleInvitedProfile(member.id)}
                 className={cn(
-                  'w-full flex items-center gap-3 p-2 rounded-lg text-left transition-all',
+                  'w-full flex items-center gap-3 p-2 rounded-sm text-left transition-all',
                   data.invited_profiles.includes(member.id)
                     ? 'bg-purple-500/10 border border-purple-500/30'
                     : 'hover:bg-white/5',
@@ -299,7 +299,7 @@ export function CampaignStepVisibility({
                 key={creator.id}
                 onClick={() => toggleInvitedProfile(creator.id)}
                 className={cn(
-                  'w-full flex items-center gap-3 p-2 rounded-lg text-left transition-all',
+                  'w-full flex items-center gap-3 p-2 rounded-sm text-left transition-all',
                   data.invited_profiles.includes(creator.id)
                     ? 'bg-purple-500/10 border border-purple-500/30'
                     : 'hover:bg-white/5',
@@ -367,7 +367,7 @@ export function CampaignStepVisibility({
             min="1"
             value={data.max_creators}
             onChange={e => onChange('max_creators', Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500"
+            className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500"
           />
         </div>
         <div>
@@ -380,7 +380,7 @@ export function CampaignStepVisibility({
             value={data.max_applications ?? ''}
             onChange={e => onChange('max_applications', e.target.value ? parseInt(e.target.value) : undefined)}
             placeholder="Sin limite"
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
+            className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
           />
         </div>
       </div>
@@ -421,7 +421,7 @@ export function CampaignStepVisibility({
 
       {/* Creator requirements (collapsible) - only for public/selective */}
       {data.visibility !== 'internal' && (
-        <div className="border border-white/10 rounded-xl overflow-hidden">
+        <div className="border border-white/10 rounded-sm overflow-hidden">
           <button
             onClick={() => setShowRequirements(!showRequirements)}
             className="w-full flex items-center justify-between p-4 text-left hover:bg-white/5 transition-colors"
@@ -455,7 +455,7 @@ export function CampaignStepVisibility({
                       key={rating}
                       onClick={() => onCreatorReqChange('min_rating', rating)}
                       className={cn(
-                        'px-3 py-1.5 rounded-lg text-xs font-medium border transition-all',
+                        'px-3 py-1.5 rounded-sm text-xs font-medium border transition-all',
                         creatorRequirements.min_rating === rating
                           ? 'border-purple-500/50 bg-purple-500/10 text-purple-300'
                           : 'border-white/10 text-gray-400 hover:border-white/20',
@@ -475,7 +475,7 @@ export function CampaignStepVisibility({
                   min="0"
                   value={creatorRequirements.min_completed_projects}
                   onChange={e => onCreatorReqChange('min_completed_projects', Math.max(0, parseInt(e.target.value) || 0))}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500 max-w-xs"
+                  className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500 max-w-xs"
                 />
               </div>
 

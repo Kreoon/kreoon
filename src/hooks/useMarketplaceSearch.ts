@@ -8,6 +8,7 @@ export interface MarketplaceSearchFilters {
   location_country: string | null;
   location_city: string | null;
   niches: string[];
+  specializations: string[];
   min_rating: number | null;
   max_price: number | null;
   accepts_exchange: boolean | null;
@@ -62,6 +63,7 @@ export interface SearchCreatorResult {
   content_types: string[];
   languages: string[];
   level: string;
+  specializations: string[];
 }
 
 const DEFAULT_FILTERS: MarketplaceSearchFilters = {
@@ -70,6 +72,7 @@ const DEFAULT_FILTERS: MarketplaceSearchFilters = {
   location_country: null,
   location_city: null,
   niches: [],
+  specializations: [],
   min_rating: null,
   max_price: null,
   accepts_exchange: null,
@@ -96,6 +99,7 @@ export function useMarketplaceSearch() {
         p_location_country: filters.location_country,
         p_location_city: filters.location_city,
         p_niches: filters.niches.length > 0 ? filters.niches : null,
+        p_specializations: filters.specializations.length > 0 ? filters.specializations : null,
         p_min_rating: filters.min_rating,
         p_max_price: filters.max_price,
         p_accepts_exchange: filters.accepts_exchange,
@@ -196,6 +200,7 @@ export function useMarketplaceSearch() {
     filters.roles.length > 0,
     filters.location_country,
     filters.niches.length > 0,
+    filters.specializations.length > 0,
     filters.min_rating,
     filters.max_price,
     filters.accepts_exchange !== null,

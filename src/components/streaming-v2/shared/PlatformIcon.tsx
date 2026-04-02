@@ -154,7 +154,7 @@ export function PlatformIcon({
     <div className={cn('inline-flex items-center gap-2', className)}>
       <div
         className={cn(
-          'flex items-center justify-center rounded-lg p-1.5',
+          'flex items-center justify-center rounded-sm p-1.5',
           config.bgColor
         )}
       >

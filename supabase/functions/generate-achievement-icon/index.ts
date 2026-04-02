@@ -51,7 +51,7 @@ No text or letters in the image.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gemini-2.0-flash-exp-image-generation',
+        model: 'gemini-1.5-flash-exp-image-generation',
         messages: [
           { role: 'user', content: prompt }
         ],
@@ -94,7 +94,7 @@ No text or letters in the image.`;
       JSON.stringify({ 
         success: true, 
         imageUrl: imageData,
-        model: 'gemini-2.0-flash-image'
+        model: 'gemini-1.5-flash-image'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

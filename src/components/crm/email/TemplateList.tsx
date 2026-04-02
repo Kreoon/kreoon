@@ -195,7 +195,7 @@ export function TemplateList() {
 
       {/* Editor Dialog */}
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-2xl max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? "Editar Template" : "Nuevo Template"}</DialogTitle>
           </DialogHeader>
@@ -254,12 +254,12 @@ export function TemplateList() {
 
       {/* Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh]">
+        <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-3xl max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Preview: {editing?.name}</DialogTitle>
             <DialogDescription>Asunto: {editing?.subject}</DialogDescription>
           </DialogHeader>
-          <div className="border rounded-lg overflow-hidden bg-white">
+          <div className="border rounded-sm overflow-hidden bg-white">
             <iframe
               srcDoc={editing?.html_body || ""}
               className="w-full h-[500px] border-0"

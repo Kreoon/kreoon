@@ -78,7 +78,7 @@ export function MembershipGate({ children, feature = 'crear campañas' }: Member
     return (
       <div className="min-h-[40vh] flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center">
-          <div className="w-14 h-14 mx-auto bg-amber-100 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center mb-4">
+          <div className="w-14 h-14 mx-auto bg-amber-100 dark:bg-amber-900/30 rounded-sm flex items-center justify-center mb-4">
             <AlertTriangle className="w-7 h-7 text-amber-600 dark:text-amber-400" />
           </div>
           <h2 className="text-xl font-bold mb-2">Límite de campañas activas alcanzado</h2>
@@ -91,7 +91,7 @@ export function MembershipGate({ children, feature = 'crear campañas' }: Member
           </p>
           <Link
             to="/pricing"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white font-medium rounded-xl hover:bg-purple-700 transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white font-medium rounded-sm hover:bg-purple-700 transition-colors"
           >
             <Sparkles className="w-4 h-4" />
             Actualizar plan
@@ -105,7 +105,7 @@ export function MembershipGate({ children, feature = 'crear campañas' }: Member
     return (
       <div className="min-h-[40vh] flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center">
-          <div className="w-14 h-14 mx-auto bg-amber-100 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center mb-4">
+          <div className="w-14 h-14 mx-auto bg-amber-100 dark:bg-amber-900/30 rounded-sm flex items-center justify-center mb-4">
             <AlertTriangle className="w-7 h-7 text-amber-600 dark:text-amber-400" />
           </div>
           <h2 className="text-xl font-bold mb-2">Límite mensual de campañas alcanzado</h2>
@@ -118,7 +118,7 @@ export function MembershipGate({ children, feature = 'crear campañas' }: Member
           </p>
           <Link
             to="/pricing"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white font-medium rounded-xl hover:bg-purple-700 transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white font-medium rounded-sm hover:bg-purple-700 transition-colors"
           >
             <Sparkles className="w-4 h-4" />
             Actualizar plan
@@ -134,7 +134,7 @@ export function MembershipGate({ children, feature = 'crear campañas' }: Member
     <div className="min-h-[60vh] flex items-center justify-center p-4">
       <div className="max-w-2xl w-full">
         <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-3xl p-8 text-white text-center">
-          <div className="w-16 h-16 mx-auto bg-white/20 rounded-2xl flex items-center justify-center mb-6">
+          <div className="w-16 h-16 mx-auto bg-white/20 rounded-sm flex items-center justify-center mb-6">
             <Crown className="w-8 h-8" />
           </div>
 
@@ -147,7 +147,7 @@ export function MembershipGate({ children, feature = 'crear campañas' }: Member
 
           <div className="grid md:grid-cols-3 gap-4 mb-8">
             {/* Starter */}
-            <div className="bg-white/10 backdrop-blur rounded-xl p-4 text-left">
+            <div className="bg-white/10 rounded-sm p-4 text-left">
               <h3 className="font-semibold mb-2">Starter</h3>
               <p className="text-2xl font-bold mb-3">
                 $49<span className="text-sm font-normal">/mes</span>
@@ -163,7 +163,7 @@ export function MembershipGate({ children, feature = 'crear campañas' }: Member
             </div>
 
             {/* Pro - Featured */}
-            <div className="bg-white text-gray-900 rounded-xl p-4 text-left relative">
+            <div className="bg-white text-gray-900 rounded-sm p-4 text-left relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-semibold rounded-full">
                 Popular
               </div>
@@ -182,7 +182,7 @@ export function MembershipGate({ children, feature = 'crear campañas' }: Member
             </div>
 
             {/* Enterprise */}
-            <div className="bg-white/10 backdrop-blur rounded-xl p-4 text-left">
+            <div className="bg-white/10 rounded-sm p-4 text-left">
               <h3 className="font-semibold mb-2">Enterprise</h3>
               <p className="text-2xl font-bold mb-3">
                 $399<span className="text-sm font-normal">/mes</span>
@@ -201,7 +201,7 @@ export function MembershipGate({ children, feature = 'crear campañas' }: Member
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               to="/pricing"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-purple-600 font-semibold rounded-xl hover:bg-gray-100 transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-purple-600 font-semibold rounded-sm hover:bg-gray-100 transition-colors"
             >
               <Sparkles className="w-5 h-5" />
               Ver todos los planes

@@ -131,7 +131,7 @@ export function MessageFeedback({
               key={reason.id}
               onClick={() => handleSelectReason(reason.id)}
               className={cn(
-                'px-2 py-1 rounded-md',
+                'px-2 py-1 rounded-sm',
                 'text-[9px] font-medium',
                 'bg-red-500/10 border border-red-500/20',
                 'text-red-400 hover:bg-red-500/20',

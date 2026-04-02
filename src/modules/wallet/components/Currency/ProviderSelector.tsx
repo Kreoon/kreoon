@@ -96,7 +96,7 @@ export function ProviderSelector({
                   onClick={() => !disabled && onSelect(provider)}
                   disabled={disabled}
                   className={cn(
-                    'w-full p-4 rounded-xl border-2 transition-all text-left',
+                    'w-full p-4 rounded-sm border-2 transition-all text-left',
                     'bg-[hsl(270,40%,6%)] hover:bg-[hsl(270,30%,10%)]',
                     isSelected
                       ? 'border-[hsl(270,80%,60%)] bg-[hsl(270,50%,15%)]/30'
@@ -107,7 +107,7 @@ export function ProviderSelector({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       {/* Logo/Emoji */}
-                      <div className="w-10 h-10 rounded-lg bg-[hsl(270,30%,15%)] flex items-center justify-center text-xl">
+                      <div className="w-10 h-10 rounded-sm bg-[hsl(270,30%,15%)] flex items-center justify-center text-xl">
                         {PROVIDER_LOGOS[provider.id] || '💳'}
                       </div>
 

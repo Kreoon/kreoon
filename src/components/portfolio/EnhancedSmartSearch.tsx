@@ -458,7 +458,7 @@ export function EnhancedSmartSearch({
       return (
         <div className="flex flex-wrap gap-1 mt-1">
           {uniqueTags.map((tag, i) => (
-            <span key={i} className="text-[10px] px-1.5 py-0.5 bg-social-muted rounded text-social-muted-foreground">
+            <span key={i} className="text-[10px] px-1.5 py-0.5 bg-background rounded text-muted-foreground">
               {tag}
             </span>
           ))}
@@ -492,7 +492,7 @@ export function EnhancedSmartSearch({
     <>
       {/* Loading */}
       {isSearching && (
-        <div className="flex items-center justify-center gap-2 p-4 text-social-muted-foreground">
+        <div className="flex items-center justify-center gap-2 p-4 text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
           <span className="text-sm">Buscando...</span>
         </div>
@@ -504,13 +504,13 @@ export function EnhancedSmartSearch({
           {recentSearches.length > 0 && (
             <>
               <div className="flex items-center justify-between px-3 py-2">
-                <span className="text-xs font-medium text-social-muted-foreground uppercase tracking-wide">Recientes</span>
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Recientes</span>
                 <button
                   onClick={() => {
                     setRecentSearches([]);
                     localStorage.removeItem('social_recent_searches');
                   }}
-                  className="text-xs text-social-muted-foreground hover:text-social-foreground"
+                  className="text-xs text-muted-foreground hover:text-foreground"
                 >
                   Borrar
                 </button>
@@ -519,10 +519,10 @@ export function EnhancedSmartSearch({
                 <button
                   key={i}
                   onClick={() => handleRecentClick(term)}
-                  className="w-full flex items-center gap-3 px-3 py-2 hover:bg-social-muted rounded-lg transition text-left"
+                  className="w-full flex items-center gap-3 px-3 py-2 hover:bg-background rounded-sm transition text-left"
                 >
-                  <Search className="h-4 w-4 text-social-muted-foreground" />
-                  <span className="text-social-foreground text-sm">{term}</span>
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-foreground text-sm">{term}</span>
                 </button>
               ))}
             </>
@@ -532,14 +532,14 @@ export function EnhancedSmartSearch({
             <>
               <div className="flex items-center gap-2 px-3 py-2 mt-2">
                 <TrendingUp className="h-4 w-4 text-primary" />
-                <span className="text-xs font-medium text-social-muted-foreground uppercase tracking-wide">Tendencias</span>
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tendencias</span>
               </div>
               <div className="flex flex-wrap gap-2 px-3 pb-2">
                 {trendingSearches.map((term, i) => (
                   <button
                     key={i}
                     onClick={() => handleRecentClick(term)}
-                    className="px-3 py-1.5 bg-social-muted hover:bg-social-accent rounded-full text-sm text-social-foreground transition"
+                    className="px-3 py-1.5 bg-background hover:bg-primary rounded-full text-sm text-foreground transition"
                   >
                     {term}
                   </button>
@@ -554,7 +554,7 @@ export function EnhancedSmartSearch({
       {!isSearching && query.length === 0 && recentSearches.length === 0 && trendingSearches.length === 0 && (
         <div className="p-4 text-center">
           <Sparkles className="h-6 w-6 mx-auto mb-2 text-primary/50" />
-          <p className="text-social-muted-foreground text-xs">
+          <p className="text-muted-foreground text-xs">
             Busca por nombre, nicho, especialidad, industria, ciudad o país
           </p>
         </div>
@@ -563,25 +563,25 @@ export function EnhancedSmartSearch({
       {/* No results */}
       {!isSearching && query.length >= 2 && !hasResults && (
         <div className="p-6 text-center">
-          <Search className="h-8 w-8 mx-auto mb-2 text-social-muted-foreground/30" />
-          <p className="text-social-muted-foreground text-sm">No se encontraron resultados para "{query}"</p>
+          <Search className="h-8 w-8 mx-auto mb-2 text-muted-foreground/30" />
+          <p className="text-muted-foreground text-sm">No se encontraron resultados para "{query}"</p>
         </div>
       )}
 
       {/* Users with full trust indicators */}
       {!isSearching && users.length > 0 && (
-        <div className="p-2 border-b border-social-border">
+        <div className="p-2 border-b border-border">
           <div className="flex items-center gap-2 px-3 py-2">
             <User className="h-4 w-4 text-primary" />
-            <span className="text-xs font-medium text-social-muted-foreground uppercase tracking-wide">Creadores</span>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Creadores</span>
           </div>
           {users.map((user) => (
             <button
               key={user.id}
               onClick={() => handleUserClick(user)}
-              className="w-full flex items-center gap-3 px-3 py-3 hover:bg-social-muted rounded-lg transition text-left"
+              className="w-full flex items-center gap-3 px-3 py-3 hover:bg-background rounded-sm transition text-left"
             >
-              <Avatar className="h-12 w-12 ring-2 ring-social-border flex-shrink-0">
+              <Avatar className="h-12 w-12 ring-2 ring-border flex-shrink-0">
                 <AvatarImage src={user.avatar_url || undefined} />
                 <AvatarFallback className="bg-primary/20 text-primary">
                   {user.full_name?.charAt(0) || 'U'}
@@ -589,29 +589,29 @@ export function EnhancedSmartSearch({
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-social-foreground font-medium text-sm truncate">{user.full_name}</span>
+                  <span className="text-foreground font-medium text-sm truncate">{user.full_name}</span>
                   {renderUserBadges(user)}
                 </div>
                 {user.username && (
-                  <span className="text-social-muted-foreground text-xs block">@{user.username}</span>
+                  <span className="text-muted-foreground text-xs block">@{user.username}</span>
                 )}
                 {(user.city || user.country) && (
-                  <span className="text-social-muted-foreground/70 text-[11px] flex items-center gap-1">
+                  <span className="text-muted-foreground/70 text-[11px] flex items-center gap-1">
                     <MapPin className="h-2.5 w-2.5" />
                     {[user.city, user.country].filter(Boolean).join(', ')}
                   </span>
                 )}
                 {renderUserMeta(user)}
                 {!user.city && !user.country && (
-                  <span className="text-social-muted-foreground/70 text-[11px] block mt-0.5">
+                  <span className="text-muted-foreground/70 text-[11px] block mt-0.5">
                     {renderUserStats(user)}
                   </span>
                 )}
               </div>
               {(user.followers_count || 0) > 0 && (
                 <div className="text-right flex-shrink-0">
-                  <span className="text-social-foreground text-sm font-medium">{formatCount(user.followers_count || 0)}</span>
-                  <span className="text-social-muted-foreground text-[10px] block">seguidores</span>
+                  <span className="text-foreground text-sm font-medium">{formatCount(user.followers_count || 0)}</span>
+                  <span className="text-muted-foreground text-[10px] block">seguidores</span>
                 </div>
               )}
             </button>
@@ -621,33 +621,33 @@ export function EnhancedSmartSearch({
 
       {/* Content */}
       {!isSearching && content.length > 0 && (
-        <div className="p-2 border-b border-social-border">
+        <div className="p-2 border-b border-border">
           <div className="flex items-center gap-2 px-3 py-2">
             <Video className="h-4 w-4 text-pink-500" />
-            <span className="text-xs font-medium text-social-muted-foreground uppercase tracking-wide">Videos</span>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Videos</span>
           </div>
           {content.map((item) => (
             <button
               key={item.id}
               onClick={() => handleContentClick(item)}
-              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-social-muted rounded-lg transition text-left"
+              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-background rounded-sm transition text-left"
             >
-              <div className="h-12 w-12 rounded-lg bg-social-muted overflow-hidden flex-shrink-0">
+              <div className="h-12 w-12 rounded-sm bg-background overflow-hidden flex-shrink-0">
                 {item.thumbnail_url ? (
                   <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover" />
                 ) : (
                   <div className="h-full w-full flex items-center justify-center">
-                    <Video className="h-5 w-5 text-social-muted-foreground/50" />
+                    <Video className="h-5 w-5 text-muted-foreground/50" />
                   </div>
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <span className="text-social-foreground font-medium text-sm truncate block">{item.title}</span>
+                <span className="text-foreground font-medium text-sm truncate block">{item.title}</span>
                 {item.creator_name && (
-                  <span className="text-social-muted-foreground text-xs">por {item.creator_name}</span>
+                  <span className="text-muted-foreground text-xs">por {item.creator_name}</span>
                 )}
                 {(item.views_count || item.likes_count) && (
-                  <span className="text-social-muted-foreground/70 text-[11px] block">
+                  <span className="text-muted-foreground/70 text-[11px] block">
                     {item.views_count ? `${formatCount(item.views_count)} vistas` : ''}
                     {item.views_count && item.likes_count ? ' · ' : ''}
                     {item.likes_count ? `${formatCount(item.likes_count)} likes` : ''}
@@ -664,15 +664,15 @@ export function EnhancedSmartSearch({
         <div className="p-2">
           <div className="flex items-center gap-2 px-3 py-2">
             <Building2 className="h-4 w-4 text-blue-400" />
-            <span className="text-xs font-medium text-social-muted-foreground uppercase tracking-wide">Marcas</span>
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Marcas</span>
           </div>
           {clients.map((client) => (
             <button
               key={client.id}
               onClick={() => handleClientClick(client)}
-              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-social-muted rounded-lg transition text-left"
+              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-background rounded-sm transition text-left"
             >
-              <Avatar className="h-10 w-10 ring-2 ring-social-border">
+              <Avatar className="h-10 w-10 ring-2 ring-border">
                 <AvatarImage src={client.logo_url || undefined} />
                 <AvatarFallback className="bg-blue-500/20 text-blue-400">
                   {client.name?.charAt(0) || 'C'}
@@ -680,10 +680,10 @@ export function EnhancedSmartSearch({
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-social-foreground font-medium text-sm truncate">{client.name}</span>
+                  <span className="text-foreground font-medium text-sm truncate">{client.name}</span>
                   {client.is_vip && <Crown className="h-3.5 w-3.5 text-yellow-400" />}
                 </div>
-                <span className="text-social-muted-foreground text-xs">
+                <span className="text-muted-foreground text-xs">
                   {client.category || 'Marca'}
                   {(client.followers_count || 0) > 0 && ` · ${formatCount(client.followers_count || 0)} seguidores`}
                 </span>
@@ -702,7 +702,7 @@ export function EnhancedSmartSearch({
         {!isExpanded ? (
           <button
             onClick={handleExpand}
-            className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-social-muted transition-colors text-social-muted-foreground hover:text-social-foreground"
+            className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-background transition-colors text-muted-foreground hover:text-foreground"
           >
             <Search className="h-4 w-4" />
           </button>
@@ -710,7 +710,7 @@ export function EnhancedSmartSearch({
           <div className="animate-in slide-in-from-right-2 fade-in duration-200">
             <div className="relative flex items-center">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-social-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   ref={inputRef}
                   type="text"
@@ -718,11 +718,11 @@ export function EnhancedSmartSearch({
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onFocus={() => setShowResults(true)}
-                  className="w-[220px] sm:w-[280px] pl-10 pr-10 h-9 bg-social-muted border-social-border text-social-foreground text-sm placeholder:text-social-muted-foreground"
+                  className="w-[220px] sm:w-[280px] pl-10 pr-10 h-9 bg-background border-border text-foreground text-sm placeholder:text-muted-foreground"
                 />
                 <button
                   onClick={handleClose}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-social-muted-foreground hover:text-social-foreground p-1"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -730,7 +730,7 @@ export function EnhancedSmartSearch({
             </div>
 
             {showDropdown && (
-              <div className="absolute top-full right-0 mt-2 w-[320px] sm:w-[380px] bg-social-card border border-social-border rounded-xl shadow-2xl z-50 overflow-hidden max-h-[70vh] overflow-y-auto">
+              <div className="absolute top-full right-0 mt-2 w-[320px] sm:w-[380px] bg-card border border-border rounded-sm shadow-2xl z-50 overflow-hidden max-h-[70vh] overflow-y-auto">
                 {renderDropdownContent()}
               </div>
             )}
@@ -744,7 +744,7 @@ export function EnhancedSmartSearch({
   return (
     <div ref={containerRef} className={cn("relative", className)}>
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-social-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           ref={inputRef}
           type="text"
@@ -754,14 +754,14 @@ export function EnhancedSmartSearch({
           onFocus={() => setShowResults(true)}
           onBlur={() => setTimeout(() => setShowResults(false), 200)}
           className={cn(
-            "pl-10 pr-10 bg-social-muted border-social-border text-social-foreground placeholder:text-social-muted-foreground focus:bg-social-input",
+            "pl-10 pr-10 bg-background border-border text-foreground placeholder:text-muted-foreground focus:bg-input",
             variant === 'full' && "h-12 text-base"
           )}
         />
         {query && (
           <button
             onClick={clearSearch}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-social-muted-foreground hover:text-social-foreground"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >
             <X className="h-4 w-4" />
           </button>
@@ -770,7 +770,7 @@ export function EnhancedSmartSearch({
 
       {showDropdown && (
         <div className={cn(
-          "absolute top-full left-0 right-0 mt-2 bg-social-card border border-social-border rounded-xl shadow-2xl z-50 overflow-hidden max-h-[70vh] overflow-y-auto",
+          "absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-sm shadow-2xl z-50 overflow-hidden max-h-[70vh] overflow-y-auto",
           variant === 'full' && "max-h-[80vh]"
         )}>
           {renderDropdownContent()}

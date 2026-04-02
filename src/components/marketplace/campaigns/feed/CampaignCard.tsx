@@ -4,11 +4,12 @@ import { cn } from '@/lib/utils';
 import { CAMPAIGN_STATUS_COLORS, CAMPAIGN_STATUS_LABELS } from '@/hooks/useMarketplaceCampaigns';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import type { Campaign } from '../../types/marketplace';
+// Nova Design System styles applied directly via CSS variables
 
 const VISIBILITY_BADGE = {
-  public: { icon: Globe, label: 'Publica', bg: 'bg-green-500/15', text: 'text-green-300' },
-  internal: { icon: Lock, label: 'Interna', bg: 'bg-amber-500/15', text: 'text-amber-300' },
-  selective: { icon: Target, label: 'Selectiva', bg: 'bg-purple-500/15', text: 'text-purple-300' },
+  public: { icon: Globe, label: 'Publica', bg: 'bg-[var(--nova-success-bg)]', text: 'text-[var(--nova-success)]' },
+  internal: { icon: Lock, label: 'Interna', bg: 'bg-[var(--nova-warning-bg)]', text: 'text-[var(--nova-warning)]' },
+  selective: { icon: Target, label: 'Selectiva', bg: 'bg-[var(--nova-accent-primary)]/15', text: 'text-[var(--nova-accent-primary)]' },
 } as const;
 
 interface CampaignCardProps {
@@ -17,9 +18,9 @@ interface CampaignCardProps {
 }
 
 const TYPE_CONFIG = {
-  paid: { icon: DollarSign, label: 'Pagada', color: 'text-green-400' },
-  exchange: { icon: Gift, label: 'Canje', color: 'text-purple-400' },
-  hybrid: { icon: Layers, label: 'Hibrida', color: 'text-blue-400' },
+  paid: { icon: DollarSign, label: 'Pagada', color: 'text-[var(--nova-success)]' },
+  exchange: { icon: Gift, label: 'Canje', color: 'text-[var(--nova-accent-primary)]' },
+  hybrid: { icon: Layers, label: 'Hibrida', color: 'text-[var(--nova-accent-secondary)]' },
 } as const;
 
 export const CampaignCard = memo(function CampaignCard({ campaign, onClick }: CampaignCardProps) {
@@ -47,7 +48,7 @@ export const CampaignCard = memo(function CampaignCard({ campaign, onClick }: Ca
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-card/80 backdrop-blur border border-white/5 rounded-xl p-5 hover:border-purple-500/30 transition-all group"
+      className="w-full text-left nova-glass rounded-sm p-5 group cursor-pointer transition-all duration-200 hover:border-[var(--nova-border-accent)] hover:shadow-[var(--nova-shadow-glow)] hover:-translate-y-0.5"
     >
       {/* Header: Brand + Status */}
       <div className="flex items-start justify-between mb-3">
@@ -55,12 +56,12 @@ export const CampaignCard = memo(function CampaignCard({ campaign, onClick }: Ca
           {campaign.brand_logo ? (
             <img src={campaign.brand_logo} alt="" loading="lazy" className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
           ) : (
-            <div className="w-9 h-9 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 text-xs font-bold flex-shrink-0">
+            <div className="w-9 h-9 rounded-full bg-[var(--nova-accent-primary)]/20 flex items-center justify-center text-[var(--nova-accent-primary)] text-xs font-bold flex-shrink-0">
               {displayName.charAt(0)}
             </div>
           )}
           <div className="min-w-0">
-            <p className="text-gray-500 text-xs truncate">{displayName}</p>
+            <p className="text-[var(--nova-text-muted)] text-xs truncate">{displayName}</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -71,7 +72,7 @@ export const CampaignCard = memo(function CampaignCard({ campaign, onClick }: Ca
           </span>
           {/* Urgent badge */}
           {campaign.is_urgent && (
-            <span className="text-xs px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-300 flex items-center gap-0.5">
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-[var(--nova-error-bg)] text-[var(--nova-error)] flex items-center gap-0.5">
               <Zap className="h-3 w-3" />
               Urgente
             </span>
@@ -79,7 +80,7 @@ export const CampaignCard = memo(function CampaignCard({ campaign, onClick }: Ca
           {isBidMode && (
             <span className={cn(
               'text-xs px-1.5 py-0.5 rounded-full flex items-center gap-0.5',
-              pricingMode === 'auction' ? 'bg-orange-500/15 text-orange-300' : 'bg-blue-500/15 text-blue-300',
+              pricingMode === 'auction' ? 'bg-[var(--nova-warning-bg)] text-[var(--nova-warning)]' : 'bg-[var(--nova-info-bg)] text-[var(--nova-info)]',
             )}>
               {pricingMode === 'auction' ? <Gavel className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3" />}
               {pricingMode === 'auction' ? 'Subasta' : 'Rango'}
@@ -92,17 +93,17 @@ export const CampaignCard = memo(function CampaignCard({ campaign, onClick }: Ca
       </div>
 
       {/* Title */}
-      <h3 className="text-white font-semibold text-sm mb-2 line-clamp-2 group-hover:text-purple-200 transition-colors">
+      <h3 className="text-[var(--nova-text-bright)] font-semibold text-sm mb-2 line-clamp-2 group-hover:text-[var(--nova-accent-primary-hover)] transition-colors">
         {campaign.title}
       </h3>
 
       {/* Description */}
-      <p className="text-gray-500 text-xs mb-3 line-clamp-2">{campaign.description}</p>
+      <p className="text-[var(--nova-text-muted)] text-xs mb-3 line-clamp-2">{campaign.description}</p>
 
       {/* Content type tags */}
       <div className="flex flex-wrap gap-1.5 mb-3">
         {campaign.content_requirements.slice(0, 3).map((req, i) => (
-          <span key={i} className="bg-purple-500/15 text-purple-300 text-xs px-2 py-0.5 rounded-full">
+          <span key={i} className="bg-[var(--nova-accent-primary)]/15 text-[var(--nova-accent-primary)] text-xs px-2 py-0.5 rounded-full">
             {req.quantity}x {req.content_type}
           </span>
         ))}
@@ -111,22 +112,22 @@ export const CampaignCard = memo(function CampaignCard({ campaign, onClick }: Ca
       {/* Budget + Type */}
       <div className="flex items-center gap-2 mb-3">
         <TypeIcon className={cn('h-4 w-4', typeConfig.color)} />
-        <span className={cn('text-sm font-medium', isBidMode ? 'text-orange-300' : 'text-white')}>{budgetDisplay}</span>
+        <span className={cn('text-sm font-medium', isBidMode ? 'text-[var(--nova-warning)]' : 'text-[var(--nova-text-bright)]')}>{budgetDisplay}</span>
         <span className={cn('text-xs', typeConfig.color)}>({typeConfig.label})</span>
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-3 border-t border-white/5">
+      <div className="flex items-center justify-between pt-3 border-t border-[var(--nova-border-subtle)]">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 text-gray-500 text-xs">
+          <div className="flex items-center gap-1 text-[var(--nova-text-muted)] text-xs">
             <Users className="h-3 w-3" />
             <span>{campaign.applications_count} aplicaciones</span>
           </div>
-          <div className="flex items-center gap-1 text-gray-500 text-xs">
+          <div className="flex items-center gap-1 text-[var(--nova-text-muted)] text-xs">
             <span>{campaign.approved_count}/{campaign.max_creators} seleccionados</span>
           </div>
         </div>
-        <div className="flex items-center gap-1 text-gray-600 text-xs">
+        <div className="flex items-center gap-1 text-[var(--nova-text-disabled)] text-xs">
           {daysLeft > 0 ? (
             <>
               <Clock className="h-3 w-3" />

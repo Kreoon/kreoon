@@ -24,7 +24,21 @@ import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { DateRangePresetPicker } from '@/components/ui/date-range-preset-picker';
 import { useDateRangePreset } from '@/hooks/useDateRangePreset';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPie, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
+import {
+  LazyLineChart,
+  LazyPieChart,
+  LazyChartContainer,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Pie,
+  Cell,
+  Bar,
+  Legend,
+} from '@/components/ui/lazy-charts';
 
 interface UsageStats {
   total_requests: number;
@@ -226,7 +240,7 @@ export function AIUsageDashboard({ organizationId }: { organizationId: string })
                 <p className="text-sm text-muted-foreground">Solicitudes</p>
                 <p className="text-2xl font-bold">{stats?.total_requests.toLocaleString() || 0}</p>
               </div>
-              <div className="p-2 rounded-lg bg-primary/10">
+              <div className="p-2 rounded-sm bg-primary/10">
                 <Zap className="h-5 w-5 text-primary" />
               </div>
             </div>
@@ -253,7 +267,7 @@ export function AIUsageDashboard({ organizationId }: { organizationId: string })
                   {((stats?.total_tokens_input || 0) + (stats?.total_tokens_output || 0)).toLocaleString()}
                 </p>
               </div>
-              <div className="p-2 rounded-lg bg-chart-2/10">
+              <div className="p-2 rounded-sm bg-chart-2/10">
                 <Activity className="h-5 w-5 text-chart-2" />
               </div>
             </div>
@@ -272,7 +286,7 @@ export function AIUsageDashboard({ organizationId }: { organizationId: string })
                 <p className="text-sm text-muted-foreground">Costo Estimado</p>
                 <p className="text-2xl font-bold">${(stats?.estimated_cost || 0).toFixed(2)}</p>
               </div>
-              <div className="p-2 rounded-lg bg-chart-3/10">
+              <div className="p-2 rounded-sm bg-chart-3/10">
                 <DollarSign className="h-5 w-5 text-chart-3" />
               </div>
             </div>
@@ -298,7 +312,7 @@ export function AIUsageDashboard({ organizationId }: { organizationId: string })
                 <p className="text-sm text-muted-foreground">Tasa de Éxito</p>
                 <p className="text-2xl font-bold">{successRate}%</p>
               </div>
-              <div className="p-2 rounded-lg bg-green-500/10">
+              <div className="p-2 rounded-sm bg-green-500/10">
                 <CheckCircle2 className="h-5 w-5 text-green-500" />
               </div>
             </div>
@@ -316,34 +330,36 @@ export function AIUsageDashboard({ organizationId }: { organizationId: string })
           </CardHeader>
           <CardContent>
             {dailyUsage.length > 0 ? (
-              <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={dailyUsage}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis 
-                    dataKey="date" 
-                    tick={{ fontSize: 10 }}
-                    tickFormatter={(value) => format(new Date(value), 'dd/MM')}
-                  />
-                  <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip 
-                    labelFormatter={(value) => format(new Date(value), 'dd MMM yyyy', { locale: es })}
-                    formatter={(value: number, name: string) => [
-                      name === 'requests' ? value : value.toLocaleString(),
-                      name === 'requests' ? 'Solicitudes' : 'Tokens'
-                    ]}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="requests" 
-                    stroke="hsl(var(--primary))" 
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              <LazyChartContainer height={200}>
+                <ResponsiveContainer width="100%" height={200}>
+                  <LazyLineChart data={dailyUsage}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 10 }}
+                      tickFormatter={(value) => format(new Date(value), 'dd/MM')}
+                    />
+                    <YAxis tick={{ fontSize: 10 }} />
+                    <Tooltip
+                      labelFormatter={(value) => format(new Date(value), 'dd MMM yyyy', { locale: es })}
+                      formatter={(value: number, name: string) => [
+                        name === 'requests' ? value : value.toLocaleString(),
+                        name === 'requests' ? 'Solicitudes' : 'Tokens'
+                      ]}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="requests"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                  </LazyLineChart>
+                </ResponsiveContainer>
+              </LazyChartContainer>
             ) : (
               <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-                No hay datos en este período
+                No hay datos en este periodo
               </div>
             )}
           </CardContent>
@@ -356,28 +372,30 @@ export function AIUsageDashboard({ organizationId }: { organizationId: string })
           </CardHeader>
           <CardContent>
             {providerUsage.length > 0 ? (
-              <ResponsiveContainer width="100%" height={200}>
-                <RechartsPie>
-                  <Pie
-                    data={providerUsage}
-                    dataKey="count"
-                    nameKey="model"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={70}
-                    label={({ model, percent }) => `${model.split('/').pop()} (${(percent * 100).toFixed(0)}%)`}
-                    labelLine={false}
-                  >
-                    {providerUsage.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </RechartsPie>
-              </ResponsiveContainer>
+              <LazyChartContainer height={200}>
+                <ResponsiveContainer width="100%" height={200}>
+                  <LazyPieChart>
+                    <Pie
+                      data={providerUsage}
+                      dataKey="count"
+                      nameKey="model"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={70}
+                      label={({ model, percent }) => `${model.split('/').pop()} (${(percent * 100).toFixed(0)}%)`}
+                      labelLine={false}
+                    >
+                      {providerUsage.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </LazyPieChart>
+                </ResponsiveContainer>
+              </LazyChartContainer>
             ) : (
               <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-                No hay datos en este período
+                No hay datos en este periodo
               </div>
             )}
           </CardContent>
@@ -397,7 +415,7 @@ export function AIUsageDashboard({ organizationId }: { organizationId: string })
             <ScrollArea className="h-[300px]">
               <div className="space-y-3">
                 {moduleUsage.map((mod, i) => (
-                  <div key={mod.module} className="flex items-center gap-4 p-3 rounded-lg bg-muted/50">
+                  <div key={mod.module} className="flex items-center gap-4 p-3 rounded-sm bg-muted/50">
                     <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                       <Sparkles className="h-4 w-4 text-primary" />
                     </div>

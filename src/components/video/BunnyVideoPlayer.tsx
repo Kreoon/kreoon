@@ -2,7 +2,35 @@ import { memo, useRef, useState, useEffect, useCallback, forwardRef, useImperati
 import { Play, Loader2, RefreshCw, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
-import Hls from 'hls.js';
+import type Hls from 'hls.js';
+
+// Lazy-loaded HLS module reference
+let HlsModule: typeof import('hls.js').default | null = null;
+let hlsLoadPromise: Promise<typeof import('hls.js').default> | null = null;
+
+/**
+ * Dynamically load HLS.js only when needed (saves 522KB from initial bundle)
+ */
+async function loadHls(): Promise<typeof import('hls.js').default> {
+  if (HlsModule) return HlsModule;
+  if (hlsLoadPromise) return hlsLoadPromise;
+
+  hlsLoadPromise = import('hls.js').then(mod => {
+    HlsModule = mod.default;
+    return HlsModule;
+  });
+
+  return hlsLoadPromise;
+}
+
+/**
+ * Check if HLS.js is supported (without loading the full module)
+ */
+function isHlsSupported(): boolean {
+  const mediaSource = window.MediaSource || (window as any).WebKitMediaSource;
+  return !!mediaSource && typeof mediaSource.isTypeSupported === 'function' &&
+         mediaSource.isTypeSupported('video/mp4; codecs="avc1.42E01E,mp4a.40.2"');
+}
 
 export interface BunnyVideoPlayerRef {
   play: () => Promise<void>;
@@ -133,6 +161,22 @@ const BunnyVideoPlayerComponent = forwardRef<BunnyVideoPlayerRef, BunnyVideoPlay
       }
     }, [isInViewport, autoPlay, error, onViewStart, onViewEnd]);
 
+    // Helper: Load MP4 fallback
+    const loadMp4Fallback = useCallback(
+      (video: HTMLVideoElement, url: string | null, onReady: () => void) => {
+        if (!url) {
+          setError('Video no disponible');
+          setIsLoading(false);
+          return;
+        }
+
+        video.src = url;
+        video.addEventListener('canplay', onReady, { once: true });
+        video.load();
+      },
+      []
+    );
+
     // Initialize video player (HLS or MP4 fallback)
     useEffect(() => {
       const video = videoRef.current;
@@ -170,47 +214,70 @@ const BunnyVideoPlayerComponent = forwardRef<BunnyVideoPlayerRef, BunnyVideoPlay
         };
       }
 
-      // hls.js for other browsers
-      if (hlsUrl && Hls.isSupported()) {
-        const hls = new Hls({
-          enableWorker: true,
-          lowLatencyMode: false,
-          backBufferLength: 30,
-          maxBufferLength: 20,
-          maxMaxBufferLength: 40,
-          startLevel: -1,
-        });
+      // hls.js for other browsers - LOAD DYNAMICALLY
+      if (hlsUrl && isHlsSupported()) {
+        let cancelled = false;
 
-        hlsRef.current = hls;
-        hls.loadSource(hlsUrl);
-        hls.attachMedia(video);
+        const initHls = async () => {
+          try {
+            const Hls = await loadHls();
 
-        hls.on(Hls.Events.MANIFEST_PARSED, clearLoadingState);
+            if (cancelled) return;
 
-        hls.on(Hls.Events.ERROR, (_, data) => {
-          if (!data.fatal) return;
-
-          retryCountRef.current += 1;
-
-          if (retryCountRef.current <= 3) {
-            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-              hls.startLoad();
+            if (!Hls.isSupported()) {
+              loadMp4Fallback(video, mp4Url || src, clearLoadingState);
               return;
             }
-            if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-              hls.recoverMediaError();
-              return;
-            }
+
+            // POLICY: Min 720p quality (startLevel: 2), seek max quality
+            const hls = new Hls({
+              enableWorker: true,
+              lowLatencyMode: false,
+              backBufferLength: 45,
+              maxBufferLength: 60,
+              maxMaxBufferLength: 90,
+              startLevel: 2, // 720p minimum (0=360p, 1=480p, 2=720p, 3=1080p)
+              autoLevelCapping: -1, // No cap - allow max quality
+            });
+
+            hlsRef.current = hls;
+            hls.loadSource(hlsUrl);
+            hls.attachMedia(video);
+
+            hls.on(Hls.Events.MANIFEST_PARSED, clearLoadingState);
+
+            hls.on(Hls.Events.ERROR, (_, data) => {
+              if (!data.fatal) return;
+
+              retryCountRef.current += 1;
+
+              if (retryCountRef.current <= 3) {
+                if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                  hls.startLoad();
+                  return;
+                }
+                if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                  hls.recoverMediaError();
+                  return;
+                }
+              }
+
+              // Fallback to MP4
+              hls.destroy();
+              hlsRef.current = null;
+              loadMp4Fallback(video, mp4Url, clearLoadingState);
+            });
+          } catch (err) {
+            console.error('[BunnyVideoPlayer] Failed to load hls.js:', err);
+            loadMp4Fallback(video, mp4Url || src, clearLoadingState);
           }
+        };
 
-          // Fallback to MP4
-          hls.destroy();
-          hlsRef.current = null;
-          loadMp4Fallback(video, mp4Url, clearLoadingState);
-        });
+        initHls();
 
         return () => {
-          hls.destroy();
+          cancelled = true;
+          hlsRef.current?.destroy();
           hlsRef.current = null;
           clearTimeout(loadingTimeout);
         };
@@ -220,7 +287,7 @@ const BunnyVideoPlayerComponent = forwardRef<BunnyVideoPlayerRef, BunnyVideoPlay
       loadMp4Fallback(video, mp4Url || src, clearLoadingState);
 
       return () => clearTimeout(loadingTimeout);
-    }, [src, hlsUrl, mp4Url, loop, preload]);
+    }, [src, hlsUrl, mp4Url, loop, preload, isMuted, loadMp4Fallback]);
 
     // Sync muted state
     useEffect(() => {
@@ -243,7 +310,7 @@ const BunnyVideoPlayerComponent = forwardRef<BunnyVideoPlayerRef, BunnyVideoPlay
         onPause?.();
       };
       const handleError = () => {
-        setError('Error de reproducción');
+        setError('Error de reproduccion');
         setIsLoading(false);
         onError?.('Video playback error');
       };
@@ -264,22 +331,6 @@ const BunnyVideoPlayerComponent = forwardRef<BunnyVideoPlayerRef, BunnyVideoPlay
         video.removeEventListener('playing', handlePlaying);
       };
     }, [onPlay, onPause, onError]);
-
-    // Helper: Load MP4 fallback
-    const loadMp4Fallback = useCallback(
-      (video: HTMLVideoElement, url: string | null, onReady: () => void) => {
-        if (!url) {
-          setError('Video no disponible');
-          setIsLoading(false);
-          return;
-        }
-
-        video.src = url;
-        video.addEventListener('canplay', onReady, { once: true });
-        video.load();
-      },
-      []
-    );
 
     // Retry handler
     const handleRetry = useCallback(() => {

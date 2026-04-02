@@ -66,7 +66,7 @@ export default function PaymentsTab({ project, formData, setFormData, editMode, 
             Recompensas
           </h3>
 
-          <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 p-4 space-y-3">
+          <div className="rounded-sm border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500" />
               <span className="font-medium text-amber-700 dark:text-amber-300">Contenido Interno de la Organizacion</span>
@@ -154,7 +154,7 @@ export default function PaymentsTab({ project, formData, setFormData, editMode, 
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="border rounded-lg p-4">
+        <div className="border rounded-sm p-4">
           <label className="text-xs font-medium text-muted-foreground uppercase">Total</label>
           <p className="text-xl font-bold mt-1">
             {formatCurrency(formData.total_price || project.totalPrice, project.currency)}
@@ -163,19 +163,19 @@ export default function PaymentsTab({ project, formData, setFormData, editMode, 
 
         {typeConfig.roles.primary.length > 0 && (
           <>
-            <div className="border rounded-lg p-4">
+            <div className="border rounded-sm p-4">
               <label className="text-xs font-medium text-muted-foreground uppercase">Pago Creador</label>
               <p className="text-lg font-semibold mt-1">
                 {formatCurrency(formData.creator_payout || project.creatorPayment, project.currency)}
               </p>
             </div>
-            <div className="border rounded-lg p-4">
+            <div className="border rounded-sm p-4">
               <label className="text-xs font-medium text-muted-foreground uppercase">Pago Editor</label>
               <p className="text-lg font-semibold mt-1">
                 {formatCurrency(formData.editor_payout || project.editorPayment, project.currency)}
               </p>
             </div>
-            <div className="border rounded-lg p-4">
+            <div className="border rounded-sm p-4">
               <label className="text-xs font-medium text-muted-foreground uppercase">Comision Plataforma</label>
               <p className="text-lg font-semibold mt-1">
                 {formatCurrency(formData.platform_fee || project.platformFee, project.currency)}
@@ -212,10 +212,10 @@ function ContentInvoiceSection({
   onToggle: (val: boolean) => void;
 }) {
   return (
-    <div className="border rounded-lg p-4">
+    <div className="border rounded-sm p-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-blue-500/10">
+          <div className="p-2 rounded-sm bg-blue-500/10">
             <Receipt className="h-4 w-4 text-blue-500" />
           </div>
           <div>
@@ -282,15 +282,15 @@ function AssignmentPaymentsSection({
 
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="border rounded-lg p-3 text-center">
+        <div className="border rounded-sm p-3 text-center">
           <p className="text-xs text-muted-foreground">Total</p>
           <p className="text-sm font-bold mt-0.5">{formatCurrency(totals.total, currency)}</p>
         </div>
-        <div className="border rounded-lg p-3 text-center">
+        <div className="border rounded-sm p-3 text-center">
           <p className="text-xs text-green-600">Pagado</p>
           <p className="text-sm font-bold mt-0.5 text-green-600">{formatCurrency(totals.paid, currency)}</p>
         </div>
-        <div className="border rounded-lg p-3 text-center">
+        <div className="border rounded-sm p-3 text-center">
           <p className="text-xs text-amber-600">Pendiente</p>
           <p className="text-sm font-bold mt-0.5 text-amber-600">{formatCurrency(totals.pending, currency)}</p>
         </div>
@@ -299,7 +299,7 @@ function AssignmentPaymentsSection({
       {/* Per-assignment rows */}
       <div className="space-y-2">
         {active.map((assignment: any) => (
-          <div key={assignment.id} className="border rounded-lg p-3 flex items-center gap-3">
+          <div key={assignment.id} className="border rounded-sm p-3 flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs shrink-0">
               {(assignment.user?.full_name || '?')[0]}
             </div>
@@ -369,7 +369,7 @@ function PaymentField({
   onTogglePaid?: (val: boolean) => void;
 }) {
   return (
-    <div className="border rounded-lg p-4">
+    <div className="border rounded-sm p-4">
       <div className="flex items-center justify-between mb-2">
         <label className="text-sm font-medium text-muted-foreground">{label}</label>
         <div className="flex items-center gap-2">

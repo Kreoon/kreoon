@@ -414,3 +414,165 @@ export interface EsferaPhaseData {
   tactics: string[];
   angles: string[];
 }
+
+// =====================================================
+// LINKEDIN ADS INTEGRATION TYPES
+// =====================================================
+
+export interface LinkedInAdAccount {
+  id: string;
+  name: string;
+  status: 'ACTIVE' | 'PAUSED' | 'ARCHIVED';
+  currency: string;
+  reference?: string;
+}
+
+export interface LinkedInCampaign {
+  id?: string;
+  name: string;
+  account_id: string;
+  objective_type: LinkedInObjectiveType;
+  status: LinkedInCampaignStatus;
+  daily_budget?: LinkedInMoney;
+  total_budget?: LinkedInMoney;
+  targeting?: LinkedInTargeting;
+  start_date?: string;
+  end_date?: string;
+}
+
+export type LinkedInObjectiveType =
+  | 'BRAND_AWARENESS'
+  | 'ENGAGEMENT'
+  | 'LEAD_GENERATION'
+  | 'WEBSITE_CONVERSIONS'
+  | 'VIDEO_VIEWS';
+
+export type LinkedInCampaignStatus = 'ACTIVE' | 'PAUSED' | 'ARCHIVED' | 'DRAFT';
+
+export interface LinkedInMoney {
+  amount: string;
+  currency_code: string;
+}
+
+export interface LinkedInTargeting {
+  locations?: string[];
+  job_titles?: string[];
+  industries?: string[];
+  company_sizes?: string[];
+  seniorities?: string[];
+  skills?: string[];
+  member_groups?: string[];
+  job_functions?: string[];
+}
+
+export interface LinkedInCampaignMetrics {
+  impressions: number;
+  clicks: number;
+  spend: number;
+  conversions: number;
+  leads: number;
+  ctr: number;
+  cpc: number;
+  cpl: number;
+}
+
+export interface LinkedInConversionEvent {
+  event_type: LinkedInEventType;
+  conversion_id: string;
+  user: {
+    email?: string;
+    linkedin_first_party_id?: string;
+  };
+  event_time: number;
+  event_source_url?: string;
+  value?: LinkedInMoney;
+}
+
+export type LinkedInEventType =
+  | 'SIGNUP'
+  | 'PURCHASE'
+  | 'LEAD'
+  | 'KEY_PAGE_VIEW'
+  | 'ADD_TO_CART'
+  | 'INSTALL'
+  | 'OTHER';
+
+export const LINKEDIN_OBJECTIVES: { value: LinkedInObjectiveType; label: string; description: string }[] = [
+  { value: 'BRAND_AWARENESS', label: 'Conocimiento de marca', description: 'Aumentar visibilidad y reconocimiento' },
+  { value: 'ENGAGEMENT', label: 'Interaccion', description: 'Generar likes, comentarios y compartidos' },
+  { value: 'LEAD_GENERATION', label: 'Generacion de leads', description: 'Capturar leads con formularios nativos' },
+  { value: 'WEBSITE_CONVERSIONS', label: 'Conversiones web', description: 'Dirigir trafico que convierte' },
+  { value: 'VIDEO_VIEWS', label: 'Visualizaciones de video', description: 'Maximizar reproducciones de video' },
+];
+
+export const LINKEDIN_TARGETING_OPTIONS = {
+  company_sizes: [
+    { value: '1-10', label: '1-10 empleados' },
+    { value: '11-50', label: '11-50 empleados' },
+    { value: '51-200', label: '51-200 empleados' },
+    { value: '201-500', label: '201-500 empleados' },
+    { value: '501-1000', label: '501-1000 empleados' },
+    { value: '1001-5000', label: '1001-5000 empleados' },
+    { value: '5001-10000', label: '5001-10000 empleados' },
+    { value: '10001+', label: 'Mas de 10000 empleados' },
+  ],
+  seniorities: [
+    { value: 'entry', label: 'Nivel inicial' },
+    { value: 'senior', label: 'Senior' },
+    { value: 'manager', label: 'Manager' },
+    { value: 'director', label: 'Director' },
+    { value: 'vp', label: 'VP' },
+    { value: 'cxo', label: 'C-Level' },
+    { value: 'owner', label: 'Propietario' },
+  ],
+  industries: [
+    { value: 'technology', label: 'Tecnologia' },
+    { value: 'finance', label: 'Finanzas' },
+    { value: 'healthcare', label: 'Salud' },
+    { value: 'education', label: 'Educacion' },
+    { value: 'retail', label: 'Retail' },
+    { value: 'manufacturing', label: 'Manufactura' },
+    { value: 'marketing', label: 'Marketing y Publicidad' },
+    { value: 'consulting', label: 'Consultoria' },
+    { value: 'real_estate', label: 'Bienes Raices' },
+    { value: 'legal', label: 'Legal' },
+  ],
+};
+
+// =====================================================
+// CONTENT ANALYTICS TYPES
+// =====================================================
+
+export interface ContentAnalyticsMetrics {
+  total_views: number;
+  total_likes: number;
+  total_content: number;
+  avg_engagement: number;
+  views_growth: number;
+  content_growth: number;
+}
+
+export interface ContentDailyTrend {
+  date: string;
+  views: number;
+  likes: number;
+  content_created: number;
+}
+
+export interface ContentTypeDistribution {
+  type: string;
+  count: number;
+  views: number;
+  engagement_rate: number;
+}
+
+export interface TopPerformingContent {
+  id: string;
+  title: string;
+  views: number;
+  likes: number;
+  engagement_rate: number;
+  thumbnail_url: string | null;
+  content_type: string;
+  created_at: string;
+}

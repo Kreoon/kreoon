@@ -116,7 +116,7 @@ export function PlatformTrash() {
   const renderTrashItem = (item: TrashItem) => (
     <div
       key={item.backup_id}
-      className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+      className="flex items-center gap-3 p-3 rounded-sm border bg-card hover:bg-accent/50 transition-colors"
     >
       <Checkbox
         checked={selectedItems.has(item.backup_id)}

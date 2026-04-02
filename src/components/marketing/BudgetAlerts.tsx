@@ -186,7 +186,7 @@ export function BudgetAlerts({ organizationId }: BudgetAlertsProps) {
           return (
             <div 
               key={alert.id} 
-              className={`p-3 rounded-lg ${config.bgColor} border border-current/10`}
+              className={`p-3 rounded-sm ${config.bgColor} border border-current/10`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3">

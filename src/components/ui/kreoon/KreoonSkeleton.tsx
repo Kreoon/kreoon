@@ -15,8 +15,8 @@ export interface KreoonSkeletonProps
 const variantRadius: Record<KreoonSkeletonVariant, string> = {
   text: "rounded",
   circular: "rounded-full",
-  rectangular: "rounded-lg",
-  card: "rounded-xl",
+  rectangular: "rounded-sm",
+  card: "rounded-sm",
 };
 
 const animationClasses: Record<KreoonSkeletonAnimation, string> = {
@@ -119,7 +119,7 @@ export function KreoonSkeletonCard({
   return (
     <div
       className={cn(
-        "rounded-xl border border-kreoon-border bg-kreoon-bg-card/80 overflow-hidden",
+        "rounded-sm border border-kreoon-border bg-kreoon-bg-card/80 overflow-hidden",
         className
       )}
       aria-hidden
@@ -164,7 +164,7 @@ export function KreoonSkeletonTable({
   return (
     <div
       className={cn(
-        "w-full rounded-xl border border-kreoon-border overflow-hidden",
+        "w-full rounded-sm border border-kreoon-border overflow-hidden",
         className
       )}
       aria-hidden
@@ -231,11 +231,11 @@ export function KreoonLoadingScreen({
     >
       {showLogo && (
         <div className="mb-8 animate-kreoon-skeleton-pulse">
-          <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-kreoon-purple-500/30 bg-kreoon-bg-card">
+          <div className="flex h-14 w-14 items-center justify-center rounded-sm border border-kreoon-purple-500/30 bg-kreoon-bg-card">
             <img
               src="/favicon.png"
               alt=""
-              className="h-10 w-10 object-cover rounded-lg"
+              className="h-10 w-10 object-cover rounded-sm"
             />
           </div>
         </div>

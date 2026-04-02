@@ -53,7 +53,7 @@ export function ProgressToNextLevel({
     return (
       <motion.div
         className={cn(
-          'relative rounded-xl overflow-hidden',
+          'relative rounded-sm overflow-hidden',
           config.padding,
           'bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-amber-500/10',
           'border border-amber-500/30',
@@ -95,7 +95,7 @@ export function ProgressToNextLevel({
         <Tooltip>
           <TooltipTrigger asChild>
             <div className={cn('w-full', className)}>
-              <div className="relative w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+              <div className="relative w-full h-1.5 bg-secondary rounded-full overflow-hidden">
                 <motion.div
                   className="absolute inset-y-0 left-0 rounded-full"
                   style={{
@@ -109,12 +109,12 @@ export function ProgressToNextLevel({
               </div>
             </div>
           </TooltipTrigger>
-          <TooltipContent className="bg-zinc-900/95 backdrop-blur-sm border-white/10">
+          <TooltipContent className="bg-popover border-border">
             <div className="flex flex-col gap-1">
               <span className="font-medium">
                 Nivel {actual.nivel} → {siguiente.nivel}
               </span>
-              <span className="text-xs text-zinc-400">
+              <span className="text-xs text-muted-foreground">
                 Faltan {xpFaltante.toLocaleString()} CR para {siguiente.nombre}
               </span>
             </div>
@@ -127,11 +127,11 @@ export function ProgressToNextLevel({
   return (
     <motion.div
       className={cn(
-        'rounded-xl',
+        'rounded-sm',
         config.padding,
-        'bg-gradient-to-br from-zinc-900/80 to-zinc-900/40',
-        'border border-white/5',
-        'backdrop-blur-sm',
+        'bg-gradient-to-br from-card/80 to-card/40',
+        'border border-border',
+        '',
         className
       )}
       initial={{ opacity: 0, y: 10 }}
@@ -144,10 +144,10 @@ export function ProgressToNextLevel({
           <div className="flex items-center gap-2">
             <LevelBadge nivel={actual.nivel} size={config.badgeSize} showTooltip={false} />
             <div className="flex flex-col">
-              <span className={cn('font-semibold text-white', config.text)}>
+              <span className={cn('font-semibold text-foreground', config.text)}>
                 {actual.nombre}
               </span>
-              <span className="text-xs text-zinc-500">
+              <span className="text-xs text-muted-foreground">
                 Nivel actual
               </span>
             </div>
@@ -158,16 +158,16 @@ export function ProgressToNextLevel({
             animate={{ x: [0, 5, 0] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           >
-            <ChevronRight className="w-5 h-5 text-zinc-500" />
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </motion.div>
 
           {/* Next level */}
           <div className="flex items-center gap-2">
             <div className="flex flex-col items-end">
-              <span className={cn('font-semibold text-zinc-400', config.text)}>
+              <span className={cn('font-semibold text-muted-foreground', config.text)}>
                 {siguiente.nombre}
               </span>
-              <span className="text-xs text-zinc-600">
+              <span className="text-xs text-muted-foreground">
                 Siguiente nivel
               </span>
             </div>
@@ -182,7 +182,7 @@ export function ProgressToNextLevel({
       <div className="relative">
         <div
           className={cn(
-            'w-full bg-zinc-800/50 rounded-full overflow-hidden',
+            'w-full bg-muted rounded-full overflow-hidden',
             config.height
           )}
         >
@@ -212,13 +212,13 @@ export function ProgressToNextLevel({
       {/* Footer info */}
       {showDetails && (
         <div className="flex items-center justify-between mt-2">
-          <span className={cn('text-zinc-400 tabular-nums', size === 'lg' ? 'text-sm' : 'text-xs')}>
+          <span className={cn('text-muted-foreground tabular-nums', size === 'lg' ? 'text-sm' : 'text-xs')}>
             {creditosActuales.toLocaleString()} CR
           </span>
-          <span className={cn('text-zinc-500', size === 'lg' ? 'text-sm' : 'text-xs')}>
+          <span className={cn('text-muted-foreground', size === 'lg' ? 'text-sm' : 'text-xs')}>
             Faltan <span className="text-purple-400 font-medium">{xpFaltante.toLocaleString()} CR</span> para {siguiente.nombre}
           </span>
-          <span className={cn('text-zinc-400 tabular-nums', size === 'lg' ? 'text-sm' : 'text-xs')}>
+          <span className={cn('text-muted-foreground tabular-nums', size === 'lg' ? 'text-sm' : 'text-xs')}>
             {siguiente.xpRequerido.toLocaleString()} CR
           </span>
         </div>

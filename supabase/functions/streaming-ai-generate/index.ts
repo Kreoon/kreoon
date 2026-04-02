@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getModuleAIConfig, getPerplexityConfig } from "../_shared/get-module-ai-config.ts";
 import { makeAIRequest, corsHeaders } from "../_shared/ai-providers.ts";
+import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
 
 const LIVE_SHOPPING_SYSTEM_PROMPT = `Eres un experto en Live Shopping y Social Commerce para Latinoamérica.
 
@@ -312,21 +313,18 @@ serve(async (req) => {
       throw new Error(`Invalid action: ${action}`);
     }
 
-    if (organizationId) {
-      try {
-        await supabase.from("ai_usage_logs").insert({
-          organization_id: organizationId,
-          user_id: "00000000-0000-0000-0000-000000000000",
-          action: action ?? "streaming_ai",
-          module: "streaming_ai",
-          provider: "gemini",
-          model: "gemini-2.5-flash",
-          success: true,
-        });
-      } catch {
-        // ignore
-      }
-    }
+    logAIUsage(supabase, {
+      organization_id: organizationId || "00000000-0000-0000-0000-000000000000",
+      user_id: "00000000-0000-0000-0000-000000000000",
+      module: "streaming-ai",
+      action: action ?? "streaming_ai",
+      provider: "gemini",
+      model: "gemini-2.5-flash",
+      tokens_input: 0,
+      tokens_output: 0,
+      success: true,
+      edge_function: "streaming-ai-generate",
+    }).catch(console.error);
 
     return new Response(JSON.stringify(output), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

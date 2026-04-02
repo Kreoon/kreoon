@@ -27,9 +27,9 @@ export function BalanceCard({ wallet, isLoading, showBreakdown = true, className
         <CardContent>
           <div className="space-y-4">
             <div className="h-12 w-48 bg-[hsl(270,100%,60%,0.1)] rounded animate-pulse" />
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[1, 2, 3].map(i => (
-                <div key={i} className="h-16 bg-[hsl(270,100%,60%,0.05)] rounded-lg animate-pulse" />
+                <div key={i} className="h-16 bg-[hsl(270,100%,60%,0.05)] rounded-sm animate-pulse" />
               ))}
             </div>
           </div>
@@ -57,7 +57,7 @@ export function BalanceCard({ wallet, isLoading, showBreakdown = true, className
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
+            <div className="p-2 rounded-sm bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
               <Wallet className="h-5 w-5 text-primary" />
             </div>
             <span>Mi Wallet</span>
@@ -106,10 +106,10 @@ export function BalanceCard({ wallet, isLoading, showBreakdown = true, className
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="grid grid-cols-3 gap-3"
+              className="grid grid-cols-1 sm:grid-cols-3 gap-3"
             >
               {/* Available */}
-              <div className="p-3 rounded-xl bg-[hsl(270,100%,60%,0.08)] border border-[hsl(270,100%,60%,0.1)]">
+              <div className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.08)] border border-[hsl(270,100%,60%,0.1)]">
                 <div className="flex items-center gap-1.5 mb-1">
                   <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
                   <span className="text-xs text-muted-foreground">Disponible</span>
@@ -120,7 +120,7 @@ export function BalanceCard({ wallet, isLoading, showBreakdown = true, className
               </div>
 
               {/* Pending */}
-              <div className="p-3 rounded-xl bg-[hsl(270,100%,60%,0.08)] border border-[hsl(270,100%,60%,0.1)]">
+              <div className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.08)] border border-[hsl(270,100%,60%,0.1)]">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Clock className="h-3.5 w-3.5 text-amber-400" />
                   <span className="text-xs text-muted-foreground">Pendiente</span>
@@ -131,7 +131,7 @@ export function BalanceCard({ wallet, isLoading, showBreakdown = true, className
               </div>
 
               {/* Reserved */}
-              <div className="p-3 rounded-xl bg-[hsl(270,100%,60%,0.08)] border border-[hsl(270,100%,60%,0.1)]">
+              <div className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.08)] border border-[hsl(270,100%,60%,0.1)]">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Lock className="h-3.5 w-3.5 text-primary" />
                   <span className="text-xs text-muted-foreground">Reservado</span>

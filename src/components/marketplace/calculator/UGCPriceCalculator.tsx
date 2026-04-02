@@ -117,13 +117,13 @@ export default function UGCPriceCalculator() {
             {/* Content Type */}
             <div>
               <label className="text-sm text-gray-300 font-medium mb-2 block">Tipo de contenido</label>
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                 {CONTENT_TYPE_OPTIONS.map(opt => (
                   <button
                     key={opt.id}
                     onClick={() => setContentType(opt.id)}
                     className={cn(
-                      'flex flex-col items-center gap-1 p-3 rounded-xl border text-center transition-all',
+                      'flex flex-col items-center gap-1 p-3 rounded-sm border text-center transition-all',
                       contentType === opt.id
                         ? 'border-purple-500 bg-purple-500/10'
                         : 'border-white/10 hover:border-white/20',
@@ -188,7 +188,7 @@ export default function UGCPriceCalculator() {
                     key={opt.days}
                     onClick={() => setDuration(opt.days)}
                     className={cn(
-                      'flex-1 py-2.5 rounded-xl text-sm border transition-all',
+                      'flex-1 py-2.5 rounded-sm text-sm border transition-all',
                       duration === opt.days
                         ? 'border-purple-500 bg-purple-500/10 text-purple-300 font-semibold'
                         : 'border-white/10 text-gray-400 hover:border-white/20',
@@ -209,7 +209,7 @@ export default function UGCPriceCalculator() {
                     key={opt.id}
                     onClick={() => setTier(opt.id)}
                     className={cn(
-                      'w-full flex items-center justify-between p-3 rounded-xl border transition-all',
+                      'w-full flex items-center justify-between p-3 rounded-sm border transition-all',
                       tier === opt.id
                         ? 'border-purple-500 bg-purple-500/10'
                         : 'border-white/10 hover:border-white/20',
@@ -230,7 +230,7 @@ export default function UGCPriceCalculator() {
 
           {/* Right: Estimate */}
           <div className="md:col-span-2">
-            <div className="sticky top-24 bg-card/80 border border-white/10 rounded-2xl p-6 space-y-4">
+            <div className="sticky top-24 bg-card/80 border border-white/10 rounded-sm p-6 space-y-4">
               <h3 className="text-white font-bold text-lg">Estimacion</h3>
 
               <div className="space-y-3">
@@ -252,7 +252,7 @@ export default function UGCPriceCalculator() {
               {/* CTA */}
               <button
                 onClick={handleCreateCampaign}
-                className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold py-3 rounded-xl transition-colors"
+                className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold py-3 rounded-sm transition-colors"
               >
                 <Zap className="h-4 w-4" />
                 Crear Campana Express
@@ -274,12 +274,12 @@ export default function UGCPriceCalculator() {
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       placeholder="tu@email.com"
-                      className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50"
+                      className="flex-1 bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50"
                     />
                     <button
                       onClick={handleCaptureLead}
                       disabled={submittingLead || !email.trim()}
-                      className="bg-white/10 hover:bg-white/15 text-white text-sm px-3 py-2 rounded-lg transition-colors"
+                      className="bg-white/10 hover:bg-white/15 text-white text-sm px-3 py-2 rounded-sm transition-colors"
                     >
                       {submittingLead ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Enviar'}
                     </button>

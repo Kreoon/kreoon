@@ -96,7 +96,7 @@ export function TransactionHistory({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card className="bg-emerald-500/5 border-emerald-500/10">
             <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-emerald-500/10">
+              <div className="p-2 rounded-sm bg-emerald-500/10">
                 <TrendingUp className="h-5 w-5 text-emerald-400" />
               </div>
               <div>
@@ -109,7 +109,7 @@ export function TransactionHistory({
           </Card>
           <Card className="bg-red-500/5 border-red-500/10">
             <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-red-500/10">
+              <div className="p-2 rounded-sm bg-red-500/10">
                 <TrendingDown className="h-5 w-5 text-red-400" />
               </div>
               <div>
@@ -122,7 +122,7 @@ export function TransactionHistory({
           </Card>
           <Card className="bg-[hsl(270,100%,60%,0.05)] border-[hsl(270,100%,60%,0.1)]">
             <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-[hsl(270,100%,60%,0.1)]">
+              <div className="p-2 rounded-sm bg-[hsl(270,100%,60%,0.1)]">
                 <ArrowLeftRight className="h-5 w-5 text-primary" />
               </div>
               <div>

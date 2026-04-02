@@ -34,7 +34,7 @@ import {
   Film,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { invokeProductResearch } from '@/lib/productResearch';
+import { fireProductResearch, pollProductResearchProgress } from '@/lib/productResearch';
 import { invokeAIWithTokens } from '@/lib/ai/token-gate';
 import { ResearchProgressIndicator } from './ResearchProgressIndicator';
 import { toast } from 'sonner';
@@ -868,24 +868,52 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
 
       toast.success('Producto creado, iniciando investigación con IA...');
 
-      // Step 2: Call the research function (Kreoon directo)
-      // Research errors are handled separately - product is already saved
+      // Step 2: Fire research as fire-and-forget (edge function self-invokes for all 12 steps)
+      // The ResearchProgressIndicator component polls research_progress automatically
       let researchSuccess = false;
       try {
-        const { data, error } = await invokeProductResearch({ productId: newProduct.id, briefData });
+        const fireResult = await fireProductResearch({ productId: newProduct.id, briefData });
 
-        if (error) {
-          console.error('Research function error:', error);
-          toast.error('Error al generar la investigación', {
+        if (!fireResult.success) {
+          console.error('Research fire error:', fireResult.error);
+          toast.error('Error al iniciar la investigación', {
             description: 'El brief fue guardado. Puedes reintentar la investigación desde el detalle del producto.'
           });
-        } else if (!data?.success) {
-          console.error('Research returned failure:', data?.error);
-          toast.error('La investigación no se completó', {
-            description: data?.error || 'El brief fue guardado. Puedes reintentar desde el detalle del producto.'
-          });
         } else {
-          researchSuccess = true;
+          // Poll for completion — wait up to 10 minutes
+          researchSuccess = await new Promise<boolean>((resolve) => {
+            const cancelPoll = pollProductResearchProgress(
+              newProduct.id,
+              (progress, done) => {
+                if (done) {
+                  if (progress?.error) {
+                    console.error('Research poll error:', progress.label);
+                    toast.error('La investigación encontró un error', {
+                      description: progress.label || 'Puedes reintentar desde el detalle del producto.'
+                    });
+                    resolve(false);
+                  } else {
+                    resolve(true);
+                  }
+                  cancelPoll();
+                }
+              },
+              3000,
+              200,
+            );
+
+            // Safety timeout: don't block forever (10 min)
+            setTimeout(() => {
+              cancelPoll();
+              resolve(false);
+            }, 600000);
+          });
+
+          if (!researchSuccess) {
+            toast.error('La investigación no se completó a tiempo', {
+              description: 'Puedes ver el progreso parcial y reintentar desde el detalle del producto.'
+            });
+          }
         }
       } catch (researchError) {
         console.error('Research exception:', researchError);
@@ -1036,7 +1064,7 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
         return (
           <div className="space-y-4">
             {/* Business Type Selector */}
-            <div className="p-4 bg-muted/50 rounded-lg border">
+            <div className="p-4 bg-muted/50 rounded-sm border">
               <Label className="text-base font-semibold">¿Qué tipo de negocio es? *</Label>
               <p className="text-sm text-muted-foreground mb-3">Esto nos ayuda a personalizar los guiones</p>
               <RadioGroup 
@@ -1044,7 +1072,7 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
                 onValueChange={(v: 'product_service' | 'personal_brand') => updateField('businessType', v)}
                 className="grid grid-cols-1 md:grid-cols-2 gap-3"
               >
-                <div className={`flex items-start space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                <div className={`flex items-start space-x-3 p-4 rounded-sm border-2 cursor-pointer transition-all ${
                   briefData.businessType === 'product_service' 
                     ? 'border-primary bg-primary/5' 
                     : 'border-border hover:border-primary/50'
@@ -1062,7 +1090,7 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
                     </p>
                   </div>
                 </div>
-                <div className={`flex items-start space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                <div className={`flex items-start space-x-3 p-4 rounded-sm border-2 cursor-pointer transition-all ${
                   briefData.businessType === 'personal_brand' 
                     ? 'border-primary bg-primary/5' 
                     : 'border-border hover:border-primary/50'
@@ -1181,7 +1209,7 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
             </div>
 
             {/* Document Upload for additional context */}
-            <div className="p-4 bg-muted/30 rounded-lg border border-dashed">
+            <div className="p-4 bg-muted/30 rounded-sm border border-dashed">
               <div className="flex items-center gap-2 mb-2">
                 <Package className="h-4 w-4 text-primary" />
                 <Label>Documento del producto (Opcional)</Label>
@@ -1485,7 +1513,7 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
       case 3:
         return (
           <div className="space-y-6">
-            <div className="bg-muted/50 p-4 rounded-lg mb-2">
+            <div className="bg-muted/50 p-4 rounded-sm mb-2">
               <p className="text-sm text-muted-foreground">
                 💡 <strong>¿Para qué sirve esto?</strong> Las personas compran por emociones, no por lógica. 
                 Aquí identificamos qué motiva a tu cliente a tomar acción.
@@ -1500,7 +1528,7 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
                   <div
                     key={trigger.value}
                     onClick={() => toggleArrayField('reptileBrain', trigger.value)}
-                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                    className={`p-3 rounded-sm border cursor-pointer transition-all ${
                       briefData.reptileBrain.includes(trigger.value)
                         ? 'border-primary bg-primary/10'
                         : 'border-border hover:border-primary/50'
@@ -1558,7 +1586,7 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
       case 4:
         return (
           <div className="space-y-4">
-            <div className="bg-muted/50 p-4 rounded-lg mb-2">
+            <div className="bg-muted/50 p-4 rounded-sm mb-2">
               <p className="text-sm text-muted-foreground">
                 👤 <strong>Vamos a conocer a tu cliente ideal.</strong> Piensa en la persona perfecta que compraría tu producto.
               </p>
@@ -1729,7 +1757,7 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
       case 5:
         return (
           <div className="space-y-4">
-            <div className="bg-muted/50 p-4 rounded-lg mb-2">
+            <div className="bg-muted/50 p-4 rounded-sm mb-2">
               <p className="text-sm text-muted-foreground">
                 📱 <strong>¡Ya casi terminamos!</strong> Ahora cuéntanos dónde y cómo quieres mostrar tu producto.
               </p>
@@ -1743,7 +1771,7 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
                   <div
                     key={type.value}
                     onClick={() => toggleArrayField('contentTypes', type.value)}
-                    className={`p-2 rounded-lg border cursor-pointer text-center transition-all ${
+                    className={`p-2 rounded-sm border cursor-pointer text-center transition-all ${
                       briefData.contentTypes.includes(type.value)
                         ? 'border-primary bg-primary/10'
                         : 'border-border hover:border-primary/50'
@@ -1907,7 +1935,7 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
             </div>
 
             {/* Videos Section - Based on Client Packages */}
-            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-4">
+            <div className="bg-primary/5 border border-primary/20 rounded-sm p-4 space-y-4">
               <div>
                 <Label className="text-base font-semibold flex items-center gap-2">
                   📦 Videos Disponibles de tus Paquetes
@@ -1933,7 +1961,7 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
                     </div>
                   </div>
                 ) : (
-                  <div className="mt-2 p-4 bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-lg">
+                  <div className="mt-2 p-4 bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-sm">
                     <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
                       ⚠️ No tienes videos disponibles
                     </p>
@@ -1964,7 +1992,7 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
                   {ESFERA_PHASES.map((phase) => (
                     <div
                       key={phase.key}
-                      className={`p-4 rounded-lg border-2 ${phase.color} transition-all`}
+                      className={`p-4 rounded-sm border-2 ${phase.color} transition-all`}
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0 space-y-2">
@@ -2032,7 +2060,7 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
                 </div>
 
                 {totalFromPhases > 0 && (
-                  <div className="p-4 bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-300 dark:border-emerald-700 rounded-lg">
+                  <div className="p-4 bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-300 dark:border-emerald-700 rounded-sm">
                     <p className="text-sm text-emerald-800 dark:text-emerald-200">
                       ✅ Se crearán <strong>{totalFromPhases}</strong> proyectos en tu tablero de contenido, 
                       distribuidos estratégicamente por fase del embudo.
@@ -2079,7 +2107,7 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
             <button
               key={step.id}
               onClick={() => setCurrentStep(index)}
-              className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors min-w-[70px] ${
+              className={`flex flex-col items-center gap-1 p-2 rounded-sm transition-colors min-w-[70px] ${
                 isActive ? 'bg-primary/10 text-primary' : isComplete ? 'text-primary/70' : 'text-muted-foreground'
               }`}
             >

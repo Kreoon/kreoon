@@ -1,4 +1,4 @@
-import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { LazyRichTextEditor as RichTextEditor } from '@/components/ui/lazy-rich-text-editor';
 import { RichTextViewer } from '@/components/scripts/RichTextViewer';
 import { SectionCard } from '../../components/SectionCard';
 import { Palette, Type, Image, Sparkles } from 'lucide-react';
@@ -38,7 +38,7 @@ export function DesignerSubTab({
             <RichTextViewer content={formData.designer_guidelines || ''} maxHeight="" />
           
           ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/30 rounded-lg">
+            <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/30 rounded-sm">
               <Palette className="h-8 w-8 text-muted-foreground/50 mb-2" />
               <p className="text-muted-foreground text-sm">Sin indicaciones de diseño</p>
             </div>
@@ -48,7 +48,7 @@ export function DesignerSubTab({
 
       {/* Design Reference Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-4 bg-muted/30 rounded-lg">
+        <div className="p-4 bg-muted/30 rounded-sm">
           <div className="flex items-center gap-2 mb-2">
             <Image className="h-4 w-4 text-primary" />
             <span className="font-medium text-sm">Miniatura</span>
@@ -58,7 +58,7 @@ export function DesignerSubTab({
           </p>
         </div>
 
-        <div className="p-4 bg-muted/30 rounded-lg">
+        <div className="p-4 bg-muted/30 rounded-sm">
           <div className="flex items-center gap-2 mb-2">
             <Palette className="h-4 w-4 text-primary" />
             <span className="font-medium text-sm">Colores</span>
@@ -68,7 +68,7 @@ export function DesignerSubTab({
           </p>
         </div>
 
-        <div className="p-4 bg-muted/30 rounded-lg">
+        <div className="p-4 bg-muted/30 rounded-sm">
           <div className="flex items-center gap-2 mb-2">
             <Type className="h-4 w-4 text-primary" />
             <span className="font-medium text-sm">Tipografía</span>
@@ -82,7 +82,7 @@ export function DesignerSubTab({
       {/* Thumbnail Preview Placeholder */}
       {content?.thumbnail_url && (
         <SectionCard title="Miniatura Actual" iconEmoji="🖼️">
-          <div className="aspect-video max-w-sm rounded-lg overflow-hidden bg-muted">
+          <div className="aspect-video max-w-sm rounded-sm overflow-hidden bg-muted">
             <img 
               src={content.thumbnail_url} 
               alt="Thumbnail" 

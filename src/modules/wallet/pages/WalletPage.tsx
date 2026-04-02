@@ -68,7 +68,7 @@ export function WalletPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
+          <div className="p-3 rounded-sm bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
             <Wallet className="h-8 w-8 text-primary" />
           </div>
           <div>
@@ -118,8 +118,8 @@ export function WalletPage() {
             />
           ) : isWalletLoading ? (
             <div className="animate-pulse space-y-4">
-              <div className="h-12 w-full bg-[hsl(270,100%,60%,0.1)] rounded-xl" />
-              <div className="h-[400px] bg-[hsl(270,100%,60%,0.05)] rounded-2xl" />
+              <div className="h-12 w-full bg-[hsl(270,100%,60%,0.1)] rounded-sm" />
+              <div className="h-[400px] bg-[hsl(270,100%,60%,0.05)] rounded-sm" />
             </div>
           ) : (
             <div className="text-center py-12 text-muted-foreground">
@@ -134,19 +134,19 @@ export function WalletPage() {
             <div className="space-y-6">
               {/* Quick Stats */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)] border border-[hsl(270,100%,60%,0.1)]">
+                <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] border border-[hsl(270,100%,60%,0.1)]">
                   <p className="text-sm text-muted-foreground">Balance Disponible</p>
                   <p className="text-2xl font-bold text-emerald-400 mt-1">
                     {walletDisplay.formattedAvailable}
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)] border border-[hsl(270,100%,60%,0.1)]">
+                <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] border border-[hsl(270,100%,60%,0.1)]">
                   <p className="text-sm text-muted-foreground">Pendiente de Retiro</p>
                   <p className="text-2xl font-bold text-amber-400 mt-1">
                     {walletDisplay.formattedPending}
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)] border border-[hsl(270,100%,60%,0.1)]">
+                <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] border border-[hsl(270,100%,60%,0.1)]">
                   <p className="text-sm text-muted-foreground">Mínimo de Retiro</p>
                   <p className="text-2xl font-bold text-white mt-1">
                     $50.000 COP
@@ -159,12 +159,12 @@ export function WalletPage() {
             </div>
           ) : isWalletLoading ? (
             <div className="animate-pulse space-y-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-24 bg-[hsl(270,100%,60%,0.05)] rounded-xl" />
+                  <div key={i} className="h-24 bg-[hsl(270,100%,60%,0.05)] rounded-sm" />
                 ))}
               </div>
-              <div className="h-[400px] bg-[hsl(270,100%,60%,0.05)] rounded-2xl" />
+              <div className="h-[400px] bg-[hsl(270,100%,60%,0.05)] rounded-sm" />
             </div>
           ) : (
             <div className="text-center py-12 text-muted-foreground">

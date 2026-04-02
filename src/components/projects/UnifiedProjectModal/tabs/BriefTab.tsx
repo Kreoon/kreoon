@@ -182,7 +182,7 @@ export default function BriefTab({ project, formData, setFormData, editMode, per
 
       {/* ============ VIDEO DE REFERENCIA ============ */}
       {project.source === 'content' && (
-        <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+        <div className="rounded-sm border bg-muted/20 p-4 space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="font-medium flex items-center gap-2">
               <Video className="h-4 w-4" />
@@ -206,7 +206,7 @@ export default function BriefTab({ project, formData, setFormData, editMode, per
 
           {/* Video Player */}
           {hasVideo && (
-            <div className="aspect-[9/16] max-h-[400px] rounded-lg overflow-hidden bg-black mx-auto w-full max-w-[280px]">
+            <div className="aspect-[9/16] max-h-[400px] rounded-sm overflow-hidden bg-black mx-auto w-full max-w-[280px]">
               {isBunnyVideo ? (
                 <AutoPauseVideo
                   src={referenceUrl}
@@ -226,7 +226,7 @@ export default function BriefTab({ project, formData, setFormData, editMode, per
 
           {/* Non-embeddable URL — show as link */}
           {referenceUrl && !hasVideo && (
-            <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-sm">
               <LinkIcon className="h-4 w-4 text-muted-foreground shrink-0" />
               <a
                 href={referenceUrl}

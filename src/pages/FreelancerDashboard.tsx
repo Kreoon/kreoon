@@ -59,7 +59,7 @@ function StatCard({
               </div>
             )}
           </div>
-          <div className={cn("w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center", colors[color])}>
+          <div className={cn("w-10 h-10 rounded-sm bg-gradient-to-br flex items-center justify-center", colors[color])}>
             <Icon className="w-5 h-5" />
           </div>
         </div>
@@ -87,7 +87,7 @@ function CampaignCard({ campaign, type }: { campaign: any; type: 'public' | 'app
   };
 
   return (
-    <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 hover:border-purple-500/30 transition-colors">
+    <div className="p-4 rounded-sm bg-white/[0.02] border border-white/10 hover:border-purple-500/30 transition-colors">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -126,7 +126,7 @@ function ProjectCard({ project }: { project: any }) {
     : 0;
 
   return (
-    <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10">
+    <div className="p-4 rounded-sm bg-white/[0.02] border border-white/10">
       <div className="flex items-start justify-between mb-3">
         <div>
           <h4 className="font-medium text-white">{project.title}</h4>
@@ -202,46 +202,59 @@ export default function FreelancerDashboard() {
 
   // Fetch campaign applications
   const { data: applications } = useQuery({
-    queryKey: ['campaign-applications', user?.id],
+    queryKey: ['campaign-applications', creatorProfile?.id],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      // Primero obtener las aplicaciones
+      const { data: apps, error } = await (supabase as any)
         .from('campaign_applications')
-        .select(`
-          *,
-          campaign:marketplace_campaigns(id, title, budget, deadline, status)
-        `)
+        .select('id, campaign_id, status, created_at, cover_letter, proposed_price')
         .eq('creator_id', creatorProfile?.id)
         .order('created_at', { ascending: false })
         .limit(10);
-      return data || [];
+
+      if (error || !apps?.length) return [];
+
+      // Luego obtener los datos de las campañas
+      const campaignIds = [...new Set(apps.map((a: any) => a.campaign_id))];
+      const { data: campaigns } = await (supabase as any)
+        .from('marketplace_campaigns')
+        .select('id, title, total_budget, deadline, status')
+        .in('id', campaignIds);
+
+      const campaignsMap = new Map((campaigns || []).map((c: any) => [c.id, c]));
+
+      return apps.map((app: any) => ({
+        ...app,
+        campaign: campaignsMap.get(app.campaign_id) || null,
+      }));
     },
     enabled: !!creatorProfile?.id,
   });
 
-  // Fetch active projects
+  // Fetch active projects (creator_id references auth.users.id, not creator_profiles.id)
   const { data: projects } = useQuery({
     queryKey: ['marketplace-projects', user?.id],
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from('marketplace_projects')
-        .select('*')
-        .eq('creator_id', creatorProfile?.id)
+        .select('id, title, status, created_at, deadline, total_price, currency')
+        .eq('creator_id', user?.id) // Usa user.id, no creatorProfile.id
         .in('status', ['in_progress', 'pending_delivery', 'revision'])
         .order('created_at', { ascending: false })
         .limit(5);
       return data || [];
     },
-    enabled: !!creatorProfile?.id,
+    enabled: !!user?.id,
   });
 
-  // Fetch public campaigns
+  // Fetch public campaigns (status 'open' o 'active' son visibles públicamente)
   const { data: publicCampaigns } = useQuery({
     queryKey: ['public-campaigns'],
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from('marketplace_campaigns')
-        .select('*')
-        .eq('status', 'open')
+        .select('id, title, description, status, deadline, total_budget, currency, cover_image_url')
+        .in('status', ['open', 'active'])
         .eq('visibility', 'public')
         .order('created_at', { ascending: false })
         .limit(5);
@@ -528,22 +541,22 @@ export default function FreelancerDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="p-3 rounded-lg bg-white/5">
+                  <div className="p-3 rounded-sm bg-white/5">
                     <p className="text-xs text-white/50">Posts este mes</p>
                     <p className="text-xl font-bold text-white">{socialStats?.posts_this_month || 0}</p>
                     {!isPro && (
                       <p className="text-xs text-amber-400">de 50 gratis</p>
                     )}
                   </div>
-                  <div className="p-3 rounded-lg bg-white/5">
+                  <div className="p-3 rounded-sm bg-white/5">
                     <p className="text-xs text-white/50">Alcance total</p>
                     <p className="text-xl font-bold text-white">{(socialStats?.total_reach || 0).toLocaleString()}</p>
                   </div>
-                  <div className="p-3 rounded-lg bg-white/5">
+                  <div className="p-3 rounded-sm bg-white/5">
                     <p className="text-xs text-white/50">Engagement</p>
                     <p className="text-xl font-bold text-white">{socialStats?.engagement_rate || 0}%</p>
                   </div>
-                  <div className="p-3 rounded-lg bg-white/5">
+                  <div className="p-3 rounded-sm bg-white/5">
                     <p className="text-xs text-white/50">Programados</p>
                     <p className="text-xl font-bold text-white">{socialStats?.scheduled || 0}</p>
                   </div>
@@ -662,7 +675,7 @@ export default function FreelancerDashboard() {
                 </div>
 
                 {!isPro && (
-                  <div className="p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+                  <div className="p-4 rounded-sm bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-medium text-white">Plan Gratuito: 50 posts/mes</p>

@@ -2,6 +2,8 @@ import {
   startOfDay,
   endOfDay,
   subDays,
+  subYears,
+  differenceInCalendarDays,
   startOfWeek,
   endOfWeek,
   startOfMonth,
@@ -127,4 +129,23 @@ export function resolvePreset(
  */
 export function getPresetLabel(key: DateRangePresetKey): string {
   return DATE_RANGE_PRESETS.find(p => p.key === key)?.label ?? 'Personalizado';
+}
+
+/**
+ * Calculate the previous period of the same length for comparison.
+ * E.g. if from=Mar 1 and to=Mar 30 (30 days), returns Feb 1 – Mar 1.
+ */
+export function getComparisonRange(from: Date, to: Date): { from: Date; to: Date } {
+  const days = differenceInCalendarDays(to, from) + 1;
+  const compTo = subDays(from, 1);
+  const compFrom = subDays(from, days);
+  return { from: startOfDay(compFrom), to: endOfDay(compTo) };
+}
+
+/**
+ * Calculate the same date range from the previous year.
+ * E.g. if from=Mar 1 2026 and to=Mar 30 2026, returns Mar 1 2025 – Mar 30 2025.
+ */
+export function getYearOverYearRange(from: Date, to: Date): { from: Date; to: Date } {
+  return { from: startOfDay(subYears(from, 1)), to: endOfDay(subYears(to, 1)) };
 }

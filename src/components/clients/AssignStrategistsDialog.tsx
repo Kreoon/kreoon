@@ -191,7 +191,7 @@ export function AssignStrategistsDialog({
               {strategists.map((strategist) => (
                 <div
                   key={strategist.id}
-                  className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                  className={`flex items-center gap-3 p-3 rounded-sm border transition-colors ${
                     isAssigned(strategist.id) ? 'bg-primary/5 border-primary/30' : 'hover:bg-muted/50'
                   }`}
                 >

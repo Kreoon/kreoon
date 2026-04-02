@@ -275,7 +275,7 @@ export function BookingCalendar() {
               exit={{ opacity: 0 }}
               className="text-center py-12"
             >
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-slate-100 mb-4">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-sm bg-slate-100 mb-4">
                 <CalendarIcon className="w-6 h-6 text-slate-400" />
               </div>
               <p className="text-slate-500 text-sm">
@@ -290,7 +290,7 @@ export function BookingCalendar() {
               exit={{ opacity: 0 }}
               className="text-center py-12"
             >
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-green-50 mb-4">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-sm bg-green-50 mb-4">
                 <CheckCircle2 className="w-6 h-6 text-green-500" />
               </div>
               <p className="text-slate-500 text-sm">
@@ -312,7 +312,7 @@ export function BookingCalendar() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
                   onClick={() => setSelectedBooking(booking)}
-                  className="p-4 rounded-xl bg-white border border-slate-200 cursor-pointer hover:shadow-md hover:border-violet-200 transition-all group"
+                  className="p-4 rounded-sm bg-white border border-slate-200 cursor-pointer hover:shadow-md hover:border-violet-200 transition-all group"
                   style={{
                     borderLeft: `4px solid ${booking.event_type?.color || '#8B5CF6'}`,
                   }}

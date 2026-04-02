@@ -26,7 +26,7 @@ export function OrgProfileSidebar({ org, accentColor, onContact }: OrgProfileSid
   return (
     <div className="sticky top-24 space-y-4">
       {/* Contact card */}
-      <div className="rounded-2xl border border-white/5 bg-card p-5 space-y-4">
+      <div className="rounded-sm border border-white/5 bg-card p-5 space-y-4">
         <Button
           onClick={onContact}
           className="w-full text-white font-semibold"
@@ -63,7 +63,7 @@ export function OrgProfileSidebar({ org, accentColor, onContact }: OrgProfileSid
 
       {/* Social links */}
       {socialLinks.length > 0 && (
-        <div className="rounded-2xl border border-white/5 bg-card p-5 space-y-3">
+        <div className="rounded-sm border border-white/5 bg-card p-5 space-y-3">
           <h3 className="text-sm font-semibold text-white">Enlaces</h3>
           {socialLinks.map(link => (
             <a
@@ -82,7 +82,7 @@ export function OrgProfileSidebar({ org, accentColor, onContact }: OrgProfileSid
 
       {/* Specialties */}
       {org.org_specialties.length > 0 && (
-        <div className="rounded-2xl border border-white/5 bg-card p-5 space-y-3">
+        <div className="rounded-sm border border-white/5 bg-card p-5 space-y-3">
           <h3 className="text-sm font-semibold text-white">Especialidades</h3>
           <div className="flex flex-wrap gap-2">
             {org.org_specialties.map(spec => (

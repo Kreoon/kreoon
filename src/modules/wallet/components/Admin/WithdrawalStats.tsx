@@ -59,7 +59,7 @@ function StatCard({
               <Skeleton className="h-8 w-20" />
               <Skeleton className="h-3 w-32" />
             </div>
-            <Skeleton className="h-12 w-12 rounded-xl" />
+            <Skeleton className="h-12 w-12 rounded-sm" />
           </div>
         </CardContent>
       </Card>
@@ -104,7 +104,7 @@ function StatCard({
               </div>
             )}
           </div>
-          <div className={cn('p-3 rounded-xl', iconBg)}>
+          <div className={cn('p-3 rounded-sm', iconBg)}>
             <Icon className={cn('h-6 w-6', iconColor)} />
           </div>
         </div>

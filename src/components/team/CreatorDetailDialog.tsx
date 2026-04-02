@@ -298,7 +298,7 @@ export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: C
                         href={`https://instagram.com/${profile.instagram.replace('@', '')}`} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg border hover:bg-accent transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 rounded-sm border hover:bg-accent transition-colors"
                       >
                         <Instagram className="h-4 w-4" />
                         <span className="text-sm">{profile.instagram}</span>
@@ -309,7 +309,7 @@ export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: C
                         href={profile.facebook.startsWith('http') ? profile.facebook : `https://facebook.com/${profile.facebook}`} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg border hover:bg-accent transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 rounded-sm border hover:bg-accent transition-colors"
                       >
                         <Facebook className="h-4 w-4" />
                         <span className="text-sm">{profile.facebook}</span>
@@ -320,7 +320,7 @@ export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: C
                         href={`https://tiktok.com/${profile.tiktok.replace('@', '')}`} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg border hover:bg-accent transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 rounded-sm border hover:bg-accent transition-colors"
                       >
                         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
@@ -348,7 +348,7 @@ export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: C
                       <h4 className="font-medium text-sm text-muted-foreground mb-2">Activos ({activeContent.length})</h4>
                       <div className="space-y-2">
                         {activeContent.map(content => (
-                          <div key={content.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+                          <div key={content.id} className="flex items-center justify-between p-3 rounded-sm border bg-card">
                             <div className="flex-1 min-w-0">
                               <p className="font-medium truncate">{content.title}</p>
                               <p className="text-xs text-muted-foreground">{content.client?.name}</p>
@@ -375,7 +375,7 @@ export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: C
                       <h4 className="font-medium text-sm text-muted-foreground mb-2">Completados ({completedContent.length})</h4>
                       <div className="space-y-2">
                         {completedContent.slice(0, 5).map(content => (
-                          <div key={content.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/50">
+                          <div key={content.id} className="flex items-center justify-between p-3 rounded-sm border bg-muted/50">
                             <div className="flex-1 min-w-0">
                               <p className="font-medium truncate">{content.title}</p>
                               <p className="text-xs text-muted-foreground">{content.client?.name}</p>
@@ -399,19 +399,19 @@ export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: C
 
             <TabsContent value="stats" className="space-y-6 mt-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="p-4 rounded-lg border bg-card text-center">
+                <div className="p-4 rounded-sm border bg-card text-center">
                   <p className="text-2xl font-bold text-primary">{assignedContent.length}</p>
                   <p className="text-xs text-muted-foreground">Total asignados</p>
                 </div>
-                <div className="p-4 rounded-lg border bg-card text-center">
+                <div className="p-4 rounded-sm border bg-card text-center">
                   <p className="text-2xl font-bold text-info">{activeContent.length}</p>
                   <p className="text-xs text-muted-foreground">En progreso</p>
                 </div>
-                <div className="p-4 rounded-lg border bg-card text-center">
+                <div className="p-4 rounded-sm border bg-card text-center">
                   <p className="text-2xl font-bold text-success">{completedContent.length}</p>
                   <p className="text-xs text-muted-foreground">Completados</p>
                 </div>
-                <div className="p-4 rounded-lg border bg-card text-center">
+                <div className="p-4 rounded-sm border bg-card text-center">
                   <p className="text-2xl font-bold text-warning flex items-center justify-center gap-1">
                     <DollarSign className="h-5 w-5" />
                     {totalPayment.toLocaleString()}
@@ -422,14 +422,14 @@ export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: C
 
               {/* Editor-specific stats */}
               {creator?.role === 'editor' && (
-                <div className="space-y-4 p-4 rounded-lg border bg-muted/30">
+                <div className="space-y-4 p-4 rounded-sm border bg-muted/30">
                   <h4 className="font-medium flex items-center gap-2">
                     <TrendingUp className="h-4 w-4 text-primary" />
                     Métricas de Editor (para asignación automática)
                   </h4>
                   
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="p-3 rounded-lg bg-card border">
+                    <div className="p-3 rounded-sm bg-card border">
                       <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
                         <Clock className="h-3 w-3" />
                         Entregas a tiempo
@@ -444,7 +444,7 @@ export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: C
                       </p>
                     </div>
 
-                    <div className="p-3 rounded-lg bg-card border">
+                    <div className="p-3 rounded-sm bg-card border">
                       <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
                         <Video className="h-3 w-3" />
                         Carga actual
@@ -453,7 +453,7 @@ export function CreatorDetailDialog({ creator, open, onOpenChange, onUpdate }: C
                       <p className="text-xs text-muted-foreground">proyectos pendientes</p>
                     </div>
 
-                    <div className="p-3 rounded-lg bg-card border col-span-2 md:col-span-1">
+                    <div className="p-3 rounded-sm bg-card border col-span-2 md:col-span-1">
                       <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
                         <Star className="h-3 w-3 fill-warning text-warning" />
                         Calificación interna

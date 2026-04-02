@@ -112,7 +112,7 @@ export default function CurriculumWorkspace({ formData, setFormData, editMode, r
       ) : (
         <div className="space-y-3">
           {modules.map((mod, modIndex) => (
-            <div key={mod.id} className="border rounded-lg overflow-hidden">
+            <div key={mod.id} className="border rounded-sm overflow-hidden">
               {/* Module header */}
               <div
                 className="flex items-center gap-2 p-3 bg-muted/30 cursor-pointer"
@@ -169,7 +169,7 @@ export default function CurriculumWorkspace({ formData, setFormData, editMode, r
                     {mod.lessons.map((lesson, lessonIndex) => {
                       const typeConfig = LESSON_TYPES[lesson.type] || LESSON_TYPES.video;
                       return (
-                        <div key={lesson.id} className="flex items-center gap-3 p-2 rounded-md bg-muted/20 group">
+                        <div key={lesson.id} className="flex items-center gap-3 p-2 rounded-sm bg-muted/20 group">
                           <span className="text-xs text-muted-foreground font-mono w-8">
                             {modIndex + 1}.{lessonIndex + 1}
                           </span>

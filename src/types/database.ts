@@ -1,34 +1,130 @@
-// AppRole - Defines all available user roles in the system
-// System roles + Legacy roles + 36 Marketplace specialization roles
-// All roles map to a PermissionGroup via getPermissionGroup() in src/lib/permissionGroups.ts
+// =============================================================================
+// ROLES SIMPLIFICADOS - 7 Roles Base + Especializaciones
+// =============================================================================
+// Sistema unificado de roles para toda la plataforma (marketplace, agencias, etc.)
+// - Talento: 5 roles combinables entre sí
+// - Cliente: 1 rol exclusivo (no combinable)
+// - Admin: 1 rol de sistema
 
-/** System roles: special platform management roles */
-export type SystemRole = 'admin' | 'team_leader';
+/**
+ * 7 Roles Base de la plataforma
+ * - admin: Administrador del sistema
+ * - content_creator: Creador de contenido (UGC, influencers, fotógrafos, etc.)
+ * - editor: Editor y producción audiovisual
+ * - digital_strategist: Estratega digital (SEO, trafficker, growth, etc.)
+ * - creative_strategist: Estratega creativo (content strategy, social media, etc.)
+ * - community_manager: Community manager
+ * - client: Cliente/Marca (EXCLUSIVO - no combinable con otros)
+ */
+export type AppRole =
+  | 'admin'
+  | 'content_creator'
+  | 'editor'
+  | 'digital_strategist'
+  | 'creative_strategist'
+  | 'community_manager'
+  | 'client';
 
-/** Legacy roles: still valid but deprecated in favor of specific marketplace roles */
-export type LegacyRole = 'creator' | 'editor' | 'strategist' | 'client' | 'trafficker' | 'ambassador' | 'developer' | 'educator';
+/** Roles de talento (combinables entre sí) */
+export type TalentRole = Exclude<AppRole, 'admin' | 'client'>;
 
-/** Marketplace roles: 36 specialized roles organized by category */
+/** Tipo de usuario: talento busca trabajo, cliente contrata */
+export type UserType = 'talent' | 'client' | 'admin';
+
+/**
+ * Tipo de cuenta - define la version de plataforma que ve el usuario
+ * - talent: Creador independiente con especialidades
+ * - organization: Agencia que gestiona equipos
+ * - client: Marca/empresa que contrata talento
+ */
+export type AccountType = 'talent' | 'organization' | 'client';
+
+/**
+ * Especializaciones - metadata adicional para cada rol
+ * Un usuario puede tener hasta 5 especializaciones
+ */
+export type Specialization =
+  // Content Creator (9)
+  | 'ugc'
+  | 'nano_influencer'
+  | 'micro_influencer'
+  | 'macro_influencer'
+  | 'lifestyle'
+  | 'photographer'
+  | 'live_streamer'
+  | 'podcast_host'
+  | 'voice_artist'
+  // Editor (7)
+  | 'video_editor'
+  | 'motion_graphics'
+  | 'colorist'
+  | 'sound_designer'
+  | 'animator'
+  | 'director'
+  | 'producer'
+  // Digital Strategist (7)
+  | 'seo'
+  | 'sem'
+  | 'trafficker'
+  | 'email_marketing'
+  | 'growth_hacker'
+  | 'cro'
+  | 'crm'
+  // Creative Strategist (4)
+  | 'content_strategy'
+  | 'social_media'
+  | 'copywriting'
+  | 'graphic_design'
+  // Client (3)
+  | 'brand_manager'
+  | 'marketing_director'
+  | 'agency';
+
+/** Categoría de especialización para UI */
+export type SpecializationCategory =
+  | 'content_creator'
+  | 'editor'
+  | 'digital_strategist'
+  | 'creative_strategist'
+  | 'client';
+
+// =============================================================================
+// LEGACY TYPES - Para compatibilidad con código existente
+// =============================================================================
+// Estos tipos se mantienen temporalmente para no romper imports existentes
+// TODO: Migrar gradualmente y eliminar
+
+/** @deprecated Use AppRole instead */
+export type SystemRole = 'admin';
+
+/** @deprecated Use AppRole instead */
+export type LegacyRole =
+  | 'creator'        // → content_creator
+  | 'editor'         // → editor
+  | 'strategist'     // → creative_strategist
+  | 'client'         // → client
+  | 'trafficker'     // → digital_strategist + trafficker specialization
+  | 'ambassador'     // → content_creator + brand_ambassador badge
+  | 'developer'      // REMOVED
+  | 'educator'       // REMOVED
+  | 'team_leader';   // → admin (for orgs)
+
+/** @deprecated Use Specialization instead - kept for migration */
 export type MarketplaceRole =
-  // Content Creation (12)
   | 'ugc_creator' | 'lifestyle_creator' | 'micro_influencer' | 'nano_influencer'
   | 'macro_influencer' | 'brand_ambassador' | 'live_streamer' | 'podcast_host'
   | 'photographer' | 'copywriter' | 'graphic_designer' | 'voice_artist'
-  // Post-Production (7)
   | 'video_editor' | 'motion_graphics' | 'sound_designer' | 'colorist'
   | 'director' | 'producer' | 'animator_2d3d'
-  // Strategy & Marketing (10)
   | 'content_strategist' | 'social_media_manager' | 'community_manager'
   | 'digital_strategist' | 'seo_specialist' | 'email_marketer'
   | 'growth_hacker' | 'crm_specialist' | 'conversion_optimizer'
-  // Technology (3)
   | 'web_developer' | 'app_developer' | 'ai_specialist'
-  // Education (2)
   | 'online_instructor' | 'workshop_facilitator'
-  // Client (2)
   | 'brand_manager' | 'marketing_director';
 
-export type AppRole = SystemRole | LegacyRole | MarketplaceRole;
+/** @deprecated - Combined type for backwards compatibility */
+export type LegacyAppRole = SystemRole | LegacyRole | MarketplaceRole | AppRole;
 
 // Ambassador badge levels (badge system - not a role)
 export type AmbassadorLevel = 'bronze' | 'silver' | 'gold';
@@ -79,6 +175,7 @@ export interface Profile {
   current_organization_id: string | null;
   organization_status?: string;
   active_role?: AppRole | string | null;
+  user_type?: AccountType | null;
   active_brand_id?: string | null;
   platform_access_unlocked?: boolean;
   display_currency?: string | null;
@@ -144,6 +241,7 @@ export interface ClientPackage {
   payment_status: PaymentStatus;
   paid_amount: number;
   paid_at: string | null;
+  payment_due_date: string | null;
   notes: string | null;
   is_active: boolean;
   created_at: string;

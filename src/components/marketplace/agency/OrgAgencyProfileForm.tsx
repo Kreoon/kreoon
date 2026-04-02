@@ -247,7 +247,7 @@ export function OrgAgencyProfileForm() {
     <div className="space-y-6 max-w-2xl">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-500/30">
+        <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-500/30">
           <Building2 className="h-5 w-5 text-purple-400" />
         </div>
         <div>
@@ -416,7 +416,7 @@ export function OrgAgencyProfileForm() {
               <CardDescription>Define el rango de precios de tus servicios</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1.5">
                   <Label>Mínimo</Label>
                   <Input
@@ -476,7 +476,7 @@ export function OrgAgencyProfileForm() {
               ) : (
                 <div className="space-y-3">
                   {services.map((svc) => (
-                    <div key={svc.id} className="p-3 rounded-lg border bg-card/50 space-y-2">
+                    <div key={svc.id} className="p-3 rounded-sm border bg-card/50 space-y-2">
                       <div className="flex items-start gap-2">
                         <Input
                           className="w-14 text-center text-lg"

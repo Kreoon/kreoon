@@ -112,7 +112,7 @@ export function CustomQuestionsEditor({
             variant="outline"
             size="sm"
             onClick={() => setIsAdding(true)}
-            className="rounded-lg"
+            className="rounded-sm"
           >
             <Plus className="w-4 h-4 mr-1" />
             Agregar
@@ -132,7 +132,7 @@ export function CustomQuestionsEditor({
             <Reorder.Item
               key={question.id}
               value={question}
-              className="bg-white border border-slate-200 rounded-xl p-4 cursor-move"
+              className="bg-white border border-slate-200 rounded-sm p-4 cursor-move"
             >
               <div className="flex items-start gap-3">
                 <GripVertical className="w-5 h-5 text-slate-300 mt-0.5 flex-shrink-0" />
@@ -195,7 +195,7 @@ export function CustomQuestionsEditor({
 
       {/* Empty state */}
       {questions.length === 0 && !isAdding && (
-        <div className="text-center py-8 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
+        <div className="text-center py-8 bg-slate-50 rounded-sm border-2 border-dashed border-slate-200">
           <Type className="w-10 h-10 mx-auto text-slate-300 mb-3" />
           <p className="text-sm text-slate-500 mb-3">
             No hay preguntas personalizadas
@@ -204,7 +204,7 @@ export function CustomQuestionsEditor({
             variant="outline"
             size="sm"
             onClick={() => setIsAdding(true)}
-            className="rounded-lg"
+            className="rounded-sm"
           >
             <Plus className="w-4 h-4 mr-1" />
             Agregar primera pregunta
@@ -219,7 +219,7 @@ export function CustomQuestionsEditor({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="bg-violet-50 border border-violet-200 rounded-xl p-4 space-y-4"
+            className="bg-violet-50 border border-violet-200 rounded-sm p-4 space-y-4"
           >
             <div className="space-y-3">
               <div>
@@ -277,7 +277,7 @@ export function CustomQuestionsEditor({
                     onChange={(e) => setNewOptions(e.target.value)}
                     placeholder="Opción 1&#10;Opción 2&#10;Opción 3"
                     rows={3}
-                    className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+                    className="mt-1 w-full px-3 py-2 rounded-sm border border-slate-200 bg-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
                   />
                 </div>
               )}
@@ -288,7 +288,7 @@ export function CustomQuestionsEditor({
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsAdding(false)}
-                className="rounded-lg"
+                className="rounded-sm"
               >
                 Cancelar
               </Button>
@@ -296,7 +296,7 @@ export function CustomQuestionsEditor({
                 size="sm"
                 onClick={handleAdd}
                 disabled={!newQuestion.trim() || addingLoading}
-                className="rounded-lg bg-violet-600 hover:bg-violet-700"
+                className="rounded-sm bg-violet-600 hover:bg-violet-700"
               >
                 {addingLoading && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
                 Agregar pregunta

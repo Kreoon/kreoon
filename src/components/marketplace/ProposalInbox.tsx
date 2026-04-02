@@ -110,7 +110,7 @@ export function ProposalInbox({ className }: ProposalInboxProps) {
   if (isLoading) {
     return (
       <div className={cn("flex items-center justify-center py-12", className)}>
-        <Loader2 className="h-6 w-6 animate-spin text-social-muted-foreground" />
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -120,8 +120,8 @@ export function ProposalInbox({ className }: ProposalInboxProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Inbox className="h-5 w-5 text-social-foreground" />
-          <h2 className="text-lg font-semibold text-social-foreground">Propuestas</h2>
+          <Inbox className="h-5 w-5 text-foreground" />
+          <h2 className="text-lg font-semibold text-foreground">Propuestas</h2>
           {pendingCount > 0 && (
             <Badge variant="destructive" className="rounded-full px-2">
               {pendingCount}
@@ -132,7 +132,7 @@ export function ProposalInbox({ className }: ProposalInboxProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-        <TabsList className="bg-social-muted w-full">
+        <TabsList className="bg-background w-full">
           <TabsTrigger value="pending" className="flex-1 gap-1">
             Pendientes
             {counts.pending + counts.viewed + counts.interested > 0 && (
@@ -156,7 +156,7 @@ export function ProposalInbox({ className }: ProposalInboxProps) {
 
         <TabsContent value={activeTab} className="mt-4">
           {filteredProposals.length === 0 ? (
-            <div className="text-center py-12 text-social-muted-foreground">
+            <div className="text-center py-12 text-muted-foreground">
               <Inbox className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p>No hay propuestas {activeTab === 'pending' ? 'pendientes' : 'en esta sección'}</p>
             </div>
@@ -173,9 +173,9 @@ export function ProposalInbox({ className }: ProposalInboxProps) {
                         transition={{ delay: index * 0.05 }}
                         onClick={() => handleSelectProposal(proposal)}
                         className={cn(
-                          "p-4 rounded-xl border cursor-pointer transition-all duration-200",
-                          "bg-social-card border-social-border",
-                          "hover:border-social-accent/50 hover:shadow-lg",
+                          "p-4 rounded-sm border cursor-pointer transition-all duration-200",
+                          "bg-card border-border",
+                          "hover:border-primary/50 hover:shadow-lg",
                           proposal.status === 'pending' && "border-l-4 border-l-blue-500"
                         )}
                       >
@@ -194,36 +194,36 @@ export function ProposalInbox({ className }: ProposalInboxProps) {
                           {/* Content */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-social-foreground">
+                              <span className="font-medium text-foreground">
                                 {proposal.client?.full_name}
                               </span>
                               {proposal.client?.username && (
-                                <span className="text-sm text-social-muted-foreground">
+                                <span className="text-sm text-muted-foreground">
                                   @{proposal.client.username}
                                 </span>
                               )}
                             </div>
 
-                            <h4 className="font-medium text-social-foreground mt-1 line-clamp-1">
+                            <h4 className="font-medium text-foreground mt-1 line-clamp-1">
                               {proposal.title}
                             </h4>
 
-                            <p className="text-sm text-social-muted-foreground mt-0.5 line-clamp-1">
+                            <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">
                               {proposal.description}
                             </p>
 
                             <div className="flex items-center gap-4 mt-2 text-sm">
-                              <span className="flex items-center gap-1 text-social-foreground font-medium">
+                              <span className="flex items-center gap-1 text-foreground font-medium">
                                 <DollarSign className="h-3.5 w-3.5" />
                                 {formatBudget(proposal)}
                               </span>
                               {proposal.desired_deadline && (
-                                <span className="flex items-center gap-1 text-social-muted-foreground">
+                                <span className="flex items-center gap-1 text-muted-foreground">
                                   <Calendar className="h-3.5 w-3.5" />
                                   {new Date(proposal.desired_deadline).toLocaleDateString()}
                                 </span>
                               )}
-                              <span className="text-social-muted-foreground">
+                              <span className="text-muted-foreground">
                                 {formatDistanceToNow(new Date(proposal.created_at), {
                                   addSuffix: true,
                                   locale: es,
@@ -232,12 +232,12 @@ export function ProposalInbox({ className }: ProposalInboxProps) {
                             </div>
                           </div>
 
-                          <ChevronRight className="h-5 w-5 text-social-muted-foreground" />
+                          <ChevronRight className="h-5 w-5 text-muted-foreground" />
                         </div>
                       </motion.div>
                     </SheetTrigger>
 
-                    <SheetContent className="w-full sm:max-w-lg bg-social-card border-social-border">
+                    <SheetContent className="w-full sm:max-w-lg bg-card border-border">
                       <ProposalDetail
                         proposalId={proposal.id}
                         onStatusUpdate={(status) => updateStatus({ proposalId: proposal.id, status })}
@@ -294,7 +294,7 @@ function ProposalDetail({ proposalId, onStatusUpdate }: ProposalDetailProps) {
   return (
     <ScrollArea className="h-full">
       <SheetHeader>
-        <SheetTitle className="text-social-foreground">{proposal.title}</SheetTitle>
+        <SheetTitle className="text-foreground">{proposal.title}</SheetTitle>
       </SheetHeader>
 
       <div className="mt-6 space-y-6">
@@ -305,9 +305,9 @@ function ProposalDetail({ proposalId, onStatusUpdate }: ProposalDetailProps) {
             <AvatarFallback>{proposal.client?.full_name?.[0]}</AvatarFallback>
           </Avatar>
           <div>
-            <p className="font-medium text-social-foreground">{proposal.client?.full_name}</p>
+            <p className="font-medium text-foreground">{proposal.client?.full_name}</p>
             {proposal.client?.username && (
-              <p className="text-sm text-social-muted-foreground">@{proposal.client.username}</p>
+              <p className="text-sm text-muted-foreground">@{proposal.client.username}</p>
             )}
           </div>
         </div>
@@ -319,8 +319,8 @@ function ProposalDetail({ proposalId, onStatusUpdate }: ProposalDetailProps) {
 
         {/* Description */}
         <div>
-          <h4 className="text-sm font-medium text-social-foreground mb-2">Descripción</h4>
-          <p className="text-sm text-social-muted-foreground whitespace-pre-wrap">
+          <h4 className="text-sm font-medium text-foreground mb-2">Descripción</h4>
+          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
             {proposal.description}
           </p>
         </div>
@@ -328,10 +328,10 @@ function ProposalDetail({ proposalId, onStatusUpdate }: ProposalDetailProps) {
         {/* Service */}
         {proposal.service && (
           <div>
-            <h4 className="text-sm font-medium text-social-foreground mb-2">Servicio solicitado</h4>
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-social-muted">
+            <h4 className="text-sm font-medium text-foreground mb-2">Servicio solicitado</h4>
+            <div className="flex items-center gap-2 p-3 rounded-sm bg-background">
               <span>{SERVICE_TYPE_ICONS[proposal.service.service_type]}</span>
-              <span className="text-social-foreground">{proposal.service.title}</span>
+              <span className="text-foreground">{proposal.service.title}</span>
             </div>
           </div>
         )}
@@ -339,13 +339,13 @@ function ProposalDetail({ proposalId, onStatusUpdate }: ProposalDetailProps) {
         {/* Budget & deadline */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <h4 className="text-sm font-medium text-social-foreground mb-1">Presupuesto</h4>
-            <p className="text-lg font-semibold text-social-foreground">{formatBudget()}</p>
+            <h4 className="text-sm font-medium text-foreground mb-1">Presupuesto</h4>
+            <p className="text-lg font-semibold text-foreground">{formatBudget()}</p>
           </div>
           {proposal.desired_deadline && (
             <div>
-              <h4 className="text-sm font-medium text-social-foreground mb-1">Fecha deseada</h4>
-              <p className="text-social-muted-foreground">
+              <h4 className="text-sm font-medium text-foreground mb-1">Fecha deseada</h4>
+              <p className="text-muted-foreground">
                 {new Date(proposal.desired_deadline).toLocaleDateString()}
               </p>
             </div>
@@ -354,7 +354,7 @@ function ProposalDetail({ proposalId, onStatusUpdate }: ProposalDetailProps) {
 
         {/* Action buttons */}
         {canRespond && (
-          <div className="flex gap-2 pt-4 border-t border-social-border">
+          <div className="flex gap-2 pt-4 border-t border-border">
             {proposal.status === 'pending' || proposal.status === 'viewed' ? (
               <>
                 <Button
@@ -385,7 +385,7 @@ function ProposalDetail({ proposalId, onStatusUpdate }: ProposalDetailProps) {
                   Rechazar
                 </Button>
                 <Button
-                  className="flex-1 bg-gradient-to-r from-social-accent to-purple-600"
+                  className="flex-1 bg-gradient-to-r from-primary to-purple-600"
                   onClick={() => onStatusUpdate('accepted')}
                 >
                   <Check className="h-4 w-4 mr-2" />
@@ -398,21 +398,21 @@ function ProposalDetail({ proposalId, onStatusUpdate }: ProposalDetailProps) {
 
         {/* Messages */}
         {messages.length > 0 && (
-          <div className="pt-4 border-t border-social-border">
-            <h4 className="text-sm font-medium text-social-foreground mb-3">Mensajes</h4>
+          <div className="pt-4 border-t border-border">
+            <h4 className="text-sm font-medium text-foreground mb-3">Mensajes</h4>
             <div className="space-y-3">
               {messages.map((msg) => (
                 <div
                   key={msg.id}
                   className={cn(
-                    "p-3 rounded-lg text-sm",
+                    "p-3 rounded-sm text-sm",
                     msg.sender_id === proposal.provider_id
-                      ? "bg-social-accent/20 ml-8"
-                      : "bg-social-muted mr-8"
+                      ? "bg-secondary ml-8"
+                      : "bg-background mr-8"
                   )}
                 >
-                  <p className="text-social-foreground">{msg.message}</p>
-                  <p className="text-xs text-social-muted-foreground mt-1">
+                  <p className="text-foreground">{msg.message}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
                     {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true, locale: es })}
                   </p>
                 </div>
@@ -429,7 +429,7 @@ function ProposalDetail({ proposalId, onStatusUpdate }: ProposalDetailProps) {
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
               placeholder="Escribe un mensaje..."
-              className="flex-1 px-3 py-2 rounded-lg bg-social-muted border border-social-border text-social-foreground placeholder:text-social-muted-foreground focus:outline-none focus:ring-2 focus:ring-social-accent"
+              className="flex-1 px-3 py-2 rounded-sm bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
             />
             <Button onClick={handleSendMessage} disabled={isSending || !messageText.trim()}>

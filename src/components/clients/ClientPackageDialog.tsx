@@ -157,7 +157,7 @@ export function ClientPackageDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-2xl max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {package_ ? "Editar Paquete" : "Nuevo Paquete de Contenido"}
@@ -198,7 +198,7 @@ export function ClientPackageDialog({
           </div>
 
           {/* Content Details */}
-          <div className="p-4 rounded-lg bg-muted/50 space-y-4">
+          <div className="p-4 rounded-sm bg-muted/50 space-y-4">
             <h4 className="font-medium">Detalles del Contenido</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="space-y-2">
@@ -244,7 +244,7 @@ export function ClientPackageDialog({
           {products.length > 0 && (
             <div className="space-y-3">
               <Label>Productos Incluidos</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border rounded-sm">
                 {products.map(product => (
                   <div key={product.id} className="flex items-center space-x-2">
                     <Checkbox
@@ -265,7 +265,7 @@ export function ClientPackageDialog({
           )}
 
           {/* Payment Section */}
-          <div className="p-4 rounded-lg border border-primary/20 bg-primary/5 space-y-4">
+          <div className="p-4 rounded-sm border border-primary/20 bg-primary/5 space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="font-medium">Estado de Pago</h4>
               <CurrencyBadge currency={formData.currency} />
@@ -305,7 +305,7 @@ export function ClientPackageDialog({
               </div>
               <div className="space-y-2">
                 <Label>Pendiente</Label>
-                <div className={`h-10 px-3 flex items-center rounded-md border ${pendingAmount > 0 ? 'bg-warning/10 border-warning/30 text-warning' : 'bg-success/10 border-success/30 text-success'}`}>
+                <div className={`h-10 px-3 flex items-center rounded-sm border ${pendingAmount > 0 ? 'bg-warning/10 border-warning/30 text-warning' : 'bg-success/10 border-success/30 text-success'}`}>
                   <CurrencyDisplay value={pendingAmount} currency={formData.currency} />
                 </div>
               </div>

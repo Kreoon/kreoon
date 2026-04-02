@@ -12,6 +12,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganizationAI } from "@/hooks/useOrganizationAI";
+import { NovaInput, NovaTextarea, NovaButton } from "@/components/ui/nova";
 import {
   Sparkles,
   Loader2,
@@ -1142,7 +1143,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
   if (!product) {
     return (
-      <div className="p-6 border rounded-lg bg-muted/50 text-center">
+      <div className="p-6 border rounded-sm bg-muted/50 text-center">
         <FileText className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
           Selecciona un producto para poder crear el brief del guión
@@ -1154,33 +1155,33 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
   const hasDocumentUrls = product.brief_url || product.onboarding_url || product.research_url;
 
   return (
-    <div className="space-y-6 p-6 border rounded-lg bg-gradient-to-br from-primary/5 to-primary/10">
+    <div className="space-y-6 p-6 border border-[var(--nova-border-subtle)] rounded-sm bg-gradient-to-br from-[var(--nova-accent-primary)]/5 to-[var(--nova-accent-secondary)]/10">
       <div className="flex items-center justify-between">
-        <h4 className="font-semibold flex items-center gap-2 text-lg">
-          <Wand2 className="h-5 w-5 text-primary" />
-          Formulario de Guión
+        <h4 className="font-semibold flex items-center gap-2 text-lg text-[var(--nova-text-bright)]">
+          <Wand2 className="h-5 w-5 text-[var(--nova-accent-primary)]" />
+          Formulario de Guion
         </h4>
-        <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
+        <Badge variant="secondary" className="text-xs bg-[var(--nova-accent-primary)]/10 text-[var(--nova-accent-primary)] border-[var(--nova-accent-primary)]/20">
           {AI_MODELS.find(m => m.value === formData.ai_model)?.label || "IA"}
         </Badge>
       </div>
 
       {/* Document Loading Section */}
       {hasDocumentUrls && (
-        <div className="p-4 rounded-lg bg-muted/50 border space-y-3">
+        <div className="p-4 rounded-sm bg-[var(--nova-bg-elevated)]/50 border border-[var(--nova-border-subtle)] space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <FileSearch className="h-5 w-5 text-primary" />
-              <Label className="text-sm font-medium">Documentos del Producto</Label>
+              <FileSearch className="h-5 w-5 text-[var(--nova-accent-primary)]" />
+              <Label className="text-sm font-medium text-[var(--nova-text-primary)]">Documentos del Producto</Label>
             </div>
             <div className="flex items-center gap-2">
               {docsLoaded && (
-                <Badge variant="outline" className="text-xs text-green-600 border-green-600">
+                <Badge variant="outline" className="text-xs text-[var(--nova-success)] border-[var(--nova-success)]">
                   <CheckCircle2 className="h-3 w-3 mr-1" />
                   Cargados
                 </Badge>
               )}
-              <Button
+              <NovaButton
                 variant="outline"
                 size="sm"
                 onClick={loadProductDocuments}
@@ -1192,7 +1193,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
                   <RefreshCw className="h-4 w-4" />
                 )}
                 <span className="ml-2">{docsLoaded ? "Recargar" : "Cargar Docs"}</span>
-              </Button>
+              </NovaButton>
             </div>
           </div>
           <div className="flex flex-wrap gap-2 text-xs">
@@ -1216,10 +1217,10 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       )}
 
       {/* AI Provider Selection */}
-      <div className="p-4 rounded-lg bg-muted/50 border space-y-4">
+      <div className="p-4 rounded-sm bg-[var(--nova-bg-elevated)]/50 border border-[var(--nova-border-subtle)] space-y-4">
         <div className="flex items-center gap-2">
-          <Bot className="h-5 w-5 text-primary" />
-          <Label className="text-sm font-medium">Modelo IA</Label>
+          <Bot className="h-5 w-5 text-[var(--nova-accent-primary)]" />
+          <Label className="text-sm font-medium text-[var(--nova-text-primary)]">Modelo IA</Label>
         </div>
         
         <Select 
@@ -1242,23 +1243,23 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* CTA */}
         <div className="space-y-2">
-          <Label className="flex items-center gap-2">
-            <Target className="h-4 w-4" /> CTA (Llamado a la acción) *
+          <Label className="flex items-center gap-2 text-[var(--nova-text-primary)]">
+            <Target className="h-4 w-4 text-[var(--nova-accent-primary)]" /> CTA (Llamado a la accion) *
           </Label>
-          <Input
+          <NovaInput
             value={formData.cta}
             onChange={(e) => setFormData({ ...formData, cta: e.target.value })}
             placeholder="Ej: Haz clic en el link de la bio"
           />
         </div>
 
-        {/* Ángulo de Venta */}
+        {/* Angulo de Venta */}
         <div className="space-y-2">
-          <Label className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4" /> Ángulo de Venta *
+          <Label className="flex items-center gap-2 text-[var(--nova-text-primary)]">
+            <Sparkles className="h-4 w-4 text-[var(--nova-accent-primary)]" /> Angulo de Venta *
           </Label>
 
-          <Accordion type="single" collapsible className="border rounded-lg">
+          <Accordion type="single" collapsible className="border rounded-sm">
             {researchAngles.length > 0 ? (
               researchAngles.map((a: any, idx: number) => {
                 const angleText = a?.angle || a?.salesAngle || a?.name || "";
@@ -1327,10 +1328,10 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           </Accordion>
         </div>
 
-        {/* Número de Hooks */}
+        {/* Numero de Hooks */}
         <div className="space-y-2">
-          <Label className="flex items-center gap-2">
-            <ListOrdered className="h-4 w-4" /> Cantidad de Hooks
+          <Label className="flex items-center gap-2 text-[var(--nova-text-primary)]">
+            <ListOrdered className="h-4 w-4 text-[var(--nova-accent-primary)]" /> Cantidad de Hooks
           </Label>
           <Select 
             value={formData.hooks_count} 
@@ -1345,10 +1346,10 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           </Select>
         </div>
 
-        {/* País Objetivo */}
+        {/* Pais Objetivo */}
         <div className="space-y-2">
-          <Label className="flex items-center gap-2">
-            <Globe className="h-4 w-4" /> País Objetivo
+          <Label className="flex items-center gap-2 text-[var(--nova-text-primary)]">
+            <Globe className="h-4 w-4 text-[var(--nova-accent-primary)]" /> Pais Objetivo
           </Label>
           <Select 
             value={formData.target_country} 
@@ -1365,8 +1366,8 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
         {/* Estructura Narrativa */}
         <div className="space-y-2 md:col-span-2">
-          <Label className="flex items-center gap-2">
-            <MessageSquare className="h-4 w-4" /> Estructura Narrativa *
+          <Label className="flex items-center gap-2 text-[var(--nova-text-primary)]">
+            <MessageSquare className="h-4 w-4 text-[var(--nova-accent-primary)]" /> Estructura Narrativa *
           </Label>
           <Select 
             value={formData.narrative_structure} 
@@ -1383,18 +1384,18 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
         {/* Avatar Ideal */}
         <div className="space-y-2 md:col-span-2">
-          <Label className="flex items-center gap-2">
-            <Users className="h-4 w-4" /> Avatar / Cliente Ideal
+          <Label className="flex items-center gap-2 text-[var(--nova-text-primary)]">
+            <Users className="h-4 w-4 text-[var(--nova-accent-primary)]" /> Avatar / Cliente Ideal
           </Label>
-          <Textarea
+          <NovaTextarea
             value={formData.ideal_avatar}
             onChange={(e) => setFormData({ ...formData, ideal_avatar: e.target.value })}
             placeholder="Describe al cliente ideal..."
-            rows={2}
+            className="min-h-[60px]"
           />
 
           {/* Selector SIEMPRE visible (aunque esté vacío) */}
-          <Accordion type="single" collapsible className="border rounded-lg">
+          <Accordion type="single" collapsible className="border rounded-sm">
             {researchAvatars.length > 0 ? (
               researchAvatars.map((a: any, idx: number) => {
                 const name = a?.name || a?.avatarName || `Avatar ${idx + 1}`;
@@ -1499,7 +1500,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         {formData.hooks.length > 0 && (
           <div className="space-y-2">
             {formData.hooks.map((hook, idx) => (
-              <div key={idx} className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+              <div key={idx} className="flex items-center gap-2 p-2 bg-muted rounded-sm">
                 <Badge variant="outline" className="shrink-0">{idx + 1}</Badge>
                 <span className="flex-1 text-sm">{hook}</span>
                 <button type="button" onClick={() => removeHook(idx)} className="p-1 hover:bg-destructive/20 rounded">
@@ -1524,9 +1525,9 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
       {/* Toggle de Perplexity */}
       <div className="space-y-4 pt-4 border-t">
-        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg border border-purple-500/20">
+        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-sm border border-purple-500/20">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-500/20 rounded-lg">
+            <div className="p-2 bg-purple-500/20 rounded-sm">
               <Search className="w-5 h-5 text-purple-400" />
             </div>
             <div>
@@ -1676,7 +1677,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
       {/* Generation Progress */}
       {loading && (
-        <div className="space-y-2 p-4 bg-muted/50 rounded-lg">
+        <div className="space-y-2 p-4 bg-muted/50 rounded-sm">
           <p className="text-sm font-medium mb-3">Progreso (IA):</p>
           {generationSteps.map((step) => (
             <div key={step.key} className="flex items-center gap-3">

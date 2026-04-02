@@ -70,9 +70,9 @@ export function PaymentMethodSelector({
       <div className="space-y-4">
         <Label>Método de Pago</Label>
         {[1, 2, 3].map((i) => (
-          <div key={i} className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)]">
+          <div key={i} className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)]">
             <div className="flex items-center gap-3">
-              <Skeleton className="h-10 w-10 rounded-lg" />
+              <Skeleton className="h-10 w-10 rounded-sm" />
               <div className="flex-1">
                 <Skeleton className="h-4 w-32 mb-2" />
                 <Skeleton className="h-3 w-24" />
@@ -89,7 +89,7 @@ export function PaymentMethodSelector({
       <Label>Método de Pago</Label>
 
       {methods.length === 0 ? (
-        <div className="p-6 rounded-xl bg-[hsl(270,100%,60%,0.05)] text-center">
+        <div className="p-6 rounded-sm bg-[hsl(270,100%,60%,0.05)] text-center">
           <Wallet className="h-10 w-10 mx-auto mb-3 text-[hsl(270,100%,60%,0.3)]" />
           <p className="text-muted-foreground mb-3">
             No tienes métodos de pago configurados
@@ -114,7 +114,7 @@ export function PaymentMethodSelector({
                 transition={{ delay: index * 0.05 }}
                 onClick={() => onChange(isSelected ? null : method.id)}
                 className={cn(
-                  'w-full p-4 rounded-xl text-left transition-all',
+                  'w-full p-4 rounded-sm text-left transition-all',
                   'border-2',
                   isSelected
                     ? 'border-[hsl(270,100%,60%)] bg-[hsl(270,100%,60%,0.1)]'
@@ -137,7 +137,7 @@ export function PaymentMethodSelector({
                   {/* Icon */}
                   <div
                     className={cn(
-                      'p-2 rounded-lg transition-colors',
+                      'p-2 rounded-sm transition-colors',
                       isSelected
                         ? 'bg-[hsl(270,100%,60%,0.2)]'
                         : 'bg-[hsl(270,100%,60%,0.1)]'
@@ -191,7 +191,7 @@ export function PaymentMethodSelector({
 
       {/* Fee info */}
       {methods.length > 0 && (
-        <div className="p-3 rounded-lg bg-[hsl(270,100%,60%,0.03)] border border-[hsl(270,100%,60%,0.1)]">
+        <div className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.03)] border border-[hsl(270,100%,60%,0.1)]">
           <p className="text-xs text-muted-foreground">
             <strong className="text-[hsl(270,30%,70%)]">Comisiones por método:</strong>
           </p>

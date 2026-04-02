@@ -43,7 +43,7 @@ export function AchievementUnlockToast({ achievement, onClose }: AchievementUnlo
       >
         <div
           className={cn(
-            'relative overflow-hidden rounded-xl border shadow-2xl',
+            'relative overflow-hidden rounded-sm border shadow-2xl',
             'bg-gradient-to-br p-4 min-w-[300px] max-w-[400px]',
             RARITY_COLORS[rarity]
           )}
@@ -56,7 +56,7 @@ export function AchievementUnlockToast({ achievement, onClose }: AchievementUnlo
           </button>
 
           <div className="flex items-start gap-4">
-            <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
+            <div className="p-3 rounded-sm bg-white/20">
               <Trophy className="w-8 h-8 text-white" />
             </div>
 

@@ -89,6 +89,7 @@ export type SubscriptionTier =
   | 'brand_business'
   | 'creator_free'
   | 'creator_pro'
+  | 'creator_premium'
   | 'org_starter'
   | 'org_pro'
   | 'org_enterprise';

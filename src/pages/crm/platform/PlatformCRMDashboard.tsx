@@ -18,17 +18,18 @@ import {
   FileText,
 } from "lucide-react";
 import {
-  BarChart,
+  LazyBarChart,
+  LazyPieChart,
+  LazyChartContainer,
   Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
   Pie,
   Cell,
-} from "recharts";
+} from "@/components/ui/lazy-charts";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -125,7 +126,7 @@ function StatCard({
           )}
           {subtitle && <p className="text-xs text-white/30 mt-1">{subtitle}</p>}
         </div>
-        <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0", c.bg)}>
+        <div className={cn("w-12 h-12 rounded-sm flex items-center justify-center shrink-0", c.bg)}>
           <Icon className={cn("h-6 w-6", c.icon)} />
         </div>
       </div>
@@ -143,7 +144,7 @@ const formatCurrency = (value: number) =>
 function BarTooltipContent({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg px-3 py-2 text-xs bg-[#0f0f14]/95 border border-purple-500/30 backdrop-blur-xl">
+    <div className="rounded-sm px-3 py-2 text-xs bg-[#0f0f14]/95 border border-purple-500/30">
       <p className="text-white/60 mb-1">{label}</p>
       {payload.map((p: any, i: number) => (
         <div key={i} className="flex items-center gap-2">
@@ -159,7 +160,7 @@ function PieTooltipContent({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   const item = payload[0];
   return (
-    <div className="rounded-lg px-3 py-2 text-xs bg-[#0f0f14]/95 border border-purple-500/30 backdrop-blur-xl">
+    <div className="rounded-sm px-3 py-2 text-xs bg-[#0f0f14]/95 border border-purple-500/30">
       <span className="text-white/80">{item.name}: {item.value}</span>
     </div>
   );
@@ -268,41 +269,43 @@ const PlatformCRMDashboard = () => {
             <Card className="p-6">
               <h3 className="text-lg font-semibold text-white mb-4">Leads por Mes</h3>
               {monthlyData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={monthlyData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                    <defs>
-                      <linearGradient id="purpleGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#A855F7" />
-                        <stop offset="100%" stopColor="#EC4899" />
-                      </linearGradient>
-                      <linearGradient id="greenGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#22C55E" />
-                        <stop offset="100%" stopColor="#14B8A6" />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis
-                      dataKey="label"
-                      stroke="rgba(255,255,255,0.3)"
-                      tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 12 }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      stroke="rgba(255,255,255,0.3)"
-                      tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 12 }}
-                      axisLine={false}
-                      tickLine={false}
-                      allowDecimals={false}
-                    />
-                    <Tooltip content={<BarTooltipContent />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
-                    <Bar dataKey="total" name="Total" fill="url(#purpleGradient)" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="converted" name="Convertidos" fill="url(#greenGradient)" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <LazyChartContainer height={250}>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LazyBarChart data={monthlyData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                      <defs>
+                        <linearGradient id="purpleGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#A855F7" />
+                          <stop offset="100%" stopColor="#EC4899" />
+                        </linearGradient>
+                        <linearGradient id="greenGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#22C55E" />
+                          <stop offset="100%" stopColor="#14B8A6" />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                      <XAxis
+                        dataKey="label"
+                        stroke="rgba(255,255,255,0.3)"
+                        tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 12 }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        stroke="rgba(255,255,255,0.3)"
+                        tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 12 }}
+                        axisLine={false}
+                        tickLine={false}
+                        allowDecimals={false}
+                      />
+                      <Tooltip content={<BarTooltipContent />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
+                      <Bar dataKey="total" name="Total" fill="url(#purpleGradient)" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="converted" name="Convertidos" fill="url(#greenGradient)" radius={[4, 4, 0, 0]} />
+                    </LazyBarChart>
+                  </ResponsiveContainer>
+                </LazyChartContainer>
               ) : (
                 <div className="h-[250px] flex items-center justify-center">
-                  <p className="text-sm text-white/30">Sin datos de leads aún</p>
+                  <p className="text-sm text-white/30">Sin datos de leads aun</p>
                 </div>
               )}
             </Card>
@@ -326,7 +329,7 @@ const PlatformCRMDashboard = () => {
                       <Link
                         key={lead.id}
                         to="/crm/leads"
-                        className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/[0.08] transition-colors"
+                        className="flex items-center justify-between p-3 bg-white/5 rounded-sm hover:bg-white/[0.08] transition-colors"
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 shrink-0 text-sm font-medium">
@@ -439,28 +442,30 @@ const PlatformCRMDashboard = () => {
               <h3 className="text-lg font-semibold text-white mb-4">Por Categoría</h3>
               {categoryDistribution.length > 0 ? (
                 <>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <PieChart>
-                      <Pie
-                        data={categoryDistribution}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={50}
-                        outerRadius={80}
-                        dataKey="count"
-                        nameKey="name"
-                        paddingAngle={3}
-                      >
-                        {categoryDistribution.map((entry, index) => (
-                          <Cell
-                            key={index}
-                            fill={CATEGORY_CHART_COLORS[entry.category] || "#6366f1"}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip content={<PieTooltipContent />} />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <LazyChartContainer height={200}>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <LazyPieChart>
+                        <Pie
+                          data={categoryDistribution}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={80}
+                          dataKey="count"
+                          nameKey="name"
+                          paddingAngle={3}
+                        >
+                          {categoryDistribution.map((entry, index) => (
+                            <Cell
+                              key={index}
+                              fill={CATEGORY_CHART_COLORS[entry.category] || "#6366f1"}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip content={<PieTooltipContent />} />
+                      </LazyPieChart>
+                    </ResponsiveContainer>
+                  </LazyChartContainer>
                   <div className="grid grid-cols-2 gap-2 mt-4">
                     {categoryDistribution.map((cat) => (
                       <div key={cat.category} className="flex items-center gap-2 text-xs">
@@ -494,7 +499,7 @@ const PlatformCRMDashboard = () => {
                   usersNeedingAttention.slice(0, 5).map((user) => (
                     <div
                       key={user.user_id}
-                      className="flex items-center justify-between p-2 bg-white/5 rounded-lg"
+                      className="flex items-center justify-between p-2 bg-white/5 rounded-sm"
                     >
                       <div className="min-w-0">
                         <p className="text-white text-sm truncate">

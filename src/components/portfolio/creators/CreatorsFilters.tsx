@@ -45,7 +45,7 @@ function CreatorsFiltersComponent({
 
   return (
     <div className={cn("flex flex-wrap items-center gap-3", className)}>
-      <div className="flex items-center gap-2 text-social-muted-foreground">
+      <div className="flex items-center gap-2 text-muted-foreground">
         <Filter className="h-4 w-4" />
         <span className="text-sm font-medium hidden sm:inline">Filtros:</span>
       </div>
@@ -55,13 +55,13 @@ function CreatorsFiltersComponent({
         value={filters.niche}
         onValueChange={(value) => onFilterChange('niche', value)}
       >
-        <SelectTrigger className="w-[160px] bg-social-card border-social-border text-social-foreground">
+        <SelectTrigger className="w-[160px] bg-card border-border text-foreground">
           <div className="flex items-center gap-2">
-            <Tag className="h-3.5 w-3.5 text-social-muted-foreground" />
+            <Tag className="h-3.5 w-3.5 text-muted-foreground" />
             <SelectValue placeholder="Nicho" />
           </div>
         </SelectTrigger>
-        <SelectContent className="bg-social-card border-social-border">
+        <SelectContent className="bg-card border-border">
           <SelectItem value="all">Todos los nichos</SelectItem>
           {niches.map((niche) => (
             <SelectItem key={niche} value={niche}>
@@ -76,13 +76,13 @@ function CreatorsFiltersComponent({
         value={filters.country}
         onValueChange={(value) => onFilterChange('country', value)}
       >
-        <SelectTrigger className="w-[160px] bg-social-card border-social-border text-social-foreground">
+        <SelectTrigger className="w-[160px] bg-card border-border text-foreground">
           <div className="flex items-center gap-2">
-            <MapPin className="h-3.5 w-3.5 text-social-muted-foreground" />
+            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
             <SelectValue placeholder="País" />
           </div>
         </SelectTrigger>
-        <SelectContent className="bg-social-card border-social-border">
+        <SelectContent className="bg-card border-border">
           <SelectItem value="all">Todos los países</SelectItem>
           {countries.map((country) => (
             <SelectItem key={country} value={country}>
@@ -97,13 +97,13 @@ function CreatorsFiltersComponent({
         value={filters.upRange}
         onValueChange={(value) => onFilterChange('upRange', value)}
       >
-        <SelectTrigger className="w-[160px] bg-social-card border-social-border text-social-foreground">
+        <SelectTrigger className="w-[160px] bg-card border-border text-foreground">
           <div className="flex items-center gap-2">
             <Flame className="h-3.5 w-3.5 text-orange-400" />
             <SelectValue placeholder="Rango UP" />
           </div>
         </SelectTrigger>
-        <SelectContent className="bg-social-card border-social-border">
+        <SelectContent className="bg-card border-border">
           {UP_RANGES.map((range) => (
             <SelectItem key={range.value} value={range.value}>
               {range.label}
@@ -118,7 +118,7 @@ function CreatorsFiltersComponent({
           variant="ghost"
           size="sm"
           onClick={onClearFilters}
-          className="text-social-muted-foreground hover:text-social-foreground"
+          className="text-muted-foreground hover:text-foreground"
         >
           Limpiar filtros
         </Button>

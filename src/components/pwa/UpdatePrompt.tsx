@@ -87,7 +87,7 @@ export function UpdatePrompt() {
     <div
       className={cn(
         'fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-[9999]',
-        'bg-card border border-primary/20 rounded-xl shadow-lg p-4',
+        'bg-card border border-primary/20 rounded-sm shadow-lg p-4',
         'animate-in slide-in-from-bottom-4 duration-300'
       )}
     >

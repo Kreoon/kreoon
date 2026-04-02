@@ -20,7 +20,7 @@ export function DashboardKpiCard({
   title,
   value,
   icon: Icon,
-  iconColor = "hsl(270 100% 60%)",
+  iconColor = "var(--nova-accent-primary)",
   onClick,
   subtitle,
   trend,
@@ -32,18 +32,18 @@ export function DashboardKpiCard({
     <motion.div
       onClick={onClick}
       className={cn(
-        "group relative overflow-hidden rounded-xl p-4",
-        "bg-gradient-to-br from-card to-card",
-        "border transition-all duration-500",
+        "group relative overflow-hidden rounded-sm p-4",
+        "bg-[var(--nova-bg-elevated)]",
+        "border border-[var(--nova-border-default)] transition-all duration-500",
         onClick && "cursor-pointer",
         className
       )}
-      style={{ 
-        borderColor: borderColor || `${iconColor}33`,
+      style={{
+        borderColor: borderColor || "var(--nova-border-default)",
       }}
-      whileHover={onClick ? { 
+      whileHover={onClick ? {
         scale: 1.02,
-        boxShadow: `0 0 30px ${iconColor}25`,
+        boxShadow: "var(--nova-shadow-glow)",
       } : undefined}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -51,7 +51,7 @@ export function DashboardKpiCard({
       {/* Animated gradient orb */}
       <motion.div
         className="absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl pointer-events-none"
-        style={{ background: `radial-gradient(circle, ${iconColor}30, transparent 70%)` }}
+        style={{ background: `radial-gradient(circle, rgba(139, 92, 246, 0.3), transparent 70%)` }}
         animate={{
           scale: [1, 1.3, 1],
           opacity: [0.3, 0.5, 0.3],
@@ -63,31 +63,31 @@ export function DashboardKpiCard({
       {/* Content */}
       <div className="relative z-10">
         <div className="flex items-center gap-2 mb-2">
-          <motion.div 
-            className="p-2 rounded-lg"
-            style={{ 
-              background: `${iconColor}15`,
-              border: `1px solid ${iconColor}30`,
+          <motion.div
+            className="p-2 rounded-sm"
+            style={{
+              background: "rgba(139, 92, 246, 0.15)",
+              border: "1px solid var(--nova-border-accent)",
             }}
             whileHover={{
-              boxShadow: `0 0 15px ${iconColor}40`,
+              boxShadow: "var(--nova-shadow-glow)",
             }}
           >
-            <Icon className="h-5 w-5" style={{ color: iconColor }} />
+            <Icon className="h-5 w-5 text-[var(--nova-accent-primary)]" style={{ color: iconColor }} />
           </motion.div>
-          <span className="text-sm text-muted-foreground">{title}</span>
+          <span className="text-sm text-[var(--nova-text-secondary)]">{title}</span>
         </div>
-        
-        <div className="text-3xl font-bold text-white mb-1" style={{ textShadow: `0 0 20px ${iconColor}30` }}>
+
+        <div className="text-3xl font-bold text-[var(--nova-text-bright)] mb-1" style={{ textShadow: "0 0 20px rgba(139, 92, 246, 0.3)" }}>
           {value}
         </div>
-        
+
         {subtitle && (
-          <div className="text-sm text-muted-foreground">{subtitle}</div>
+          <div className="text-sm text-[var(--nova-text-secondary)]">{subtitle}</div>
         )}
 
         {trend !== undefined && trend !== 0 && (
-          <motion.div 
+          <motion.div
             className="flex items-center gap-1 mt-2"
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -95,12 +95,11 @@ export function DashboardKpiCard({
           >
             <div className={cn(
               "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
-              "border backdrop-blur-sm"
-            )} style={{
-              background: trend > 0 ? `${iconColor}15` : "hsl(350 80% 50% / 0.15)",
-              borderColor: trend > 0 ? `${iconColor}30` : "hsl(350 80% 50% / 0.3)",
-              color: trend > 0 ? iconColor : "hsl(350 80% 60%)",
-            }}>
+              "border",
+              trend > 0
+                ? "bg-[var(--nova-success-bg)] border-[var(--nova-success)] text-[var(--nova-success)]"
+                : "bg-[var(--nova-error-bg)] border-[var(--nova-error)] text-[var(--nova-error)]"
+            )}>
               {trend > 0 ? (
                 <TrendingUp className="h-3 w-3" />
               ) : (
@@ -115,9 +114,9 @@ export function DashboardKpiCard({
       </div>
 
       {/* Bottom accent */}
-      <motion.div 
+      <motion.div
         className="absolute bottom-0 left-0 right-0 h-px"
-        style={{ background: `linear-gradient(90deg, transparent, ${iconColor}50, transparent)` }}
+        style={{ background: "linear-gradient(90deg, transparent, var(--nova-accent-primary), transparent)" }}
         animate={{ opacity: [0.3, 0.7, 0.3] }}
         transition={{ duration: 2, repeat: Infinity }}
       />
@@ -125,38 +124,38 @@ export function DashboardKpiCard({
   );
 }
 
-// Animated progress bar with glow
-export function TechProgress({ 
-  value, 
-  max = 100, 
-  color = "hsl(270 100% 60%)",
+// Animated progress bar with glow - Nova Design System
+export function TechProgress({
+  value,
+  max = 100,
+  color = "var(--nova-accent-primary)",
   label,
   showPercent = true
-}: { 
-  value: number; 
-  max?: number; 
+}: {
+  value: number;
+  max?: number;
   color?: string;
   label?: string;
   showPercent?: boolean;
 }) {
   const percent = Math.min((value / max) * 100, 100);
-  
+
   return (
     <div className="mt-2 space-y-1">
       <div className="flex justify-between text-xs">
-        <span className="text-muted-foreground">{label || 'Meta'}: {max.toLocaleString()}</span>
+        <span className="text-[var(--nova-text-secondary)]">{label || 'Meta'}: {max.toLocaleString()}</span>
         {showPercent && (
-          <span style={{ color }} className="font-medium">
+          <span className="font-medium text-[var(--nova-accent-primary)]">
             {Math.round(percent)}%
           </span>
         )}
       </div>
-      <div className="h-2 bg-muted rounded-full overflow-hidden border" style={{ borderColor: `${color}20` }}>
-        <motion.div 
+      <div className="h-2 bg-[var(--nova-bg-surface)] rounded-full overflow-hidden border border-[var(--nova-border-subtle)]">
+        <motion.div
           className="h-full rounded-full relative overflow-hidden"
-          style={{ 
-            background: `linear-gradient(90deg, ${color}, ${color}cc)`,
-            boxShadow: `0 0 15px ${color}66`,
+          style={{
+            background: "linear-gradient(90deg, var(--nova-accent-primary), var(--nova-accent-secondary))",
+            boxShadow: "var(--nova-shadow-glow)",
           }}
           initial={{ width: 0 }}
           animate={{ width: `${percent}%` }}
@@ -173,7 +172,7 @@ export function TechProgress({
   );
 }
 
-// Pipeline item with glow
+// Pipeline item with glow - Nova Design System
 export function PipelineItem({
   icon: Icon,
   value,
@@ -188,40 +187,37 @@ export function PipelineItem({
   onClick?: () => void;
 }) {
   return (
-    <motion.div 
+    <motion.div
       onClick={onClick}
       className={cn(
-        "p-3 rounded-lg text-center transition-all cursor-pointer",
-        "border backdrop-blur-sm"
+        "p-3 rounded-sm text-center transition-all cursor-pointer",
+        "border border-[var(--nova-border-default)]",
+        "bg-[var(--nova-bg-elevated)]",
+        "hover:border-[var(--nova-border-accent)]"
       )}
-      style={{
-        background: `${color}10`,
-        borderColor: `${color}25`,
-      }}
       whileHover={{
         scale: 1.05,
-        boxShadow: `0 0 20px ${color}30`,
-        borderColor: `${color}50`,
+        boxShadow: "var(--nova-shadow-glow)",
       }}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
     >
-      <Icon className="h-4 w-4 mx-auto mb-1" style={{ color }} />
-      <motion.p 
-        className="text-xl font-bold" 
-        style={{ color, textShadow: `0 0 10px ${color}50` }}
+      <Icon className="h-4 w-4 mx-auto mb-1 text-[var(--nova-accent-primary)]" style={{ color }} />
+      <motion.p
+        className="text-xl font-bold text-[var(--nova-text-bright)]"
+        style={{ color, textShadow: "0 0 10px rgba(139, 92, 246, 0.5)" }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
       >
         {value}
       </motion.p>
-      <p className="text-[10px] text-muted-foreground">{label}</p>
+      <p className="text-[10px] text-[var(--nova-text-secondary)]">{label}</p>
     </motion.div>
   );
 }
 
-// Section header with glow
+// Section header with glow - Nova Design System
 export function TechSectionHeader({
   icon: Icon,
   title,
@@ -235,19 +231,19 @@ export function TechSectionHeader({
     <div className="flex items-center justify-between mb-3">
       <h3 className="text-sm font-semibold flex items-center gap-2">
         <motion.div
-          animate={{ 
+          animate={{
             boxShadow: [
-              "0 0 0 0 hsl(270 100% 60% / 0)",
-              "0 0 10px 2px hsl(270 100% 60% / 0.3)",
-              "0 0 0 0 hsl(270 100% 60% / 0)"
+              "0 0 0 0 rgba(139, 92, 246, 0)",
+              "0 0 10px 2px rgba(139, 92, 246, 0.3)",
+              "0 0 0 0 rgba(139, 92, 246, 0)"
             ]
           }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="p-1.5 rounded-lg bg-primary/10"
+          className="p-1.5 rounded-sm bg-[rgba(139,92,246,0.1)]"
         >
-          <Icon className="h-4 w-4 text-primary" />
+          <Icon className="h-4 w-4 text-[var(--nova-accent-primary)]" />
         </motion.div>
-        <span className="text-primary">
+        <span className="text-[var(--nova-accent-primary)]">
           {title}
         </span>
       </h3>

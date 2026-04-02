@@ -83,7 +83,7 @@ export function UnifiedTalentCard({ member, onClick, onAmbassadorToggle, isAdmin
       <div
         onClick={onClick}
         className={cn(
-          'group rounded-xl border bg-card p-4 transition-all duration-300 hover:shadow-lg cursor-pointer relative overflow-hidden',
+          'group rounded-sm border bg-card p-4 transition-all duration-300 hover:shadow-lg cursor-pointer relative overflow-hidden',
           isSelected && 'ring-2 ring-[#8b5cf6] border-[#8b5cf6]/50',
           isAmbassador
             ? 'border-amber-500/50 shadow-[0_0_15px_-3px_rgba(245,158,11,0.3)] hover:shadow-[0_0_25px_-3px_rgba(245,158,11,0.5)] hover:border-amber-500 bg-gradient-to-br from-card via-card to-amber-500/5'
@@ -248,7 +248,7 @@ export function UnifiedTalentCard({ member, onClick, onAmbassadorToggle, isAdmin
                   <div
                     onClick={(e) => { e.stopPropagation(); onAmbassadorToggle(e); }}
                     className={cn(
-                      'flex items-center justify-center h-6 w-6 rounded-md border transition-all cursor-pointer',
+                      'flex items-center justify-center h-6 w-6 rounded-sm border transition-all cursor-pointer',
                       member.is_ambassador
                         ? 'bg-amber-500 border-amber-500 text-white'
                         : 'bg-muted/50 border-border hover:border-amber-500/50 hover:bg-amber-500/10',

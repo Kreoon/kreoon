@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { AppRole, Profile } from '@/types/database';
+import { AppRole, Profile, UserType, AccountType } from '@/types/database';
 import { getPermissionGroup, type PermissionGroup } from '@/lib/permissionGroups';
+import { logger } from '@/lib/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -28,6 +29,11 @@ interface AuthContextType {
   isStrategist: boolean;
   isTrafficker: boolean;
   isTeamLeader: boolean;
+  // User type helpers (talent vs client vs admin)
+  userType: UserType;
+  isTalent: boolean;
+  // Account type from profile (talent, organization, client)
+  accountType: AccountType | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -101,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setActiveRole = async (role: AppRole) => {
     // GUARD: Never allow 'ambassador' as active_role - it's a badge, not a functional role
     if (role === 'ambassador') {
-      console.warn('[auth] Blocked attempt to set active_role to ambassador. Ambassador is a badge, not a functional role.');
+      logger.warn('auth Blocked attempt to set active_role to ambassador');
       return;
     }
     if (roles.includes(role)) {
@@ -115,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .update({ active_role: role })
           .eq('id', user.id)
           .then(({ error }) => {
-            if (error) console.warn('[auth] Failed to persist active_role:', error);
+            if (error) logger.warn('auth Failed to persist active_role', { error });
           });
       }
 
@@ -132,7 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // IMPORTANT: Don't clear this timeout just because getSession resolved; only clear when bootstrapping finishes.
     bootTimeoutRef.current = window.setTimeout(() => {
       if (!isMounted) return;
-      console.warn('[auth] bootstrap timeout');
+      logger.warn('auth bootstrap timeout');
       setRolesLoaded(true);
       setLoading(false);
     }, 8000);
@@ -140,7 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!isMounted) return;
 
-      console.log('[auth] state change', event);
+      logger.debug('auth state change', { event });
 
       // CRITICAL: Treat same-user events (often triggered on tab focus / token refresh)
       // as a silent refresh. We should never re-block the entire UI in that case.
@@ -205,7 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession()
       .then(({ data: { session } }) => {
         if (!isMounted) return;
-        console.log('[auth] getSession resolved', !!session);
+        logger.debug('auth getSession resolved', { hasSession: !!session });
 
         setSession(session);
         setUser(session?.user ?? null);
@@ -224,7 +230,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       })
       .catch((err) => {
-        console.error('[auth] getSession error', err);
+        logger.error('auth getSession error', err);
         if (!isMounted) return;
         setRolesLoaded(true);
         setLoading(false);
@@ -281,7 +287,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
 
       if (profileResult.error) {
-        console.warn('[auth] profile fetch error', profileResult.error);
+        logger.warn('auth profile fetch error', { error: profileResult.error });
       }
 
       let userProfile = profileResult.data as Profile | null;
@@ -293,7 +299,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userEmail = authUser?.email;
         
         if (userEmail && ROOT_EMAILS.includes(userEmail)) {
-          console.log('[auth] Profile not found by ID, trying email lookup for root admin');
+          logger.debug('auth Profile not found by ID, trying email lookup for root admin');
           const emailProfileResult = await withTimeout(
             () =>
               supabase
@@ -306,7 +312,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           if (emailProfileResult.data) {
             userProfile = emailProfileResult.data as Profile;
-            console.log('[auth] Found root admin profile by email');
+            logger.debug('auth Found root admin profile by email');
           }
         }
       }
@@ -345,7 +351,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         );
 
         if (memberRolesResult.error) {
-          console.warn('[auth] org member roles fetch error', memberRolesResult.error);
+          logger.warn('auth org member roles fetch error', { error: memberRolesResult.error });
         }
 
         if (memberRolesResult.data && memberRolesResult.data.length > 0) {
@@ -376,7 +382,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         );
 
         if (anyOrgRolesResult.error) {
-          console.warn('[auth] org member roles (any org) fetch error', anyOrgRolesResult.error);
+          logger.warn('auth org member roles (any org) fetch error', { error: anyOrgRolesResult.error });
         }
 
         if (anyOrgRolesResult.data && anyOrgRolesResult.data.length > 0) {
@@ -397,7 +403,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           );
 
           if (anyMemberRolesResult.error) {
-            console.warn('[auth] organization_members (any org) fetch error', anyMemberRolesResult.error);
+            logger.warn('auth organization_members (any org) fetch error', { error: anyMemberRolesResult.error });
           }
 
           if (anyMemberRolesResult.data && anyMemberRolesResult.data.length > 0) {
@@ -437,10 +443,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (!userRoles.includes('admin')) {
               userRoles.unshift('admin');
             }
-            console.log('[auth] User is org owner — granted admin access');
+            logger.debug('auth User is org owner — granted admin access');
           }
         } catch (err) {
-          console.warn('[auth] Error checking owner status:', err);
+          logger.warn('auth Error checking owner status', { error: err });
         }
       }
 
@@ -459,16 +465,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           );
 
           if (clientUserResult.error) {
-            console.warn('[auth] client_users fetch error:', clientUserResult.error);
+            logger.warn('auth client_users fetch error', { error: clientUserResult.error });
           }
 
           if (clientUserResult.data && clientUserResult.data.length > 0) {
             // User is a client user, add client role
             userRoles = [...userRoles, 'client'];
-            console.log('[auth] Added client role for user in client_users table');
+            logger.debug('auth Added client role for user in client_users table');
           }
         } catch (err) {
-          console.warn('[auth] Error checking client_users:', err);
+          logger.warn('auth Error checking client_users', { error: err });
         }
       }
 
@@ -497,12 +503,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           userRoles = platformRoles;
         }
       } catch (err) {
-        console.warn('[auth] Error checking user_roles:', err);
+        logger.warn('auth Error checking user_roles', { error: err });
       }
 
       // FINAL FALLBACK: If still no roles and this is a root admin, grant admin role
       if (userRoles.length === 0 && detectedPlatformAdmin) {
-        console.log('[auth] Platform admin detected with no roles, granting admin role');
+        logger.debug('auth Platform admin detected with no roles, granting admin role');
         userRoles = ['admin'];
       }
 
@@ -524,13 +530,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // The active_role in profile can be set for UI purposes, but the roles array stays empty
       // until the user joins an organization or completes the referral gate.
 
-      console.log('[auth] Final roles for user:', userRoles, 'Profile active_role:', profileActiveRole);
+      logger.debug('auth Final roles for user', { roles: userRoles, activeRole: profileActiveRole });
 
       if (!silent || userRoles.length > 0) {
         setRoles(userRoles);
       }
     } catch (error) {
-      console.error('[auth] Error fetching user data:', error);
+      logger.error('auth Error fetching user data', error);
 
       // On silent refresh, keep the previous profile/roles to avoid flicker.
       if (!silent) {
@@ -627,16 +633,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Permission group for current active role
   const permissionGroup = activeRole ? getPermissionGroup(activeRole) : null;
 
-  // These check permission GROUP, not exact role string.
-  // e.g. isCreator is true for 'ugc_creator', 'photographer', etc.
+  // Permission groups: 'admin' | 'talent' | 'client'
+  // All creator/editor/strategist roles map to 'talent' group
   const isAdmin = permissionGroup === 'admin';
-  const isCreator = permissionGroup === 'creator';
-  const isEditor = permissionGroup === 'editor';
+  const isTalentGroup = permissionGroup === 'talent';
+  const isCreator = isTalentGroup;    // Legacy alias - all content roles are talent
+  const isEditor = isTalentGroup;     // Legacy alias - all production roles are talent
   const isClient = permissionGroup === 'client';
-  const isStrategist = permissionGroup === 'strategist';
-  const isTrafficker = permissionGroup === 'strategist'; // trafficker maps to strategist group
-  const isTeamLeader = permissionGroup === 'team_leader';
+  const isStrategist = isTalentGroup; // Legacy alias - all strategy roles are talent
+  const isTrafficker = isTalentGroup; // Legacy alias - trafficker is talent
+  const isTeamLeader = isAdmin;       // Legacy alias - team_leader maps to admin
   const isSuperadmin = profile?.is_superadmin === true; // Platform superadmin
+
+  // User type: talent (content creators, editors, etc.), client, or admin
+  // Priority: admin > client > talent
+  const getUserTypeFromRoles = (): UserType => {
+    if (roles.length === 0) return 'talent';
+    const groups = roles.map(r => getPermissionGroup(r));
+    if (groups.includes('admin')) return 'admin';
+    if (groups.includes('client')) return 'client';
+    return 'talent';
+  };
+
+  const userType = getUserTypeFromRoles();
+  const isTalent = userType === 'talent';
+
+  // Account type from profile (set during onboarding)
+  const accountType: AccountType | null = (profile?.user_type as AccountType) || null;
 
   return (
     <AuthContext.Provider value={{
@@ -662,7 +685,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isStrategist,
       isTrafficker,
       isTeamLeader,
-      isSuperadmin
+      isSuperadmin,
+      userType,
+      isTalent,
+      accountType
     }}>
       {children}
     </AuthContext.Provider>

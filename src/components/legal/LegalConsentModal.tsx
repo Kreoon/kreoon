@@ -115,7 +115,7 @@ export function LegalConsentModal({
         className={cn(
           "sm:max-w-[600px] max-h-[90vh] overflow-hidden",
           "bg-gradient-to-br from-background/95 via-background/98 to-background/95",
-          "backdrop-blur-xl border-white/10"
+          "border-white/10"
         )}
         onPointerDownOutside={(e) => {
           if (blockClose && requiredDocs.length > 0) {
@@ -133,7 +133,7 @@ export function LegalConsentModal({
 
         <DialogHeader className="relative">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-sm bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
               <Shield className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -176,7 +176,7 @@ export function LegalConsentModal({
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className={cn(
-                      "p-4 rounded-xl border transition-all",
+                      "p-4 rounded-sm border transition-all",
                       ageConfirmed
                         ? "border-green-500/30 bg-green-500/5"
                         : "border-orange-500/30 bg-orange-500/5"
@@ -277,7 +277,7 @@ function DocumentItem({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "p-4 rounded-xl border transition-all",
+        "p-4 rounded-sm border transition-all",
         isAccepted
           ? "border-green-500/30 bg-green-500/5"
           : "border-white/10 bg-white/5"

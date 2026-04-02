@@ -148,7 +148,7 @@ export default function RankingPage() {
       <PageHeader
         icon={Castle}
         title="Kreoon Ranking"
-        subtitle="Sistema de Kreoon Coins y clasificacion por rol"
+        subtitle="Sistema de Tokens IA y clasificacion por rol"
       />
 
       <Tabs defaultValue="ranking" className="space-y-6">
@@ -183,21 +183,21 @@ export default function RankingPage() {
         {/* ─── Ranking Tab ─── */}
         <TabsContent value="ranking" className="space-y-6">
           {/* Stats Overview */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Card className="border border-primary/30 bg-primary/5">
               <CardContent className="p-4 flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+                <div className="p-2 rounded-sm bg-primary/10 border border-primary/20">
                   <Flame className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{totalPoints.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">Kreoon Coins</p>
+                  <p className="text-xs text-muted-foreground">Tokens IA</p>
                 </div>
               </CardContent>
             </Card>
             <Card className="border border-green-400/30 bg-green-400/5">
               <CardContent className="p-4 flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-400/10 border border-green-400/20">
+                <div className="p-2 rounded-sm bg-green-400/10 border border-green-400/20">
                   <Users className="w-5 h-5 text-green-400" />
                 </div>
                 <div>
@@ -208,7 +208,7 @@ export default function RankingPage() {
             </Card>
             <Card className="border border-purple-400/30 bg-purple-400/5">
               <CardContent className="p-4 flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-purple-400/10 border border-purple-400/20">
+                <div className="p-2 rounded-sm bg-purple-400/10 border border-purple-400/20">
                   <Trophy className="w-5 h-5 text-purple-400" />
                 </div>
                 <div>
@@ -221,7 +221,7 @@ export default function RankingPage() {
 
           {/* Sort toggle + Season indicator */}
           <div className="flex items-center gap-3">
-            <div className="flex gap-1 bg-secondary/50 rounded-lg p-1 border border-border">
+            <div className="flex gap-1 bg-secondary/50 rounded-sm p-1 border border-border">
               {[
                 { value: 'lifetime' as SortKey, label: 'Puntos totales' },
                 { value: 'season' as SortKey, label: 'Temporada actual' },
@@ -230,7 +230,7 @@ export default function RankingPage() {
                   key={so.value}
                   onClick={() => setSortBy(so.value)}
                   className={cn(
-                    'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                    'px-3 py-1.5 rounded-sm text-xs font-medium transition-colors',
                     sortBy === so.value
                       ? 'bg-background text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
@@ -241,7 +241,7 @@ export default function RankingPage() {
               ))}
             </div>
             {activeSeason && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-xs">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-yellow-500/10 border border-yellow-500/20 text-xs">
                 <Calendar className="h-3 w-3 text-yellow-500" />
                 <span className="text-yellow-500 font-medium">{activeSeason.name}</span>
               </div>
@@ -300,11 +300,11 @@ export default function RankingPage() {
               <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/10 to-transparent">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center text-3xl">
+                    <div className="w-16 h-16 rounded-sm bg-primary/20 border border-primary/30 flex items-center justify-center text-3xl">
                       {LEVEL_META[primaryScore.current_level]?.icon || '🌱'}
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-2xl font-bold">{primaryScore.lifetime_points.toLocaleString()} Kreoon Coins</h3>
+                      <h3 className="text-2xl font-bold">{primaryScore.lifetime_points.toLocaleString()} Tokens IA</h3>
                       <p className="text-muted-foreground text-sm">
                         Nivel: <span className="font-medium text-foreground">{primaryScore.current_level}</span>
                         {' '} | Progreso: {Math.round(primaryScore.current_level_progress)}%
@@ -364,7 +364,7 @@ export default function RankingPage() {
             <div className="text-center py-16 text-muted-foreground">
               <Zap className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p className="text-lg font-medium">Sin puntos aun</p>
-              <p className="text-sm">Completa tareas para empezar a ganar Kreoon Coins</p>
+              <p className="text-sm">Completa tareas para empezar a ganar Tokens IA</p>
             </div>
           )}
         </TabsContent>
@@ -388,7 +388,7 @@ export default function RankingPage() {
                     <div className="space-y-3">
                       {seasons.map(season => (
                         <div key={season.id} className={cn(
-                          'flex items-center justify-between p-4 rounded-lg border',
+                          'flex items-center justify-between p-4 rounded-sm border',
                           season.is_active ? 'border-yellow-500/30 bg-yellow-500/5' : 'border-border',
                         )}>
                           <div>
@@ -478,7 +478,7 @@ export default function RankingPage() {
                     {archetypes.map(arch => {
                       const meta = ARCHETYPE_META[arch.archetype];
                       return (
-                        <div key={arch.id} className="p-3 rounded-lg border bg-card">
+                        <div key={arch.id} className="p-3 rounded-sm border bg-card">
                           <div className="flex items-center gap-2 mb-1">
                             <span>{meta?.icon || '📋'}</span>
                             <span className="text-sm font-medium truncate">{arch.role_display_name}</span>
@@ -570,7 +570,7 @@ function RoleLeaderboard({
               <div
                 key={entry.user_id}
                 className={cn(
-                  'flex items-center gap-4 p-3 rounded-lg transition-colors border',
+                  'flex items-center gap-4 p-3 rounded-sm transition-colors border',
                   isCurrentUser ? 'bg-primary/15 border-primary/40' : 'hover:bg-muted/50 border-transparent',
                   rank <= 3 && 'border-2',
                 )}
@@ -619,7 +619,7 @@ function RoleLeaderboard({
                 </div>
 
                 {/* Points */}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-primary/5 border-primary/20">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-sm border bg-primary/5 border-primary/20">
                   <Flame className="w-4 h-4 text-primary" />
                   <span className="font-bold text-primary">
                     {Math.round(displayPoints).toLocaleString()}
@@ -640,7 +640,7 @@ function StatCard({ icon: Icon, label, value, color }: { icon: any; label: strin
   return (
     <Card>
       <CardContent className="p-4 flex items-center gap-3">
-        <div className={cn('p-2 rounded-lg bg-muted border border-border')}>
+        <div className={cn('p-2 rounded-sm bg-muted border border-border')}>
           <Icon className={cn('w-5 h-5', color)} />
         </div>
         <div>
@@ -655,7 +655,7 @@ function StatCard({ icon: Icon, label, value, color }: { icon: any; label: strin
 function RoleScoreRow({ score }: { score: UserReputationTotals }) {
   const levelMeta = LEVEL_META[score.current_level] || LEVEL_META['Novato'];
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
+    <div className="flex items-center gap-3 p-3 rounded-sm border bg-card">
       <span className="text-lg">{levelMeta.icon}</span>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium">{ROLE_LABEL[score.role_key] || score.role_key}</p>
@@ -703,7 +703,7 @@ function EventsList({ events, loading, showUserName }: { events: any[]; loading:
         const isPositive = points >= 0;
 
         return (
-          <div key={ev.id || i} className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+          <div key={ev.id || i} className="flex items-center gap-3 p-3 rounded-sm border hover:bg-muted/50 transition-colors">
             <div className={cn(
               'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0',
               isPositive ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500',

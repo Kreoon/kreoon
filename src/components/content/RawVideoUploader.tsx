@@ -387,7 +387,7 @@ export function RawVideoUploader({
       {/* Video list */}
       <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
         {uploads.map((upload, index) => (
-          <div key={upload.id} className="space-y-2 p-3 rounded-lg border bg-muted/30">
+          <div key={upload.id} className="space-y-2 p-3 rounded-sm border bg-muted/30">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 {getStatusIcon(upload.status)}
@@ -435,7 +435,7 @@ export function RawVideoUploader({
             {/* Video Preview */}
             {showPreview && upload.embedUrl && upload.status === 'completed' && (
               <div 
-                className="rounded-lg overflow-hidden bg-black flex items-center justify-center mx-auto"
+                className="rounded-sm overflow-hidden bg-black flex items-center justify-center mx-auto"
                 style={{ aspectRatio: '9/16', maxHeight: '250px', width: 'auto' }}
               >
                 {renderBunnyEmbed(upload.embedUrl)}
@@ -463,7 +463,7 @@ export function RawVideoUploader({
 
       {/* Empty state */}
       {uploads.length === 0 && (
-        <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center p-8">
+        <div className="rounded-sm border-2 border-dashed border-border flex items-center justify-center p-8">
           <div className="text-center text-muted-foreground">
             <Upload className="h-10 w-10 mx-auto mb-2 opacity-50" />
             <p className="text-sm">No hay videos crudos subidos</p>

@@ -36,7 +36,7 @@ export function HiringStepPackage({
               type="button"
               onClick={() => onPaymentMethodChange('payment')}
               className={cn(
-                'text-left border rounded-xl p-4 transition-all',
+                'text-left border rounded-sm p-4 transition-all',
                 paymentMethod === 'payment'
                   ? 'border-purple-500 bg-purple-500/10'
                   : 'border-white/10 hover:border-purple-500/50',
@@ -66,7 +66,7 @@ export function HiringStepPackage({
                 if (hasPaidPlan) onPaymentMethodChange('exchange');
               }}
               className={cn(
-                'text-left border rounded-xl p-4 transition-all relative',
+                'text-left border rounded-sm p-4 transition-all relative',
                 paymentMethod === 'exchange'
                   ? 'border-green-500/50 bg-green-500/10'
                   : hasPaidPlan
@@ -113,7 +113,7 @@ export function HiringStepPackage({
             type="button"
             onClick={() => onSelectPackage(pkg.id)}
             className={cn(
-              'w-full text-left border rounded-xl p-4 transition-all',
+              'w-full text-left border rounded-sm p-4 transition-all',
               selectedPackageId === pkg.id
                 ? 'border-purple-500 bg-purple-500/10'
                 : 'border-white/10 hover:border-purple-500/50',
@@ -157,7 +157,7 @@ export function HiringStepPackage({
 
       {/* Selected package details */}
       {selected && (
-        <div className="bg-white/5 rounded-lg p-4 space-y-2">
+        <div className="bg-white/5 rounded-sm p-4 space-y-2">
           <p className="text-gray-400 text-xs font-medium">Incluye:</p>
           {selected.includes.map((item, i) => (
             <div key={i} className="flex items-start gap-2 text-foreground/80 text-xs">

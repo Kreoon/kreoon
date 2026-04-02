@@ -24,7 +24,7 @@ function DiffList({ title, items, color, primaryKey, secondaryKey }: {
       <h4 className={`text-xs font-semibold ${titleColor} uppercase tracking-wider mb-3`}>{title}</h4>
       <div className="space-y-2">
         {items.map((item: any, i: number) => (
-          <div key={i} className={`${bgColor} border ${borderColor} rounded-lg p-3`}>
+          <div key={i} className={`${bgColor} border ${borderColor} rounded-sm p-3`}>
             <p className="text-sm text-white/80">{safeStr(typeof item === 'string' ? item : item[primaryKey] || item, '')}</p>
             {typeof item === 'object' && item[secondaryKey] && (
               <p className="text-xs text-white/40 mt-1">{item[secondaryKey]}</p>

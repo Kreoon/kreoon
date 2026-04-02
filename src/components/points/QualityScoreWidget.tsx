@@ -76,7 +76,7 @@ export function QualityScoreWidget({ contentId, organizationId, compact = false 
 
     return (
       <div className={cn(
-        "flex items-center gap-2 px-2 py-1 rounded-md border text-xs",
+        "flex items-center gap-2 px-2 py-1 rounded-sm border text-xs",
         getScoreBg(qualityScore.score)
       )}>
         <Brain className="w-3 h-3" />
@@ -166,7 +166,7 @@ export function QualityScoreWidget({ contentId, organizationId, compact = false 
 
             {/* Suggestions */}
             {qualityScore.suggestions && qualityScore.suggestions.length > 0 && (
-              <div className="space-y-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+              <div className="space-y-2 p-3 rounded-sm bg-primary/5 border border-primary/20">
                 <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
                   <Lightbulb className="w-3 h-3 text-primary" />
                   Sugerencias para mejorar:

@@ -200,7 +200,7 @@ const VideoSlide = memo(function VideoSlide({
 
       {/* Variant selector - top center */}
       {hasMultipleVariants && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full z-20">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 px-4 py-2 rounded-full z-20">
           <button
             onClick={() => onVariantChange(Math.max(0, currentVariantIndex - 1))}
             disabled={currentVariantIndex === 0}
@@ -311,7 +311,7 @@ const VideoSlide = memo(function VideoSlide({
         {item.media_type === 'video' && (
           <button
             onClick={onMuteToggle}
-            className="p-3 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors"
+            className="p-3 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors"
           >
             {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
           </button>
@@ -324,7 +324,7 @@ const VideoSlide = memo(function VideoSlide({
               setLocalIsLiked(!localIsLiked);
               onLike();
             }}
-            className="p-3 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors"
+            className="p-3 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors"
           >
             <Heart className={cn("h-6 w-6", localIsLiked && "fill-red-500 text-red-500")} />
           </button>
@@ -333,7 +333,7 @@ const VideoSlide = memo(function VideoSlide({
         {/* Comments */}
         <button
           onClick={onOpenComments}
-          className="p-3 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors"
+          className="p-3 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors"
         >
           <MessageCircle className="h-6 w-6" />
         </button>
@@ -342,7 +342,7 @@ const VideoSlide = memo(function VideoSlide({
         {mode === 'browse' && onSave && (
           <button
             onClick={onSave}
-            className="p-3 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors"
+            className="p-3 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors"
           >
             <Bookmark className={cn("h-6 w-6", isSaved && "fill-yellow-500 text-yellow-500")} />
           </button>
@@ -352,7 +352,7 @@ const VideoSlide = memo(function VideoSlide({
         {onShare && (
           <button
             onClick={onShare}
-            className="p-3 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors"
+            className="p-3 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors"
           >
             <Share2 className="h-6 w-6" />
           </button>
@@ -362,7 +362,7 @@ const VideoSlide = memo(function VideoSlide({
         {canDownload && onDownload && (
           <button
             onClick={onDownload}
-            className="p-3 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors"
+            className="p-3 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors"
           >
             <Download className="h-6 w-6" />
           </button>
@@ -583,14 +583,14 @@ export function UnifiedContentViewer({
       {/* Close button */}
       <button
         onClick={onClose}
-        className="absolute top-[calc(env(safe-area-inset-top)+1rem)] right-4 z-50 p-3 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/40 transition-all shadow-lg border border-white/20"
+        className="absolute top-[calc(env(safe-area-inset-top)+1rem)] right-4 z-50 p-3 rounded-full bg-white/20 text-white hover:bg-white/40 transition-all shadow-lg border border-white/20"
         aria-label="Cerrar"
       >
         <X className="h-7 w-7" />
       </button>
 
       {/* Counter */}
-      <div className="absolute top-[calc(env(safe-area-inset-top)+1rem)] left-4 z-50 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm text-white text-sm font-medium">
+      <div className="absolute top-[calc(env(safe-area-inset-top)+1rem)] left-4 z-50 px-3 py-1.5 rounded-full bg-black/50 text-white text-sm font-medium">
         {currentIndex + 1} / {items.length}
       </div>
 
@@ -600,7 +600,7 @@ export function UnifiedContentViewer({
           onClick={goToPrevious}
           disabled={currentIndex === 0}
           className={cn(
-            "p-3 rounded-full bg-black/50 backdrop-blur-sm text-white transition-all",
+            "p-3 rounded-full bg-black/50 text-white transition-all",
             currentIndex === 0 ? "opacity-30 cursor-not-allowed" : "hover:bg-black/70"
           )}
         >
@@ -610,7 +610,7 @@ export function UnifiedContentViewer({
           onClick={goToNext}
           disabled={currentIndex === items.length - 1}
           className={cn(
-            "p-3 rounded-full bg-black/50 backdrop-blur-sm text-white transition-all",
+            "p-3 rounded-full bg-black/50 text-white transition-all",
             currentIndex === items.length - 1 ? "opacity-30 cursor-not-allowed" : "hover:bg-black/70"
           )}
         >
@@ -645,7 +645,7 @@ export function UnifiedContentViewer({
         {mode === 'review' && (onApprove || onReject) && (
           <div className="absolute inset-x-0 bottom-0 z-30">
             {showFeedbackInput ? (
-              <div className="bg-black/90 backdrop-blur-xl p-4 space-y-3">
+              <div className="bg-black/90 p-4 space-y-3">
                 <Textarea
                   ref={textareaRef}
                   placeholder="Escribe tus comentarios o correcciones..."

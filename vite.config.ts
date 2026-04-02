@@ -75,6 +75,11 @@ export default defineConfig(({ mode }) => ({
           if (id.includes('node_modules/date-fns')) {
             return 'vendor-date';
           }
+
+          // HLS.js - large video streaming library (522KB), loaded dynamically
+          if (id.includes('node_modules/hls.js')) {
+            return 'hls';
+          }
         },
       },
     },
@@ -137,6 +142,15 @@ export default defineConfig(({ mode }) => ({
         // Clean up old caches (including v2 bloated ones)
         cleanupOutdatedCaches: true,
         runtimeCaching: [
+          {
+            // Supabase Edge Functions - ALWAYS go to network, never cache
+            // This prevents 404 errors from cached responses
+            urlPattern: /^https:\/\/.*\.supabase\.co\/functions\/v1\/.*/i,
+            handler: 'NetworkOnly',
+            options: {
+              cacheName: 'supabase-functions',
+            }
+          },
           {
             // Lazy-loaded JS/CSS chunks: cache on first visit, serve from cache next time
             urlPattern: /\/assets\/.*\.(?:js|css)$/i,

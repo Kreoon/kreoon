@@ -82,9 +82,9 @@ export function AuthLayout({
                     <img
                       src={logoUrl}
                       alt={platformName}
-                      className="h-10 w-10 rounded-lg object-cover"
+                      className="h-10 w-10 rounded-sm object-cover"
                     />
-                    <span className="text-xl font-bold tracking-tight text-kreoon-text-primary">
+                    <span className="text-xl font-bold tracking-tight text-foreground">
                       {platformName}
                     </span>
                   </motion.div>
@@ -97,17 +97,17 @@ export function AuthLayout({
                   >
                     <div
                       className={cn(
-                        "flex flex-col items-center justify-center gap-4 rounded-2xl px-10 py-12",
-                        "border border-kreoon-purple-400/20 bg-kreoon-bg-card/40 backdrop-blur-xl",
-                        "shadow-kreoon-glow",
+                        "flex flex-col items-center justify-center gap-4 rounded-sm px-10 py-12",
+                        "border border-border bg-card",
+                        "shadow-none",
                       )}
                     >
                       <img
                         src="/favicon.png"
                         alt="KREOON"
-                        className="h-20 w-20 rounded-2xl object-cover shadow-kreoon-glow"
+                        className="h-20 w-20 rounded-sm object-cover shadow-kreoon-glow"
                       />
-                      <p className="text-sm font-medium text-kreoon-text-secondary tracking-wide">
+                      <p className="text-sm font-medium text-muted-foreground tracking-wide">
                         El sistema operativo para creadores
                       </p>
                     </div>
@@ -117,10 +117,10 @@ export function AuthLayout({
                     initial="hidden"
                     animate="visible"
                     custom={2}
-                    className="text-center text-lg font-medium tracking-wide text-kreoon-purple-400 lg:text-xl"
+                    className="text-center text-lg font-bold tracking-widest uppercase font-mono text-purple-500 lg:text-xl"
                     style={{
                       textShadow:
-                        "0 0 10px rgba(124, 58, 237, 0.5), 0 0 20px rgba(124, 58, 237, 0.3)",
+                        "0 0 10px rgba(124, 58, 237, 0.3)",
                     }}
                   >
                     Conecta. Crea. Crece.

@@ -113,7 +113,7 @@ async function generateCopy(params: {
     brandDNA,
   });
 
-  const geminiModel = model.startsWith("gemini") ? model : "gemini-2.0-flash";
+  const geminiModel = model.startsWith("gemini") ? model : "gemini-1.5-flash";
 
   console.log(`[copy] Calling Gemini model=${geminiModel}, product="${productName}"`);
 
@@ -951,7 +951,7 @@ async function generateImagePrompts(params: {
     name, description: description || undefined, stylePreset, aspectRatio, mode, language, hasReferenceImage, numProductImages, numVariations, customization, brandDNA, researchVariables, researchContext, briefData,
   });
 
-  const geminiModel = model.startsWith("gemini") ? model : "gemini-2.0-flash";
+  const geminiModel = model.startsWith("gemini") ? model : "gemini-1.5-flash";
 
   console.log(`[image-director] Calling Gemini model=${geminiModel} for ${numVariations} Nano Banana Pro prompts, product="${name}", refImage=${!!referenceImageUrl}, productImages=${productImageUrls?.length || 0}`);
 
@@ -1296,7 +1296,7 @@ Responde SOLO con JSON (sin markdown, sin backticks):
   "emotional_trigger": "El disparador emocional más efectivo para este producto"
 }`;
 
-  const geminiModel = model.startsWith("gemini") ? model : "gemini-2.0-flash";
+  const geminiModel = model.startsWith("gemini") ? model : "gemini-1.5-flash";
   console.log(`[quick-research] Calling Gemini for product="${productName}"`);
 
   try {

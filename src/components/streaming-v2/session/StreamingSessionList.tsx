@@ -127,7 +127,7 @@ export function StreamingSessionList({
           />
         </div>
         <div className="flex items-center gap-2">
-          <div className="hidden sm:flex items-center gap-1 rounded-lg border p-1">
+          <div className="hidden sm:flex items-center gap-1 rounded-sm border p-1">
             <Button
               variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
               size="icon"

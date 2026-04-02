@@ -123,7 +123,7 @@ export function ProfileBuilder({ onClose }: ProfileBuilderProps) {
                       <div>
                         <Label className="text-xs text-muted-foreground">Portada</Label>
                         <div 
-                          className="mt-1 h-32 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 relative overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                          className="mt-1 h-32 rounded-sm bg-gradient-to-br from-primary/20 to-secondary/20 relative overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
                           onClick={() => document.getElementById('cover-upload')?.click()}
                         >
                           {profile.cover_url && (
@@ -456,7 +456,7 @@ export function ProfileBuilder({ onClose }: ProfileBuilderProps) {
                         <div>
                           <Label>Moneda</Label>
                           <select
-                            className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            className="w-full h-10 rounded-sm border border-input bg-background px-3 py-2 text-sm"
                             value={profile.rate_currency}
                             onChange={(e) => updateField('rate_currency', e.target.value)}
                           >

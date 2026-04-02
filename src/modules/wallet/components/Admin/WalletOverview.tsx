@@ -204,7 +204,7 @@ export function WalletOverview({ className }: WalletOverviewProps) {
     <div className={cn('space-y-6', className)}>
       {/* Header */}
       <div className="flex items-center gap-4">
-        <div className="p-3 rounded-2xl bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
+        <div className="p-3 rounded-sm bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]">
           <Wallet className="h-8 w-8 text-primary" />
         </div>
         <div>
@@ -460,7 +460,7 @@ export function WalletOverview({ className }: WalletOverviewProps) {
                     El usuario no podrá realizar retiros ni transferencias mientras el wallet
                     esté congelado.
                   </p>
-                  <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <div className="flex items-start gap-2 p-3 rounded-sm bg-amber-500/10 border border-amber-500/20">
                     <AlertTriangle className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
                     <p className="text-sm text-[hsl(270,30%,70%)]">
                       Esta acción debería utilizarse solo en casos de actividad sospechosa o

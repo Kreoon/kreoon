@@ -25,7 +25,7 @@ function TalentGrid({ talents, loading, onSelect, onAmbassadorToggle, isAdmin }:
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
         {[1, 2, 3, 4].map(i => (
-          <Skeleton key={i} className="h-56 rounded-xl" />
+          <Skeleton key={i} className="h-56 rounded-sm" />
         ))}
       </div>
     );
@@ -448,7 +448,7 @@ export function CreatorsContent() {
                 placeholder="Buscar creador..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-9 w-full rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="h-9 w-full rounded-sm border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
           )}

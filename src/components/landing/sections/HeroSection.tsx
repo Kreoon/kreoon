@@ -168,7 +168,7 @@ export function HeroSection({ onGetStarted, onWatchDemo }: HeroSectionProps) {
                 repeat: Infinity,
                 ease: "easeInOut",
               }}
-              className="relative rounded-2xl border border-kreoon-purple-500/30 bg-kreoon-bg-card/80 p-6 shadow-kreoon-glow-sm backdrop-blur-xl"
+              className="relative rounded-sm border border-kreoon-purple-500/30 bg-kreoon-bg-card/80 p-6 shadow-kreoon-glow-sm"
             >
               <div className="flex items-center gap-4">
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-kreoon-purple-500 to-kreoon-purple-700">
@@ -182,15 +182,15 @@ export function HeroSection({ onGetStarted, onWatchDemo }: HeroSectionProps) {
                 </div>
               </div>
               <div className="mt-4 flex gap-3">
-                <div className="flex-1 rounded-lg bg-kreoon-bg-secondary/80 px-3 py-2 text-center">
+                <div className="flex-1 rounded-sm bg-kreoon-bg-secondary/80 px-3 py-2 text-center">
                   <p className="text-lg font-bold text-kreoon-purple-400">3</p>
                   <p className="text-xs text-kreoon-text-muted">campañas activas</p>
                 </div>
-                <div className="flex-1 rounded-lg bg-kreoon-bg-secondary/80 px-3 py-2 text-center">
+                <div className="flex-1 rounded-sm bg-kreoon-bg-secondary/80 px-3 py-2 text-center">
                   <p className="text-lg font-bold text-kreoon-purple-400">12</p>
                   <p className="text-xs text-kreoon-text-muted">creadores</p>
                 </div>
-                <div className="flex-1 rounded-lg bg-kreoon-bg-secondary/80 px-3 py-2 text-center">
+                <div className="flex-1 rounded-sm bg-kreoon-bg-secondary/80 px-3 py-2 text-center">
                   <p className="text-lg font-bold text-kreoon-purple-400">5</p>
                   <p className="text-xs text-kreoon-text-muted">clientes</p>
                 </div>
@@ -206,7 +206,7 @@ export function HeroSection({ onGetStarted, onWatchDemo }: HeroSectionProps) {
                 ease: "easeInOut",
                 delay: 0.3,
               }}
-              className="absolute -right-2 top-4 rounded-xl border border-kreoon-purple-500/25 bg-kreoon-bg-card/70 px-4 py-3 backdrop-blur-md md:right-8"
+              className="absolute -right-2 top-4 rounded-sm border border-kreoon-purple-500/25 bg-kreoon-bg-card/70 px-4 py-3 md:right-8"
             >
               <p className="text-xs font-medium text-kreoon-text-secondary">
                 Nuevo brief asignado
@@ -226,7 +226,7 @@ export function HeroSection({ onGetStarted, onWatchDemo }: HeroSectionProps) {
                 ease: "easeInOut",
                 delay: 0.6,
               }}
-              className="absolute bottom-8 left-0 rounded-xl border border-kreoon-purple-500/25 bg-kreoon-bg-card/70 px-4 py-3 backdrop-blur-md md:left-4"
+              className="absolute bottom-8 left-0 rounded-sm border border-kreoon-purple-500/25 bg-kreoon-bg-card/70 px-4 py-3 md:left-4"
             >
               <p className="flex items-center gap-2 text-xs text-kreoon-text-secondary">
                 <Users className="h-4 w-4 text-kreoon-purple-400" />
@@ -244,7 +244,7 @@ export function HeroSection({ onGetStarted, onWatchDemo }: HeroSectionProps) {
                 ease: "easeInOut",
                 delay: 0.9,
               }}
-              className="absolute -left-2 bottom-24 rounded-xl border border-kreoon-purple-500/25 bg-kreoon-bg-card/70 px-4 py-3 backdrop-blur-md md:bottom-32 md:left-8"
+              className="absolute -left-2 bottom-24 rounded-sm border border-kreoon-purple-500/25 bg-kreoon-bg-card/70 px-4 py-3 md:bottom-32 md:left-8"
             >
               <p className="flex items-center gap-1.5 text-xs text-kreoon-text-secondary">
                 <TrendingUp className="h-3.5 w-3.5 text-green-400" />
@@ -262,7 +262,7 @@ export function HeroSection({ onGetStarted, onWatchDemo }: HeroSectionProps) {
                 ease: "easeInOut",
                 delay: 1.2,
               }}
-              className="absolute -right-4 bottom-16 rounded-xl border border-green-500/30 bg-kreoon-bg-card/70 px-4 py-2.5 backdrop-blur-md md:right-4"
+              className="absolute -right-4 bottom-16 rounded-sm border border-green-500/30 bg-kreoon-bg-card/70 px-4 py-2.5 md:right-4"
             >
               <p className="flex items-center gap-1.5 text-sm font-semibold text-green-400">
                 <CheckCircle className="h-4 w-4" />

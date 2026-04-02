@@ -111,7 +111,7 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
     return (
       <div
         className={cn(
-          "flex items-center gap-2 px-3 py-1.5 rounded-lg border",
+          "flex items-center gap-2 px-3 py-1.5 rounded-sm border",
           "bg-opacity-20 border-opacity-30"
         )}
         style={{
@@ -133,7 +133,7 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
 
   return (
     <Card
-      className="border-2 bg-gradient-to-br backdrop-blur-xl overflow-hidden"
+      className="border-2 bg-gradient-to-br overflow-hidden"
       style={{
         backgroundColor: `${levelMeta.bgColor}33`,
         borderColor: `${levelMeta.color}4D`,
@@ -164,7 +164,7 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-background/50">
+          <div className="flex items-center gap-1 px-2 py-1 rounded-sm bg-background/50">
             <RoleIcon className="w-4 h-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">{roleLabel}</span>
           </div>
@@ -194,8 +194,8 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
 
         {/* Stats del rol específico */}
         <div className="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-border/50">
-          <div className="flex items-center gap-2 p-2 rounded-lg bg-background/30">
-            <div className="p-1.5 rounded-md bg-green-500/20">
+          <div className="flex items-center gap-2 p-2 rounded-sm bg-background/30">
+            <div className="p-1.5 rounded-sm bg-green-500/20">
               <CheckCircle2 className="w-4 h-4 text-green-500" />
             </div>
             <div>
@@ -203,8 +203,8 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
               <p className="text-xs text-muted-foreground">A tiempo</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 p-2 rounded-lg bg-background/30">
-            <div className="p-1.5 rounded-md bg-orange-500/20">
+          <div className="flex items-center gap-2 p-2 rounded-sm bg-background/30">
+            <div className="p-1.5 rounded-sm bg-orange-500/20">
               <Clock className="w-4 h-4 text-orange-500" />
             </div>
             <div>
@@ -215,8 +215,8 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
         </div>
 
         <div className="grid grid-cols-2 gap-3 mt-2">
-          <div className="flex items-center gap-2 p-2 rounded-lg bg-background/30">
-            <div className="p-1.5 rounded-md bg-emerald-500/20">
+          <div className="flex items-center gap-2 p-2 rounded-sm bg-background/30">
+            <div className="p-1.5 rounded-sm bg-emerald-500/20">
               <Trophy className="w-4 h-4 text-emerald-500" />
             </div>
             <div>
@@ -224,8 +224,8 @@ export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProp
               <p className="text-xs text-muted-foreground">Limpias</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 p-2 rounded-lg bg-background/30">
-            <div className="p-1.5 rounded-md bg-red-500/20">
+          <div className="flex items-center gap-2 p-2 rounded-sm bg-background/30">
+            <div className="p-1.5 rounded-sm bg-red-500/20">
               <AlertTriangle className="w-4 h-4 text-red-500" />
             </div>
             <div>

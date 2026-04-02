@@ -289,7 +289,7 @@ export function ContentAIAnalysis({
               <CardContent>
                 {phaseConfig && (
                   <div className="flex items-start gap-4">
-                    <div className={`p-4 rounded-lg ${phaseConfig.color} text-white text-3xl`}>
+                    <div className={`p-4 rounded-sm ${phaseConfig.color} text-white text-3xl`}>
                       {phaseConfig.emoji}
                     </div>
                     <div className="flex-1">
@@ -399,7 +399,7 @@ export function ContentAIAnalysis({
                     </h4>
                     <div className="grid gap-3">
                       {result.targetAudiences.directAudiences?.map((audience, i) => (
-                        <div key={i} className="p-3 rounded-lg border bg-green-50/50 dark:bg-green-950/20">
+                        <div key={i} className="p-3 rounded-sm border bg-green-50/50 dark:bg-green-950/20">
                           <div className="flex items-start justify-between gap-2 mb-2">
                             <span className="font-medium text-sm">{audience.name}</span>
                             {audience.demographics && (
@@ -430,7 +430,7 @@ export function ContentAIAnalysis({
                     </h4>
                     <div className="grid gap-3">
                       {result.targetAudiences.indirectAudiences?.map((audience, i) => (
-                        <div key={i} className="p-3 rounded-lg border bg-blue-50/50 dark:bg-blue-950/20">
+                        <div key={i} className="p-3 rounded-sm border bg-blue-50/50 dark:bg-blue-950/20">
                           <div className="flex items-start justify-between gap-2 mb-2">
                             <span className="font-medium text-sm">{audience.name}</span>
                             {audience.demographics && (
@@ -473,7 +473,7 @@ export function ContentAIAnalysis({
                 {result.adCopies.map((copy, index) => (
                   <div
                     key={index}
-                    className="p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
+                    className="p-4 rounded-sm border bg-card hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-start justify-between gap-2 mb-3">
                       <div className="flex items-center gap-2">

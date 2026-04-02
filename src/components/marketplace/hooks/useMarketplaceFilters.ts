@@ -18,8 +18,6 @@ export function useMarketplaceFilters() {
         next.platforms = [];
         next.software = [];
         next.accepts_exchange = null;
-        next.tech_stack = [];
-        next.education_format = [];
       }
 
       return next;
@@ -34,6 +32,7 @@ export function useMarketplaceFilters() {
     let count = 0;
     if (filters.category) count++;
     if (filters.country) count++;
+    if (filters.city) count++; // Ciudad específica
     if (filters.content_type.length > 0) count++;
     if (filters.price_min != null || filters.price_max != null) count++;
     if (filters.rating_min != null) count++;
@@ -46,8 +45,8 @@ export function useMarketplaceFilters() {
     if (filters.platforms.length > 0) count++;
     if (filters.software.length > 0) count++;
     if (filters.accepts_exchange != null) count++;
-    if (filters.tech_stack.length > 0) count++;
-    if (filters.education_format.length > 0) count++;
+    // Specializations
+    if (filters.specializations.length > 0) count++;
     return count;
   }, [filters]);
 

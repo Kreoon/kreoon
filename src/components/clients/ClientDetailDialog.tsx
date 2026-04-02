@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,13 +19,15 @@ import { es } from "date-fns/locale";
 import {
   Building2, Video, Mail, Phone, Calendar, DollarSign,
   Package, Plus, Trash2, Edit2, ShoppingBag, CheckCircle,
-  Star, Eye, Settings, Radio, Dna, Sparkles, FolderOpen, FileText, Target
+  Star, Eye, Settings, Radio, Dna, Sparkles, FolderOpen, FileText, Target, Loader2
 } from "lucide-react";
-import { RichTextViewer } from "@/components/ui/rich-text-editor";
+import { LazyRichTextViewer as RichTextViewer } from "@/components/ui/lazy-rich-text-editor";
 import { Card, CardContent } from "@/components/ui/card";
 import { ClientStreamingChannels } from "@/components/clients/ClientStreamingChannels";
-import { ClientDNATab } from "@/components/clients/dna";
 import { VipBadge } from "@/components/ui/vip-badge";
+
+// Lazy load ClientDNATab (424KB) - only loads when DNA tab is active
+const ClientDNATab = lazy(() => import('@/components/clients/dna/ClientDNATab').then(m => ({ default: m.ClientDNATab })));
 import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
 import { CompanyProfileEditor } from "@/components/portfolio/CompanyProfileEditor";
@@ -321,17 +323,17 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="w-full sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full sm:max-w-4xl max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-4">
             {client.logo_url ? (
               <img 
                 src={client.logo_url} 
                 alt={client.name}
-                className="h-16 w-16 rounded-lg object-cover ring-2 ring-border"
+                className="h-16 w-16 rounded-sm object-cover ring-2 ring-border"
               />
             ) : (
-              <div className="h-16 w-16 rounded-lg bg-primary/10 flex items-center justify-center ring-2 ring-border">
+              <div className="h-16 w-16 rounded-sm bg-primary/10 flex items-center justify-center ring-2 ring-border">
                 <Building2 className="h-8 w-8 text-primary" />
               </div>
             )}
@@ -381,7 +383,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
           <TabsContent value="info" className="space-y-4 mt-4">
             {/* Admin: Full Profile Editor Button */}
             {isAdmin && fullClientData && (
-              <div className="p-4 rounded-lg border bg-primary/5 border-primary/20">
+              <div className="p-4 rounded-sm border bg-primary/5 border-primary/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Settings className="h-5 w-5 text-primary" />
@@ -480,7 +482,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
 
             {/* VIP Toggle - Admin only */}
             {isAdmin && (
-              <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
+              <div className="flex items-center justify-between p-4 rounded-sm border bg-card">
                 <div className="flex items-center gap-3">
                   <Star className="h-5 w-5 text-purple-500" />
                   <div>
@@ -510,9 +512,15 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
             )}
           </TabsContent>
 
-          {/* DNA Tab */}
+          {/* DNA Tab - lazy loaded */}
           <TabsContent value="dna" className="mt-4">
-            <ClientDNATab clientId={client.id} />
+            <Suspense fallback={
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            }>
+              <ClientDNATab clientId={client.id} />
+            </Suspense>
           </TabsContent>
 
           {/* Packages Tab */}
@@ -529,7 +537,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
             {loadingPackages ? (
               <div className="space-y-3">
                 {[1, 2].map(i => (
-                  <Skeleton key={i} className="h-32 rounded-lg" />
+                  <Skeleton key={i} className="h-32 rounded-sm" />
                 ))}
               </div>
             ) : packages.length === 0 ? (
@@ -558,7 +566,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
                   return (
                     <div 
                       key={pkg.id}
-                      className="p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
+                      className="p-4 rounded-sm border bg-card hover:shadow-md transition-shadow"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
@@ -707,7 +715,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
                 {loadingProducts ? (
                   <div className="space-y-3">
                     {[1, 2].map(i => (
-                      <Skeleton key={i} className="h-24 rounded-lg" />
+                      <Skeleton key={i} className="h-24 rounded-sm" />
                     ))}
                   </div>
                 ) : products.length === 0 ? (
@@ -743,7 +751,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
                           <div className="p-4 bg-gradient-to-r from-primary/5 to-primary/10 border-b">
                             <div className="flex items-start justify-between">
                               <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-lg bg-primary/10">
+                                <div className="p-2 rounded-sm bg-primary/10">
                                   <Package className="h-5 w-5 text-primary" />
                                 </div>
                                 <div>
@@ -880,7 +888,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
                     <h4 className="font-medium text-sm text-muted-foreground mb-2">Activos ({activeContent.length})</h4>
                     <div className="space-y-2">
                       {activeContent.map(content => (
-                        <div key={content.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+                        <div key={content.id} className="flex items-center justify-between p-3 rounded-sm border bg-card">
                           <div className="flex-1 min-w-0">
                             <p className="font-medium truncate">{content.title}</p>
                             <div className="flex gap-2 text-xs text-muted-foreground">
@@ -910,7 +918,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
                     <h4 className="font-medium text-sm text-muted-foreground mb-2">Completados ({completedContent.length})</h4>
                     <div className="space-y-2">
                       {completedContent.slice(0, 5).map(content => (
-                        <div key={content.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/50">
+                        <div key={content.id} className="flex items-center justify-between p-3 rounded-sm border bg-muted/50">
                           <div className="flex-1 min-w-0">
                             <p className="font-medium truncate">{content.title}</p>
                           </div>
@@ -936,19 +944,19 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
             <div>
               <h4 className="font-medium text-sm text-muted-foreground mb-3">Contenido</h4>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="p-4 rounded-lg border bg-card text-center">
+                <div className="p-4 rounded-sm border bg-card text-center">
                   <p className="text-2xl font-bold text-primary">{assignedContent.length}</p>
                   <p className="text-xs text-muted-foreground">Total videos</p>
                 </div>
-                <div className="p-4 rounded-lg border bg-card text-center">
+                <div className="p-4 rounded-sm border bg-card text-center">
                   <p className="text-2xl font-bold text-info">{activeContent.length}</p>
                   <p className="text-xs text-muted-foreground">En progreso</p>
                 </div>
-                <div className="p-4 rounded-lg border bg-card text-center">
+                <div className="p-4 rounded-sm border bg-card text-center">
                   <p className="text-2xl font-bold text-success">{completedContent.length}</p>
                   <p className="text-xs text-muted-foreground">Completados</p>
                 </div>
-                <div className="p-4 rounded-lg border bg-card text-center">
+                <div className="p-4 rounded-sm border bg-card text-center">
                   <p className="text-2xl font-bold text-primary">{products.length}</p>
                   <p className="text-xs text-muted-foreground">Productos</p>
                 </div>
@@ -959,19 +967,19 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
             <div>
               <h4 className="font-medium text-sm text-muted-foreground mb-3">Engagement</h4>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-lg border bg-card text-center">
+                <div className="p-4 rounded-sm border bg-card text-center">
                   <p className="text-2xl font-bold text-primary">
                     {assignedContent.reduce((sum, c) => sum + (c.views_count || 0), 0).toLocaleString()}
                   </p>
                   <p className="text-xs text-muted-foreground">Vistas totales</p>
                 </div>
-                <div className="p-4 rounded-lg border bg-card text-center">
+                <div className="p-4 rounded-sm border bg-card text-center">
                   <p className="text-2xl font-bold text-pink-500">
                     {assignedContent.reduce((sum, c) => sum + (c.likes_count || 0), 0).toLocaleString()}
                   </p>
                   <p className="text-xs text-muted-foreground">Likes totales</p>
                 </div>
-                <div className="p-4 rounded-lg border bg-card text-center">
+                <div className="p-4 rounded-sm border bg-card text-center">
                   <p className="text-2xl font-bold text-success">
                     {assignedContent.filter(c => c.is_published).length}
                   </p>
@@ -984,28 +992,28 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
             <div>
               <h4 className="font-medium text-sm text-muted-foreground mb-3">Finanzas</h4>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="p-4 rounded-lg border bg-card text-center">
+                <div className="p-4 rounded-sm border bg-card text-center">
                   <p className="text-2xl font-bold text-success flex items-center justify-center gap-1">
                     <DollarSign className="h-5 w-5" />
                     {packages.reduce((sum, p) => sum + (p.total_value || 0), 0).toLocaleString()}
                   </p>
                   <p className="text-xs text-muted-foreground">Valor contratado</p>
                 </div>
-                <div className="p-4 rounded-lg border bg-card text-center">
+                <div className="p-4 rounded-sm border bg-card text-center">
                   <p className="text-2xl font-bold text-primary flex items-center justify-center gap-1">
                     <DollarSign className="h-5 w-5" />
                     {packages.reduce((sum, p) => sum + (p.paid_amount || 0), 0).toLocaleString()}
                   </p>
                   <p className="text-xs text-muted-foreground">Pagado</p>
                 </div>
-                <div className="p-4 rounded-lg border bg-card text-center">
+                <div className="p-4 rounded-sm border bg-card text-center">
                   <p className="text-2xl font-bold text-warning flex items-center justify-center gap-1">
                     <DollarSign className="h-5 w-5" />
                     {packages.reduce((sum, p) => sum + ((p.total_value || 0) - (p.paid_amount || 0)), 0).toLocaleString()}
                   </p>
                   <p className="text-xs text-muted-foreground">Pendiente</p>
                 </div>
-                <div className="p-4 rounded-lg border bg-card text-center">
+                <div className="p-4 rounded-sm border bg-card text-center">
                   <p className="text-2xl font-bold text-muted-foreground flex items-center justify-center gap-1">
                     <DollarSign className="h-5 w-5" />
                     {totalValue.toLocaleString()}
@@ -1019,23 +1027,23 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
             <div>
               <h4 className="font-medium text-sm text-muted-foreground mb-3">Paquetes</h4>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="p-4 rounded-lg border bg-card text-center">
+                <div className="p-4 rounded-sm border bg-card text-center">
                   <p className="text-2xl font-bold text-primary">{packages.length}</p>
                   <p className="text-xs text-muted-foreground">Total paquetes</p>
                 </div>
-                <div className="p-4 rounded-lg border bg-card text-center">
+                <div className="p-4 rounded-sm border bg-card text-center">
                   <p className="text-2xl font-bold text-success">
                     {packages.filter(p => p.payment_status === 'paid').length}
                   </p>
                   <p className="text-xs text-muted-foreground">Pagados</p>
                 </div>
-                <div className="p-4 rounded-lg border bg-card text-center">
+                <div className="p-4 rounded-sm border bg-card text-center">
                   <p className="text-2xl font-bold text-info">
                     {packages.reduce((sum, p) => sum + (p.content_quantity || 0), 0)}
                   </p>
                   <p className="text-xs text-muted-foreground">Videos contratados</p>
                 </div>
-                <div className="p-4 rounded-lg border bg-card text-center">
+                <div className="p-4 rounded-sm border bg-card text-center">
                   <p className="text-2xl font-bold text-warning">
                     {packages.reduce((sum, p) => sum + (p.content_quantity || 0), 0) - completedContent.length}
                   </p>

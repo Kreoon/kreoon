@@ -154,7 +154,7 @@ export function LiveShoppingComingSoon({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400"
+                className="flex items-center gap-2 rounded-sm bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400"
               >
                 <CheckCircle className="h-4 w-4" />
                 ¡Estás en la lista!
@@ -218,7 +218,7 @@ export function LiveShoppingComingSoon({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           className={cn(
-            "relative overflow-hidden rounded-xl border border-kreoon-purple-500/30 bg-gradient-to-r from-kreoon-purple-900/30 via-kreoon-bg-card to-kreoon-purple-900/30 px-4 py-3 backdrop-blur-sm",
+            "relative overflow-hidden rounded-sm border border-kreoon-purple-500/30 bg-gradient-to-r from-kreoon-purple-900/30 via-kreoon-bg-card to-kreoon-purple-900/30 px-4 py-3",
             className,
           )}
         >
@@ -314,7 +314,7 @@ export function LiveShoppingComingSoon({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className={cn(
-          "fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm",
+          "fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4",
           className,
         )}
         onClick={(e) => {
@@ -326,7 +326,7 @@ export function LiveShoppingComingSoon({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: "spring", duration: 0.5 }}
-          className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-kreoon-border bg-kreoon-bg-card shadow-2xl"
+          className="relative w-full max-w-lg overflow-hidden rounded-sm border border-kreoon-border bg-kreoon-bg-card shadow-2xl"
         >
           {/* Close button */}
           {onClose && (
@@ -354,7 +354,7 @@ export function LiveShoppingComingSoon({
               <motion.div
                 animate={{ y: [0, -8, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-kreoon-purple-500 to-kreoon-purple-700 shadow-kreoon-glow-lg"
+                className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-sm bg-gradient-to-br from-kreoon-purple-500 to-kreoon-purple-700 shadow-kreoon-glow-lg"
               >
                 <ShoppingBag className="h-10 w-10 text-white" />
                 <motion.div
@@ -397,7 +397,7 @@ export function LiveShoppingComingSoon({
                     transition={{ delay: 0.1 + index * 0.05 }}
                     className="flex items-center gap-3"
                   >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-kreoon-purple-500/10">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-kreoon-purple-500/10">
                       <Icon className="h-4 w-4 text-kreoon-purple-400" />
                     </div>
                     <span className="text-sm text-kreoon-text-secondary">
@@ -409,7 +409,7 @@ export function LiveShoppingComingSoon({
             </div>
 
             {/* Waitlist counter */}
-            <div className="mb-4 flex items-center justify-center gap-2 rounded-lg bg-kreoon-bg-secondary/50 py-2.5">
+            <div className="mb-4 flex items-center justify-center gap-2 rounded-sm bg-kreoon-bg-secondary/50 py-2.5">
               <Sparkles className="h-4 w-4 text-amber-400" />
               <span className="text-sm text-kreoon-text-secondary">
                 Ya hay <span className="font-semibold text-white">{WAITLIST_COUNT}</span> personas esperando
@@ -423,7 +423,7 @@ export function LiveShoppingComingSoon({
                   key="success"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="rounded-xl bg-emerald-500/10 p-4 text-center"
+                  className="rounded-sm bg-emerald-500/10 p-4 text-center"
                 >
                   <CheckCircle className="mx-auto mb-2 h-10 w-10 text-emerald-400" />
                   <h3 className="text-lg font-semibold text-white">¡Estás en la lista!</h3>

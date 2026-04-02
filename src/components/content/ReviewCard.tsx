@@ -255,7 +255,7 @@ export function ReviewCard({ content, onApprove, onReject, onUpdate, userId }: R
               {/* Volume toggle for iframe */}
               <button
                 onClick={() => setMuted(!muted)}
-                className="absolute top-16 right-3 z-30 p-2.5 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
+                className="absolute top-16 right-3 z-30 p-2.5 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
               >
                 {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
               </button>
@@ -280,7 +280,7 @@ export function ReviewCard({ content, onApprove, onReject, onUpdate, userId }: R
                   className="absolute inset-0 flex items-center justify-center cursor-pointer"
                   onClick={togglePlayPause}
                 >
-                  <div className="h-16 w-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <div className="h-16 w-16 rounded-full bg-white/20 flex items-center justify-center">
                     <Play className="h-8 w-8 text-white fill-white ml-1" />
                   </div>
                 </div>
@@ -314,7 +314,7 @@ export function ReviewCard({ content, onApprove, onReject, onUpdate, userId }: R
 
           {/* Variant selector */}
           {hasMultipleVariants && (
-            <div className="absolute top-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full">
+            <div className="absolute top-3 right-3 flex items-center gap-1 bg-black/60 px-2 py-1 rounded-full">
               <button
                 onClick={() => setCurrentVariantIndex(prev => Math.max(0, prev - 1))}
                 disabled={currentVariantIndex === 0}
@@ -357,14 +357,14 @@ export function ReviewCard({ content, onApprove, onReject, onUpdate, userId }: R
             <div className="flex flex-col gap-2">
               <button
                 onClick={() => setMuted(!muted)}
-                className="p-2 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
+                className="p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
               >
                 {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
               </button>
               <button
                 onClick={handleToggleComments}
                 className={cn(
-                  "p-2 rounded-full backdrop-blur-sm text-white transition-colors",
+                  "p-2 rounded-full text-white transition-colors",
                   showComments ? "bg-primary" : "bg-black/40 hover:bg-black/60"
                 )}
               >

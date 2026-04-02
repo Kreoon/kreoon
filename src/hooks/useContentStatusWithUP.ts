@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { ContentStatus } from '@/types/database';
 import { handleUPStatusChange } from './useUPStatusHandler';
+import { logger } from '@/lib/logger';
 
 interface StatusChangeParams {
   contentId: string;
@@ -17,8 +18,8 @@ interface StatusChangeParams {
  */
 export async function updateContentStatusWithUP(params: StatusChangeParams) {
   const { contentId, oldStatus, newStatus } = params;
-  
-  console.log('[ContentStatusWithUP] Starting status change:', { contentId, oldStatus, newStatus });
+
+  logger.debug('ContentStatusWithUP Starting status change', { contentId, oldStatus, newStatus });
   
   // Fetch content via SECURITY DEFINER RPC (bypasses 18 RLS policies)
   const { data: contentArr, error: fetchError } = await supabase
@@ -27,15 +28,13 @@ export async function updateContentStatusWithUP(params: StatusChangeParams) {
   const content = contentArr?.[0];
 
   if (fetchError || !content) {
-    console.error('[ContentStatusWithUP] Error fetching content for UP:', fetchError);
+    logger.error('ContentStatusWithUP Error fetching content for UP', fetchError);
     throw fetchError || new Error('Content not found');
   }
 
-  console.log('[ContentStatusWithUP] Content fetched:', {
+  logger.debug('ContentStatusWithUP Content fetched', {
     creator_id: content.creator_id,
-    editor_id: content.editor_id,
-    recording_at: content.recording_at,
-    editing_at: content.editing_at
+    editor_id: content.editor_id
   });
 
   // Build update object based on the new status
@@ -78,11 +77,11 @@ export async function updateContentStatusWithUP(params: StatusChangeParams) {
     .rpc('update_content_by_id', { p_content_id: contentId, p_updates: updates });
 
   if (updateError) {
-    console.error('[ContentStatusWithUP] Error updating content:', updateError);
+    logger.error('ContentStatusWithUP Error updating content', updateError);
     throw updateError;
   }
 
-  console.log('[ContentStatusWithUP] Content status updated to:', newStatus);
+  logger.debug('ContentStatusWithUP Content status updated', { newStatus });
 
   // Handle UP points
   if (content.organization_id) {
@@ -109,17 +108,17 @@ export async function updateContentStatusWithUP(params: StatusChangeParams) {
         approvedAt: newStatus === 'approved' ? now : content.approved_at
       };
 
-      console.log('[ContentStatusWithUP] Calling handleUPStatusChange with:', upParams);
-      
+      logger.debug('ContentStatusWithUP Calling handleUPStatusChange');
+
       await handleUPStatusChange(upParams);
-      
-      console.log('[ContentStatusWithUP] UP points handled successfully');
+
+      logger.debug('ContentStatusWithUP UP points handled successfully');
     } catch (upError) {
       // Log but don't fail the status change
-      console.error('[ContentStatusWithUP] Error handling UP points:', upError);
+      logger.error('ContentStatusWithUP Error handling UP points', upError);
     }
   } else {
-    console.log('[ContentStatusWithUP] No organization_id, skipping UP points');
+    logger.debug('ContentStatusWithUP No organization_id, skipping UP points');
   }
 
   return { success: true };

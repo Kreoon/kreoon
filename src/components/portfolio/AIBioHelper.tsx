@@ -61,7 +61,7 @@ export function AIBioHelper({ currentBio, profession, skills, onApply }: AIBioHe
           {/* Current bio */}
           <div>
             <label className="text-sm font-medium text-muted-foreground">Bio actual</label>
-            <div className="mt-1 p-3 bg-muted rounded-lg text-sm">
+            <div className="mt-1 p-3 bg-muted rounded-sm text-sm">
               {currentBio || <span className="text-muted-foreground italic">Sin biografía</span>}
             </div>
           </div>

@@ -299,7 +299,7 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
 
   return (
     <Card className={cn(
-      "overflow-hidden bg-card border-border rounded-xl",
+      "overflow-hidden bg-card border-border rounded-sm",
       "hover:shadow-xl transition-all duration-300",
       className
     )}>
@@ -324,7 +324,7 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
             {canManage && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="h-7 w-7 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-colors">
+                  <button className="h-7 w-7 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors">
                     <MoreVertical className="h-4 w-4" />
                   </button>
                 </DropdownMenuTrigger>
@@ -359,7 +359,7 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
                 e.stopPropagation();
                 setIsPlaying(false);
               }}
-              className="absolute top-2 right-2 z-30 h-8 w-8 rounded-full bg-black/70 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/90 transition-colors"
+              className="absolute top-2 right-2 z-30 h-8 w-8 rounded-full bg-black/70 flex items-center justify-center text-white hover:bg-black/90 transition-colors"
               aria-label="Cerrar video"
             >
               <X className="h-5 w-5" />
@@ -418,7 +418,7 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
 
         {/* Variant Navigation */}
         {hasMultipleVariants && !isPlaying && (
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-black/60 px-3 py-1.5 rounded-full">
             <button
               onClick={(e) => {
                 e.stopPropagation();

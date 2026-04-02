@@ -131,7 +131,7 @@ export function ClientMarketingDashboard({ organizationId, clientId }: ClientMar
         <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
           <CardContent className="p-6">
             <div className="flex items-start gap-4">
-              <div className="p-3 rounded-lg bg-primary/20">
+              <div className="p-3 rounded-sm bg-primary/20">
                 <Target className="h-6 w-6 text-primary" />
               </div>
               <div>
@@ -148,7 +148,7 @@ export function ClientMarketingDashboard({ organizationId, clientId }: ClientMar
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-blue-100 dark:bg-blue-900">
+              <div className="p-3 rounded-sm bg-blue-100 dark:bg-blue-900">
                 <FileVideo className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
@@ -163,7 +163,7 @@ export function ClientMarketingDashboard({ organizationId, clientId }: ClientMar
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-green-100 dark:bg-green-900">
+                <div className="p-3 rounded-sm bg-green-100 dark:bg-green-900">
                   <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
@@ -182,7 +182,7 @@ export function ClientMarketingDashboard({ organizationId, clientId }: ClientMar
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-purple-100 dark:bg-purple-900">
+              <div className="p-3 rounded-sm bg-purple-100 dark:bg-purple-900">
                 <Megaphone className="h-5 w-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
@@ -196,7 +196,7 @@ export function ClientMarketingDashboard({ organizationId, clientId }: ClientMar
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-amber-100 dark:bg-amber-900">
+              <div className="p-3 rounded-sm bg-amber-100 dark:bg-amber-900">
                 <DollarSign className="h-5 w-5 text-amber-600 dark:text-amber-400" />
               </div>
               <div>

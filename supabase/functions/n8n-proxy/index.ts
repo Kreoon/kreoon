@@ -5,6 +5,23 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const ALLOWED_WEBHOOK_DOMAINS = [
+  'dev.kreoon.com',
+  'n8n.kreoon.com',
+  'hooks.n8n.cloud',
+];
+
+function isAllowedWebhookUrl(urlString: string): boolean {
+  try {
+    const url = new URL(urlString);
+    return ALLOWED_WEBHOOK_DOMAINS.some(domain =>
+      url.hostname === domain || url.hostname.endsWith('.' + domain)
+    );
+  } catch {
+    return false;
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -25,6 +42,16 @@ serve(async (req) => {
       );
     }
 
+    if (!isAllowedWebhookUrl(webhookUrl)) {
+      return new Response(
+        JSON.stringify({
+          error: 'Webhook URL not allowed',
+          allowed_domains: ALLOWED_WEBHOOK_DOMAINS
+        }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Call n8n webhook from server (no CORS issues)
     const n8nResponse = await fetch(webhookUrl, {
       method: "POST",
@@ -35,16 +62,16 @@ serve(async (req) => {
     });
 
     console.log("n8n response status:", n8nResponse.status);
-    
+
     const responseText = await n8nResponse.text();
     console.log("n8n response length:", responseText.length);
     console.log("n8n response preview:", responseText.substring(0, 500));
 
     if (!n8nResponse.ok) {
       return new Response(
-        JSON.stringify({ 
-          error: `n8n returned ${n8nResponse.status}`, 
-          details: responseText 
+        JSON.stringify({
+          error: `n8n returned ${n8nResponse.status}`,
+          details: responseText
         }),
         { status: n8nResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );

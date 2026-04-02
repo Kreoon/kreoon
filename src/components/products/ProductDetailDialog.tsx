@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { LazyRichTextEditor as RichTextEditor } from "@/components/ui/lazy-rich-text-editor";
 import { ProductDocumentUploader } from "./ProductDocumentUploader";
 import ProductDNADisplay from "@/components/product-dna/ProductDNADisplay";
 import type { ProductDNARecord } from "@/components/product-dna/ProductDNADisplay";
@@ -36,6 +36,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useClientDNA } from "@/hooks/useClientDNA";
 import { useUnifiedTokens } from "@/hooks/useUnifiedTokens";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
@@ -55,6 +56,8 @@ import {
   AUDIENCE_OPTIONS,
 } from "@/lib/product-dna-questions";
 import { LocationSelector } from "@/components/product-dna/LocationSelector";
+import { fireProductResearch, pollProductResearchProgress } from "@/lib/productResearch";
+import { AdnResearchV3Section } from "@/components/adn-research/AdnResearchV3Section";
 
 interface Product {
   id: string;
@@ -127,6 +130,9 @@ export function ProductDetailDialog({
     enabled: !!productClientId && !isClient,
     staleTime: 10 * 60 * 1000, // 10 min
   });
+
+  // ── Cargar ADN de Marca del cliente ──
+  const { dna: clientDnaRecord } = useClientDNA(productClientId || null);
 
   // ── Token access control for ADN Recargado ──
   // Para admins: usar organización del cliente del producto
@@ -559,8 +565,8 @@ export function ProductDetailDialog({
 
   return (<>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-0 shrink-0">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-4xl max-h-[90dvh] sm:max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-0 shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-primary" />
             {isNew ? "Nuevo Producto" : (
@@ -574,7 +580,7 @@ export function ProductDetailDialog({
 
         <Tabs defaultValue={isNew ? "info" : "brief"} className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {/* Tabs en dos filas */}
-          <div className="px-6 pt-4 shrink-0 space-y-1">
+          <div className="px-4 sm:px-6 pt-4 shrink-0 space-y-1">
             {/* Row 1: ADN + steps 1-6 (in research invocation order) */}
             <TabsList className="grid grid-cols-4 sm:grid-cols-7 h-auto gap-1">
               <TabsTrigger value="brief" className="gap-1 text-xs py-2">
@@ -632,12 +638,27 @@ export function ProductDetailDialog({
                 {product?.launch_strategy ? <Check className="h-3 w-3 text-emerald-400" /> : <Rocket className="h-3 w-3" />}
                 Lanzamiento
               </TabsTrigger>
+              <TabsTrigger value="adn-v3" className="gap-1 text-xs py-2 bg-gradient-to-r from-violet-600/10 to-pink-600/10 border-violet-500/30">
+                <Sparkles className="h-3 w-3 text-violet-400" />
+                ADN v3
+              </TabsTrigger>
               <TabsTrigger value="info" className="text-xs py-2">Info</TabsTrigger>
               <TabsTrigger value="files" className="text-xs py-2">Archivos</TabsTrigger>
             </TabsList>
           </div>
 
           <div className="flex-1 overflow-y-auto px-6 pb-6">
+
+          {/* Banner: Retry incomplete research (for brief-based products without DNA) */}
+          {product && !dnaRecord && product.brief_data && product.brief_status !== 'completed' &&
+            (!product.avatar_profiles || !product.content_calendar || !product.launch_strategy) && (
+            <RetryResearchBanner
+              product={product}
+              onRetryComplete={(updatedProduct) => {
+                if (onResearchComplete) onResearchComplete(updatedProduct);
+              }}
+            />
+          )}
 
           {/* TabsContent ordered by research invocation flow */}
           <TabsContent value="brief" className="mt-4 space-y-6">
@@ -787,7 +808,7 @@ export function ProductDetailDialog({
               <Label>Descripción del Producto</Label>
               {/* AI-Generated Description from content_strategy */}
               {(product?.content_strategy as any)?.executiveSummary?.marketSummary && (
-                <div className="p-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg border border-primary/20 mb-3">
+                <div className="p-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-sm border border-primary/20 mb-3">
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles className="h-4 w-4 text-primary" />
                     <span className="text-xs font-medium text-primary">Descripción generada por IA</span>
@@ -866,6 +887,49 @@ export function ProductDetailDialog({
                 )}
               </div>
             </div>
+          </TabsContent>
+
+          {/* ADN Recargado v3 - 22 secciones */}
+          <TabsContent value="adn-v3" className="mt-4">
+            {product && dnaRecord && (
+              <AdnResearchV3Section
+                productId={product.id}
+                organizationId={profile?.current_organization_id || ""}
+                productDna={{
+                  id: dnaRecord.id,
+                  product_dna_id: dnaRecord.id,
+                  product_name: product.name || "Mi Producto",
+                  product_description:
+                    product.description ||
+                    (dnaRecord as any).ai_analysis?.executive_summary ||
+                    "",
+                  has_audio: !!(dnaRecord.audio_url || (dnaRecord as any).audio_analysis),
+                  has_ai_analysis: !!(dnaRecord.market_research || dnaRecord.strategy_recommendations),
+                  has_links: !!(
+                    (dnaRecord.competitor_links?.length || 0) > 0 ||
+                    (dnaRecord.inspiration_links?.length || 0) > 0
+                  ),
+                  completeness_score: (dnaRecord as any).completeness_score || dnaRecord.ai_confidence_score || 0,
+                  confidence_score: dnaRecord.ai_confidence_score || 0,
+                }}
+                clientDna={clientDnaRecord ? {
+                  id: clientDnaRecord.id,
+                  brand_name: (clientDnaRecord as any).brand_name || (clientDnaRecord.dna_data as any)?.brand_name || "",
+                  has_dna_data: !!(clientDnaRecord.dna_data),
+                  is_complete: !!(clientDnaRecord.dna_data && (clientDnaRecord.dna_data as any)?.value_proposition),
+                } : undefined}
+                useLiteMode={true}
+              />
+            )}
+            {product && !dnaRecord && (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <Sparkles className="w-12 h-12 text-muted-foreground/30 mb-4" />
+                <h3 className="text-lg font-medium mb-2">Primero genera el ADN basico</h3>
+                <p className="text-sm text-muted-foreground max-w-sm">
+                  Completa el ADN del producto en la pestana "ADN" antes de poder generar el ADN Recargado v3.
+                </p>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="files" className="space-y-6 mt-4">
@@ -1139,6 +1203,104 @@ export function ProductDetailDialog({
 }
 
 // ════════════════════════════════════════════════════════════════════
+// Retry Research Banner — for brief-based products with incomplete research
+// ════════════════════════════════════════════════════════════════════
+
+function RetryResearchBanner({
+  product,
+  onRetryComplete,
+}: {
+  product: Product;
+  onRetryComplete?: (updatedProduct: Product) => void;
+}) {
+  const [retrying, setRetrying] = useState(false);
+  const [progress, setProgress] = useState<{ step: number; total: number; label: string } | null>(null);
+
+  const missingParts: string[] = [];
+  if (!product.avatar_profiles) missingParts.push('Avatares');
+  if (!product.content_calendar) missingParts.push('Parrilla de Contenido');
+  if (!product.launch_strategy) missingParts.push('Estrategia de Lanzamiento');
+  if (missingParts.length === 0) return null;
+
+  const handleRetry = async () => {
+    setRetrying(true);
+    setProgress(null);
+
+    // Determine startFromStep based on existing research_progress
+    const rp = product.brief_data?.research_progress || (product as any).research_progress;
+    const completedSteps: string[] = rp?.completed_steps || [];
+    const ALL_STEPS = [
+      'market_overview', 'jtbd', 'pains_desires', 'competitors', 'avatars',
+      'differentiation', 'sales_angles', 'puv_transformation', 'lead_magnets',
+      'video_creatives', 'content_calendar', 'launch_strategy',
+    ];
+    const nextStep = ALL_STEPS.find(s => !completedSteps.includes(s));
+
+    const result = await fireProductResearch({
+      productId: product.id,
+      briefData: product.brief_data || {},
+      startFromStep: nextStep,
+    });
+
+    if (!result.success) {
+      setRetrying(false);
+      return;
+    }
+
+    // Poll for completion
+    const cancelPoll = pollProductResearchProgress(
+      product.id,
+      (prog, done) => {
+        if (prog) setProgress({ step: prog.step, total: prog.total, label: prog.label });
+        if (done) {
+          cancelPoll();
+          setRetrying(false);
+          // Refresh product data
+          (async () => {
+            const { data } = await supabase.from('products').select('*').eq('id', product.id).single();
+            if (data && onRetryComplete) onRetryComplete(data as any);
+          })();
+        }
+      },
+      3000,
+      200,
+    );
+  };
+
+  return (
+    <div className="mx-0 mt-4 mb-2 p-4 rounded-sm border border-amber-500/30 bg-amber-500/5">
+      <div className="flex items-start gap-3">
+        <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <p className="text-sm font-medium">Investigación incompleta</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Faltan: {missingParts.join(', ')}. Puedes reintentar para completar los pasos faltantes.
+          </p>
+          {retrying && progress && (
+            <p className="text-xs text-purple-400 mt-2 animate-pulse">
+              Paso {progress.step}/{progress.total}: {progress.label}
+            </p>
+          )}
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          className="shrink-0 gap-1.5"
+          onClick={handleRetry}
+          disabled={retrying}
+        >
+          {retrying ? (
+            <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Procesando...</>
+          ) : (
+            <><RefreshCw className="h-3.5 w-3.5" /> Reintentar</>
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
 // KIRO Research — Step definitions for the 12-step progress
 // ════════════════════════════════════════════════════════════════════
 
@@ -1191,7 +1353,7 @@ function KiroResearchButton({
   const disabled = !canActivate || !hasEnoughTokens || limitReached || balanceLoading;
 
   const tooltipMessage = balanceLoading
-    ? 'Verificando Kreoon Coins...'
+    ? 'Verificando Tokens IA...'
     : !canActivate
       ? 'Solo administradores de la organización pueden activar ADN Recargado'
       : limitReached
@@ -1199,24 +1361,18 @@ function KiroResearchButton({
           ? 'Tu plan no incluye ADN Recargado'
           : `Límite mensual alcanzado (${monthlyUsageCount}/${monthlyLimit})`
         : !hasEnoughTokens
-          ? `Kreoon Coins insuficientes (necesitas ${tokenCost})`
+          ? `Tokens IA insuficientes (necesitas ${tokenCost})`
           : '';
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-purple-500/20 bg-gradient-to-br from-purple-950/60 via-black/40 to-pink-950/60 p-6">
-      {/* Background ambient glow */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
-      </div>
-
+    <div className="relative overflow-hidden rounded-lg border border-purple-500/20 bg-purple-50 dark:bg-[#14141f] p-6">
       <div className="relative flex items-center gap-5">
         {/* KIRO eye icon */}
         <div className="relative flex-shrink-0">
-          <div className="absolute inset-0 -m-1 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 animate-pulse" />
           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-600 via-purple-500 to-pink-500 p-[2px]">
-            <div className="w-full h-full rounded-full bg-black/80 backdrop-blur-xl flex items-center justify-center border border-white/10">
+            <div className="w-full h-full rounded-full bg-zinc-100 dark:bg-[#0a0a0f] flex items-center justify-center border border-zinc-200 dark:border-zinc-700/50">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-[0_0_20px_rgba(168,85,247,0.5)]">
-                <Dna className="w-4 h-4 text-white" />
+                <Dna className="w-4 h-4 text-zinc-100" />
               </div>
             </div>
           </div>
@@ -1224,11 +1380,11 @@ function KiroResearchButton({
 
         {/* Text */}
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-purple-400" />
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-purple-500 dark:text-purple-400" />
             ADN Recargado
           </h3>
-          <p className="text-xs text-gray-400 mt-1 leading-relaxed">
+          <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1 leading-relaxed">
             KIRO combina ADN de Marca + ADN de Producto para generar la investigación completa de 12 pasos.
           </p>
           {/* Checkbox para incluir ADN de Marca */}
@@ -1237,17 +1393,17 @@ function KiroResearchButton({
               type="checkbox"
               checked={includeClientDna}
               onChange={(e) => setIncludeClientDna(e.target.checked)}
-              className="w-4 h-4 rounded border-purple-500/50 bg-purple-900/30 text-purple-500 focus:ring-purple-500/50 focus:ring-offset-0"
+              className="w-4 h-4 rounded border-purple-500/50 bg-purple-100 dark:bg-purple-900/30 text-purple-500 focus:ring-purple-500/50 focus:ring-offset-0"
             />
-            <span className="text-[11px] text-gray-400 group-hover:text-gray-300 transition-colors">
+            <span className="text-[11px] text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-300 transition-colors duration-150">
               Incluir ADN de Marca (Client DNA)
             </span>
           </label>
-          {/* Kreoon Coins cost + monthly usage info */}
+          {/* Tokens IA cost + monthly usage info */}
           <div className="flex items-center gap-3 mt-2">
             <span className="inline-flex items-center gap-1 text-[10px] font-medium text-purple-300/80 bg-purple-500/10 px-2 py-0.5 rounded-full">
               <Coins className="w-3 h-3" />
-              {tokenCost} Kreoon Coins
+              {tokenCost} Tokens IA
             </span>
             {isClient && monthlyLimit !== null && monthlyLimit !== undefined && (
               <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${
@@ -1269,26 +1425,26 @@ function KiroResearchButton({
                 <button
                   onClick={disabled ? undefined : () => onClick(includeClientDna, isRegenerate)}
                   disabled={disabled}
-                  className={`relative group flex-shrink-0 px-5 py-2.5 rounded-xl text-sm font-medium
-                    transition-all duration-300 flex items-center gap-2
+                  className={`relative group flex-shrink-0 px-5 py-2.5 rounded-lg text-sm font-medium
+                    transition-colors duration-150 flex items-center gap-2
                     ${disabled
-                      ? 'bg-gray-700/50 text-gray-400 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] hover:scale-105'
+                      ? 'bg-zinc-700/50 text-zinc-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-purple-600 to-pink-500 text-zinc-100 shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:brightness-110'
                     }`}
                 >
                   {disabled ? (
                     <AlertTriangle className="w-4 h-4" />
                   ) : isRegenerate ? (
-                    <RefreshCw className="w-4 h-4 group-hover:animate-spin" />
+                    <RefreshCw className="w-4 h-4" />
                   ) : (
-                    <Rocket className="w-4 h-4 group-hover:animate-bounce" />
+                    <Rocket className="w-4 h-4" />
                   )}
                   {isRegenerate ? 'Recrear' : 'Activar'}
                 </button>
               </div>
             </TooltipTrigger>
             {disabled && tooltipMessage && (
-              <TooltipContent side="top" className="bg-gray-900 text-gray-200 border-gray-700">
+              <TooltipContent side="top" className="bg-zinc-900 text-zinc-200 border-zinc-700">
                 <p>{tooltipMessage}</p>
               </TooltipContent>
             )}
@@ -1302,10 +1458,10 @@ function KiroResearchButton({
           const Icon = step.icon;
           return (
             <div key={i} className="flex flex-col items-center gap-1 opacity-30">
-              <div className="w-6 h-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                <Icon className="w-3 h-3 text-gray-500" />
+              <div className="w-6 h-6 rounded-full bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center">
+                <Icon className="w-3 h-3 text-zinc-500" />
               </div>
-              <span className="text-[8px] text-gray-600 hidden sm:block">{step.label}</span>
+              <span className="text-[8px] text-zinc-600 hidden sm:block">{step.label}</span>
             </div>
           );
         })}
@@ -1332,39 +1488,18 @@ function KiroResearchProgress({
   const seconds = (elapsed % 60).toString().padStart(2, '0');
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-950/80 via-black/60 to-pink-950/80">
-      {/* Animated background particles */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div
-          className="absolute top-1/2 left-1/2 w-80 h-80 -translate-x-1/2 -translate-y-1/2"
-          style={{ animation: 'kiroOrbit 8s linear infinite' }}
-        >
-          <div className="absolute top-0 left-1/2 w-2 h-2 rounded-full bg-purple-400/40 blur-[1px]" />
-          <div className="absolute bottom-0 right-1/3 w-1.5 h-1.5 rounded-full bg-pink-400/30 blur-[1px]" />
-          <div className="absolute top-1/3 right-0 w-1 h-1 rounded-full bg-purple-300/50" />
-        </div>
-        <div className="absolute top-4 right-8 w-1 h-1 rounded-full bg-purple-400 animate-pulse" />
-        <div className="absolute bottom-6 left-12 w-1.5 h-1.5 rounded-full bg-pink-400 animate-pulse" style={{ animationDelay: '1s' }} />
-      </div>
-
+    <div className="relative overflow-hidden rounded-lg border border-purple-500/30 bg-purple-50 dark:bg-[#14141f]">
       <div className="relative p-6 space-y-5">
         {/* Header: KIRO eye + status */}
         <div className="flex items-center gap-4">
-          {/* Pulsing KIRO eye */}
+          {/* KIRO eye */}
           <div className="relative flex-shrink-0">
-            <div className="absolute inset-0 -m-2 rounded-full bg-purple-500/20 animate-ping" style={{ animationDuration: '2s' }} />
-            <div className="absolute inset-0 -m-1 rounded-full bg-purple-500/10 animate-pulse" />
-            <div
-              className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 via-purple-500 to-pink-500 p-[2px]"
-              style={{ animation: 'kiroBreath 3s ease-in-out infinite' }}
-            >
-              <div className="w-full h-full rounded-full bg-black/80 backdrop-blur-xl flex items-center justify-center border border-white/10">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 via-purple-500 to-pink-500 p-[2px]">
+              <div className="w-full h-full rounded-full bg-zinc-100 dark:bg-[#0a0a0f] flex items-center justify-center border border-zinc-200 dark:border-zinc-700/50">
                 <div className="relative">
                   <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.6)]">
-                    <Mic className="w-3.5 h-3.5 text-white" />
+                    <Mic className="w-3.5 h-3.5 text-zinc-100" />
                   </div>
-                  {/* Reflection */}
-                  <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-2 h-1 bg-gradient-to-b from-white/50 to-transparent rounded-full blur-[0.5px]" />
                 </div>
               </div>
             </div>
@@ -1372,32 +1507,32 @@ function KiroResearchProgress({
 
           {/* Status text */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white flex items-center gap-2">
+            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               KIRO está investigando
               <span className="inline-flex gap-0.5">
                 {[0, 1, 2].map(i => (
                   <span
                     key={i}
-                    className="w-1 h-1 rounded-full bg-purple-400"
-                    style={{ animation: `kiroDots 1.4s ease-in-out ${i * 0.2}s infinite` }}
+                    className="w-1 h-1 rounded-full bg-purple-500 dark:bg-purple-400 animate-pulse"
+                    style={{ animationDelay: `${i * 0.2}s` }}
                   />
                 ))}
               </span>
             </p>
-            <p className="text-xs text-purple-300/80 mt-0.5 truncate">
+            <p className="text-xs text-purple-600 dark:text-purple-300/80 mt-0.5 truncate">
               {progress?.label || 'Preparando análisis de mercado...'}
             </p>
-            <p className="text-[10px] text-gray-500 mt-1 font-mono">
+            <p className="text-[10px] text-zinc-600 dark:text-zinc-500 mt-1 font-mono">
               {minutes}:{seconds}
             </p>
           </div>
 
           {/* Percentage badge */}
           <div className="flex-shrink-0 text-right">
-            <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            <div className="text-2xl font-bold bg-gradient-to-r from-purple-500 dark:from-purple-400 to-pink-500 dark:to-pink-400 bg-clip-text text-transparent">
               {Math.round(pct)}%
             </div>
-            <p className="text-[10px] text-gray-500">
+            <p className="text-[10px] text-zinc-600 dark:text-zinc-500">
               {currentStep}/{totalSteps}
             </p>
           </div>
@@ -1411,14 +1546,14 @@ function KiroResearchProgress({
             return (
               <div
                 key={i}
-                className="flex-1 h-1.5 rounded-full overflow-hidden bg-white/5"
+                className="flex-1 h-1.5 rounded-full overflow-hidden bg-zinc-200/50 dark:bg-zinc-800/50"
               >
                 <div
-                  className={`h-full rounded-full transition-all duration-700 ${
+                  className={`h-full rounded-full transition-[width] duration-300 ${
                     isDone
                       ? 'bg-gradient-to-r from-purple-500 to-pink-500 w-full'
                       : isActive
-                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 w-1/2 animate-pulse'
+                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 w-1/2'
                         : 'w-0'
                   }`}
                 />
@@ -1437,23 +1572,22 @@ function KiroResearchProgress({
             return (
               <div key={i} className="flex flex-col items-center gap-1">
                 <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center transition-all duration-500 ${
+                  className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors duration-150 ${
                     isDone
                       ? 'bg-gradient-to-br from-purple-500 to-pink-500 shadow-[0_0_10px_rgba(168,85,247,0.4)]'
                       : isActive
                         ? 'bg-gradient-to-br from-purple-500/80 to-pink-500/80 border border-purple-400/50 shadow-[0_0_15px_rgba(168,85,247,0.5)]'
-                        : 'bg-white/5 border border-white/10'
+                        : 'bg-zinc-800/50 border border-zinc-700/50'
                   }`}
-                  style={isActive ? { animation: 'kiroStepPulse 2s ease-in-out infinite' } : undefined}
                 >
                   {isDone ? (
-                    <Check className="w-3 h-3 text-white" />
+                    <Check className="w-3 h-3 text-zinc-100" />
                   ) : (
-                    <Icon className={`w-3 h-3 ${isActive ? 'text-white' : 'text-gray-600'}`} />
+                    <Icon className={`w-3 h-3 ${isActive ? 'text-zinc-100' : 'text-zinc-600'}`} />
                   )}
                 </div>
-                <span className={`text-[8px] transition-colors duration-300 hidden sm:block ${
-                  isDone ? 'text-purple-400' : isActive ? 'text-white font-medium' : 'text-gray-600'
+                <span className={`text-[8px] transition-colors duration-150 hidden sm:block ${
+                  isDone ? 'text-purple-400' : isActive ? 'text-zinc-100 font-medium' : 'text-zinc-600'
                 }`}>
                   {step.label}
                 </span>

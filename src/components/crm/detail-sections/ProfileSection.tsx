@@ -45,7 +45,7 @@ export function ProfileSection({
 
         {/* Banner / Cover image */}
         {displayImage && (
-          <div className="rounded-lg overflow-hidden border border-white/10">
+          <div className="rounded-sm overflow-hidden border border-white/10">
             <img
               src={displayImage}
               alt="Banner"
@@ -60,7 +60,7 @@ export function ProfileSection({
             href={videoUrl}
             target="_blank"
             rel="noopener"
-            className="block relative rounded-lg overflow-hidden border border-white/10 group"
+            className="block relative rounded-sm overflow-hidden border border-white/10 group"
           >
             {videoThumb ? (
               <img
@@ -75,7 +75,7 @@ export function ProfileSection({
             )}
             {/* Play overlay */}
             <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
-              <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/30 transition-colors">
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-colors">
                 <Play className="h-5 w-5 text-white fill-white" />
               </div>
             </div>

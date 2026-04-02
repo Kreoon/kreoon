@@ -178,13 +178,13 @@ export function UserOrgSwitcher() {
                 onClick={() => handleSwitchOrg(org)}
                 disabled={switching || currentOrg?.id === org.id}
                 className={cn(
-                  "w-full flex items-center gap-3 p-2 rounded-md text-left transition-colors",
+                  "w-full flex items-center gap-3 p-2 rounded-sm text-left transition-colors",
                   "hover:bg-accent",
                   currentOrg?.id === org.id && "bg-accent",
                   switching && "opacity-60 pointer-events-none"
                 )}
               >
-                <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                <div className="h-8 w-8 rounded-sm bg-muted flex items-center justify-center overflow-hidden shrink-0">
                   {org.logo_url ? (
                     <img src={org.logo_url} alt={org.name} className="h-full w-full object-cover" />
                   ) : (

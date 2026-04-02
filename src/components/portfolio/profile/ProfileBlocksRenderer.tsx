@@ -109,8 +109,8 @@ const BlockRenderer = memo(function BlockRenderer({
 
   return (
     <section className={cn(
-      editMode && "ring-2 ring-primary/20 ring-offset-2 rounded-lg relative",
-      block.is_internal && "bg-yellow-500/5 rounded-lg"
+      editMode && "ring-2 ring-primary/20 ring-offset-2 rounded-sm relative",
+      block.is_internal && "bg-yellow-500/5 rounded-sm"
     )}>
       {editMode && (
         <div className="absolute -top-2 -left-2 z-10">
@@ -204,12 +204,12 @@ function PortfolioGridBlock({ userId }: { userId: string }) {
                   </div>
                 )}
                 {/* Video indicator - glassmorphism style like main feed */}
-                <div className="absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-md bg-black/30 border border-white/10">
+                <div className="absolute top-2 right-2 p-1.5 rounded-full bg-black/30 border border-white/10">
                   <Play className="h-3.5 w-3.5 text-white fill-white" />
                 </div>
                 {/* Views count */}
                 {(post.views_count ?? 0) > 0 && (
-                  <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-md bg-black/40 border border-white/10">
+                  <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full bg-black/40 border border-white/10">
                     <Eye className="h-3 w-3 text-white/80" />
                     <span className="text-white text-xs font-medium">{post.views_count}</span>
                   </div>
@@ -225,7 +225,7 @@ function PortfolioGridBlock({ userId }: { userId: string }) {
             
             {/* Hover overlay with stats - glassmorphism style */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <div className="flex items-center gap-4 px-4 py-2 rounded-full backdrop-blur-xl bg-white/10 border border-white/20">
+              <div className="flex items-center gap-4 px-4 py-2 rounded-full bg-white/10 border border-white/20">
                 {(post.likes_count ?? 0) >= 0 && (
                   <span className="flex items-center gap-1.5 text-white text-sm font-semibold">
                     <Heart className="h-4 w-4 text-red-400 fill-red-400" />
@@ -263,7 +263,7 @@ function HeroBlock({ userId, isOwner }: { userId: string; isOwner: boolean }) {
   if (!profile) return null;
 
   return (
-    <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 p-6">
+    <div className="relative overflow-hidden rounded-sm bg-gradient-to-br from-primary/20 to-secondary/20 p-6">
       <div className="flex flex-col sm:flex-row items-center gap-4">
         <Avatar className="h-20 w-20 ring-4 ring-background">
           <AvatarImage src={profile.avatar_url} />

@@ -186,7 +186,7 @@ export function TeleprompterMode({ content, isOpen, onClose }: TeleprompterModeP
       {/* Controls panel */}
       <div 
         className={cn(
-          "fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-sm border-t border-white/10 transition-transform duration-300",
+          "fixed bottom-0 left-0 right-0 bg-black/90 border-t border-white/10 transition-transform duration-300",
           showControls ? "translate-y-0" : "translate-y-full"
         )}
       >

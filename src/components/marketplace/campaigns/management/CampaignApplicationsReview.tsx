@@ -199,15 +199,15 @@ export function CampaignApplicationsReview({ campaignId, onBack }: CampaignAppli
 
       {/* Summary */}
       <div className="flex gap-4">
-        <div className="bg-yellow-500/10 rounded-lg px-4 py-2">
+        <div className="bg-yellow-500/10 rounded-sm px-4 py-2">
           <p className="text-yellow-300 text-lg font-bold">{pendingCount}</p>
           <p className="text-gray-500 text-xs">Pendientes</p>
         </div>
-        <div className="bg-green-500/10 rounded-lg px-4 py-2">
+        <div className="bg-green-500/10 rounded-sm px-4 py-2">
           <p className="text-green-300 text-lg font-bold">{approvedCount}</p>
           <p className="text-gray-500 text-xs">Aprobadas</p>
         </div>
-        <div className="bg-white/5 rounded-lg px-4 py-2">
+        <div className="bg-white/5 rounded-sm px-4 py-2">
           <p className="text-white text-lg font-bold">{applications.length}</p>
           <p className="text-gray-500 text-xs">Total</p>
         </div>
@@ -256,7 +256,7 @@ export function CampaignApplicationsReview({ campaignId, onBack }: CampaignAppli
 
       {/* Payment Summary for Auction/Range */}
       {isBidMode && campaign?.payment_status !== 'in_escrow' && approvedApps.length > 0 && (
-        <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-5 space-y-3">
+        <div className="bg-green-500/5 border border-green-500/20 rounded-sm p-5 space-y-3">
           <h3 className="text-white font-semibold flex items-center gap-2">
             <CreditCard className="h-4 w-4 text-green-400" />
             Resumen de Pago
@@ -282,7 +282,7 @@ export function CampaignApplicationsReview({ campaignId, onBack }: CampaignAppli
           <button
             onClick={handlePayAndStart}
             disabled={isPayingBid}
-            className="w-full bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+            className="w-full bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white font-semibold py-3 rounded-sm transition-colors flex items-center justify-center gap-2"
           >
             {isPayingBid ? (
               <>

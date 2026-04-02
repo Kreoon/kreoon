@@ -118,7 +118,7 @@ export function AIProviderSelector({
   }
 
   return (
-    <div className={cn("space-y-3 p-4 rounded-lg border bg-muted/30", className)}>
+    <div className={cn("space-y-3 p-4 rounded-sm border bg-muted/30", className)}>
       <div className="flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-primary" />
         <span className="font-medium text-sm">Configuración de IA</span>

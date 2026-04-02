@@ -40,21 +40,21 @@ const FUNNEL_LABELS: Record<string, string> = {
 };
 
 const FUNNEL_COLORS: Record<string, string> = {
-  'tofu': 'bg-sky-100 text-sky-700',
-  'mofu': 'bg-amber-100 text-amber-700',
-  'bofu': 'bg-green-100 text-green-700',
+  'tofu': 'bg-sky-900/50 text-sky-400',
+  'mofu': 'bg-amber-900/50 text-amber-400',
+  'bofu': 'bg-green-900/50 text-green-400',
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  'educativo': 'bg-blue-100 text-blue-700',
-  'emocional': 'bg-pink-100 text-pink-700',
-  'aspiracional': 'bg-purple-100 text-purple-700',
-  'autoridad': 'bg-amber-100 text-amber-700',
-  'comparativo': 'bg-green-100 text-green-700',
-  'anti-mercado': 'bg-red-100 text-red-700',
-  'storytelling': 'bg-indigo-100 text-indigo-700',
-  'prueba-social': 'bg-teal-100 text-teal-700',
-  'error-comun': 'bg-orange-100 text-orange-700',
+  'educativo': 'bg-blue-900/50 text-blue-400',
+  'emocional': 'bg-pink-900/50 text-pink-400',
+  'aspiracional': 'bg-purple-900/50 text-purple-400',
+  'autoridad': 'bg-amber-900/50 text-amber-400',
+  'comparativo': 'bg-green-900/50 text-green-400',
+  'anti-mercado': 'bg-red-900/50 text-red-400',
+  'storytelling': 'bg-indigo-900/50 text-indigo-400',
+  'prueba-social': 'bg-teal-900/50 text-teal-400',
+  'error-comun': 'bg-orange-900/50 text-orange-400',
 };
 
 export function SalesAnglesTab({ salesAnglesData }: SalesAnglesTabProps) {
@@ -73,12 +73,12 @@ export function SalesAnglesTab({ salesAnglesData }: SalesAnglesTabProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="p-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-lg border border-amber-500/20">
-        <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+      <div className="p-4 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
+        <h3 className="font-semibold text-sm mb-2 flex items-center gap-2 text-zinc-100">
           <Sparkles className="h-4 w-4 text-amber-500" />
           20 Ángulos de Venta Estratégicos
         </h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400">
           Ángulos variados: educativos, emocionales, aspiracionales, autoridad, comparativos, anti-mercado, storytelling, prueba social y error común.
         </p>
       </div>
@@ -97,7 +97,7 @@ export function SalesAnglesTab({ salesAnglesData }: SalesAnglesTabProps) {
                 return acc;
               }, {} as Record<string, number>)
             ).map(([type, count]) => (
-              <Badge key={type} className={TYPE_COLORS[type] || 'bg-gray-100 text-gray-700'}>
+              <Badge key={type} className={TYPE_COLORS[type] || 'bg-zinc-800 text-zinc-400'}>
                 {type}: {count}
               </Badge>
             ))}
@@ -131,13 +131,13 @@ export function SalesAnglesTab({ salesAnglesData }: SalesAnglesTabProps) {
                     <TableCell className="font-bold text-primary">{idx + 1}</TableCell>
                     <TableCell className="text-sm">{angle.angle || '-'}</TableCell>
                     <TableCell>
-                      <Badge className={`text-xs ${TYPE_COLORS[angle.type || ''] || 'bg-gray-100 text-gray-700'}`}>
+                      <Badge className={`text-xs ${TYPE_COLORS[angle.type || ''] || 'bg-zinc-800 text-zinc-400'}`}>
                         {angle.type || '-'}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       {angle.funnelPhase && (
-                        <Badge className={`text-xs ${FUNNEL_COLORS[angle.funnelPhase] || 'bg-gray-100 text-gray-700'}`}>
+                        <Badge className={`text-xs ${FUNNEL_COLORS[angle.funnelPhase] || 'bg-zinc-800 text-zinc-400'}`}>
                           {FUNNEL_LABELS[angle.funnelPhase] || angle.funnelPhase}
                         </Badge>
                       )}
@@ -179,11 +179,11 @@ export function SalesAnglesTab({ salesAnglesData }: SalesAnglesTabProps) {
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Badge className={`text-xs ${TYPE_COLORS[angle.type || ''] || 'bg-gray-100 text-gray-700'}`}>
+                  <Badge className={`text-xs ${TYPE_COLORS[angle.type || ''] || 'bg-zinc-800 text-zinc-400'}`}>
                     {angle.type}
                   </Badge>
                   {angle.funnelPhase && (
-                    <Badge className={`text-xs ${FUNNEL_COLORS[angle.funnelPhase] || 'bg-gray-100 text-gray-700'}`}>
+                    <Badge className={`text-xs ${FUNNEL_COLORS[angle.funnelPhase] || 'bg-zinc-800 text-zinc-400'}`}>
                       {FUNNEL_LABELS[angle.funnelPhase] || angle.funnelPhase}
                     </Badge>
                   )}
@@ -195,18 +195,18 @@ export function SalesAnglesTab({ salesAnglesData }: SalesAnglesTabProps) {
               <p className="text-sm">{angle.angle}</p>
 
               {angle.hookExample && (
-                <div className="p-2 bg-amber-500/5 border border-amber-500/20 rounded-md">
-                  <p className="text-xs font-medium text-amber-600 mb-1 flex items-center gap-1">
+                <div className="p-2 bg-[#1a1a24] border border-zinc-800 dark:border-zinc-700/50 rounded-lg">
+                  <p className="text-xs font-medium text-amber-500 mb-1 flex items-center gap-1">
                     <Megaphone className="h-3 w-3" /> Hook
                   </p>
-                  <p className="text-sm italic">"{angle.hookExample}"</p>
+                  <p className="text-sm italic text-zinc-300">"{angle.hookExample}"</p>
                 </div>
               )}
 
               {angle.ctaExample && (
-                <div className="p-2 bg-green-500/5 border border-green-500/20 rounded-md">
-                  <p className="text-xs font-medium text-green-600 mb-1">CTA</p>
-                  <p className="text-sm">{angle.ctaExample}</p>
+                <div className="p-2 bg-[#1a1a24] border border-zinc-800 dark:border-zinc-700/50 rounded-lg">
+                  <p className="text-xs font-medium text-green-500 mb-1">CTA</p>
+                  <p className="text-sm text-zinc-300">{angle.ctaExample}</p>
                 </div>
               )}
 

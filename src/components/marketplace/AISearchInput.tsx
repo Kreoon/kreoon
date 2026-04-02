@@ -63,7 +63,7 @@ export function AISearchInput({ onFiltersChange, className }: AISearchInputProps
 
       {/* Suggestions dropdown */}
       {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-white/10 rounded-lg shadow-lg z-50 overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-white/10 rounded-sm shadow-lg z-50 overflow-hidden">
           <div className="px-3 py-2 text-xs text-gray-400 border-b border-white/5">
             Sugerencias
           </div>

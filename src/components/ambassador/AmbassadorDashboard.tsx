@@ -158,7 +158,7 @@ export function AmbassadorDashboard() {
           </CardHeader>
           <CardContent className="space-y-3">
             {ambassadorsWithAlerts.map((amb) => (
-              <div key={amb.user_id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+              <div key={amb.user_id} className="flex items-center justify-between p-3 rounded-sm bg-muted/50">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={amb.profile.avatar_url || ""} />

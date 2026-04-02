@@ -22,7 +22,7 @@ export default function CampaignEditWizardPage() {
           <p className="text-gray-400 text-sm">No se proporciono un ID de campana para editar.</p>
           <button
             onClick={() => navigate('/marketplace/my-campaigns')}
-            className="bg-white/10 hover:bg-white/20 text-white px-6 py-2.5 rounded-xl text-sm transition-colors"
+            className="bg-white/10 hover:bg-white/20 text-white px-6 py-2.5 rounded-sm text-sm transition-colors"
           >
             Ir a mis campanas
           </button>

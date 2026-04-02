@@ -70,7 +70,7 @@ export function BrandProfileStep({ data, onChange, onNext, onBack, mode }: StepC
             value={data.brandWebsite}
             onChange={e => onChange({ brandWebsite: e.target.value })}
             placeholder="https://mimarca.com"
-            className="w-full rounded-lg border border-border bg-white/5 pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-emerald-500/50 focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
+            className="w-full rounded-sm border border-border bg-white/5 pl-10 pr-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-emerald-500/50 focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
           />
         </div>
       </div>
@@ -79,7 +79,7 @@ export function BrandProfileStep({ data, onChange, onNext, onBack, mode }: StepC
 
       <button
         onClick={handleNext}
-        className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 text-sm transition-colors"
+        className="w-full rounded-sm bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 text-sm transition-colors"
       >
         Continuar
       </button>

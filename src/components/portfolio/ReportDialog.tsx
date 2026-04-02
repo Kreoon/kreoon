@@ -89,7 +89,7 @@ export function ReportDialog({
             {REPORT_REASONS.map((item) => (
               <div
                 key={item.value}
-                className="flex items-start space-x-3 p-2 rounded-lg hover:bg-muted/50"
+                className="flex items-start space-x-3 p-2 rounded-sm hover:bg-muted/50"
               >
                 <RadioGroupItem value={item.value} id={item.value} className="mt-1" />
                 <Label htmlFor={item.value} className="cursor-pointer flex-1">

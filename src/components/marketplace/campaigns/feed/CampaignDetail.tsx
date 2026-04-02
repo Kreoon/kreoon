@@ -86,7 +86,7 @@ export function CampaignDetail({ campaignId }: CampaignDetailProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Top nav */}
-      <div className="border-b border-white/10 bg-background/95 backdrop-blur-sm sticky top-0 z-10">
+      <div className="border-b border-white/10 bg-background/95 sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center gap-3">
             <button
@@ -135,17 +135,17 @@ export function CampaignDetail({ campaignId }: CampaignDetailProps) {
             </div>
 
             {/* Description */}
-            <div className="bg-white/5 rounded-xl p-5">
+            <div className="bg-white/5 rounded-sm p-5">
               <h2 className="text-sm font-semibold text-foreground/80 mb-3">Descripcion</h2>
               <p className="text-foreground/80 text-sm leading-relaxed">{campaign.description}</p>
             </div>
 
             {/* Content requirements */}
-            <div className="bg-white/5 rounded-xl p-5">
+            <div className="bg-white/5 rounded-sm p-5">
               <h2 className="text-sm font-semibold text-foreground/80 mb-3">Contenido Requerido</h2>
               <div className="space-y-3">
                 {campaign.content_requirements.map((req, i) => (
-                  <div key={i} className="flex items-start gap-3 bg-white/5 rounded-lg p-3">
+                  <div key={i} className="flex items-start gap-3 bg-white/5 rounded-sm p-3">
                     <Video className="h-4 w-4 text-purple-400 mt-0.5 flex-shrink-0" />
                     <div>
                       <div className="flex items-center gap-2">
@@ -162,7 +162,7 @@ export function CampaignDetail({ campaignId }: CampaignDetailProps) {
             </div>
 
             {/* Creator requirements */}
-            <div className="bg-white/5 rounded-xl p-5">
+            <div className="bg-white/5 rounded-sm p-5">
               <h2 className="text-sm font-semibold text-foreground/80 mb-3">Perfil de Creador Buscado</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="flex items-center gap-2">
@@ -214,8 +214,8 @@ export function CampaignDetail({ campaignId }: CampaignDetailProps) {
           {/* Sidebar */}
           <div className="lg:w-80 space-y-4">
             {/* Budget card */}
-            <div className="bg-card/80 border border-white/10 rounded-xl p-5 space-y-4 sticky top-24">
-              <div className={cn('flex items-center gap-2 px-3 py-2 rounded-lg', typeConfig.bg)}>
+            <div className="bg-card/80 border border-white/10 rounded-sm p-5 space-y-4 sticky top-24">
+              <div className={cn('flex items-center gap-2 px-3 py-2 rounded-sm', typeConfig.bg)}>
                 <TypeIcon className={cn('h-5 w-5', typeConfig.color)} />
                 <span className={cn('text-sm font-medium', typeConfig.color)}>{typeConfig.label}</span>
               </div>
@@ -278,7 +278,7 @@ export function CampaignDetail({ campaignId }: CampaignDetailProps) {
 
               {/* Exchange product */}
               {(campaign.campaign_type === 'exchange' || campaign.campaign_type === 'hybrid') && campaign.exchange_product_name && (
-                <div className="bg-white/5 rounded-lg p-3">
+                <div className="bg-white/5 rounded-sm p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <Gift className="h-4 w-4 text-purple-400" />
                     <span className="text-white text-sm font-medium">{campaign.exchange_product_name}</span>
@@ -325,7 +325,7 @@ export function CampaignDetail({ campaignId }: CampaignDetailProps) {
                 <button
                   onClick={() => setShowApplicationModal(true)}
                   className={cn(
-                    'w-full font-semibold py-3 rounded-xl transition-colors',
+                    'w-full font-semibold py-3 rounded-sm transition-colors',
                     isBidMode
                       ? 'bg-orange-600 hover:bg-orange-500 text-white'
                       : 'bg-purple-600 hover:bg-purple-500 text-white',
@@ -337,7 +337,7 @@ export function CampaignDetail({ campaignId }: CampaignDetailProps) {
 
               {myApplication && (
                 <div className="text-center">
-                  <span className="bg-purple-500/20 text-purple-300 text-sm px-4 py-2 rounded-lg inline-block">
+                  <span className="bg-purple-500/20 text-purple-300 text-sm px-4 py-2 rounded-sm inline-block">
                     Ya aplicaste — {myApplication.status === 'pending' ? 'Pendiente' : myApplication.status === 'approved' ? 'Aprobada' : 'En proceso'}
                   </span>
                 </div>

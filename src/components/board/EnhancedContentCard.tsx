@@ -22,6 +22,11 @@ import {
   XCircle,
   GripVertical,
   Share2,
+  DollarSign,
+  Package,
+  Eye,
+  Star,
+  Receipt,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -45,15 +50,16 @@ import { cn } from "@/lib/utils";
 import { StatusChangeDropdown, QuickStatusButtons } from "./StatusChangeDropdown";
 import { KanbanCardVideoPreview, shouldShowVideoArea } from "./KanbanCardVideoPreview";
 import { UserAssignmentSection } from "./UserAssignmentSection";
-import { TECH_COLORS, getStatusNeonStyle } from "./kanbanTechStyles";
+import { CardFieldsCustomizer } from "./CardFieldsCustomizer";
+import { BOARD_CLASSES, getStatusNeonStyle, getSpherePhaseStyle } from "./kanbanTechStyles";
 import { QuickShareButton } from "@/modules/social/components/Dashboard/QuickShareButton";
 import { PostComposer } from "@/modules/social/components/Composer/PostComposer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PromoteContentDialog } from "@/modules/marketing/components/Promote/PromoteContentDialog";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
-import { motion } from "framer-motion";
 import type { ContentSocialStatus } from "@/modules/social/hooks/useContentSocialStatus";
+import { useTheme } from "next-themes";
 
 const SPHERE_PHASE_DISPLAY: Record<
   string,
@@ -77,6 +83,8 @@ interface EnhancedContentCardProps {
   content: Content;
   cardSize?: "compact" | "normal" | "large";
   visibleFields?: string[];
+  /** Callback para persistir cambios de campos visibles */
+  onVisibleFieldsChange?: (fields: string[]) => void;
   onClick?: () => void;
   onDragStart?: (e: React.DragEvent) => void;
   isDragging?: boolean;
@@ -97,6 +105,8 @@ interface EnhancedContentCardProps {
   onUpdate?: () => void;
   /** Social publishing status for this content */
   socialStatus?: ContentSocialStatus;
+  /** Mostrar personalizador de campos */
+  showFieldsCustomizer?: boolean;
 }
 
 const SIZE_CONFIG = {
@@ -141,7 +151,8 @@ function getPrimaryVideoUrl(content: Content): string | null {
 export function EnhancedContentCard({
   content,
   cardSize = "normal",
-  visibleFields = ["title", "status", "client", "deadline", "creator", "editor"],
+  visibleFields = ["title", "status", "client", "deadline", "creator", "editor", "sphere_phase", "campaign_week", "marketing_status", "progress"],
+  onVisibleFieldsChange,
   onClick,
   onDragStart,
   isDragging,
@@ -160,11 +171,14 @@ export function EnhancedContentCard({
   onAssignEditor,
   onUpdate,
   socialStatus,
+  showFieldsCustomizer = false,
 }: EnhancedContentCardProps) {
   const sizeConfig = SIZE_CONFIG[cardSize] || SIZE_CONFIG.normal;
   const { toast } = useToast();
   const navigate = useNavigate();
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   const currentStatusConfig = useMemo(
     () => organizationStatuses.find((s) => s.status_key === content.status),
@@ -175,7 +189,8 @@ export function EnhancedContentCard({
     currentStatusConfig?.label || STATUS_LABELS[content.status] || content.status;
   const statusNeon = getStatusNeonStyle(
     content.status,
-    currentStatusConfig?.color
+    currentStatusConfig?.color,
+    isDark
   );
 
   const getProgress = (): number => {
@@ -270,31 +285,21 @@ export function EnhancedContentCard({
     return null;
   })();
 
-  const cardBaseStyle = {
-    background: TECH_COLORS.card,
-    backdropFilter: "blur(16px) saturate(180%)",
-    border: `1px solid ${TECH_COLORS.border}`,
-    boxShadow: `0 0 20px rgba(139, 92, 246, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.05)`,
-  };
-
   return (
     <>
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
+      <div
         className={cn(
-          "group cursor-pointer relative rounded-xl overflow-visible cursor-grab active:cursor-grabbing",
-          "w-full flex flex-col shrink-0 transition-[min-height] duration-300 ease-out",
+          "group cursor-pointer relative rounded-lg overflow-visible cursor-grab active:cursor-grabbing",
+          "w-full flex flex-col shrink-0 transition-colors duration-150",
+          BOARD_CLASSES.card,
+          "border",
           hasVideoArea ? "min-h-[420px]" : "min-h-[280px]",
-          "hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(168,85,247,0.2)]",
-          "hover:border-[rgba(168,85,247,0.5)]",
-          isDragging && "opacity-70 scale-[0.98] shadow-[0_0_25px_rgba(168,85,247,0.3)]",
-          isOverdue && "border-l-4 border-l-[#ef4444]",
-          isStale && !isOverdue && "border-l-4 border-l-[#f59e0b]",
+          BOARD_CLASSES.cardHover,
+          isDragging && "opacity-70 ring-2 ring-purple-500/30",
+          isOverdue && "border-l-4 border-l-red-500",
+          isStale && !isOverdue && "border-l-4 border-l-amber-500",
           cardSize === "compact" && "rounded-lg min-h-0"
         )}
-        style={cardBaseStyle}
         draggable
         onDragStart={onDragStart}
         onClick={(e) => {
@@ -303,11 +308,19 @@ export function EnhancedContentCard({
           onClick?.();
         }}
       >
-        {/* Drag handle + Social share button */}
+        {/* Drag handle + Social share button + Fields customizer */}
         <div
           data-no-click
-          className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
         >
+          {/* Personalizador de campos - estilo Notion */}
+          {showFieldsCustomizer && onVisibleFieldsChange && (
+            <CardFieldsCustomizer
+              visibleFields={visibleFields}
+              onFieldsChange={onVisibleFieldsChange}
+              className="opacity-100"
+            />
+          )}
           {isShareableStatus && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -315,7 +328,7 @@ export function EnhancedContentCard({
                   data-no-click
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 rounded-lg bg-[#8b5cf6]/20 hover:bg-[#8b5cf6]/40 text-[#a78bfa] hover:text-white border border-[#8b5cf6]/30"
+                  className="h-7 w-7 rounded-lg bg-purple-500/10 dark:bg-purple-500/20 hover:bg-purple-500/20 dark:hover:bg-purple-500/40 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-white border border-purple-300 dark:border-purple-500/30"
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowShareDialog(true);
@@ -327,7 +340,7 @@ export function EnhancedContentCard({
               <TooltipContent>Compartir en redes sociales</TooltipContent>
             </Tooltip>
           )}
-          <GripVertical className="h-4 w-4 text-[#cbd5e1]" />
+          <GripVertical className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
         </div>
 
         {/* AI indicators */}
@@ -336,7 +349,7 @@ export function EnhancedContentCard({
             {isOverdue && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#ef4444]/90 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)]">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow-sm dark:shadow-[0_0_10px_rgba(239,68,68,0.5)]">
                     <AlertTriangle className="h-3 w-3" />
                   </span>
                 </TooltipTrigger>
@@ -346,7 +359,7 @@ export function EnhancedContentCard({
             {isStale && !isOverdue && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#f59e0b]/90 text-white shadow-[0_0_10px_rgba(245,158,11,0.5)]">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm dark:shadow-[0_0_10px_rgba(245,158,11,0.5)]">
                     <Clock4 className="h-3 w-3" />
                   </span>
                 </TooltipTrigger>
@@ -364,27 +377,27 @@ export function EnhancedContentCard({
                 data-no-click
                 variant="ghost"
                 size="icon"
-                className="absolute top-2 left-2 h-7 w-7 z-10 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg bg-black/30 hover:bg-black/50 text-white"
+                className="absolute top-2 left-2 h-7 w-7 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150 rounded-lg bg-zinc-900/30 dark:bg-black/30 hover:bg-zinc-900/50 dark:hover:bg-black/50 text-white"
               >
                 <MoreVertical className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48 bg-popover border-[#8b5cf6]/30">
+            <DropdownMenuContent align="start" className="w-48 bg-white dark:bg-[#1f1f2e] border-zinc-200 dark:border-purple-500/30">
               {onShowMarketingInfo && (
-                <DropdownMenuItem onClick={handleMarketingClick} className="gap-2 text-[#f8fafc] focus:bg-white/10">
-                  <Megaphone className="h-4 w-4 text-[#60a5fa]" />
+                <DropdownMenuItem onClick={handleMarketingClick} className="gap-2 text-zinc-900 dark:text-zinc-100 focus:bg-zinc-100 dark:focus:bg-white/10">
+                  <Megaphone className="h-4 w-4 text-blue-500 dark:text-blue-400" />
                   Ver info Marketing
                 </DropdownMenuItem>
               )}
-              {onShowMarketingInfo && onAnalyzeWithAI && <DropdownMenuSeparator className="bg-white/10" />}
+              {onShowMarketingInfo && onAnalyzeWithAI && <DropdownMenuSeparator className="bg-zinc-200 dark:bg-white/10" />}
               {onAnalyzeWithAI && (
-                <DropdownMenuItem onClick={handleAnalyzeClick} className="gap-2 text-[#f8fafc] focus:bg-white/10">
-                  <Brain className="h-4 w-4 text-[#a855f7]" />
+                <DropdownMenuItem onClick={handleAnalyzeClick} className="gap-2 text-zinc-900 dark:text-zinc-100 focus:bg-zinc-100 dark:focus:bg-white/10">
+                  <Brain className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                   Analizar con IA
                 </DropdownMenuItem>
               )}
-              <DropdownMenuSeparator className="bg-white/10" />
-              <DropdownMenuItem asChild className="gap-2 text-[#f8fafc] focus:bg-white/10 p-0">
+              <DropdownMenuSeparator className="bg-zinc-200 dark:bg-white/10" />
+              <DropdownMenuItem asChild className="gap-2 text-zinc-900 dark:text-zinc-100 focus:bg-zinc-100 dark:focus:bg-white/10 p-0">
                 <QuickShareButton
                   contentId={content.id}
                   title={content.title || ""}
@@ -392,10 +405,10 @@ export function EnhancedContentCard({
                   thumbnailUrl={content.thumbnail_url}
                   caption={content.title || ""}
                   variant="button"
-                  className="w-full justify-start gap-2 px-2 py-1.5 h-auto font-normal text-sm border-0 hover:bg-white/10"
+                  className="w-full justify-start gap-2 px-2 py-1.5 h-auto font-normal text-sm border-0 hover:bg-zinc-100 dark:hover:bg-white/10"
                 />
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="gap-2 text-[#f8fafc] focus:bg-white/10 p-0">
+              <DropdownMenuItem asChild className="gap-2 text-zinc-900 dark:text-zinc-100 focus:bg-zinc-100 dark:focus:bg-white/10 p-0">
                 <PromoteContentDialog
                   content={{
                     contentId: content.id,
@@ -405,8 +418,8 @@ export function EnhancedContentCard({
                     description: content.title || "",
                   }}
                   trigger={
-                    <button className="w-full flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-white/10 rounded-sm">
-                      <Megaphone className="h-4 w-4 text-[#22d3ee]" />
+                    <button className="w-full flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10 rounded-lg">
+                      <Megaphone className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
                       Pautar contenido
                     </button>
                   }
@@ -428,24 +441,17 @@ export function EnhancedContentCard({
         {/* 2. Separator + BODY - layout fluido, pt/mt solo cuando hay video arriba */}
         <div
           className={cn(
-            "flex-1 flex flex-col p-4",
+            "flex-1 flex flex-col p-4 bg-zinc-50/50 dark:bg-white/[0.02]",
             cardSize !== "compact" && hasVideoArea && "pt-3 mt-3"
           )}
-          style={{ background: TECH_COLORS.cardBody }}
         >
           {/* Title - 2 lines max with ellipsis */}
           {showField("title") && (
             <h4
               className={cn(
-                "font-medium line-clamp-2 break-words",
+                "font-medium line-clamp-2 break-words bg-gradient-to-br from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent",
                 sizeConfig.titleSize
               )}
-              style={{
-                background: "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
             >
               {content.title}
             </h4>
@@ -481,8 +487,8 @@ export function EnhancedContentCard({
             </div>
           )}
 
-          {/* Sección Equipo: Creador, Editor, Cliente, Fechas */}
-          {cardSize !== "compact" && (
+          {/* Sección Equipo: Creador, Editor, Cliente, Fechas - Respeta visibleFields */}
+          {cardSize !== "compact" && (showField('creator') || showField('editor') || showField('client')) && (
             <UserAssignmentSection
               content={content}
               creators={creators}
@@ -491,40 +497,51 @@ export function EnhancedContentCard({
               onAssignCreator={onAssignCreator ? async (userId) => onAssignCreator(content.id, userId) : undefined}
               onAssignEditor={onAssignEditor ? async (userId) => onAssignEditor(content.id, userId) : undefined}
               onUpdate={onUpdate}
+              showCreator={showField('creator')}
+              showEditor={showField('editor')}
+              showClient={showField('client')}
             />
           )}
 
-          {(content.sphere_phase || content.campaign_week || marketingIndicator) && (
+          {/* Marketing badges - Respetan visibleFields */}
+          {((showField('sphere_phase') && content.sphere_phase) ||
+            (showField('campaign_week') && content.campaign_week) ||
+            (showField('marketing_status') && marketingIndicator)) && (
             <div className={cn("flex flex-wrap items-center mt-3", sizeConfig.spacing)}>
-              {content.sphere_phase && SPHERE_PHASE_DISPLAY[content.sphere_phase] && (() => {
+              {showField('sphere_phase') && content.sphere_phase && SPHERE_PHASE_DISPLAY[content.sphere_phase] && (() => {
                 const phase = SPHERE_PHASE_DISPLAY[content.sphere_phase];
+                const phaseStyle = getSpherePhaseStyle(content.sphere_phase, isDark);
                 const Icon = phase.icon;
                 return (
                   <Badge
                     variant="outline"
-                    className={cn(sizeConfig.badgeSize, "border-white/20")}
-                    style={{ color: phase.color }}
+                    className={cn(sizeConfig.badgeSize)}
+                    style={{
+                      backgroundColor: phaseStyle.bg,
+                      borderColor: phaseStyle.border,
+                      color: phaseStyle.text
+                    }}
                   >
                     <Icon className={cn(sizeConfig.iconSize, "mr-0.5")} />
                     {cardSize === "compact" ? phase.shortLabel : phase.label}
                   </Badge>
                 );
               })()}
-              {content.campaign_week && (
+              {showField('campaign_week') && content.campaign_week && (
                 <Badge
                   variant="outline"
-                  className={cn(sizeConfig.badgeSize, "border-white/20 text-[#cbd5e1]")}
+                  className={cn(sizeConfig.badgeSize, "border-zinc-300 dark:border-white/20 text-zinc-600 dark:text-zinc-400")}
                 >
                   <Calendar className={cn(sizeConfig.iconSize, "mr-0.5")} />
                   S{content.campaign_week}
                 </Badge>
               )}
-              {marketingIndicator && (() => {
+              {showField('marketing_status') && marketingIndicator && (() => {
                 const MIcon = marketingIndicator.icon;
                 return (
                   <Badge
                     variant="outline"
-                    className={cn(sizeConfig.badgeSize, "border-white/20 cursor-pointer")}
+                    className={cn(sizeConfig.badgeSize, "border-zinc-300 dark:border-white/20 cursor-pointer")}
                     style={{ color: marketingIndicator.color }}
                     onClick={handleMarketingClick}
                   >
@@ -536,26 +553,147 @@ export function EnhancedContentCard({
             </div>
           )}
 
+          {/* Producto y Ángulo de ventas */}
+          {((showField('product') && content.product) || (showField('sales_angle') && content.sales_angle)) && (
+            <div className={cn("flex flex-wrap items-center mt-2", sizeConfig.spacing)}>
+              {showField('product') && content.product && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      variant="outline"
+                      className={cn(sizeConfig.badgeSize, "border-blue-500/30 text-blue-600 dark:text-blue-400 max-w-[120px]")}
+                    >
+                      <Package className={cn(sizeConfig.iconSize, "mr-0.5 flex-shrink-0")} />
+                      <span className="truncate">{content.product.name}</span>
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>{content.product.name}</TooltipContent>
+                </Tooltip>
+              )}
+              {showField('sales_angle') && content.sales_angle && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      variant="outline"
+                      className={cn(sizeConfig.badgeSize, "border-amber-500/30 text-amber-600 dark:text-amber-400 max-w-[100px]")}
+                    >
+                      <span className="truncate">{content.sales_angle}</span>
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[300px]">{content.sales_angle}</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          )}
+
+          {/* Sección de Pagos */}
+          {((showField('creator_payment') && content.creator_payment != null) ||
+            (showField('editor_payment') && content.editor_payment != null) ||
+            showField('payment_status') ||
+            showField('invoiced')) && (
+            <div className={cn("flex flex-wrap items-center mt-2 gap-2", sizeConfig.spacing)}>
+              {showField('creator_payment') && content.creator_payment != null && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        sizeConfig.badgeSize,
+                        content.creator_paid
+                          ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                          : "border-zinc-300 dark:border-white/20 text-zinc-600 dark:text-zinc-400"
+                      )}
+                    >
+                      <DollarSign className={cn(sizeConfig.iconSize, "mr-0.5")} />
+                      C: ${content.creator_payment.toLocaleString()}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Pago creador {content.creator_paid ? '(Pagado)' : '(Pendiente)'}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {showField('editor_payment') && content.editor_payment != null && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        sizeConfig.badgeSize,
+                        content.editor_paid
+                          ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                          : "border-zinc-300 dark:border-white/20 text-zinc-600 dark:text-zinc-400"
+                      )}
+                    >
+                      <DollarSign className={cn(sizeConfig.iconSize, "mr-0.5")} />
+                      E: ${content.editor_payment.toLocaleString()}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Pago editor {content.editor_paid ? '(Pagado)' : '(Pendiente)'}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {showField('invoiced') && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className={cn(
+                      "flex items-center",
+                      content.invoiced ? "text-emerald-500" : "text-zinc-400"
+                    )}>
+                      <Receipt className={sizeConfig.iconSize} />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {content.invoiced ? 'Facturado' : 'Sin facturar'}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          )}
+
+          {/* Puntos UP y Vistas */}
+          {((showField('points') && content.up_points) || (showField('views_count') && content.views_count)) && (
+            <div className={cn("flex items-center mt-2", sizeConfig.spacing)}>
+              {showField('points') && content.up_points != null && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="flex items-center gap-0.5 text-amber-500">
+                      <Star className={cn(sizeConfig.iconSize, "fill-current")} />
+                      <span className="text-xs font-medium">{content.up_points}</span>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>Puntos UP</TooltipContent>
+                </Tooltip>
+              )}
+              {showField('views_count') && content.views_count != null && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="flex items-center gap-0.5 text-blue-500 ml-2">
+                      <Eye className={sizeConfig.iconSize} />
+                      <span className="text-xs font-medium">{content.views_count.toLocaleString()}</span>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>Vistas</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          )}
+
         </div>
 
         {/* 3. FOOTER */}
-        <div
-          className="flex flex-wrap items-center px-3 py-2 border-t border-white/5"
-          style={{
-            background: "rgba(255,255,255,0.02)",
-            backdropFilter: "blur(8px)",
-          }}
-        >
+        <div className="flex flex-wrap items-center px-3 py-2 border-t border-zinc-200 dark:border-white/5 bg-zinc-50/50 dark:bg-white/[0.02]">
           {showField("deadline") && content.deadline && (
             <div
               className={cn(
                 "flex items-center ml-auto",
                 sizeConfig.spacing,
-                isOverdue && "text-[#f87171] font-medium"
+                isOverdue && "text-red-500 font-medium"
               )}
             >
-              <Clock className={cn(sizeConfig.iconSize, "text-[#8b5cf6]")} />
-              <span className="text-xs text-[#cbd5e1]">
+              <Clock className={cn(sizeConfig.iconSize, "text-purple-600 dark:text-purple-400")} />
+              <span className="text-xs text-zinc-600 dark:text-zinc-400">
                 {format(new Date(content.deadline), "dd MMM", { locale: es })}
               </span>
             </div>
@@ -565,8 +703,8 @@ export function EnhancedContentCard({
               <Tooltip>
                 <TooltipTrigger>
                   <span className="flex items-center gap-0.5">
-                    <Share2 className={cn(sizeConfig.iconSize, socialStatus.hasPublished ? "text-emerald-400" : "text-[#8b5cf6]")} />
-                    <span className="text-[10px] font-medium text-[#cbd5e1]">{socialStatus.count}</span>
+                    <Share2 className={cn(sizeConfig.iconSize, socialStatus.hasPublished ? "text-emerald-500 dark:text-emerald-400" : "text-purple-600 dark:text-purple-400")} />
+                    <span className="text-[10px] font-medium text-zinc-600 dark:text-zinc-400">{socialStatus.count}</span>
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -579,7 +717,7 @@ export function EnhancedContentCard({
             {hasRawVideo && (
               <Tooltip>
                 <TooltipTrigger>
-                  <Video className={cn(sizeConfig.iconSize, "text-orange-400")} />
+                  <Video className={cn(sizeConfig.iconSize, "text-orange-500 dark:text-orange-400")} />
                 </TooltipTrigger>
                 <TooltipContent>Material crudo</TooltipContent>
               </Tooltip>
@@ -587,7 +725,7 @@ export function EnhancedContentCard({
             {hasVideo && (
               <Tooltip>
                 <TooltipTrigger>
-                  <Video className={cn(sizeConfig.iconSize, "text-emerald-400 fill-emerald-400/50")} />
+                  <Video className={cn(sizeConfig.iconSize, "text-emerald-500 dark:text-emerald-400 fill-emerald-500/50 dark:fill-emerald-400/50")} />
                 </TooltipTrigger>
                 <TooltipContent>Video editado</TooltipContent>
               </Tooltip>
@@ -595,7 +733,7 @@ export function EnhancedContentCard({
             {content.script && (
               <Tooltip>
                 <TooltipTrigger>
-                  <FileText className={cn(sizeConfig.iconSize, "text-[#60a5fa]")} />
+                  <FileText className={cn(sizeConfig.iconSize, "text-blue-500 dark:text-blue-400")} />
                 </TooltipTrigger>
                 <TooltipContent>Tiene guión</TooltipContent>
               </Tooltip>
@@ -607,7 +745,7 @@ export function EnhancedContentCard({
           <div className="px-4 pb-3">
             <Progress
               value={getProgress()}
-              className="h-1.5 bg-white/5 [&>div]:bg-gradient-to-r [&>div]:from-[#8b5cf6] [&>div]:to-[#ec4899]"
+              className="h-1.5 bg-zinc-200 dark:bg-white/5 [&>div]:bg-gradient-to-r [&>div]:from-purple-600 [&>div]:to-pink-600 dark:[&>div]:from-purple-500 dark:[&>div]:to-pink-500"
             />
           </div>
         )}
@@ -616,8 +754,7 @@ export function EnhancedContentCard({
           <div className="px-3 pb-2">
             <Badge
               variant="outline"
-              className={cn("text-amber-400 border-amber-500/50", sizeConfig.badgeSize)}
-              style={{ boxShadow: "0 0 10px rgba(245,158,11,0.3)" }}
+              className={cn("text-amber-600 dark:text-amber-400 border-amber-500/50", sizeConfig.badgeSize)}
             >
               <Crown className="h-3 w-3 mr-0.5" />
               Embajador
@@ -637,11 +774,11 @@ export function EnhancedContentCard({
             />
           </div>
         )}
-      </motion.div>
+      </div>
 
       {/* Standalone Share Dialog (triggered by share button or approval toast) */}
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-lg max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
             <DialogTitle>Compartir en Redes Sociales</DialogTitle>
           </DialogHeader>
@@ -661,14 +798,14 @@ export function EnhancedContentCard({
                 },
               });
             }}
-            className="w-full flex items-center gap-3 p-3 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors text-left mb-4"
+            className="w-full flex items-center gap-3 p-3 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors duration-150 text-left mb-4"
           >
             <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
               <Share2 className="w-4 h-4 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-medium">Crear publicación en Social Hub</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Crear publicación en Social Hub</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
                 Ir al Social Hub con este contenido precargado
               </p>
             </div>

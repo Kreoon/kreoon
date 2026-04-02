@@ -258,7 +258,7 @@ const UnifiedClientsPage = () => {
         {/* Stats Row */}
         <div className={cn('grid gap-3', canSeeInternal ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-3')}>
           {canSeeInternal && (
-            <div className="rounded-xl border border-border bg-card p-3">
+            <div className="rounded-sm border border-border bg-card p-3">
               <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
                 <Building2 className="h-3.5 w-3.5" />
                 Empresas
@@ -266,14 +266,14 @@ const UnifiedClientsPage = () => {
               <p className="text-xl font-bold text-card-foreground">{stats.empresas}</p>
             </div>
           )}
-          <div className="rounded-xl border border-border bg-card p-3">
+          <div className="rounded-sm border border-border bg-card p-3">
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
               <Contact className="h-3.5 w-3.5" />
               Contactos
             </div>
             <p className="text-xl font-bold text-card-foreground">{stats.contactos}</p>
           </div>
-          <div className="rounded-xl border border-border bg-card p-3">
+          <div className="rounded-sm border border-border bg-card p-3">
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
               <UsersIcon className="h-3.5 w-3.5" />
               Usuarios
@@ -281,7 +281,7 @@ const UnifiedClientsPage = () => {
             <p className="text-xl font-bold text-card-foreground">{stats.usuarios}</p>
           </div>
           {canSeeInternal && (
-            <div className="rounded-xl border border-border bg-card p-3">
+            <div className="rounded-sm border border-border bg-card p-3">
               <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
                 <Crown className="h-3.5 w-3.5" />
                 VIP
@@ -289,7 +289,7 @@ const UnifiedClientsPage = () => {
               <p className="text-xl font-bold text-card-foreground">{stats.vip}</p>
             </div>
           )}
-          <div className="rounded-xl border border-border bg-card p-3">
+          <div className="rounded-sm border border-border bg-card p-3">
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
               <DollarSign className="h-3.5 w-3.5" />
               Pipeline
@@ -306,7 +306,7 @@ const UnifiedClientsPage = () => {
                 key={tab.key}
                 onClick={() => handleFilterChange(tab.key)}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
+                  'px-3 py-1.5 rounded-sm text-xs font-medium transition-all',
                   filter === tab.key
                     ? 'bg-primary text-white shadow-sm'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground',
@@ -361,7 +361,7 @@ const UnifiedClientsPage = () => {
               <>
                 {/* Unassigned alert */}
                 {canSeeInternal && unassignedMembers.length > 0 && (
-                  <div className="mb-4 flex items-center gap-2 p-3 rounded-xl border border-amber-500/30 bg-amber-500/10">
+                  <div className="mb-4 flex items-center gap-2 p-3 rounded-sm border border-amber-500/30 bg-amber-500/10">
                     <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
                     <p className="text-xs text-amber-400">
                       <strong>{unassignedMembers.length}</strong> usuario{unassignedMembers.length !== 1 ? 's' : ''} con rol cliente sin empresa asignada
@@ -377,11 +377,11 @@ const UnifiedClientsPage = () => {
                 {clientUsersLoading ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {Array.from({ length: 6 }).map((_, i) => (
-                      <Skeleton key={i} className="h-40 rounded-xl bg-muted" />
+                      <Skeleton key={i} className="h-40 rounded-sm bg-muted" />
                     ))}
                   </div>
                 ) : filteredClientUsers.length === 0 ? (
-                  <div className="text-center py-16 border border-dashed border-border rounded-xl">
+                  <div className="text-center py-16 border border-dashed border-border rounded-sm">
                     <UsersIcon className="h-8 w-8 text-white/20 mx-auto mb-3" />
                     <p className="text-sm text-muted-foreground">
                       {search ? 'No se encontraron usuarios' : 'No hay usuarios cliente vinculados a empresas'}
@@ -405,7 +405,7 @@ const UnifiedClientsPage = () => {
                   </div>
                 ) : (
                   /* Table view for client users */
-                  <div className="rounded-xl border border-border overflow-hidden overflow-x-auto">
+                  <div className="rounded-sm border border-border overflow-hidden overflow-x-auto">
                     <table className="w-full text-xs min-w-[600px]">
                       <thead>
                         <tr className="bg-muted border-b border-border">
@@ -475,11 +475,11 @@ const UnifiedClientsPage = () => {
                 {isLoading ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {Array.from({ length: 6 }).map((_, i) => (
-                      <Skeleton key={i} className="h-40 rounded-xl bg-muted" />
+                      <Skeleton key={i} className="h-40 rounded-sm bg-muted" />
                     ))}
                   </div>
                 ) : filtered.length === 0 ? (
-                  <div className="text-center py-16 border border-dashed border-border rounded-xl">
+                  <div className="text-center py-16 border border-dashed border-border rounded-sm">
                     <Castle className="h-8 w-8 text-white/20 mx-auto mb-3" />
                     <p className="text-sm text-muted-foreground">No se encontraron clientes</p>
                     {search && (
@@ -503,7 +503,7 @@ const UnifiedClientsPage = () => {
                   </div>
                 ) : (
                   /* Table view */
-                  <div className="rounded-xl border border-border overflow-hidden overflow-x-auto">
+                  <div className="rounded-sm border border-border overflow-hidden overflow-x-auto">
                     <table className="w-full text-xs min-w-[500px]">
                       <thead>
                         <tr className="bg-muted border-b border-border">
@@ -528,9 +528,9 @@ const UnifiedClientsPage = () => {
                               <div className="flex items-center gap-2">
                                 {e.entity_type === 'empresa' ? (
                                   e.avatar_url ? (
-                                    <img src={e.avatar_url} alt="" className="h-7 w-7 rounded-lg object-cover" />
+                                    <img src={e.avatar_url} alt="" className="h-7 w-7 rounded-sm object-cover" />
                                   ) : (
-                                    <div className="h-7 w-7 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                                    <div className="h-7 w-7 rounded-sm bg-blue-500/10 flex items-center justify-center">
                                       <Building2 className="h-3.5 w-3.5 text-blue-400" />
                                     </div>
                                   )

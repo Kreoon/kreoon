@@ -113,8 +113,8 @@ export default function SocialHubPage() {
 
       {/* Quick stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border">
-          <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+        <div className="flex items-center gap-3 p-3 rounded-sm bg-muted/30 border">
+          <div className="w-8 h-8 rounded-sm bg-blue-500/10 flex items-center justify-center">
             <LinkIcon className="w-4 h-4 text-blue-400" />
           </div>
           <div>
@@ -122,8 +122,8 @@ export default function SocialHubPage() {
             <p className="text-lg font-bold">{accounts.length}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border">
-          <div className="w-8 h-8 rounded-lg bg-yellow-500/10 flex items-center justify-center">
+        <div className="flex items-center gap-3 p-3 rounded-sm bg-muted/30 border">
+          <div className="w-8 h-8 rounded-sm bg-yellow-500/10 flex items-center justify-center">
             <Calendar className="w-4 h-4 text-yellow-400" />
           </div>
           <div>
@@ -131,8 +131,8 @@ export default function SocialHubPage() {
             <p className="text-lg font-bold">{stats.scheduledCount}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border">
-          <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center">
+        <div className="flex items-center gap-3 p-3 rounded-sm bg-muted/30 border">
+          <div className="w-8 h-8 rounded-sm bg-green-500/10 flex items-center justify-center">
             <BarChart3 className="w-4 h-4 text-green-400" />
           </div>
           <div>
@@ -140,8 +140,8 @@ export default function SocialHubPage() {
             <p className="text-lg font-bold">{stats.publishedCount}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border">
-          <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
+        <div className="flex items-center gap-3 p-3 rounded-sm bg-muted/30 border">
+          <div className="w-8 h-8 rounded-sm bg-red-500/10 flex items-center justify-center">
             <PenSquare className="w-4 h-4 text-red-400" />
           </div>
           <div>
@@ -229,7 +229,7 @@ export default function SocialHubPage() {
                 <img
                   src={viewingPost.thumbnail_url}
                   alt=""
-                  className="w-full rounded-lg aspect-video object-cover"
+                  className="w-full rounded-sm aspect-video object-cover"
                 />
               )}
               <p className="text-sm whitespace-pre-wrap">{viewingPost.caption}</p>

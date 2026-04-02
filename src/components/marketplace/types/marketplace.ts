@@ -1,3 +1,20 @@
+import type { Specialization } from '@/types/database';
+
+// --- Dynamic Filter Options (from RPC) ---
+
+export interface LocationOption {
+  country_code: string;
+  country_name: string;
+  country_flag: string;
+  city: string | null;
+}
+
+export interface MarketplaceFilterOptions {
+  locations: LocationOption[];
+  content_types: string[];
+  categories: string[];
+}
+
 export interface MarketplaceCreator {
   id: string;
   user_id: string;
@@ -44,6 +61,8 @@ export interface MarketplaceCreator {
     tone_descriptors?: string[];
     primary_style?: string;
   } | null;
+  /** Creator specializations */
+  specializations?: Specialization[];
 }
 
 export interface PortfolioMedia {
@@ -57,6 +76,7 @@ export interface MarketplaceFilters {
   search: string;
   category: string | null;
   country: string | null;
+  city: string | null;
   content_type: string[];
   price_min: number | null;
   price_max: number | null;
@@ -72,8 +92,10 @@ export interface MarketplaceFilters {
   platforms: string[];
   software: string[];
   accepts_exchange: boolean | null;
-  tech_stack: string[];
-  education_format: string[];
+  // Specialization filters
+  specializations: Specialization[];
+  // Organization filter
+  organization_id: string | null;
 }
 
 export interface MarketplaceSection {
@@ -145,6 +167,7 @@ export interface CreatorFullProfile extends MarketplaceCreator {
   response_time: string;
   delivery_time: string;
   exchange_conditions?: string;
+  specializations?: Specialization[];
 }
 
 export const MARKETPLACE_CATEGORIES = [
@@ -237,7 +260,7 @@ export const EXPERTISE_TAG_GROUPS: ExpertiseTagGroup[] = [
 
 // --- Phase 3: Hiring & Project types ---
 
-export type MarketplaceProjectType = 'content_creation' | 'post_production' | 'strategy_marketing' | 'technology' | 'education';
+export type MarketplaceProjectType = 'creators' | 'production' | 'strategy';
 export type ProjectStatus = 'pending' | 'briefing' | 'in_progress' | 'revision' | 'approved' | 'completed' | 'cancelled' | 'overdue';
 export type ProjectPaymentMethod = 'payment' | 'exchange';
 export type ProjectPaymentStatus = 'pending' | 'escrow' | 'released' | 'refunded';
@@ -317,6 +340,7 @@ export const DEFAULT_FILTERS: MarketplaceFilters = {
   search: '',
   category: null,
   country: null,
+  city: null,
   content_type: [],
   price_min: null,
   price_max: null,
@@ -332,38 +356,35 @@ export const DEFAULT_FILTERS: MarketplaceFilters = {
   platforms: [],
   software: [],
   accepts_exchange: null,
-  tech_stack: [],
-  education_format: [],
+  // Specialization filters
+  specializations: [],
+  // Organization filter
+  organization_id: null,
 };
 
 // --- Phase 5: Marketplace Specialization Roles ---
+// 4 categorias principales: creators, production, strategy, client
 
 export type MarketplaceRoleCategory =
-  | 'content_creation'
-  | 'post_production'
-  | 'strategy_marketing'
-  | 'technology'
-  | 'education'
-  | 'client';
+  | 'creators'    // Creadores de Contenido
+  | 'production'  // Editores y Produccion
+  | 'strategy'    // Estrategas (Digital + Creativo + CM)
+  | 'client';     // Clientes/Marcas (oculto del marketplace publico)
 
 export type MarketplaceRoleId =
-  // Content Creation
+  // Creadores (creators)
   | 'ugc_creator' | 'lifestyle_creator' | 'micro_influencer'
   | 'nano_influencer' | 'macro_influencer' | 'brand_ambassador'
   | 'live_streamer' | 'podcast_host'
   | 'photographer' | 'copywriter' | 'graphic_designer' | 'voice_artist'
-  // Post-Production
+  // Produccion (production)
   | 'video_editor' | 'motion_graphics' | 'sound_designer' | 'colorist'
   | 'director' | 'producer' | 'animator_2d3d'
-  // Estrategia & Marketing
+  // Estrategas (strategy)
   | 'content_strategist' | 'social_media_manager' | 'community_manager'
   | 'digital_strategist' | 'trafficker' | 'seo_specialist'
   | 'email_marketer' | 'growth_hacker' | 'crm_specialist' | 'conversion_optimizer'
-  // Technology
-  | 'web_developer' | 'app_developer' | 'ai_specialist'
-  // Education
-  | 'online_instructor' | 'workshop_facilitator'
-  // Client
+  // Cliente (client)
   | 'brand_manager' | 'marketing_director';
 
 export interface MarketplaceRoleDefinition {

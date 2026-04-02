@@ -1,0 +1,188 @@
+/* =============================================================================
+   KREOON NOVA - Design System Premium
+   Tema oscuro SaaS con efectos Aurora
+   ============================================================================= */
+
+:root {
+  /* =========================================================================
+     FONDOS - Profundidad extrema
+     ========================================================================= */
+  --nova-bg-void: #030308;
+  --nova-bg-deep: #050510;
+  --nova-bg-surface: #0a0a18;
+  --nova-bg-elevated: #0f0f22;
+  --nova-bg-hover: #141428;
+
+  /* =========================================================================
+     ACENTOS - Sistema Dual Púrpura/Cyan
+     ========================================================================= */
+  --nova-accent-primary: #8b5cf6;
+  --nova-accent-primary-hover: #a78bfa;
+  --nova-accent-secondary: #06b6d4;
+  --nova-accent-secondary-hover: #22d3ee;
+  --nova-accent-glow: #c084fc;
+
+  /* Aurora Gradients */
+  --nova-aurora-1: #7c3aed;
+  --nova-aurora-2: #db2777;
+  --nova-aurora-3: #06b6d4;
+
+  /* =========================================================================
+     TEXTO - Jerarquía Clara
+     ========================================================================= */
+  --nova-text-bright: #fafafa;
+  --nova-text-primary: #e4e4e7;
+  --nova-text-secondary: #a1a1aa;
+  --nova-text-muted: #52525b;
+  --nova-text-disabled: #3f3f46;
+
+  /* =========================================================================
+     BORDES - Ultra Sutiles
+     ========================================================================= */
+  --nova-border-subtle: rgba(139, 92, 246, 0.08);
+  --nova-border-default: rgba(139, 92, 246, 0.15);
+  --nova-border-accent: rgba(139, 92, 246, 0.3);
+  --nova-border-focus: rgba(139, 92, 246, 0.5);
+
+  /* =========================================================================
+     ESTADOS
+     ========================================================================= */
+  --nova-success: #10b981;
+  --nova-success-bg: rgba(16, 185, 129, 0.1);
+  --nova-warning: #f59e0b;
+  --nova-warning-bg: rgba(245, 158, 11, 0.1);
+  --nova-error: #ef4444;
+  --nova-error-bg: rgba(239, 68, 68, 0.1);
+  --nova-info: #3b82f6;
+  --nova-info-bg: rgba(59, 130, 246, 0.1);
+
+  /* =========================================================================
+     SOMBRAS
+     ========================================================================= */
+  --nova-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --nova-shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --nova-shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.5);
+  --nova-shadow-glow: 0 0 40px rgba(139, 92, 246, 0.25);
+  --nova-shadow-glow-intense:
+    0 0 20px rgba(139, 92, 246, 0.3),
+    0 0 40px rgba(139, 92, 246, 0.2),
+    0 0 60px rgba(139, 92, 246, 0.1);
+  --nova-shadow-glow-cyan: 0 0 40px rgba(6, 182, 212, 0.25);
+
+  /* =========================================================================
+     GLASSMORPHISM
+     ========================================================================= */
+  --nova-glass-bg: rgba(10, 10, 24, 0.7);
+  --nova-glass-bg-light: rgba(10, 10, 24, 0.5);
+  --nova-glass-border: rgba(139, 92, 246, 0.1);
+  --nova-glass-blur: 24px;
+  --nova-glass-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+
+  /* =========================================================================
+     GRADIENTES
+     ========================================================================= */
+  --nova-gradient-primary: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
+  --nova-gradient-aurora: linear-gradient(135deg, #7c3aed 0%, #db2777 50%, #06b6d4 100%);
+  --nova-gradient-surface: linear-gradient(145deg, #0a0a18 0%, #050510 100%);
+  --nova-gradient-border: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(6, 182, 212, 0.1));
+
+  /* =========================================================================
+     ESPACIADO Y RADIOS (sutiles, no muy redondeados)
+     ========================================================================= */
+  --nova-radius-sm: 4px;
+  --nova-radius-md: 6px;
+  --nova-radius-lg: 8px;
+  --nova-radius-xl: 12px;
+  --nova-radius-full: 9999px;
+
+  /* =========================================================================
+     TRANSICIONES
+     ========================================================================= */
+  --nova-transition-fast: 150ms ease;
+  --nova-transition-normal: 200ms ease;
+  --nova-transition-slow: 300ms ease;
+  --nova-transition-aurora: 20s ease-in-out;
+}
+
+/* =============================================================================
+   CLASES UTILITARIAS NOVA
+   ============================================================================= */
+
+/* Backgrounds */
+.nova-bg-void { background-color: var(--nova-bg-void); }
+.nova-bg-deep { background-color: var(--nova-bg-deep); }
+.nova-bg-surface { background-color: var(--nova-bg-surface); }
+.nova-bg-elevated { background-color: var(--nova-bg-elevated); }
+
+/* Text */
+.nova-text-bright { color: var(--nova-text-bright); }
+.nova-text-primary { color: var(--nova-text-primary); }
+.nova-text-secondary { color: var(--nova-text-secondary); }
+.nova-text-muted { color: var(--nova-text-muted); }
+
+/* Glassmorphism */
+.nova-glass {
+  background: var(--nova-glass-bg);
+  backdrop-filter: blur(var(--nova-glass-blur));
+  -webkit-backdrop-filter: blur(var(--nova-glass-blur));
+  border: 1px solid var(--nova-glass-border);
+  box-shadow: var(--nova-glass-shadow);
+}
+
+.nova-glass-light {
+  background: var(--nova-glass-bg-light);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--nova-glass-border);
+}
+
+/* Glow Effects */
+.nova-glow {
+  box-shadow: var(--nova-shadow-glow);
+}
+
+.nova-glow-intense {
+  box-shadow: var(--nova-shadow-glow-intense);
+}
+
+.nova-glow-cyan {
+  box-shadow: var(--nova-shadow-glow-cyan);
+}
+
+/* Border Gradient */
+.nova-border-gradient {
+  position: relative;
+}
+
+.nova-border-gradient::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--nova-gradient-border);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Focus Ring */
+.nova-focus-ring:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--nova-bg-void),
+    0 0 0 4px var(--nova-accent-primary);
+}
+
+/* Hover Glow */
+.nova-hover-glow {
+  transition: box-shadow var(--nova-transition-normal);
+}
+
+.nova-hover-glow:hover {
+  box-shadow: var(--nova-shadow-glow);
+}

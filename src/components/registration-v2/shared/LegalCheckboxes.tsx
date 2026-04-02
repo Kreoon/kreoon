@@ -91,7 +91,7 @@ export function LegalCheckboxes({
       </label>
 
       <div className={cn(
-        "space-y-2.5 p-4 rounded-lg border transition-colors",
+        "space-y-2.5 p-4 rounded-sm border transition-colors",
         hasAnyError
           ? "border-red-500/30 bg-red-500/5"
           : "border-white/10 bg-white/5"

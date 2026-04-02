@@ -9,15 +9,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import {
-  Building2,
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Globe,
-  Instagram,
-  Facebook,
+import { 
+  Building2, 
+  User, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  Globe, 
+  Instagram, 
+  Facebook, 
   Linkedin,
   Save,
   Ban,
@@ -25,10 +25,8 @@ import {
   Clock,
   Link2,
   Upload,
-  Image as ImageIcon,
-  Crosshair
+  Image as ImageIcon
 } from 'lucide-react';
-import { detectBrowserTimezone } from '@/hooks/useOrgTimezone';
 
 interface OrganizationProfile {
   id: string;
@@ -74,14 +72,19 @@ const ORG_TYPES = [
 
 const TIMEZONES = [
   { value: 'America/Bogota', label: 'Colombia (GMT-5)' },
-  { value: 'America/Mexico_City', label: 'México (GMT-6)' },
+  { value: 'America/Mexico_City', label: 'México Central (GMT-6)' },
   { value: 'America/Lima', label: 'Perú (GMT-5)' },
   { value: 'America/Santiago', label: 'Chile (GMT-4)' },
   { value: 'America/Buenos_Aires', label: 'Argentina (GMT-3)' },
   { value: 'America/Sao_Paulo', label: 'Brasil (GMT-3)' },
+  { value: 'America/Guayaquil', label: 'Ecuador (GMT-5)' },
+  { value: 'America/Caracas', label: 'Venezuela (GMT-4)' },
+  { value: 'America/Panama', label: 'Panamá (GMT-5)' },
+  { value: 'America/Costa_Rica', label: 'Costa Rica (GMT-6)' },
+  { value: 'America/Chicago', label: 'US Central (GMT-6)' },
   { value: 'Europe/Madrid', label: 'España (GMT+1)' },
-  { value: 'America/New_York', label: 'Eastern US (GMT-5)' },
-  { value: 'America/Los_Angeles', label: 'Pacific US (GMT-8)' },
+  { value: 'America/New_York', label: 'US Eastern (GMT-5)' },
+  { value: 'America/Los_Angeles', label: 'US Pacific (GMT-8)' },
 ];
 
 export function OrganizationProfileEditor({ organizationId, isRootAdmin = false, onUpdate }: Props) {
@@ -108,7 +111,16 @@ export function OrganizationProfileEditor({ organizationId, isRootAdmin = false,
       toast.error('Error al cargar perfil de organización');
       console.error(error);
     } else {
-      setProfile(data as OrganizationProfile);
+      const org = data as OrganizationProfile;
+      // Auto-detect timezone from browser if not set
+      if (!org.timezone) {
+        try {
+          org.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        } catch {
+          org.timezone = 'America/Bogota';
+        }
+      }
+      setProfile(org);
     }
     setLoading(false);
   };
@@ -269,7 +281,7 @@ export function OrganizationProfileEditor({ organizationId, isRootAdmin = false,
     <div className="space-y-6">
       {/* Status Banner */}
       {profile.is_blocked && (
-        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 flex items-center gap-3">
+        <div className="bg-destructive/10 border border-destructive/20 rounded-sm p-4 flex items-center gap-3">
           <Ban className="h-5 w-5 text-destructive" />
           <div className="flex-1">
             <p className="font-medium text-destructive">Organización Bloqueada</p>
@@ -345,7 +357,7 @@ export function OrganizationProfileEditor({ organizationId, isRootAdmin = false,
             <Label>Logo de la Organización</Label>
             <div className="flex items-center gap-4">
               {profile.logo_url ? (
-                <div className="relative h-20 w-20 rounded-lg border overflow-hidden bg-muted">
+                <div className="relative h-20 w-20 rounded-sm border overflow-hidden bg-muted">
                   <img 
                     src={profile.logo_url} 
                     alt="Logo" 
@@ -353,7 +365,7 @@ export function OrganizationProfileEditor({ organizationId, isRootAdmin = false,
                   />
                 </div>
               ) : (
-                <div className="h-20 w-20 rounded-lg border border-dashed flex items-center justify-center bg-muted">
+                <div className="h-20 w-20 rounded-sm border border-dashed flex items-center justify-center bg-muted">
                   <ImageIcon className="h-8 w-8 text-muted-foreground" />
                 </div>
               )}
@@ -498,41 +510,27 @@ export function OrganizationProfileEditor({ organizationId, isRootAdmin = false,
               <Clock className="h-4 w-4" />
               Zona Horaria
             </Label>
-            <div className="flex gap-2">
-              <Select
-                value={profile.timezone || 'America/Bogota'}
-                onValueChange={(v) => updateField('timezone', v)}
-              >
-                <SelectTrigger className="flex-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TIMEZONES.map((tz) => (
-                    <SelectItem key={tz.value} value={tz.value}>
-                      {tz.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                title="Detectar zona horaria del navegador"
-                onClick={() => {
-                  const detected = detectBrowserTimezone();
-                  const match = TIMEZONES.find(tz => tz.value === detected);
-                  if (match) {
-                    updateField('timezone', detected);
-                    toast.success(`Zona horaria detectada: ${match.label}`);
-                  } else {
-                    toast.info(`Tu zona (${detected}) no está en la lista. Selecciona la más cercana.`);
-                  }
-                }}
-              >
-                <Crosshair className="h-4 w-4" />
-              </Button>
-            </div>
+            <Select
+              value={profile.timezone || 'America/Bogota'}
+              onValueChange={(v) => updateField('timezone', v)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TIMEZONES.map((tz) => (
+                  <SelectItem key={tz.value} value={tz.value}>
+                    {tz.label}
+                  </SelectItem>
+                ))}
+                {/* If current timezone isn't in the preset list, show it as detected */}
+                {profile.timezone && !TIMEZONES.some(tz => tz.value === profile.timezone) && (
+                  <SelectItem value={profile.timezone}>
+                    {profile.timezone} (detectado)
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>

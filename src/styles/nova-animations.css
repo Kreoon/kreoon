@@ -1,0 +1,438 @@
+/* =============================================================================
+   KREOON NOVA - Animaciones CSS
+   Efectos visuales livianos (solo CSS, sin JavaScript)
+   ============================================================================= */
+
+/* =============================================================================
+   AURORA BOREAL - Efecto de fondo
+   ============================================================================= */
+
+@keyframes nova-aurora-drift {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  25% {
+    transform: translate(30px, -20px) scale(1.05);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate(-20px, 30px) scale(0.95);
+    opacity: 1;
+  }
+  75% {
+    transform: translate(20px, 20px) scale(1.02);
+    opacity: 0.9;
+  }
+}
+
+@keyframes nova-aurora-drift-reverse {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.8;
+  }
+  25% {
+    transform: translate(-25px, 15px) scale(0.98);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(15px, -25px) scale(1.03);
+    opacity: 0.7;
+  }
+  75% {
+    transform: translate(-15px, -15px) scale(0.97);
+    opacity: 0.9;
+  }
+}
+
+/* Aurora Container */
+.nova-aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Aurora Layers */
+.nova-aurora-layer-1 {
+  position: absolute;
+  top: -30%;
+  left: 15%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(ellipse at center, rgba(124, 58, 237, 0.15) 0%, transparent 70%);
+  filter: blur(80px);
+  animation: nova-aurora-drift 20s ease-in-out infinite;
+  will-change: transform;
+}
+
+.nova-aurora-layer-2 {
+  position: absolute;
+  top: -20%;
+  right: 10%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(ellipse at center, rgba(219, 39, 119, 0.1) 0%, transparent 70%);
+  filter: blur(80px);
+  animation: nova-aurora-drift-reverse 25s ease-in-out infinite;
+  will-change: transform;
+}
+
+.nova-aurora-layer-3 {
+  position: absolute;
+  top: 5%;
+  left: 35%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(ellipse at center, rgba(6, 182, 212, 0.08) 0%, transparent 70%);
+  filter: blur(80px);
+  animation: nova-aurora-drift 30s ease-in-out infinite;
+  animation-delay: -10s;
+  will-change: transform;
+}
+
+/* Aurora Intensity Variants */
+.nova-aurora--subtle .nova-aurora-layer-1 { opacity: 0.5; }
+.nova-aurora--subtle .nova-aurora-layer-2 { opacity: 0.4; }
+.nova-aurora--subtle .nova-aurora-layer-3 { opacity: 0.3; }
+
+.nova-aurora--intense .nova-aurora-layer-1 { opacity: 1.2; }
+.nova-aurora--intense .nova-aurora-layer-2 { opacity: 1; }
+.nova-aurora--intense .nova-aurora-layer-3 { opacity: 0.8; }
+
+/* =============================================================================
+   MESH BACKGROUND - Gradiente estático
+   ============================================================================= */
+
+.nova-mesh-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(at 20% 20%, rgba(124, 58, 237, 0.08) 0%, transparent 50%),
+    radial-gradient(at 80% 80%, rgba(6, 182, 212, 0.05) 0%, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(219, 39, 119, 0.03) 0%, transparent 50%);
+}
+
+/* =============================================================================
+   GLOW ANIMATIONS
+   ============================================================================= */
+
+@keyframes nova-glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(139, 92, 246, 0.4);
+  }
+}
+
+@keyframes nova-glow-pulse-cyan {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(6, 182, 212, 0.4);
+  }
+}
+
+.nova-animate-glow-pulse {
+  animation: nova-glow-pulse 3s ease-in-out infinite;
+}
+
+.nova-animate-glow-pulse-cyan {
+  animation: nova-glow-pulse-cyan 3s ease-in-out infinite;
+}
+
+/* =============================================================================
+   FLOAT ANIMATION
+   ============================================================================= */
+
+@keyframes nova-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.nova-animate-float {
+  animation: nova-float 4s ease-in-out infinite;
+}
+
+/* =============================================================================
+   FADE ANIMATIONS
+   ============================================================================= */
+
+@keyframes nova-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes nova-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes nova-fade-down {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes nova-fade-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.nova-animate-fade-in {
+  animation: nova-fade-in 0.3s ease-out forwards;
+}
+
+.nova-animate-fade-up {
+  animation: nova-fade-up 0.4s ease-out forwards;
+}
+
+.nova-animate-fade-down {
+  animation: nova-fade-down 0.4s ease-out forwards;
+}
+
+.nova-animate-fade-scale {
+  animation: nova-fade-scale 0.3s ease-out forwards;
+}
+
+/* =============================================================================
+   SHIMMER / SKELETON
+   ============================================================================= */
+
+@keyframes nova-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.nova-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--nova-bg-elevated) 0%,
+    var(--nova-bg-hover) 50%,
+    var(--nova-bg-elevated) 100%
+  );
+  background-size: 200% 100%;
+  animation: nova-shimmer 1.5s ease-in-out infinite;
+}
+
+/* =============================================================================
+   PULSE / BEACON
+   ============================================================================= */
+
+@keyframes nova-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes nova-beacon {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.nova-animate-pulse {
+  animation: nova-pulse 2s ease-in-out infinite;
+}
+
+.nova-beacon {
+  position: relative;
+}
+
+.nova-beacon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--nova-accent-primary);
+  opacity: 0.5;
+  animation: nova-beacon 1.5s ease-out infinite;
+}
+
+/* =============================================================================
+   BORDER SCAN EFFECT (for inputs)
+   ============================================================================= */
+
+@keyframes nova-border-scan {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.nova-border-scan {
+  position: relative;
+}
+
+.nova-border-scan::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--nova-accent-primary) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: nova-border-scan 2s ease-in-out infinite;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  padding: 1px;
+}
+
+.nova-border-scan:focus-within::before {
+  opacity: 1;
+}
+
+/* =============================================================================
+   RIPPLE EFFECT
+   ============================================================================= */
+
+@keyframes nova-ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.nova-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.nova-ripple-effect {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(6, 182, 212, 0.3));
+  animation: nova-ripple 0.6s ease-out forwards;
+  pointer-events: none;
+}
+
+/* =============================================================================
+   CONFETTI (for celebrations)
+   ============================================================================= */
+
+@keyframes nova-confetti-fall {
+  0% {
+    transform: translateY(-100%) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.nova-confetti-particle {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  background: var(--nova-accent-primary);
+  animation: nova-confetti-fall 3s ease-in forwards;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.nova-confetti-particle:nth-child(2n) {
+  background: var(--nova-accent-secondary);
+  animation-delay: 0.1s;
+}
+
+.nova-confetti-particle:nth-child(3n) {
+  background: var(--nova-aurora-2);
+  animation-delay: 0.2s;
+}
+
+/* =============================================================================
+   STAGGER UTILITIES
+   ============================================================================= */
+
+.nova-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.nova-stagger > *:nth-child(2) { animation-delay: 50ms; }
+.nova-stagger > *:nth-child(3) { animation-delay: 100ms; }
+.nova-stagger > *:nth-child(4) { animation-delay: 150ms; }
+.nova-stagger > *:nth-child(5) { animation-delay: 200ms; }
+.nova-stagger > *:nth-child(6) { animation-delay: 250ms; }
+.nova-stagger > *:nth-child(7) { animation-delay: 300ms; }
+.nova-stagger > *:nth-child(8) { animation-delay: 350ms; }
+
+/* =============================================================================
+   REDUCE MOTION
+   ============================================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .nova-aurora-layer-1,
+  .nova-aurora-layer-2,
+  .nova-aurora-layer-3,
+  .nova-animate-glow-pulse,
+  .nova-animate-glow-pulse-cyan,
+  .nova-animate-float,
+  .nova-animate-pulse,
+  .nova-beacon::after,
+  .nova-skeleton {
+    animation: none !important;
+  }
+
+  .nova-animate-fade-in,
+  .nova-animate-fade-up,
+  .nova-animate-fade-down,
+  .nova-animate-fade-scale {
+    animation-duration: 0.01ms !important;
+  }
+}

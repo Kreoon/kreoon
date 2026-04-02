@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { uploadPortfolioImage, uploadAsset } from '@/lib/bunnyUpload';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -229,38 +230,17 @@ export function MediaUploader({
         return;
       }
 
-      // For images, use standard Supabase storage
-      const fileName = `${userId}/${type}s/${timestamp}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('portfolio')
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from('portfolio')
-        .getPublicUrl(fileName);
-
-      const mediaUrl = urlData.publicUrl;
+      // For images, use Bunny CDN (WebP optimized)
+      const imageResult = await uploadPortfolioImage(file, userId);
+      const mediaUrl = imageResult.cdnUrl;
       let musicUrl: string | null = null;
 
       // Handle music for stories (images only - videos go through Bunny)
       if (type === 'story') {
         if (musicFile) {
-          const musicExt = musicFile.name.split('.').pop();
-          const musicFileName = `${userId}/stories/music/${timestamp}.${musicExt}`;
-
-          const { error: musicError } = await supabase.storage
-            .from('portfolio')
-            .upload(musicFileName, musicFile);
-
-          if (!musicError) {
-            const { data: musicUrlData } = supabase.storage
-              .from('portfolio')
-              .getPublicUrl(musicFileName);
-            musicUrl = musicUrlData.publicUrl;
-          }
+          // Upload music to Bunny assets zone
+          const musicResult = await uploadAsset(musicFile, userId);
+          musicUrl = musicResult.cdnUrl;
         }
       }
 
@@ -350,7 +330,7 @@ export function MediaUploader({
           {!preview ? (
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="aspect-[9/16] max-h-[400px] bg-zinc-800 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-zinc-700 transition-colors"
+              className="aspect-[9/16] max-h-[400px] bg-zinc-800 rounded-sm flex flex-col items-center justify-center cursor-pointer hover:bg-zinc-700 transition-colors"
             >
               <div className="flex gap-4 mb-4">
                 <Image className="h-10 w-10 text-white/40" />
@@ -361,7 +341,7 @@ export function MediaUploader({
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="relative aspect-[9/16] max-h-[350px] bg-zinc-800 rounded-xl overflow-hidden">
+              <div className="relative aspect-[9/16] max-h-[350px] bg-zinc-800 rounded-sm overflow-hidden">
                 {isVideo ? (
                   <video
                     ref={videoRef}
@@ -392,7 +372,7 @@ export function MediaUploader({
 
               {/* Thumbnail selector for videos (posts only) */}
               {isVideo && type === 'post' && (
-                <div className="bg-zinc-800 rounded-xl p-3 space-y-3">
+                <div className="bg-zinc-800 rounded-sm p-3 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-white/70 text-sm font-medium">Miniatura del video</span>
                     <Button
@@ -406,7 +386,7 @@ export function MediaUploader({
                   </div>
 
                   {thumbnail && (
-                    <div className="relative w-20 h-28 rounded-lg overflow-hidden bg-zinc-700">
+                    <div className="relative w-20 h-28 rounded-sm overflow-hidden bg-zinc-700">
                       <img 
                         src={thumbnail} 
                         alt="Thumbnail" 
@@ -482,7 +462,7 @@ export function MediaUploader({
 
               {/* Music settings for stories */}
               {type === 'story' && (
-                <div className="bg-zinc-800 rounded-xl p-3 space-y-3">
+                <div className="bg-zinc-800 rounded-sm p-3 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Music className="h-4 w-4 text-primary" />
@@ -500,7 +480,7 @@ export function MediaUploader({
 
                   {/* Show selected music preview */}
                   {musicFile && !showMusicSettings && (
-                    <div className="flex items-center gap-2 bg-zinc-700/50 rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-2 bg-zinc-700/50 rounded-sm px-3 py-2">
                       <Music className="h-3 w-3 text-primary" />
                       <div className="flex-1 min-w-0">
                         <span className="text-white/80 text-xs truncate block">
@@ -532,7 +512,7 @@ export function MediaUploader({
                         </div>
                       ) : (
                         <div className="space-y-3">
-                          <div className="flex items-center gap-2 bg-zinc-700/50 rounded-lg px-3 py-2">
+                          <div className="flex items-center gap-2 bg-zinc-700/50 rounded-sm px-3 py-2">
                             <Music className="h-3 w-3 text-primary" />
                             <span className="text-white/80 text-xs truncate flex-1">{musicFile?.name}</span>
                             <button

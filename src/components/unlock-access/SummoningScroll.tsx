@@ -142,7 +142,7 @@ export const SummoningScroll = memo(function SummoningScroll({
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           className={cn(
-                            'px-3 py-2 rounded-xl text-sm font-medium',
+                            'px-3 py-2 rounded-sm text-sm font-medium',
                             'border transition-all',
                             selectedStyle === style
                               ? 'bg-purple-500/30 border-purple-400/50 text-purple-200'
@@ -159,7 +159,7 @@ export const SummoningScroll = memo(function SummoningScroll({
 
                 {/* Message preview */}
                 <div className={cn(
-                  'relative p-4 rounded-xl',
+                  'relative p-4 rounded-sm',
                   'bg-gradient-to-br from-slate-800/50 to-slate-900/50',
                   'border border-white/10'
                 )}>
@@ -170,7 +170,7 @@ export const SummoningScroll = memo(function SummoningScroll({
                     {currentMessage.text}
                   </p>
                   <div className={cn(
-                    'mt-3 p-2 rounded-lg',
+                    'mt-3 p-2 rounded-sm',
                     'bg-purple-500/10 border border-purple-500/20'
                   )}>
                     <p className="text-purple-300 text-xs font-mono truncate">
@@ -187,7 +187,7 @@ export const SummoningScroll = memo(function SummoningScroll({
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className={cn(
-                      'flex items-center justify-center gap-2 py-3 px-4 rounded-xl',
+                      'flex items-center justify-center gap-2 py-3 px-4 rounded-sm',
                       'font-medium text-sm',
                       'transition-all',
                       copied
@@ -214,7 +214,7 @@ export const SummoningScroll = memo(function SummoningScroll({
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className={cn(
-                      'flex items-center justify-center gap-2 py-3 px-4 rounded-xl',
+                      'flex items-center justify-center gap-2 py-3 px-4 rounded-sm',
                       'font-medium text-sm',
                       'bg-green-600/20 border border-green-500/30',
                       'text-green-300 hover:bg-green-600/30',
@@ -232,7 +232,7 @@ export const SummoningScroll = memo(function SummoningScroll({
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className={cn(
-                        'flex items-center justify-center gap-2 py-3 px-4 rounded-xl',
+                        'flex items-center justify-center gap-2 py-3 px-4 rounded-sm',
                         'font-medium text-sm',
                         'bg-purple-500/20 border border-purple-500/30',
                         'text-purple-300 hover:bg-purple-500/30',

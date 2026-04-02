@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import {
   Send, Clock, Hash, MapPin, MessageSquare, Calendar as CalendarIcon,
   X, Plus, Sparkles, Eye, ChevronDown, User, Building, Globe, FolderOpen,
-  AlertTriangle, Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +15,6 @@ import { cn } from '@/lib/utils';
 import { useSocialAccounts } from '../../hooks/useSocialAccounts';
 import { useScheduledPosts } from '../../hooks/useScheduledPosts';
 import { useAccountGroups } from '../../hooks/useAccountGroups';
-import { useSocialPostsLimit } from '../../hooks/useSocialPostsLimit';
 import { PlatformIcon } from '../common/PlatformIcon';
 import { MediaUploader } from './MediaUploader';
 import { HashtagManager } from './HashtagManager';
@@ -26,11 +24,10 @@ import { AICaptionSelector } from './AICaptionSelector';
 import type { ApprovedContent } from '../../hooks/useApprovedContent';
 import { getBunnyThumbnailUrl, getBunnyVideoUrls, findBestBunnyMp4 } from '@/hooks/useHLSPlayer';
 import { PLATFORMS } from '../../config';
-import { useOrgTimezone } from '@/hooks/useOrgTimezone';
-import { formatInTimeZone } from 'date-fns-tz';
-import { fromZoned } from '@/lib/utils/timezone';
 import type { SocialPostType, ComposerFormData, QuickShareData, CollaborationType, SocialPlatform, SocialAccount } from '../../types/social.types';
 import { toast } from 'sonner';
+import { fromZonedTime } from 'date-fns-tz';
+import { useTimezone } from '@/hooks/useTimezone';
 
 interface PostComposerProps {
   initialData?: Partial<QuickShareData>;
@@ -41,11 +38,10 @@ interface PostComposerProps {
 }
 
 export function PostComposer({ initialData, campaignId, brandUsername, onSuccess, onClose }: PostComposerProps) {
+  const { timezone } = useTimezone();
   const { accounts, personalAccounts, clientAccounts, orgAccounts, accountsByClient } = useSocialAccounts();
   const { createPost, publishNow } = useScheduledPosts();
   const { groups } = useAccountGroups();
-  const orgTz = useOrgTimezone();
-  const postsLimit = useSocialPostsLimit();
 
   const [caption, setCaption] = useState(initialData?.caption || '');
   const [hashtags, setHashtags] = useState<string[]>([]);
@@ -162,11 +158,6 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
       toast.error('Agrega un caption o media');
       return;
     }
-    // Check posts limit
-    if (!postsLimit.canCreatePost) {
-      toast.error(`Has alcanzado el límite de ${postsLimit.limit} posts/mes de tu plan ${postsLimit.planName}. Actualiza tu plan para continuar.`);
-      return;
-    }
 
     setIsSubmitting(true);
     try {
@@ -175,7 +166,7 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
         hashtags,
         mediaUrls,
         thumbnailUrl,
-        scheduledAt: immediate ? null : (scheduledAt ? fromZoned(scheduledAt, orgTz) : null),
+        scheduledAt: immediate ? null : (scheduledAt ? fromZonedTime(scheduledAt, timezone) : null),
         postType,
         visibility,
         firstComment,
@@ -203,8 +194,6 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
         toast.success('Borrador guardado');
       }
 
-      // Refresh posts limit counter
-      postsLimit.refresh();
       onSuccess?.();
     } catch (err: any) {
       toast.error(`Error: ${err.message}`);
@@ -220,50 +209,6 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
 
   return (
     <div className="space-y-6">
-      {/* Posts limit banner */}
-      {!postsLimit.isUnlimited && !postsLimit.loading && (
-        <div className={cn(
-          "flex items-center justify-between gap-3 p-3 rounded-lg border text-sm",
-          postsLimit.canCreatePost
-            ? postsLimit.percentUsed >= 80
-              ? "bg-amber-500/10 border-amber-500/30 text-amber-200"
-              : "bg-muted/30 border-border text-muted-foreground"
-            : "bg-red-500/10 border-red-500/30 text-red-200"
-        )}>
-          <div className="flex items-center gap-2">
-            {postsLimit.canCreatePost ? (
-              postsLimit.percentUsed >= 80 ? (
-                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-              ) : null
-            ) : (
-              <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
-            )}
-            <span>
-              {postsLimit.canCreatePost
-                ? `${postsLimit.usedThisMonth}/${postsLimit.limit} posts este mes`
-                : `Límite de ${postsLimit.limit} posts alcanzado`
-              }
-              {!postsLimit.canCreatePost && (
-                <span className="ml-1 opacity-70">
-                  — Plan {postsLimit.planName}
-                </span>
-              )}
-            </span>
-          </div>
-          {(postsLimit.percentUsed >= 80 || !postsLimit.canCreatePost) && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs gap-1.5 shrink-0"
-              onClick={() => window.location.href = '/settings/planes'}
-            >
-              <Zap className="w-3 h-3" />
-              Mejorar plan
-            </Button>
-          )}
-        </div>
-      )}
-
       {/* Account selector - grouped by entity */}
       <div className="space-y-3">
         <Label className="text-sm font-semibold">Publicar en</Label>
@@ -368,12 +313,12 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
       {/* Content selector */}
       <div className="space-y-2">
         {selectedContent ? (
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+          <div className="flex items-center gap-3 p-3 rounded-sm bg-primary/5 border border-primary/20">
             {selectedContent.thumbnail_url && (
               <img
                 src={selectedContent.thumbnail_url}
                 alt=""
-                className="w-12 h-12 rounded-md object-cover"
+                className="w-12 h-12 rounded-sm object-cover"
               />
             )}
             <div className="flex-1 min-w-0">
@@ -450,7 +395,6 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
         thumbnailUrl={thumbnailUrl}
         onThumbnailChange={setThumbnailUrl}
         maxFiles={10}
-        postType={postType}
       />
 
       {/* Schedule */}
@@ -462,10 +406,10 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
           type="datetime-local"
           value={scheduledAt}
           onChange={(e) => setScheduledAt(e.target.value)}
-          min={formatInTimeZone(new Date(), orgTz, "yyyy-MM-dd'T'HH:mm")}
+          min={new Date().toISOString().slice(0, 16)}
         />
         <p className="text-[10px] text-muted-foreground">
-          Zona horaria: {orgTz.replace(/_/g, ' ')}
+          Zona horaria: {timezone}
         </p>
       </div>
 
@@ -495,7 +439,7 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
       </button>
 
       {showAdvanced && (
-        <div className="space-y-4 p-4 rounded-lg bg-muted/30 border">
+        <div className="space-y-4 p-4 rounded-sm bg-muted/30 border">
           <div className="space-y-2">
             <Label className="text-xs">Primer comentario</Label>
             <Input
@@ -621,7 +565,7 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
         <Button
           variant="outline"
           onClick={() => handleSubmit(false)}
-          disabled={isSubmitting || selectedAccountIds.length === 0 || !postsLimit.canCreatePost}
+          disabled={isSubmitting || selectedAccountIds.length === 0}
           className="flex-1"
         >
           {scheduledAt ? (
@@ -635,7 +579,7 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
         </Button>
         <Button
           onClick={() => handleSubmit(true)}
-          disabled={isSubmitting || selectedAccountIds.length === 0 || !postsLimit.canCreatePost}
+          disabled={isSubmitting || selectedAccountIds.length === 0}
           className="flex-1"
         >
           <Send className="w-4 h-4 mr-2" />
@@ -678,7 +622,7 @@ function AccountButton({
       disabled={disabled}
       title={disabled ? 'Ya hay una cuenta de esta red seleccionada para esta entidad' : undefined}
       className={cn(
-        'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm',
+        'flex items-center gap-2 px-3 py-2 rounded-sm border transition-all text-sm',
         selected
           ? 'border-primary bg-primary/10 text-primary'
           : disabled

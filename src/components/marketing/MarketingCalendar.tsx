@@ -199,7 +199,7 @@ export function MarketingCalendar({ organizationId }: MarketingCalendarProps) {
 
           <div className="flex items-center gap-2">
             {/* View Mode Toggle */}
-            <div className="flex border rounded-lg overflow-hidden">
+            <div className="flex border rounded-sm overflow-hidden">
               <Button
                 variant={viewMode === 'month' ? 'default' : 'ghost'}
                 size="sm"
@@ -253,7 +253,7 @@ export function MarketingCalendar({ organizationId }: MarketingCalendarProps) {
               cancelled: 'Cancelados'
             };
             return (
-              <div key={status} className="bg-muted/50 rounded-lg p-3 text-center">
+              <div key={status} className="bg-muted/50 rounded-sm p-3 text-center">
                 <div className="text-2xl font-bold">{count}</div>
                 <div className="text-xs text-muted-foreground">{labels[status]}</div>
               </div>

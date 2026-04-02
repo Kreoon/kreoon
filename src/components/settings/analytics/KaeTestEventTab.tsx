@@ -40,7 +40,7 @@ export function KaeTestEventTab() {
         </CardHeader>
         <CardContent className="space-y-4">
           {enabledPlatforms.length === 0 ? (
-            <div className="flex items-center gap-2 p-4 rounded-lg bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800">
+            <div className="flex items-center gap-2 p-4 rounded-sm bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800">
               <AlertTriangle className="h-5 w-5 text-amber-500" />
               <div>
                 <p className="font-medium text-amber-800 dark:text-amber-200">
@@ -107,7 +107,7 @@ export function KaeTestEventTab() {
               </div>
 
               {lastResult && (
-                <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 text-sm text-green-800 dark:text-green-200">
+                <div className="p-3 rounded-sm bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 text-sm text-green-800 dark:text-green-200">
                   {lastResult}
                 </div>
               )}

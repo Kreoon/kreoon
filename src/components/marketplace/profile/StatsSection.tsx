@@ -36,7 +36,7 @@ export function StatsSection({ stats }: StatsSectionProps) {
         {items.map((item, i) => (
           <div
             key={i}
-            className="bg-white/5 border border-white/10 rounded-xl p-5 text-center"
+            className="bg-white/5 border border-white/10 rounded-sm p-5 text-center"
           >
             <div className="text-2xl font-bold text-white mb-1">
               {item.value}

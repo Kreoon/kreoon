@@ -468,7 +468,7 @@ serve(async (req) => {
       console.log("[social-ai-generator] Insufficient tokens:", tokenResult);
       return new Response(
         JSON.stringify({
-          error: "No tienes suficientes Kreoon Coins para generar captions",
+          error: "No tienes suficientes Tokens IA para generar captions",
           tokens_required: tokenResult?.required || TOKEN_COST,
           tokens_available: tokenResult?.available || 0,
           code: "INSUFFICIENT_TOKENS",

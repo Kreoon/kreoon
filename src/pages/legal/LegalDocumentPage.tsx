@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2, ArrowLeft, Download, Calendar, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { sanitizeHTML } from '@/lib/sanitizeHTML';
 
 // Mapeo de rutas a tipos de documento
 const ROUTE_TO_TYPE: Record<string, string> = {
@@ -116,7 +117,7 @@ export function LegalDocumentPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-white/10">
+      <header className="sticky top-0 z-50 bg-background/80 border-b border-white/10">
         <div className="container max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Button variant="ghost" size="sm" asChild>
@@ -148,7 +149,7 @@ export function LegalDocumentPage() {
           {/* Si el contenido es HTML, renderizarlo */}
           {htmlContent && htmlContent.startsWith('<') ? (
             <div
-              dangerouslySetInnerHTML={{ __html: htmlContent }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHTML(htmlContent) }}
               className={cn(
                 // Estilos para el contenido HTML legal
                 "[&_h1]:text-3xl [&_h1]:font-bold [&_h1]:mb-6 [&_h1]:text-foreground",
@@ -163,9 +164,9 @@ export function LegalDocumentPage() {
                 "[&_th]:bg-white/5 [&_th]:border [&_th]:border-white/10 [&_th]:p-3 [&_th]:text-left [&_th]:font-medium",
                 "[&_td]:border [&_td]:border-white/10 [&_td]:p-3",
                 "[&_address]:not-italic [&_address]:text-foreground/70",
-                "[&_.legal-meta]:text-sm [&_.legal-meta]:text-muted-foreground [&_.legal-meta]:mb-8 [&_.legal-meta]:p-4 [&_.legal-meta]:bg-white/5 [&_.legal-meta]:rounded-lg",
-                "[&_.legal-warning]:bg-orange-500/10 [&_.legal-warning]:border [&_.legal-warning]:border-orange-500/30 [&_.legal-warning]:p-4 [&_.legal-warning]:rounded-lg [&_.legal-warning]:my-4",
-                "[&_.legal-highlight]:bg-purple-500/10 [&_.legal-highlight]:border [&_.legal-highlight]:border-purple-500/30 [&_.legal-highlight]:p-4 [&_.legal-highlight]:rounded-lg [&_.legal-highlight]:my-4",
+                "[&_.legal-meta]:text-sm [&_.legal-meta]:text-muted-foreground [&_.legal-meta]:mb-8 [&_.legal-meta]:p-4 [&_.legal-meta]:bg-white/5 [&_.legal-meta]:rounded-sm",
+                "[&_.legal-warning]:bg-orange-500/10 [&_.legal-warning]:border [&_.legal-warning]:border-orange-500/30 [&_.legal-warning]:p-4 [&_.legal-warning]:rounded-sm [&_.legal-warning]:my-4",
+                "[&_.legal-highlight]:bg-purple-500/10 [&_.legal-highlight]:border [&_.legal-highlight]:border-purple-500/30 [&_.legal-highlight]:p-4 [&_.legal-highlight]:rounded-sm [&_.legal-highlight]:my-4",
                 "[&_.legal-table]:overflow-x-auto",
                 "[&_.legal-footer]:mt-12 [&_.legal-footer]:pt-6 [&_.legal-footer]:border-t [&_.legal-footer]:border-white/10 [&_.legal-footer]:text-sm [&_.legal-footer]:text-muted-foreground",
                 "[&_section]:mb-8",

@@ -57,11 +57,11 @@ export const FomoCard = memo(function FomoCard({ show = true }: FomoCardProps) {
           scale: [1, 1.02, 1]
         }}
         transition={{ duration: 2, repeat: Infinity }}
-        className="absolute -inset-1 bg-gradient-to-r from-red-500 via-orange-500 to-red-500 rounded-2xl blur-lg opacity-30"
+        className="absolute -inset-1 bg-gradient-to-r from-red-500 via-orange-500 to-red-500 rounded-sm blur-lg opacity-30"
       />
 
       <div className={cn(
-        'relative rounded-2xl overflow-hidden',
+        'relative rounded-sm overflow-hidden',
         'bg-gradient-to-br from-red-950/80 via-orange-950/60 to-red-950/80',
         'border-2 border-red-500/50'
       )}>
@@ -120,7 +120,7 @@ export const FomoCard = memo(function FomoCard({ show = true }: FomoCardProps) {
                   }}
                   transition={{ duration: 0.3 }}
                   className={cn(
-                    'p-3 rounded-xl border transition-all',
+                    'p-3 rounded-sm border transition-all',
                     isActive
                       ? 'bg-white/5 border-white/20'
                       : 'bg-transparent border-transparent'
@@ -128,7 +128,7 @@ export const FomoCard = memo(function FomoCard({ show = true }: FomoCardProps) {
                 >
                   <div className="flex items-start gap-3">
                     <div className={cn(
-                      'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
+                      'w-8 h-8 rounded-sm flex items-center justify-center shrink-0',
                       point.bgColor
                     )}>
                       <Icon className={cn('w-4 h-4', point.iconColor)} />
@@ -166,7 +166,7 @@ export const FomoCard = memo(function FomoCard({ show = true }: FomoCardProps) {
           </div>
 
           {/* Live activity */}
-          <div className="flex items-center justify-center gap-2 p-2 rounded-lg bg-black/30 border border-red-500/20">
+          <div className="flex items-center justify-center gap-2 p-2 rounded-sm bg-black/30 border border-red-500/20">
             <motion.div
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ duration: 1.5, repeat: Infinity }}

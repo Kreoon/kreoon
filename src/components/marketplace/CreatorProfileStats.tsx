@@ -43,12 +43,12 @@ export function CreatorProfileStats({
         {avg_rating !== null && (
           <span className="flex items-center gap-1">
             <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-            <span className="font-medium text-social-foreground">{avg_rating}</span>
-            <span className="text-social-muted-foreground">({reviews_count})</span>
+            <span className="font-medium text-foreground">{avg_rating}</span>
+            <span className="text-muted-foreground">({reviews_count})</span>
           </span>
         )}
         {total_contracts_completed > 0 && (
-          <span className="flex items-center gap-1 text-social-muted-foreground">
+          <span className="flex items-center gap-1 text-muted-foreground">
             <Package className="h-4 w-4" />
             {total_contracts_completed}
           </span>
@@ -77,8 +77,8 @@ export function CreatorProfileStats({
                   whileHover={{ scale: 1.05 }}
                 >
                   <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
-                  <span className="font-semibold text-social-foreground">{avg_rating}</span>
-                  <span className="text-social-muted-foreground">
+                  <span className="font-semibold text-foreground">{avg_rating}</span>
+                  <span className="text-muted-foreground">
                     ({reviews_count} review{reviews_count !== 1 ? 's' : ''})
                   </span>
                 </motion.div>
@@ -97,11 +97,11 @@ export function CreatorProfileStats({
                   className="flex items-center gap-1.5 cursor-default"
                   whileHover={{ scale: 1.05 }}
                 >
-                  <Package className="h-5 w-5 text-social-accent" />
-                  <span className="font-semibold text-social-foreground">
+                  <Package className="h-5 w-5 text-primary" />
+                  <span className="font-semibold text-foreground">
                     {total_contracts_completed}
                   </span>
-                  <span className="text-social-muted-foreground">proyectos</span>
+                  <span className="text-muted-foreground">proyectos</span>
                 </motion.div>
               </TooltipTrigger>
               <TooltipContent>Proyectos completados</TooltipContent>
@@ -128,10 +128,10 @@ export function CreatorProfileStats({
                         : "text-red-500"
                     )}
                   />
-                  <span className="font-semibold text-social-foreground">
+                  <span className="font-semibold text-foreground">
                     {formatPercent(on_time_delivery_rate)}
                   </span>
-                  <span className="text-social-muted-foreground">a tiempo</span>
+                  <span className="text-muted-foreground">a tiempo</span>
                 </motion.div>
               </TooltipTrigger>
               <TooltipContent>Tasa de entrega a tiempo</TooltipContent>
@@ -142,7 +142,7 @@ export function CreatorProfileStats({
 
       {/* Response time */}
       {response_rate !== null && (
-        <div className="flex items-center gap-2 text-sm text-social-muted-foreground">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <MessageCircle className="h-4 w-4" />
           <span>
             Responde en ~{response_rate <= 0.25 ? '6' : response_rate <= 0.5 ? '12' : '24'} horas
@@ -188,7 +188,7 @@ export function CreatorProfileStats({
                       badge === 'top_rated' && "bg-amber-500/20 text-amber-500 border border-amber-500/30",
                       badge === 'fast_delivery' && "bg-green-500/20 text-green-500 border border-green-500/30",
                       badge === 'rising_talent' && "bg-purple-500/20 text-purple-500 border border-purple-500/30",
-                      badge === 'kreoon_pick' && "bg-gradient-to-r from-social-accent/20 to-purple-500/20 text-social-accent border border-social-accent/30"
+                      badge === 'kreoon_pick' && "bg-gradient-to-r from-primary/20 to-purple-500/20 text-primary border border-primary/30"
                     )}
                     whileHover={{ scale: 1.05 }}
                   >
@@ -224,7 +224,7 @@ export function CreatorStatsMinimal({
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-center gap-2 text-xs text-social-muted-foreground", className)}>
+    <div className={cn("flex items-center gap-2 text-xs text-muted-foreground", className)}>
       {rating !== null && rating !== undefined && (
         <span className="flex items-center gap-0.5">
           <Star className="h-3 w-3 fill-amber-400 text-amber-400" />

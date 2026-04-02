@@ -11,17 +11,17 @@ export default function CreatorProfileSection() {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-white/5 border border-white/10 p-1 rounded-xl mb-6">
+        <TabsList className="bg-card border border-border p-1 rounded-sm mb-6">
           <TabsTrigger
             value="profile"
-            className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-primary rounded-lg"
+            className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-primary rounded-sm"
           >
             <User className="h-4 w-4" />
             Perfil Manual
           </TabsTrigger>
           <TabsTrigger
             value="talent-dna"
-            className="gap-2 data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 rounded-lg"
+            className="gap-2 data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 rounded-sm"
           >
             <Dna className="h-4 w-4" />
             ADN de Talento
@@ -37,9 +37,9 @@ export default function CreatorProfileSection() {
         </TabsContent>
 
         <TabsContent value="talent-dna" className="mt-0">
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 mb-6">
+          <div className="bg-card border border-border rounded-sm p-6 mb-6">
             <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/20">
+              <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/20">
                 <Dna className="h-6 w-6 text-emerald-400" />
               </div>
               <div className="flex-1">

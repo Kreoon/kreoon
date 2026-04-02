@@ -316,17 +316,17 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="w-full max-w-[95vw] sm:max-w-3xl md:max-w-4xl lg:max-w-5xl p-0 gap-0 overflow-hidden flex flex-col bg-popover/95 backdrop-blur-xl border-[#8b5cf6]/20"
+        className="w-full max-w-[95vw] sm:max-w-3xl md:max-w-4xl lg:max-w-5xl p-0 gap-0 overflow-hidden flex flex-col bg-[#0a0a18]/95 border-purple-500/15"
         aria-describedby="board-config-description"
       >
         <Tabs defaultValue="statuses" className="flex h-full overflow-hidden">
           <div className="flex h-full w-full overflow-hidden">
-            {/* Sidebar - estilo Trello/Notion */}
-            <aside className="w-56 shrink-0 flex flex-col border-r border-white/10 bg-white/[0.02]">
-              <SheetHeader className="p-4 border-b border-white/10 shrink-0">
-                <SheetTitle className="flex items-center gap-2 text-[#f8fafc] text-lg">
-                  <Settings className="h-5 w-5 text-[#a855f7]" />
-                  Configuración
+            {/* Sidebar - Nova v2 */}
+            <aside className="w-56 shrink-0 flex flex-col border-r border-purple-500/10 bg-[#0f0f22]/60">
+              <SheetHeader className="p-4 border-b border-purple-500/10 shrink-0">
+                <SheetTitle className="flex items-center gap-2 text-[#e4e4e7] text-lg">
+                  <Settings className="h-5 w-5 text-[#8b5cf6]" />
+                  Configuracion
                 </SheetTitle>
                 <SheetDescription id="board-config-description" className="sr-only">
                   Configura estados, permisos, transiciones, campos y visibilidad del tablero Kanban.
@@ -339,8 +339,8 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
                     value={tab.id}
                     className={cn(
                       "w-full justify-start gap-2 h-10 px-4 rounded-none border-l-2 border-transparent mt-0.5",
-                      "data-[state=active]:border-primary data-[state=active]:bg-primary/10 data-[state=active]:text-primary",
-                      "hover:bg-white/5 text-[#94a3b8]"
+                      "data-[state=active]:border-[#8b5cf6] data-[state=active]:bg-purple-500/10 data-[state=active]:text-[#a78bfa]",
+                      "hover:bg-purple-500/5 text-[#a1a1aa] transition-colors duration-150"
                     )}
                   >
                     <tab.icon className="h-4 w-4 shrink-0" />
@@ -356,7 +356,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
           {/* ESTADOS TAB */}
           <TabsContent value="statuses" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0 data-[state=inactive]:hidden min-h-0">
             {!organizationId && (
-              <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-sm text-amber-200">
+              <div className="rounded-sm border border-amber-500/50 bg-amber-500/10 p-3 text-sm text-amber-200">
                 No hay organización seleccionada. Asegúrate de estar en el tablero de una organización.
               </div>
             )}
@@ -404,7 +404,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
               />
             </div>
 
-            <ScrollArea className="h-[300px] border rounded-lg p-2">
+            <ScrollArea className="h-[300px] border border-purple-500/15 rounded-lg p-2 bg-[#0f0f22]/40">
               <DndContext
                 sensors={statusSensors}
                 collisionDetection={closestCenter}
@@ -554,7 +554,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
               </div>
             </div>
             <ScrollArea className="h-[400px]">
-              <div className="border rounded-lg overflow-x-auto">
+              <div className="border rounded-sm overflow-x-auto">
                 <table className="w-full text-sm min-w-[600px]">
                   <thead className="bg-muted">
                     <tr>
@@ -641,7 +641,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
               </p>
             </div>
             
-            <ScrollArea className="h-[350px] border rounded-lg p-3">
+            <ScrollArea className="h-[350px] border rounded-sm p-3">
               <div className="space-y-4">
                 {statuses.filter(s => s.is_active).map((status, index) => {
                   const rule = getRuleForStatus(status.id);
@@ -839,7 +839,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
               {/* Card Preview */}
               <div className="flex gap-4">
                 {/* Fields selector */}
-                <ScrollArea className="flex-1 h-[240px] border rounded-lg p-3">
+                <ScrollArea className="flex-1 h-[240px] border rounded-sm p-3">
                   <div className="space-y-2">
                     {VISIBLE_FIELD_OPTIONS.map((field, index) => {
                       const isActive = settings?.visible_fields.includes(field.value);
@@ -849,7 +849,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
                         <div
                           key={field.value}
                           className={cn(
-                            "flex items-center gap-3 p-2 rounded-lg border transition-all",
+                            "flex items-center gap-3 p-2 rounded-sm border transition-all",
                             isActive ? "bg-primary/10 border-primary" : "hover:bg-muted border-transparent"
                           )}
                         >
@@ -955,12 +955,12 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
               </Button>
             </div>
 
-            <ScrollArea className="h-[280px] border rounded-lg p-2">
+            <ScrollArea className="h-[280px] border rounded-sm p-2">
               <div className="space-y-2">
                 {customFields.map(field => (
                   <div
                     key={field.id}
-                    className="flex items-center gap-3 p-3 rounded-lg border bg-card"
+                    className="flex items-center gap-3 p-3 rounded-sm border bg-card"
                   >
                     <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
                     <span className="flex-1 font-medium">{field.name}</span>
@@ -1000,7 +1000,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
               Define qué puede hacer cada rol en el tablero
             </p>
 
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border rounded-sm overflow-hidden">
               <table className="w-full text-sm">
                 <thead className="bg-muted">
                   <tr>

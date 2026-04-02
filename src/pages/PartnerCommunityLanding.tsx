@@ -270,7 +270,7 @@ export default function PartnerCommunityLanding() {
 
           {/* Video embed if provided */}
           {community.metadata?.video_url && (
-            <div className="max-w-2xl mx-auto mb-8 rounded-xl overflow-hidden border border-zinc-800">
+            <div className="max-w-2xl mx-auto mb-8 rounded-sm overflow-hidden border border-zinc-800">
               <iframe
                 src={community.metadata.video_url}
                 className="w-full aspect-video"
@@ -362,7 +362,7 @@ export default function PartnerCommunityLanding() {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-white">
-                      +{community.benefits.bonus_ai_tokens.toLocaleString()} Kreoon Coins
+                      +{community.benefits.bonus_ai_tokens.toLocaleString()} Tokens IA
                     </h3>
                     <p className="text-zinc-400 text-sm">
                       Tokens de bienvenida para usar con las funciones de inteligencia artificial.
@@ -382,7 +382,7 @@ export default function PartnerCommunityLanding() {
                   <Card key={idx} className="bg-zinc-900/50 border-zinc-800 p-6 hover:border-zinc-700 transition-colors">
                     <div className="flex items-start gap-4">
                       <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                        className="w-10 h-10 rounded-sm flex items-center justify-center shrink-0"
                         style={{ backgroundColor: `${themeColor}20` }}
                       >
                         <IconComponent className="w-5 h-5" style={{ color: themeColor }} />
@@ -491,7 +491,7 @@ export default function PartnerCommunityLanding() {
             {/* Opción Talento */}
             <button
               onClick={() => handleSelectUserType('talent')}
-              className="flex items-center gap-4 p-4 rounded-xl border border-zinc-700 hover:border-primary hover:bg-zinc-800/50 transition-all text-left group"
+              className="flex items-center gap-4 p-4 rounded-sm border border-zinc-700 hover:border-primary hover:bg-zinc-800/50 transition-all text-left group"
             >
               <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0 group-hover:bg-primary/30 transition-colors">
                 <User className="w-6 h-6 text-primary" />
@@ -510,7 +510,7 @@ export default function PartnerCommunityLanding() {
             {/* Opción Marca */}
             <button
               onClick={() => handleSelectUserType('brand')}
-              className="flex items-center gap-4 p-4 rounded-xl border border-zinc-700 hover:border-amber-500 hover:bg-zinc-800/50 transition-all text-left group"
+              className="flex items-center gap-4 p-4 rounded-sm border border-zinc-700 hover:border-amber-500 hover:bg-zinc-800/50 transition-all text-left group"
             >
               <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0 group-hover:bg-amber-500/30 transition-colors">
                 <Briefcase className="w-6 h-6 text-amber-500" />
@@ -529,7 +529,7 @@ export default function PartnerCommunityLanding() {
             {/* Opción Organización */}
             <button
               onClick={() => handleSelectUserType('organization')}
-              className="flex items-center gap-4 p-4 rounded-xl border border-zinc-700 hover:border-purple-500 hover:bg-zinc-800/50 transition-all text-left group"
+              className="flex items-center gap-4 p-4 rounded-sm border border-zinc-700 hover:border-purple-500 hover:bg-zinc-800/50 transition-all text-left group"
             >
               <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0 group-hover:bg-purple-500/30 transition-colors">
                 <Building2 className="w-6 h-6 text-purple-500" />

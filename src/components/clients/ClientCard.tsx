@@ -106,7 +106,7 @@ if (!error && data?.length) {
     <div 
       onClick={() => onSelect(client)}
       className={cn(
-        "group rounded-xl border p-4 transition-all duration-200 hover:shadow-lg cursor-pointer flex flex-col h-full",
+        "group rounded-sm border p-4 transition-all duration-200 hover:shadow-lg cursor-pointer flex flex-col h-full",
         client.is_internal_brand 
           ? "border-amber-500/50 bg-gradient-to-br from-amber-500/10 to-amber-600/5 hover:border-amber-500" 
           : "border-border bg-card hover:border-primary/20"
@@ -120,13 +120,13 @@ if (!error && data?.length) {
             src={client.logo_url} 
             alt={client.name}
             className={cn(
-              "h-12 w-12 rounded-lg object-cover ring-1 shrink-0",
+              "h-12 w-12 rounded-sm object-cover ring-1 shrink-0",
               client.is_internal_brand ? "ring-amber-500/50" : "ring-border"
             )}
           />
         ) : (
           <div className={cn(
-            "h-12 w-12 rounded-lg flex items-center justify-center ring-1 shrink-0",
+            "h-12 w-12 rounded-sm flex items-center justify-center ring-1 shrink-0",
             client.is_internal_brand 
               ? "bg-amber-500/20 ring-amber-500/50" 
               : "bg-primary/10 ring-border"
@@ -191,22 +191,22 @@ if (!error && data?.length) {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-3 gap-2 mb-3">
-        <div className="text-center p-2 rounded-lg bg-muted/50">
+      <div className="grid grid-cols-3 gap-2 mb-3 min-w-0">
+        <div className="text-center p-2 rounded-sm bg-muted/50">
           <div className="flex items-center justify-center gap-1">
             <FolderKanban className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="font-semibold text-sm">{client.active_projects}</span>
           </div>
           <p className="text-[10px] text-muted-foreground">Proyectos</p>
         </div>
-        <div className="text-center p-2 rounded-lg bg-muted/50">
+        <div className="text-center p-2 rounded-sm bg-muted/50">
           <div className="flex items-center justify-center gap-1">
             <Video className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="font-semibold text-sm">{client.content_count}</span>
           </div>
           <p className="text-[10px] text-muted-foreground">Videos</p>
         </div>
-        <div className="text-center p-2 rounded-lg bg-muted/50">
+        <div className="text-center p-2 rounded-sm bg-muted/50">
           <div className="flex items-center justify-center gap-1">
             <Users className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="font-semibold text-sm">{client.users_count}</span>
@@ -217,7 +217,7 @@ if (!error && data?.length) {
 
       {/* Strategists Section - visible to all */}
       <div 
-        className="mb-3 p-2.5 rounded-lg border border-dashed border-border hover:border-primary/30 hover:bg-primary/5 transition-colors cursor-pointer"
+        className="mb-3 p-2.5 rounded-sm border border-dashed border-border hover:border-primary/30 hover:bg-primary/5 transition-colors cursor-pointer"
         onClick={(e) => {
           e.stopPropagation();
           onOpenStrategists(client);

@@ -326,7 +326,7 @@ export default function StrategistDashboard() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <motion.div
-                    className="p-2 rounded-lg"
+                    className="p-2 rounded-sm"
                     style={{
                       background: 'hsl(40 100% 50% / 0.15)',
                       border: '1px solid hsl(40 100% 50% / 0.3)',
@@ -488,7 +488,7 @@ export default function StrategistDashboard() {
                       Copiar
                     </Button>
                   </div>
-                  <div className="p-4 bg-muted border border-amber-500/20 rounded-lg text-sm whitespace-pre-wrap max-h-64 overflow-auto">
+                  <div className="p-4 bg-muted border border-amber-500/20 rounded-sm text-sm whitespace-pre-wrap max-h-64 overflow-auto">
                     {generatedScript}
                   </div>
                 </motion.div>
@@ -513,7 +513,7 @@ export default function StrategistDashboard() {
                 {content.slice(0, 6).map((item, index) => (
                   <motion.div 
                     key={item.id} 
-                    className="p-3 bg-muted border border-[hsl(270,100%,60%,0.1)] rounded-lg hover:border-[hsl(270,100%,60%,0.3)] cursor-pointer transition-all group"
+                    className="p-3 bg-muted border border-[hsl(270,100%,60%,0.1)] rounded-sm hover:border-[hsl(270,100%,60%,0.3)] cursor-pointer transition-all group"
                     onClick={() => setSelectedContent(item)}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -521,9 +521,9 @@ export default function StrategistDashboard() {
                     whileHover={{ x: 5 }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 border border-[hsl(270,100%,60%,0.2)]">
+                      <div className="h-10 w-10 rounded-sm bg-muted flex items-center justify-center flex-shrink-0 border border-[hsl(270,100%,60%,0.2)]">
                         {item.thumbnail_url ? (
-                          <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover rounded-lg" />
+                          <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover rounded-sm" />
                         ) : (
                           <Play className="h-4 w-4 text-[hsl(270,100%,60%)]" />
                         )}

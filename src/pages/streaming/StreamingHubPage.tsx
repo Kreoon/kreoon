@@ -253,7 +253,7 @@ export function StreamingHubPage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {channelsLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-48 rounded-lg bg-muted animate-pulse" />
+                <div key={i} className="h-48 rounded-sm bg-muted animate-pulse" />
               ))
             ) : channels.length === 0 ? (
               <div className="col-span-full text-center py-12">
@@ -271,11 +271,11 @@ export function StreamingHubPage() {
               channels.map((channel) => (
                 <div
                   key={channel.id}
-                  className="rounded-lg border p-4 hover:shadow-md transition-shadow cursor-pointer"
+                  className="rounded-sm border p-4 hover:shadow-md transition-shadow cursor-pointer"
                   onClick={() => navigate('/streaming/settings')}
                 >
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <div className="h-10 w-10 rounded-sm bg-primary/10 flex items-center justify-center">
                       <Tv className="h-5 w-5 text-primary" />
                     </div>
                     <div>
@@ -326,10 +326,10 @@ function QuickStat({ label, value, icon: Icon, color }: QuickStatProps) {
   };
 
   return (
-    <div className="rounded-lg border p-4">
+    <div className="rounded-sm border p-4">
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted-foreground">{label}</span>
-        <div className={cn('rounded-lg p-2', colorClasses[color])}>
+        <div className={cn('rounded-sm p-2', colorClasses[color])}>
           <Icon className="h-4 w-4" />
         </div>
       </div>

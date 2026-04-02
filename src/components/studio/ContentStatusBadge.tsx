@@ -60,14 +60,14 @@ const sizeConfig = {
     text: 'text-sm',
     icon: 14,
     gap: 'gap-1.5',
-    rounded: 'rounded-lg',
+    rounded: 'rounded-sm',
   },
   lg: {
     padding: 'px-3 py-1.5',
     text: 'text-base',
     icon: 16,
     gap: 'gap-2',
-    rounded: 'rounded-lg',
+    rounded: 'rounded-sm',
   },
 };
 
@@ -153,13 +153,13 @@ export function ContentStatusBadge({
           {badgeContent}
         </TooltipTrigger>
         <TooltipContent
-          className="bg-zinc-900/95 backdrop-blur-sm border-white/10 max-w-[200px]"
+          className="bg-popover border-border max-w-[200px]"
         >
           <div className="flex flex-col gap-1">
             <span className="font-semibold" style={{ color: estado.color }}>
               {estado.nombre}
             </span>
-            <span className="text-xs text-zinc-400">
+            <span className="text-xs text-muted-foreground">
               {estado.descripcion}
             </span>
           </div>
@@ -218,7 +218,7 @@ export function ContentStatusDot({
         <TooltipTrigger asChild>
           {dot}
         </TooltipTrigger>
-        <TooltipContent className="bg-zinc-900/95 backdrop-blur-sm border-white/10">
+        <TooltipContent className="bg-popover border-border">
           <span style={{ color: estado.color }}>{estado.nombre}</span>
         </TooltipContent>
       </Tooltip>

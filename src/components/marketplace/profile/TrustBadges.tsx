@@ -219,7 +219,7 @@ export function TrustBadges({ stats, compact = false }: TrustBadgesProps) {
             <div
               key={i}
               className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded-lg border text-sm",
+                "flex items-center gap-2 px-3 py-2 rounded-sm border text-sm",
                 badge.verified
                   ? "bg-green-500/10 border-green-500/30 text-green-400"
                   : "bg-white/5 border-white/10 text-white/40"
@@ -380,7 +380,7 @@ function MetricCard({
   sublabel?: string;
 }) {
   return (
-    <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+    <div className="bg-white/5 border border-white/10 rounded-sm p-4 text-center">
       <div className="flex justify-center mb-2">
         <Icon className="w-5 h-5 text-purple-400" />
       </div>
@@ -401,7 +401,7 @@ function MiniMetric({
   label: string;
 }) {
   return (
-    <div className="bg-white/5 rounded-lg p-3 text-center">
+    <div className="bg-white/5 rounded-sm p-3 text-center">
       <div className="flex items-center justify-center gap-1.5 mb-1">
         <Icon className="w-3.5 h-3.5 text-white/40" />
         <span className="text-lg font-semibold text-white">{value}</span>

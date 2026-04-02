@@ -134,7 +134,7 @@ export function WizardContainer({
 
       {/* Contenido del paso actual */}
       <div className={cn(
-        "rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm",
+        "rounded-sm border border-white/10 bg-slate-900/50",
         compact ? "p-6" : "p-8"
       )}>
         {/* Invite Code Step */}

@@ -120,7 +120,7 @@ export function UnassignedClientUsersAlert({
       </Alert>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-lg max-h-[80dvh] sm:max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserPlus className="h-5 w-5 text-amber-500" />
@@ -142,7 +142,7 @@ export function UnassignedClientUsersAlert({
                   <div
                     key={user.id}
                     onClick={() => handleSelectUser(user)}
-                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                    className={`flex items-center gap-3 p-3 rounded-sm border cursor-pointer transition-all ${
                       selectedUser?.id === user.id 
                         ? 'border-primary bg-primary/10' 
                         : 'border-border hover:border-primary/50 hover:bg-muted/50'
@@ -169,7 +169,7 @@ export function UnassignedClientUsersAlert({
             {/* Assignment Form */}
             {selectedUser && (
               <div className="space-y-4 pt-4 border-t">
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                <div className="flex items-center gap-3 p-3 rounded-sm bg-primary/5 border border-primary/20">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={selectedUser.avatar_url || undefined} />
                     <AvatarFallback>{selectedUser.full_name?.charAt(0) || 'U'}</AvatarFallback>

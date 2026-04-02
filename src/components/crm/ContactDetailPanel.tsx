@@ -552,7 +552,7 @@ export function ContactDetailPanel({
                       type="button"
                       onClick={() => handleStrengthClick(strength)}
                       className={cn(
-                        'flex flex-col items-center gap-1 px-4 py-2.5 rounded-lg border transition-all',
+                        'flex flex-col items-center gap-1 px-4 py-2.5 rounded-sm border transition-all',
                         isActive
                           ? cn(
                               'border-white/20 bg-white/5',
@@ -718,7 +718,7 @@ export function ContactDetailPanel({
                       href={`https://instagram.com/${socialLinks.instagram.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-white/60 hover:text-white hover:border-pink-500/40 hover:bg-pink-500/10 transition-all"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-white/5 border border-white/10 text-xs text-white/60 hover:text-white hover:border-pink-500/40 hover:bg-pink-500/10 transition-all"
                     >
                       <Globe className="h-3 w-3" />
                       Instagram
@@ -730,7 +730,7 @@ export function ContactDetailPanel({
                       href={`https://tiktok.com/@${socialLinks.tiktok.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-white/60 hover:text-white hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-white/5 border border-white/10 text-xs text-white/60 hover:text-white hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all"
                     >
                       <Globe className="h-3 w-3" />
                       TikTok
@@ -746,7 +746,7 @@ export function ContactDetailPanel({
                       }
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-white/60 hover:text-white hover:border-blue-500/40 hover:bg-blue-500/10 transition-all"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-white/5 border border-white/10 text-xs text-white/60 hover:text-white hover:border-blue-500/40 hover:bg-blue-500/10 transition-all"
                     >
                       <Globe className="h-3 w-3" />
                       LinkedIn

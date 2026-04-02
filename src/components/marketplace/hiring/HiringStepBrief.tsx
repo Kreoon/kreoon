@@ -59,12 +59,12 @@ function TagInput({
             }
           }}
           placeholder={placeholder}
-          className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
+          className="flex-1 bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
         />
         <button
           type="button"
           onClick={add}
-          className="bg-purple-600 hover:bg-purple-500 text-white px-3 py-2 rounded-lg transition-colors"
+          className="bg-purple-600 hover:bg-purple-500 text-white px-3 py-2 rounded-sm transition-colors"
         >
           <Plus className="h-4 w-4" />
         </button>
@@ -104,7 +104,7 @@ export function HiringStepBrief({ data, onChange }: HiringStepBriefProps) {
           value={data.product_name}
           onChange={e => onChange('product_name', e.target.value)}
           placeholder="Ej: Proteina Vegana NaturalFit"
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
+          className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
         />
       </div>
 
@@ -117,7 +117,7 @@ export function HiringStepBrief({ data, onChange }: HiringStepBriefProps) {
           value={data.product_url || ''}
           onChange={e => onChange('product_url', e.target.value)}
           placeholder="https://tuproducto.com"
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
+          className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
         />
       </div>
 
@@ -129,7 +129,7 @@ export function HiringStepBrief({ data, onChange }: HiringStepBriefProps) {
         <select
           value={data.objective}
           onChange={e => onChange('objective', e.target.value)}
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500 [&>option]:bg-card"
+          className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500 [&>option]:bg-card"
         >
           <option value="">Selecciona un objetivo</option>
           {OBJECTIVES.map(obj => (
@@ -145,7 +145,7 @@ export function HiringStepBrief({ data, onChange }: HiringStepBriefProps) {
           value={data.target_audience}
           onChange={e => onChange('target_audience', e.target.value)}
           placeholder="Ej: Mujeres 25-40, interesadas en fitness"
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
+          className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
         />
       </div>
 
@@ -165,7 +165,7 @@ export function HiringStepBrief({ data, onChange }: HiringStepBriefProps) {
         <select
           value={data.tone}
           onChange={e => onChange('tone', e.target.value)}
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500 [&>option]:bg-card"
+          className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500 [&>option]:bg-card"
         >
           <option value="">Selecciona un tono</option>
           {TONES.map(t => (
@@ -203,7 +203,7 @@ export function HiringStepBrief({ data, onChange }: HiringStepBriefProps) {
           type="date"
           value={data.deadline || ''}
           onChange={e => onChange('deadline', e.target.value)}
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500"
+          className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500"
         />
       </div>
 
@@ -217,7 +217,7 @@ export function HiringStepBrief({ data, onChange }: HiringStepBriefProps) {
           onChange={e => onChange('notes', e.target.value)}
           placeholder="Referencias, instrucciones especiales, etc."
           rows={3}
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-purple-500 resize-none"
+          className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-purple-500 resize-none"
         />
       </div>
     </div>

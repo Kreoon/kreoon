@@ -1048,7 +1048,7 @@ Escribe 1-2 frases de complemento para agregar al final.`
         return (
           <div className="space-y-5">
             {/* Business Type Selector */}
-            <div className="p-4 bg-muted/50 rounded-lg border">
+            <div className="p-4 bg-muted/50 rounded-sm border">
               <Label className="text-base font-semibold">¿Qué tipo de negocio es? *</Label>
               <p className="text-sm text-muted-foreground mb-3">Esto nos ayuda a personalizar los guiones</p>
               <RadioGroup 
@@ -1056,7 +1056,7 @@ Escribe 1-2 frases de complemento para agregar al final.`
                 onValueChange={(v: 'product_service' | 'personal_brand') => updateField('businessType', v)}
                 className="grid grid-cols-1 md:grid-cols-2 gap-3"
               >
-                <div className={`flex items-start space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                <div className={`flex items-start space-x-3 p-4 rounded-sm border-2 cursor-pointer transition-all ${
                   briefData.businessType === 'product_service' 
                     ? 'border-primary bg-primary/5' 
                     : 'border-border hover:border-primary/50'
@@ -1074,7 +1074,7 @@ Escribe 1-2 frases de complemento para agregar al final.`
                     </p>
                   </div>
                 </div>
-                <div className={`flex items-start space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                <div className={`flex items-start space-x-3 p-4 rounded-sm border-2 cursor-pointer transition-all ${
                   briefData.businessType === 'personal_brand' 
                     ? 'border-primary bg-primary/5' 
                     : 'border-border hover:border-primary/50'
@@ -1178,7 +1178,7 @@ Escribe 1-2 frases de complemento para agregar al final.`
             </div>
 
             {/* Document Upload for additional context */}
-            <div className="space-y-2 p-4 bg-muted/30 rounded-lg border border-dashed">
+            <div className="space-y-2 p-4 bg-muted/30 rounded-sm border border-dashed">
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-primary" />
                 <Label>Documento del producto (Opcional)</Label>
@@ -1456,7 +1456,7 @@ Escribe 1-2 frases de complemento para agregar al final.`
                   {REPTILE_TRIGGERS.map(trigger => (
                     <div
                       key={trigger.value}
-                      className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                      className={`p-3 rounded-sm border cursor-pointer transition-all ${
                         briefData.reptileBrain.includes(trigger.value)
                           ? 'border-red-500 bg-red-100 dark:bg-red-900/30'
                           : 'border-border hover:border-red-300'
@@ -1695,7 +1695,7 @@ Escribe 1-2 frases de complemento para agregar al final.`
                 {CONTENT_TYPES.map(type => (
                   <div
                     key={type.value}
-                    className={`p-3 rounded-lg border cursor-pointer transition-all text-center ${
+                    className={`p-3 rounded-sm border cursor-pointer transition-all text-center ${
                       briefData.contentTypes.includes(type.value)
                         ? 'border-primary bg-primary/10'
                         : 'border-border hover:border-primary/50'
@@ -1715,7 +1715,7 @@ Escribe 1-2 frases de complemento para agregar al final.`
                 {PLATFORMS.map(platform => (
                   <div
                     key={platform.value}
-                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                    className={`p-3 rounded-sm border cursor-pointer transition-all ${
                       briefData.platforms.includes(platform.value)
                         ? 'border-primary bg-primary/10'
                         : 'border-border hover:border-primary/50'
@@ -1855,7 +1855,7 @@ Escribe 1-2 frases de complemento para agregar al final.`
         return (
           <div className="space-y-6">
             {/* Phase Distribution Info */}
-            <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 border border-primary/20">
+            <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-sm p-4 border border-primary/20">
               <div className="flex items-start gap-3">
                 <Film className="h-5 w-5 text-primary mt-0.5" />
                 <div>
@@ -2005,7 +2005,7 @@ Escribe 1-2 frases de complemento para agregar al final.`
             <button
               key={step.id}
               onClick={() => setCurrentStep(index)}
-              className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors min-w-[70px] ${
+              className={`flex flex-col items-center gap-1 p-2 rounded-sm transition-colors min-w-[70px] ${
                 isActive ? 'bg-primary/10 text-primary' : isComplete ? 'text-primary/70' : 'text-muted-foreground'
               }`}
             >

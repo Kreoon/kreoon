@@ -83,7 +83,7 @@ export function ProductBriefSection({ product }: ProductBriefSectionProps) {
   if (!product) {
     return (
       <SectionCard title="Brief del Producto" iconEmoji="📋">
-        <div className="flex flex-col items-center justify-center py-6 text-center bg-muted/30 rounded-lg">
+        <div className="flex flex-col items-center justify-center py-6 text-center bg-muted/30 rounded-sm">
           <Package className="h-8 w-8 text-muted-foreground/50 mb-2" />
           <p className="text-muted-foreground text-sm">No hay producto asociado</p>
           <p className="text-xs text-muted-foreground mt-1">Selecciona un producto para ver su brief</p>
@@ -98,7 +98,7 @@ export function ProductBriefSection({ product }: ProductBriefSectionProps) {
   if (!hasBrief) {
     return (
       <SectionCard title="Brief del Producto" iconEmoji="📋">
-        <div className="flex flex-col items-center justify-center py-6 text-center bg-muted/30 rounded-lg">
+        <div className="flex flex-col items-center justify-center py-6 text-center bg-muted/30 rounded-sm">
           <AlertCircle className="h-8 w-8 text-warning/50 mb-2" />
           <p className="text-muted-foreground text-sm">Producto sin brief</p>
           <p className="text-xs text-muted-foreground mt-1">
@@ -137,21 +137,21 @@ export function ProductBriefSection({ product }: ProductBriefSectionProps) {
         {/* Quick summary - always visible */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {brief.slogan && (
-            <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg col-span-full">
+            <div className="p-3 bg-primary/5 border border-primary/20 rounded-sm col-span-full">
               <p className="text-xs text-muted-foreground mb-1">✨ Slogan</p>
               <p className="text-sm font-medium">{brief.slogan}</p>
             </div>
           )}
           
           {brief.currentObjective && (
-            <div className="p-3 bg-muted/50 rounded-lg">
+            <div className="p-3 bg-muted/50 rounded-sm">
               <p className="text-xs text-muted-foreground mb-1">🎯 Objetivo</p>
               <p className="text-sm">{brief.currentObjective}</p>
             </div>
           )}
 
           {brief.mainBenefit && (
-            <div className="p-3 bg-muted/50 rounded-lg">
+            <div className="p-3 bg-muted/50 rounded-sm">
               <p className="text-xs text-muted-foreground mb-1">⭐ Beneficio principal</p>
               <p className="text-sm">{brief.mainBenefit}</p>
             </div>
@@ -167,7 +167,7 @@ export function ProductBriefSection({ product }: ProductBriefSectionProps) {
           {(brief.transformation || brief.differentiator) && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {brief.transformation && (
-                <div className="p-3 bg-success/5 border border-success/20 rounded-lg">
+                <div className="p-3 bg-success/5 border border-success/20 rounded-sm">
                   <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                     <Sparkles className="h-3 w-3" /> Transformación
                   </p>
@@ -175,7 +175,7 @@ export function ProductBriefSection({ product }: ProductBriefSectionProps) {
                 </div>
               )}
               {brief.differentiator && (
-                <div className="p-3 bg-info/5 border border-info/20 rounded-lg">
+                <div className="p-3 bg-info/5 border border-info/20 rounded-sm">
                   <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                     <Lightbulb className="h-3 w-3" /> Diferenciador
                   </p>
@@ -193,13 +193,13 @@ export function ProductBriefSection({ product }: ProductBriefSectionProps) {
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {brief.problemSolved && (
-                  <div className="p-3 bg-destructive/5 border border-destructive/20 rounded-lg">
+                  <div className="p-3 bg-destructive/5 border border-destructive/20 rounded-sm">
                     <p className="text-xs text-muted-foreground mb-1">😫 Problema que resuelve</p>
                     <p className="text-sm">{brief.problemSolved}</p>
                   </div>
                 )}
                 {brief.mainDesire && (
-                  <div className="p-3 bg-success/5 border border-success/20 rounded-lg">
+                  <div className="p-3 bg-success/5 border border-success/20 rounded-sm">
                     <p className="text-xs text-muted-foreground mb-1">🌟 Deseo principal</p>
                     <p className="text-sm">{brief.mainDesire}</p>
                   </div>
@@ -227,7 +227,7 @@ export function ProductBriefSection({ product }: ProductBriefSectionProps) {
                 ))}
               </div>
               {brief.cortexBrain && (
-                <div className="p-3 bg-blue-500/5 border border-blue-500/20 rounded-lg mt-2">
+                <div className="p-3 bg-blue-500/5 border border-blue-500/20 rounded-sm mt-2">
                   <p className="text-xs text-muted-foreground mb-1">🧠 Argumento racional</p>
                   <p className="text-sm">{brief.cortexBrain}</p>
                 </div>
@@ -290,7 +290,7 @@ export function ProductBriefSection({ product }: ProductBriefSectionProps) {
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {brief.contentTypes?.length > 0 && (
-                  <div className="p-3 bg-muted/50 rounded-lg">
+                  <div className="p-3 bg-muted/50 rounded-sm">
                     <p className="text-xs text-muted-foreground mb-2">Tipos de contenido</p>
                     <div className="flex flex-wrap gap-1">
                       {brief.contentTypes.map((type) => (
@@ -300,7 +300,7 @@ export function ProductBriefSection({ product }: ProductBriefSectionProps) {
                   </div>
                 )}
                 {brief.platforms?.length > 0 && (
-                  <div className="p-3 bg-muted/50 rounded-lg">
+                  <div className="p-3 bg-muted/50 rounded-sm">
                     <p className="text-xs text-muted-foreground mb-2">Plataformas</p>
                     <div className="flex flex-wrap gap-1">
                       {brief.platforms.map((platform) => (
@@ -317,13 +317,13 @@ export function ProductBriefSection({ product }: ProductBriefSectionProps) {
           {(brief.brandStrengths || brief.expectedResult) && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {brief.brandStrengths && (
-                <div className="p-3 bg-muted/50 rounded-lg">
+                <div className="p-3 bg-muted/50 rounded-sm">
                   <p className="text-xs text-muted-foreground mb-1">💪 Fortalezas de marca</p>
                   <p className="text-sm">{brief.brandStrengths}</p>
                 </div>
               )}
               {brief.expectedResult && (
-                <div className="p-3 bg-muted/50 rounded-lg">
+                <div className="p-3 bg-muted/50 rounded-sm">
                   <p className="text-xs text-muted-foreground mb-1">🎯 Resultado esperado</p>
                   <p className="text-sm">{brief.expectedResult}</p>
                 </div>

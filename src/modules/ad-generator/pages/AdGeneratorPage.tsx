@@ -33,7 +33,7 @@ export default function AdGeneratorPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-primary/10 border border-primary/20">
               <ImagePlus className="h-5 w-5 text-primary" />
             </div>
             <div>
@@ -52,7 +52,7 @@ export default function AdGeneratorPage() {
 
       {/* Stats bar */}
       {!isLoading && products.length > 0 && (
-        <div className="flex items-center gap-6 px-4 py-3 rounded-lg bg-muted/30 border border-border/50">
+        <div className="flex items-center gap-6 px-4 py-3 rounded-sm bg-muted/30 border border-border/50">
           <div className="flex items-center gap-2 text-sm">
             <Package className="h-4 w-4 text-muted-foreground" />
             <span className="font-medium">{products.length}</span>

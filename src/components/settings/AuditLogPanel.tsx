@@ -284,19 +284,19 @@ export function AuditLogPanel() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-muted/50 rounded-lg p-3 text-center">
+          <div className="bg-muted/50 rounded-sm p-3 text-center">
             <p className="text-2xl font-bold">{logs.length}</p>
             <p className="text-xs text-muted-foreground">Total registros</p>
           </div>
-          <div className="bg-muted/50 rounded-lg p-3 text-center">
+          <div className="bg-muted/50 rounded-sm p-3 text-center">
             <p className="text-2xl font-bold">{logs.filter(l => l.entity_type === 'content').length}</p>
             <p className="text-xs text-muted-foreground">En contenido</p>
           </div>
-          <div className="bg-muted/50 rounded-lg p-3 text-center">
+          <div className="bg-muted/50 rounded-sm p-3 text-center">
             <p className="text-2xl font-bold">{logs.filter(l => l.entity_type === 'client').length}</p>
             <p className="text-xs text-muted-foreground">En clientes</p>
           </div>
-          <div className="bg-muted/50 rounded-lg p-3 text-center">
+          <div className="bg-muted/50 rounded-sm p-3 text-center">
             <p className="text-2xl font-bold">{new Set(logs.map(l => l.user_id)).size}</p>
             <p className="text-xs text-muted-foreground">Usuarios activos</p>
           </div>
@@ -314,7 +314,7 @@ export function AuditLogPanel() {
               {filteredLogs.map((log) => (
                 <div
                   key={log.id}
-                  className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                  className="flex items-start gap-3 p-3 rounded-sm bg-muted/30 hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
                     {ENTITY_ICONS[log.entity_type] || <FileText className="w-4 h-4" />}

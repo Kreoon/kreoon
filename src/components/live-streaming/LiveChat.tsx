@@ -57,7 +57,7 @@ export function LiveChat({
   };
 
   return (
-    <div className={cn('flex flex-col bg-background border rounded-lg', className)}>
+    <div className={cn('flex flex-col bg-background border rounded-sm', className)}>
       {/* Chat messages */}
       <ScrollArea
         ref={scrollRef}
@@ -138,7 +138,7 @@ export function LiveChatOverlay({ comments, maxMessages = 5 }: LiveChatOverlayPr
       {recentComments.map((comment, index) => (
         <div
           key={comment.id}
-          className="bg-black/50 backdrop-blur-sm rounded-lg px-3 py-1.5 animate-in slide-in-from-bottom-2"
+          className="bg-black/50 rounded-sm px-3 py-1.5 animate-in slide-in-from-bottom-2"
           style={{
             opacity: 0.5 + (index / maxMessages) * 0.5,
           }}

@@ -57,7 +57,7 @@ function VideoPlayer({ src, aspectClass }: { src: string; aspectClass: string })
           playing ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'
         )}
       >
-        <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center backdrop-blur-sm">
+        <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center">
           {playing ? (
             <Pause className="w-5 h-5 text-white" />
           ) : (
@@ -68,7 +68,7 @@ function VideoPlayer({ src, aspectClass }: { src: string; aspectClass: string })
       {/* Mute toggle */}
       <button
         onClick={(e) => { e.stopPropagation(); setMuted(!muted); }}
-        className="absolute bottom-2 right-2 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
+        className="absolute bottom-2 right-2 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
       >
         {muted ? (
           <VolumeX className="w-3.5 h-3.5 text-white" />
@@ -103,7 +103,7 @@ function CarouselPreview({ mediaUrls, aspectClass }: { mediaUrls: string[]; aspe
           {currentIndex > 0 && (
             <button
               onClick={() => goTo(currentIndex - 1)}
-              className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -111,7 +111,7 @@ function CarouselPreview({ mediaUrls, aspectClass }: { mediaUrls: string[]; aspe
           {currentIndex < mediaUrls.length - 1 && (
             <button
               onClick={() => goTo(currentIndex + 1)}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -121,7 +121,7 @@ function CarouselPreview({ mediaUrls, aspectClass }: { mediaUrls: string[]; aspe
 
       {/* Counter badge */}
       {mediaUrls.length > 1 && (
-        <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full backdrop-blur-sm">
+        <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full">
           {currentIndex + 1}/{mediaUrls.length}
         </div>
       )}
@@ -193,7 +193,7 @@ export function PreviewPanel({
       <CardContent className="space-y-3">
         <div className={cn('mx-auto', containerMaxWidth)}>
           {/* Mock post layout */}
-          <div className="bg-card rounded-lg overflow-hidden border">
+          <div className="bg-card rounded-sm overflow-hidden border">
             {/* Header */}
             <div className="flex items-center gap-2 p-2.5 border-b">
               <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500" />

@@ -135,8 +135,8 @@ export function SuggestedUsers({
     return (
       <div className={cn("space-y-4", className)}>
         <div className="flex items-center justify-between">
-          <Skeleton className="h-6 w-40 bg-social-muted" />
-          {showRefresh && <Skeleton className="h-8 w-8 rounded-full bg-social-muted" />}
+          <Skeleton className="h-6 w-40 bg-background" />
+          {showRefresh && <Skeleton className="h-8 w-8 rounded-full bg-background" />}
         </div>
         <div className={cn(
           variant === 'grid' && "grid grid-cols-2 md:grid-cols-3 gap-4",
@@ -147,8 +147,8 @@ export function SuggestedUsers({
             <Skeleton 
               key={i} 
               className={cn(
-                "bg-social-muted",
-                variant === 'list' ? "h-20 rounded-xl" : "h-64 rounded-xl"
+                "bg-background",
+                variant === 'list' ? "h-20 rounded-sm" : "h-64 rounded-sm"
               )} 
             />
           ))}
@@ -166,12 +166,12 @@ export function SuggestedUsers({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-semibold text-social-foreground flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-social-accent" />
+          <h3 className="font-semibold text-foreground flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
             {title}
           </h3>
           {subtitle && (
-            <p className="text-sm text-social-muted-foreground">{subtitle}</p>
+            <p className="text-sm text-muted-foreground">{subtitle}</p>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -180,7 +180,7 @@ export function SuggestedUsers({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-social-muted-foreground hover:text-social-foreground"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
                 onClick={handlePrevCarousel}
                 disabled={carouselIndex === 0}
               >
@@ -189,7 +189,7 @@ export function SuggestedUsers({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-social-muted-foreground hover:text-social-foreground"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
                 onClick={handleNextCarousel}
                 disabled={carouselIndex >= users.length - 3}
               >
@@ -201,7 +201,7 @@ export function SuggestedUsers({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-social-muted-foreground hover:text-social-foreground"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
               onClick={handleRefresh}
             >
               <RefreshCw className="h-4 w-4" />

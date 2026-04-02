@@ -46,8 +46,8 @@ function StatCard({
   color?: string;
 }) {
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
-      <div className={cn('p-2 rounded-lg bg-white/5', color)}>
+    <div className="flex items-center gap-3 p-3 rounded-sm bg-white/5 border border-white/10">
+      <div className={cn('p-2 rounded-sm bg-white/5', color)}>
         <Icon className="h-4 w-4" />
       </div>
       <div>

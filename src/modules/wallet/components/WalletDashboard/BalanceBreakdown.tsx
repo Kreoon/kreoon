@@ -74,7 +74,7 @@ export function BalanceBreakdown({ wallet, className }: BalanceBreakdownProps) {
     <Card className={cn('', className)}>
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-[hsl(270,100%,60%,0.1)]">
+          <div className="p-1.5 rounded-sm bg-[hsl(270,100%,60%,0.1)]">
             <Info className="h-4 w-4 text-primary" />
           </div>
           Desglose de Fondos
@@ -127,7 +127,7 @@ export function BalanceBreakdown({ wallet, className }: BalanceBreakdownProps) {
                 className="flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
-                  <div className={cn('p-2 rounded-lg', segment.bgColor)}>
+                  <div className={cn('p-2 rounded-sm', segment.bgColor)}>
                     <Icon className={cn('h-4 w-4', segment.color.replace('bg-', 'text-').replace('-500', '-400'))} />
                   </div>
                   <div>

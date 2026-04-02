@@ -288,7 +288,7 @@ export function BookingDetailDrawer({ booking, onClose }: BookingDetailDrawerPro
                     rel="noopener noreferrer"
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
-                    className="mt-3 flex items-center justify-center gap-2 w-full p-3 rounded-lg bg-violet-50 text-violet-600 font-medium text-sm hover:bg-violet-100 transition-colors"
+                    className="mt-3 flex items-center justify-center gap-2 w-full p-3 rounded-sm bg-violet-50 text-violet-600 font-medium text-sm hover:bg-violet-100 transition-colors"
                   >
                     <Video className="w-4 h-4" />
                     Unirse a la reunión
@@ -308,7 +308,7 @@ export function BookingDetailDrawer({ booking, onClose }: BookingDetailDrawerPro
                   <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">
                     Notas del invitado
                   </h4>
-                  <p className="text-sm text-slate-700 bg-slate-50 p-4 rounded-xl">
+                  <p className="text-sm text-slate-700 bg-slate-50 p-4 rounded-sm">
                     {booking.guest_notes}
                   </p>
                 </div>
@@ -345,7 +345,7 @@ export function BookingDetailDrawer({ booking, onClose }: BookingDetailDrawerPro
                         value={hostNotes}
                         onChange={(e) => setHostNotes(e.target.value)}
                         placeholder="Notas privadas sobre esta cita..."
-                        className="bg-slate-50 border-slate-200 rounded-xl"
+                        className="bg-slate-50 border-slate-200 rounded-sm"
                         rows={3}
                       />
                       <div className="flex gap-2">
@@ -353,7 +353,7 @@ export function BookingDetailDrawer({ booking, onClose }: BookingDetailDrawerPro
                           size="sm"
                           onClick={handleSaveNotes}
                           disabled={updateBooking.isPending}
-                          className="rounded-lg"
+                          className="rounded-sm"
                         >
                           {updateBooking.isPending && (
                             <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
@@ -364,7 +364,7 @@ export function BookingDetailDrawer({ booking, onClose }: BookingDetailDrawerPro
                           variant="outline"
                           size="sm"
                           onClick={() => setIsEditingNotes(false)}
-                          className="rounded-lg"
+                          className="rounded-sm"
                         >
                           Cancelar
                         </Button>
@@ -374,7 +374,7 @@ export function BookingDetailDrawer({ booking, onClose }: BookingDetailDrawerPro
                     <motion.p
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="text-sm text-slate-700 bg-slate-50 p-4 rounded-xl"
+                      className="text-sm text-slate-700 bg-slate-50 p-4 rounded-sm"
                     >
                       {booking.host_notes}
                     </motion.p>
@@ -389,7 +389,7 @@ export function BookingDetailDrawer({ booking, onClose }: BookingDetailDrawerPro
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-red-50 p-4 rounded-xl"
+                  className="bg-red-50 p-4 rounded-sm"
                 >
                   <div className="flex items-center gap-2 text-red-600 font-semibold mb-2">
                     <XCircle className="w-4 h-4" />
@@ -502,14 +502,14 @@ export function BookingDetailDrawer({ booking, onClose }: BookingDetailDrawerPro
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
               placeholder="Explica brevemente por qué cancelas..."
-              className="mt-2 bg-slate-50 border-slate-200 rounded-xl"
+              className="mt-2 bg-slate-50 border-slate-200 rounded-sm"
             />
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-lg">Volver</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-sm">Volver</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleCancel}
-              className="bg-red-600 hover:bg-red-700 text-white rounded-lg"
+              className="bg-red-600 hover:bg-red-700 text-white rounded-sm"
             >
               {cancelBooking.isPending && (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />

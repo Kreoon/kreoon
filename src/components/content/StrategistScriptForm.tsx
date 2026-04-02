@@ -2068,7 +2068,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
   if (!product) {
     return (
-      <div className="p-4 sm:p-6 border rounded-lg bg-muted/50 text-center">
+      <div className="p-4 sm:p-6 border rounded-sm bg-muted/50 text-center">
         <FileText className="h-8 w-8 sm:h-10 sm:w-10 mx-auto mb-2 sm:mb-3 text-muted-foreground" />
         <p className="text-xs sm:text-sm text-muted-foreground">
           Selecciona un producto para crear el brief del guión
@@ -2080,7 +2080,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
   const hasDocumentUrls = product.brief_url || product.onboarding_url || product.research_url;
 
   return (
-    <div className="space-y-3 sm:space-y-6 p-3 sm:p-6 border rounded-lg bg-gradient-to-br from-primary/5 to-primary/10">
+    <div className="space-y-3 sm:space-y-6 p-3 sm:p-6 border rounded-sm bg-gradient-to-br from-primary/5 to-primary/10">
       <div className="flex items-center justify-between gap-2">
         <h4 className="font-semibold flex items-center gap-1.5 sm:gap-2 text-sm sm:text-lg">
           <Wand2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
@@ -2093,7 +2093,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
       {/* AI Prefill Banner */}
       {prefillStatus.isPrefilled && (
-        <div className="p-2 sm:p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+        <div className="p-2 sm:p-3 rounded-sm bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
           <div className="flex items-start sm:items-center gap-2">
             <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5 sm:mt-0" />
             <div className="flex-1 min-w-0">
@@ -2117,7 +2117,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       )}
 
       {/* Block Selection */}
-      <div className="p-2.5 sm:p-4 rounded-lg bg-muted/50 border space-y-2 sm:space-y-3">
+      <div className="p-2.5 sm:p-4 rounded-sm bg-muted/50 border space-y-2 sm:space-y-3">
         <div className="flex items-center gap-1.5 sm:gap-2">
           <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
           <Label className="text-xs sm:text-sm font-medium">Bloques a generar</Label>
@@ -2175,7 +2175,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
       {/* Document Loading Section */}
       {hasDocumentUrls && (
-        <div className="p-2.5 sm:p-4 rounded-lg bg-muted/50 border space-y-2 sm:space-y-3">
+        <div className="p-2.5 sm:p-4 rounded-sm bg-muted/50 border space-y-2 sm:space-y-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
               <FileSearch className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
@@ -2228,7 +2228,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       )}
 
       {/* AI Provider Selection */}
-      <div className="p-2.5 sm:p-4 rounded-lg bg-muted/50 border space-y-2 sm:space-y-4">
+      <div className="p-2.5 sm:p-4 rounded-sm bg-muted/50 border space-y-2 sm:space-y-4">
         <div className="flex items-center gap-1.5 sm:gap-2">
           <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           <Label className="text-xs sm:text-sm font-medium">Modelo IA</Label>
@@ -2280,7 +2280,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
                 <ChevronDown className="h-4 w-4 shrink-0 ml-2" />
               </Button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto">
+            <CollapsibleContent className="mt-2 border rounded-sm bg-background p-2 space-y-1 max-h-60 overflow-y-auto">
               {researchAngles.map((a: any, idx: number) => {
                 const angleText = a?.angle || a?.salesAngle || a?.name || "";
                 if (!angleText) return null;
@@ -2387,9 +2387,9 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
         {/* Toggle Perplexity Research */}
         <div className="space-y-4 sm:col-span-2">
-          <div className="flex items-center justify-between p-2.5 sm:p-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg border border-purple-500/20 gap-2">
+          <div className="flex items-center justify-between p-2.5 sm:p-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-sm border border-purple-500/20 gap-2">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="p-1.5 sm:p-2 bg-purple-500/20 rounded-lg shrink-0">
+              <div className="p-1.5 sm:p-2 bg-purple-500/20 rounded-sm shrink-0">
                 <Search className="h-4 w-4 sm:h-5 sm:w-5 text-purple-400" />
               </div>
               <div className="min-w-0">
@@ -2498,7 +2498,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
                 <ChevronDown className="h-4 w-4 shrink-0" />
               </Button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto">
+            <CollapsibleContent className="mt-2 border rounded-sm bg-background p-2 space-y-1 max-h-60 overflow-y-auto">
               {researchAvatars.slice(0, 5).map((a: any, idx: number) => {
                 const name = a?.name || a?.avatarName || `Avatar ${idx + 1}`;
                 const situation = a?.situation || a?.currentSituation || "";
@@ -2555,7 +2555,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
                   <ChevronDown className="h-3.5 w-3.5 ml-1" />
                 </Button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="absolute right-0 mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-[calc(100vw-3rem)] sm:w-80 shadow-lg">
+              <CollapsibleContent className="absolute right-0 mt-2 border rounded-sm bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-[calc(100vw-3rem)] sm:w-80 shadow-lg">
                 {researchPains.map((pain: any, idx: number) => {
                   const painText = typeof pain === 'string' ? pain : (pain?.pain || pain?.description || pain?.text || `Dolor ${idx + 1}`);
                   if (!painText || (typeof painText === 'string' && !painText.trim())) return null;
@@ -2609,7 +2609,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
                   <ChevronDown className="h-3.5 w-3.5 ml-1" />
                 </Button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="absolute right-0 mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-[calc(100vw-3rem)] sm:w-80 shadow-lg">
+              <CollapsibleContent className="absolute right-0 mt-2 border rounded-sm bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-[calc(100vw-3rem)] sm:w-80 shadow-lg">
                 {researchDesires.map((desire: any, idx: number) => {
                   const desireText = typeof desire === 'string' ? desire : (desire?.desire || desire?.description || desire?.text || `Deseo ${idx + 1}`);
                   if (!desireText || (typeof desireText === 'string' && !desireText.trim())) return null;
@@ -2663,7 +2663,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
                   <ChevronDown className="h-3.5 w-3.5 ml-1" />
                 </Button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="absolute right-0 mt-2 border rounded-lg bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-[calc(100vw-3rem)] sm:w-80 shadow-lg">
+              <CollapsibleContent className="absolute right-0 mt-2 border rounded-sm bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-[calc(100vw-3rem)] sm:w-80 shadow-lg">
                 {researchObjections.map((objection: any, idx: number) => {
                   const objectionText = typeof objection === 'string' ? objection : (objection?.objection || objection?.description || objection?.text || `Objeción ${idx + 1}`);
                   if (!objectionText || (typeof objectionText === 'string' && !objectionText.trim())) return null;
@@ -2745,7 +2745,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         {formData.hooks.length > 0 && (
           <div className="space-y-2">
             {formData.hooks.map((hook, idx) => (
-              <div key={idx} className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+              <div key={idx} className="flex items-center gap-2 p-2 bg-muted rounded-sm">
                 <Badge variant="outline" className="shrink-0">{idx + 1}</Badge>
                 <span className="flex-1 text-sm">{hook}</span>
                 <button type="button" onClick={() => removeHook(idx)} className="p-1 hover:bg-destructive/20 rounded">
@@ -2860,7 +2860,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
       {/* Generation Progress */}
       {loading && (
-        <div className="space-y-1.5 sm:space-y-2 p-2.5 sm:p-4 bg-muted/50 rounded-lg">
+        <div className="space-y-1.5 sm:space-y-2 p-2.5 sm:p-4 bg-muted/50 rounded-sm">
           <p className="text-xs sm:text-sm font-medium mb-2 sm:mb-3">Progreso:</p>
           <div className="grid grid-cols-2 sm:grid-cols-1 gap-1.5 sm:gap-2">
             {generationSteps.filter((step) => selectedBlocks[step.key]).map((step) => (

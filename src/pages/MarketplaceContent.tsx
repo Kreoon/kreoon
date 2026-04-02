@@ -90,7 +90,7 @@ export default function MarketplaceContent() {
               placeholder="Buscar por proyecto, creador o marca..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-muted border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+              className="w-full bg-muted border border-border rounded-sm pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/50"
             />
           </div>
           <div className="flex gap-2 overflow-x-auto scrollbar-none">
@@ -98,7 +98,7 @@ export default function MarketplaceContent() {
               <button
                 key={tab.key}
                 onClick={() => setFilter(tab.key)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors whitespace-nowrap ${
+                className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors whitespace-nowrap ${
                   filter === tab.key
                     ? 'bg-primary text-foreground'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
@@ -127,7 +127,7 @@ export default function MarketplaceContent() {
             {filter === 'all' && (
               <button
                 onClick={() => navigate(isCreator ? '/marketplace/campaigns' : '/marketplace')}
-                className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-foreground font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
+                className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-foreground font-semibold px-5 py-2.5 rounded-sm text-sm transition-colors"
               >
                 {isCreator ? 'Explorar Campanas' : 'Buscar Creadores'}
                 <ArrowRight className="h-4 w-4" />
@@ -139,7 +139,7 @@ export default function MarketplaceContent() {
             {filteredProjects.map(project => (
               <div
                 key={project.id}
-                className="group relative rounded-xl overflow-hidden cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all"
+                className="group relative rounded-sm overflow-hidden cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all"
                 onClick={() => navigate('/board?view=marketplace')}
               >
                 {/* Vertical thumbnail 9:16 */}
@@ -151,7 +151,7 @@ export default function MarketplaceContent() {
 
                   {/* Play button overlay on hover */}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                    <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity scale-90 group-hover:scale-100">
+                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity scale-90 group-hover:scale-100">
                       <Play className="h-5 w-5 text-foreground ml-0.5" />
                     </div>
                   </div>
@@ -166,10 +166,10 @@ export default function MarketplaceContent() {
                   {/* Action buttons for approved/completed */}
                   {['approved', 'completed'].includes(project.status) && (
                     <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="p-1.5 bg-black/60 rounded-lg hover:bg-black/80 transition-colors" onClick={(e) => e.stopPropagation()}>
+                      <button className="p-1.5 bg-black/60 rounded-sm hover:bg-black/80 transition-colors" onClick={(e) => e.stopPropagation()}>
                         <Download className="h-3 w-3 text-foreground" />
                       </button>
-                      <button className="p-1.5 bg-black/60 rounded-lg hover:bg-black/80 transition-colors" onClick={(e) => e.stopPropagation()}>
+                      <button className="p-1.5 bg-black/60 rounded-sm hover:bg-black/80 transition-colors" onClick={(e) => e.stopPropagation()}>
                         <Eye className="h-3 w-3 text-foreground" />
                       </button>
                     </div>

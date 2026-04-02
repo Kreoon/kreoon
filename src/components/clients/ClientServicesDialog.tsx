@@ -138,9 +138,9 @@ export function ClientServicesDialog({
         ) : (
           <div className="space-y-6 py-4">
             {/* Strategy Service */}
-            <div className="flex items-start justify-between gap-4 p-4 rounded-lg border bg-card">
+            <div className="flex items-start justify-between gap-4 p-4 rounded-sm border bg-card">
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-orange-500/10">
+                <div className="p-2 rounded-sm bg-orange-500/10">
                   <Lightbulb className="h-5 w-5 text-orange-500" />
                 </div>
                 <div className="space-y-1">
@@ -168,9 +168,9 @@ export function ClientServicesDialog({
             </div>
 
             {/* Traffic Service */}
-            <div className="flex items-start justify-between gap-4 p-4 rounded-lg border bg-card">
+            <div className="flex items-start justify-between gap-4 p-4 rounded-sm border bg-card">
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-cyan-500/10">
+                <div className="p-2 rounded-sm bg-cyan-500/10">
                   <Radio className="h-5 w-5 text-cyan-500" />
                 </div>
                 <div className="space-y-1">

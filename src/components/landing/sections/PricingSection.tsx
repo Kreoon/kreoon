@@ -331,12 +331,12 @@ export function PricingSection({
 
         {/* Billing toggle */}
         <div className="mb-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-          <div className="inline-flex rounded-xl border border-kreoon-border bg-kreoon-bg-secondary/80 p-1 backdrop-blur-sm">
+          <div className="inline-flex rounded-sm border border-kreoon-border bg-kreoon-bg-secondary/80 p-1">
             <button
               type="button"
               onClick={() => setBilling("monthly")}
               className={cn(
-                "rounded-lg px-5 py-2.5 text-sm font-medium transition-all",
+                "rounded-sm px-5 py-2.5 text-sm font-medium transition-all",
                 billing === "monthly"
                   ? "bg-kreoon-purple-500/20 text-white shadow-sm"
                   : "text-kreoon-text-secondary hover:text-white",
@@ -348,7 +348,7 @@ export function PricingSection({
               type="button"
               onClick={() => setBilling("annual")}
               className={cn(
-                "relative rounded-lg px-5 py-2.5 text-sm font-medium transition-all",
+                "relative rounded-sm px-5 py-2.5 text-sm font-medium transition-all",
                 billing === "annual"
                   ? "bg-kreoon-purple-500/20 text-white shadow-sm"
                   : "text-kreoon-text-secondary hover:text-white",
@@ -364,7 +364,7 @@ export function PricingSection({
 
         {/* Segment tabs with icons */}
         <div className="mb-10 flex justify-center">
-          <div className="inline-flex rounded-xl border border-kreoon-border bg-kreoon-bg-secondary/80 p-1 backdrop-blur-sm">
+          <div className="inline-flex rounded-sm border border-kreoon-border bg-kreoon-bg-secondary/80 p-1">
             {(Object.keys(SEGMENT_CONFIG) as PricingSegment[]).map((s) => {
               const config = SEGMENT_CONFIG[s];
               const Icon = config.icon;
@@ -374,7 +374,7 @@ export function PricingSection({
                   type="button"
                   onClick={() => setSegment(s)}
                   className={cn(
-                    "flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all",
+                    "flex items-center gap-2 rounded-sm px-4 py-2.5 text-sm font-medium transition-all",
                     segment === s
                       ? "bg-kreoon-purple-500/20 text-white shadow-sm"
                       : "text-kreoon-text-secondary hover:text-white",
@@ -538,7 +538,7 @@ export function PricingSection({
           initial={{ opacity: 0, y: 10 }}
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
           transition={{ delay: 0.35 }}
-          className="mt-8 flex flex-col items-center justify-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-6 py-4 sm:flex-row"
+          className="mt-8 flex flex-col items-center justify-center gap-3 rounded-sm border border-amber-500/20 bg-amber-500/5 px-6 py-4 sm:flex-row"
         >
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/20">
@@ -591,7 +591,7 @@ export function PricingSection({
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden"
             >
-              <div className="mt-6 overflow-x-auto rounded-xl border border-kreoon-border bg-kreoon-bg-card/50">
+              <div className="mt-6 overflow-x-auto rounded-sm border border-kreoon-border bg-kreoon-bg-card/50">
                 <table className="w-full min-w-[600px] text-left text-sm">
                   <thead className="sticky top-0 z-10 border-b border-kreoon-border bg-kreoon-bg-secondary">
                     <tr>

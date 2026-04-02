@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
+import { motion, useMotionValue, animate } from 'framer-motion';
 import { Ticket } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -68,12 +68,11 @@ export function CreditsDisplay({
   return (
     <motion.div
       className={cn(
-        'inline-flex items-center rounded-lg',
+        'inline-flex items-center rounded-sm',
         config.gap,
         config.padding,
         'bg-gradient-to-r from-purple-500/10 to-purple-600/5',
         'border border-purple-500/20',
-        'backdrop-blur-sm',
         className
       )}
       initial={animated ? { scale: 0.9, opacity: 0 } : undefined}
@@ -104,7 +103,7 @@ export function CreditsDisplay({
       <div className="flex items-baseline gap-1">
         <motion.span
           className={cn(
-            'font-bold text-white tabular-nums',
+            'font-bold text-foreground tabular-nums',
             config.text
           )}
           key={displayValue}
@@ -126,7 +125,7 @@ export function CreditsDisplay({
 
       {/* Label for large size */}
       {showLabel && size === 'lg' && (
-        <span className="text-sm text-zinc-500 ml-1">
+        <span className="text-sm text-muted-foreground ml-1">
           Créditos
         </span>
       )}
@@ -151,7 +150,7 @@ export function CreditsDisplayCompact({
       )}
     >
       <Ticket className="w-3 h-3 text-purple-400" />
-      <span className="text-xs font-semibold text-white tabular-nums">
+      <span className="text-xs font-semibold text-foreground tabular-nums">
         {creditos.toLocaleString()}
       </span>
     </div>

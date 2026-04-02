@@ -76,7 +76,7 @@ export function useAIContentGenerator() {
       if (data?.code === 'INSUFFICIENT_TOKENS') {
         setInsufficientTokens(true);
         setError(
-          `Necesitas ${data.tokens_required} Kreoon Coins (tienes ${data.tokens_available})`
+          `Necesitas ${data.tokens_required} Tokens IA (tienes ${data.tokens_available})`
         );
         return null;
       }

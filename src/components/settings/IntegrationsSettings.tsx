@@ -584,7 +584,7 @@ export function IntegrationsSettings() {
     const isConfigured = Boolean(webhookUrl);
 
     return (
-      <div className="border rounded-lg p-4 space-y-4 border-primary/30 bg-primary/5">
+      <div className="border rounded-sm p-4 space-y-4 border-primary/30 bg-primary/5">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 flex-wrap">
@@ -658,7 +658,7 @@ export function IntegrationsSettings() {
         </div>
 
         {/* Test Button */}
-        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-sm">
           <div className="text-sm text-muted-foreground">
             {isConfigured ? "Webhook configurado y listo" : "Configura la URL para habilitar"}
           </div>
@@ -699,7 +699,7 @@ export function IntegrationsSettings() {
     const hasProductionUrl = Boolean(productionUrl);
 
     return (
-      <div key={webhook.key} className="border rounded-lg p-4 space-y-4">
+      <div key={webhook.key} className="border rounded-sm p-4 space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 flex-wrap">
@@ -738,7 +738,7 @@ export function IntegrationsSettings() {
         </div>
 
         {/* Mode Toggle */}
-        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-sm">
           <div className="flex items-center gap-2">
             <span className={`text-sm ${!isProduction ? "font-medium" : "text-muted-foreground"}`}>
               Test
@@ -809,7 +809,7 @@ export function IntegrationsSettings() {
     const isConfigured = Boolean(value);
 
     return (
-      <div key={integration.key} className="border rounded-lg p-4 space-y-3">
+      <div key={integration.key} className="border rounded-sm p-4 space-y-3">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2">
@@ -947,7 +947,7 @@ export function IntegrationsSettings() {
 
               <Separator className="my-6" />
 
-              <div className="p-4 bg-muted/30 rounded-lg">
+              <div className="p-4 bg-muted/30 rounded-sm">
                 <h4 className="font-medium text-sm mb-2">¿Cómo funciona?</h4>
                 <ul className="text-xs text-muted-foreground space-y-1">
                   <li>• <strong>Modo Test:</strong> Usa la URL hardcodeada en el código (ideal para desarrollo)</li>
@@ -999,7 +999,7 @@ export function IntegrationsSettings() {
                 return (
                   <div 
                     key={webhook.key}
-                    className={`flex items-center gap-2 p-2 rounded-lg border text-sm ${
+                    className={`flex items-center gap-2 p-2 rounded-sm border text-sm ${
                       isReady 
                         ? isProduction 
                           ? "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800"
@@ -1041,7 +1041,7 @@ export function IntegrationsSettings() {
                   return (
                     <div 
                       key={integration.key}
-                      className={`flex items-center gap-2 p-2 rounded-lg border text-sm ${
+                      className={`flex items-center gap-2 p-2 rounded-sm border text-sm ${
                         isConfigured ? "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800" : "bg-muted/50"
                       }`}
                     >

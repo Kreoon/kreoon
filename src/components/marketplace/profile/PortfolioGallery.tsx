@@ -69,7 +69,7 @@ export const PortfolioGallery = memo(function PortfolioGallery({
     <>
       {/* ── Desktop: Bento layout (hero + weighted flex columns) ── */}
       <div
-        className="hidden md:flex gap-2 rounded-2xl overflow-hidden"
+        className="hidden md:flex gap-2 rounded-sm overflow-hidden"
         style={{ height: DESKTOP_HEIGHT }}
       >
         {/* Hero — aspect-ratio-driven width, full container height */}
@@ -77,7 +77,7 @@ export const PortfolioGallery = memo(function PortfolioGallery({
           onClick={() => openLightbox(0)}
           className={cn(
             'relative h-full flex-shrink-0 overflow-hidden group bg-card',
-            isSingle ? 'w-full rounded-2xl' : 'rounded-l-2xl',
+            isSingle ? 'w-full rounded-sm' : 'rounded-l-2xl',
           )}
           style={isSingle ? undefined : { aspectRatio: heroAR }}
         >
@@ -91,7 +91,7 @@ export const PortfolioGallery = memo(function PortfolioGallery({
           />
           {desktopItems[0].type === 'video' && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-14 h-14 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+              <div className="w-14 h-14 rounded-full bg-black/40 flex items-center justify-center">
                 <Play className="h-6 w-6 text-white fill-white ml-0.5" />
               </div>
             </div>
@@ -123,14 +123,14 @@ export const PortfolioGallery = memo(function PortfolioGallery({
                     />
                     {item.type === 'video' && (
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full bg-black/40 flex items-center justify-center">
                           <Play className="h-4 w-4 text-white fill-white ml-0.5" />
                         </div>
                       </div>
                     )}
                     {isLastInGrid && hasMore && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <span className="bg-white text-black text-sm font-semibold px-4 py-2 rounded-lg shadow-lg flex items-center gap-1.5">
+                        <span className="bg-white text-black text-sm font-semibold px-4 py-2 rounded-sm shadow-lg flex items-center gap-1.5">
                           <Grid className="h-4 w-4" />
                           +{media.length - MAX_DESKTOP} más
                         </span>
@@ -166,14 +166,14 @@ export const PortfolioGallery = memo(function PortfolioGallery({
                       />
                       {item.type === 'video' && (
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-black/40 flex items-center justify-center">
                             <Play className="h-4 w-4 text-white fill-white ml-0.5" />
                           </div>
                         </div>
                       )}
                       {isLastInGrid && hasMore && (
                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                          <span className="bg-white text-black text-sm font-semibold px-4 py-2 rounded-lg shadow-lg flex items-center gap-1.5">
+                          <span className="bg-white text-black text-sm font-semibold px-4 py-2 rounded-sm shadow-lg flex items-center gap-1.5">
                             <Grid className="h-4 w-4" />
                             +{media.length - MAX_DESKTOP} más
                           </span>
@@ -198,7 +198,7 @@ export const PortfolioGallery = memo(function PortfolioGallery({
           <button
             key={item.id}
             onClick={() => openLightbox(i)}
-            className="snap-start flex-shrink-0 rounded-xl overflow-hidden relative group bg-card h-full"
+            className="snap-start flex-shrink-0 rounded-sm overflow-hidden relative group bg-card h-full"
             style={{ aspectRatio: ar(i) }}
           >
             <img
@@ -208,7 +208,7 @@ export const PortfolioGallery = memo(function PortfolioGallery({
             />
             {item.type === 'video' && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-black/40 flex items-center justify-center">
                   <Play className="h-3.5 w-3.5 text-white fill-white ml-0.5" />
                 </div>
               </div>

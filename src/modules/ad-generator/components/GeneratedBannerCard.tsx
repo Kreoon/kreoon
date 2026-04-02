@@ -95,7 +95,7 @@ export function GeneratedBannerCard({ banner, onDelete }: GeneratedBannerCardPro
     <>
       {/* Meta Ad Preview Card */}
       <div className={cn(
-        "rounded-lg border border-border bg-card overflow-hidden group",
+        "rounded-sm border border-border bg-card overflow-hidden group",
         isFailed && "border-destructive/30",
       )}>
         {/* Meta-style header: brand + sponsored */}

@@ -171,7 +171,7 @@ export default function WhiteLabelDomainTab() {
         </CardHeader>
         <CardContent className="space-y-3">
           {subdomainUrl ? (
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border">
+            <div className="flex items-center gap-3 p-3 rounded-sm bg-muted/50 border">
               <Globe className="h-5 w-5 text-muted-foreground shrink-0" />
               <code className="text-sm font-mono text-primary flex-1">{subdomainUrl}</code>
               <Button variant="ghost" size="sm" onClick={() => copyToClipboard(`https://${subdomainUrl}`)}>
@@ -220,7 +220,7 @@ export default function WhiteLabelDomainTab() {
             <>
               {/* Current saved domain */}
               {savedCustomDomain && (
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                <div className="flex items-center gap-3 p-3 rounded-sm bg-green-500/10 border border-green-500/30">
                   <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
                   <div className="flex-1">
                     <code className="text-sm font-mono text-green-400">{savedCustomDomain}</code>
@@ -272,7 +272,7 @@ export default function WhiteLabelDomainTab() {
                   <p className="text-xs text-muted-foreground">
                     Antes de verificar, agrega un registro CNAME en tu proveedor DNS:
                   </p>
-                  <div className="bg-background rounded-md p-3 font-mono text-xs space-y-1">
+                  <div className="bg-background rounded-sm p-3 font-mono text-xs space-y-1">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Tipo:</span>
                       <span>CNAME</span>
@@ -293,7 +293,7 @@ export default function WhiteLabelDomainTab() {
               </Card>
             </>
           ) : (
-            <div className="flex items-center justify-between rounded-lg border border-dashed border-muted-foreground/30 px-4 py-6 opacity-60">
+            <div className="flex items-center justify-between rounded-sm border border-dashed border-muted-foreground/30 px-4 py-6 opacity-60">
               <div>
                 <p className="text-sm text-muted-foreground">Dominio personalizado</p>
                 <p className="text-xs text-muted-foreground mt-1">

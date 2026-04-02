@@ -78,7 +78,7 @@ export function PromoBanner({ campaign, compact = false }: PromoBannerProps) {
 
       <div className="flex items-start gap-3">
         <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+          className="w-10 h-10 rounded-sm flex items-center justify-center shrink-0"
           style={{ backgroundColor: `${badgeColor}20` }}
         >
           <Gift className="w-5 h-5" style={{ color: badgeColor }} />
@@ -99,7 +99,7 @@ export function PromoBanner({ campaign, compact = false }: PromoBannerProps) {
             )}
             {campaign.referred_bonus_coins > 0 && (
               <span className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 text-[10px] font-medium">
-                +{campaign.referred_bonus_coins} Kreoon Coins
+                +{campaign.referred_bonus_coins} Tokens IA
               </span>
             )}
             {campaign.referral_extra_free_months > 0 && (

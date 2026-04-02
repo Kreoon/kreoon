@@ -82,14 +82,14 @@ export function IntentStep({ onSelect, mode }: IntentStepProps) {
               transition={{ delay: 0.05 * i }}
               onClick={() => onSelect(intent.id)}
               className={cn(
-                'group relative text-left rounded-xl border p-4 transition-all duration-200',
+                'group relative text-left rounded-sm border p-4 transition-all duration-200',
                 'bg-gradient-to-br', intent.gradient,
                 intent.border,
                 'hover:shadow-lg', intent.glow,
               )}
             >
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/5">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-white/5">
                   <Icon className="h-5 w-5 text-white" />
                 </div>
                 <div className="min-w-0">

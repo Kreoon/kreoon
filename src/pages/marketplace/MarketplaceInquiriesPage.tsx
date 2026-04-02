@@ -67,7 +67,7 @@ export default function MarketplaceInquiriesPage() {
             {inquiries.map(inquiry => {
               const statusInfo = INQUIRY_STATUS_LABELS[inquiry.status];
               return (
-                <div key={inquiry.id} className="p-4 rounded-xl border border-white/5 bg-white/[0.02]">
+                <div key={inquiry.id} className="p-4 rounded-sm border border-white/5 bg-white/[0.02]">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">

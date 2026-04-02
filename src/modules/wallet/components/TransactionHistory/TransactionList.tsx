@@ -77,7 +77,7 @@ export function TransactionList({
         {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
           <div
             key={i}
-            className="flex items-center gap-3 p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)]"
+            className="flex items-center gap-3 p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)]"
           >
             <div className="h-10 w-10 rounded-full bg-[hsl(270,100%,60%,0.1)] animate-pulse" />
             <div className="flex-1 space-y-2">
@@ -124,7 +124,7 @@ export function TransactionList({
     <div className={cn('space-y-6', className)}>
       {Object.entries(groupedTransactions).map(([date, dayTransactions]) => (
         <div key={date}>
-          <h3 className="text-sm font-medium text-muted-foreground mb-3 sticky top-0 bg-background/80 backdrop-blur-sm py-2">
+          <h3 className="text-sm font-medium text-muted-foreground mb-3 sticky top-0 bg-background/80 py-2">
             {date}
           </h3>
           <div className="space-y-2">
@@ -142,7 +142,7 @@ export function TransactionList({
                   transition={{ delay: index * 0.03 }}
                   onClick={() => onSelectTransaction?.(transaction)}
                   className={cn(
-                    'flex items-center gap-4 p-4 rounded-xl transition-all cursor-pointer',
+                    'flex items-center gap-4 p-4 rounded-sm transition-all cursor-pointer',
                     'bg-[hsl(270,100%,60%,0.03)] hover:bg-[hsl(270,100%,60%,0.08)]',
                     'border border-transparent',
                     isSelected && 'border-[hsl(270,100%,60%,0.3)] bg-[hsl(270,100%,60%,0.1)]'

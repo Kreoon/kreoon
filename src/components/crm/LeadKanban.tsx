@@ -283,7 +283,7 @@ export function LeadKanban({
               onDragLeave={handleDragLeave}
               onDrop={handleDrop(stage)}
               className={cn(
-                'flex-shrink-0 w-[300px] rounded-xl border flex flex-col',
+                'flex-shrink-0 w-[300px] rounded-sm border flex flex-col',
                 'transition-all duration-200',
                 dragOverStage === stage
                   ? 'ring-2 ring-[#a855f7]/60 shadow-[0_0_30px_rgba(168,85,247,0.15)]'
@@ -335,7 +335,7 @@ export function LeadKanban({
                 {hasMore && (
                   <button
                     onClick={() => toggleExpand(stage)}
-                    className="w-full py-2 text-xs text-[#a855f7] hover:text-[#c084fc] transition-colors rounded-lg hover:bg-white/5"
+                    className="w-full py-2 text-xs text-[#a855f7] hover:text-[#c084fc] transition-colors rounded-sm hover:bg-white/5"
                   >
                     Ver {stageLeads.length - MAX_CARDS_PER_COLUMN} mas
                   </button>
@@ -343,7 +343,7 @@ export function LeadKanban({
                 {isExpanded && stageLeads.length > MAX_CARDS_PER_COLUMN && (
                   <button
                     onClick={() => toggleExpand(stage)}
-                    className="w-full py-2 text-xs text-white/30 hover:text-white/50 transition-colors rounded-lg hover:bg-white/5"
+                    className="w-full py-2 text-xs text-white/30 hover:text-white/50 transition-colors rounded-sm hover:bg-white/5"
                   >
                     Ver menos
                   </button>

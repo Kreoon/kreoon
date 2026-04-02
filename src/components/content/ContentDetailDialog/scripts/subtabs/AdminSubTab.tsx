@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { LazyRichTextEditor as RichTextEditor } from '@/components/ui/lazy-rich-text-editor';
 import { RichTextViewer } from '@/components/scripts/RichTextViewer';
 import { SectionCard, FieldRow } from '../../components/SectionCard';
 import { Shield, Lock, Unlock, CheckCircle, XCircle, AlertTriangle, Settings } from 'lucide-react';
@@ -60,7 +60,7 @@ export function AdminSubTab({
           ) : hasContent ? (
             <RichTextViewer content={formData.admin_guidelines || ''} maxHeight="" />
           ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/30 rounded-lg">
+            <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/30 rounded-sm">
               <Shield className="h-8 w-8 text-muted-foreground/50 mb-3" />
               <p className="text-muted-foreground text-sm font-medium">Sin contenido generado</p>
               <p className="text-muted-foreground/70 text-xs mt-1">
@@ -75,7 +75,7 @@ export function AdminSubTab({
       <SectionCard title="Estado del Contenido" iconEmoji="📊">
         <div className="space-y-4">
           {/* Current Status */}
-          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-sm">
             <span className="text-sm font-medium">Estado actual</span>
             <Badge variant="outline" className="gap-1">
               {content?.status ? STATUS_LABELS[content.status] || content.status : 'Desconocido'}
@@ -84,13 +84,13 @@ export function AdminSubTab({
 
           {/* Key Dates */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 bg-muted/30 rounded-lg">
+            <div className="p-3 bg-muted/30 rounded-sm">
               <p className="text-xs text-muted-foreground mb-1">Creado</p>
               <p className="text-sm font-medium">
                 {content?.created_at ? new Date(content.created_at).toLocaleDateString() : '—'}
               </p>
             </div>
-            <div className="p-3 bg-muted/30 rounded-lg">
+            <div className="p-3 bg-muted/30 rounded-sm">
               <p className="text-xs text-muted-foreground mb-1">Actualizado</p>
               <p className="text-sm font-medium">
                 {content?.updated_at ? new Date(content.updated_at).toLocaleDateString() : '—'}
@@ -152,7 +152,7 @@ export function AdminSubTab({
 
       {/* Warnings */}
       {(!content?.creator_id || !content?.editor_id) && (
-        <div className="flex items-start gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg">
+        <div className="flex items-start gap-2 p-3 bg-warning/10 border border-warning/20 rounded-sm">
           <AlertTriangle className="h-4 w-4 text-warning mt-0.5" />
           <div>
             <p className="text-sm font-medium text-warning">Asignaciones pendientes</p>

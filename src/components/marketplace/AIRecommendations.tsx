@@ -130,14 +130,14 @@ export function AIRecommendations({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-social-accent/20 to-purple-500/20">
-            <Sparkles className="h-5 w-5 text-social-accent" />
+          <div className="p-2 rounded-sm bg-gradient-to-br from-primary/20 to-purple-500/20">
+            <Sparkles className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-social-foreground">
+            <h2 className="text-lg font-semibold text-foreground">
               Creadores recomendados
             </h2>
-            <p className="text-sm text-social-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Encuentra el creador perfecto para tu marca
             </p>
           </div>
@@ -157,9 +157,9 @@ export function AIRecommendations({
                 )}
               </Button>
             </SheetTrigger>
-            <SheetContent className="bg-social-card border-social-border">
+            <SheetContent className="bg-card border-border">
               <SheetHeader>
-                <SheetTitle className="text-social-foreground">
+                <SheetTitle className="text-foreground">
                   Filtrar creadores
                 </SheetTitle>
               </SheetHeader>
@@ -168,14 +168,14 @@ export function AIRecommendations({
                 <div className="space-y-6 py-4">
                   {/* Industry */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-social-foreground">
+                    <label className="text-sm font-medium text-foreground">
                       Industria
                     </label>
                     <Select
                       value={criteria.industry}
                       onValueChange={(v) => updateCriteria('industry', v as IndustryId)}
                     >
-                      <SelectTrigger className="bg-social-muted border-social-border">
+                      <SelectTrigger className="bg-background border-border">
                         <SelectValue placeholder="Selecciona industria" />
                       </SelectTrigger>
                       <SelectContent>
@@ -193,13 +193,13 @@ export function AIRecommendations({
 
                   {/* Content types */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-social-foreground">
+                    <label className="text-sm font-medium text-foreground">
                       Tipo de contenido
                     </label>
                     <div className="space-y-2">
                       {Object.entries(SERVICE_TYPE_CATEGORIES).map(([catKey, category]) => (
                         <div key={catKey}>
-                          <p className="text-[10px] font-medium text-social-muted-foreground mb-1">{category.label}</p>
+                          <p className="text-[10px] font-medium text-muted-foreground mb-1">{category.label}</p>
                           <div className="flex flex-wrap gap-1.5">
                             {category.types.map(type => (
                               <Badge
@@ -225,7 +225,7 @@ export function AIRecommendations({
 
                   {/* Content styles */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-social-foreground">
+                    <label className="text-sm font-medium text-foreground">
                       Estilo de contenido
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -250,14 +250,14 @@ export function AIRecommendations({
 
                   {/* Budget */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-social-foreground">
+                    <label className="text-sm font-medium text-foreground">
                       Rango de presupuesto
                     </label>
                     <Select
                       value={criteria.budget_range}
                       onValueChange={(v) => updateCriteria('budget_range', v as any)}
                     >
-                      <SelectTrigger className="bg-social-muted border-social-border">
+                      <SelectTrigger className="bg-background border-border">
                         <SelectValue placeholder="Cualquier presupuesto" />
                       </SelectTrigger>
                       <SelectContent>
@@ -272,14 +272,14 @@ export function AIRecommendations({
 
                   {/* Min rating */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-social-foreground">
+                    <label className="text-sm font-medium text-foreground">
                       Rating mínimo
                     </label>
                     <Select
                       value={criteria.min_rating?.toString()}
                       onValueChange={(v) => updateCriteria('min_rating', parseFloat(v))}
                     >
-                      <SelectTrigger className="bg-social-muted border-social-border">
+                      <SelectTrigger className="bg-background border-border">
                         <SelectValue placeholder="Cualquier rating" />
                       </SelectTrigger>
                       <SelectContent>
@@ -318,7 +318,7 @@ export function AIRecommendations({
           <Button
             onClick={handleSearch}
             disabled={isSearching}
-            className="gap-2 bg-gradient-to-r from-social-accent to-purple-600"
+            className="gap-2 bg-gradient-to-r from-primary to-purple-600"
           >
             {isSearching ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -365,11 +365,11 @@ export function AIRecommendations({
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-4 rounded-lg bg-gradient-to-r from-social-accent/10 to-purple-500/10 border border-social-accent/20"
+          className="p-4 rounded-sm bg-gradient-to-r from-secondary to-purple-500/10 border border-primary/20"
         >
           <div className="flex items-start gap-3">
-            <Sparkles className="h-5 w-5 text-social-accent mt-0.5" />
-            <p className="text-sm text-social-foreground">{results.aiSummary}</p>
+            <Sparkles className="h-5 w-5 text-primary mt-0.5" />
+            <p className="text-sm text-foreground">{results.aiSummary}</p>
           </div>
         </motion.div>
       )}
@@ -378,7 +378,7 @@ export function AIRecommendations({
       {results && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-social-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               {results.total} creadores encontrados
             </p>
 
@@ -388,7 +388,7 @@ export function AIRecommendations({
                 placeholder="Nombre de búsqueda..."
                 value={searchName}
                 onChange={(e) => setSearchName(e.target.value)}
-                className="w-40 h-8 text-sm bg-social-muted border-social-border"
+                className="w-40 h-8 text-sm bg-background border-border"
               />
               <Button
                 variant="outline"
@@ -413,13 +413,13 @@ export function AIRecommendations({
       {/* Empty state */}
       {!results && !isSearching && (
         <div className="text-center py-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-social-muted mb-4">
-            <Search className="h-8 w-8 text-social-muted-foreground" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-background mb-4">
+            <Search className="h-8 w-8 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-medium text-social-foreground mb-2">
+          <h3 className="text-lg font-medium text-foreground mb-2">
             Encuentra tu creador ideal
           </h3>
-          <p className="text-social-muted-foreground mb-4">
+          <p className="text-muted-foreground mb-4">
             Usa los filtros o haz clic en "Buscar" para ver recomendaciones
             {hasProfile && ' basadas en tu perfil de empresa'}
           </p>
@@ -433,8 +433,8 @@ export function AIRecommendations({
       {/* Loading state */}
       {isSearching && (
         <div className="flex flex-col items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-social-accent mb-4" />
-          <p className="text-social-muted-foreground">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">
             Buscando los mejores creadores para ti...
           </p>
         </div>

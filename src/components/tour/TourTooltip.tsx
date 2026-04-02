@@ -210,7 +210,7 @@ export function TourTooltip({ steps, isOpen, onClose, onComplete }: TourTooltipP
         {/* Spotlight border glow */}
         {spotlightRect && (
           <div
-            className="absolute rounded-xl pointer-events-none transition-all duration-300 ease-out"
+            className="absolute rounded-sm pointer-events-none transition-all duration-300 ease-out"
             style={{
               top: spotlightRect.top,
               left: spotlightRect.left,
@@ -233,7 +233,7 @@ export function TourTooltip({ steps, isOpen, onClose, onComplete }: TourTooltipP
       <div
         ref={tooltipRef}
         className={cn(
-          "fixed z-[9999] w-[340px] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden",
+          "fixed z-[9999] w-[340px] bg-card border border-border rounded-sm shadow-2xl overflow-hidden",
           "transition-all duration-300 ease-out",
           isAnimating ? "opacity-0 scale-95" : "opacity-100 scale-100"
         )}
@@ -270,7 +270,7 @@ export function TourTooltip({ steps, isOpen, onClose, onComplete }: TourTooltipP
           
           {/* Action indicator */}
           {step.action && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
+            <div className="flex items-center gap-2 p-3 rounded-sm bg-primary/10 border border-primary/20">
               <MousePointer2 className="h-4 w-4 text-primary shrink-0" />
               <span className="text-sm text-foreground font-medium">{step.action}</span>
             </div>

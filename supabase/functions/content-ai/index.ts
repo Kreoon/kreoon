@@ -4,11 +4,13 @@ import { getKreoonClient, isKreoonConfigured } from "../_shared/kreoon-client.ts
 import { getModuleAIConfig } from "../_shared/get-module-ai-config.ts";
 import { callAIWithFallback, corsHeaders } from "../_shared/ai-providers.ts";
 import { PerplexitySearches, searchWithPerplexity } from "../_shared/perplexity-client.ts";
+import { errorResponse, successResponse, moduleInactiveResponse, validationErrorResponse } from "../_shared/error-response.ts";
 // Fallback legacy
 import { MASTER_SCRIPT_PROMPT } from "../_shared/prompts/scripts.ts";
 // Nuevo: Prompts desde DB con cache y fallback a hardcodeados
 import { getPrompt, interpolatePrompt } from "../_shared/prompts/db-prompts.ts";
 import { checkAndDeductTokens, insufficientTokensResponse } from "../_shared/ai-token-guard.ts";
+import { logAIUsage as sharedLogAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
 
 interface ContentAIRequest {
   action: "generate_script" | "analyze_content" | "chat" | "improve_script" | "research_and_generate";
@@ -186,7 +188,7 @@ function getAllAvailableFallbacks(primaryProvider: string): Array<{ provider: st
   return fallbacks;
 }
 
-// Log AI usage; returns execution id for feedback loop
+// Log AI usage via shared logger; returns execution id for feedback loop
 async function logAIUsage(supabase: any, params: {
   organizationId: string;
   userId: string;
@@ -195,31 +197,24 @@ async function logAIUsage(supabase: any, params: {
   action: string;
   success: boolean;
   errorMessage?: string;
+  tokens_input?: number;
+  tokens_output?: number;
+  response_time_ms?: number;
 }): Promise<string | null> {
-  try {
-    const { data, error } = await supabase
-      .from("ai_usage_logs")
-      .insert({
-        organization_id: params.organizationId,
-        user_id: params.userId,
-        provider: params.provider,
-        model: params.model,
-        module: "content",
-        action: params.action,
-        success: params.success,
-        error_message: params.errorMessage,
-      })
-      .select("id")
-      .single();
-    if (error) {
-      console.error("Failed to log AI usage:", error);
-      return null;
-    }
-    return data?.id ?? null;
-  } catch (e) {
-    console.error("Failed to log AI usage:", e);
-    return null;
-  }
+  return sharedLogAIUsage(supabase, {
+    organization_id: params.organizationId,
+    user_id: params.userId,
+    module: "content-ai",
+    action: params.action,
+    provider: params.provider,
+    model: params.model,
+    tokens_input: params.tokens_input || 0,
+    tokens_output: params.tokens_output || 0,
+    success: params.success,
+    error_message: params.errorMessage,
+    edge_function: "content-ai",
+    response_time_ms: params.response_time_ms,
+  });
 }
 
 // Usa prompt maestro centralizado desde _shared/prompts/scripts.ts
@@ -391,6 +386,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let body: ContentAIRequest | null = null;
+
   try {
     // Use Kreoon database if configured, otherwise fallback to default
     let supabase;
@@ -404,23 +401,20 @@ serve(async (req) => {
       supabase = createClient(supabaseUrl, supabaseKey);
     }
 
-    const body: ContentAIRequest = await req.json();
-    const { 
-      action, 
+    body = await req.json();
+    const {
+      action,
       organizationId,
-      data, 
-      prompt, 
-      product, 
+      data,
+      prompt,
+      product,
       generation_type
     } = body;
 
     console.log("Content AI Request:", { action, organizationId, generation_type });
 
     if (!organizationId) {
-      return new Response(
-        JSON.stringify({ error: "organizationId es requerido" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return validationErrorResponse("organizationId es requerido", "organizationId");
     }
 
     // Get module key for this action
@@ -434,19 +428,13 @@ serve(async (req) => {
     } catch (error: any) {
       if (error.message?.startsWith("MODULE_INACTIVE:")) {
         const module = error.message.split(":")[1];
-        return new Response(
-          JSON.stringify({ 
-            error: "MODULE_INACTIVE",
-            module,
-            message: `El módulo de IA "${module}" no está habilitado para tu organización. Actívalo en Configuración → IA & Modelos.`
-          }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return moduleInactiveResponse(module);
       }
       throw error;
     }
 
     let result: string;
+    const startTime = Date.now();
 
     switch (action) {
       case "research_and_generate":
@@ -660,7 +648,9 @@ IMPORTANTE:
           console.log("[content-ai] Full system prompt length:", fullSystemPrompt.length);
           console.log("[content-ai] Template variables replaced, Perplexity:", usePerplexity);
 
+          const startTime1 = Date.now();
           result = await callAI(aiConfig.provider, aiConfig.apiKey, aiConfig.model, fullSystemPrompt, prompt, fallbacks);
+          const responseTime1 = Date.now() - startTime1;
 
           await logAIUsage(supabase, {
             organizationId,
@@ -668,7 +658,8 @@ IMPORTANTE:
             provider: aiConfig.provider,
             model: aiConfig.model,
             action: usePerplexity ? "generate_script_with_research" : "generate_script",
-            success: true
+            success: true,
+            response_time_ms: responseTime1,
           });
 
           return new Response(
@@ -745,24 +736,21 @@ Devuelve el guion mejorado manteniendo el formato HTML estructurado.`;
       provider: aiConfig.provider,
       model: aiConfig.model,
       action,
-      success: true
+      success: true,
+      response_time_ms: Date.now() - startTime,
     });
 
-    return new Response(
-      JSON.stringify({ success: true, result, ai_provider: aiConfig.provider, ai_model: aiConfig.model, execution_id: executionId ?? undefined }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return successResponse({
+      success: true,
+      result,
+      ai_provider: aiConfig.provider,
+      ai_model: aiConfig.model,
+      execution_id: executionId ?? undefined
+    });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error("Error in content-ai function:", error);
-
-    let status = 500;
-    if (errorMessage.includes("Rate limit")) status = 429;
-    if (errorMessage.includes("Payment required")) status = 402;
-
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return errorResponse(error, {
+      action: `content-ai:${body?.action || 'unknown'}`,
+      resourceId: body?.product?.id,
+    });
   }
 });

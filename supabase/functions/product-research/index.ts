@@ -1751,17 +1751,28 @@ Para cada rol:
   }
 }
 
-/** Guarda progreso parcial */
+// Máximo de pasos por invocación para evitar timeout de Supabase Edge Functions
+const MAX_STEPS_PER_BATCH = 4;
+
+/** Guarda progreso parcial con formato compatible con polling del frontend */
 async function savePartialResults(
   supabase: any,
   productId: string,
   results: Record<string, unknown>,
-  completedSteps: string[]
+  completedSteps: string[],
+  currentStepName?: string,
+  currentStepId?: string,
 ) {
   const { error } = await supabase
     .from("products")
     .update({
       research_progress: {
+        // Polling-friendly fields (for frontend progress UI)
+        step: completedSteps.length,
+        total: RESEARCH_STEPS.length,
+        label: currentStepName || (completedSteps.length === RESEARCH_STEPS.length ? 'Completado' : 'Procesando...'),
+        stepId: currentStepId || completedSteps[completedSteps.length - 1],
+        // Data fields (for self-invocation resumption)
         completed_steps: completedSteps,
         partial_results: results,
         updated_at: new Date().toISOString(),
@@ -1773,8 +1784,6 @@ async function savePartialResults(
 
   if (error) {
     console.error("[product-research] savePartialResults error:", error);
-    // Don't throw - we don't want to lose progress in memory even if DB write fails
-    // The consolidation at the end will retry the full save
   }
 }
 
@@ -1905,6 +1914,26 @@ async function consolidateFinalResults(
     };
   }
 
+  // Validate: only mark as completed if key research columns are populated
+  const requiredFields = ['avatar_profiles', 'content_calendar', 'launch_strategy'];
+  const missingFields = requiredFields.filter(f => !update[f]);
+
+  if (missingFields.length > 0) {
+    console.warn(`[product-research] Missing required fields: ${missingFields.join(', ')}. Marking as partial.`);
+    update.brief_status = 'in_progress';
+    delete update.brief_completed_at;
+    delete update.research_generated_at;
+    // Keep research_progress so frontend can detect partial completion
+    update.research_progress = {
+      step: Object.keys(results).length,
+      total: RESEARCH_STEPS.length,
+      label: `Parcial: faltan ${missingFields.join(', ')}`,
+      incomplete: true,
+      completed_steps: Object.keys(results),
+      updated_at: new Date().toISOString(),
+    };
+  }
+
   console.log("[product-research] Update keys:", Object.keys(update));
 
   const { error } = await supabase
@@ -1917,7 +1946,7 @@ async function consolidateFinalResults(
     throw error;
   }
 
-  console.log("[product-research] Consolidation complete");
+  console.log(`[product-research] Consolidation complete (status: ${update.brief_status})`);
 }
 
 function buildProductDescription(briefData: any): string {
@@ -2056,9 +2085,11 @@ serve(async (req) => {
       ? Math.max(0, RESEARCH_STEPS.findIndex((s) => s.id === startFromStep))
       : 0;
 
-    console.log(`[product-research] Starting from step ${startIdx}, completed: ${completedSteps.join(', ')}`);
+    console.log(`[product-research] Starting from step ${startIdx}, completed: ${completedSteps.join(', ')}, batch limit: ${MAX_STEPS_PER_BATCH}`);
 
-    // Execute steps sequentially
+    // Execute steps sequentially with batch limit to avoid Supabase timeout
+    let stepsExecutedThisBatch = 0;
+
     for (let i = startIdx; i < RESEARCH_STEPS.length; i++) {
       const step = RESEARCH_STEPS[i];
 
@@ -2073,7 +2104,7 @@ serve(async (req) => {
       if (missingDeps.length > 0) {
         const errMsg = `Dependencies not met for ${step.id}: missing ${missingDeps.join(', ')}`;
         console.error(`[product-research] ${errMsg}`);
-        await savePartialResults(supabase, productId, results, completedSteps);
+        await savePartialResults(supabase, productId, results, completedSteps, errMsg, step.id);
         return new Response(
           JSON.stringify({
             success: false,
@@ -2087,6 +2118,9 @@ serve(async (req) => {
 
       console.log(`[product-research] === Step ${i + 1}/${RESEARCH_STEPS.length}: ${step.name} ===`);
 
+      // Update progress BEFORE running the step (so frontend shows current step)
+      await savePartialResults(supabase, productId, results, completedSteps, step.name, step.id);
+
       const stepResult = await executeResearchStep(
         step.id,
         baseContext,
@@ -2097,7 +2131,7 @@ serve(async (req) => {
 
       if (!stepResult.success) {
         console.error(`[product-research] Step ${step.id} failed:`, stepResult.error);
-        await savePartialResults(supabase, productId, results, completedSteps);
+        await savePartialResults(supabase, productId, results, completedSteps, `Error: ${step.name}`, step.id);
 
         return new Response(
           JSON.stringify({
@@ -2112,11 +2146,58 @@ serve(async (req) => {
 
       results[step.id] = stepResult.result;
       completedSteps.push(step.id);
+      stepsExecutedThisBatch++;
 
-      // Save progress after each step
-      await savePartialResults(supabase, productId, results, completedSteps);
+      // Save progress after completing
+      await savePartialResults(supabase, productId, results, completedSteps, step.name, step.id);
 
-      console.log(`[product-research] Step ${step.id} completed`);
+      console.log(`[product-research] Step ${step.id} completed (${stepsExecutedThisBatch}/${MAX_STEPS_PER_BATCH} this batch)`);
+
+      // Self-invoke if batch limit reached and more steps remain
+      if (stepsExecutedThisBatch >= MAX_STEPS_PER_BATCH) {
+        const remaining = RESEARCH_STEPS.filter(s => !completedSteps.includes(s.id));
+        if (remaining.length > 0) {
+          const nextStep = remaining[0];
+          console.log(`[product-research] Batch limit reached. Self-invoking for step: ${nextStep.id} (${remaining.length} remaining)`);
+
+          const selfUrl = `${supabaseUrl}/functions/v1/product-research`;
+          fetch(selfUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${supabaseKey}`,
+            },
+            body: JSON.stringify({ productId, briefData, startFromStep: nextStep.id }),
+          }).catch(err => {
+            console.error("[product-research] Self-invoke failed:", err);
+            // Mark progress as error so frontend stops polling
+            supabase.from("products").update({
+              research_progress: {
+                step: completedSteps.length,
+                total: RESEARCH_STEPS.length,
+                label: `Error al continuar desde ${nextStep.name}`,
+                error: true,
+                completed_steps: completedSteps,
+                updated_at: new Date().toISOString(),
+              },
+            }).eq("id", productId).then(() => {});
+          });
+
+          // Give time for the self-invoke request to dispatch
+          await new Promise(r => setTimeout(r, 500));
+
+          return new Response(
+            JSON.stringify({
+              success: true,
+              partial: true,
+              completedSteps,
+              totalSteps: RESEARCH_STEPS.length,
+              nextStep: nextStep.id,
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
 
       // Small delay between API calls to avoid rate limiting
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -2124,6 +2205,16 @@ serve(async (req) => {
 
     // All steps completed - consolidate results
     await consolidateFinalResults(supabase, productId, results, briefData);
+
+    // Mark final progress for polling
+    await supabase.from("products").update({
+      research_progress: {
+        step: RESEARCH_STEPS.length,
+        total: RESEARCH_STEPS.length,
+        label: "Completado",
+        done: true,
+      },
+    }).eq("id", productId);
 
     return new Response(
       JSON.stringify({

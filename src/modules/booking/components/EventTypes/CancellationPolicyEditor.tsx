@@ -71,7 +71,7 @@ export function CancellationPolicyEditor({
   return (
     <div className="space-y-5">
       <div className="flex items-start gap-3">
-        <div className="p-2 rounded-lg bg-violet-50">
+        <div className="p-2 rounded-sm bg-violet-50">
           <Shield className="w-5 h-5 text-violet-600" />
         </div>
         <div>
@@ -86,11 +86,11 @@ export function CancellationPolicyEditor({
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white border border-slate-200 rounded-xl p-4"
+        className="bg-white border border-slate-200 rounded-sm p-4"
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-red-50">
+            <div className="p-2 rounded-sm bg-red-50">
               <XCircle className="w-4 h-4 text-red-500" />
             </div>
             <div>
@@ -144,11 +144,11 @@ export function CancellationPolicyEditor({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-white border border-slate-200 rounded-xl p-4"
+        className="bg-white border border-slate-200 rounded-sm p-4"
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-50">
+            <div className="p-2 rounded-sm bg-amber-50">
               <RefreshCw className="w-4 h-4 text-amber-500" />
             </div>
             <div>
@@ -202,7 +202,7 @@ export function CancellationPolicyEditor({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-white border border-slate-200 rounded-xl p-4"
+        className="bg-white border border-slate-200 rounded-sm p-4"
       >
         <Label className="text-sm text-slate-700 font-medium block mb-2">
           Texto personalizado de política (opcional)
@@ -226,12 +226,12 @@ export function CancellationPolicyEditor({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-slate-50 border border-slate-200 rounded-xl p-4"
+        className="bg-slate-50 border border-slate-200 rounded-sm p-4"
       >
         <h5 className="text-sm font-medium text-slate-700 mb-3">
           Vista previa para el invitado
         </h5>
-        <div className="bg-white rounded-lg p-3 text-sm text-slate-600 space-y-2">
+        <div className="bg-white rounded-sm p-3 text-sm text-slate-600 space-y-2">
           {localPolicy.allow_cancellation ? (
             <p>
               ✓ Puedes cancelar hasta {localPolicy.min_hours_before} horas antes de la cita
@@ -268,7 +268,7 @@ export function CancellationPolicyEditor({
           <Button
             onClick={handleSave}
             disabled={saving || isLoading}
-            className="bg-violet-600 hover:bg-violet-700 rounded-lg px-6"
+            className="bg-violet-600 hover:bg-violet-700 rounded-sm px-6"
           >
             {saving ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />

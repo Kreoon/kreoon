@@ -239,7 +239,7 @@ export function SuggestedProfiles({ variant = 'carousel', limit = 5, onDismiss }
           {profiles.map(profile => (
             <div 
               key={profile.id}
-              className="flex-shrink-0 w-36 bg-card/50 border border-border rounded-xl p-3 text-center"
+              className="flex-shrink-0 w-36 bg-card/50 border border-border rounded-sm p-3 text-center"
             >
               <button onClick={() => handleProfileClick(profile.id)}>
                 <Avatar className="h-16 w-16 mx-auto mb-2">

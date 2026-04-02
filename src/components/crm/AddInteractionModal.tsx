@@ -132,7 +132,7 @@ export function AddInteractionModal({
           {/* Interaction Type as icon grid */}
           <div className="space-y-2">
             <Label className="text-white/70 text-xs">Tipo de interaccion</Label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {types.map((t) => {
                 const Icon = t.icon;
                 const isSelected = selectedType === t.value;
@@ -142,7 +142,7 @@ export function AddInteractionModal({
                     type="button"
                     onClick={() => form.setValue('interaction_type', t.value, { shouldValidate: true })}
                     className={cn(
-                      'flex flex-col items-center gap-1 p-2.5 rounded-lg border transition-all text-center',
+                      'flex flex-col items-center gap-1 p-2.5 rounded-sm border transition-all text-center',
                       isSelected
                         ? 'border-[#8b5cf6]/60 bg-[#8b5cf6]/10 shadow-[0_0_15px_rgba(139,92,246,0.15)]'
                         : 'border-white/10 bg-white/5 hover:bg-white/8 hover:border-white/20',

@@ -8,14 +8,14 @@ export function CreatorProfileSkeleton() {
 
       {/* Gallery skeleton */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
-        <div className="hidden md:grid grid-cols-4 grid-rows-2 gap-2 rounded-2xl overflow-hidden h-[450px]">
+        <div className="hidden md:grid grid-cols-4 grid-rows-2 gap-2 rounded-sm overflow-hidden h-[450px]">
           <div className="col-span-2 row-span-2 bg-white/5" />
           <div className="bg-white/5" />
           <div className="bg-white/5" />
           <div className="bg-white/5" />
           <div className="bg-white/5" />
         </div>
-        <div className="md:hidden aspect-[4/5] rounded-2xl bg-white/5" />
+        <div className="md:hidden aspect-[4/5] rounded-sm bg-white/5" />
       </div>
 
       {/* Content skeleton */}
@@ -45,24 +45,24 @@ export function CreatorProfileSkeleton() {
             {/* Services */}
             <div className="space-y-3">
               <div className="h-6 w-48 rounded bg-white/5" />
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-32 rounded-xl bg-white/5" />
+                  <div key={i} className="h-32 rounded-sm bg-white/5" />
                 ))}
               </div>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-24 rounded-xl bg-white/5" />
+                <div key={i} className="h-24 rounded-sm bg-white/5" />
               ))}
             </div>
           </div>
 
           {/* Sidebar */}
           <div className="hidden lg:block w-[380px] flex-shrink-0">
-            <div className="h-[500px] rounded-2xl bg-white/5" />
+            <div className="h-[500px] rounded-sm bg-white/5" />
           </div>
         </div>
       </div>

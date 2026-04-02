@@ -73,6 +73,15 @@ export interface MySignatureItem {
 
 // Mapeo de documentos a método de firma requerido
 export const DOCUMENT_SIGNATURE_METHODS: Record<string, SignatureMethod> = {
+  // Documentos de registro (simplificados v1.0)
+  age_declaration: 'clickwrap',
+  general_terms: 'clickwrap',
+
+  // Documentos por rol
+  creator_agreement: 'typed_name',
+  brand_agreement: 'typed_name',
+
+  // Documentos legacy (mantener para histórico)
   terms_of_service: 'clickwrap',
   privacy_policy: 'clickwrap',
   cookie_policy: 'clickwrap',
@@ -81,11 +90,14 @@ export const DOCUMENT_SIGNATURE_METHODS: Record<string, SignatureMethod> = {
   content_moderation_policy: 'clickwrap',
   dmca_policy: 'clickwrap',
   live_shopping_terms: 'clickwrap',
-  creator_agreement: 'typed_name',
-  brand_agreement: 'typed_name',
   escrow_payment_terms: 'typed_name',
   data_processing_agreement: 'typed_name',
   white_label_agreement: 'drawn_signature',
+
+  // Documentos unificados por tipo de cuenta (v1.0 - Marzo 2026)
+  talent_agreement: 'typed_name',
+  client_agreement: 'typed_name',
+  organization_agreement: 'drawn_signature',
 };
 
 export function getSignatureMethodForDocument(documentType: string): SignatureMethod {

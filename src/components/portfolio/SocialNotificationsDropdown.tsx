@@ -74,7 +74,7 @@ export function SocialNotificationsDropdown() {
       <div
         key={notification.id}
         className={cn(
-          "flex items-start gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors rounded-lg",
+          "flex items-start gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors rounded-sm",
           !notification.is_read && "bg-primary/5"
         )}
         onClick={() => handleNotificationClick(notification)}

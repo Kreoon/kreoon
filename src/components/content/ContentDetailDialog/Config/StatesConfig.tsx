@@ -202,7 +202,7 @@ export function StatesConfig({ organizationId, stateRules, onUpdate }: StatesCon
         </div>
       )}
 
-      <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg text-sm">
+      <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-sm text-sm">
         <span>💡</span>
         <p className="text-muted-foreground">
           <strong>Bloqueado:</strong> Solo los roles seleccionados pueden editar. 

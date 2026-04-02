@@ -106,7 +106,7 @@ export function AmbassadorBadge({
           "border-2",
           colors.border,
           colors.text,
-          "backdrop-blur-sm",
+          "",
           "transition-all duration-300 hover:shadow-lg hover:shadow-current/20 hover:scale-105",
           sizeClasses[size],
           className

@@ -216,16 +216,16 @@ function FullDistribution({
           return (
             <div
               key={r.type}
-              className="p-3 rounded-xl bg-[hsl(270,100%,60%,0.03)] border border-[hsl(270,100%,60%,0.05)]"
+              className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.03)] border border-[hsl(270,100%,60%,0.05)]"
             >
               <div className="flex items-center gap-3">
                 {/* Avatar/Icon */}
                 {r.type === 'platform' ? (
-                  <div className="p-2 rounded-lg bg-[hsl(270,100%,60%,0.1)]">
+                  <div className="p-2 rounded-sm bg-[hsl(270,100%,60%,0.1)]">
                     <Building2 className="h-5 w-5 text-primary" />
                   </div>
                 ) : r.status === 'unassigned' ? (
-                  <div className="p-2 rounded-lg bg-[hsl(270,100%,60%,0.05)]">
+                  <div className="p-2 rounded-sm bg-[hsl(270,100%,60%,0.05)]">
                     <HelpCircle className="h-5 w-5 text-muted-foreground" />
                   </div>
                 ) : (

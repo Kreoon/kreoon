@@ -20,9 +20,11 @@ export function EditableText({
   className = '',
 }: EditableTextProps) {
   const baseClasses =
-    'w-full rounded-lg bg-white/10 border border-white/20 text-white text-sm px-3 py-2 ' +
-    'placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500/50 ' +
-    'transition-colors';
+    'w-full rounded-lg bg-white dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50 ' +
+    'text-zinc-900 dark:text-zinc-100 text-sm px-3 py-2 ' +
+    'placeholder:text-zinc-400 dark:placeholder:text-zinc-500 ' +
+    'focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 ' +
+    'transition-colors duration-150';
 
   if (multiline) {
     return (
@@ -42,7 +44,7 @@ export function EditableText({
       value={value || ''}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className={`${baseClasses} h-9 ${className}`}
+      className={`${baseClasses} h-10 ${className}`}
     />
   );
 }
@@ -58,15 +60,15 @@ interface EditableTagsProps {
 }
 
 const TAG_COLORS: Record<string, string> = {
-  purple: 'bg-purple-500/10 border-purple-500/20 text-purple-300',
-  pink: 'bg-pink-500/10 border-pink-500/20 text-pink-300',
-  blue: 'bg-blue-500/10 border-blue-500/20 text-blue-300',
-  cyan: 'bg-cyan-500/10 border-cyan-500/20 text-cyan-300',
-  emerald: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300',
-  green: 'bg-green-500/10 border-green-500/20 text-green-300',
-  amber: 'bg-amber-500/10 border-amber-500/20 text-amber-300',
-  red: 'bg-red-500/10 border-red-500/20 text-red-300',
-  orange: 'bg-orange-500/10 border-orange-500/20 text-orange-300',
+  purple: 'bg-purple-100 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/20 text-purple-600 dark:text-purple-300',
+  pink: 'bg-pink-100 dark:bg-pink-500/10 border-pink-200 dark:border-pink-500/20 text-pink-600 dark:text-pink-300',
+  blue: 'bg-blue-100 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-300',
+  cyan: 'bg-cyan-100 dark:bg-cyan-500/10 border-cyan-200 dark:border-cyan-500/20 text-cyan-600 dark:text-cyan-300',
+  emerald: 'bg-emerald-100 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-300',
+  green: 'bg-green-100 dark:bg-green-500/10 border-green-200 dark:border-green-500/20 text-green-600 dark:text-green-300',
+  amber: 'bg-amber-100 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20 text-amber-600 dark:text-amber-300',
+  red: 'bg-red-100 dark:bg-red-500/10 border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-300',
+  orange: 'bg-orange-100 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/20 text-orange-600 dark:text-orange-300',
 };
 
 export function EditableTags({
@@ -101,7 +103,7 @@ export function EditableTags({
             {item}
             <button
               onClick={() => removeTag(i)}
-              className="ml-0.5 hover:text-white transition-colors"
+              className="ml-0.5 hover:opacity-70 transition-opacity"
             >
               <X className="w-3 h-3" />
             </button>
@@ -120,14 +122,18 @@ export function EditableTags({
             }
           }}
           placeholder={placeholder}
-          className="flex-1 h-8 rounded-lg bg-white/10 border border-white/20 text-white text-xs px-3
-                     placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500/50
-                     focus:border-purple-500/50 transition-colors"
+          className="flex-1 h-9 rounded-lg bg-white dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50
+                     text-zinc-900 dark:text-white text-xs px-3
+                     placeholder:text-zinc-400 dark:placeholder:text-zinc-500
+                     focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20
+                     transition-colors duration-150"
         />
         <button
           onClick={addTag}
-          className="h-8 px-2 rounded-lg bg-white/10 border border-white/20 text-gray-400
-                     hover:text-white hover:bg-white/20 transition-colors"
+          className="h-9 px-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700
+                     text-zinc-600 dark:text-zinc-400
+                     hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-700
+                     transition-colors duration-150"
         >
           <Plus className="w-3.5 h-3.5" />
         </button>
@@ -155,14 +161,14 @@ export function EditableList({
   const [newItem, setNewItem] = useState('');
 
   const dotColors: Record<string, string> = {
-    purple: 'bg-purple-400',
-    pink: 'bg-pink-400',
-    green: 'bg-green-400',
-    emerald: 'bg-emerald-400',
-    red: 'bg-red-400',
-    blue: 'bg-blue-400',
-    amber: 'bg-amber-400',
-    orange: 'bg-orange-400',
+    purple: 'bg-purple-500',
+    pink: 'bg-pink-500',
+    green: 'bg-green-500',
+    emerald: 'bg-emerald-500',
+    red: 'bg-red-500',
+    blue: 'bg-blue-500',
+    amber: 'bg-amber-500',
+    orange: 'bg-orange-500',
   };
 
   const dotClass = dotColors[color] || dotColors.purple;
@@ -184,10 +190,10 @@ export function EditableList({
       {items.map((item, i) => (
         <div key={i} className="flex items-start gap-2 group">
           <div className={`w-1.5 h-1.5 rounded-full ${dotClass} mt-2 flex-shrink-0`} />
-          <span className="text-sm text-foreground/80 flex-1">{item}</span>
+          <span className="text-sm text-zinc-700 dark:text-zinc-300 flex-1">{item}</span>
           <button
             onClick={() => removeItem(i)}
-            className="p-0.5 rounded text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100
+            className="p-0.5 rounded text-zinc-400 hover:text-red-500 dark:hover:text-red-400 opacity-0 group-hover:opacity-100
                        transition-all flex-shrink-0"
           >
             <X className="w-3.5 h-3.5" />
@@ -206,14 +212,18 @@ export function EditableList({
             }
           }}
           placeholder={placeholder}
-          className="flex-1 h-8 rounded-lg bg-white/10 border border-white/20 text-white text-xs px-3
-                     placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500/50
-                     focus:border-purple-500/50 transition-colors"
+          className="flex-1 h-9 rounded-lg bg-white dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50
+                     text-zinc-900 dark:text-white text-xs px-3
+                     placeholder:text-zinc-400 dark:placeholder:text-zinc-500
+                     focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20
+                     transition-colors duration-150"
         />
         <button
           onClick={addItem}
-          className="h-8 px-2 rounded-lg bg-white/10 border border-white/20 text-gray-400
-                     hover:text-white hover:bg-white/20 transition-colors"
+          className="h-9 px-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700
+                     text-zinc-600 dark:text-zinc-400
+                     hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-700
+                     transition-colors duration-150"
         >
           <Plus className="w-3.5 h-3.5" />
         </button>

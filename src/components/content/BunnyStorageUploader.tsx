@@ -353,7 +353,7 @@ export function BunnyStorageUploader({
       {/* Uploaded Files Notification Style - Collapsible */}
       {uploadedFiles.length > 0 && !uploading && (
         <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-          <div className="rounded-lg border bg-green-500/10 border-green-500/30 p-3 space-y-2">
+          <div className="rounded-sm border bg-green-500/10 border-green-500/30 p-3 space-y-2">
             <div className="flex items-center justify-between">
               <CollapsibleTrigger asChild>
                 <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">

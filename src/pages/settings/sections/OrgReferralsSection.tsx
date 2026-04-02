@@ -11,8 +11,8 @@ function MetricCard({ icon: Icon, label, value, color }: {
   color: string;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border bg-card/50 p-4">
-      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${color}`}>
+    <div className="flex items-center gap-3 rounded-sm border border-border bg-card/50 p-4">
+      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-sm ${color}`}>
         <Icon className="h-5 w-5" />
       </div>
       <div>
@@ -150,7 +150,7 @@ export default function OrgReferralsSection() {
             Los códigos de referido de organización son independientes de los personales.
             Cuando alguien se registra usando un link de tu org, las comisiones se acumulan
             en el wallet de la organización. El referido recibe los mismos beneficios
-            (descuento + Kreoon Coins).
+            (descuento + Tokens IA).
           </p>
         </CardContent>
       </Card>

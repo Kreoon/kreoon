@@ -268,7 +268,7 @@ export function SmartSearch({
 
             {/* Results Dropdown */}
             {showDropdown && (
-              <div className="absolute top-full right-0 mt-2 w-[280px] sm:w-[320px] bg-zinc-900 border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden max-h-[60vh] overflow-y-auto">
+              <div className="absolute top-full right-0 mt-2 w-[280px] sm:w-[320px] bg-zinc-900 border border-white/10 rounded-sm shadow-2xl z-50 overflow-hidden max-h-[60vh] overflow-y-auto">
                 {renderDropdownContent()}
               </div>
             )}
@@ -305,7 +305,7 @@ export function SmartSearch({
 
       {/* Results Dropdown */}
       {showDropdown && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden max-h-[70vh] overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-white/10 rounded-sm shadow-2xl z-50 overflow-hidden max-h-[70vh] overflow-y-auto">
           {renderDropdownContent()}
         </div>
       )}
@@ -342,7 +342,7 @@ export function SmartSearch({
               <button
                 key={i}
                 onClick={() => handleRecentClick(term)}
-                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-white/10 rounded-lg transition text-left"
+                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-white/10 rounded-sm transition text-left"
               >
                 <Hash className="h-4 w-4 text-white/40" />
                 <span className="text-white/70 text-sm">{term}</span>
@@ -379,7 +379,7 @@ export function SmartSearch({
               <button
                 key={user.id}
                 onClick={() => handleUserClick(user.id, user.full_name)}
-                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/10 rounded-lg transition text-left"
+                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/10 rounded-sm transition text-left"
               >
                 <Avatar className="h-10 w-10 ring-2 ring-white/10">
                   <AvatarImage src={user.avatar_url || undefined} />
@@ -418,9 +418,9 @@ export function SmartSearch({
               <button
                 key={item.id}
                 onClick={() => handleContentClick(item.id, item.title)}
-                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/10 rounded-lg transition text-left"
+                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/10 rounded-sm transition text-left"
               >
-                <div className="h-10 w-10 rounded-lg bg-white/10 overflow-hidden flex-shrink-0">
+                <div className="h-10 w-10 rounded-sm bg-white/10 overflow-hidden flex-shrink-0">
                   {item.thumbnail_url ? (
                     <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover" />
                   ) : (
@@ -451,7 +451,7 @@ export function SmartSearch({
               <button
                 key={client.id}
                 onClick={() => handleClientClick(client.id, client.name)}
-                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/10 rounded-lg transition text-left"
+                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/10 rounded-sm transition text-left"
               >
                 <Avatar className="h-10 w-10 ring-2 ring-white/10">
                   <AvatarImage src={client.logo_url || undefined} />

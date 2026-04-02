@@ -38,7 +38,7 @@ export function KPICard({ label, value, previousValue, format, color }: KPIData)
 
   return (
     <div className={cn(
-      'bg-gradient-to-br backdrop-blur-sm rounded-xl p-5 border transition-all hover:scale-[1.02]',
+      'bg-gradient-to-br rounded-sm p-5 border transition-all hover:scale-[1.02]',
       COLOR_CLASSES[color]
     )}>
       <p className="text-sm text-gray-400 mb-1">{label}</p>

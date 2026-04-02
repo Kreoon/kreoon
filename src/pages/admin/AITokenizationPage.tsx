@@ -239,7 +239,7 @@ export default function AITokenizationPage() {
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-3">
               <Brain className="h-8 w-8 text-primary" />
-              Kreoon Coins • Valoración IA
+              Tokens IA • Valoración IA
             </h1>
             <p className="text-muted-foreground mt-1">
               Sistema de evaluación automática de perfiles con IA
@@ -259,7 +259,7 @@ export default function AITokenizationPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-primary/10">
+                <div className="p-3 rounded-sm bg-primary/10">
                   <Users className="h-6 w-6 text-primary" />
                 </div>
                 <div>
@@ -273,7 +273,7 @@ export default function AITokenizationPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-green-500/10">
+                <div className="p-3 rounded-sm bg-green-500/10">
                   <Sparkles className="h-6 w-6 text-green-500" />
                 </div>
                 <div>
@@ -289,7 +289,7 @@ export default function AITokenizationPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-yellow-500/10">
+                <div className="p-3 rounded-sm bg-yellow-500/10">
                   <Coins className="h-6 w-6 text-yellow-500" />
                 </div>
                 <div>
@@ -308,7 +308,7 @@ export default function AITokenizationPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-purple-500/10">
+                <div className="p-3 rounded-sm bg-purple-500/10">
                   <History className="h-6 w-6 text-purple-500" />
                 </div>
                 <div>

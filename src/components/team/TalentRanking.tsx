@@ -30,7 +30,7 @@ export function TalentRanking() {
     return (
       <div className="space-y-3">
         {[1, 2, 3, 4, 5].map(i => (
-          <Skeleton key={i} className="h-20 rounded-lg" />
+          <Skeleton key={i} className="h-20 rounded-sm" />
         ))}
       </div>
     );
@@ -51,7 +51,7 @@ export function TalentRanking() {
             key={f}
             onClick={() => setFilter(f)}
             className={cn(
-              "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+              "px-3 py-1.5 rounded-sm text-sm font-medium transition-colors",
               filter === f
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -74,7 +74,7 @@ export function TalentRanking() {
             <div
               key={talent.user_id}
               className={cn(
-                "flex items-center gap-3 p-3 rounded-lg border bg-card transition-all hover:shadow-md",
+                "flex items-center gap-3 p-3 rounded-sm border bg-card transition-all hover:shadow-md",
                 index < 3 && "border-amber-500/30 bg-gradient-to-r from-card to-amber-500/5"
               )}
             >

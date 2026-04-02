@@ -85,7 +85,7 @@ function StatCard({
   return (
     <Card className="p-4">
       <div className="flex items-center gap-3">
-        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", c.iconBg)}>
+        <div className={cn("w-10 h-10 rounded-sm flex items-center justify-center", c.iconBg)}>
           <Icon className={cn("h-5 w-5", c.text)} />
         </div>
         <div className="min-w-0">
@@ -306,7 +306,7 @@ const PlatformCRMUsers = () => {
                 {usersNeedingAttention.slice(0, 5).map((user) => (
                   <div
                     key={user.user_id}
-                    className="flex items-center justify-between p-2 bg-white/5 rounded-lg cursor-pointer hover:bg-white/10 transition-colors"
+                    className="flex items-center justify-between p-2 bg-white/5 rounded-sm cursor-pointer hover:bg-white/10 transition-colors"
                     onClick={() => {
                       const found = users.find((u) => u.id === user.user_id);
                       if (found) handleSelectUser(found);
@@ -501,7 +501,7 @@ const PlatformCRMUsers = () => {
                   <div
                     key={user.id}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-white/5 cursor-pointer transition-colors",
+                      "flex items-center gap-3 px-4 py-2.5 rounded-sm hover:bg-white/5 cursor-pointer transition-colors",
                       selectedUser?.id === user.id && "bg-[#8b5cf6]/10 border border-[#8b5cf6]/30",
                     )}
                     onClick={() => handleSelectUser(user)}

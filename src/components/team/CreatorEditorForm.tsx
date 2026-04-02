@@ -195,7 +195,7 @@ export function CreatorEditorForm({ open, onOpenChange, profile, onSuccess }: Cr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-2xl max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
@@ -332,7 +332,7 @@ export function CreatorEditorForm({ open, onOpenChange, profile, onSuccess }: Cr
             />
 
             {/* Estado de Embajador */}
-            <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
+            <div className="p-4 rounded-sm border bg-muted/30 space-y-3">
               <FormField
                 control={form.control}
                 name="is_ambassador"

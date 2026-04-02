@@ -158,7 +158,7 @@ export const TreasureChest = memo(function TreasureChest({
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.15 }}
                     className={cn(
-                      'flex items-center gap-4 p-3 rounded-xl',
+                      'flex items-center gap-4 p-3 rounded-sm',
                       'bg-gradient-to-r from-yellow-500/10 to-amber-500/5',
                       'border border-yellow-500/20'
                     )}
@@ -192,7 +192,7 @@ export const TreasureChest = memo(function TreasureChest({
                   <div
                     key={index}
                     className={cn(
-                      'h-12 rounded-xl',
+                      'h-12 rounded-sm',
                       'bg-white/5 border border-white/5',
                       !isUnlocked && 'opacity-30'
                     )}
@@ -207,7 +207,7 @@ export const TreasureChest = memo(function TreasureChest({
             animate={isUnlocked ? { scale: [1, 1.02, 1] } : {}}
             transition={{ duration: 2, repeat: Infinity }}
             className={cn(
-              'mt-6 p-4 rounded-xl text-center',
+              'mt-6 p-4 rounded-sm text-center',
               isUnlocked
                 ? 'bg-gradient-to-r from-yellow-500/20 via-amber-500/20 to-yellow-500/20 border border-yellow-500/30'
                 : 'bg-white/5 border border-white/10'

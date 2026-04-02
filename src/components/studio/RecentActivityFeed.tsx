@@ -113,7 +113,7 @@ function formatActividadTexto(actividad: Actividad): React.ReactNode {
     case 'pieza_aprobada':
       return (
         <>
-          <span className="font-medium text-white">{usuario.nombre}</span>
+          <span className="font-medium text-foreground">{usuario.nombre}</span>
           {' aprobó el corte final'}
           {metadata?.pieza && (
             <>
@@ -133,7 +133,7 @@ function formatActividadTexto(actividad: Actividad): React.ReactNode {
     case 'pieza_entregada':
       return (
         <>
-          <span className="font-medium text-white">{usuario.nombre}</span>
+          <span className="font-medium text-foreground">{usuario.nombre}</span>
           {' entregó una toma'}
           {metadata?.produccion && (
             <>
@@ -147,7 +147,7 @@ function formatActividadTexto(actividad: Actividad): React.ReactNode {
     case 'nuevo_miembro':
       return (
         <>
-          <span className="font-medium text-white">{usuario.nombre}</span>
+          <span className="font-medium text-foreground">{usuario.nombre}</span>
           {' se unió al estudio'}
           {metadata?.rol && (
             <>
@@ -161,7 +161,7 @@ function formatActividadTexto(actividad: Actividad): React.ReactNode {
     case 'nivel_subido':
       return (
         <>
-          <span className="font-medium text-white">{usuario.nombre}</span>
+          <span className="font-medium text-foreground">{usuario.nombre}</span>
           {' subió a '}
           <span className="text-amber-400">Nivel {metadata?.nivel}</span>
           {metadata?.nombreNivel && (
@@ -176,7 +176,7 @@ function formatActividadTexto(actividad: Actividad): React.ReactNode {
     case 'insignia_ganada':
       return (
         <>
-          <span className="font-medium text-white">{usuario.nombre}</span>
+          <span className="font-medium text-foreground">{usuario.nombre}</span>
           {' desbloqueó la insignia '}
           <span className="text-orange-400">{metadata?.nombreInsignia || metadata?.insignia}</span>
         </>
@@ -185,7 +185,7 @@ function formatActividadTexto(actividad: Actividad): React.ReactNode {
     case 'comentario':
       return (
         <>
-          <span className="font-medium text-white">{usuario.nombre}</span>
+          <span className="font-medium text-foreground">{usuario.nombre}</span>
           {' comentó'}
           {metadata?.pieza && (
             <>
@@ -199,7 +199,7 @@ function formatActividadTexto(actividad: Actividad): React.ReactNode {
     case 'produccion_creada':
       return (
         <>
-          <span className="font-medium text-white">{usuario.nombre}</span>
+          <span className="font-medium text-foreground">{usuario.nombre}</span>
           {' creó la producción '}
           <span className="text-purple-400">{metadata?.produccion}</span>
         </>
@@ -208,7 +208,7 @@ function formatActividadTexto(actividad: Actividad): React.ReactNode {
     case 'pago_realizado':
       return (
         <>
-          <span className="font-medium text-white">{usuario.nombre}</span>
+          <span className="font-medium text-foreground">{usuario.nombre}</span>
           {' recibió un pago de '}
           <span className="text-emerald-400">
             ${metadata?.monto?.toLocaleString() || '0'}
@@ -239,9 +239,9 @@ export function RecentActivityFeed({
   if (displayActividades.length === 0) {
     return (
       <div className={cn('flex flex-col items-center justify-center py-12 text-center', className)}>
-        <Film className="w-12 h-12 text-zinc-600 mb-4" />
-        <h3 className="text-lg font-semibold text-zinc-400">El set está tranquilo</h3>
-        <p className="text-sm text-zinc-500">No hay actividad reciente</p>
+        <Film className="w-12 h-12 text-muted-foreground mb-4" />
+        <h3 className="text-lg font-semibold text-muted-foreground">El set está tranquilo</h3>
+        <p className="text-sm text-muted-foreground">No hay actividad reciente</p>
       </div>
     );
   }
@@ -251,7 +251,7 @@ export function RecentActivityFeed({
       {/* Header */}
       <div className="flex items-center gap-2">
         <Activity className="w-5 h-5 text-purple-400" />
-        <h3 className="font-bold text-white text-lg">Detrás de Cámaras</h3>
+        <h3 className="font-bold text-foreground text-lg">Detrás de Cámaras</h3>
       </div>
 
       {/* Activity list */}
@@ -271,9 +271,9 @@ export function RecentActivityFeed({
                 exit={{ opacity: 0, y: 20 }}
                 transition={{ delay: index * 0.05 }}
                 className={cn(
-                  'flex items-start gap-3 p-3 rounded-xl',
-                  'border-b border-zinc-800/50 last:border-0',
-                  'hover:bg-zinc-800/30 transition-colors',
+                  'flex items-start gap-3 p-3 rounded-sm',
+                  'border-b border-border last:border-0',
+                  'hover:bg-secondary transition-colors',
                   isRecent && 'bg-purple-500/5'
                 )}
               >
@@ -287,21 +287,21 @@ export function RecentActivityFeed({
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-zinc-400 leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     {formatActividadTexto(actividad)}
                   </p>
                 </div>
 
                 {/* Timestamp + Icon */}
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="text-xs text-zinc-600">
+                  <span className="text-xs text-muted-foreground">
                     {formatDistanceToNow(new Date(actividad.fecha), {
                       addSuffix: false,
                       locale: es,
                     })}
                   </span>
                   <div
-                    className="w-7 h-7 rounded-lg flex items-center justify-center"
+                    className="w-7 h-7 rounded-sm flex items-center justify-center"
                     style={{ backgroundColor: config.bgColor }}
                   >
                     <Icon size={14} style={{ color: config.color }} />
@@ -317,10 +317,10 @@ export function RecentActivityFeed({
       {showLoadMore && onLoadMore && filteredActividades.length > maxItems && (
         <motion.button
           className={cn(
-            'w-full py-2.5 rounded-xl text-sm font-medium',
-            'bg-zinc-800/50 hover:bg-zinc-700/50',
-            'text-zinc-400 hover:text-white',
-            'border border-zinc-700/50 hover:border-zinc-600',
+            'w-full py-2.5 rounded-sm text-sm font-medium',
+            'bg-secondary hover:bg-muted',
+            'text-muted-foreground hover:text-foreground',
+            'border border-border hover:border-border',
             'transition-all'
           )}
           onClick={onLoadMore}

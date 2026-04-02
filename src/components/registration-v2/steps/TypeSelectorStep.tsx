@@ -61,7 +61,7 @@ export function TypeSelectorStep({
               type="button"
               onClick={() => onSelect(option.type)}
               className={cn(
-                "relative flex items-center gap-4 p-5 rounded-xl border-2 transition-all text-left group",
+                "relative flex items-center gap-4 p-5 rounded-sm border-2 transition-all text-left group",
                 "hover:scale-[1.02] hover:shadow-lg",
                 isSelected
                   ? "border-primary bg-primary/10 shadow-primary/20"
@@ -70,7 +70,7 @@ export function TypeSelectorStep({
             >
               {/* Icon */}
               <div className={cn(
-                "flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center transition-colors",
+                "flex-shrink-0 w-12 h-12 rounded-sm flex items-center justify-center transition-colors",
                 isSelected
                   ? "bg-primary text-white"
                   : "bg-white/10 text-white/60 group-hover:bg-white/15 group-hover:text-white/80"

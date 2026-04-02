@@ -10,7 +10,7 @@ export interface AdaptiveFilterConfig {
   label: string;
   type: 'multi-select' | 'toggle';
   options: AdaptiveFilterOption[];
-  filterKey: 'platforms' | 'software' | 'accepts_exchange' | 'tech_stack' | 'education_format';
+  filterKey: 'platforms' | 'software' | 'accepts_exchange';
 }
 
 // --- Constants ---
@@ -33,40 +33,18 @@ export const SOFTWARE_TOOLS: AdaptiveFilterOption[] = [
   { value: 'figma', label: 'Figma' },
 ];
 
-export const TECH_STACKS: AdaptiveFilterOption[] = [
-  { value: 'react', label: 'React' },
-  { value: 'python', label: 'Python' },
-  { value: 'node', label: 'Node.js' },
-  { value: 'flutter', label: 'Flutter' },
-  { value: 'wordpress', label: 'WordPress' },
-  { value: 'shopify', label: 'Shopify' },
-];
-
-export const EDUCATION_FORMATS: AdaptiveFilterOption[] = [
-  { value: 'live', label: 'En vivo' },
-  { value: 'recorded', label: 'Grabado' },
-  { value: 'workshop', label: 'Taller' },
-  { value: 'mentoring', label: 'Mentoría' },
-];
-
-// --- Adaptive Filter Config per Role Category ---
+// --- Adaptive Filter Config per Role Category (4 categorias) ---
 
 const ADAPTIVE_FILTERS: Partial<Record<MarketplaceViewMode, AdaptiveFilterConfig[]>> = {
-  content_creation: [
+  creators: [
     { key: 'platforms', label: 'Plataformas', type: 'multi-select', options: PLATFORMS, filterKey: 'platforms' },
     { key: 'accepts_exchange', label: 'Acepta intercambio', type: 'toggle', options: [{ value: 'true', label: 'Solo intercambio de producto' }], filterKey: 'accepts_exchange' },
   ],
-  post_production: [
+  production: [
     { key: 'software', label: 'Software', type: 'multi-select', options: SOFTWARE_TOOLS, filterKey: 'software' },
   ],
-  strategy_marketing: [
+  strategy: [
     { key: 'platforms', label: 'Plataformas que gestiona', type: 'multi-select', options: PLATFORMS, filterKey: 'platforms' },
-  ],
-  technology: [
-    { key: 'tech_stack', label: 'Stack tecnológico', type: 'multi-select', options: TECH_STACKS, filterKey: 'tech_stack' },
-  ],
-  education: [
-    { key: 'education_format', label: 'Formato', type: 'multi-select', options: EDUCATION_FORMATS, filterKey: 'education_format' },
   ],
 };
 

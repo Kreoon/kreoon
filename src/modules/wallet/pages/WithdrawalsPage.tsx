@@ -54,12 +54,12 @@ export function WithdrawalsPage() {
       <div className="container mx-auto py-6 px-4 max-w-5xl">
         <div className="animate-pulse space-y-4">
           <div className="h-8 w-48 bg-[hsl(270,100%,60%,0.1)] rounded" />
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 bg-[hsl(270,100%,60%,0.05)] rounded-xl" />
+              <div key={i} className="h-24 bg-[hsl(270,100%,60%,0.05)] rounded-sm" />
             ))}
           </div>
-          <div className="h-[400px] bg-[hsl(270,100%,60%,0.05)] rounded-2xl" />
+          <div className="h-[400px] bg-[hsl(270,100%,60%,0.05)] rounded-sm" />
         </div>
       </div>
     );
@@ -105,7 +105,7 @@ export function WithdrawalsPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10">
+            <div className="p-3 rounded-sm bg-gradient-to-br from-emerald-500/20 to-emerald-600/10">
               <ArrowUpRight className="h-8 w-8 text-emerald-400" />
             </div>
             <div>

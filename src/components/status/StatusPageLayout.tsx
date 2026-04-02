@@ -1,4 +1,5 @@
 import * as React from "react";
+import { KreoonLogo } from '@/components/ui/kreoon-logo';
 import { motion } from "framer-motion";
 import { KreoonPageWrapper } from "@/components/ui/kreoon";
 import { cn } from "@/lib/utils";
@@ -137,15 +138,11 @@ export function StatusPageLayout({
       {confettiVisible && <ConfettiEffect />}
 
       {/* Header sticky */}
-      <header className="sticky top-0 z-10 border-b border-kreoon-border/50 bg-kreoon-bg-primary/80 backdrop-blur-md">
+      <header className="sticky top-0 z-10 border-b border-border bg-background">
         <div className="flex items-center justify-between px-4 py-3 lg:px-6">
-          <div className="flex items-center gap-2">
-            <img
-              src="/favicon.png"
-              alt="KREOON"
-              className="h-8 w-8 rounded-lg object-cover"
-            />
-            <span className="text-lg font-bold tracking-tight text-kreoon-text-primary">
+          <div className="flex items-center gap-3">
+            <KreoonLogo heightClass="h-8" />
+            <span className="text-lg font-bold tracking-tight text-foreground uppercase tracking-widest font-mono">
               KREOON
             </span>
           </div>
@@ -162,7 +159,7 @@ export function StatusPageLayout({
                   {(userInfo.name ?? userInfo.email ?? "?")[0].toUpperCase()}
                 </div>
               )}
-              <span className="max-w-[120px] truncate text-sm text-kreoon-text-secondary md:max-w-[180px]">
+              <span className="max-w-[120px] truncate text-sm text-muted-foreground md:max-w-[180px]">
                 {userInfo.name ?? userInfo.email}
               </span>
             </div>
@@ -201,7 +198,7 @@ export function StatusPageLayout({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
-            className="text-3xl font-bold text-white"
+            className="text-3xl font-bold text-foreground"
           >
             {title}
           </motion.h1>
@@ -212,7 +209,7 @@ export function StatusPageLayout({
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.2 }}
-              className="mx-auto max-w-md text-kreoon-text-secondary"
+              className="mx-auto max-w-md text-muted-foreground"
             >
               {subtitle}
             </motion.p>

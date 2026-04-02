@@ -137,11 +137,11 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
 
   return (
     <div className="fixed inset-0 z-[100]">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="absolute inset-0 flex items-center justify-center p-4">
-        <div className="relative bg-card border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="relative bg-card border border-white/10 rounded-sm w-full max-w-lg max-h-[90vh] overflow-y-auto">
           {/* Header */}
-          <div className="sticky top-0 bg-card/95 backdrop-blur-sm border-b border-white/10 px-6 py-4 flex items-center justify-between">
+          <div className="sticky top-0 bg-card/95 border-b border-white/10 px-6 py-4 flex items-center justify-between">
             <div>
               <h2 className="text-white font-semibold">
                 {isBidMode ? 'Hacer Oferta' : 'Aplicar a Campana'}
@@ -158,7 +158,7 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
             {/* Pricing mode notice */}
             {isBidMode && (
               <div className={cn(
-                'rounded-xl p-3 flex items-start gap-3',
+                'rounded-sm p-3 flex items-start gap-3',
                 isAuction ? 'bg-orange-500/10 border border-orange-500/20' : 'bg-blue-500/10 border border-blue-500/20',
               )}>
                 {isAuction ? (
@@ -196,7 +196,7 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
                 onChange={e => setCoverLetter(e.target.value)}
                 placeholder="Cuentale a la marca por que eres el creador ideal para esta campana..."
                 rows={5}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500 resize-none"
+                className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500 resize-none"
               />
               <p className="text-gray-600 text-xs mt-1">{coverLetter.length}/500 caracteres</p>
             </div>
@@ -224,7 +224,7 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
                           ? `${(campaign.min_bid ?? 0).toLocaleString()} - ${(campaign.max_bid ?? 0).toLocaleString()}`
                           : `Sugerido: $${(campaign.budget_per_video ?? 0).toLocaleString()}`
                     }
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
+                    className="w-full bg-white/5 border border-white/10 rounded-sm pl-10 pr-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
                   />
                 </div>
                 {/* Hints per mode */}
@@ -255,13 +255,13 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
                   onChange={e => setBidMessage(e.target.value)}
                   placeholder="Justifica tu oferta o agrega detalles sobre tu propuesta..."
                   rows={3}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500 resize-none"
+                  className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500 resize-none"
                 />
               </div>
             )}
 
             {/* Editing toggle */}
-            <div className="rounded-xl p-4 bg-white/5 border border-white/5">
+            <div className="rounded-sm p-4 bg-white/5 border border-white/5">
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
                   type="checkbox"
@@ -298,7 +298,7 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
                   max={30}
                   value={estimatedDeliveryDays}
                   onChange={e => setEstimatedDeliveryDays(Math.max(1, Math.min(30, parseInt(e.target.value) || 7)))}
-                  className="w-24 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm text-center focus:outline-none focus:border-purple-500"
+                  className="w-24 bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white text-sm text-center focus:outline-none focus:border-purple-500"
                 />
                 <span className="text-gray-500 text-sm">dias despues de aprobacion</span>
               </div>
@@ -306,7 +306,7 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
 
             {/* Payment preview (paid campaigns only) */}
             {isPaidCampaign && paymentPreview && paymentPreview.total > 0 && (
-              <div className="rounded-xl p-4 bg-purple-500/10 border border-purple-500/15">
+              <div className="rounded-sm p-4 bg-purple-500/10 border border-purple-500/15">
                 <p className="text-purple-300 text-xs font-medium mb-2">Tu pago estimado</p>
                 <p className="text-2xl font-bold text-white">
                   {formatCurrency(paymentPreview.creatorPayout, campaign.currency || 'COP')}
@@ -333,12 +333,12 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
                   onChange={e => setPortfolioInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addPortfolioLink(); } }}
                   placeholder="https://instagram.com/tu-perfil"
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
+                  className="flex-1 bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-purple-500"
                 />
                 <button
                   onClick={addPortfolioLink}
                   disabled={!portfolioInput.trim()}
-                  className="bg-white/5 border border-white/10 hover:bg-white/10 disabled:opacity-40 px-3 rounded-xl transition-colors"
+                  className="bg-white/5 border border-white/10 hover:bg-white/10 disabled:opacity-40 px-3 rounded-sm transition-colors"
                 >
                   <Link className="h-4 w-4 text-gray-400" />
                 </button>
@@ -368,7 +368,7 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
                   type="date"
                   value={availabilityDate}
                   onChange={e => setAvailabilityDate(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500"
+                  className="w-full bg-white/5 border border-white/10 rounded-sm pl-10 pr-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500"
                 />
               </div>
               <p className="text-gray-600 text-xs mt-1">Desde cuando puedes empezar a crear contenido</p>
@@ -379,7 +379,7 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
           <div className="border-t border-white/10 px-6 py-4 flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 border border-white/10 text-gray-400 py-3 rounded-xl hover:bg-white/5 transition-colors text-sm font-medium"
+              className="flex-1 border border-white/10 text-gray-400 py-3 rounded-sm hover:bg-white/5 transition-colors text-sm font-medium"
             >
               Cancelar
             </button>
@@ -387,7 +387,7 @@ export function CampaignApplicationModal({ campaign, onClose, onSuccess }: Campa
               onClick={handleSubmit}
               disabled={submitting}
               className={cn(
-                'flex-1 py-3 rounded-xl transition-colors text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50',
+                'flex-1 py-3 rounded-sm transition-colors text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50',
                 isBidMode
                   ? 'bg-orange-600 hover:bg-orange-500 text-white'
                   : 'bg-purple-600 hover:bg-purple-500 text-white',

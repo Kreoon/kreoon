@@ -128,7 +128,7 @@ const UnlockAccess = () => {
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => (
                 <div
                   key={i}
-                  className="rounded-xl bg-white/5 border border-white/10 overflow-hidden"
+                  className="rounded-sm bg-white/5 border border-white/10 overflow-hidden"
                 >
                   <div className="aspect-video bg-gradient-to-br from-purple-500/20 to-pink-500/20" />
                   <div className="p-4 space-y-2">
@@ -146,7 +146,7 @@ const UnlockAccess = () => {
         </div>
 
         {/* Blur overlay */}
-        <div className="absolute inset-0 backdrop-blur-md bg-black/60" />
+        <div className="absolute inset-0 bg-black/60" />
       </div>
 
       {/* Animated background effects on top of blur */}
@@ -187,7 +187,7 @@ const UnlockAccess = () => {
           transition={{ duration: 0.3, ease: 'easeOut' }}
           className={cn(
             'relative w-full max-w-2xl mx-4',
-            'bg-background/95 backdrop-blur-xl',
+            'bg-background/95',
             'rounded-3xl border border-white/10',
             'shadow-2xl shadow-purple-500/10'
           )}
@@ -277,7 +277,7 @@ const UnlockAccess = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className={cn(
-                    'px-8 py-4 rounded-xl',
+                    'px-8 py-4 rounded-sm',
                     'bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500',
                     'text-white font-bold text-lg',
                     'shadow-lg shadow-amber-500/25',

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RichTextEditor, RichTextViewer } from "@/components/ui/rich-text-editor";
+import { LazyRichTextEditor as RichTextEditor, LazyRichTextViewer as RichTextViewer } from "@/components/ui/lazy-rich-text-editor";
 import { ScriptViewer } from "@/components/content/ScriptViewer";
 import { ProductSelector } from "@/components/products/ProductSelector";
 import { ProductDetailDialog } from "@/components/products/ProductDetailDialog";
@@ -734,7 +734,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
           <TabsContent value="video" className="space-y-6 mt-4">
             {/* Publish to Portfolio Toggle - Only for Admin */}
             {isAdmin && (
-              <div className="flex items-center justify-between p-4 rounded-lg border bg-gradient-to-r from-primary/5 to-primary/10">
+              <div className="flex items-center justify-between p-4 rounded-sm border bg-gradient-to-r from-primary/5 to-primary/10">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-full bg-primary/10">
                     <Share2 className="h-4 w-4 text-primary" />
@@ -784,7 +784,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 />
 
                 {/* Manual Thumbnail Selector */}
-                <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
+                <div className="space-y-3 p-4 rounded-sm border bg-muted/30">
                   <div className="flex items-center gap-2">
                     <Image className="h-4 w-4 text-primary" />
                     <h4 className="font-medium">Subir Miniatura Manual</h4>
@@ -804,7 +804,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
 
             {/* Restriction notice for non-strategists */}
             {!canEditVideoTab && editMode && (
-              <div className="flex items-center gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg text-sm">
+              <div className="flex items-center gap-2 p-3 bg-warning/10 border border-warning/20 rounded-sm text-sm">
                 <Lock className="h-4 w-4 text-warning" />
                 <span>Solo el estratega asignado o un admin pueden editar esta sección</span>
               </div>
@@ -855,7 +855,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
                   {formData.video_urls.map((videoUrl, index) => {
                     return (
-                    <div key={index} className="space-y-2 p-3 rounded-lg border bg-muted/30">
+                    <div key={index} className="space-y-2 p-3 rounded-sm border bg-muted/30">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">Variable {index + 1}</span>
                         <div className="flex items-center gap-2">
@@ -874,12 +874,12 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                           index={index}
                           contentId={content?.id}
                           thumbnailUrl={content?.thumbnail_url}
-                          className="rounded-lg overflow-hidden bg-black flex items-center justify-center mx-auto"
+                          className="rounded-sm overflow-hidden bg-black flex items-center justify-center mx-auto"
                           style={{ aspectRatio: '9/16', maxHeight: '350px', width: 'auto' }}
                         />
                       ) : (
                         <div 
-                          className="rounded-lg border-2 border-dashed border-border flex items-center justify-center bg-muted/50 mx-auto"
+                          className="rounded-sm border-2 border-dashed border-border flex items-center justify-center bg-muted/50 mx-auto"
                           style={{ aspectRatio: '9/16', maxHeight: '200px', width: 'auto' }}
                         >
                           <div className="text-center text-muted-foreground">
@@ -893,7 +893,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                   
                   {/* Show empty state only if no hooks configured */}
                   {formData.video_urls.length === 0 && !editMode && (
-                    <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center p-6">
+                    <div className="rounded-sm border-2 border-dashed border-border flex items-center justify-center p-6">
                       <div className="text-center text-muted-foreground">
                         <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
                         <p>No hay videos configurados</p>
@@ -911,7 +911,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 <div className="space-y-3 max-h-[300px] overflow-y-auto">
                   {comments.length > 0 ? (
                     comments.map((comment) => (
-                      <div key={comment.id} className="p-3 bg-muted rounded-lg">
+                      <div key={comment.id} className="p-3 bg-muted rounded-sm">
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-sm font-medium">{comment.profile?.full_name}</span>
                           <span className="text-xs text-muted-foreground">
@@ -968,7 +968,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                       />
                     </div>
                   ) : selectedProduct ? (
-                    <div className="p-3 rounded-lg border bg-muted/50 inline-flex items-center gap-2">
+                    <div className="p-3 rounded-sm border bg-muted/50 inline-flex items-center gap-2">
                       <Package className="h-4 w-4 text-primary" />
                       <span className="font-medium">{selectedProduct.name}</span>
                       {formData.sales_angle && (
@@ -1066,7 +1066,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                     maxHeight="max-h-[500px]"
                   />
                 ) : (
-                  <div className="min-h-[150px] rounded-xl border-2 border-dashed border-muted-foreground/20 bg-muted/20 flex items-center justify-center">
+                  <div className="min-h-[150px] rounded-sm border-2 border-dashed border-muted-foreground/20 bg-muted/20 flex items-center justify-center">
                     <div className="text-center space-y-2 p-8">
                       <div className="text-3xl">📝</div>
                       <p className="text-sm text-muted-foreground">Sin guión disponible</p>
@@ -1077,7 +1077,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 
                 {/* Script Approval for Clients */}
                 {isClient && content.script && !content.script_approved_at && (
-                  <div className="flex items-center justify-between p-4 rounded-lg border bg-gradient-to-r from-success/5 to-success/10 mt-4">
+                  <div className="flex items-center justify-between p-4 rounded-sm border bg-gradient-to-r from-success/5 to-success/10 mt-4">
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-full bg-success/10">
                         <CheckCircle className="h-4 w-4 text-success" />
@@ -1124,7 +1124,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 )}
                 
                 {isClient && content.script_approved_at && (
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 border border-success/20 text-success text-sm">
+                  <div className="flex items-center gap-2 p-3 rounded-sm bg-success/10 border border-success/20 text-success text-sm">
                     <CheckCircle className="h-4 w-4" />
                     <span>Guión aprobado el {format(new Date(content.script_approved_at), "d 'de' MMMM, yyyy 'a las' HH:mm", { locale: es })}</span>
                   </div>
@@ -1149,7 +1149,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                     className="min-h-[100px] max-h-[500px] overflow-y-auto"
                   />
                 ) : (
-                  <div className="min-h-[150px] rounded-md border bg-muted/30 flex items-center justify-center">
+                  <div className="min-h-[150px] rounded-sm border bg-muted/30 flex items-center justify-center">
                     <p className="text-sm text-muted-foreground italic">Sin pautas para el editor</p>
                   </div>
                 )}
@@ -1173,7 +1173,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                     className="min-h-[100px] max-h-[500px] overflow-y-auto"
                   />
                 ) : (
-                  <div className="min-h-[150px] rounded-md border bg-muted/30 flex items-center justify-center">
+                  <div className="min-h-[150px] rounded-sm border bg-muted/30 flex items-center justify-center">
                     <p className="text-sm text-muted-foreground italic">Sin pautas para el trafficker</p>
                   </div>
                 )}
@@ -1197,7 +1197,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                     className="min-h-[100px] max-h-[500px] overflow-y-auto"
                   />
                 ) : (
-                  <div className="min-h-[150px] rounded-md border bg-muted/30 flex items-center justify-center">
+                  <div className="min-h-[150px] rounded-sm border bg-muted/30 flex items-center justify-center">
                     <p className="text-sm text-muted-foreground italic">Sin pautas para el estratega</p>
                   </div>
                 )}
@@ -1221,7 +1221,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                     className="min-h-[100px] max-h-[500px] overflow-y-auto"
                   />
                 ) : (
-                  <div className="min-h-[150px] rounded-md border bg-muted/30 flex items-center justify-center">
+                  <div className="min-h-[150px] rounded-sm border bg-muted/30 flex items-center justify-center">
                     <p className="text-sm text-muted-foreground italic">Sin pautas para el diseñador</p>
                   </div>
                 )}
@@ -1245,7 +1245,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                     className="min-h-[100px] max-h-[500px] overflow-y-auto"
                   />
                 ) : (
-                  <div className="min-h-[150px] rounded-md border bg-muted/30 flex items-center justify-center">
+                  <div className="min-h-[150px] rounded-sm border bg-muted/30 flex items-center justify-center">
                     <p className="text-sm text-muted-foreground italic">Sin pautas para admin/PM</p>
                   </div>
                 )}
@@ -1330,7 +1330,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 <div className="grid gap-4">
                   {/* Video Final - Bunny Stream uploader for editors (Multiple Variables) */}
                   {(isEditor || isAdmin) && (
-                    <div className="space-y-3 p-4 rounded-lg border-2 border-dashed border-green-500/30 bg-green-500/5">
+                    <div className="space-y-3 p-4 rounded-sm border-2 border-dashed border-green-500/30 bg-green-500/5">
                       <div className="flex items-center justify-between">
                         <Label className="font-medium flex items-center gap-2 text-green-700 dark:text-green-400">
                           <Video className="h-4 w-4" /> Videos Editados (Finales)
@@ -1389,11 +1389,11 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                     placeholder="Agrega notas sobre el contenido..."
                   />
                 ) : editMode ? (
-                  <div className="p-4 bg-muted rounded-lg text-sm whitespace-pre-wrap max-h-32 overflow-y-auto">
+                  <div className="p-4 bg-muted rounded-sm text-sm whitespace-pre-wrap max-h-32 overflow-y-auto">
                     {content.notes || "Sin notas"}
                   </div>
                 ) : (
-                  <div className="p-4 bg-muted rounded-lg text-sm whitespace-pre-wrap max-h-32 overflow-y-auto">
+                  <div className="p-4 bg-muted rounded-sm text-sm whitespace-pre-wrap max-h-32 overflow-y-auto">
                     {content.notes || "Sin notas"}
                   </div>
                 )}
@@ -1557,7 +1557,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
           {isAdmin && (
             <TabsContent value="pagos" className="space-y-4 mt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-4 rounded-lg border space-y-3">
+                <div className="p-4 rounded-sm border space-y-3">
                   <h4 className="font-medium flex items-center gap-2">
                     <DollarSign className="h-4 w-4" /> Pago Creador
                   </h4>
@@ -1589,7 +1589,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                   )}
                 </div>
 
-                <div className="p-4 rounded-lg border space-y-3">
+                <div className="p-4 rounded-sm border space-y-3">
                   <h4 className="font-medium flex items-center gap-2">
                     <DollarSign className="h-4 w-4" /> Pago Editor
                   </h4>
@@ -1656,7 +1656,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                   {content.reference_url ? (
                     <div className="space-y-2">
                       <div 
-                        className="rounded-lg overflow-hidden bg-muted flex items-center justify-center"
+                        className="rounded-sm overflow-hidden bg-muted flex items-center justify-center"
                         style={{ height: '350px' }}
                       >
                         {renderVideoEmbed(content.reference_url)}
@@ -1671,7 +1671,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                       </a>
                     </div>
                   ) : (
-                    <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center" style={{ height: '200px' }}>
+                    <div className="rounded-sm border-2 border-dashed border-border flex items-center justify-center" style={{ height: '200px' }}>
                       <div className="text-center text-muted-foreground">
                         <LinkIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
                         <p>No hay video de referencia</p>

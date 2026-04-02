@@ -202,7 +202,7 @@ export function EventTypeList() {
           animate={{ opacity: 1, scale: 1 }}
           style={styles.emptyState}
         >
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-violet-50 mb-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-sm bg-violet-50 mb-6">
             <Calendar className="w-8 h-8 text-violet-500" />
           </div>
           <h4 className="text-xl font-semibold text-slate-900 mb-2">
@@ -285,7 +285,7 @@ export function EventTypeList() {
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => handleCopyLink(eventType)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-lg hover:bg-slate-100"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-sm hover:bg-slate-100"
                           >
                             {copiedId === eventType.id ? (
                               <CheckCircle2 className="w-4 h-4 text-green-500" />
@@ -305,7 +305,7 @@ export function EventTypeList() {
                           {/* More options */}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <button className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                              <button className="p-2 rounded-sm hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
                                 <MoreVertical className="w-5 h-5" />
                               </button>
                             </DropdownMenuTrigger>

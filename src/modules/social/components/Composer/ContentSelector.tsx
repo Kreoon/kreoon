@@ -199,7 +199,7 @@ export function ContentSelector({ open, onClose, onSelect }: ContentSelectorProp
                       key={idx}
                       onClick={() => setSelectedVariantIdx(idx)}
                       className={cn(
-                        'w-full rounded-lg overflow-hidden border transition-all',
+                        'w-full rounded-sm overflow-hidden border transition-all',
                         isActive
                           ? 'ring-2 ring-primary border-primary'
                           : 'border-border/50 hover:border-primary/40'
@@ -226,7 +226,7 @@ export function ContentSelector({ open, onClose, onSelect }: ContentSelectorProp
                           </div>
                         )}
                         <div className="absolute bottom-1 left-1">
-                          <Badge variant="secondary" className="text-[9px] h-4 px-1.5 bg-black/60 backdrop-blur-sm">
+                          <Badge variant="secondary" className="text-[9px] h-4 px-1.5 bg-black/60">
                             V{idx + 1}
                           </Badge>
                         </div>
@@ -240,7 +240,7 @@ export function ContentSelector({ open, onClose, onSelect }: ContentSelectorProp
             {/* Preview (right) */}
             <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4">
               <div className="w-full max-w-xs">
-                <div className="aspect-[9/16] rounded-xl overflow-hidden bg-black relative shadow-2xl">
+                <div className="aspect-[9/16] rounded-sm overflow-hidden bg-black relative shadow-2xl">
                   {bunnyUrls?.mp4 ? (
                     <video
                       key={selectedUrl}
@@ -258,7 +258,7 @@ export function ContentSelector({ open, onClose, onSelect }: ContentSelectorProp
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                        <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center">
                           <Play className="w-7 h-7 text-white ml-1" />
                         </div>
                       </div>
@@ -422,8 +422,8 @@ export function ContentSelector({ open, onClose, onSelect }: ContentSelectorProp
                     key={content.id}
                     onClick={() => handleSelectContent(content)}
                     className={cn(
-                      'group relative rounded-xl overflow-hidden border text-left transition-all',
-                      'bg-card/50 backdrop-blur-sm',
+                      'group relative rounded-sm overflow-hidden border text-left transition-all',
+                      'bg-card/50',
                       'border-border/50 hover:border-primary/40 hover:shadow-md'
                     )}
                   >
@@ -447,7 +447,7 @@ export function ContentSelector({ open, onClose, onSelect }: ContentSelectorProp
 
                       {/* Play/select indicator on hover */}
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="w-10 h-10 rounded-full bg-primary/80 backdrop-blur-sm flex items-center justify-center shadow-lg">
+                        <div className="w-10 h-10 rounded-full bg-primary/80 flex items-center justify-center shadow-lg">
                           {videos.length > 1 ? (
                             <ArrowRight className="w-5 h-5 text-primary-foreground" />
                           ) : (
@@ -461,7 +461,7 @@ export function ContentSelector({ open, onClose, onSelect }: ContentSelectorProp
                         <div className="absolute top-2 left-2">
                           <Badge
                             variant="outline"
-                            className={cn('text-[9px] h-4 px-1.5 backdrop-blur-sm', statusInfo.color)}
+                            className={cn('text-[9px] h-4 px-1.5', statusInfo.color)}
                           >
                             {statusInfo.label}
                           </Badge>
@@ -471,7 +471,7 @@ export function ContentSelector({ open, onClose, onSelect }: ContentSelectorProp
                       {/* Top-right: variant count */}
                       {videos.length > 1 && (
                         <div className="absolute top-2 right-2">
-                          <Badge variant="secondary" className="text-[9px] h-4 px-1.5 bg-black/60 backdrop-blur-sm">
+                          <Badge variant="secondary" className="text-[9px] h-4 px-1.5 bg-black/60">
                             {videos.length} var.
                           </Badge>
                         </div>
@@ -483,7 +483,7 @@ export function ContentSelector({ open, onClose, onSelect }: ContentSelectorProp
                           <Badge
                             variant="outline"
                             className={cn(
-                              'text-[8px] h-3.5 px-1 backdrop-blur-sm',
+                              'text-[8px] h-3.5 px-1',
                               SPHERE_COLORS[content.sphere_phase] || 'bg-muted/50'
                             )}
                           >
@@ -536,7 +536,7 @@ export function ContentSelector({ open, onClose, onSelect }: ContentSelectorProp
 
           {/* Loading overlay for page transitions */}
           {isFetching && !isLoading && (
-            <div className="absolute inset-0 bg-background/30 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+            <div className="absolute inset-0 bg-background/30-[1px] flex items-center justify-center pointer-events-none">
               <Loader2 className="w-5 h-5 animate-spin text-primary" />
             </div>
           )}

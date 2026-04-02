@@ -71,7 +71,7 @@ export function AdSearchBar({ onSearch, onSaveSearch, isSearching, isSaving }: A
           <button
             key={p}
             onClick={() => setPlatform(p)}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-sm text-sm font-medium transition-colors ${
               platform === p
                 ? `${PLATFORM_CONFIG[p].bgColor} ${PLATFORM_CONFIG[p].color} ring-1 ring-current`
                 : "text-muted-foreground hover:text-foreground hover:bg-accent"

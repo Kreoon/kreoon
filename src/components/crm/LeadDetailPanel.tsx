@@ -492,7 +492,7 @@ export function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailPanelProp
                       href={`https://instagram.com/${socialProfiles.instagram.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-white/60 hover:text-white hover:border-pink-500/40 hover:bg-pink-500/10 transition-all"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-white/5 border border-white/10 text-xs text-white/60 hover:text-white hover:border-pink-500/40 hover:bg-pink-500/10 transition-all"
                     >
                       <Globe className="h-3 w-3" />
                       Instagram
@@ -504,7 +504,7 @@ export function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailPanelProp
                       href={`https://tiktok.com/@${socialProfiles.tiktok.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-white/60 hover:text-white hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-white/5 border border-white/10 text-xs text-white/60 hover:text-white hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all"
                     >
                       <Globe className="h-3 w-3" />
                       TikTok
@@ -516,7 +516,7 @@ export function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailPanelProp
                       href={socialProfiles.linkedin.startsWith('http') ? socialProfiles.linkedin : `https://linkedin.com/in/${socialProfiles.linkedin}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-white/60 hover:text-white hover:border-blue-500/40 hover:bg-blue-500/10 transition-all"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-white/5 border border-white/10 text-xs text-white/60 hover:text-white hover:border-blue-500/40 hover:bg-blue-500/10 transition-all"
                     >
                       <Globe className="h-3 w-3" />
                       LinkedIn
@@ -528,7 +528,7 @@ export function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailPanelProp
                       href={lead.portfolio_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-white/60 hover:text-white hover:border-purple-500/40 hover:bg-purple-500/10 transition-all"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-white/5 border border-white/10 text-xs text-white/60 hover:text-white hover:border-purple-500/40 hover:bg-purple-500/10 transition-all"
                     >
                       <LinkIcon className="h-3 w-3" />
                       Portfolio
@@ -565,7 +565,7 @@ export function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailPanelProp
               {/* Stage change note */}
               {showStageNote && pendingStage && (
                 <div
-                  className="p-3 rounded-lg space-y-2"
+                  className="p-3 rounded-sm space-y-2"
                   style={{ background: 'rgba(139, 92, 246, 0.08)', border: '1px solid rgba(139, 92, 246, 0.2)' }}
                 >
                   <p className="text-xs text-white/60">
@@ -673,7 +673,7 @@ export function LeadDetailPanel({ lead, onClose, onUpdate }: LeadDetailPanelProp
                   UTM Tracking
                 </button>
                 {showUtm && (
-                  <div className="grid grid-cols-3 gap-2 mt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
                     {lead.utm_source && (
                       <div className="space-y-0.5">
                         <span className="text-[10px] text-white/30">source</span>

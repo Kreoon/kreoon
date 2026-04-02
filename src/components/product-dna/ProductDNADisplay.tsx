@@ -431,7 +431,7 @@ export default function ProductDNADisplay({
 
       {/* Audio */}
       {productDna.audio_url && (
-        <div className="bg-muted/50 backdrop-blur-sm rounded-xl p-4 border border-border">
+        <div className="bg-muted/50 rounded-sm p-4 border border-border">
           <div className="flex items-center gap-3">
             <button
               onClick={toggleAudio}
@@ -455,7 +455,7 @@ export default function ProductDNADisplay({
             {productDna.transcription && (
               <button
                 onClick={() => handleCopy(productDna.transcription!, 'transcript')}
-                className="p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                className="p-2 rounded-sm bg-muted/50 hover:bg-muted transition-colors"
                 title="Copiar transcripción"
               >
                 {copiedSection === 'transcript' ? (
@@ -467,7 +467,7 @@ export default function ProductDNADisplay({
             )}
           </div>
           {productDna.transcription && (
-            <div className="mt-3 p-3 bg-muted/50 rounded-lg">
+            <div className="mt-3 p-3 bg-muted/50 rounded-sm">
               <p className="text-xs text-gray-400 uppercase font-medium mb-1">Transcripción</p>
               <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto">
                 {productDna.transcription}
@@ -761,11 +761,11 @@ function HeaderSection({
   onToggleEdit?: () => void;
 }) {
   return (
-    <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 backdrop-blur-sm rounded-2xl p-6 border border-border">
+    <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 rounded-sm p-6 border border-border">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         {/* Info */}
         <div className="flex items-start gap-4">
-          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+          <div className="w-14 h-14 rounded-sm bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
             <Sparkles className="w-7 h-7 text-white" />
           </div>
           <div>
@@ -857,14 +857,14 @@ function SectionCard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-muted/50 backdrop-blur-sm rounded-xl border border-border overflow-hidden"
+      className="bg-muted/50 rounded-sm border border-border overflow-hidden"
     >
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full p-4 flex items-center justify-between hover:bg-muted/50 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${accentColor} flex items-center justify-center`}>
+          <div className={`w-10 h-10 rounded-sm bg-gradient-to-br ${accentColor} flex items-center justify-center`}>
             {icon}
           </div>
           <h3 className="text-lg font-semibold text-white">{title}</h3>
@@ -900,14 +900,14 @@ function MarketResearchSection({ data }: { data: MarketResearchData }) {
     <div className="space-y-6">
       {/* Overview */}
       {data.market_overview && (
-        <div className="p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-lg border border-green-500/20">
+        <div className="p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-sm border border-green-500/20">
           <p className="text-foreground/80 leading-relaxed">{data.market_overview}</p>
         </div>
       )}
 
       {/* Market Size */}
       {data.market_size && (
-        <div className="p-4 bg-muted/50 rounded-lg">
+        <div className="p-4 bg-muted/50 rounded-sm">
           <h4 className="text-sm font-semibold text-green-400 uppercase tracking-wider mb-2">
             Tamaño del Mercado
           </h4>
@@ -923,7 +923,7 @@ function MarketResearchSection({ data }: { data: MarketResearchData }) {
           </h4>
           <div className="grid gap-2">
             {data.growth_trends.map((trend, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+              <div key={i} className="flex items-start gap-3 p-3 bg-muted/50 rounded-sm">
                 <TrendingUp className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
                 <span className="text-foreground/80 text-sm">{trend}</span>
               </div>
@@ -939,7 +939,7 @@ function MarketResearchSection({ data }: { data: MarketResearchData }) {
             <h4 className="text-sm font-semibold text-green-400 uppercase tracking-wider mb-3">Oportunidades</h4>
             <div className="space-y-2">
               {data.opportunities.map((opp, i) => (
-                <div key={i} className="flex items-start gap-2 p-2 bg-green-500/10 rounded-lg">
+                <div key={i} className="flex items-start gap-2 p-2 bg-green-500/10 rounded-sm">
                   <Zap className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
                   <span className="text-foreground/80 text-sm">{opp}</span>
                 </div>
@@ -952,7 +952,7 @@ function MarketResearchSection({ data }: { data: MarketResearchData }) {
             <h4 className="text-sm font-semibold text-red-400 uppercase tracking-wider mb-3">Amenazas</h4>
             <div className="space-y-2">
               {data.threats.map((threat, i) => (
-                <div key={i} className="flex items-start gap-2 p-2 bg-red-500/10 rounded-lg">
+                <div key={i} className="flex items-start gap-2 p-2 bg-red-500/10 rounded-sm">
                   <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
                   <span className="text-foreground/80 text-sm">{threat}</span>
                 </div>
@@ -968,7 +968,7 @@ function MarketResearchSection({ data }: { data: MarketResearchData }) {
           <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Segmentos Objetivo</h4>
           <div className="grid gap-3">
             {data.target_segments.map((seg, i) => (
-              <div key={i} className="p-4 bg-muted/50 rounded-lg">
+              <div key={i} className="p-4 bg-muted/50 rounded-sm">
                 <div className="flex items-center justify-between mb-1">
                   <h5 className="font-medium text-white">{seg.name}</h5>
                   {seg.priority && (
@@ -1002,7 +1002,7 @@ function CompetitorSection({ data }: { data: CompetitorAnalysisData }) {
   return (
     <div className="space-y-6">
       {data.competitive_advantage && (
-        <div className="p-4 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-lg border border-orange-500/20">
+        <div className="p-4 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-sm border border-orange-500/20">
           <p className="text-xs text-orange-400 uppercase font-semibold mb-1">Ventaja Competitiva</p>
           <p className="text-foreground/80 font-medium">{data.competitive_advantage}</p>
         </div>
@@ -1013,7 +1013,7 @@ function CompetitorSection({ data }: { data: CompetitorAnalysisData }) {
           <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Competidores Directos</h4>
           <div className="grid gap-3">
             {data.direct_competitors.map((comp, i) => (
-              <div key={i} className="p-4 bg-muted/50 rounded-lg">
+              <div key={i} className="p-4 bg-muted/50 rounded-sm">
                 <div className="flex items-center justify-between mb-2">
                   <h5 className="font-medium text-white">{comp.name}</h5>
                   {comp.price_range && (
@@ -1056,7 +1056,7 @@ function CompetitorSection({ data }: { data: CompetitorAnalysisData }) {
       )}
 
       {data.positioning_strategy && (
-        <div className="p-4 bg-muted/50 rounded-lg">
+        <div className="p-4 bg-muted/50 rounded-sm">
           <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Estrategia de Posicionamiento</p>
           <p className="text-foreground/80">{data.positioning_strategy}</p>
         </div>
@@ -1098,13 +1098,13 @@ function TargetAudienceSection({ data }: { data: NonNullable<MarketResearchData[
     <div className="space-y-6">
       <div className="grid md:grid-cols-2 gap-4">
         {data.demographics && (
-          <div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
+          <div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-sm border border-purple-500/20">
             <p className="text-xs text-purple-400 uppercase font-semibold mb-2">Demográfico</p>
             <p className="text-foreground/80">{data.demographics}</p>
           </div>
         )}
         {data.psychographics && (
-          <div className="p-4 bg-gradient-to-r from-pink-500/10 to-rose-500/10 rounded-lg border border-pink-500/20">
+          <div className="p-4 bg-gradient-to-r from-pink-500/10 to-rose-500/10 rounded-sm border border-pink-500/20">
             <p className="text-xs text-pink-400 uppercase font-semibold mb-2">Psicográfico</p>
             <p className="text-foreground/80">{data.psychographics}</p>
           </div>
@@ -1194,7 +1194,7 @@ function SalesAnglesSection({
         </button>
       </div>
       {data.map((angle, i) => (
-        <div key={i} className="p-4 bg-muted/50 rounded-lg border-l-2 border-yellow-500">
+        <div key={i} className="p-4 bg-muted/50 rounded-sm border-l-2 border-yellow-500">
           <div className="flex items-start justify-between">
             <h5 className="font-medium text-white">{angle.angle_name}</h5>
             {angle.target_emotion && (
@@ -1246,7 +1246,7 @@ function ContentBriefSection({
           )}
           <div className="grid md:grid-cols-2 gap-4">
             {data.brand_voice.do_say && data.brand_voice.do_say.length > 0 && (
-              <div className="p-3 bg-green-500/10 rounded-lg">
+              <div className="p-3 bg-green-500/10 rounded-sm">
                 <p className="text-xs text-green-400 uppercase font-semibold mb-2">Sí decir</p>
                 <ul className="space-y-1">
                   {data.brand_voice.do_say.map((s, i) => (
@@ -1258,7 +1258,7 @@ function ContentBriefSection({
               </div>
             )}
             {data.brand_voice.dont_say && data.brand_voice.dont_say.length > 0 && (
-              <div className="p-3 bg-red-500/10 rounded-lg">
+              <div className="p-3 bg-red-500/10 rounded-sm">
                 <p className="text-xs text-red-400 uppercase font-semibold mb-2">No decir</p>
                 <ul className="space-y-1">
                   {data.brand_voice.dont_say.map((s, i) => (
@@ -1288,7 +1288,7 @@ function ContentBriefSection({
           </div>
           <div className="grid gap-2">
             {data.key_messages.map((msg, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+              <div key={i} className="flex items-start gap-3 p-3 bg-muted/50 rounded-sm">
                 <span className="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 text-xs flex items-center justify-center flex-shrink-0">
                   {i + 1}
                 </span>
@@ -1305,7 +1305,7 @@ function ContentBriefSection({
           <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Taglines Sugeridos</h4>
           <div className="grid md:grid-cols-2 gap-3">
             {data.tagline_suggestions.map((t, i) => (
-              <div key={i} className="p-3 bg-muted/50 rounded-lg border-l-2 border-purple-500">
+              <div key={i} className="p-3 bg-muted/50 rounded-sm border-l-2 border-purple-500">
                 <p className="text-foreground/80 text-sm italic">"{t}"</p>
               </div>
             ))}
@@ -1319,7 +1319,7 @@ function ContentBriefSection({
           <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Ideas de Contenido</h4>
           <div className="grid gap-3">
             {data.content_ideas.map((idea, i) => (
-              <div key={i} className="p-4 bg-muted/50 rounded-lg">
+              <div key={i} className="p-4 bg-muted/50 rounded-sm">
                 <div className="flex items-start justify-between">
                   <h5 className="font-medium text-white">{idea.title}</h5>
                   <div className="flex gap-2">
@@ -1342,7 +1342,7 @@ function ContentBriefSection({
 
       {/* Visual Direction */}
       {data.visual_direction && (
-        <div className="p-4 bg-gradient-to-r from-pink-500/10 to-rose-500/10 rounded-lg border border-pink-500/20">
+        <div className="p-4 bg-gradient-to-r from-pink-500/10 to-rose-500/10 rounded-sm border border-pink-500/20">
           <h4 className="text-sm font-semibold text-pink-400 uppercase tracking-wider mb-3">Dirección Visual</h4>
           {data.visual_direction.style && (
             <p className="text-foreground/80 mb-2">{data.visual_direction.style}</p>
@@ -1389,7 +1389,7 @@ function FunnelStrategySection({ data }: { data: NonNullable<StrategyRecommendat
             <div className={`absolute -left-2 top-0 w-4 h-4 rounded-full bg-gradient-to-br ${stage.color} flex items-center justify-center`}>
               <span className="text-white">{stage.icon}</span>
             </div>
-            <div className="bg-muted/50 rounded-lg p-3">
+            <div className="bg-muted/50 rounded-sm p-3">
               <h5 className="font-medium text-white text-sm mb-1">{stage.label}</h5>
               <p className="text-gray-400 text-sm">{value}</p>
             </div>
@@ -1408,7 +1408,7 @@ function PlatformsSection({ data, hashtags }: { data: NonNullable<StrategyRecomm
   return (
     <div className="space-y-4">
       {data.map((platform, i) => (
-        <div key={i} className="p-3 bg-muted/50 rounded-lg">
+        <div key={i} className="p-3 bg-muted/50 rounded-sm">
           <div className="flex items-center justify-between mb-1">
             <h5 className="font-medium text-white text-sm">{platform.name}</h5>
             {platform.priority && (
@@ -1562,7 +1562,7 @@ function InlineTextarea({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className={`w-full bg-muted border border-border rounded-lg p-3 text-foreground text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-purple-500/50 resize-y min-h-[80px] ${className}`}
+      className={`w-full bg-muted border border-border rounded-sm p-3 text-foreground text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-purple-500/50 resize-y min-h-[80px] ${className}`}
     />
   );
 }
@@ -1615,7 +1615,7 @@ function InlineChipList({
             }
           }}
           placeholder="Agregar..."
-          className="flex-1 bg-muted border border-border rounded-lg px-3 py-1.5 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+          className="flex-1 bg-muted border border-border rounded-sm px-3 py-1.5 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
         />
         <button
           onClick={() => {
@@ -1624,7 +1624,7 @@ function InlineChipList({
               setNewItem('');
             }
           }}
-          className="p-1.5 bg-muted rounded-lg hover:bg-muted transition-colors"
+          className="p-1.5 bg-muted rounded-sm hover:bg-muted transition-colors"
         >
           <Plus className="w-4 h-4 text-foreground/80" />
         </button>
@@ -1639,7 +1639,7 @@ function SectionSaveButton({ onClick, saving }: { onClick: () => void; saving: b
     <button
       onClick={onClick}
       disabled={saving}
-      className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-green-500 to-emerald-500 hover:opacity-90 text-white rounded-lg text-sm font-medium transition-all disabled:opacity-50"
+      className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-green-500 to-emerald-500 hover:opacity-90 text-white rounded-sm text-sm font-medium transition-all disabled:opacity-50"
     >
       {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
       {saving ? 'Guardando...' : 'Guardar'}
@@ -1693,7 +1693,7 @@ function EditableStrategySection({
           </div>
         )}
         {(local.brand_positioning || isEditing) && (
-          <div className="p-4 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-lg border border-blue-500/20">
+          <div className="p-4 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-sm border border-blue-500/20">
             <p className="text-xs text-blue-400 uppercase font-semibold mb-1">Posicionamiento de Marca</p>
             <InlineTextarea
               value={local.brand_positioning || ''}
@@ -1704,7 +1704,7 @@ function EditableStrategySection({
           </div>
         )}
         {(local.pricing_strategy || isEditing) && (
-          <div className="p-4 bg-muted/50 rounded-lg">
+          <div className="p-4 bg-muted/50 rounded-sm">
             <p className="text-xs text-gray-400 uppercase font-semibold mb-1 flex items-center gap-1">
               <DollarSign className="w-3 h-3" /> Estrategia de Precio
             </p>
@@ -1969,12 +1969,12 @@ function EditableContentBriefSection({
 function ContextoSection({ data }: { data: Seccion1Contexto }) {
   return (
     <div className="space-y-4">
-      <div className="p-4 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-lg border border-blue-500/20">
+      <div className="p-4 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-sm border border-blue-500/20">
         <p className="text-xs text-blue-400 uppercase font-semibold mb-1">Servicio Exacto</p>
         <p className="text-foreground/80 font-medium">{data.servicio_exacto}</p>
       </div>
 
-      <div className="p-4 bg-muted/50 rounded-lg">
+      <div className="p-4 bg-muted/50 rounded-sm">
         <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Objetivo Real</p>
         <p className="text-foreground/80">{data.objetivo_real}</p>
       </div>
@@ -1991,21 +1991,21 @@ function ContextoSection({ data }: { data: Seccion1Contexto }) {
       )}
 
       {data.restricciones_creativas && (
-        <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/20">
+        <div className="p-4 bg-red-500/10 rounded-sm border border-red-500/20">
           <p className="text-xs text-red-400 uppercase font-semibold mb-1">Restricciones Creativas</p>
           <p className="text-foreground/80">{data.restricciones_creativas}</p>
         </div>
       )}
 
       {data.referentes_estilo && (
-        <div className="p-4 bg-muted/50 rounded-lg">
+        <div className="p-4 bg-muted/50 rounded-sm">
           <p className="text-xs text-purple-400 uppercase font-semibold mb-1">Referentes de Estilo</p>
           <p className="text-foreground/80">{data.referentes_estilo}</p>
         </div>
       )}
 
       {data.tono_emocional_audio && (
-        <div className="p-4 bg-muted/50 rounded-lg">
+        <div className="p-4 bg-muted/50 rounded-sm">
           <p className="text-xs text-pink-400 uppercase font-semibold mb-1">Tono Emocional del Audio</p>
           <p className="text-foreground/80 italic">{data.tono_emocional_audio}</p>
         </div>
@@ -2019,14 +2019,14 @@ function MercadoSection({ data }: { data: Seccion2Mercado }) {
   return (
     <div className="space-y-6">
       {data.panorama_mercado && (
-        <div className="p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-lg border border-green-500/20">
+        <div className="p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-sm border border-green-500/20">
           <p className="text-xs text-green-400 uppercase font-semibold mb-1">Panorama del Mercado</p>
           <p className="text-foreground/80 leading-relaxed">{data.panorama_mercado}</p>
         </div>
       )}
 
       {data.tendencias_actuales && (
-        <div className="p-4 bg-muted/50 rounded-lg">
+        <div className="p-4 bg-muted/50 rounded-sm">
           <p className="text-xs text-cyan-400 uppercase font-semibold mb-1">Tendencias Actuales</p>
           <p className="text-foreground/80">{data.tendencias_actuales}</p>
         </div>
@@ -2037,7 +2037,7 @@ function MercadoSection({ data }: { data: Seccion2Mercado }) {
           <p className="text-xs text-orange-400 uppercase font-semibold mb-3">Competidores ({data.competidores.length})</p>
           <div className="grid gap-3">
             {data.competidores.map((comp, i) => (
-              <div key={i} className="p-4 bg-muted/50 rounded-lg border-l-2 border-orange-500">
+              <div key={i} className="p-4 bg-muted/50 rounded-sm border-l-2 border-orange-500">
                 <div className="flex items-center justify-between mb-2">
                   <h5 className="font-medium text-white">{comp.nombre}</h5>
                   {comp.precio_referencial && (
@@ -2069,14 +2069,14 @@ function MercadoSection({ data }: { data: Seccion2Mercado }) {
       )}
 
       {data.gap_competitivo && (
-        <div className="p-4 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 rounded-lg border border-yellow-500/20">
+        <div className="p-4 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 rounded-sm border border-yellow-500/20">
           <p className="text-xs text-yellow-400 uppercase font-semibold mb-1">Gap Competitivo</p>
           <p className="text-foreground/80 font-medium">{data.gap_competitivo}</p>
         </div>
       )}
 
       {data.posicionamiento_sugerido && (
-        <div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
+        <div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-sm border border-purple-500/20">
           <p className="text-xs text-purple-400 uppercase font-semibold mb-1">Posicionamiento Sugerido</p>
           <p className="text-foreground/80">{data.posicionamiento_sugerido}</p>
         </div>
@@ -2100,7 +2100,7 @@ function AvatarSection({ data }: { data: Seccion3Avatar[] }) {
   return (
     <div className="space-y-4">
       {data.map((avatar, i) => (
-        <div key={i} className="p-4 bg-muted/50 rounded-lg border-l-2 border-purple-500">
+        <div key={i} className="p-4 bg-muted/50 rounded-sm border-l-2 border-purple-500">
           <div className="flex items-center justify-between mb-3">
             <h5 className="font-medium text-white text-lg">{avatar.nombre_edad}</h5>
             <span className={`text-xs px-2 py-0.5 rounded-full ${getNivelColor(avatar.nivel_consciencia)}`}>
@@ -2111,17 +2111,17 @@ function AvatarSection({ data }: { data: Seccion3Avatar[] }) {
           <p className="text-sm text-gray-400 mb-4">{avatar.situacion_actual}</p>
 
           <div className="grid md:grid-cols-2 gap-4 mb-4">
-            <div className="p-3 bg-red-500/10 rounded-lg">
+            <div className="p-3 bg-red-500/10 rounded-sm">
               <p className="text-xs text-red-400 uppercase font-semibold mb-1">Dolor Principal</p>
               <p className="text-foreground/80 text-sm">{avatar.dolor_principal}</p>
             </div>
-            <div className="p-3 bg-green-500/10 rounded-lg">
+            <div className="p-3 bg-green-500/10 rounded-sm">
               <p className="text-xs text-green-400 uppercase font-semibold mb-1">Deseo Principal</p>
               <p className="text-foreground/80 text-sm">{avatar.deseo_principal}</p>
             </div>
           </div>
 
-          <div className="p-3 bg-yellow-500/10 rounded-lg mb-4">
+          <div className="p-3 bg-yellow-500/10 rounded-sm mb-4">
             <p className="text-xs text-yellow-400 uppercase font-semibold mb-1">Objeción Principal</p>
             <p className="text-foreground/80 text-sm">{avatar.objecion_principal}</p>
           </div>
@@ -2137,7 +2137,7 @@ function AvatarSection({ data }: { data: Seccion3Avatar[] }) {
             </div>
           )}
 
-          <div className="p-3 bg-blue-500/10 rounded-lg">
+          <div className="p-3 bg-blue-500/10 rounded-sm">
             <p className="text-xs text-blue-400 uppercase font-semibold mb-1">Trigger de Compra</p>
             <p className="text-foreground/80 text-sm">{avatar.trigger_de_compra}</p>
           </div>
@@ -2193,7 +2193,7 @@ function AngulosSection({
       </div>
 
       {data.map((angulo, i) => (
-        <div key={i} className="p-4 bg-muted/50 rounded-lg border-l-2 border-yellow-500">
+        <div key={i} className="p-4 bg-muted/50 rounded-sm border-l-2 border-yellow-500">
           <div className="flex items-start justify-between mb-2">
             <div className="flex items-center gap-2">
               <span className="text-xs bg-yellow-500/20 px-2 py-0.5 rounded-full text-yellow-300 capitalize">
@@ -2212,7 +2212,7 @@ function AngulosSection({
           <p className="text-foreground font-medium mb-2">"{angulo.hook_apertura}"</p>
           <p className="text-gray-400 text-sm mb-3">{angulo.desarrollo}</p>
 
-          <div className="p-2 bg-green-500/10 rounded-lg">
+          <div className="p-2 bg-green-500/10 rounded-sm">
             <p className="text-xs text-green-400 uppercase font-semibold">CTA</p>
             <p className="text-foreground/80 text-sm">{angulo.cta}</p>
           </div>
@@ -2249,7 +2249,7 @@ function IdeasSection({
       </div>
 
       {data.map((idea, i) => (
-        <div key={i} className="p-4 bg-muted/50 rounded-lg">
+        <div key={i} className="p-4 bg-muted/50 rounded-sm">
           <div className="flex items-start justify-between mb-3">
             <h5 className="font-medium text-white">{idea.titulo}</h5>
             <div className="flex gap-2">
@@ -2259,15 +2259,15 @@ function IdeasSection({
           </div>
 
           <div className="space-y-2 mb-3">
-            <div className="p-2 bg-purple-500/10 rounded-lg">
+            <div className="p-2 bg-purple-500/10 rounded-sm">
               <p className="text-xs text-purple-400 uppercase mb-1">Hook 1</p>
               <p className="text-foreground/80 text-sm">{idea.hook_variacion_1}</p>
             </div>
-            <div className="p-2 bg-pink-500/10 rounded-lg">
+            <div className="p-2 bg-pink-500/10 rounded-sm">
               <p className="text-xs text-pink-400 uppercase mb-1">Hook 2</p>
               <p className="text-foreground/80 text-sm">{idea.hook_variacion_2}</p>
             </div>
-            <div className="p-2 bg-rose-500/10 rounded-lg">
+            <div className="p-2 bg-rose-500/10 rounded-sm">
               <p className="text-xs text-rose-400 uppercase mb-1">Hook 3</p>
               <p className="text-foreground/80 text-sm">{idea.hook_variacion_3}</p>
             </div>
@@ -2276,7 +2276,7 @@ function IdeasSection({
           <p className="text-gray-400 text-sm mb-3">{idea.desarrollo}</p>
 
           <div className="flex items-center justify-between">
-            <div className="p-2 bg-green-500/10 rounded-lg flex-1 mr-2">
+            <div className="p-2 bg-green-500/10 rounded-sm flex-1 mr-2">
               <p className="text-xs text-green-400 uppercase">CTA</p>
               <p className="text-foreground/80 text-sm">{idea.cta}</p>
             </div>
@@ -2296,7 +2296,7 @@ function OrganicoSection({ data }: { data: Seccion6Organico }) {
   return (
     <div className="space-y-6">
       {data.objetivo_organico && (
-        <div className="p-4 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-lg border border-cyan-500/20">
+        <div className="p-4 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-sm border border-cyan-500/20">
           <p className="text-xs text-cyan-400 uppercase font-semibold mb-1">Objetivo Orgánico</p>
           <p className="text-foreground/80 font-medium">{data.objetivo_organico}</p>
         </div>
@@ -2306,19 +2306,19 @@ function OrganicoSection({ data }: { data: Seccion6Organico }) {
         <div>
           <p className="text-xs text-gray-400 uppercase font-semibold mb-3">Distribución 4V</p>
           <div className="grid grid-cols-4 gap-2 mb-2">
-            <div className="text-center p-3 bg-purple-500/20 rounded-lg">
+            <div className="text-center p-3 bg-purple-500/20 rounded-sm">
               <p className="text-2xl font-bold text-purple-300">{data.distribucion_contenido.viral}%</p>
               <p className="text-xs text-purple-400">Viral</p>
             </div>
-            <div className="text-center p-3 bg-blue-500/20 rounded-lg">
+            <div className="text-center p-3 bg-blue-500/20 rounded-sm">
               <p className="text-2xl font-bold text-blue-300">{data.distribucion_contenido.valor}%</p>
               <p className="text-xs text-blue-400">Valor</p>
             </div>
-            <div className="text-center p-3 bg-green-500/20 rounded-lg">
+            <div className="text-center p-3 bg-green-500/20 rounded-sm">
               <p className="text-2xl font-bold text-green-300">{data.distribucion_contenido.venta}%</p>
               <p className="text-xs text-green-400">Venta</p>
             </div>
-            <div className="text-center p-3 bg-pink-500/20 rounded-lg">
+            <div className="text-center p-3 bg-pink-500/20 rounded-sm">
               <p className="text-2xl font-bold text-pink-300">{data.distribucion_contenido.personal}%</p>
               <p className="text-xs text-pink-400">Personal</p>
             </div>
@@ -2331,13 +2331,13 @@ function OrganicoSection({ data }: { data: Seccion6Organico }) {
 
       <div className="grid md:grid-cols-2 gap-4">
         {data.frecuencia_publicacion && (
-          <div className="p-4 bg-muted/50 rounded-lg">
+          <div className="p-4 bg-muted/50 rounded-sm">
             <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Frecuencia</p>
             <p className="text-foreground/80">{data.frecuencia_publicacion}</p>
           </div>
         )}
         {data.tono_organico && (
-          <div className="p-4 bg-muted/50 rounded-lg">
+          <div className="p-4 bg-muted/50 rounded-sm">
             <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Tono</p>
             <p className="text-foreground/80">{data.tono_organico}</p>
           </div>
@@ -2356,7 +2356,7 @@ function OrganicoSection({ data }: { data: Seccion6Organico }) {
       )}
 
       {data.metricas_organico && (
-        <div className="p-4 bg-muted/50 rounded-lg">
+        <div className="p-4 bg-muted/50 rounded-sm">
           <p className="text-xs text-gray-400 uppercase font-semibold mb-3">Métricas Objetivo</p>
           <div className="space-y-2 text-sm">
             <p><span className="text-gray-400">Retención:</span> <span className="text-foreground/80">{data.metricas_organico.retencion_objetivo}</span></p>
@@ -2388,7 +2388,7 @@ function AdsSection({ data }: { data: Seccion7Ads }) {
   return (
     <div className="space-y-6">
       {data.objetivo_campana && (
-        <div className="p-4 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-lg border border-emerald-500/20">
+        <div className="p-4 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-sm border border-emerald-500/20">
           <p className="text-xs text-emerald-400 uppercase font-semibold mb-1">Objetivo de Campaña</p>
           <p className="text-foreground/80 font-medium capitalize">{data.objetivo_campana}</p>
         </div>
@@ -2398,15 +2398,15 @@ function AdsSection({ data }: { data: Seccion7Ads }) {
         <div>
           <p className="text-xs text-gray-400 uppercase font-semibold mb-3">Estructura de Campaña</p>
           <div className="space-y-2">
-            <div className="p-3 bg-blue-500/10 rounded-lg border-l-2 border-blue-500">
+            <div className="p-3 bg-blue-500/10 rounded-sm border-l-2 border-blue-500">
               <p className="text-xs text-blue-400 uppercase mb-1">Frío</p>
               <p className="text-foreground/80 text-sm">{data.estructura_campana.frio}</p>
             </div>
-            <div className="p-3 bg-yellow-500/10 rounded-lg border-l-2 border-yellow-500">
+            <div className="p-3 bg-yellow-500/10 rounded-sm border-l-2 border-yellow-500">
               <p className="text-xs text-yellow-400 uppercase mb-1">Tibio</p>
               <p className="text-foreground/80 text-sm">{data.estructura_campana.tibio}</p>
             </div>
-            <div className="p-3 bg-orange-500/10 rounded-lg border-l-2 border-orange-500">
+            <div className="p-3 bg-orange-500/10 rounded-sm border-l-2 border-orange-500">
               <p className="text-xs text-orange-400 uppercase mb-1">Remarketing</p>
               <p className="text-foreground/80 text-sm">{data.estructura_campana.remarketing}</p>
             </div>
@@ -2415,7 +2415,7 @@ function AdsSection({ data }: { data: Seccion7Ads }) {
       )}
 
       {data.publico_frio && (
-        <div className="p-4 bg-muted/50 rounded-lg">
+        <div className="p-4 bg-muted/50 rounded-sm">
           <p className="text-xs text-gray-400 uppercase font-semibold mb-3">Público Frío</p>
           {data.publico_frio.caracteristicas && (
             <p className="text-foreground/80 text-sm mb-3">{data.publico_frio.caracteristicas}</p>
@@ -2446,7 +2446,7 @@ function AdsSection({ data }: { data: Seccion7Ads }) {
       )}
 
       {data.estructura_creativo_ad && (
-        <div className="p-4 bg-gradient-to-r from-pink-500/10 to-rose-500/10 rounded-lg border border-pink-500/20">
+        <div className="p-4 bg-gradient-to-r from-pink-500/10 to-rose-500/10 rounded-sm border border-pink-500/20">
           <p className="text-xs text-pink-400 uppercase font-semibold mb-3">Estructura del Creativo</p>
           <div className="space-y-2 text-sm">
             <p><span className="font-medium text-white">Hook:</span> <span className="text-foreground/80">{data.estructura_creativo_ad.hook}</span></p>
@@ -2459,19 +2459,19 @@ function AdsSection({ data }: { data: Seccion7Ads }) {
 
       <div className="grid md:grid-cols-3 gap-4">
         {data.presupuesto_minimo_sugerido && (
-          <div className="p-3 bg-muted/50 rounded-lg text-center">
+          <div className="p-3 bg-muted/50 rounded-sm text-center">
             <p className="text-xs text-gray-400 uppercase mb-1">Presupuesto Mínimo</p>
             <p className="text-foreground/80 font-medium">{data.presupuesto_minimo_sugerido}</p>
           </div>
         )}
         {data.ctr_objetivo && (
-          <div className="p-3 bg-muted/50 rounded-lg text-center">
+          <div className="p-3 bg-muted/50 rounded-sm text-center">
             <p className="text-xs text-gray-400 uppercase mb-1">CTR Objetivo</p>
             <p className="text-foreground/80 font-medium">{data.ctr_objetivo}</p>
           </div>
         )}
         {data.variaciones_recomendadas && (
-          <div className="p-3 bg-muted/50 rounded-lg text-center">
+          <div className="p-3 bg-muted/50 rounded-sm text-center">
             <p className="text-xs text-gray-400 uppercase mb-1">Variaciones</p>
             <p className="text-foreground/80 font-medium">{data.variaciones_recomendadas}</p>
           </div>
@@ -2480,13 +2480,13 @@ function AdsSection({ data }: { data: Seccion7Ads }) {
 
       <div className="grid md:grid-cols-2 gap-4">
         {data.senales_de_escalar && (
-          <div className="p-3 bg-green-500/10 rounded-lg">
+          <div className="p-3 bg-green-500/10 rounded-sm">
             <p className="text-xs text-green-400 uppercase font-semibold mb-1">Señales para Escalar</p>
             <p className="text-foreground/80 text-sm">{data.senales_de_escalar}</p>
           </div>
         )}
         {data.senales_de_pausar && (
-          <div className="p-3 bg-red-500/10 rounded-lg">
+          <div className="p-3 bg-red-500/10 rounded-sm">
             <p className="text-xs text-red-400 uppercase font-semibold mb-1">Señales para Pausar</p>
             <p className="text-foreground/80 text-sm">{data.senales_de_pausar}</p>
           </div>
@@ -2535,7 +2535,7 @@ RESTRICCIONES: ${data.restricciones_del_cliente}
       </div>
 
       {data.tono_de_voz && (
-        <div className="p-4 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-lg border border-indigo-500/20">
+        <div className="p-4 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-sm border border-indigo-500/20">
           <p className="text-xs text-indigo-400 uppercase font-semibold mb-1">Tono de Voz</p>
           <p className="text-foreground/80 font-medium">{data.tono_de_voz}</p>
         </div>
@@ -2543,7 +2543,7 @@ RESTRICCIONES: ${data.restricciones_del_cliente}
 
       <div className="grid md:grid-cols-2 gap-4">
         {data.palabras_usar?.length > 0 && (
-          <div className="p-3 bg-green-500/10 rounded-lg">
+          <div className="p-3 bg-green-500/10 rounded-sm">
             <p className="text-xs text-green-400 uppercase font-semibold mb-2">Palabras a Usar</p>
             <div className="flex flex-wrap gap-1">
               {data.palabras_usar.map((p, i) => (
@@ -2553,7 +2553,7 @@ RESTRICCIONES: ${data.restricciones_del_cliente}
           </div>
         )}
         {data.palabras_evitar?.length > 0 && (
-          <div className="p-3 bg-red-500/10 rounded-lg">
+          <div className="p-3 bg-red-500/10 rounded-sm">
             <p className="text-xs text-red-400 uppercase font-semibold mb-2">Palabras a Evitar</p>
             <div className="flex flex-wrap gap-1">
               {data.palabras_evitar.map((p, i) => (
@@ -2565,28 +2565,28 @@ RESTRICCIONES: ${data.restricciones_del_cliente}
       </div>
 
       {data.indicaciones_visuales && (
-        <div className="p-4 bg-muted/50 rounded-lg">
+        <div className="p-4 bg-muted/50 rounded-sm">
           <p className="text-xs text-pink-400 uppercase font-semibold mb-1">Indicaciones Visuales</p>
           <p className="text-foreground/80">{data.indicaciones_visuales}</p>
         </div>
       )}
 
       {data.especificaciones_tecnicas && (
-        <div className="p-4 bg-muted/50 rounded-lg">
+        <div className="p-4 bg-muted/50 rounded-sm">
           <p className="text-xs text-cyan-400 uppercase font-semibold mb-1">Especificaciones Técnicas</p>
           <p className="text-foreground/80">{data.especificaciones_tecnicas}</p>
         </div>
       )}
 
       {data.cta_recomendado && (
-        <div className="p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-lg border border-green-500/20">
+        <div className="p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-sm border border-green-500/20">
           <p className="text-xs text-green-400 uppercase font-semibold mb-1">CTA Recomendado</p>
           <p className="text-foreground/80 font-medium">{data.cta_recomendado}</p>
         </div>
       )}
 
       {data.restricciones_del_cliente && (
-        <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/20">
+        <div className="p-4 bg-red-500/10 rounded-sm border border-red-500/20">
           <p className="text-xs text-red-400 uppercase font-semibold mb-1">Restricciones del Cliente</p>
           <p className="text-foreground/80">{data.restricciones_del_cliente}</p>
         </div>
@@ -2635,7 +2635,7 @@ function ActionButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${variants[variant]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+      className={`flex items-center gap-2 px-3 py-2 rounded-sm transition-all ${variants[variant]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       {icon}
       <span className="text-sm">{label}</span>
@@ -2647,7 +2647,7 @@ function CopyButton({ onClick, copied }: { onClick: () => void; copied: boolean 
   return (
     <button
       onClick={onClick}
-      className="absolute top-2 right-2 p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+      className="absolute top-2 right-2 p-2 rounded-sm bg-muted/50 hover:bg-muted transition-colors"
     >
       {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4 text-gray-400" />}
     </button>

@@ -111,7 +111,7 @@ export function RichTextEditor({
       Image.configure({
         inline: true,
         HTMLAttributes: {
-          class: "max-w-full rounded-lg my-2",
+          class: "max-w-full rounded-sm my-2",
         },
       }),
     ],
@@ -172,7 +172,7 @@ export function RichTextEditor({
   if (!editor) return null;
 
   return (
-    <div className={cn("rounded-lg border bg-card overflow-hidden", className)}>
+    <div className={cn("rounded-sm border bg-card overflow-hidden", className)}>
       {editable && (
         <div className="flex flex-wrap items-center justify-between gap-2 p-2 border-b bg-muted/40">
           <div className="flex flex-wrap items-center gap-1">
@@ -491,6 +491,9 @@ export function RichTextEditor({
   );
 }
 
+// Default export para lazy loading
+export default RichTextEditor;
+
 export function RichTextViewer({ content, className }: { content: string; className?: string }) {
   const editor = useEditor({
     extensions: [
@@ -510,7 +513,7 @@ export function RichTextViewer({ content, className }: { content: string; classN
       Image.configure({
         inline: true,
         HTMLAttributes: {
-          class: "max-w-full rounded-lg my-2",
+          class: "max-w-full rounded-sm my-2",
         },
       }),
     ],
@@ -527,13 +530,13 @@ export function RichTextViewer({ content, className }: { content: string; classN
   }, [content, editor]);
 
   if (!editor) {
-    return <div className={cn("p-4 bg-muted rounded-lg", className)}>{content || "Sin contenido"}</div>;
+    return <div className={cn("p-4 bg-muted rounded-sm", className)}>{content || "Sin contenido"}</div>;
   }
 
   return (
     <div
       className={cn(
-        "rounded-lg border bg-card p-5 leading-7 text-base",
+        "rounded-sm border bg-card p-5 leading-7 text-base",
         "prose prose-sm dark:prose-invert max-w-none",
         // Headers
         "[&_h2]:text-lg [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-3 [&_h2]:text-foreground",

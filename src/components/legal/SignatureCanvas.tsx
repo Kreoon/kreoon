@@ -177,7 +177,7 @@ export function SignatureCanvas({
       <div className="relative">
         <canvas
           ref={canvasRef}
-          className="border border-white/20 rounded-lg bg-white/5 cursor-crosshair touch-none"
+          className="border border-white/20 rounded-sm bg-white/5 cursor-crosshair touch-none"
           style={{ width, height }}
           onMouseDown={startDrawing}
           onMouseMove={draw}

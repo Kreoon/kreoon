@@ -57,7 +57,7 @@ export function ReferralLeaderboard({ entries, currentUserId, isLoading }: Refer
                 <div
                   key={entry.id}
                   className={cn(
-                    'flex items-center gap-3 px-3 py-2 rounded-lg',
+                    'flex items-center gap-3 px-3 py-2 rounded-sm',
                     isMe ? 'bg-purple-500/10 ring-1 ring-purple-500/30' : 'bg-white/5',
                   )}
                 >

@@ -224,7 +224,7 @@ export function ScriptPermissionsEditor({ organizationId }: ScriptPermissionsEdi
       </div>
 
       {/* Permissions Grid */}
-      <ScrollArea className="h-[300px] border rounded-lg p-4">
+      <ScrollArea className="h-[300px] border rounded-sm p-4">
         <div className="space-y-4">
           {SUB_TABS.map(tab => (
             <Card key={tab.key} className="p-4">
@@ -254,7 +254,7 @@ export function ScriptPermissionsEditor({ organizationId }: ScriptPermissionsEdi
       </ScrollArea>
 
       {/* Quick Overview */}
-      <div className="p-3 bg-muted/50 rounded-lg">
+      <div className="p-3 bg-muted/50 rounded-sm">
         <p className="text-xs text-muted-foreground mb-2">Vista rápida para {ROLE_LABELS[selectedRole]}:</p>
         <div className="flex flex-wrap gap-1">
           {SUB_TABS.map(tab => {

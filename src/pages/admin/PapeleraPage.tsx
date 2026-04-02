@@ -31,7 +31,7 @@ export default function PapeleraPage() {
     <div className="container max-w-6xl py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-destructive/10 border border-destructive/20">
+        <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-destructive/10 border border-destructive/20">
           <Trash2 className="h-6 w-6 text-destructive" />
         </div>
         <div>
@@ -43,7 +43,7 @@ export default function PapeleraPage() {
       </div>
 
       {/* Security notice */}
-      <div className="flex items-center gap-3 p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400">
+      <div className="flex items-center gap-3 p-4 rounded-sm bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400">
         <Shield className="h-5 w-5 flex-shrink-0" />
         <div className="text-sm">
           <strong>Acceso restringido:</strong> Solo los administradores root pueden ver y restaurar elementos de la papelera.

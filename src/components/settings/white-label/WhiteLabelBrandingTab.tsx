@@ -146,11 +146,11 @@ export default function WhiteLabelBrandingTab() {
           </div>
 
           {settings.logo_url && (
-            <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/50 border">
+            <div className="flex items-center gap-4 p-3 rounded-sm bg-muted/50 border">
               <img
                 src={settings.logo_url}
                 alt="Logo preview"
-                className="h-12 w-12 rounded-lg object-contain"
+                className="h-12 w-12 rounded-sm object-contain"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
               />
               <span className="text-sm text-muted-foreground">Vista previa</span>
@@ -224,7 +224,7 @@ export default function WhiteLabelBrandingTab() {
                 type="color"
                 value={settings.primary_color}
                 onChange={(e) => setSettings(prev => ({ ...prev, primary_color: e.target.value }))}
-                className="h-10 w-14 rounded-md border cursor-pointer"
+                className="h-10 w-14 rounded-sm border cursor-pointer"
               />
               <Input
                 value={settings.primary_color}
@@ -243,7 +243,7 @@ export default function WhiteLabelBrandingTab() {
                   type="color"
                   value={settings.secondary_color || '#6366F1'}
                   onChange={(e) => setSettings(prev => ({ ...prev, secondary_color: e.target.value }))}
-                  className="h-10 w-14 rounded-md border cursor-pointer"
+                  className="h-10 w-14 rounded-sm border cursor-pointer"
                 />
                 <Input
                   value={settings.secondary_color}
@@ -326,7 +326,7 @@ export default function WhiteLabelBrandingTab() {
                 onChange={(e) => setSettings(prev => ({ ...prev, og_image_url: e.target.value }))}
               />
               {settings.og_image_url && (
-                <div className="mt-2 rounded-lg border overflow-hidden max-w-md">
+                <div className="mt-2 rounded-sm border overflow-hidden max-w-md">
                   <img
                     src={settings.og_image_url}
                     alt="OG preview"
@@ -356,7 +356,7 @@ export default function WhiteLabelBrandingTab() {
 /** Small locked field indicator showing which plan is needed */
 function LockedField({ label, plan }: { label: string; plan: string }) {
   return (
-    <div className="flex items-center justify-between rounded-lg border border-dashed border-muted-foreground/30 px-4 py-3 opacity-60">
+    <div className="flex items-center justify-between rounded-sm border border-dashed border-muted-foreground/30 px-4 py-3 opacity-60">
       <span className="text-sm text-muted-foreground">{label}</span>
       <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">
         Plan {plan}+

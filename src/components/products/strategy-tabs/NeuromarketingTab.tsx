@@ -85,7 +85,7 @@ export function NeuromarketingTab({ contentStrategy }: NeuromarketingTabProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
+      <div className="p-4 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
         <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
           <Brain className="h-4 w-4 text-purple-500" />
           Método ESFERA - Insights por Fase

@@ -59,20 +59,20 @@ export default function MarketingPage() {
     <div className="space-y-6">
       {/* Quick stats bar */}
       <div className="flex items-center gap-4 overflow-x-auto pb-1">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/30 border shrink-0">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-muted/30 border shrink-0">
           <Target className="w-3.5 h-3.5 text-muted-foreground" />
           <span className="text-xs">{activeCampaigns.length} activas</span>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/30 border shrink-0">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-muted/30 border shrink-0">
           <Megaphone className="w-3.5 h-3.5 text-muted-foreground" />
           <span className="text-xs">{campaigns.length} total</span>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/30 border shrink-0">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-muted/30 border shrink-0">
           <BarChart3 className="w-3.5 h-3.5 text-muted-foreground" />
           <span className="text-xs">Gasto: {fmtCurrency(totalSpend)}</span>
         </div>
         {unreadInsightsCount > 0 && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/30 shrink-0">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-primary/10 border border-primary/30 shrink-0">
             <Sparkles className="w-3.5 h-3.5 text-primary" />
             <span className="text-xs text-primary">{unreadInsightsCount} insights nuevos</span>
           </div>
@@ -88,7 +88,7 @@ export default function MarketingPage() {
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={cn(
-                'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-all',
+                'flex items-center gap-1.5 px-4 py-2 rounded-sm text-sm whitespace-nowrap transition-all',
                 activeTab === tab.key
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-muted/30 text-muted-foreground hover:bg-muted/50'

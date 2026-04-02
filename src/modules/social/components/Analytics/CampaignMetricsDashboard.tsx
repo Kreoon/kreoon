@@ -162,7 +162,7 @@ export function CampaignMetricsDashboard({ campaignId, campaignName }: CampaignM
             { icon: Play, label: 'Video views', value: summary.total_video_views },
             { icon: MousePointerClick, label: 'Clicks', value: summary.total_clicks },
           ].map(({ icon: Icon, label, value }) => (
-            <div key={label} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border">
+            <div key={label} className="flex items-center gap-2 p-2 rounded-sm bg-muted/30 border">
               <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
               <div>
                 <p className="text-sm font-bold">{fmt(value)}</p>
@@ -253,10 +253,10 @@ export function CampaignMetricsDashboard({ campaignId, campaignName }: CampaignM
                       <img
                         src={post.thumbnail_url}
                         alt=""
-                        className="w-16 h-16 rounded-lg object-cover shrink-0"
+                        className="w-16 h-16 rounded-sm object-cover shrink-0"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-lg bg-muted/50 flex items-center justify-center shrink-0">
+                      <div className="w-16 h-16 rounded-sm bg-muted/50 flex items-center justify-center shrink-0">
                         <Play className="w-5 h-5 text-muted-foreground" />
                       </div>
                     )}

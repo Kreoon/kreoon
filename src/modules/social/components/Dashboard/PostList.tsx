@@ -225,14 +225,14 @@ export function PostList({ onViewPost }: PostListProps) {
                     const isBlobUrl = mediaSrc?.startsWith('blob:');
                     if (!mediaSrc || isBlobUrl) {
                       return (
-                        <div className="w-14 h-14 rounded-lg bg-muted/50 flex items-center justify-center shrink-0">
+                        <div className="w-14 h-14 rounded-sm bg-muted/50 flex items-center justify-center shrink-0">
                           {isBlobUrl ? <Film className="w-5 h-5 text-muted-foreground" /> : <Clock className="w-5 h-5 text-muted-foreground" />}
                         </div>
                       );
                     }
                     const isVideo = /\.(mp4|mov|webm|avi|m4v)/i.test(mediaSrc);
                     return (
-                      <div className="w-14 h-14 rounded-lg overflow-hidden bg-muted shrink-0">
+                      <div className="w-14 h-14 rounded-sm overflow-hidden bg-muted shrink-0">
                         {isVideo ? (
                           <video src={mediaSrc} className="w-full h-full object-cover" muted playsInline preload="metadata" />
                         ) : (

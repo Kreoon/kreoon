@@ -70,7 +70,7 @@ export function LaunchStrategyTab({ launchStrategy }: LaunchStrategyTabProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="p-4 bg-gradient-to-r from-rose-500/10 to-orange-500/10 rounded-lg border border-rose-500/20">
+      <div className="p-4 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
         <h3 className="font-semibold text-sm mb-1 flex items-center gap-2">
           <Rocket className="h-4 w-4 text-rose-500" />
           Estrategia de Lanzamiento

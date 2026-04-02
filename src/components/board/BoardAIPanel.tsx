@@ -400,7 +400,7 @@ export function BoardAIPanel({
                     </Card>
 
                     {/* Quick Stats */}
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <Card>
                         <CardContent className="pt-3 pb-3 text-center">
                           <div className="text-2xl font-bold">{boardAnalysis.total_cards}</div>
@@ -432,7 +432,7 @@ export function BoardAIPanel({
                         </CardHeader>
                         <CardContent className="space-y-2">
                           {(boardAnalysis.recommendations || []).map((rec, i) => (
-                            <div key={i} className="p-3 rounded-lg border bg-muted/30">
+                            <div key={i} className="p-3 rounded-sm border bg-muted/30">
                               <div className="flex items-start justify-between gap-2">
                                 <span className="font-medium text-sm">{rec.title}</span>
                                 <Badge {...PRIORITY_BADGES[rec.priority]}>

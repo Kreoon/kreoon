@@ -153,7 +153,7 @@ export function WebhooksEditor({
           <Button
             variant="outline"
             onClick={() => setIsAdding(true)}
-            className="rounded-lg"
+            className="rounded-sm"
           >
             <Plus className="w-4 h-4 mr-2" />
             Nuevo webhook
@@ -170,12 +170,12 @@ export function WebhooksEditor({
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="bg-white border border-slate-200 rounded-xl overflow-hidden"
+              className="bg-white border border-slate-200 rounded-sm overflow-hidden"
             >
               <div className="p-4">
                 <div className="flex items-start gap-4">
                   <div
-                    className={`p-2 rounded-lg ${
+                    className={`p-2 rounded-sm ${
                       webhook.active ? 'bg-green-50' : 'bg-slate-100'
                     }`}
                   >
@@ -307,7 +307,7 @@ export function WebhooksEditor({
 
       {/* Empty state */}
       {webhooks.length === 0 && !isAdding && (
-        <div className="text-center py-12 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
+        <div className="text-center py-12 bg-slate-50 rounded-sm border-2 border-dashed border-slate-200">
           <Webhook className="w-12 h-12 mx-auto text-slate-300 mb-4" />
           <h4 className="font-medium text-slate-900 mb-2">Sin webhooks</h4>
           <p className="text-sm text-slate-500 mb-4">
@@ -316,7 +316,7 @@ export function WebhooksEditor({
           <Button
             variant="outline"
             onClick={() => setIsAdding(true)}
-            className="rounded-lg"
+            className="rounded-sm"
           >
             <Plus className="w-4 h-4 mr-2" />
             Crear webhook
@@ -331,7 +331,7 @@ export function WebhooksEditor({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="bg-violet-50 border border-violet-200 rounded-xl p-5 space-y-4"
+            className="bg-violet-50 border border-violet-200 rounded-sm p-5 space-y-4"
           >
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -362,7 +362,7 @@ export function WebhooksEditor({
                 {WEBHOOK_EVENTS.map((event) => (
                   <div
                     key={event.value}
-                    className="flex items-start gap-3 p-3 bg-white rounded-lg border border-slate-200"
+                    className="flex items-start gap-3 p-3 bg-white rounded-sm border border-slate-200"
                   >
                     <Checkbox
                       id={event.value}
@@ -388,14 +388,14 @@ export function WebhooksEditor({
               <Button
                 variant="ghost"
                 onClick={() => setIsAdding(false)}
-                className="rounded-lg"
+                className="rounded-sm"
               >
                 Cancelar
               </Button>
               <Button
                 onClick={handleAdd}
                 disabled={!newUrl.trim() || newEvents.length === 0 || addingLoading}
-                className="rounded-lg bg-violet-600 hover:bg-violet-700"
+                className="rounded-sm bg-violet-600 hover:bg-violet-700"
               >
                 {addingLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Crear webhook
@@ -420,7 +420,7 @@ export function WebhooksEditor({
               selectedWebhookLogs.map((log) => (
                 <div
                   key={log.id}
-                  className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg"
+                  className="flex items-center gap-3 p-3 bg-slate-50 rounded-sm"
                 >
                   <div
                     className={`p-1.5 rounded-full ${

@@ -64,7 +64,7 @@ export const KeyCard = memo(function KeyCard({
             opacity: [0.1, 0.2, 0.1]
           }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="absolute inset-0 rounded-2xl bg-white/10"
+          className="absolute inset-0 rounded-sm bg-white/10"
         />
       )}
 
@@ -79,7 +79,7 @@ export const KeyCard = memo(function KeyCard({
         {/* Front */}
         <div
           className={cn(
-            'absolute inset-0 rounded-2xl p-4 flex flex-col',
+            'absolute inset-0 rounded-sm p-4 flex flex-col',
             'border transition-all',
             // Locked y current se ven iguales (grises, sin color)
             (isLocked || isCurrent) && 'bg-white/[0.02] border-white/10',
@@ -92,7 +92,7 @@ export const KeyCard = memo(function KeyCard({
           {/* Header */}
           <div className="flex items-start justify-between mb-3">
             <div className={cn(
-              'w-12 h-12 rounded-xl flex items-center justify-center',
+              'w-12 h-12 rounded-sm flex items-center justify-center',
               // Locked y current se ven iguales (sin color)
               (isLocked || isCurrent) && 'bg-white/5',
               isUnlocked && 'bg-white/20'
@@ -178,7 +178,7 @@ export const KeyCard = memo(function KeyCard({
         {/* Back (rewards) */}
         <div
           className={cn(
-            'absolute inset-0 rounded-2xl p-4 flex flex-col',
+            'absolute inset-0 rounded-sm p-4 flex flex-col',
             `bg-gradient-to-br ${colorClasses.gradient}`
           )}
           style={{
@@ -198,7 +198,7 @@ export const KeyCard = memo(function KeyCard({
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 + i * 0.1 }}
-                className="flex items-center gap-2 bg-white/10 rounded-lg p-2"
+                className="flex items-center gap-2 bg-white/10 rounded-sm p-2"
               >
                 <span className="text-lg">{reward.icon}</span>
                 <div className="flex-1 min-w-0">

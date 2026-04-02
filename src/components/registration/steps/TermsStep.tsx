@@ -55,7 +55,7 @@ export function TermsStep({ data, onChange, onBack, onSubmit, submitting, mode }
           <select
             value={data.locationCountry}
             onChange={e => onChange({ locationCountry: e.target.value })}
-            className="w-full appearance-none rounded-lg border border-border bg-white/5 pl-10 pr-3 py-2.5 text-sm text-white focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30"
+            className="w-full appearance-none rounded-sm border border-border bg-white/5 pl-10 pr-3 py-2.5 text-sm text-white focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30"
           >
             {COUNTRIES.map(c => (
               <option key={c.code} value={c.code} className="bg-card text-white">
@@ -77,7 +77,7 @@ export function TermsStep({ data, onChange, onBack, onSubmit, submitting, mode }
           placeholder="Cuéntanos un poco sobre ti..."
           rows={2}
           maxLength={200}
-          className="w-full rounded-lg border border-border bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30 resize-none"
+          className="w-full rounded-sm border border-border bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30 resize-none"
         />
         <p className="text-right text-[10px] text-gray-500 mt-0.5">{data.bio.length}/200</p>
       </div>
@@ -105,7 +105,7 @@ export function TermsStep({ data, onChange, onBack, onSubmit, submitting, mode }
         onClick={handleSubmit}
         disabled={submitting}
         className={cn(
-          'w-full flex items-center justify-center gap-2 rounded-lg text-white font-medium py-3 text-sm transition-colors disabled:opacity-50',
+          'w-full flex items-center justify-center gap-2 rounded-sm text-white font-medium py-3 text-sm transition-colors disabled:opacity-50',
           btnColor,
         )}
       >

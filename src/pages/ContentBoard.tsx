@@ -27,22 +27,24 @@ import { updateContentStatusWithUP } from "@/hooks/useContentStatusWithUP";
 import { cn } from "@/lib/utils";
 import { DateRangePresetPicker } from "@/components/ui/date-range-preset-picker";
 import { resolvePreset, type DateRangeValue } from "@/lib/date-presets";
-import { 
-  BoardViewSwitcher, 
-  BoardView, 
-  BoardConfigDialog, 
-  BoardCalendarView, 
-  BoardTableView, 
+import {
+  BoardViewSwitcher,
+  BoardView,
+  BoardConfigDialog,
+  BoardCalendarView,
+  BoardTableView,
   BoardListView,
   EnhancedKanbanColumn,
   EnhancedContentCard,
   BoardAIPanel,
   MarketingInfoPanel,
   CampaignAssignmentDialog,
-  MarketplaceBoardView
+  MarketplaceBoardView,
+  ViewSelector
 } from "@/components/board";
 import { useBoardSettings } from "@/hooks/useBoardSettings";
 import { useBoardPersistence } from "@/hooks/useBoardPersistence";
+import { useBoardUserPreferences } from "@/hooks/useBoardUserPreferences";
 import { useOrgAssignableUsers } from "@/hooks/useOrgAssignableUsers";
 import { AutoSaveIndicator } from "@/components/ui/autosave-indicator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -345,6 +347,7 @@ export default function ContentBoard() {
   const setCurrentView = persistence.setCurrentView;
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [calendarDate, setCalendarDate] = useState<Date>(new Date());
+  const [listGroupBy, setListGroupBy] = useState<string>('status');
   
   // Autosave status
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -392,8 +395,24 @@ export default function ContentBoard() {
   }, [filterCreatorId, filterEditorId, filterClientId, filterProductId, filterCampaignWeek, searchTerm, dateRangeFilter]);
   
   // Board settings hook
-  const { settings, statuses: orgStatuses, rules, loading: settingsLoading, refetch: refetchSettings } = useBoardSettings(currentOrgId);
+  const { settings, statuses: orgStatuses, rules, loading: settingsLoading, refetch: refetchSettings, updateSettings } = useBoardSettings(currentOrgId);
   const { creators: assignableCreators, editors: assignableEditors, refetch: refetchAssignable } = useOrgAssignableUsers(currentOrgId);
+
+  // User board preferences hook (hybrid localStorage + Supabase sync)
+  const {
+    savedViews,
+    activeViewId,
+    activeView,
+    tableConfig,
+    preferences: userPreferences,
+    isSyncing: isPreferencesSyncing,
+    setActiveView: setActiveUserView,
+    saveView,
+    deleteView,
+    renameView,
+    updateTableConfig,
+    updatePreferences,
+  } = useBoardUserPreferences(currentOrgId);
 
   // Rol efectivo para permisos del board - use impersonated role if active
   const primaryRole = isImpersonating && impersonationTarget.role
@@ -703,10 +722,10 @@ export default function ContentBoard() {
       <div className="min-h-screen p-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => (
-            <Skeleton key={i} className="h-32 rounded-xl" />
+            <Skeleton key={i} className="h-32 rounded-sm" />
           ))}
         </div>
-        <Skeleton className="h-96 rounded-xl" />
+        <Skeleton className="h-96 rounded-sm" />
       </div>
     );
   }
@@ -728,7 +747,7 @@ export default function ContentBoard() {
                   placeholder="Buscar producción..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="h-9 md:h-10 w-40 md:w-64 rounded-xl border border-border bg-card pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-[hsl(270,100%,60%,0.3)] transition-all placeholder:text-[hsl(270,30%,45%)]"
+                  className="h-9 md:h-10 w-40 md:w-64 rounded-sm border border-border bg-card pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-[hsl(270,100%,60%,0.3)] transition-all placeholder:text-[hsl(270,30%,45%)]"
                 />
               </div>
             </div>
@@ -744,18 +763,18 @@ export default function ContentBoard() {
               placeholder="Buscar producción..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-9 w-full rounded-xl border border-border bg-card pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all placeholder:text-[hsl(270,30%,45%)]"
+              className="h-9 w-full rounded-sm border border-border bg-card pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all placeholder:text-[hsl(270,30%,45%)]"
             />
           </div>
         </div>
 
         {/* Board Mode Toggle: Contenido | Marketplace (hidden for freelancers and users without content access) */}
         {!shouldForceMarketplace && (
-          <div className="flex items-center gap-1 bg-muted rounded-xl p-1 w-fit border border-white/5">
+          <div className="flex items-center gap-1 bg-muted rounded-sm p-1 w-fit border border-white/5">
             <button
               onClick={() => setBoardMode('content')}
               className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                "flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium transition-all",
                 boardMode === 'content'
                   ? "bg-purple-600/20 text-purple-300 border border-purple-500/30"
                   : "text-gray-500 hover:text-foreground"
@@ -767,7 +786,7 @@ export default function ContentBoard() {
             <button
               onClick={() => setBoardMode('marketplace')}
               className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                "flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium transition-all",
                 boardMode === 'marketplace'
                   ? "bg-purple-600/20 text-purple-300 border border-purple-500/30"
                   : "text-gray-500 hover:text-foreground"
@@ -856,7 +875,7 @@ export default function ContentBoard() {
           </div>
         )}
         {/* Board Header with View Switcher */}
-        <div className="rounded-xl border border-border bg-card p-3 md:p-4">
+        <div className="rounded-sm border border-border bg-card p-3 md:p-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3 md:mb-4">
             <div className="flex items-center gap-3 flex-wrap">
               <h2 className="text-base md:text-lg font-semibold text-card-foreground">Flujo de Trabajo</h2>
@@ -898,6 +917,37 @@ export default function ContentBoard() {
                   </Label>
                 </div>
               )}
+              <ViewSelector
+                savedViews={savedViews}
+                activeViewId={activeViewId}
+                currentViewType={currentView}
+                onSelectView={(viewId) => {
+                  setActiveUserView(viewId);
+                  // Si selecciona una vista guardada, cambiar al tipo de vista correspondiente
+                  if (viewId) {
+                    const view = savedViews.find(v => v.id === viewId);
+                    if (view) {
+                      setCurrentView(view.type);
+                    }
+                  }
+                }}
+                onSaveCurrentView={(name) => {
+                  saveView({
+                    name,
+                    type: currentView,
+                    config: {
+                      visibleColumns: settings.visible_fields || [],
+                      columnOrder: tableConfig.columnOrder,
+                      columnWidths: tableConfig.columnWidths,
+                      sortBy: userPreferences.defaultSort,
+                      cardSize: settings.card_size || 'normal',
+                    },
+                  });
+                }}
+                onRenameView={renameView}
+                onDeleteView={deleteView}
+                isSyncing={isPreferencesSyncing}
+              />
               <BoardViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
               {showAdminControls && (
                 <>
@@ -950,7 +1000,7 @@ export default function ContentBoard() {
           {/* Kanban View - Tech/IA aesthetic - Hierarchical layout */}
           {currentView === 'kanban' && (
             <div 
-              className="flex overflow-x-auto gap-4 p-3 md:p-5 rounded-xl"
+              className="flex overflow-x-auto gap-4 p-3 md:p-5 rounded-sm"
               style={{
                 background: "linear-gradient(180deg, #0a0118 0%, #0d0220 100%)",
                 height: "calc(100vh - 200px)",
@@ -1009,6 +1059,8 @@ export default function ContentBoard() {
                               content={item}
                               cardSize={settings?.card_size || 'normal'}
                               visibleFields={settings?.visible_fields || ['title', 'status', 'client', 'deadline', 'responsible']}
+                              showFieldsCustomizer={true}
+                              onVisibleFieldsChange={(fields) => updateSettings({ visible_fields: fields })}
                               onClick={() => setSelectedContent(item)}
                               onDragStart={(e) => handleDragStart(e, item)}
                               isDragging={draggingContent?.id === item.id}
@@ -1043,7 +1095,7 @@ export default function ContentBoard() {
                           {!isExpanded && hiddenCount > 0 && (
                             <button
                               onClick={(e) => { e.stopPropagation(); toggleColumnExpand(column.status); }}
-                              className="w-full py-2 px-3 rounded-lg text-xs font-medium text-[#a78bfa] hover:text-[#c4b5fd] transition-colors"
+                              className="w-full py-2 px-3 rounded-sm text-xs font-medium text-[#a78bfa] hover:text-[#c4b5fd] transition-colors"
                               style={{ background: 'rgba(139, 92, 246, 0.08)', border: '1px dashed rgba(139, 92, 246, 0.25)' }}
                             >
                               Ver {hiddenCount} más
@@ -1052,7 +1104,7 @@ export default function ContentBoard() {
                           {isExpanded && hiddenCount > 0 && (
                             <button
                               onClick={(e) => { e.stopPropagation(); toggleColumnExpand(column.status); }}
-                              className="w-full py-2 px-3 rounded-lg text-xs font-medium text-[#64748b] hover:text-[#94a3b8] transition-colors"
+                              className="w-full py-2 px-3 rounded-sm text-xs font-medium text-[#64748b] hover:text-[#94a3b8] transition-colors"
                               style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px dashed rgba(255, 255, 255, 0.1)' }}
                             >
                               Mostrar menos
@@ -1062,7 +1114,7 @@ export default function ContentBoard() {
                       );
                     })()}
                     {columnContent.length === 0 && (
-                      <div className="border-2 border-dashed border-border rounded-lg p-4 md:p-8 text-center text-muted-foreground text-xs md:text-sm">
+                      <div className="border-2 border-dashed border-border rounded-sm p-4 md:p-8 text-center text-muted-foreground text-xs md:text-sm">
                         Sin contenido
                       </div>
                     )}
@@ -1072,40 +1124,60 @@ export default function ContentBoard() {
             </div>
           )}
           
-          {/* List View */}
+          {/* List View - conectado a preferencias de usuario */}
           {currentView === 'list' && (
-            <BoardListView 
-              content={filteredContent} 
+            <BoardListView
+              content={filteredContent}
               onContentClick={setSelectedContent}
               cardSize={settings?.card_size || 'normal'}
               visibleFields={settings?.visible_fields || ['title', 'thumbnail', 'status', 'client', 'responsible', 'deadline']}
+              onVisibleFieldsChange={(fields) => updateSettings({ visible_fields: fields })}
               organizationStatuses={orgStatuses}
               ambassadorIds={ambassadorIds}
+              showFieldsCustomizer={true}
+              groupBy={listGroupBy}
+              onGroupByChange={setListGroupBy}
             />
           )}
           
-          {/* Calendar View */}
+          {/* Calendar View - conectado a preferencias de usuario */}
           {currentView === 'calendar' && (
-            <BoardCalendarView 
-              content={filteredContent} 
+            <BoardCalendarView
+              content={filteredContent}
               currentDate={calendarDate}
               onDateChange={setCalendarDate}
               onContentClick={setSelectedContent}
               cardSize={settings?.card_size || 'normal'}
               visibleFields={settings?.visible_fields || ['title', 'status', 'responsible']}
+              onVisibleFieldsChange={(fields) => updateSettings({ visible_fields: fields })}
               organizationStatuses={orgStatuses}
               ambassadorIds={ambassadorIds}
+              showFieldsCustomizer={true}
             />
           )}
           
-          {/* Table View */}
+          {/* Table View - conectado a preferencias de usuario */}
           {currentView === 'table' && (
-            <BoardTableView 
-              content={filteredContent} 
+            <BoardTableView
+              content={filteredContent}
               onContentClick={setSelectedContent}
-              visibleFields={settings?.visible_fields || ['title', 'thumbnail', 'status', 'client', 'responsible', 'deadline']}
+              visibleFields={
+                tableConfig.visibleColumns.length > 0
+                  ? tableConfig.visibleColumns
+                  : settings?.visible_fields || ['title', 'thumbnail', 'status', 'client', 'responsible', 'deadline']
+              }
               organizationStatuses={orgStatuses}
               ambassadorIds={ambassadorIds}
+              columnOrder={tableConfig.columnOrder}
+              columnWidths={tableConfig.columnWidths}
+              onColumnOrderChange={(order) => updateTableConfig({ columnOrder: order })}
+              onColumnWidthsChange={(widths) => updateTableConfig({ columnWidths: widths })}
+              onVisibleFieldsChange={(fields) => updateTableConfig({ visibleColumns: fields })}
+              enableReorder={true}
+              enableResize={true}
+              initialSortField={userPreferences.defaultSort?.field as 'title' | 'status' | 'client' | 'creator' | 'deadline' | 'created_at' || 'created_at'}
+              initialSortDirection={userPreferences.defaultSort?.direction || 'desc'}
+              onSortChange={(field, direction) => updatePreferences({ defaultSort: { field, direction } })}
             />
           )}
         </div>

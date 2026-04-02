@@ -191,7 +191,7 @@ export function CompanyOnboarding({
       {/* Progress header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-social-foreground">
+          <h1 className="text-2xl font-bold text-foreground">
             Configura tu perfil de empresa
           </h1>
           {onSkip && currentStep !== 'complete' && (
@@ -208,8 +208,8 @@ export function CompanyOnboarding({
               className={cn(
                 "flex items-center gap-1 text-xs",
                 idx <= stepIndex
-                  ? "text-social-accent"
-                  : "text-social-muted-foreground"
+                  ? "text-primary"
+                  : "text-muted-foreground"
               )}
             >
               <step.icon className="h-3 w-3" />
@@ -233,13 +233,13 @@ export function CompanyOnboarding({
           {currentStep === 'company' && (
             <div className="space-y-6">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-social-accent/20 mb-4">
-                  <Building2 className="h-8 w-8 text-social-accent" />
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-4">
+                  <Building2 className="h-8 w-8 text-primary" />
                 </div>
-                <h2 className="text-xl font-semibold text-social-foreground">
+                <h2 className="text-xl font-semibold text-foreground">
                   Cuéntanos sobre tu empresa
                 </h2>
-                <p className="text-social-muted-foreground mt-2">
+                <p className="text-muted-foreground mt-2">
                   Esta información nos ayudará a encontrar los creadores perfectos para ti
                 </p>
               </div>
@@ -250,8 +250,8 @@ export function CompanyOnboarding({
                   {logoPreview ? (
                     <AvatarImage src={logoPreview} />
                   ) : (
-                    <AvatarFallback className="bg-social-muted">
-                      <Building2 className="h-10 w-10 text-social-muted-foreground" />
+                    <AvatarFallback className="bg-background">
+                      <Building2 className="h-10 w-10 text-muted-foreground" />
                     </AvatarFallback>
                   )}
                 </Avatar>
@@ -263,27 +263,27 @@ export function CompanyOnboarding({
 
               {/* Company name */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-social-foreground">
+                <label className="text-sm font-medium text-foreground">
                   Nombre de la empresa *
                 </label>
                 <Input
                   placeholder="Ej: Mi Empresa S.A."
                   value={formData.company_name || ''}
                   onChange={(e) => updateField('company_name', e.target.value)}
-                  className="bg-social-muted border-social-border"
+                  className="bg-background border-border"
                 />
               </div>
 
               {/* Description */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-social-foreground">
+                <label className="text-sm font-medium text-foreground">
                   Descripción breve
                 </label>
                 <Textarea
                   placeholder="¿A qué se dedica tu empresa? ¿Cuál es su propuesta de valor?"
                   value={formData.company_description || ''}
                   onChange={(e) => updateField('company_description', e.target.value)}
-                  className="bg-social-muted border-social-border min-h-[100px]"
+                  className="bg-background border-border min-h-[100px]"
                 />
               </div>
             </div>
@@ -293,13 +293,13 @@ export function CompanyOnboarding({
           {currentStep === 'industry' && (
             <div className="space-y-6">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-social-accent/20 mb-4">
-                  <Target className="h-8 w-8 text-social-accent" />
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-4">
+                  <Target className="h-8 w-8 text-primary" />
                 </div>
-                <h2 className="text-xl font-semibold text-social-foreground">
+                <h2 className="text-xl font-semibold text-foreground">
                   ¿En qué industria operas?
                 </h2>
-                <p className="text-social-muted-foreground mt-2">
+                <p className="text-muted-foreground mt-2">
                   Esto nos ayuda a recomendar creadores especializados en tu sector
                 </p>
               </div>
@@ -311,14 +311,14 @@ export function CompanyOnboarding({
                     key={industry.id}
                     onClick={() => updateField('industry', industry.id as IndustryId)}
                     className={cn(
-                      "p-4 rounded-xl border-2 text-left transition-all",
+                      "p-4 rounded-sm border-2 text-left transition-all",
                       formData.industry === industry.id
-                        ? "border-social-accent bg-social-accent/10"
-                        : "border-social-border bg-social-card hover:border-social-accent/50"
+                        ? "border-primary bg-secondary"
+                        : "border-border bg-card hover:border-primary/50"
                     )}
                   >
                     <span className="text-2xl mb-2 block">{industry.icon}</span>
-                    <p className="font-medium text-social-foreground text-sm">
+                    <p className="font-medium text-foreground text-sm">
                       {industry.name_es}
                     </p>
                   </button>
@@ -328,7 +328,7 @@ export function CompanyOnboarding({
               {/* Niche tags */}
               {selectedIndustry && (
                 <div className="space-y-3 pt-4">
-                  <label className="text-sm font-medium text-social-foreground">
+                  <label className="text-sm font-medium text-foreground">
                     Etiquetas de nicho (opcional)
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -351,7 +351,7 @@ export function CompanyOnboarding({
                       value={customTag}
                       onChange={(e) => setCustomTag(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && addCustomTag()}
-                      className="bg-social-muted border-social-border"
+                      className="bg-background border-border"
                     />
                     <Button variant="outline" onClick={addCustomTag}>
                       Agregar
@@ -381,33 +381,33 @@ export function CompanyOnboarding({
           {currentStep === 'audience' && (
             <div className="space-y-6">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-social-accent/20 mb-4">
-                  <Users className="h-8 w-8 text-social-accent" />
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-4">
+                  <Users className="h-8 w-8 text-primary" />
                 </div>
-                <h2 className="text-xl font-semibold text-social-foreground">
+                <h2 className="text-xl font-semibold text-foreground">
                   ¿Quién es tu audiencia?
                 </h2>
-                <p className="text-social-muted-foreground mt-2">
+                <p className="text-muted-foreground mt-2">
                   Conocer a tu público nos ayuda a encontrar creadores que conecten con ellos
                 </p>
               </div>
 
               {/* Target audience */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-social-foreground">
+                <label className="text-sm font-medium text-foreground">
                   Describe tu audiencia objetivo *
                 </label>
                 <Textarea
                   placeholder="Ej: Mujeres de 25-45 años interesadas en bienestar, salud y lifestyle premium..."
                   value={formData.target_audience || ''}
                   onChange={(e) => updateField('target_audience', e.target.value)}
-                  className="bg-social-muted border-social-border min-h-[120px]"
+                  className="bg-background border-border min-h-[120px]"
                 />
               </div>
 
               {/* Brand voice */}
               <div className="space-y-3">
-                <label className="text-sm font-medium text-social-foreground">
+                <label className="text-sm font-medium text-foreground">
                   Tono de tu marca
                 </label>
                 <div className="grid grid-cols-2 gap-3">
@@ -416,16 +416,16 @@ export function CompanyOnboarding({
                       key={voice.value}
                       onClick={() => updateField('brand_voice', voice.value)}
                       className={cn(
-                        "p-3 rounded-lg border text-left transition-all",
+                        "p-3 rounded-sm border text-left transition-all",
                         formData.brand_voice === voice.value
-                          ? "border-social-accent bg-social-accent/10"
-                          : "border-social-border bg-social-card hover:border-social-accent/50"
+                          ? "border-primary bg-secondary"
+                          : "border-border bg-card hover:border-primary/50"
                       )}
                     >
-                      <p className="font-medium text-social-foreground text-sm">
+                      <p className="font-medium text-foreground text-sm">
                         {voice.label}
                       </p>
-                      <p className="text-xs text-social-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         {voice.desc}
                       </p>
                     </button>
@@ -435,7 +435,7 @@ export function CompanyOnboarding({
 
               {/* Content goals */}
               <div className="space-y-3">
-                <label className="text-sm font-medium text-social-foreground">
+                <label className="text-sm font-medium text-foreground">
                   Objetivos de contenido
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -458,20 +458,20 @@ export function CompanyOnboarding({
           {currentStep === 'preferences' && (
             <div className="space-y-6">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-social-accent/20 mb-4">
-                  <Sparkles className="h-8 w-8 text-social-accent" />
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-4">
+                  <Sparkles className="h-8 w-8 text-primary" />
                 </div>
-                <h2 className="text-xl font-semibold text-social-foreground">
+                <h2 className="text-xl font-semibold text-foreground">
                   Preferencias de contenido
                 </h2>
-                <p className="text-social-muted-foreground mt-2">
+                <p className="text-muted-foreground mt-2">
                   Casi terminamos. Cuéntanos qué tipo de contenido buscas
                 </p>
               </div>
 
               {/* Content types */}
               <div className="space-y-3">
-                <label className="text-sm font-medium text-social-foreground">
+                <label className="text-sm font-medium text-foreground">
                   Tipos de contenido que te interesan
                 </label>
                 <div className="space-y-3">
@@ -497,7 +497,7 @@ export function CompanyOnboarding({
 
               {/* Platforms */}
               <div className="space-y-3">
-                <label className="text-sm font-medium text-social-foreground">
+                <label className="text-sm font-medium text-foreground">
                   Plataformas de interés
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -516,7 +516,7 @@ export function CompanyOnboarding({
 
               {/* Creator styles */}
               <div className="space-y-3">
-                <label className="text-sm font-medium text-social-foreground">
+                <label className="text-sm font-medium text-foreground">
                   Estilos de creador preferidos
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -535,14 +535,14 @@ export function CompanyOnboarding({
 
               {/* Budget */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-social-foreground">
+                <label className="text-sm font-medium text-foreground">
                   Presupuesto típico por proyecto
                 </label>
                 <Select
                   value={formData.typical_budget_range}
                   onValueChange={(v) => updateField('typical_budget_range', v as BudgetRange)}
                 >
-                  <SelectTrigger className="bg-social-muted border-social-border">
+                  <SelectTrigger className="bg-background border-border">
                     <SelectValue placeholder="Selecciona un rango" />
                   </SelectTrigger>
                   <SelectContent>
@@ -567,10 +567,10 @@ export function CompanyOnboarding({
               >
                 <Check className="h-10 w-10 text-green-500" />
               </motion.div>
-              <h2 className="text-2xl font-bold text-social-foreground mb-2">
+              <h2 className="text-2xl font-bold text-foreground mb-2">
                 ¡Perfil completado!
               </h2>
-              <p className="text-social-muted-foreground">
+              <p className="text-muted-foreground">
                 Ya puedes empezar a descubrir creadores perfectos para tu marca
               </p>
             </div>
@@ -580,7 +580,7 @@ export function CompanyOnboarding({
 
       {/* Navigation */}
       {currentStep !== 'complete' && (
-        <div className="flex justify-between mt-8 pt-6 border-t border-social-border">
+        <div className="flex justify-between mt-8 pt-6 border-t border-border">
           <Button
             variant="ghost"
             onClick={prevStep}
@@ -595,7 +595,7 @@ export function CompanyOnboarding({
             <Button
               onClick={handleComplete}
               disabled={isUpdating}
-              className="gap-2 bg-gradient-to-r from-social-accent to-purple-600"
+              className="gap-2 bg-gradient-to-r from-primary to-purple-600"
             >
               {isUpdating ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

@@ -40,18 +40,34 @@ export function ResearchProgressIndicator({ productId, isGenerating }: ResearchP
       try {
         const { data } = await supabase
           .from('products')
-          .select('research_progress')
+          .select('research_progress, research_generated_at')
           .eq('id', productId)
           .single();
 
         const progress = (data as any)?.research_progress;
-        if (progress?.completed_steps) {
+        if (!progress) return;
+
+        // Support both formats: legacy (completed_steps array) and new (step/total/label)
+        if (progress.completed_steps) {
           const steps: string[] = progress.completed_steps;
           setCompletedSteps(steps);
+        } else if (typeof progress.step === 'number' && progress.stepId) {
+          // Reconstruct completed steps from step index
+          const completed = RESEARCH_SECTIONS.slice(0, progress.step).map(s => s.key);
+          setCompletedSteps(completed);
+        }
 
-          // Determine which step is currently generating
-          const nextStep = RESEARCH_SECTIONS.find(s => !steps.includes(s.key));
+        // Use stepId or label to determine current step
+        if (progress.stepId) {
+          setCurrentStep(progress.stepId);
+        } else {
+          const nextStep = RESEARCH_SECTIONS.find(s => !completedSteps.includes(s.key));
           setCurrentStep(nextStep?.key || null);
+        }
+
+        // Stop polling if done or error
+        if (progress.done || progress.error || data?.research_generated_at) {
+          if (pollRef.current) clearInterval(pollRef.current);
         }
       } catch {
         // Silently ignore polling errors
@@ -85,7 +101,7 @@ export function ResearchProgressIndicator({ productId, isGenerating }: ResearchP
   };
 
   return (
-    <div className="w-full rounded-xl border border-purple-500/30 bg-card/95 backdrop-blur-sm p-5 shadow-lg">
+    <div className="w-full rounded-lg border border-purple-500/30 bg-white dark:bg-[#14141f] p-5 shadow-sm dark:shadow-none">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
@@ -126,7 +142,7 @@ export function ResearchProgressIndicator({ productId, isGenerating }: ResearchP
           return (
             <div
               key={section.key}
-              className={`flex items-center justify-between py-1.5 px-2 rounded-md text-xs transition-all duration-300 ${
+              className={`flex items-center justify-between py-1.5 px-2 rounded-lg text-xs transition-colors duration-150 ${
                 status === 'generating' ? 'bg-purple-500/10 border border-purple-500/20' : ''
               }`}
             >
@@ -150,7 +166,7 @@ export function ResearchProgressIndicator({ productId, isGenerating }: ResearchP
               </div>
               <span className={`text-[10px] ${
                 status === 'completed' ? 'text-green-500/70' :
-                status === 'generating' ? 'text-purple-400 animate-pulse' :
+                status === 'generating' ? 'text-purple-400' :
                 'text-muted-foreground/30'
               }`}>
                 {status === 'completed' && 'completado'}

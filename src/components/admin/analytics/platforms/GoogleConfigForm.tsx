@@ -64,7 +64,7 @@ export function GoogleConfigForm({ data, onChange, hasExistingToken }: GoogleCon
         </p>
       </div>
 
-      <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3">
+      <div className="rounded-sm bg-amber-500/10 border border-amber-500/20 p-3">
         <div className="flex items-start gap-2">
           <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
           <div className="text-xs text-amber-300">
@@ -77,7 +77,7 @@ export function GoogleConfigForm({ data, onChange, hasExistingToken }: GoogleCon
         </div>
       </div>
 
-      <div className="flex items-center justify-between p-3 rounded-lg bg-gray-800/30 border border-gray-700/30">
+      <div className="flex items-center justify-between p-3 rounded-sm bg-gray-800/30 border border-gray-700/30">
         <div>
           <Label className="text-foreground/80">Modo Test</Label>
           <p className="text-xs text-gray-500 mt-0.5">

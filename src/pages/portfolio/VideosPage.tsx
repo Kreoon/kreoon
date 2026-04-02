@@ -610,7 +610,7 @@ export default function VideosPage() {
       <div className="fixed inset-0 flex items-center justify-center bg-black text-white/60 z-50">
         <button
           onClick={() => navigate(-1)}
-          className="absolute top-4 right-4 z-30 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-colors"
+          className="absolute top-4 right-4 z-30 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
           aria-label="Cerrar"
         >
           <X className="h-5 w-5 text-white" />
@@ -648,7 +648,7 @@ export default function VideosPage() {
       {/* Close / Back button */}
       <button
         onClick={() => navigate(-1)}
-        className="absolute top-4 right-4 z-30 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition-colors"
+        className="absolute top-4 right-4 z-30 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70 transition-colors"
         aria-label="Cerrar"
       >
         <X className="h-5 w-5 text-white" />

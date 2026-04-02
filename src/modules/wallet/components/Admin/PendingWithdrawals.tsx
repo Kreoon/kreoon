@@ -71,7 +71,7 @@ export function PendingWithdrawals({ className }: PendingWithdrawalsProps) {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-amber-500/10">
+              <div className="p-3 rounded-sm bg-amber-500/10">
                 <Clock className="h-6 w-6 text-amber-400" />
               </div>
               <div>
@@ -84,7 +84,7 @@ export function PendingWithdrawals({ className }: PendingWithdrawalsProps) {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-blue-500/10">
+              <div className="p-3 rounded-sm bg-blue-500/10">
                 <Loader2 className="h-6 w-6 text-blue-400" />
               </div>
               <div>
@@ -97,7 +97,7 @@ export function PendingWithdrawals({ className }: PendingWithdrawalsProps) {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-[hsl(270,100%,60%,0.1)]">
+              <div className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.1)]">
                 <AlertCircle className="h-6 w-6 text-primary" />
               </div>
               <div>
@@ -154,7 +154,7 @@ export function PendingWithdrawals({ className }: PendingWithdrawalsProps) {
           {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="p-4 rounded-xl bg-[hsl(270,100%,60%,0.05)] animate-pulse">
+                <div key={i} className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] animate-pulse">
                   <div className="flex items-center gap-4">
                     <div className="h-12 w-12 rounded-full bg-[hsl(270,100%,60%,0.1)]" />
                     <div className="flex-1 space-y-2">
@@ -182,7 +182,7 @@ export function PendingWithdrawals({ className }: PendingWithdrawalsProps) {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.03 }}
                     className={cn(
-                      'p-4 rounded-xl transition-all',
+                      'p-4 rounded-sm transition-all',
                       'bg-[hsl(270,100%,60%,0.03)] hover:bg-[hsl(270,100%,60%,0.08)]',
                       'border border-transparent hover:border-[hsl(270,100%,60%,0.1)]'
                     )}

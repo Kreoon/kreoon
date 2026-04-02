@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { KreoonLogo } from '@/components/ui/kreoon-logo';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -43,29 +44,19 @@ export function OnboardingWizard() {
   }
 
   return (
-    <div className="fixed inset-0 z-[100] bg-[#0F0F23] overflow-x-hidden overflow-y-auto">
+    <div className="fixed inset-0 z-[100] bg-background overflow-x-hidden overflow-y-auto">
       {/* Background gradient */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[min(800px,200vw)] h-[400px] opacity-30"
-          style={{
-            background: 'radial-gradient(ellipse at center, rgba(147, 51, 234, 0.3) 0%, transparent 70%)',
-            filter: 'blur(60px)',
-          }}
-        />
-      </div>
+      <div className="absolute inset-0 pointer-events-none bg-background" />
 
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-[#0F0F23]/80 backdrop-blur-lg border-b border-white/10">
+      <header className="sticky top-0 z-10 bg-background border-b border-border">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-              <Shield className="w-5 h-5 text-white" />
-            </div>
+            <KreoonLogo heightClass="h-8" />
             <div>
-              <span className="font-bold text-lg text-white">KREOON</span>
-              <span className="ml-2 text-xs text-purple-400">Verificación</span>
+              <span className="font-bold text-lg text-foreground tracking-widest uppercase font-mono">KREOON</span>
+              <span className="ml-2 text-xs text-muted-foreground font-mono">Verificación</span>
             </div>
           </div>
 
@@ -74,7 +65,7 @@ export function OnboardingWizard() {
             variant="ghost"
             size="sm"
             onClick={handleLogout}
-            className="text-white/60 hover:text-white hover:bg-white/10"
+            className="text-muted-foreground hover:text-foreground hover:bg-secondary"
           >
             <LogOut className="w-4 h-4 mr-2" />
             Cerrar sesión
@@ -94,8 +85,8 @@ export function OnboardingWizard() {
                   index < currentStepIndex
                     ? "bg-green-500 text-white"
                     : index === currentStepIndex
-                    ? "bg-gradient-to-br from-purple-500 to-pink-500 text-white"
-                    : "bg-white/10 text-white/40"
+                    ? "bg-primary text-primary-foreground font-mono"
+                    : "bg-secondary border border-border text-muted-foreground font-mono"
                 )}
               >
                 {index < currentStepIndex ? '✓' : index + 1}
@@ -105,7 +96,7 @@ export function OnboardingWizard() {
               <span
                 className={cn(
                   "text-sm font-medium hidden sm:block",
-                  index === currentStepIndex ? "text-white" : "text-white/40"
+                  index === currentStepIndex ? "text-foreground font-mono" : "text-muted-foreground font-mono"
                 )}
               >
                 {step.label}
@@ -116,7 +107,7 @@ export function OnboardingWizard() {
                 <div
                   className={cn(
                     "w-12 sm:w-20 h-0.5 mx-2",
-                    index < currentStepIndex ? "bg-green-500" : "bg-white/10"
+                    index < currentStepIndex ? "bg-green-500" : "bg-border"
                   )}
                 />
               )}
@@ -155,9 +146,9 @@ export function OnboardingWizard() {
       </main>
 
       {/* Footer */}
-      <footer className="fixed bottom-0 left-0 right-0 py-4 bg-[#0F0F23]/80 backdrop-blur-lg border-t border-white/10">
+      <footer className="fixed bottom-0 left-0 right-0 py-4 bg-background border-t border-border">
         <div className="max-w-3xl mx-auto px-4 text-center">
-          <p className="text-xs text-white/40">
+          <p className="text-xs text-muted-foreground font-mono">
             © 2026 SICOMMER INT LLC. Todos los derechos reservados.
           </p>
         </div>
@@ -168,28 +159,28 @@ export function OnboardingWizard() {
 
 function OnboardingSplash() {
   return (
-    <div className="fixed inset-0 z-[100] bg-[#0F0F23] flex items-center justify-center">
+    <div className="fixed inset-0 z-[100] bg-background flex items-center justify-center">
       <div className="text-center">
-        {/* Logo animado */}
+        {/* Logo */}
         <motion.div
           animate={{ scale: [1, 1.05, 1] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center"
+          className="mx-auto mb-6 flex justify-center"
         >
-          <Shield className="w-10 h-10 text-white" />
+          <KreoonLogo heightClass="h-16" />
         </motion.div>
 
-        <h2 className="text-xl font-semibold text-white mb-2">
+        <h2 className="text-xl font-semibold text-foreground mb-2 font-mono uppercase">
           Verificando tu cuenta...
         </h2>
-        <p className="text-sm text-white/60">
+        <p className="text-sm text-muted-foreground font-mono">
           Por favor espera un momento
         </p>
 
         {/* Loading bar */}
-        <div className="mt-6 w-48 h-1 mx-auto bg-white/10 rounded-full overflow-hidden">
+        <div className="mt-6 w-48 h-1 mx-auto bg-secondary rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
+            className="h-full bg-primary"
             animate={{ x: ['-100%', '100%'] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
             style={{ width: '50%' }}

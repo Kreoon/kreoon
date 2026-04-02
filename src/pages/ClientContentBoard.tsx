@@ -14,7 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { Content, ContentStatus, STATUS_LABELS } from "@/types/database";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
-import { useBoardSettings } from "@/hooks/useBoardSettings";
+import { useBoardSettings, StatePermission, OrganizationStatus } from "@/hooks/useBoardSettings";
 import { useSubscription } from "@/hooks/useSubscription";
 import { getPlanById } from "@/lib/finance/constants";
 import { useToast } from "@/hooks/use-toast";
@@ -75,6 +75,29 @@ const canClientMoveToStatusFallback = (
   if (currentStatus === 'corrected' && ['approved', 'issue'].includes(targetStatus)) return true;
   if (['approved', 'script_approved', 'issue'].includes(currentStatus)) return false;
   return false;
+};
+
+// Validar movimiento usando state_permissions (prioridad sobre board_status_rules)
+const canClientMoveWithPermissions = (
+  currentStatus: string,
+  targetStatus: string,
+  orgStatuses: OrganizationStatus[],
+  permissions: StatePermission[]
+): boolean => {
+  // Buscar el estado destino en organization_statuses
+  const targetOrgStatus = orgStatuses.find(s => s.status_key === targetStatus);
+  if (!targetOrgStatus) return false;
+
+  // Buscar permiso para rol 'client' en estado destino
+  const permission = permissions.find(
+    p => p.status_id === targetOrgStatus.id && p.role === 'client'
+  );
+
+  // Si no hay permiso configurado para cliente en este estado, denegar
+  if (!permission) return false;
+
+  // Verificar si el cliente puede mover cards A este estado
+  return permission.can_move_to === true;
 };
 
 interface ClientInfo {
@@ -353,16 +376,28 @@ export default function ClientContentBoard() {
     [filteredContent]
   );
 
-  // UNIFICADO: Cliente ve TODAS las columnas (mismo tablero que internos). El contenido ya está filtrado a su cliente.
+  // UNIFICADO: Cliente ve columnas filtradas por permisos (can_view de state_permissions)
   const clientColumns = useMemo(() => {
     if (!orgStatuses?.length) {
       return CLIENT_COLUMNS_FALLBACK.map(s => ({ status: s, label: CLIENT_COLUMN_LABELS_FALLBACK[s], color: '#6b7280' }));
     }
     return orgStatuses
       .filter(s => s.is_active)
+      .filter(s => {
+        // Si hay statePermissions configurados, validar can_view para rol 'client'
+        if (statePermissions?.length) {
+          const perm = statePermissions.find(
+            p => p.status_id === s.id && p.role === 'client'
+          );
+          // Si no hay permiso configurado para este estado, mostrarlo por defecto
+          // Si hay permiso, respetar can_view
+          return perm ? perm.can_view !== false : true;
+        }
+        return true;
+      })
       .sort((a, b) => a.sort_order - b.sort_order)
       .map(s => ({ status: s.status_key, label: s.label, color: s.color || '#6b7280' }));
-  }, [orgStatuses]);
+  }, [orgStatuses, statePermissions]);
 
   // Agrupar contenido por estado
   const getContentByStatus = (status: ContentStatus | string) => {
@@ -434,9 +469,24 @@ export default function ClientContentBoard() {
       return;
     }
 
-    const canMove = (orgStatuses?.length && rules?.length)
-      ? canClientMoveWithRules(draggingContent.status, targetStatus as string, orgStatuses, rules)
-      : canClientMoveToStatusFallback(draggingContent.status, targetStatus, draggingContent);
+    // Prioridad de validación: statePermissions → board_status_rules → fallback
+    const canMove = (() => {
+      // 1. Prioridad máxima: usar statePermissions si existen
+      if (statePermissions?.length && orgStatuses?.length) {
+        return canClientMoveWithPermissions(
+          draggingContent.status,
+          targetStatus as string,
+          orgStatuses,
+          statePermissions
+        );
+      }
+      // 2. Usar board_status_rules si existen
+      if (orgStatuses?.length && rules?.length) {
+        return canClientMoveWithRules(draggingContent.status, targetStatus as string, orgStatuses, rules);
+      }
+      // 3. Fallback: lógica hardcodeada
+      return canClientMoveToStatusFallback(draggingContent.status, targetStatus, draggingContent);
+    })();
 
     if (!canMove) {
       const message = draggingContent.status === 'approved'
@@ -467,7 +517,7 @@ export default function ClientContentBoard() {
     }
 
     setDraggingContent(null);
-  }, [draggingContent, user, toast, orgStatuses, rules, clientColumns]);
+  }, [draggingContent, user, toast, orgStatuses, rules, statePermissions, clientColumns]);
 
   const handleDragEnter = useCallback((status: ContentStatus) => {
     setDropTarget(status);
@@ -564,10 +614,10 @@ export default function ClientContentBoard() {
       <div className="min-h-screen p-6 space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
           {[1, 2, 3, 4, 5, 6].map(i => (
-            <Skeleton key={i} className="h-32 rounded-xl" />
+            <Skeleton key={i} className="h-32 rounded-sm" />
           ))}
         </div>
-        <Skeleton className="h-96 rounded-xl" />
+        <Skeleton className="h-96 rounded-sm" />
       </div>
     );
   }
@@ -675,7 +725,7 @@ export default function ClientContentBoard() {
                 placeholder="Buscar..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-9 md:h-10 w-full rounded-lg border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="h-9 md:h-10 w-full rounded-sm border border-input bg-background pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
 
@@ -691,7 +741,7 @@ export default function ClientContentBoard() {
 
             {/* Kanban Board */}
             <div
-              className="p-3 md:p-5 rounded-xl flex overflow-x-auto gap-4"
+              className="p-3 md:p-5 rounded-sm flex overflow-x-auto gap-4"
               style={{
                 background: "linear-gradient(180deg, #0a0118 0%, #0d0220 100%)",
                 height: "calc(100vh - 320px)",
@@ -699,10 +749,13 @@ export default function ClientContentBoard() {
               }}
             >
               {clientColumns.map((col) => {
+                // Prioridad de validación: statePermissions → board_status_rules → fallback
                 const canDropHere = draggingContent
-                  ? (orgStatuses?.length && rules?.length)
-                    ? canClientMoveWithRules(draggingContent.status, col.status, orgStatuses, rules)
-                    : canClientMoveToStatusFallback(draggingContent.status, col.status as ContentStatus, draggingContent)
+                  ? (statePermissions?.length && orgStatuses?.length)
+                    ? canClientMoveWithPermissions(draggingContent.status, col.status, orgStatuses, statePermissions)
+                    : (orgStatuses?.length && rules?.length)
+                      ? canClientMoveWithRules(draggingContent.status, col.status, orgStatuses, rules)
+                      : canClientMoveToStatusFallback(draggingContent.status, col.status as ContentStatus, draggingContent)
                   : true;
                 return (
                   <DroppableKanbanColumn

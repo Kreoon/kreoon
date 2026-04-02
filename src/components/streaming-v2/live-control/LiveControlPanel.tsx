@@ -219,7 +219,7 @@ export function LiveControlPanel({
         <Separator />
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-4 text-center">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
           <div>
             <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
               <Eye className="h-4 w-4" />
@@ -277,7 +277,7 @@ export function LiveControlPanel({
               <div
                 key={channel.id}
                 className={cn(
-                  'flex items-center justify-between rounded-lg border p-2',
+                  'flex items-center justify-between rounded-sm border p-2',
                   channel.status === 'error' && 'border-red-500/50 bg-red-500/5',
                   channel.status === 'live' && 'border-green-500/50 bg-green-500/5'
                 )}

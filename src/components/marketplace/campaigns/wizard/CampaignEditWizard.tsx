@@ -603,7 +603,7 @@ export default function CampaignEditWizard({ campaignId, onClose }: CampaignEdit
           <p className="text-gray-400 text-sm">{loadError}</p>
           <button
             onClick={handleClose}
-            className="bg-white/10 hover:bg-white/20 text-white px-6 py-2.5 rounded-xl text-sm transition-colors"
+            className="bg-white/10 hover:bg-white/20 text-white px-6 py-2.5 rounded-sm text-sm transition-colors"
           >
             Volver
           </button>
@@ -636,8 +636,8 @@ export default function CampaignEditWizard({ campaignId, onClose }: CampaignEdit
     return (
       <div className="relative">
         <div className="opacity-50 pointer-events-none select-none">{children}</div>
-        <div className="absolute inset-0 bg-background/60 backdrop-blur-[1px] rounded-xl flex items-center justify-center">
-          <div className="flex items-center gap-2 bg-background/90 px-4 py-2 rounded-lg border border-white/10">
+        <div className="absolute inset-0 bg-background/60-[1px] rounded-sm flex items-center justify-center">
+          <div className="flex items-center gap-2 bg-background/90 px-4 py-2 rounded-sm border border-white/10">
             <Lock className="h-4 w-4 text-gray-400" />
             <span className="text-gray-400 text-sm">
               No editable en campana {getStatusLabel(campaignStatus).toLowerCase()}
@@ -653,7 +653,7 @@ export default function CampaignEditWizard({ campaignId, onClose }: CampaignEdit
   return (
     <div className="fixed inset-0 z-[100] bg-background overflow-y-auto">
       {/* Header */}
-      <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-white/10 z-10">
+      <div className="sticky top-0 bg-background/95 border-b border-white/10 z-10">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
@@ -672,7 +672,7 @@ export default function CampaignEditWizard({ campaignId, onClose }: CampaignEdit
 
           {/* Read-only banner */}
           {isReadOnly && (
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-2 mb-4 flex items-center gap-2">
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-sm px-4 py-2 mb-4 flex items-center gap-2">
               <Lock className="h-4 w-4 text-amber-400" />
               <span className="text-amber-300 text-sm">
                 Esta campana esta en modo solo lectura. Las campanas {getStatusLabel(campaignStatus).toLowerCase()}s no
@@ -683,7 +683,7 @@ export default function CampaignEditWizard({ campaignId, onClose }: CampaignEdit
 
           {/* Limited edit banner */}
           {!isReadOnly && (campaignStatus === 'active' || campaignStatus === 'in_progress') && (
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg px-4 py-2 mb-4 flex items-center gap-2">
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-sm px-4 py-2 mb-4 flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-blue-400" />
               <span className="text-blue-300 text-sm">
                 Solo puedes editar titulo, descripcion, fecha limite y maximo de creadores en campanas activas.
@@ -723,7 +723,7 @@ export default function CampaignEditWizard({ campaignId, onClose }: CampaignEdit
                   key={step.id}
                   onClick={() => setCurrentStep(i)}
                   className={cn(
-                    'flex-1 flex items-center justify-center gap-1.5 py-2 px-1 rounded-lg text-xs font-medium transition-all cursor-pointer',
+                    'flex-1 flex items-center justify-center gap-1.5 py-2 px-1 rounded-sm text-xs font-medium transition-all cursor-pointer',
                     isActive
                       ? 'bg-purple-500/20 text-purple-300'
                       : isDone
@@ -772,7 +772,7 @@ export default function CampaignEditWizard({ campaignId, onClose }: CampaignEdit
               {isBrandActivation && (
                 <>
                   <div className="border-t border-white/10 pt-2" />
-                  <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-4">
+                  <div className="bg-green-500/5 border border-green-500/20 rounded-sm p-4">
                     <ActivationCampaignConfig
                       config={activationConfig}
                       onChange={editableFields.content ? setActivationConfig : () => {}}
@@ -842,7 +842,7 @@ export default function CampaignEditWizard({ campaignId, onClose }: CampaignEdit
                 onClick={handleSave}
                 disabled={isReadOnly || isSubmitting}
                 className={cn(
-                  'flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all',
+                  'flex items-center gap-1.5 px-6 py-2.5 rounded-sm text-sm font-semibold transition-all',
                   isReadOnly
                     ? 'bg-gray-500/20 text-gray-500 cursor-not-allowed'
                     : 'bg-purple-600 hover:bg-purple-500 text-white',
@@ -865,7 +865,7 @@ export default function CampaignEditWizard({ campaignId, onClose }: CampaignEdit
               <button
                 onClick={() => setCurrentStep(prev => prev + 1)}
                 disabled={!isStepValid(currentStep)}
-                className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-all"
+                className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold px-6 py-2.5 rounded-sm text-sm transition-all"
               >
                 Siguiente
                 <ChevronRight className="h-4 w-4" />

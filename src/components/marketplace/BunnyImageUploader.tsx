@@ -117,7 +117,7 @@ export function BunnyImageUploader({
     // Has image preview
     if (value) {
       return (
-        <div className={cn('relative group rounded-lg overflow-hidden border bg-muted', aspectClass, height, className)}>
+        <div className={cn('relative group rounded-sm overflow-hidden border bg-muted', aspectClass, height, className)}>
           <img
             src={value}
             alt="Preview"
@@ -142,7 +142,7 @@ export function BunnyImageUploader({
     // Uploading state
     if (isUploading) {
       return (
-        <div className={cn('flex flex-col items-center justify-center rounded-lg border border-dashed bg-muted/50', height, className)}>
+        <div className={cn('flex flex-col items-center justify-center rounded-sm border border-dashed bg-muted/50', height, className)}>
           <Loader2 className="h-6 w-6 animate-spin text-primary mb-2" />
           <p className="text-xs text-muted-foreground mb-2">Subiendo imagen...</p>
           {progress && (
@@ -161,7 +161,7 @@ export function BunnyImageUploader({
         <div
           {...getRootProps()}
           className={cn(
-            'flex flex-col items-center justify-center rounded-lg border-2 border-dashed cursor-pointer transition-colors',
+            'flex flex-col items-center justify-center rounded-sm border-2 border-dashed cursor-pointer transition-colors',
             height,
             isDragActive
               ? 'border-primary bg-primary/5'
@@ -195,7 +195,7 @@ export function BunnyImageUploader({
       {values.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {values.map((url, i) => (
-            <div key={`${url}-${i}`} className="relative group rounded-lg overflow-hidden border aspect-video bg-muted">
+            <div key={`${url}-${i}`} className="relative group rounded-sm overflow-hidden border aspect-video bg-muted">
               <img
                 src={url}
                 alt={`Imagen ${i + 1}`}
@@ -225,7 +225,7 @@ export function BunnyImageUploader({
 
       {/* Upload progress */}
       {isUploading && (
-        <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/50">
+        <div className="flex items-center gap-3 p-3 rounded-sm border bg-muted/50">
           <Loader2 className="h-5 w-5 animate-spin text-primary flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-xs text-muted-foreground mb-1">Subiendo imagen...</p>
@@ -242,7 +242,7 @@ export function BunnyImageUploader({
         <div
           {...getRootProps()}
           className={cn(
-            'flex flex-col items-center justify-center rounded-lg border-2 border-dashed cursor-pointer transition-colors h-28',
+            'flex flex-col items-center justify-center rounded-sm border-2 border-dashed cursor-pointer transition-colors h-28',
             isDragActive
               ? 'border-primary bg-primary/5'
               : 'border-muted-foreground/25 hover:border-primary/50 bg-muted/30',

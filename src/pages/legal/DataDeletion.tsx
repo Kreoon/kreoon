@@ -61,7 +61,7 @@ export default function DataDeletion() {
         </div>
 
         {submitted ? (
-          <div className="rounded-xl border border-green-500/30 bg-green-500/10 p-8 text-center">
+          <div className="rounded-sm border border-green-500/30 bg-green-500/10 p-8 text-center">
             <CheckCircle2 className="mx-auto h-12 w-12 text-green-400 mb-4" />
             <h2 className="text-xl font-semibold text-foreground mb-2">
               Solicitud recibida
@@ -119,11 +119,11 @@ export default function DataDeletion() {
             </div>
 
             {/* Deletion request form */}
-            <form onSubmit={handleSubmit} className="rounded-xl border border-border bg-card p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="rounded-sm border border-border bg-card p-6 space-y-4">
               <h3 className="text-lg font-semibold">Solicitar eliminación de datos</h3>
 
               {error && (
-                <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 rounded-sm p-3">
                   <AlertTriangle className="h-4 w-4 shrink-0" />
                   {error}
                 </div>
@@ -140,7 +140,7 @@ export default function DataDeletion() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="su@email.com"
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
 
@@ -154,7 +154,7 @@ export default function DataDeletion() {
                   onChange={(e) => setReason(e.target.value)}
                   rows={3}
                   placeholder="Cuéntenos por qué desea eliminar sus datos..."
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+                  className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary resize-none"
                 />
               </div>
 

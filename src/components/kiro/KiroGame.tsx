@@ -248,7 +248,7 @@ export function KiroGame({
   // Render
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="relative w-full h-[200px] bg-card/80 rounded-xl overflow-hidden border border-violet-500/20">
+    <div className="relative w-full h-[200px] bg-card/80 rounded-sm overflow-hidden border border-violet-500/20">
       {/* Confetti canvas */}
       <KiroConfetti
         ref={confettiRef}
@@ -297,7 +297,7 @@ export function KiroGame({
           <button
             onClick={startGame}
             className={cn(
-              'px-6 py-3 rounded-xl min-h-[48px]',
+              'px-6 py-3 rounded-sm min-h-[48px]',
               'bg-violet-500/30 border border-violet-500/50',
               'text-violet-200 font-medium',
               'hover:bg-violet-500/40 transition-colors',
@@ -425,7 +425,7 @@ export function KiroGame({
               kiroSounds.play('action_click');
               onClose();
             }}
-            className="mt-2 px-5 py-2 min-h-[44px] bg-violet-500/20 border border-violet-500/30 rounded-lg text-violet-300 text-sm hover:bg-violet-500/30 transition-colors"
+            className="mt-2 px-5 py-2 min-h-[44px] bg-violet-500/20 border border-violet-500/30 rounded-sm text-violet-300 text-sm hover:bg-violet-500/30 transition-colors"
           >
             Cerrar
           </button>

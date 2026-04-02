@@ -10,7 +10,7 @@ interface GeneratedBannersGridProps {
 export function GeneratedBannersGrid({ banners, onDelete }: GeneratedBannersGridProps) {
   if (banners.length === 0) {
     return (
-      <div className="text-center py-12 border border-dashed border-border rounded-lg">
+      <div className="text-center py-12 border border-dashed border-border rounded-sm">
         <div className="mx-auto w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-2">
           <Image className="h-5 w-5 text-primary/60" />
         </div>

@@ -1,0 +1,168 @@
+/**
+ * Board Component CSS Variables
+ * Nova v2 Design System - Kanban/List/Calendar/Table Views
+ * Integrado con nova-theme.css variables
+ */
+
+:root {
+  /* Board - Light Mode (mantiene colores claros para modo light) */
+  --board-bg: #fafafa;
+  --board-card: #ffffff;
+  --board-card-hover: #f4f4f5;
+  --board-card-body: rgba(0, 0, 0, 0.02);
+  --board-border: rgba(139, 92, 246, 0.12);
+  --board-border-hover: rgba(139, 92, 246, 0.25);
+  --board-text: #18181b;
+  --board-text-muted: #52525b;
+  --board-text-secondary: #71717a;
+
+  /* Column */
+  --board-column-bg: rgba(250, 250, 250, 0.8);
+  --board-column-header: #ffffff;
+  --board-drop-zone: rgba(139, 92, 246, 0.05);
+  --board-drop-zone-active: rgba(139, 92, 246, 0.1);
+
+  /* Status Colors - Light Mode (darker text for contrast) */
+  --status-draft: #52525b;
+  --status-recording: #0891b2;
+  --status-editing: #7c3aed;
+  --status-review: #a16207;
+  --status-approved: #16a34a;
+  --status-paid: #7c3aed;
+  --status-issue: #c2410c;
+  --status-rejected: #dc2626;
+
+  /* Nova Glow Effects - Light (subtle) */
+  --board-glow-sm: none;
+  --board-glow-md: none;
+  --board-glow-card-selected: 0 0 0 2px rgba(139, 92, 246, 0.3);
+}
+
+.dark {
+  /* Board - Dark Mode (Nova v2 integration) */
+  --board-bg: var(--nova-bg-surface, #0a0a18);
+  --board-card: var(--nova-bg-elevated, #0f0f22);
+  --board-card-hover: var(--nova-bg-hover, #141428);
+  --board-card-body: rgba(255, 255, 255, 0.02);
+  --board-border: var(--nova-border-default, rgba(139, 92, 246, 0.15));
+  --board-border-hover: var(--nova-border-accent, rgba(139, 92, 246, 0.3));
+  --board-text: var(--nova-text-primary, #e4e4e7);
+  --board-text-muted: var(--nova-text-secondary, #a1a1aa);
+  --board-text-secondary: var(--nova-text-muted, #52525b);
+
+  /* Column - Nova v2 */
+  --board-column-bg: rgba(15, 15, 34, 0.6);
+  --board-column-header: var(--nova-bg-elevated, #0f0f22);
+  --board-drop-zone: rgba(139, 92, 246, 0.08);
+  --board-drop-zone-active: rgba(139, 92, 246, 0.15);
+
+  /* Status Colors - Dark Mode (brighter for visibility) */
+  --status-draft: #94a3b8;
+  --status-recording: #22d3ee;
+  --status-editing: #a78bfa;
+  --status-review: #facc15;
+  --status-approved: #4ade80;
+  --status-paid: #c084fc;
+  --status-issue: #fb923c;
+  --status-rejected: #f87171;
+
+  /* Nova Glow Effects - Dark */
+  --board-glow-sm: 0 0 12px rgba(139, 92, 246, 0.15);
+  --board-glow-md: 0 0 20px rgba(139, 92, 246, 0.2);
+  --board-glow-card-selected: 0 0 20px rgba(139, 92, 246, 0.25), 0 0 0 1px rgba(139, 92, 246, 0.4);
+}
+
+/* Kanban scrollbar styling - Nova v2 */
+.kanban-column-cards::-webkit-scrollbar {
+  width: 4px;
+}
+
+.kanban-column-cards::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.kanban-column-cards::-webkit-scrollbar-thumb {
+  background: var(--nova-border-default, rgba(139, 92, 246, 0.15));
+  border-radius: 4px;
+  transition: background 200ms ease;
+}
+
+.kanban-column-cards::-webkit-scrollbar-thumb:hover {
+  background: var(--nova-border-accent, rgba(139, 92, 246, 0.3));
+}
+
+/* Light mode scrollbar */
+:root .kanban-column-cards::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.12);
+}
+
+:root .kanban-column-cards::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.25);
+}
+
+/* =============================================================================
+   BOARD NOVA UTILITY CLASSES
+   ============================================================================= */
+
+/* Card base - Nova v2 */
+.board-card-nova {
+  background: var(--board-card);
+  border: 1px solid var(--board-border);
+  border-radius: var(--nova-radius-md, 6px);
+  transition: all var(--nova-transition-normal, 200ms ease);
+}
+
+.board-card-nova:hover {
+  background: var(--board-card-hover);
+  border-color: var(--board-border-hover);
+}
+
+/* Card with glow effect */
+.dark .board-card-nova:hover {
+  box-shadow: var(--board-glow-sm);
+}
+
+/* Selected card - Nova glow */
+.board-card-nova.selected,
+.board-card-nova[data-selected="true"] {
+  box-shadow: var(--board-glow-card-selected);
+  border-color: var(--nova-accent-primary, #8b5cf6);
+}
+
+/* Column - Nova v2 */
+.board-column-nova {
+  background: var(--board-column-bg);
+  border: 1px solid var(--board-border);
+  border-radius: var(--nova-radius-lg, 8px);
+}
+
+/* Column header - Nova v2 */
+.board-column-header-nova {
+  background: var(--board-column-header);
+  border-radius: var(--nova-radius-lg, 8px) var(--nova-radius-lg, 8px) 0 0;
+}
+
+/* Drop zone states */
+.board-drop-zone {
+  background: var(--board-drop-zone);
+  transition: all var(--nova-transition-fast, 150ms ease);
+}
+
+.board-drop-zone.active,
+.board-drop-zone[data-drop-active="true"] {
+  background: var(--board-drop-zone-active);
+  border-color: var(--nova-accent-primary, #8b5cf6);
+}
+
+/* Glass effect for overlays */
+.board-glass-overlay {
+  background: var(--nova-glass-bg, rgba(10, 10, 24, 0.7));
+  backdrop-filter: blur(var(--nova-glass-blur, 24px));
+  -webkit-backdrop-filter: blur(var(--nova-glass-blur, 24px));
+  border: 1px solid var(--nova-glass-border, rgba(139, 92, 246, 0.1));
+}
+
+/* Status badge glow (for important states) */
+.dark .board-status-glow {
+  box-shadow: var(--board-glow-sm);
+}

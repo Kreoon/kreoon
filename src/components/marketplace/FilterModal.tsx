@@ -1,10 +1,24 @@
 import { useState, useCallback } from 'react';
-import { X, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MarketplaceFilters, MarketplaceViewMode } from './types/marketplace';
 import { CONTENT_TYPES } from './types/marketplace';
 import { getAdaptiveFilters } from './hooks/useAdaptiveFilters';
 import type { AdaptiveFilterConfig } from './hooks/useAdaptiveFilters';
+import type { Specialization, SpecializationCategory } from '@/types/database';
+import {
+  SPECIALIZATIONS_BY_ROLE,
+  getSpecializationLabel,
+  getSpecializationColor,
+  getSpecializationBgColor,
+} from '@/lib/specializations';
+import { getOptimizedImageUrl } from '@/lib/imageOptimization';
+
+export interface OrganizationOption {
+  id: string;
+  name: string;
+  logo_url: string | null;
+}
 
 interface FilterModalProps {
   open: boolean;
@@ -13,6 +27,29 @@ interface FilterModalProps {
   onApply: (filters: MarketplaceFilters) => void;
   resultCount: number;
   activeRoleCategory?: MarketplaceViewMode;
+  organizations?: OrganizationOption[];
+}
+
+// --- Roles de Talento (5 roles sin client) ---
+const ROLE_FILTERS = [
+  { value: 'content_creator', label: 'Creador de Contenido' },
+  { value: 'editor', label: 'Editor/Produccion' },
+  { value: 'digital_strategist', label: 'Estratega Digital' },
+  { value: 'creative_strategist', label: 'Estratega Creativo' },
+  { value: 'community_manager', label: 'Community Manager' },
+];
+
+// --- Helper to get specializations for a role ---
+function getSpecializationsForRoleFilter(role: string): Specialization[] {
+  const roleMap: Record<string, SpecializationCategory> = {
+    content_creator: 'content_creator',
+    editor: 'editor',
+    digital_strategist: 'digital_strategist',
+    creative_strategist: 'creative_strategist',
+    community_manager: 'creative_strategist', // Map to creative_strategist
+  };
+  const category = roleMap[role];
+  return category ? SPECIALIZATIONS_BY_ROLE[category] || [] : [];
 }
 
 const LEVELS = [
@@ -22,7 +59,7 @@ const LEVELS = [
   { id: 'elite', label: 'Elite' },
 ];
 
-const LANGUAGES = ['Español', 'Inglés', 'Portugués'];
+const LANGUAGES = ['Espanol', 'Ingles', 'Portugues'];
 
 const RATING_OPTIONS = [
   { value: null, label: 'Cualquiera' },
@@ -31,9 +68,13 @@ const RATING_OPTIONS = [
   { value: 4.8, label: '4.8+' },
 ];
 
-export function FilterModal({ open, onClose, filters, onApply, resultCount, activeRoleCategory }: FilterModalProps) {
+export function FilterModal({ open, onClose, filters, onApply, resultCount, activeRoleCategory, organizations = [] }: FilterModalProps) {
   const [local, setLocal] = useState<MarketplaceFilters>(filters);
   const [expandedAdaptive, setExpandedAdaptive] = useState(true);
+  const [expandedRoles, setExpandedRoles] = useState(true);
+  const [expandedSpecializations, setExpandedSpecializations] = useState(true);
+  const [expandedOrganizations, setExpandedOrganizations] = useState(true);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
 
   const adaptiveFilters = activeRoleCategory ? getAdaptiveFilters(activeRoleCategory) : [];
 
@@ -44,7 +85,7 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
     setLocal(prev => ({ ...prev, [key]: value }));
   }, []);
 
-  const toggleArrayItem = useCallback((key: 'content_type' | 'level' | 'languages' | 'platforms' | 'software' | 'tech_stack' | 'education_format', item: string) => {
+  const toggleArrayItem = useCallback((key: 'content_type' | 'level' | 'languages' | 'platforms' | 'software' | 'marketplace_roles' | 'specializations', item: string) => {
     setLocal(prev => {
       const arr = prev[key] as string[];
       return {
@@ -53,6 +94,11 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
       };
     });
   }, []);
+
+  const handleRoleSelect = useCallback((roleValue: string) => {
+    setSelectedRole(prev => prev === roleValue ? null : roleValue);
+    toggleArrayItem('marketplace_roles', roleValue);
+  }, [toggleArrayItem]);
 
   const handleClear = useCallback(() => {
     setLocal(prev => ({
@@ -67,9 +113,11 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
       platforms: [],
       software: [],
       accepts_exchange: null,
-      tech_stack: [],
-      education_format: [],
+      marketplace_roles: [],
+      specializations: [],
+      organization_id: null,
     }));
+    setSelectedRole(null);
   }, []);
 
   const handleApply = useCallback(() => {
@@ -83,38 +131,161 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
       {/* Overlay */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative bg-card border border-white/10 rounded-t-2xl sm:rounded-2xl max-w-lg w-full max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-300 sm:animate-in sm:fade-in sm:zoom-in-95">
+      <div className="relative bg-card border border-border rounded-[0.125rem] sm:rounded-sm max-w-lg w-full max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-300 sm:animate-in sm:fade-in sm:zoom-in-95">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div className="w-8" />
-          <h3 className="text-lg font-semibold text-white">Filtros</h3>
+          <h3 className="text-lg font-semibold text-foreground">Filtros</h3>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-[0.125rem] hover:bg-secondary flex items-center justify-center transition-colors"
           >
-            <X className="h-5 w-5 text-gray-400" />
+            <X className="h-5 w-5 text-muted-foreground" />
           </button>
         </div>
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6">
+          {/* Talent Role filters section */}
+          <div className="py-6 border-b border-border">
+            <button
+              onClick={() => setExpandedRoles(!expandedRoles)}
+              className="flex items-center justify-between w-full mb-4"
+            >
+              <h4 className="text-sm font-semibold text-primary">Tipo de Talento</h4>
+              {expandedRoles ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
+            {expandedRoles && (
+              <div className="flex flex-wrap gap-2">
+                {ROLE_FILTERS.map(role => (
+                  <button
+                    key={role.value}
+                    onClick={() => handleRoleSelect(role.value)}
+                    className={cn(
+                      'px-4 py-2 rounded-sm text-sm transition-colors border',
+                      (local.marketplace_roles as string[]).includes(role.value)
+                        ? 'bg-primary/20 border-primary/40 text-primary'
+                        : 'border-border text-muted-foreground hover:bg-secondary hover:text-foreground',
+                    )}
+                  >
+                    {role.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Organization/Agency filter */}
+          {organizations.length > 0 && (
+            <div className="py-6 border-b border-border">
+              <button
+                onClick={() => setExpandedOrganizations(!expandedOrganizations)}
+                className="flex items-center justify-between w-full mb-4"
+              >
+                <h4 className="text-sm font-semibold text-primary">Agencia / Organizacion</h4>
+                {expandedOrganizations ? (
+                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                )}
+              </button>
+              {expandedOrganizations && (
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => update('organization_id', null)}
+                    className={cn(
+                      'px-4 py-2 rounded-sm text-sm transition-colors border',
+                      local.organization_id === null
+                        ? 'bg-primary/20 border-primary/40 text-primary'
+                        : 'border-border text-muted-foreground hover:bg-secondary hover:text-foreground',
+                    )}
+                  >
+                    Todas
+                  </button>
+                  {organizations.map(org => (
+                    <button
+                      key={org.id}
+                      onClick={() => update('organization_id', org.id)}
+                      className={cn(
+                        'px-3 py-2 rounded-sm text-sm transition-colors border flex items-center gap-2',
+                        local.organization_id === org.id
+                          ? 'bg-primary/20 border-primary/40 text-primary'
+                          : 'border-border text-muted-foreground hover:bg-secondary hover:text-foreground',
+                      )}
+                    >
+                      {org.logo_url ? (
+                        <img
+                          src={getOptimizedImageUrl(org.logo_url, { width: 40, quality: 70 })}
+                          alt={org.name}
+                          className="w-5 h-5 rounded-full object-cover"
+                        />
+                      ) : (
+                        <Building2 className="w-4 h-4" />
+                      )}
+                      {org.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Specializations section (shows when a role is selected) */}
+          {selectedRole && getSpecializationsForRoleFilter(selectedRole).length > 0 && (
+            <div className="py-6 border-b border-border">
+              <button
+                onClick={() => setExpandedSpecializations(!expandedSpecializations)}
+                className="flex items-center justify-between w-full mb-4"
+              >
+                <h4 className="text-sm font-semibold text-primary">Especializacion</h4>
+                {expandedSpecializations ? (
+                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                )}
+              </button>
+              {expandedSpecializations && (
+                <div className="flex flex-wrap gap-2">
+                  {getSpecializationsForRoleFilter(selectedRole).map(spec => (
+                    <button
+                      key={spec}
+                      onClick={() => toggleArrayItem('specializations', spec)}
+                      className={cn(
+                        'px-3 py-1.5 rounded-sm text-xs transition-colors border',
+                        local.specializations.includes(spec)
+                          ? cn(getSpecializationBgColor(spec), 'border-primary/40', getSpecializationColor(spec))
+                          : 'border-border text-muted-foreground hover:bg-secondary hover:text-foreground',
+                      )}
+                    >
+                      {getSpecializationLabel(spec)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Adaptive filters section */}
           {adaptiveFilters.length > 0 && (
-            <div className="py-6 border-b border-white/10">
+            <div className="py-6 border-b border-border">
               <button
                 onClick={() => setExpandedAdaptive(!expandedAdaptive)}
                 className="flex items-center justify-between w-full mb-4"
               >
-                <h4 className="text-sm font-semibold text-purple-300">Filtros de especialidad</h4>
+                <h4 className="text-sm font-semibold text-primary">Filtros adicionales</h4>
                 {expandedAdaptive ? (
-                  <ChevronUp className="h-4 w-4 text-gray-400" />
+                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
                 ) : (
-                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 )}
               </button>
               {expandedAdaptive && (
@@ -134,8 +305,8 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
           )}
 
           {/* Price range */}
-          <div className="py-6 border-b border-white/10">
-            <h4 className="text-sm font-semibold text-white mb-4">Rango de precio</h4>
+          <div className="py-6 border-b border-border">
+            <h4 className="text-sm font-semibold text-foreground mb-4">Rango de precio</h4>
             <div className="flex items-center gap-3">
               <input
                 type="number"
@@ -144,9 +315,9 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
                 onChange={e =>
                   update('price_min', e.target.value ? Number(e.target.value) : null)
                 }
-                className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-500 outline-none focus:border-purple-500/50"
+                className="flex-1 bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50"
               />
-              <span className="text-gray-500">—</span>
+              <span className="text-muted-foreground">—</span>
               <input
                 type="number"
                 placeholder="Máximo"
@@ -154,24 +325,24 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
                 onChange={e =>
                   update('price_max', e.target.value ? Number(e.target.value) : null)
                 }
-                className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-500 outline-none focus:border-purple-500/50"
+                className="flex-1 bg-secondary border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50"
               />
             </div>
           </div>
 
           {/* Rating */}
-          <div className="py-6 border-b border-white/10">
-            <h4 className="text-sm font-semibold text-white mb-4">Calificación mínima</h4>
+          <div className="py-6 border-b border-border">
+            <h4 className="text-sm font-semibold text-foreground mb-4">Calificación mínima</h4>
             <div className="flex flex-wrap gap-2">
               {RATING_OPTIONS.map(opt => (
                 <button
                   key={opt.label}
                   onClick={() => update('rating_min', opt.value)}
                   className={cn(
-                    'px-4 py-2 rounded-lg text-sm transition-colors border',
+                    'px-4 py-2 rounded-sm text-sm transition-colors border',
                     local.rating_min === opt.value
-                      ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
-                      : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-white',
+                      ? 'bg-primary/20 border-primary/40 text-primary'
+                      : 'border-border text-muted-foreground hover:bg-secondary hover:text-foreground',
                   )}
                 >
                   {opt.value ? `⭐ ${opt.label}` : opt.label}
@@ -181,18 +352,18 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
           </div>
 
           {/* Level */}
-          <div className="py-6 border-b border-white/10">
-            <h4 className="text-sm font-semibold text-white mb-4">Nivel del creador</h4>
+          <div className="py-6 border-b border-border">
+            <h4 className="text-sm font-semibold text-foreground mb-4">Nivel del creador</h4>
             <div className="flex flex-wrap gap-2">
               {LEVELS.map(l => (
                 <button
                   key={l.id}
                   onClick={() => toggleArrayItem('level', l.id)}
                   className={cn(
-                    'px-4 py-2 rounded-lg text-sm transition-colors border',
+                    'px-4 py-2 rounded-sm text-sm transition-colors border',
                     local.level.includes(l.id)
-                      ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
-                      : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-white',
+                      ? 'bg-primary/20 border-primary/40 text-primary'
+                      : 'border-border text-muted-foreground hover:bg-secondary hover:text-foreground',
                   )}
                 >
                   {l.label}
@@ -202,18 +373,18 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
           </div>
 
           {/* Languages */}
-          <div className="py-6 border-b border-white/10">
-            <h4 className="text-sm font-semibold text-white mb-4">Idiomas</h4>
+          <div className="py-6 border-b border-border">
+            <h4 className="text-sm font-semibold text-foreground mb-4">Idiomas</h4>
             <div className="flex flex-wrap gap-2">
               {LANGUAGES.map(l => (
                 <button
                   key={l}
                   onClick={() => toggleArrayItem('languages', l)}
                   className={cn(
-                    'px-4 py-2 rounded-lg text-sm transition-colors border',
+                    'px-4 py-2 rounded-sm text-sm transition-colors border',
                     local.languages.includes(l)
-                      ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
-                      : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-white',
+                      ? 'bg-primary/20 border-primary/40 text-primary'
+                      : 'border-border text-muted-foreground hover:bg-secondary hover:text-foreground',
                   )}
                 >
                   {l}
@@ -223,18 +394,18 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
           </div>
 
           {/* Content types */}
-          <div className="py-6 border-b border-white/10">
-            <h4 className="text-sm font-semibold text-white mb-4">Tipo de contenido</h4>
+          <div className="py-6 border-b border-border">
+            <h4 className="text-sm font-semibold text-foreground mb-4">Tipo de contenido</h4>
             <div className="flex flex-wrap gap-2">
               {CONTENT_TYPES.map(ct => (
                 <button
                   key={ct}
                   onClick={() => toggleArrayItem('content_type', ct)}
                   className={cn(
-                    'px-4 py-2 rounded-lg text-sm transition-colors border',
+                    'px-4 py-2 rounded-sm text-sm transition-colors border',
                     local.content_type.includes(ct)
-                      ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
-                      : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-white',
+                      ? 'bg-primary/20 border-primary/40 text-primary'
+                      : 'border-border text-muted-foreground hover:bg-secondary hover:text-foreground',
                   )}
                 >
                   {ct}
@@ -245,7 +416,7 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
 
           {/* Availability */}
           <div className="py-6">
-            <h4 className="text-sm font-semibold text-white mb-4">Disponibilidad</h4>
+            <h4 className="text-sm font-semibold text-foreground mb-4">Disponibilidad</h4>
             <div className="flex flex-wrap gap-2">
               {[
                 { id: 'any' as const, label: 'Cualquier momento' },
@@ -256,10 +427,10 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
                   key={opt.id}
                   onClick={() => update('availability', opt.id)}
                   className={cn(
-                    'px-4 py-2 rounded-lg text-sm transition-colors border',
+                    'px-4 py-2 rounded-sm text-sm transition-colors border',
                     local.availability === opt.id
-                      ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
-                      : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-white',
+                      ? 'bg-primary/20 border-primary/40 text-primary'
+                      : 'border-border text-muted-foreground hover:bg-secondary hover:text-foreground',
                   )}
                 >
                   {opt.label}
@@ -270,16 +441,16 @@ export function FilterModal({ open, onClose, filters, onApply, resultCount, acti
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-white/10 bg-card">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-card">
           <button
             onClick={handleClear}
-            className="text-purple-400 underline text-sm hover:text-white transition-colors"
+            className="text-primary underline text-sm hover:text-foreground transition-colors"
           >
             Limpiar todo
           </button>
           <button
             onClick={handleApply}
-            className="bg-purple-600 hover:bg-purple-500 text-white rounded-xl px-6 py-3 font-semibold text-sm transition-colors"
+            className="bg-primary hover:bg-primary/90 text-foreground rounded-sm px-6 py-3 font-semibold text-sm transition-colors"
           >
             Mostrar {resultCount} resultados
           </button>
@@ -306,14 +477,14 @@ function AdaptiveSection({
     const isOn = local[config.filterKey] === true;
     return (
       <div>
-        <h5 className="text-xs font-medium text-gray-400 mb-2">{config.label}</h5>
+        <h5 className="text-xs font-medium text-muted-foreground mb-2">{config.label}</h5>
         <button
           onClick={() => onUpdate(config.filterKey, isOn ? null : true)}
           className={cn(
-            'px-4 py-2 rounded-lg text-sm transition-colors border',
+            'px-4 py-2 rounded-sm text-sm transition-colors border',
             isOn
-              ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
-              : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-white',
+              ? 'bg-primary/20 border-primary/40 text-primary'
+              : 'border-border text-muted-foreground hover:bg-secondary hover:text-foreground',
           )}
         >
           {config.options[0]?.label}
@@ -325,17 +496,17 @@ function AdaptiveSection({
   const selected = (local[config.filterKey] as string[]) || [];
   return (
     <div>
-      <h5 className="text-xs font-medium text-gray-400 mb-2">{config.label}</h5>
+      <h5 className="text-xs font-medium text-muted-foreground mb-2">{config.label}</h5>
       <div className="flex flex-wrap gap-2">
         {config.options.map(opt => (
           <button
             key={opt.value}
             onClick={() => onToggle(config.filterKey, opt.value)}
             className={cn(
-              'px-3 py-1.5 rounded-lg text-xs transition-colors border',
+              'px-3 py-1.5 rounded-sm text-xs transition-colors border',
               selected.includes(opt.value)
-                ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
-                : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-white',
+                ? 'bg-primary/20 border-primary/40 text-primary'
+                : 'border-border text-muted-foreground hover:bg-secondary hover:text-foreground',
             )}
           >
             {opt.label}

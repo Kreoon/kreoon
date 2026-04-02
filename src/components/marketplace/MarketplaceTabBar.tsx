@@ -39,7 +39,7 @@ function TabBarComponent({ activeTab, onTabChange, creatorsCount, agenciesCount,
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             className={cn(
-              'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+              'flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium transition-all',
               isActive
                 ? 'bg-purple-500/15 text-purple-400'
                 : 'text-gray-500 hover:text-foreground hover:bg-white/5'
@@ -64,7 +64,7 @@ function TabBarComponent({ activeTab, onTabChange, creatorsCount, agenciesCount,
         <button
           onClick={() => navigate('/live')}
           className={cn(
-            'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+            'flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium transition-all',
             'text-gray-500 hover:text-foreground hover:bg-white/5'
           )}
         >
@@ -81,7 +81,7 @@ function TabBarComponent({ activeTab, onTabChange, creatorsCount, agenciesCount,
           <TooltipTrigger asChild>
             <button
               className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                'flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium transition-all',
                 'text-gray-500/50 cursor-not-allowed'
               )}
               disabled

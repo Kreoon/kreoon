@@ -10,11 +10,14 @@ import { useCreatorServices } from '@/hooks/useCreatorServices';
 import { WizardStepRoles } from './steps/WizardStepRoles';
 import { WizardStepBasicInfo } from './steps/WizardStepBasicInfo';
 import { WizardStepExpertise } from './steps/WizardStepExpertise';
+import { WizardStepSpecializations } from './steps/WizardStepSpecializations';
 import { WizardStepPortfolio } from './steps/WizardStepPortfolio';
 import { WizardStepServices } from './steps/WizardStepServices';
 import { WizardStepCustomize } from './steps/WizardStepCustomize';
 import { WizardStepPublish } from './steps/WizardStepPublish';
+import { useUserSpecializations } from '@/hooks/useUserSpecializations';
 import type { MarketplaceRoleId } from '../types/marketplace';
+import type { Specialization } from '@/types/database';
 
 interface CreatorProfileWizardProps {
   isOpen: boolean;
@@ -26,6 +29,7 @@ const STEPS = [
   { id: 'roles', label: 'Tipo', shortLabel: 'Tipo' },
   { id: 'basic', label: 'Perfil', shortLabel: 'Perfil' },
   { id: 'expertise', label: 'Expertise', shortLabel: 'Expert' },
+  { id: 'specializations', label: 'Especialidades', shortLabel: 'Espec' },
   { id: 'portfolio', label: 'Portafolio', shortLabel: 'Port' },
   { id: 'services', label: 'Servicios', shortLabel: 'Serv' },
   { id: 'customize', label: 'Estilo', shortLabel: 'Estilo' },
@@ -54,6 +58,7 @@ export interface WizardDraftState {
     experience_level: string;
     custom_tags: string[];
   };
+  specializations: Specialization[];
   customization: ProfileCustomization;
   services: {
     accepts_exchange: boolean;
@@ -81,6 +86,7 @@ const DEFAULT_DRAFT: WizardDraftState = {
     experience_level: '',
     custom_tags: [],
   },
+  specializations: [],
   customization: {
     theme: 'dark_purple',
     card_style: 'glass',
@@ -121,6 +127,7 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
   const { profile: userProfile } = useProfile({ autoFetch: true });
   const creatorProfile = useCreatorProfile({ autoCreate: false });
   const creatorServices = useCreatorServices();
+  const { specializations: existingSpecializations, replaceAll: replaceSpecializations } = useUserSpecializations();
 
   // State to track newly created profile ID (for portfolio step)
   // MUST be declared before effectiveProfileId calculation
@@ -213,6 +220,16 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
     }
   }, [creatorProfile.profile, initialDraft]);
 
+  // Pre-populate specializations from existing user specializations
+  useEffect(() => {
+    if (existingSpecializations.length > 0 && !initialDraft && draft.specializations.length === 0) {
+      setDraft(prev => ({
+        ...prev,
+        specializations: existingSpecializations,
+      }));
+    }
+  }, [existingSpecializations, initialDraft]);
+
   // Auto-save draft with debounce
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -257,8 +274,8 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
 
   const goNext = useCallback(async () => {
     if (currentStep < STEPS.length - 1) {
-      // If moving TO portfolio step (step 3), ensure profile exists first
-      if (currentStep === 2 && !creatorProfile.profile?.id && !createdProfileId) {
+      // If moving TO portfolio step (step 4), ensure profile exists first
+      if (currentStep === 3 && !creatorProfile.profile?.id && !createdProfileId) {
         const newId = await ensureProfileExists();
         if (!newId) {
           return; // Don't proceed if profile creation failed
@@ -334,13 +351,18 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
         await creatorProfile.save();
       }
 
+      // Save specializations
+      if (draft.specializations.length > 0) {
+        await replaceSpecializations(draft.specializations);
+      }
+
       clearDraft();
       onComplete?.();
       onClose();
     } catch (err) {
       console.error('[CreatorProfileWizard] Error publishing:', err);
     }
-  }, [user?.id, creatorProfile, draft, onClose, onComplete]);
+  }, [user?.id, creatorProfile, draft, onClose, onComplete, replaceSpecializations]);
 
   const handleSaveAndExit = useCallback(() => {
     saveDraftToStorage({ ...draft, step: currentStep });
@@ -354,14 +376,15 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex-shrink-0 border-b border-white/10 bg-background/95 backdrop-blur-xl">
+      <div className="flex-shrink-0 border-b border-white/10 bg-background/95">
         <div className="max-w-5xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={handleSaveAndExit}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              aria-label="Guardar borrador y cerrar wizard"
+              className="p-2 rounded-sm hover:bg-white/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
-              <X className="h-5 w-5 text-gray-400" />
+              <X className="h-5 w-5 text-gray-400" aria-hidden="true" />
             </button>
             <div>
               <h1 className="text-white font-semibold text-lg">
@@ -375,15 +398,23 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
 
           <button
             onClick={handleSaveAndExit}
-            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-sm text-foreground/80 transition-colors"
+            aria-label="Guardar borrador y salir del wizard"
+            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-sm text-sm text-foreground/80 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            <Save className="h-4 w-4" />
+            <Save className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">Guardar y salir</span>
           </button>
         </div>
 
         {/* Progress bar */}
-        <div className="relative h-1 bg-white/5">
+        <div
+          className="relative h-1 bg-white/5"
+          role="progressbar"
+          aria-valuenow={Math.round(progress)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`Progreso del wizard: paso ${currentStep + 1} de ${STEPS.length}`}
+        >
           <motion.div
             className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-r-full"
             animate={{ width: `${progress}%` }}
@@ -392,7 +423,7 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
         </div>
 
         {/* Step indicators — desktop only */}
-        <div className="hidden md:flex max-w-5xl mx-auto px-8 py-3 gap-1">
+        <nav className="hidden md:flex max-w-5xl mx-auto px-8 py-3 gap-1" aria-label="Pasos del wizard">
           {STEPS.map((step, index) => {
             const isCompleted = index < currentStep;
             const isCurrent = index === currentStep;
@@ -401,8 +432,11 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
                 key={step.id}
                 onClick={() => index <= currentStep && goToStep(index)}
                 disabled={index > currentStep}
+                aria-label={`${step.label}${isCompleted ? ' (completado)' : isCurrent ? ' (paso actual)' : ' (pendiente)'}`}
+                aria-current={isCurrent ? 'step' : undefined}
                 className={cn(
-                  'flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-all',
+                  'flex-1 py-1.5 px-2 rounded-sm text-xs font-medium transition-all',
+                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                   isCompleted && 'bg-purple-500/20 text-purple-300 cursor-pointer hover:bg-purple-500/30',
                   isCurrent && 'bg-white/10 text-white',
                   !isCompleted && !isCurrent && 'text-gray-600 cursor-not-allowed'
@@ -412,7 +446,7 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
               </button>
             );
           })}
-        </div>
+        </nav>
       </div>
 
       {/* Content */}
@@ -448,6 +482,13 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
                 />
               )}
               {currentStep === 3 && (
+                <WizardStepSpecializations
+                  selectedMarketplaceRoles={draft.roles}
+                  selectedSpecializations={draft.specializations}
+                  onChange={(specializations) => updateDraft({ specializations })}
+                />
+              )}
+              {currentStep === 4 && (
                 <WizardStepPortfolio
                   creatorProfileId={effectiveProfileId || null}
                   userId={user?.id || ''}
@@ -460,7 +501,7 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
                   onReorder={portfolioItems.reorderItems}
                 />
               )}
-              {currentStep === 4 && (
+              {currentStep === 5 && (
                 <WizardStepServices
                   services={creatorServices.services}
                   servicesData={draft.services}
@@ -471,13 +512,13 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
                   userId={user?.id || ''}
                 />
               )}
-              {currentStep === 5 && (
+              {currentStep === 6 && (
                 <WizardStepCustomize
                   customization={draft.customization}
                   onChange={(customization) => updateDraft({ customization })}
                 />
               )}
-              {currentStep === 6 && (
+              {currentStep === 7 && (
                 <WizardStepPublish
                   draft={draft}
                   portfolioCount={portfolioItems.items.length}
@@ -494,24 +535,26 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
       </div>
 
       {/* Footer navigation */}
-      <div className="flex-shrink-0 border-t border-white/10 bg-background/95 backdrop-blur-xl">
+      <div className="flex-shrink-0 border-t border-white/10 bg-background/95">
         <div className="max-w-4xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
           <button
             onClick={goBack}
             disabled={currentStep === 0}
+            aria-label="Ir al paso anterior"
             className={cn(
-              'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-colors',
+              'flex items-center gap-2 px-5 py-2.5 rounded-sm text-sm font-medium transition-colors',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
               currentStep === 0
                 ? 'text-gray-600 cursor-not-allowed'
                 : 'text-foreground/80 hover:bg-white/10'
             )}
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             Atras
           </button>
 
-          <div className="flex items-center gap-1.5 md:hidden">
-            {STEPS.map((_, index) => (
+          <div className="flex items-center gap-1.5 md:hidden" role="group" aria-label={`Paso ${currentStep + 1} de ${STEPS.length}`}>
+            {STEPS.map((step, index) => (
               <div
                 key={index}
                 className={cn(
@@ -519,6 +562,7 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
                   index === currentStep ? 'bg-purple-500' :
                   index < currentStep ? 'bg-purple-500/40' : 'bg-white/10'
                 )}
+                aria-hidden="true"
               />
             ))}
           </div>
@@ -526,10 +570,11 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
           {currentStep < STEPS.length - 1 ? (
             <button
               onClick={goNext}
-              className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-sm font-semibold transition-colors"
+              aria-label="Ir al siguiente paso"
+              className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-sm text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Siguiente
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </button>
           ) : (
             <div /> // Publish button is inside the step

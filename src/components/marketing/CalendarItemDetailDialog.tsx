@@ -156,7 +156,7 @@ export function CalendarItemDetailDialog({ item, open, onOpenChange, onUpdate }:
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-2xl max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
@@ -246,7 +246,7 @@ export function CalendarItemDetailDialog({ item, open, onOpenChange, onUpdate }:
                 placeholder="Texto para publicar..."
               />
             ) : (
-              <div className="bg-muted/50 rounded-lg p-3 text-sm">
+              <div className="bg-muted/50 rounded-sm p-3 text-sm">
                 {item.copy_text || "Sin copy definido"}
               </div>
             )}
@@ -288,7 +288,7 @@ export function CalendarItemDetailDialog({ item, open, onOpenChange, onUpdate }:
               <Label className="text-sm font-medium">Media</Label>
               <div className="grid grid-cols-3 gap-2">
                 {item.media_urls.map((url, i) => (
-                  <div key={i} className="aspect-square bg-muted rounded-lg overflow-hidden">
+                  <div key={i} className="aspect-square bg-muted rounded-sm overflow-hidden">
                     <img src={url} alt={`Media ${i + 1}`} className="w-full h-full object-cover" />
                   </div>
                 ))}
@@ -318,25 +318,25 @@ export function CalendarItemDetailDialog({ item, open, onOpenChange, onUpdate }:
               <Label className="text-sm font-medium">Rendimiento</Label>
               <div className="grid grid-cols-4 gap-4">
                 {item.performance.reach && (
-                  <div className="text-center p-3 bg-muted/50 rounded-lg">
+                  <div className="text-center p-3 bg-muted/50 rounded-sm">
                     <div className="text-lg font-semibold">{item.performance.reach.toLocaleString()}</div>
                     <div className="text-xs text-muted-foreground">Alcance</div>
                   </div>
                 )}
                 {item.performance.impressions && (
-                  <div className="text-center p-3 bg-muted/50 rounded-lg">
+                  <div className="text-center p-3 bg-muted/50 rounded-sm">
                     <div className="text-lg font-semibold">{item.performance.impressions.toLocaleString()}</div>
                     <div className="text-xs text-muted-foreground">Impresiones</div>
                   </div>
                 )}
                 {item.performance.likes && (
-                  <div className="text-center p-3 bg-muted/50 rounded-lg">
+                  <div className="text-center p-3 bg-muted/50 rounded-sm">
                     <div className="text-lg font-semibold">{item.performance.likes.toLocaleString()}</div>
                     <div className="text-xs text-muted-foreground">Likes</div>
                   </div>
                 )}
                 {item.performance.comments && (
-                  <div className="text-center p-3 bg-muted/50 rounded-lg">
+                  <div className="text-center p-3 bg-muted/50 rounded-sm">
                     <div className="text-lg font-semibold">{item.performance.comments.toLocaleString()}</div>
                     <div className="text-xs text-muted-foreground">Comentarios</div>
                   </div>

@@ -328,7 +328,7 @@ export function ProfileEditor({
           </div>
 
           {/* Privacy */}
-          <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-sm">
             <div className="flex items-center gap-3">
               {isPublic ? (
                 <Globe className="h-5 w-5 text-green-400" />

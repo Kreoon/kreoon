@@ -88,7 +88,7 @@ export default function LiveViewerPage() {
         <div className="container max-w-7xl mx-auto p-4">
           <div className="grid lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 space-y-4">
-              <Skeleton className="aspect-video rounded-lg" />
+              <Skeleton className="aspect-video rounded-sm" />
               <div className="flex items-center gap-4">
                 <Skeleton className="h-12 w-12 rounded-full" />
                 <div className="space-y-2 flex-1">
@@ -98,7 +98,7 @@ export default function LiveViewerPage() {
               </div>
             </div>
             <div className="hidden lg:block">
-              <Skeleton className="h-[500px] rounded-lg" />
+              <Skeleton className="h-[500px] rounded-sm" />
             </div>
           </div>
         </div>
@@ -158,7 +158,7 @@ export default function LiveViewerPage() {
               <div className="relative">
                 <LivePlayer
                   playbackUrl={playbackUrl}
-                  className="rounded-lg overflow-hidden"
+                  className="rounded-sm overflow-hidden"
                   onError={(err) => console.error('Player error:', err)}
                 />
 

@@ -73,11 +73,11 @@ export function PromoteContentDialog({ content, trigger, onSuccess }: PromoteCon
 
         <div className="space-y-4">
           {/* Content preview */}
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border">
+          <div className="flex items-center gap-3 p-3 rounded-sm bg-muted/30 border">
             {content.thumbnailUrl ? (
-              <img src={content.thumbnailUrl} alt="" className="w-12 h-12 rounded-lg object-cover" />
+              <img src={content.thumbnailUrl} alt="" className="w-12 h-12 rounded-sm object-cover" />
             ) : (
-              <div className="w-12 h-12 rounded-lg bg-muted/50 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-sm bg-muted/50 flex items-center justify-center">
                 <Megaphone className="w-5 h-5 text-muted-foreground" />
               </div>
             )}
@@ -99,7 +99,7 @@ export function PromoteContentDialog({ content, trigger, onSuccess }: PromoteCon
                     key={account.id}
                     onClick={() => setSelectedAccountId(account.id)}
                     className={cn(
-                      'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm',
+                      'flex items-center gap-2 px-3 py-2 rounded-sm border transition-all text-sm',
                       selectedAccountId === account.id
                         ? 'border-primary bg-primary/10'
                         : 'border-border bg-card hover:border-primary/30'
@@ -139,7 +139,7 @@ export function PromoteContentDialog({ content, trigger, onSuccess }: PromoteCon
           </div>
 
           {/* Estimate */}
-          <div className="p-3 rounded-lg bg-muted/30 border text-center">
+          <div className="p-3 rounded-sm bg-muted/30 border text-center">
             <p className="text-xs text-muted-foreground">Inversión total estimada</p>
             <p className="text-xl font-bold">${(dailyBudget * durationDays).toFixed(2)}</p>
           </div>

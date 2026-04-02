@@ -92,9 +92,9 @@ export function CreatorMatchingCard({
     return (
       <motion.div
         className={cn(
-          "flex items-center gap-3 p-3 rounded-lg cursor-pointer",
-          "bg-social-card border border-social-border",
-          "hover:border-social-accent/50 transition-all"
+          "flex items-center gap-3 p-3 rounded-sm cursor-pointer",
+          "bg-card border border-border",
+          "hover:border-primary/50 transition-all"
         )}
         onClick={onClick}
         whileHover={{ scale: 1.02 }}
@@ -106,10 +106,10 @@ export function CreatorMatchingCard({
         </Avatar>
 
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-social-foreground truncate">
+          <p className="font-medium text-foreground truncate">
             {creator.full_name}
           </p>
-          <p className="text-xs text-social-muted-foreground truncate">
+          <p className="text-xs text-muted-foreground truncate">
             {match_reasons[0]?.label}
           </p>
         </div>
@@ -127,10 +127,10 @@ export function CreatorMatchingCard({
     return (
       <motion.div
         className={cn(
-          "relative p-6 rounded-2xl cursor-pointer overflow-hidden",
-          "bg-gradient-to-br from-social-card via-social-card to-social-accent/10",
-          "border-2 border-social-accent/30",
-          "hover:border-social-accent/50 transition-all"
+          "relative p-6 rounded-sm cursor-pointer overflow-hidden",
+          "bg-gradient-to-br from-card via-card to-secondary",
+          "border-2 border-primary/30",
+          "hover:border-primary/50 transition-all"
         )}
         onClick={onClick}
         onMouseEnter={() => setIsHovered(true)}
@@ -138,7 +138,7 @@ export function CreatorMatchingCard({
         whileHover={{ y: -4 }}
       >
         {/* Featured badge */}
-        <div className="absolute top-4 right-4 flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-social-accent to-purple-600 text-white text-xs font-medium">
+        <div className="absolute top-4 right-4 flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-primary to-purple-600 text-white text-xs font-medium">
           <Sparkles className="h-3 w-3" />
           TOP MATCH
         </div>
@@ -154,17 +154,17 @@ export function CreatorMatchingCard({
         )}
 
         <div className="flex items-start gap-4 mt-8">
-          <Avatar className="h-16 w-16 ring-2 ring-social-accent/50">
+          <Avatar className="h-16 w-16 ring-2 ring-primary/50">
             <AvatarImage src={creator.avatar_url || undefined} />
             <AvatarFallback className="text-lg">{creator.full_name[0]}</AvatarFallback>
           </Avatar>
 
           <div className="flex-1">
-            <h3 className="text-xl font-semibold text-social-foreground">
+            <h3 className="text-xl font-semibold text-foreground">
               {creator.full_name}
             </h3>
             {creator.username && (
-              <p className="text-social-muted-foreground">@{creator.username}</p>
+              <p className="text-muted-foreground">@{creator.username}</p>
             )}
 
             {/* Industry & stats */}
@@ -182,7 +182,7 @@ export function CreatorMatchingCard({
                 </span>
               )}
               {creator.total_projects > 0 && (
-                <span className="flex items-center gap-1 text-social-muted-foreground">
+                <span className="flex items-center gap-1 text-muted-foreground">
                   <Package className="h-4 w-4" />
                   {creator.total_projects}
                 </span>
@@ -197,7 +197,7 @@ export function CreatorMatchingCard({
             <Badge
               key={i}
               variant="secondary"
-              className="bg-social-muted/50 text-social-foreground"
+              className="bg-background/50 text-foreground"
             >
               {getReasonIcon(reason.type)} {reason.label}
             </Badge>
@@ -206,12 +206,12 @@ export function CreatorMatchingCard({
 
         {/* Top service */}
         {top_service && (
-          <div className="mt-4 p-3 rounded-lg bg-social-muted/50">
-            <p className="text-sm text-social-muted-foreground">Servicio destacado</p>
+          <div className="mt-4 p-3 rounded-sm bg-background/50">
+            <p className="text-sm text-muted-foreground">Servicio destacado</p>
             <div className="flex items-center justify-between mt-1">
-              <p className="font-medium text-social-foreground">{top_service.title}</p>
+              <p className="font-medium text-foreground">{top_service.title}</p>
               {top_service.price_amount && (
-                <p className="font-bold text-social-accent">
+                <p className="font-bold text-primary">
                   ${top_service.price_amount}
                 </p>
               )}
@@ -222,7 +222,7 @@ export function CreatorMatchingCard({
         {/* Actions */}
         <div className="flex gap-2 mt-4">
           <Button
-            className="flex-1 bg-gradient-to-r from-social-accent to-purple-600"
+            className="flex-1 bg-gradient-to-r from-primary to-purple-600"
             onClick={(e) => {
               e.stopPropagation();
               onContact?.();
@@ -262,9 +262,9 @@ export function CreatorMatchingCard({
   return (
     <motion.div
       className={cn(
-        "relative p-4 rounded-xl cursor-pointer",
-        "bg-social-card border border-social-border",
-        "hover:border-social-accent/50 hover:shadow-lg transition-all",
+        "relative p-4 rounded-sm cursor-pointer",
+        "bg-card border border-border",
+        "hover:border-primary/50 hover:shadow-lg transition-all",
         "group"
       )}
       onClick={onClick}
@@ -290,7 +290,7 @@ export function CreatorMatchingCard({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h4 className="font-medium text-social-foreground truncate">
+            <h4 className="font-medium text-foreground truncate">
               {creator.full_name}
             </h4>
             {creator.avg_rating && (
@@ -302,14 +302,14 @@ export function CreatorMatchingCard({
           </div>
 
           {creator.username && (
-            <p className="text-sm text-social-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               @{creator.username}
             </p>
           )}
 
           {/* Primary reason */}
           {match_reasons[0] && (
-            <p className="text-sm text-social-accent mt-1 flex items-center gap-1">
+            <p className="text-sm text-primary mt-1 flex items-center gap-1">
               <Zap className="h-3 w-3" />
               {match_reasons[0].label}
             </p>
@@ -318,11 +318,11 @@ export function CreatorMatchingCard({
           {/* Service preview */}
           {top_service && (
             <div className="mt-2 flex items-center justify-between text-sm">
-              <span className="text-social-muted-foreground truncate">
+              <span className="text-muted-foreground truncate">
                 {top_service.title}
               </span>
               {top_service.price_amount && (
-                <span className="font-semibold text-social-foreground">
+                <span className="font-semibold text-foreground">
                   ${top_service.price_amount}
                 </span>
               )}
@@ -333,17 +333,17 @@ export function CreatorMatchingCard({
         <div className="flex flex-col gap-1">
           <button
             onClick={handleFavoriteClick}
-            className="p-1.5 rounded-full hover:bg-social-muted transition-colors"
+            className="p-1.5 rounded-full hover:bg-background transition-colors"
             disabled={isAdding || isRemoving}
           >
             <Heart
               className={cn(
                 "h-4 w-4 transition-colors",
-                isFav ? "fill-red-500 text-red-500" : "text-social-muted-foreground"
+                isFav ? "fill-red-500 text-red-500" : "text-muted-foreground"
               )}
             />
           </button>
-          <ChevronRight className="h-4 w-4 text-social-muted-foreground group-hover:text-social-accent transition-colors" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
         </div>
       </div>
     </motion.div>
@@ -370,7 +370,7 @@ export function CreatorMatchingGrid({
 }: CreatorMatchingGridProps) {
   if (matches.length === 0) {
     return (
-      <div className="text-center py-12 text-social-muted-foreground">
+      <div className="text-center py-12 text-muted-foreground">
         <p>{emptyMessage}</p>
       </div>
     );

@@ -212,9 +212,9 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[90vh] p-0 bg-[#0a0118] border-[#8b5cf6]/20 overflow-hidden">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-4xl h-[90dvh] sm:h-[90vh] p-0 bg-[#0a0118] border-[#8b5cf6]/20 overflow-hidden">
         {/* Header */}
-        <DialogHeader className="p-6 pb-4 border-b border-white/10">
+        <DialogHeader className="p-4 sm:p-6 pb-4 border-b border-white/10">
           <div className="flex items-start gap-4">
             {/* Avatar */}
             <div className="relative shrink-0">
@@ -324,7 +324,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
 
         {/* Tabs Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-          <div className="px-6 border-b border-white/10">
+          <div className="px-4 sm:px-6 border-b border-white/10">
             <TabsList className="bg-transparent h-12 p-0 gap-0">
               <TabsTrigger
                 value="general"
@@ -367,19 +367,19 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
           </div>
 
           <ScrollArea className="flex-1">
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               {fullLoading && (
                 <div className="space-y-4">
-                  <Skeleton className="h-20 rounded-lg bg-white/5" />
-                  <Skeleton className="h-16 rounded-lg bg-white/5" />
-                  <Skeleton className="h-24 rounded-lg bg-white/5" />
+                  <Skeleton className="h-20 rounded-sm bg-white/5" />
+                  <Skeleton className="h-16 rounded-sm bg-white/5" />
+                  <Skeleton className="h-24 rounded-sm bg-white/5" />
                 </div>
               )}
 
               {/* GENERAL TAB */}
               <TabsContent value="general" className="mt-0 space-y-6">
                 {/* Personal Data */}
-                <div className="rounded-lg border border-white/10 p-4">
+                <div className="rounded-sm border border-white/10 p-4">
                   <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
                     <User className="h-4 w-4 text-pink-400" />
                     Datos Personales
@@ -427,7 +427,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                 </div>
 
                 {/* Bio */}
-                <div className="rounded-lg border border-white/10 p-4">
+                <div className="rounded-sm border border-white/10 p-4">
                   <h3 className="text-sm font-semibold text-white mb-4">Biografía</h3>
                   <EditableField
                     label="Tagline"
@@ -458,7 +458,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                 </div>
 
                 {/* Social Links */}
-                <div className="rounded-lg border border-white/10 p-4">
+                <div className="rounded-sm border border-white/10 p-4">
                   <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
                     <Link2 className="h-4 w-4 text-pink-400" />
                     Redes Sociales
@@ -504,7 +504,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                 </div>
 
                 {/* Specialization */}
-                <div className="rounded-lg border border-white/10 p-4">
+                <div className="rounded-sm border border-white/10 p-4">
                   <h3 className="text-sm font-semibold text-white mb-4">Especialización</h3>
                   {(full?.categories ?? creator.categories)?.length > 0 && (
                     <div className="mb-4">
@@ -545,28 +545,28 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                 </div>
 
                 {/* Marketplace Stats */}
-                <div className="rounded-lg border border-white/10 p-4">
+                <div className="rounded-sm border border-white/10 p-4">
                   <h3 className="text-sm font-semibold text-white mb-4">Estadísticas Marketplace</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-3 rounded-lg bg-white/5">
+                    <div className="text-center p-3 rounded-sm bg-white/5">
                       <p className="text-2xl font-bold text-yellow-400">
                         {creator.rating_avg > 0 ? creator.rating_avg.toFixed(1) : '—'}
                       </p>
                       <p className="text-xs text-white/50">Rating ({creator.rating_count})</p>
                     </div>
-                    <div className="text-center p-3 rounded-lg bg-white/5">
+                    <div className="text-center p-3 rounded-sm bg-white/5">
                       <p className="text-2xl font-bold text-white">
                         {creator.completed_projects}
                       </p>
                       <p className="text-xs text-white/50">Proyectos</p>
                     </div>
-                    <div className="text-center p-3 rounded-lg bg-white/5">
+                    <div className="text-center p-3 rounded-sm bg-white/5">
                       <p className="text-2xl font-bold text-green-400">
                         {formatCurrency(creator.total_earned)}
                       </p>
                       <p className="text-xs text-white/50">Total ganado</p>
                     </div>
-                    <div className="text-center p-3 rounded-lg bg-white/5">
+                    <div className="text-center p-3 rounded-sm bg-white/5">
                       <p className="text-xl font-bold text-white">
                         {formatCurrency(creator.base_price)}
                       </p>
@@ -574,7 +574,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                     </div>
                   </div>
                   {full && (
-                    <div className="grid grid-cols-3 gap-4 mt-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
                       {full.response_time_hours && (
                         <div className="flex items-center gap-2 text-sm text-white/70">
                           <Clock className="h-4 w-4 text-white/40" />
@@ -604,7 +604,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {full.portfolio.map((item: any) => (
                       <div key={item.id} className="group relative">
-                        <div className="aspect-video rounded-lg bg-white/5 overflow-hidden">
+                        <div className="aspect-video rounded-sm bg-white/5 overflow-hidden">
                           {hasValidUrl(item.thumbnail_url) ? (
                             <img
                               src={item.thumbnail_url}
@@ -652,7 +652,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                     {full.services.map((service: any) => (
                       <div
                         key={service.id}
-                        className="rounded-lg border border-white/10 p-4 hover:border-pink-500/30 transition-colors"
+                        className="rounded-sm border border-white/10 p-4 hover:border-pink-500/30 transition-colors"
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
@@ -694,7 +694,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
               <TabsContent value="organization" className="mt-0 space-y-6">
                 {/* Roles & Badges */}
                 {userDetail && (
-                  <div className="rounded-lg border border-white/10 p-4">
+                  <div className="rounded-sm border border-white/10 p-4">
                     <RolesBadgesSection
                       roles={userDetail.roles}
                       badges={userDetail.badges}
@@ -705,7 +705,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
 
                 {/* Organizations */}
                 {userDetail && userId && (
-                  <div className="rounded-lg border border-white/10 p-4">
+                  <div className="rounded-sm border border-white/10 p-4">
                     <OrganizationsListSection
                       organizations={userDetail.organizations || []}
                       userId={userId}
@@ -716,7 +716,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
 
                 {/* Companies */}
                 {userDetail && userId && (
-                  <div className="rounded-lg border border-white/10 p-4">
+                  <div className="rounded-sm border border-white/10 p-4">
                     <CompaniesSection
                       companies={userDetail.companies || []}
                       userId={userId}
@@ -726,7 +726,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                 )}
 
                 {/* System Info */}
-                <div className="rounded-lg border border-white/10 p-4">
+                <div className="rounded-sm border border-white/10 p-4">
                   <h3 className="text-sm font-semibold text-white mb-4">Información del Sistema</h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
@@ -756,7 +756,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
               {/* ADMIN TAB */}
               {isRoot && userId && (
                 <TabsContent value="admin" className="mt-0">
-                  <div className="rounded-lg border border-red-500/20 p-4 bg-red-500/5">
+                  <div className="rounded-sm border border-red-500/20 p-4 bg-red-500/5">
                     <div className="flex items-center gap-2 mb-4">
                       <AlertTriangle className="h-5 w-5 text-red-400" />
                       <h3 className="text-sm font-semibold text-red-400">

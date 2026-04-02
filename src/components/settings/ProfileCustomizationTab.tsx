@@ -78,7 +78,7 @@ function SortableSectionRow({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'flex items-center justify-between p-3 rounded-lg border transition-all',
+        'flex items-center justify-between p-3 rounded-sm border transition-all',
         isDragging ? 'z-50 border-primary bg-primary/10' : 'border-border bg-card',
         !isVisible && 'opacity-50'
       )}
@@ -91,7 +91,7 @@ function SortableSectionRow({
       </div>
       <button
         onClick={onToggleVisibility}
-        className="p-1.5 rounded-lg transition-colors hover:bg-muted"
+        className="p-1.5 rounded-sm transition-colors hover:bg-muted"
       >
         {isVisible
           ? <Eye className="h-4 w-4 text-green-500" />
@@ -177,7 +177,7 @@ export function ProfileCustomizationTab() {
                   secondary_color: theme.secondary,
                 })}
                 className={cn(
-                  'relative rounded-xl overflow-hidden border-2 transition-all',
+                  'relative rounded-sm overflow-hidden border-2 transition-all',
                   customization.theme === theme.id
                     ? 'border-primary shadow-lg ring-2 ring-primary/20'
                     : 'border-border hover:border-primary/50'
@@ -215,7 +215,7 @@ export function ProfileCustomizationTab() {
                 key={style.id}
                 onClick={() => updateCustomization({ card_style: style.id })}
                 className={cn(
-                  'p-3 rounded-lg border text-left transition-all',
+                  'p-3 rounded-sm border text-left transition-all',
                   customization.card_style === style.id
                     ? 'border-primary bg-primary/10'
                     : 'border-border bg-card hover:border-primary/50'
@@ -242,7 +242,7 @@ export function ProfileCustomizationTab() {
                 key={style.id}
                 onClick={() => updateCustomization({ cover_style: style.id })}
                 className={cn(
-                  'p-3 rounded-lg border text-left transition-all',
+                  'p-3 rounded-sm border text-left transition-all',
                   customization.cover_style === style.id
                     ? 'border-primary bg-primary/10'
                     : 'border-border bg-card hover:border-primary/50'

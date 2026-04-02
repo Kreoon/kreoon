@@ -125,6 +125,32 @@ Deno.serve(async (req) => {
       )
     }
 
+    // Si es cliente, verificar que no tenga pagos vencidos
+    if (isContentClient && content.client_id) {
+      const { data: packages } = await supabase
+        .from('client_packages')
+        .select('payment_status, payment_due_date')
+        .eq('client_id', content.client_id)
+        .neq('payment_status', 'paid')
+
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      const hasExpiredPayment = packages?.some(p =>
+        p.payment_due_date && new Date(p.payment_due_date) < today
+      )
+
+      if (hasExpiredPayment) {
+        return new Response(
+          JSON.stringify({
+            error: 'PAYMENT_OVERDUE',
+            message: 'Tienes pagos vencidos. Regulariza tu situación para habilitar las descargas.'
+          }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    }
+
     // Extract video ID from Bunny URL
     // Formats:
     // - Embed: https://iframe.mediadelivery.net/embed/{library_id}/{video_id}

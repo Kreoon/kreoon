@@ -112,7 +112,7 @@ export function ShareDialog({
           )}
 
           {/* Social share buttons */}
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {shareLinks.map((link) => (
               <a
                 key={link.name}
@@ -120,7 +120,7 @@ export function ShareDialog({
                 target="_blank"
                 rel="noopener noreferrer"
                 className={cn(
-                  "flex flex-col items-center justify-center p-3 rounded-lg border transition-colors",
+                  "flex flex-col items-center justify-center p-3 rounded-sm border transition-colors",
                   link.color
                 )}
               >
