@@ -2,14 +2,15 @@
  * Container Block - Profile Builder Pro
  *
  * Contenedor simple con ancho maximo centrado.
- * Puede contener otros bloques anidados.
+ * Puede contener otros bloques anidados con drag & drop.
  */
 
-import { memo } from 'react';
-import { BoxSelect, Plus } from 'lucide-react';
+import { memo, useCallback } from 'react';
+import { useDroppable } from '@dnd-kit/core';
+import { BoxSelect, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import type { BlockProps } from '../types/profile-builder';
+import type { BlockProps, ProfileBlock } from '../types/profile-builder';
 
 interface ContainerConfig {
   maxWidth: string;
@@ -24,10 +25,40 @@ const paddingClasses = {
   xl: 'p-12',
 };
 
-function ContainerBlockComponent({ block, isEditing, isSelected }: BlockProps) {
+// Props extendidas para ContainerBlock
+interface ContainerBlockProps extends BlockProps {
+  renderChild?: (child: ProfileBlock) => React.ReactNode;
+  onAddBlockToColumn?: (columnIndex: number) => void;
+  onRemoveChild?: (childId: string) => void;
+}
+
+function ContainerBlockComponent({
+  block,
+  isEditing,
+  isSelected,
+  renderChild,
+  onAddBlockToColumn,
+  onRemoveChild,
+}: ContainerBlockProps) {
   const config = block.config as ContainerConfig;
   const styles = block.styles;
-  const hasChildren = block.children && block.children.length > 0;
+  const children = block.children || [];
+  const hasChildren = children.length > 0;
+
+  // Drop zone para el contenedor
+  const { setNodeRef, isOver } = useDroppable({
+    id: `container-${block.id}`,
+    data: {
+      type: 'column',
+      parentId: block.id,
+      columnIndex: 0, // Contenedor solo tiene una "columna"
+      accepts: ['block'],
+    },
+  });
+
+  const handleAddBlock = useCallback(() => {
+    onAddBlockToColumn?.(0);
+  }, [onAddBlockToColumn]);
 
   return (
     <div
@@ -45,28 +76,62 @@ function ContainerBlockComponent({ block, isEditing, isSelected }: BlockProps) {
       }}
     >
       <div
+        ref={setNodeRef}
         className={cn(
-          'w-full',
+          'w-full min-h-[100px]',
           config.centered && 'mx-auto',
+          isEditing && 'border-2 border-dashed rounded-lg transition-all',
+          isEditing && !hasChildren && 'border-border/40',
+          isOver && 'border-primary bg-primary/5 border-solid',
         )}
         style={{
           maxWidth: config.maxWidth || '1200px',
         }}
       >
         {hasChildren ? (
-          <div className="space-y-4">
-            {/* Los children se renderizan desde el BuilderCanvas */}
-            <div className="text-xs text-muted-foreground text-center py-2 border border-dashed border-border rounded">
-              {block.children?.length} bloques anidados
-            </div>
+          <div className="space-y-2 p-2">
+            {children.map((child) => (
+              <div key={child.id} className="relative group">
+                {renderChild ? (
+                  renderChild(child)
+                ) : (
+                  <div className="p-3 bg-muted/30 rounded border border-border/30 text-sm">
+                    {child.type}
+                  </div>
+                )}
+                {/* Controles de bloque anidado */}
+                {isEditing && isSelected && onRemoveChild && (
+                  <button
+                    onClick={() => onRemoveChild(child.id)}
+                    className="absolute top-1 right-1 p-1 rounded bg-background/80 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Eliminar"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+            ))}
+
+            {/* Boton para agregar mas bloques */}
+            {isEditing && isSelected && (
+              <div className="flex justify-center pt-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs gap-1 opacity-60 hover:opacity-100"
+                  onClick={handleAddBlock}
+                >
+                  <Plus className="h-3 w-3" />
+                  Agregar
+                </Button>
+              </div>
+            )}
           </div>
         ) : (
           <div
             className={cn(
               'flex flex-col items-center justify-center py-12 gap-3',
-              'border-2 border-dashed border-muted-foreground/30 rounded-lg',
               'transition-colors min-h-[150px]',
-              isSelected && 'border-primary/50 bg-primary/5'
             )}
           >
             <BoxSelect className="h-8 w-8 text-muted-foreground/50" />
@@ -79,10 +144,18 @@ function ContainerBlockComponent({ block, isEditing, isSelected }: BlockProps) {
               </p>
             </div>
             {isEditing && (
-              <Button variant="outline" size="sm" className="gap-1.5 mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 mt-2"
+                onClick={handleAddBlock}
+              >
                 <Plus className="h-3.5 w-3.5" />
                 Agregar bloque
               </Button>
+            )}
+            {isOver && (
+              <p className="text-xs text-primary mt-2">Soltar aqui</p>
             )}
           </div>
         )}

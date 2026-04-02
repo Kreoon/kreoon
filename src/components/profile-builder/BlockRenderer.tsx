@@ -135,9 +135,16 @@ export function BlockRenderer(props: BlockProps) {
     return <BlockNotImplemented type={props.block.type} />;
   }
 
+  // Las props de contenedores se pasan a todos los bloques
+  // Los bloques que no son contenedores simplemente las ignoran
   return (
     <Suspense fallback={<BlockSkeleton />}>
-      <BlockComponent {...props} />
+      <BlockComponent
+        {...props}
+        renderChild={props.renderChild}
+        onAddBlockToColumn={props.onAddBlockToColumn}
+        onRemoveChild={props.onRemoveChild}
+      />
     </Suspense>
   );
 }

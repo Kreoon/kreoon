@@ -16,6 +16,9 @@ import { BLOCK_DEFINITIONS } from './types/profile-builder';
 import { applyBlockStyles, getAnimationVariants } from './utils';
 import { useResponsiveStyles } from './hooks/useResponsiveStyles';
 
+// Bloques contenedores que siempre necesitan pointer-events para drops
+const CONTAINER_TYPES = ['columns', 'container', 'section'];
+
 export function BlockWrapper({
   block,
   children,
@@ -27,6 +30,7 @@ export function BlockWrapper({
   onMoveDown,
 }: BlockWrapperProps) {
   const definition = BLOCK_DEFINITIONS[block.type];
+  const isContainer = CONTAINER_TYPES.includes(block.type);
   const isDeletable = definition.isDeletable;
 
   const {
@@ -198,7 +202,9 @@ export function BlockWrapper({
       {/* Contenido del bloque */}
       <div
         className={cn(
-          'pointer-events-none select-none',
+          'select-none',
+          // Los contenedores siempre necesitan pointer-events para recibir drops
+          isContainer ? 'pointer-events-auto' : 'pointer-events-none',
           isSelected && 'pointer-events-auto',
         )}
       >

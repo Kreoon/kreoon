@@ -2,13 +2,15 @@ import { useReducer, useCallback, useState, useEffect } from 'react';
 import {
   DndContext,
   DragOverlay,
-  closestCenter,
+  pointerWithin,
+  rectIntersection,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
   type DragStartEvent,
+  type CollisionDetection,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable';
 import { Settings2, X } from 'lucide-react';
@@ -92,6 +94,61 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
         orderIndex: i,
       }));
       return { ...state, blocks: reordered, isDirty: true };
+    }
+
+    case 'ADD_BLOCK_TO_CONTAINER': {
+      const { parentId, block, columnIndex } = action.payload;
+      const addBlockToParent = (blocks: ProfileBlock[]): ProfileBlock[] => {
+        return blocks.map((b) => {
+          if (b.id === parentId) {
+            const children = b.children || [];
+            const newChild = { ...block, parentId, columnIndex };
+            return { ...b, children: [...children, newChild] };
+          }
+          if (b.children?.length) {
+            return { ...b, children: addBlockToParent(b.children) };
+          }
+          return b;
+        });
+      };
+      return { ...state, blocks: addBlockToParent(state.blocks), isDirty: true };
+    }
+
+    case 'REMOVE_FROM_CONTAINER': {
+      const { parentId, blockId } = action.payload;
+      const removeFromParent = (blocks: ProfileBlock[]): ProfileBlock[] => {
+        return blocks.map((b) => {
+          if (b.id === parentId) {
+            return { ...b, children: b.children?.filter((c) => c.id !== blockId) || [] };
+          }
+          if (b.children?.length) {
+            return { ...b, children: removeFromParent(b.children) };
+          }
+          return b;
+        });
+      };
+      return { ...state, blocks: removeFromParent(state.blocks), isDirty: true };
+    }
+
+    case 'MOVE_BLOCK_TO_COLUMN': {
+      const { parentId, blockId, newColumnIndex } = action.payload;
+      const moveToColumn = (blocks: ProfileBlock[]): ProfileBlock[] => {
+        return blocks.map((b) => {
+          if (b.id === parentId) {
+            return {
+              ...b,
+              children: b.children?.map((c) =>
+                c.id === blockId ? { ...c, columnIndex: newColumnIndex } : c
+              ) || [],
+            };
+          }
+          if (b.children?.length) {
+            return { ...b, children: moveToColumn(b.children) };
+          }
+          return b;
+        });
+      };
+      return { ...state, blocks: moveToColumn(state.blocks), isDirty: true };
     }
 
     case 'SELECT_BLOCK':
@@ -185,6 +242,25 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
+  // Estrategia de detección personalizada que prioriza contenedores
+  const customCollisionDetection: CollisionDetection = useCallback((args) => {
+    // Primero buscar colisiones con contenedores (column, container, section)
+    const pointerCollisions = pointerWithin(args);
+
+    // Filtrar para priorizar contenedores
+    const containerCollisions = pointerCollisions.filter(
+      (collision) => collision.data?.droppableContainer?.data?.current?.type === 'column'
+    );
+
+    // Si hay colisión con un contenedor, usarlo
+    if (containerCollisions.length > 0) {
+      return containerCollisions;
+    }
+
+    // Si no, usar rectIntersection para el canvas general
+    return rectIntersection(args);
+  }, []);
+
   // ── Handlers ──────────────────────────────────────────────────────────────
 
   const handleDragEnd = useCallback(
@@ -193,6 +269,8 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
       if (!over) return;
 
       const isFromPalette = active.data.current?.fromPalette === true;
+      const overData = over.data.current;
+      const isOverColumn = overData?.type === 'column';
 
       if (isFromPalette) {
         const blockType = active.data.current?.type as BlockType;
@@ -219,9 +297,23 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
           return;
         }
 
-        // Añadir nuevo bloque al canvas desde la paleta
+        // Crear el nuevo bloque
         const newBlock = createBlock(blockType, state.blocks.length);
-        dispatch({ type: 'ADD_BLOCK', payload: { block: newBlock } });
+
+        // Si el drop es sobre una columna de un contenedor
+        if (isOverColumn && overData?.parentId) {
+          dispatch({
+            type: 'ADD_BLOCK_TO_CONTAINER',
+            payload: {
+              parentId: overData.parentId as string,
+              block: newBlock,
+              columnIndex: overData.columnIndex as number,
+            },
+          });
+        } else {
+          // Añadir nuevo bloque al canvas desde la paleta
+          dispatch({ type: 'ADD_BLOCK', payload: { block: newBlock } });
+        }
         dispatch({ type: 'SELECT_BLOCK', payload: newBlock.id });
       } else if (active.id !== over.id) {
         // Reordenar bloques existentes en el canvas
@@ -296,6 +388,32 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
     dispatch({ type: 'SET_BUILDER_CONFIG', payload: updates });
   }, []);
 
+  // Handler para agregar un bloque a un contenedor (columns, container, section)
+  const handleAddBlockToContainer = useCallback(
+    (parentId: string, columnIndex?: number) => {
+      // Por ahora creamos un bloque de texto por defecto
+      // En el futuro se podría mostrar un selector de bloques
+      const newBlock = createBlock('text_block', 0);
+      dispatch({
+        type: 'ADD_BLOCK_TO_CONTAINER',
+        payload: { parentId, block: newBlock, columnIndex },
+      });
+      dispatch({ type: 'SELECT_BLOCK', payload: newBlock.id });
+    },
+    []
+  );
+
+  // Handler para remover un bloque de un contenedor
+  const handleRemoveFromContainer = useCallback(
+    (parentId: string, blockId: string) => {
+      dispatch({
+        type: 'REMOVE_FROM_CONTAINER',
+        payload: { parentId, blockId },
+      });
+    },
+    []
+  );
+
   // Handler para seleccionar una plantilla
   const handleSelectTemplate = useCallback(
     (template: ProfileTemplate) => {
@@ -356,7 +474,7 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={customCollisionDetection}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
@@ -447,6 +565,8 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
               previewDevice={state.previewDevice}
               userId={profile?.user_id}
               creatorProfileId={profileId}
+              onAddBlockToContainer={handleAddBlockToContainer}
+              onRemoveFromContainer={handleRemoveFromContainer}
             />
           </main>
 

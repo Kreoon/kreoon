@@ -1,20 +1,8 @@
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  DragOverlay,
-  type DragStartEvent,
-} from '@dnd-kit/core';
-import {
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { useState, useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { LayoutTemplate, Sparkles, TrendingDown, Crown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -43,6 +31,9 @@ interface BuilderCanvasProps {
   // Para MediaLibraryPicker
   userId?: string;
   creatorProfileId?: string;
+  // Para contenedores
+  onAddBlockToContainer?: (parentId: string, columnIndex?: number) => void;
+  onRemoveFromContainer?: (parentId: string, blockId: string) => void;
 }
 
 export function BuilderCanvas({
@@ -55,20 +46,32 @@ export function BuilderCanvas({
   previewDevice,
   userId,
   creatorProfileId,
+  onAddBlockToContainer,
+  onRemoveFromContainer,
 }: BuilderCanvasProps) {
-  const [activeId, setActiveId] = useState<string | null>(null);
   const { maxBlocks, commissionRate, isPremium } = useCreatorPlanFeatures();
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        // Requiere un pequeño desplazamiento para activar drag (evita conflictos con click)
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
+  // Función recursiva para renderizar children de contenedores
+  const renderChild = useCallback(
+    (child: ProfileBlock) => (
+      <BlockRenderer
+        key={child.id}
+        block={child}
+        isEditing={true}
+        isSelected={selectedBlockId === child.id}
+        onSelect={() => onSelectBlock(child.id)}
+        onUpdate={(updates) => onUpdateBlock(child.id, updates)}
+        userId={userId}
+        creatorProfileId={creatorProfileId}
+        renderChild={renderChild}
+        onRemoveChild={
+          child.parentId && onRemoveFromContainer
+            ? (childId) => onRemoveFromContainer(child.parentId!, childId)
+            : undefined
+        }
+      />
+    ),
+    [selectedBlockId, onSelectBlock, onUpdateBlock, userId, creatorProfileId, onRemoveFromContainer]
   );
 
   // Todos los bloques son movibles - sin restricciones
@@ -77,24 +80,6 @@ export function BuilderCanvas({
   }, [blocks]);
 
   const allBlockIds = sortedBlocks.map((b) => b.id);
-  const activeBlock = activeId ? blocks.find((b) => b.id === activeId) : null;
-
-  function handleDragStart(event: DragStartEvent) {
-    setActiveId(String(event.active.id));
-  }
-
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    setActiveId(null);
-
-    if (!over || active.id === over.id) return;
-
-    onReorderBlocks(String(active.id), String(over.id));
-  }
-
-  function handleDragCancel() {
-    setActiveId(null);
-  }
 
   // Deseleccionar al hacer click en el canvas vacío
   function handleCanvasClick(e: React.MouseEvent<HTMLDivElement>) {
@@ -202,77 +187,58 @@ export function BuilderCanvas({
           </div>
         )}
 
-        {/* Todos los bloques con drag & drop */}
+        {/* Todos los bloques con drag & drop - usa el DndContext de ProfileBuilder */}
         {sortedBlocks.length > 0 && (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDragCancel={handleDragCancel}
-          >
-            <SortableContext items={allBlockIds} strategy={verticalListSortingStrategy}>
-              <div className="flex flex-col gap-1.5" role="list" aria-label="Bloques del perfil">
-                {sortedBlocks.map((block, index) => {
-                  const definition = BLOCK_DEFINITIONS[block.type];
-                  const isFirst = index === 0;
-                  const isLast = index === sortedBlocks.length - 1;
+          <SortableContext items={allBlockIds} strategy={verticalListSortingStrategy}>
+            <div className="flex flex-col gap-1.5" role="list" aria-label="Bloques del perfil">
+              {sortedBlocks.map((block, index) => {
+                const definition = BLOCK_DEFINITIONS[block.type];
+                const isFirst = index === 0;
+                const isLast = index === sortedBlocks.length - 1;
 
-                  return (
-                    <div key={block.id} role="listitem">
-                      <BlockWrapper
+                return (
+                  <div key={block.id} role="listitem">
+                    <BlockWrapper
+                      block={block}
+                      isSelected={selectedBlockId === block.id}
+                      onSelect={() => onSelectBlock(block.id)}
+                      onDelete={
+                        definition?.isDeletable && onDeleteBlock
+                          ? () => onDeleteBlock(block.id)
+                          : undefined
+                      }
+                      onToggleVisibility={() =>
+                        onUpdateBlock(block.id, { isVisible: !block.isVisible })
+                      }
+                      onMoveUp={!isFirst ? () => handleMoveUp(block.id) : undefined}
+                      onMoveDown={!isLast ? () => handleMoveDown(block.id) : undefined}
+                    >
+                      <BlockRenderer
                         block={block}
+                        isEditing={true}
                         isSelected={selectedBlockId === block.id}
                         onSelect={() => onSelectBlock(block.id)}
-                        onDelete={
-                          definition.isDeletable && onDeleteBlock
-                            ? () => onDeleteBlock(block.id)
+                        onUpdate={(updates) => onUpdateBlock(block.id, updates)}
+                        userId={userId}
+                        creatorProfileId={creatorProfileId}
+                        renderChild={renderChild}
+                        onAddBlockToColumn={
+                          onAddBlockToContainer
+                            ? (columnIndex) => onAddBlockToContainer(block.id, columnIndex)
                             : undefined
                         }
-                        onToggleVisibility={() =>
-                          onUpdateBlock(block.id, { isVisible: !block.isVisible })
+                        onRemoveChild={
+                          onRemoveFromContainer
+                            ? (childId) => onRemoveFromContainer(block.id, childId)
+                            : undefined
                         }
-                        onMoveUp={!isFirst ? () => handleMoveUp(block.id) : undefined}
-                        onMoveDown={!isLast ? () => handleMoveDown(block.id) : undefined}
-                      >
-                        <BlockRenderer
-                          block={block}
-                          isEditing={true}
-                          isSelected={selectedBlockId === block.id}
-                          onSelect={() => onSelectBlock(block.id)}
-                          onUpdate={(updates) => onUpdateBlock(block.id, updates)}
-                          userId={userId}
-                          creatorProfileId={creatorProfileId}
-                        />
-                      </BlockWrapper>
-                    </div>
-                  );
-                })}
-              </div>
-            </SortableContext>
-
-            {/* DragOverlay: preview flotante al arrastrar */}
-            <DragOverlay>
-              {activeBlock && (
-                <div
-                  className={cn(
-                    'rounded-lg border border-purple-500/60 bg-[#14141f]',
-                    'shadow-2xl shadow-black/60 ring-2 ring-purple-500/30',
-                    'pointer-events-none',
-                  )}
-                  aria-hidden="true"
-                >
-                  <BlockRenderer
-                    block={activeBlock}
-                    isEditing={false}
-                    isSelected={false}
-                    onSelect={() => undefined}
-                    onUpdate={() => undefined}
-                  />
-                </div>
-              )}
-            </DragOverlay>
-          </DndContext>
+                      />
+                    </BlockWrapper>
+                  </div>
+                );
+              })}
+            </div>
+          </SortableContext>
         )}
 
         {/* Drop zone al final de la lista */}

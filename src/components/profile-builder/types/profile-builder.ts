@@ -28,29 +28,21 @@ export type BlockType =
   | 'timeline'
   | 'divider'
   | 'spacer'
-  // === NUEVOS BLOQUES AVANZADOS v3 ===
+  // === BLOQUES AVANZADOS v3 ===
   // Layout avanzado
   | 'section'               // Contenedor con fondo personalizable
   | 'columns'               // Grid de 2-6 columnas responsivas
   | 'container'             // Wrapper con ancho maximo
-  | 'tabs'                  // Contenido en pestanas
-  | 'accordion_group'       // Grupo de acordeones
   // Contenido avanzado
   | 'headline'              // Titulo con animacion y gradiente
   | 'button'                // CTA personalizable
   | 'icon_list'             // Lista con iconos
   | 'countdown'             // Contador regresivo
-  | 'embed'                 // HTML/iframe embed
   // Conversion (landing page)
   | 'cta_banner'            // Banner de llamada a accion
-  | 'lead_form'             // Formulario de captura
   | 'whatsapp_button'       // Boton flotante WhatsApp
-  | 'social_proof'          // Logos + testimonios rapidos
   | 'case_study'            // Casos de exito con metricas (vertical)
   // Media avanzado
-  | 'video_hero'            // Video de fondo con overlay
-  | 'before_after'          // Comparador deslizable
-  | 'lightbox_gallery'      // Galeria con zoom
   | 'carousel';
 
 export type BlockCategory = 'required' | 'core' | 'content' | 'media' | 'layout' | 'conversion';
@@ -235,7 +227,11 @@ export type BuilderAction =
   | { type: 'SET_DIRTY'; payload: boolean }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_SAVING'; payload: boolean }
-  | { type: 'TOGGLE_BLOCK_VISIBILITY'; payload: string };
+  | { type: 'TOGGLE_BLOCK_VISIBILITY'; payload: string }
+  // Acciones para contenedores
+  | { type: 'ADD_BLOCK_TO_CONTAINER'; payload: { parentId: string; block: ProfileBlock; columnIndex?: number } }
+  | { type: 'REMOVE_FROM_CONTAINER'; payload: { parentId: string; blockId: string } }
+  | { type: 'MOVE_BLOCK_TO_COLUMN'; payload: { parentId: string; blockId: string; newColumnIndex: number } };
 
 // Templates
 export type TemplateName = 'minimalista' | 'creativo' | 'profesional' | 'influencer' | 'freelancer';
@@ -259,6 +255,10 @@ export interface BlockProps {
   // Para MediaLibraryPicker
   userId?: string;
   creatorProfileId?: string;
+  // Para contenedores (columns, container, section)
+  renderChild?: (child: ProfileBlock) => React.ReactNode;
+  onAddBlockToColumn?: (columnIndex: number) => void;
+  onRemoveChild?: (childId: string) => void;
 }
 
 export interface BlockWrapperProps {
@@ -347,7 +347,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     description: 'Bio extendida con formato de texto',
     category: 'core',
     isRequired: false,
-    isDeletable: false,
+    isDeletable: true,
     maxInstances: 0, // Sin limite
     defaultConfig: {},
     defaultStyles: {
@@ -362,7 +362,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     description: 'Galeria de trabajos y proyectos',
     category: 'core',
     isRequired: false,
-    isDeletable: false,
+    isDeletable: true,
     maxInstances: 0, // Sin limite
     defaultConfig: {
       layout: 'grid',
@@ -381,7 +381,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     description: 'Lista de servicios ofrecidos',
     category: 'core',
     isRequired: false,
-    isDeletable: false,
+    isDeletable: true,
     maxInstances: 0, // Sin limite
     defaultConfig: {
       layout: 'cards',
@@ -398,7 +398,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     description: 'Metricas y numeros destacados',
     category: 'core',
     isRequired: false,
-    isDeletable: false,
+    isDeletable: true,
     maxInstances: 0, // Sin limite
     defaultConfig: {
       showFollowers: true,
@@ -417,7 +417,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     description: 'Resenas y testimonios de clientes',
     category: 'core',
     isRequired: false,
-    isDeletable: false,
+    isDeletable: true,
     maxInstances: 0, // Sin limite
     defaultConfig: {
       layout: 'carousel',
@@ -435,7 +435,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     description: 'Paquetes y precios de servicios',
     category: 'core',
     isRequired: false,
-    isDeletable: false,
+    isDeletable: true,
     maxInstances: 0, // Sin limite
     defaultConfig: {
       layout: 'cards',
@@ -453,7 +453,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     description: 'Seccion de contacto y CTA',
     category: 'core',
     isRequired: false,
-    isDeletable: false,
+    isDeletable: true,
     maxInstances: 0, // Sin limite
     defaultConfig: {
       showEmail: true,
@@ -722,53 +722,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     },
   },
 
-  tabs: {
-    type: 'tabs',
-    label: 'Pestanas',
-    icon: 'PanelTop',
-    description: 'Contenido organizado en pestanas clickeables',
-    category: 'layout',
-    isRequired: false,
-    isDeletable: true,
-    maxInstances: 0,
-    defaultConfig: {
-      tabs: [
-        { id: '1', label: 'Tab 1', content: '' },
-        { id: '2', label: 'Tab 2', content: '' },
-      ],
-      defaultTab: '1',
-      variant: 'underline', // underline | pills | boxed
-    },
-    defaultStyles: {
-      padding: 'md',
-      margin: 'md',
-    },
-    requiresPlan: 'creator_pro',
-  },
-
-  accordion_group: {
-    type: 'accordion_group',
-    label: 'Acordeon',
-    icon: 'ChevronDown',
-    description: 'Grupo de secciones colapsables',
-    category: 'layout',
-    isRequired: false,
-    isDeletable: true,
-    maxInstances: 0,
-    defaultConfig: {
-      items: [
-        { id: '1', title: 'Pregunta 1', content: 'Respuesta 1' },
-        { id: '2', title: 'Pregunta 2', content: 'Respuesta 2' },
-      ],
-      allowMultiple: false,
-      defaultOpen: null,
-    },
-    defaultStyles: {
-      padding: 'md',
-      margin: 'md',
-    },
-  },
-
+  
   // =====================================================
   // BLOQUES AVANZADOS v3 - Contenido
   // =====================================================
@@ -874,28 +828,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     requiresPlan: 'creator_pro',
   },
 
-  embed: {
-    type: 'embed',
-    label: 'Embed',
-    icon: 'Code',
-    description: 'Codigo HTML o iframe embebido',
-    category: 'content',
-    isRequired: false,
-    isDeletable: true,
-    maxInstances: 0,
-    defaultConfig: {
-      code: '',
-      aspectRatio: '16:9', // 16:9 | 4:3 | 1:1 | auto
-      maxWidth: '100%',
-    },
-    defaultStyles: {
-      padding: 'md',
-      margin: 'md',
-      borderRadius: 'md',
-    },
-    requiresPlan: 'creator_premium',
-  },
-
+  
   // =====================================================
   // BLOQUES AVANZADOS v3 - Conversion
   // =====================================================
@@ -928,35 +861,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     requiresPlan: 'creator_pro',
   },
 
-  lead_form: {
-    type: 'lead_form',
-    label: 'Formulario',
-    icon: 'ClipboardList',
-    description: 'Formulario de captura de leads',
-    category: 'conversion',
-    isRequired: false,
-    isDeletable: true,
-    maxInstances: 0, // Sin limite
-    defaultConfig: {
-      fields: [
-        { id: '1', type: 'text', label: 'Nombre', required: true },
-        { id: '2', type: 'email', label: 'Email', required: true },
-        { id: '3', type: 'textarea', label: 'Mensaje', required: false },
-      ],
-      submitText: 'Enviar mensaje',
-      successMessage: 'Gracias! Te contactare pronto.',
-      redirectUrl: null,
-      webhookUrl: null, // Para n8n/Zapier
-    },
-    defaultStyles: {
-      padding: 'lg',
-      margin: 'md',
-      borderRadius: 'md',
-      backgroundColor: 'rgba(255,255,255,0.05)',
-    },
-    requiresPlan: 'creator_premium',
-  },
-
+  
   whatsapp_button: {
     type: 'whatsapp_button',
     label: 'WhatsApp',
@@ -978,33 +883,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     requiresPlan: 'creator_premium',
   },
 
-  social_proof: {
-    type: 'social_proof',
-    label: 'Social Proof',
-    icon: 'Trophy',
-    description: 'Logos de marcas + mini testimonios',
-    category: 'conversion',
-    isRequired: false,
-    isDeletable: true,
-    maxInstances: 0, // Sin limite
-    defaultConfig: {
-      headline: 'Confian en mi',
-      logos: [],
-      showTestimonials: true,
-      testimonials: [
-        { id: '1', text: 'Excelente trabajo', author: 'Cliente 1' },
-      ],
-      layout: 'horizontal', // horizontal | grid
-      grayscale: true,
-    },
-    defaultStyles: {
-      padding: 'lg',
-      margin: 'md',
-      textAlign: 'center',
-    },
-    requiresPlan: 'creator_pro',
-  },
-
+  
   case_study: {
     type: 'case_study',
     label: 'Casos de Exito',
@@ -1054,85 +933,6 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
   // =====================================================
   // BLOQUES AVANZADOS v3 - Media
   // =====================================================
-
-  video_hero: {
-    type: 'video_hero',
-    label: 'Video Hero',
-    icon: 'Film',
-    description: 'Video de fondo con overlay y contenido encima',
-    category: 'media',
-    isRequired: false,
-    isDeletable: true,
-    maxInstances: 0, // Sin limite
-    defaultConfig: {
-      videoUrl: '',
-      posterUrl: '',
-      autoplay: true,
-      loop: true,
-      muted: true,
-      overlay: true,
-      overlayColor: 'rgba(0,0,0,0.5)',
-      headline: '',
-      subtext: '',
-      ctaText: '',
-      ctaUrl: '',
-    },
-    defaultStyles: {
-      padding: 'xl',
-      margin: 'none',
-      textAlign: 'center',
-    },
-    requiresPlan: 'creator_premium',
-  },
-
-  before_after: {
-    type: 'before_after',
-    label: 'Antes/Despues',
-    icon: 'ArrowLeftRight',
-    description: 'Comparador deslizable de imagenes',
-    category: 'media',
-    isRequired: false,
-    isDeletable: true,
-    maxInstances: 0,
-    defaultConfig: {
-      beforeImage: '',
-      afterImage: '',
-      beforeLabel: 'Antes',
-      afterLabel: 'Despues',
-      orientation: 'horizontal', // horizontal | vertical
-      initialPosition: 50,
-    },
-    defaultStyles: {
-      padding: 'md',
-      margin: 'md',
-      borderRadius: 'md',
-    },
-    requiresPlan: 'creator_pro',
-  },
-
-  lightbox_gallery: {
-    type: 'lightbox_gallery',
-    label: 'Galeria Lightbox',
-    icon: 'Expand',
-    description: 'Galeria de imagenes con zoom y navegacion',
-    category: 'media',
-    isRequired: false,
-    isDeletable: true,
-    maxInstances: 0,
-    defaultConfig: {
-      images: [],
-      columns: 3,
-      gap: 'md',
-      aspectRatio: '1:1', // 1:1 | 4:3 | 16:9 | auto
-      showCaptions: true,
-      enableZoom: true,
-    },
-    defaultStyles: {
-      padding: 'md',
-      margin: 'md',
-    },
-    requiresPlan: 'creator_pro',
-  },
 
   carousel: {
     type: 'carousel',
