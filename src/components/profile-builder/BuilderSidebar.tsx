@@ -21,9 +21,10 @@ export function BuilderSidebar({
   onUpgradeClick,
 }: BuilderSidebarProps) {
   const { maxBlocks } = useCreatorPlanFeatures();
-  const blocksRemaining = maxBlocks - blocks.length;
-  const isNearLimit = blocksRemaining <= 2 && blocksRemaining > 0;
-  const isAtLimit = blocksRemaining <= 0;
+  const isUnlimited = !isFinite(maxBlocks);
+  const blocksRemaining = isUnlimited ? Infinity : maxBlocks - blocks.length;
+  const isNearLimit = !isUnlimited && blocksRemaining <= 2 && blocksRemaining > 0;
+  const isAtLimit = !isUnlimited && blocksRemaining <= 0;
 
   return (
     <aside
@@ -63,11 +64,13 @@ export function BuilderSidebar({
                 <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
               )}
               <span>
-                {isAtLimit
-                  ? 'Limite alcanzado'
-                  : isNearLimit
-                    ? `Solo ${blocksRemaining} bloque${blocksRemaining > 1 ? 's' : ''} restante${blocksRemaining > 1 ? 's' : ''}`
-                    : `${blocks.length}/${maxBlocks} bloques usados`}
+                {isUnlimited
+                  ? `${blocks.length} bloques`
+                  : isAtLimit
+                    ? 'Limite alcanzado'
+                    : isNearLimit
+                      ? `Solo ${blocksRemaining} bloque${blocksRemaining > 1 ? 's' : ''} restante${blocksRemaining > 1 ? 's' : ''}`
+                      : `${blocks.length}/${maxBlocks} bloques usados`}
               </span>
             </div>
             <BlockPalette existingBlocks={blocks} onUpgradeClick={onUpgradeClick} />

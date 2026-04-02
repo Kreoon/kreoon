@@ -32,7 +32,7 @@ export interface CreatorPlanFeatures {
 // La comisión es el diferenciador principal, NO los bloques
 // FREE puede crear perfiles muy profesionales - la plataforma gana con comisión
 const DEFAULT_FEATURES: CreatorPlanFeatures = {
-  maxBlocks: 15, // Muy generoso - perfiles profesionales
+  maxBlocks: Infinity, // Sin límite de bloques para todos los planes
   allowedBlocks: [
     // Fijos
     'hero_banner', 'recommended_talent',

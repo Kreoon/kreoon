@@ -197,8 +197,8 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
       if (isFromPalette) {
         const blockType = active.data.current?.type as BlockType;
 
-        // Validar limite de bloques
-        if (state.blocks.length >= maxBlocks) {
+        // Validar limite de bloques (solo si hay limite)
+        if (isFinite(maxBlocks) && state.blocks.length >= maxBlocks) {
           toast({
             title: 'Limite de bloques alcanzado',
             description: `Tu plan permite maximo ${maxBlocks} bloques. Upgrade para agregar mas.`,

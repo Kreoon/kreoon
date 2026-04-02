@@ -45,10 +45,11 @@ export function PlanStatusBar({ currentBlockCount, onUpgradeClick }: PlanStatusB
 
   const planConfig = PLAN_CONFIG[tier];
   const PlanIcon = planConfig.icon;
-  const blockUsagePercent = Math.min((currentBlockCount / maxBlocks) * 100, 100);
-  const blocksRemaining = maxBlocks - currentBlockCount;
-  const isNearLimit = blocksRemaining <= 2 && blocksRemaining > 0;
-  const isAtLimit = blocksRemaining <= 0;
+  const isUnlimited = !isFinite(maxBlocks);
+  const blockUsagePercent = isUnlimited ? 0 : Math.min((currentBlockCount / maxBlocks) * 100, 100);
+  const blocksRemaining = isUnlimited ? Infinity : maxBlocks - currentBlockCount;
+  const isNearLimit = !isUnlimited && blocksRemaining <= 2 && blocksRemaining > 0;
+  const isAtLimit = !isUnlimited && blocksRemaining <= 0;
 
   return (
     <TooltipProvider>
@@ -105,35 +106,41 @@ export function PlanStatusBar({ currentBlockCount, onUpgradeClick }: PlanStatusB
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center gap-2 flex-1">
-                <div className="flex-1">
-                  <Progress
-                    value={blockUsagePercent}
-                    className={cn(
-                      'h-1.5',
-                      isAtLimit && '[&>div]:bg-red-500',
-                      isNearLimit && !isAtLimit && '[&>div]:bg-amber-500'
-                    )}
-                  />
-                </div>
+                {!isUnlimited && (
+                  <div className="flex-1">
+                    <Progress
+                      value={blockUsagePercent}
+                      className={cn(
+                        'h-1.5',
+                        isAtLimit && '[&>div]:bg-red-500',
+                        isNearLimit && !isAtLimit && '[&>div]:bg-amber-500'
+                      )}
+                    />
+                  </div>
+                )}
                 <span
                   className={cn(
-                    'text-xs font-medium tabular-nums min-w-[60px] text-right',
+                    'text-xs font-medium tabular-nums text-right',
                     isAtLimit && 'text-red-400',
                     isNearLimit && !isAtLimit && 'text-amber-400',
                     !isNearLimit && !isAtLimit && 'text-muted-foreground'
                   )}
                 >
-                  {currentBlockCount}/{maxBlocks} bloques
+                  {isUnlimited
+                    ? `${currentBlockCount} bloques`
+                    : `${currentBlockCount}/${maxBlocks} bloques`}
                 </span>
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom">
               <p className="text-xs">
-                {isAtLimit
-                  ? 'Limite alcanzado. Upgrade para mas bloques.'
-                  : isNearLimit
-                    ? `Solo ${blocksRemaining} bloque${blocksRemaining > 1 ? 's' : ''} restante${blocksRemaining > 1 ? 's' : ''}`
-                    : `Tienes ${blocksRemaining} bloques disponibles`}
+                {isUnlimited
+                  ? 'Bloques ilimitados'
+                  : isAtLimit
+                    ? 'Limite alcanzado. Upgrade para mas bloques.'
+                    : isNearLimit
+                      ? `Solo ${blocksRemaining} bloque${blocksRemaining > 1 ? 's' : ''} restante${blocksRemaining > 1 ? 's' : ''}`
+                      : `Tienes ${blocksRemaining} bloques disponibles`}
               </p>
             </TooltipContent>
           </Tooltip>

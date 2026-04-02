@@ -175,7 +175,7 @@ export function BuilderCanvas({
                 ) : (
                   <Sparkles className="h-3.5 w-3.5" />
                 )}
-                {maxBlocks} bloques disponibles
+                {isFinite(maxBlocks) ? `${maxBlocks} bloques disponibles` : 'Bloques ilimitados'}
               </Badge>
 
               <Badge
