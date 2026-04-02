@@ -63,6 +63,15 @@ const SpacerBlock = lazy(() =>
 const RecommendedTalentBlock = lazy(() =>
   import('./blocks/RecommendedTalentBlock').then((m) => ({ default: m.RecommendedTalentBlock })),
 );
+const SectionBlock = lazy(() =>
+  import('./blocks/SectionBlock').then((m) => ({ default: m.SectionBlock })),
+);
+const ColumnsBlock = lazy(() =>
+  import('./blocks/ColumnsBlock').then((m) => ({ default: m.ColumnsBlock })),
+);
+const ContainerBlock = lazy(() =>
+  import('./blocks/ContainerBlock').then((m) => ({ default: m.ContainerBlock })),
+);
 
 // Mapa de tipo de bloque a componente lazy
 const BLOCK_COMPONENT_MAP: Record<BlockType, React.LazyExoticComponent<React.ComponentType<BlockProps>>> = {
@@ -86,6 +95,10 @@ const BLOCK_COMPONENT_MAP: Record<BlockType, React.LazyExoticComponent<React.Com
   timeline: TimelineBlock,
   divider: DividerBlock,
   spacer: SpacerBlock,
+  // Contenedores
+  section: SectionBlock,
+  columns: ColumnsBlock,
+  container: ContainerBlock,
 };
 
 function BlockSkeleton() {

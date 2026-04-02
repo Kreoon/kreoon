@@ -16,7 +16,7 @@ import {
 } from '@dnd-kit/sortable';
 import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { LayoutTemplate, Sparkles, TrendingDown, Crown, Users, Lock } from 'lucide-react';
+import { LayoutTemplate, Sparkles, TrendingDown, Crown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { BlockWrapper } from './BlockWrapper';
 import { BlockRenderer } from './BlockRenderer';
@@ -57,7 +57,7 @@ export function BuilderCanvas({
   creatorProfileId,
 }: BuilderCanvasProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const { tier, maxBlocks, commissionRate, isPremium, isFree, canDeleteRecommendedTalent, isBlockFixed } = useCreatorPlanFeatures();
+  const { maxBlocks, commissionRate, isPremium } = useCreatorPlanFeatures();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -71,23 +71,12 @@ export function BuilderCanvas({
     }),
   );
 
-  // Separar bloques fijos de movibles
-  const { fixedTopBlock, fixedBottomBlock, movableBlocks } = useMemo(() => {
-    const sorted = [...blocks].sort((a, b) => a.orderIndex - b.orderIndex);
-    const top = sorted.find((b) => b.type === 'hero_banner');
-    const bottom = sorted.find((b) => b.type === 'recommended_talent');
-    const movable = sorted.filter(
-      (b) => b.type !== 'hero_banner' && b.type !== 'recommended_talent'
-    );
-    return {
-      fixedTopBlock: top,
-      fixedBottomBlock: bottom,
-      movableBlocks: movable,
-    };
+  // Todos los bloques son movibles - sin restricciones
+  const sortedBlocks = useMemo(() => {
+    return [...blocks].sort((a, b) => a.orderIndex - b.orderIndex);
   }, [blocks]);
 
-  const sortedBlocks = [...blocks].sort((a, b) => a.orderIndex - b.orderIndex);
-  const movableBlockIds = movableBlocks.map((b) => b.id);
+  const allBlockIds = sortedBlocks.map((b) => b.id);
   const activeBlock = activeId ? blocks.find((b) => b.id === activeId) : null;
 
   function handleDragStart(event: DragStartEvent) {
@@ -114,85 +103,22 @@ export function BuilderCanvas({
     }
   }
 
-  function getMovableBlockIndex(id: string) {
-    return movableBlocks.findIndex((b) => b.id === id);
+  function getBlockIndex(id: string) {
+    return sortedBlocks.findIndex((b) => b.id === id);
   }
 
   function handleMoveUp(id: string) {
-    const index = getMovableBlockIndex(id);
+    const index = getBlockIndex(id);
     if (index <= 0) return;
-    const prevBlock = movableBlocks[index - 1];
+    const prevBlock = sortedBlocks[index - 1];
     onReorderBlocks(id, prevBlock.id);
   }
 
   function handleMoveDown(id: string) {
-    const index = getMovableBlockIndex(id);
-    if (index >= movableBlocks.length - 1) return;
-    const nextBlock = movableBlocks[index + 1];
+    const index = getBlockIndex(id);
+    if (index >= sortedBlocks.length - 1) return;
+    const nextBlock = sortedBlocks[index + 1];
     onReorderBlocks(nextBlock.id, id);
-  }
-
-  // Renderiza un bloque fijo (sin drag, sin reorder)
-  function renderFixedBlock(block: ProfileBlock, position: 'top' | 'bottom') {
-    const definition = BLOCK_DEFINITIONS[block.type];
-    const canDelete =
-      block.type === 'recommended_talent' ? canDeleteRecommendedTalent : false;
-
-    return (
-      <div
-        key={block.id}
-        role="listitem"
-        className="relative"
-      >
-        {/* Indicador de bloque fijo */}
-        <div
-          className={cn(
-            'absolute -top-2 left-3 z-10 flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium',
-            position === 'top'
-              ? 'bg-purple-500/10 border border-purple-500/30 text-purple-400'
-              : isFree
-                ? 'bg-amber-500/10 border border-amber-500/30 text-amber-400'
-                : 'bg-green-500/10 border border-green-500/30 text-green-400',
-          )}
-        >
-          {position === 'top' ? (
-            <>
-              <Lock className="h-3 w-3" />
-              Fijo arriba
-            </>
-          ) : isFree ? (
-            <>
-              <Lock className="h-3 w-3" />
-              Requiere plan para eliminar
-            </>
-          ) : (
-            <>
-              <Users className="h-3 w-3" />
-              Opcional
-            </>
-          )}
-        </div>
-
-        <BlockWrapper
-          block={block}
-          isSelected={selectedBlockId === block.id}
-          onSelect={() => onSelectBlock(block.id)}
-          onDelete={canDelete && onDeleteBlock ? () => onDeleteBlock(block.id) : undefined}
-          onToggleVisibility={() => onUpdateBlock(block.id, { isVisible: !block.isVisible })}
-          // Sin moveUp/moveDown para bloques fijos
-        >
-          <BlockRenderer
-            block={block}
-            isEditing={true}
-            isSelected={selectedBlockId === block.id}
-            onSelect={() => onSelectBlock(block.id)}
-            onUpdate={(updates) => onUpdateBlock(block.id, updates)}
-            userId={userId}
-            creatorProfileId={creatorProfileId}
-          />
-        </BlockWrapper>
-      </div>
-    );
   }
 
   return (
@@ -276,86 +202,77 @@ export function BuilderCanvas({
           </div>
         )}
 
-        {/* Bloques con estructura: fijo arriba + movibles + fijo abajo */}
+        {/* Todos los bloques con drag & drop */}
         {sortedBlocks.length > 0 && (
-          <div className="flex flex-col gap-1.5" role="list" aria-label="Bloques del perfil">
-            {/* Bloque fijo arriba (hero_banner) */}
-            {fixedTopBlock && renderFixedBlock(fixedTopBlock, 'top')}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDragCancel={handleDragCancel}
+          >
+            <SortableContext items={allBlockIds} strategy={verticalListSortingStrategy}>
+              <div className="flex flex-col gap-1.5" role="list" aria-label="Bloques del perfil">
+                {sortedBlocks.map((block, index) => {
+                  const definition = BLOCK_DEFINITIONS[block.type];
+                  const isFirst = index === 0;
+                  const isLast = index === sortedBlocks.length - 1;
 
-            {/* Bloques movibles con drag & drop */}
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              onDragCancel={handleDragCancel}
-            >
-              <SortableContext items={movableBlockIds} strategy={verticalListSortingStrategy}>
-                <div className="flex flex-col gap-1.5">
-                  {movableBlocks.map((block, index) => {
-                    const definition = BLOCK_DEFINITIONS[block.type];
-                    const isFirst = index === 0;
-                    const isLast = index === movableBlocks.length - 1;
-
-                    return (
-                      <div key={block.id} role="listitem">
-                        <BlockWrapper
+                  return (
+                    <div key={block.id} role="listitem">
+                      <BlockWrapper
+                        block={block}
+                        isSelected={selectedBlockId === block.id}
+                        onSelect={() => onSelectBlock(block.id)}
+                        onDelete={
+                          definition.isDeletable && onDeleteBlock
+                            ? () => onDeleteBlock(block.id)
+                            : undefined
+                        }
+                        onToggleVisibility={() =>
+                          onUpdateBlock(block.id, { isVisible: !block.isVisible })
+                        }
+                        onMoveUp={!isFirst ? () => handleMoveUp(block.id) : undefined}
+                        onMoveDown={!isLast ? () => handleMoveDown(block.id) : undefined}
+                      >
+                        <BlockRenderer
                           block={block}
+                          isEditing={true}
                           isSelected={selectedBlockId === block.id}
                           onSelect={() => onSelectBlock(block.id)}
-                          onDelete={
-                            definition.isDeletable && onDeleteBlock
-                              ? () => onDeleteBlock(block.id)
-                              : undefined
-                          }
-                          onToggleVisibility={() =>
-                            onUpdateBlock(block.id, { isVisible: !block.isVisible })
-                          }
-                          onMoveUp={!isFirst ? () => handleMoveUp(block.id) : undefined}
-                          onMoveDown={!isLast ? () => handleMoveDown(block.id) : undefined}
-                        >
-                          <BlockRenderer
-                            block={block}
-                            isEditing={true}
-                            isSelected={selectedBlockId === block.id}
-                            onSelect={() => onSelectBlock(block.id)}
-                            onUpdate={(updates) => onUpdateBlock(block.id, updates)}
-                            userId={userId}
-                            creatorProfileId={creatorProfileId}
-                          />
-                        </BlockWrapper>
-                      </div>
-                    );
-                  })}
+                          onUpdate={(updates) => onUpdateBlock(block.id, updates)}
+                          userId={userId}
+                          creatorProfileId={creatorProfileId}
+                        />
+                      </BlockWrapper>
+                    </div>
+                  );
+                })}
+              </div>
+            </SortableContext>
+
+            {/* DragOverlay: preview flotante al arrastrar */}
+            <DragOverlay>
+              {activeBlock && (
+                <div
+                  className={cn(
+                    'rounded-lg border border-purple-500/60 bg-[#14141f]',
+                    'shadow-2xl shadow-black/60 ring-2 ring-purple-500/30',
+                    'pointer-events-none',
+                  )}
+                  aria-hidden="true"
+                >
+                  <BlockRenderer
+                    block={activeBlock}
+                    isEditing={false}
+                    isSelected={false}
+                    onSelect={() => undefined}
+                    onUpdate={() => undefined}
+                  />
                 </div>
-              </SortableContext>
-
-              {/* DragOverlay: preview flotante al arrastrar */}
-              <DragOverlay>
-                {activeBlock && !isBlockFixed(activeBlock.type) && (
-                  <div
-                    className={cn(
-                      'rounded-lg border border-purple-500/60 bg-[#14141f]',
-                      'shadow-2xl shadow-black/60 ring-2 ring-purple-500/30',
-                      'pointer-events-none',
-                    )}
-                    aria-hidden="true"
-                  >
-                    <BlockRenderer
-                      block={activeBlock}
-                      isEditing={false}
-                      isSelected={false}
-                      onSelect={() => undefined}
-                      onUpdate={() => undefined}
-                    />
-                  </div>
-                )}
-              </DragOverlay>
-            </DndContext>
-
-            {/* Bloque fijo abajo (recommended_talent) */}
-            {fixedBottomBlock && renderFixedBlock(fixedBottomBlock, 'bottom')}
-          </div>
+              )}
+            </DragOverlay>
+          </DndContext>
         )}
 
         {/* Drop zone al final de la lista */}

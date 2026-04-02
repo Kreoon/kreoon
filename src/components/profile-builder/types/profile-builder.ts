@@ -67,23 +67,88 @@ export interface BlockStyles {
   customWidth?: string;
   maxWidth?: string;
   // Fondos avanzados (v3)
+  backgroundType?: 'color' | 'gradient' | 'image';
   backgroundGradient?: string;
   backgroundImage?: string;
-  backgroundOverlay?: string;
-  backgroundPosition?: 'center' | 'top' | 'bottom';
+  backgroundOpacity?: number; // 0-100
+  backgroundOverlay?: string; // Color del overlay
+  backgroundOverlayStyle?: 'none' | 'full' | 'gradient-bottom' | 'gradient-top' | 'gradient-center';
+  backgroundOverlayIntensity?: number; // 0-100
+  backgroundPosition?: 'center' | 'top' | 'bottom' | 'left' | 'right';
   backgroundSize?: 'cover' | 'contain' | 'auto';
   // Texto avanzado
   textAlign?: 'left' | 'center' | 'right';
+  textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
   // Bordes
   borderWidth?: string;
   borderColor?: string;
   // Animaciones (v3)
-  animation?: 'none' | 'fade-in' | 'slide-up' | 'slide-down' | 'scale-in' | 'bounce';
+  animation?: string; // ID de animacion (fadeIn, slideUp, etc.)
   animationDelay?: number;
+  animationDuration?: number;
+  animationEasing?: string;
+  animationTrigger?: 'load' | 'scroll' | 'hover';
   // Responsivo
   hideOnMobile?: boolean;
   hideOnDesktop?: boolean;
   mobileOrder?: number;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROFILE BUILDER PRO - Herramientas de diseño avanzadas
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Gradientes avanzados
+  gradientType?: 'linear' | 'radial' | 'conic';
+  gradientAngle?: number;
+  gradientStops?: Array<{ color: string; position: number }>;
+
+  // Tipografia custom
+  fontFamily?: string;
+  fontSize?: string;
+  fontWeight?: '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900';
+  lineHeight?: string;
+  letterSpacing?: string;
+
+  // Bordes avanzados
+  borderStyle?: 'none' | 'solid' | 'dashed' | 'dotted' | 'double';
+  borderWidthCustom?: { top: string; right: string; bottom: string; left: string };
+  borderRadiusCustom?: { tl: string; tr: string; br: string; bl: string };
+
+  // Sombras multiples
+  boxShadows?: Array<{
+    x: number;
+    y: number;
+    blur: number;
+    spread: number;
+    color: string;
+    inset?: boolean;
+  }>;
+
+  // Spacing pixel-perfect
+  paddingCustom?: { top: string; right: string; bottom: string; left: string };
+  marginCustom?: { top: string; right: string; bottom: string; left: string };
+
+  // Responsive overrides
+  responsiveOverrides?: {
+    mobile?: Partial<Omit<BlockStyles, 'responsiveOverrides'>>;
+    tablet?: Partial<Omit<BlockStyles, 'responsiveOverrides'>>;
+  };
+}
+
+// Tipo para data bindings
+export interface DataBinding {
+  id: string;
+  fieldPath: string;
+  source: 'profile' | 'portfolio' | 'reviews' | 'marketplace' | 'reputation';
+  sourceField: string;
+  fallbackValue: string | number;
+  format?: {
+    type: 'number' | 'currency' | 'percentage' | 'date' | 'text';
+    locale?: string;
+    decimals?: number;
+    prefix?: string;
+    suffix?: string;
+  };
 }
 
 export interface BlockDefinition {
@@ -113,6 +178,13 @@ export interface ProfileBlock {
   config: Record<string, unknown>;
   styles: BlockStyles;
   content: Record<string, unknown>;
+  dataBindings?: DataBinding[];
+  /** Bloques anidados (para contenedores como columns, section) */
+  children?: ProfileBlock[];
+  /** ID del bloque padre (si esta anidado) */
+  parentId?: string;
+  /** Indice de columna dentro de un contenedor columns */
+  columnIndex?: number;
 }
 
 export interface BuilderConfig {
@@ -211,22 +283,38 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'required',
     isRequired: true,
     isDeletable: false,
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {
-      showAvatar: true,
-      showName: true,
-      showBio: true,
+      // Fondo
+      backgroundType: 'color',
+      backgroundColor: '#1a1a2e',
+      backgroundOpacity: 100,
+      // Layout
+      layout: 'horizontal',
+      avatarPosition: 'left',
+      avatarSize: 'lg',
+      avatarShape: 'rounded',
+      contentAlign: 'left',
+      minHeight: 'md',
+      // Contenido opcional (avatar y nombre siempre visibles)
+      showRole: true,
+      showTagline: true,
       showCTA: true,
-      ctaText: 'Contactar',
-      layout: 'centered',
+      showSocialLinks: false,
+      // CTA
+      ctaText: 'Ver Portfolio',
+      ctaAction: 'scroll-portfolio',
+      ctaStyle: 'solid',
+      ctaUrl: '',
+      ctaWhatsapp: '',
+      ctaWhatsappMessage: 'Hola! Vi tu perfil en Kreoon',
+      // Premium
+      premiumCtaEnabled: false,
     },
     defaultStyles: {
       padding: 'lg',
       margin: 'none',
     },
-    // v2: Fijo arriba, no movible
-    isFixed: true,
-    fixedPosition: 'top',
   },
   recommended_talent: {
     type: 'recommended_talent',
@@ -236,7 +324,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'required',
     isRequired: true,
     isDeletable: true, // Técnicamente eliminable...
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {
       maxItems: 4,
       layout: 'horizontal',
@@ -249,10 +337,8 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
       backgroundColor: 'rgba(139, 92, 246, 0.05)',
       borderRadius: 'lg',
     },
-    // v2: Fijo abajo, FREE no puede eliminar
-    isFixed: true,
-    fixedPosition: 'bottom',
-    freeCanDelete: false, // Solo planes pagos pueden eliminar
+    // Solo planes pagos pueden eliminar
+    freeCanDelete: false,
   },
   about: {
     type: 'about',
@@ -262,7 +348,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'core',
     isRequired: false,
     isDeletable: false,
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {},
     defaultStyles: {
       padding: 'md',
@@ -277,7 +363,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'core',
     isRequired: false,
     isDeletable: false,
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {
       layout: 'grid',
       columns: 3,
@@ -296,7 +382,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'core',
     isRequired: false,
     isDeletable: false,
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {
       layout: 'cards',
     },
@@ -313,7 +399,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'core',
     isRequired: false,
     isDeletable: false,
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {
       showFollowers: true,
       showProjects: true,
@@ -332,7 +418,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'core',
     isRequired: false,
     isDeletable: false,
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {
       layout: 'carousel',
       maxItems: 5,
@@ -350,7 +436,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'core',
     isRequired: false,
     isDeletable: false,
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {
       layout: 'cards',
       showCurrency: true,
@@ -368,7 +454,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'core',
     isRequired: false,
     isDeletable: false,
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {
       showEmail: true,
       showButton: true,
@@ -441,7 +527,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'content',
     isRequired: false,
     isDeletable: true,
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {
       layout: 'horizontal',
       showLabels: false,
@@ -461,7 +547,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'content',
     isRequired: false,
     isDeletable: true,
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {
       allowMultipleOpen: false,
     },
@@ -478,7 +564,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'content',
     isRequired: false,
     isDeletable: true,
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {
       layout: 'grid',
     },
@@ -495,7 +581,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'content',
     isRequired: false,
     isDeletable: true,
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {
       grayscale: true,
     },
@@ -512,7 +598,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'content',
     isRequired: false,
     isDeletable: true,
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {
       showPercentage: true,
     },
@@ -529,7 +615,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'content',
     isRequired: false,
     isDeletable: true,
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {
       layout: 'vertical',
     },
@@ -770,7 +856,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'content',
     isRequired: false,
     isDeletable: true,
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {
       targetDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       showDays: true,
@@ -850,7 +936,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'conversion',
     isRequired: false,
     isDeletable: true,
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {
       fields: [
         { id: '1', type: 'text', label: 'Nombre', required: true },
@@ -879,7 +965,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'conversion',
     isRequired: false,
     isDeletable: true,
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {
       phone: '',
       message: 'Hola! Vi tu perfil en Kreoon y me gustaria contactarte',
@@ -900,7 +986,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'conversion',
     isRequired: false,
     isDeletable: true,
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {
       headline: 'Confian en mi',
       logos: [],
@@ -927,7 +1013,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'conversion',
     isRequired: false,
     isDeletable: true,
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {
       layout: 'carousel', // carousel | grid
       showMetrics: true,
@@ -950,7 +1036,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'conversion',
     isRequired: false,
     isDeletable: true,
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {
       layout: 'grid', // grid | carousel | featured
       maxItems: 6,
@@ -977,7 +1063,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     category: 'media',
     isRequired: false,
     isDeletable: true,
-    maxInstances: 1,
+    maxInstances: 0, // Sin limite
     defaultConfig: {
       videoUrl: '',
       posterUrl: '',

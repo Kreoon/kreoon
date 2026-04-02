@@ -1,5 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
   GripVertical,
@@ -12,6 +13,8 @@ import {
 import { Button } from '@/components/ui/button';
 import type { BlockWrapperProps } from './types/profile-builder';
 import { BLOCK_DEFINITIONS } from './types/profile-builder';
+import { applyBlockStyles, getAnimationVariants } from './utils';
+import { useResponsiveStyles } from './hooks/useResponsiveStyles';
 
 export function BlockWrapper({
   block,
@@ -35,25 +38,44 @@ export function BlockWrapper({
     isDragging,
   } = useSortable({ id: block.id });
 
+  // Obtener estilos responsive (aplica overrides segun viewport)
+  const { effectiveStyles } = useResponsiveStyles(block.styles);
+
+  // Aplicar estilos avanzados del bloque
+  const { style: blockStyles, className: blockClasses } = applyBlockStyles(effectiveStyles);
+  const animationVariants = getAnimationVariants(effectiveStyles);
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 50 : undefined,
+    ...blockStyles, // Aplicar estilos personalizados
   };
 
+  // Determinar si tiene fondo custom
+  const hasCustomBackground = !!(
+    effectiveStyles.backgroundColor ||
+    effectiveStyles.gradientType ||
+    effectiveStyles.backgroundImage
+  );
+
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
       style={style}
+      initial={animationVariants.initial}
+      animate={animationVariants.animate}
+      transition={animationVariants.transition}
       className={cn(
         'group relative rounded-lg border transition-colors duration-150',
-        'bg-[#14141f]',
+        !hasCustomBackground && 'bg-[#14141f]', // Solo usar fondo default si no hay custom
         isSelected
           ? 'border-purple-500 ring-2 ring-purple-500/20'
           : 'border-zinc-800 hover:border-zinc-600',
         !block.isVisible && 'opacity-40',
         isDragging && 'cursor-grabbing shadow-2xl shadow-black/40',
+        blockClasses, // Clases adicionales (responsive, etc.)
       )}
       onClick={onSelect}
       aria-label={`Bloque ${definition.label}${isSelected ? ', seleccionado' : ''}`}
@@ -195,6 +217,6 @@ export function BlockWrapper({
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

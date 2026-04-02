@@ -158,18 +158,18 @@ function populateBlockContent(
 
   switch (blockType) {
     case 'hero_banner':
+      // Determinar el rol/especialidad del creador
+      const primaryCategory = profile.categories?.[0] || 'Creador de Contenido';
+      const roleText = profile.level
+        ? `${profile.level} - ${primaryCategory}`
+        : primaryCategory;
+
       return {
         headline: profile.display_name,
-        subheadline: profile.bio || `Creador de contenido en ${profile.location_country || 'LATAM'}`,
+        subheadline: profile.bio || `Transformo ideas en contenido que conecta`,
+        role: roleText,
         avatarUrl: profile.avatar_url || '',
-        backgroundImage: profile.banner_url || '',
-        showAvatar: true,
-        showBadge: profile.is_verified,
-        badgeText: profile.level || 'Creador',
-        ctaText: (templateBlock.content as any)?.ctaText || 'Solicitar cotizacion',
-        ctaUrl: '#pricing',
-        layout: (templateBlock.config as any)?.layout || 'center',
-        overlayOpacity: 60,
+        coverUrl: profile.banner_url || '',
       };
 
     case 'about':

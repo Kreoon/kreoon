@@ -6,7 +6,12 @@ export interface TextFormatPopupProps {
   onCancel?: () => void;
   title?: string;
   placeholder?: string;
-  mode?: 'inline' | 'block';
+  /**
+   * inline: Editor pequeño con formato HTML
+   * block: Editor grande con formato HTML
+   * plain: Editor pequeño sin formato (solo texto plano)
+   */
+  mode?: 'inline' | 'block' | 'plain';
 }
 
 export interface UseTextFormatPopupReturn {

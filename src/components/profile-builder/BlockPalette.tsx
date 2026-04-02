@@ -110,15 +110,16 @@ interface DraggablePaletteItemProps {
 }
 
 const CATEGORY_LABELS: Record<BlockCategory, string> = {
-  required: 'Requerido',
-  core: 'Core',
+  required: 'Basicos',
+  layout: 'Constructor',
+  core: 'Perfil',
   content: 'Contenido',
-  media: 'Media',
-  layout: 'Layout',
+  media: 'Multimedia',
   conversion: 'Conversion',
 };
 
-const DISPLAY_CATEGORIES: BlockCategory[] = ['core', 'content', 'conversion', 'media', 'layout'];
+// Orden: Constructor primero, luego todo lo demas
+const DISPLAY_CATEGORIES: BlockCategory[] = ['layout', 'required', 'core', 'content', 'media', 'conversion'];
 
 function DraggablePaletteItem({ definition, disabled, locked, requiredPlan, onLockedClick }: DraggablePaletteItemProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({

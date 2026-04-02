@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useMediaLibrary } from '@/hooks/useMediaLibrary';
 import { MediaLibraryGrid } from './MediaLibraryGrid';
 import { MediaLibraryUploader } from './MediaLibraryUploader';
+import { MediaUrlInput } from './MediaUrlInput';
 import type { MediaItem, MediaLibraryPickerProps, MediaFilters } from './types';
 
 type TypeFilterValue = 'all' | 'image' | 'video';
@@ -105,6 +106,12 @@ export function MediaLibraryPicker({
                 className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-3 h-9 text-sm"
               >
                 Subir nuevo
+              </TabsTrigger>
+              <TabsTrigger
+                value="url"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-3 h-9 text-sm"
+              >
+                URL externa
               </TabsTrigger>
             </TabsList>
           </div>
@@ -251,6 +258,19 @@ export function MediaLibraryPicker({
                 </Button>
               </div>
             </div>
+          </TabsContent>
+
+          {/* Pestana: URL externa */}
+          <TabsContent value="url" className="flex flex-col mt-0 min-h-0">
+            <ScrollArea className="h-[360px]">
+              <MediaUrlInput
+                allowedTypes={allowedTypes}
+                onConfirm={(item) => {
+                  onSelect(item);
+                  handleOpenChange(false);
+                }}
+              />
+            </ScrollArea>
           </TabsContent>
         </Tabs>
       </DialogContent>

@@ -9,15 +9,15 @@
  */
 
 import { useMemo, Suspense } from 'react';
-import { Loader2, AlertCircle, Zap, ArrowLeft } from 'lucide-react';
+import { Loader2, AlertCircle, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useCreatorPublicProfile } from '@/hooks/useCreatorPublicProfile';
 import { PROFILE_TEMPLATES, getTemplateByName } from '@/lib/profile-builder/templates';
 import { generateBlocksFromTemplate, type CreatorDataForTemplate } from '@/lib/profile-builder/generateBlocksFromTemplate';
 import { CreatorThemeProvider } from './CreatorThemeProvider';
 import { PublicBlockRenderer } from './PublicBlockRenderer';
+import { ProfileHeader } from './ProfileHeader';
 import type { ProfileBlock, ProfileTemplate } from '@/components/profile-builder/types/profile-builder';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -27,8 +27,12 @@ interface TemplateProfileRendererProps {
   creatorProfileId: string;
   /** Nombre de plantilla a usar (default: profesional) */
   templateName?: string;
-  /** Mostrar boton de volver */
+  /** Mostrar boton de volver (deprecado, usar showHeader) */
   showBackButton?: boolean;
+  /** Mostrar header completo con navegacion y acciones */
+  showHeader?: boolean;
+  /** Mostrar creadores similares al final */
+  showSimilarCreators?: boolean;
 }
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
@@ -85,38 +89,18 @@ function KreoonBranding() {
   );
 }
 
-// ─── Back Button ──────────────────────────────────────────────────────────────
-
-function BackButton({ onClick }: { onClick: () => void }) {
-  return (
-    <div className="fixed top-4 left-4 z-50">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onClick}
-        className={cn(
-          'h-10 w-10 rounded-full',
-          'bg-black/50 backdrop-blur-sm',
-          'text-white hover:bg-black/70 hover:text-white',
-          'border border-white/10',
-          'shadow-lg'
-        )}
-        aria-label="Volver"
-      >
-        <ArrowLeft className="h-5 w-5" />
-      </Button>
-    </div>
-  );
-}
-
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
 export function TemplateProfileRenderer({
   creatorProfileId,
   templateName = 'profesional',
-  showBackButton = true,
+  showBackButton = false,
+  showHeader = true,
 }: TemplateProfileRendererProps) {
   const navigate = useNavigate();
+  // El ProfileHeader siempre se muestra si showHeader=true
+  // Contiene acciones específicas del perfil: Guardar, Compartir, Contactar
+  const shouldShowHeader = showHeader;
 
   // 1. Cargar datos del creador
   const {
@@ -173,23 +157,33 @@ export function TemplateProfileRenderer({
   // Loading state
   if (loading) {
     return (
-      <>
-        {showBackButton && <BackButton onClick={handleBack} />}
+      <div className="min-h-screen bg-[#0a0a0f]">
+        {shouldShowHeader && (
+          <ProfileHeader
+            creatorId={creatorProfileId}
+            creatorName="Cargando..."
+          />
+        )}
         <ProfileSkeleton />
-      </>
+      </div>
     );
   }
 
   // Error state
   if (error || !creatorData) {
     return (
-      <>
-        {showBackButton && <BackButton onClick={handleBack} />}
+      <div className="min-h-screen bg-[#0a0a0f]">
+        {shouldShowHeader && (
+          <ProfileHeader
+            creatorId={creatorProfileId}
+            creatorName="Error"
+          />
+        )}
         <ProfileError
           message={error || 'No pudimos cargar este perfil. Intenta de nuevo mas tarde.'}
           onBack={handleBack}
         />
-      </>
+      </div>
     );
   }
 
@@ -197,21 +191,31 @@ export function TemplateProfileRenderer({
   const hasMinimumRequirements = creatorData.portfolioItems.length > 0;
   if (!hasMinimumRequirements) {
     return (
-      <>
-        {showBackButton && <BackButton onClick={handleBack} />}
+      <div className="min-h-screen bg-[#0a0a0f]">
+        {shouldShowHeader && (
+          <ProfileHeader
+            creatorId={creatorData.profile.id}
+            creatorName={creatorData.profile.display_name}
+          />
+        )}
         <ProfileError
           message="Este creador aun no ha completado su perfil. Se requiere al menos un contenido en el portafolio."
           onBack={handleBack}
         />
-      </>
+      </div>
     );
   }
 
   const showBranding = template.config.showKreoonBranding !== false;
 
   return (
-    <>
-      {showBackButton && <BackButton onClick={handleBack} />}
+    <div className="min-h-screen bg-[#0a0a0f]">
+      {shouldShowHeader && (
+        <ProfileHeader
+          creatorId={creatorData.profile.id}
+          creatorName={creatorData.profile.display_name}
+        />
+      )}
 
       <CreatorThemeProvider config={template.config}>
         <main
@@ -253,7 +257,7 @@ export function TemplateProfileRenderer({
           {showBranding && <KreoonBranding />}
         </main>
       </CreatorThemeProvider>
-    </>
+    </div>
   );
 }
 

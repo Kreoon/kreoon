@@ -36,6 +36,7 @@ import {
   type BlockType,
   type ProfileTemplate,
 } from './types/profile-builder';
+import { generateBlocksFromTemplate, type CreatorDataForTemplate } from '@/lib/profile-builder/generateBlocksFromTemplate';
 
 // ─── Reducer ─────────────────────────────────────────────────────────────────
 
@@ -159,6 +160,8 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
   const {
     profile,
     blocks: savedBlocks,
+    currentTemplate: savedTemplate,
+    marketplaceData,
     generatePreviewTokenAsync,
     saveBlocksAsync,
     publishBlocks,
@@ -167,14 +170,15 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
     isLoading: dataLoading,
   } = useProfileBuilderData(profileId);
 
-  // Cargar bloques desde la BD al iniciar
+  // Cargar bloques desde la BD al iniciar (o generados automáticamente)
   const [hasLoadedBlocks, setHasLoadedBlocks] = useState(false);
   useEffect(() => {
     if (!hasLoadedBlocks && savedBlocks.length > 0 && state.blocks.length === 0) {
       dispatch({ type: 'SET_BLOCKS', payload: savedBlocks });
+      setCurrentTemplate(savedTemplate);
       setHasLoadedBlocks(true);
     }
-  }, [savedBlocks, hasLoadedBlocks, state.blocks.length]);
+  }, [savedBlocks, savedTemplate, hasLoadedBlocks, state.blocks.length]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -295,13 +299,28 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
   // Handler para seleccionar una plantilla
   const handleSelectTemplate = useCallback(
     (template: ProfileTemplate) => {
-      // Convertir bloques de plantilla a bloques con IDs unicos
-      const newBlocks: ProfileBlock[] = template.blocks.map((templateBlock, index) => ({
-        ...templateBlock,
-        id: crypto.randomUUID(),
-        isDraft: false,
-        orderIndex: index,
-      }));
+      let newBlocks: ProfileBlock[];
+
+      // Si hay datos del marketplace, generar bloques con contenido real
+      if (marketplaceData?.profile) {
+        const templateData: CreatorDataForTemplate = {
+          profile: marketplaceData.profile,
+          portfolioItems: marketplaceData.portfolioItems || [],
+          services: marketplaceData.services || [],
+          reviews: marketplaceData.reviews || [],
+          trustStats: marketplaceData.trustStats || undefined,
+          specializations: marketplaceData.specializations?.map((s) => s.name) || [],
+        };
+        newBlocks = generateBlocksFromTemplate(template, templateData);
+      } else {
+        // Fallback: usar bloques vacios de la plantilla
+        newBlocks = template.blocks.map((templateBlock, index) => ({
+          ...templateBlock,
+          id: crypto.randomUUID(),
+          isDraft: false,
+          orderIndex: index,
+        }));
+      }
 
       // Aplicar bloques de la plantilla
       dispatch({ type: 'SET_BLOCKS', payload: newBlocks });
@@ -312,12 +331,15 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
       // Guardar nombre de plantilla actual
       setCurrentTemplate(template.name);
 
+      // Marcar como dirty para que se pueda guardar
+      dispatch({ type: 'SET_DIRTY', payload: true });
+
       toast({
         title: 'Plantilla aplicada',
         description: `Se ha aplicado la plantilla "${template.label}" con ${newBlocks.length} bloques.`,
       });
     },
-    [toast]
+    [marketplaceData, toast]
   );
 
   const selectedBlock = state.blocks.find((b) => b.id === state.selectedBlockId) ?? null;
@@ -404,6 +426,8 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
                     <BlockSettingsPanel
                       block={selectedBlock}
                       onUpdate={(updates) => handleUpdateBlock(selectedBlock.id, updates)}
+                      userId={profile?.user_id}
+                      creatorProfileId={profileId}
                     />
                   </SheetContent>
                 </Sheet>
@@ -456,6 +480,8 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
                     <BlockSettingsPanel
                       block={selectedBlock}
                       onUpdate={(updates) => handleUpdateBlock(selectedBlock.id, updates)}
+                      userId={profile?.user_id}
+                      creatorProfileId={profileId}
                     />
                   </ScrollArea>
                 </div>

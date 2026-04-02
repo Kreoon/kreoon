@@ -163,7 +163,8 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.bunny-media-upload]
-verify_jwt = true
+# JWT verification handled internally - gateway verify_jwt causes 401 issues
+verify_jwt = false
 
 [functions.bunny-raw-download]
 verify_jwt = false

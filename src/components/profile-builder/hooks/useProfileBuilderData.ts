@@ -1,7 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import type { ProfileBuilderData, ProfileBlock } from '../types/profile-builder';
+import { useCreatorPublicProfile } from '@/hooks/useCreatorPublicProfile';
+import { getTemplateByName, PROFILE_TEMPLATES } from '@/lib/profile-builder/templates';
+import { generateBlocksFromTemplate, type CreatorDataForTemplate } from '@/lib/profile-builder/generateBlocksFromTemplate';
+import type { ProfileBuilderData, ProfileBlock, ProfileTemplate } from '../types/profile-builder';
 
 // ─── Query keys ───────────────────────────────────────────────────────────────
 
@@ -61,6 +64,10 @@ export function useProfileBuilderData(profileId: string | undefined) {
     enabled: !!profileId,
     staleTime: 5 * 60 * 1000,
   });
+
+  // ─── Query: cargar datos del marketplace para generar bloques ─────────────
+  // Solo se usa si no hay bloques guardados
+  const { data: marketplaceData, loading: marketplaceLoading } = useCreatorPublicProfile(profileId);
 
   // ─── Mutation: guardar bloques (borrador o publicado) ─────────────────────
 
@@ -177,13 +184,50 @@ export function useProfileBuilderData(profileId: string | undefined) {
     }
   };
 
+  // ─── Generar bloques automáticamente si no hay guardados ───────────────────
+  // Esto permite que el builder muestre contenido basado en datos del marketplace
+  const generatedBlocks = (() => {
+    // Si hay bloques guardados, usarlos
+    if (data?.blocks && data.blocks.length > 0) {
+      return data.blocks;
+    }
+
+    // Si no hay datos del marketplace, no generar
+    if (!marketplaceData?.profile) {
+      return [];
+    }
+
+    // Obtener plantilla guardada o usar profesional
+    const templateName = data?.profile?.builder_template || 'profesional';
+    const template = getTemplateByName(templateName) || PROFILE_TEMPLATES.find((t) => t.name === 'profesional')!;
+
+    // Convertir datos del marketplace al formato del template
+    const templateData: CreatorDataForTemplate = {
+      profile: marketplaceData.profile,
+      portfolioItems: marketplaceData.portfolioItems,
+      services: marketplaceData.services,
+      reviews: marketplaceData.reviews,
+      trustStats: marketplaceData.trustStats || undefined,
+      specializations: marketplaceData.specializations?.map((s) => s.name) || [],
+    };
+
+    // Generar bloques
+    return generateBlocksFromTemplate(template, templateData);
+  })();
+
+  // Determinar la plantilla actual
+  const currentTemplate = data?.profile?.builder_template || 'profesional';
+
   return {
     // Datos
     data,
     profile: data?.profile ?? null,
-    blocks: data?.blocks ?? [],
+    blocks: generatedBlocks,
+    currentTemplate,
+    // Datos del marketplace (para regenerar bloques)
+    marketplaceData,
     // Estados de carga
-    isLoading,
+    isLoading: isLoading || marketplaceLoading,
     isError,
     error,
     isSaving: saveBlocksMutation.isPending,

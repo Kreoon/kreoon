@@ -30,6 +30,7 @@ import { CookieConsentBanner } from "@/components/legal/CookieConsentBanner";
 import { ThemeProvider } from "next-themes";
 import { MainLayout } from "./components/layout/MainLayout";
 import { MarketplaceLayout } from "./components/layout/MarketplacePublicLayout";
+import { ProfileLayout } from "./components/profile-viewer/ProfileLayout";
 import { AdminOnlyFeature } from "./components/common/AdminOnlyFeature";
 
 // Helper: detect chunk/module load failures (stale hashes after deploy)
@@ -352,7 +353,7 @@ function AppRoutes() {
         {/* Marketplace routes — PUBLIC browse/view, PROTECTED actions */}
         {/* Public routes wrapped with TalentGate: blocks talents without keys */}
         <Route path="/marketplace" element={<TalentGate><MainLayout><MarketplaceExplorePage /></MainLayout></TalentGate>} />
-        <Route path="/marketplace/creator/:id" element={<TalentGate><CreatorProfilePage_Marketplace /></TalentGate>} />
+        <Route path="/marketplace/creator/:id" element={<TalentGate><ProfileLayout><CreatorProfilePage_Marketplace /></ProfileLayout></TalentGate>} />
         <Route path="/marketplace/org/:slug" element={<TalentGate><OrgProfilePage_Marketplace /></TalentGate>} />
         <Route path="/marketplace/campaigns" element={<TalentGate><MarketplaceLayout><CampaignsFeedPage /></MarketplaceLayout></TalentGate>} />
         <Route path="/marketplace/campaigns/:id" element={<TalentGate><MarketplaceLayout><CampaignDetailPage /></MarketplaceLayout></TalentGate>} />

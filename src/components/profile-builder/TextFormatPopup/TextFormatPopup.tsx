@@ -20,21 +20,25 @@ import { cn } from '@/lib/utils';
 import { TextFormatToolbar } from './TextFormatToolbar';
 import { TextFormatPopupProps } from './types';
 
-// ─── Extensiones TipTap ───────────────────────────────────────────────────────
+// ─── Extensiones TipTap (base sin placeholder) ───────────────────────────────
+
+const BASE_EXTENSIONS = [
+  StarterKit.configure({
+    // Desactivar historia innecesaria para modo inline simple
+    history: {},
+  }),
+  Underline,
+  TextStyle,
+  Color,
+  FontFamily,
+  TextAlign.configure({
+    types: ['paragraph', 'heading'],
+  }),
+];
 
 function buildExtensions(placeholder: string) {
   return [
-    StarterKit.configure({
-      // Desactivar historia innecesaria para modo inline simple
-      history: {},
-    }),
-    Underline,
-    TextStyle,
-    Color,
-    FontFamily,
-    TextAlign.configure({
-      types: ['paragraph', 'heading'],
-    }),
+    ...BASE_EXTENSIONS,
     Placeholder.configure({
       placeholder,
       emptyEditorClass: 'is-editor-empty',
@@ -100,8 +104,16 @@ export function TextFormatPopup({
 
   const handleSave = useCallback(() => {
     if (!editor) return;
+
+    // Para modo plain, devolver solo texto sin formato
+    if (mode === 'plain') {
+      const plainText = editor.getText().trim();
+      onSave(plainText);
+      return;
+    }
+
+    // Para modos inline/block, devolver HTML sanitizado
     const rawHtml = editor.getHTML();
-    // Sanitizar output antes de persistir
     const sanitized = DOMPurify.sanitize(rawHtml, {
       ALLOWED_TAGS: [
         'p', 'br', 'strong', 'em', 'u', 's', 'h1', 'h2', 'h3', 'h4',
@@ -110,7 +122,7 @@ export function TextFormatPopup({
       ALLOWED_ATTR: ['style', 'href', 'target', 'rel', 'class'],
     });
     onSave(sanitized);
-  }, [editor, onSave]);
+  }, [editor, onSave, mode]);
 
   const handleCancel = useCallback(() => {
     onCancel?.();
@@ -119,7 +131,7 @@ export function TextFormatPopup({
 
   // Escape cierra sin guardar — manejado nativamente por el Dialog de Radix
 
-  const minHeight = mode === 'inline' ? 'min-h-[80px]' : 'min-h-[180px]';
+  const minHeight = mode === 'block' ? 'min-h-[180px]' : 'min-h-[80px]';
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleCancel()}>
@@ -147,7 +159,8 @@ export function TextFormatPopup({
 
         {/* Toolbar + Editor */}
         <div className="mt-3 border rounded-sm mx-4 overflow-hidden bg-background">
-          {editor && <TextFormatToolbar editor={editor} />}
+          {/* Ocultar toolbar en modo plain */}
+          {editor && mode !== 'plain' && <TextFormatToolbar editor={editor} />}
 
           <EditorContent
             editor={editor}

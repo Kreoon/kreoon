@@ -5,7 +5,7 @@ export interface MediaItem {
   thumbnailUrl?: string;
   title?: string;
   tags?: string[];
-  source: 'portfolio_items' | 'marketplace_media';
+  source: 'portfolio_items' | 'marketplace_media' | 'external_url';
   createdAt: string;
   aspectRatio?: string;
 }

@@ -26,7 +26,7 @@ export default function CreatorProfilePage() {
     <TemplateProfileRenderer
       creatorProfileId={id}
       templateName="profesional"
-      showBackButton={true}
+      showBackButton={false}
       showSimilarCreators={true}
     />
   );

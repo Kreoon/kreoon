@@ -4,3 +4,6 @@ export type { UseProfileBuilderReturn } from './useProfileBuilder';
 export { useProfileBuilderData, profileBuilderKeys } from './useProfileBuilderData';
 
 export { useAutoSave } from './useAutoSave';
+
+export { useResponsiveStyles, applyResponsiveOverrides } from './useResponsiveStyles';
+export type { CurrentDevice } from './useResponsiveStyles';

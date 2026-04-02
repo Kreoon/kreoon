@@ -6,10 +6,18 @@
 export const CONFIG_LABELS: Record<string, string> = {
   // ─── Hero Banner ────────────────────────────────────────────────────────────
   showAvatar: 'Mostrar avatar',
+  showRole: 'Mostrar rol/especialidad',
   showName: 'Mostrar nombre',
+  showTagline: 'Mostrar tagline',
   showBio: 'Mostrar biografia',
   showCTA: 'Mostrar boton CTA',
   ctaText: 'Texto del boton',
+  ctaAction: 'Accion del boton',
+  ctaWhatsapp: 'Numero WhatsApp',
+  ctaWhatsappMessage: 'Mensaje WhatsApp',
+  backgroundColor: 'Color de fondo',
+  backgroundOpacity: 'Opacidad del fondo',
+  premiumCtaEnabled: 'CTA premium habilitado',
   showBadge: 'Mostrar insignia',
 
   // ─── Recommended Talent ─────────────────────────────────────────────────────
@@ -279,6 +287,12 @@ export const OPTION_LABELS: Record<string, Record<string, string>> = {
     h3: 'H3 - Seccion',
     h4: 'H4 - Subseccion',
     p: 'Parrafo',
+  },
+  ctaAction: {
+    'scroll-portfolio': 'Ver Portfolio',
+    contact: 'Ir a Contacto',
+    link: 'Link externo',
+    whatsapp: 'WhatsApp',
   },
 };
 
