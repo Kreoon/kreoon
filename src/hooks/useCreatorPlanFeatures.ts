@@ -81,7 +81,7 @@ function parseFeatures(rawFeatures: Record<string, unknown>): CreatorPlanFeature
   };
 
   return {
-    maxBlocks: Number(parseJson(rawFeatures.max_blocks)) || DEFAULT_FEATURES.maxBlocks,
+    maxBlocks: Infinity, // Sin límite de bloques para todos los planes
     allowedBlocks: parseJson(rawFeatures.allowed_blocks) || DEFAULT_FEATURES.allowedBlocks,
     showBranding: parseJson(rawFeatures.show_branding) ?? DEFAULT_FEATURES.showBranding,
     canHideBranding: parseJson(rawFeatures.can_hide_branding) ?? DEFAULT_FEATURES.canHideBranding,
