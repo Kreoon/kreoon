@@ -89,6 +89,9 @@ export const AI_TOKEN_COSTS = {
   "transcription": 15,
   "ads.generate_banner": 200,
   "ads.generate_copy": 40,
+  "profile.bio_generator": 200,
+  "profile.seo_optimizer": 300,
+  "profile.content_suggestions": 150,
 } as const;
 
 export type AIActionKey = keyof typeof AI_TOKEN_COSTS;
@@ -112,6 +115,7 @@ export const PLAN_AI_TOKENS = {
   // Creadores
   creator_free: 800,
   creator_pro: 6_000,
+  creator_premium: 15_000,
   // Agencias
   agency_starter: 20_000,
   agency_pro: 60_000,
@@ -242,6 +246,21 @@ export const PLANS: PlanDef[] = [
     badge: "Badge verificado",
     highlighted: true,
     adnRecargadosPerMonth: 3,
+    socialPostsPerMonth: null, // unlimited
+  },
+  {
+    id: "creadores-premium",
+    name: "Creator Premium",
+    segment: "creadores",
+    priceMonthly: 49,
+    priceAnnual: 470,
+    aiTokens: 15_000,
+    users: 1,
+    contentPerMonth: null,
+    storage: "—",
+    badge: "Badge Premium",
+    highlighted: false,
+    adnRecargadosPerMonth: 5,
     socialPostsPerMonth: null, // unlimited
   },
   // ── Agencias ──
