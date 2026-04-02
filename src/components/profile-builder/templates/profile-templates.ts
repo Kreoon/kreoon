@@ -12,8 +12,14 @@ function createTemplateBlock(
   config: Record<string, unknown> = {},
   content: Record<string, unknown> = {},
   customStyles: Partial<BlockStyles> = {}
-): Omit<ProfileBlock, 'id' | 'isDraft'> {
+): Omit<ProfileBlock, 'id' | 'isDraft'> | null {
   const definition = BLOCK_DEFINITIONS[type];
+
+  // Si el bloque no existe en BLOCK_DEFINITIONS, retornar null
+  if (!definition) {
+    console.warn(`[ProfileTemplates] Block type "${type}" not found in BLOCK_DEFINITIONS, skipping`);
+    return null;
+  }
 
   return {
     type,
@@ -577,19 +583,27 @@ export const TEMPLATE_AGENCIA: ProfileTemplate = {
 // EXPORT: Todas las plantillas organizadas por tier
 // =====================================================
 
+// Helper para filtrar bloques null (bloques que no existen en BLOCK_DEFINITIONS)
+function filterValidBlocks(template: ProfileTemplate): ProfileTemplate {
+  return {
+    ...template,
+    blocks: template.blocks.filter((block): block is Omit<ProfileBlock, 'id' | 'isDraft'> => block !== null),
+  };
+}
+
 export const FREE_TEMPLATES: ProfileTemplate[] = [
-  TEMPLATE_MINIMALISTA,
-  TEMPLATE_CREATIVO,
-  TEMPLATE_PROFESIONAL,
+  filterValidBlocks(TEMPLATE_MINIMALISTA),
+  filterValidBlocks(TEMPLATE_CREATIVO),
+  filterValidBlocks(TEMPLATE_PROFESIONAL),
 ];
 
 export const PRO_TEMPLATES: ProfileTemplate[] = [
-  TEMPLATE_INFLUENCER,
-  TEMPLATE_FREELANCER,
+  filterValidBlocks(TEMPLATE_INFLUENCER),
+  filterValidBlocks(TEMPLATE_FREELANCER),
 ];
 
 export const PREMIUM_TEMPLATES: ProfileTemplate[] = [
-  TEMPLATE_AGENCIA,
+  filterValidBlocks(TEMPLATE_AGENCIA),
 ];
 
 export const ALL_TEMPLATES: ProfileTemplate[] = [
