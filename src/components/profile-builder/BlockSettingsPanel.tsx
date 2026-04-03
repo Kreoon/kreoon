@@ -59,57 +59,79 @@ function DeviceSelector({
   block: ProfileBlock;
   onResetDevice: (device: DeviceType) => void;
 }) {
+  const isNotDesktop = currentDevice !== 'desktop';
+  const currentHasOverrides = hasDeviceOverrides(block, currentDevice);
+
   return (
     <TooltipProvider>
-      <div className="flex items-center gap-2 p-3 border-b border-border bg-muted/30">
-        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
-          Editar para:
-        </span>
-        <div className="flex items-center gap-0.5 bg-background rounded-md p-0.5 flex-1">
-          {DEVICES.map(({ id, icon: Icon, label }) => {
-            const hasOverrides = hasDeviceOverrides(block, id);
-            return (
-              <Tooltip key={id}>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => onDeviceChange(id)}
-                    className={cn(
-                      'flex-1 flex items-center justify-center gap-1 p-1.5 rounded transition-colors relative',
-                      currentDevice === id
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                    )}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    {hasOverrides && (
-                      <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-amber-500" />
-                    )}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-xs">
-                  {label}
-                  {hasOverrides && ' (personalizado)'}
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
+      <div
+        className={cn(
+          'border-b transition-colors',
+          isNotDesktop ? 'bg-amber-500/5 border-amber-500/20' : 'bg-muted/30 border-border'
+        )}
+      >
+        {/* Selector de dispositivo */}
+        <div className="flex items-center gap-2 px-3 py-2">
+          <div className="flex items-center gap-0.5 bg-background rounded-md p-0.5 flex-1 shadow-sm">
+            {DEVICES.map(({ id, icon: Icon, label }) => {
+              const hasOverrides = hasDeviceOverrides(block, id);
+              const isActive = currentDevice === id;
+              return (
+                <Tooltip key={id}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => onDeviceChange(id)}
+                      className={cn(
+                        'flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded transition-all relative',
+                        isActive
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                      )}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      <span className="text-[10px] font-medium hidden sm:inline">
+                        {id === 'desktop' ? 'PC' : id === 'tablet' ? 'Tablet' : 'Móvil'}
+                      </span>
+                      {hasOverrides && !isActive && (
+                        <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-500 border border-background" />
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">
+                    {label}
+                    {hasOverrides && ' (personalizado)'}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
+          {isNotDesktop && currentHasOverrides && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-500/10"
+                  onClick={() => onResetDevice(currentDevice)}
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                Resetear a valores de PC
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
-        {currentDevice !== 'desktop' && hasDeviceOverrides(block, currentDevice) && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0"
-                onClick={() => onResetDevice(currentDevice)}
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">
-              Resetear a valores de escritorio
-            </TooltipContent>
-          </Tooltip>
+
+        {/* Indicador inline cuando no es desktop */}
+        {isNotDesktop && (
+          <div className="px-3 pb-2">
+            <p className="text-[10px] text-amber-600 dark:text-amber-400">
+              Los cambios solo aplican a {currentDevice === 'tablet' ? 'tablets' : 'móviles'}.
+              {!currentHasOverrides && ' Actualmente hereda de PC.'}
+            </p>
+          </div>
         )}
       </div>
     </TooltipProvider>
@@ -661,23 +683,13 @@ export function BlockSettingsPanel({ block, onUpdate, userId, creatorProfileId, 
         </div>
       </div>
 
-      {/* Selector de dispositivo */}
+      {/* Selector de dispositivo - aplica a las 3 pestañas */}
       <DeviceSelector
         currentDevice={editingDevice}
         onDeviceChange={setEditingDevice}
         block={block}
         onResetDevice={handleResetDevice}
       />
-
-      {/* Indicador de modo */}
-      {editingDevice !== 'desktop' && (
-        <div className="px-4 py-2 bg-amber-500/10 border-b border-amber-500/20">
-          <p className="text-[10px] text-amber-600 dark:text-amber-400">
-            Editando para {editingDevice === 'tablet' ? 'Tablet' : 'Móvil'}.
-            Los valores vacíos heredan de Escritorio.
-          </p>
-        </div>
-      )}
 
       {/* Tabs */}
       <Tabs defaultValue="content" className="flex-1 flex flex-col overflow-hidden">
