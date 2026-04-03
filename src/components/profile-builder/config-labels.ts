@@ -28,6 +28,15 @@ export const CONFIG_LABELS: Record<string, string> = {
   // ─── Portfolio ──────────────────────────────────────────────────────────────
   showTitles: 'Mostrar titulos',
   columns: 'Columnas',
+  showMetrics: 'Mostrar metricas',
+  showCategoryFilter: 'Filtro de categoria',
+  onlyFeatured: 'Solo destacados',
+  maxItems: 'Maximo de items',
+  aspectRatio: 'Relacion de aspecto',
+  gap: 'Espaciado',
+  showFeaturedBadge: 'Badge destacado',
+  hoverEffect: 'Efecto hover',
+  carouselAutoplay: 'Autoplay carrusel',
 
   // ─── Stats ──────────────────────────────────────────────────────────────────
   selectedMetrics: 'Metricas a mostrar',
@@ -276,9 +285,25 @@ export const OPTION_LABELS: Record<string, Record<string, string>> = {
   aspectRatio: {
     '16:9': '16:9 (Panoramico)',
     '4:3': '4:3 (Clasico)',
+    '4:5': '4:5 (Instagram)',
     '1:1': '1:1 (Cuadrado)',
     '9:16': '9:16 (Vertical)',
     auto: 'Automatico',
+  },
+  gap: {
+    sm: 'Pequeno',
+    md: 'Mediano',
+    lg: 'Grande',
+  },
+  hoverEffect: {
+    none: 'Sin efecto',
+    zoom: 'Zoom',
+    overlay: 'Overlay',
+  },
+  columns: {
+    '2': '2 columnas',
+    '3': '3 columnas',
+    '4': '4 columnas',
   },
   tag: {
     h1: 'H1 - Titulo principal',

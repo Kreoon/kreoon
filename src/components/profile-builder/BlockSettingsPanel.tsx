@@ -492,6 +492,177 @@ function StatsSettings({
   );
 }
 
+// ─── Portfolio Settings ─────────────────────────────────────────────────────
+
+function PortfolioSettings({
+  block,
+  onUpdate,
+}: {
+  block: ProfileBlock;
+  onUpdate: (updates: Partial<ProfileBlock>) => void;
+}) {
+  const config = block.config as Record<string, unknown>;
+
+  const handleConfigChange = (key: string, value: unknown) => {
+    onUpdate({ config: { ...config, [key]: value } });
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* Info */}
+      <p className="text-[10px] text-muted-foreground bg-muted/50 rounded-md p-2">
+        Muestra tu portfolio real con thumbnails optimizados de Bunny CDN
+      </p>
+
+      {/* Layout */}
+      <FieldRow label="Disposición">
+        <Select
+          value={(config.layout as string) || 'grid'}
+          onValueChange={(v) => handleConfigChange('layout', v)}
+        >
+          <SelectTrigger className="h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="grid">Cuadrícula</SelectItem>
+            <SelectItem value="masonry">Masonry</SelectItem>
+            <SelectItem value="featured">Destacado + Grid</SelectItem>
+            <SelectItem value="carousel">Carrusel</SelectItem>
+          </SelectContent>
+        </Select>
+      </FieldRow>
+
+      {/* Columnas */}
+      <FieldRow label="Columnas">
+        <Select
+          value={String(config.columns || 3)}
+          onValueChange={(v) => handleConfigChange('columns', Number(v))}
+        >
+          <SelectTrigger className="h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="2">2 columnas</SelectItem>
+            <SelectItem value="3">3 columnas</SelectItem>
+            <SelectItem value="4">4 columnas</SelectItem>
+          </SelectContent>
+        </Select>
+      </FieldRow>
+
+      {/* Aspect Ratio */}
+      <FieldRow label="Relación de aspecto">
+        <Select
+          value={(config.aspectRatio as string) || '9:16'}
+          onValueChange={(v) => handleConfigChange('aspectRatio', v)}
+        >
+          <SelectTrigger className="h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="9:16">9:16 (Vertical/Reels)</SelectItem>
+            <SelectItem value="4:5">4:5 (Instagram)</SelectItem>
+            <SelectItem value="1:1">1:1 (Cuadrado)</SelectItem>
+            <SelectItem value="16:9">16:9 (Horizontal)</SelectItem>
+          </SelectContent>
+        </Select>
+      </FieldRow>
+
+      {/* Espaciado */}
+      <FieldRow label="Espaciado">
+        <Select
+          value={(config.gap as string) || 'md'}
+          onValueChange={(v) => handleConfigChange('gap', v)}
+        >
+          <SelectTrigger className="h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="sm">Pequeño</SelectItem>
+            <SelectItem value="md">Mediano</SelectItem>
+            <SelectItem value="lg">Grande</SelectItem>
+          </SelectContent>
+        </Select>
+      </FieldRow>
+
+      {/* Hover effect */}
+      <FieldRow label="Efecto hover">
+        <Select
+          value={(config.hoverEffect as string) || 'overlay'}
+          onValueChange={(v) => handleConfigChange('hoverEffect', v)}
+        >
+          <SelectTrigger className="h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Sin efecto</SelectItem>
+            <SelectItem value="overlay">Overlay oscuro</SelectItem>
+            <SelectItem value="zoom">Zoom</SelectItem>
+          </SelectContent>
+        </Select>
+      </FieldRow>
+
+      {/* Max items */}
+      <FieldRow label="Máximo de items">
+        <Input
+          type="number"
+          min={1}
+          max={50}
+          value={config.maxItems as number || 12}
+          onChange={(e) => handleConfigChange('maxItems', Number(e.target.value))}
+          className="h-8 text-xs"
+        />
+      </FieldRow>
+
+      {/* Toggles */}
+      <div className="space-y-3 pt-2 border-t border-border">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Opciones
+        </p>
+
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Mostrar títulos</Label>
+          <Switch
+            checked={config.showTitles !== false}
+            onCheckedChange={(v) => handleConfigChange('showTitles', v)}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Mostrar métricas</Label>
+          <Switch
+            checked={config.showMetrics !== false}
+            onCheckedChange={(v) => handleConfigChange('showMetrics', v)}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Badge de destacado</Label>
+          <Switch
+            checked={config.showFeaturedBadge !== false}
+            onCheckedChange={(v) => handleConfigChange('showFeaturedBadge', v)}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Filtro de categoría</Label>
+          <Switch
+            checked={Boolean(config.showCategoryFilter)}
+            onCheckedChange={(v) => handleConfigChange('showCategoryFilter', v)}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Solo destacados</Label>
+          <Switch
+            checked={Boolean(config.onlyFeatured)}
+            onCheckedChange={(v) => handleConfigChange('onlyFeatured', v)}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Tab Contenido: campos genéricos según config ───────────────────────────
 
 function ContentFields({
@@ -514,6 +685,10 @@ function ContentFields({
 
   if (block.type === 'stats') {
     return <StatsSettings block={block} onUpdate={onUpdate} />;
+  }
+
+  if (block.type === 'portfolio') {
+    return <PortfolioSettings block={block} onUpdate={onUpdate} />;
   }
 
   const handleConfigChange = (key: string, value: unknown) => {
