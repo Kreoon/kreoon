@@ -51,8 +51,6 @@ interface StatsConfig {
   showIcons: boolean;
   /** Mostrar skeleton mientras carga */
   showLoading: boolean;
-  /** Usar datos mock (para preview sin datos reales) */
-  useMockData: boolean;
   /** Labels personalizados por métrica */
   customLabels?: Record<StatMetricKey, string>;
 }
@@ -128,8 +126,11 @@ function StatsBlockComponent({
   const selectedMetrics = config.selectedMetrics || DEFAULT_METRICS;
   const layout = config.layout || 'row';
   const showIcons = config.showIcons !== false;
-  const useMockData = config.useMockData || isEditing;
   const customLabels = config.customLabels || {};
+
+  // Solo usar mock data explícitamente en modo edición Y si no hay creatorProfileId
+  // En publicado, SIEMPRE usar datos reales del creador
+  const shouldUseMockData = isEditing && !creatorProfileId;
 
   // Obtener stats reales solo si no estamos en modo mock
   const {
@@ -139,11 +140,11 @@ function StatsBlockComponent({
   } = useCreatorStats({
     userId,
     creatorProfileId,
-    enabled: !useMockData && !!(userId || creatorProfileId),
+    enabled: !shouldUseMockData && !!(userId || creatorProfileId),
   });
 
   // Usar mock o datos reales
-  const stats = useMockData ? (MOCK_STATS as CreatorUnifiedStats) : realStats;
+  const stats = shouldUseMockData ? (MOCK_STATS as CreatorUnifiedStats) : realStats;
 
   // Filtrar métricas seleccionadas con sus definiciones
   const displayMetrics = useMemo(() => {
@@ -176,7 +177,7 @@ function StatsBlockComponent({
   };
 
   // Loading state
-  if (isLoading && !useMockData) {
+  if (isLoading && !shouldUseMockData) {
     return (
       <div
         className={cn(
@@ -192,7 +193,7 @@ function StatsBlockComponent({
   }
 
   // Error state
-  if (error && !useMockData) {
+  if (error && !shouldUseMockData) {
     return (
       <div
         className={cn(
@@ -240,7 +241,7 @@ function StatsBlockComponent({
       }}
     >
       {/* Indicador de datos mock en edición */}
-      {isEditing && useMockData && (
+      {isEditing && shouldUseMockData && (
         <p className="text-[10px] text-amber-500/80 text-center mb-3">
           Datos de ejemplo — se mostrarán tus métricas reales al publicar
         </p>

@@ -430,7 +430,6 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
       layout: 'row',
       showIcons: true,
       showLoading: true,
-      useMockData: false,
     },
     defaultStyles: {
       padding: 'md',
