@@ -420,15 +420,17 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     type: 'stats',
     label: 'Estadisticas',
     icon: 'BarChart3',
-    description: 'Metricas y numeros destacados',
+    description: 'Metricas reales de la plataforma y redes sociales',
     category: 'core',
     isRequired: false,
     isDeletable: true,
     maxInstances: 0, // Sin limite
     defaultConfig: {
-      showFollowers: true,
-      showProjects: true,
-      showRating: true,
+      selectedMetrics: ['completedProjects', 'ratingAvg', 'portfolioViews', 'socialTotalFollowers'],
+      layout: 'row',
+      showIcons: true,
+      showLoading: true,
+      useMockData: false,
     },
     defaultStyles: {
       padding: 'md',

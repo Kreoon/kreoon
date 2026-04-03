@@ -30,14 +30,11 @@ export const CONFIG_LABELS: Record<string, string> = {
   columns: 'Columnas',
 
   // ─── Stats ──────────────────────────────────────────────────────────────────
-  showFollowers: 'Mostrar seguidores',
-  showProjects: 'Mostrar proyectos',
-  showClients: 'Mostrar clientes',
-  showYears: 'Mostrar anos de experiencia',
-  showTeamSize: 'Mostrar tamano del equipo',
-  showReach: 'Mostrar alcance',
-  showEngagement: 'Mostrar engagement',
-  showResponseTime: 'Mostrar tiempo de respuesta',
+  selectedMetrics: 'Metricas a mostrar',
+  showIcons: 'Mostrar iconos',
+  showLoading: 'Mostrar carga',
+  useMockData: 'Usar datos de ejemplo',
+  customLabels: 'Labels personalizados',
 
   // ─── Contact ────────────────────────────────────────────────────────────────
   showEmail: 'Mostrar email',
@@ -229,6 +226,8 @@ export const OPTION_LABELS: Record<string, Record<string, string>> = {
     vertical: 'Vertical',
     centered: 'Centrado',
     featured: 'Destacado',
+    row: 'Fila',
+    compact: 'Compacto',
   },
   target: {
     _self: 'Misma ventana',

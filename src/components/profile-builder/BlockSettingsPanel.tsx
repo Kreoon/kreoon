@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -30,6 +31,7 @@ import {
 } from './types/profile-builder';
 import { getConfigLabel, OPTION_LABELS } from './config-labels';
 import { AdvancedStylesTab } from './design-controls';
+import { STAT_METRICS, type StatMetricKey } from '@/hooks/useCreatorStats';
 
 interface BlockSettingsPanelProps {
   block: ProfileBlock;
@@ -367,6 +369,129 @@ function HeroBannerSettings({
   );
 }
 
+// ─── Stats Settings ─────────────────────────────────────────────────────────
+
+const METRIC_CATEGORIES = {
+  projects: { label: 'Proyectos', emoji: '📊' },
+  quality: { label: 'Calidad', emoji: '⭐' },
+  engagement: { label: 'Engagement', emoji: '👀' },
+  social: { label: 'Redes Sociales', emoji: '📱' },
+  general: { label: 'General', emoji: '📈' },
+};
+
+function StatsSettings({
+  block,
+  onUpdate,
+}: {
+  block: ProfileBlock;
+  onUpdate: (updates: Partial<ProfileBlock>) => void;
+}) {
+  const config = block.config as Record<string, unknown>;
+  const selectedMetrics = (config.selectedMetrics as StatMetricKey[]) || [];
+
+  const handleToggleMetric = (metricKey: StatMetricKey) => {
+    const newMetrics = selectedMetrics.includes(metricKey)
+      ? selectedMetrics.filter((m) => m !== metricKey)
+      : [...selectedMetrics, metricKey];
+    onUpdate({ config: { ...config, selectedMetrics: newMetrics } });
+  };
+
+  const handleConfigChange = (key: string, value: unknown) => {
+    onUpdate({ config: { ...config, [key]: value } });
+  };
+
+  // Agrupar métricas por categoría
+  const metricsByCategory = STAT_METRICS.reduce(
+    (acc, metric) => {
+      if (!acc[metric.category]) acc[metric.category] = [];
+      acc[metric.category].push(metric);
+      return acc;
+    },
+    {} as Record<string, typeof STAT_METRICS>
+  );
+
+  return (
+    <div className="space-y-5">
+      {/* Info */}
+      <p className="text-[10px] text-muted-foreground bg-muted/50 rounded-md p-2">
+        Las estadísticas se conectan a tus datos reales de la plataforma
+      </p>
+
+      {/* Layout */}
+      <FieldRow label="Disposición">
+        <Select
+          value={(config.layout as string) || 'row'}
+          onValueChange={(v) => handleConfigChange('layout', v)}
+        >
+          <SelectTrigger className="h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="row">Fila centrada</SelectItem>
+            <SelectItem value="grid">Cuadrícula</SelectItem>
+            <SelectItem value="compact">Compacto</SelectItem>
+          </SelectContent>
+        </Select>
+      </FieldRow>
+
+      {/* Opciones */}
+      <div className="flex items-center justify-between">
+        <Label className="text-xs">Mostrar iconos</Label>
+        <Switch
+          checked={config.showIcons !== false}
+          onCheckedChange={(v) => handleConfigChange('showIcons', v)}
+        />
+      </div>
+
+      {/* Métricas por categoría */}
+      <div className="space-y-4">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Selecciona las métricas ({selectedMetrics.length}/6)
+        </p>
+
+        {Object.entries(metricsByCategory).map(([category, metrics]) => (
+          <div key={category} className="space-y-2">
+            <p className="text-[10px] text-muted-foreground flex items-center gap-1.5">
+              <span>{METRIC_CATEGORIES[category as keyof typeof METRIC_CATEGORIES]?.emoji}</span>
+              {METRIC_CATEGORIES[category as keyof typeof METRIC_CATEGORIES]?.label || category}
+            </p>
+            <div className="space-y-1.5 pl-1">
+              {metrics.map((metric) => {
+                const isSelected = selectedMetrics.includes(metric.key);
+                const isDisabled = !isSelected && selectedMetrics.length >= 6;
+                return (
+                  <label
+                    key={metric.key}
+                    className={cn(
+                      'flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer transition-colors',
+                      isSelected ? 'bg-primary/10' : 'hover:bg-muted/50',
+                      isDisabled && 'opacity-50 cursor-not-allowed'
+                    )}
+                  >
+                    <Checkbox
+                      checked={isSelected}
+                      disabled={isDisabled}
+                      onCheckedChange={() => handleToggleMetric(metric.key)}
+                      className="h-3.5 w-3.5"
+                    />
+                    <span className="text-xs flex-1">{metric.label}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {selectedMetrics.length === 0 && (
+        <p className="text-[10px] text-amber-500 text-center">
+          Selecciona al menos una métrica para mostrar
+        </p>
+      )}
+    </div>
+  );
+}
+
 // ─── Tab Contenido: campos genéricos según config ───────────────────────────
 
 function ContentFields({
@@ -382,9 +507,13 @@ function ContentFields({
 }) {
   const definition = BLOCK_DEFINITIONS[block.type];
 
-  // Hero Banner tiene su propio panel especializado
+  // Bloques con panel especializado
   if (block.type === 'hero_banner') {
     return <HeroBannerSettings block={block} onUpdate={onUpdate} />;
+  }
+
+  if (block.type === 'stats') {
+    return <StatsSettings block={block} onUpdate={onUpdate} />;
   }
 
   const handleConfigChange = (key: string, value: unknown) => {
