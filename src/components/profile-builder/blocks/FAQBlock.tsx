@@ -209,30 +209,48 @@ function FAQBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockProp
           </Button>
         </div>
       ) : (
-        /* Modo preview: Accordion de shadcn */
-        <Accordion
-          type={config.allowMultipleOpen ? 'multiple' : 'single'}
-          collapsible={!config.allowMultipleOpen}
-          className="w-full space-y-2"
-        >
-          {items.map((item) => (
-            <AccordionItem
-              key={item.id}
-              value={item.id}
-              className={cn(
-                'rounded-lg border border-border/50 bg-card/30 px-4',
-                'data-[state=open]:bg-card/60',
-              )}
-            >
-              <AccordionTrigger className="text-left font-medium text-foreground hover:no-underline py-4">
-                {item.question}
-              </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground text-sm leading-relaxed pb-4">
-                {item.answer}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+        /* Modo preview: Accordion de shadcn - separado por tipo para evitar warning de Radix */
+        config.allowMultipleOpen ? (
+          <Accordion type="multiple" className="w-full space-y-2">
+            {items.map((item) => (
+              <AccordionItem
+                key={item.id}
+                value={item.id}
+                className={cn(
+                  'rounded-lg border border-border/50 bg-card/30 px-4',
+                  'data-[state=open]:bg-card/60',
+                )}
+              >
+                <AccordionTrigger className="text-left font-medium text-foreground hover:no-underline py-4">
+                  {item.question}
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground text-sm leading-relaxed pb-4">
+                  {item.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        ) : (
+          <Accordion type="single" collapsible className="w-full space-y-2">
+            {items.map((item) => (
+              <AccordionItem
+                key={item.id}
+                value={item.id}
+                className={cn(
+                  'rounded-lg border border-border/50 bg-card/30 px-4',
+                  'data-[state=open]:bg-card/60',
+                )}
+              >
+                <AccordionTrigger className="text-left font-medium text-foreground hover:no-underline py-4">
+                  {item.question}
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground text-sm leading-relaxed pb-4">
+                  {item.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        )
       )}
 
       {/* Editor Popup */}
