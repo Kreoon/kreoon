@@ -1,7 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { Underline } from '@tiptap/extension-underline';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import { FontFamily } from '@tiptap/extension-font-family';
@@ -21,13 +20,13 @@ import { TextFormatToolbar } from './TextFormatToolbar';
 import { TextFormatPopupProps } from './types';
 
 // ─── Extensiones TipTap (base sin placeholder) ───────────────────────────────
+// Nota: StarterKit ya incluye Underline internamente; no se registra por separado.
 
 const BASE_EXTENSIONS = [
   StarterKit.configure({
     // Desactivar historia innecesaria para modo inline simple
     history: {},
   }),
-  Underline,
   TextStyle,
   Color,
   FontFamily,

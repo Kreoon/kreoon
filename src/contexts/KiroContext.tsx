@@ -643,7 +643,7 @@ export function KiroProvider({ children }: KiroProviderProps) {
   // ─────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       console.log(`[KIRO] Zona actual: ${ZONE_INFO[currentZone].label}`);
     }
   }, [currentZone]);
