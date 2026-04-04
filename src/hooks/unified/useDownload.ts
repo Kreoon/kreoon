@@ -103,7 +103,8 @@ export function useDownload(): UseDownloadReturn {
       // Check if it's a Bunny CDN URL
       const isBunnyUrl = urlToDownload.includes('b-cdn.net') ||
                          urlToDownload.includes('bunnycdn') ||
-                         urlToDownload.includes('mediadelivery.net');
+                         urlToDownload.includes('mediadelivery.net') ||
+                         urlToDownload.includes('cdn.kreoon.com');
 
       let finalDownloadUrl = urlToDownload;
       let usedEdgeFunction = false;

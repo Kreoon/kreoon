@@ -51,7 +51,7 @@ function getEmbedUrl(url: string, muted: boolean): string {
 // Check if URL is a Bunny video URL that should use iframe
 function isBunnyUrl(url: string): boolean {
   if (!url) return false;
-  return url.includes('iframe.mediadelivery.net') || url.includes('b-cdn.net');
+  return url.includes('iframe.mediadelivery.net') || url.includes('b-cdn.net') || url.includes('cdn.kreoon.com');
 }
 
 interface ReviewCardProps {

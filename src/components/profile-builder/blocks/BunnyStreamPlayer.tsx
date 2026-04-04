@@ -56,6 +56,12 @@ function extractBunnyIds(url: string): { libraryId: string; videoId: string } | 
     return { libraryId: directMatch[1], videoId: directMatch[2] };
   }
 
+  // 4. URL de cdn.kreoon.com (dominio personalizado): https://cdn.kreoon.com/{video_id}/...
+  const kreoonCdnMatch = url.match(/cdn\.kreoon\.com\/([a-f0-9-]+)(?:\/|$)/i);
+  if (kreoonCdnMatch) {
+    return { libraryId: DEFAULT_BUNNY_LIBRARY_ID, videoId: kreoonCdnMatch[1] };
+  }
+
   return null;
 }
 
@@ -165,20 +171,22 @@ export function isBunnyUrl(url: string): boolean {
   return (
     lower.includes('b-cdn.net') ||
     lower.includes('mediadelivery.net') ||
-    lower.includes('bunnycdn')
+    lower.includes('bunnycdn') ||
+    lower.includes('cdn.kreoon.com')
   );
 }
 
 /**
  * Obtiene la URL del thumbnail de un video de Bunny.
- * Usa cdn.kreoon.com que es el dominio personalizado configurado en Bunny
+ * Usa el host de Bunny Stream directamente (cdn.kreoon.com no sirve thumbnails)
  */
 export function getBunnyThumbnailUrl(url: string): string | null {
   const ids = extractBunnyIds(url);
   if (!ids) return null;
 
-  // Dominio personalizado de Kreoon en Bunny CDN
-  return `https://cdn.kreoon.com/${ids.videoId}/thumbnail.jpg`;
+  // Host de Bunny Stream para thumbnails
+  const BUNNY_STREAM_HOST = 'vz-78fcd769-050.b-cdn.net';
+  return `https://${BUNNY_STREAM_HOST}/${ids.videoId}/thumbnail.jpg`;
 }
 
 export default BunnyStreamPlayer;

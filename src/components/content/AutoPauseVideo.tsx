@@ -184,7 +184,7 @@ export const AutoPauseVideo = forwardRef<HTMLDivElement, AutoPauseVideoProps>(
     }
 
     // For direct video files, use native video element controls
-    if (src.match(/\.(mp4|webm|ogg)$/i) || src.includes('b-cdn.net')) {
+    if (src.match(/\.(mp4|webm|ogg)$/i) || src.includes('b-cdn.net') || src.includes('cdn.kreoon.com')) {
       return (
         <AutoPauseNativeVideo
           ref={ref as React.Ref<HTMLDivElement>}

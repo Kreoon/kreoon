@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import {
-  User, Globe, Briefcase, FolderOpen, Star, Calendar, Save,
-  Loader2, Camera, ImageIcon, X, Palette, CheckCircle2, Circle, Dna,
+  User, Globe, Briefcase, FolderOpen, Save,
+  Loader2, Camera, ImageIcon, X, CheckCircle2, Circle, Dna, Lock, Info,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Select,
   SelectContent,
@@ -21,22 +24,17 @@ import {
 } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
-import { CURRENCY_FLAGS, CURRENCY_LABELS, type CurrencyCode } from '@/contexts/CurrencyContext';
 import { useCreatorProfile } from '@/hooks/useCreatorProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { getRoleArea, type RoleArea, ROLE_AREA_LABELS } from '@/lib/permissionGroups';
 import {
-  CreatorExpertiseTab,
-  CreatorServicesTab,
-  CreatorAvailabilityTab,
-  CreatorPricingTab,
   BrandSettingsTabs,
   EXPERIENCE_LEVELS,
 } from '@/components/settings/MarketplaceSettings';
 import { PortfolioTab } from '@/components/settings/PortfolioTab';
-import { ProfileCustomizationTab } from '@/components/settings/ProfileCustomizationTab';
+import { SpecializationsTab } from '@/components/settings/SpecializationsTab';
 import { TalentDNAPage } from '@/components/talent-dna';
 
 const COUNTRIES = [
@@ -126,13 +124,8 @@ const ALL_TABS: TabDef[] = [
     visibleTo: ALL_AREAS,
   },
   {
-    value: 'talent-dna', icon: Dna, label: 'ADN de Talento',
+    value: 'talent-dna', icon: Dna, label: 'ADN Talento',
     component: TalentDNATab,
-    visibleTo: ALL_NON_CLIENT,
-  },
-  {
-    value: 'public', icon: Globe, label: 'Perfil Público',
-    component: PublicProfileTab,
     visibleTo: ALL_NON_CLIENT,
   },
   {
@@ -141,28 +134,13 @@ const ALL_TABS: TabDef[] = [
     visibleTo: ALL_AREAS,
   },
   {
-    value: 'expertise', icon: Briefcase, label: 'Especialización',
-    component: CreatorExpertiseTab,
+    value: 'specializations', icon: Briefcase, label: 'Especializaciones',
+    component: SpecializationsTab,
     visibleTo: ALL_NON_CLIENT,
   },
   {
     value: 'portfolio', icon: FolderOpen, label: 'Portafolio',
     component: PortfolioTab,
-    visibleTo: ALL_NON_CLIENT,
-  },
-  {
-    value: 'services', icon: Star, label: 'Servicios',
-    component: CreatorServicesTab,
-    visibleTo: ALL_NON_CLIENT,
-  },
-  {
-    value: 'availability', icon: Calendar, label: 'Disponibilidad',
-    component: AvailabilityAndPricingTab,
-    visibleTo: ALL_NON_CLIENT,
-  },
-  {
-    value: 'customization', icon: Palette, label: 'Personalización',
-    component: ProfileCustomizationTab,
     visibleTo: ALL_NON_CLIENT,
   },
 ];
@@ -249,11 +227,24 @@ function CreatorUnifiedProfile({ roleArea }: { roleArea: RoleArea }) {
             <p className="text-muted-foreground">
               {roleArea === 'client'
                 ? 'Configura tu información personal y datos de tu empresa'
-                : `${ROLE_AREA_LABELS[roleArea]} — Personaliza tu perfil, portafolio y servicios`}
+                : `${ROLE_AREA_LABELS[roleArea]} — Gestiona tu información personal y especializaciones`}
             </p>
           </div>
         </div>
       </div>
+
+      {/* Banner de redirección al Profile Builder (solo para no-clientes) */}
+      {showCompletion && (
+        <Alert className="bg-primary/5 border-primary/20">
+          <Info className="h-4 w-4 text-primary" />
+          <AlertDescription className="text-sm">
+            Para configurar tu <strong>perfil público</strong>, <strong>servicios</strong> y <strong>disponibilidad</strong>,{' '}
+            <Link to="/profile-builder" className="text-primary underline hover:no-underline font-medium">
+              usa el Profile Builder →
+            </Link>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Completion indicator for creators/editors */}
       {showCompletion && <ProfileCompletionCard />}
@@ -301,85 +292,144 @@ function PersonalInfoTab() {
     <Card>
       <CardHeader>
         <CardTitle>Información Personal</CardTitle>
-        <CardDescription>Datos privados de tu cuenta. No se muestran públicamente excepto el nombre.</CardDescription>
+        <CardDescription>Gestiona tu información personal y datos de contacto</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="full_name">Nombre completo</Label>
-            <Input
-              id="full_name"
-              value={profile.full_name}
-              onChange={(e) => updateField('full_name', e.target.value)}
-              placeholder="Tu nombre completo"
-            />
+        {/* Sección: Datos Legales (READ-ONLY) */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 pb-2 border-b">
+            <Lock className="h-4 w-4 text-muted-foreground" />
+            <h3 className="text-sm font-semibold">Datos Legales</h3>
+            <Badge variant="outline" className="text-xs ml-auto">
+              Verificado
+            </Badge>
           </div>
+          <p className="text-xs text-muted-foreground -mt-2">
+            Estos datos no pueden modificarse por razones legales. Contacta soporte si necesitas actualizarlos.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="full_name" className="flex items-center gap-2">
+                Nombre completo
+                <Lock className="h-3 w-3 text-muted-foreground" />
+              </Label>
+              <Input
+                id="full_name"
+                value={profile.full_name || ''}
+                disabled
+                className="bg-muted cursor-not-allowed opacity-70"
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Correo electrónico</Label>
-            <Input id="email" value={profile.email} disabled className="bg-muted" />
+            <div className="space-y-2">
+              <Label htmlFor="nationality" className="flex items-center gap-2">
+                Nacionalidad
+                <Lock className="h-3 w-3 text-muted-foreground" />
+              </Label>
+              <Input
+                id="nationality"
+                value={profile.nationality || 'No especificada'}
+                disabled
+                className="bg-muted cursor-not-allowed opacity-70"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="document_type" className="flex items-center gap-2">
+                Tipo de documento
+                <Lock className="h-3 w-3 text-muted-foreground" />
+              </Label>
+              <Input
+                id="document_type"
+                value={profile.document_type || 'No especificado'}
+                disabled
+                className="bg-muted cursor-not-allowed opacity-70"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="document_number" className="flex items-center gap-2">
+                Número de documento
+                <Lock className="h-3 w-3 text-muted-foreground" />
+              </Label>
+              <Input
+                id="document_number"
+                value={profile.document_number || 'No especificado'}
+                disabled
+                className="bg-muted cursor-not-allowed opacity-70"
+              />
+            </div>
           </div>
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="phone">Teléfono</Label>
-            <Input
-              id="phone"
-              value={profile.phone}
-              onChange={(e) => updateField('phone', e.target.value)}
-              placeholder="+57 300 000 0000"
-            />
+        {/* Sección: Datos de Contacto (EDITABLE) */}
+        <div className="space-y-4 pt-2">
+          <div className="flex items-center gap-2 pb-2 border-b">
+            <User className="h-4 w-4 text-muted-foreground" />
+            <h3 className="text-sm font-semibold">Datos de Contacto</h3>
           </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Correo electrónico</Label>
+              <Input
+                id="email"
+                value={profile.email || ''}
+                disabled
+                className="bg-muted cursor-not-allowed"
+              />
+              <p className="text-xs text-muted-foreground">
+                El email está vinculado a tu cuenta y no puede modificarse
+              </p>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="document_type">Tipo de documento</Label>
-            <Input
-              id="document_type"
-              value={profile.document_type}
-              onChange={(e) => updateField('document_type', e.target.value)}
-              placeholder="CC, CE, NIT..."
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Teléfono</Label>
+              <Input
+                id="phone"
+                value={profile.phone || ''}
+                onChange={(e) => updateField('phone', e.target.value)}
+                placeholder="+57 300 000 0000"
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="document_number">Número de documento</Label>
-            <Input
-              id="document_number"
-              value={profile.document_number}
-              onChange={(e) => updateField('document_number', e.target.value)}
-              placeholder="123456789"
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="city">Ciudad</Label>
+              <Input
+                id="city"
+                value={profile.city || ''}
+                onChange={(e) => updateField('city', e.target.value)}
+                placeholder="Tu ciudad"
+              />
+            </div>
 
-          <div className="md:col-span-2 space-y-2">
-            <Label htmlFor="address">Dirección</Label>
-            <Input
-              id="address"
-              value={profile.address}
-              onChange={(e) => updateField('address', e.target.value)}
-              placeholder="Tu dirección"
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="country">País</Label>
+              <Select
+                value={profile.country || ''}
+                onValueChange={(val) => updateField('country', val)}
+              >
+                <SelectTrigger id="country">
+                  <SelectValue placeholder="Selecciona tu país" />
+                </SelectTrigger>
+                <SelectContent>
+                  {COUNTRIES.map(c => (
+                    <SelectItem key={c.code} value={c.code}>
+                      {c.flag} {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="md:col-span-2 space-y-2">
-            <Label htmlFor="display_currency">Moneda de visualización</Label>
-            <Select
-              value={profile.display_currency || 'USD'}
-              onValueChange={(val) => updateField('display_currency', val)}
-            >
-              <SelectTrigger id="display_currency">
-                <SelectValue placeholder="Selecciona moneda" />
-              </SelectTrigger>
-              <SelectContent>
-                {(Object.keys(CURRENCY_LABELS) as CurrencyCode[]).map((code) => (
-                  <SelectItem key={code} value={code}>
-                    {CURRENCY_FLAGS[code]} {code} — {CURRENCY_LABELS[code]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              Los precios en la plataforma se mostrarán en esta moneda. Los valores se almacenan internamente en USD.
-            </p>
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="address">Dirección</Label>
+              <Input
+                id="address"
+                value={profile.address || ''}
+                onChange={(e) => updateField('address', e.target.value)}
+                placeholder="Tu dirección completa"
+              />
+            </div>
           </div>
         </div>
 
@@ -868,9 +918,19 @@ function SocialLinksTab() {
     <Card>
       <CardHeader>
         <CardTitle>Redes Sociales</CardTitle>
-        <CardDescription>Conecta tus redes sociales y portfolio para que las marcas te encuentren</CardDescription>
+        <CardDescription>Información de redes sociales para gestión interna de KREOON</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        <Alert className="bg-blue-500/5 border-blue-500/20">
+          <Info className="h-4 w-4 text-blue-500" />
+          <AlertDescription className="text-sm">
+            Estos datos son para uso interno de la plataforma. Las redes que se muestran
+            en tu perfil público se configuran en el{' '}
+            <Link to="/profile-builder" className="text-primary underline hover:no-underline">
+              Profile Builder
+            </Link>.
+          </AlertDescription>
+        </Alert>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="instagram">Instagram</Label>

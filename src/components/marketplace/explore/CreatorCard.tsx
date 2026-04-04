@@ -35,7 +35,13 @@ function resolveThumb(item: PortfolioMedia): string {
     if (bunnyThumb) return bunnyThumb;
   }
   const base = item.thumbnail_url || item.url;
-  if (base && !base.includes('b-cdn.net')) {
+  // Skip optimization for Bunny CDN URLs (already optimized)
+  const isBunnyCdn = base && (
+    base.includes('b-cdn.net') ||
+    base.includes('cdn.kreoon.com') ||
+    base.includes('mediadelivery.net')
+  );
+  if (base && !isBunnyCdn) {
     return getOptimizedImageUrl(base, { width: CARD_WIDTH * 2, quality: 75 });
   }
   return base;

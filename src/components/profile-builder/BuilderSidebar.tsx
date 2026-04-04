@@ -1,9 +1,12 @@
-import { LayoutGrid, Palette, AlertTriangle } from 'lucide-react';
+import { LayoutGrid, Palette, AlertTriangle, Dna } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import { BlockPalette } from './BlockPalette';
 import { StylesPanel } from './StylesPanel';
+import { DNADataPanel } from './DNADataPanel';
 import { useCreatorPlanFeatures } from '@/hooks/useCreatorPlanFeatures';
+import { useDNAForBuilder } from './hooks/useDNAForBuilder';
 import { cn } from '@/lib/utils';
 import type { BuilderConfig, ProfileBlock } from './types/profile-builder';
 
@@ -21,6 +24,7 @@ export function BuilderSidebar({
   onUpgradeClick,
 }: BuilderSidebarProps) {
   const { maxBlocks } = useCreatorPlanFeatures();
+  const { hasDNA } = useDNAForBuilder();
   const isUnlimited = !isFinite(maxBlocks);
   const blocksRemaining = isUnlimited ? Infinity : maxBlocks - blocks.length;
   const isNearLimit = !isUnlimited && blocksRemaining <= 2 && blocksRemaining > 0;
@@ -46,6 +50,21 @@ export function BuilderSidebar({
           >
             <Palette className="h-3.5 w-3.5" />
             Estilos
+          </TabsTrigger>
+          <TabsTrigger
+            value="dna"
+            className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent gap-1.5 text-xs h-full relative"
+          >
+            <Dna className="h-3.5 w-3.5" />
+            ADN
+            {hasDNA && (
+              <Badge
+                variant="secondary"
+                className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[8px] bg-purple-500/20 text-purple-400 border-purple-500/30"
+              >
+                <span className="sr-only">ADN disponible</span>
+              </Badge>
+            )}
           </TabsTrigger>
         </TabsList>
 
@@ -81,6 +100,10 @@ export function BuilderSidebar({
           <ScrollArea className="h-full">
             <StylesPanel config={builderConfig} onChange={onConfigChange} />
           </ScrollArea>
+        </TabsContent>
+
+        <TabsContent value="dna" className="flex-1 overflow-hidden mt-0">
+          <DNADataPanel />
         </TabsContent>
       </Tabs>
     </aside>

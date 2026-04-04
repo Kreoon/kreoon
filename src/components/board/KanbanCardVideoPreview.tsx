@@ -60,7 +60,8 @@ export function getContentThumbnail(content: Content): string | null {
 function isBunnyUrl(url: string): boolean {
   return (
     url.includes("mediadelivery.net") ||
-    url.includes("b-cdn.net")
+    url.includes("b-cdn.net") ||
+    url.includes("cdn.kreoon.com")
   );
 }
 

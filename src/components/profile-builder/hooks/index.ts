@@ -7,3 +7,6 @@ export { useAutoSave } from './useAutoSave';
 
 export { useResponsiveStyles, applyResponsiveOverrides } from './useResponsiveStyles';
 export type { CurrentDevice } from './useResponsiveStyles';
+
+export { useDNAForBuilder } from './useDNAForBuilder';
+export type { UseDNAForBuilderResult } from './useDNAForBuilder';

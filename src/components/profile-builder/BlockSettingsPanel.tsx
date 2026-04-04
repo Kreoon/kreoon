@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Settings2, Wand2, RotateCcw, Plus, Trash2 } from 'lucide-react';
+import { Settings2, Wand2, RotateCcw, Plus, Trash2, Dna, Sparkles } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -13,12 +13,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { toast } from 'sonner';
 import {
   BLOCK_DEFINITIONS,
   type ProfileBlock,
 } from './types/profile-builder';
 import { getConfigLabel, OPTION_LABELS } from './config-labels';
 import { AdvancedStylesTab, ResponsiveToggle, type DeviceMode } from './design-controls';
+import { useDNAForBuilder } from './hooks/useDNAForBuilder';
+import type { DNASuggestion } from '@/lib/profile-builder/dnaToBlocksMapping';
 
 interface BlockSettingsPanelProps {
   block: ProfileBlock;
@@ -498,6 +501,19 @@ function ContentFields({
 export function BlockSettingsPanel({ block, onUpdate, userId, creatorProfileId }: BlockSettingsPanelProps) {
   const definition = BLOCK_DEFINITIONS[block.type];
   const [deviceMode, setDeviceMode] = useState<DeviceMode>('all');
+  const { hasDNA, getSuggestionsForBlock, applyToBlock } = useDNAForBuilder();
+
+  // Obtener sugerencias ADN para este tipo de bloque
+  const dnaSuggestions = getSuggestionsForBlock(block.type);
+
+  // Handler para aplicar una sugerencia ADN
+  const handleApplyDNASuggestion = (suggestion: DNASuggestion) => {
+    const updates = applyToBlock(suggestion, block);
+    if (Object.keys(updates).length > 0) {
+      onUpdate(updates);
+      toast.success(`"${suggestion.label}" aplicado al bloque`);
+    }
+  };
 
   // Contar overrides por dispositivo (estilos + config)
   const styleOverrides = {
@@ -620,6 +636,39 @@ export function BlockSettingsPanel({ block, onUpdate, userId, creatorProfileId }
 
         <TabsContent value="content" className="flex-1 overflow-y-auto p-4 mt-0">
           <ContentFields block={block} onUpdate={onUpdate} userId={userId} creatorProfileId={creatorProfileId} deviceMode={deviceMode} />
+
+          {/* Seccion de sugerencias del ADN de Talento */}
+          {hasDNA && dnaSuggestions.length > 0 && (
+            <div className="mt-6 pt-4 border-t border-border">
+              <Label className="flex items-center gap-2 text-xs font-medium mb-3">
+                <Dna className="h-4 w-4 text-purple-400" />
+                Datos de tu ADN
+              </Label>
+              <p className="text-[10px] text-muted-foreground mb-3">
+                Usa contenido de tu ADN de Talento en este bloque
+              </p>
+              <div className="space-y-2">
+                {dnaSuggestions.map((suggestion) => (
+                  <Button
+                    key={suggestion.dnaPath}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start text-xs h-auto py-2 px-3"
+                    onClick={() => handleApplyDNASuggestion(suggestion)}
+                  >
+                    <Sparkles className="h-3 w-3 mr-2 text-amber-400 flex-shrink-0" />
+                    <div className="flex flex-col items-start text-left min-w-0">
+                      <span className="font-medium">Usar: {suggestion.label}</span>
+                      <span className="text-[10px] text-muted-foreground truncate max-w-full">
+                        {suggestion.preview}
+                      </span>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="design" className="flex-1 overflow-y-auto p-4 mt-0">

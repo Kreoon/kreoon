@@ -28,13 +28,14 @@ function extractBunnyVideoId(url: string): string | null {
 
 /**
  * Genera la URL del thumbnail de Bunny basándose en la URL del video
- * Usa cdn.kreoon.com que es el dominio personalizado configurado en Bunny
+ * Usa el host de Bunny Stream (cdn.kreoon.com no sirve thumbnails)
  */
 function getBunnyThumbnail(url: string): string | null {
   const videoId = extractBunnyVideoId(url);
   if (!videoId) return null;
-  // Dominio personalizado de Kreoon en Bunny CDN
-  return `https://cdn.kreoon.com/${videoId}/thumbnail.jpg`;
+  // Host de Bunny Stream para thumbnails
+  const BUNNY_STREAM_HOST = 'vz-78fcd769-050.b-cdn.net';
+  return `https://${BUNNY_STREAM_HOST}/${videoId}/thumbnail.jpg`;
 }
 
 function MediaThumbnail({ item }: { item: MediaItem }) {

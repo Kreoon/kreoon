@@ -4,7 +4,7 @@
  */
 
 const SUPABASE_STORAGE_HOST = 'wjkbqcrxwsmvtxmqgiqc.supabase.co';
-const BUNNY_CDN_HOSTS = ['b-cdn.net', 'mediadelivery.net'];
+const BUNNY_CDN_HOSTS = ['b-cdn.net', 'mediadelivery.net', 'cdn.kreoon.com'];
 
 interface OptimizedImageOptions {
   width?: number;

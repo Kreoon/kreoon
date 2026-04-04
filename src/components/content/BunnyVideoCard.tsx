@@ -57,7 +57,7 @@ function extractVideoId(url: string): string | null {
 // Check if URL is a Bunny video (embed or CDN) vs a native video file
 function isBunnyVideoUrl(url: string): boolean {
   if (!url) return false;
-  return url.includes('iframe.mediadelivery.net') || url.includes('b-cdn.net');
+  return url.includes('iframe.mediadelivery.net') || url.includes('b-cdn.net') || url.includes('cdn.kreoon.com');
 }
 
 // Check if URL is a direct video file (mp4, mov, webm, etc.)

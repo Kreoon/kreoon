@@ -176,6 +176,12 @@ export function extractBunnyIds(url: string): { libraryId: string; videoId: stri
     return { libraryId: directMatch[1], videoId: directMatch[2] };
   }
 
+  // Format: cdn.kreoon.com/{videoId}/... (dominio personalizado de Kreoon)
+  const kreoonCdnMatch = url.match(/cdn\.kreoon\.com\/([a-f0-9-]+)(?:\/|$)/i);
+  if (kreoonCdnMatch) {
+    return { libraryId: 'kreoon', videoId: kreoonCdnMatch[1] };
+  }
+
   return null;
 }
 
@@ -186,8 +192,10 @@ export function extractBunnyIds(url: string): { libraryId: string; videoId: stri
 export function getBunnyThumbnailUrl(url: string): string | null {
   const ids = extractBunnyIds(url);
   if (!ids) return null;
-  // Dominio personalizado de Kreoon para thumbnails
-  return `https://cdn.kreoon.com/${ids.videoId}/thumbnail.jpg`;
+  // Usar el host de Bunny Stream directamente para thumbnails
+  // El dominio personalizado cdn.kreoon.com no sirve thumbnails
+  const BUNNY_STREAM_HOST = 'vz-78fcd769-050.b-cdn.net';
+  return `https://${BUNNY_STREAM_HOST}/${ids.videoId}/thumbnail.jpg`;
 }
 
 /**

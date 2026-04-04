@@ -44,7 +44,7 @@ import { extractBunnyIds, getBunnyThumbnailUrl, getBunnyVideoUrls } from '@/hook
 
 // Helper to get thumbnail URLs for portfolio item (primary + fallback)
 function getPortfolioThumbUrls(item: PortfolioItemData): { primary: string | null; fallback: string | null } {
-  const BUNNY_CDN_HOST = 'vz-78fcd769-050.b-cdn.net';
+  const BUNNY_CDN_HOST = 'cdn.kreoon.com';
 
   let primary: string | null = null;
   let fallback: string | null = null;

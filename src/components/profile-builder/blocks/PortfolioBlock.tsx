@@ -95,10 +95,10 @@ const COLUMNS_CLASSES = {
  * Prioriza: bunnyVideoId > thumbnailUrl guardado > extracción de URL > fallback
  */
 function getOptimalThumbnail(item: PortfolioItem): string {
-  // 1. Si es video y tiene bunnyVideoId, usar Bunny CDN thumbnail
+  // 1. Si es video y tiene bunnyVideoId, usar Bunny Stream thumbnail
+  const BUNNY_STREAM_HOST = 'vz-78fcd769-050.b-cdn.net';
   if (item.type === 'video' && item.bunnyVideoId) {
-    // Usar el host correcto de Bunny
-    return `https://cdn.kreoon.com/${item.bunnyVideoId}/thumbnail.jpg`;
+    return `https://${BUNNY_STREAM_HOST}/${item.bunnyVideoId}/thumbnail.jpg`;
   }
 
   // 2. Si es video, intentar extraer IDs de la URL
@@ -111,7 +111,7 @@ function getOptimalThumbnail(item: PortfolioItem): string {
     // Intentar extraer directamente
     const ids = extractBunnyIds(item.url);
     if (ids?.videoId) {
-      return `https://cdn.kreoon.com/${ids.videoId}/thumbnail.jpg`;
+      return `https://${BUNNY_STREAM_HOST}/${ids.videoId}/thumbnail.jpg`;
     }
   }
 

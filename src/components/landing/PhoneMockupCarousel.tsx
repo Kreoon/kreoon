@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { FADE_IN_UP, useScrollAnimation } from '@/lib/animations';
 
-const BUNNY_CDN_BASE = 'https://vz-78fcd769-050.b-cdn.net';
+const BUNNY_CDN_BASE = 'https://cdn.kreoon.com';
 
 /** How many videos to fetch from DB (pool for randomization) */
 const FETCH_POOL = 50;

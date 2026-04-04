@@ -32,7 +32,7 @@ function detectProvider(url: string): VideoProvider {
   const lower = url.toLowerCase();
   if (lower.includes('youtube.com') || lower.includes('youtu.be')) return 'youtube';
   if (lower.includes('vimeo.com')) return 'vimeo';
-  if (lower.includes('bunnycdn') || lower.includes('b-cdn.net') || lower.includes('iframe.mediadelivery.net'))
+  if (lower.includes('bunnycdn') || lower.includes('b-cdn.net') || lower.includes('iframe.mediadelivery.net') || lower.includes('cdn.kreoon.com'))
     return 'bunny';
   return 'unknown';
 }

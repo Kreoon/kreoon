@@ -312,6 +312,7 @@ function isBunnyOrDirectVideo(url: string): boolean {
   return (
     url.includes('iframe.mediadelivery.net') ||
     url.includes('b-cdn.net') ||
+    url.includes('cdn.kreoon.com') ||
     /\.(mp4|webm|ogg)(\?|$)/i.test(url)
   );
 }
