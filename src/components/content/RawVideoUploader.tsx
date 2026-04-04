@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, SUPABASE_FUNCTIONS_URL } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, Loader2, CheckCircle, XCircle, RefreshCw, Plus, Trash2, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -55,6 +55,19 @@ export function RawVideoUploader({
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
+    // Validate file types
+    const validTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
+    for (const file of Array.from(files)) {
+      if (!validTypes.includes(file.type)) {
+        toast({
+          title: "Formato no válido",
+          description: `${file.name}: Por favor sube un archivo MP4, WebM, MOV o AVI`,
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
     // Validate file sizes (max 5GB each)
     const maxSize = 5 * 1024 * 1024 * 1024;
     for (const file of Array.from(files)) {
@@ -71,11 +84,7 @@ export function RawVideoUploader({
     try {
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) throw sessionError;
-      const accessToken = sessionData.session?.access_token;
-      if (!accessToken) throw new Error("No autenticado");
-
-      const supabaseUrl = (supabase as any).supabaseUrl as string;
-      const supabaseKey = (supabase as any).supabaseKey as string;
+      const userId = sessionData.session?.user?.id || 'anonymous';
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -91,56 +100,90 @@ export function RawVideoUploader({
           originalName: file.name
         }]);
 
-        // Simulate progress
-        const progressInterval = setInterval(() => {
-          setUploads(prev => prev.map(u => 
-            u.id === uploadId && u.status === 'uploading' 
-              ? { ...u, progress: Math.min(u.progress + 10, 90) } 
-              : u
-          ));
-        }, 300);
-
         try {
-          const url = new URL(`${supabaseUrl}/functions/v1/bunny-storage`);
-          url.searchParams.set('content_id', contentId);
-          url.searchParams.set('file_type', 'raw_video');
-          url.searchParams.set('file_name', file.name);
-
-          const res = await fetch(url.toString(), {
-            method: 'PUT',
-            headers: {
-              apikey: supabaseKey,
-              authorization: `Bearer ${accessToken}`,
-              'content-type': file.type || 'application/octet-stream',
-              'x-file-name': file.name,
-              'x-file-type': 'raw_video',
-              'x-content-id': contentId,
-            },
-            body: file,
+          // === Step 1: Create video entry in Bunny (lightweight JSON call) ===
+          const createRes = await fetch(`${SUPABASE_FUNCTIONS_URL}/functions/v1/bunny-portfolio-upload`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'create',
+              user_id: userId,
+              type: 'raw',
+              file_name: file.name,
+            }),
           });
 
-          clearInterval(progressInterval);
-
-          const payload = await res.json().catch(() => ({}));
-          if (!res.ok) {
-            throw new Error(payload?.error || payload?.message || `Error ${res.status}`);
+          if (!createRes.ok) {
+            const errData = await createRes.json().catch(() => ({}));
+            throw new Error(errData.error || `Error del servidor: ${createRes.status}`);
           }
 
-          // Backend returns full list of URLs - use that as source of truth
-          const serverAllUrls: string[] = payload.all_urls || [];
+          const createData = await createRes.json();
+          if (!createData.success) {
+            throw new Error(createData.error || 'Error al crear video en Bunny');
+          }
+
+          console.log('[RawVideoUploader] Video created in Bunny:', createData.video_id);
+
+          // === Step 2: Upload file DIRECTLY to Bunny (XHR with real progress) ===
+          const embedUrl = await new Promise<string>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+
+            xhr.upload.addEventListener('progress', (event) => {
+              if (event.lengthComputable) {
+                const percentComplete = Math.round((event.loaded / event.total) * 90);
+                setUploads(prev => prev.map(u =>
+                  u.id === uploadId ? { ...u, progress: percentComplete } : u
+                ));
+              }
+            });
+
+            xhr.addEventListener('load', () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(createData.embed_url);
+              } else {
+                reject(new Error(`Error subiendo a Bunny: ${xhr.status}`));
+              }
+            });
+
+            xhr.addEventListener('error', () => reject(new Error('Error de conexión. Verifica tu internet y desactiva VPN/bloqueadores si los tienes.')));
+            xhr.addEventListener('abort', () => reject(new Error('Subida cancelada')));
+            xhr.addEventListener('timeout', () => reject(new Error('Tiempo de espera agotado. Verifica tu conexión.')));
+
+            xhr.open('PUT', createData.upload_url);
+            xhr.setRequestHeader('AccessKey', createData.access_key);
+            xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+            xhr.timeout = 600000; // 10 minutes for large files
+            xhr.send(file);
+          });
+
+          console.log('[RawVideoUploader] File uploaded directly to Bunny');
+
+          // === Step 3: Save URL to database via edge function ===
+          const saveRes = await fetch(`${SUPABASE_FUNCTIONS_URL}/functions/v1/bunny-portfolio-upload`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'save-raw-video',
+              content_id: contentId,
+              embed_url: embedUrl,
+            }),
+          });
+
+          const saveData = await saveRes.json().catch(() => ({}));
+          const serverAllUrls: string[] = saveData.all_urls || [];
 
           // Update upload as completed and sync with server state
           setUploads(prev => {
             // Mark current upload as completed
-            let updated = prev.map(u => 
-              u.id === uploadId 
-                ? { ...u, status: 'completed' as const, progress: 100, embedUrl: payload.url } 
+            let updated = prev.map(u =>
+              u.id === uploadId
+                ? { ...u, status: 'completed' as const, progress: 100, embedUrl, videoId: createData.video_id }
                 : u
             );
 
             // Use server URLs as source of truth if available
             if (serverAllUrls.length > 0) {
-              // Merge: keep any local uploads in progress, but completed ones come from server
               const inProgressUploads = updated.filter(u => u.status !== 'completed');
               const serverUploads: VideoUpload[] = serverAllUrls.map((url, idx) => ({
                 id: `server-${idx}-${Date.now()}`,
@@ -165,8 +208,8 @@ export function RawVideoUploader({
           });
 
         } catch (error) {
-          clearInterval(progressInterval);
-          setUploads(prev => prev.map(u => 
+          console.error('Upload error:', error);
+          setUploads(prev => prev.map(u =>
             u.id === uploadId ? { ...u, status: 'failed' as const } : u
           ));
           toast({

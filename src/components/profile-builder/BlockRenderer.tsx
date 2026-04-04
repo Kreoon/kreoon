@@ -1,6 +1,13 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import type { BlockProps, BlockType } from './types/profile-builder';
+import type { BlockProps, BlockType, DeviceType, ProfileBlock } from './types/profile-builder';
+import { resolveBlockForDevice } from './types/profile-builder';
+
+// Props extendidas con soporte de dispositivo
+interface BlockRendererProps extends BlockProps {
+  /** Dispositivo actual para resolver configuración responsive */
+  currentDevice?: DeviceType;
+}
 
 // Lazy loading de cada bloque para code-splitting
 const HeroBannerBlock = lazy(() =>
@@ -128,8 +135,19 @@ function BlockNotImplemented({ type }: { type: BlockType }) {
   );
 }
 
-export function BlockRenderer(props: BlockProps) {
+export function BlockRenderer({ currentDevice = 'desktop', ...props }: BlockRendererProps) {
   const BlockComponent = BLOCK_COMPONENT_MAP[props.block.type];
+
+  // Resolver config/content/styles según el dispositivo actual
+  const resolvedBlock: ProfileBlock = useMemo(() => {
+    const resolved = resolveBlockForDevice(props.block, currentDevice);
+    return {
+      ...props.block,
+      config: resolved.config,
+      content: resolved.content,
+      styles: resolved.styles,
+    };
+  }, [props.block, currentDevice]);
 
   if (!BlockComponent) {
     return <BlockNotImplemented type={props.block.type} />;

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, SUPABASE_FUNCTIONS_URL } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CheckCircle, Download, FileVideo, X, Plus, FolderDown, ChevronDown, ChevronUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -90,64 +90,104 @@ export function BunnyStorageUploader({
     try {
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) throw sessionError;
-      const accessToken = sessionData.session?.access_token;
-      if (!accessToken) throw new Error("No autenticado");
-
-      const supabaseUrl = (supabase as any).supabaseUrl as string;
-      const supabaseKey = (supabase as any).supabaseKey as string;
-      if (!supabaseUrl || !supabaseKey) throw new Error("Configuración de backend no disponible");
+      const userId = sessionData.session?.user?.id || 'anonymous';
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         setCurrentFileIndex(i + 1);
         setProgress(0);
 
-        // Simulate per-file upload progress
-        const progressInterval = setInterval(() => {
-          setProgress(prev => Math.min(prev + 10, 90));
-        }, 200);
+        try {
+          // === Step 1: Create video entry in Bunny (lightweight JSON call) ===
+          const createRes = await fetch(`${SUPABASE_FUNCTIONS_URL}/functions/v1/bunny-portfolio-upload`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'create',
+              user_id: userId,
+              type: fileType,
+              file_name: file.name,
+            }),
+          });
 
-        const url = new URL(`${supabaseUrl}/functions/v1/bunny-storage`);
-        url.searchParams.set('content_id', contentId);
-        url.searchParams.set('file_type', fileType);
-        url.searchParams.set('file_name', file.name);
+          if (!createRes.ok) {
+            const errData = await createRes.json().catch(() => ({}));
+            throw new Error(errData.error || `Error del servidor: ${createRes.status}`);
+          }
 
-        const res = await fetch(url.toString(), {
-          method: 'PUT',
-          headers: {
-            apikey: supabaseKey,
-            authorization: `Bearer ${accessToken}`,
-            'content-type': file.type || 'application/octet-stream',
-            'x-file-name': file.name,
-            'x-file-type': fileType,
-            'x-content-id': contentId,
-          },
-          body: file,
-        });
+          const createData = await createRes.json();
+          if (!createData.success) {
+            throw new Error(createData.error || 'Error al crear video en Bunny');
+          }
 
-        clearInterval(progressInterval);
+          // === Step 2: Upload file DIRECTLY to Bunny (XHR with real progress) ===
+          const embedUrl = await new Promise<string>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
 
-        const payload = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          throw new Error(payload?.error || payload?.message || `Error ${res.status} al subir`);
+            xhr.upload.addEventListener('progress', (event) => {
+              if (event.lengthComputable) {
+                const percentComplete = Math.round((event.loaded / event.total) * 90);
+                setProgress(percentComplete);
+              }
+            });
+
+            xhr.addEventListener('load', () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(createData.embed_url);
+              } else {
+                reject(new Error(`Error subiendo a Bunny: ${xhr.status}`));
+              }
+            });
+
+            xhr.addEventListener('error', () => reject(new Error('Error de conexión. Verifica tu internet y desactiva VPN/bloqueadores si los tienes.')));
+            xhr.addEventListener('abort', () => reject(new Error('Subida cancelada')));
+            xhr.addEventListener('timeout', () => reject(new Error('Tiempo de espera agotado. Verifica tu conexión.')));
+
+            xhr.open('PUT', createData.upload_url);
+            xhr.setRequestHeader('AccessKey', createData.access_key);
+            xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+            xhr.timeout = 600000; // 10 minutes for large files
+            xhr.send(file);
+          });
+
+          // === Step 3: Save URL to database via edge function ===
+          await fetch(`${SUPABASE_FUNCTIONS_URL}/functions/v1/bunny-portfolio-upload`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'save-raw-video',
+              content_id: contentId,
+              embed_url: embedUrl,
+            }),
+          });
+
+          setProgress(100);
+
+          newUploadedFiles.push({
+            name: file.name,
+            url: embedUrl,
+            size: file.size
+          });
+
+        } catch (error) {
+          console.error('Upload error for file:', file.name, error);
+          toast({
+            title: "Error al subir",
+            description: `${file.name}: ${error instanceof Error ? error.message : "No se pudo subir el archivo"}`,
+            variant: "destructive"
+          });
         }
-
-        setProgress(100);
-
-        newUploadedFiles.push({
-          name: file.name,
-          url: payload.url,
-          size: file.size
-        });
       }
 
       setUploadedFiles(newUploadedFiles);
       onUploadComplete?.(newUploadedFiles.map(f => f.url));
 
-      toast({
-        title: "Archivos subidos",
-        description: `${files.length} archivo(s) subido(s) correctamente`
-      });
+      if (newUploadedFiles.length > uploadedFiles.length) {
+        toast({
+          title: "Archivos subidos",
+          description: `${newUploadedFiles.length - uploadedFiles.length} archivo(s) subido(s) correctamente`
+        });
+      }
 
     } catch (error) {
       console.error('Upload error:', error);
