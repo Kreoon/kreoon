@@ -178,15 +178,16 @@ INSTRUCCIONES:
 - Los nichos y roles deben ser especificos y relevantes para marcas
 - El unique_factor debe destacar lo que hace DIFERENTE a este creador
 - Todo el contenido debe estar en espanol
+- **MUY IMPORTANTE**: Los textos narrativos (tagline, bio_full, unique_factor, workflow_description, collaboration_style) DEBEN estar escritos en PRIMERA PERSONA. Usa "Soy", "Tengo", "Mi experiencia", "Creo", "Me especializo", etc. NUNCA uses tercera persona como "Es un creador" o "Tiene experiencia"
 
 Genera un JSON con esta estructura EXACTA:
 
 {
   "creator_identity": {
-    "tagline": "Frase corta que define al creador (max 150 chars)",
-    "bio_full": "Biografia profesional completa con personalidad (max 1000 chars)",
+    "tagline": "Frase corta EN PRIMERA PERSONA. Ej: 'Creo contenido que conecta marcas con audiencias reales'",
+    "bio_full": "Biografia EN PRIMERA PERSONA. Ej: 'Soy creador de contenido con 5 anos de experiencia. Me especializo en...'",
     "experience_level": "beginner|intermediate|advanced|expert",
-    "unique_factor": "Lo que hace unico/diferente a este creador",
+    "unique_factor": "EN PRIMERA PERSONA. Ej: 'Mi diferencial es que combino storytelling con datos de conversion'",
     "years_creating": "X anos",
     "achievements": ["logro 1", "logro 2", "logro 3"]
   },
@@ -212,9 +213,9 @@ Genera un JSON con esta estructura EXACTA:
     "avoid_categories": ["categoria a evitar 1"]
   },
   "creative_process": {
-    "workflow_description": "Descripcion del flujo de trabajo",
+    "workflow_description": "EN PRIMERA PERSONA. Ej: 'Mi proceso inicia con una llamada de briefing donde entiendo la marca...'",
     "turnaround_typical": "tiempo tipico de entrega",
-    "collaboration_style": "como prefiere colaborar con marcas",
+    "collaboration_style": "EN PRIMERA PERSONA. Ej: 'Prefiero comunicacion directa por WhatsApp y entregas en Drive'",
     "tools_used": ["herramienta 1", "herramienta 2"]
   },
   "professional_goals": {
