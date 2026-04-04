@@ -23,59 +23,40 @@ export function usePublishedProfileBlocks(creatorProfileId: string | undefined) 
   return useQuery({
     queryKey: ['published-profile-blocks', creatorProfileId],
     queryFn: async (): Promise<PublishedProfileData> => {
-      console.log('[usePublishedProfileBlocks] ▶ Iniciando fetch para:', creatorProfileId);
-
       if (!creatorProfileId) {
-        console.log('[usePublishedProfileBlocks] ✗ No hay creatorProfileId, abortando');
         return { blocks: [], builderConfig: null, hasPublishedProfile: false };
       }
 
       // Determinar si es UUID o slug
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(creatorProfileId);
-      console.log('[usePublishedProfileBlocks] Es UUID:', isUUID, '| Valor:', creatorProfileId);
 
       // 1. Obtener el profile_id real si es slug
       let profileId = creatorProfileId;
       if (!isUUID) {
-        console.log('[usePublishedProfileBlocks] Resolviendo slug a UUID...');
         const { data: profile, error: slugError } = await supabase
           .from('creator_profiles')
           .select('id, slug')
           .eq('slug', creatorProfileId)
           .maybeSingle();
 
-        console.log('[usePublishedProfileBlocks] Resultado resolución slug:', {
-          profile,
-          slugError: slugError?.message ?? null,
-          slugError_code: slugError?.code ?? null,
-        });
-
         if (slugError) {
-          console.error('[usePublishedProfileBlocks] ✗ Error al resolver slug:', slugError);
+          console.error('[usePublishedProfileBlocks] Error al resolver slug:', slugError);
           return { blocks: [], builderConfig: null, hasPublishedProfile: false };
         }
 
         if (!profile) {
-          console.warn('[usePublishedProfileBlocks] ✗ Slug no encontrado en creator_profiles:', creatorProfileId);
           return { blocks: [], builderConfig: null, hasPublishedProfile: false };
         }
 
         profileId = profile.id;
-        console.log('[usePublishedProfileBlocks] ✓ Slug resuelto a UUID:', profileId);
       }
 
       // 2. Obtener la configuración del builder del creator_profile
-      console.log('[usePublishedProfileBlocks] Obteniendo builder_config para profile_id:', profileId);
       const { data: creatorProfile, error: profileError } = await supabase
         .from('creator_profiles')
         .select('builder_config')
         .eq('id', profileId)
         .maybeSingle();
-
-      console.log('[usePublishedProfileBlocks] builder_config resultado:', {
-        hasConfig: !!creatorProfile?.builder_config,
-        error: profileError?.message ?? null,
-      });
 
       if (profileError) {
         console.error('[usePublishedProfileBlocks] Error al obtener builder_config:', profileError);
@@ -84,7 +65,6 @@ export function usePublishedProfileBlocks(creatorProfileId: string | undefined) 
       const builderConfig = creatorProfile?.builder_config as BuilderConfig | null;
 
       // 3. Obtener bloques publicados (is_draft = false)
-      console.log('[usePublishedProfileBlocks] Consultando bloques publicados para profile_id:', profileId);
       const { data: blocks, error: blocksError } = await supabase
         .from('profile_builder_blocks')
         .select('*')
@@ -92,21 +72,12 @@ export function usePublishedProfileBlocks(creatorProfileId: string | undefined) 
         .eq('is_draft', false)
         .order('order_index', { ascending: true });
 
-      console.log('[usePublishedProfileBlocks] Resultado query bloques:', {
-        count: blocks?.length ?? 0,
-        error: blocksError?.message ?? null,
-        error_code: blocksError?.code ?? null,
-        error_details: blocksError?.details ?? null,
-        primeros_ids: blocks?.slice(0, 3).map((b) => b.id) ?? [],
-      });
-
       if (blocksError) {
-        console.error('[usePublishedProfileBlocks] ✗ Error al obtener bloques:', blocksError);
+        console.error('[usePublishedProfileBlocks] Error al obtener bloques:', blocksError);
         return { blocks: [], builderConfig, hasPublishedProfile: false };
       }
 
       if (!blocks || blocks.length === 0) {
-        console.warn('[usePublishedProfileBlocks] ✗ No se encontraron bloques publicados para profile_id:', profileId);
         return { blocks: [], builderConfig, hasPublishedProfile: false };
       }
 
@@ -121,8 +92,6 @@ export function usePublishedProfileBlocks(creatorProfileId: string | undefined) 
         styles: (b.styles as Record<string, unknown>) || {},
         content: (b.content as Record<string, unknown>) || {},
       }));
-
-      console.log('[usePublishedProfileBlocks] ✓ Bloques formateados:', formattedBlocks.length, '| Tipos:', formattedBlocks.map((b) => b.type));
 
       return {
         blocks: formattedBlocks,

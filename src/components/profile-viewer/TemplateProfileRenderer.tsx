@@ -115,9 +115,6 @@ export function TemplateProfileRenderer({
   // de bloques intente resolver por su cuenta (también soporta slugs).
   const resolvedProfileId: string | undefined = creatorData?.profile?.id ?? creatorProfileId;
 
-  console.log('[TemplateProfileRenderer] creatorProfileId (original):', creatorProfileId);
-  console.log('[TemplateProfileRenderer] resolvedProfileId (UUID):', resolvedProfileId);
-
   // 2. Cargar bloques publicados del Profile Builder usando el UUID resuelto
   const {
     data: publishedData,
@@ -178,21 +175,14 @@ export function TemplateProfileRenderer({
 
   // 7. Bloques finales: publicados o generados desde template
   const blocks = useMemo<ProfileBlock[]>(() => {
-    console.log('[TemplateProfileRenderer] hasPublishedProfile:', hasPublishedProfile);
-    console.log('[TemplateProfileRenderer] publishedData blocks:', publishedData?.blocks?.length ?? 0);
-    console.log('[TemplateProfileRenderer] publishedLoading:', publishedLoading);
-    console.log('[TemplateProfileRenderer] creatorLoading:', creatorLoading);
-
     // Mientras cargamos, no generar nada aún
     if (publishedLoading) return [];
 
     // Prioridad 1: Bloques publicados del Profile Builder
     if (hasPublishedProfile && publishedData?.blocks?.length) {
-      console.log('[TemplateProfileRenderer] Usando bloques PUBLICADOS:', publishedData.blocks.length);
       return publishedData.blocks;
     }
     // Prioridad 2: Generar desde template con datos del creador
-    console.log('[TemplateProfileRenderer] Usando bloques de TEMPLATE (fallback)');
     if (!templateData || !template) return [];
     return generateBlocksFromTemplate(template, templateData);
   }, [hasPublishedProfile, publishedData, publishedLoading, creatorLoading, template, templateData]);

@@ -50,7 +50,6 @@ export function useProfileBuilderData(profileId: string | undefined) {
   } = useQuery({
     queryKey: profileBuilderKeys.data(profileId ?? ''),
     queryFn: async (): Promise<ProfileBuilderData> => {
-      console.log('[useProfileBuilderData] Cargando datos para profile:', profileId);
       const { data: rpcData, error: rpcError } = await supabase.rpc(
         'get_profile_builder_data',
         { profile_id: profileId }
@@ -61,10 +60,6 @@ export function useProfileBuilderData(profileId: string | undefined) {
         throw rpcError;
       }
 
-      console.log('[useProfileBuilderData] Datos recibidos:', {
-        blocksCount: (rpcData as any)?.blocks?.length ?? 0,
-        hasProfile: !!(rpcData as any)?.profile,
-      });
       return rpcData as unknown as ProfileBuilderData;
     },
     enabled: !!profileId,
@@ -79,10 +74,6 @@ export function useProfileBuilderData(profileId: string | undefined) {
 
   const saveBlocksMutation = useMutation({
     mutationFn: async ({ profileId: pid, blocks, isDraft }: SaveProfileBlocksParams) => {
-      console.log('[saveBlocksMutation] Guardando', blocks.length, 'bloques, isDraft:', isDraft);
-      console.log('[saveBlocksMutation] Profile ID:', pid);
-      console.log('[saveBlocksMutation] Primer bloque:', JSON.stringify(blocks[0], null, 2));
-
       const { data: rpcData, error: rpcError } = await supabase.rpc('save_profile_blocks', {
         profile_id: pid,
         blocks: blocks as unknown as Record<string, unknown>[],
@@ -93,11 +84,8 @@ export function useProfileBuilderData(profileId: string | undefined) {
         console.error('[saveBlocksMutation] Error RPC:', rpcError);
         throw rpcError;
       }
-      console.log('[saveBlocksMutation] Resultado RPC:', rpcData);
-      console.log('[saveBlocksMutation] Guardado exitoso');
     },
     onSuccess: (_data, variables) => {
-      console.log('[saveBlocksMutation] Invalidando caches para:', variables.profileId);
       // Invalidar datos del builder
       queryClient.invalidateQueries({
         queryKey: profileBuilderKeys.data(variables.profileId),
@@ -261,14 +249,8 @@ export function useProfileBuilderData(profileId: string | undefined) {
   // ─── Generar bloques automáticamente si no hay guardados ───────────────────
   // Esto permite que el builder muestre contenido basado en datos del marketplace
   const generatedBlocks = (() => {
-    console.log('[useProfileBuilderData] Calculando bloques:', {
-      dataBlocks: data?.blocks?.length ?? 0,
-      hasMarketplaceProfile: !!marketplaceData?.profile,
-    });
-
     // Si hay bloques guardados, usarlos
     if (data?.blocks && data.blocks.length > 0) {
-      console.log('[useProfileBuilderData] Usando bloques guardados:', data.blocks.length);
       return data.blocks;
     }
 
