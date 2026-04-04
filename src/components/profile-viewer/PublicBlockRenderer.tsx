@@ -1,6 +1,7 @@
-import { Suspense, memo } from 'react';
+import { Suspense, memo, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { BLOCK_COMPONENTS } from '@/components/profile-builder/blocks';
+import { useCurrentDevice } from '@/hooks/useCurrentDevice';
 import type { ProfileBlock, BlockType, BlockStyles } from '@/components/profile-builder/types/profile-builder';
 
 // ─── Props del bloque en modo público ─────────────────────────────────────────
@@ -34,6 +35,34 @@ const MARGIN_CLASSES: Record<NonNullable<BlockStyles['margin']>, string> = {
   xl: 'my-10',
 };
 
+/**
+ * Resuelve config y styles del bloque según el dispositivo actual.
+ * Aplica configOverrides y responsiveOverrides guardados en el builder.
+ */
+function resolveBlockForDevice(
+  block: ProfileBlock,
+  device: 'desktop' | 'tablet' | 'mobile'
+): ProfileBlock {
+  // Desktop usa los estilos base sin overrides
+  if (device === 'desktop') {
+    return block;
+  }
+
+  // Aplicar configOverrides para el dispositivo
+  const configOverrides = block.configOverrides?.[device] || {};
+  const resolvedConfig = { ...block.config, ...configOverrides };
+
+  // Aplicar responsiveOverrides (estilos) para el dispositivo
+  const styleOverrides = block.styles?.responsiveOverrides?.[device] || {};
+  const resolvedStyles = { ...block.styles, ...styleOverrides };
+
+  return {
+    ...block,
+    config: resolvedConfig,
+    styles: resolvedStyles,
+  };
+}
+
 // ─── Skeleton de carga ────────────────────────────────────────────────────────
 
 function BlockSkeleton() {
@@ -61,32 +90,41 @@ function BlockFallback({ type }: { type: BlockType }) {
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 function PublicBlockRendererComponent({ block, creatorProfile }: PublicBlockProps) {
-  const BlockComponent = BLOCK_COMPONENTS[block.type];
+  // Detectar dispositivo actual para aplicar overrides responsive
+  const currentDevice = useCurrentDevice();
+
+  // Resolver el bloque con los overrides del dispositivo actual
+  const resolvedBlock = useMemo(
+    () => resolveBlockForDevice(block, currentDevice),
+    [block, currentDevice]
+  );
+
+  const BlockComponent = BLOCK_COMPONENTS[resolvedBlock.type];
 
   if (!BlockComponent) {
-    return <BlockFallback type={block.type} />;
+    return <BlockFallback type={resolvedBlock.type} />;
   }
 
-  const paddingClass = block.styles.padding
-    ? PADDING_CLASSES[block.styles.padding]
+  const paddingClass = resolvedBlock.styles?.padding
+    ? PADDING_CLASSES[resolvedBlock.styles.padding]
     : PADDING_CLASSES['md'];
 
-  const marginClass = block.styles.margin
-    ? MARGIN_CLASSES[block.styles.margin]
+  const marginClass = resolvedBlock.styles?.margin
+    ? MARGIN_CLASSES[resolvedBlock.styles.margin]
     : MARGIN_CLASSES['md'];
 
   return (
     <div
       className={cn('w-full', paddingClass, marginClass)}
-      data-block-type={block.type}
+      data-block-type={resolvedBlock.type}
       style={{
-        backgroundColor: block.styles.backgroundColor,
-        color: block.styles.textColor,
+        backgroundColor: resolvedBlock.styles?.backgroundColor,
+        color: resolvedBlock.styles?.textColor,
       }}
     >
       <Suspense fallback={<BlockSkeleton />}>
         <BlockComponent
-          block={block}
+          block={resolvedBlock}
           // Modo público: isEditing e isSelected siempre falsos
           isEditing={false}
           isSelected={false}
