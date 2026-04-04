@@ -1,7 +1,6 @@
 import { lazy, Suspense, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import type { BlockProps, BlockType, DeviceType, ProfileBlock } from './types/profile-builder';
-import { resolveBlockForDevice } from './types/profile-builder';
 
 // Props extendidas con soporte de dispositivo
 interface BlockRendererProps extends BlockProps {
@@ -79,22 +78,55 @@ const ColumnsBlock = lazy(() =>
 const ContainerBlock = lazy(() =>
   import('./blocks/ContainerBlock').then((m) => ({ default: m.ContainerBlock })),
 );
+// === Bloques avanzados v3 ===
+const HeadlineBlock = lazy(() =>
+  import('./blocks/HeadlineBlock').then((m) => ({ default: m.HeadlineBlock })),
+);
+const ButtonBlock = lazy(() =>
+  import('./blocks/ButtonBlock').then((m) => ({ default: m.ButtonBlock })),
+);
+const IconListBlock = lazy(() =>
+  import('./blocks/IconListBlock').then((m) => ({ default: m.IconListBlock })),
+);
+const CountdownBlock = lazy(() =>
+  import('./blocks/CountdownBlock').then((m) => ({ default: m.CountdownBlock })),
+);
+const CTABannerBlock = lazy(() =>
+  import('./blocks/CTABannerBlock').then((m) => ({ default: m.CTABannerBlock })),
+);
+const WhatsAppButtonBlock = lazy(() =>
+  import('./blocks/WhatsAppButtonBlock').then((m) => ({ default: m.WhatsAppButtonBlock })),
+);
+const CaseStudyBlock = lazy(() =>
+  import('./blocks/CaseStudyBlock').then((m) => ({ default: m.CaseStudyBlock })),
+);
+const VerifiedReviewsBlock = lazy(() =>
+  import('./blocks/VerifiedReviewsBlock').then((m) => ({ default: m.VerifiedReviewsBlock })),
+);
+const CarouselBlock = lazy(() =>
+  import('./blocks/CarouselBlock').then((m) => ({ default: m.CarouselBlock })),
+);
 
 // Mapa de tipo de bloque a componente lazy
 const BLOCK_COMPONENT_MAP: Record<BlockType, React.LazyExoticComponent<React.ComponentType<BlockProps>>> = {
+  // Obligatorios
   hero_banner: HeroBannerBlock,
   recommended_talent: RecommendedTalentBlock,
+  // Core
   about: AboutBlock,
   portfolio: PortfolioBlock,
   services: ServicesBlock,
   stats: StatsBlock,
   reviews: ReviewsBlock,
+  verified_reviews: VerifiedReviewsBlock,
   pricing: PricingBlock,
+  // Premium
   contact: ContactBlock,
+  social_links: SocialLinksBlock,
+  // Contenido básico
   text_block: TextBlock,
   video_embed: VideoEmbedBlock,
   image_gallery: ImageGalleryBlock,
-  social_links: SocialLinksBlock,
   faq: FaqBlock,
   testimonials: TestimonialsBlock,
   brands: BrandsBlock,
@@ -102,10 +134,21 @@ const BLOCK_COMPONENT_MAP: Record<BlockType, React.LazyExoticComponent<React.Com
   timeline: TimelineBlock,
   divider: DividerBlock,
   spacer: SpacerBlock,
-  // Contenedores
+  // Layout avanzado
   section: SectionBlock,
   columns: ColumnsBlock,
   container: ContainerBlock,
+  // Contenido avanzado
+  headline: HeadlineBlock,
+  button: ButtonBlock,
+  icon_list: IconListBlock,
+  countdown: CountdownBlock,
+  // Conversión
+  cta_banner: CTABannerBlock,
+  whatsapp_button: WhatsAppButtonBlock,
+  case_study: CaseStudyBlock,
+  // Media avanzado
+  carousel: CarouselBlock,
 };
 
 function BlockSkeleton() {
@@ -169,8 +212,8 @@ export function BlockRenderer({ currentDevice = 'desktop', ...props }: BlockRend
 }
 
 /**
- * Resuelve config y styles del bloque según el dispositivo
- * Aplica configOverrides y responsiveOverrides
+ * Resuelve config y styles del bloque según el dispositivo.
+ * Aplica configOverrides y responsiveOverrides.
  */
 function resolveBlockForDevice(
   block: BlockProps['block'],
