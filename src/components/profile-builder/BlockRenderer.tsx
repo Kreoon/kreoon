@@ -153,9 +153,6 @@ export function BlockRenderer({ currentDevice = 'desktop', ...props }: BlockRend
     return <BlockNotImplemented type={props.block.type} />;
   }
 
-  // Resolver config y styles según el dispositivo de preview
-  const resolvedBlock = resolveBlockForDevice(props.block, props.previewDevice);
-
   // Las props de contenedores se pasan a todos los bloques
   // Los bloques que no son contenedores simplemente las ignoran
   return (
