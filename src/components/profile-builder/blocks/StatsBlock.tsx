@@ -1,15 +1,4 @@
-/**
- * Stats Block - Profile Builder
- *
- * Bloque de estadísticas conectado a datos reales de la plataforma:
- * - Proyectos completados, activos
- * - Rating y reseñas
- * - Métricas de portfolio (vistas, likes)
- * - Seguidores de redes sociales
- * - Tiempos de respuesta y entrega
- */
-
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import {
   Users,
   Star,
@@ -18,212 +7,376 @@ import {
   Heart,
   TrendingUp,
   Clock,
-  CheckCircle,
+  CheckCircle2,
+  UserCheck,
   Calendar,
-  Loader2,
-  AlertCircle,
+  PlayCircle,
+  BadgeCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  useCreatorStats,
-  STAT_METRICS,
-  formatStatValue,
-  getStatValue,
-  type StatMetricKey,
-  type CreatorUnifiedStats,
-} from '@/hooks/useCreatorStats';
 import type { BlockProps } from '../types/profile-builder';
-
-// ─── Tipos ──────────────────────────────────────────────────────────────────
-
-interface StatDisplayItem {
-  key: StatMetricKey;
-  customLabel?: string; // Override del label
-  customIcon?: string;
-}
+import { useCreatorPublicProfile, type CreatorTrustStats } from '@/hooks/useCreatorPublicProfile';
+import { useCreatorSocialStats } from '@/hooks/useCreatorSocialStats';
 
 interface StatsConfig {
-  /** Métricas seleccionadas para mostrar */
-  selectedMetrics: StatMetricKey[];
-  /** Layout de visualización */
-  layout: 'row' | 'grid' | 'compact';
-  /** Mostrar iconos */
-  showIcons: boolean;
-  /** Mostrar skeleton mientras carga */
-  showLoading: boolean;
-  /** Labels personalizados por métrica */
-  customLabels?: Record<StatMetricKey, string>;
+  layout: 'row' | 'grid' | 'cards';
+  columns: '2' | '3' | '4' | '5' | '6';
+  dataSource: 'auto' | 'manual';
+  // Plataforma
+  showProjects: boolean;
+  showRating: boolean;
+  showClients: boolean;
+  showResponseTime: boolean;
+  showDeliveryRate: boolean;
+  showExperience: boolean;
+  // Social
+  showFollowers: boolean;
+  showEngagement: boolean;
+  showReach: boolean;
+  showVideoViews: boolean;
+  // Portfolio
+  showPortfolioViews: boolean;
+  showPortfolioLikes: boolean;
+}
+
+interface ManualStatItem {
+  id: string;
+  label: string;
+  value: string;
+  icon: string;
 }
 
 interface StatsContent {
-  /** Items legacy (para compatibilidad hacia atrás) */
-  items?: Array<{
-    id: string;
-    label: string;
-    value: string | number;
-    icon: string;
-  }>;
+  manualItems?: ManualStatItem[];
 }
 
-// ─── Iconos ─────────────────────────────────────────────────────────────────
-
-const ICON_MAP = {
-  users: Users,
-  star: Star,
-  briefcase: Briefcase,
-  eye: Eye,
-  heart: Heart,
-  trending: TrendingUp,
-  clock: Clock,
-  check: CheckCircle,
-  calendar: Calendar,
+const paddingClasses = {
+  none: 'p-0',
+  sm: 'p-4',
+  md: 'p-6',
+  lg: 'p-8',
+  xl: 'p-12',
 };
 
-// ─── Mock data para preview ─────────────────────────────────────────────────
-
-const MOCK_STATS: Partial<CreatorUnifiedStats> = {
-  completedProjects: 47,
-  activeProjects: 3,
-  ratingAvg: 4.9,
-  ratingCount: 32,
-  uniqueClients: 28,
-  portfolioViews: 12500,
-  portfolioLikes: 890,
-  portfolioItems: 24,
-  onTimeDeliveryPct: 98,
-  responseTimeHours: 2,
-  repeatClientsPct: 45,
-  daysOnPlatform: 365,
-  invitationResponseRate: 85,
-  social: {
-    totalFollowers: 45200,
-    platforms: [],
-  },
+const COLUMNS_CLASSES: Record<string, string> = {
+  '2': 'grid-cols-2',
+  '3': 'grid-cols-2 md:grid-cols-3',
+  '4': 'grid-cols-2 md:grid-cols-4',
+  '5': 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5',
+  '6': 'grid-cols-2 md:grid-cols-3 lg:grid-cols-6',
 };
 
-// ─── Defaults ───────────────────────────────────────────────────────────────
+// Formateador de números grandes
+function formatNumber(num: number): string {
+  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+  return num.toString();
+}
 
-const DEFAULT_METRICS: StatMetricKey[] = [
-  'completedProjects',
-  'ratingAvg',
-  'portfolioViews',
-  'socialTotalFollowers',
-];
+// Formateador de tiempo
+function formatResponseTime(hours: number): string {
+  if (hours < 1) return '< 1h';
+  if (hours < 24) return `${Math.round(hours)}h`;
+  return `${Math.round(hours / 24)}d`;
+}
 
-// ─── Componente ─────────────────────────────────────────────────────────────
+interface StatItemDisplay {
+  id: string;
+  label: string;
+  value: string | number;
+  icon: React.ReactNode;
+  suffix?: string;
+  isVerified?: boolean;
+}
 
-function StatsBlockComponent({
-  block,
-  isEditing,
-  isSelected,
-  onUpdate,
-  userId,
-  creatorProfileId,
-}: BlockProps) {
-  const config = (block.config || {}) as StatsConfig;
+// Construir stats desde datos reales
+function buildStatsFromData(
+  config: StatsConfig,
+  trustStats: CreatorTrustStats | null,
+  socialStats: {
+    total_followers: number;
+    total_reach: number;
+    total_video_views: number;
+    avg_engagement_rate: number;
+    platforms_count: number;
+  } | null
+): StatItemDisplay[] {
+  const stats: StatItemDisplay[] = [];
+
+  // KPIs de Plataforma (siempre mostrar si la opcion esta activa)
+  if (config.showProjects) {
+    const projects = trustStats?.completed_projects || 0;
+    stats.push({
+      id: 'projects',
+      label: 'Proyectos',
+      value: projects,
+      icon: <Briefcase className="h-5 w-5" />,
+      isVerified: true,
+    });
+  }
+
+  if (config.showRating) {
+    const ratingAvg = trustStats?.rating_avg || 0;
+    const ratingCount = trustStats?.rating_count || 0;
+    stats.push({
+      id: 'rating',
+      label: 'Rating',
+      value: ratingCount > 0 ? ratingAvg.toFixed(1) : '-',
+      icon: <Star className="h-5 w-5" />,
+      suffix: ratingCount > 0 ? `(${ratingCount})` : undefined,
+      isVerified: true,
+    });
+  }
+
+  if (config.showClients) {
+    const clients = trustStats?.unique_clients || 0;
+    stats.push({
+      id: 'clients',
+      label: 'Clientes',
+      value: clients,
+      icon: <UserCheck className="h-5 w-5" />,
+      isVerified: true,
+    });
+  }
+
+  if (config.showResponseTime) {
+    const responseTime = trustStats?.response_time_hours || 24;
+    stats.push({
+      id: 'response',
+      label: 'Respuesta',
+      value: formatResponseTime(responseTime),
+      icon: <Clock className="h-5 w-5" />,
+      isVerified: true,
+    });
+  }
+
+  if (config.showDeliveryRate) {
+    const deliveryRate = trustStats?.on_time_delivery_pct || 100;
+    stats.push({
+      id: 'delivery',
+      label: 'A tiempo',
+      value: `${deliveryRate}%`,
+      icon: <CheckCircle2 className="h-5 w-5" />,
+      isVerified: true,
+    });
+  }
+
+  if (config.showExperience) {
+    const days = trustStats?.days_on_platform || 0;
+    const years = Math.floor(days / 365);
+    const months = Math.floor((days % 365) / 30);
+    stats.push({
+      id: 'experience',
+      label: 'En plataforma',
+      value: days > 0 ? (years > 0 ? `${years}+ años` : `${months} meses`) : 'Nuevo',
+      icon: <Calendar className="h-5 w-5" />,
+      isVerified: true,
+    });
+  }
+
+  // Social Media (desde Social Hub - siempre mostrar si la opcion esta activa)
+  if (config.showFollowers) {
+    const followers = socialStats?.total_followers || 0;
+    const platformsCount = socialStats?.platforms_count || 0;
+    stats.push({
+      id: 'followers',
+      label: 'Seguidores',
+      value: formatNumber(followers),
+      icon: <Users className="h-5 w-5" />,
+      suffix: platformsCount > 1 ? `(${platformsCount} redes)` : platformsCount === 0 ? '(sin conectar)' : undefined,
+    });
+  }
+
+  if (config.showEngagement) {
+    const engagement = socialStats?.avg_engagement_rate || 0;
+    stats.push({
+      id: 'engagement',
+      label: 'Engagement',
+      value: `${engagement.toFixed(1)}%`,
+      icon: <Heart className="h-5 w-5" />,
+    });
+  }
+
+  if (config.showReach) {
+    const reach = socialStats?.total_reach || 0;
+    stats.push({
+      id: 'reach',
+      label: 'Alcance',
+      value: formatNumber(reach),
+      icon: <Eye className="h-5 w-5" />,
+    });
+  }
+
+  if (config.showVideoViews) {
+    const views = socialStats?.total_video_views || 0;
+    stats.push({
+      id: 'videoViews',
+      label: 'Reproducciones',
+      value: formatNumber(views),
+      icon: <PlayCircle className="h-5 w-5" />,
+    });
+  }
+
+  // Portfolio
+  if (config.showPortfolioViews) {
+    const portfolioViews = trustStats?.portfolio_views || 0;
+    stats.push({
+      id: 'portfolioViews',
+      label: 'Vistas portfolio',
+      value: formatNumber(portfolioViews),
+      icon: <Eye className="h-5 w-5" />,
+      isVerified: true,
+    });
+  }
+
+  if (config.showPortfolioLikes) {
+    const portfolioLikes = trustStats?.portfolio_likes || 0;
+    stats.push({
+      id: 'portfolioLikes',
+      label: 'Likes portfolio',
+      value: formatNumber(portfolioLikes),
+      icon: <Heart className="h-5 w-5" />,
+      isVerified: true,
+    });
+  }
+
+  return stats;
+}
+
+// Stat card individual
+function StatCard({
+  stat,
+  layout,
+}: {
+  stat: StatItemDisplay;
+  layout: 'row' | 'grid' | 'cards';
+}) {
+  return (
+    <div
+      className={cn(
+        'flex flex-col items-center text-center gap-2 transition-all',
+        layout === 'cards' && 'bg-card/50 rounded-xl border border-border/30 p-4 hover:border-primary/30 hover:bg-card/70',
+        layout === 'grid' && 'bg-background/50 rounded-lg p-4',
+        layout === 'row' && 'p-3',
+      )}
+    >
+      <div className={cn(
+        'rounded-full flex items-center justify-center',
+        layout === 'cards' ? 'w-14 h-14 bg-primary/10' : 'w-12 h-12 bg-primary/10',
+      )}>
+        <span className="text-primary">{stat.icon}</span>
+      </div>
+      <div className="flex items-baseline gap-1">
+        <span className={cn(
+          'font-bold text-foreground',
+          layout === 'cards' ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl',
+        )}>
+          {stat.value}
+        </span>
+        {stat.suffix && (
+          <span className="text-xs text-muted-foreground">{stat.suffix}</span>
+        )}
+      </div>
+      <div className="flex items-center gap-1">
+        <span className="text-sm text-muted-foreground">{stat.label}</span>
+        {stat.isVerified && (
+          <BadgeCheck className="h-3.5 w-3.5 text-emerald-500" />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Componente principal
+function StatsBlockComponent({ block, isEditing, isSelected, onUpdate, creatorProfileId }: BlockProps) {
+  const config = {
+    layout: 'cards',
+    columns: '4',
+    dataSource: 'auto',
+    showProjects: true,
+    showRating: true,
+    showClients: true,
+    showResponseTime: false,
+    showDeliveryRate: false,
+    showExperience: true,
+    showFollowers: true,
+    showEngagement: false,
+    showReach: false,
+    showVideoViews: false,
+    showPortfolioViews: false,
+    showPortfolioLikes: false,
+    ...block.config,
+  } as StatsConfig;
+
+  const content = block.content as StatsContent;
   const styles = block.styles;
 
-  const selectedMetrics = config.selectedMetrics || DEFAULT_METRICS;
-  const layout = config.layout || 'row';
-  const showIcons = config.showIcons !== false;
-  const customLabels = config.customLabels || {};
+  // Obtener datos reales del creador específico
+  const { data: profileData } = useCreatorPublicProfile(creatorProfileId || '');
+  const { data: socialStats, isLoading: socialLoading } = useCreatorSocialStats(creatorProfileId);
 
-  // Solo usar mock data explícitamente en modo edición Y si no hay creatorProfileId
-  // En publicado, SIEMPRE usar datos reales del creador
-  const shouldUseMockData = isEditing && !creatorProfileId;
+  const trustStats = profileData?.trustStats || null;
 
-  // Obtener stats reales solo si no estamos en modo mock
-  const {
-    data: realStats,
-    isLoading,
-    error,
-  } = useCreatorStats({
-    userId,
-    creatorProfileId,
-    enabled: !shouldUseMockData && !!(userId || creatorProfileId),
-  });
+  // Construir stats según configuración
+  const displayStats = config.dataSource === 'auto'
+    ? buildStatsFromData(config, trustStats, socialStats || null)
+    : (content.manualItems || []).map(item => ({
+        id: item.id,
+        label: item.label,
+        value: item.value,
+        icon: <TrendingUp className="h-5 w-5" />,
+      }));
 
-  // Usar mock o datos reales
-  const stats = shouldUseMockData ? (MOCK_STATS as CreatorUnifiedStats) : realStats;
-
-  // Filtrar métricas seleccionadas con sus definiciones
-  const displayMetrics = useMemo(() => {
-    return selectedMetrics
-      .map((key) => {
-        const definition = STAT_METRICS.find((m) => m.key === key);
-        if (!definition) return null;
-        return {
-          ...definition,
-          label: customLabels[key] || definition.label,
-        };
-      })
-      .filter(Boolean) as typeof STAT_METRICS;
-  }, [selectedMetrics, customLabels]);
-
-  // Clases de padding
-  const paddingClasses = {
-    none: 'p-0',
-    sm: 'p-4',
-    md: 'p-6',
-    lg: 'p-8',
-    xl: 'p-12',
+  // Handler para edición manual
+  const handleUpdateManualStat = (id: string, updates: Partial<ManualStatItem>) => {
+    const items = content.manualItems || [];
+    const newItems = items.map((item) =>
+      item.id === id ? { ...item, ...updates } : item
+    );
+    onUpdate({ content: { ...content, manualItems: newItems } });
   };
 
-  // Clases de layout
-  const layoutClasses = {
-    row: 'flex flex-wrap justify-center gap-8 md:gap-12',
-    grid: 'grid grid-cols-2 md:grid-cols-4 gap-4',
-    compact: 'flex flex-wrap justify-center gap-4',
+  const handleAddManualStat = () => {
+    const items = content.manualItems || [];
+    const newItem: ManualStatItem = {
+      id: crypto.randomUUID(),
+      label: 'Nueva métrica',
+      value: '0',
+      icon: 'trending',
+    };
+    onUpdate({ content: { ...content, manualItems: [...items, newItem] } });
   };
 
   // Loading state
-  if (isLoading && !shouldUseMockData) {
+  if (config.dataSource === 'auto' && !trustStats && !socialLoading) {
     return (
-      <div
-        className={cn(
-          'rounded-lg flex items-center justify-center',
-          paddingClasses[styles.padding || 'md'],
-          'min-h-[120px]'
-        )}
-        style={{ backgroundColor: styles.backgroundColor }}
-      >
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className={cn('rounded-lg', paddingClasses[styles.padding || 'md'])}>
+        <div className="text-center py-8 text-muted-foreground">
+          <TrendingUp className="h-12 w-12 mx-auto mb-3 opacity-30" />
+          <p className="text-sm">Las estadísticas se cargarán con tus datos reales</p>
+          {isEditing && (
+            <p className="text-xs mt-2">
+              Configura qué métricas mostrar en el panel de ajustes
+            </p>
+          )}
+        </div>
       </div>
     );
   }
 
-  // Error state
-  if (error && !shouldUseMockData) {
+  // Sin stats configuradas
+  if (displayStats.length === 0) {
     return (
-      <div
-        className={cn(
-          'rounded-lg flex items-center justify-center gap-2',
-          paddingClasses[styles.padding || 'md'],
-          'min-h-[120px] text-muted-foreground'
-        )}
-        style={{ backgroundColor: styles.backgroundColor }}
-      >
-        <AlertCircle className="h-5 w-5" />
-        <span className="text-sm">No se pudieron cargar las estadísticas</span>
-      </div>
-    );
-  }
-
-  // No stats available
-  if (!stats) {
-    return (
-      <div
-        className={cn(
-          'rounded-lg flex flex-col items-center justify-center gap-2',
-          paddingClasses[styles.padding || 'md'],
-          'min-h-[120px]'
-        )}
-        style={{ backgroundColor: styles.backgroundColor }}
-      >
-        <TrendingUp className="h-8 w-8 text-muted-foreground/50" />
-        <p className="text-sm text-muted-foreground">
-          {isEditing ? 'Selecciona métricas en configuración' : 'Sin estadísticas disponibles'}
-        </p>
+      <div className={cn('rounded-lg', paddingClasses[styles.padding || 'md'])}>
+        <div className="text-center py-8 text-muted-foreground">
+          <TrendingUp className="h-12 w-12 mx-auto mb-3 opacity-30" />
+          <p className="text-sm">No hay estadísticas para mostrar</p>
+          {isEditing && (
+            <p className="text-xs mt-2">
+              Activa las métricas que quieras mostrar en el panel de configuración
+            </p>
+          )}
+        </div>
       </div>
     );
   }
@@ -233,79 +386,41 @@ function StatsBlockComponent({
       className={cn(
         'rounded-lg',
         paddingClasses[styles.padding || 'md'],
-        !styles.backgroundColor && 'bg-card/50'
+        !styles.backgroundColor && 'bg-card/30',
       )}
       style={{
         backgroundColor: styles.backgroundColor,
         color: styles.textColor,
       }}
     >
-      {/* Indicador de datos mock en edición */}
-      {isEditing && shouldUseMockData && (
-        <p className="text-[10px] text-amber-500/80 text-center mb-3">
-          Datos de ejemplo — se mostrarán tus métricas reales al publicar
-        </p>
+      {/* Aviso en modo edición */}
+      {isEditing && isSelected && config.dataSource === 'auto' && (
+        <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+          <p className="text-xs text-blue-400">
+            <strong>Datos verificados:</strong> Estas estadísticas vienen de tu actividad real en la plataforma
+            y tus redes sociales conectadas. No se pueden editar manualmente.
+          </p>
+        </div>
       )}
 
-      <div className={cn(layoutClasses[layout])}>
-        {displayMetrics.map((metric) => {
-          const Icon = ICON_MAP[metric.icon] || TrendingUp;
-          const rawValue = getStatValue(stats, metric.key);
-          const formattedValue = formatStatValue(rawValue, metric.format);
-
-          return (
-            <div
-              key={metric.key}
-              className={cn(
-                'flex flex-col items-center text-center gap-2',
-                layout === 'grid' && 'bg-background/50 rounded-lg p-4',
-                layout === 'compact' && 'min-w-[80px]',
-                layout === 'row' && 'p-4'
-              )}
-            >
-              {showIcons && (
-                <div
-                  className={cn(
-                    'rounded-full flex items-center justify-center',
-                    layout === 'compact' ? 'w-10 h-10' : 'w-12 h-12',
-                    'bg-primary/10'
-                  )}
-                >
-                  <Icon
-                    className={cn(
-                      'text-primary',
-                      layout === 'compact' ? 'h-5 w-5' : 'h-6 w-6'
-                    )}
-                  />
-                </div>
-              )}
-
-              <span
-                className={cn(
-                  'font-bold text-foreground',
-                  layout === 'compact' ? 'text-xl' : 'text-2xl md:text-3xl'
-                )}
-              >
-                {formattedValue}
-              </span>
-
-              <span
-                className={cn(
-                  'text-muted-foreground',
-                  layout === 'compact' ? 'text-xs' : 'text-sm'
-                )}
-              >
-                {metric.label}
-              </span>
-            </div>
-          );
-        })}
+      {/* Stats grid/row */}
+      <div
+        className={cn(
+          config.layout === 'row'
+            ? 'flex flex-wrap justify-center gap-6 md:gap-10'
+            : cn('grid gap-4', COLUMNS_CLASSES[config.columns] || COLUMNS_CLASSES['4']),
+        )}
+      >
+        {displayStats.map((stat) => (
+          <StatCard key={stat.id} stat={stat} layout={config.layout} />
+        ))}
       </div>
 
-      {/* Hint para seleccionar más métricas */}
-      {isEditing && isSelected && displayMetrics.length < 6 && (
-        <p className="text-[10px] text-muted-foreground/60 text-center mt-4 border-t border-border/30 pt-3">
-          Configura qué métricas mostrar en el panel derecho
+      {/* Nota de datos verificados */}
+      {config.dataSource === 'auto' && displayStats.some(s => s.isVerified) && !isEditing && (
+        <p className="text-center text-xs text-muted-foreground mt-4 flex items-center justify-center gap-1">
+          <BadgeCheck className="h-3 w-3 text-emerald-500" />
+          Datos verificados por la plataforma
         </p>
       )}
     </div>

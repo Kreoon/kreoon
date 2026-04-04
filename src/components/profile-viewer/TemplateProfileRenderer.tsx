@@ -1,11 +1,12 @@
 /**
- * Renderizador de perfiles usando plantillas del Profile Builder.
+ * Renderizador de perfiles usando el Profile Builder.
  *
- * Combina:
- * - Estructura visual de la plantilla (bloques, colores, layout)
- * - Datos reales del creador (portfolio, servicios, reviews)
+ * Prioridad de renderizado:
+ * 1. Bloques publicados del Profile Builder (si existen)
+ * 2. Plantilla generada automáticamente con datos del creador (fallback)
  *
- * Plantilla por defecto: Profesional B2B
+ * Esto permite que los creadores personalicen su perfil completamente
+ * mientras mantiene un fallback funcional para quienes no lo han hecho.
  */
 
 import { useMemo, Suspense } from 'react';
@@ -13,17 +14,18 @@ import { Loader2, AlertCircle, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useCreatorPublicProfile } from '@/hooks/useCreatorPublicProfile';
+import { usePublishedProfileBlocks } from '@/hooks/usePublishedProfileBlocks';
 import { PROFILE_TEMPLATES, getTemplateByName } from '@/lib/profile-builder/templates';
 import { generateBlocksFromTemplate, type CreatorDataForTemplate } from '@/lib/profile-builder/generateBlocksFromTemplate';
 import { CreatorThemeProvider } from './CreatorThemeProvider';
 import { PublicBlockRenderer } from './PublicBlockRenderer';
 import { ProfileHeader } from './ProfileHeader';
-import type { ProfileBlock, ProfileTemplate } from '@/components/profile-builder/types/profile-builder';
+import type { ProfileBlock, ProfileTemplate, BuilderConfig } from '@/components/profile-builder/types/profile-builder';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface TemplateProfileRendererProps {
-  /** ID del creator_profile (UUID) */
+  /** ID del creator_profile (UUID o slug) */
   creatorProfileId: string;
   /** Nombre de plantilla a usar (default: profesional) */
   templateName?: string;
@@ -98,30 +100,70 @@ export function TemplateProfileRenderer({
   showHeader = true,
 }: TemplateProfileRendererProps) {
   const navigate = useNavigate();
-  // El ProfileHeader siempre se muestra si showHeader=true
-  // Contiene acciones específicas del perfil: Guardar, Compartir, Contactar
   const shouldShowHeader = showHeader;
 
-  // 1. Cargar datos del creador
+  // 1. Cargar datos del creador (para contenido dinámico de bloques)
+  //    Este hook resuelve slug → UUID internamente
   const {
     data: creatorData,
-    loading,
-    error,
+    loading: creatorLoading,
+    error: creatorError,
   } = useCreatorPublicProfile(creatorProfileId);
 
-  // 2. Obtener plantilla (default: profesional)
+  // Una vez resuelto, usar el UUID real del profile.
+  // Si aún no hay datos, pasamos el identificador original para que el hook
+  // de bloques intente resolver por su cuenta (también soporta slugs).
+  const resolvedProfileId: string | undefined = creatorData?.profile?.id ?? creatorProfileId;
+
+  console.log('[TemplateProfileRenderer] creatorProfileId (original):', creatorProfileId);
+  console.log('[TemplateProfileRenderer] resolvedProfileId (UUID):', resolvedProfileId);
+
+  // 2. Cargar bloques publicados del Profile Builder usando el UUID resuelto
+  const {
+    data: publishedData,
+    isLoading: publishedLoading,
+  } = usePublishedProfileBlocks(resolvedProfileId);
+
+  // Estados combinados de carga
+  const loading = creatorLoading || publishedLoading;
+  const error = creatorError;
+
+  // 3. Determinar si usar bloques publicados o generar desde template
+  const hasPublishedProfile = publishedData?.hasPublishedProfile ?? false;
+
+  // 4. Configuración del builder (publicada o de plantilla)
+  const builderConfig = useMemo<BuilderConfig>(() => {
+    // Si tiene perfil publicado con config, usar esa
+    if (hasPublishedProfile && publishedData?.builderConfig) {
+      return publishedData.builderConfig;
+    }
+    // Si no, usar config de la plantilla
+    const savedTemplate = (creatorData?.profile as Record<string, unknown> | undefined)?.builder_template as string | undefined;
+    const template = savedTemplate
+      ? getTemplateByName(savedTemplate)
+      : getTemplateByName(templateName) ?? PROFILE_TEMPLATES.find((t) => t.name === 'profesional');
+    return template?.config ?? {
+      theme: 'dark',
+      accentColor: '#8B5CF6',
+      fontHeading: 'inter',
+      fontBody: 'inter',
+      spacing: 'normal',
+      borderRadius: 'md',
+      showKreoonBranding: true,
+    };
+  }, [hasPublishedProfile, publishedData, creatorData, templateName]);
+
+  // 5. Obtener plantilla para fallback
   const template = useMemo<ProfileTemplate>(() => {
-    // Si el creador tiene plantilla guardada, usar esa
-    const savedTemplate = (creatorData?.profile as any)?.builder_template;
+    const savedTemplate = (creatorData?.profile as Record<string, unknown> | undefined)?.builder_template as string | undefined;
     if (savedTemplate) {
       const found = getTemplateByName(savedTemplate);
       if (found) return found;
     }
-    // Usar la plantilla especificada o profesional por defecto
     return getTemplateByName(templateName) ?? PROFILE_TEMPLATES.find((t) => t.name === 'profesional')!;
   }, [creatorData, templateName]);
 
-  // 3. Convertir datos a formato para plantilla
+  // 6. Convertir datos a formato para plantilla (para fallback)
   const templateData = useMemo<CreatorDataForTemplate | null>(() => {
     if (!creatorData) return null;
     return {
@@ -134,13 +176,28 @@ export function TemplateProfileRenderer({
     };
   }, [creatorData]);
 
-  // 4. Generar bloques usando plantilla + datos
+  // 7. Bloques finales: publicados o generados desde template
   const blocks = useMemo<ProfileBlock[]>(() => {
+    console.log('[TemplateProfileRenderer] hasPublishedProfile:', hasPublishedProfile);
+    console.log('[TemplateProfileRenderer] publishedData blocks:', publishedData?.blocks?.length ?? 0);
+    console.log('[TemplateProfileRenderer] publishedLoading:', publishedLoading);
+    console.log('[TemplateProfileRenderer] creatorLoading:', creatorLoading);
+
+    // Mientras cargamos, no generar nada aún
+    if (publishedLoading) return [];
+
+    // Prioridad 1: Bloques publicados del Profile Builder
+    if (hasPublishedProfile && publishedData?.blocks?.length) {
+      console.log('[TemplateProfileRenderer] Usando bloques PUBLICADOS:', publishedData.blocks.length);
+      return publishedData.blocks;
+    }
+    // Prioridad 2: Generar desde template con datos del creador
+    console.log('[TemplateProfileRenderer] Usando bloques de TEMPLATE (fallback)');
     if (!templateData || !template) return [];
     return generateBlocksFromTemplate(template, templateData);
-  }, [template, templateData]);
+  }, [hasPublishedProfile, publishedData, publishedLoading, creatorLoading, template, templateData]);
 
-  // 5. Filtrar bloques visibles
+  // 8. Filtrar bloques visibles
   const visibleBlocks = useMemo(() => {
     return blocks.filter((b) => b.isVisible && !b.isDraft).sort((a, b) => a.orderIndex - b.orderIndex);
   }, [blocks]);
@@ -206,7 +263,7 @@ export function TemplateProfileRenderer({
     );
   }
 
-  const showBranding = template.config.showKreoonBranding !== false;
+  const showBranding = builderConfig.showKreoonBranding !== false;
 
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
@@ -217,7 +274,7 @@ export function TemplateProfileRenderer({
         />
       )}
 
-      <CreatorThemeProvider config={template.config}>
+      <CreatorThemeProvider config={builderConfig}>
         <main
           className="w-full min-h-screen"
           aria-label={`Perfil de ${creatorData.profile.display_name}`}

@@ -24,11 +24,11 @@ interface GalleryLightboxProps {
 
 function buildBunnyEmbedUrl(libraryId: string, videoId: string): string {
   const params = new URLSearchParams({
-    autoplay: 'true',
-    muted: 'true',
+    autoplay: 'false',
+    muted: 'false',
     preload: 'true',
     responsive: 'true',
-    loop: 'true',
+    loop: 'false',
     quality: '720',
     'fast-start': 'true',
     t: '0',
@@ -564,10 +564,10 @@ function TikTokSlideVideo({ item, bunnyVideoId, isActive }: TikTokSlideVideoProp
         <video
           src={item.url}
           poster={getBunnyThumbnailUrl(item.url) || item.thumbnail_url || undefined}
-          autoPlay={isActive}
+          autoPlay={false}
           controls
           playsInline
-          loop
+          loop={false}
           className="max-h-full max-w-full object-contain rounded-sm"
         />
       )}

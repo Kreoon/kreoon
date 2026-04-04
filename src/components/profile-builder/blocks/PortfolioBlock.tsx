@@ -1,76 +1,72 @@
 /**
  * Portfolio Block - Profile Builder
  *
- * Muestra el portfolio real del creador con:
- * - Datos de portfolio_items (no manual)
- * - Thumbnails optimizados con Bunny CDN
+ * El usuario SELECCIONA qué contenido mostrar de su biblioteca.
+ * No carga todo automáticamente.
+ *
+ * Features:
+ * - Selección de items desde MediaLibraryPicker
+ * - Thumbnails optimizados de Bunny CDN
  * - Múltiples layouts: grid, masonry, featured, carousel
- * - Filtros por categoría
- * - Visor fullscreen tipo TikTok
+ * - Reproducción inline de videos con BunnyStreamPlayer
  */
 
-import { memo, useState, useMemo, useCallback } from 'react';
+import { memo, useState, useCallback } from 'react';
 import {
-  Play,
   Eye,
   Heart,
+  Plus,
+  Trash2,
   ChevronLeft,
   ChevronRight,
-  Grid3x3,
   LayoutGrid,
   Star,
   Loader2,
   ImageOff,
-  Filter,
+  Camera,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import type { BlockProps } from '../types/profile-builder';
-import { usePortfolioItems, type PortfolioItemData } from '@/hooks/usePortfolioItems';
-import { getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
-import { FullscreenVideoViewer } from '@/components/content/FullscreenVideoViewer';
-import { VideoPlayerProvider } from '@/contexts/VideoPlayerContext';
+import { MediaLibraryPicker } from '../media/MediaLibraryPicker';
+import type { MediaItem } from '../media/types';
+import { getBunnyVideoUrls, extractBunnyIds } from '@/hooks/useHLSPlayer';
+import { BunnyStreamPlayer } from './BunnyStreamPlayer';
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 
+interface PortfolioItem {
+  id: string;
+  type: 'image' | 'video';
+  url: string;
+  thumbnailUrl?: string;
+  bunnyVideoId?: string;
+  title?: string;
+  description?: string;
+  duration?: number;
+  viewsCount?: number;
+  likesCount?: number;
+  isFeatured?: boolean;
+}
+
 interface PortfolioConfig {
-  /** Layout de visualización */
   layout: 'grid' | 'masonry' | 'featured' | 'carousel';
-  /** Columnas para grid */
   columns: 2 | 3 | 4;
-  /** Mostrar títulos */
   showTitles: boolean;
-  /** Mostrar métricas (vistas, likes) */
   showMetrics: boolean;
-  /** Mostrar filtro de categoría */
-  showCategoryFilter: boolean;
-  /** Mostrar solo destacados */
-  onlyFeatured: boolean;
-  /** Máximo de items a mostrar */
   maxItems: number;
-  /** Relación de aspecto de thumbnails */
   aspectRatio: '9:16' | '1:1' | '4:5' | '16:9';
-  /** Gap entre items */
   gap: 'sm' | 'md' | 'lg';
-  /** Mostrar badge de destacado */
   showFeaturedBadge: boolean;
-  /** Hover effect */
   hoverEffect: 'zoom' | 'overlay' | 'none';
-  /** Autoplay carousel */
-  carouselAutoplay: boolean;
+}
+
+interface PortfolioContent {
+  items?: PortfolioItem[];
 }
 
 // ─── Constantes ─────────────────────────────────────────────────────────────
-
-const BUNNY_CDN_HOST = 'https://vz-93653693-f0a.b-cdn.net';
 
 const ASPECT_RATIO_CLASSES = {
   '9:16': 'aspect-[9/16]',
@@ -91,167 +87,225 @@ const COLUMNS_CLASSES = {
   4: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4',
 };
 
-const CATEGORIES = [
-  { value: 'all', label: 'Todos' },
-  { value: 'ugc', label: 'UGC' },
-  { value: 'reels', label: 'Reels' },
-  { value: 'tiktok', label: 'TikTok' },
-  { value: 'youtube', label: 'YouTube' },
-  { value: 'photography', label: 'Foto' },
-  { value: 'other', label: 'Otro' },
-];
+// ─── Helpers para Bunny CDN ─────────────────────────────────────────────────
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
-function getBunnyThumbnail(item: PortfolioItemData, size: 'sm' | 'md' | 'lg' = 'md'): string {
-  const sizes = {
-    sm: { w: 320, h: 568 },
-    md: { w: 480, h: 854 },
-    lg: { w: 720, h: 1280 },
-  };
-
-  // Para videos de Bunny, usar thumbnail optimizado
-  if (item.media_type === 'video' && item.bunny_video_id) {
-    const { w, h } = sizes[size];
-    return `${BUNNY_CDN_HOST}/${item.bunny_video_id}/thumbnail.jpg?width=${w}&height=${h}`;
+/**
+ * Obtiene el mejor thumbnail disponible para un item
+ * Prioriza: bunnyVideoId > thumbnailUrl guardado > extracción de URL > fallback
+ */
+function getOptimalThumbnail(item: PortfolioItem): string {
+  // 1. Si es video y tiene bunnyVideoId, usar Bunny CDN thumbnail
+  if (item.type === 'video' && item.bunnyVideoId) {
+    // Usar el host correcto de Bunny
+    return `https://cdn.kreoon.com/${item.bunnyVideoId}/thumbnail.jpg`;
   }
 
-  // Para videos con URL de Bunny, extraer el ID
-  if (item.media_type === 'video' && item.media_url) {
-    const bunnyUrls = getBunnyVideoUrls(item.media_url);
+  // 2. Si es video, intentar extraer IDs de la URL
+  if (item.type === 'video' && item.url) {
+    const bunnyUrls = getBunnyVideoUrls(item.url);
     if (bunnyUrls?.thumbnail) {
       return bunnyUrls.thumbnail;
     }
+
+    // Intentar extraer directamente
+    const ids = extractBunnyIds(item.url);
+    if (ids?.videoId) {
+      return `https://cdn.kreoon.com/${ids.videoId}/thumbnail.jpg`;
+    }
   }
 
-  // Fallback a thumbnail guardado o URL del media
-  return item.thumbnail_url || item.media_url;
+  // 3. Usar thumbnailUrl guardado si existe
+  if (item.thumbnailUrl && !item.thumbnailUrl.includes('playlist.m3u8')) {
+    return item.thumbnailUrl;
+  }
+
+  // 4. Fallback a la URL del media
+  return item.url;
 }
 
-function formatDuration(seconds: number | null): string {
+function formatDuration(seconds: number | undefined): string {
   if (!seconds) return '';
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-function formatCount(count: number): string {
+function formatCount(count: number | undefined): string {
+  if (!count) return '0';
   if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
   if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
   return count.toString();
 }
 
-// ─── Portfolio Item Component ───────────────────────────────────────────────
+// ─── Portfolio Item Card ────────────────────────────────────────────────────
 
-interface PortfolioItemProps {
-  item: PortfolioItemData;
+interface PortfolioItemCardProps {
+  item: PortfolioItem;
   config: PortfolioConfig;
   onClick: () => void;
-  size?: 'sm' | 'md' | 'lg';
+  isEditing?: boolean;
+  onDelete?: () => void;
 }
 
-function PortfolioItemCard({ item, config, onClick, size = 'md' }: PortfolioItemProps) {
+function PortfolioItemCard({
+  item,
+  config,
+  onClick,
+  isEditing,
+  onDelete,
+}: PortfolioItemCardProps) {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  const thumbnailUrl = getBunnyThumbnail(item, size);
+  const thumbnailUrl = getOptimalThumbnail(item);
+  const isVideo = item.type === 'video';
+
+  // Determinar aspect ratio para el reproductor
+  const getVideoAspectRatio = (): '16:9' | '9:16' | '1:1' | '4:3' => {
+    switch (config.aspectRatio) {
+      case '9:16': return '9:16';
+      case '1:1': return '1:1';
+      case '4:5': return '4:3'; // Aproximación
+      case '16:9': return '16:9';
+      default: return '16:9';
+    }
+  };
 
   return (
     <div
       className={cn(
-        'group relative overflow-hidden rounded-lg bg-muted cursor-pointer',
+        'group relative overflow-hidden rounded-lg bg-muted',
         ASPECT_RATIO_CLASSES[config.aspectRatio],
-        config.hoverEffect === 'zoom' && 'hover:scale-[1.02] transition-transform duration-300',
+        !isVideo && config.hoverEffect === 'zoom' && 'hover:scale-[1.02] transition-transform duration-300',
         'ring-0 hover:ring-2 hover:ring-primary/50 transition-all',
+        isEditing && 'cursor-pointer',
       )}
-      onClick={onClick}
+      onClick={isEditing ? onClick : undefined}
     >
-      {/* Loading skeleton */}
-      {!imageLoaded && !imageError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted animate-pulse">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      )}
-
-      {/* Thumbnail */}
-      {!imageError ? (
-        <img
-          src={thumbnailUrl}
-          alt={item.title || 'Portfolio item'}
-          className={cn(
-            'w-full h-full object-cover transition-opacity duration-300',
-            imageLoaded ? 'opacity-100' : 'opacity-0',
-            config.hoverEffect === 'zoom' && 'group-hover:scale-105 transition-transform duration-500',
-          )}
-          loading="lazy"
-          decoding="async"
-          onLoad={() => setImageLoaded(true)}
-          onError={() => setImageError(true)}
+      {/* VIDEO: Usar reproductor oficial de Bunny con miniatura integrada */}
+      {isVideo && item.url && (
+        <BunnyStreamPlayer
+          videoUrl={item.url}
+          autoplay={false}
+          muted={false}
+          loop={false}
+          preload={true}
+          aspectRatio={getVideoAspectRatio()}
+          className="absolute inset-0 w-full h-full"
+          borderRadius="none"
         />
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted">
-          <ImageOff className="h-8 w-8 text-muted-foreground/50" />
-        </div>
       )}
 
-      {/* Video indicator + duration */}
-      {item.media_type === 'video' && (
+      {/* IMAGEN: Mostrar thumbnail con efectos */}
+      {!isVideo && (
         <>
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all">
-              <Play className="h-5 w-5 text-white fill-white ml-0.5" />
+          {/* Loading skeleton */}
+          {!imageLoaded && !imageError && (
+            <div className="absolute inset-0 flex items-center justify-center bg-muted animate-pulse">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
-          </div>
-          {item.duration_seconds && (
-            <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/70 text-[10px] text-white font-medium">
-              {formatDuration(item.duration_seconds)}
+          )}
+
+          {/* Thumbnail */}
+          {!imageError ? (
+            <img
+              src={thumbnailUrl}
+              alt={item.title || 'Portfolio item'}
+              className={cn(
+                'w-full h-full object-cover transition-opacity duration-300 cursor-pointer',
+                imageLoaded ? 'opacity-100' : 'opacity-0',
+                config.hoverEffect === 'zoom' && 'group-hover:scale-105 transition-transform duration-500',
+              )}
+              loading="lazy"
+              decoding="async"
+              onLoad={() => setImageLoaded(true)}
+              onError={() => setImageError(true)}
+              onClick={onClick}
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-muted">
+              <ImageOff className="h-8 w-8 text-muted-foreground/50" />
+            </div>
+          )}
+
+          {/* Overlay con info */}
+          {config.hoverEffect === 'overlay' && (
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+          )}
+
+          {/* Title + metrics en hover o siempre */}
+          {(config.showTitles || config.showMetrics) && (
+            <div
+              className={cn(
+                'absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/80 to-transparent pointer-events-none',
+                config.hoverEffect === 'overlay' && !isEditing ? 'opacity-0 group-hover:opacity-100 transition-opacity' : '',
+              )}
+            >
+              {config.showTitles && item.title && (
+                <p className="text-sm text-white font-medium truncate">{item.title}</p>
+              )}
+              {config.showMetrics && (item.viewsCount || item.likesCount) && (
+                <div className="flex items-center gap-3 mt-1 text-[10px] text-white/80">
+                  {item.viewsCount !== undefined && (
+                    <span className="flex items-center gap-1">
+                      <Eye className="h-3 w-3" />
+                      {formatCount(item.viewsCount)}
+                    </span>
+                  )}
+                  {item.likesCount !== undefined && (
+                    <span className="flex items-center gap-1">
+                      <Heart className="h-3 w-3" />
+                      {formatCount(item.likesCount)}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </>
       )}
 
-      {/* Featured badge */}
-      {config.showFeaturedBadge && item.is_featured && (
-        <div className="absolute top-2 left-2">
+      {/* Featured badge (para ambos tipos) */}
+      {config.showFeaturedBadge && item.isFeatured && (
+        <div className="absolute top-2 left-2 z-10 pointer-events-none">
           <Badge variant="secondary" className="gap-1 text-[10px] bg-amber-500/90 text-white border-0">
             <Star className="h-2.5 w-2.5 fill-current" />
-            Destacado
           </Badge>
         </div>
       )}
 
-      {/* Overlay con info */}
-      {config.hoverEffect === 'overlay' && (
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      )}
-
-      {/* Title + metrics */}
-      {(config.showTitles || config.showMetrics) && (
-        <div
-          className={cn(
-            'absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/80 to-transparent',
-            config.hoverEffect === 'overlay' ? 'opacity-0 group-hover:opacity-100 transition-opacity' : '',
+      {/* Controles de edicion (overlay sobre video o imagen) */}
+      {isEditing && (
+        <>
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none z-10">
+            <Camera className="h-6 w-6 text-white" />
+          </div>
+          {onDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100 z-20"
+              aria-label="Eliminar"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
           )}
-        >
-          {config.showTitles && item.title && (
-            <p className="text-sm text-white font-medium truncate">{item.title}</p>
-          )}
-          {config.showMetrics && (
-            <div className="flex items-center gap-3 mt-1 text-[10px] text-white/80">
-              <span className="flex items-center gap-1">
-                <Eye className="h-3 w-3" />
-                {formatCount(item.views_count)}
-              </span>
-              <span className="flex items-center gap-1">
-                <Heart className="h-3 w-3" />
-                {formatCount(item.likes_count)}
-              </span>
-            </div>
-          )}
-        </div>
+        </>
       )}
     </div>
   );
+}
+
+// ─── Props comunes para layouts ─────────────────────────────────────────────
+
+interface LayoutProps {
+  items: PortfolioItem[];
+  config: PortfolioConfig;
+  onItemClick: (index: number) => void;
+  isEditing?: boolean;
+  onDeleteItem?: (id: string) => void;
 }
 
 // ─── Carousel Layout ────────────────────────────────────────────────────────
@@ -260,33 +314,22 @@ function CarouselLayout({
   items,
   config,
   onItemClick,
-}: {
-  items: PortfolioItemData[];
-  config: PortfolioConfig;
-  onItemClick: (index: number) => void;
-}) {
+  isEditing,
+  onDeleteItem,
+}: LayoutProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const visibleCount = config.columns;
 
   const canGoPrev = currentIndex > 0;
   const canGoNext = currentIndex + visibleCount < items.length;
 
-  const goToPrev = useCallback(() => {
-    setCurrentIndex((i) => Math.max(0, i - 1));
-  }, []);
-
-  const goToNext = useCallback(() => {
-    setCurrentIndex((i) => Math.min(items.length - visibleCount, i + 1));
-  }, [items.length, visibleCount]);
-
   const visibleItems = items.slice(currentIndex, currentIndex + visibleCount);
 
   return (
     <div className="relative group/carousel">
-      {/* Nav buttons */}
       {canGoPrev && (
         <button
-          onClick={goToPrev}
+          onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
           className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/90 shadow-lg flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-opacity hover:bg-background"
         >
           <ChevronLeft className="h-5 w-5" />
@@ -294,26 +337,26 @@ function CarouselLayout({
       )}
       {canGoNext && (
         <button
-          onClick={goToNext}
+          onClick={() => setCurrentIndex((i) => Math.min(items.length - visibleCount, i + 1))}
           className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/90 shadow-lg flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-opacity hover:bg-background"
         >
           <ChevronRight className="h-5 w-5" />
         </button>
       )}
 
-      {/* Items */}
       <div className={cn('grid', COLUMNS_CLASSES[config.columns], GAP_CLASSES[config.gap])}>
         {visibleItems.map((item, idx) => (
           <PortfolioItemCard
             key={item.id}
             item={item}
             config={config}
-            onClick={() => onItemClick(currentIndex + idx)}
+            onClick={() => !isEditing && onItemClick(currentIndex + idx)}
+            isEditing={isEditing}
+            onDelete={onDeleteItem ? () => onDeleteItem(item.id) : undefined}
           />
         ))}
       </div>
 
-      {/* Dots */}
       {items.length > visibleCount && (
         <div className="flex justify-center gap-1.5 mt-4">
           {Array.from({ length: Math.ceil(items.length / visibleCount) }).map((_, i) => (
@@ -338,11 +381,9 @@ function FeaturedLayout({
   items,
   config,
   onItemClick,
-}: {
-  items: PortfolioItemData[];
-  config: PortfolioConfig;
-  onItemClick: (index: number) => void;
-}) {
+  isEditing,
+  onDeleteItem,
+}: LayoutProps) {
   const featuredItem = items[0];
   const restItems = items.slice(1, 5);
 
@@ -350,24 +391,23 @@ function FeaturedLayout({
 
   return (
     <div className={cn('grid grid-cols-2 md:grid-cols-3', GAP_CLASSES[config.gap])}>
-      {/* Featured item (larger) */}
       <div className="col-span-2 row-span-2">
         <PortfolioItemCard
           item={featuredItem}
           config={{ ...config, aspectRatio: '4:5' }}
-          onClick={() => onItemClick(0)}
-          size="lg"
+          onClick={() => !isEditing && onItemClick(0)}
+          isEditing={isEditing}
+          onDelete={onDeleteItem ? () => onDeleteItem(featuredItem.id) : undefined}
         />
       </div>
-
-      {/* Rest items */}
       {restItems.map((item, idx) => (
         <PortfolioItemCard
           key={item.id}
           item={item}
           config={config}
-          onClick={() => onItemClick(idx + 1)}
-          size="sm"
+          onClick={() => !isEditing && onItemClick(idx + 1)}
+          isEditing={isEditing}
+          onDelete={onDeleteItem ? () => onDeleteItem(item.id) : undefined}
         />
       ))}
     </div>
@@ -380,13 +420,10 @@ function MasonryLayout({
   items,
   config,
   onItemClick,
-}: {
-  items: PortfolioItemData[];
-  config: PortfolioConfig;
-  onItemClick: (index: number) => void;
-}) {
-  // Distribuir items en columnas
-  const columns: PortfolioItemData[][] = Array.from({ length: config.columns }, () => []);
+  isEditing,
+  onDeleteItem,
+}: LayoutProps) {
+  const columns: PortfolioItem[][] = Array.from({ length: config.columns }, () => []);
   items.forEach((item, idx) => {
     columns[idx % config.columns].push(item);
   });
@@ -397,7 +434,6 @@ function MasonryLayout({
         <div key={colIdx} className={cn('flex-1 flex flex-col', GAP_CLASSES[config.gap])}>
           {columnItems.map((item) => {
             const originalIndex = items.findIndex((i) => i.id === item.id);
-            // Variar aspect ratio para efecto masonry
             const aspectRatios: PortfolioConfig['aspectRatio'][] = ['9:16', '4:5', '1:1'];
             const randomAspect = aspectRatios[(originalIndex + colIdx) % 3];
 
@@ -406,7 +442,9 @@ function MasonryLayout({
                 key={item.id}
                 item={item}
                 config={{ ...config, aspectRatio: randomAspect }}
-                onClick={() => onItemClick(originalIndex)}
+                onClick={() => !isEditing && onItemClick(originalIndex)}
+                isEditing={isEditing}
+                onDelete={onDeleteItem ? () => onDeleteItem(item.id) : undefined}
               />
             );
           })}
@@ -422,15 +460,20 @@ function GridLayout({
   items,
   config,
   onItemClick,
-}: {
-  items: PortfolioItemData[];
-  config: PortfolioConfig;
-  onItemClick: (index: number) => void;
-}) {
+  isEditing,
+  onDeleteItem,
+}: LayoutProps) {
   return (
     <div className={cn('grid', COLUMNS_CLASSES[config.columns], GAP_CLASSES[config.gap])}>
       {items.map((item, idx) => (
-        <PortfolioItemCard key={item.id} item={item} config={config} onClick={() => onItemClick(idx)} />
+        <PortfolioItemCard
+          key={item.id}
+          item={item}
+          config={config}
+          onClick={() => !isEditing && onItemClick(idx)}
+          isEditing={isEditing}
+          onDelete={onDeleteItem ? () => onDeleteItem(item.id) : undefined}
+        />
       ))}
     </div>
   );
@@ -442,86 +485,87 @@ function PortfolioBlockComponent({
   block,
   isEditing,
   isSelected,
+  onUpdate,
+  userId,
   creatorProfileId,
 }: BlockProps) {
   const config = {
     layout: 'grid',
     columns: 3,
     showTitles: true,
-    showMetrics: true,
-    showCategoryFilter: false,
-    onlyFeatured: false,
+    showMetrics: false,
     maxItems: 12,
     aspectRatio: '9:16',
     gap: 'md',
     showFeaturedBadge: true,
     hoverEffect: 'overlay',
-    carouselAutoplay: false,
     ...block.config,
   } as PortfolioConfig;
 
+  const content = block.content as PortfolioContent;
   const styles = block.styles;
+  const items = content.items || [];
 
-  // Estado para filtro y viewer
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [viewerOpen, setViewerOpen] = useState(false);
-  const [viewerInitialIndex, setViewerInitialIndex] = useState(0);
+  // Estado para media picker
+  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
 
-  // Cargar items reales del portfolio
-  const {
-    items: portfolioItems,
-    loading,
-  } = usePortfolioItems({
-    creatorProfileId,
-  });
+  // Items limitados por maxItems
+  const displayItems = items.slice(0, config.maxItems);
 
-  // Filtrar y limitar items
-  const filteredItems = useMemo(() => {
-    let items = portfolioItems || [];
-
-    // Solo públicos
-    items = items.filter((i) => i.is_public);
-
-    // Solo destacados si está configurado
-    if (config.onlyFeatured) {
-      items = items.filter((i) => i.is_featured);
+  // Click en item (para imagenes, abrir lightbox si se implementa)
+  const handleItemClick = useCallback((index: number) => {
+    const item = displayItems[index];
+    if (item?.type === 'image') {
+      // TODO: Abrir lightbox para imagenes
+      console.log('Open image lightbox:', item);
     }
+  }, [displayItems]);
 
-    // Filtrar por categoría
-    if (selectedCategory !== 'all') {
-      items = items.filter((i) => i.category === selectedCategory);
-    }
+  // Handler para agregar item desde MediaLibrary
+  const handleMediaSelect = useCallback(
+    (media: MediaItem) => {
+      // Extraer bunnyVideoId si es video de Bunny
+      let bunnyVideoId: string | undefined;
+      if (media.type === 'video' && media.url) {
+        const ids = extractBunnyIds(media.url);
+        bunnyVideoId = ids?.videoId;
+      }
 
-    // Ordenar: destacados primero, luego por display_order
-    items = [...items].sort((a, b) => {
-      if (a.is_featured !== b.is_featured) return a.is_featured ? -1 : 1;
-      return (a.display_order || 0) - (b.display_order || 0);
-    });
+      const newItem: PortfolioItem = {
+        id: crypto.randomUUID(),
+        type: media.type === 'video' ? 'video' : 'image',
+        url: media.url,
+        thumbnailUrl: media.thumbnail_url,
+        bunnyVideoId,
+        title: media.title || '',
+        duration: media.duration,
+        viewsCount: media.views_count,
+        likesCount: media.likes_count,
+      };
 
-    // Limitar
-    return items.slice(0, config.maxItems);
-  }, [portfolioItems, config.onlyFeatured, config.maxItems, selectedCategory]);
+      onUpdate({
+        content: {
+          ...content,
+          items: [...items, newItem],
+        },
+      });
+      setMediaPickerOpen(false);
+    },
+    [content, items, onUpdate]
+  );
 
-  // Convertir a formato para FullscreenVideoViewer
-  const viewerItems = useMemo(() => {
-    return filteredItems.map((item) => ({
-      id: item.id,
-      title: item.title || '',
-      videoUrls: item.media_type === 'video' ? [item.media_url] : [],
-      thumbnailUrl: getBunnyThumbnail(item, 'lg'),
-      viewsCount: item.views_count,
-      likesCount: item.likes_count,
-      isLiked: false,
-      mediaType: item.media_type as 'video' | 'image',
-      mediaUrl: item.media_url,
-      caption: item.description || item.title || '',
-    }));
-  }, [filteredItems]);
-
-  const openViewer = useCallback((index: number) => {
-    setViewerInitialIndex(index);
-    setViewerOpen(true);
-  }, []);
+  // Handler para eliminar item
+  const handleDeleteItem = useCallback(
+    (itemId: string) => {
+      onUpdate({
+        content: {
+          ...content,
+          items: items.filter((i) => i.id !== itemId),
+        },
+      });
+    },
+    [content, items, onUpdate]
+  );
 
   const paddingClasses = {
     none: 'p-0',
@@ -531,97 +575,85 @@ function PortfolioBlockComponent({
     xl: 'p-12',
   };
 
-  // Categorías disponibles en el portfolio actual
-  const availableCategories = useMemo(() => {
-    const cats = new Set(portfolioItems?.map((i) => i.category).filter(Boolean));
-    return CATEGORIES.filter((c) => c.value === 'all' || cats.has(c.value));
-  }, [portfolioItems]);
-
   // Render layout
   const renderLayout = () => {
-    if (filteredItems.length === 0) return null;
+    if (displayItems.length === 0) return null;
+
+    const layoutProps: LayoutProps = {
+      items: displayItems,
+      config,
+      onItemClick: handleItemClick,
+      isEditing: isEditing && isSelected,
+      onDeleteItem: isEditing && isSelected ? handleDeleteItem : undefined,
+    };
 
     switch (config.layout) {
       case 'carousel':
-        return <CarouselLayout items={filteredItems} config={config} onItemClick={openViewer} />;
+        return <CarouselLayout {...layoutProps} />;
       case 'featured':
-        return <FeaturedLayout items={filteredItems} config={config} onItemClick={openViewer} />;
+        return <FeaturedLayout {...layoutProps} />;
       case 'masonry':
-        return <MasonryLayout items={filteredItems} config={config} onItemClick={openViewer} />;
+        return <MasonryLayout {...layoutProps} />;
       case 'grid':
       default:
-        return <GridLayout items={filteredItems} config={config} onItemClick={openViewer} />;
+        return <GridLayout {...layoutProps} />;
     }
   };
 
   return (
-    <div
-      className={cn(paddingClasses[styles.padding || 'md'])}
-      style={{
-        backgroundColor: styles.backgroundColor,
-        color: styles.textColor,
-      }}
-    >
+    <div className={cn(paddingClasses[styles.padding || 'md'])}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-foreground">Portfolio</h2>
-
-        {/* Category filter */}
-        {config.showCategoryFilter && availableCategories.length > 2 && (
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-32 h-8 text-xs">
-              <Filter className="h-3 w-3 mr-1.5" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {availableCategories.map((cat) => (
-                <SelectItem key={cat.value} value={cat.value}>
-                  {cat.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {isEditing && isSelected && items.length < config.maxItems && userId && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setMediaPickerOpen(true)}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Agregar
+          </Button>
         )}
       </div>
 
-      {/* Loading state */}
-      {loading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      )}
-
       {/* Empty state */}
-      {!loading && filteredItems.length === 0 && (
+      {displayItems.length === 0 && (
         <div className="border-2 border-dashed border-border rounded-lg p-12 text-center">
           <LayoutGrid className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-          <p className="text-muted-foreground">
-            {selectedCategory !== 'all'
-              ? `No hay contenido en la categoría "${CATEGORIES.find((c) => c.value === selectedCategory)?.label}"`
-              : config.onlyFeatured
-                ? 'No hay contenido destacado'
-                : 'No hay contenido en el portfolio'}
+          <p className="text-muted-foreground mb-4">
+            {isEditing ? 'Agrega contenido a tu portfolio' : 'Sin contenido en el portfolio'}
           </p>
-          {isEditing && (
-            <p className="text-xs text-muted-foreground/70 mt-2">
-              Agrega contenido desde el Portfolio Manager en tu panel
-            </p>
+          {isEditing && isSelected && userId && (
+            <Button variant="outline" onClick={() => setMediaPickerOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Seleccionar contenido
+            </Button>
           )}
         </div>
       )}
 
-      {/* Portfolio grid */}
-      {!loading && filteredItems.length > 0 && renderLayout()}
+      {/* Portfolio content */}
+      {displayItems.length > 0 && renderLayout()}
 
-      {/* Visor fullscreen */}
-      {viewerOpen && viewerItems.length > 0 && (
-        <VideoPlayerProvider>
-          <FullscreenVideoViewer
-            videos={viewerItems}
-            initialIndex={viewerInitialIndex}
-            onClose={() => setViewerOpen(false)}
-          />
-        </VideoPlayerProvider>
+      {/* Contador de items */}
+      {isEditing && isSelected && items.length > 0 && (
+        <p className="text-[10px] text-muted-foreground text-center mt-4">
+          {items.length} de {config.maxItems} items maximo
+        </p>
+      )}
+
+      {/* Media Library Picker */}
+      {userId && (
+        <MediaLibraryPicker
+          open={mediaPickerOpen}
+          onOpenChange={setMediaPickerOpen}
+          onSelect={handleMediaSelect}
+          allowedTypes={['image', 'video']}
+          userId={userId}
+          creatorProfileId={creatorProfileId}
+        />
       )}
     </div>
   );

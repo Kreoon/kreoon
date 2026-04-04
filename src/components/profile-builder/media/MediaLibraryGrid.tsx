@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Play, ImageIcon } from 'lucide-react';
+import { Play, ImageIcon, Loader2 } from 'lucide-react';
 import type { MediaItem } from './types';
 
 interface MediaLibraryGridProps {
@@ -8,29 +9,74 @@ interface MediaLibraryGridProps {
   onSelect: (item: MediaItem) => void;
 }
 
+/**
+ * Extrae el video_id de una URL de Bunny Stream/CDN
+ */
+function extractBunnyVideoId(url: string): string | null {
+  if (!url) return null;
+
+  // URL de embed: https://iframe.mediadelivery.net/embed/{library_id}/{video_id}
+  const embedMatch = url.match(/iframe\.mediadelivery\.net\/(?:embed|play)\/\d+\/([a-f0-9-]+)/i);
+  if (embedMatch) return embedMatch[1];
+
+  // URL de CDN: https://vz-xxxxx.b-cdn.net/{video_id}/...
+  const cdnMatch = url.match(/vz-[a-f0-9-]+\.b-cdn\.net\/([a-f0-9-]+)/i);
+  if (cdnMatch) return cdnMatch[1];
+
+  return null;
+}
+
+/**
+ * Genera la URL del thumbnail de Bunny basándose en la URL del video
+ * Usa cdn.kreoon.com que es el dominio personalizado configurado en Bunny
+ */
+function getBunnyThumbnail(url: string): string | null {
+  const videoId = extractBunnyVideoId(url);
+  if (!videoId) return null;
+  // Dominio personalizado de Kreoon en Bunny CDN
+  return `https://cdn.kreoon.com/${videoId}/thumbnail.jpg`;
+}
+
 function MediaThumbnail({ item }: { item: MediaItem }) {
+  const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  // Determinar la URL del thumbnail
+  let thumbnailSrc: string | null = null;
+
   if (item.thumbnailUrl) {
+    thumbnailSrc = item.thumbnailUrl;
+  } else if (item.type === 'video' && item.url) {
+    // Intentar generar thumbnail de Bunny desde la URL del video
+    thumbnailSrc = getBunnyThumbnail(item.url);
+  } else if (item.type === 'image' && item.url) {
+    thumbnailSrc = item.url;
+  }
+
+  if (thumbnailSrc && !imageError) {
     return (
-      <img
-        src={item.thumbnailUrl}
-        alt={item.title ?? 'Medio'}
-        className="w-full h-full object-cover"
-        loading="lazy"
-      />
+      <>
+        {!imageLoaded && (
+          <div className="absolute inset-0 flex items-center justify-center bg-muted animate-pulse">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        )}
+        <img
+          src={thumbnailSrc}
+          alt={item.title ?? 'Medio'}
+          className={cn(
+            'w-full h-full object-cover transition-opacity duration-200',
+            imageLoaded ? 'opacity-100' : 'opacity-0'
+          )}
+          loading="lazy"
+          onLoad={() => setImageLoaded(true)}
+          onError={() => setImageError(true)}
+        />
+      </>
     );
   }
 
-  if (item.type === 'image' && item.url) {
-    return (
-      <img
-        src={item.url}
-        alt={item.title ?? 'Imagen'}
-        className="w-full h-full object-cover"
-        loading="lazy"
-      />
-    );
-  }
-
+  // Fallback: mostrar icono
   return (
     <div className="w-full h-full flex items-center justify-center bg-muted">
       {item.type === 'video' ? (

@@ -3,11 +3,21 @@ export interface MediaItem {
   type: 'image' | 'video';
   url: string;
   thumbnailUrl?: string;
+  /** Thumbnail URL alternativo (alias de thumbnailUrl para compatibilidad) */
+  thumbnail_url?: string;
   title?: string;
   tags?: string[];
   source: 'portfolio_items' | 'marketplace_media' | 'external_url';
   createdAt: string;
   aspectRatio?: string;
+  /** ID del video en Bunny Stream (opcional) */
+  bunnyVideoId?: string;
+  /** Duración del video en segundos */
+  duration?: number;
+  /** Conteo de vistas */
+  views_count?: number;
+  /** Conteo de likes */
+  likes_count?: number;
 }
 
 export interface MediaLibraryPickerProps {

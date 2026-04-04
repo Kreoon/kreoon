@@ -5,6 +5,18 @@
 import type { ProfileTemplate, ProfileBlock, BuilderConfig, BlockType, BlockStyles } from '../types/profile-builder';
 import { BLOCK_DEFINITIONS } from '../types/profile-builder';
 
+// Estilos y config por defecto para bloques que no existen aun en BLOCK_DEFINITIONS
+const FALLBACK_DEFAULTS = {
+  defaultConfig: {},
+  defaultStyles: {
+    padding: 'md' as const,
+    margin: 'none' as const,
+    shadow: 'none' as const,
+    borderRadius: 'md' as const,
+    width: 'full' as const,
+  },
+};
+
 // Helper para crear bloques de plantilla con estilos heredados de BLOCK_DEFINITIONS
 function createTemplateBlock(
   type: BlockType,
@@ -12,14 +24,9 @@ function createTemplateBlock(
   config: Record<string, unknown> = {},
   content: Record<string, unknown> = {},
   customStyles: Partial<BlockStyles> = {}
-): Omit<ProfileBlock, 'id' | 'isDraft'> | null {
-  const definition = BLOCK_DEFINITIONS[type];
-
-  // Si el bloque no existe en BLOCK_DEFINITIONS, retornar null
-  if (!definition) {
-    console.warn(`[ProfileTemplates] Block type "${type}" not found in BLOCK_DEFINITIONS, skipping`);
-    return null;
-  }
+): Omit<ProfileBlock, 'id' | 'isDraft'> {
+  // Usar definicion existente o fallback si el bloque no existe
+  const definition = BLOCK_DEFINITIONS[type] || FALLBACK_DEFAULTS;
 
   return {
     type,
@@ -583,27 +590,19 @@ export const TEMPLATE_AGENCIA: ProfileTemplate = {
 // EXPORT: Todas las plantillas organizadas por tier
 // =====================================================
 
-// Helper para filtrar bloques null (bloques que no existen en BLOCK_DEFINITIONS)
-function filterValidBlocks(template: ProfileTemplate): ProfileTemplate {
-  return {
-    ...template,
-    blocks: template.blocks.filter((block): block is Omit<ProfileBlock, 'id' | 'isDraft'> => block !== null),
-  };
-}
-
 export const FREE_TEMPLATES: ProfileTemplate[] = [
-  filterValidBlocks(TEMPLATE_MINIMALISTA),
-  filterValidBlocks(TEMPLATE_CREATIVO),
-  filterValidBlocks(TEMPLATE_PROFESIONAL),
+  TEMPLATE_MINIMALISTA,
+  TEMPLATE_CREATIVO,
+  TEMPLATE_PROFESIONAL,
 ];
 
 export const PRO_TEMPLATES: ProfileTemplate[] = [
-  filterValidBlocks(TEMPLATE_INFLUENCER),
-  filterValidBlocks(TEMPLATE_FREELANCER),
+  TEMPLATE_INFLUENCER,
+  TEMPLATE_FREELANCER,
 ];
 
 export const PREMIUM_TEMPLATES: ProfileTemplate[] = [
-  filterValidBlocks(TEMPLATE_AGENCIA),
+  TEMPLATE_AGENCIA,
 ];
 
 export const ALL_TEMPLATES: ProfileTemplate[] = [

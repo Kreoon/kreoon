@@ -221,6 +221,7 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
     marketplaceData,
     generatePreviewTokenAsync,
     saveBlocksAsync,
+    saveBuilderConfigAsync,
     publishBlocks,
     isSaving: hookIsSaving,
     isPublishing,
@@ -230,7 +231,14 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
   // Cargar bloques desde la BD al iniciar (o generados automáticamente)
   const [hasLoadedBlocks, setHasLoadedBlocks] = useState(false);
   useEffect(() => {
+    console.log('[ProfileBuilder] useEffect carga:', {
+      hasLoadedBlocks,
+      savedBlocksLength: savedBlocks.length,
+      stateBlocksLength: state.blocks.length,
+      savedTemplate,
+    });
     if (!hasLoadedBlocks && savedBlocks.length > 0 && state.blocks.length === 0) {
+      console.log('[ProfileBuilder] Cargando bloques desde BD:', savedBlocks.length);
       dispatch({ type: 'SET_BLOCKS', payload: savedBlocks });
       setCurrentTemplate(savedTemplate);
       setHasLoadedBlocks(true);
@@ -331,6 +339,16 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
   }, []);
 
   const handleSaveDraft = useCallback(async () => {
+    // Protección: no guardar si no hay bloques
+    if (!state.blocks || state.blocks.length === 0) {
+      toast({
+        title: 'No hay bloques',
+        description: 'Agrega al menos un bloque antes de guardar.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     dispatch({ type: 'SET_SAVING', payload: true });
     try {
       await saveBlocksAsync(state.blocks, true);
@@ -341,24 +359,69 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
       });
     } catch (err) {
       console.error('Error saving draft:', err);
+      toast({
+        title: 'Error al guardar',
+        description: 'No se pudo guardar el borrador. Intenta de nuevo.',
+        variant: 'destructive',
+      });
     } finally {
       dispatch({ type: 'SET_SAVING', payload: false });
     }
   }, [state.blocks, saveBlocksAsync, toast]);
 
   const handlePublish = useCallback(async () => {
+    // Protección: no publicar si no hay bloques
+    if (!state.blocks || state.blocks.length === 0) {
+      toast({
+        title: 'No hay bloques',
+        description: 'Agrega al menos un bloque antes de publicar.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    console.log('[handlePublish] Iniciando publicación...');
+    console.log('[handlePublish] Bloques a guardar:', state.blocks.length);
+    console.log('[handlePublish] Config:', state.builderConfig);
+
     dispatch({ type: 'SET_SAVING', payload: true });
     try {
-      // Primero guardar como publicado, luego ejecutar la publicación
+      // 1. Guardar la configuración del builder (tema, colores, fuentes)
+      console.log('[handlePublish] Paso 1: Guardando config...');
+      await saveBuilderConfigAsync(state.builderConfig);
+      console.log('[handlePublish] Config guardada OK');
+
+      // 2. Guardar bloques como publicados (isDraft: false)
+      // Esto elimina todos los bloques existentes y los reinserta como publicados
+      console.log('[handlePublish] Paso 2: Guardando bloques como publicados...');
+      console.log('[handlePublish] Bloques:', JSON.stringify(state.blocks.map(b => ({
+        id: b.id,
+        type: b.type,
+        orderIndex: b.orderIndex,
+        content: b.content,
+      }))));
       await saveBlocksAsync(state.blocks, false);
-      publishBlocks();
+      console.log('[handlePublish] Bloques guardados como publicados OK');
+
+      // Nota: No llamamos a publishBlocks() porque saveBlocksAsync con isDraft=false
+      // ya guarda los bloques como publicados directamente
+
       dispatch({ type: 'SET_DIRTY', payload: false });
+      toast({
+        title: 'Perfil publicado',
+        description: 'Tu perfil personalizado ya es visible en el marketplace.',
+      });
     } catch (err) {
-      console.error('Error publishing:', err);
+      console.error('[handlePublish] Error:', err);
+      toast({
+        title: 'Error al publicar',
+        description: err instanceof Error ? err.message : 'No se pudo guardar. Intenta de nuevo.',
+        variant: 'destructive',
+      });
     } finally {
       dispatch({ type: 'SET_SAVING', payload: false });
     }
-  }, [state.blocks, saveBlocksAsync, publishBlocks]);
+  }, [state.blocks, state.builderConfig, saveBlocksAsync, saveBuilderConfigAsync, toast]);
 
   const handlePreview = useCallback(async () => {
     const token = await generatePreviewTokenAsync();
