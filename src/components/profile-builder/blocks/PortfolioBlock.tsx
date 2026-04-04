@@ -518,7 +518,6 @@ function PortfolioBlockComponent({
     const item = displayItems[index];
     if (item?.type === 'image') {
       // TODO: Abrir lightbox para imagenes
-      console.log('Open image lightbox:', item);
     }
   }, [displayItems]);
 

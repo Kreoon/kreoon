@@ -122,9 +122,8 @@ export function MediaLibraryUploader({
 
           xhr.upload.addEventListener('progress', (event) => {
             if (event.lengthComputable) {
-              const percent = Math.round((event.loaded / event.total) * 100);
-              // Podriamos actualizar progreso aqui si tuvieramos un state
-              console.log(`[MediaLibraryUploader] Upload progress: ${percent}%`);
+              // TODO: Actualizar UI con progreso si se implementa state
+              // const percent = Math.round((event.loaded / event.total) * 100);
             }
           });
 
@@ -150,11 +149,6 @@ export function MediaLibraryUploader({
         // Usar URLs de Bunny Stream
         mediaUrl = createData.embed_url;
         thumbnailUrl = createData.thumbnail_url;
-        console.log('[MediaLibraryUploader] Video uploaded to Bunny Stream:', {
-          video_id: createData.video_id,
-          embed_url: mediaUrl,
-          thumbnail_url: thumbnailUrl,
-        });
 
       } else {
         // IMAGENES: usar Bunny Storage via useMediaUpload
