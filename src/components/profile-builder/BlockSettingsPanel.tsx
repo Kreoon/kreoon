@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Settings2, Wand2, RotateCcw } from 'lucide-react';
+import { Settings2, Wand2, RotateCcw, Plus, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -449,6 +449,28 @@ function ContentFields({
                 type="number"
                 value={String(currentValue)}
                 onChange={(e) => handleConfigChange(key, Number(e.target.value))}
+                className="h-8 text-xs"
+              />
+            </FieldRow>
+          );
+        }
+
+        // Campos de fecha: datetime-local picker
+        if (key.toLowerCase().includes('date') && typeof defaultValue === 'string') {
+          const toLocalInput = (iso: string) => {
+            if (!iso) return '';
+            try { return new Date(iso).toISOString().slice(0, 16); } catch { return ''; }
+          };
+          const fromLocalInput = (local: string) => {
+            if (!local) return '';
+            return new Date(local).toISOString();
+          };
+          return (
+            <FieldRow key={key} label={getConfigLabel(key)}>
+              <Input
+                type="datetime-local"
+                value={toLocalInput(String(currentValue))}
+                onChange={(e) => handleConfigChange(key, fromLocalInput(e.target.value))}
                 className="h-8 text-xs"
               />
             </FieldRow>

@@ -842,8 +842,10 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
       showHours: true,
       showMinutes: true,
       showSeconds: true,
+      title: '',
       completedText: 'Oferta terminada',
       style: 'cards', // cards | inline | minimal
+      accentColor: '',
     },
     defaultStyles: {
       padding: 'md',

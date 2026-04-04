@@ -4,12 +4,14 @@ import type { BlockProps } from '../types/profile-builder';
 
 interface CountdownConfig {
   targetDate: string;
+  title?: string;
   showDays: boolean;
   showHours: boolean;
   showMinutes: boolean;
   showSeconds: boolean;
   completedText: string;
   style: 'cards' | 'inline' | 'minimal';
+  accentColor?: string;
 }
 
 interface TimeLeft {
@@ -36,87 +38,150 @@ function calculateTimeLeft(targetDate: string): TimeLeft {
   };
 }
 
+const PADDING_CLASSES: Record<string, string> = {
+  none: 'p-0',
+  sm: 'p-4',
+  md: 'p-6',
+  lg: 'p-8',
+  xl: 'p-12',
+};
+
+const TEXT_ALIGN_CLASSES: Record<string, string> = {
+  left: 'text-left',
+  center: 'text-center',
+  right: 'text-right',
+};
+
+const MARGIN_CLASSES: Record<string, string> = {
+  sm: 'my-2',
+  md: 'my-4',
+  lg: 'my-6',
+  xl: 'my-8',
+};
+
 function CountdownBlockComponent({ block, isEditing, isSelected }: BlockProps) {
   const config = block.config as CountdownConfig;
   const styles = block.styles;
 
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(() =>
-    calculateTimeLeft(config.targetDate)
+    calculateTimeLeft(config.targetDate),
   );
 
   useEffect(() => {
+    setTimeLeft(calculateTimeLeft(config.targetDate));
     const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft(config.targetDate));
     }, 1000);
-
     return () => clearInterval(timer);
   }, [config.targetDate]);
 
-  const paddingClasses = {
-    none: 'p-0',
-    sm: 'p-4',
-    md: 'p-6',
-    lg: 'p-8',
-    xl: 'p-12',
-  };
+  const containerClass = cn(
+    PADDING_CLASSES[styles.padding || 'md'],
+    TEXT_ALIGN_CLASSES[styles.textAlign || 'center'],
+    styles.margin && MARGIN_CLASSES[styles.margin],
+    isEditing && isSelected && 'ring-2 ring-primary/50 rounded-lg',
+  );
 
-  const textAlignClasses = {
-    left: 'text-left',
-    center: 'text-center',
-    right: 'text-right',
-  };
+  const units = [
+    { value: timeLeft.days, label: 'Días', show: config.showDays ?? true },
+    { value: timeLeft.hours, label: 'Horas', show: config.showHours ?? true },
+    { value: timeLeft.minutes, label: 'Min', show: config.showMinutes ?? true },
+    { value: timeLeft.seconds, label: 'Seg', show: config.showSeconds ?? true },
+  ].filter((u) => u.show);
 
+  const accentColor = config.accentColor || styles.backgroundColor;
+
+  // Estado expirado
   if (timeLeft.isExpired) {
     return (
       <div
-        className={cn(
-          paddingClasses[styles.padding || 'md'],
-          textAlignClasses[styles.textAlign || 'center'],
-          styles.margin === 'sm' && 'my-2',
-          styles.margin === 'md' && 'my-4',
-          styles.margin === 'lg' && 'my-6',
-        )}
+        className={containerClass}
+        style={{ backgroundColor: styles.backgroundColor }}
       >
-        <p className="text-lg text-muted-foreground">
+        {config.title && (
+          <p className="text-sm font-medium uppercase tracking-widest text-muted-foreground mb-3">
+            {config.title}
+          </p>
+        )}
+        <p
+          className="text-xl font-semibold"
+          style={{ color: styles.textColor }}
+        >
           {config.completedText || 'Oferta terminada'}
         </p>
       </div>
     );
   }
 
-  const units = [
-    { value: timeLeft.days, label: 'Dias', show: config.showDays ?? true },
-    { value: timeLeft.hours, label: 'Horas', show: config.showHours ?? true },
-    { value: timeLeft.minutes, label: 'Min', show: config.showMinutes ?? true },
-    { value: timeLeft.seconds, label: 'Seg', show: config.showSeconds ?? true },
-  ].filter((u) => u.show);
-
-  // Cards style
-  if (config.style === 'cards') {
+  // Estilo cards (principal — números grandes con tarjetas)
+  if (!config.style || config.style === 'cards') {
     return (
       <div
-        className={cn(
-          paddingClasses[styles.padding || 'md'],
-          textAlignClasses[styles.textAlign || 'center'],
-          styles.margin === 'sm' && 'my-2',
-          styles.margin === 'md' && 'my-4',
-          styles.margin === 'lg' && 'my-6',
-          isEditing && isSelected && 'ring-2 ring-primary/50 rounded-lg',
-        )}
+        className={containerClass}
         style={{ backgroundColor: styles.backgroundColor }}
       >
-        <div className="flex justify-center gap-3 md:gap-4">
-          {units.map((unit) => (
-            <div
-              key={unit.label}
-              className="flex flex-col items-center p-3 md:p-4 rounded-lg bg-muted/50 min-w-[70px] md:min-w-[80px]"
-            >
-              <span className="text-2xl md:text-4xl font-bold tabular-nums text-foreground">
-                {String(unit.value).padStart(2, '0')}
-              </span>
-              <span className="text-xs md:text-sm text-muted-foreground uppercase tracking-wider">
-                {unit.label}
-              </span>
+        {config.title && (
+          <p
+            className="text-sm font-medium uppercase tracking-widest mb-5 opacity-70"
+            style={{ color: styles.textColor }}
+          >
+            {config.title}
+          </p>
+        )}
+        <div
+          className={cn(
+            'flex gap-3 md:gap-4',
+            styles.textAlign === 'left'
+              ? 'justify-start'
+              : styles.textAlign === 'right'
+                ? 'justify-end'
+                : 'justify-center',
+          )}
+        >
+          {units.map((unit, index) => (
+            <div key={unit.label} className="flex items-center gap-3 md:gap-4">
+              <div className="flex flex-col items-center">
+                <div
+                  className={cn(
+                    'flex items-center justify-center rounded-xl',
+                    'min-w-[64px] md:min-w-[88px] h-[72px] md:h-[96px]',
+                    'shadow-lg',
+                    !accentColor && 'bg-zinc-800/80 dark:bg-zinc-800/80',
+                  )}
+                  style={accentColor ? { backgroundColor: accentColor } : undefined}
+                >
+                  <span
+                    className={cn(
+                      'text-3xl md:text-5xl font-extrabold tabular-nums leading-none',
+                      !styles.textColor && 'text-foreground',
+                    )}
+                    style={styles.textColor ? { color: styles.textColor } : undefined}
+                  >
+                    {String(unit.value).padStart(2, '0')}
+                  </span>
+                </div>
+                <span
+                  className={cn(
+                    'mt-2 text-[10px] md:text-xs uppercase tracking-widest font-medium',
+                    !styles.textColor && 'text-muted-foreground',
+                  )}
+                  style={styles.textColor ? { color: styles.textColor, opacity: 0.65 } : undefined}
+                >
+                  {unit.label}
+                </span>
+              </div>
+              {index < units.length - 1 && (
+                <span
+                  className={cn(
+                    'text-2xl md:text-4xl font-bold mb-6 select-none',
+                    !styles.textColor && 'text-muted-foreground/60',
+                  )}
+                  style={styles.textColor ? { color: styles.textColor, opacity: 0.4 } : undefined}
+                  aria-hidden="true"
+                >
+                  :
+                </span>
+              )}
             </div>
           ))}
         </div>
@@ -124,25 +189,48 @@ function CountdownBlockComponent({ block, isEditing, isSelected }: BlockProps) {
     );
   }
 
-  // Inline style
+  // Estilo inline (reloj monospace)
   if (config.style === 'inline') {
     return (
       <div
-        className={cn(
-          paddingClasses[styles.padding || 'md'],
-          textAlignClasses[styles.textAlign || 'center'],
-          styles.margin === 'sm' && 'my-2',
-          styles.margin === 'md' && 'my-4',
-          styles.margin === 'lg' && 'my-6',
-          isEditing && isSelected && 'ring-2 ring-primary/50 rounded-lg',
-        )}
+        className={containerClass}
         style={{ backgroundColor: styles.backgroundColor }}
       >
-        <p className="text-2xl md:text-3xl font-mono font-bold text-foreground">
+        {config.title && (
+          <p
+            className="text-sm font-medium uppercase tracking-widest mb-3 opacity-70"
+            style={{ color: styles.textColor }}
+          >
+            {config.title}
+          </p>
+        )}
+        <p
+          className={cn(
+            'text-3xl md:text-5xl font-mono font-bold tracking-tight',
+            !styles.textColor && 'text-foreground',
+          )}
+          style={styles.textColor ? { color: styles.textColor } : undefined}
+        >
           {units.map((unit, i) => (
             <span key={unit.label}>
-              {String(unit.value).padStart(2, '0')}
-              {i < units.length - 1 && <span className="text-muted-foreground mx-1">:</span>}
+              <span>{String(unit.value).padStart(2, '0')}</span>
+              {i < units.length - 1 && (
+                <span className="opacity-40 mx-1">:</span>
+              )}
+            </span>
+          ))}
+        </p>
+        <p
+          className={cn(
+            'mt-1 text-xs uppercase tracking-widest opacity-50',
+            !styles.textColor && 'text-muted-foreground',
+          )}
+          style={styles.textColor ? { color: styles.textColor } : undefined}
+        >
+          {units.map((u, i) => (
+            <span key={u.label}>
+              {u.label}
+              {i < units.length - 1 && <span className="mx-2 opacity-40">·</span>}
             </span>
           ))}
         </p>
@@ -150,28 +238,57 @@ function CountdownBlockComponent({ block, isEditing, isSelected }: BlockProps) {
     );
   }
 
-  // Minimal style (default)
+  // Estilo minimal
   return (
     <div
-      className={cn(
-        paddingClasses[styles.padding || 'md'],
-        textAlignClasses[styles.textAlign || 'center'],
-        styles.margin === 'sm' && 'my-2',
-        styles.margin === 'md' && 'my-4',
-        styles.margin === 'lg' && 'my-6',
-        isEditing && isSelected && 'ring-2 ring-primary/50 rounded-lg',
-      )}
+      className={containerClass}
       style={{ backgroundColor: styles.backgroundColor }}
     >
-      <div className="flex justify-center items-baseline gap-2 flex-wrap">
+      {config.title && (
+        <p
+          className="text-sm font-medium uppercase tracking-widest mb-3 opacity-70"
+          style={{ color: styles.textColor }}
+        >
+          {config.title}
+        </p>
+      )}
+      <div
+        className={cn(
+          'flex items-baseline gap-3 flex-wrap',
+          styles.textAlign === 'left'
+            ? 'justify-start'
+            : styles.textAlign === 'right'
+              ? 'justify-end'
+              : 'justify-center',
+        )}
+      >
         {units.map((unit, i) => (
           <span key={unit.label} className="inline-flex items-baseline gap-1">
-            <span className="text-xl md:text-2xl font-bold text-foreground">
-              {unit.value}
+            <span
+              className={cn(
+                'text-2xl md:text-3xl font-bold tabular-nums',
+                !styles.textColor && 'text-foreground',
+              )}
+              style={styles.textColor ? { color: styles.textColor } : undefined}
+            >
+              {String(unit.value).padStart(2, '0')}
             </span>
-            <span className="text-sm text-muted-foreground">{unit.label}</span>
+            <span
+              className={cn(
+                'text-xs uppercase tracking-wider',
+                !styles.textColor && 'text-muted-foreground',
+              )}
+              style={styles.textColor ? { color: styles.textColor, opacity: 0.6 } : undefined}
+            >
+              {unit.label}
+            </span>
             {i < units.length - 1 && (
-              <span className="text-muted-foreground/50 mx-1">·</span>
+              <span
+                className="text-muted-foreground/40 mx-1 text-lg"
+                aria-hidden="true"
+              >
+                ·
+              </span>
             )}
           </span>
         ))}

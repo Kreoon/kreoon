@@ -127,7 +127,9 @@ export const CONFIG_LABELS: Record<string, string> = {
   showHours: 'Mostrar horas',
   showMinutes: 'Mostrar minutos',
   showSeconds: 'Mostrar segundos',
+  title: 'Titulo del contador',
   completedText: 'Texto al completar',
+  accentColor: 'Color de acento',
 
   // ─── Embed ──────────────────────────────────────────────────────────────────
   code: 'Codigo HTML',
