@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import type { BlockProps } from '../types/profile-builder';
 import { TextFormatPopup, useTextFormatPopup } from '../TextFormatPopup';
+import { getBlockStyleObject } from './blockStyles';
 
 // Renderiza HTML sanitizado
 function SafeHtml({ html, className }: { html: string; className?: string }) {
@@ -73,21 +74,30 @@ function CTABannerBlockComponent({ block, isEditing, isSelected, onUpdate }: Blo
     full: 'rounded-3xl',
   };
 
+  // Usa getBlockStyleObject para obtener estilos base
+  const baseStyles = getBlockStyleObject(styles);
+
+  // Combinar con estilos específicos del CTA Banner (fallback de gradiente)
+  const blockStyle: React.CSSProperties = {
+    ...baseStyles,
+    // Si no hay background definido, usar gradiente por defecto del CTA
+    background: baseStyles.background || baseStyles.backgroundColor ||
+      'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
+  };
+
   return (
     <div
       className={cn(
         'relative overflow-hidden',
         paddingClasses[styles.padding || 'xl'],
-        borderRadiusClasses[styles.borderRadius || 'lg'],
+        !blockStyle.borderRadius && borderRadiusClasses[styles.borderRadius || 'lg'],
         styles.margin === 'sm' && 'my-2',
         styles.margin === 'md' && 'my-4',
         styles.margin === 'lg' && 'my-8',
         styles.margin === 'xl' && 'my-12',
         isEditing && isSelected && 'ring-2 ring-primary/50',
       )}
-      style={{
-        background: styles.backgroundGradient || 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
-      }}
+      style={blockStyle}
     >
       {/* Content */}
       <div className="relative z-10 max-w-2xl mx-auto text-center">

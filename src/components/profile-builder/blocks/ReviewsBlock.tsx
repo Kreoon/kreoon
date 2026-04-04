@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { usePublicReviews, useReviewStats, type CreatorReview } from '@/hooks/useCreatorReviews';
 import type { BlockProps } from '../types/profile-builder';
+import { getBlockStyleObject } from './blockStyles';
 
 interface ReviewsConfig {
   layout: 'carousel' | 'grid';
@@ -211,10 +212,12 @@ function ReviewsBlockComponent({ block, isEditing, isSelected, onUpdate, creator
     onUpdate({ content: { ...content, ...updates } });
   };
 
+  const blockStyle = getBlockStyleObject(styles);
+
   // Si esta cargando, mostrar skeleton
   if (isLoading) {
     return (
-      <div className={cn('rounded-lg', paddingClasses[styles.padding || 'md'])}>
+      <div className={cn('rounded-lg', paddingClasses[styles.padding || 'md'])} style={blockStyle}>
         <div className="h-8 w-48 bg-muted/50 rounded animate-pulse mb-6" />
         <div className={cn('grid gap-4', getColumnsClass(config.columns))}>
           {[1, 2, 3].map((i) => (
@@ -238,7 +241,7 @@ function ReviewsBlockComponent({ block, isEditing, isSelected, onUpdate, creator
   // Si hay error de BD (tabla no existe), mostrar placeholder sin crashear
   if (hasError && !isLoading) {
     return (
-      <div className={cn('rounded-lg', paddingClasses[styles.padding || 'md'])}>
+      <div className={cn('rounded-lg', paddingClasses[styles.padding || 'md'])} style={blockStyle}>
         <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
           {content.title || 'Lo que dicen de mi'}
         </h2>
@@ -250,7 +253,7 @@ function ReviewsBlockComponent({ block, isEditing, isSelected, onUpdate, creator
   return (
     <div
       className={cn('rounded-lg', paddingClasses[styles.padding || 'md'])}
-      style={{ backgroundColor: styles.backgroundColor, color: styles.textColor }}
+      style={blockStyle}
     >
       {/* Titulo - Solo el titulo es editable */}
       {isEditing && isSelected ? (

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import type { BlockProps } from '../types/profile-builder';
+import { getBlockStyleObject } from './blockStyles';
 
 interface SkillItem {
   id: string;
@@ -28,14 +29,6 @@ const DEFAULT_SKILLS: SkillItem[] = [
   { id: '4', name: 'Guion y storytelling', level: 75 },
   { id: '5', name: 'Social Media Strategy', level: 70 },
 ];
-
-const paddingClasses = {
-  none: 'p-0',
-  sm: 'p-4',
-  md: 'p-6',
-  lg: 'p-8',
-  xl: 'p-12',
-};
 
 interface AnimatedBarProps {
   level: number;
@@ -105,10 +98,7 @@ function SkillsBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockP
   };
 
   return (
-    <div
-      className={cn('rounded-lg', paddingClasses[styles.padding || 'md'])}
-      style={{ backgroundColor: styles.backgroundColor, color: styles.textColor }}
-    >
+    <div style={getBlockStyleObject(styles)}>
       {/* Titulo */}
       {isEditing && isSelected ? (
         <input

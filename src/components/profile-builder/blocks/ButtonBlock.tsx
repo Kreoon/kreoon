@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, ArrowRight, ChevronRight, Send, MessageCircle, Mail, Phone } from 'lucide-react';
 import type { BlockProps } from '../types/profile-builder';
+import { getBlockStyleObject } from './blockStyles';
 
 interface ButtonConfig {
   text: string;
@@ -58,14 +59,6 @@ function ButtonBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockP
     right: 'justify-end',
   };
 
-  const paddingClasses = {
-    none: 'p-0',
-    sm: 'p-2',
-    md: 'p-4',
-    lg: 'p-6',
-    xl: 'p-8',
-  };
-
   const IconComponent = config.icon ? ICON_MAP[config.icon] : null;
 
   const buttonContent = (
@@ -85,12 +78,8 @@ function ButtonBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockP
       className={cn(
         'flex',
         textAlignClasses[styles.textAlign || 'center'],
-        paddingClasses[styles.padding || 'sm'],
-        styles.margin === 'sm' && 'my-2',
-        styles.margin === 'md' && 'my-4',
-        styles.margin === 'lg' && 'my-6',
-        styles.margin === 'xl' && 'my-8',
       )}
+      style={getBlockStyleObject(styles)}
     >
       {isEditing && isSelected ? (
         <div className="flex flex-col gap-2 w-full max-w-md">

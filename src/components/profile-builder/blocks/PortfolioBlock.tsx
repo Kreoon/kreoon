@@ -33,6 +33,7 @@ import { MediaLibraryPicker } from '../media/MediaLibraryPicker';
 import type { MediaItem } from '../media/types';
 import { getBunnyVideoUrls, extractBunnyIds } from '@/hooks/useHLSPlayer';
 import { BunnyStreamPlayer } from './BunnyStreamPlayer';
+import { getBlockStyleObject } from './blockStyles';
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 
@@ -601,7 +602,10 @@ function PortfolioBlockComponent({
   };
 
   return (
-    <div className={cn(paddingClasses[styles.padding || 'md'])}>
+    <div
+      className={cn(paddingClasses[styles.padding || 'md'])}
+      style={getBlockStyleObject(styles)}
+    >
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-foreground">Portfolio</h2>

@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/accordion';
 import type { BlockProps } from '../types/profile-builder';
 import { TextFormatPopup, useTextFormatPopup } from '../TextFormatPopup';
+import { getBlockStyleObject } from './blockStyles';
 
 // Renderiza HTML sanitizado
 function SafeHtml({ html, className }: { html: string; className?: string }) {
@@ -67,14 +68,6 @@ const DEFAULT_ITEMS: FAQItem[] = [
   },
 ];
 
-const paddingClasses = {
-  none: 'p-0',
-  sm: 'p-4',
-  md: 'p-6',
-  lg: 'p-8',
-  xl: 'p-12',
-};
-
 function FAQBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockProps) {
   const config = block.config as FAQConfig;
   const content = block.content as FAQContent;
@@ -130,10 +123,7 @@ function FAQBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockProp
   };
 
   return (
-    <div
-      className={cn('rounded-lg', paddingClasses[styles.padding || 'md'])}
-      style={{ backgroundColor: styles.backgroundColor, color: styles.textColor }}
-    >
+    <div style={getBlockStyleObject(styles)}>
       {/* Titulo - Editable */}
       <div
         className={cn(

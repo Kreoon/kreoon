@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import type { BlockProps } from '../types/profile-builder';
+import { getBlockStyleObject } from './blockStyles';
 
 interface CaseStudyItem {
   id: string;
@@ -48,6 +49,9 @@ function CaseStudyBlockComponent({ block, isEditing, isSelected, onUpdate }: Blo
     lg: 'p-8',
     xl: 'p-12',
   };
+
+  // Usa getBlockStyleObject para obtener estilos base
+  const blockStyle = getBlockStyleObject(styles);
 
   const handleAddItem = () => {
     const newItem: CaseStudyItem = {
@@ -229,7 +233,10 @@ function CaseStudyBlockComponent({ block, isEditing, isSelected, onUpdate }: Blo
   );
 
   return (
-    <div className={cn(paddingClasses[styles.padding || 'md'])}>
+    <div
+      className={cn(paddingClasses[styles.padding || 'md'])}
+      style={blockStyle}
+    >
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-foreground">Casos de Exito</h2>

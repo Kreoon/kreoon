@@ -6,7 +6,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { ChevronDown, ChevronRight, Palette, Type, Box, Sparkles, Layers, ImagePlus, Link2, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Palette, Type, Box, Sparkles, Layers, ImagePlus, Link2, X, Square } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -127,6 +127,7 @@ export function AdvancedStylesTab({ styles, onStylesChange, userId, creatorProfi
       });
     }
   }, [deviceMode, styles.responsiveOverrides, onStylesChange]);
+
   // Helpers para convertir entre formatos (usan effectiveStyles para mostrar valor correcto)
   const getSpacingValues = (prefix: 'paddingCustom' | 'marginCustom'): SpacingValues => {
     const custom = effectiveStyles[prefix];
@@ -456,6 +457,131 @@ export function AdvancedStylesTab({ styles, onStylesChange, userId, creatorProfi
             value={getSpacingValues('marginCustom')}
             onChange={(values) => handleStyleChange({ marginCustom: values })}
           />
+        </div>
+      </StyleSection>
+
+      {/* Bordes */}
+      <StyleSection icon={Square} title="Bordes">
+        <div className="space-y-4">
+          {/* Estilo de borde */}
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Estilo de borde</Label>
+            <Select
+              value={effectiveStyles.borderStyle || 'none'}
+              onValueChange={(v) => handleStyleChange({ borderStyle: v as BlockStyles['borderStyle'] })}
+            >
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sin borde</SelectItem>
+                <SelectItem value="solid">Solido</SelectItem>
+                <SelectItem value="dashed">Discontinuo</SelectItem>
+                <SelectItem value="dotted">Punteado</SelectItem>
+                <SelectItem value="double">Doble</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Grosor y color solo si hay borde */}
+          {effectiveStyles.borderStyle && effectiveStyles.borderStyle !== 'none' && (
+            <>
+              {/* Grosor de borde */}
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Grosor del borde</Label>
+                <div className="flex items-center gap-2">
+                  <Slider
+                    value={[parseInt(effectiveStyles.borderWidth || '1', 10)]}
+                    min={1}
+                    max={16}
+                    step={1}
+                    onValueChange={([v]) => handleStyleChange({ borderWidth: `${v}px` })}
+                    className="flex-1 py-2"
+                  />
+                  <span className="text-xs text-muted-foreground w-8 text-right tabular-nums">
+                    {effectiveStyles.borderWidth || '1px'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Color del borde */}
+              <ColorPickerAdvanced
+                label="Color del borde"
+                value={effectiveStyles.borderColor || '#e4e4e7'}
+                onChange={(color) => handleStyleChange({ borderColor: color })}
+              />
+            </>
+          )}
+
+          {/* Radio de borde */}
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Radio de esquinas</Label>
+            <Select
+              value={effectiveStyles.borderRadius || 'none'}
+              onValueChange={(v) => handleStyleChange({ borderRadius: v as BlockStyles['borderRadius'] })}
+            >
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Cuadrado (0)</SelectItem>
+                <SelectItem value="sm">Suave (4px)</SelectItem>
+                <SelectItem value="md">Medio (8px)</SelectItem>
+                <SelectItem value="lg">Redondeado (12px)</SelectItem>
+                <SelectItem value="full">Circular (9999px)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Radio personalizado por esquina */}
+          {effectiveStyles.borderRadius !== 'none' && (
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Radio por esquina (px)</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {(
+                  [
+                    { key: 'tl', label: 'Sup. izq.' },
+                    { key: 'tr', label: 'Sup. der.' },
+                    { key: 'bl', label: 'Inf. izq.' },
+                    { key: 'br', label: 'Inf. der.' },
+                  ] as const
+                ).map(({ key, label }) => (
+                  <div key={key} className="space-y-1">
+                    <Label className="text-[10px] text-muted-foreground">{label}</Label>
+                    <Input
+                      type="text"
+                      placeholder="8px"
+                      value={effectiveStyles.borderRadiusCustom?.[key] || ''}
+                      onChange={(e) =>
+                        handleStyleChange({
+                          borderRadiusCustom: {
+                            tl: '0px',
+                            tr: '0px',
+                            br: '0px',
+                            bl: '0px',
+                            ...(effectiveStyles.borderRadiusCustom || {}),
+                            [key]: e.target.value,
+                          },
+                        })
+                      }
+                      className="h-7 text-xs"
+                    />
+                  </div>
+                ))}
+              </div>
+              {effectiveStyles.borderRadiusCustom && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 text-xs text-muted-foreground w-full"
+                  onClick={() => handleStyleChange({ borderRadiusCustom: undefined })}
+                >
+                  Limpiar radios personalizados
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </StyleSection>
 

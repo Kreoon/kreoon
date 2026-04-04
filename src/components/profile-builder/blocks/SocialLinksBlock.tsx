@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { BlockProps } from '../types/profile-builder';
+import { getBlockStyleObject } from './blockStyles';
 
 type SocialPlatform =
   | 'instagram'
@@ -151,18 +152,9 @@ const DEFAULT_LINKS: SocialLink[] = [
   { platform: 'youtube', url: '' },
 ];
 
-const paddingClasses = {
-  none: 'p-0',
-  sm: 'p-4',
-  md: 'p-6',
-  lg: 'p-8',
-  xl: 'p-12',
-};
-
 function SocialLinksBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockProps) {
   const config = block.config as SocialLinksConfig;
   const content = block.content as SocialLinksContent;
-  const styles = block.styles;
   const links = content.links || DEFAULT_LINKS;
 
   const handleContentUpdate = (updates: Partial<SocialLinksContent>) => {
@@ -189,10 +181,7 @@ function SocialLinksBlockComponent({ block, isEditing, isSelected, onUpdate }: B
   const visibleLinks = links.filter((l) => l.url || isEditing);
 
   return (
-    <div
-      className={cn('rounded-lg', paddingClasses[styles.padding || 'sm'])}
-      style={{ backgroundColor: styles.backgroundColor, color: styles.textColor }}
-    >
+    <div style={getBlockStyleObject(block.styles)}>
       {/* Titulo opcional */}
       {(content.title || (isEditing && isSelected)) && (
         <div className="mb-4">

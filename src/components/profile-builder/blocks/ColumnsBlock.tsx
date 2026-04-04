@@ -12,6 +12,7 @@ import { Columns3, Plus, GripVertical, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import type { BlockProps, ProfileBlock } from '../types/profile-builder';
+import { getBlockStyleObject } from './blockStyles';
 
 interface ColumnsConfig {
   columns: 2 | 3 | 4 | 5 | 6;
@@ -37,12 +38,20 @@ const columnGridClasses = {
   6: 'md:grid-cols-6',
 };
 
-const paddingClasses = {
+const paddingClasses: Record<string, string> = {
   none: 'p-0',
   sm: 'p-3',
   md: 'p-4',
   lg: 'p-6',
   xl: 'p-8',
+};
+
+const borderRadiusClasses: Record<string, string> = {
+  none: '',
+  sm: 'rounded-sm',
+  md: 'rounded-md',
+  lg: 'rounded-lg',
+  full: 'rounded-full',
 };
 
 // Componente de columna droppable
@@ -210,12 +219,14 @@ function ColumnsBlockComponent({
         styles.margin === 'md' && 'my-4',
         styles.margin === 'lg' && 'my-6',
         styles.margin === 'xl' && 'my-8',
-        styles.borderRadius === 'sm' && 'rounded-sm',
-        styles.borderRadius === 'md' && 'rounded-md',
-        styles.borderRadius === 'lg' && 'rounded-lg',
+        borderRadiusClasses[styles.borderRadius || 'none'],
       )}
       style={{
+        ...getBlockStyleObject(block.styles),
         backgroundColor: styles.backgroundColor,
+        borderWidth: styles.borderWidth || undefined,
+        borderColor: styles.borderColor || undefined,
+        borderStyle: styles.borderWidth ? 'solid' : undefined,
       }}
     >
       <div

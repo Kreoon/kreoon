@@ -11,18 +11,27 @@ import { BoxSelect, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import type { BlockProps, ProfileBlock } from '../types/profile-builder';
+import { getBlockStyleObject } from './blockStyles';
 
 interface ContainerConfig {
   maxWidth: string;
   centered: boolean;
 }
 
-const paddingClasses = {
+const paddingClasses: Record<string, string> = {
   none: 'p-0',
   sm: 'p-4',
   md: 'p-6',
   lg: 'p-8',
   xl: 'p-12',
+};
+
+const borderRadiusClasses: Record<string, string> = {
+  none: '',
+  sm: 'rounded-sm',
+  md: 'rounded-md',
+  lg: 'rounded-lg',
+  full: 'rounded-full',
 };
 
 // Props extendidas para ContainerBlock
@@ -69,10 +78,15 @@ function ContainerBlockComponent({
         styles.margin === 'md' && 'my-4',
         styles.margin === 'lg' && 'my-6',
         styles.margin === 'xl' && 'my-8',
-        isEditing && isSelected && 'ring-2 ring-primary/30 rounded-lg',
+        borderRadiusClasses[styles.borderRadius || 'none'],
+        isEditing && isSelected && 'ring-2 ring-primary/30',
       )}
       style={{
+        ...getBlockStyleObject(block.styles),
         backgroundColor: styles.backgroundColor,
+        borderWidth: styles.borderWidth || undefined,
+        borderColor: styles.borderColor || undefined,
+        borderStyle: styles.borderWidth ? 'solid' : undefined,
       }}
     >
       <div

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import type { BlockProps } from '../types/profile-builder';
+import { getBlockStyleObject } from './blockStyles';
 
 interface TimelineEvent {
   id: string;
@@ -50,14 +51,6 @@ const DEFAULT_EVENTS: TimelineEvent[] = [
   },
 ];
 
-const paddingClasses = {
-  none: 'p-0',
-  sm: 'p-4',
-  md: 'p-6',
-  lg: 'p-8',
-  xl: 'p-12',
-};
-
 function TimelineBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockProps) {
   const config = block.config as TimelineConfig;
   const content = block.content as TimelineContent;
@@ -90,10 +83,7 @@ function TimelineBlockComponent({ block, isEditing, isSelected, onUpdate }: Bloc
   };
 
   return (
-    <div
-      className={cn('rounded-lg', paddingClasses[styles.padding || 'md'])}
-      style={{ backgroundColor: styles.backgroundColor, color: styles.textColor }}
-    >
+    <div style={getBlockStyleObject(styles)}>
       {/* Titulo */}
       {isEditing && isSelected ? (
         <input

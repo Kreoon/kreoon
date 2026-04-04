@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import type { BlockProps } from '../types/profile-builder';
 import { BunnyStreamPlayer, isBunnyUrl } from './BunnyStreamPlayer';
+import { getBlockStyleObject } from './blockStyles';
 
 type VideoProvider = 'youtube' | 'vimeo' | 'bunny' | 'unknown';
 
@@ -18,12 +19,12 @@ interface VideoEmbedContent {
   provider?: VideoProvider;
 }
 
-const paddingClasses = {
-  none: 'p-0',
-  sm: 'p-4',
-  md: 'p-6',
-  lg: 'p-8',
-  xl: 'p-12',
+const borderRadiusClasses: Record<string, string> = {
+  none: '',
+  sm: 'rounded',
+  md: 'rounded-lg',
+  lg: 'rounded-xl',
+  full: 'rounded-2xl',
 };
 
 function detectProvider(url: string): VideoProvider {
@@ -107,18 +108,12 @@ function VideoEmbedBlockComponent({ block, isEditing, isSelected, onUpdate }: Bl
     });
   };
 
-  const borderRadiusClasses = {
-    none: '',
-    sm: 'rounded',
-    md: 'rounded-lg',
-    lg: 'rounded-xl',
-    full: 'rounded-2xl',
-  };
+  const containerBorderRadius = borderRadiusClasses[styles.borderRadius || 'md'];
 
   return (
     <div
-      className={cn('rounded-lg', paddingClasses[styles.padding || 'md'])}
-      style={{ backgroundColor: styles.backgroundColor }}
+      className={cn(containerBorderRadius)}
+      style={getBlockStyleObject(styles)}
     >
       {/* Campo URL en edicion */}
       {isEditing && isSelected && (
@@ -155,7 +150,7 @@ function VideoEmbedBlockComponent({ block, isEditing, isSelected, onUpdate }: Bl
         <div
           className={cn(
             'relative w-full overflow-hidden',
-            borderRadiusClasses[styles.borderRadius || 'md'],
+            containerBorderRadius,
           )}
           style={{ paddingBottom: '56.25%' }}
         >
@@ -172,7 +167,7 @@ function VideoEmbedBlockComponent({ block, isEditing, isSelected, onUpdate }: Bl
         <div
           className={cn(
             'w-full aspect-video bg-muted/30 border border-border/50 flex flex-col items-center justify-center gap-3',
-            borderRadiusClasses[styles.borderRadius || 'md'],
+            containerBorderRadius,
           )}
         >
           {content.url && provider === 'unknown' ? (

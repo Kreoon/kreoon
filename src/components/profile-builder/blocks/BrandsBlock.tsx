@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import type { BlockProps } from '../types/profile-builder';
 import { MediaLibraryPicker } from '../media/MediaLibraryPicker';
 import type { MediaItem } from '../media/types';
+import { getBlockStyleObject } from './blockStyles';
 
 interface BrandItem {
   id: string;
@@ -30,14 +31,6 @@ const DEFAULT_BRANDS: BrandItem[] = [
   { id: '5', name: 'Marca 5', logoUrl: '' },
   { id: '6', name: 'Marca 6', logoUrl: '' },
 ];
-
-const paddingClasses = {
-  none: 'p-0',
-  sm: 'p-4',
-  md: 'p-6',
-  lg: 'p-8',
-  xl: 'p-12',
-};
 
 function BrandsBlockComponent({ block, isEditing, isSelected, onUpdate, userId, creatorProfileId }: BlockProps) {
   const config = block.config as BrandsConfig;
@@ -88,10 +81,7 @@ function BrandsBlockComponent({ block, isEditing, isSelected, onUpdate, userId, 
   };
 
   return (
-    <div
-      className={cn('rounded-lg', paddingClasses[styles.padding || 'md'])}
-      style={{ backgroundColor: styles.backgroundColor, color: styles.textColor }}
-    >
+    <div style={getBlockStyleObject(styles)}>
       {/* Titulo */}
       {isEditing && isSelected ? (
         <input

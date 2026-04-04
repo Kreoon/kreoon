@@ -9,6 +9,7 @@ import { useMarketplaceCreators } from '@/hooks/useMarketplaceCreators';
 import { MarketplaceCreatorCard } from '@/components/marketplace/CreatorCard';
 import { CreatorCardSkeleton } from '@/components/marketplace/CreatorCardSkeleton';
 import type { BlockProps } from '../types/profile-builder';
+import { getBlockStyleObject } from './blockStyles';
 
 interface RecommendedTalentConfig {
   maxItems: number;
@@ -88,16 +89,21 @@ function RecommendedTalentBlockComponent({ block, isEditing, isSelected, onUpdat
     return null;
   }
 
+  // Obtener estilos base y combinar con valores por defecto
+  const baseStyle = getBlockStyleObject(styles);
+  const blockStyle: React.CSSProperties = {
+    backgroundColor: styles.backgroundColor || 'rgba(139, 92, 246, 0.03)',
+    ...baseStyle,
+  };
+
   return (
     <div
       className={cn(
         'rounded-xl border border-border/30 relative',
-        paddingClasses[styles.padding || 'lg'],
+        // Solo aplicar clase si no hay padding custom
+        !styles.paddingCustom && paddingClasses[styles.padding || 'lg'],
       )}
-      style={{
-        backgroundColor: styles.backgroundColor || 'rgba(139, 92, 246, 0.03)',
-        color: styles.textColor,
-      }}
+      style={blockStyle}
     >
       {/* Badge de monetizacion Kreoon (solo visible en FREE) */}
       {isFree && (

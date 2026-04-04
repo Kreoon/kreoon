@@ -4,6 +4,7 @@ import DOMPurify from 'dompurify';
 import { cn } from '@/lib/utils';
 import type { BlockProps } from '../types/profile-builder';
 import { TextFormatPopup, useTextFormatPopup } from '../TextFormatPopup';
+import { getBlockStyleObject } from './blockStyles';
 
 interface HeadlineConfig {
   text: string;
@@ -21,13 +22,13 @@ const sizeClasses = {
   '2xl': 'text-5xl md:text-6xl',
 };
 
-const animationClasses = {
-  'none': '',
+const animationClasses: Record<string, string> = {
+  none: '',
   'fade-in': 'animate-in fade-in duration-700',
   'slide-up': 'animate-in slide-in-from-bottom-4 duration-700',
   'slide-down': 'animate-in slide-in-from-top-4 duration-700',
   'scale-in': 'animate-in zoom-in-95 duration-500',
-  'bounce': 'animate-bounce',
+  bounce: 'animate-bounce',
 };
 
 // Renderiza HTML sanitizado
@@ -42,6 +43,12 @@ function SafeHtml({ html, className, style }: { html: string; className?: string
 function isHtml(str: string): boolean {
   return /<[a-z][\s\S]*>/i.test(str);
 }
+
+const textAlignClasses: Record<string, string> = {
+  left: 'text-left',
+  center: 'text-center',
+  right: 'text-right',
+};
 
 function HeadlineBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockProps) {
   const config = block.config as HeadlineConfig;
@@ -61,45 +68,31 @@ function HeadlineBlockComponent({ block, isEditing, isSelected, onUpdate }: Bloc
     closeEditor();
   };
 
-  const textAlignClasses = {
-    left: 'text-left',
-    center: 'text-center',
-    right: 'text-right',
-  };
-
-  const paddingClasses = {
-    none: 'p-0',
-    sm: 'p-2',
-    md: 'p-4',
-    lg: 'p-6',
-    xl: 'p-8',
-  };
-
   const Tag = config.tag || 'h2';
-  const gradientStyle = config.gradient
+
+  // El gradiente de texto del headline usa -webkit-background-clip,
+  // por eso se aplica como estilo separado sobre el elemento de texto.
+  const gradientTextStyle: React.CSSProperties = config.gradient
     ? {
         background: `linear-gradient(135deg, ${config.gradientColors?.[0] || '#8B5CF6'}, ${config.gradientColors?.[1] || '#EC4899'})`,
         WebkitBackgroundClip: 'text',
         WebkitTextFillColor: 'transparent',
         backgroundClip: 'text',
       }
-    : { color: styles.textColor };
+    : {};
+
+  const containerStyle: React.CSSProperties = {
+    ...getBlockStyleObject(styles),
+    animationDelay: styles.animationDelay ? `${styles.animationDelay}ms` : undefined,
+  };
 
   return (
     <div
       className={cn(
-        paddingClasses[styles.padding || 'md'],
-        styles.margin === 'sm' && 'my-2',
-        styles.margin === 'md' && 'my-4',
-        styles.margin === 'lg' && 'my-6',
-        styles.margin === 'xl' && 'my-8',
         textAlignClasses[styles.textAlign || 'center'],
         animationClasses[styles.animation || 'none'],
       )}
-      style={{
-        backgroundColor: styles.backgroundColor,
-        animationDelay: styles.animationDelay ? `${styles.animationDelay}ms` : undefined,
-      }}
+      style={containerStyle}
     >
       {/* Headline - Editable */}
       <div
@@ -113,12 +106,12 @@ function HeadlineBlockComponent({ block, isEditing, isSelected, onUpdate }: Bloc
           <SafeHtml
             html={config.text || 'Tu titulo aqui'}
             className={cn('font-bold leading-tight tracking-tight', sizeClasses[config.size || 'xl'])}
-            style={gradientStyle}
+            style={gradientTextStyle}
           />
         ) : (
           <Tag
             className={cn('font-bold leading-tight tracking-tight', sizeClasses[config.size || 'xl'])}
-            style={gradientStyle}
+            style={gradientTextStyle}
           >
             {config.text || 'Tu titulo aqui'}
           </Tag>

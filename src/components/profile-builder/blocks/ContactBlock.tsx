@@ -3,6 +3,7 @@ import { Mail, MessageSquare, Phone, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import type { BlockProps } from '../types/profile-builder';
+import { getBlockStyleObject } from './blockStyles';
 
 interface ContactConfig {
   showEmail: boolean;
@@ -28,21 +29,27 @@ function ContactBlockComponent({ block, isEditing, isSelected, onUpdate }: Block
     onUpdate({ content: { ...content, ...updates } });
   };
 
-  const paddingClasses = {
-    none: 'p-0',
-    sm: 'p-4',
-    md: 'p-6',
-    lg: 'p-8 md:p-12',
-    xl: 'p-12 md:p-16',
-  };
+  // Si el usuario no definió un fondo personalizado, usamos el gradiente por defecto
+  const hasCustomBackground =
+    styles.backgroundColor ||
+    styles.backgroundGradient ||
+    styles.backgroundImage ||
+    styles.backgroundType === 'gradient' ||
+    styles.backgroundType === 'image';
+
+  // Solo aplicar padding de Tailwind como fallback si no hay padding en styles
+  const hasDynamicPadding = styles.padding || styles.paddingCustom;
 
   return (
     <div
       className={cn(
-        'rounded-lg bg-gradient-to-br from-primary/10 to-primary/5',
-        paddingClasses[styles.padding || 'lg'],
+        'rounded-lg',
+        !hasCustomBackground && 'bg-gradient-to-br from-primary/10 to-primary/5',
+        // Fallback de padding solo si no hay estilos dinámicos
+        !hasDynamicPadding && 'p-8 md:p-12',
         config.layout === 'centered' ? 'text-center' : 'text-left',
       )}
+      style={getBlockStyleObject(styles)}
     >
       {/* Title */}
       {isEditing && isSelected ? (

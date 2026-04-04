@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import type { BlockProps } from '../types/profile-builder';
 import { MediaLibraryPicker } from '../media/MediaLibraryPicker';
 import type { MediaItem } from '../media/types';
+import { getBlockStyleObject } from './blockStyles';
 
 interface CarouselItem {
   id: string;
@@ -82,6 +83,9 @@ function CarouselBlockComponent({ block, isEditing, isSelected, onUpdate, userId
 
   const items = config.items || [];
 
+  // Usar getBlockStyleObject para soporte completo de estilos
+  const blockStyle = getBlockStyleObject(styles);
+
   const handleConfigUpdate = (updates: Partial<CarouselConfig>) => {
     onUpdate({ config: { ...config, ...updates } });
   };
@@ -141,6 +145,7 @@ function CarouselBlockComponent({ block, isEditing, isSelected, onUpdate, userId
           styles.margin === 'lg' && 'my-6',
           isSelected && 'ring-2 ring-primary/50',
         )}
+        style={blockStyle}
       >
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <ImagePlus className="h-10 w-10 text-muted-foreground/50 mb-3" />
@@ -181,6 +186,7 @@ function CarouselBlockComponent({ block, isEditing, isSelected, onUpdate, userId
         styles.margin === 'lg' && 'my-6',
         isEditing && isSelected && 'ring-2 ring-primary/50 rounded-lg',
       )}
+      style={blockStyle}
     >
       {/* Carousel container */}
       <div className="overflow-hidden rounded-lg" ref={emblaRef}>

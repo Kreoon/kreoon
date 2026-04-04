@@ -1,6 +1,7 @@
 import { memo, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import type { BlockProps } from '../types/profile-builder';
+import { getBlockStyleObject } from './blockStyles';
 
 interface CountdownConfig {
   targetDate: string;
@@ -38,25 +39,10 @@ function calculateTimeLeft(targetDate: string): TimeLeft {
   };
 }
 
-const PADDING_CLASSES: Record<string, string> = {
-  none: 'p-0',
-  sm: 'p-4',
-  md: 'p-6',
-  lg: 'p-8',
-  xl: 'p-12',
-};
-
 const TEXT_ALIGN_CLASSES: Record<string, string> = {
   left: 'text-left',
   center: 'text-center',
   right: 'text-right',
-};
-
-const MARGIN_CLASSES: Record<string, string> = {
-  sm: 'my-2',
-  md: 'my-4',
-  lg: 'my-6',
-  xl: 'my-8',
 };
 
 function CountdownBlockComponent({ block, isEditing, isSelected }: BlockProps) {
@@ -76,11 +62,11 @@ function CountdownBlockComponent({ block, isEditing, isSelected }: BlockProps) {
   }, [config.targetDate]);
 
   const containerClass = cn(
-    PADDING_CLASSES[styles.padding || 'md'],
     TEXT_ALIGN_CLASSES[styles.textAlign || 'center'],
-    styles.margin && MARGIN_CLASSES[styles.margin],
     isEditing && isSelected && 'ring-2 ring-primary/50 rounded-lg',
   );
+
+  const blockStyle = getBlockStyleObject(styles);
 
   const units = [
     { value: timeLeft.days, label: 'Días', show: config.showDays ?? true },
@@ -94,10 +80,7 @@ function CountdownBlockComponent({ block, isEditing, isSelected }: BlockProps) {
   // Estado expirado
   if (timeLeft.isExpired) {
     return (
-      <div
-        className={containerClass}
-        style={{ backgroundColor: styles.backgroundColor }}
-      >
+      <div className={containerClass} style={blockStyle}>
         {config.title && (
           <p className="text-sm font-medium uppercase tracking-widest text-muted-foreground mb-3">
             {config.title}
@@ -116,10 +99,7 @@ function CountdownBlockComponent({ block, isEditing, isSelected }: BlockProps) {
   // Estilo cards (principal — números grandes con tarjetas)
   if (!config.style || config.style === 'cards') {
     return (
-      <div
-        className={containerClass}
-        style={{ backgroundColor: styles.backgroundColor }}
-      >
+      <div className={containerClass} style={blockStyle}>
         {config.title && (
           <p
             className="text-sm font-medium uppercase tracking-widest mb-5 opacity-70"
@@ -192,10 +172,7 @@ function CountdownBlockComponent({ block, isEditing, isSelected }: BlockProps) {
   // Estilo inline (reloj monospace)
   if (config.style === 'inline') {
     return (
-      <div
-        className={containerClass}
-        style={{ backgroundColor: styles.backgroundColor }}
-      >
+      <div className={containerClass} style={blockStyle}>
         {config.title && (
           <p
             className="text-sm font-medium uppercase tracking-widest mb-3 opacity-70"
@@ -240,10 +217,7 @@ function CountdownBlockComponent({ block, isEditing, isSelected }: BlockProps) {
 
   // Estilo minimal
   return (
-    <div
-      className={containerClass}
-      style={{ backgroundColor: styles.backgroundColor }}
-    >
+    <div className={containerClass} style={blockStyle}>
       {config.title && (
         <p
           className="text-sm font-medium uppercase tracking-widest mb-3 opacity-70"

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { BlockProps } from '../types/profile-builder';
 import { TextFormatPopup, useTextFormatPopup } from '../TextFormatPopup';
+import { getBlockStyleObject } from './blockStyles';
 
 // Renderiza HTML sanitizado
 function SafeHtml({ html, className }: { html: string; className?: string }) {
@@ -420,7 +421,7 @@ function PricingBlockComponent({ block, isEditing, isSelected, onUpdate }: Block
   return (
     <div
       className={cn('rounded-lg', paddingClasses[styles.padding || 'md'])}
-      style={{ backgroundColor: styles.backgroundColor, color: styles.textColor }}
+      style={getBlockStyleObject(styles)}
     >
       {/* Encabezado - Editable con TextFormatPopup */}
       <div className="text-center mb-8">

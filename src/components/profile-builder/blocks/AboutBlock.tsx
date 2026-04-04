@@ -4,6 +4,7 @@ import DOMPurify from 'dompurify';
 import { cn } from '@/lib/utils';
 import type { BlockProps } from '../types/profile-builder';
 import { TextFormatPopup, useTextFormatPopup } from '../TextFormatPopup';
+import { getBlockStyleObject } from './blockStyles';
 
 interface AboutContent {
   text?: string;
@@ -82,10 +83,7 @@ function AboutBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockPr
           styles.shadow === 'md' && 'shadow-md',
           styles.shadow === 'lg' && 'shadow-lg',
         )}
-        style={{
-          backgroundColor: styles.backgroundColor,
-          color: styles.textColor,
-        }}
+        style={getBlockStyleObject(styles)}
       >
         {/* Title - Editable */}
         <div

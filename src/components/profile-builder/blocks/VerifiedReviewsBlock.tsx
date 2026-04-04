@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import type { BlockProps } from '../types/profile-builder';
 import { usePublicReviews, useReviewStats, type CreatorReview } from '@/hooks/useCreatorReviews';
+import { getBlockStyleObject } from './blockStyles';
 
 interface VerifiedReviewsConfig {
   layout: 'grid' | 'carousel' | 'featured';
@@ -13,6 +14,7 @@ interface VerifiedReviewsConfig {
   showCompany: boolean;
   showDate: boolean;
 }
+
 
 function StarRating({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'md' }) {
   const sizeClasses = size === 'sm' ? 'h-3.5 w-3.5' : 'h-5 w-5';
@@ -159,6 +161,9 @@ function VerifiedReviewsBlockComponent({ block, isEditing }: BlockProps) {
     xl: 'p-12',
   };
 
+  // Usa getBlockStyleObject para obtener estilos base
+  const blockStyle = getBlockStyleObject(styles);
+
   // Datos de ejemplo para modo edicion
   const sampleReviews: CreatorReview[] = [
     {
@@ -208,7 +213,7 @@ function VerifiedReviewsBlockComponent({ block, isEditing }: BlockProps) {
 
   if (!isEditing && reviewsLoading) {
     return (
-      <div className={cn(paddingClasses[styles.padding || 'md'])}>
+      <div className={cn(paddingClasses[styles.padding || 'md'])} style={blockStyle}>
         <div className="animate-pulse space-y-4">
           <div className="h-6 w-40 bg-muted rounded" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -222,7 +227,7 @@ function VerifiedReviewsBlockComponent({ block, isEditing }: BlockProps) {
 
   if (!isEditing && displayReviews.length === 0) {
     return (
-      <div className={cn(paddingClasses[styles.padding || 'md'])}>
+      <div className={cn(paddingClasses[styles.padding || 'md'])} style={blockStyle}>
         <div className="text-center py-8">
           <Quote className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
           <p className="text-muted-foreground">
@@ -234,7 +239,7 @@ function VerifiedReviewsBlockComponent({ block, isEditing }: BlockProps) {
   }
 
   return (
-    <div className={cn(paddingClasses[styles.padding || 'md'])}>
+    <div className={cn(paddingClasses[styles.padding || 'md'])} style={blockStyle}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-foreground">

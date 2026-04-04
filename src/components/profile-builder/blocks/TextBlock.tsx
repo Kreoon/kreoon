@@ -4,6 +4,7 @@ import DOMPurify from 'dompurify';
 import { cn } from '@/lib/utils';
 import type { BlockProps } from '../types/profile-builder';
 import { TextFormatPopup, useTextFormatPopup } from '../TextFormatPopup';
+import { getBlockStyleObject } from './blockStyles';
 
 interface TextContent {
   title?: string;
@@ -51,41 +52,12 @@ function TextBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockPro
     closeEditor();
   };
 
-  const paddingClasses = {
-    none: 'p-0',
-    sm: 'p-4',
-    md: 'p-6',
-    lg: 'p-8',
-    xl: 'p-12',
-  };
-
-  const marginClasses = {
-    none: 'my-0',
-    sm: 'my-2',
-    md: 'my-4',
-    lg: 'my-6',
-    xl: 'my-8',
-  };
-
   const titleContent = content.title || '';
   const textContent = content.text || '';
 
   return (
     <>
-      <div
-        className={cn(
-          'rounded-lg',
-          paddingClasses[styles.padding || 'md'],
-          marginClasses[styles.margin || 'sm'],
-          styles.shadow === 'sm' && 'shadow-sm',
-          styles.shadow === 'md' && 'shadow-md',
-          styles.shadow === 'lg' && 'shadow-lg',
-        )}
-        style={{
-          backgroundColor: styles.backgroundColor,
-          color: styles.textColor,
-        }}
-      >
+      <div style={getBlockStyleObject(styles)}>
         {/* Title (optional) - Editable */}
         <div
           className={cn(

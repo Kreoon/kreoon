@@ -2,6 +2,7 @@ import { memo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { MessageCircle } from 'lucide-react';
 import type { BlockProps } from '../types/profile-builder';
+import { getBlockStyleObject } from './blockStyles';
 
 interface WhatsAppConfig {
   phone: string;
@@ -14,6 +15,7 @@ interface WhatsAppConfig {
 
 function WhatsAppButtonBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockProps) {
   const config = block.config as WhatsAppConfig;
+  const styles = block.styles;
 
   const [localPhone, setLocalPhone] = useState(config.phone || '');
   const [localMessage, setLocalMessage] = useState(
@@ -40,6 +42,9 @@ function WhatsAppButtonBlockComponent({ block, isEditing, isSelected, onUpdate }
   const encodedMessage = encodeURIComponent(config.message || '');
   const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
 
+  // Usa getBlockStyleObject para obtener estilos base
+  const blockStyle = getBlockStyleObject(styles);
+
   // In editing mode, show configuration form
   if (isEditing) {
     return (
@@ -48,6 +53,7 @@ function WhatsAppButtonBlockComponent({ block, isEditing, isSelected, onUpdate }
           'p-4 rounded-lg border border-border bg-muted/30',
           isSelected && 'ring-2 ring-primary/50',
         )}
+        style={blockStyle}
       >
         <div className="flex items-center gap-2 mb-4">
           <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">

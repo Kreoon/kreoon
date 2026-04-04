@@ -8,6 +8,7 @@ import type { BlockProps } from '../types/profile-builder';
 import { TextFormatPopup, useTextFormatPopup } from '../TextFormatPopup';
 import { MediaLibraryPicker } from '../media/MediaLibraryPicker';
 import type { MediaItem } from '../media/types';
+import { getBlockStyleObject } from './blockStyles';
 
 // Renderiza HTML sanitizado
 function SafeHtml({ html, className }: { html: string; className?: string }) {
@@ -63,14 +64,6 @@ const DEFAULT_ITEMS: TestimonialItem[] = [
     text: 'Profesionalismo, creatividad y entrega puntual. Exactamente lo que necesitabamos para nuestras campanas de temporada.',
   },
 ];
-
-const paddingClasses = {
-  none: 'p-0',
-  sm: 'p-4',
-  md: 'p-6',
-  lg: 'p-8',
-  xl: 'p-12',
-};
 
 function TestimonialsBlockComponent({ block, isEditing, isSelected, onUpdate, userId, creatorProfileId }: BlockProps) {
   const content = block.content as TestimonialsContent;
@@ -145,10 +138,7 @@ function TestimonialsBlockComponent({ block, isEditing, isSelected, onUpdate, us
   };
 
   return (
-    <div
-      className={cn('rounded-lg', paddingClasses[styles.padding || 'md'])}
-      style={{ backgroundColor: styles.backgroundColor, color: styles.textColor }}
-    >
+    <div style={getBlockStyleObject(styles)}>
       {/* Titulo - Editable */}
       <div
         className={cn(

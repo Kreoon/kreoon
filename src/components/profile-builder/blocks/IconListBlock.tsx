@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { Check, Star, Heart, Zap, Shield, Award, Target, Clock, Users, Sparkles } from 'lucide-react';
 import type { BlockProps } from '../types/profile-builder';
+import { getBlockStyleObject } from './blockStyles';
 
 interface IconListItem {
   id: string;
@@ -33,14 +34,6 @@ function IconListBlockComponent({ block, isEditing, isSelected }: BlockProps) {
   const config = block.config as IconListConfig;
   const styles = block.styles;
 
-  const paddingClasses = {
-    none: 'p-0',
-    sm: 'p-4',
-    md: 'p-6',
-    lg: 'p-8',
-    xl: 'p-12',
-  };
-
   const items = config.items || [
     { id: '1', icon: 'Check', text: 'Beneficio 1' },
     { id: '2', icon: 'Check', text: 'Beneficio 2' },
@@ -61,16 +54,9 @@ function IconListBlockComponent({ block, isEditing, isSelected }: BlockProps) {
   return (
     <div
       className={cn(
-        paddingClasses[styles.padding || 'md'],
-        styles.margin === 'sm' && 'my-2',
-        styles.margin === 'md' && 'my-4',
-        styles.margin === 'lg' && 'my-6',
-        styles.margin === 'xl' && 'my-8',
         isEditing && isSelected && 'ring-2 ring-primary/50 rounded-lg',
       )}
-      style={{
-        backgroundColor: styles.backgroundColor,
-      }}
+      style={getBlockStyleObject(styles)}
     >
       <ul className={layoutClasses[config.layout || 'vertical']}>
         {items.map((item) => {

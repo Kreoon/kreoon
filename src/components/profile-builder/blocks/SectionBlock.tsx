@@ -11,6 +11,7 @@ import { LayoutPanelTop, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import type { BlockProps, ProfileBlock } from '../types/profile-builder';
+import { getBlockStyleObject } from './blockStyles';
 
 interface SectionConfig {
   backgroundType: 'color' | 'gradient' | 'image' | 'video';
@@ -33,6 +34,22 @@ const minHeightClasses = {
   screen: 'min-h-screen',
 };
 
+const paddingClasses: Record<string, string> = {
+  none: 'p-0',
+  sm: 'py-8 px-4',
+  md: 'py-12 px-6',
+  lg: 'py-16 px-8',
+  xl: 'py-24 px-12',
+};
+
+const borderRadiusClasses: Record<string, string> = {
+  none: '',
+  sm: 'rounded-sm',
+  md: 'rounded-md',
+  lg: 'rounded-lg',
+  full: 'rounded-full',
+};
+
 // Props extendidas para SectionBlock
 interface SectionBlockProps extends BlockProps {
   renderChild?: (child: ProfileBlock) => React.ReactNode;
@@ -53,14 +70,6 @@ function SectionBlockComponent({
   const styles = block.styles;
   const children = block.children || [];
   const hasChildren = children.length > 0;
-
-  const paddingClasses = {
-    none: 'p-0',
-    sm: 'py-8 px-4',
-    md: 'py-12 px-6',
-    lg: 'py-16 px-8',
-    xl: 'py-24 px-12',
-  };
 
   const hasBackground = config.backgroundType === 'image' || config.backgroundType === 'video';
   const overlayOpacity = content.overlayOpacity ?? 50;
@@ -86,18 +95,20 @@ function SectionBlockComponent({
         'relative w-full overflow-hidden',
         paddingClasses[styles.padding || 'lg'],
         minHeightClasses[config.minHeight || 'auto'],
-        styles.borderRadius === 'sm' && 'rounded-sm',
-        styles.borderRadius === 'md' && 'rounded-md',
-        styles.borderRadius === 'lg' && 'rounded-lg',
+        borderRadiusClasses[styles.borderRadius || 'none'],
         isEditing && isSelected && 'ring-2 ring-primary/50',
       )}
       style={{
+        ...getBlockStyleObject(block.styles),
         backgroundColor: config.backgroundType === 'color' ? styles.backgroundColor : undefined,
         backgroundImage: config.backgroundType === 'gradient' ? styles.backgroundGradient :
                         (config.backgroundType === 'image' && content.backgroundUrl)
                           ? `url(${content.backgroundUrl})` : undefined,
         backgroundSize: styles.backgroundSize || 'cover',
         backgroundPosition: styles.backgroundPosition || 'center',
+        borderWidth: styles.borderWidth || undefined,
+        borderColor: styles.borderColor || undefined,
+        borderStyle: styles.borderWidth ? 'solid' : undefined,
       }}
     >
       {/* Video background */}

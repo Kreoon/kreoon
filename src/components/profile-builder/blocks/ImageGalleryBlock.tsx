@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import type { BlockProps } from '../types/profile-builder';
 import { MediaLibraryPicker } from '../media/MediaLibraryPicker';
 import type { MediaItem } from '../media/types';
+import { getBlockStyleObject } from './blockStyles';
 
 interface GalleryImage {
   id: string;
@@ -30,14 +31,6 @@ const DEFAULT_IMAGES: GalleryImage[] = [
   { id: '5', url: '', alt: 'Imagen 5' },
   { id: '6', url: '', alt: 'Imagen 6' },
 ];
-
-const paddingClasses = {
-  none: 'p-0',
-  sm: 'p-4',
-  md: 'p-6',
-  lg: 'p-8',
-  xl: 'p-12',
-};
 
 const gapClasses = {
   sm: 'gap-2',
@@ -187,8 +180,7 @@ function ImageGalleryBlockComponent({ block, isEditing, isSelected, onUpdate, us
 
   return (
     <div
-      className={cn('rounded-lg', paddingClasses[styles.padding || 'md'])}
-      style={{ backgroundColor: styles.backgroundColor, color: styles.textColor }}
+      style={getBlockStyleObject(styles)}
     >
       {/* Titulo */}
       {isEditing && isSelected ? (

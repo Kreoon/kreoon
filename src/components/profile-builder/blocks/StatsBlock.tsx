@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import type { BlockProps } from '../types/profile-builder';
 import { useCreatorPublicProfile, type CreatorTrustStats } from '@/hooks/useCreatorPublicProfile';
 import { useCreatorSocialStats } from '@/hooks/useCreatorSocialStats';
+import { getBlockStyleObject } from './blockStyles';
 
 interface StatsConfig {
   layout: 'row' | 'grid' | 'cards';
@@ -347,10 +348,15 @@ function StatsBlockComponent({ block, isEditing, isSelected, onUpdate, creatorPr
     onUpdate({ content: { ...content, manualItems: [...items, newItem] } });
   };
 
+  const blockStyle = getBlockStyleObject(styles);
+
   // Loading state
   if (config.dataSource === 'auto' && !trustStats && !socialLoading) {
     return (
-      <div className={cn('rounded-lg', paddingClasses[styles.padding || 'md'])}>
+      <div
+        className={cn('rounded-lg', paddingClasses[styles.padding || 'md'])}
+        style={blockStyle}
+      >
         <div className="text-center py-8 text-muted-foreground">
           <TrendingUp className="h-12 w-12 mx-auto mb-3 opacity-30" />
           <p className="text-sm">Las estadísticas se cargarán con tus datos reales</p>
@@ -367,7 +373,10 @@ function StatsBlockComponent({ block, isEditing, isSelected, onUpdate, creatorPr
   // Sin stats configuradas
   if (displayStats.length === 0) {
     return (
-      <div className={cn('rounded-lg', paddingClasses[styles.padding || 'md'])}>
+      <div
+        className={cn('rounded-lg', paddingClasses[styles.padding || 'md'])}
+        style={blockStyle}
+      >
         <div className="text-center py-8 text-muted-foreground">
           <TrendingUp className="h-12 w-12 mx-auto mb-3 opacity-30" />
           <p className="text-sm">No hay estadísticas para mostrar</p>
@@ -388,10 +397,7 @@ function StatsBlockComponent({ block, isEditing, isSelected, onUpdate, creatorPr
         paddingClasses[styles.padding || 'md'],
         !styles.backgroundColor && 'bg-card/30',
       )}
-      style={{
-        backgroundColor: styles.backgroundColor,
-        color: styles.textColor,
-      }}
+      style={blockStyle}
     >
       {/* Aviso en modo edición */}
       {isEditing && isSelected && config.dataSource === 'auto' && (

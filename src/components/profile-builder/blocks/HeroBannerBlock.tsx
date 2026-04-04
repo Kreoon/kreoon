@@ -7,6 +7,7 @@ import type { BlockProps } from '../types/profile-builder';
 import { TextFormatPopup, useTextFormatPopup } from '../TextFormatPopup';
 import { MediaLibraryPicker } from '../media/MediaLibraryPicker';
 import type { MediaItem } from '../media/types';
+import { getBlockStyleObject } from './blockStyles';
 
 // Ajusta un color hex haciéndolo más claro o más oscuro
 function adjustColor(hex: string, amount: number): string {
@@ -317,7 +318,10 @@ function HeroBannerBlockComponent({ block, isEditing, isSelected, onUpdate, user
         'relative w-full overflow-hidden',
         minHeightClasses[minHeight],
       )}
-      style={getBackgroundStyle()}
+      style={{
+        ...getBlockStyleObject(styles),
+        ...getBackgroundStyle(),
+      }}
     >
       {/* Overlay - solo para imágenes */}
       {bgType === 'image' && bgImage && (
