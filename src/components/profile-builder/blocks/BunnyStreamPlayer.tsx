@@ -82,16 +82,17 @@ function buildEmbedUrl(
 ): string {
   const params = new URLSearchParams();
 
-  if (options.autoplay) params.set('autoplay', 'true');
+  // IMPORTANTE: Siempre enviar autoplay explícitamente para evitar comportamiento por defecto de Bunny
+  params.set('autoplay', options.autoplay ? 'true' : 'false');
   if (options.muted) params.set('muted', 'true');
   if (options.loop) params.set('loop', 'true');
-  if (options.preload) params.set('preload', 'true');
+  // Solo precargar si autoplay está habilitado, para evitar múltiples videos cargando
+  if (options.preload && options.autoplay) params.set('preload', 'true');
   if (options.showSpeed) params.set('showSpeed', 'true');
   if (options.quality) params.set('quality', options.quality);
 
   // Optimizaciones adicionales
   params.set('responsive', 'true');
-  params.set('fast-start', 'true');
 
   return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?${params.toString()}`;
 }
