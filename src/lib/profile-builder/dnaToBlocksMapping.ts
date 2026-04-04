@@ -41,12 +41,12 @@ export const DNA_BLOCK_MAPPINGS: Partial<Record<BlockType, DNAFieldMapping[]>> =
   about: [
     {
       dnaPath: 'creator_identity.bio_full',
-      blockField: 'config.text',
+      blockField: 'content.text',
       label: 'Biografia completa',
     },
     {
       dnaPath: 'creator_identity.unique_factor',
-      blockField: 'config.text',
+      blockField: 'content.text',
       label: 'Factor diferenciador',
     },
   ],
@@ -54,13 +54,13 @@ export const DNA_BLOCK_MAPPINGS: Partial<Record<BlockType, DNAFieldMapping[]>> =
   skills: [
     {
       dnaPath: 'specialization.production_skills',
-      blockField: 'config.items',
+      blockField: 'content.skills',
       label: 'Habilidades de produccion',
       transform: 'arrayToSkillItems',
     },
     {
       dnaPath: 'creative_process.tools_used',
-      blockField: 'config.items',
+      blockField: 'content.skills',
       label: 'Herramientas',
       transform: 'arrayToSkillItems',
     },
@@ -96,7 +96,7 @@ export const DNA_BLOCK_MAPPINGS: Partial<Record<BlockType, DNAFieldMapping[]>> =
   faq: [
     {
       dnaPath: 'creative_process.workflow_description',
-      blockField: 'config.items',
+      blockField: 'content.items',
       label: 'Proceso de trabajo',
       transform: 'arrayToFaqItems',
     },
@@ -105,35 +105,22 @@ export const DNA_BLOCK_MAPPINGS: Partial<Record<BlockType, DNAFieldMapping[]>> =
   text: [
     {
       dnaPath: 'creator_identity.bio_full',
-      blockField: 'config.content',
+      blockField: 'content.text',
       label: 'Biografia completa',
     },
     {
       dnaPath: 'creator_identity.unique_factor',
-      blockField: 'config.content',
+      blockField: 'content.text',
       label: 'Factor diferenciador',
     },
     {
       dnaPath: 'creative_process.workflow_description',
-      blockField: 'config.content',
+      blockField: 'content.text',
       label: 'Proceso de trabajo',
     },
   ],
 
-  bullet_list: [
-    {
-      dnaPath: 'creator_identity.achievements',
-      blockField: 'config.items',
-      label: 'Logros destacados',
-      transform: 'arrayToBulletList',
-    },
-    {
-      dnaPath: 'specialization.specialized_services',
-      blockField: 'config.items',
-      label: 'Servicios especializados',
-      transform: 'arrayToBulletList',
-    },
-  ],
+  // bullet_list: No hay BulletListBlock implementado
 };
 
 // ─── Funciones de utilidad ───────────────────────────────────────────────────

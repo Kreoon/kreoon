@@ -106,14 +106,25 @@ export function useDNAForBuilder(): UseDNAForBuilderResult {
 
       // Determinar donde aplicar el valor
       const fieldParts = suggestion.blockField.split('.');
+      const fieldKey = fieldParts[1];
 
       if (fieldParts[0] === 'config') {
         // Aplicar a config del bloque
-        const configKey = fieldParts[1];
         return {
           config: {
             ...block.config,
-            [configKey]: transformedValue,
+            [fieldKey]: transformedValue,
+          },
+        };
+      }
+
+      if (fieldParts[0] === 'content') {
+        // Aplicar a content del bloque
+        const currentContent = (block.content || {}) as Record<string, unknown>;
+        return {
+          content: {
+            ...currentContent,
+            [fieldKey]: transformedValue,
           },
         };
       }
