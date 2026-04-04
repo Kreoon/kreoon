@@ -9,6 +9,9 @@
 -- Error: "column cp.marketplace_visible does not exist"
 -- ============================================================================
 
+-- Eliminar funcion existente si tiene tipo de retorno diferente
+DROP FUNCTION IF EXISTS get_marketplace_filter_options();
+
 CREATE OR REPLACE FUNCTION get_marketplace_filter_options()
 RETURNS JSONB
 LANGUAGE plpgsql
