@@ -276,6 +276,94 @@ const LargeKpiCard = ({
   );
 };
 
+function DashboardSkeleton() {
+  return (
+    <div className="relative min-h-screen bg-background">
+      {/* Header skeleton */}
+      <div className="p-4 md:p-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-8 w-8 rounded-sm" />
+          <div className="space-y-1.5">
+            <Skeleton className="h-5 w-36" />
+            <Skeleton className="h-3 w-48" />
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-8 w-32 rounded-md" />
+          <Skeleton className="h-8 w-20 rounded-md" />
+        </div>
+      </div>
+
+      {/* Filters bar skeleton */}
+      <div className="border-b border-border/50 px-4 md:px-6 pb-3">
+        <div className="hidden md:flex items-center gap-3">
+          <Skeleton className="h-4 w-4 rounded" />
+          <Skeleton className="h-8 w-[160px] rounded-md" />
+          <Skeleton className="h-8 w-[130px] rounded-md" />
+          <Skeleton className="h-8 w-[130px] rounded-md" />
+          <Skeleton className="h-8 w-[130px] rounded-md" />
+        </div>
+        <Skeleton className="h-9 w-full rounded-md md:hidden" />
+      </div>
+
+      <div className="px-4 py-2 lg:px-6 space-y-3">
+        {/* Tabs skeleton */}
+        <Skeleton className="h-10 w-full rounded-md" />
+
+        {/* KPI Cards - grid 2 cols mobile / 4 cols desktop */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-sm border border-border/30 p-4 space-y-3 bg-card">
+              <div className="flex items-start justify-between">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-10 w-10 rounded-sm" />
+              </div>
+              <Skeleton className="h-8 w-28" />
+              <Skeleton className="h-1.5 w-full rounded-full" />
+            </div>
+          ))}
+        </div>
+
+        {/* Pipeline panel */}
+        <div className="rounded-sm border border-border/30 bg-card p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-4 w-4" />
+            <Skeleton className="h-4 w-40" />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <div key={i} className="rounded-sm border border-border/20 bg-card/50 p-3 space-y-2">
+                <Skeleton className="h-5 w-5 mx-auto" />
+                <Skeleton className="h-6 w-10 mx-auto" />
+                <Skeleton className="h-3 w-16 mx-auto" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Row 3: summary cards - grid 1/3 cols */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="rounded-sm border border-border/30 bg-card p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-5 w-5" />
+                  <Skeleton className="h-4 w-28" />
+                </div>
+                <div className="space-y-1 text-right">
+                  <Skeleton className="h-5 w-20" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 export default function Dashboard() {
   const { user, isAdmin, isClient, profile } = useAuth();
   const { currentOrgId, isPlatformRoot, loading: orgLoading } = useOrgOwner();
@@ -712,29 +800,7 @@ export default function Dashboard() {
   const hasActiveFilters = filterClientId !== 'all' || filterCreatorId !== 'all' || filterEditorId !== 'all' || dateRangeFilter;
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="relative">
-          <motion.div 
-            className="absolute inset-0 rounded-full bg-[hsl(270,100%,60%,0.3)] blur-xl"
-            animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0.6, 0.3] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          />
-          <motion.div
-            className="w-12 h-12 rounded-full border-2 border-t-[hsl(270,100%,60%)] border-[hsl(270,100%,60%,0.2)]"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-          />
-          <motion.p
-            className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-primary whitespace-nowrap"
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          >
-            Cargando dashboard...
-          </motion.p>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (

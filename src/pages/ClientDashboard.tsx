@@ -7,6 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -127,7 +137,7 @@ interface Product {
 }
 
 export default function ClientDashboard() {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, refetchUserData } = useAuth();
   const { isImpersonating, effectiveClientId } = useImpersonation();
   const { brandClient, activeBrand, loading: brandClientLoading } = useBrandClient();
   const { toast } = useToast();
@@ -186,6 +196,9 @@ export default function ClientDashboard() {
     notes: ''
   });
   const [savingCompany, setSavingCompany] = useState(false);
+
+  // Delete product confirmation dialog state (UX-C01)
+  const [deleteProductDialog, setDeleteProductDialog] = useState<{ id: string; name: string } | null>(null);
 
   // Create brand state (for users without brand)
   const [showCreateBrandDialog, setShowCreateBrandDialog] = useState(false);
@@ -540,8 +553,8 @@ export default function ClientDashboard() {
       toast({ title: 'Empresa creada', description: 'Tu empresa se ha creado correctamente' });
       setShowCreateBrandDialog(false);
 
-      // Reload page to refresh brand context
-      window.location.reload();
+      // Refresh brand context without full page reload (UX-C02)
+      await refetchUserData();
     } catch (error: any) {
       console.error('Error creating brand:', error);
       if (error?.code === '23505') {
@@ -582,12 +595,17 @@ export default function ClientDashboard() {
           });
       }
 
+      // UX-C04: optimistic update — remover item de lista inmediatamente
+      const approvedId = selectedContent.id;
+      setContent(prev => prev.filter(c => c.id !== approvedId));
       toast({ title: 'Contenido aprobado', description: 'El contenido ha sido aprobado exitosamente' });
       setSelectedContent(null);
       setFeedback('');
-      if (selectedClientId) fetchClientData(selectedClientId);
+      // Sincronizacion silenciosa en background
+      if (selectedClientId) fetchClientData(selectedClientId, { silent: true });
     } catch (error) {
       console.error('Error approving content:', error);
+      if (selectedClientId) fetchClientData(selectedClientId);
       toast({ title: 'Error', description: 'No se pudo aprobar el contenido', variant: 'destructive' });
     } finally {
       setSubmitting(false);
@@ -621,12 +639,17 @@ export default function ClientDashboard() {
         comment: `Correcciones solicitadas: ${feedback}`
       });
 
+      // UX-C04: optimistic update — remover item de lista inmediatamente
+      const rejectedId = selectedContent.id;
+      setContent(prev => prev.filter(c => c.id !== rejectedId));
       toast({ title: 'Enviado a corrección', description: 'El editor realizará los cambios solicitados' });
       setSelectedContent(null);
       setFeedback('');
-      if (selectedClientId) fetchClientData(selectedClientId);
+      // Sincronizacion silenciosa en background
+      if (selectedClientId) fetchClientData(selectedClientId, { silent: true });
     } catch (error) {
       console.error('Error rejecting content:', error);
+      if (selectedClientId) fetchClientData(selectedClientId);
       toast({ title: 'Error', description: 'No se pudo enviar a corrección', variant: 'destructive' });
     } finally {
       setSubmitting(false);
@@ -685,8 +708,15 @@ export default function ClientDashboard() {
     }
   };
 
-  const handleDeleteProduct = async (productId: string, productName: string) => {
-    if (!window.confirm(`¿Eliminar "${productName}"? Esta acción no se puede deshacer.`)) return;
+  // UX-C01: Abre el AlertDialog en lugar de window.confirm()
+  const handleDeleteProduct = (productId: string, productName: string) => {
+    setDeleteProductDialog({ id: productId, name: productName });
+  };
+
+  const confirmDeleteProduct = async () => {
+    if (!deleteProductDialog) return;
+    const { id: productId } = deleteProductDialog;
+    setDeleteProductDialog(null);
     try {
       const { error } = await supabase.from('products').delete().eq('id', productId);
       if (error) throw error;
@@ -832,19 +862,12 @@ export default function ClientDashboard() {
       );
     }
 
-    // Independent brand member without client yet - show create button
+    // Independent brand member without client yet - polling automático (UX-C02b + UX-C03)
     if (isIndependentBrand && activeBrand && !brandClient) {
       return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-          <Building2 className="w-16 h-16 text-primary mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Configurando tu empresa</h2>
-          <p className="text-muted-foreground text-center max-w-md mb-6">
-            Estamos preparando tu espacio de trabajo. Esto tomará solo un momento...
-          </p>
-          <Button onClick={() => window.location.reload()}>
-            Recargar página
-          </Button>
-        </div>
+        <EmptyBrandClientState
+          onRetry={fetchUserClients}
+        />
       );
     }
 
@@ -1692,6 +1715,91 @@ export default function ClientDashboard() {
           mode="review"
         />
       )}
+
+      {/* UX-C01: AlertDialog para confirmar eliminación de producto */}
+      <AlertDialog
+        open={!!deleteProductDialog}
+        onOpenChange={(open) => { if (!open) setDeleteProductDialog(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vas a eliminar <strong>{deleteProductDialog?.name}</strong>. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={confirmDeleteProduct}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+// UX-C02b + UX-C03: Componente de estado vacío con polling automático
+function EmptyBrandClientState({ onRetry }: { onRetry: () => Promise<void> }) {
+  const [polling, setPolling] = useState(false);
+  const [attempts, setAttempts] = useState(0);
+  const [failed, setFailed] = useState(false);
+  const MAX_ATTEMPTS = 3;
+  const POLL_INTERVAL_MS = 3000;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const runPolling = async () => {
+      setPolling(true);
+      for (let i = 0; i < MAX_ATTEMPTS; i++) {
+        if (cancelled) break;
+        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
+        if (cancelled) break;
+        setAttempts(i + 1);
+        await onRetry();
+      }
+      if (!cancelled) {
+        setPolling(false);
+        setFailed(true);
+      }
+    };
+
+    runPolling();
+    return () => { cancelled = true; };
+  }, []);
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+      <Building2 className="w-16 h-16 text-primary mb-4" />
+      <h2 className="text-xl font-semibold mb-2">Configurando tu empresa</h2>
+      {polling ? (
+        <>
+          <Loader2 className="w-6 h-6 text-primary animate-spin mb-3" />
+          <p className="text-muted-foreground text-center max-w-md">
+            Vinculando tu empresa con la plataforma&hellip; ({attempts}/{MAX_ATTEMPTS})
+          </p>
+        </>
+      ) : failed ? (
+        <>
+          <p className="text-muted-foreground text-center max-w-md mb-6">
+            No pudimos detectar tu empresa automáticamente.
+            Contacta a soporte o intenta de nuevo.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button onClick={() => { setFailed(false); setAttempts(0); setPolling(false); onRetry(); }}>
+              Intentar de nuevo
+            </Button>
+            <Button variant="outline" asChild>
+              <a href="mailto:soporte@kreoon.com">Contactar soporte</a>
+            </Button>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

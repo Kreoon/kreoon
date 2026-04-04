@@ -14,6 +14,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { BunnyImageUploader } from '@/components/marketplace/BunnyImageUploader';
@@ -61,6 +77,9 @@ const OnboardingProfile = () => {
   const [creatorProfileId, setCreatorProfileId] = useState<string | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
   const creatingProfileRef = useRef(false);
+
+  // UX-T04: estado para el AlertDialog de confirmación al regresar
+  const [showBackConfirm, setShowBackConfirm] = useState(false);
 
   // Form state
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -434,6 +453,22 @@ const OnboardingProfile = () => {
     }
   };
 
+  // UX-T03: mensaje explicativo cuando el botón Siguiente está bloqueado
+  const getBlockedTooltip = (): string => {
+    if (accountType === 'brand') return '';
+    switch (currentStep) {
+      case 0: return 'Escribe al menos 10 caracteres en tu bio';
+      case 1: return 'Selecciona al menos un área';
+      case 2: return 'Sube al menos 1 archivo al portafolio';
+      default: return '';
+    }
+  };
+
+  // UX-T04: determina si hay datos ingresados para confirmar al regresar
+  const hasEnteredData = (): boolean => {
+    return bio.length > 0 || avatarUrl !== null || uploadingFiles.length > 0 || uploadedCount > 0;
+  };
+
   const handleNext = () => {
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
@@ -445,6 +480,17 @@ const OnboardingProfile = () => {
   const handleBack = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+    }
+  };
+
+  // UX-T04: maneja el clic en "Atrás" desde Step 0
+  const handleBackClick = () => {
+    if (currentStep === 0 && hasEnteredData()) {
+      setShowBackConfirm(true);
+    } else if (currentStep === 0) {
+      setAccountType(null);
+    } else {
+      handleBack();
     }
   };
 
@@ -640,597 +686,676 @@ const OnboardingProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Background */}
-      <div className="fixed inset-0 pointer-events-none bg-background" />
+    <TooltipProvider>
+      <div className="min-h-screen bg-background">
+        {/* Background */}
+        <div className="fixed inset-0 pointer-events-none bg-background" />
 
-      <div className="relative max-w-2xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-white mb-2">
-            {accountType === 'brand' ? 'Registra tu Marca' : 'Completa tu perfil'}
-          </h1>
-          <p className="text-white/50 text-sm">
-            {accountType === 'brand'
-              ? 'Configura tu marca para contratar talento'
-              : 'Para que las marcas te encuentren en el marketplace'}
-          </p>
-        </div>
+        <div className="relative max-w-2xl mx-auto px-4 py-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-white mb-2">
+              {accountType === 'brand' ? 'Registra tu Marca' : 'Completa tu perfil'}
+            </h1>
+            <p className="text-white/50 text-sm">
+              {accountType === 'brand'
+                ? 'Configura tu marca para contratar talento'
+                : 'Para que las marcas te encuentren en el marketplace'}
+            </p>
+          </div>
 
-        {/* Progress */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            {STEPS.map((step, i) => (
-              <div key={i} className="flex items-center">
-                <div
-                  className={cn(
-                    'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors',
-                    i < currentStep
-                      ? 'bg-purple-500 text-white'
-                      : i === currentStep
-                      ? 'bg-purple-500/30 border-2 border-purple-500 text-purple-300'
-                      : 'bg-white/10 text-white/40'
-                  )}
-                >
-                  {i < currentStep ? <Check className="w-4 h-4" /> : i + 1}
-                </div>
-                {i < STEPS.length - 1 && (
+          {/* Progress */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-2">
+              {STEPS.map((step, i) => (
+                <div key={i} className="flex items-center">
                   <div
                     className={cn(
-                      'w-12 sm:w-20 h-0.5 mx-1',
-                      i < currentStep ? 'bg-purple-500' : 'bg-white/10'
+                      'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors',
+                      i < currentStep
+                        ? 'bg-purple-500 text-white'
+                        : i === currentStep
+                        ? 'bg-purple-500/30 border-2 border-purple-500 text-purple-300'
+                        : 'bg-white/10 text-white/40'
                     )}
-                  />
-                )}
-              </div>
-            ))}
+                  >
+                    {i < currentStep ? <Check className="w-4 h-4" /> : i + 1}
+                  </div>
+                  {i < STEPS.length - 1 && (
+                    <div
+                      className={cn(
+                        'w-12 sm:w-20 h-0.5 mx-1',
+                        i < currentStep ? 'bg-purple-500' : 'bg-white/10'
+                      )}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+            <p className="text-center text-sm text-white/60">{STEPS[currentStep]}</p>
           </div>
-          <p className="text-center text-sm text-white/60">{STEPS[currentStep]}</p>
-        </div>
 
-        {/* Steps */}
-        <AnimatePresence mode="wait">
-          {/* ─── BRAND FLOW ─── */}
-          {accountType === 'brand' && currentStep === 0 && (
-            <motion.div
-              key="brand-step"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-            >
-              <Card className="bg-card border-border shadow-none p-6 space-y-6 rounded-[0.125rem]">
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-3">
-                    <Camera className="w-4 h-4 inline mr-2" />
-                    Logo de tu marca (opcional)
-                  </label>
-                  <div className="flex justify-center">
-                    <div className="w-32">
-                      <BunnyImageUploader
-                        mode="single"
-                        value={avatarUrl || ''}
-                        onChange={(url) => setAvatarUrl(url || null)}
-                        getStoragePath={(file) => `brands/${user?.id || 'unknown'}/${Date.now()}-${file.name}`}
-                        aspectRatio="square"
-                        height="h-32"
-                        maxSizeMB={5}
-                      />
+          {/* Steps */}
+          <AnimatePresence mode="wait">
+            {/* ─── BRAND FLOW ─── */}
+            {accountType === 'brand' && currentStep === 0 && (
+              <motion.div
+                key="brand-step"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+              >
+                <Card className="bg-card border-border shadow-none p-6 space-y-6 rounded-[0.125rem]">
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-3">
+                      <Camera className="w-4 h-4 inline mr-2" />
+                      Logo de tu marca (opcional)
+                    </label>
+                    <div className="flex justify-center">
+                      <div className="w-32">
+                        <BunnyImageUploader
+                          mode="single"
+                          value={avatarUrl || ''}
+                          onChange={(url) => setAvatarUrl(url || null)}
+                          getStoragePath={(file) => `brands/${user?.id || 'unknown'}/${Date.now()}-${file.name}`}
+                          aspectRatio="square"
+                          height="h-32"
+                          maxSizeMB={5}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-2">
-                    <Briefcase className="w-4 h-4 inline mr-2" />
-                    Nombre de tu marca *
-                  </label>
-                  <Input
-                    value={brandName}
-                    onChange={e => setBrandName(e.target.value)}
-                    placeholder="Ej: Mi Empresa S.A.S"
-                    className="bg-background border-border"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-2">
-                    Industria (opcional)
-                  </label>
-                  <Input
-                    value={brandIndustry}
-                    onChange={e => setBrandIndustry(e.target.value)}
-                    placeholder="Ej: Moda, Tecnología, Alimentos..."
-                    className="bg-background border-border"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-2">
-                    <Globe className="w-4 h-4 inline mr-2" />
-                    Sitio web (opcional)
-                  </label>
-                  <Input
-                    value={brandWebsite}
-                    onChange={e => setBrandWebsite(e.target.value)}
-                    placeholder="https://..."
-                    className="bg-background border-border"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-2">
-                    <FileText className="w-4 h-4 inline mr-2" />
-                    Sobre tu marca (opcional)
-                  </label>
-                  <textarea
-                    value={bio}
-                    onChange={e => setBio(e.target.value)}
-                    placeholder="Describe brevemente tu marca o negocio..."
-                    rows={3}
-                    maxLength={500}
-                    className="w-full rounded-[0.125rem] border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:outline-none resize-none"
-                  />
-                </div>
-              </Card>
-            </motion.div>
-          )}
-
-          {/* ─── TALENT FLOW ─── */}
-          {/* Step 1: Photo & Bio */}
-          {accountType === 'talent' && currentStep === 0 && (
-            <motion.div
-              key="step1"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-            >
-              <Card className="bg-card border-border shadow-none p-6 space-y-6 rounded-[0.125rem]">
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-3">
-                    <Camera className="w-4 h-4 inline mr-2" />
-                    Foto de perfil
-                  </label>
-                  <div className="flex justify-center">
-                    <div className="w-32">
-                      <BunnyImageUploader
-                        mode="single"
-                        value={avatarUrl || ''}
-                        onChange={(url) => setAvatarUrl(url || null)}
-                        getStoragePath={(file) => `avatars/${user?.id || 'unknown'}/${Date.now()}-${file.name}`}
-                        aspectRatio="square"
-                        height="h-32"
-                        maxSizeMB={5}
-                      />
-                    </div>
-                  </div>
-                  <p className="text-xs text-white/40 text-center mt-2">
-                    Una buena foto aumenta tus oportunidades
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-2">
-                    <FileText className="w-4 h-4 inline mr-2" />
-                    Cuéntanos sobre ti *
-                  </label>
-                  <textarea
-                    value={bio}
-                    onChange={e => setBio(e.target.value)}
-                    placeholder="Describe tu experiencia, estilo y lo que te hace único como creador..."
-                    rows={4}
-                    maxLength={500}
-                    className="w-full rounded-[0.125rem] border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-purple-500/50 focus:outline-none resize-none"
-                  />
-                  <p className="text-xs text-white/40 text-right mt-1">{bio.length}/500</p>
-                </div>
-              </Card>
-            </motion.div>
-          )}
-
-          {/* Step 2: Specialization */}
-          {accountType === 'talent' && currentStep === 1 && (
-            <motion.div
-              key="step2"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-            >
-              <Card className="bg-card border-border shadow-none p-6 space-y-6 rounded-[0.125rem]">
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-3">
-                    <Briefcase className="w-4 h-4 inline mr-2" />
-                    ¿En qué áreas te especializas? *
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {TALENT_AREAS.map(area => {
-                      const Icon = area.icon;
-                      const isSelected = selectedAreas.includes(area.id);
-                      return (
-                        <button
-                          key={area.id}
-                          type="button"
-                          onClick={() => toggleArea(area.id)}
-                          className={cn(
-                            'flex flex-col items-center gap-2 p-3 rounded-sm border transition-all',
-                            isSelected
-                              ? 'border-purple-500/60 bg-purple-500/15'
-                              : 'border-white/10 bg-white/5 hover:border-white/20'
-                          )}
-                        >
-                          <div className={cn('w-10 h-10 rounded-sm bg-gradient-to-br flex items-center justify-center', area.color)}>
-                            <Icon className="w-5 h-5 text-white" />
-                          </div>
-                          <span className="text-xs font-medium text-white/80">{area.label}</span>
-                          {isSelected && <Check className="w-4 h-4 text-purple-400" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {selectedAreas.length > 0 && (
                   <div>
                     <label className="block text-sm font-medium text-white/80 mb-2">
-                      Roles específicos <span className="text-white/40">(opcional - {selectedRoles.length}/{MAX_ROLES})</span>
-                    </label>
-                    <div className="max-h-48 overflow-y-auto space-y-2 pr-2">
-                      {selectedAreas.map(areaId => {
-                        const roles = MARKETPLACE_ROLES.filter(r => r.category === areaId);
-                        if (roles.length === 0) return null;
-                        const category = MARKETPLACE_ROLE_CATEGORIES[areaId as MarketplaceRoleCategory];
-                        return (
-                          <div key={areaId}>
-                            <p className="text-xs font-medium text-white/50 uppercase mb-1.5">{category?.label}</p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {roles.map(role => {
-                                const isSelected = selectedRoles.includes(role.id);
-                                const isDisabled = !isSelected && selectedRoles.length >= MAX_ROLES;
-                                return (
-                                  <button
-                                    key={role.id}
-                                    type="button"
-                                    onClick={() => !isDisabled && toggleRole(role.id)}
-                                    disabled={isDisabled}
-                                    className={cn(
-                                      'px-3 py-1.5 rounded-full text-xs border transition-all',
-                                      isSelected
-                                        ? 'border-purple-500/50 bg-purple-500/20 text-white'
-                                        : isDisabled
-                                        ? 'border-white/5 text-white/30 cursor-not-allowed'
-                                        : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20'
-                                    )}
-                                  >
-                                    {isSelected && <Check className="w-3 h-3 inline mr-1" />}
-                                    {role.label}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-2">
-                    Plataformas donde creas contenido
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {PLATFORMS.map(platform => {
-                      const isSelected = selectedPlatforms.includes(platform);
-                      return (
-                        <button
-                          key={platform}
-                          type="button"
-                          onClick={() => togglePlatform(platform)}
-                          className={cn(
-                            'px-3 py-1.5 rounded-full text-xs border transition-all',
-                            isSelected
-                              ? 'border-purple-500/50 bg-purple-500/20 text-white'
-                              : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20'
-                          )}
-                        >
-                          {isSelected && <Check className="w-3 h-3 inline mr-1" />}
-                          {platform}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-          )}
-
-          {/* Step 3: Portfolio Upload (REQUIRED) */}
-          {accountType === 'talent' && currentStep === 2 && (
-            <motion.div
-              key="step3"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-            >
-              <Card className="bg-card border-border shadow-none p-6 space-y-4 rounded-[0.125rem]">
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-2">
-                    <Film className="w-4 h-4 inline mr-2" />
-                    Sube tu mejor trabajo *
-                  </label>
-                  <p className="text-xs text-white/50 mb-4">
-                    Las marcas quieren ver tu trabajo. Sube al menos 1 video o imagen.
-                  </p>
-
-                  {/* Dropzone */}
-                  {(uploadingFiles.length + uploadedCount) < MAX_PORTFOLIO_FILES && (
-                    <div
-                      {...(creatorProfileId && !profileError ? getRootProps() : {})}
-                      className={cn(
-                        'flex flex-col items-center justify-center rounded-sm border-2 border-dashed transition-all p-8',
-                        profileError
-                          ? 'border-red-500/50 bg-red-500/10'
-                          : isDragActive
-                          ? 'border-purple-500 bg-purple-500/10'
-                          : creatorProfileId
-                          ? 'border-white/20 hover:border-purple-500/50 bg-white/[0.02] cursor-pointer'
-                          : 'border-white/20 bg-white/[0.02] cursor-wait opacity-50'
-                      )}
-                    >
-                      {creatorProfileId && !profileError && <input {...getInputProps()} />}
-                      {profileError ? (
-                        <>
-                          <AlertCircle className="w-10 h-10 text-red-400 mb-3" />
-                          <p className="text-sm text-red-300 mb-2">{profileError}</p>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              creatingProfileRef.current = false;
-                              fetchOrCreateCreatorProfile();
-                            }}
-                            className="border-red-500/50 text-red-300 hover:bg-red-500/20"
-                          >
-                            Reintentar
-                          </Button>
-                        </>
-                      ) : !creatorProfileId ? (
-                        <>
-                          <Loader2 className="w-10 h-10 text-white/40 mb-3 animate-spin" />
-                          <p className="text-sm text-white/60">Preparando tu perfil...</p>
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="w-10 h-10 text-white/40 mb-3" />
-                          <p className="text-sm text-white/80 mb-1">
-                            {isDragActive ? 'Suelta los archivos aquí' : 'Toca para seleccionar archivos'}
-                          </p>
-                          <p className="text-xs text-white/40 mb-3">
-                            Videos (MP4, MOV) o Imágenes (JPG, PNG)
-                          </p>
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openFileDialog();
-                            }}
-                            className="bg-purple-600 hover:bg-purple-700"
-                          >
-                            <Upload className="w-4 h-4 mr-2" />
-                            Seleccionar archivos
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Uploaded/Uploading files */}
-                  {uploadingFiles.length > 0 && (
-                    <div className="mt-4 space-y-3">
-                      {uploadingFiles.map(uf => (
-                        <div
-                          key={uf.id}
-                          className={cn(
-                            'flex items-center gap-3 p-3 rounded-sm border',
-                            uf.status === 'error'
-                              ? 'bg-red-500/10 border-red-500/30'
-                              : uf.status === 'success'
-                              ? 'bg-emerald-500/10 border-emerald-500/30'
-                              : 'bg-white/[0.02] border-white/10'
-                          )}
-                        >
-                          {/* Preview/Icon */}
-                          <div className="w-12 h-12 rounded-sm bg-white/5 flex items-center justify-center overflow-hidden shrink-0">
-                            {uf.preview ? (
-                              <img src={uf.preview} alt="" className="w-full h-full object-cover" />
-                            ) : uf.type === 'video' ? (
-                              <Video className="w-5 h-5 text-purple-400" />
-                            ) : (
-                              <ImageIcon className="w-5 h-5 text-blue-400" />
-                            )}
-                          </div>
-
-                          {/* Info */}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-white truncate">{uf.file.name}</p>
-                            {uf.status === 'uploading' && (
-                              <div className="mt-1">
-                                <Progress value={uf.progress} className="h-1.5" />
-                                <p className="text-xs text-white/50 mt-0.5">{uf.progress}% subiendo...</p>
-                              </div>
-                            )}
-                            {uf.status === 'error' && (
-                              <p className="text-xs text-red-400 mt-1">{uf.error}</p>
-                            )}
-                            {uf.status === 'success' && (
-                              <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
-                                <CheckCircle2 className="w-3 h-3" />
-                                Subido correctamente
-                              </p>
-                            )}
-                          </div>
-
-                          {/* Status Icon */}
-                          {uf.status === 'uploading' ? (
-                            <Loader2 className="w-5 h-5 text-purple-400 animate-spin shrink-0" />
-                          ) : uf.status === 'success' ? (
-                            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-                          ) : (
-                            <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
-                          )}
-
-                          {/* Remove button */}
-                          {uf.status !== 'uploading' && (
-                            <button
-                              onClick={() => removeFile(uf.id)}
-                              className="p-1 text-white/40 hover:text-white transition-colors shrink-0"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Status message */}
-                  <div className={cn(
-                    'mt-4 p-3 rounded-sm border',
-                    totalItems >= 1
-                      ? 'bg-emerald-500/10 border-emerald-500/20'
-                      : 'bg-purple-500/10 border-purple-500/20'
-                  )}>
-                    <p className={cn(
-                      'text-sm',
-                      totalItems >= 1 ? 'text-emerald-200' : 'text-purple-200'
-                    )}>
-                      <Sparkles className="w-4 h-4 inline mr-1" />
-                      {totalItems === 0 ? (
-                        'Sube al menos 1 archivo para continuar'
-                      ) : totalItems === 1 ? (
-                        '¡Genial! Ya tienes 1 archivo. Puedes agregar más o continuar.'
-                      ) : (
-                        `¡Excelente! Tienes ${totalItems} archivos en tu portafolio.`
-                      )}
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-          )}
-
-          {/* Step 4: Social Links */}
-          {accountType === 'talent' && currentStep === 3 && (
-            <motion.div
-              key="step4"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-            >
-              <Card className="bg-card border-border shadow-none p-6 space-y-4 rounded-[0.125rem]">
-                <label className="block text-sm font-medium text-white/80 mb-2">
-                  <Globe className="w-4 h-4 inline mr-2" />
-                  Redes sociales <span className="text-white/40">(opcional)</span>
-                </label>
-
-                <div className="space-y-3">
-                  <div>
-                    <label className="flex items-center gap-2 text-xs text-white/60 mb-1">
-                      <Instagram className="w-3.5 h-3.5" /> Instagram
+                      <Briefcase className="w-4 h-4 inline mr-2" />
+                      Nombre de tu marca *
                     </label>
                     <Input
-                      value={socialLinks.instagram}
-                      onChange={e => setSocialLinks({ ...socialLinks, instagram: e.target.value })}
-                      placeholder="@usuario"
+                      value={brandName}
+                      onChange={e => setBrandName(e.target.value)}
+                      placeholder="Ej: Mi Empresa S.A.S"
                       className="bg-background border-border"
                     />
                   </div>
+
                   <div>
-                    <label className="flex items-center gap-2 text-xs text-white/60 mb-1">
-                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
-                      </svg>
-                      TikTok
+                    <label className="block text-sm font-medium text-white/80 mb-2">
+                      Industria (opcional)
                     </label>
                     <Input
-                      value={socialLinks.tiktok}
-                      onChange={e => setSocialLinks({ ...socialLinks, tiktok: e.target.value })}
-                      placeholder="@usuario"
+                      value={brandIndustry}
+                      onChange={e => setBrandIndustry(e.target.value)}
+                      placeholder="Ej: Moda, Tecnología, Alimentos..."
                       className="bg-background border-border"
                     />
                   </div>
+
                   <div>
-                    <label className="flex items-center gap-2 text-xs text-white/60 mb-1">
-                      <Youtube className="w-3.5 h-3.5" /> YouTube
+                    <label className="block text-sm font-medium text-white/80 mb-2">
+                      <Globe className="w-4 h-4 inline mr-2" />
+                      Sitio web (opcional)
                     </label>
                     <Input
-                      value={socialLinks.youtube}
-                      onChange={e => setSocialLinks({ ...socialLinks, youtube: e.target.value })}
-                      placeholder="URL del canal"
-                      className="bg-background border-border"
-                    />
-                  </div>
-                  <div>
-                    <label className="flex items-center gap-2 text-xs text-white/60 mb-1">
-                      <Globe className="w-3.5 h-3.5" /> Sitio web
-                    </label>
-                    <Input
-                      value={socialLinks.website}
-                      onChange={e => setSocialLinks({ ...socialLinks, website: e.target.value })}
+                      value={brandWebsite}
+                      onChange={e => setBrandWebsite(e.target.value)}
                       placeholder="https://..."
                       className="bg-background border-border"
                     />
                   </div>
-                </div>
-              </Card>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between mt-6">
-          <Button
-            variant="ghost"
-            onClick={() => {
-              if (currentStep === 0) {
-                setAccountType(null); // Go back to account type selection
-              } else {
-                handleBack();
-              }
-            }}
-            className="text-white/60"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Atrás
-          </Button>
-
-          <Button
-            onClick={handleNext}
-            disabled={!canProceed() || saving || isUploading}
-            className={accountType === 'brand' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-purple-600 hover:bg-purple-700'}
-          >
-            {saving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : isUploading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Subiendo...
-              </>
-            ) : currentStep === STEPS.length - 1 ? (
-              <>
-                {accountType === 'brand' ? 'Registrar Marca' : 'Guardar y continuar'}
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </>
-            ) : (
-              <>
-                Siguiente
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </>
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-2">
+                      <FileText className="w-4 h-4 inline mr-2" />
+                      Sobre tu marca (opcional)
+                    </label>
+                    <textarea
+                      value={bio}
+                      onChange={e => setBio(e.target.value)}
+                      placeholder="Describe brevemente tu marca o negocio..."
+                      rows={3}
+                      maxLength={500}
+                      className="w-full rounded-[0.125rem] border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:outline-none resize-none"
+                    />
+                  </div>
+                </Card>
+              </motion.div>
             )}
-          </Button>
+
+            {/* ─── TALENT FLOW ─── */}
+            {/* Step 1: Photo & Bio */}
+            {accountType === 'talent' && currentStep === 0 && (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+              >
+                <Card className="bg-card border-border shadow-none p-6 space-y-6 rounded-[0.125rem]">
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-3">
+                      <Camera className="w-4 h-4 inline mr-2" />
+                      Foto de perfil
+                    </label>
+                    <div className="flex justify-center">
+                      <div className="w-32">
+                        <BunnyImageUploader
+                          mode="single"
+                          value={avatarUrl || ''}
+                          onChange={(url) => setAvatarUrl(url || null)}
+                          getStoragePath={(file) => `avatars/${user?.id || 'unknown'}/${Date.now()}-${file.name}`}
+                          aspectRatio="square"
+                          height="h-32"
+                          maxSizeMB={5}
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-white/40 text-center mt-2">
+                      Una buena foto aumenta tus oportunidades
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-2">
+                      <FileText className="w-4 h-4 inline mr-2" />
+                      Cuéntanos sobre ti *
+                    </label>
+                    <textarea
+                      value={bio}
+                      onChange={e => setBio(e.target.value)}
+                      placeholder="Describe tu experiencia, estilo y lo que te hace único como creador..."
+                      rows={4}
+                      maxLength={500}
+                      className="w-full rounded-[0.125rem] border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-purple-500/50 focus:outline-none resize-none"
+                    />
+                    <p className="text-xs text-white/40 text-right mt-1">{bio.length}/500</p>
+                  </div>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Step 2: Specialization */}
+            {accountType === 'talent' && currentStep === 1 && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+              >
+                <Card className="bg-card border-border shadow-none p-6 space-y-6 rounded-[0.125rem]">
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-3">
+                      <Briefcase className="w-4 h-4 inline mr-2" />
+                      ¿En qué áreas te especializas? *
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {TALENT_AREAS.map(area => {
+                        const Icon = area.icon;
+                        const isSelected = selectedAreas.includes(area.id);
+                        return (
+                          <button
+                            key={area.id}
+                            type="button"
+                            onClick={() => toggleArea(area.id)}
+                            // UX-T01: aria-pressed y aria-label descriptivo
+                            aria-pressed={isSelected}
+                            aria-label={`${area.label}${isSelected ? ' (seleccionado)' : ''}`}
+                            className={cn(
+                              'flex flex-col items-center gap-2 p-3 rounded-sm border transition-all',
+                              isSelected
+                                ? 'border-purple-500/60 bg-purple-500/15'
+                                : 'border-white/10 bg-white/5 hover:border-white/20'
+                            )}
+                          >
+                            <div className={cn('w-10 h-10 rounded-sm bg-gradient-to-br flex items-center justify-center', area.color)}>
+                              <Icon className="w-5 h-5 text-white" />
+                            </div>
+                            <span className="text-xs font-medium text-white/80">{area.label}</span>
+                            {isSelected && <Check className="w-4 h-4 text-purple-400" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {selectedAreas.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-white/80 mb-2">
+                        Roles específicos <span className="text-white/40">(opcional - {selectedRoles.length}/{MAX_ROLES})</span>
+                      </label>
+                      <div className="max-h-48 overflow-y-auto space-y-2 pr-2">
+                        {selectedAreas.map(areaId => {
+                          const roles = MARKETPLACE_ROLES.filter(r => r.category === areaId);
+                          if (roles.length === 0) return null;
+                          const category = MARKETPLACE_ROLE_CATEGORIES[areaId as MarketplaceRoleCategory];
+                          return (
+                            <div key={areaId}>
+                              <p className="text-xs font-medium text-white/50 uppercase mb-1.5">{category?.label}</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {roles.map(role => {
+                                  const isSelected = selectedRoles.includes(role.id);
+                                  const isDisabled = !isSelected && selectedRoles.length >= MAX_ROLES;
+                                  return (
+                                    <button
+                                      key={role.id}
+                                      type="button"
+                                      onClick={() => !isDisabled && toggleRole(role.id)}
+                                      disabled={isDisabled}
+                                      // UX-T01: aria-pressed y aria-label descriptivo
+                                      aria-pressed={isSelected}
+                                      aria-label={`${role.label}${isSelected ? ' (seleccionado)' : ''}${isDisabled ? ' (límite de roles alcanzado)' : ''}`}
+                                      className={cn(
+                                        'px-3 py-1.5 rounded-full text-xs border transition-all',
+                                        isSelected
+                                          ? 'border-purple-500/50 bg-purple-500/20 text-white'
+                                          : isDisabled
+                                          ? 'border-white/5 text-white/30 cursor-not-allowed'
+                                          : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20'
+                                      )}
+                                    >
+                                      {isSelected && <Check className="w-3 h-3 inline mr-1" />}
+                                      {role.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-2">
+                      Plataformas donde creas contenido
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {PLATFORMS.map(platform => {
+                        const isSelected = selectedPlatforms.includes(platform);
+                        return (
+                          <button
+                            key={platform}
+                            type="button"
+                            onClick={() => togglePlatform(platform)}
+                            // UX-T01: aria-pressed y aria-label descriptivo
+                            aria-pressed={isSelected}
+                            aria-label={`${platform}${isSelected ? ' (seleccionado)' : ''}`}
+                            className={cn(
+                              'px-3 py-1.5 rounded-full text-xs border transition-all',
+                              isSelected
+                                ? 'border-purple-500/50 bg-purple-500/20 text-white'
+                                : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20'
+                            )}
+                          >
+                            {isSelected && <Check className="w-3 h-3 inline mr-1" />}
+                            {platform}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Step 3: Portfolio Upload (REQUIRED) */}
+            {accountType === 'talent' && currentStep === 2 && (
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+              >
+                <Card className="bg-card border-border shadow-none p-6 space-y-4 rounded-[0.125rem]">
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-2">
+                      <Film className="w-4 h-4 inline mr-2" />
+                      Sube tu mejor trabajo *
+                    </label>
+                    <p className="text-xs text-white/50 mb-4">
+                      Las marcas quieren ver tu trabajo. Sube al menos 1 video o imagen.
+                    </p>
+
+                    {/* UX-T02: Banner de estado cuando el perfil no está listo */}
+                    {!creatorProfileId && !profileError && (
+                      <div
+                        role="status"
+                        aria-live="polite"
+                        className="flex items-center gap-3 mb-4 px-4 py-3 rounded-sm border border-purple-500/30 bg-purple-500/10"
+                      >
+                        <Loader2 className="w-4 h-4 text-purple-400 animate-spin shrink-0" />
+                        <p className="text-sm text-purple-200">
+                          Preparando tu espacio de portafolio...
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Dropzone */}
+                    {(uploadingFiles.length + uploadedCount) < MAX_PORTFOLIO_FILES && (
+                      <div
+                        {...(creatorProfileId && !profileError ? getRootProps() : {})}
+                        className={cn(
+                          'flex flex-col items-center justify-center rounded-sm border-2 border-dashed transition-all p-8',
+                          profileError
+                            ? 'border-red-500/50 bg-red-500/10'
+                            : isDragActive
+                            ? 'border-purple-500 bg-purple-500/10'
+                            : creatorProfileId
+                            ? 'border-white/20 hover:border-purple-500/50 bg-white/[0.02] cursor-pointer'
+                            : 'border-white/20 bg-white/[0.02] cursor-wait opacity-50'
+                        )}
+                        // UX-T02: indica al usuario que el área no está lista aún
+                        aria-disabled={!creatorProfileId && !profileError}
+                        aria-label={
+                          profileError
+                            ? 'Error al preparar el portafolio'
+                            : !creatorProfileId
+                            ? 'Preparando tu espacio de portafolio, espera un momento'
+                            : 'Zona de carga de archivos. Arrastra o haz clic para seleccionar'
+                        }
+                      >
+                        {creatorProfileId && !profileError && <input {...getInputProps()} />}
+                        {profileError ? (
+                          <>
+                            <AlertCircle className="w-10 h-10 text-red-400 mb-3" />
+                            <p className="text-sm text-red-300 mb-2">{profileError}</p>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                creatingProfileRef.current = false;
+                                fetchOrCreateCreatorProfile();
+                              }}
+                              className="border-red-500/50 text-red-300 hover:bg-red-500/20"
+                            >
+                              Reintentar
+                            </Button>
+                          </>
+                        ) : !creatorProfileId ? (
+                          <>
+                            <Loader2 className="w-10 h-10 text-white/40 mb-3 animate-spin" />
+                            <p className="text-sm text-white/60">Preparando tu perfil...</p>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-10 h-10 text-white/40 mb-3" />
+                            <p className="text-sm text-white/80 mb-1">
+                              {isDragActive ? 'Suelta los archivos aquí' : 'Toca para seleccionar archivos'}
+                            </p>
+                            <p className="text-xs text-white/40 mb-3">
+                              Videos (MP4, MOV) o Imágenes (JPG, PNG)
+                            </p>
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openFileDialog();
+                              }}
+                              className="bg-purple-600 hover:bg-purple-700"
+                            >
+                              <Upload className="w-4 h-4 mr-2" />
+                              Seleccionar archivos
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Uploaded/Uploading files */}
+                    {uploadingFiles.length > 0 && (
+                      <div className="mt-4 space-y-3">
+                        {uploadingFiles.map(uf => (
+                          <div
+                            key={uf.id}
+                            className={cn(
+                              'flex items-center gap-3 p-3 rounded-sm border',
+                              uf.status === 'error'
+                                ? 'bg-red-500/10 border-red-500/30'
+                                : uf.status === 'success'
+                                ? 'bg-emerald-500/10 border-emerald-500/30'
+                                : 'bg-white/[0.02] border-white/10'
+                            )}
+                          >
+                            {/* Preview/Icon */}
+                            <div className="w-12 h-12 rounded-sm bg-white/5 flex items-center justify-center overflow-hidden shrink-0">
+                              {uf.preview ? (
+                                <img src={uf.preview} alt="" className="w-full h-full object-cover" />
+                              ) : uf.type === 'video' ? (
+                                <Video className="w-5 h-5 text-purple-400" />
+                              ) : (
+                                <ImageIcon className="w-5 h-5 text-blue-400" />
+                              )}
+                            </div>
+
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-white truncate">{uf.file.name}</p>
+                              {uf.status === 'uploading' && (
+                                <div className="mt-1">
+                                  <Progress value={uf.progress} className="h-1.5" />
+                                  <p className="text-xs text-white/50 mt-0.5">{uf.progress}% subiendo...</p>
+                                </div>
+                              )}
+                              {uf.status === 'error' && (
+                                <p className="text-xs text-red-400 mt-1">{uf.error}</p>
+                              )}
+                              {uf.status === 'success' && (
+                                <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  Subido correctamente
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Status Icon */}
+                            {uf.status === 'uploading' ? (
+                              <Loader2 className="w-5 h-5 text-purple-400 animate-spin shrink-0" />
+                            ) : uf.status === 'success' ? (
+                              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                            ) : (
+                              <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+                            )}
+
+                            {/* Remove button */}
+                            {uf.status !== 'uploading' && (
+                              <button
+                                onClick={() => removeFile(uf.id)}
+                                aria-label={`Eliminar ${uf.file.name}`}
+                                className="p-1 text-white/40 hover:text-white transition-colors shrink-0"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Status message */}
+                    <div className={cn(
+                      'mt-4 p-3 rounded-sm border',
+                      totalItems >= 1
+                        ? 'bg-emerald-500/10 border-emerald-500/20'
+                        : 'bg-purple-500/10 border-purple-500/20'
+                    )}>
+                      <p className={cn(
+                        'text-sm',
+                        totalItems >= 1 ? 'text-emerald-200' : 'text-purple-200'
+                      )}>
+                        <Sparkles className="w-4 h-4 inline mr-1" />
+                        {totalItems === 0 ? (
+                          'Sube al menos 1 archivo para continuar'
+                        ) : totalItems === 1 ? (
+                          '¡Genial! Ya tienes 1 archivo. Puedes agregar más o continuar.'
+                        ) : (
+                          `¡Excelente! Tienes ${totalItems} archivos en tu portafolio.`
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Step 4: Social Links */}
+            {accountType === 'talent' && currentStep === 3 && (
+              <motion.div
+                key="step4"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+              >
+                <Card className="bg-card border-border shadow-none p-6 space-y-4 rounded-[0.125rem]">
+                  <label className="block text-sm font-medium text-white/80 mb-2">
+                    <Globe className="w-4 h-4 inline mr-2" />
+                    Redes sociales <span className="text-white/40">(opcional)</span>
+                  </label>
+
+                  <div className="space-y-3">
+                    <div>
+                      <label className="flex items-center gap-2 text-xs text-white/60 mb-1">
+                        <Instagram className="w-3.5 h-3.5" /> Instagram
+                      </label>
+                      <Input
+                        value={socialLinks.instagram}
+                        onChange={e => setSocialLinks({ ...socialLinks, instagram: e.target.value })}
+                        placeholder="@usuario"
+                        className="bg-background border-border"
+                      />
+                    </div>
+                    <div>
+                      <label className="flex items-center gap-2 text-xs text-white/60 mb-1">
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                        </svg>
+                        TikTok
+                      </label>
+                      <Input
+                        value={socialLinks.tiktok}
+                        onChange={e => setSocialLinks({ ...socialLinks, tiktok: e.target.value })}
+                        placeholder="@usuario"
+                        className="bg-background border-border"
+                      />
+                    </div>
+                    <div>
+                      <label className="flex items-center gap-2 text-xs text-white/60 mb-1">
+                        <Youtube className="w-3.5 h-3.5" /> YouTube
+                      </label>
+                      <Input
+                        value={socialLinks.youtube}
+                        onChange={e => setSocialLinks({ ...socialLinks, youtube: e.target.value })}
+                        placeholder="URL del canal"
+                        className="bg-background border-border"
+                      />
+                    </div>
+                    <div>
+                      <label className="flex items-center gap-2 text-xs text-white/60 mb-1">
+                        <Globe className="w-3.5 h-3.5" /> Sitio web
+                      </label>
+                      <Input
+                        value={socialLinks.website}
+                        onChange={e => setSocialLinks({ ...socialLinks, website: e.target.value })}
+                        placeholder="https://..."
+                        className="bg-background border-border"
+                      />
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Navigation */}
+          <div className="flex items-center justify-between mt-6">
+            <Button
+              variant="ghost"
+              onClick={handleBackClick}
+              className="text-white/60"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Atrás
+            </Button>
+
+            {/* UX-T03: Tooltip en botón Siguiente cuando está bloqueado */}
+            {!canProceed() && getBlockedTooltip() ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  {/* span necesario porque el botón disabled no dispara eventos del tooltip */}
+                  <span tabIndex={0} className="inline-flex">
+                    <Button
+                      onClick={handleNext}
+                      disabled
+                      className={cn(
+                        'pointer-events-none',
+                        accountType === 'brand' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-purple-600 hover:bg-purple-700'
+                      )}
+                    >
+                      Siguiente
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  {getBlockedTooltip()}
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <Button
+                onClick={handleNext}
+                disabled={!canProceed() || saving || isUploading}
+                className={accountType === 'brand' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-purple-600 hover:bg-purple-700'}
+              >
+                {saving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : isUploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Subiendo...
+                  </>
+                ) : currentStep === STEPS.length - 1 ? (
+                  <>
+                    {accountType === 'brand' ? 'Registrar Marca' : 'Guardar y continuar'}
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                ) : (
+                  <>
+                    Siguiente
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
         </div>
+
+        {/* UX-T04: AlertDialog de confirmación al regresar con datos ingresados */}
+        <AlertDialog open={showBackConfirm} onOpenChange={setShowBackConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Regresar al inicio?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tienes información ingresada que se perderá si cambias el tipo de cuenta.
+                ¿Deseas continuar?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  setShowBackConfirm(false);
+                  setAccountType(null);
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Sí, regresar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };
 

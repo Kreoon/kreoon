@@ -62,7 +62,7 @@ export function CreatorCarousel({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold text-white">
-            {title} {emoji}
+            {title}{emoji && <span aria-hidden="true"> {emoji}</span>}
           </h2>
           {subtitle && <p className="text-gray-400 text-sm mt-0.5">{subtitle}</p>}
         </div>
@@ -79,6 +79,7 @@ export function CreatorCarousel({
             <button
               onClick={() => scroll('left')}
               disabled={!canScrollLeft}
+              aria-label="Desplazar carrusel a la izquierda"
               className={cn(
                 'w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center transition-all',
                 canScrollLeft
@@ -91,6 +92,7 @@ export function CreatorCarousel({
             <button
               onClick={() => scroll('right')}
               disabled={!canScrollRight}
+              aria-label="Desplazar carrusel a la derecha"
               className={cn(
                 'w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center transition-all',
                 canScrollRight
