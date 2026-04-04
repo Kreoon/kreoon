@@ -171,13 +171,14 @@ export function isBunnyUrl(url: string): boolean {
 
 /**
  * Obtiene la URL del thumbnail de un video de Bunny.
+ * Usa cdn.kreoon.com que es el dominio personalizado configurado en Bunny
  */
 export function getBunnyThumbnailUrl(url: string): string | null {
   const ids = extractBunnyIds(url);
   if (!ids) return null;
 
-  // El thumbnail está en el CDN, no en mediadelivery
-  return `https://vz-78fcd769-050.b-cdn.net/${ids.videoId}/thumbnail.jpg`;
+  // Dominio personalizado de Kreoon en Bunny CDN
+  return `https://cdn.kreoon.com/${ids.videoId}/thumbnail.jpg`;
 }
 
 export default BunnyStreamPlayer;

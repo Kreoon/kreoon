@@ -63,6 +63,7 @@ export function BuilderCanvas({
         onUpdate={(updates) => onUpdateBlock(child.id, updates)}
         userId={userId}
         creatorProfileId={creatorProfileId}
+        previewDevice={previewDevice}
         renderChild={renderChild}
         onRemoveChild={
           child.parentId && onRemoveFromContainer
@@ -71,7 +72,7 @@ export function BuilderCanvas({
         }
       />
     ),
-    [selectedBlockId, onSelectBlock, onUpdateBlock, userId, creatorProfileId, onRemoveFromContainer]
+    [selectedBlockId, onSelectBlock, onUpdateBlock, userId, creatorProfileId, previewDevice, onRemoveFromContainer]
   );
 
   // Todos los bloques son movibles - sin restricciones
@@ -221,6 +222,7 @@ export function BuilderCanvas({
                         onUpdate={(updates) => onUpdateBlock(block.id, updates)}
                         userId={userId}
                         creatorProfileId={creatorProfileId}
+                        previewDevice={previewDevice}
                         renderChild={renderChild}
                         onAddBlockToColumn={
                           onAddBlockToContainer

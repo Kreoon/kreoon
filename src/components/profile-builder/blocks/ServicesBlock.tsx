@@ -30,6 +30,7 @@ interface ServiceItem {
 
 interface ServicesConfig {
   layout: 'cards' | 'list';
+  columns: '1' | '2' | '3' | '4';
 }
 
 interface ServicesContent {
@@ -66,8 +67,26 @@ const paddingClasses = {
   xl: 'p-12',
 };
 
+// Clases de columnas segun configuracion
+const COLUMNS_CLASSES: Record<string, string> = {
+  '1': 'grid-cols-1',
+  '2': 'grid-cols-1 md:grid-cols-2',
+  '3': 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
+  '4': 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
+};
+
+function getColumnsClass(columns: string | number | undefined): string {
+  if (!columns) return COLUMNS_CLASSES['3'];
+  const key = String(columns);
+  return COLUMNS_CLASSES[key] || COLUMNS_CLASSES['3'];
+}
+
 function ServicesBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockProps) {
-  const config = block.config as ServicesConfig;
+  const config = {
+    layout: 'cards',
+    columns: '3',
+    ...block.config,
+  } as ServicesConfig;
   const content = block.content as ServicesContent;
   const styles = block.styles;
   const items = content.items || DEFAULT_ITEMS;
@@ -152,7 +171,7 @@ function ServicesBlockComponent({ block, isEditing, isSelected, onUpdate }: Bloc
       <div
         className={cn(
           config.layout === 'cards'
-            ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
+            ? cn('grid gap-4', getColumnsClass(config.columns))
             : 'flex flex-col gap-3',
         )}
       >

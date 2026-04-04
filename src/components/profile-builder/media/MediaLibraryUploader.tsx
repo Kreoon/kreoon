@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { UploadCloud, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, SUPABASE_FUNCTIONS_URL } from '@/integrations/supabase/client';
 import { useMediaUpload } from '@/hooks/useMediaUpload';
 import type { MediaItem } from './types';
 
@@ -86,13 +86,88 @@ export function MediaLibraryUploader({
       const mediaType = getFileMediaType(file);
       if (!mediaType) return;
 
-      // Subir a Bunny CDN via useMediaUpload
-      const result = await upload(file, {
-        type: 'portfolio',
-        userId,
-      });
+      let mediaUrl: string;
+      let thumbnailUrl: string | null = null;
 
-      if (!result) return;
+      // Para VIDEOS: usar Bunny Stream (bunny-portfolio-upload) que genera thumbnails
+      // Para IMAGENES: usar Bunny Storage (useMediaUpload)
+      if (mediaType === 'video') {
+        // Step 1: Crear video en Bunny Stream
+        const createRes = await fetch(`${SUPABASE_FUNCTIONS_URL}/functions/v1/bunny-portfolio-upload`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'create',
+            user_id: userId,
+            type: 'portfolio',
+            file_name: file.name,
+          }),
+        });
+
+        if (!createRes.ok) {
+          const errData = await createRes.json().catch(() => ({}));
+          setValidationError(errData.error || `Error del servidor: ${createRes.status}`);
+          return;
+        }
+
+        const createData = await createRes.json();
+        if (!createData.success) {
+          setValidationError(createData.error || 'Error al crear video en Bunny');
+          return;
+        }
+
+        // Step 2: Subir archivo directamente a Bunny Stream
+        const uploadSuccess = await new Promise<boolean>((resolve) => {
+          const xhr = new XMLHttpRequest();
+
+          xhr.upload.addEventListener('progress', (event) => {
+            if (event.lengthComputable) {
+              const percent = Math.round((event.loaded / event.total) * 100);
+              // Podriamos actualizar progreso aqui si tuvieramos un state
+              console.log(`[MediaLibraryUploader] Upload progress: ${percent}%`);
+            }
+          });
+
+          xhr.addEventListener('load', () => {
+            resolve(xhr.status >= 200 && xhr.status < 300);
+          });
+
+          xhr.addEventListener('error', () => resolve(false));
+          xhr.addEventListener('abort', () => resolve(false));
+
+          xhr.open('PUT', createData.upload_url);
+          xhr.setRequestHeader('AccessKey', createData.access_key);
+          xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+          xhr.timeout = 600000; // 10 min
+          xhr.send(file);
+        });
+
+        if (!uploadSuccess) {
+          setValidationError('Error al subir video a Bunny');
+          return;
+        }
+
+        // Usar URLs de Bunny Stream
+        mediaUrl = createData.embed_url;
+        thumbnailUrl = createData.thumbnail_url;
+        console.log('[MediaLibraryUploader] Video uploaded to Bunny Stream:', {
+          video_id: createData.video_id,
+          embed_url: mediaUrl,
+          thumbnail_url: thumbnailUrl,
+        });
+
+      } else {
+        // IMAGENES: usar Bunny Storage via useMediaUpload
+        const result = await upload(file, {
+          type: 'portfolio',
+          userId,
+        });
+
+        if (!result) return;
+        mediaUrl = result.cdnUrl;
+        // Para imagenes, la misma URL sirve como thumbnail
+        thumbnailUrl = result.cdnUrl;
+      }
 
       // Guardar registro en portfolio_items si hay creatorProfileId
       let newItem: MediaItem;
@@ -104,10 +179,10 @@ export function MediaLibraryUploader({
             creator_id: creatorProfileId,
             title: file.name.replace(/\.[^.]+$/, ''),
             media_type: mediaType,
-            media_url: result.cdnUrl,
-            thumbnail_url: null,
+            media_url: mediaUrl,
+            thumbnail_url: thumbnailUrl,
             tags: [],
-            aspect_ratio: '1:1',
+            aspect_ratio: mediaType === 'video' ? '16:9' : '1:1',
             is_public: true,
             is_featured: false,
             display_order: 0,
@@ -121,7 +196,8 @@ export function MediaLibraryUploader({
           newItem = {
             id: crypto.randomUUID(),
             type: mediaType,
-            url: result.cdnUrl,
+            url: mediaUrl,
+            thumbnailUrl: thumbnailUrl ?? undefined,
             title: file.name.replace(/\.[^.]+$/, ''),
             source: 'portfolio_items',
             createdAt: new Date().toISOString(),
@@ -144,8 +220,8 @@ export function MediaLibraryUploader({
         const { data: row, error: dbError } = await (supabase as any)
           .from('marketplace_media')
           .insert({
-            file_url: result.cdnUrl,
-            thumbnail_url: null,
+            file_url: mediaUrl,
+            thumbnail_url: thumbnailUrl,
             file_type: file.type,
             uploaded_by: userId,
           })
@@ -157,7 +233,8 @@ export function MediaLibraryUploader({
           newItem = {
             id: crypto.randomUUID(),
             type: mediaType,
-            url: result.cdnUrl,
+            url: mediaUrl,
+            thumbnailUrl: thumbnailUrl ?? undefined,
             source: 'marketplace_media',
             createdAt: new Date().toISOString(),
           };

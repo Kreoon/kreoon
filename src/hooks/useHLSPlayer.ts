@@ -186,8 +186,8 @@ export function extractBunnyIds(url: string): { libraryId: string; videoId: stri
 export function getBunnyThumbnailUrl(url: string): string | null {
   const ids = extractBunnyIds(url);
   if (!ids) return null;
-  const BUNNY_CDN_HOST = 'vz-78fcd769-050.b-cdn.net';
-  return `https://${BUNNY_CDN_HOST}/${ids.videoId}/thumbnail.jpg`;
+  // Dominio personalizado de Kreoon para thumbnails
+  return `https://cdn.kreoon.com/${ids.videoId}/thumbnail.jpg`;
 }
 
 /**
@@ -197,19 +197,23 @@ export function getBunnyThumbnailUrl(url: string): string | null {
 export function getBunnyVideoUrls(url: string): BunnyVideoUrls | null {
   if (!url) return null;
 
-  const BUNNY_CDN_HOST = 'vz-78fcd769-050.b-cdn.net';
+  // Host para streaming (HLS/MP4)
+  const BUNNY_STREAM_HOST = 'vz-78fcd769-050.b-cdn.net';
+  const BUNNY_CDN_HOST = BUNNY_STREAM_HOST; // Alias para compatibilidad
+  // Host para thumbnails (dominio personalizado)
+  const BUNNY_THUMB_HOST = 'cdn.kreoon.com';
 
   // Helper to build all quality URLs for a given host and videoId
-  const buildUrls = (host: string, videoId: string): BunnyVideoUrls => ({
-    hls: `https://${host}/${videoId}/playlist.m3u8`,
-    mp4: `https://${host}/${videoId}/play_1080p.mp4`,
-    mp4_360p: `https://${host}/${videoId}/play_360p.mp4`,
-    mp4_480p: `https://${host}/${videoId}/play_480p.mp4`,
-    mp4_720p: `https://${host}/${videoId}/play_720p.mp4`,
-    mp4_1080p: `https://${host}/${videoId}/play_1080p.mp4`,
-    mp4_1440p: `https://${host}/${videoId}/play_1440p.mp4`,
-    mp4_2160p: `https://${host}/${videoId}/play_2160p.mp4`,
-    thumbnail: `https://${host}/${videoId}/thumbnail.jpg`,
+  const buildUrls = (streamHost: string, videoId: string): BunnyVideoUrls => ({
+    hls: `https://${streamHost}/${videoId}/playlist.m3u8`,
+    mp4: `https://${streamHost}/${videoId}/play_1080p.mp4`,
+    mp4_360p: `https://${streamHost}/${videoId}/play_360p.mp4`,
+    mp4_480p: `https://${streamHost}/${videoId}/play_480p.mp4`,
+    mp4_720p: `https://${streamHost}/${videoId}/play_720p.mp4`,
+    mp4_1080p: `https://${streamHost}/${videoId}/play_1080p.mp4`,
+    mp4_1440p: `https://${streamHost}/${videoId}/play_1440p.mp4`,
+    mp4_2160p: `https://${streamHost}/${videoId}/play_2160p.mp4`,
+    thumbnail: `https://${BUNNY_THUMB_HOST}/${videoId}/thumbnail.jpg`,
   });
 
   // 1) CDN URL
@@ -278,6 +282,9 @@ export function getBunnyVideoUrlCandidates(url: string): BunnyVideoUrls[] {
   ];
 
   const uniqueHosts = Array.from(new Set(candidateHosts));
+  // Dominio personalizado para thumbnails
+  const BUNNY_THUMB_HOST = 'cdn.kreoon.com';
+
   return uniqueHosts.map((host) => ({
     hls: `https://${host}/${videoId}/playlist.m3u8`,
     mp4: `https://${host}/${videoId}/play_1080p.mp4`,
@@ -287,7 +294,7 @@ export function getBunnyVideoUrlCandidates(url: string): BunnyVideoUrls[] {
     mp4_1080p: `https://${host}/${videoId}/play_1080p.mp4`,
     mp4_1440p: `https://${host}/${videoId}/play_1440p.mp4`,
     mp4_2160p: `https://${host}/${videoId}/play_2160p.mp4`,
-    thumbnail: `https://${host}/${videoId}/thumbnail.jpg`,
+    thumbnail: `https://${BUNNY_THUMB_HOST}/${videoId}/thumbnail.jpg`,
   }));
 }
 

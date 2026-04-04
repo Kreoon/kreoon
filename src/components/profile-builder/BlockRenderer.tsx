@@ -135,16 +135,48 @@ export function BlockRenderer(props: BlockProps) {
     return <BlockNotImplemented type={props.block.type} />;
   }
 
+  // Resolver config y styles según el dispositivo de preview
+  const resolvedBlock = resolveBlockForDevice(props.block, props.previewDevice);
+
   // Las props de contenedores se pasan a todos los bloques
   // Los bloques que no son contenedores simplemente las ignoran
   return (
     <Suspense fallback={<BlockSkeleton />}>
       <BlockComponent
         {...props}
+        block={resolvedBlock}
         renderChild={props.renderChild}
         onAddBlockToColumn={props.onAddBlockToColumn}
         onRemoveChild={props.onRemoveChild}
       />
     </Suspense>
   );
+}
+
+/**
+ * Resuelve config y styles del bloque según el dispositivo
+ * Aplica configOverrides y responsiveOverrides
+ */
+function resolveBlockForDevice(
+  block: BlockProps['block'],
+  device?: 'desktop' | 'tablet' | 'mobile'
+): BlockProps['block'] {
+  // Si no hay dispositivo o es desktop, retornar sin cambios
+  if (!device || device === 'desktop') {
+    return block;
+  }
+
+  // Aplicar configOverrides
+  const configOverrides = block.configOverrides?.[device] || {};
+  const resolvedConfig = { ...block.config, ...configOverrides };
+
+  // Aplicar responsiveOverrides (estilos)
+  const styleOverrides = block.styles.responsiveOverrides?.[device] || {};
+  const resolvedStyles = { ...block.styles, ...styleOverrides };
+
+  return {
+    ...block,
+    config: resolvedConfig,
+    styles: resolvedStyles,
+  };
 }

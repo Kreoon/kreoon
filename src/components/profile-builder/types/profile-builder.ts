@@ -168,6 +168,11 @@ export interface ProfileBlock {
   isVisible: boolean;
   isDraft: boolean;
   config: Record<string, unknown>;
+  /** Overrides de config por dispositivo */
+  configOverrides?: {
+    mobile?: Record<string, unknown>;
+    tablet?: Record<string, unknown>;
+  };
   styles: BlockStyles;
   content: Record<string, unknown>;
   dataBindings?: DataBinding[];
@@ -259,6 +264,8 @@ export interface BlockProps {
   renderChild?: (child: ProfileBlock) => React.ReactNode;
   onAddBlockToColumn?: (columnIndex: number) => void;
   onRemoveChild?: (childId: string) => void;
+  // Dispositivo de preview para aplicar configOverrides
+  previewDevice?: 'desktop' | 'tablet' | 'mobile';
 }
 
 export interface BlockWrapperProps {
@@ -385,6 +392,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     maxInstances: 0, // Sin limite
     defaultConfig: {
       layout: 'cards',
+      columns: '3',
     },
     defaultStyles: {
       padding: 'md',
@@ -393,17 +401,31 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
   },
   stats: {
     type: 'stats',
-    label: 'Estadisticas',
+    label: 'Estadisticas Verificadas',
     icon: 'BarChart3',
-    description: 'Metricas y numeros destacados',
+    description: 'KPIs de plataforma y redes sociales',
     category: 'core',
     isRequired: false,
     isDeletable: true,
-    maxInstances: 0, // Sin limite
+    maxInstances: 1, // Solo una instancia - datos reales
     defaultConfig: {
-      showFollowers: true,
+      layout: 'cards',
+      columns: '4',
+      // Plataforma
       showProjects: true,
       showRating: true,
+      showClients: true,
+      showResponseTime: false,
+      showDeliveryRate: false,
+      showExperience: true,
+      // Social
+      showFollowers: true,
+      showEngagement: false,
+      showReach: false,
+      showVideoViews: false,
+      // Portfolio
+      showPortfolioViews: false,
+      showPortfolioLikes: false,
     },
     defaultStyles: {
       padding: 'md',
@@ -412,16 +434,18 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
   },
   reviews: {
     type: 'reviews',
-    label: 'Resenas',
+    label: 'Resenas Verificadas',
     icon: 'Star',
-    description: 'Resenas y testimonios de clientes',
+    description: 'Resenas reales de clientes y agencias',
     category: 'core',
     isRequired: false,
     isDeletable: true,
-    maxInstances: 0, // Sin limite
+    maxInstances: 1, // Solo una instancia - resenas son datos reales
     defaultConfig: {
       layout: 'carousel',
-      maxItems: 5,
+      columns: '3',
+      maxItems: 6,
+      showStats: true,
     },
     defaultStyles: {
       padding: 'md',
@@ -439,6 +463,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     maxInstances: 0, // Sin limite
     defaultConfig: {
       layout: 'cards',
+      columns: '3',
       showCurrency: true,
     },
     defaultStyles: {

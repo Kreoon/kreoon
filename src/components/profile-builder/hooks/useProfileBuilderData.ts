@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useCreatorPublicProfile } from '@/hooks/useCreatorPublicProfile';
 import { getTemplateByName, PROFILE_TEMPLATES } from '@/lib/profile-builder/templates';
 import { generateBlocksFromTemplate, type CreatorDataForTemplate } from '@/lib/profile-builder/generateBlocksFromTemplate';
-import type { ProfileBuilderData, ProfileBlock, ProfileTemplate } from '../types/profile-builder';
+import type { ProfileBuilderData, ProfileBlock, ProfileTemplate, BuilderConfig } from '../types/profile-builder';
 
 // ─── Query keys ───────────────────────────────────────────────────────────────
 
@@ -50,15 +50,21 @@ export function useProfileBuilderData(profileId: string | undefined) {
   } = useQuery({
     queryKey: profileBuilderKeys.data(profileId ?? ''),
     queryFn: async (): Promise<ProfileBuilderData> => {
+      console.log('[useProfileBuilderData] Cargando datos para profile:', profileId);
       const { data: rpcData, error: rpcError } = await supabase.rpc(
         'get_profile_builder_data',
         { profile_id: profileId }
       );
 
       if (rpcError) {
+        console.error('[useProfileBuilderData] Error RPC:', rpcError);
         throw rpcError;
       }
 
+      console.log('[useProfileBuilderData] Datos recibidos:', {
+        blocksCount: (rpcData as any)?.blocks?.length ?? 0,
+        hasProfile: !!(rpcData as any)?.profile,
+      });
       return rpcData as unknown as ProfileBuilderData;
     },
     enabled: !!profileId,
@@ -73,19 +79,32 @@ export function useProfileBuilderData(profileId: string | undefined) {
 
   const saveBlocksMutation = useMutation({
     mutationFn: async ({ profileId: pid, blocks, isDraft }: SaveProfileBlocksParams) => {
-      const { error: rpcError } = await supabase.rpc('save_profile_blocks', {
+      console.log('[saveBlocksMutation] Guardando', blocks.length, 'bloques, isDraft:', isDraft);
+      console.log('[saveBlocksMutation] Profile ID:', pid);
+      console.log('[saveBlocksMutation] Primer bloque:', JSON.stringify(blocks[0], null, 2));
+
+      const { data: rpcData, error: rpcError } = await supabase.rpc('save_profile_blocks', {
         profile_id: pid,
         blocks: blocks as unknown as Record<string, unknown>[],
         is_draft: isDraft,
       });
 
       if (rpcError) {
+        console.error('[saveBlocksMutation] Error RPC:', rpcError);
         throw rpcError;
       }
+      console.log('[saveBlocksMutation] Resultado RPC:', rpcData);
+      console.log('[saveBlocksMutation] Guardado exitoso');
     },
     onSuccess: (_data, variables) => {
+      console.log('[saveBlocksMutation] Invalidando caches para:', variables.profileId);
+      // Invalidar datos del builder
       queryClient.invalidateQueries({
         queryKey: profileBuilderKeys.data(variables.profileId),
+      });
+      // También invalidar bloques publicados para el marketplace
+      queryClient.invalidateQueries({
+        queryKey: ['published-profile-blocks', variables.profileId],
       });
     },
     onError: (err: Error) => {
@@ -113,6 +132,10 @@ export function useProfileBuilderData(profileId: string | undefined) {
       queryClient.invalidateQueries({
         queryKey: profileBuilderKeys.data(variables.profileId),
       });
+      // Invalidar también la query de bloques publicados para el marketplace
+      queryClient.invalidateQueries({
+        queryKey: ['published-profile-blocks', variables.profileId],
+      });
       toast({
         title: 'Perfil publicado',
         description: 'Los cambios ya son visibles para todos.',
@@ -121,6 +144,37 @@ export function useProfileBuilderData(profileId: string | undefined) {
     onError: (err: Error) => {
       toast({
         title: 'Error al publicar',
+        description: err.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // ─── Mutation: guardar configuración del builder ──────────────────────────
+
+  const saveConfigMutation = useMutation({
+    mutationFn: async ({ profileId: pid, config }: { profileId: string; config: BuilderConfig }) => {
+      const { error } = await supabase
+        .from('creator_profiles')
+        .update({ builder_config: config as unknown as Record<string, unknown> })
+        .eq('id', pid);
+
+      if (error) {
+        throw error;
+      }
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: profileBuilderKeys.data(variables.profileId),
+      });
+      // Invalidar también para el marketplace
+      queryClient.invalidateQueries({
+        queryKey: ['published-profile-blocks', variables.profileId],
+      });
+    },
+    onError: (err: Error) => {
+      toast({
+        title: 'Error al guardar configuración',
         description: err.message,
         variant: 'destructive',
       });
@@ -157,17 +211,37 @@ export function useProfileBuilderData(profileId: string | undefined) {
 
   const saveBlocks = (blocks: ProfileBlock[], isDraft: boolean) => {
     if (!profileId) return;
+    // Protección: no permitir guardar un array vacío para evitar borrar datos
+    if (!blocks || blocks.length === 0) {
+      console.warn('[saveBlocks] Intento de guardar array vacío bloqueado');
+      return;
+    }
     saveBlocksMutation.mutate({ profileId, blocks, isDraft });
   };
 
   const saveBlocksAsync = (blocks: ProfileBlock[], isDraft: boolean) => {
     if (!profileId) return Promise.resolve();
+    // Protección: no permitir guardar un array vacío para evitar borrar datos
+    if (!blocks || blocks.length === 0) {
+      console.warn('[saveBlocksAsync] Intento de guardar array vacío bloqueado');
+      return Promise.reject(new Error('No se puede guardar un perfil sin bloques'));
+    }
     return saveBlocksMutation.mutateAsync({ profileId, blocks, isDraft });
   };
 
   const publishBlocks = () => {
     if (!profileId) return;
     publishMutation.mutate({ profileId });
+  };
+
+  const saveBuilderConfig = (config: BuilderConfig) => {
+    if (!profileId) return;
+    saveConfigMutation.mutate({ profileId, config });
+  };
+
+  const saveBuilderConfigAsync = async (config: BuilderConfig) => {
+    if (!profileId) return;
+    return saveConfigMutation.mutateAsync({ profileId, config });
   };
 
   const generatePreviewToken = () => {
@@ -187,8 +261,14 @@ export function useProfileBuilderData(profileId: string | undefined) {
   // ─── Generar bloques automáticamente si no hay guardados ───────────────────
   // Esto permite que el builder muestre contenido basado en datos del marketplace
   const generatedBlocks = (() => {
+    console.log('[useProfileBuilderData] Calculando bloques:', {
+      dataBlocks: data?.blocks?.length ?? 0,
+      hasMarketplaceProfile: !!marketplaceData?.profile,
+    });
+
     // Si hay bloques guardados, usarlos
     if (data?.blocks && data.blocks.length > 0) {
+      console.log('[useProfileBuilderData] Usando bloques guardados:', data.blocks.length);
       return data.blocks;
     }
 
@@ -230,7 +310,7 @@ export function useProfileBuilderData(profileId: string | undefined) {
     isLoading: isLoading || marketplaceLoading,
     isError,
     error,
-    isSaving: saveBlocksMutation.isPending,
+    isSaving: saveBlocksMutation.isPending || saveConfigMutation.isPending,
     isPublishing: publishMutation.isPending,
     isGeneratingToken: generatePreviewTokenMutation.isPending,
     // Token de preview generado
@@ -239,6 +319,8 @@ export function useProfileBuilderData(profileId: string | undefined) {
     saveBlocks,
     saveBlocksAsync,
     publishBlocks,
+    saveBuilderConfig,
+    saveBuilderConfigAsync,
     generatePreviewToken,
     generatePreviewTokenAsync,
     refetch,

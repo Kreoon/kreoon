@@ -5,6 +5,18 @@
 import type { ProfileTemplate, ProfileBlock, BuilderConfig, BlockType, BlockStyles } from '../types/profile-builder';
 import { BLOCK_DEFINITIONS } from '../types/profile-builder';
 
+// Estilos y config por defecto para bloques que no existen aun en BLOCK_DEFINITIONS
+const FALLBACK_DEFAULTS = {
+  defaultConfig: {},
+  defaultStyles: {
+    padding: 'md' as const,
+    margin: 'none' as const,
+    shadow: 'none' as const,
+    borderRadius: 'md' as const,
+    width: 'full' as const,
+  },
+};
+
 // Helper para crear bloques de plantilla con estilos heredados de BLOCK_DEFINITIONS
 function createTemplateBlock(
   type: BlockType,
@@ -13,7 +25,8 @@ function createTemplateBlock(
   content: Record<string, unknown> = {},
   customStyles: Partial<BlockStyles> = {}
 ): Omit<ProfileBlock, 'id' | 'isDraft'> {
-  const definition = BLOCK_DEFINITIONS[type];
+  // Usar definicion existente o fallback si el bloque no existe
+  const definition = BLOCK_DEFINITIONS[type] || FALLBACK_DEFAULTS;
 
   return {
     type,

@@ -219,7 +219,10 @@ export async function fetchUserSpecializations(userId: string): Promise<Speciali
       .eq('user_id', userId);
 
     if (error) {
-      console.error('Error fetching user specializations:', error);
+      // Silenciar error 42501 (permission denied) - no es crítico
+      if (error.code !== '42501') {
+        console.error('Error fetching user specializations:', error);
+      }
       return [];
     }
 

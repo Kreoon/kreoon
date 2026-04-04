@@ -1,11 +1,13 @@
-import { Suspense } from 'react';
+import { Suspense, useMemo } from 'react';
 import { Eye, Zap, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useProfileBuilderData } from '@/components/profile-builder/hooks/useProfileBuilderData';
+import { usePublishedProfileBlocks } from '@/hooks/usePublishedProfileBlocks';
+import { useCreatorPublicProfile } from '@/hooks/useCreatorPublicProfile';
 import { CreatorThemeProvider } from './CreatorThemeProvider';
 import { PublicBlockRenderer } from './PublicBlockRenderer';
 import { DEFAULT_BUILDER_CONFIG } from '@/components/profile-builder/types/profile-builder';
-import type { ProfileBlock } from '@/components/profile-builder/types/profile-builder';
+import type { ProfileBlock, BuilderConfig } from '@/components/profile-builder/types/profile-builder';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -90,13 +92,63 @@ function KreoonBranding() {
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export function ProfilePageRenderer({ profileId, isPreview = false }: ProfilePageRendererProps) {
-  const { profile, blocks, isLoading, isError, error } = useProfileBuilderData(profileId);
+  // Para preview: usar datos del builder (incluye borradores)
+  const builderData = useProfileBuilderData(isPreview ? profileId : undefined);
+
+  // Para público: usar bloques publicados
+  const publishedData = usePublishedProfileBlocks(!isPreview ? profileId : undefined);
+
+  // Datos del creador para fallback y display_name
+  const { data: creatorData, loading: creatorLoading } = useCreatorPublicProfile(profileId);
+
+  // Estados combinados
+  const isLoading = isPreview
+    ? builderData.isLoading
+    : publishedData.isLoading || creatorLoading;
+
+  const isError = isPreview ? builderData.isError : false;
+  const error = isPreview ? builderData.error : null;
+
+  // Obtener configuración del builder (debe estar antes de returns condicionales)
+  const config: BuilderConfig = useMemo(() => {
+    if (isPreview && builderData.profile?.builder_config) {
+      return builderData.profile.builder_config;
+    }
+    if (!isPreview && publishedData.data?.builderConfig) {
+      return publishedData.data.builderConfig;
+    }
+    return DEFAULT_BUILDER_CONFIG;
+  }, [isPreview, builderData.profile, publishedData.data]);
+
+  // Obtener bloques según el modo
+  const blocks: ProfileBlock[] = useMemo(() => {
+    if (isPreview) {
+      return builderData.blocks || [];
+    }
+    return publishedData.data?.blocks || [];
+  }, [isPreview, builderData.blocks, publishedData.data]);
+
+  // Filtrar bloques visibles
+  const visibleBlocks: ProfileBlock[] = useMemo(() => {
+    return [...blocks]
+      .filter((b) => b.isVisible && (isPreview ? true : !b.isDraft))
+      .sort((a, b) => a.orderIndex - b.orderIndex);
+  }, [blocks, isPreview]);
+
+  const displayName = isPreview
+    ? builderData.profile?.display_name || 'Creador'
+    : creatorData?.profile?.display_name || 'Creador';
+
+  const showBranding = config.showKreoonBranding;
+
+  // ── Render states ──
 
   if (isLoading) {
     return <ProfileSkeleton />;
   }
 
-  if (isError || !profile) {
+  // En modo preview, verificar perfil del builder
+  if (isPreview && (isError || !builderData.profile)) {
     const message =
       error instanceof Error
         ? error.message
@@ -104,14 +156,10 @@ export function ProfilePageRenderer({ profileId, isPreview = false }: ProfilePag
     return <ProfileError message={message} />;
   }
 
-  const config = profile.builder_config ?? DEFAULT_BUILDER_CONFIG;
-
-  // Filtrar bloques: solo visibles y no borradores (a menos que sea preview)
-  const visibleBlocks: ProfileBlock[] = [...blocks]
-    .filter((b) => b.isVisible && (isPreview ? true : !b.isDraft))
-    .sort((a, b) => a.orderIndex - b.orderIndex);
-
-  const showBranding = config.showKreoonBranding;
+  // En modo público, verificar datos del creador
+  if (!isPreview && !creatorData?.profile) {
+    return <ProfileError message="Perfil no encontrado" />;
+  }
 
   return (
     <CreatorThemeProvider config={config}>
@@ -121,7 +169,7 @@ export function ProfilePageRenderer({ profileId, isPreview = false }: ProfilePag
       {/* Contenedor principal del perfil */}
       <main
         className="w-full min-h-screen"
-        aria-label={`Perfil de ${profile.display_name}`}
+        aria-label={`Perfil de ${displayName}`}
       >
         {visibleBlocks.length === 0 ? (
           <div className="flex items-center justify-center min-h-[60vh] px-4">
@@ -137,7 +185,16 @@ export function ProfilePageRenderer({ profileId, isPreview = false }: ProfilePag
             }
           >
             {visibleBlocks.map((block) => (
-              <PublicBlockRenderer key={block.id} block={block} />
+              <PublicBlockRenderer
+                key={block.id}
+                block={block}
+                creatorProfile={creatorData?.profile ? {
+                  id: creatorData.profile.id,
+                  user_id: creatorData.profile.user_id,
+                  display_name: creatorData.profile.display_name,
+                  categories: creatorData.profile.categories || [],
+                } : undefined}
+              />
             ))}
           </Suspense>
         )}

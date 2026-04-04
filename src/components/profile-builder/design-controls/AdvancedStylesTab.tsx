@@ -6,7 +6,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { ChevronDown, ChevronRight, Palette, Type, Box, Sparkles, Layers, ImagePlus, Link2, X, RotateCcw } from 'lucide-react';
+import { ChevronDown, ChevronRight, Palette, Type, Box, Sparkles, Layers, ImagePlus, Link2, X } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -26,9 +26,8 @@ import { SpacingControl, type SpacingValues } from './SpacingControl';
 import { ShadowBuilder, type BoxShadow } from './ShadowBuilder';
 import { TypographyControl, type TypographyValues } from './TypographyControl';
 import { AnimationPicker, type AnimationConfig } from './AnimationPicker';
-import { ResponsiveToggle, type DeviceMode } from './ResponsiveToggle';
+import { type DeviceMode } from './ResponsiveToggle';
 import { MediaLibraryPicker, type MediaItem } from '../media';
-import { Badge } from '@/components/ui/badge';
 import type { BlockStyles } from '../types/profile-builder';
 
 interface AdvancedStylesTabProps {
@@ -36,6 +35,8 @@ interface AdvancedStylesTabProps {
   onStylesChange: (updates: Partial<BlockStyles>) => void;
   userId?: string;
   creatorProfileId?: string;
+  /** Dispositivo actual - controlado desde el padre */
+  deviceMode?: DeviceMode;
 }
 
 // Seccion colapsable
@@ -70,54 +71,61 @@ function StyleSection({
   );
 }
 
-export function AdvancedStylesTab({ styles, onStylesChange, userId, creatorProfileId }: AdvancedStylesTabProps) {
+export function AdvancedStylesTab({ styles, onStylesChange, userId, creatorProfileId, deviceMode = 'all' }: AdvancedStylesTabProps) {
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [imageInputMode, setImageInputMode] = useState<'url' | 'upload'>('upload');
-  const [deviceMode, setDeviceMode] = useState<DeviceMode>('desktop');
 
   // Obtener estilos efectivos segun dispositivo
   const effectiveStyles = useMemo((): BlockStyles => {
-    if (deviceMode === 'desktop') {
+    // 'all' y 'desktop' muestran los estilos base
+    if (deviceMode === 'all' || deviceMode === 'desktop') {
       return styles;
     }
+    // tablet y mobile muestran estilos base + overrides
     const overrides = styles.responsiveOverrides?.[deviceMode] || {};
     return { ...styles, ...overrides };
   }, [styles, deviceMode]);
 
-  // Contar overrides por dispositivo
-  const overrideCounts = useMemo(() => ({
-    tablet: Object.keys(styles.responsiveOverrides?.tablet || {}).length,
-    mobile: Object.keys(styles.responsiveOverrides?.mobile || {}).length,
-  }), [styles.responsiveOverrides]);
-
   // Handler para cambios de estilo segun dispositivo
   const handleStyleChange = useCallback((updates: Partial<BlockStyles>) => {
-    if (deviceMode === 'desktop') {
-      // Cambios en desktop se aplican al estilo base
-      onStylesChange(updates);
+    // Excluir responsiveOverrides de los updates para evitar conflictos
+    const { responsiveOverrides: _, ...cleanUpdates } = updates as BlockStyles;
+
+    if (deviceMode === 'all') {
+      // 'all' aplica a estilos base Y limpia los overrides de esas propiedades
+      const currentOverrides = styles.responsiveOverrides || {};
+      const updatedKeys = Object.keys(cleanUpdates);
+
+      // Limpiar esas propiedades de tablet y mobile overrides
+      const cleanedTablet = { ...(currentOverrides.tablet || {}) };
+      const cleanedMobile = { ...(currentOverrides.mobile || {}) };
+      updatedKeys.forEach(key => {
+        delete cleanedTablet[key as keyof typeof cleanedTablet];
+        delete cleanedMobile[key as keyof typeof cleanedMobile];
+      });
+
+      const newOverrides: typeof currentOverrides = {};
+      if (Object.keys(cleanedTablet).length > 0) newOverrides.tablet = cleanedTablet;
+      if (Object.keys(cleanedMobile).length > 0) newOverrides.mobile = cleanedMobile;
+
+      onStylesChange({
+        ...cleanUpdates,
+        responsiveOverrides: Object.keys(newOverrides).length > 0 ? newOverrides : undefined,
+      });
+    } else if (deviceMode === 'desktop') {
+      // Desktop solo modifica estilos base, preserva overrides
+      onStylesChange(cleanUpdates);
     } else {
-      // Cambios en tablet/mobile se guardan en responsiveOverrides
+      // tablet/mobile guardan en responsiveOverrides
       const currentOverrides = styles.responsiveOverrides || {};
       const deviceOverrides = currentOverrides[deviceMode] || {};
-      // Llamar a onStylesChange (no handleStyleChange) para evitar recursion
       onStylesChange({
         responsiveOverrides: {
           ...currentOverrides,
-          [deviceMode]: { ...deviceOverrides, ...updates },
+          [deviceMode]: { ...deviceOverrides, ...cleanUpdates },
         },
       });
     }
-  }, [deviceMode, styles.responsiveOverrides, onStylesChange]);
-
-  // Resetear overrides de un dispositivo
-  const handleResetDevice = useCallback(() => {
-    if (deviceMode === 'desktop') return;
-    const currentOverrides = styles.responsiveOverrides || {};
-    const { [deviceMode]: _, ...restOverrides } = currentOverrides;
-    // Llamar a onStylesChange directamente
-    onStylesChange({
-      responsiveOverrides: Object.keys(restOverrides).length > 0 ? restOverrides : undefined,
-    });
   }, [deviceMode, styles.responsiveOverrides, onStylesChange]);
   // Helpers para convertir entre formatos (usan effectiveStyles para mostrar valor correcto)
   const getSpacingValues = (prefix: 'paddingCustom' | 'marginCustom'): SpacingValues => {
@@ -156,40 +164,6 @@ export function AdvancedStylesTab({ styles, onStylesChange, userId, creatorProfi
 
   return (
     <div className="space-y-3">
-      {/* Selector de dispositivo */}
-      <div className="flex items-center justify-between gap-2 px-1">
-        <ResponsiveToggle value={deviceMode} onChange={setDeviceMode} />
-
-        {/* Indicador de overrides y boton reset */}
-        {deviceMode !== 'desktop' && (
-          <div className="flex items-center gap-2">
-            {overrideCounts[deviceMode] > 0 && (
-              <Badge variant="secondary" className="text-xs">
-                {overrideCounts[deviceMode]} cambio{overrideCounts[deviceMode] !== 1 ? 's' : ''}
-              </Badge>
-            )}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive"
-              onClick={handleResetDevice}
-              disabled={overrideCounts[deviceMode] === 0}
-            >
-              <RotateCcw className="h-3 w-3 mr-1" />
-              Resetear
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Info de modo */}
-      {deviceMode !== 'desktop' && (
-        <p className="text-xs text-muted-foreground px-1 -mt-1">
-          Los cambios aqui solo se aplican en {deviceMode === 'tablet' ? 'tablet' : 'movil'}
-        </p>
-      )}
-
       {/* Colores y Fondo */}
       <StyleSection icon={Palette} title="Colores y Fondo" defaultOpen>
         <div className="space-y-4">
