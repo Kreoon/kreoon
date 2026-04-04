@@ -6,16 +6,21 @@
 const SUPABASE_STORAGE_HOST = 'wjkbqcrxwsmvtxmqgiqc.supabase.co';
 const BUNNY_CDN_HOSTS = ['b-cdn.net', 'mediadelivery.net', 'cdn.kreoon.com'];
 
+// wsrv.nl - servicio gratuito de optimización de imágenes (sin límites, open source)
+const WSRV_PROXY = 'https://wsrv.nl';
+
 interface OptimizedImageOptions {
   width?: number;
   height?: number;
   quality?: number;
   format?: 'webp' | 'jpg' | 'png' | 'auto';
+  /** Usar proxy de optimización para cualquier imagen */
+  forceProxy?: boolean;
 }
 
 /**
  * Get optimized image URL with proper sizing for the container
- * Supports Supabase Storage transformations and Bunny CDN
+ * Supports Supabase Storage transformations, wsrv.nl proxy, and Bunny CDN
  */
 export function getOptimizedImageUrl(
   url: string | null | undefined,
@@ -23,35 +28,32 @@ export function getOptimizedImageUrl(
 ): string {
   if (!url) return '';
 
-  const { width = 400, quality = 75, format = 'webp' } = options;
+  const { width = 400, height, quality = 75, format = 'webp', forceProxy = false } = options;
 
   try {
     const urlObj = new URL(url);
-
-    // Supabase Storage - use render endpoint with transformations
-    // Only for portfolio bucket which has transformations enabled
-    // Skip avatar images as they may fail transformation
-    if (
-      urlObj.hostname === SUPABASE_STORAGE_HOST &&
-      urlObj.pathname.includes('/storage/v1/object/') &&
-      urlObj.pathname.includes('/portfolio/') &&
-      !urlObj.pathname.includes('/avatar')
-    ) {
-      // Convert from /storage/v1/object/public/... to /storage/v1/render/image/public/...
-      const renderPath = urlObj.pathname.replace('/object/', '/render/image/');
-      const params = new URLSearchParams();
-      params.set('width', String(width));
-      params.set('quality', String(quality));
-      if (format !== 'auto') params.set('format', format);
-      return `${urlObj.origin}${renderPath}?${params.toString()}`;
-    }
 
     // Bunny CDN video thumbnails - already optimized, just return
     if (BUNNY_CDN_HOSTS.some(host => urlObj.hostname.includes(host))) {
       return url;
     }
 
-    // External images and avatars - return as-is
+    // Supabase Storage - use wsrv.nl proxy for reliable transformation
+    // (Supabase image transformations require Pro plan per bucket)
+    if (urlObj.hostname === SUPABASE_STORAGE_HOST || forceProxy) {
+      const params = new URLSearchParams();
+      params.set('url', url);
+      params.set('w', String(width));
+      if (height) params.set('h', String(height));
+      params.set('q', String(quality));
+      params.set('output', format === 'auto' ? 'webp' : format);
+      params.set('fit', 'cover');
+      // Usar afilado para mejor calidad en tamaños pequeños
+      if (width <= 100) params.set('sharp', '1');
+      return `${WSRV_PROXY}/?${params.toString()}`;
+    }
+
+    // External images - return as-is
     return url;
   } catch {
     return url || '';

@@ -188,14 +188,34 @@ export function extractBunnyIds(url: string): { libraryId: string; videoId: stri
 /**
  * Get a Bunny CDN thumbnail URL from any Bunny video URL.
  * Returns null for non-Bunny URLs.
+ * @param url - URL del video de Bunny
+ * @param options - Opciones de tamaño para optimizar el thumbnail
  */
-export function getBunnyThumbnailUrl(url: string): string | null {
+export function getBunnyThumbnailUrl(
+  url: string,
+  options?: { width?: number; height?: number; quality?: number }
+): string | null {
   const ids = extractBunnyIds(url);
   if (!ids) return null;
+
   // Usar el host de Bunny Stream directamente para thumbnails
   // El dominio personalizado cdn.kreoon.com no sirve thumbnails
   const BUNNY_STREAM_HOST = 'vz-78fcd769-050.b-cdn.net';
-  return `https://${BUNNY_STREAM_HOST}/${ids.videoId}/thumbnail.jpg`;
+  const thumbnailUrl = `https://${BUNNY_STREAM_HOST}/${ids.videoId}/thumbnail.jpg`;
+
+  // Si se especifican opciones de tamaño, usar wsrv.nl para optimizar
+  if (options?.width || options?.height) {
+    const params = new URLSearchParams();
+    params.set('url', thumbnailUrl);
+    if (options.width) params.set('w', String(options.width));
+    if (options.height) params.set('h', String(options.height));
+    params.set('q', String(options.quality || 75));
+    params.set('output', 'webp');
+    params.set('fit', 'cover');
+    return `https://wsrv.nl/?${params.toString()}`;
+  }
+
+  return thumbnailUrl;
 }
 
 /**

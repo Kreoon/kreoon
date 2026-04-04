@@ -7,26 +7,26 @@ import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 import { getSpecializationLabel, getSpecializationBgColor, getSpecializationColor } from '@/lib/specializations';
 import type { Specialization } from '@/types/database';
 
-// Card dimensions for image optimization
+// Card dimensions for image optimization (2x for retina)
 const CARD_WIDTH = 180;
 const CARD_HEIGHT = 320; // 9:16 aspect ratio
+const THUMB_WIDTH = CARD_WIDTH * 2; // 360px para 2x retina
+const THUMB_HEIGHT = CARD_HEIGHT * 2; // 640px para 2x retina
 
-function resolveThumb(item: PortfolioMedia, optimize = true): string {
+function resolveThumb(item: PortfolioMedia): string {
   if (item.type === 'video') {
-    const bunnyThumb = getBunnyThumbnailUrl(item.url);
+    // Optimizar thumbnails de Bunny con tamaño adecuado
+    const bunnyThumb = getBunnyThumbnailUrl(item.url, {
+      width: THUMB_WIDTH,
+      height: THUMB_HEIGHT,
+      quality: 75
+    });
     if (bunnyThumb) return bunnyThumb;
   }
   const baseUrl = item.thumbnail_url || item.url;
-  // Skip optimization for Bunny CDN URLs (already optimized)
-  const isBunnyCdn = baseUrl && (
-    baseUrl.includes('b-cdn.net') ||
-    baseUrl.includes('cdn.kreoon.com') ||
-    baseUrl.includes('mediadelivery.net')
-  );
-  if (optimize && baseUrl && !isBunnyCdn) {
-    return getOptimizedImageUrl(baseUrl, { width: CARD_WIDTH * 2, quality: 75 });
-  }
-  return baseUrl;
+  if (!baseUrl) return '';
+  // Optimizar todas las imágenes con wsrv.nl
+  return getOptimizedImageUrl(baseUrl, { width: THUMB_WIDTH, quality: 75 });
 }
 
 interface CreatorCardProps {

@@ -28,23 +28,23 @@ interface CreatorCardProps {
 
 const CARD_WIDTH = 180;
 const CARD_HEIGHT = 320;
+const THUMB_WIDTH = CARD_WIDTH * 2; // 360px para 2x retina
+const THUMB_HEIGHT = CARD_HEIGHT * 2; // 640px para 2x retina
 
 function resolveThumb(item: PortfolioMedia): string {
   if (item.type === 'video') {
-    const bunnyThumb = getBunnyThumbnailUrl(item.url);
+    // Optimizar thumbnails de Bunny con tamaño adecuado
+    const bunnyThumb = getBunnyThumbnailUrl(item.url, {
+      width: THUMB_WIDTH,
+      height: THUMB_HEIGHT,
+      quality: 75
+    });
     if (bunnyThumb) return bunnyThumb;
   }
   const base = item.thumbnail_url || item.url;
-  // Skip optimization for Bunny CDN URLs (already optimized)
-  const isBunnyCdn = base && (
-    base.includes('b-cdn.net') ||
-    base.includes('cdn.kreoon.com') ||
-    base.includes('mediadelivery.net')
-  );
-  if (base && !isBunnyCdn) {
-    return getOptimizedImageUrl(base, { width: CARD_WIDTH * 2, quality: 75 });
-  }
-  return base;
+  if (!base) return '';
+  // Optimizar todas las imágenes con wsrv.nl
+  return getOptimizedImageUrl(base, { width: THUMB_WIDTH, quality: 75 });
 }
 
 function formatPrice(price: number, currency: string): string {
