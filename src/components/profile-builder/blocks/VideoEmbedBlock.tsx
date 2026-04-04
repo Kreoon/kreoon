@@ -53,15 +53,17 @@ function extractVimeoId(url: string): string | null {
   return match ? match[1] : null;
 }
 
-function buildEmbedUrl(url: string, provider: VideoProvider, config: VideoEmbedConfig): string | null {
+function buildEmbedUrl(url: string, provider: VideoProvider, config: VideoEmbedConfig, allowAutoplay: boolean = true): string | null {
   if (!url) return null;
+  // Solo permitir autoplay si está habilitado Y si allowAutoplay es true
+  const shouldAutoplay = config.autoplay && allowAutoplay;
 
   switch (provider) {
     case 'youtube': {
       const id = extractYoutubeId(url);
       if (!id) return null;
       const params = new URLSearchParams();
-      if (config.autoplay) params.set('autoplay', '1');
+      if (shouldAutoplay) params.set('autoplay', '1');
       if (config.muted) params.set('mute', '1');
       if (!config.controls) params.set('controls', '0');
       params.set('rel', '0');
@@ -71,7 +73,7 @@ function buildEmbedUrl(url: string, provider: VideoProvider, config: VideoEmbedC
       const id = extractVimeoId(url);
       if (!id) return null;
       const params = new URLSearchParams();
-      if (config.autoplay) params.set('autoplay', '1');
+      if (shouldAutoplay) params.set('autoplay', '1');
       if (config.muted) params.set('muted', '1');
       if (!config.controls) params.set('controls', '0');
       return `https://player.vimeo.com/video/${id}?${params.toString()}`;
@@ -97,8 +99,9 @@ function VideoEmbedBlockComponent({ block, isEditing, isSelected, onUpdate }: Bl
   );
 
   const embedUrl = useMemo(
-    () => content.url ? buildEmbedUrl(content.url, provider, config) : null,
-    [content.url, provider, config],
+    // En perfil público (no edición), nunca autoplay para evitar múltiples videos cargando
+    () => content.url ? buildEmbedUrl(content.url, provider, config, isEditing) : null,
+    [content.url, provider, config, isEditing],
   );
 
   const handleUrlChange = (url: string) => {
@@ -135,13 +138,13 @@ function VideoEmbedBlockComponent({ block, isEditing, isSelected, onUpdate }: Bl
         </div>
       )}
 
-      {/* Player */}
+      {/* Player - En perfil público (no edición), nunca autoplay para evitar múltiples videos cargando */}
       {content.url && provider === 'bunny' ? (
         <BunnyStreamPlayer
           videoUrl={content.url}
-          autoplay={config.autoplay}
+          autoplay={isEditing ? config.autoplay : false}
           muted={config.muted}
-          preload={true}
+          preload={!isEditing}
           showSpeed={true}
           aspectRatio="16:9"
           borderRadius={styles.borderRadius || 'md'}
