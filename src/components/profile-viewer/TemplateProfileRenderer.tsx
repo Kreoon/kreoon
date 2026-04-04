@@ -234,8 +234,9 @@ export function TemplateProfileRenderer({
     );
   }
 
-  // Validar requisitos minimos
-  const hasMinimumRequirements = creatorData.portfolioItems.length > 0;
+  // Validar requisitos minimos SOLO si no hay bloques publicados del profile builder
+  // Si el creador uso el profile builder, no necesita portfolio items en la tabla clásica
+  const hasMinimumRequirements = hasPublishedProfile || creatorData.portfolioItems.length > 0;
   if (!hasMinimumRequirements) {
     return (
       <div className="min-h-screen bg-[#0a0a0f]">
