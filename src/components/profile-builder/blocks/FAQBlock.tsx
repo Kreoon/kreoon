@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, useState, useMemo } from 'react';
 import { Plus, Trash2, Pencil } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { cn } from '@/lib/utils';
@@ -72,7 +72,12 @@ function FAQBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockProp
   const config = block.config as FAQConfig;
   const content = block.content as FAQContent;
   const styles = block.styles;
-  const items = content.items || DEFAULT_ITEMS;
+  // Asegurar que cada item tenga un id único para evitar warning de React keys
+  const items = useMemo(() =>
+    (content.items || DEFAULT_ITEMS).map((item, index) => ({
+      ...item,
+      id: item.id || `faq-${index}`
+    })), [content.items]);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
   const {
