@@ -181,32 +181,15 @@ export function isBunnyUrl(url: string): boolean {
  * Obtiene la URL del thumbnail de un video de Bunny.
  * Usa el host de Bunny Stream directamente (cdn.kreoon.com no sirve thumbnails)
  * @param url - URL del video de Bunny
- * @param options - Opciones de tamaño para optimizar el thumbnail
  */
-export function getBunnyThumbnailUrl(
-  url: string,
-  options?: { width?: number; height?: number; quality?: number }
-): string | null {
+export function getBunnyThumbnailUrl(url: string): string | null {
   const ids = extractBunnyIds(url);
   if (!ids) return null;
 
   // Host de Bunny Stream para thumbnails
+  // Bunny CDN ya tiene buena compresión, no necesita proxy adicional
   const BUNNY_STREAM_HOST = 'vz-78fcd769-050.b-cdn.net';
-  const thumbnailUrl = `https://${BUNNY_STREAM_HOST}/${ids.videoId}/thumbnail.jpg`;
-
-  // Si se especifican opciones de tamaño, usar wsrv.nl para optimizar
-  if (options?.width || options?.height) {
-    const params = new URLSearchParams();
-    params.set('url', thumbnailUrl);
-    if (options.width) params.set('w', String(options.width));
-    if (options.height) params.set('h', String(options.height));
-    params.set('q', String(options.quality || 75));
-    params.set('output', 'webp');
-    params.set('fit', 'cover');
-    return `https://wsrv.nl/?${params.toString()}`;
-  }
-
-  return thumbnailUrl;
+  return `https://${BUNNY_STREAM_HOST}/${ids.videoId}/thumbnail.jpg`;
 }
 
 export default BunnyStreamPlayer;

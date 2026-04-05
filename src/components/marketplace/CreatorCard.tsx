@@ -15,17 +15,13 @@ const THUMB_HEIGHT = CARD_HEIGHT * 2; // 640px para 2x retina
 
 function resolveThumb(item: PortfolioMedia): string {
   if (item.type === 'video') {
-    // Optimizar thumbnails de Bunny con tamaño adecuado
-    const bunnyThumb = getBunnyThumbnailUrl(item.url, {
-      width: THUMB_WIDTH,
-      height: THUMB_HEIGHT,
-      quality: 75
-    });
+    // Bunny CDN ya optimiza sus thumbnails, no necesita proxy
+    const bunnyThumb = getBunnyThumbnailUrl(item.url);
     if (bunnyThumb) return bunnyThumb;
   }
   const baseUrl = item.thumbnail_url || item.url;
   if (!baseUrl) return '';
-  // Optimizar todas las imágenes con wsrv.nl
+  // Optimizar imágenes de Supabase con wsrv.nl
   return getOptimizedImageUrl(baseUrl, { width: THUMB_WIDTH, quality: 75 });
 }
 
