@@ -20,6 +20,8 @@ interface CreatorCardProps {
   creator: RankedCreator;
   onClick: () => void;
   style?: React.CSSProperties;
+  /** Prioridad alta para LCP - primeras tarjetas visibles */
+  priority?: boolean;
 }
 
 // -------------------------------------------------------------------
@@ -98,11 +100,15 @@ function RankingBadge({ tag }: RankingBadgeProps) {
 // CreatorCard
 // -------------------------------------------------------------------
 
-function CreatorCardComponent({ creator, onClick, style }: CreatorCardProps) {
+function CreatorCardComponent({ creator, onClick, style, priority = false }: CreatorCardProps) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const firstMedia = creator.portfolio_media?.[0] ?? null;
 
   const handleLoad = useCallback(() => setImgLoaded(true), []);
+
+  // Atributos de carga según prioridad (para mejorar LCP)
+  const loadingAttr = priority ? 'eager' : 'lazy';
+  const decodingAttr = priority ? 'sync' : 'async';
 
   const locationParts = [creator.location_city, creator.location_country].filter(Boolean);
   const locationLabel = locationParts.join(', ');
@@ -148,8 +154,9 @@ function CreatorCardComponent({ creator, onClick, style }: CreatorCardProps) {
               alt=""
               width={CARD_WIDTH}
               height={CARD_HEIGHT}
-              loading="lazy"
-              decoding="async"
+              loading={loadingAttr}
+              decoding={decodingAttr}
+              fetchPriority={priority ? 'high' : undefined}
               className={cn(
                 'w-full h-full object-cover transition-opacity duration-300',
                 imgLoaded ? 'opacity-100' : 'opacity-0',
@@ -163,8 +170,9 @@ function CreatorCardComponent({ creator, onClick, style }: CreatorCardProps) {
             alt={creator.display_name}
             width={CARD_WIDTH}
             height={CARD_HEIGHT}
-            loading="lazy"
-            decoding="async"
+            loading={loadingAttr}
+            decoding={decodingAttr}
+            fetchPriority={priority ? 'high' : undefined}
             className="w-full h-full object-cover"
           />
         ) : (

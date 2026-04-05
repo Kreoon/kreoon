@@ -124,6 +124,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
                   )}
                   loading={(priority && i === 0) ? 'eager' : 'lazy'}
                   decoding={(priority && i === 0) ? 'sync' : 'async'}
+                  fetchPriority={(priority && i === 0) ? 'high' : undefined}
                   onLoad={() => setImgLoaded(prev => ({ ...prev, [i]: true }))}
                 />
                 {item.type === 'video' && (
@@ -143,7 +144,8 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
                 src={getOptimizedImageUrl(creator.avatar_url, { width: CARD_WIDTH * 2, quality: 75 })}
                 alt={creator.display_name}
                 className="w-full h-full object-cover"
-                loading="lazy"
+                loading={priority ? 'eager' : 'lazy'}
+                fetchPriority={priority ? 'high' : undefined}
               />
             ) : (
               <div className="w-16 h-16 rounded-full bg-primary/30 flex items-center justify-center">
