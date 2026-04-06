@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders, handleCorsOptions } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 // Platform root emails that have full admin access
 // SECURITY: No fallback - must be explicitly configured in environment
@@ -28,6 +29,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return handleCorsOptions(req);
   const corsHeaders = getCorsHeaders(req);
 
+  const logger = createLogger("admin-users");
+
   try {
     // Use native Supabase env vars when deployed to Kreoon directly
     // Falls back to KREOON_* vars for backwards compatibility
@@ -35,7 +38,7 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('KREOON_SERVICE_ROLE_KEY');
 
     if (!supabaseUrl || !serviceRoleKey) {
-      console.error("Database credentials not configured");
+      logger.error("Database credentials not configured");
       return new Response(JSON.stringify({ error: "Database credentials not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -45,6 +48,7 @@ serve(async (req) => {
     // Verify the caller has authorization header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith('Bearer ')) {
+      logger.warn("Request without authorization header");
       return new Response(JSON.stringify({ error: "No authorization header" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -61,7 +65,7 @@ serve(async (req) => {
     const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
 
     if (userError || !userData?.user) {
-      console.error("Auth error:", userError);
+      logger.warn("Invalid or expired token", { auth_error: userError?.message });
       return new Response(JSON.stringify({ error: "Invalid or expired token - please log in again" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -70,6 +74,9 @@ serve(async (req) => {
 
     const callerEmail = userData.user.email as string;
     const callerId = userData.user.id as string;
+
+    // Adjuntar contexto del caller a todos los logs
+    logger.setContext(callerId);
 
     // Check if caller is a root user
     const isRootUser = ROOT_EMAILS.includes(callerEmail);
@@ -91,14 +98,18 @@ serve(async (req) => {
     const body = await req.json();
     const { action, userId, email, role, clientId, contentId, conversationId, productId, notificationId, postId, referralId } = body;
 
-    console.log(`[admin-users] Action: ${action}, Caller: ${callerEmail}, isRoot: ${isRootUser}, Target userId: ${userId || 'N/A'}`);
-
+    logger.info("Admin action requested", {
+      action,
+      caller_email: callerEmail,
+      is_root: isRootUser,
+      target_user_id: userId || null,
+    });
 
     // Check authorization based on action type
     if (ROOT_ONLY_ACTIONS.includes(action)) {
       // Destructive actions require ROOT access
       if (!isRootUser) {
-        console.warn(`Unauthorized ROOT action attempt by ${callerEmail}: ${action}`);
+        logger.warn("Unauthorized ROOT action attempt", { action, caller_email: callerEmail });
         return new Response(JSON.stringify({ error: "Unauthorized - Root access required for this action" }), {
           status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -107,7 +118,7 @@ serve(async (req) => {
     } else {
       // Non-destructive actions require platform admin OR root
       if (!isPlatformAdmin) {
-        console.warn(`Unauthorized admin access attempt by ${callerEmail}: ${action}`);
+        logger.warn("Unauthorized admin access attempt", { action, caller_email: callerEmail });
         return new Response(JSON.stringify({ error: "Unauthorized - Platform admin access required" }), {
           status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -115,15 +126,19 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Admin action authorized for ${callerEmail} (root: ${isRootUser}, admin: ${isPlatformAdmin}): ${action}`);
+    logger.info("Admin action authorized", {
+      action,
+      is_root: isRootUser,
+      is_admin: isPlatformAdmin,
+    });
 
     switch (action) {
       case "list_users": {
         // Get all users from auth
         const { data: authUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-        
+
         if (listError) {
-          console.error("Error listing users:", listError);
+          logger.error("Error listing users", listError);
           throw listError;
         }
 
@@ -168,11 +183,12 @@ serve(async (req) => {
                 email_confirmed_at: rootProfile.created_at,
                 banned: false
               });
-              console.log(`Added root user from profiles: ${rootEmail}`);
+              logger.debug("Added root user from profiles", { root_email: rootEmail });
             }
           }
         }
 
+        logger.info("Users listed", { count: users.length });
         return new Response(JSON.stringify({ users }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -219,12 +235,12 @@ serve(async (req) => {
             });
             if (retryError) throw retryError;
           } else {
-            console.error('Error sending reset:', resetError);
+            logger.error("Error sending password reset", resetError instanceof Error ? resetError : new Error(String(resetError)), { email });
             throw resetError;
           }
         }
 
-        console.log(`Password reset sent to ${email}`);
+        logger.info("Password reset sent", { email });
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -257,7 +273,7 @@ serve(async (req) => {
         });
         if (updateErr) throw updateErr;
 
-        console.log(`Password set for ${email}`);
+        logger.info("Password set for user", { email });
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -282,14 +298,14 @@ serve(async (req) => {
             ban_duration: "none"
           });
           if (error) throw error;
-          console.log(`User ${userId} unbanned`);
+          logger.info("User unbanned", { target_user_id: userId });
         } else {
           // Ban for 100 years (effectively permanent)
           const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
             ban_duration: "876000h" // ~100 years
           });
           if (error) throw error;
-          console.log(`User ${userId} banned`);
+          logger.warn("User banned", { target_user_id: userId });
         }
 
         return new Response(JSON.stringify({ success: true, banned: !isBanned }), {
@@ -320,9 +336,9 @@ serve(async (req) => {
             .delete()
             .eq("user_id", userId)
             .eq("role", role);
-          
+
           if (error) throw error;
-          console.log(`Role ${role} removed from user ${userId}`);
+          logger.info("Role removed from user", { target_user_id: userId, role });
           return new Response(JSON.stringify({ success: true, added: false }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" }
           });
@@ -331,9 +347,9 @@ serve(async (req) => {
           const { error } = await supabaseAdmin
             .from("user_roles")
             .insert({ user_id: userId, role });
-          
+
           if (error) throw error;
-          console.log(`Role ${role} added to user ${userId}`);
+          logger.info("Role added to user", { target_user_id: userId, role });
           return new Response(JSON.stringify({ success: true, added: true }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" }
           });
@@ -370,7 +386,7 @@ serve(async (req) => {
             .from("organization_members")
             .update({ role: activeRole })
             .eq("user_id", userId);
-          if (omError) console.error("Error updating organization_members:", omError);
+          if (omError) logger.warn("Error updating organization_members", { error: omError.message });
 
           if (memberships && memberships.length > 0) {
             for (const m of memberships) {
@@ -403,7 +419,10 @@ serve(async (req) => {
           }
         }
 
-        console.log(`Active role ${activeRole ? `set to ${activeRole}` : 'cleared'} for user ${userId}`);
+        logger.info("Active role updated", {
+          target_user_id: userId,
+          active_role: activeRole || null,
+        });
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -417,16 +436,17 @@ serve(async (req) => {
           });
         }
 
-        console.log(`[delete_user] Starting deletion of user ${userId}`);
+        logger.warn("Starting user deletion", { target_user_id: userId });
 
         // Don't allow deleting any root user
         const { data: targetUserData, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(userId);
         if (getUserError) {
-          console.error(`[delete_user] Error getting user: ${getUserError.message}`);
+          logger.warn("Error getting user for deletion check", { error: getUserError.message, target_user_id: userId });
           // Continue anyway - user might not exist in auth but exists in profiles
         }
 
         if (targetUserData?.user?.email && ROOT_EMAILS.includes(targetUserData.user.email)) {
+          logger.warn("Attempted to delete root user", { target_user_id: userId });
           return new Response(JSON.stringify({ error: "Cannot delete root user" }), {
             status: 403,
             headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -439,17 +459,17 @@ serve(async (req) => {
           try {
             if (operation === 'delete') {
               const { error } = await supabaseAdmin.from(table).delete().eq(column, value);
-              if (error) console.warn(`[delete_user] Cleanup ${table}.${column}: ${error.message}`);
+              if (error) logger.warn(`Cleanup ${table}.${column}`, { error: error.message });
             } else {
               const { error } = await supabaseAdmin.from(table).update({ [column]: null }).eq(column, value);
-              if (error) console.warn(`[delete_user] Nullify ${table}.${column}: ${error.message}`);
+              if (error) logger.warn(`Nullify ${table}.${column}`, { error: error.message });
             }
           } catch (e) {
-            console.warn(`[delete_user] Failed cleanup ${table}.${column}: ${e}`);
+            logger.warn(`Failed cleanup ${table}.${column}`, { error: String(e) });
           }
         };
 
-        console.log(`[delete_user] Cleaning up related data for user ${userId}`);
+        logger.info("Cleaning up related data", { target_user_id: userId });
 
         // ─── Partner communities ───
         await cleanupTable("partner_community_memberships", "user_id", userId);
@@ -531,7 +551,7 @@ serve(async (req) => {
         // ─── Finally delete profile ───
         await cleanupTable("profiles", "id", userId);
 
-        console.log(`[delete_user] Using SQL cascade function to delete user and all related data`);
+        logger.info("Using SQL cascade function to delete user", { target_user_id: userId });
 
         // Use the robust SQL function that handles all FK constraints
         const { data: deleteResult, error: rpcError } = await supabaseAdmin.rpc('admin_delete_user_cascade', {
@@ -539,16 +559,22 @@ serve(async (req) => {
         });
 
         if (rpcError) {
-          console.error(`[delete_user] RPC error: ${rpcError.message}`);
+          logger.error("RPC cascade delete failed", rpcError instanceof Error ? rpcError : new Error(rpcError.message), { target_user_id: userId });
           throw new Error(`Failed to delete user: ${rpcError.message}`);
         }
 
         if (deleteResult && !deleteResult.success) {
-          console.error(`[delete_user] Cascade delete failed: ${deleteResult.error}`);
+          logger.error("Cascade delete returned failure", undefined, {
+            target_user_id: userId,
+            delete_error: deleteResult.error,
+          });
           throw new Error(`Failed to delete user: ${deleteResult.error}`);
         }
 
-        console.log(`[delete_user] User ${userId} deleted successfully. Tables cleaned: ${deleteResult?.deleted_from?.join(', ')}`);
+        logger.warn("User deleted successfully", {
+          target_user_id: userId,
+          tables_cleaned: deleteResult?.deleted_from,
+        });
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -567,7 +593,7 @@ serve(async (req) => {
         // Get user info from auth
         const { data: authUserData, error: authUserErr } = await supabaseAdmin.auth.admin.getUserById(userId);
         if (authUserErr) {
-          console.error("Error getting auth user for create_profile:", authUserErr);
+          logger.error("Error getting auth user for create_profile", authUserErr, { target_user_id: userId });
           throw authUserErr;
         }
 
@@ -593,11 +619,11 @@ serve(async (req) => {
           });
 
         if (profileError) {
-          console.error("Error upserting profile:", profileError);
+          logger.error("Error upserting profile", profileError, { target_user_id: userId });
           throw profileError;
         }
 
-        console.log(`Profile created/updated for user ${userId} (${userEmail})`);
+        logger.info("Profile created/updated", { target_user_id: userId, email: userEmail });
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -606,10 +632,10 @@ serve(async (req) => {
       case "assign_to_org": {
         // Assign a user to an organization with a specific role
         const { organizationId, assignRole, makeOwner: assignOwner } = body;
-        console.log("assign_to_org params:", { userId, organizationId, assignRole });
+        logger.debug("assign_to_org params", { target_user_id: userId, organizationId, assignRole });
 
         if (!userId || !organizationId) {
-          console.error("Missing params:", { userId: !!userId, organizationId: !!organizationId });
+          logger.warn("Missing required params for assign_to_org", { has_user_id: !!userId, has_org_id: !!organizationId });
           return new Response(JSON.stringify({
             error: `Missing required params: ${!userId ? 'userId ' : ''}${!organizationId ? 'organizationId' : ''}`.trim()
           }), {
@@ -621,7 +647,7 @@ serve(async (req) => {
         // Get user info from auth
         const { data: authUser, error: authUserError } = await supabaseAdmin.auth.admin.getUserById(userId);
         if (authUserError) {
-          console.error("Error getting auth user:", authUserError);
+          logger.error("Error getting auth user for assign_to_org", authUserError, { target_user_id: userId });
           throw authUserError;
         }
 
@@ -634,7 +660,11 @@ serve(async (req) => {
         const functionalRoles = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client'];
         const roleToAssign = (assignRole && functionalRoles.includes(assignRole)) ? assignRole : 'creator';
 
-        console.log(`Assigning user ${userId} (${userEmail}) to org ${organizationId} with role ${roleToAssign || '(owner only)'}`);
+        logger.info("Assigning user to org", {
+          target_user_id: userId,
+          organization_id: organizationId,
+          role: roleToAssign,
+        });
 
         // Use UPSERT for profile - creates if not exists, updates if exists
         const profileData: Record<string, unknown> = {
@@ -656,7 +686,7 @@ serve(async (req) => {
           });
 
         if (upsertError) {
-          console.error("Error upserting profile:", JSON.stringify(upsertError));
+          logger.error("Error upserting profile in assign_to_org", upsertError, { target_user_id: userId });
           throw new Error(`Failed to upsert profile: ${upsertError.message}`);
         }
 
@@ -688,7 +718,7 @@ serve(async (req) => {
           .insert(memberData);
 
         if (memberError) {
-          console.error("Error inserting organization member:", memberError);
+          logger.error("Error inserting organization member", memberError, { target_user_id: userId, organization_id: organizationId });
           throw memberError;
         }
 
@@ -703,12 +733,16 @@ serve(async (req) => {
             });
 
           if (roleError) {
-            console.error("Error inserting organization member role:", roleError);
+            logger.warn("Error inserting organization_member_roles (membership created)", { error: roleError.message });
             // Don't throw - membership was created
           }
         }
 
-        console.log(`User ${userId} assigned to org ${organizationId}${roleToAssign ? ` with role ${roleToAssign}` : ' as owner (no role)'}`);
+        logger.info("User assigned to org successfully", {
+          target_user_id: userId,
+          organization_id: organizationId,
+          role: roleToAssign || null,
+        });
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -755,11 +789,15 @@ serve(async (req) => {
           .eq("organization_id", targetOrgId);
 
         if (ownerError) {
-          console.error("Error setting owner:", ownerError);
+          logger.error("Error setting owner", ownerError, { target_user_id: userId, organization_id: targetOrgId });
           throw ownerError;
         }
 
-        console.log(`User ${userId} is_owner set to ${setOwner} in org ${targetOrgId}`);
+        logger.info("Owner status updated", {
+          target_user_id: userId,
+          organization_id: targetOrgId,
+          is_owner: setOwner,
+        });
         return new Response(JSON.stringify({ success: true, is_owner: setOwner }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -792,14 +830,14 @@ serve(async (req) => {
           .update({ current_organization_id: null })
           .eq("id", userId);
 
-        console.log(`User ${userId} removed from all organizations`);
+        logger.info("User removed from all organizations", { target_user_id: userId });
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
       }
 
       // ============ ROOT DELETE ANY ENTITY ============
-      
+
       case "delete_client": {
         if (!clientId) {
           return new Response(JSON.stringify({ error: "Client ID required" }), {
@@ -812,11 +850,11 @@ serve(async (req) => {
         await supabaseAdmin.from("products").delete().eq("client_id", clientId);
         await supabaseAdmin.from("client_packages").delete().eq("client_id", clientId);
         await supabaseAdmin.from("content").update({ client_id: null }).eq("client_id", clientId);
-        
+
         const { error } = await supabaseAdmin.from("clients").delete().eq("id", clientId);
         if (error) throw error;
-        
-        console.log(`Client ${clientId} deleted by root`);
+
+        logger.warn("Client deleted by root", { client_id: clientId });
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -836,11 +874,11 @@ serve(async (req) => {
         await supabaseAdmin.from("content_likes").delete().eq("content_id", contentId);
         await supabaseAdmin.from("content_collaborators").delete().eq("content_id", contentId);
         await supabaseAdmin.from("chat_conversations").update({ content_id: null }).eq("content_id", contentId);
-        
+
         const { error } = await supabaseAdmin.from("content").delete().eq("id", contentId);
         if (error) throw error;
-        
-        console.log(`Content ${contentId} deleted by root`);
+
+        logger.warn("Content deleted by root", { content_id: contentId });
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -857,11 +895,11 @@ serve(async (req) => {
         // Delete messages and participants first
         await supabaseAdmin.from("chat_messages").delete().eq("conversation_id", conversationId);
         await supabaseAdmin.from("chat_participants").delete().eq("conversation_id", conversationId);
-        
+
         const { error } = await supabaseAdmin.from("chat_conversations").delete().eq("id", conversationId);
         if (error) throw error;
-        
-        console.log(`Conversation ${conversationId} deleted by root`);
+
+        logger.warn("Conversation deleted by root", { conversation_id: conversationId });
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -876,11 +914,11 @@ serve(async (req) => {
         }
 
         await supabaseAdmin.from("content").update({ product_id: null }).eq("product_id", productId);
-        
+
         const { error } = await supabaseAdmin.from("products").delete().eq("id", productId);
         if (error) throw error;
-        
-        console.log(`Product ${productId} deleted by root`);
+
+        logger.warn("Product deleted by root", { product_id: productId });
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -896,8 +934,8 @@ serve(async (req) => {
 
         const { error } = await supabaseAdmin.from("notifications").delete().eq("id", notificationId);
         if (error) throw error;
-        
-        console.log(`Notification ${notificationId} deleted by root`);
+
+        logger.info("Notification deleted by root", { notification_id: notificationId });
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -913,8 +951,8 @@ serve(async (req) => {
 
         const { error } = await supabaseAdmin.from("portfolio_posts").delete().eq("id", postId);
         if (error) throw error;
-        
-        console.log(`Portfolio post ${postId} deleted by root`);
+
+        logger.warn("Portfolio post deleted by root", { post_id: postId });
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -929,11 +967,11 @@ serve(async (req) => {
         }
 
         await supabaseAdmin.from("referral_commissions").delete().eq("referral_id", referralId);
-        
+
         const { error } = await supabaseAdmin.from("referrals").delete().eq("id", referralId);
         if (error) throw error;
-        
-        console.log(`Referral ${referralId} deleted by root`);
+
+        logger.warn("Referral deleted by root", { referral_id: referralId });
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -968,11 +1006,11 @@ serve(async (req) => {
           .insert({ user_id: userId, client_id: clientId, role: "viewer" });
 
         if (linkError) {
-          console.error("Error linking user to company:", linkError);
+          logger.error("Error linking user to company", linkError, { target_user_id: userId, client_id: clientId });
           throw linkError;
         }
 
-        console.log(`User ${userId} linked to company ${clientId}`);
+        logger.info("User linked to company", { target_user_id: userId, client_id: clientId });
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -994,11 +1032,11 @@ serve(async (req) => {
           .eq("client_id", clientId);
 
         if (unlinkError) {
-          console.error("Error unlinking user from company:", unlinkError);
+          logger.error("Error unlinking user from company", unlinkError, { target_user_id: userId, client_id: clientId });
           throw unlinkError;
         }
 
-        console.log(`User ${userId} unlinked from company ${clientId}`);
+        logger.info("User unlinked from company", { target_user_id: userId, client_id: clientId });
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -1016,6 +1054,7 @@ serve(async (req) => {
           supabaseAdmin.from("referrals").select("id, referrer_id, referred_email, status, created_at").order("created_at", { ascending: false }),
         ]);
 
+        logger.info("All entities listed");
         return new Response(JSON.stringify({
           clients: clients.data || [],
           content: content.data || [],
@@ -1036,11 +1075,10 @@ serve(async (req) => {
         });
     }
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorStack = error instanceof Error ? error.stack : undefined;
-    console.error("Admin users error:", errorMessage);
-    if (errorStack) console.error("Stack:", errorStack);
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    const err = error instanceof Error ? error : new Error(String(error));
+    // SECURITY: el cliente recibe el errorId, no el stack trace
+    const errorId = logger.error("Admin operation failed", err);
+    return new Response(JSON.stringify({ error: err.message, errorId }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" }
     });

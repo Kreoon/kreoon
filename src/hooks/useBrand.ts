@@ -6,6 +6,12 @@ import type { Brand, BrandMember, CreateBrandInput } from '@/types/brands';
 
 const sb = supabase as any;
 
+// Columnas requeridas por la interfaz Brand
+const BRAND_COLUMNS = 'id, name, slug, logo_url, description, website, industry, country, city, nit, plan, is_verified, owner_id, invite_code, created_at, updated_at';
+
+// Columnas requeridas por la interfaz BrandMember
+const MEMBER_COLUMNS = 'id, brand_id, user_id, role, status, invited_by, created_at, updated_at';
+
 export function useBrand() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -23,7 +29,7 @@ export function useBrand() {
       // 1. Get active memberships
       const { data: memberships, error: memError } = await sb
         .from('brand_members')
-        .select('*')
+        .select(MEMBER_COLUMNS)
         .eq('user_id', user.id)
         .eq('status', 'active');
 
@@ -32,7 +38,7 @@ export function useBrand() {
       // 2. Also check for owned brands WITHOUT membership (orphaned brands)
       const { data: ownedBrands, error: ownedError } = await sb
         .from('brands')
-        .select('*')
+        .select(BRAND_COLUMNS)
         .eq('owner_id', user.id);
 
       if (ownedError) throw ownedError;
@@ -43,7 +49,7 @@ export function useBrand() {
         const brandIds = memberships.map((m: BrandMember) => m.brand_id);
         const { data: memberBrands, error: brandError } = await sb
           .from('brands')
-          .select('*')
+          .select(BRAND_COLUMNS)
           .in('id', brandIds);
 
         if (brandError) throw brandError;
@@ -65,7 +71,7 @@ export function useBrand() {
               role: 'owner',
               status: 'active',
             })
-            .select()
+            .select(MEMBER_COLUMNS)
             .single();
 
           if (!insertError && newMembership) {
@@ -143,7 +149,7 @@ export function useBrand() {
           ...input,
           owner_id: user.id,
         })
-        .select()
+        .select(BRAND_COLUMNS)
         .single();
 
       if (brandError) {

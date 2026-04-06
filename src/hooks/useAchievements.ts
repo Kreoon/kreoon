@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface Achievement {
@@ -51,11 +51,13 @@ export function useAchievements(userId?: string) {
   const [userAchievements, setUserAchievements] = useState<UserAchievement[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Ref para acceder al state actual de achievements sin causar re-renders
+  // ni closures obsoletos en fetchUserAchievements
+  const achievementsRef = useRef<Achievement[]>([]);
+
   useEffect(() => {
     fetchAchievements();
     if (userId) {
-      fetchUserAchievements();
-      
       const channel = supabase
         .channel('user-achievements-changes')
         .on(
@@ -84,22 +86,31 @@ export function useAchievements(userId?: string) {
         .order('rarity', { ascending: true });
 
       if (error) throw error;
-      
+
       // Sort by rarity
-      const sorted = (data || []).sort((a, b) => 
-        RARITY_ORDER[a.rarity as keyof typeof RARITY_ORDER] - 
+      const sorted = (data || []).sort((a, b) =>
+        RARITY_ORDER[a.rarity as keyof typeof RARITY_ORDER] -
         RARITY_ORDER[b.rarity as keyof typeof RARITY_ORDER]
       );
-      
-      setAchievements(sorted as Achievement[]);
+
+      const typedSorted = sorted as Achievement[];
+      achievementsRef.current = typedSorted;
+      setAchievements(typedSorted);
+
+      // Cargar user achievements después de tener el catálogo completo
+      if (userId) {
+        await fetchUserAchievements(typedSorted);
+      }
     } catch (error) {
       console.error('Error fetching achievements:', error);
     }
   };
 
-  const fetchUserAchievements = async () => {
+  // Recibe el catálogo como parámetro para evitar un segundo fetch a la BD.
+  // Si no se pasa, reutiliza lo que hay en achievementsRef (para el trigger realtime).
+  const fetchUserAchievements = async (achCatalog?: Achievement[]) => {
     if (!userId) return;
-    
+
     try {
       // Fetch sin embed (evita error PGRST200 de relación en schema cache)
       const { data: uaData, error } = await supabase
@@ -110,9 +121,9 @@ export function useAchievements(userId?: string) {
 
       if (error) throw error;
 
-      // Obtener achievements para merge (ya se cargan en fetchAchievements)
-      const { data: achData } = await supabase.from('achievements').select('*');
-      const achMap = new Map((achData || []).map(a => [a.id, a]));
+      // Usar el catálogo recibido o el que ya está en memoria — sin round-trip adicional
+      const catalog = achCatalog ?? achievementsRef.current;
+      const achMap = new Map(catalog.map(a => [a.id, a]));
 
       const merged = (uaData || []).map((ua) => ({
         ...ua,
@@ -149,8 +160,8 @@ export function useAchievements(userId?: string) {
     return {
       unlocked: userAchievements.length,
       total: achievements.length,
-      percentage: achievements.length > 0 
-        ? Math.round((userAchievements.length / achievements.length) * 100) 
+      percentage: achievements.length > 0
+        ? Math.round((userAchievements.length / achievements.length) * 100)
         : 0
     };
   };
@@ -182,7 +193,8 @@ export function useAllUserAchievements() {
     try {
       const { data, error } = await supabase
         .from('user_achievements')
-        .select('user_id, achievement_id');
+        .select('user_id, achievement_id')
+        .limit(10000);
 
       if (error) throw error;
 
@@ -192,7 +204,7 @@ export function useAllUserAchievements() {
         existing.push(ua.achievement_id);
         map.set(ua.user_id, existing);
       });
-      
+
       setUserAchievementsMap(map);
     } catch (error) {
       console.error('Error fetching all user achievements:', error);

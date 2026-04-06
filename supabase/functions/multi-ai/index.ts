@@ -1,6 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
+import {
+  checkRateLimit,
+  RATE_LIMIT_PRESETS,
+  rateLimitResponse,
+  getClientIp,
+} from "../_shared/rate-limiter.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -199,13 +205,13 @@ async function callClaude(messages: Message[]): Promise<AIResponse> {
 // Combinar respuestas de múltiples IAs usando Gemini
 async function combineResponses(responses: AIResponse[], originalPrompt: string): Promise<string> {
   const GOOGLE_AI_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
-  
+
   const successfulResponses = responses.filter(r => r.success);
-  
+
   if (successfulResponses.length === 0) {
     throw new Error("No AI models responded successfully");
   }
-  
+
   if (successfulResponses.length === 1) {
     return successfulResponses[0].content;
   }
@@ -266,9 +272,27 @@ serve(async (req) => {
   }
 
   try {
-    const { 
-      messages, 
-      models, 
+    // ── Rate limiting por IP (función sin auth obligatoria) ──────────────────
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+    const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+
+    if (SUPABASE_URL && SUPABASE_SERVICE_KEY) {
+      const supabaseForRL = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+      const clientIp = getClientIp(req);
+      const rateLimitResult = await checkRateLimit(
+        supabaseForRL,
+        clientIp,
+        RATE_LIMIT_PRESETS.ai,
+      );
+      if (!rateLimitResult.allowed) {
+        return rateLimitResponse(req, rateLimitResult, RATE_LIMIT_PRESETS.ai.limit);
+      }
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
+    const {
+      messages,
+      models,
       mode = "combine",
       action // "status" para obtener estado de proveedores
     } = await req.json();
@@ -277,7 +301,7 @@ serve(async (req) => {
     if (action === "status") {
       const providers = getAvailableProviders();
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           providers,
           availableModels: {
             gemini: providers.gemini ? ["gemini-2.5-flash", "gemini-2.5-pro"] : [],
@@ -298,7 +322,7 @@ serve(async (req) => {
 
     // Auto-detectar modelos disponibles si no se especifican
     const selectedModels = models || [];
-    
+
     if (selectedModels.length === 0) {
       if (providers.gemini) {
         selectedModels.push("gemini", "gemini-pro");
@@ -310,7 +334,7 @@ serve(async (req) => {
         selectedModels.push("claude");
       }
     }
-    
+
     console.log("Calling models:", selectedModels);
     console.log("Mode:", mode);
 
@@ -349,7 +373,7 @@ serve(async (req) => {
 
     if (promises.length === 0) {
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: "No AI providers available. Configure GOOGLE_AI_API_KEY or OPENAI_API_KEY.",
           providers
         }),
@@ -362,9 +386,6 @@ serve(async (req) => {
     console.log("Responses received:", responses.map(r => ({ model: r.model, success: r.success, error: r.error })));
 
     // Log AI usage for each response (fire and forget)
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
-    const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-
     if (SUPABASE_URL && SUPABASE_SERVICE_KEY) {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
@@ -397,7 +418,7 @@ serve(async (req) => {
 
     if (mode === "combine") {
       const combinedResponse = await combineResponses(responses, userMessage);
-      
+
       return new Response(
         JSON.stringify({
           response: combinedResponse,
@@ -431,21 +452,21 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error in multi-ai function:", error);
-    
+
     if (errorMessage.includes("429") || errorMessage.includes("rate limit")) {
       return new Response(
         JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
         { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    
+
     if (errorMessage.includes("402")) {
       return new Response(
         JSON.stringify({ error: "Payment required. Please add credits to your account." }),
         { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    
+
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

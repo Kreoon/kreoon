@@ -5,7 +5,9 @@ import { useAuth } from "./useAuth";
 // ─── Fallback: query tokens directly from DB ───
 async function getTokensFallback(userId: string, organizationId?: string | null): Promise<any | null> {
   try {
-    let query = supabase.from('ai_token_balances').select('*');
+    let query = supabase.from('ai_token_balances').select(
+      'id, balance_subscription, balance_purchased, balance_bonus, total_consumed, monthly_allowance, last_reset_at, next_reset_at'
+    );
 
     if (organizationId) {
       query = query.eq('organization_id', organizationId);
@@ -82,7 +84,7 @@ async function getTransactionsFallback(userId: string, organizationId?: string |
     // Ahora obtener transacciones usando balance_id
     const { data, error } = await supabase
       .from('ai_token_transactions')
-      .select('*')
+      .select('id, transaction_type, tokens, action_type, description, created_at')
       .eq('balance_id', balanceData.id)
       .order('created_at', { ascending: false })
       .limit(limit);

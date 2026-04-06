@@ -7,6 +7,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@14.14.0";
 import { getCorsHeaders, handleCorsOptions } from "../_shared/cors.ts";
+import { createLogger } from "../_shared/logger.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
   apiVersion: "2023-10-16",
@@ -19,24 +20,32 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return handleCorsOptions(req);
   const corsHeaders = getCorsHeaders(req);
 
+  const logger = createLogger("ai-tokens-service");
+
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
+      logger.warn("Request without authorization header");
       throw new Error("No authorization header");
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
+
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    
+
     if (authError || !user) {
+      logger.warn("Invalid or expired token", { auth_error: authError?.message });
       throw new Error("Invalid token");
     }
 
     const url = new URL(req.url);
     const action = url.pathname.split("/").pop();
     const body = req.method === "GET" ? {} : await req.json();
+
+    // Adjuntar contexto de usuario a todos los logs del request
+    logger.setContext(user.id, body.organization_id);
+    logger.info("Processing token action", { action });
 
     let result;
 
@@ -46,12 +55,19 @@ serve(async (req) => {
         break;
       case "consume":
         result = await consumeTokens(supabase, user.id, body);
+        logger.info("Tokens consumed", {
+          action_type: body.action_type,
+          success: result.success,
+          tokens_consumed: result.tokens_consumed,
+          balance_remaining: result.balance_remaining,
+        });
         break;
       case "check-can-consume":
         result = await checkCanConsume(supabase, user.id, body);
         break;
       case "purchase":
         result = await purchaseTokens(supabase, user.id, body);
+        logger.info("Purchase session created", { package_id: body.package_id });
         break;
       case "get-packages":
         result = await getPackages(supabase);
@@ -64,9 +80,19 @@ serve(async (req) => {
         break;
       case "add-bonus":
         result = await addBonusTokens(supabase, user.id, body);
+        logger.info("Bonus tokens added", {
+          target_user_id: body.target_user_id,
+          target_org_id: body.target_org_id,
+          tokens: body.tokens,
+          reason: body.reason,
+        });
         break;
       case "admin-credit":
         result = await adminCreditTokens(supabase, user.id, body);
+        logger.info("Admin credit applied", {
+          organization_id: body.organization_id,
+          tokens: body.tokens,
+        });
         break;
       default:
         throw new Error(`Unknown action: ${action}`);
@@ -78,9 +104,11 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    // SECURITY: Log full error internally but only return safe message to client
-    const errorId = crypto.randomUUID();
-    console.error(`[ai-tokens-service][ERROR-${errorId}]`, error?.message, error?.stack);
+    // SECURITY: el cliente solo recibe el errorId, nunca el stack trace
+    const errorId = logger.error(
+      "Token request failed",
+      error instanceof Error ? error : new Error(String(error))
+    );
     return new Response(
       JSON.stringify({ error: "Error processing token request", errorId }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -214,7 +242,7 @@ async function getBalance(supabase: any, userId: string, organizationId?: string
   }
 
   // Calcular días hasta reset
-  const daysUntilReset = balance.next_reset_at 
+  const daysUntilReset = balance.next_reset_at
     ? Math.ceil((new Date(balance.next_reset_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : 30;
 
@@ -292,7 +320,7 @@ async function checkCanConsume(supabase: any, userId: string, body: any) {
   const tokenCost = costs[action_type] || costs.default || 40;
 
   // Obtener balance
-  const query = organization_id 
+  const query = organization_id
     ? { organization_id }
     : { user_id: userId };
 
@@ -337,7 +365,7 @@ async function purchaseTokens(supabase: any, userId: string, body: any) {
   }
 
   // Obtener wallet
-  const walletQuery = organization_id 
+  const walletQuery = organization_id
     ? { organization_id }
     : { user_id: userId };
 
@@ -488,7 +516,7 @@ async function getActionCosts(supabase: any) {
 
   for (const [action, cost] of Object.entries(costs)) {
     if (action === "default") continue;
-    
+
     const category = categoryMap[action] || "other";
     grouped[category].push({
       action,
@@ -513,7 +541,7 @@ async function getTokenHistory(supabase: any, userId: string, body: any) {
   const { organization_id, limit = 50, offset = 0, type } = body;
 
   // Obtener balance ID
-  const balanceQuery = organization_id 
+  const balanceQuery = organization_id
     ? { organization_id }
     : { user_id: userId };
 
@@ -548,7 +576,7 @@ async function getTokenHistory(supabase: any, userId: string, body: any) {
   // Calcular estadísticas del período
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  
+
   const { data: statsData } = await supabase
     .from("ai_token_transactions")
     .select("tokens, transaction_type")
@@ -600,7 +628,7 @@ async function addBonusTokens(supabase: any, adminUserId: string, body: any) {
     throw new Error("Only platform admins can add bonus tokens");
   }
 
-  const query = target_org_id 
+  const query = target_org_id
     ? { organization_id: target_org_id }
     : { user_id: target_user_id };
 

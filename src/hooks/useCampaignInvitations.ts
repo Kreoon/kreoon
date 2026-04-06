@@ -3,7 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import type { CampaignInvitation, InvitationStatus } from '@/components/marketplace/types/marketplace';
 
-function mapInvitationRow(row: any, profile?: { id: string; full_name: string; avatar_url: string | null }): CampaignInvitation {
+function mapInvitationRow(
+  row: any,
+  profile?: { id: string; full_name: string; avatar_url: string | null },
+): CampaignInvitation {
   return {
     id: row.id,
     campaign_id: row.campaign_id,
@@ -27,28 +30,38 @@ export function useCampaignInvitations() {
     try {
       const { data: rows, error: err } = await supabase
         .from('campaign_invitations')
-        .select('*')
+        .select(`
+          id,
+          campaign_id,
+          invited_profile_id,
+          invited_by,
+          message,
+          status,
+          sent_at,
+          responded_at,
+          expires_at,
+          profiles (
+            id,
+            full_name,
+            avatar_url
+          )
+        `)
         .eq('campaign_id', campaignId)
         .order('sent_at', { ascending: false });
 
       if (err) throw err;
       if (!rows?.length) return [];
 
-      // Fetch invited profiles
-      const profileIds = [...new Set(rows.map((r: any) => r.invited_profile_id).filter(Boolean))] as string[];
-      const profilesMap = new Map<string, { id: string; full_name: string; avatar_url: string | null }>();
-
-      if (profileIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, full_name, avatar_url')
-          .in('id', profileIds);
-        for (const p of profiles || []) {
-          profilesMap.set(p.id, { id: p.id, full_name: p.full_name || '', avatar_url: p.avatar_url });
-        }
-      }
-
-      return rows.map((row: any) => mapInvitationRow(row, profilesMap.get(row.invited_profile_id)));
+      return rows.map((row: any) => {
+        const profile = row.profiles
+          ? {
+              id: row.profiles.id,
+              full_name: row.profiles.full_name || '',
+              avatar_url: row.profiles.avatar_url as string | null,
+            }
+          : undefined;
+        return mapInvitationRow(row, profile);
+      });
     } catch (err) {
       console.error('[useCampaignInvitations] Fetch error:', err);
       return [];

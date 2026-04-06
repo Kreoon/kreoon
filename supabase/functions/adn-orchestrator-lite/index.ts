@@ -12,6 +12,11 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2.46.2";
 import { corsHeaders } from "../_shared/ai-providers.ts";
+import {
+  checkRateLimit,
+  RATE_LIMIT_PRESETS,
+  rateLimitResponse,
+} from "../_shared/rate-limiter.ts";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -77,6 +82,17 @@ Deno.serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // ── Rate limiting por user_id ─────────────────────────────────────────────
+    const rateLimitResult = await checkRateLimit(
+      supabaseAdmin,
+      user.id,
+      RATE_LIMIT_PRESETS.ai,
+    );
+    if (!rateLimitResult.allowed) {
+      return rateLimitResponse(req, rateLimitResult, RATE_LIMIT_PRESETS.ai.limit);
+    }
+    // ────────────────────────────────────────────────────────────────────────
 
     const input: OrchestratorLiteInput = await req.json();
     const { product_id, organization_id, config } = input;

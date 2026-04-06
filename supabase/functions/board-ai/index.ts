@@ -14,6 +14,11 @@ import { getPrompt, interpolatePrompt } from "../_shared/prompts/db-prompts.ts";
 // Fallback legacy (se usa internamente por db-prompts)
 import { replaceBoardVariables } from "../_shared/prompts/board.ts";
 import { PerplexitySearches } from "../_shared/perplexity-client.ts";
+import {
+  checkRateLimit,
+  RATE_LIMIT_PRESETS,
+  rateLimitResponse,
+} from "../_shared/rate-limiter.ts";
 
 // Action types
 type BoardAIAction =
@@ -50,7 +55,7 @@ async function isModuleActive(supabase: any, organizationId: string, moduleKey: 
     .eq("organization_id", organizationId)
     .eq("module_key", moduleKey)
     .maybeSingle();
-  
+
   return data?.is_active ?? false;
 }
 
@@ -142,13 +147,13 @@ async function analyzeCard(supabase: any, contentId: string, organizationId: str
 
   // Calculate time in current status
   const lastMove = statusLogs?.[0];
-  const daysInCurrentStatus = lastMove 
+  const daysInCurrentStatus = lastMove
     ? Math.floor((Date.now() - new Date(lastMove.moved_at).getTime()) / (1000 * 60 * 60 * 24))
     : 0;
 
   // Check deadline
   const isOverdue = content.deadline && new Date(content.deadline) < new Date();
-  const daysUntilDeadline = content.deadline 
+  const daysUntilDeadline = content.deadline
     ? Math.floor((new Date(content.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : null;
 
@@ -338,13 +343,13 @@ async function analyzeBoard(supabase: any, organizationId: string, userId: strin
   }));
 
   // Check for overdue items
-  const overdueItems = contents.filter((c: any) => 
+  const overdueItems = contents.filter((c: any) =>
     c.deadline && new Date(c.deadline) < new Date() && !["approved", "paid", "delivered"].includes(c.status)
   );
 
   // Check for stale items (no update in 7+ days)
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const staleItems = contents.filter((c: any) => 
+  const staleItems = contents.filter((c: any) =>
     new Date(c.updated_at) < sevenDaysAgo && !["approved", "paid", "delivered"].includes(c.status)
   );
 
@@ -778,11 +783,11 @@ serve(async (req) => {
   try {
     // Use Kreoon (external) database if configured
     let supabase;
-    
+
     if (isKreoonConfigured()) {
       console.log("[board-ai] Using Kreoon database");
       supabase = getKreoonClient();
-      
+
       // Get user from auth header
       const authHeader = req.headers.get("Authorization");
       if (authHeader) {
@@ -797,7 +802,7 @@ serve(async (req) => {
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
       const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       supabase = createClient(supabaseUrl, supabaseKey);
-      
+
       const authHeader = req.headers.get("Authorization");
       if (authHeader) {
         const token = authHeader.replace("Bearer ", "");
@@ -805,6 +810,18 @@ serve(async (req) => {
         if (user) userId = user.id;
       }
     }
+
+    // ── Rate limiting por user_id (o "system" si no hay auth) ────────────────
+    const rateLimitKey = userId !== "system" ? userId : `ip:${req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || "unknown"}`;
+    const rateLimitResult = await checkRateLimit(
+      supabase,
+      rateLimitKey,
+      RATE_LIMIT_PRESETS.ai,
+    );
+    if (!rateLimitResult.allowed) {
+      return rateLimitResponse(req, rateLimitResult, RATE_LIMIT_PRESETS.ai.limit);
+    }
+    // ────────────────────────────────────────────────────────────────────────
 
     body = await req.json();
     const { action, organizationId, contentId } = body;

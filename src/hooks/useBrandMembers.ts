@@ -28,26 +28,43 @@ export function useBrandMembers(brandId: string | null) {
 
       const { data, error } = await sb
         .from('brand_members')
-        .select('*')
+        .select(`
+          id,
+          user_id,
+          role,
+          status,
+          invited_by,
+          created_at,
+          updated_at,
+          profiles!inner (
+            id,
+            full_name,
+            email,
+            avatar_url
+          )
+        `)
         .eq('brand_id', brandId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
 
-      // Fetch profiles for each member
-      const userIds = (data || []).map((m: any) => m.user_id);
-      if (!userIds.length) return [];
-
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, avatar_url')
-        .in('id', userIds);
-
-      const profileMap = new Map((profiles || []).map(p => [p.id, p]));
-
       return (data || []).map((m: any) => ({
-        ...m,
-        profile: profileMap.get(m.user_id) || undefined,
+        id: m.id,
+        brand_id: brandId,
+        user_id: m.user_id,
+        role: m.role,
+        status: m.status,
+        invited_by: m.invited_by,
+        created_at: m.created_at,
+        updated_at: m.updated_at,
+        profile: m.profiles
+          ? {
+              id: m.profiles.id,
+              full_name: m.profiles.full_name,
+              email: m.profiles.email,
+              avatar_url: m.profiles.avatar_url,
+            }
+          : undefined,
       })) as BrandMemberWithProfile[];
     },
     enabled: !!brandId,
@@ -68,11 +85,29 @@ export function useBrandMembers(brandId: string | null) {
         .eq('id', memberId);
       if (error) throw error;
     },
+    onMutate: async (memberId: string) => {
+      await queryClient.cancelQueries({ queryKey: ['brand-members', brandId] });
+      const previousMembers = queryClient.getQueryData<BrandMemberWithProfile[]>(['brand-members', brandId]);
+
+      queryClient.setQueryData<BrandMemberWithProfile[]>(
+        ['brand-members', brandId],
+        (old) => old?.map(m => m.id === memberId ? { ...m, status: 'active' as const } : m) ?? []
+      );
+
+      return { previousMembers };
+    },
+    onError: (_err, _memberId, context) => {
+      if (context?.previousMembers) {
+        queryClient.setQueryData(['brand-members', brandId], context.previousMembers);
+      }
+      toast.error('Error al aceptar miembro');
+    },
     onSuccess: () => {
-      invalidate();
       toast.success('Miembro aceptado');
     },
-    onError: () => toast.error('Error al aceptar miembro'),
+    onSettled: () => {
+      invalidate();
+    },
   });
 
   const rejectMember = useMutation({
@@ -83,11 +118,29 @@ export function useBrandMembers(brandId: string | null) {
         .eq('id', memberId);
       if (error) throw error;
     },
+    onMutate: async (memberId: string) => {
+      await queryClient.cancelQueries({ queryKey: ['brand-members', brandId] });
+      const previousMembers = queryClient.getQueryData<BrandMemberWithProfile[]>(['brand-members', brandId]);
+
+      queryClient.setQueryData<BrandMemberWithProfile[]>(
+        ['brand-members', brandId],
+        (old) => old?.map(m => m.id === memberId ? { ...m, status: 'rejected' as const } : m) ?? []
+      );
+
+      return { previousMembers };
+    },
+    onError: (_err, _memberId, context) => {
+      if (context?.previousMembers) {
+        queryClient.setQueryData(['brand-members', brandId], context.previousMembers);
+      }
+      toast.error('Error al rechazar solicitud');
+    },
     onSuccess: () => {
-      invalidate();
       toast.success('Solicitud rechazada');
     },
-    onError: () => toast.error('Error al rechazar solicitud'),
+    onSettled: () => {
+      invalidate();
+    },
   });
 
   const removeMember = useMutation({
@@ -98,11 +151,29 @@ export function useBrandMembers(brandId: string | null) {
         .eq('id', memberId);
       if (error) throw error;
     },
+    onMutate: async (memberId: string) => {
+      await queryClient.cancelQueries({ queryKey: ['brand-members', brandId] });
+      const previousMembers = queryClient.getQueryData<BrandMemberWithProfile[]>(['brand-members', brandId]);
+
+      queryClient.setQueryData<BrandMemberWithProfile[]>(
+        ['brand-members', brandId],
+        (old) => old?.filter(m => m.id !== memberId) ?? []
+      );
+
+      return { previousMembers };
+    },
+    onError: (_err, _memberId, context) => {
+      if (context?.previousMembers) {
+        queryClient.setQueryData(['brand-members', brandId], context.previousMembers);
+      }
+      toast.error('Error al remover miembro');
+    },
     onSuccess: () => {
-      invalidate();
       toast.success('Miembro removido');
     },
-    onError: () => toast.error('Error al remover miembro'),
+    onSettled: () => {
+      invalidate();
+    },
   });
 
   const generateInviteCode = async () => {
