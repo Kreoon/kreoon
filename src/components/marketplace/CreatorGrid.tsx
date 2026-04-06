@@ -4,6 +4,7 @@ import type { MarketplaceCreator } from './types/marketplace';
 import { MarketplaceCreatorCard } from './CreatorCard';
 import { CreatorCardSkeleton } from './CreatorCardSkeleton';
 import { Users } from 'lucide-react';
+import { usePreloadLCPImages } from '@/hooks/usePreloadLCPImages';
 
 interface CreatorGridProps {
   creators: MarketplaceCreator[];
@@ -27,6 +28,9 @@ export const CreatorGrid = memo(function CreatorGrid({
   searchQuery,
   priority = false,
 }: CreatorGridProps) {
+  // Preload first 6 images for better LCP (2 rows on mobile)
+  usePreloadLCPImages(priority ? creators : undefined, 6);
+
   if (!isLoading && creators.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">

@@ -32,7 +32,7 @@ export default function MarketplacePage() {
   const { exists: hasCreatorProfile, loading: profileLoading } = useCreatorProfile();
   const { filters, updateFilter, resetFilters, activeFilterCount, setFilters } =
     useMarketplaceFilters();
-  const { creators, featured, newTalent, topRated, recommended, totalCount, isPersonalized } =
+  const { creators, featured, newTalent, topRated, recommended, totalCount, isPersonalized, isLoading } =
     useCreatorSearch(filters);
   const { visibleCreators, hasMore, loadMore, reset } = useInfiniteCreators(creators);
 
@@ -355,6 +355,7 @@ export default function MarketplacePage() {
                     creators={featured.slice(0, 8)}
                     onCreatorClick={handleCreatorClick}
                     priority={true}
+                    isLoading={isLoading}
                   />
 
                   {/* Secondary carousels - limited items to reduce initial load */}
@@ -364,6 +365,7 @@ export default function MarketplacePage() {
                     subtitle="Recien llegados con propuestas frescas y descuentos de bienvenida"
                     creators={newTalent.slice(0, 6)}
                     onCreatorClick={handleCreatorClick}
+                    isLoading={isLoading}
                   />
 
                   <CreatorCarousel
@@ -372,6 +374,7 @@ export default function MarketplacePage() {
                     subtitle="Consistencia y calidad comprobada por marcas"
                     creators={topRated.slice(0, 6)}
                     onCreatorClick={handleCreatorClick}
+                    isLoading={isLoading}
                   />
                 </>
               )}
@@ -379,6 +382,7 @@ export default function MarketplacePage() {
               {/* Main creator grid */}
               <CreatorGrid
                 creators={visibleCreators}
+                isLoading={isLoading}
                 hasMore={hasMore}
                 totalCount={totalCount}
                 onLoadMore={loadMore}

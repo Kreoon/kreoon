@@ -115,6 +115,10 @@ function CreatorCardComponent({ creator, onClick, style, priority = false }: Cre
 
   return (
     <div
+      style={{
+        contain: 'layout style paint', // CSS containment to prevent layout shifts
+        minHeight: `${CARD_HEIGHT}px`, // Reserve minimum space for CLS prevention
+      }}
       className={cn(
         // Base layout — 9:16 aspect ratio
         'relative w-full cursor-pointer select-none overflow-hidden rounded-xl',

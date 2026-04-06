@@ -10,6 +10,25 @@
     <meta name="apple-mobile-web-app-title" content="KREOON" />
     
     <title>KREOON</title>
+
+    <!-- Critical CSS inline for faster FCP -->
+    <style>
+      /* Critical CSS for marketplace initial render */
+      :root{--background:0 0% 100%;--foreground:0 0% 10%;--card:0 0% 100%;--primary:270 100% 60%;--muted:0 0% 94%;--border:0 0% 15%}
+      .dark{--background:240 10% 2%;--foreground:0 0% 98%;--card:240 10% 4%;--primary:270 100% 60%;--muted:250 15% 8%;--border:240 10% 12%}
+      *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid}
+      html{line-height:1.5;-webkit-text-size-adjust:100%;font-family:Outfit,Manrope,system-ui,sans-serif}
+      body{margin:0;line-height:inherit;background-color:hsl(var(--background));color:hsl(var(--foreground))}
+      #root{min-height:100vh;display:flex;flex-direction:column}
+      /* Skeleton placeholder for cards - prevents CLS */
+      .creator-card-skeleton{aspect-ratio:9/16;border-radius:0.75rem;background:hsl(var(--muted)/0.4);animation:pulse 2s cubic-bezier(0.4,0,0.6,1) infinite}
+      @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+      /* Grid layout placeholder */
+      .grid-placeholder{display:grid;gap:1rem;grid-template-columns:repeat(2,1fr)}
+      @media(min-width:640px){.grid-placeholder{grid-template-columns:repeat(3,1fr)}}
+      @media(min-width:1024px){.grid-placeholder{grid-template-columns:repeat(4,1fr)}}
+      @media(min-width:1280px){.grid-placeholder{grid-template-columns:repeat(5,1fr)}}
+    </style>
     <meta name="description" content="El sistema operativo creativo. Gestiona creadores, contenido, proyectos y resultados desde una única plataforma." />
     <meta name="author" content="KREOON" />
 
@@ -25,18 +44,26 @@
     <!-- Preconnect to critical origins for faster resource loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Image optimization proxy -->
+    <link rel="preconnect" href="https://wsrv.nl">
     <!-- Image CDNs - no crossorigin for normal img tags -->
     <link rel="preconnect" href="https://wjkbqcrxwsmvtxmqgiqc.supabase.co">
     <link rel="preconnect" href="https://vz-78fcd769-050.b-cdn.net">
     <link rel="preconnect" href="https://cdn.kreoon.com">
+    <link rel="dns-prefetch" href="https://wsrv.nl">
     <link rel="dns-prefetch" href="https://wjkbqcrxwsmvtxmqgiqc.supabase.co">
     <link rel="dns-prefetch" href="https://vz-78fcd769-050.b-cdn.net">
     <link rel="dns-prefetch" href="https://cdn.kreoon.com">
 
-    <!-- KREOON Web Fonts - Neo Studio (Pro Tools Vibe) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- KREOON Web Fonts - Async loading to prevent render blocking -->
+    <!-- Preload critical font (Outfit - used for headings) -->
+    <link rel="preload" href="https://fonts.gstatic.com/s/outfit/v11/QGYyz_MVcBeNP4NjuGObqx1XmO1I4TC1C4G-EiAou6Y.woff2" as="font" type="font/woff2" crossorigin>
+
+    <!-- Async font loading with media trick -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    </noscript>
 
     <!-- PWA -->
     <link rel="manifest" href="/manifest.webmanifest" />

@@ -96,9 +96,13 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
       )}
       onClick={onClick}
     >
-      {/* Media container — 9:16 aspect ratio */}
+      {/* Media container — 9:16 aspect ratio with CSS containment for performance */}
       <div
-        className="relative aspect-[9/16] rounded-lg overflow-hidden bg-card/50"
+        className="relative aspect-[9/16] rounded-lg overflow-hidden bg-card/50 dark:bg-[#1a1a35]"
+        style={{
+          contain: 'layout style paint', // CSS containment to prevent layout shifts
+          minHeight: `${CARD_HEIGHT}px`, // Reserve minimum space
+        }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
