@@ -24,7 +24,7 @@ function ProfileSkeleton() {
       {/* Hero skeleton */}
       <div className="h-80 w-full bg-zinc-800/50" />
       {/* Content skeletons */}
-      <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+      <div className="w-full md:max-w-3xl md:mx-auto px-0 md:px-6 py-8 space-y-6">
         {Array.from({ length: 3 }).map((_, i) => (
           <div key={i} className="h-32 rounded-lg bg-zinc-800/40" />
         ))}

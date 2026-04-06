@@ -21,10 +21,10 @@ export interface PublicBlockProps {
 
 const PADDING_CLASSES: Record<NonNullable<BlockStyles['padding']>, string> = {
   none: 'px-0',
-  sm: 'px-4',
-  md: 'px-6',
-  lg: 'px-8 md:px-12',
-  xl: 'px-12 md:px-16',
+  sm: 'px-0 sm:px-4',
+  md: 'px-0 sm:px-6',
+  lg: 'px-0 sm:px-8 md:px-12',
+  xl: 'px-0 sm:px-12 md:px-16',
 };
 
 const MARGIN_CLASSES: Record<NonNullable<BlockStyles['margin']>, string> = {

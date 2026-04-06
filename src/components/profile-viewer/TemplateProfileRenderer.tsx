@@ -45,7 +45,7 @@ function ProfileSkeleton() {
       {/* Hero skeleton */}
       <div className="h-80 w-full bg-zinc-800/50" />
       {/* Content skeletons */}
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+      <div className="w-full md:max-w-4xl md:mx-auto px-0 md:px-6 py-8 space-y-6">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="h-32 rounded-lg bg-zinc-800/40" />
         ))}
@@ -270,8 +270,8 @@ export function TemplateProfileRenderer({
           className="w-full min-h-screen"
           aria-label={`Perfil de ${creatorData.profile.display_name}`}
         >
-          {/* Contenedor centrado con max-width para PC */}
-          <div className="max-w-4xl mx-auto px-4 md:px-6 lg:px-8">
+          {/* Contenedor: full-width en móvil, centrado con max-width en tablet+ */}
+          <div className="w-full md:max-w-4xl md:mx-auto">
             {/* Renderizar bloques de la plantilla */}
             {visibleBlocks.length === 0 ? (
               <div className="flex items-center justify-center min-h-[60vh]">
