@@ -45,15 +45,20 @@ export default defineConfig(({ mode }) => ({
             return 'vendor-query';
           }
 
-          // TipTap editor
+          // TipTap editor — solo se usa en rutas de edición, nunca en marketplace
           if (id.includes('node_modules/@tiptap') || id.includes('node_modules/prosemirror')) {
             return 'vendor-editor';
           }
 
-          // Charts and animation
+          // Charts — separados en su propio chunk asíncrono.
+          // recharts + d3 suman ~200KB y NO se usan en el marketplace principal.
+          // Al estar en un chunk propio, solo se descargan cuando se navega
+          // a dashboards/analytics que los necesitan.
           if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-')) {
             return 'vendor-charts';
           }
+
+          // Framer Motion — animaciones opcionales, chunk propio para defer
           if (id.includes('node_modules/framer-motion')) {
             return 'vendor-motion';
           }
@@ -66,7 +71,9 @@ export default defineConfig(({ mode }) => ({
             return 'vendor-zod';
           }
 
-          // Icons
+          // Icons — lucide-react es grande (~1MB sin treeshake).
+          // Vite/SWC hace tree-shaking por default, pero aislar el chunk
+          // evita que cambios en iconos invaliden otros vendor chunks.
           if (id.includes('node_modules/lucide-react')) {
             return 'vendor-icons';
           }
@@ -80,10 +87,17 @@ export default defineConfig(({ mode }) => ({
           if (id.includes('node_modules/hls.js')) {
             return 'hls';
           }
+
+          // next-themes — pequeño pero se puede aislar del bundle principal
+          if (id.includes('node_modules/next-themes')) {
+            return 'vendor-themes';
+          }
         },
       },
     },
-    chunkSizeWarningLimit: 600,
+    // Reducir el umbral de advertencia — queremos que Rollup avise antes
+    // para detectar chunks que crecen sin control.
+    chunkSizeWarningLimit: 500,
   },
   plugins: [
     react(),
@@ -138,7 +152,8 @@ export default defineConfig(({ mode }) => ({
         // Disable navigation preload to prevent race conditions
         navigationPreload: false,
         // Force cache invalidation by using a unique cache name prefix
-        cacheId: 'kreoon-v3',
+        // v4: Fixed role detection in MainLayout, Sidebar, MobileNav (2026-04-06)
+        cacheId: 'kreoon-v4',
         // Clean up old caches (including v2 bloated ones)
         cleanupOutdatedCaches: true,
         runtimeCaching: [
@@ -156,7 +171,7 @@ export default defineConfig(({ mode }) => ({
             urlPattern: /\/assets\/.*\.(?:js|css)$/i,
             handler: 'StaleWhileRevalidate',
             options: {
-              cacheName: 'app-chunks-v1',
+              cacheName: 'app-chunks-v2',
               expiration: {
                 maxEntries: 150,
                 maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
