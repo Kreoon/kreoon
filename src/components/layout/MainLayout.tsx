@@ -70,7 +70,7 @@ export function MainLayout({
   children
 }: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { isClient, isEditor, isAdmin, isCreator, signOut, profile, user } = useAuth();
+  const { isClient, isAdmin, activeRole, signOut, profile, user } = useAuth();
   const { marketplaceEnabled, clientMarketplaceEnabled } = useOrgMarketplace();
   const location = useLocation();
   const navigate = useNavigate();
@@ -88,7 +88,9 @@ export function MainLayout({
   const isMarketplaceRoute = location.pathname.startsWith('/marketplace');
 
   // For editors, show editor-specific layout with bottom nav on mobile
-  if (isEditor && !isAdmin) {
+  // IMPORTANT: Use activeRole instead of isEditor to respect the user's selected role
+  // isEditor was true for ALL talent users, causing creators to see "Panel Editor"
+  if (activeRole === 'editor' && !isAdmin) {
     return (
       <div className="min-h-screen bg-background">
         {/* Editor Desktop Sidebar */}
