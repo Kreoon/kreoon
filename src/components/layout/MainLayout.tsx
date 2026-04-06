@@ -14,7 +14,7 @@ import { useClientRealtimeNotifications } from "@/hooks/useClientRealtimeNotific
 import { useClientPendingReviews } from "@/hooks/useClientPendingReviews";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Kanban, Settings, LogOut, Sparkles, Scissors, Briefcase, Eye } from "lucide-react";
+import { LayoutDashboard, Kanban, Settings, LogOut, Sparkles, Scissors, Briefcase, Eye, Clapperboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -43,6 +43,15 @@ interface MainLayoutProps {
 // Editor navigation items for mobile bottom bar - Kreoon Tech theme
 const editorMobileNavigation = [
   { name: "Edición", href: "/editor-dashboard", icon: LayoutDashboard },
+  { name: "Producciones", href: "/board", icon: Kanban },
+  { name: "Market", href: "/marketplace", icon: Briefcase },
+  { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
+  { name: "Config", href: "/settings", icon: Settings },
+];
+
+// Creator navigation items for mobile bottom bar
+const creatorMobileNavigation = [
+  { name: "Hub", href: "/creator-dashboard", icon: LayoutDashboard },
   { name: "Producciones", href: "/board", icon: Kanban },
   { name: "Market", href: "/marketplace", icon: Briefcase },
   { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
@@ -86,6 +95,106 @@ export function MainLayout({
 
   // Detect marketplace routes for dark styling
   const isMarketplaceRoute = location.pathname.startsWith('/marketplace');
+
+  // For content creators, show creator-specific layout with bottom nav on mobile
+  if ((activeRole === 'creator' || activeRole === 'content_creator') && !isAdmin) {
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Creator Desktop Sidebar */}
+        <div className="hidden md:block">
+          <Sidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
+        </div>
+
+        {/* Creator Mobile Header */}
+        <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background px-3 md:hidden">
+          <div className="flex-1 flex items-center gap-2 min-w-0">
+            <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-pink-500 flex-shrink-0">
+              <Clapperboard className="h-4 w-4 text-white" />
+            </div>
+            <span className="text-sm font-bold truncate">Panel Creador</span>
+          </div>
+          <div className="flex items-center gap-0.5 flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(user?.id ? `/p/${user.id}` : '/creator-dashboard')}
+              className="h-8 w-8 rounded-full p-0"
+            >
+              <Avatar className="h-7 w-7">
+                <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
+                <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">
+                  {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+            </Button>
+            {marketplaceEnabled && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/marketplace')}
+                className="h-8 w-8 rounded-full"
+              >
+                <Briefcase className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </header>
+
+        {/* Creator Mobile Bottom Navigation */}
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden">
+          <div className="flex justify-around py-2">
+            {creatorMobileNavigation.filter(item => item.href !== '/marketplace' || marketplaceEnabled).map((item) => {
+              const isActive = item.href.startsWith('/marketplace')
+                ? location.pathname.startsWith(item.href)
+                : location.pathname === item.href;
+              return (
+                <NavLink
+                  key={item.name}
+                  to={item.href}
+                  className={cn(
+                    "flex flex-col items-center gap-1 px-2 py-1.5 rounded-sm transition-colors",
+                    isActive ? "text-primary" : "text-muted-foreground"
+                  )}
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span className="text-[10px]">{item.name}</span>
+                </NavLink>
+              );
+            })}
+          </div>
+        </nav>
+
+        {/* Desktop Integrated Notification Header */}
+        <div className="hidden md:block">
+          <IntegratedNotificationHeader
+            sidebarCollapsed={sidebarCollapsed}
+          />
+        </div>
+
+        {/* Main Content */}
+        <main
+          id="main-content"
+          className={cn(
+            "pb-16 md:pb-0 transition-all duration-300",
+            sidebarCollapsed ? "md:ml-[104px]" : "md:ml-[288px]",
+            "md:pt-14"
+          )}
+        >
+          <div className={cn("min-h-screen", isMarketplaceRoute ? "bg-background" : "p-4 md:p-6")}>
+            <PageWrapper locationKey={location.pathname}>
+              {children}
+            </PageWrapper>
+          </div>
+        </main>
+
+        {/* KIRO AI Assistant */}
+        <KiroWidget />
+
+        {/* Ambassador Celebration */}
+        <AmbassadorCelebration />
+      </div>
+    );
+  }
 
   // For editors, show editor-specific layout with bottom nav on mobile
   // IMPORTANT: Use activeRole instead of isEditor to respect the user's selected role

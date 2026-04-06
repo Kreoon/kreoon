@@ -53,11 +53,20 @@ function getDashboardPath(roles: AppRole[], activeRole?: AppRole | null, isUnloc
     return getDashboardForRole(activeRole);
   }
 
-  // Fallback to first role by group priority
-  const groupPriority: PermissionGroup[] = ['admin', 'team_leader', 'strategist', 'editor', 'creator', 'client'];
-  for (const group of groupPriority) {
-    const match = roles.find(r => getPermissionGroup(r) === group);
-    if (match) return getDashboardForRole(match);
+  // Fallback to first role by priority order
+  // NOTE: Using actual role names, not PermissionGroups (which only has 'admin'|'talent'|'client')
+  const rolePriority: AppRole[] = [
+    'admin', 'team_leader',
+    'digital_strategist', 'creative_strategist', 'strategist',
+    'content_creator', 'creator',
+    'editor',
+    'community_manager',
+    'client'
+  ];
+  for (const priorityRole of rolePriority) {
+    if (roles.includes(priorityRole)) {
+      return getDashboardForRole(priorityRole);
+    }
   }
   return '/marketplace';
 }

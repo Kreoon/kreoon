@@ -383,6 +383,7 @@ function AppRoutes() {
         <Route path="/profile/:userId" element={<PublicProfilePage />} />
         <Route path="/profile" element={<ProfileRedirect />} />
         <Route path="/p/:username" element={<PublicCreatorPage />} />
+        <Route path="/@:username" element={<PublicCreatorPage />} />
         <Route path="/review/:token" element={<PublicReviewPage />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/no-company" element={<NoCompany />} />
@@ -414,8 +415,8 @@ function AppRoutes() {
         <Route path="/comunidad/:slug" element={<PartnerCommunityLanding />} />
         <Route path="/" element={<HomePage />} />
         <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'team_leader']}><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
-        <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client']}><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
-        <Route path="/content" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor']}><MainLayout><Content /></MainLayout></ProtectedRoute>} />
+        <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'content_creator', 'editor', 'client']}><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
+        <Route path="/content" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'content_creator', 'editor']}><MainLayout><Content /></MainLayout></ProtectedRoute>} />
         <Route path="/talent" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist']}><MainLayout><UnifiedTalentPage /></MainLayout></ProtectedRoute>} />
         <Route path="/clients-hub" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist']}><MainLayout><UnifiedClientsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/creators" element={<Navigate to="/talent" replace />} />
@@ -482,12 +483,12 @@ function AppRoutes() {
         <Route path="/settings" element={<ProtectedRoute allowNoRoles><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
         <Route path="/planes" element={<ProtectedRoute allowNoRoles><MainLayout><PlanesPage /></MainLayout></ProtectedRoute>} />
         <Route path="/freelancer-dashboard" element={<ProtectedRoute allowNoRoles><MainLayout><FreelancerDashboard /></MainLayout></ProtectedRoute>} />
-        <Route path="/creator-dashboard" element={<ProtectedRoute allowedRoles={['creator']}><MainLayout><CreatorDashboard /></MainLayout></ProtectedRoute>} />
+        <Route path="/creator-dashboard" element={<ProtectedRoute allowedRoles={['creator', 'content_creator']}><MainLayout><CreatorDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/editor-dashboard" element={<ProtectedRoute allowedRoles={['editor']}><MainLayout><EditorDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/strategist-dashboard" element={<ProtectedRoute allowedRoles={['strategist']}><MainLayout><StrategistDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/client-dashboard" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/client-board" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientContentBoard /></MainLayout></ProtectedRoute>} />
-        <Route path="/ranking" element={<RootOnlyRoute><ProtectedRoute allowedRoles={['admin', 'creator', 'editor']}><MainLayout><Ranking /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
+        <Route path="/ranking" element={<RootOnlyRoute><ProtectedRoute allowedRoles={['admin', 'creator', 'content_creator', 'editor']}><MainLayout><Ranking /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
         <Route path="/ambassador" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><AmbassadorPage /></MainLayout></ProtectedRoute>} />
         <Route path="/research/:productId" element={<ProtectedRoute allowNoRoles><ResearchLanding /></ProtectedRoute>} />
         {/* Profile Builder */}

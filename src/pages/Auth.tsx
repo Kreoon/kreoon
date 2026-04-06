@@ -81,7 +81,7 @@ export default function Auth() {
         navigate("/strategist-dashboard", { replace: true });
         return;
       }
-      if (roles.includes("creator") || roles.includes("ambassador")) {
+      if (roles.includes("creator") || roles.includes("content_creator") || roles.includes("ambassador")) {
         navigate("/creator-dashboard", { replace: true });
         return;
       }

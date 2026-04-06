@@ -152,8 +152,8 @@ export default defineConfig(({ mode }) => ({
         // Disable navigation preload to prevent race conditions
         navigationPreload: false,
         // Force cache invalidation by using a unique cache name prefix
-        // v4: Fixed role detection in MainLayout, Sidebar, MobileNav (2026-04-06)
-        cacheId: 'kreoon-v4',
+        // v6: Added Creator layout + migrated creator→content_creator (2026-04-06)
+        cacheId: 'kreoon-v6',
         // Clean up old caches (including v2 bloated ones)
         cleanupOutdatedCaches: true,
         runtimeCaching: [
