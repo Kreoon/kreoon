@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Content } from '@/types/database';
 import { useAuth } from '@/hooks/useAuth';
-import { getPermissionGroup } from '@/lib/permissionGroups';
+import { getRoleArea } from '@/lib/permissionGroups';
 import { ContentResource, ContentAction, ContentPermissions, TabKey } from '../types';
 
 /**
@@ -126,16 +126,29 @@ export function useContentPermissions(content: Content | null): ContentPermissio
   const { user, isAdmin, isCreator, isEditor, isClient, isStrategist, activeRole } = useAuth();
 
   return useMemo(() => {
-    // Determine effective role - resolve to permission group for RBAC matrix lookup
+    // Determine effective role - resolve to RBAC matrix key
     const getEffectiveRole = (): string => {
-      const group = activeRole ? getPermissionGroup(activeRole) : null;
+      // Use getRoleArea which properly distinguishes content_creation vs post_production
+      const area = activeRole ? getRoleArea(activeRole) : null;
 
-      if (group) {
-        // Check if they're assigned to this content (use group for matching)
-        if (group === 'strategist' && content?.strategist_id === user?.id) return 'strategist';
-        if (group === 'creator' && content?.creator_id === user?.id) return 'creator';
-        if (group === 'editor' && content?.editor_id === user?.id) return 'editor';
-        return group;
+      if (area) {
+        // Admin/system role → admin permissions
+        if (area === 'system') return 'admin';
+
+        // Strategist roles → strategist permissions (if assigned)
+        if (area === 'strategy_marketing' && content?.strategist_id === user?.id) return 'strategist';
+
+        // Content creation roles (content_creator, creator, etc.) → creator permissions (if assigned)
+        if (area === 'content_creation' && content?.creator_id === user?.id) return 'creator';
+
+        // Post-production roles (editor, video_editor, etc.) → editor permissions (if assigned)
+        if (area === 'post_production' && content?.editor_id === user?.id) return 'editor';
+
+        // Client roles
+        if (area === 'client') return 'client';
+
+        // Talent not assigned to this specific content - give them guest view
+        return 'guest';
       }
 
       // Fallback to checking boolean flags (already group-based via useAuth)
