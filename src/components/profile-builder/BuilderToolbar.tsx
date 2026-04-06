@@ -1,4 +1,4 @@
-import { Monitor, Tablet, Smartphone, Save, Eye, Cloud, LayoutTemplate } from 'lucide-react';
+import { Monitor, Tablet, Smartphone, Save, Eye, Cloud, LayoutTemplate, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -13,6 +13,7 @@ interface BuilderToolbarProps {
   onPreview: () => void;
   onDeviceChange: (device: 'desktop' | 'tablet' | 'mobile') => void;
   onOpenTemplates?: () => void;
+  onSaveAsTemplate?: () => void;
 }
 
 const DEVICES = [
@@ -30,6 +31,7 @@ export function BuilderToolbar({
   onPreview,
   onDeviceChange,
   onOpenTemplates,
+  onSaveAsTemplate,
 }: BuilderToolbarProps) {
   return (
     <TooltipProvider>
@@ -98,6 +100,26 @@ export function BuilderToolbar({
               </TooltipTrigger>
               <TooltipContent side="bottom">
                 <p>Elige una plantilla prediseñada</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+
+          {onSaveAsTemplate && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onSaveAsTemplate}
+                  disabled={isDirty}
+                  aria-label="Guardar como plantilla"
+                >
+                  <Upload className="h-4 w-4 mr-1.5" />
+                  Compartir
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>Guarda tu diseño como plantilla</p>
               </TooltipContent>
             </Tooltip>
           )}

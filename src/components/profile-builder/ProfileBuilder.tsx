@@ -28,6 +28,7 @@ import { BuilderCanvas } from './BuilderCanvas';
 import { PlanStatusBar } from './PlanStatusBar';
 import { TemplateSelector } from './templates/TemplateSelector';
 import { UpgradeModal } from '@/components/premium/UpgradeModal';
+import { SaveAsTemplateDialog } from '@/components/template-library';
 import {
   DEFAULT_BUILDER_CONFIG,
   createBlock,
@@ -209,6 +210,7 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
   const [state, dispatch] = useReducer(builderReducer, INITIAL_STATE);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [showSaveAsTemplate, setShowSaveAsTemplate] = useState(false);
   const [currentTemplate, setCurrentTemplate] = useState<string | undefined>(undefined);
   const { toast } = useToast();
   const { tier, maxBlocks, canUseBlock } = useCreatorPlanFeatures();
@@ -539,6 +541,7 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
             dispatch({ type: 'SET_PREVIEW_DEVICE', payload: device })
           }
           onOpenTemplates={() => setShowTemplateSelector(true)}
+          onSaveAsTemplate={() => setShowSaveAsTemplate(true)}
         />
 
         {/* Body: sidebar | canvas | settings */}
@@ -679,6 +682,12 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
           setShowTemplateSelector(false);
           setShowUpgradeModal(true);
         }}
+      />
+
+      {/* Dialog para guardar como plantilla */}
+      <SaveAsTemplateDialog
+        open={showSaveAsTemplate}
+        onOpenChange={setShowSaveAsTemplate}
       />
     </DndContext>
   );

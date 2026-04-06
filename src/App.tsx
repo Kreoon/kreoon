@@ -229,6 +229,9 @@ const ProfilePreviewPage = lazyWithRetry(() => import("./pages/ProfilePreviewPag
 const PublicCreatorPage = lazyWithRetry(() => import("./pages/PublicCreatorPage"));
 const PublicReviewPage = lazyWithRetry(() => import("./pages/PublicReviewPage"));
 
+// Template Library
+const TemplateLibraryPage = lazyWithRetry(() => import("./pages/TemplateLibraryPage"));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -490,6 +493,8 @@ function AppRoutes() {
         {/* Profile Builder */}
         <Route path="/profile-builder" element={<ProtectedRoute allowNoRoles><ProfileBuilderPage /></ProtectedRoute>} />
         <Route path="/preview/:token" element={<ProfilePreviewPage />} />
+        {/* Template Library (public) */}
+        <Route path="/templates" element={<TemplateLibraryPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
