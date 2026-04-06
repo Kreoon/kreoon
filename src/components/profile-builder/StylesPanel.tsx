@@ -4,11 +4,15 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useCreatorPlanFeatures } from '@/hooks/useCreatorPlanFeatures';
+import { FeaturedMediaSelector } from './FeaturedMediaSelector';
 import type { BuilderConfig } from './types/profile-builder';
 
 interface StylesPanelProps {
   config: BuilderConfig;
   onChange: (updates: Partial<BuilderConfig>) => void;
+  creatorProfileId?: string;
+  featuredMediaUrl?: string | null;
+  featuredMediaType?: 'image' | 'video' | null;
 }
 
 const ACCENT_COLORS = [
@@ -51,11 +55,29 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function StylesPanel({ config, onChange }: StylesPanelProps) {
+export function StylesPanel({
+  config,
+  onChange,
+  creatorProfileId,
+  featuredMediaUrl,
+  featuredMediaType,
+}: StylesPanelProps) {
   const { canHideBranding } = useCreatorPlanFeatures();
 
   return (
     <div className="space-y-5 p-4">
+      {/* Imagen destacada del marketplace */}
+      {creatorProfileId && (
+        <>
+          <FeaturedMediaSelector
+            creatorProfileId={creatorProfileId}
+            currentFeaturedUrl={featuredMediaUrl}
+            currentFeaturedType={featuredMediaType}
+          />
+          <div className="border-t border-border" />
+        </>
+      )}
+
       {/* Tema */}
       <div>
         <SectionTitle>Tema</SectionTitle>

@@ -2,4 +2,4 @@
  * Profile Builder - Utilities
  */
 
-export { applyBlockStyles, getAnimationVariants, type ComputedBlockStyles } from './applyBlockStyles';
+export { applyBlockStyles, getAnimationVariants, getBlockStyleObject, type ComputedBlockStyles } from './applyBlockStyles';

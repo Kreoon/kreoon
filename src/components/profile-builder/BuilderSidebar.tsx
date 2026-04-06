@@ -15,6 +15,9 @@ interface BuilderSidebarProps {
   builderConfig: BuilderConfig;
   onConfigChange: (updates: Partial<BuilderConfig>) => void;
   onUpgradeClick?: () => void;
+  creatorProfileId?: string;
+  featuredMediaUrl?: string | null;
+  featuredMediaType?: 'image' | 'video' | null;
 }
 
 export function BuilderSidebar({
@@ -22,6 +25,9 @@ export function BuilderSidebar({
   builderConfig,
   onConfigChange,
   onUpgradeClick,
+  creatorProfileId,
+  featuredMediaUrl,
+  featuredMediaType,
 }: BuilderSidebarProps) {
   const { maxBlocks } = useCreatorPlanFeatures();
   const { hasDNA } = useDNAForBuilder();
@@ -98,7 +104,13 @@ export function BuilderSidebar({
 
         <TabsContent value="styles" className="flex-1 overflow-hidden mt-0">
           <ScrollArea className="h-full">
-            <StylesPanel config={builderConfig} onChange={onConfigChange} />
+            <StylesPanel
+              config={builderConfig}
+              onChange={onConfigChange}
+              creatorProfileId={creatorProfileId}
+              featuredMediaUrl={featuredMediaUrl}
+              featuredMediaType={featuredMediaType}
+            />
           </ScrollArea>
         </TabsContent>
 

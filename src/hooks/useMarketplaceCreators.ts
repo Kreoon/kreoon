@@ -33,6 +33,9 @@ function mapCreatorRow(row: Record<string, unknown>): MarketplaceCreator {
     joined_at: (row.created_at as string) || '',
     accepts_product_exchange: (row.accepts_product_exchange as boolean) || false,
     marketplace_roles: (row.marketplace_roles as string[]) || [],
+    // Featured media seleccionado por el creador
+    featured_media_url: row.featured_media_url as string | null,
+    featured_media_type: row.featured_media_type as 'image' | 'video' | null,
   };
 }
 
@@ -120,7 +123,8 @@ export async function fetchAllCreators(): Promise<MarketplaceCreatorsResult> {
     location_country, country_flag, categories, content_types, level,
     is_verified, rating_avg, rating_count, base_price, currency,
     is_available, languages, completed_projects, created_at,
-    accepts_product_exchange, marketplace_roles
+    accepts_product_exchange, marketplace_roles,
+    featured_media_url, featured_media_type
   `;
   const { data: rows, error: err } = await (supabase as any)
     .from('creator_profiles')

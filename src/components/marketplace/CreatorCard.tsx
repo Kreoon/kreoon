@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback, memo } from 'react';
-import { Heart, ChevronLeft, ChevronRight, Star, MapPin, CheckCircle2, Play, Gift, Percent, Building2 } from 'lucide-react';
+import { useState, useCallback, memo } from 'react';
+import { Heart, Star, MapPin, CheckCircle2, Play, Gift, Percent, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MarketplaceCreator, PortfolioMedia } from './types/marketplace';
 import { getOptimizedImageUrl, getOptimizedThumbnail } from '@/lib/imageOptimization';
@@ -13,10 +13,23 @@ const THUMB_WIDTH = CARD_WIDTH * 2; // 360px para 2x retina
 const THUMB_HEIGHT = CARD_HEIGHT * 2; // 640px para 2x retina
 
 function resolveThumb(item: PortfolioMedia): string {
-  // Pasar todo por getOptimizedThumbnail — esto incluye Bunny CDN via wsrv.nl
-  // evitando descargar thumbnails de 1440x2560px cuando se muestran a ~360px
-  const base = item.thumbnail_url || item.url;
+  // Prioridad: thumbnail_url guardado > URL del media
+  // El thumbnail_url de la BD es más confiable que construir la URL
+  let base = item.thumbnail_url;
+
+  // Si no hay thumbnail guardado y es imagen, usar URL directa
+  if (!base && item.type === 'image') {
+    base = item.url;
+  }
+
+  // Si no hay thumbnail y es video, intentar usar URL
+  if (!base && item.type === 'video' && item.url) {
+    base = item.url;
+  }
+
   if (!base) return '';
+
+  // Pasar por getOptimizedThumbnail para resize via wsrv.nl
   return getOptimizedThumbnail(base, THUMB_WIDTH, THUMB_HEIGHT, 80);
 }
 
@@ -28,41 +41,25 @@ interface CreatorCardProps {
 }
 
 function CreatorCardComponent({ creator, onClick, className, priority = false }: CreatorCardProps) {
-  const [currentSlide, setCurrentSlide] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [imgLoaded, setImgLoaded] = useState<Record<number, boolean>>({});
-  const touchStartX = useRef(0);
-  const media = creator.portfolio_media;
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
-  const handlePrev = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentSlide(prev => Math.max(0, prev - 1));
-  }, []);
-
-  const handleNext = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentSlide(prev => Math.min(media.length - 1, prev + 1));
-  }, [media.length]);
+  // Prioridad: featured_media_url seleccionado > primer item del portafolio
+  const hasFeaturedMedia = !!creator.featured_media_url;
+  const featuredMedia = hasFeaturedMedia
+    ? {
+        id: 'featured',
+        url: creator.featured_media_url!,
+        thumbnail_url: creator.featured_media_url,
+        type: creator.featured_media_type || 'image',
+      } as PortfolioMedia
+    : creator.portfolio_media?.[0] ?? null;
 
   const handleFavorite = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     setIsFavorite(prev => !prev);
   }, []);
-
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-  }, []);
-
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    const diff = touchStartX.current - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 50) {
-      if (diff > 0 && currentSlide < media.length - 1) {
-        setCurrentSlide(prev => prev + 1);
-      } else if (diff < 0 && currentSlide > 0) {
-        setCurrentSlide(prev => prev - 1);
-      }
-    }
-  }, [currentSlide, media.length]);
 
   const isNew = isNewCreator(creator.joined_at);
   const hasDiscount = creator.introductory_discount_pct && creator.introductory_discount_pct > 0;
@@ -91,62 +88,51 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
       )}
       onClick={onClick}
     >
-      {/*
-       * CLS fix: aspect-[9/16] + contain reservan el espacio exacto antes de
-       * que carguen imágenes. Se elimina minHeight fijo en px porque entraba en
-       * conflicto con el aspect-ratio en viewports estrechos, generando layouts
-       * de altura inconsistente que contribuían al CLS de 0.618.
-       */}
       <div
         className="relative aspect-[9/16] rounded-lg overflow-hidden bg-card/50 dark:bg-[#1a1a35]"
         style={{ contain: 'layout style paint' }}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
       >
-        {/* Media slides */}
-        {media.length > 0 ? (
-          <div
-            className="flex h-full transition-transform duration-300 ease-out"
-            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-          >
-            {media.map((item, i) => (
-              <div key={item.id} className="w-full h-full flex-shrink-0 relative">
-                {!imgLoaded[i] && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-secondary to-secondary/50 animate-pulse" />
-                )}
-                <img
-                  src={resolveThumb(item)}
-                  alt=""
-                  width={CARD_WIDTH}
-                  height={CARD_HEIGHT}
-                  className={cn(
-                    'w-full h-full object-cover transition-opacity duration-300',
-                    imgLoaded[i] ? 'opacity-100' : 'opacity-0',
-                  )}
-                  loading={(priority && i === 0) ? 'eager' : 'lazy'}
-                  decoding={(priority && i === 0) ? 'sync' : 'async'}
-                  fetchPriority={(priority && i === 0) ? 'high' : undefined}
-                  onLoad={() => setImgLoaded(prev => ({ ...prev, [i]: true }))}
-                />
-                {item.type === 'video' && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-11 h-11 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center border border-white/20">
-                      <Play className="h-5 w-5 text-white fill-white ml-0.5" />
-                    </div>
-                  </div>
-                )}
+        {/* Imagen destacada fija (primer item del portafolio) */}
+        {featuredMedia && !imgError ? (
+          <>
+            {!imgLoaded && (
+              <div className="absolute inset-0 bg-gradient-to-br from-secondary to-secondary/50 animate-pulse" />
+            )}
+            <img
+              src={resolveThumb(featuredMedia)}
+              alt=""
+              width={CARD_WIDTH}
+              height={CARD_HEIGHT}
+              className={cn(
+                'w-full h-full object-cover transition-opacity duration-300',
+                imgLoaded ? 'opacity-100' : 'opacity-0',
+              )}
+              loading={priority ? 'eager' : 'lazy'}
+              decoding={priority ? 'sync' : 'async'}
+              fetchPriority={priority ? 'high' : undefined}
+              onLoad={() => setImgLoaded(true)}
+              onError={() => setImgError(true)}
+            />
+            {/* Icono de video si es video */}
+            {featuredMedia.type === 'video' && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-11 h-11 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center border border-white/20">
+                  <Play className="h-5 w-5 text-white fill-white ml-0.5" />
+                </div>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         ) : (
+          // Fallback: avatar o inicial
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-            {creator.avatar_url ? (
+            {creator.avatar_url && !imgError ? (
               <img
                 src={getOptimizedImageUrl(creator.avatar_url, { width: CARD_WIDTH * 2, quality: 75 })}
                 alt={creator.display_name}
                 className="w-full h-full object-cover"
                 loading={priority ? 'eager' : 'lazy'}
                 fetchPriority={priority ? 'high' : undefined}
+                onError={() => setImgError(true)}
               />
             ) : (
               <div className="w-16 h-16 rounded-full bg-primary/30 flex items-center justify-center">
@@ -190,46 +176,6 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
           <div className="absolute top-11 left-2.5 z-10 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 shadow-lg">
             <Percent className="h-2.5 w-2.5" />
             {creator.introductory_discount_pct}% OFF
-          </div>
-        )}
-
-        {/* Navigation arrows */}
-        {media.length > 1 && (
-          <>
-            {currentSlide > 0 && (
-              <button
-                onClick={handlePrev}
-                className="absolute left-1.5 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60"
-                aria-label="Anterior"
-              >
-                <ChevronLeft className="h-4 w-4 text-white" />
-              </button>
-            )}
-            {currentSlide < media.length - 1 && (
-              <button
-                onClick={handleNext}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60"
-                aria-label="Siguiente"
-              >
-                <ChevronRight className="h-4 w-4 text-white" />
-              </button>
-            )}
-          </>
-        )}
-
-        {/* Dots indicator */}
-        {media.length > 1 && (
-          <div className="absolute bottom-[72px] left-1/2 -translate-x-1/2 z-10 flex gap-1">
-            {media.slice(0, 5).map((_, i) => (
-              <span
-                key={i}
-                className={cn(
-                  'h-1 rounded-full transition-all duration-200',
-                  i === currentSlide ? 'bg-white w-3' : 'bg-white/50 w-1',
-                )}
-              />
-            ))}
-            {media.length > 5 && <span className="text-white/50 text-[8px] ml-0.5">+{media.length - 5}</span>}
           </div>
         )}
 
@@ -325,11 +271,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
             )}
           </div>
 
-          {/*
-           * Row 3: Hover-only extra info.
-           * CLS fix: se usa opacity en lugar de max-h animado.
-           * max-height fuerza reflow de layout en cada hover; opacity es compositor-only.
-           */}
+          {/* Row 3: Hover-only extra info */}
           <div
             className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out pointer-events-none group-hover:pointer-events-auto"
             aria-hidden="true"

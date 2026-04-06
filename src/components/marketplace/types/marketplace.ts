@@ -37,6 +37,10 @@ export interface MarketplaceCreator {
   is_available: boolean;
   languages: string[];
   completed_projects: number;
+  /** URL de imagen/video destacado seleccionado por el creador */
+  featured_media_url?: string | null;
+  /** Tipo de media destacado: image o video */
+  featured_media_type?: 'image' | 'video' | null;
   /** Projects completed within organizations (from content table) */
   org_projects?: number;
   joined_at: string;

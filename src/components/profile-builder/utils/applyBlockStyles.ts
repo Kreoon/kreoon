@@ -140,7 +140,124 @@ function buildBorderRadius(styles: BlockStyles): string | undefined {
 }
 
 /**
- * Convierte BlockStyles en estilos CSS computados
+ * getBlockStyleObject
+ *
+ * Función simplificada que convierte BlockStyles en React.CSSProperties puro.
+ * Diseñada para ser usada directamente en el prop `style` del contenedor
+ * raíz de cada bloque, sin necesitar clases Tailwind adicionales.
+ *
+ * Incluye: fondo (color / gradiente / imagen), texto, tipografía, espaciado,
+ * bordes (estilo, ancho, color, radio), y sombras.
+ *
+ * Uso:
+ *   const blockStyle = getBlockStyleObject(block.styles);
+ *   <div style={blockStyle}>...</div>
+ */
+export function getBlockStyleObject(styles: BlockStyles): React.CSSProperties {
+  const css: React.CSSProperties = {};
+
+  // === Fondo ===
+  const gradient = buildGradientCSS(styles);
+  if (gradient) {
+    css.background = gradient;
+  } else if (styles.backgroundType === 'image' && styles.backgroundImage) {
+    css.backgroundImage = `url(${styles.backgroundImage})`;
+    css.backgroundSize = styles.backgroundSize || 'cover';
+    css.backgroundPosition = styles.backgroundPosition || 'center';
+    css.backgroundRepeat = 'no-repeat';
+  } else if (styles.backgroundColor) {
+    css.backgroundColor = styles.backgroundColor;
+  }
+
+  // Opacidad del fondo (se aplica como opacity general si no hay otro mecanismo)
+  if (styles.backgroundOpacity !== undefined && styles.backgroundOpacity < 100) {
+    css.opacity = styles.backgroundOpacity / 100;
+  }
+
+  // === Color de texto ===
+  if (styles.textColor) {
+    css.color = styles.textColor;
+  }
+
+  // === Alineación y transformación de texto ===
+  if (styles.textAlign) {
+    css.textAlign = styles.textAlign;
+  }
+  if (styles.textTransform) {
+    css.textTransform = styles.textTransform;
+  }
+
+  // === Tipografía ===
+  if (styles.fontFamily) {
+    css.fontFamily = `"${styles.fontFamily}", sans-serif`;
+  }
+  if (styles.fontSize) {
+    css.fontSize = styles.fontSize;
+  }
+  if (styles.fontWeight) {
+    css.fontWeight = styles.fontWeight;
+  }
+  if (styles.lineHeight) {
+    css.lineHeight = styles.lineHeight;
+  }
+  if (styles.letterSpacing) {
+    css.letterSpacing = styles.letterSpacing;
+  }
+
+  // === Espaciado ===
+  const padding = buildPadding(styles);
+  if (padding) {
+    css.padding = padding;
+  }
+
+  const margin = buildMargin(styles);
+  if (margin) {
+    css.margin = margin;
+  }
+
+  // === Bordes ===
+  const borderRadius = buildBorderRadius(styles);
+  if (borderRadius) {
+    css.borderRadius = borderRadius;
+  }
+
+  if (styles.borderStyle && styles.borderStyle !== 'none') {
+    css.borderStyle = styles.borderStyle;
+    css.borderColor = styles.borderColor || 'currentColor';
+
+    if (styles.borderWidthCustom) {
+      const { top, right, bottom, left } = styles.borderWidthCustom;
+      css.borderWidth = `${top} ${right} ${bottom} ${left}`;
+    } else if (styles.borderWidth) {
+      css.borderWidth = styles.borderWidth;
+    } else {
+      css.borderWidth = '1px';
+    }
+  }
+
+  // === Sombras ===
+  const boxShadow = buildBoxShadowCSS(styles);
+  if (boxShadow) {
+    css.boxShadow = boxShadow;
+  }
+
+  // === Ancho ===
+  if (styles.width === 'custom' && styles.customWidth) {
+    css.width = styles.customWidth;
+  } else if (styles.width && styles.width !== 'full') {
+    css.width = WIDTH_MAP[styles.width] || '100%';
+  }
+
+  if (styles.maxWidth) {
+    css.maxWidth = styles.maxWidth;
+  }
+
+  return css;
+}
+
+/**
+ * Convierte BlockStyles en estilos CSS computados (con className para Tailwind)
+ * Usado por BlockWrapper para aplicar estilos al contenedor de arrastre.
  */
 export function applyBlockStyles(styles: BlockStyles): ComputedBlockStyles {
   const cssProperties: React.CSSProperties = {};

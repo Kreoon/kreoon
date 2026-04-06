@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Play, Maximize2 } from 'lucide-react';
+import { Play, Maximize2, ImageOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { PortfolioMedia } from '../types/marketplace';
 import type { PortfolioItemData } from '@/hooks/usePortfolioItems';
@@ -15,10 +15,19 @@ const GRID_H_SMALL = Math.round(GRID_W * (4 / 3));  // 3:4 → 400px
 
 function resolveThumb(item: PortfolioMedia, size: 'large' | 'small'): string {
   const h = size === 'large' ? GRID_H_LARGE : GRID_H_SMALL;
-  const base = item.thumbnail_url || item.url;
+
+  // Prioridad: thumbnail_url guardado > URL del media
+  // El thumbnail_url de la BD es más confiable que construir la URL
+  let base = item.thumbnail_url;
+
+  // Si no hay thumbnail guardado, usar URL directa
+  if (!base) {
+    base = item.url;
+  }
+
   if (!base) return '';
-  // getOptimizedThumbnail envía Bunny CDN por wsrv.nl:
-  // thumbnail original ~2.2 MB → WebP recortado ~40–80 KB
+
+  // getOptimizedThumbnail envía por wsrv.nl para resize
   return getOptimizedThumbnail(base, GRID_W * 2, h * 2, 80);
 }
 
@@ -47,6 +56,57 @@ type FilterTab = 'all' | 'video' | 'image';
 function getItemSize(index: number): 'large' | 'small' {
   const pos = index % 6;
   return pos === 0 || pos === 3 ? 'large' : 'small';
+}
+
+// ─── Portfolio Thumbnail con fallback ───────────────────────────────────────
+
+interface PortfolioThumbnailProps {
+  item: PortfolioMedia;
+  size: 'large' | 'small';
+  onClick: () => void;
+}
+
+function PortfolioThumbnail({ item, size, onClick }: PortfolioThumbnailProps) {
+  const [hasError, setHasError] = useState(false);
+  const thumbUrl = resolveThumb(item, size);
+
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'w-full rounded-sm overflow-hidden relative group cursor-pointer break-inside-avoid',
+        size === 'large' ? 'aspect-[9/16]' : 'aspect-[3/4]',
+      )}
+    >
+      {hasError || !thumbUrl ? (
+        <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+          <ImageOff className="h-8 w-8 text-zinc-600" />
+        </div>
+      ) : (
+        <img
+          src={thumbUrl}
+          alt=""
+          width={GRID_W}
+          height={size === 'large' ? GRID_H_LARGE : GRID_H_SMALL}
+          loading="lazy"
+          decoding="async"
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          onError={() => setHasError(true)}
+        />
+      )}
+      {/* Hover overlay */}
+      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+        <Maximize2 className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+      </div>
+      {/* Video badge */}
+      {item.type === 'video' && (
+        <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+          <Play className="h-3 w-3 fill-white" />
+          Video
+        </div>
+      )}
+    </button>
+  );
 }
 
 export function PortfolioGrid({
@@ -108,40 +168,14 @@ export function PortfolioGrid({
 
       {/* Masonry-style collage grid — vertical content with varying sizes */}
       <div className="columns-2 md:columns-3 lg:columns-4 gap-3 space-y-3">
-        {visible.map((item, i) => {
-          const size = getItemSize(i);
-          return (
-            <button
-              key={item.id}
-              onClick={() => handleOpen(i)}
-              className={cn(
-                'w-full rounded-sm overflow-hidden relative group cursor-pointer break-inside-avoid',
-                size === 'large' ? 'aspect-[9/16]' : 'aspect-[3/4]',
-              )}
-            >
-              <img
-                src={resolveThumb(item, size)}
-                alt=""
-                width={GRID_W}
-                height={size === 'large' ? GRID_H_LARGE : GRID_H_SMALL}
-                loading="lazy"
-                decoding="async"
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-              {/* Hover overlay */}
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                <Maximize2 className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-              {/* Video badge */}
-              {item.type === 'video' && (
-                <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
-                  <Play className="h-3 w-3 fill-white" />
-                  Video
-                </div>
-              )}
-            </button>
-          );
-        })}
+        {visible.map((item, i) => (
+          <PortfolioThumbnail
+            key={item.id}
+            item={item}
+            size={getItemSize(i)}
+            onClick={() => handleOpen(i)}
+          />
+        ))}
       </div>
 
       {/* Load more */}

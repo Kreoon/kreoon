@@ -152,13 +152,19 @@ export function useProfileBuilderData(profileId: string | undefined) {
       }
     },
     onSuccess: (_data, variables) => {
+      // Invalidar datos del builder
       queryClient.invalidateQueries({
         queryKey: profileBuilderKeys.data(variables.profileId),
       });
-      // Invalidar también para el marketplace
+      // Invalidar bloques publicados para actualizar el perfil público
       queryClient.invalidateQueries({
         queryKey: ['published-profile-blocks', variables.profileId],
       });
+      // Invalidar también perfiles públicos para que se reflejen los cambios
+      queryClient.invalidateQueries({ queryKey: ['public-creator-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['creator-public-profile'] });
+      // Forzar refetch del marketplace para mostrar cambios inmediatamente
+      queryClient.invalidateQueries({ queryKey: ['marketplace-creators'] });
     },
     onError: (err: Error) => {
       toast({

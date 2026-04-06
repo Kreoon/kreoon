@@ -205,6 +205,10 @@ export interface ProfileBuilderData {
     builder_config: BuilderConfig;
     builder_template: string | null;
     builder_has_draft: boolean;
+    // Featured media para marketplace
+    featured_media_id?: string | null;
+    featured_media_url?: string | null;
+    featured_media_type?: 'image' | 'video' | null;
   };
   blocks: ProfileBlock[];
 }

@@ -33,10 +33,25 @@ const THUMB_WIDTH = CARD_WIDTH * 2; // 360px para 2x retina
 const THUMB_HEIGHT = CARD_HEIGHT * 2; // 640px para 2x retina
 
 function resolveThumb(item: PortfolioMedia): string {
-  // Pasar todo por getOptimizedThumbnail — aplica wsrv.nl a Bunny CDN
-  // evitando descargar thumbnails de 1440x2560px cuando se muestran a ~360px
-  const base = item.thumbnail_url || item.url;
+  // Prioridad: thumbnail_url guardado > URL del media
+  // El thumbnail_url de la BD es más confiable que construir la URL
+  // porque ya fue verificado al momento del upload
+  let base = item.thumbnail_url;
+
+  // Si no hay thumbnail guardado y es imagen, usar URL directa
+  if (!base && item.type === 'image') {
+    base = item.url;
+  }
+
+  // Si no hay thumbnail y es video, intentar construir desde URL
+  // (puede dar 404 si Bunny no ha generado el thumbnail)
+  if (!base && item.type === 'video' && item.url) {
+    base = item.url;
+  }
+
   if (!base) return '';
+
+  // Pasar por getOptimizedThumbnail para resize via wsrv.nl
   return getOptimizedThumbnail(base, THUMB_WIDTH, THUMB_HEIGHT, 80);
 }
 
@@ -97,9 +112,21 @@ function RankingBadge({ tag }: RankingBadgeProps) {
 
 function CreatorCardComponent({ creator, onClick, style, priority = false }: CreatorCardProps) {
   const [imgLoaded, setImgLoaded] = useState(false);
-  const firstMedia = creator.portfolio_media?.[0] ?? null;
+  const [imgError, setImgError] = useState(false);
+
+  // Prioridad: featured_media_url seleccionado > primer item del portafolio
+  const hasFeaturedMedia = !!creator.featured_media_url;
+  const firstMedia = hasFeaturedMedia
+    ? {
+        id: 'featured',
+        url: creator.featured_media_url!,
+        thumbnail_url: creator.featured_media_url,
+        type: creator.featured_media_type || 'image',
+      } as PortfolioMedia
+    : creator.portfolio_media?.[0] ?? null;
 
   const handleLoad = useCallback(() => setImgLoaded(true), []);
+  const handleError = useCallback(() => setImgError(true), []);
 
   // Atributos de carga según prioridad (para mejorar LCP)
   const loadingAttr = priority ? 'eager' : 'lazy';
@@ -142,7 +169,7 @@ function CreatorCardComponent({ creator, onClick, style, priority = false }: Cre
     >
       {/* ---- Background: thumbnail o avatar ---- */}
       <div className="absolute inset-0">
-        {firstMedia ? (
+        {firstMedia && !imgError ? (
           <>
             {!imgLoaded && (
               <div className="absolute inset-0 bg-[#1a1a35] animate-pulse" />
@@ -160,9 +187,10 @@ function CreatorCardComponent({ creator, onClick, style, priority = false }: Cre
                 imgLoaded ? 'opacity-100' : 'opacity-0',
               )}
               onLoad={handleLoad}
+              onError={handleError}
             />
           </>
-        ) : creator.avatar_url ? (
+        ) : creator.avatar_url && !imgError ? (
           <img
             src={getOptimizedImageUrl(creator.avatar_url, { width: CARD_WIDTH * 2, quality: 80 })}
             alt={creator.display_name}
@@ -172,6 +200,7 @@ function CreatorCardComponent({ creator, onClick, style, priority = false }: Cre
             decoding={decodingAttr}
             fetchPriority={priority ? 'high' : undefined}
             className="w-full h-full object-cover"
+            onError={handleError}
           />
         ) : (
           // Fallback: initial con fondo degradado

@@ -232,6 +232,8 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
 
   // Cargar bloques desde la BD al iniciar (o generados automáticamente)
   const [hasLoadedBlocks, setHasLoadedBlocks] = useState(false);
+  const [hasLoadedConfig, setHasLoadedConfig] = useState(false);
+
   useEffect(() => {
     if (!hasLoadedBlocks && savedBlocks.length > 0 && state.blocks.length === 0) {
       dispatch({ type: 'SET_BLOCKS', payload: savedBlocks });
@@ -239,6 +241,14 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
       setHasLoadedBlocks(true);
     }
   }, [savedBlocks, savedTemplate, hasLoadedBlocks, state.blocks.length]);
+
+  // Cargar configuración del builder guardada (tema, colores, fuentes, etc.)
+  useEffect(() => {
+    if (!hasLoadedConfig && profile?.builder_config) {
+      dispatch({ type: 'SET_BUILDER_CONFIG', payload: profile.builder_config });
+      setHasLoadedConfig(true);
+    }
+  }, [profile?.builder_config, hasLoadedConfig]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -545,7 +555,7 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
         />
 
         {/* Body: sidebar | canvas | settings */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 min-h-0">
           {/* Sidebar izquierdo — oculto en mobile */}
           <div className="hidden md:flex">
             <BuilderSidebar
@@ -553,11 +563,14 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
               builderConfig={state.builderConfig}
               onConfigChange={handleConfigChange}
               onUpgradeClick={() => setShowUpgradeModal(true)}
+              creatorProfileId={profileId}
+              featuredMediaUrl={profile?.featured_media_url}
+              featuredMediaType={profile?.featured_media_type}
             />
           </div>
 
           {/* Canvas central */}
-          <main className="flex-1 overflow-hidden bg-muted/20 flex flex-col">
+          <main className="flex-1 min-h-0 bg-muted/20 flex flex-col">
             {/* Controles mobile: acceso a sidebar y panel de bloque */}
             <div className="flex md:hidden items-center gap-2 px-3 py-2 border-b border-border bg-background flex-shrink-0">
               <Sheet>
@@ -572,6 +585,9 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
                     builderConfig={state.builderConfig}
                     onConfigChange={handleConfigChange}
                     onUpgradeClick={() => setShowUpgradeModal(true)}
+                    creatorProfileId={profileId}
+                    featuredMediaUrl={profile?.featured_media_url}
+                    featuredMediaType={profile?.featured_media_type}
                   />
                 </SheetContent>
               </Sheet>
@@ -608,6 +624,7 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
               }
               onDeleteBlock={handleDeleteBlock}
               previewDevice={state.previewDevice}
+              builderConfig={state.builderConfig}
               userId={profile?.user_id}
               creatorProfileId={profileId}
               onAddBlockToContainer={handleAddBlockToContainer}

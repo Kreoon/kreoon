@@ -126,12 +126,15 @@ export function getBlockStyleObject(styles: BlockStyles): React.CSSProperties {
   }
 
   // ── Bordes ────────────────────────────────────────────────────────────────
-  // Radio: custom por esquina tiene precedencia sobre preset
+  // Radio: custom por esquina tiene precedencia sobre preset, luego preset, luego variable global
   if (styles.borderRadiusCustom) {
     const { tl, tr, br, bl } = styles.borderRadiusCustom;
     css.borderRadius = `${tl} ${tr} ${br} ${bl}`;
   } else if (styles.borderRadius && styles.borderRadius !== 'none') {
     css.borderRadius = RADIUS_MAP[styles.borderRadius] ?? styles.borderRadius;
+  } else {
+    // Usar la variable CSS global del canvas como fallback
+    css.borderRadius = 'var(--creator-radius, 0.5rem)';
   }
 
   // Estilo, grosor y color del borde

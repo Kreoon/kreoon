@@ -10,8 +10,59 @@ import { BlockWrapper } from './BlockWrapper';
 import { BlockRenderer } from './BlockRenderer';
 import { DropZone } from './DropZone';
 import { useCreatorPlanFeatures } from '@/hooks/useCreatorPlanFeatures';
-import type { ProfileBlock } from './types/profile-builder';
-import { BLOCK_DEFINITIONS } from './types/profile-builder';
+import type { ProfileBlock, BuilderConfig } from './types/profile-builder';
+import { BLOCK_DEFINITIONS, DEFAULT_BUILDER_CONFIG } from './types/profile-builder';
+
+// Convertir HEX a HSL para Tailwind
+function hexToHsl(hex: string): string {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return '262 83% 58%'; // fallback violeta
+
+  let r = parseInt(result[1], 16) / 255;
+  let g = parseInt(result[2], 16) / 255;
+  let b = parseInt(result[3], 16) / 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+
+  return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+}
+
+// Mapeo de fuentes a font-family CSS
+const FONT_FAMILY_MAP: Record<string, string> = {
+  inter: '"Inter", system-ui, sans-serif',
+  poppins: '"Poppins", system-ui, sans-serif',
+  playfair: '"Playfair Display", Georgia, serif',
+  roboto: '"Roboto", system-ui, sans-serif',
+  montserrat: '"Montserrat", system-ui, sans-serif',
+};
+
+// Mapeo de espaciado a valores CSS
+const SPACING_MAP: Record<string, string> = {
+  compact: '0.5rem',
+  normal: '1rem',
+  relaxed: '1.5rem',
+};
+
+// Mapeo de border-radius a valores CSS
+const BORDER_RADIUS_MAP: Record<string, string> = {
+  none: '0',
+  sm: '0.25rem',
+  md: '0.5rem',
+  lg: '1rem',
+};
 
 // Anchos de canvas según device
 const DEVICE_WIDTH: Record<'desktop' | 'tablet' | 'mobile', string> = {
@@ -28,6 +79,8 @@ interface BuilderCanvasProps {
   onReorderBlocks: (activeId: string, overId: string) => void;
   onDeleteBlock?: (id: string) => void;
   previewDevice: 'desktop' | 'tablet' | 'mobile';
+  // Configuración del builder para aplicar estilos en tiempo real
+  builderConfig?: BuilderConfig;
   // Para MediaLibraryPicker
   userId?: string;
   creatorProfileId?: string;
@@ -44,6 +97,7 @@ export function BuilderCanvas({
   onReorderBlocks,
   onDeleteBlock,
   previewDevice,
+  builderConfig = DEFAULT_BUILDER_CONFIG,
   userId,
   creatorProfileId,
   onAddBlockToContainer,
@@ -107,18 +161,57 @@ export function BuilderCanvas({
     onReorderBlocks(nextBlock.id, id);
   }
 
+  // ID único para scoping de estilos
+  const canvasId = useMemo(() => `canvas-${Math.random().toString(36).substr(2, 9)}`, []);
+
   return (
     <div
-      className="flex flex-col items-center w-full h-full overflow-y-auto py-8 px-4"
+      className="flex flex-col items-center w-full flex-1 min-h-0 overflow-y-auto py-8 px-4"
       onClick={handleCanvasClick}
       aria-label="Canvas del profile builder"
       role="main"
     >
+      {/* Estilos con scope para headings y elementos del canvas */}
+      <style>{`
+        #${canvasId} h1, #${canvasId} h2, #${canvasId} h3, #${canvasId} h4 {
+          font-family: var(--font-heading);
+        }
+        #${canvasId} p, #${canvasId} span, #${canvasId} li {
+          font-family: var(--font-body);
+        }
+        #${canvasId} .btn-primary, #${canvasId} [data-accent="true"] {
+          background-color: var(--creator-accent);
+        }
+      `}</style>
       <div
+        id={canvasId}
         className={cn(
-          'flex flex-col gap-0 mx-auto transition-all duration-200',
+          'flex flex-col gap-0 mx-auto transition-all duration-200 rounded-lg',
           DEVICE_WIDTH[previewDevice],
+          // Aplicar tema directamente
+          builderConfig.theme === 'dark' ? 'bg-[#0a0a0f] text-zinc-100' : 'bg-white text-zinc-900',
         )}
+        style={{
+          // Aplicar todas las variables CSS del tema
+          // HEX para uso directo
+          '--creator-accent': builderConfig.accentColor,
+          '--creator-accent-10': `${builderConfig.accentColor}1a`,
+          '--creator-accent-20': `${builderConfig.accentColor}33`,
+          // HSL para Tailwind/shadcn (sin hsl())
+          '--primary': hexToHsl(builderConfig.accentColor),
+          '--ring': hexToHsl(builderConfig.accentColor),
+          // Fuentes
+          '--font-heading': FONT_FAMILY_MAP[builderConfig.fontHeading] || FONT_FAMILY_MAP.inter,
+          '--font-body': FONT_FAMILY_MAP[builderConfig.fontBody] || FONT_FAMILY_MAP.inter,
+          fontFamily: FONT_FAMILY_MAP[builderConfig.fontBody] || FONT_FAMILY_MAP.inter,
+          // Espaciado global
+          '--creator-spacing': SPACING_MAP[builderConfig.spacing] || SPACING_MAP.normal,
+          gap: SPACING_MAP[builderConfig.spacing] || SPACING_MAP.normal,
+          // Border radius global
+          '--creator-radius': BORDER_RADIUS_MAP[builderConfig.borderRadius] || BORDER_RADIUS_MAP.md,
+          '--radius': BORDER_RADIUS_MAP[builderConfig.borderRadius] || BORDER_RADIUS_MAP.md,
+          borderRadius: BORDER_RADIUS_MAP[builderConfig.borderRadius] || BORDER_RADIUS_MAP.md,
+        } as React.CSSProperties}
       >
         {/* Estado vacío - Onboarding freemium */}
         {sortedBlocks.length === 0 && (
@@ -191,7 +284,7 @@ export function BuilderCanvas({
         {/* Todos los bloques con drag & drop - usa el DndContext de ProfileBuilder */}
         {sortedBlocks.length > 0 && (
           <SortableContext items={allBlockIds} strategy={verticalListSortingStrategy}>
-            <div className="flex flex-col gap-1.5" role="list" aria-label="Bloques del perfil">
+            <div className="flex flex-col" style={{ gap: 'var(--creator-spacing, 1rem)' }} role="list" aria-label="Bloques del perfil">
               {sortedBlocks.map((block, index) => {
                 const definition = BLOCK_DEFINITIONS[block.type];
                 const isFirst = index === 0;

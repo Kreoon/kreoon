@@ -47,3 +47,7 @@ export { OrgInviteModal } from './OrgInviteModal';
 // Conexión de redes sociales
 export { InstagramConnect } from './InstagramConnect';
 export { TikTokConnect } from './TikTokConnect';
+
+// Compartir perfil
+export { ProfileShareDialog } from './ProfileShareDialog';
+export { ProfileShareButton } from './ProfileShareButton';
