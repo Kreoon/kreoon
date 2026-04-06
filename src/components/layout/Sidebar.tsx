@@ -441,23 +441,29 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   // User has multiple distinct permission groups (e.g., creator + editor)
   const isMultiRoleUser = allUserGroups.length > 1;
 
-  // For multi-role: get the "highest" group for certain checks (admin > strategist > creator > editor > client)
-  const highestGroup = useMemo(() => {
-    const priority: PermissionGroup[] = ['admin', 'team_leader', 'strategist', 'creator', 'editor', 'client'];
-    for (const g of priority) {
-      if (allUserGroups.includes(g)) return g;
+  // For multi-role: get the "highest" role for certain checks
+  // Use activeRole directly since PermissionGroup only has 3 values
+  const highestRole = useMemo(() => {
+    const priority = ['admin', 'team_leader', 'digital_strategist', 'creative_strategist', 'strategist', 'content_creator', 'creator', 'editor', 'client'];
+    for (const r of priority) {
+      if (realRoles.includes(r as any)) return r;
     }
-    return activeGroup;
-  }, [allUserGroups, activeGroup]);
+    return activeRole;
+  }, [realRoles, activeRole]);
 
-  const activeIsAdmin = activeGroup === 'admin' || allUserGroups.includes('admin');
-  const activeIsStrategist = activeGroup === 'strategist' || allUserGroups.includes('strategist');
-  const activeIsEditor = activeGroup === 'editor' || allUserGroups.includes('editor');
+  // IMPORTANT: Use activeRole directly instead of activeGroup (PermissionGroup)
+  // PermissionGroup only has 3 values: 'admin' | 'talent' | 'client'
+  // But we need to distinguish between creator, editor, strategist which all map to 'talent'
+  const activeIsAdmin = activeRole === 'admin' || activeRole === 'team_leader' || realRoles.includes('admin');
+  const activeIsStrategist = activeRole === 'strategist' || activeRole === 'digital_strategist' || activeRole === 'creative_strategist' ||
+    realRoles.some(r => ['strategist', 'digital_strategist', 'creative_strategist'].includes(r));
+  const activeIsEditor = activeRole === 'editor' || realRoles.includes('editor');
   // Client detection FIRST: if user has client role and no admin/strategist/editor, they're a client
   // (ignore 'creator' ghost role from organization_members default)
-  const activeIsClient = activeGroup === 'client' || (hasClientRole && !activeIsAdmin && !activeIsStrategist && !activeIsEditor);
-  // Creator only if not already detected as client
-  const activeIsCreator = !activeIsClient && (activeGroup === 'creator' || allUserGroups.includes('creator'));
+  const activeIsClient = activeRole === 'client' || activeGroup === 'client' || (hasClientRole && !activeIsAdmin && !activeIsStrategist && !activeIsEditor);
+  // Creator: check for both 'creator' (legacy) and 'content_creator' (new)
+  const activeIsCreator = !activeIsClient && (activeRole === 'creator' || activeRole === 'content_creator' ||
+    realRoles.some(r => ['creator', 'content_creator'].includes(r)));
 
   // Fetch current client name and count for client users
   useEffect(() => {

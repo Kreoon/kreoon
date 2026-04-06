@@ -412,14 +412,19 @@ export function MobileNav() {
   // User has multiple distinct permission groups (e.g., creator + editor)
   const isMultiRoleUser = allUserGroups.length > 1;
 
-  const activeIsAdmin = activeGroup === 'admin' || allUserGroups.includes('admin');
-  const activeIsStrategist = activeGroup === 'strategist' || allUserGroups.includes('strategist');
-  const activeIsEditor = activeGroup === 'editor' || allUserGroups.includes('editor');
+  // IMPORTANT: Use activeRole directly instead of activeGroup (PermissionGroup)
+  // PermissionGroup only has 3 values: 'admin' | 'talent' | 'client'
+  // But we need to distinguish between creator, editor, strategist which all map to 'talent'
+  const activeIsAdmin = activeRole === 'admin' || activeRole === 'team_leader' || roles.includes('admin');
+  const activeIsStrategist = activeRole === 'strategist' || activeRole === 'digital_strategist' || activeRole === 'creative_strategist' ||
+    roles.some(r => ['strategist', 'digital_strategist', 'creative_strategist'].includes(r));
+  const activeIsEditor = activeRole === 'editor' || roles.includes('editor');
   // Client detection FIRST: if user has client role and no admin/strategist/editor, they're a client
   // (ignore 'creator' ghost role from organization_members default)
-  const activeIsClient = activeGroup === 'client' || (hasClientRole && !activeIsAdmin && !activeIsStrategist && !activeIsEditor);
-  // Creator only if not already detected as client
-  const activeIsCreator = !activeIsClient && activeGroup === 'creator';
+  const activeIsClient = activeRole === 'client' || activeGroup === 'client' || (hasClientRole && !activeIsAdmin && !activeIsStrategist && !activeIsEditor);
+  // Creator: check for both 'creator' (legacy) and 'content_creator' (new)
+  const activeIsCreator = !activeIsClient && (activeRole === 'creator' || activeRole === 'content_creator' ||
+    roles.some(r => ['creator', 'content_creator'].includes(r)));
 
   // Fetch current client name and count for client users (with brand fallback)
   useEffect(() => {
