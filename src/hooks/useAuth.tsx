@@ -94,7 +94,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setActiveRoleState(storedRole);
       } else {
         // Default to first functional role by priority (ambassador excluded)
-        const priority: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client'];
+        // Includes both new role names (content_creator) and legacy names (creator) for compatibility
+        const priority: AppRole[] = [
+          'admin', 'team_leader',
+          'digital_strategist', 'creative_strategist', 'strategist',
+          'content_creator', 'creator', // content_creator is new, creator is legacy
+          'editor',
+          'community_manager',
+          'trafficker',
+          'client'
+        ];
         const primaryRole = priority.find((r) => roles.includes(r)) || roles[0];
         setActiveRoleState(primaryRole);
         localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, primaryRole);
