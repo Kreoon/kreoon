@@ -2,8 +2,7 @@ import { useState, useRef, useCallback, memo } from 'react';
 import { Heart, ChevronLeft, ChevronRight, Star, MapPin, CheckCircle2, Play, Gift, Percent, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MarketplaceCreator, PortfolioMedia } from './types/marketplace';
-import { getBunnyThumbnailUrl } from '@/hooks/useHLSPlayer';
-import { getOptimizedImageUrl } from '@/lib/imageOptimization';
+import { getOptimizedImageUrl, getOptimizedThumbnail } from '@/lib/imageOptimization';
 import { getSpecializationLabel, getSpecializationBgColor, getSpecializationColor } from '@/lib/specializations';
 import type { Specialization } from '@/types/database';
 
@@ -14,15 +13,11 @@ const THUMB_WIDTH = CARD_WIDTH * 2; // 360px para 2x retina
 const THUMB_HEIGHT = CARD_HEIGHT * 2; // 640px para 2x retina
 
 function resolveThumb(item: PortfolioMedia): string {
-  if (item.type === 'video') {
-    // Bunny CDN ya optimiza sus thumbnails, no necesita proxy
-    const bunnyThumb = getBunnyThumbnailUrl(item.url);
-    if (bunnyThumb) return bunnyThumb;
-  }
-  const baseUrl = item.thumbnail_url || item.url;
-  if (!baseUrl) return '';
-  // Optimizar imágenes de Supabase con wsrv.nl
-  return getOptimizedImageUrl(baseUrl, { width: THUMB_WIDTH, quality: 75 });
+  // Pasar todo por getOptimizedThumbnail — esto incluye Bunny CDN via wsrv.nl
+  // evitando descargar thumbnails de 1440x2560px cuando se muestran a ~360px
+  const base = item.thumbnail_url || item.url;
+  if (!base) return '';
+  return getOptimizedThumbnail(base, THUMB_WIDTH, THUMB_HEIGHT, 80);
 }
 
 interface CreatorCardProps {
@@ -96,13 +91,15 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
       )}
       onClick={onClick}
     >
-      {/* Media container — 9:16 aspect ratio with CSS containment for performance */}
+      {/*
+       * CLS fix: aspect-[9/16] + contain reservan el espacio exacto antes de
+       * que carguen imágenes. Se elimina minHeight fijo en px porque entraba en
+       * conflicto con el aspect-ratio en viewports estrechos, generando layouts
+       * de altura inconsistente que contribuían al CLS de 0.618.
+       */}
       <div
         className="relative aspect-[9/16] rounded-lg overflow-hidden bg-card/50 dark:bg-[#1a1a35]"
-        style={{
-          contain: 'layout style paint', // CSS containment to prevent layout shifts
-          minHeight: `${CARD_HEIGHT}px`, // Reserve minimum space
-        }}
+        style={{ contain: 'layout style paint' }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -236,7 +233,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
           </div>
         )}
 
-        {/* Bottom info panel - SIMPLIFIED */}
+        {/* Bottom info panel */}
         <div className="absolute bottom-0 inset-x-0 z-10 p-2.5">
           {/* Row 1: Avatar + Name + Verified */}
           <div className="flex items-center gap-2 mb-1.5">
@@ -328,8 +325,15 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
             )}
           </div>
 
-          {/* Row 3: Hover-only extra info */}
-          <div className="overflow-hidden max-h-0 group-hover:max-h-20 transition-all duration-300 ease-out">
+          {/*
+           * Row 3: Hover-only extra info.
+           * CLS fix: se usa opacity en lugar de max-h animado.
+           * max-height fuerza reflow de layout en cada hover; opacity es compositor-only.
+           */}
+          <div
+            className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out pointer-events-none group-hover:pointer-events-auto"
+            aria-hidden="true"
+          >
             <div className="flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-white/10 mt-1.5">
               {/* Location */}
               {(creator.location_city || creator.location_country) && (

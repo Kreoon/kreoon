@@ -3,16 +3,23 @@ import { Play, Maximize2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { PortfolioMedia } from '../types/marketplace';
 import type { PortfolioItemData } from '@/hooks/usePortfolioItems';
-import { getBunnyThumbnailUrl } from '@/hooks/useHLSPlayer';
 import { GalleryLightbox } from './GalleryLightbox';
+import { getOptimizedThumbnail } from '@/lib/imageOptimization';
 
-function resolveThumb(item: PortfolioMedia): string {
-  if (item.type === 'video') {
-    const bunnyThumb = getBunnyThumbnailUrl(item.url);
-    if (bunnyThumb) return bunnyThumb;
-  }
-  if (item.thumbnail_url) return item.thumbnail_url;
-  return item.url;
+// Dimensiones base de display para las cards del grid (px).
+// Se pasan a getOptimizedThumbnail para que wsrv.nl recorte a medida exacta.
+// columns-2 → cada columna mide ~50vw (max ~300px en desktop), 2x para retina.
+const GRID_W = 300;
+const GRID_H_LARGE = Math.round(GRID_W * (16 / 9)); // 9:16 → 533px
+const GRID_H_SMALL = Math.round(GRID_W * (4 / 3));  // 3:4 → 400px
+
+function resolveThumb(item: PortfolioMedia, size: 'large' | 'small'): string {
+  const h = size === 'large' ? GRID_H_LARGE : GRID_H_SMALL;
+  const base = item.thumbnail_url || item.url;
+  if (!base) return '';
+  // getOptimizedThumbnail envía Bunny CDN por wsrv.nl:
+  // thumbnail original ~2.2 MB → WebP recortado ~40–80 KB
+  return getOptimizedThumbnail(base, GRID_W * 2, h * 2, 80);
 }
 
 interface PortfolioGridProps {
@@ -113,8 +120,12 @@ export function PortfolioGrid({
               )}
             >
               <img
-                src={resolveThumb(item)}
+                src={resolveThumb(item, size)}
                 alt=""
+                width={GRID_W}
+                height={size === 'large' ? GRID_H_LARGE : GRID_H_SMALL}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
               {/* Hover overlay */}

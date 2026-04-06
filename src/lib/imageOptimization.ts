@@ -61,6 +61,56 @@ export function getOptimizedImageUrl(
 }
 
 /**
+ * Optimiza thumbnails de Bunny CDN pasándolos por wsrv.nl para redimensionar.
+ * Las thumbnails de Bunny pueden ser 1440x2560px cuando solo se muestran a ~360px —
+ * esto reduce el payload de ~2.2 MB a ~30–60 KB.
+ *
+ * @param url - URL del thumbnail (Bunny CDN, Supabase o externa)
+ * @param width - Ancho del contenedor en píxeles (default 400)
+ * @param height - Alto del contenedor (default: proporcional 9:16)
+ * @param quality - Calidad WebP 1–100 (default 80)
+ */
+export function getOptimizedThumbnail(
+  url: string | null | undefined,
+  width: number = 400,
+  height?: number,
+  quality: number = 80
+): string {
+  if (!url) return '/placeholder-video.jpg';
+
+  // Si ya es una URL optimizada con wsrv.nl, retornar tal cual
+  if (url.includes('wsrv.nl')) return url;
+
+  // Calcular alto en proporción 9:16 si no se especifica
+  const h = height ?? Math.round(width * (16 / 9));
+
+  // Bunny CDN thumbnails — el payload original puede ser enorme (1440x2560px).
+  // Pasar por wsrv.nl para redimensionar y convertir a WebP.
+  const isBunnyCdn = BUNNY_CDN_HOSTS.some(host => {
+    try {
+      return new URL(url).hostname.includes(host);
+    } catch {
+      return false;
+    }
+  });
+
+  if (isBunnyCdn || url.includes('thumbnail.jpg')) {
+    const params = new URLSearchParams({
+      url,
+      w: String(width),
+      h: String(h),
+      fit: 'cover',
+      output: 'webp',
+      q: String(quality),
+    });
+    return `${WSRV_PROXY}/?${params.toString()}`;
+  }
+
+  // Para el resto (Supabase, externas) usar getOptimizedImageUrl
+  return getOptimizedImageUrl(url, { width, height: h, quality, format: 'webp' });
+}
+
+/**
  * Get srcSet for responsive images
  */
 export function getResponsiveSrcSet(

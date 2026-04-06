@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sparkles, ArrowRight } from 'lucide-react';
@@ -12,9 +12,6 @@ import { ActiveFilters } from './ActiveFilters';
 import { CreatorCarousel } from './CreatorCarousel';
 import { CreatorGrid } from './CreatorGrid';
 import { MarketplaceOrgGrid } from './OrgGrid';
-import { FilterModal } from './FilterModal';
-import { CampaignsFeed } from './campaigns/feed/CampaignsFeed';
-import { ActiveLivesCarousel } from '@/components/live-streaming/ActiveLivesCarousel';
 import { useMarketplaceFilters } from './hooks/useMarketplaceFilters';
 import { useCreatorSearch } from './hooks/useCreatorSearch';
 import { useInfiniteCreators } from './hooks/useInfiniteCreators';
@@ -25,6 +22,32 @@ import { useAuth } from '@/hooks/useAuth';
 import { useCreatorProfile } from '@/hooks/useCreatorProfile';
 import { getBunnyThumbnailUrl } from '@/hooks/useHLSPlayer';
 import type { MarketplaceFilters, MarketplaceViewMode, MarketplaceRoleId, MarketplaceTab } from './types/marketplace';
+
+// Lazy-load componentes pesados que solo se usan de forma condicional.
+// FilterModal: ~40KB, solo se abre al pulsar el botón de filtros.
+// CampaignsFeed: tab secundario con su propio árbol de dependencias.
+// ActiveLivesCarousel: solo visible para admins, no impacta el render inicial.
+const FilterModal = lazy(() =>
+  import('./FilterModal').then((m) => ({ default: m.FilterModal }))
+);
+const CampaignsFeed = lazy(() =>
+  import('./campaigns/feed/CampaignsFeed').then((m) => ({ default: m.CampaignsFeed }))
+);
+const ActiveLivesCarousel = lazy(() =>
+  import('@/components/live-streaming/ActiveLivesCarousel').then((m) => ({
+    default: m.ActiveLivesCarousel,
+  }))
+);
+
+// Fallback liviano para Suspense de modales/tabs (no bloquea el render principal)
+const NullFallback = () => null;
+
+// Spinner pequeño para tabs que tardan en cargar
+const TabLoader = () => (
+  <div className="flex items-center justify-center py-20">
+    <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+  </div>
+);
 
 export default function MarketplacePage() {
   const navigate = useNavigate();
@@ -203,6 +226,8 @@ export default function MarketplacePage() {
   // Mostrar carruseles solo cuando no hay búsqueda ni filtros activos
   const showCarousels = !isSearchActive && isAllView && !filters.category && activeFilterCount === 0;
 
+  const isAdmin = activeRole === 'admin' || isPlatformAdmin;
+
   return (
     <ScrollArea className="h-full">
       <div className="min-h-full bg-background">
@@ -271,7 +296,9 @@ export default function MarketplacePage() {
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 space-y-10 pb-24">
           {/* Campaigns tab */}
           {activeTab === 'campaigns' ? (
-            <CampaignsFeed />
+            <Suspense fallback={<TabLoader />}>
+              <CampaignsFeed />
+            </Suspense>
           ) : (
           <>
           {/* Banner: invitar a crear perfil de marketplace */}
@@ -338,11 +365,13 @@ export default function MarketplacePage() {
               )}
 
               {/* Lives activos - solo para admins (feature en construcción para otros) */}
-              {(activeRole === 'admin' || isPlatformAdmin) && (
-                <ActiveLivesCarousel
-                  onViewAll={() => navigate('/live')}
-                  className="mb-6"
-                />
+              {isAdmin && (
+                <Suspense fallback={<NullFallback />}>
+                  <ActiveLivesCarousel
+                    onViewAll={() => navigate('/live')}
+                    className="mb-6"
+                  />
+                </Suspense>
               )}
 
               {showCarousels && (
@@ -396,15 +425,19 @@ export default function MarketplacePage() {
           )}
         </div>
 
-        {/* Filter modal */}
-        <FilterModal
-          open={filterModalOpen}
-          onClose={() => setFilterModalOpen(false)}
-          filters={filters}
-          onApply={handleApplyFilters}
-          resultCount={isAgencies ? orgTotalCount : totalCount}
-          activeRoleCategory={filters.role_category}
-        />
+        {/* Filter modal - lazy loaded, solo se descarga al pulsar "Filtros" */}
+        {filterModalOpen && (
+          <Suspense fallback={<NullFallback />}>
+            <FilterModal
+              open={filterModalOpen}
+              onClose={() => setFilterModalOpen(false)}
+              filters={filters}
+              onApply={handleApplyFilters}
+              resultCount={isAgencies ? orgTotalCount : totalCount}
+              activeRoleCategory={filters.role_category}
+            />
+          </Suspense>
+        )}
       </div>
     </ScrollArea>
   );

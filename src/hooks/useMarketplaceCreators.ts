@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { MarketplaceCreator, MarketplaceFilters, MarketplaceRoleCategory, PortfolioMedia } from '@/components/marketplace/types/marketplace';
 import { MARKETPLACE_ROLES } from '@/components/marketplace/roles/marketplaceRoleConfig';
@@ -31,7 +32,7 @@ function mapCreatorRow(row: Record<string, unknown>): MarketplaceCreator {
     completed_projects: Number(row.completed_projects) || 0,
     joined_at: (row.created_at as string) || '',
     accepts_product_exchange: (row.accepts_product_exchange as boolean) || false,
-    marketplace_roles: (row.marketplace_roles as any[]) || [],
+    marketplace_roles: (row.marketplace_roles as string[]) || [],
   };
 }
 
@@ -76,7 +77,7 @@ function resolveContentVideoUrl(row: Record<string, unknown>): string {
   return '';
 }
 
-// ── Main hook ──────────────────────────────────────────────────────────
+// ── Fetch function (pure, no state) ────────────────────────────────────
 
 export interface MarketplaceOrganization {
   id: string;
@@ -84,486 +85,466 @@ export interface MarketplaceOrganization {
   logo_url: string | null;
 }
 
-export function useMarketplaceCreators(filters?: MarketplaceFilters) {
-  const [allCreators, setAllCreators] = useState<MarketplaceCreator[]>([]);
-  const [organizations, setOrganizations] = useState<MarketplaceOrganization[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export interface MarketplaceCreatorsResult {
+  allCreators: MarketplaceCreator[];
+  organizations: MarketplaceOrganization[];
+}
 
-  const fetchCreators = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+export async function fetchAllCreators(): Promise<MarketplaceCreatorsResult> {
+  // ── 0. Fetch exclusions & subscriptions ──────────────────────────
+  // Ejecutar en paralelo para reducir waterfall
+  const [{ data: excludedRows }, { data: subOrgRows }] = await Promise.all([
+    (supabase as any).rpc('get_marketplace_excluded_user_ids'),
+    (supabase as any)
+      .from('platform_subscriptions')
+      .select('organization_id, tier, status')
+      .not('tier', 'in', '(brand_free,creator_free)')
+      .eq('status', 'active'),
+  ]);
+  const clientUserIds = new Set((excludedRows || []).map((r: any) => r.user_id as string));
 
-    try {
-      // ── 0. Fetch exclusions & subscriptions ──────────────────────────
-      // Use SECURITY DEFINER RPC to get client user_ids (works for anon + authenticated)
-      // Fetch exclusions + active org subscriptions (platform_subscriptions)
-      const [{ data: excludedRows }, { data: subOrgRows }] = await Promise.all([
-        (supabase as any).rpc('get_marketplace_excluded_user_ids'),
-        (supabase as any)
-          .from('platform_subscriptions')
-          .select('organization_id, tier, status')
-          .not('tier', 'in', '(brand_free,creator_free)')
-          .eq('status', 'active'),
-      ]);
-      const clientUserIds = new Set((excludedRows || []).map((r: any) => r.user_id));
+  // Resolve subscribed user_ids from org memberships
+  const subscribedOrgIds = (subOrgRows || []).map((r: any) => r.organization_id).filter(Boolean) as string[];
+  let subscribedUserIds = new Set<string>();
+  if (subscribedOrgIds.length > 0) {
+    const { data: memberRows } = await (supabase as any)
+      .from('organization_members')
+      .select('user_id')
+      .in('organization_id', subscribedOrgIds);
+    subscribedUserIds = new Set((memberRows || []).map((r: any) => r.user_id as string));
+  }
 
-      // Resolve subscribed user_ids from org memberships
-      const subscribedOrgIds = (subOrgRows || []).map((r: any) => r.organization_id).filter(Boolean);
-      let subscribedUserIds = new Set<string>();
-      if (subscribedOrgIds.length > 0) {
-        const { data: memberRows } = await (supabase as any)
-          .from('organization_members')
-          .select('user_id')
-          .in('organization_id', subscribedOrgIds);
-        subscribedUserIds = new Set((memberRows || []).map((r: any) => r.user_id));
+  // ── 1. Fetch from creator_profiles (marketplace-native) ──────────
+  const creatorFields = `
+    id, user_id, slug, display_name, avatar_url, bio, location_city,
+    location_country, country_flag, categories, content_types, level,
+    is_verified, rating_avg, rating_count, base_price, currency,
+    is_available, languages, completed_projects, created_at,
+    accepts_product_exchange, marketplace_roles
+  `;
+  const { data: rows, error: err } = await (supabase as any)
+    .from('creator_profiles')
+    .select(creatorFields)
+    .eq('is_active', true)
+    .order('rating_avg', { ascending: false });
+
+  if (err) throw err;
+
+  // Filter out client users from creator_profiles
+  const creatorRows = (rows || []).filter((r: any) => !clientUserIds.has(r.user_id));
+  const creatorIds = creatorRows.map((r: any) => r.id as string);
+  const creatorUserIds = creatorRows.map((r: any) => r.user_id as string);
+
+  // ── 1b. Stats maps (valores por defecto, sin loop de RPCs) ──
+  const orgProjectsMap = new Map<string, number>();
+  const onTimeDeliveryMap = new Map<string, number>();
+  const responseTimeMap = new Map<string, number>();
+
+  // ── 1c. Fetch real registration dates + portfolio data en PARALELO ──
+  const registrationDateMap = new Map<string, string>();
+  const portfolioMap = new Map<string, PortfolioMedia[]>();
+
+  const userIdToCreatorId = new Map<string, string>();
+  for (const r of creatorRows) {
+    userIdToCreatorId.set(r.user_id, r.id);
+  }
+
+  // ── Lanzar todas las queries de soporte en PARALELO ──
+  const parallelQueries: Promise<any>[] = [
+    // Fechas de registro reales
+    creatorUserIds.length > 0
+      ? supabase.from('profiles').select('id, created_at').in('id', creatorUserIds)
+      : Promise.resolve({ data: [] }),
+  ];
+
+  if (creatorIds.length > 0) {
+    // Portfolio en paralelo
+    parallelQueries.push(
+      (supabase as any)
+        .from('portfolio_items')
+        .select('id, creator_id, media_url, thumbnail_url, media_type')
+        .in('creator_id', creatorIds)
+        .eq('is_public', true)
+        .order('is_featured', { ascending: false })
+        .order('display_order', { ascending: true })
+        .limit(500),
+      supabase
+        .from('content')
+        .select('id, video_url, bunny_embed_url, video_urls, thumbnail_url, creator_id')
+        .in('creator_id', creatorUserIds)
+        .eq('is_published', true)
+        .limit(500),
+      supabase
+        .from('portfolio_posts')
+        .select('id, media_url, media_type, thumbnail_url, user_id')
+        .in('user_id', creatorUserIds)
+        .order('created_at', { ascending: false })
+        .limit(500),
+    );
+  }
+
+  const parallelResults = await Promise.all(parallelQueries);
+  const [profileDatesResult, portfolioResult, contentResult, postResult] = parallelResults;
+
+  // Procesar fechas de registro
+  for (const p of (profileDatesResult?.data || [])) {
+    registrationDateMap.set(p.id, p.created_at);
+  }
+
+  if (creatorIds.length > 0) {
+    const portfolioRows = portfolioResult?.data || [];
+    const contentRows = contentResult?.data || [];
+    const postRows = postResult?.data || [];
+
+    // Process portfolio_items
+    for (const item of portfolioRows) {
+      if (!portfolioMap.has(item.creator_id)) {
+        portfolioMap.set(item.creator_id, []);
       }
+      const list = portfolioMap.get(item.creator_id)!;
+      if (list.length < 8) {
+        list.push({
+          id: item.id,
+          url: item.media_url || '',
+          thumbnail_url: item.thumbnail_url,
+          type: item.media_type === 'video' ? 'video' : 'image',
+        });
+      }
+    }
 
-      // ── 1. Fetch from creator_profiles (marketplace-native) ──────────
-      // Select solo campos necesarios (evita portfolio_media y otros JSONB pesados)
-      const creatorFields = `
-        id, user_id, slug, display_name, avatar_url, bio, location_city,
-        location_country, country_flag, categories, content_types, level,
-        is_verified, rating_avg, rating_count, base_price, currency,
-        is_available, languages, completed_projects, created_at,
-        accepts_product_exchange, marketplace_roles
-      `;
-      const { data: rows, error: err } = await (supabase as any)
-        .from('creator_profiles')
-        .select(creatorFields)
-        .eq('is_active', true)
-        .order('rating_avg', { ascending: false }); // Sin LIMIT para mostrar todos los creators
+    // Track URLs already in portfolio to avoid duplicates
+    const seenUrls = new Map<string, Set<string>>();
+    for (const [cid, items] of portfolioMap) {
+      seenUrls.set(cid, new Set(items.map(i => i.url)));
+    }
 
-      if (err) throw err;
+    // Process content rows
+    for (const c of contentRows) {
+      const userId = (c as any).creator_id as string;
+      const cid = userIdToCreatorId.get(userId);
+      if (!cid) continue;
+      if (!portfolioMap.has(cid)) portfolioMap.set(cid, []);
+      if (!seenUrls.has(cid)) seenUrls.set(cid, new Set());
+      const list = portfolioMap.get(cid)!;
+      const seen = seenUrls.get(cid)!;
+      const url = resolveContentVideoUrl(c as Record<string, unknown>);
+      if (url && !seen.has(url) && list.length < 8) {
+        list.push({
+          id: c.id,
+          url,
+          thumbnail_url: (c as any).thumbnail_url || getBunnyThumbnailUrl(url) || null,
+          type: 'video',
+        });
+        seen.add(url);
+      }
+    }
 
-      // Filter out client users from creator_profiles
-      const creatorRows = (rows || []).filter((r: any) => !clientUserIds.has(r.user_id));
-      const creatorIds = creatorRows.map((r: any) => r.id);
-      const creatorUserIds = creatorRows.map((r: any) => r.user_id);
+    // Process portfolio_posts
+    for (const p of postRows) {
+      const cid = userIdToCreatorId.get(p.user_id);
+      if (!cid) continue;
+      if (!portfolioMap.has(cid)) portfolioMap.set(cid, []);
+      if (!seenUrls.has(cid)) seenUrls.set(cid, new Set());
+      const list = portfolioMap.get(cid)!;
+      const seen = seenUrls.get(cid)!;
+      if (p.media_url && !seen.has(p.media_url) && list.length < 8) {
+        const postThumb =
+          p.thumbnail_url ||
+          (p.media_type === 'video' ? getBunnyThumbnailUrl(p.media_url) : null) ||
+          null;
+        list.push({
+          id: p.id,
+          url: p.media_url,
+          thumbnail_url: postThumb,
+          type: p.media_type === 'video' ? 'video' : 'image',
+        });
+        seen.add(p.media_url);
+      }
+    }
+  }
 
-      // ── 1b. Stats maps (valores por defecto, sin loop de RPCs para performance) ──
-      // NOTA: Eliminado el loop de RPCs get_creator_unified_stats que causaba N+1 queries
-      // Las stats detalladas se cargan on-demand cuando se abre el perfil del creator
-      const orgProjectsMap = new Map<string, number>();
-      const onTimeDeliveryMap = new Map<string, number>();
-      const responseTimeMap = new Map<string, number>();
+  // ── 2d & 2e. Avatar fallbacks + org memberships en PARALELO ──
+  const missingAvatarUserIds = creatorRows
+    .filter((r: any) => !r.avatar_url)
+    .map((r: any) => r.user_id as string);
 
-      // ── 1c. Fetch real registration dates from profiles ──
-      const registrationDateMap = new Map<string, string>();
-      if (creatorUserIds.length > 0) {
-        const { data: profileDates, error: dateError } = await supabase
+  const avatarFallbackMap = new Map<string, string>();
+  const orgMemberMap = new Map<string, { org_id: string; org_name: string; org_logo: string | null }>();
+
+  const [avatarResult, orgMemberResult] = await Promise.all([
+    missingAvatarUserIds.length > 0
+      ? supabase
           .from('profiles')
-          .select('id, created_at')
-          .in('id', creatorUserIds);
+          .select('id, avatar_url')
+          .in('id', missingAvatarUserIds)
+          .not('avatar_url', 'is', null)
+          .neq('avatar_url', '')
+      : Promise.resolve({ data: [] }),
+    creatorUserIds.length > 0
+      ? supabase
+          .from('organization_members')
+          .select('user_id, organization_id')
+          .in('user_id', creatorUserIds)
+      : Promise.resolve({ data: [] }),
+  ]);
 
-        for (const p of profileDates || []) {
-          registrationDateMap.set(p.id, p.created_at);
-        }
+  for (const r of avatarResult.data || []) {
+    if (r.avatar_url) avatarFallbackMap.set(r.id, r.avatar_url);
+  }
+
+  const orgIds = new Set<string>();
+  const userOrgMap = new Map<string, string>();
+  for (const m of orgMemberResult.data || []) {
+    orgIds.add(m.organization_id);
+    userOrgMap.set(m.user_id, m.organization_id);
+  }
+
+  const orgDetailsMap = new Map<string, { name: string; logo_url: string | null }>();
+  const orgList: MarketplaceOrganization[] = [];
+  if (orgIds.size > 0) {
+    const { data: orgs } = await supabase
+      .from('organizations')
+      .select('id, name, logo_url')
+      .in('id', Array.from(orgIds));
+    for (const org of orgs || []) {
+      orgDetailsMap.set(org.id, { name: org.name, logo_url: org.logo_url });
+      orgList.push({ id: org.id, name: org.name, logo_url: org.logo_url });
+    }
+  }
+
+  for (const [userId, orgId] of userOrgMap) {
+    const orgDetails = orgDetailsMap.get(orgId);
+    if (orgDetails) {
+      orgMemberMap.set(userId, {
+        org_id: orgId,
+        org_name: orgDetails.name,
+        org_logo: orgDetails.logo_url,
+      });
+    }
+  }
+
+  const mapped = creatorRows
+    .map((row: any) => {
+      const creator = mapCreatorRow(row);
+      if (!creator.avatar_url) {
+        creator.avatar_url = avatarFallbackMap.get(row.user_id) || null;
+      }
+      creator.portfolio_media = (portfolioMap.get(row.id) || []).slice(0, 5);
+      creator.is_subscribed = subscribedUserIds.has(row.user_id);
+      const orgInfo = orgMemberMap.get(row.user_id);
+      if (orgInfo) {
+        creator.organization_id = orgInfo.org_id;
+        creator.organization_name = orgInfo.org_name;
+        creator.organization_logo = orgInfo.org_logo;
       }
 
-      // ── 2. Fetch ALL content sources for creator_profiles ────────────
-      // Map by creator_profiles.id (for portfolio_items) and by user_id (for content + portfolio_posts)
-      const portfolioMap = new Map<string, PortfolioMedia[]>();
-      // Build a user_id → creator_profiles.id lookup
-      const userIdToCreatorId = new Map<string, string>();
-      for (const r of creatorRows) {
-        userIdToCreatorId.set(r.user_id, r.id);
+      const orgProjects = orgProjectsMap.get(row.user_id) || 0;
+      creator.org_projects = orgProjects;
+      creator.completed_projects = (creator.completed_projects || 0) + orgProjects;
+
+      const onTimePct = onTimeDeliveryMap.get(row.user_id);
+      const responseHours = responseTimeMap.get(row.user_id);
+      if (onTimePct !== undefined) (creator as any).on_time_delivery_pct = onTimePct;
+      if (responseHours !== undefined) (creator as any).response_time_hours = responseHours;
+
+      // Introductory discount: auto-suggest 20% for new talent with < 3 completed projects
+      const fortyFiveDays = 45 * 24 * 60 * 60 * 1000;
+      const isNew = Date.now() - new Date(creator.joined_at).getTime() < fortyFiveDays;
+      if (isNew && creator.completed_projects < 3) {
+        creator.introductory_discount_pct = 20;
       }
 
-      if (creatorIds.length > 0) {
-        // ── Fetch portfolio data en PARALELO para mejor performance ──
-        const [{ data: portfolioRows }, { data: contentRows }, { data: postRows }] = await Promise.all([
-          // 2a. Fetch portfolio_items (marketplace-native uploads)
-          (supabase as any)
-            .from('portfolio_items')
-            .select('id, creator_id, media_url, thumbnail_url, media_type')
-            .in('creator_id', creatorIds)
-            .eq('is_public', true)
-            .order('is_featured', { ascending: false })
-            .order('display_order', { ascending: true })
-            .limit(500), // Max 500 items totales
-          // 2b. Fetch published content (videos from content creation workflow)
-          supabase
-            .from('content')
-            .select('id, video_url, bunny_embed_url, video_urls, thumbnail_url, creator_id')
-            .in('creator_id', creatorUserIds)
-            .eq('is_published', true)
-            .limit(500),
-          // 2c. Fetch portfolio_posts (social feed content)
-          supabase
-            .from('portfolio_posts')
-            .select('id, media_url, media_type, thumbnail_url, user_id')
-            .in('user_id', creatorUserIds)
-            .order('created_at', { ascending: false })
-            .limit(500),
-        ]);
+      return creator;
+    })
+    .filter((c: MarketplaceCreator) => c.portfolio_media.length > 0);
 
-        // Process portfolio_items
-        for (const item of portfolioRows || []) {
-          if (!portfolioMap.has(item.creator_id)) {
-            portfolioMap.set(item.creator_id, []);
-          }
-          const list = portfolioMap.get(item.creator_id)!;
-          if (list.length < 8) {
-            list.push({
-              id: item.id,
-              url: item.media_url || '',
-              thumbnail_url: item.thumbnail_url,
-              type: item.media_type === 'video' ? 'video' : 'image',
-            });
-          }
-        }
+  // ── 3. Fallback: Fetch profiles with content (not in creator_profiles) ──
+  const excludeIds = [...creatorUserIds, ...clientUserIds];
+  const { data: profileRows } = await supabase
+    .from('profiles')
+    .select(
+      'id, full_name, username, avatar_url, bio, city, country, content_categories, languages, minimum_budget, is_available_for_hire, avg_rating, total_contracts_completed, created_at',
+    )
+    .not(
+      'id',
+      'in',
+      excludeIds.length > 0
+        ? `(${excludeIds.join(',')})`
+        : '(00000000-0000-0000-0000-000000000000)',
+    );
 
-        // Track URLs already in portfolio to avoid duplicates
-        const seenUrls = new Map<string, Set<string>>();
-        for (const [cid, items] of portfolioMap) {
-          seenUrls.set(cid, new Set(items.map(i => i.url)));
-        }
+  const profilesWithContent: MarketplaceCreator[] = [];
 
-        // Process content rows
-        for (const c of contentRows || []) {
-          const userId = (c as any).creator_id as string;
-          const cid = userIdToCreatorId.get(userId);
-          if (!cid) continue;
-          if (!portfolioMap.has(cid)) portfolioMap.set(cid, []);
-          if (!seenUrls.has(cid)) seenUrls.set(cid, new Set());
-          const list = portfolioMap.get(cid)!;
-          const seen = seenUrls.get(cid)!;
-          const url = resolveContentVideoUrl(c as Record<string, unknown>);
-          if (url && !seen.has(url) && list.length < 8) {
-            list.push({
-              id: c.id,
-              url,
-              thumbnail_url: (c as any).thumbnail_url || getBunnyThumbnailUrl(url) || null,
-              type: 'video',
-            });
-            seen.add(url);
-          }
-        }
+  if (profileRows && profileRows.length > 0) {
+    const profileUserIds = profileRows.map(p => p.id);
 
-        // Process portfolio_posts
-        for (const p of postRows || []) {
-          const cid = userIdToCreatorId.get(p.user_id);
-          if (!cid) continue;
-          if (!portfolioMap.has(cid)) portfolioMap.set(cid, []);
-          if (!seenUrls.has(cid)) seenUrls.set(cid, new Set());
-          const list = portfolioMap.get(cid)!;
-          const seen = seenUrls.get(cid)!;
-          if (p.media_url && !seen.has(p.media_url) && list.length < 8) {
-            const postThumb = p.thumbnail_url
-              || (p.media_type === 'video' ? getBunnyThumbnailUrl(p.media_url) : null)
-              || null;
-            list.push({
-              id: p.id,
-              url: p.media_url,
-              thumbnail_url: postThumb,
-              type: p.media_type === 'video' ? 'video' : 'image',
-            });
-            seen.add(p.media_url);
-          }
-        }
+    const [{ data: contentRowsFallback }, { data: postRowsFallback }] = await Promise.all([
+      supabase
+        .from('content')
+        .select('id, title, video_url, bunny_embed_url, video_urls, thumbnail_url, creator_id')
+        .in('creator_id', profileUserIds)
+        .eq('is_published', true),
+      supabase
+        .from('portfolio_posts')
+        .select('id, media_url, media_type, thumbnail_url, user_id')
+        .in('user_id', profileUserIds)
+        .order('created_at', { ascending: false }),
+    ]);
+
+    const contentMap = new Map<string, PortfolioMedia[]>();
+
+    for (const c of contentRowsFallback || []) {
+      const userId = (c as any).creator_id as string;
+      if (!contentMap.has(userId)) contentMap.set(userId, []);
+      const list = contentMap.get(userId)!;
+      const url = resolveContentVideoUrl(c as Record<string, unknown>);
+      if (url && list.length < 5) {
+        list.push({
+          id: c.id,
+          url,
+          thumbnail_url: (c as any).thumbnail_url || getBunnyThumbnailUrl(url) || null,
+          type: 'video',
+        });
       }
+    }
 
-      // ── 2d & 2e. Fetch avatar fallbacks AND organization memberships en PARALELO ──
-      const missingAvatarUserIds = creatorRows
-        .filter((r: any) => !r.avatar_url)
-        .map((r: any) => r.user_id as string);
-
-      const avatarFallbackMap = new Map<string, string>();
-      const orgMemberMap = new Map<string, { org_id: string; org_name: string; org_logo: string | null }>();
-
-      // Ejecutar ambas queries en paralelo
-      const [avatarResult, orgMemberResult] = await Promise.all([
-        // Avatar fallbacks
-        missingAvatarUserIds.length > 0
-          ? supabase
-              .from('profiles')
-              .select('id, avatar_url')
-              .in('id', missingAvatarUserIds)
-              .not('avatar_url', 'is', null)
-              .neq('avatar_url', '')
-          : Promise.resolve({ data: [] }),
-        // Organization memberships (sin JOIN - PostgREST cache issue)
-        creatorUserIds.length > 0
-          ? supabase
-              .from('organization_members')
-              .select('user_id, organization_id')
-              .in('user_id', creatorUserIds)
-          : Promise.resolve({ data: [] }),
-      ]);
-
-      // Process avatar fallbacks
-      for (const r of avatarResult.data || []) {
-        if (r.avatar_url) avatarFallbackMap.set(r.id, r.avatar_url);
+    for (const p of postRowsFallback || []) {
+      const userId = p.user_id;
+      if (!contentMap.has(userId)) contentMap.set(userId, []);
+      const list = contentMap.get(userId)!;
+      if (p.media_url && list.length < 5) {
+        const postThumb =
+          p.thumbnail_url ||
+          (p.media_type === 'video' ? getBunnyThumbnailUrl(p.media_url) : null) ||
+          null;
+        list.push({
+          id: p.id,
+          url: p.media_url,
+          thumbnail_url: postThumb,
+          type: p.media_type === 'video' ? 'video' : 'image',
+        });
       }
+    }
 
-      // Collect unique organization IDs from memberships
-      const orgIds = new Set<string>();
-      const userOrgMap = new Map<string, string>(); // user_id -> org_id
-      for (const m of orgMemberResult.data || []) {
-        orgIds.add(m.organization_id);
-        userOrgMap.set(m.user_id, m.organization_id);
-      }
+    // Fetch organization memberships for profile users en paralelo con el content fetch
+    const profileOrgMap = new Map<string, { org_id: string; org_name: string; org_logo: string | null }>();
+    if (profileUserIds.length > 0) {
+      const { data: profileMemberRows } = await supabase
+        .from('organization_members')
+        .select('user_id, organization_id')
+        .in('user_id', profileUserIds);
 
-      // Fetch organization details in a separate query
-      const orgDetailsMap = new Map<string, { name: string; logo_url: string | null }>();
-      const orgList: MarketplaceOrganization[] = [];
-      if (orgIds.size > 0) {
-        const { data: orgs } = await supabase
+      if (profileMemberRows && profileMemberRows.length > 0) {
+        const profileOrgIds = [...new Set(profileMemberRows.map(m => m.organization_id))];
+        const { data: profileOrgRows } = await supabase
           .from('organizations')
           .select('id, name, logo_url')
-          .in('id', Array.from(orgIds));
-        for (const org of orgs || []) {
-          orgDetailsMap.set(org.id, { name: org.name, logo_url: org.logo_url });
-          orgList.push({ id: org.id, name: org.name, logo_url: org.logo_url });
-        }
-      }
-      // Update organizations state for filter UI
-      setOrganizations(orgList);
+          .in('id', profileOrgIds);
 
-      // Build final orgMemberMap combining both queries
-      for (const [userId, orgId] of userOrgMap) {
-        const orgDetails = orgDetailsMap.get(orgId);
-        if (orgDetails) {
-          orgMemberMap.set(userId, {
-            org_id: orgId,
-            org_name: orgDetails.name,
-            org_logo: orgDetails.logo_url,
-          });
-        }
-      }
-
-      const mapped = creatorRows.map((row: any) => {
-        const creator = mapCreatorRow(row);
-        // Fallback avatar from profiles table
-        if (!creator.avatar_url) {
-          creator.avatar_url = avatarFallbackMap.get(row.user_id) || null;
-        }
-        // Show up to 5 items on the card (prioritized: portfolio_items first, then content, then posts)
-        creator.portfolio_media = (portfolioMap.get(row.id) || []).slice(0, 5);
-        // Enrich with subscription status
-        creator.is_subscribed = subscribedUserIds.has(row.user_id);
-        // Enrich with organization info
-        const orgInfo = orgMemberMap.get(row.user_id);
-        if (orgInfo) {
-          creator.organization_id = orgInfo.org_id;
-          creator.organization_name = orgInfo.org_name;
-          creator.organization_logo = orgInfo.org_logo;
+        const profileOrgDetailsMap = new Map<string, { name: string; logo_url: string | null }>();
+        for (const org of profileOrgRows || []) {
+          profileOrgDetailsMap.set(org.id, { name: org.name, logo_url: org.logo_url });
         }
 
-        // ── IMPORTANT: Enrich with org stats ──
-        const orgProjects = orgProjectsMap.get(row.user_id) || 0;
-        creator.org_projects = orgProjects;
-        // Total de proyectos = marketplace + org
-        creator.completed_projects = (creator.completed_projects || 0) + orgProjects;
-
-        // Métricas de confiabilidad
-        const onTimePct = onTimeDeliveryMap.get(row.user_id);
-        const responseHours = responseTimeMap.get(row.user_id);
-        if (onTimePct !== undefined) {
-          (creator as any).on_time_delivery_pct = onTimePct;
-        }
-        if (responseHours !== undefined) {
-          (creator as any).response_time_hours = responseHours;
-        }
-
-        // Para "Nuevos Talentos": usar fecha de creación del creator_profile
-        // (cuando se activó en el marketplace, no cuando se registró en la plataforma)
-        // row.created_at ya viene de creator_profiles, lo mantenemos en joined_at
-        // creator.joined_at ya tiene el valor correcto de mapCreatorRow (row.created_at)
-
-        // Introductory discount: auto-suggest 20% for new talent with < 3 completed projects
-        const fortyFiveDays = 45 * 24 * 60 * 60 * 1000;
-        const isNew = Date.now() - new Date(creator.joined_at).getTime() < fortyFiveDays;
-        if (isNew && creator.completed_projects < 3) {
-          creator.introductory_discount_pct = 20;
-        }
-        return creator;
-      })
-      // SOLO incluir creadores con portfolio (contenido visible)
-      // Los creadores sin contenido no deben aparecer en el marketplace
-      .filter(c => c.portfolio_media.length > 0);
-
-      // ── 3. Fallback: Fetch profiles with content (not in creator_profiles) ──
-      // Also exclude client users from profiles fallback
-      const excludeIds = [...creatorUserIds, ...clientUserIds];
-      const { data: profileRows } = await supabase
-        .from('profiles')
-        .select('id, full_name, username, avatar_url, bio, city, country, content_categories, languages, minimum_budget, is_available_for_hire, avg_rating, total_contracts_completed, created_at')
-        .not('id', 'in', excludeIds.length > 0 ? `(${excludeIds.join(',')})` : '(00000000-0000-0000-0000-000000000000)');
-
-      const profilesWithContent: MarketplaceCreator[] = [];
-
-      if (profileRows && profileRows.length > 0) {
-        const profileUserIds = profileRows.map(p => p.id);
-
-        // Fetch published content (videos from Bunny CDN) for these profiles
-        const { data: contentRows } = await supabase
-          .from('content')
-          .select('id, title, video_url, bunny_embed_url, video_urls, thumbnail_url, creator_id')
-          .in('creator_id', profileUserIds)
-          .eq('is_published', true);
-
-        // Fetch portfolio_posts for these profiles
-        const { data: postRows } = await supabase
-          .from('portfolio_posts')
-          .select('id, media_url, media_type, thumbnail_url, user_id')
-          .in('user_id', profileUserIds)
-          .order('created_at', { ascending: false });
-
-        // Build content map by user_id
-        const contentMap = new Map<string, PortfolioMedia[]>();
-
-        // Add content videos
-        for (const c of contentRows || []) {
-          const userId = (c as any).creator_id as string;
-          if (!contentMap.has(userId)) contentMap.set(userId, []);
-          const list = contentMap.get(userId)!;
-          const url = resolveContentVideoUrl(c as Record<string, unknown>);
-          if (url && list.length < 5) {
-            list.push({
-              id: c.id,
-              url,
-              thumbnail_url: (c as any).thumbnail_url || getBunnyThumbnailUrl(url) || null,
-              type: 'video',
+        for (const m of profileMemberRows) {
+          const orgDetail = profileOrgDetailsMap.get(m.organization_id);
+          if (orgDetail) {
+            profileOrgMap.set(m.user_id, {
+              org_id: m.organization_id,
+              org_name: orgDetail.name,
+              org_logo: orgDetail.logo_url,
             });
           }
         }
-
-        // Add portfolio posts (images and videos)
-        for (const p of postRows || []) {
-          const userId = p.user_id;
-          if (!contentMap.has(userId)) contentMap.set(userId, []);
-          const list = contentMap.get(userId)!;
-          if (p.media_url && list.length < 5) {
-            const postThumb = p.thumbnail_url
-              || (p.media_type === 'video' ? getBunnyThumbnailUrl(p.media_url) : null)
-              || null;
-            list.push({
-              id: p.id,
-              url: p.media_url,
-              thumbnail_url: postThumb,
-              type: p.media_type === 'video' ? 'video' : 'image',
-            });
-          }
-        }
-
-        // Fetch organization memberships for profile users
-        const profileOrgMap = new Map<string, { org_id: string; org_name: string; org_logo: string | null }>();
-        if (profileUserIds.length > 0) {
-          const { data: profileMemberRows } = await supabase
-            .from('organization_members')
-            .select('user_id, organization_id')
-            .in('user_id', profileUserIds);
-
-          if (profileMemberRows && profileMemberRows.length > 0) {
-            const orgIds = [...new Set(profileMemberRows.map(m => m.organization_id))];
-            const { data: orgRows } = await supabase
-              .from('organizations')
-              .select('id, name, logo_url')
-              .in('id', orgIds);
-
-            const orgDetailsMap = new Map<string, { name: string; logo_url: string | null }>();
-            for (const org of orgRows || []) {
-              orgDetailsMap.set(org.id, { name: org.name, logo_url: org.logo_url });
-            }
-
-            for (const m of profileMemberRows) {
-              const orgDetail = orgDetailsMap.get(m.organization_id);
-              if (orgDetail) {
-                profileOrgMap.set(m.user_id, {
-                  org_id: m.organization_id,
-                  org_name: orgDetail.name,
-                  org_logo: orgDetail.logo_url,
-                });
-              }
-            }
-          }
-        }
-
-        // SOLO incluir profiles con contenido visible (portfolio)
-        for (const row of profileRows) {
-          if (!row.full_name && !row.username) continue;
-          const media = contentMap.get(row.id) || [];
-
-          // Skip profiles sin contenido - no deben aparecer en el marketplace
-          if (media.length === 0) continue;
-
-          const creator = mapProfileRow(row as Record<string, unknown>);
-          creator.portfolio_media = media;
-          creator.is_subscribed = subscribedUserIds.has(row.id);
-          // Enrich with organization info
-          const orgInfo = profileOrgMap.get(row.id);
-          if (orgInfo) {
-            creator.organization_id = orgInfo.org_id;
-            creator.organization_name = orgInfo.org_name;
-            creator.organization_logo = orgInfo.org_logo;
-          }
-          const thirtyDays = 30 * 24 * 60 * 60 * 1000;
-          const isNewProfile = Date.now() - new Date(creator.joined_at).getTime() < thirtyDays;
-          if (isNewProfile && creator.completed_projects < 3) {
-            creator.introductory_discount_pct = 20;
-          }
-          profilesWithContent.push(creator);
-        }
       }
-
-      // ── 4. Merge: creator_profiles first, then profiles fallback ──
-      // Sort so creators with portfolio content appear before those without
-      const all = [...mapped, ...profilesWithContent];
-      all.sort((a, b) => {
-        const aHas = a.portfolio_media.length > 0 ? 1 : 0;
-        const bHas = b.portfolio_media.length > 0 ? 1 : 0;
-        return bHas - aHas;
-      });
-
-      setAllCreators(all);
-    } catch (err) {
-      console.error('[useMarketplaceCreators] Error:', err);
-      setError('Error al cargar creadores');
-    } finally {
-      setLoading(false);
     }
-  }, []);
 
-  useEffect(() => {
-    fetchCreators();
-  }, [fetchCreators]);
+    for (const row of profileRows) {
+      if (!row.full_name && !row.username) continue;
+      const media = contentMap.get(row.id) || [];
+      if (media.length === 0) continue;
 
-  // Apply client-side filters (same logic as old useCreatorSearch)
+      const creator = mapProfileRow(row as Record<string, unknown>);
+      creator.portfolio_media = media;
+      creator.is_subscribed = subscribedUserIds.has(row.id);
+      const orgInfo = profileOrgMap.get(row.id);
+      if (orgInfo) {
+        creator.organization_id = orgInfo.org_id;
+        creator.organization_name = orgInfo.org_name;
+        creator.organization_logo = orgInfo.org_logo;
+      }
+      const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+      const isNewProfile = Date.now() - new Date(creator.joined_at).getTime() < thirtyDays;
+      if (isNewProfile && creator.completed_projects < 3) {
+        creator.introductory_discount_pct = 20;
+      }
+      profilesWithContent.push(creator);
+    }
+  }
+
+  // ── 4. Merge: creator_profiles first, then profiles fallback ──
+  const all = [...mapped, ...profilesWithContent];
+  all.sort((a, b) => {
+    const aHas = a.portfolio_media.length > 0 ? 1 : 0;
+    const bHas = b.portfolio_media.length > 0 ? 1 : 0;
+    return bHas - aHas;
+  });
+
+  return { allCreators: all, organizations: orgList };
+}
+
+// ── Query key ──────────────────────────────────────────────────────────
+
+export const MARKETPLACE_CREATORS_QUERY_KEY = ['marketplace-creators'] as const;
+
+// ── Main hook (React Query) ────────────────────────────────────────────
+
+export function useMarketplaceCreators(filters?: MarketplaceFilters) {
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: MARKETPLACE_CREATORS_QUERY_KEY,
+    queryFn: fetchAllCreators,
+    staleTime: 10 * 60 * 1000,  // 10 min – datos frescos, no refetch en navegación
+    gcTime: 60 * 60 * 1000,     // 60 min – sobrevive entre rutas
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    // Mostrar datos del cache mientras recarga en background
+    placeholderData: (prev) => prev,
+  });
+
+  const allCreators = data?.allCreators ?? [];
+  const organizations = data?.organizations ?? [];
+
+  // Apply client-side filters (same logic as before)
   const filtered = useMemo(() => {
     if (!filters) return allCreators;
 
     let result = [...allCreators];
 
     // Role category filter
-    // Include freelancers without marketplace_roles configured (they're not excluded from categories)
     if (filters.role_category && filters.role_category !== 'all' && filters.role_category !== 'agencies') {
       const categoryRoleIds = MARKETPLACE_ROLES
         .filter(r => r.category === (filters.role_category as MarketplaceRoleCategory))
         .map(r => r.id);
       result = result.filter(c => {
-        // If creator has no marketplace_roles, include them (freelancers)
         if (!c.marketplace_roles || c.marketplace_roles.length === 0) return true;
-        // Otherwise check if any of their roles match the category
         return c.marketplace_roles.some(r => categoryRoleIds.includes(r as any));
       });
     }
 
     // Specific marketplace roles (sub-chips)
-    // Filtro más flexible: prioriza pero no excluye completamente
     if (filters.marketplace_roles && filters.marketplace_roles.length > 0) {
-      // Separar creadores que coinciden con el rol vs los que no
       const withRole = result.filter(c => {
         if (!c.marketplace_roles || c.marketplace_roles.length === 0) return false;
         return filters.marketplace_roles.some(r => c.marketplace_roles?.includes(r as any));
       });
-
-      // Si hay coincidencias de rol, usarlas. Si no hay ninguna, mantener todos (búsqueda de texto prevalece)
       if (withRole.length > 0) {
         result = withRole;
       }
-      // Si no hay coincidencias, el filtro de texto ya habrá filtrado, no excluimos más
     }
 
     // Accepts exchange (adaptive filter)
@@ -571,33 +552,29 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
       result = result.filter(c => c.accepts_product_exchange);
     }
 
-    // Text search - buscar en múltiples campos
+    // Text search
     if (filters.search) {
       const q = filters.search.toLowerCase();
       const words = q.split(/\s+/).filter(w => w.length > 2);
 
       result = result.filter(c => {
-        // Buscar en campos básicos
         const inName = c.display_name.toLowerCase().includes(q);
         const inBio = c.bio?.toLowerCase().includes(q);
         const inCategories = c.categories.some(cat => cat.toLowerCase().includes(q));
         const inCity = c.location_city?.toLowerCase().includes(q);
         const inCountry = c.location_country?.toLowerCase().includes(q);
-
-        // Buscar en roles de marketplace (ej: "editor", "ugc", "influencer")
         const inRoles = c.marketplace_roles?.some(role =>
-          role.toLowerCase().includes(q) || q.includes(role.toLowerCase().replace(/_/g, ' '))
+          role.toLowerCase().includes(q) || q.includes(role.toLowerCase().replace(/_/g, ' ')),
         );
-
-        // Buscar en tipos de contenido
         const inContentTypes = c.content_types?.some(ct => ct.toLowerCase().includes(q));
-
-        // Buscar palabras individuales en nombre y bio
-        const wordsMatch = words.length > 1 && words.every(word =>
-          c.display_name.toLowerCase().includes(word) ||
-          c.bio?.toLowerCase().includes(word) ||
-          c.categories.some(cat => cat.toLowerCase().includes(word))
-        );
+        const wordsMatch =
+          words.length > 1 &&
+          words.every(
+            word =>
+              c.display_name.toLowerCase().includes(word) ||
+              c.bio?.toLowerCase().includes(word) ||
+              c.categories.some(cat => cat.toLowerCase().includes(word)),
+          );
 
         return inName || inBio || inCategories || inCity || inCountry || inRoles || inContentTypes || wordsMatch;
       });
@@ -606,12 +583,10 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
     // Category
     if (filters.category) {
       const cat = filters.category.toLowerCase();
-      result = result.filter(c =>
-        c.categories.some(cc => cc.toLowerCase() === cat),
-      );
+      result = result.filter(c => c.categories.some(cc => cc.toLowerCase() === cat));
     }
 
-    // Country - búsqueda flexible (incluye variaciones de escritura)
+    // Country - búsqueda flexible
     if (filters.country) {
       const countryMap: Record<string, string[]> = {
         CO: ['colombia', 'co'],
@@ -633,7 +608,7 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
       });
     }
 
-    // City - filtro específico por ciudad
+    // City
     if (filters.city) {
       const citySearch = filters.city.toLowerCase();
       result = result.filter(c => {
@@ -643,12 +618,9 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
     }
 
     // Content types
-    // Include freelancers without content_types configured (they're not excluded)
     if (filters.content_type.length > 0) {
       result = result.filter(c => {
-        // If creator has no content_types, include them (freelancers)
         if (!c.content_types || c.content_types.length === 0) return true;
-        // Otherwise check if any content type matches
         return filters.content_type.some(ct => c.content_types.includes(ct));
       });
     }
@@ -673,9 +645,7 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
 
     // Languages
     if (filters.languages.length > 0) {
-      result = result.filter(c =>
-        filters.languages.some(l => c.languages.includes(l)),
-      );
+      result = result.filter(c => filters.languages.some(l => c.languages.includes(l)));
     }
 
     // Availability
@@ -714,45 +684,36 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
 
   // Curated sections
 
-  // Destacados: Creadores que cumplen AL MENOS UNO de estos criterios:
-  // 1. Tiene proyectos completados (pagados en plataforma)
-  // 2. Es suscriptor (plan de pago)
-  // 3. Tiene portfolio de calidad (5+ items) con buen rating
-  // Prioridad: proyectos > suscripción > portfolio
   const featured = useMemo(
     () =>
       allCreators
-        .filter(c =>
-          c.completed_projects >= 1 ||  // Tiene proyectos pagados
-          c.is_subscribed ||             // Es suscriptor premium/pro
-          (c.portfolio_media.length >= 5 && c.rating_avg >= 4.0), // Portfolio destacado
+        .filter(
+          c =>
+            c.completed_projects >= 1 ||
+            c.is_subscribed ||
+            (c.portfolio_media.length >= 5 && c.rating_avg >= 4.0),
         )
         .sort((a, b) => {
-          // Priorizar por proyectos completados
           const projectsDiff = b.completed_projects - a.completed_projects;
           if (projectsDiff !== 0) return projectsDiff;
-          // Luego por suscripción
           if (a.is_subscribed !== b.is_subscribed) return b.is_subscribed ? 1 : -1;
-          // Luego por rating
           const ratingDiff = b.rating_avg - a.rating_avg;
           if (ratingDiff !== 0) return ratingDiff;
-          // Finalmente por portfolio
           return b.portfolio_media.length - a.portfolio_media.length;
         })
         .slice(0, 12),
     [allCreators],
   );
 
-  // Nuevos talentos: los últimos 20 registros con portfolio visible
-  // Ordenados por fecha de registro (más reciente primero)
-  const newTalent = useMemo(() => {
-    return allCreators
-      .filter(c => c.portfolio_media.length > 0)
-      .sort((a, b) => new Date(b.joined_at).getTime() - new Date(a.joined_at).getTime())
-      .slice(0, 20);
-  }, [allCreators]);
+  const newTalent = useMemo(
+    () =>
+      allCreators
+        .filter(c => c.portfolio_media.length > 0)
+        .sort((a, b) => new Date(b.joined_at).getTime() - new Date(a.joined_at).getTime())
+        .slice(0, 20),
+    [allCreators],
+  );
 
-  // Más valorados: all with rating >= 4.5
   const topRated = useMemo(
     () =>
       allCreators
@@ -762,18 +723,12 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
     [allCreators],
   );
 
-  // Top Performers: Los que más proyectos han entregado con buena calidad
-  // Criterio adaptativo:
-  // - Si hay creadores con >= 1 proyecto: mostrar los mejores por performance
-  // - Si no hay proyectos: mostrar los mejores por portfolio + engagement
   const topPerformers = useMemo(() => {
     const withProjects = allCreators.filter(c => c.completed_projects >= 1);
 
     if (withProjects.length > 0) {
-      // Hay creadores con proyectos: ordenar por performance score
       return withProjects
         .map(c => {
-          // Score: proyectos * (1 + rating/5 + portfolio_bonus)
           const ratingFactor = c.rating_avg / 5;
           const portfolioBonus = Math.min(c.portfolio_media.length / 5, 1) * 0.5;
           const performanceScore = c.completed_projects * (1 + ratingFactor + portfolioBonus);
@@ -783,12 +738,9 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
         .slice(0, 12);
     }
 
-    // Fallback: nadie tiene proyectos aún, mostrar los mejores portfolios
-    // Esto permite que la sección aparezca en plataformas nuevas
     return allCreators
-      .filter(c => c.portfolio_media.length >= 3) // Mínimo 3 items en portfolio
+      .filter(c => c.portfolio_media.length >= 3)
       .map(c => {
-        // Score basado en portfolio y rating
         const portfolioScore = c.portfolio_media.length * 2;
         const ratingBonus = c.rating_avg * 2;
         const performanceScore = portfolioScore + ratingBonus;
@@ -798,7 +750,6 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
       .slice(0, 12);
   }, [allCreators]);
 
-  // Get similar creators by categories
   const getSimilarCreators = useCallback(
     (categories: string[], excludeId?: string, limit = 6): MarketplaceCreator[] => {
       return allCreators
@@ -817,10 +768,10 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
     topRated,
     topPerformers,
     organizations,
-    isLoading: loading,
-    error,
+    isLoading,
+    error: isError ? 'Error al cargar creadores' : null,
     totalCount: filtered.length,
     getSimilarCreators,
-    refetch: fetchCreators,
+    refetch,
   };
 }

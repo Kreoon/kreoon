@@ -2,8 +2,7 @@ import { useState, useCallback, memo } from 'react';
 import { MapPin, Star, Package, TrendingUp, Zap, Sparkles, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MarketplaceCreator, PortfolioMedia } from '../types/marketplace';
-import { getBunnyThumbnailUrl } from '@/hooks/useHLSPlayer';
-import { getOptimizedImageUrl } from '@/lib/imageOptimization';
+import { getOptimizedImageUrl, getOptimizedThumbnail } from '@/lib/imageOptimization';
 
 // -------------------------------------------------------------------
 // Types
@@ -34,15 +33,11 @@ const THUMB_WIDTH = CARD_WIDTH * 2; // 360px para 2x retina
 const THUMB_HEIGHT = CARD_HEIGHT * 2; // 640px para 2x retina
 
 function resolveThumb(item: PortfolioMedia): string {
-  if (item.type === 'video') {
-    // Bunny CDN ya optimiza sus thumbnails, no necesita proxy
-    const bunnyThumb = getBunnyThumbnailUrl(item.url);
-    if (bunnyThumb) return bunnyThumb;
-  }
+  // Pasar todo por getOptimizedThumbnail — aplica wsrv.nl a Bunny CDN
+  // evitando descargar thumbnails de 1440x2560px cuando se muestran a ~360px
   const base = item.thumbnail_url || item.url;
   if (!base) return '';
-  // Optimizar imágenes de Supabase con wsrv.nl
-  return getOptimizedImageUrl(base, { width: THUMB_WIDTH, quality: 75 });
+  return getOptimizedThumbnail(base, THUMB_WIDTH, THUMB_HEIGHT, 80);
 }
 
 function formatPrice(price: number, currency: string): string {
@@ -115,10 +110,6 @@ function CreatorCardComponent({ creator, onClick, style, priority = false }: Cre
 
   return (
     <div
-      style={{
-        contain: 'layout style paint', // CSS containment to prevent layout shifts
-        minHeight: `${CARD_HEIGHT}px`, // Reserve minimum space for CLS prevention
-      }}
       className={cn(
         // Base layout — 9:16 aspect ratio
         'relative w-full cursor-pointer select-none overflow-hidden rounded-xl',
@@ -134,7 +125,10 @@ function CreatorCardComponent({ creator, onClick, style, priority = false }: Cre
         // Focus visible para keyboard navigation
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:ring-offset-1',
       )}
-      style={style}
+      style={{
+        contain: 'layout style paint', // CSS containment para prevenir layout shifts
+        ...style,
+      }}
       onClick={onClick}
       role="button"
       tabIndex={0}

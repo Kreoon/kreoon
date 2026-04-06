@@ -33,7 +33,16 @@ export const CreatorGrid = memo(function CreatorGrid({
 
   if (!isLoading && creators.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
+      /*
+       * CLS fix: cuando no hay resultados reservamos la misma altura mínima
+       * que ocupa el grid normal (≈4 filas × 320px mínimo) para que la
+       * página no salte si el usuario limpia un filtro y aparecen cards.
+       */
+      <section
+        className="flex flex-col items-center justify-center py-20 text-center"
+        aria-label="Resultados de creadores"
+        style={{ minHeight: '640px' }}
+      >
         <Users className="h-16 w-16 text-muted-foreground mb-4" aria-hidden="true" />
         <h3 className="text-lg font-medium text-foreground mb-2">
           No se encontraron resultados
@@ -43,22 +52,38 @@ export const CreatorGrid = memo(function CreatorGrid({
             ? `No hay resultados para "${searchQuery}". Intenta con otros terminos.`
             : 'Intenta ajustar los filtros para ver mas resultados.'}
         </p>
-      </div>
+      </section>
     );
   }
 
   return (
-    <section className="space-y-6" aria-label="Resultados de creadores">
+    <section
+      className="space-y-6"
+      aria-label="Resultados de creadores"
+      /*
+       * CLS fix: reservar altura mínima equivalente a 2 filas de cards (≈640px)
+       * antes de que el contenido cargue evita el shift masivo de 0.618.
+       * El valor 640px = 2 × CARD_HEIGHT(320px) cubre mobile (2 cols) y
+       * desktop (4-5 cols) porque el alto de cada card es fijo por aspect-ratio.
+       */
+      style={{ minHeight: '640px', contain: 'layout' }}
+    >
       {/* Header con contador — live region para anunciar cambios a screen readers */}
-      <div className="flex items-center justify-between">
+      {/*
+       * CLS fix: min-h-[2rem] reserva espacio para la línea del contador
+       * mientras isLoading es true y totalCount todavía es 0.
+       */}
+      <div className="flex items-center justify-between min-h-[2rem]">
         <h2
           className="text-xl font-semibold text-foreground"
           aria-live="polite"
           aria-atomic="true"
         >
-          {searchQuery
-            ? `${totalCount} resultado${totalCount !== 1 ? 's' : ''} para "${searchQuery}"`
-            : 'Explora Talento'}
+          {isLoading
+            ? '\u00A0' /* non-breaking space: ocupa la línea sin mostrar texto */
+            : searchQuery
+              ? `${totalCount} resultado${totalCount !== 1 ? 's' : ''} para "${searchQuery}"`
+              : 'Explora Talento'}
         </h2>
       </div>
 
@@ -73,7 +98,7 @@ export const CreatorGrid = memo(function CreatorGrid({
         aria-label={isLoading ? 'Cargando creadores' : undefined}
       >
         {isLoading
-          ? Array.from({ length: 8 }).map((_, i) => (
+          ? Array.from({ length: 10 }).map((_, i) => (
               <CreatorCardSkeleton key={i} />
             ))
           : creators.map((creator, i) => (
