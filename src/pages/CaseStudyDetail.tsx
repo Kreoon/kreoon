@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Trophy, Star, Users, DollarSign, Clock, Loader2, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { sanitizeHTML } from '@/lib/sanitizeHTML';
 import type { CaseStudy } from '@/components/marketplace/types/marketplace';
 
 export default function CaseStudyDetail() {
@@ -113,7 +114,7 @@ export default function CaseStudyDetail() {
         {/* Summary */}
         {caseStudy.summary_html && (
           <div className="prose prose-invert prose-sm max-w-none mb-8">
-            <div dangerouslySetInnerHTML={{ __html: caseStudy.summary_html }} />
+            <div dangerouslySetInnerHTML={{ __html: sanitizeHTML(caseStudy.summary_html) }} />
           </div>
         )}
 

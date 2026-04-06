@@ -210,8 +210,12 @@ export function rateLimitResponse(
 ): Response {
   const origin = req.headers.get('Origin') || '';
 
+  // SECURITY: Restrict CORS to known domains only
+  const ALLOWED_ORIGINS = ['https://www.kreoon.com', 'https://kreoon.com', 'http://localhost:8080', 'http://localhost:5173'];
+  const safeOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+
   const corsHeaders: Record<string, string> = {
-    'Access-Control-Allow-Origin':  origin || '*',
+    'Access-Control-Allow-Origin': safeOrigin,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
   };

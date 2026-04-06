@@ -78,9 +78,11 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error("Token error:", error?.message, error?.stack);
+    // SECURITY: Log full error internally but only return safe message to client
+    const errorId = crypto.randomUUID();
+    console.error(`[ai-tokens-service][ERROR-${errorId}]`, error?.message, error?.stack);
     return new Response(
-      JSON.stringify({ error: error.message, details: error.stack?.split("\n").slice(0, 3).join(" | ") }),
+      JSON.stringify({ error: "Error processing token request", errorId }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

@@ -3,7 +3,14 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders, handleCorsOptions } from "../_shared/cors.ts";
 
 // Platform root emails that have full admin access
-const ROOT_EMAILS = (Deno.env.get("ROOT_ADMIN_EMAILS") || "jacsolucionesgraficas@gmail.com,kairosgp.sas@gmail.com").split(",").map(e => e.trim());
+// SECURITY: No fallback - must be explicitly configured in environment
+const ROOT_ADMIN_EMAILS_RAW = Deno.env.get("ROOT_ADMIN_EMAILS");
+if (!ROOT_ADMIN_EMAILS_RAW) {
+  console.warn("[admin-users] WARNING: ROOT_ADMIN_EMAILS not configured. Root access disabled until configured.");
+}
+const ROOT_EMAILS = ROOT_ADMIN_EMAILS_RAW
+  ? ROOT_ADMIN_EMAILS_RAW.split(",").map(e => e.trim()).filter(Boolean)
+  : [];
 
 // Actions that require ROOT access (destructive operations)
 const ROOT_ONLY_ACTIONS = [
