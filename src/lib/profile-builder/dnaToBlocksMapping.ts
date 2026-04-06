@@ -33,7 +33,7 @@ export const DNA_BLOCK_MAPPINGS: Partial<Record<BlockType, DNAFieldMapping[]>> =
   hero_banner: [
     {
       dnaPath: 'creator_identity.tagline',
-      blockField: 'config.subheadline',
+      blockField: 'content.subheadline',
       label: 'Tagline profesional',
     },
   ],
