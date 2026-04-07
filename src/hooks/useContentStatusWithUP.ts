@@ -13,80 +13,52 @@ interface StatusChangeParams {
  * Actualiza el estado de un contenido en Supabase y dispara la lógica de puntos UP
  * (transiciones de estado que otorgan o penalizan puntos a creador/editor).
  *
+ * Uses a SECURITY DEFINER RPC function that:
+ * 1. Bypasses RLS policies to avoid permission issues
+ * 2. Updates content status with proper timestamps
+ * 3. Triggers fire automatically for UP points
+ *
  * @param params - contentId, oldStatus y newStatus
- * @throws Error de Supabase si falla el fetch o el update del contenido
+ * @throws Error de Supabase si falla el update del contenido
  */
 export async function updateContentStatusWithUP(params: StatusChangeParams) {
   const { contentId, oldStatus, newStatus } = params;
 
   logger.debug('ContentStatusWithUP Starting status change', { contentId, oldStatus, newStatus });
-  
-  // Fetch content via SECURITY DEFINER RPC (bypasses 18 RLS policies)
-  const { data: contentArr, error: fetchError } = await supabase
-    .rpc('get_content_by_id', { p_content_id: contentId });
 
-  const content = contentArr?.[0];
+  // Use the new consolidated RPC function that handles everything server-side
+  // This avoids multiple client-side queries that can trigger RLS errors
+  const { data: result, error: rpcError } = await supabase
+    .rpc('update_content_status_with_up', {
+      p_content_id: contentId,
+      p_old_status: oldStatus,
+      p_new_status: newStatus
+    });
 
-  if (fetchError || !content) {
-    logger.error('ContentStatusWithUP Error fetching content for UP', fetchError);
-    throw fetchError || new Error('Content not found');
+  if (rpcError) {
+    logger.error('ContentStatusWithUP RPC error', rpcError);
+    throw rpcError;
   }
 
-  logger.debug('ContentStatusWithUP Content fetched', {
-    creator_id: content.creator_id,
-    editor_id: content.editor_id
-  });
-
-  // Build update object based on the new status
-  const updates: Record<string, any> = {
-    status: newStatus
-  };
-
-  const now = new Date().toISOString();
-
-  // Set timestamps based on status transitions
-  switch (newStatus) {
-    case 'recording':
-      updates.recording_at = now;
-      break;
-    case 'recorded':
-      updates.recorded_at = now;
-      break;
-    case 'editing':
-      updates.editing_at = now;
-      break;
-    case 'delivered':
-      updates.delivered_at = now;
-      break;
-    case 'issue':
-      updates.issue_at = now;
-      break;
-    case 'corrected':
-      updates.corrected_at = now;
-      break;
-    case 'approved':
-      updates.approved_at = now;
-      break;
-    case 'paid':
-      updates.paid_at = now;
-      break;
+  if (result && !result.success) {
+    logger.error('ContentStatusWithUP Function error', result.error);
+    throw new Error(result.error || 'Failed to update content status');
   }
 
-  // Update via SECURITY DEFINER RPC (bypasses 18 RLS policies)
-  const { error: updateError } = await supabase
-    .rpc('update_content_by_id', { p_content_id: contentId, p_updates: updates });
+  logger.debug('ContentStatusWithUP Content status updated via RPC', { newStatus });
 
-  if (updateError) {
-    logger.error('ContentStatusWithUP Error updating content', updateError);
-    throw updateError;
-  }
+  // The database triggers handle UP events automatically
+  // But we also call handleUPStatusChange for the Unified Reputation Engine
+  // which uses reputation_events table (different from up_events)
+  try {
+    // Fetch content to get the data needed for UP calculation
+    const { data: contentArr } = await supabase
+      .rpc('get_content_by_id', { p_content_id: contentId });
 
-  logger.debug('ContentStatusWithUP Content status updated', { newStatus });
+    const content = contentArr?.[0];
 
-  // Handle UP points
-  if (content.organization_id) {
-    try {
-      // Build the parameters with the updated timestamps
+    if (content?.organization_id) {
+      const now = new Date().toISOString();
       const upParams = {
         contentId,
         organizationId: content.organization_id,
@@ -94,31 +66,21 @@ export async function updateContentStatusWithUP(params: StatusChangeParams) {
         newStatus,
         creatorId: content.creator_id,
         editorId: content.editor_id,
-        // For recording_at: use existing or new value
-        recordingAt: newStatus === 'recording' ? now : content.recording_at,
-        // For recorded_at: use new value if transitioning to recorded, else existing
-        recordedAt: newStatus === 'recorded' ? now : content.recorded_at,
-        // For editing_at: use existing or new value
-        editingAt: newStatus === 'editing' ? now : content.editing_at,
-        // For delivered_at: use new value if transitioning to delivered, else existing
-        deliveredAt: newStatus === 'delivered' ? now : content.delivered_at,
-        // For issue_at: use new value if transitioning to issue, else existing
-        issueAt: newStatus === 'issue' ? now : content.issue_at,
-        // For approved_at: use new value if transitioning to approved, else existing
-        approvedAt: newStatus === 'approved' ? now : content.approved_at
+        recordingAt: content.recording_at,
+        recordedAt: content.recorded_at,
+        editingAt: content.editing_at,
+        deliveredAt: content.delivered_at,
+        issueAt: content.issue_at,
+        approvedAt: content.approved_at
       };
 
-      logger.debug('ContentStatusWithUP Calling handleUPStatusChange');
-
+      logger.debug('ContentStatusWithUP Calling handleUPStatusChange for Unified Reputation');
       await handleUPStatusChange(upParams);
-
       logger.debug('ContentStatusWithUP UP points handled successfully');
-    } catch (upError) {
-      // Log but don't fail the status change
-      logger.error('ContentStatusWithUP Error handling UP points', upError);
     }
-  } else {
-    logger.debug('ContentStatusWithUP No organization_id, skipping UP points');
+  } catch (upError) {
+    // Log but don't fail - the main status update succeeded
+    logger.error('ContentStatusWithUP Error handling Unified Reputation UP points', upError);
   }
 
   return { success: true };
