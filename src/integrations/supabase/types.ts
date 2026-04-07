@@ -335,6 +335,62 @@ export type Database = {
         }
         Relationships: []
       }
+      account_payment_blocks: {
+        Row: {
+          block_type: string
+          blocked_at: string
+          blocked_reason: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          metadata: Json | null
+          organization_id: string | null
+          unblock_reason: string | null
+          unblocked_at: string | null
+          unblocked_by: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          block_type: string
+          blocked_at?: string
+          blocked_reason?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          organization_id?: string | null
+          unblock_reason?: string | null
+          unblocked_at?: string | null
+          unblocked_by?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          block_type?: string
+          blocked_at?: string
+          blocked_reason?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          organization_id?: string | null
+          unblock_reason?: string | null
+          unblocked_at?: string | null
+          unblocked_by?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_payment_blocks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       achievements: {
         Row: {
           category: string
@@ -6870,6 +6926,9 @@ export type Database = {
           base_price: number | null
           bio: string | null
           bio_full: string | null
+          builder_config: Json | null
+          builder_has_draft: boolean | null
+          builder_template: string | null
           categories: string[] | null
           completed_projects: number | null
           content_style: Json | null
@@ -6883,6 +6942,9 @@ export type Database = {
           exchange_conditions: string | null
           experience_level: string | null
           featured_links: Json | null
+          featured_media_id: string | null
+          featured_media_type: string | null
+          featured_media_url: string | null
           has_talent_dna: boolean | null
           id: string
           intro_discount_active: boolean | null
@@ -6921,6 +6983,7 @@ export type Database = {
           slug: string | null
           social_links: Json | null
           stripe_account_id: string | null
+          subscription_tier: string | null
           talent_dna_id: string | null
           total_projects: number | null
           unique_factor: string | null
@@ -6938,6 +7001,9 @@ export type Database = {
           base_price?: number | null
           bio?: string | null
           bio_full?: string | null
+          builder_config?: Json | null
+          builder_has_draft?: boolean | null
+          builder_template?: string | null
           categories?: string[] | null
           completed_projects?: number | null
           content_style?: Json | null
@@ -6951,6 +7017,9 @@ export type Database = {
           exchange_conditions?: string | null
           experience_level?: string | null
           featured_links?: Json | null
+          featured_media_id?: string | null
+          featured_media_type?: string | null
+          featured_media_url?: string | null
           has_talent_dna?: boolean | null
           id?: string
           intro_discount_active?: boolean | null
@@ -6989,6 +7058,7 @@ export type Database = {
           slug?: string | null
           social_links?: Json | null
           stripe_account_id?: string | null
+          subscription_tier?: string | null
           talent_dna_id?: string | null
           total_projects?: number | null
           unique_factor?: string | null
@@ -7006,6 +7076,9 @@ export type Database = {
           base_price?: number | null
           bio?: string | null
           bio_full?: string | null
+          builder_config?: Json | null
+          builder_has_draft?: boolean | null
+          builder_template?: string | null
           categories?: string[] | null
           completed_projects?: number | null
           content_style?: Json | null
@@ -7019,6 +7092,9 @@ export type Database = {
           exchange_conditions?: string | null
           experience_level?: string | null
           featured_links?: Json | null
+          featured_media_id?: string | null
+          featured_media_type?: string | null
+          featured_media_url?: string | null
           has_talent_dna?: boolean | null
           id?: string
           intro_discount_active?: boolean | null
@@ -7057,6 +7133,7 @@ export type Database = {
           slug?: string | null
           social_links?: Json | null
           stripe_account_id?: string | null
+          subscription_tier?: string | null
           talent_dna_id?: string | null
           total_projects?: number | null
           unique_factor?: string | null
@@ -7073,6 +7150,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "creator_profiles_featured_media_id_fkey"
+            columns: ["featured_media_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_items"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "creator_profiles_talent_dna_id_fkey"
             columns: ["talent_dna_id"]
             isOneToOne: false
@@ -7084,6 +7168,7 @@ export type Database = {
       creator_reviews: {
         Row: {
           brand_id: string | null
+          collaboration_date: string | null
           comment: string | null
           communication_rating: number | null
           created_at: string | null
@@ -7091,17 +7176,23 @@ export type Database = {
           creator_response: string | null
           creator_response_at: string | null
           id: string
+          is_featured: boolean | null
           is_public: boolean | null
+          is_verified: boolean | null
           project_id: string
           quality_rating: number | null
           rating: number
+          reviewer_avatar_url: string | null
+          reviewer_company: string | null
           reviewer_id: string
+          status: string | null
           timeliness_rating: number | null
           title: string | null
           updated_at: string | null
         }
         Insert: {
           brand_id?: string | null
+          collaboration_date?: string | null
           comment?: string | null
           communication_rating?: number | null
           created_at?: string | null
@@ -7109,17 +7200,23 @@ export type Database = {
           creator_response?: string | null
           creator_response_at?: string | null
           id?: string
+          is_featured?: boolean | null
           is_public?: boolean | null
+          is_verified?: boolean | null
           project_id: string
           quality_rating?: number | null
           rating: number
+          reviewer_avatar_url?: string | null
+          reviewer_company?: string | null
           reviewer_id: string
+          status?: string | null
           timeliness_rating?: number | null
           title?: string | null
           updated_at?: string | null
         }
         Update: {
           brand_id?: string | null
+          collaboration_date?: string | null
           comment?: string | null
           communication_rating?: number | null
           created_at?: string | null
@@ -7127,11 +7224,16 @@ export type Database = {
           creator_response?: string | null
           creator_response_at?: string | null
           id?: string
+          is_featured?: boolean | null
           is_public?: boolean | null
+          is_verified?: boolean | null
           project_id?: string
           quality_rating?: number | null
           rating?: number
+          reviewer_avatar_url?: string | null
+          reviewer_company?: string | null
           reviewer_id?: string
+          status?: string | null
           timeliness_rating?: number | null
           title?: string | null
           updated_at?: string | null
@@ -8566,6 +8668,80 @@ export type Database = {
           variations?: Json | null
         }
         Relationships: []
+      }
+      global_badges: {
+        Row: {
+          category: Database["public"]["Enums"]["badge_category"]
+          condition_config: Json
+          condition_type: string
+          created_at: string | null
+          description: string
+          display_order: number | null
+          icon: string
+          id: string
+          is_active: boolean | null
+          is_seasonal: boolean | null
+          is_secret: boolean | null
+          key: string
+          name: string
+          parent_badge_id: string | null
+          ranking_points: number
+          rarity: Database["public"]["Enums"]["badge_rarity"]
+          subcategory: string | null
+          tier: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["badge_category"]
+          condition_config?: Json
+          condition_type: string
+          created_at?: string | null
+          description: string
+          display_order?: number | null
+          icon?: string
+          id?: string
+          is_active?: boolean | null
+          is_seasonal?: boolean | null
+          is_secret?: boolean | null
+          key: string
+          name: string
+          parent_badge_id?: string | null
+          ranking_points?: number
+          rarity?: Database["public"]["Enums"]["badge_rarity"]
+          subcategory?: string | null
+          tier?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["badge_category"]
+          condition_config?: Json
+          condition_type?: string
+          created_at?: string | null
+          description?: string
+          display_order?: number | null
+          icon?: string
+          id?: string
+          is_active?: boolean | null
+          is_seasonal?: boolean | null
+          is_secret?: boolean | null
+          key?: string
+          name?: string
+          parent_badge_id?: string | null
+          ranking_points?: number
+          rarity?: Database["public"]["Enums"]["badge_rarity"]
+          subcategory?: string | null
+          tier?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "global_badges_parent_badge_id_fkey"
+            columns: ["parent_badge_id"]
+            isOneToOne: false
+            referencedRelation: "global_badges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       goals: {
         Row: {
@@ -10575,6 +10751,7 @@ export type Database = {
       }
       legal_consent_requirements: {
         Row: {
+          account_type: string | null
           created_at: string | null
           display_order: number | null
           document_type: string
@@ -10585,6 +10762,7 @@ export type Database = {
           user_role: string
         }
         Insert: {
+          account_type?: string | null
           created_at?: string | null
           display_order?: number | null
           document_type: string
@@ -10595,6 +10773,7 @@ export type Database = {
           user_role: string
         }
         Update: {
+          account_type?: string | null
           created_at?: string | null
           display_order?: number | null
           document_type?: string
@@ -16903,6 +17082,30 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_features: {
+        Row: {
+          created_at: string | null
+          feature_key: string
+          feature_value: Json
+          id: string
+          tier: string
+        }
+        Insert: {
+          created_at?: string | null
+          feature_key: string
+          feature_value: Json
+          id?: string
+          tier: string
+        }
+        Update: {
+          created_at?: string | null
+          feature_key?: string
+          feature_value?: Json
+          id?: string
+          tier?: string
+        }
+        Relationships: []
+      }
       platform_backup: {
         Row: {
           backed_up_at: string | null
@@ -18485,6 +18688,215 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_builder_blocks: {
+        Row: {
+          block_type: string
+          config: Json | null
+          content: Json | null
+          created_at: string | null
+          id: string
+          is_draft: boolean | null
+          is_visible: boolean | null
+          order_index: number
+          profile_id: string
+          styles: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          block_type: string
+          config?: Json | null
+          content?: Json | null
+          created_at?: string | null
+          id?: string
+          is_draft?: boolean | null
+          is_visible?: boolean | null
+          order_index?: number
+          profile_id: string
+          styles?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          block_type?: string
+          config?: Json | null
+          content?: Json | null
+          created_at?: string | null
+          id?: string
+          is_draft?: boolean | null
+          is_visible?: boolean | null
+          order_index?: number
+          profile_id?: string
+          styles?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_builder_blocks_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_preview_tokens: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          profile_id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          profile_id: string
+          token: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          profile_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_preview_tokens_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_template_interactions: {
+        Row: {
+          created_at: string | null
+          id: string
+          interaction_type: string
+          template_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          interaction_type: string
+          template_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          interaction_type?: string
+          template_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_template_interactions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "profile_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_templates: {
+        Row: {
+          author_id: string
+          author_profile_id: string
+          blocks: Json
+          builder_config: Json
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_official: boolean | null
+          like_count: number | null
+          min_tier_required: string | null
+          moderated_at: string | null
+          moderated_by: string | null
+          moderation_note: string | null
+          moderation_status: string | null
+          name: string
+          preview_colors: Json | null
+          published_at: string | null
+          save_count: number | null
+          slug: string
+          tags: string[] | null
+          thumbnail_url: string | null
+          updated_at: string | null
+          use_count: number | null
+          view_count: number | null
+          visibility: string
+        }
+        Insert: {
+          author_id: string
+          author_profile_id: string
+          blocks?: Json
+          builder_config?: Json
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_official?: boolean | null
+          like_count?: number | null
+          min_tier_required?: string | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_note?: string | null
+          moderation_status?: string | null
+          name: string
+          preview_colors?: Json | null
+          published_at?: string | null
+          save_count?: number | null
+          slug: string
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          use_count?: number | null
+          view_count?: number | null
+          visibility?: string
+        }
+        Update: {
+          author_id?: string
+          author_profile_id?: string
+          blocks?: Json
+          builder_config?: Json
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_official?: boolean | null
+          like_count?: number | null
+          min_tier_required?: string | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_note?: string | null
+          moderation_status?: string | null
+          name?: string
+          preview_colors?: Json | null
+          published_at?: string | null
+          save_count?: number | null
+          slug?: string
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          use_count?: number | null
+          view_count?: number | null
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_templates_author_profile_id_fkey"
+            columns: ["author_profile_id"]
+            isOneToOne: false
+            referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_token_evaluations: {
         Row: {
           evaluated_at: string
@@ -18638,6 +19050,7 @@ export type Database = {
           total_contracts_completed: number | null
           total_earnings: number | null
           updated_at: string | null
+          user_type: string | null
           username: string | null
           velocity_score: number | null
         }
@@ -18736,6 +19149,7 @@ export type Database = {
           total_contracts_completed?: number | null
           total_earnings?: number | null
           updated_at?: string | null
+          user_type?: string | null
           username?: string | null
           velocity_score?: number | null
         }
@@ -18834,6 +19248,7 @@ export type Database = {
           total_contracts_completed?: number | null
           total_earnings?: number | null
           updated_at?: string | null
+          user_type?: string | null
           username?: string | null
           velocity_score?: number | null
         }
@@ -20133,6 +20548,13 @@ export type Database = {
             referencedRelation: "reputation_seasons"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "reputation_events_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "season_leaderboard_live"
+            referencedColumns: ["season_id"]
+          },
         ]
       }
       reputation_global: {
@@ -20331,6 +20753,47 @@ export type Database = {
         }
         Relationships: []
       }
+      role_multipliers: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          multiplier_key: string
+          multiplier_type: string
+          multiplier_value: number
+          organization_id: string
+          role_key: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          multiplier_key: string
+          multiplier_type: string
+          multiplier_value?: number
+          organization_id: string
+          role_key?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          multiplier_key?: string
+          multiplier_type?: string
+          multiplier_value?: number
+          organization_id?: string
+          role_key?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_multipliers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_permissions: {
         Row: {
           can_create: boolean
@@ -20363,6 +20826,59 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      role_points_config: {
+        Row: {
+          clean_approval_bonus: number
+          created_at: string | null
+          delivery_days: number
+          early_delivery_points: number
+          id: string
+          is_active: boolean | null
+          issue_penalty: number
+          late_delivery_points: number
+          on_time_delivery_points: number
+          organization_id: string
+          role_key: string
+          updated_at: string | null
+        }
+        Insert: {
+          clean_approval_bonus?: number
+          created_at?: string | null
+          delivery_days?: number
+          early_delivery_points?: number
+          id?: string
+          is_active?: boolean | null
+          issue_penalty?: number
+          late_delivery_points?: number
+          on_time_delivery_points?: number
+          organization_id: string
+          role_key: string
+          updated_at?: string | null
+        }
+        Update: {
+          clean_approval_bonus?: number
+          created_at?: string | null
+          delivery_days?: number
+          early_delivery_points?: number
+          id?: string
+          is_active?: boolean | null
+          issue_penalty?: number
+          late_delivery_points?: number
+          on_time_delivery_points?: number
+          organization_id?: string
+          role_key?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_points_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       role_specialties: {
         Row: {
@@ -20824,6 +21340,205 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      season_reward_claims: {
+        Row: {
+          claim_data: Json | null
+          claimed_at: string | null
+          created_at: string | null
+          delivered_at: string | null
+          delivered_by: string | null
+          delivery_notes: string | null
+          final_level: string | null
+          final_points: number
+          final_rank: number
+          id: string
+          notification_sent: boolean | null
+          organization_id: string
+          payment_method: string | null
+          payment_reference: string | null
+          reward_id: string
+          role_key: string
+          season_id: string
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          claim_data?: Json | null
+          claimed_at?: string | null
+          created_at?: string | null
+          delivered_at?: string | null
+          delivered_by?: string | null
+          delivery_notes?: string | null
+          final_level?: string | null
+          final_points: number
+          final_rank: number
+          id?: string
+          notification_sent?: boolean | null
+          organization_id: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          reward_id: string
+          role_key: string
+          season_id: string
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          claim_data?: Json | null
+          claimed_at?: string | null
+          created_at?: string | null
+          delivered_at?: string | null
+          delivered_by?: string | null
+          delivery_notes?: string | null
+          final_level?: string | null
+          final_points?: number
+          final_rank?: number
+          id?: string
+          notification_sent?: boolean | null
+          organization_id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          reward_id?: string
+          role_key?: string
+          season_id?: string
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "season_reward_claims_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "season_reward_claims_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "season_rewards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "season_reward_claims_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "reputation_seasons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "season_reward_claims_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "season_leaderboard_live"
+            referencedColumns: ["season_id"]
+          },
+        ]
+      }
+      season_rewards: {
+        Row: {
+          badge_id: string | null
+          created_at: string | null
+          custom_data: Json | null
+          description: string | null
+          display_color: string | null
+          display_icon: string | null
+          display_name: string
+          id: string
+          is_active: boolean | null
+          monetary_amount: number | null
+          monetary_currency: string | null
+          organization_id: string
+          points_amount: number | null
+          position_max: number | null
+          position_min: number
+          position_type: string
+          priority: number | null
+          reward_type: string
+          role_key: string | null
+          season_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          badge_id?: string | null
+          created_at?: string | null
+          custom_data?: Json | null
+          description?: string | null
+          display_color?: string | null
+          display_icon?: string | null
+          display_name: string
+          id?: string
+          is_active?: boolean | null
+          monetary_amount?: number | null
+          monetary_currency?: string | null
+          organization_id: string
+          points_amount?: number | null
+          position_max?: number | null
+          position_min: number
+          position_type: string
+          priority?: number | null
+          reward_type: string
+          role_key?: string | null
+          season_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          badge_id?: string | null
+          created_at?: string | null
+          custom_data?: Json | null
+          description?: string | null
+          display_color?: string | null
+          display_icon?: string | null
+          display_name?: string
+          id?: string
+          is_active?: boolean | null
+          monetary_amount?: number | null
+          monetary_currency?: string | null
+          organization_id?: string
+          points_amount?: number | null
+          position_max?: number | null
+          position_min?: number
+          position_type?: string
+          priority?: number | null
+          reward_type?: string
+          role_key?: string | null
+          season_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "season_rewards_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "season_rewards_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "season_rewards_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "reputation_seasons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "season_rewards_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "season_leaderboard_live"
+            referencedColumns: ["season_id"]
           },
         ]
       }
@@ -25996,6 +26711,206 @@ export type Database = {
         }
         Relationships: []
       }
+      user_global_badges: {
+        Row: {
+          badge_id: string
+          created_at: string | null
+          current_progress: number | null
+          id: string
+          is_completed: boolean | null
+          progress_max: number | null
+          progress_updated_at: string | null
+          unlock_context: Json | null
+          unlocked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          created_at?: string | null
+          current_progress?: number | null
+          id?: string
+          is_completed?: boolean | null
+          progress_max?: number | null
+          progress_updated_at?: string | null
+          unlock_context?: Json | null
+          unlocked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          created_at?: string | null
+          current_progress?: number | null
+          id?: string
+          is_completed?: boolean | null
+          progress_max?: number | null
+          progress_updated_at?: string | null
+          unlock_context?: Json | null
+          unlocked_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_global_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "global_badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_global_stats: {
+        Row: {
+          average_rating: number | null
+          avg_delivery_hours: number | null
+          badges_completed_count: number | null
+          bio_length: number | null
+          collaborations_count: number | null
+          comments_given: number | null
+          consecutive_active_days: number | null
+          days_since_signup: number | null
+          delivery_streak: number | null
+          early_deliveries_count: number | null
+          featured_works_count: number | null
+          first_content_at: string | null
+          five_star_count: number | null
+          followers_count: number | null
+          following_count: number | null
+          global_rank: number | null
+          has_avatar: boolean | null
+          has_banner: boolean | null
+          has_bio: boolean | null
+          last_active_at: string | null
+          late_deliveries_count: number | null
+          likes_given: number | null
+          no_revision_streak: number | null
+          on_time_deliveries_count: number | null
+          percentile: number | null
+          portfolio_hd_count: number | null
+          portfolio_images_count: number | null
+          portfolio_likes_total: number | null
+          portfolio_posts_count: number | null
+          portfolio_videos_count: number | null
+          portfolio_views_total: number | null
+          profile_completeness: number | null
+          profile_created_at: string
+          ratings_count: number | null
+          referrals_count: number | null
+          repeat_clients_count: number | null
+          revisions_count: number | null
+          seasons_participated: number | null
+          social_networks_count: number | null
+          successful_referrals: number | null
+          total_active_months: number | null
+          total_badge_points: number | null
+          total_clients_served: number | null
+          total_projects_completed: number | null
+          total_revenue_usd: number | null
+          unique_clients_count: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          average_rating?: number | null
+          avg_delivery_hours?: number | null
+          badges_completed_count?: number | null
+          bio_length?: number | null
+          collaborations_count?: number | null
+          comments_given?: number | null
+          consecutive_active_days?: number | null
+          days_since_signup?: number | null
+          delivery_streak?: number | null
+          early_deliveries_count?: number | null
+          featured_works_count?: number | null
+          first_content_at?: string | null
+          five_star_count?: number | null
+          followers_count?: number | null
+          following_count?: number | null
+          global_rank?: number | null
+          has_avatar?: boolean | null
+          has_banner?: boolean | null
+          has_bio?: boolean | null
+          last_active_at?: string | null
+          late_deliveries_count?: number | null
+          likes_given?: number | null
+          no_revision_streak?: number | null
+          on_time_deliveries_count?: number | null
+          percentile?: number | null
+          portfolio_hd_count?: number | null
+          portfolio_images_count?: number | null
+          portfolio_likes_total?: number | null
+          portfolio_posts_count?: number | null
+          portfolio_videos_count?: number | null
+          portfolio_views_total?: number | null
+          profile_completeness?: number | null
+          profile_created_at?: string
+          ratings_count?: number | null
+          referrals_count?: number | null
+          repeat_clients_count?: number | null
+          revisions_count?: number | null
+          seasons_participated?: number | null
+          social_networks_count?: number | null
+          successful_referrals?: number | null
+          total_active_months?: number | null
+          total_badge_points?: number | null
+          total_clients_served?: number | null
+          total_projects_completed?: number | null
+          total_revenue_usd?: number | null
+          unique_clients_count?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          average_rating?: number | null
+          avg_delivery_hours?: number | null
+          badges_completed_count?: number | null
+          bio_length?: number | null
+          collaborations_count?: number | null
+          comments_given?: number | null
+          consecutive_active_days?: number | null
+          days_since_signup?: number | null
+          delivery_streak?: number | null
+          early_deliveries_count?: number | null
+          featured_works_count?: number | null
+          first_content_at?: string | null
+          five_star_count?: number | null
+          followers_count?: number | null
+          following_count?: number | null
+          global_rank?: number | null
+          has_avatar?: boolean | null
+          has_banner?: boolean | null
+          has_bio?: boolean | null
+          last_active_at?: string | null
+          late_deliveries_count?: number | null
+          likes_given?: number | null
+          no_revision_streak?: number | null
+          on_time_deliveries_count?: number | null
+          percentile?: number | null
+          portfolio_hd_count?: number | null
+          portfolio_images_count?: number | null
+          portfolio_likes_total?: number | null
+          portfolio_posts_count?: number | null
+          portfolio_videos_count?: number | null
+          portfolio_views_total?: number | null
+          profile_completeness?: number | null
+          profile_created_at?: string
+          ratings_count?: number | null
+          referrals_count?: number | null
+          repeat_clients_count?: number | null
+          revisions_count?: number | null
+          seasons_participated?: number | null
+          social_networks_count?: number | null
+          successful_referrals?: number | null
+          total_active_months?: number | null
+          total_badge_points?: number | null
+          total_clients_served?: number | null
+          total_projects_completed?: number | null
+          total_revenue_usd?: number | null
+          unique_clients_count?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_interest_profile: {
         Row: {
           engagement_stats: Json | null
@@ -26253,14 +27168,21 @@ export type Database = {
       }
       user_reputation_totals: {
         Row: {
+          ai_quality_score: number | null
           approval_rate: number | null
+          avg_engagement_rate: number | null
+          avg_rating: number | null
           best_streak_days: number | null
+          clean_approvals_count: number | null
           current_level: string | null
           current_level_progress: number | null
           current_streak_days: number | null
+          early_deliveries_count: number | null
           id: string
+          issues_count: number | null
           last_activity_date: string | null
           last_calculated_at: string | null
+          late_deliveries_count: number | null
           lifetime_points: number | null
           lifetime_tasks: number | null
           normalized_score: number | null
@@ -26274,16 +27196,24 @@ export type Database = {
           season_points: number | null
           season_tasks: number | null
           user_id: string
+          weekly_volume: number | null
         }
         Insert: {
+          ai_quality_score?: number | null
           approval_rate?: number | null
+          avg_engagement_rate?: number | null
+          avg_rating?: number | null
           best_streak_days?: number | null
+          clean_approvals_count?: number | null
           current_level?: string | null
           current_level_progress?: number | null
           current_streak_days?: number | null
+          early_deliveries_count?: number | null
           id?: string
+          issues_count?: number | null
           last_activity_date?: string | null
           last_calculated_at?: string | null
+          late_deliveries_count?: number | null
           lifetime_points?: number | null
           lifetime_tasks?: number | null
           normalized_score?: number | null
@@ -26297,16 +27227,24 @@ export type Database = {
           season_points?: number | null
           season_tasks?: number | null
           user_id: string
+          weekly_volume?: number | null
         }
         Update: {
+          ai_quality_score?: number | null
           approval_rate?: number | null
+          avg_engagement_rate?: number | null
+          avg_rating?: number | null
           best_streak_days?: number | null
+          clean_approvals_count?: number | null
           current_level?: string | null
           current_level_progress?: number | null
           current_streak_days?: number | null
+          early_deliveries_count?: number | null
           id?: string
+          issues_count?: number | null
           last_activity_date?: string | null
           last_calculated_at?: string | null
+          late_deliveries_count?: number | null
           lifetime_points?: number | null
           lifetime_tasks?: number | null
           normalized_score?: number | null
@@ -26320,6 +27258,7 @@ export type Database = {
           season_points?: number | null
           season_tasks?: number | null
           user_id?: string
+          weekly_volume?: number | null
         }
         Relationships: [
           {
@@ -26393,6 +27332,27 @@ export type Database = {
           mfa_enabled?: boolean | null
           security_score?: number | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_specializations: {
+        Row: {
+          created_at: string | null
+          id: string
+          specialization: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          specialization: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          specialization?: string
           user_id?: string
         }
         Relationships: []
@@ -27074,6 +28034,30 @@ export type Database = {
           },
         ]
       }
+      season_leaderboard_live: {
+        Row: {
+          avatar_url: string | null
+          current_level: string | null
+          full_name: string | null
+          organization_id: string | null
+          percentile: number | null
+          role_key: string | null
+          season_id: string | null
+          season_name: string | null
+          season_points: number | null
+          season_rank: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_reputation_totals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_duplicate_content: {
         Row: {
           client_id: string | null
@@ -27298,11 +28282,37 @@ export type Database = {
         }
         Returns: undefined
       }
+      block_account: {
+        Args: {
+          p_block_type?: string
+          p_organization_id?: string
+          p_reason?: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      calculate_delivery_points: {
+        Args: {
+          p_client_tier?: string
+          p_complexity_key?: string
+          p_delivery_days: number
+          p_has_issues?: boolean
+          p_issue_count?: number
+          p_organization_id: string
+          p_role_key: string
+          p_user_id: string
+        }
+        Returns: number
+      }
       calculate_engagement_bonus: {
         Args: { p_publication_id: string }
         Returns: number
       }
       calculate_level_progress: { Args: { p_points: number }; Returns: number }
+      calculate_next_token_reset: {
+        Args: { p_from_date?: string; p_registration_date: string }
+        Returns: string
+      }
       calculate_normalized_score: {
         Args: {
           p_base_weight: number
@@ -27362,6 +28372,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      can_use_block: {
+        Args: { block_type: string; plan_tier: string }
+        Returns: boolean
+      }
       can_users_chat: {
         Args: { _user1_id: string; _user2_id: string }
         Returns: boolean
@@ -27370,9 +28384,27 @@ export type Database = {
         Args: { p_user_id: string; p_withdrawal_id: string }
         Returns: boolean
       }
+      check_account_blocked: {
+        Args: { p_user_id: string }
+        Returns: {
+          block_reason: string
+          block_type: string
+          blocked_since: string
+          is_blocked: boolean
+        }[]
+      }
       check_and_award_achievements: {
         Args: { _user_id: string }
         Returns: undefined
+      }
+      check_and_award_global_badges: {
+        Args: { p_user_id: string }
+        Returns: {
+          badge_id: string
+          badge_key: string
+          badge_name: string
+          was_unlocked: boolean
+        }[]
       }
       check_and_pause_chronometer: {
         Args: {
@@ -27452,11 +28484,28 @@ export type Database = {
           thumbnail_url: string
         }[]
       }
+      cleanup_expired_preview_tokens: { Args: never; Returns: undefined }
       cleanup_expired_stories: { Args: never; Returns: undefined }
       cleanup_old_audit_logs: { Args: never; Returns: undefined }
       cleanup_old_kae_events: {
         Args: { retention_days?: number }
         Returns: number
+      }
+      clone_template_to_profile: {
+        Args: {
+          p_clone_content?: boolean
+          p_merge_mode?: string
+          p_template_id: string
+        }
+        Returns: boolean
+      }
+      close_season_and_distribute_rewards: {
+        Args: { p_season_id: string }
+        Returns: {
+          badges_awarded: number
+          claims_created: number
+          points_distributed: number
+        }[]
       }
       complete_campaign_delivery: {
         Args: { p_application_id: string; p_rating?: number }
@@ -27697,6 +28746,7 @@ export type Database = {
         Returns: string
       }
       generate_org_slug: { Args: { org_name: string }; Returns: string }
+      generate_preview_token: { Args: { profile_id: string }; Returns: string }
       generate_referral_code:
         | { Args: never; Returns: string }
         | {
@@ -28263,6 +29313,14 @@ export type Database = {
         Returns: Json
       }
       get_creator_profile_id: { Args: never; Returns: string }
+      get_creator_review_stats: {
+        Args: { p_creator_id: string }
+        Returns: {
+          average_rating: number
+          total_reviews: number
+          verified_reviews: number
+        }[]
+      }
       get_creator_unified_stats: { Args: { p_user_id: string }; Returns: Json }
       get_current_organization_id: {
         Args: { _user_id: string }
@@ -28377,6 +29435,38 @@ export type Database = {
         Returns: Json
       }
       get_full_user_detail: { Args: { p_user_id: string }; Returns: Json }
+      get_global_badges_with_progress: {
+        Args: { p_user_id: string }
+        Returns: {
+          badge_category: string
+          badge_description: string
+          badge_icon: string
+          badge_id: string
+          badge_key: string
+          badge_name: string
+          badge_rarity: string
+          current_progress: number
+          is_completed: boolean
+          is_secret: boolean
+          progress_max: number
+          progress_percentage: number
+          ranking_points: number
+          tier: number
+          unlocked_at: string
+        }[]
+      }
+      get_global_ranking: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: {
+          avatar_url: string
+          badges_completed_count: number
+          full_name: string
+          global_rank: number
+          percentile: number
+          total_badge_points: number
+          user_id: string
+        }[]
+      }
       get_hosting_hosts: {
         Args: { p_request_id: string }
         Returns: {
@@ -28513,6 +29603,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_marketplace_filter_options: { Args: never; Returns: Json }
       get_marketplace_hosting_requests: {
         Args: {
           p_limit?: number
@@ -28640,6 +29731,7 @@ export type Database = {
           status: string
         }[]
       }
+      get_my_templates: { Args: never; Returns: Json }
       get_next_queue_slot: {
         Args: { p_account_id: string; p_after?: string }
         Returns: string
@@ -28987,6 +30079,7 @@ export type Database = {
       get_pending_consents: {
         Args: { p_user_id: string }
         Returns: {
+          account_type: string
           display_order: number
           document_id: string
           document_type: string
@@ -28994,6 +30087,7 @@ export type Database = {
           summary: string
           title: string
           trigger_event: string
+          user_role: string
           version: string
         }[]
       }
@@ -29002,6 +30096,7 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: Json
       }
+      get_plan_features: { Args: { plan_tier: string }; Returns: Json }
       get_platform_creators_with_metrics: { Args: never; Returns: Json }
       get_platform_finance_stats: { Args: { p_days?: number }; Returns: Json }
       get_platform_organizations_with_metrics: { Args: never; Returns: Json }
@@ -29063,6 +30158,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_profile_builder_data: { Args: { profile_id: string }; Returns: Json }
       get_public_org_content: {
         Args: { max_items?: number; org_slug: string }
         Returns: {
@@ -29123,6 +30219,16 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_public_templates: {
+        Args: {
+          p_category?: string
+          p_page?: number
+          p_page_size?: number
+          p_search?: string
+          p_sort_by?: string
+        }
+        Returns: Json
       }
       get_random_editor_from_pool: { Args: { org_id: string }; Returns: string }
       get_recent_lead_interactions: {
@@ -29203,6 +30309,29 @@ export type Database = {
               source: string
             }[]
           }
+      get_season_rewards_with_eligibility: {
+        Args: { p_season_id: string; p_user_id: string }
+        Returns: {
+          claim_status: string
+          description: string
+          display_color: string
+          display_icon: string
+          display_name: string
+          is_claimed: boolean
+          is_eligible: boolean
+          monetary_amount: number
+          monetary_currency: string
+          points_amount: number
+          position_max: number
+          position_min: number
+          position_type: string
+          reward_id: string
+          reward_type: string
+          user_percentile: number
+          user_points: number
+          user_rank: number
+        }[]
+      }
       get_session_analytics_summary: {
         Args: { p_session_id: string }
         Returns: {
@@ -29233,6 +30362,7 @@ export type Database = {
         }[]
       }
       get_talent_gate_config: { Args: never; Returns: Json }
+      get_template_by_slug: { Args: { p_slug: string }; Returns: Json }
       get_trash_stats: {
         Args: { p_organization_id?: string }
         Returns: {
@@ -29388,14 +30518,21 @@ export type Database = {
       get_user_reputation: {
         Args: { p_org_id: string; p_user_id: string }
         Returns: {
+          ai_quality_score: number | null
           approval_rate: number | null
+          avg_engagement_rate: number | null
+          avg_rating: number | null
           best_streak_days: number | null
+          clean_approvals_count: number | null
           current_level: string | null
           current_level_progress: number | null
           current_streak_days: number | null
+          early_deliveries_count: number | null
           id: string
+          issues_count: number | null
           last_activity_date: string | null
           last_calculated_at: string | null
+          late_deliveries_count: number | null
           lifetime_points: number | null
           lifetime_tasks: number | null
           normalized_score: number | null
@@ -29409,6 +30546,7 @@ export type Database = {
           season_points: number | null
           season_tasks: number | null
           user_id: string
+          weekly_volume: number | null
         }[]
         SetofOptions: {
           from: "*"
@@ -29525,6 +30663,14 @@ export type Database = {
       init_ai_prompts_for_org: { Args: { _org_id: string }; Returns: undefined }
       initialize_board_settings: {
         Args: { _org_id: string }
+        Returns: undefined
+      }
+      initialize_default_blocks: {
+        Args: { profile_id: string; template_name?: string }
+        Returns: boolean
+      }
+      initialize_org_points_config: {
+        Args: { p_organization_id: string }
         Returns: undefined
       }
       is_ai_module_active: {
@@ -29685,6 +30831,7 @@ export type Database = {
         Returns: boolean
       }
       promote_to_full_admin: { Args: { target_email: string }; Returns: string }
+      publish_profile_blocks: { Args: { profile_id: string }; Returns: boolean }
       reassign_project: {
         Args: {
           p_new_creator_id: string
@@ -29733,6 +30880,7 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: undefined
       }
+      refresh_season_leaderboard: { Args: never; Returns: undefined }
       refund_escrow: {
         Args: { p_escrow_id: string; p_reason?: string }
         Returns: boolean
@@ -29790,6 +30938,7 @@ export type Database = {
         Args: { _event_id: string; _hours: number }
         Returns: boolean
       }
+      reset_expired_token_balances: { Args: never; Returns: number }
       resolve_org_by_domain: {
         Args: { p_hostname: string }
         Returns: {
@@ -29825,6 +30974,20 @@ export type Database = {
           p_revoked_by?: string
           p_user_id: string
         }
+        Returns: boolean
+      }
+      save_profile_as_template: {
+        Args: {
+          p_category?: string
+          p_description?: string
+          p_name: string
+          p_tags?: string[]
+          p_visibility?: string
+        }
+        Returns: string
+      }
+      save_profile_blocks: {
+        Args: { blocks: Json; is_draft?: boolean; profile_id: string }
         Returns: boolean
       }
       save_profile_data:
@@ -29886,6 +31049,7 @@ export type Database = {
           p_offset?: number
           p_query?: string
           p_roles?: string[]
+          p_specializations?: string[]
         }
         Returns: {
           accepts_exchange: boolean
@@ -29917,11 +31081,16 @@ export type Database = {
           response_time_hours: number
           search_score: number
           slug: string
+          specializations: string[]
           text_rank: number
           total_projects: number
           user_id: string
           username: string
         }[]
+      }
+      set_featured_media: {
+        Args: { p_creator_profile_id: string; p_media_id: string }
+        Returns: Json
       }
       sign_legal_document: {
         Args: {
@@ -29980,6 +31149,10 @@ export type Database = {
         Returns: boolean
       }
       toggle_post_pin: { Args: { post_id: string }; Returns: boolean }
+      toggle_template_interaction: {
+        Args: { p_interaction_type: string; p_template_id: string }
+        Returns: boolean
+      }
       transfer_currency: {
         Args: {
           _from_amount: number
@@ -29990,6 +31163,10 @@ export type Database = {
         Returns: string
       }
       unaccent: { Args: { "": string }; Returns: string }
+      unblock_account: {
+        Args: { p_block_id: string; p_reason?: string; p_unblocked_by: string }
+        Returns: boolean
+      }
       universal_restore_from_backup: {
         Args: { p_backup_id: string }
         Returns: Json
@@ -30024,6 +31201,17 @@ export type Database = {
       update_talent_performance_scores: {
         Args: { p_organization_id: string; p_user_id: string }
         Returns: undefined
+      }
+      update_template_metadata: {
+        Args: {
+          p_category?: string
+          p_description?: string
+          p_name?: string
+          p_tags?: string[]
+          p_template_id: string
+          p_visibility?: string
+        }
+        Returns: boolean
       }
       update_user_health_score: {
         Args: { p_user_id: string }
@@ -30074,6 +31262,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      validate_preview_token: {
+        Args: { preview_token: string }
+        Returns: string
       }
       validate_referral_slug: { Args: { p_slug: string }; Returns: Json }
       validate_registration_code: {
@@ -30159,6 +31351,8 @@ export type Database = {
         | "ai_specialist"
         | "online_instructor"
         | "workshop_facilitator"
+        | "content_creator"
+        | "creative_strategist"
       application_status:
         | "pending"
         | "approved"
@@ -30167,6 +31361,22 @@ export type Database = {
         | "delivered"
         | "completed"
         | "withdrawn"
+      badge_category:
+        | "profile"
+        | "portfolio"
+        | "experience"
+        | "quality"
+        | "speed"
+        | "community"
+        | "veteran"
+        | "special"
+      badge_rarity:
+        | "common"
+        | "uncommon"
+        | "rare"
+        | "epic"
+        | "legendary"
+        | "mythic"
       booking_location_type:
         | "google_meet"
         | "zoom"
@@ -30181,6 +31391,7 @@ export type Database = {
         | "no_show"
       campaign_status:
         | "draft"
+        | "open"
         | "active"
         | "paused"
         | "in_progress"
@@ -30268,6 +31479,18 @@ export type Database = {
         | "approved"
         | "completed"
         | "cancelled"
+        | "draft"
+        | "script_pending"
+        | "script_approved"
+        | "assigned"
+        | "recording"
+        | "recorded"
+        | "editing"
+        | "delivered"
+        | "issue"
+        | "corrected"
+        | "paid"
+        | "en_campaa"
       point_transaction_type:
         | "base_completion"
         | "early_delivery"
@@ -30703,6 +31926,8 @@ export const Constants = {
         "ai_specialist",
         "online_instructor",
         "workshop_facilitator",
+        "content_creator",
+        "creative_strategist",
       ],
       application_status: [
         "pending",
@@ -30712,6 +31937,24 @@ export const Constants = {
         "delivered",
         "completed",
         "withdrawn",
+      ],
+      badge_category: [
+        "profile",
+        "portfolio",
+        "experience",
+        "quality",
+        "speed",
+        "community",
+        "veteran",
+        "special",
+      ],
+      badge_rarity: [
+        "common",
+        "uncommon",
+        "rare",
+        "epic",
+        "legendary",
+        "mythic",
       ],
       booking_location_type: [
         "google_meet",
@@ -30729,6 +31972,7 @@ export const Constants = {
       ],
       campaign_status: [
         "draft",
+        "open",
         "active",
         "paused",
         "in_progress",
@@ -30824,6 +32068,18 @@ export const Constants = {
         "approved",
         "completed",
         "cancelled",
+        "draft",
+        "script_pending",
+        "script_approved",
+        "assigned",
+        "recording",
+        "recorded",
+        "editing",
+        "delivered",
+        "issue",
+        "corrected",
+        "paid",
+        "en_campaa",
       ],
       point_transaction_type: [
         "base_completion",
