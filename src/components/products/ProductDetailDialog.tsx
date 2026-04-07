@@ -151,7 +151,7 @@ export function ProductDetailDialog({
       startOfMonth.setHours(0, 0, 0, 0);
 
       const { count } = await supabase
-        .from('unified_transactions')
+        .from('ai_token_transactions')
         .select('id', { count: 'exact', head: true })
         .eq('action_type', 'research.full')
         .eq('executed_by', user!.id)
