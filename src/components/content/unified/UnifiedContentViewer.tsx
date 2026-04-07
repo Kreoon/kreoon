@@ -123,18 +123,17 @@ const VideoSlide = memo(function VideoSlide({
   const currentVideoUrl = videoUrls[currentVariantIndex] || videoUrls[0];
   const hasMultipleVariants = videoUrls.length > 1;
 
-  // Check if Bunny embed or direct video
-  const isBunnyEmbed = currentVideoUrl?.includes('iframe.mediadelivery.net/embed');
-
-  // Get HLS URL for direct videos
+  // Get HLS URL for Bunny videos (works with embed URLs too)
+  // getBunnyVideoUrls converts iframe.mediadelivery.net/embed URLs to HLS format
   const getVideoSource = useCallback(() => {
-    if (isBunnyEmbed) return null;
+    if (!currentVideoUrl) return null;
     const bunnyUrls = getBunnyVideoUrls(currentVideoUrl);
     if (bunnyUrls) {
       return { hls: bunnyUrls.hls, thumbnail: bunnyUrls.thumbnail };
     }
+    // Fallback for non-Bunny URLs
     return { hls: currentVideoUrl, thumbnail: item.thumbnail_url || '' };
-  }, [currentVideoUrl, item.thumbnail_url, isBunnyEmbed]);
+  }, [currentVideoUrl, item.thumbnail_url]);
 
   const videoSource = item.media_type === 'video' ? getVideoSource() : null;
 
@@ -155,15 +154,7 @@ const VideoSlide = memo(function VideoSlide({
     >
       {/* Video/Image content */}
       {item.media_type === 'video' ? (
-        isBunnyEmbed ? (
-          <iframe
-            key={currentVideoUrl}
-            src={`${currentVideoUrl}?autoplay=${isActive}&muted=${isMuted}&loop=true&responsive=true&preload=true`}
-            className="w-full h-full"
-            allow="autoplay; fullscreen; picture-in-picture"
-            allowFullScreen
-          />
-        ) : videoSource ? (
+        videoSource ? (
           <HLSVideoPlayer
             src={videoSource.hls}
             poster={videoSource.thumbnail || item.thumbnail_url}
