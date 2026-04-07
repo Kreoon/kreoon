@@ -76,6 +76,20 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Error closing expired seasons:", err);
     }
 
+    // ─── Reset expired AI tokens for free users ─────────
+    // Los tokens se resetean mensualmente basado en la fecha de registro
+    // Esta función solo afecta usuarios sin suscripción activa (free tier)
+    try {
+      const { data: tokensReset, error: tokensErr } = await supabase.rpc("reset_expired_token_balances");
+      if (tokensErr) {
+        console.error("Error resetting expired tokens:", tokensErr.message);
+      } else if (tokensReset && tokensReset > 0) {
+        console.log(`Reset AI tokens for ${tokensReset} user(s) with expired balances`);
+      }
+    } catch (err) {
+      console.error("Error in token reset job:", err);
+    }
+
     // ─── Fetch all relevant content ──────────────────────
     const { data: allContent, error: contentErr } = await supabase
       .from("content")

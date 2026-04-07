@@ -136,6 +136,31 @@ const TIER_TOKENS: Record<string, number> = {
 };
 
 // ============================================================================
+// FUNCIÓN HELPER: Calcular próximo reset basado en fecha de registro
+// ============================================================================
+// El ciclo de tokens se basa en el día del mes de registro.
+// Por ejemplo: si el usuario se registró el 15, su reset será el día 15 de cada mes.
+
+function calculateNextTokenReset(registrationDate: Date, fromDate: Date = new Date()): Date {
+  const dayOfMonth = registrationDate.getDate();
+
+  // Empezar con el mes actual
+  const nextReset = new Date(fromDate);
+  nextReset.setHours(12, 0, 0, 0); // Mediodía UTC para evitar problemas de timezone
+
+  // Intentar usar el día de registro, máximo 28 para evitar problemas con meses cortos
+  const targetDay = Math.min(dayOfMonth, 28);
+  nextReset.setDate(targetDay);
+
+  // Si la fecha calculada ya pasó, avanzar al siguiente mes
+  if (nextReset <= fromDate) {
+    nextReset.setMonth(nextReset.getMonth() + 1);
+  }
+
+  return nextReset;
+}
+
+// ============================================================================
 // OBTENER BALANCE
 // ============================================================================
 
@@ -158,11 +183,12 @@ async function getBalance(supabase: any, userId: string, organizationId?: string
     // Verificar si el usuario tiene una suscripción activa
     let subscriptionTier = organizationId ? "org_starter" : "creator_free";
     let tokensFromPlan = TIER_TOKENS[subscriptionTier] || 800;
+    let nextResetAt: Date;
 
-    // Buscar suscripción activa
+    // Buscar suscripción activa (incluye current_period_end para sincronizar ciclo)
     let subQuery = supabase
       .from("platform_subscriptions")
-      .select("tier, status")
+      .select("tier, status, current_period_end")
       .in("status", ["active", "trialing"]);
 
     if (organizationId) {
@@ -176,11 +202,15 @@ async function getBalance(supabase: any, userId: string, organizationId?: string
     if (subscription?.tier) {
       subscriptionTier = subscription.tier;
       tokensFromPlan = TIER_TOKENS[subscription.tier] || tokensFromPlan;
+      // Usar current_period_end de la suscripción como fecha de reset
+      if (subscription.current_period_end) {
+        nextResetAt = new Date(subscription.current_period_end);
+      }
     } else if (!organizationId) {
       // Si no hay org, verificar si es miembro de una marca (brand member)
       const { data: profile } = await supabase
         .from("profiles")
-        .select("active_brand_id, active_role")
+        .select("active_brand_id, active_role, created_at")
         .eq("id", userId)
         .single();
 
@@ -188,7 +218,7 @@ async function getBalance(supabase: any, userId: string, organizationId?: string
         // Es un miembro de marca, verificar suscripción de la marca
         const { data: brandSub } = await supabase
           .from("platform_subscriptions")
-          .select("tier, status")
+          .select("tier, status, current_period_end")
           .eq("user_id", userId)
           .is("organization_id", null)
           .in("status", ["active", "trialing"])
@@ -198,11 +228,38 @@ async function getBalance(supabase: any, userId: string, organizationId?: string
         if (brandSub?.tier) {
           subscriptionTier = brandSub.tier;
           tokensFromPlan = TIER_TOKENS[brandSub.tier] || tokensFromPlan;
+          if (brandSub.current_period_end) {
+            nextResetAt = new Date(brandSub.current_period_end);
+          }
         } else {
           // Sin suscripción, usar brand_free si es marca
           subscriptionTier = "brand_free";
           tokensFromPlan = TIER_TOKENS.brand_free;
         }
+      }
+
+      // Para usuarios free: calcular next_reset_at basado en la fecha de registro
+      if (!nextResetAt! && profile?.created_at) {
+        nextResetAt = calculateNextTokenReset(new Date(profile.created_at));
+      }
+    }
+
+    // Si aún no tenemos fecha de reset, usar la fecha de creación del usuario de auth
+    if (!nextResetAt!) {
+      // Obtener created_at del usuario si no lo tenemos
+      if (organizationId) {
+        const { data: org } = await supabase
+          .from("organizations")
+          .select("created_at")
+          .eq("id", organizationId)
+          .single();
+        if (org?.created_at) {
+          nextResetAt = calculateNextTokenReset(new Date(org.created_at));
+        }
+      }
+      // Fallback: 30 días desde ahora
+      if (!nextResetAt!) {
+        nextResetAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
       }
     }
 
@@ -213,7 +270,7 @@ async function getBalance(supabase: any, userId: string, organizationId?: string
         balance_subscription: tokensFromPlan,
         monthly_allowance: tokensFromPlan,
         subscription_tier: subscriptionTier,
-        next_reset_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        next_reset_at: nextResetAt.toISOString(),
       })
       .select()
       .single();

@@ -206,7 +206,8 @@ async function handleSubscriptionChange(supabase: any, subscription: Stripe.Subs
   }
 
   // Actualizar tokens mensuales si cambió el plan
-  await updateTokenAllowance(supabase, wallet, planConfig.ai_tokens_monthly, tierMapping.tier);
+  // Pasar current_period_end para sincronizar el ciclo de tokens con el ciclo de Stripe
+  await updateTokenAllowance(supabase, wallet, planConfig.ai_tokens_monthly, tierMapping.tier, subscription.current_period_end);
 
   // Sync organizations table (backward compat with old trial system)
   if (wallet.organization_id && (subscription.status === "active" || subscription.status === "trialing")) {
@@ -245,11 +246,11 @@ async function handleSubscriptionCancelled(supabase: any, subscription: Stripe.S
 
 async function handleInvoicePaid(supabase: any, invoice: Stripe.Invoice) {
   const subscriptionId = invoice.subscription as string;
-  
+
   // Registrar transacción
   const { data: subscription } = await supabase
     .from("platform_subscriptions")
-    .select("wallet_id, tier")
+    .select("wallet_id, tier, current_period_end")
     .eq("stripe_subscription_id", subscriptionId)
     .single();
 
@@ -265,8 +266,12 @@ async function handleInvoicePaid(supabase: any, invoice: Stripe.Invoice) {
       processed_at: new Date().toISOString(),
     });
 
-    // Renovar tokens mensuales
-    await resetMonthlyTokens(supabase, subscription.wallet_id);
+    // Renovar tokens mensuales usando la fecha del próximo ciclo de Stripe
+    // current_period_end se actualizó en handleSubscriptionChange al procesar el webhook
+    const nextResetDate = subscription.current_period_end
+      ? new Date(subscription.current_period_end)
+      : undefined;
+    await resetMonthlyTokens(supabase, subscription.wallet_id, nextResetDate);
   }
 }
 
@@ -685,10 +690,22 @@ async function getPlanConfig(supabase: any, tier: string) {
   };
 }
 
-async function updateTokenAllowance(supabase: any, wallet: any, monthlyTokens: number, tier: string) {
-  const query = wallet.user_id 
+async function updateTokenAllowance(
+  supabase: any,
+  wallet: any,
+  monthlyTokens: number,
+  tier: string,
+  currentPeriodEnd?: number // Unix timestamp from Stripe subscription
+) {
+  const query = wallet.user_id
     ? { user_id: wallet.user_id }
     : { organization_id: wallet.organization_id };
+
+  // Usar current_period_end de Stripe como fecha de próximo reset
+  // Esto ancla el ciclo de tokens al ciclo de facturación
+  const nextReset = currentPeriodEnd
+    ? new Date(currentPeriodEnd * 1000)
+    : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
   await supabase
     .from("ai_token_balances")
@@ -697,12 +714,12 @@ async function updateTokenAllowance(supabase: any, wallet: any, monthlyTokens: n
       monthly_allowance: monthlyTokens,
       balance_subscription: monthlyTokens,
       last_reset_at: new Date().toISOString(),
-      next_reset_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      next_reset_at: nextReset.toISOString(),
     })
     .match(query);
 }
 
-async function resetMonthlyTokens(supabase: any, walletId: string) {
+async function resetMonthlyTokens(supabase: any, walletId: string, nextResetDate?: Date) {
   const { data: wallet } = await supabase
     .from("unified_wallets")
     .select("user_id, organization_id")
@@ -711,7 +728,7 @@ async function resetMonthlyTokens(supabase: any, walletId: string) {
 
   if (!wallet) return;
 
-  const query = wallet.user_id 
+  const query = wallet.user_id
     ? { user_id: wallet.user_id }
     : { organization_id: wallet.organization_id };
 
@@ -722,17 +739,20 @@ async function resetMonthlyTokens(supabase: any, walletId: string) {
     .single();
 
   if (balance) {
-    // Cumulative: ADD monthly allowance to remaining balance (not replace)
+    // CORREGIDO: Resetear a monthly_allowance, NO acumular
+    // Los tokens del plan se renuevan cada mes, no se acumulan
+    const nextReset = nextResetDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
     await supabase
       .from("ai_token_balances")
       .update({
-        balance_subscription: (balance.balance_subscription || 0) + balance.monthly_allowance,
+        balance_subscription: balance.monthly_allowance, // Solo el allowance mensual (NO acumulativo)
         last_reset_at: new Date().toISOString(),
-        next_reset_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        next_reset_at: nextReset.toISOString(),
       })
       .eq("id", balance.id);
 
-    // Registrar reset
+    // Registrar reset con el nuevo balance (reseteado, no acumulado)
     await supabase.from("ai_token_transactions").insert({
       balance_id: balance.id,
       transaction_type: "reset",
