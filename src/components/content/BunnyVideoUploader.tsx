@@ -185,9 +185,18 @@ export function BunnyVideoUploader({
           }
         });
 
-        xhr.addEventListener('error', () => reject(new Error('Error de conexión. Verifica tu internet y desactiva VPN/bloqueadores si los tienes.')));
+        xhr.addEventListener('error', (e) => {
+          console.error('[BunnyVideoUploader] XHR error event:', {
+            readyState: xhr.readyState,
+            status: xhr.status,
+            statusText: xhr.statusText,
+            responseURL: xhr.responseURL,
+            uploadUrl: createData.upload_url,
+          });
+          reject(new Error(`Error de conexión (estado: ${xhr.readyState}). Verifica tu internet y desactiva VPN/bloqueadores si los tienes.`));
+        });
         xhr.addEventListener('abort', () => reject(new Error('Subida cancelada')));
-        xhr.addEventListener('timeout', () => reject(new Error('Tiempo de espera agotado. Verifica tu conexión a internet.')));
+        xhr.addEventListener('timeout', () => reject(new Error('Tiempo de espera agotado (10 min). Verifica tu conexión a internet.')));
 
         xhr.open('PUT', createData.upload_url);
         xhr.setRequestHeader('AccessKey', createData.access_key);
