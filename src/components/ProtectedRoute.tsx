@@ -213,7 +213,7 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
   // ─── ACCOUNT TYPE VALIDATION ───────────────────────────────────────────
   // Validate routes based on user's account type (set during onboarding)
   // This ensures users only access routes appropriate to their account type
-  const TALENT_ROUTES = ['/creator-dashboard', '/scripts', '/wallet', '/board']; // /board para gestionar proyectos
+  const TALENT_ROUTES = ['/creator-dashboard', '/scripts', '/wallet', '/board', '/content']; // /board y /content para gestionar proyectos y portafolio
   const ORG_ROUTES = ['/dashboard', '/board', '/content', '/talent', '/scripts', '/clients-hub', '/team', '/ranking'];
   const CLIENT_ROUTES = ['/client-dashboard', '/client-board', '/board', '/ad-generator', '/marketing-ads']; // /board para ver proyectos
   const SHARED_ROUTES = ['/marketplace', '/social', '/explore', '/profile', '/settings', '/onboarding', '/unlock-access', '/live', '/social-hub', '/planes', '/wallet'];
