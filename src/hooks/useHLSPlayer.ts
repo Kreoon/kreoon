@@ -212,11 +212,11 @@ export function getBunnyThumbnailUrl(
 export function getBunnyVideoUrls(url: string): BunnyVideoUrls | null {
   if (!url) return null;
 
-  // Host para streaming (HLS/MP4)
+  // Host para streaming (HLS/MP4) y thumbnails
   const BUNNY_STREAM_HOST = 'vz-78fcd769-050.b-cdn.net';
   const BUNNY_CDN_HOST = BUNNY_STREAM_HOST; // Alias para compatibilidad
-  // Host para thumbnails (dominio personalizado)
-  const BUNNY_THUMB_HOST = 'cdn.kreoon.com';
+  // Thumbnails deben usar el mismo host de streaming (cdn.kreoon.com no sirve thumbnails)
+  const BUNNY_THUMB_HOST = BUNNY_STREAM_HOST;
 
   // Helper to build all quality URLs for a given host and videoId
   const buildUrls = (streamHost: string, videoId: string): BunnyVideoUrls => ({
@@ -297,8 +297,8 @@ export function getBunnyVideoUrlCandidates(url: string): BunnyVideoUrls[] {
   ];
 
   const uniqueHosts = Array.from(new Set(candidateHosts));
-  // Dominio personalizado para thumbnails
-  const BUNNY_THUMB_HOST = 'cdn.kreoon.com';
+  // Thumbnails deben usar el mismo host de streaming
+  const BUNNY_THUMB_HOST = 'vz-78fcd769-050.b-cdn.net';
 
   return uniqueHosts.map((host) => ({
     hls: `https://${host}/${videoId}/playlist.m3u8`,
