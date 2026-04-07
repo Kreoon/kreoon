@@ -482,8 +482,8 @@ function AppRoutes() {
         <Route path="/book/reschedule/:bookingId" element={<RescheduleBookingPage />} />
         <Route path="/settings" element={<ProtectedRoute allowNoRoles><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
         <Route path="/planes" element={<ProtectedRoute allowNoRoles><MainLayout><PlanesPage /></MainLayout></ProtectedRoute>} />
-        <Route path="/freelancer-dashboard" element={<ProtectedRoute allowNoRoles><MainLayout><FreelancerDashboard /></MainLayout></ProtectedRoute>} />
-        <Route path="/creator-dashboard" element={<ProtectedRoute allowedRoles={['creator', 'content_creator']}><MainLayout><CreatorDashboard /></MainLayout></ProtectedRoute>} />
+        <Route path="/freelancer-dashboard" element={<Navigate to="/creator-dashboard" replace />} />
+        <Route path="/creator-dashboard" element={<ProtectedRoute allowNoRoles><MainLayout><CreatorDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/editor-dashboard" element={<ProtectedRoute allowedRoles={['editor']}><MainLayout><EditorDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/strategist-dashboard" element={<ProtectedRoute allowedRoles={['strategist']}><MainLayout><StrategistDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/client-dashboard" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientDashboard /></MainLayout></ProtectedRoute>} />

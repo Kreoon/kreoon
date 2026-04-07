@@ -62,14 +62,18 @@ export default function CreatorDashboard() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { effectiveUserId, isImpersonating } = useImpersonation();
-  
+
+  // Detectar si es freelancer (sin organización pero con acceso desbloqueado)
+  const isFreelancer = !profile?.organization_id && profile?.platform_access_unlocked;
+
   // Use effective user ID for impersonation, otherwise real user ID
   const targetUserId = isImpersonating ? effectiveUserId : user?.id;
-  
+
   const { content: allContent, loading, refetch } = useContent(targetUserId, 'creator');
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
   const [thisMonthActive, setThisMonthActive] = useState(false);
-  const [dashboardTab, setDashboardTab] = useState<'studio' | 'marketplace'>('studio');
+  // Tab por defecto: marketplace para freelancers, studio para creators en org
+  const [dashboardTab, setDashboardTab] = useState<'studio' | 'marketplace'>(isFreelancer ? 'marketplace' : 'studio');
   const [kpiDialog, setKpiDialog] = useState<{
     open: boolean;
     title: string;
@@ -195,17 +199,19 @@ export default function CreatorDashboard() {
           <MarketplaceDashboardTab role="creator" />
         ) : (
         <>
-        {/* Season Urgency Banner */}
-        <SeasonUrgencyBanner />
+        {/* Season Urgency Banner - Solo para creators en org */}
+        {!isFreelancer && <SeasonUrgencyBanner />}
 
-        {/* Banner de Temporada - El Estudio */}
-        <SeasonBanner variant="compact" showMetas={false} />
+        {/* Banner de Temporada - El Estudio - Solo para creators en org */}
+        {!isFreelancer && <SeasonBanner variant="compact" showMetas={false} />}
 
-        {/* Progreso al Siguiente Nivel */}
-        <ProgressToNextLevel
-          creditosActuales={totalPaid + (approvedContent.length * 50)}
-          size="md"
-        />
+        {/* Progreso al Siguiente Nivel - Solo para creators en org */}
+        {!isFreelancer && (
+          <ProgressToNextLevel
+            creditosActuales={totalPaid + (approvedContent.length * 50)}
+            size="md"
+          />
+        )}
 
         {/* Acciones Rápidas del Camerino */}
         <QuickActions
@@ -553,8 +559,9 @@ export default function CreatorDashboard() {
           </motion.div>
 
           {/* Ranking y Historial de Puntos - Animated */}
-          {targetUserId && (
-            <motion.div 
+          {/* Ranking y Historial de Puntos - Solo para creators en org */}
+          {targetUserId && !isFreelancer && (
+            <motion.div
               className="grid grid-cols-1 lg:grid-cols-2 gap-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

@@ -233,7 +233,7 @@ export const PERMISSION_GROUP_LABELS: Record<PermissionGroup, string> = {
 /** Dashboard path for each permission group */
 export const GROUP_DASHBOARD_PATHS: Record<PermissionGroup, string> = {
   admin: '/dashboard',
-  talent: '/freelancer-dashboard',  // Ruta que sí existe
+  talent: '/creator-dashboard',  // Consolidado con CreatorDashboard adaptativo
   client: '/client-dashboard',
 };
 
@@ -248,7 +248,7 @@ export function getDashboardForRole(role: string | null | undefined): string {
 
 /** Dashboard path for each account type */
 export const ACCOUNT_TYPE_DASHBOARDS: Record<AccountType, string> = {
-  talent: '/freelancer-dashboard',  // Ruta que sí existe
+  talent: '/creator-dashboard',  // Consolidado con CreatorDashboard adaptativo
   organization: '/dashboard',
   client: '/client-dashboard',
 };

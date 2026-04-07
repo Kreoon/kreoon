@@ -57,7 +57,7 @@ import { UserOrgSwitcher } from "@/components/layout/UserOrgSwitcher";
 import { RoleSwitcher } from "@/components/layout/RoleSwitcher";
 
 import { supabase } from "@/integrations/supabase/client";
-import { SidebarAchievementsWidget } from "@/components/points/SidebarAchievementsWidget";
+import { SidebarAchievementsWidget, GlobalRankingWidget } from "@/components/points";
 import { AITokensPanelTrigger } from "@/components/ai/AITokensPanel";
 import { Badge } from "@/components/ui/badge";
 import { useWhiteLabel } from "@/hooks/useWhiteLabel";
@@ -262,7 +262,7 @@ const freelanceSections: NavSection[] = [
   {
     label: "MI NEGOCIO",
     items: [
-      { name: "Dashboard", href: "/freelancer-dashboard", icon: LayoutDashboard, tourId: "sidebar-freelancer-dash" },
+      { name: "Dashboard", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-freelancer-dash" },
       { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban, tourId: "sidebar-freelancer-board" },
     ]
   },
@@ -451,19 +451,16 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     return activeRole;
   }, [realRoles, activeRole]);
 
-  // IMPORTANT: Use activeRole directly instead of activeGroup (PermissionGroup)
-  // PermissionGroup only has 3 values: 'admin' | 'talent' | 'client'
-  // But we need to distinguish between creator, editor, strategist which all map to 'talent'
-  const activeIsAdmin = activeRole === 'admin' || activeRole === 'team_leader' || realRoles.includes('admin');
-  const activeIsStrategist = activeRole === 'strategist' || activeRole === 'digital_strategist' || activeRole === 'creative_strategist' ||
-    realRoles.some(r => ['strategist', 'digital_strategist', 'creative_strategist'].includes(r));
-  const activeIsEditor = activeRole === 'editor' || realRoles.includes('editor');
-  // Client detection FIRST: if user has client role and no admin/strategist/editor, they're a client
-  // (ignore 'creator' ghost role from organization_members default)
-  const activeIsClient = activeRole === 'client' || activeGroup === 'client' || (hasClientRole && !activeIsAdmin && !activeIsStrategist && !activeIsEditor);
+  // IMPORTANT: Use ONLY activeRole to determine which panel to show
+  // DO NOT use realRoles.includes() as fallback - it causes multi-role users to see wrong panel
+  // Example: user with ['creator', 'editor'] and activeRole='creator' should see creator panel, not editor
+  const activeIsAdmin = activeRole === 'admin' || activeRole === 'team_leader';
+  const activeIsStrategist = activeRole === 'strategist' || activeRole === 'digital_strategist' || activeRole === 'creative_strategist';
+  const activeIsEditor = activeRole === 'editor';
+  // Client detection: only if activeRole is client or activeGroup is client
+  const activeIsClient = activeRole === 'client' || activeGroup === 'client';
   // Creator: check for both 'creator' (legacy) and 'content_creator' (new)
-  const activeIsCreator = !activeIsClient && (activeRole === 'creator' || activeRole === 'content_creator' ||
-    realRoles.some(r => ['creator', 'content_creator'].includes(r)));
+  const activeIsCreator = !activeIsClient && (activeRole === 'creator' || activeRole === 'content_creator');
 
   // Fetch current client name and count for client users
   useEffect(() => {
@@ -888,6 +885,13 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         {!activeIsClient && (
           <div className="border-t border-zinc-200 dark:border-zinc-800">
             <SidebarAchievementsWidget collapsed={collapsed} />
+          </div>
+        )}
+
+        {/* Global Ranking Widget - show for everyone except clients */}
+        {!activeIsClient && !collapsed && (
+          <div className="border-t border-zinc-200 dark:border-zinc-800 p-2">
+            <GlobalRankingWidget showTopN={3} compact showNextBadges={false} />
           </div>
         )}
 

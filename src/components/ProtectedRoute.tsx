@@ -79,7 +79,7 @@ const ORG_REQUIRED_ROUTES = ['/dashboard', '/board', '/content', '/talent', '/sc
 const SOCIAL_ROUTES = ['/social', '/marketplace', '/explore', '/profile', '/settings'];
 
 // Additional routes that unlocked freelancers can access (no org roles but platform_access_unlocked = true)
-const FREELANCE_ALLOWED_ROUTES = ['/board', '/scripts', '/freelancer-dashboard', '/social-hub', '/wallet', '/planes'];
+const FREELANCE_ALLOWED_ROUTES = ['/board', '/scripts', '/creator-dashboard', '/social-hub', '/wallet', '/planes'];
 
 // Routes that brand members/clients can access (independent brands without org)
 const CLIENT_ALLOWED_ROUTES = ['/client-dashboard', '/board', '/marketplace', '/wallet', '/planes', '/social-hub', '/live', '/marketing-ads', '/ad-generator'];
@@ -205,7 +205,7 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
   // ─── ACCOUNT TYPE VALIDATION ───────────────────────────────────────────
   // Validate routes based on user's account type (set during onboarding)
   // This ensures users only access routes appropriate to their account type
-  const TALENT_ROUTES = ['/freelancer-dashboard', '/scripts', '/wallet', '/board']; // /board para gestionar proyectos
+  const TALENT_ROUTES = ['/creator-dashboard', '/scripts', '/wallet', '/board']; // /board para gestionar proyectos
   const ORG_ROUTES = ['/dashboard', '/board', '/content', '/talent', '/scripts', '/clients-hub', '/team', '/ranking'];
   const CLIENT_ROUTES = ['/client-dashboard', '/ad-generator', '/marketing-ads'];
   const SHARED_ROUTES = ['/marketplace', '/social', '/explore', '/profile', '/settings', '/onboarding', '/unlock-access', '/live', '/social-hub', '/planes', '/wallet'];

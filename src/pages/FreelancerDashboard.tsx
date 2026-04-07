@@ -1,3 +1,16 @@
+/**
+ * @deprecated Este componente está deprecado.
+ * Los usuarios freelancer ahora son redirigidos a /creator-dashboard
+ * que detecta automáticamente si el usuario es freelancer (sin organización)
+ * y adapta la UI mostrando la pestaña Marketplace por defecto.
+ *
+ * Este archivo se mantiene temporalmente para referencia de las queries
+ * y componentes que deben migrarse a MarketplaceDashboardTab.
+ *
+ * TODO: Eliminar este archivo después de verificar que toda la funcionalidad
+ * está migrada a CreatorDashboard + MarketplaceDashboardTab.
+ */
+
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';

@@ -210,7 +210,7 @@ const freelanceSections: NavSection[] = [
   {
     label: "MI NEGOCIO",
     items: [
-      { name: "Dashboard", href: "/freelancer-dashboard", icon: LayoutDashboard },
+      { name: "Dashboard", href: "/creator-dashboard", icon: LayoutDashboard },
       { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
     ]
@@ -412,19 +412,16 @@ export function MobileNav() {
   // User has multiple distinct permission groups (e.g., creator + editor)
   const isMultiRoleUser = allUserGroups.length > 1;
 
-  // IMPORTANT: Use activeRole directly instead of activeGroup (PermissionGroup)
-  // PermissionGroup only has 3 values: 'admin' | 'talent' | 'client'
-  // But we need to distinguish between creator, editor, strategist which all map to 'talent'
-  const activeIsAdmin = activeRole === 'admin' || activeRole === 'team_leader' || roles.includes('admin');
-  const activeIsStrategist = activeRole === 'strategist' || activeRole === 'digital_strategist' || activeRole === 'creative_strategist' ||
-    roles.some(r => ['strategist', 'digital_strategist', 'creative_strategist'].includes(r));
-  const activeIsEditor = activeRole === 'editor' || roles.includes('editor');
-  // Client detection FIRST: if user has client role and no admin/strategist/editor, they're a client
-  // (ignore 'creator' ghost role from organization_members default)
-  const activeIsClient = activeRole === 'client' || activeGroup === 'client' || (hasClientRole && !activeIsAdmin && !activeIsStrategist && !activeIsEditor);
+  // IMPORTANT: Use ONLY activeRole to determine which panel to show
+  // DO NOT use roles.includes() as fallback - it causes multi-role users to see wrong panel
+  // Example: user with ['creator', 'editor'] and activeRole='creator' should see creator panel, not editor
+  const activeIsAdmin = activeRole === 'admin' || activeRole === 'team_leader';
+  const activeIsStrategist = activeRole === 'strategist' || activeRole === 'digital_strategist' || activeRole === 'creative_strategist';
+  const activeIsEditor = activeRole === 'editor';
+  // Client detection: only if activeRole is client or activeGroup is client
+  const activeIsClient = activeRole === 'client' || activeGroup === 'client';
   // Creator: check for both 'creator' (legacy) and 'content_creator' (new)
-  const activeIsCreator = !activeIsClient && (activeRole === 'creator' || activeRole === 'content_creator' ||
-    roles.some(r => ['creator', 'content_creator'].includes(r)));
+  const activeIsCreator = !activeIsClient && (activeRole === 'creator' || activeRole === 'content_creator');
 
   // Fetch current client name and count for client users (with brand fallback)
   useEffect(() => {
