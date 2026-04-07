@@ -652,25 +652,16 @@ export default function ContentBoard() {
   // Handler for creator status change (assigned -> recording -> recorded) with UP integration
   const handleCreatorStatusChange = useCallback(async (contentId: string, newStatus: 'recording' | 'recorded') => {
     try {
-      // First get the current status
-      const { data: currentContent } = await supabase
-        .from('content')
-        .select('status')
-        .eq('id', contentId)
-        .single();
-
-      if (!currentContent) throw new Error('Content not found');
-
-      // Use centralized status change with UP points
+      // Use centralized RPC that handles everything server-side (no prior SELECT needed)
       await updateContentStatusWithUP({
         contentId,
-        oldStatus: currentContent.status as ContentStatus,
+        oldStatus: 'assigned' as ContentStatus, // Will be obtained server-side
         newStatus: newStatus as ContentStatus
       });
-      
+
       // Refresh the content list
       refetch();
-      
+
       const statusLabels: Record<string, string> = {
         'recording': 'En Grabación',
         'recorded': 'Grabado'

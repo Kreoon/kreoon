@@ -10,6 +10,75 @@ interface StatusChangeParams {
 }
 
 /**
+ * Actualiza el estado de un contenido usando RPC simplificada (sin necesidad de old_status)
+ * Esta función no requiere que el cliente haga queries previos - todo se maneja server-side.
+ *
+ * @param contentId - ID del contenido
+ * @param newStatus - Nuevo estado
+ * @throws Error de Supabase si falla el update
+ */
+export async function updateContentStatus(contentId: string, newStatus: ContentStatus) {
+  logger.debug('ContentStatus Starting status change', { contentId, newStatus });
+
+  // Use the simplified RPC that doesn't require old_status
+  // This bypasses RLS completely and handles everything server-side
+  const { data: result, error: rpcError } = await supabase
+    .rpc('update_content_status_rpc', {
+      p_content_id: contentId,
+      p_new_status: newStatus
+    });
+
+  if (rpcError) {
+    logger.error('ContentStatus RPC error', rpcError);
+    throw rpcError;
+  }
+
+  if (result && !result.success) {
+    logger.error('ContentStatus Function error', result.error);
+    throw new Error(result.error || 'Failed to update content status');
+  }
+
+  logger.debug('ContentStatus Updated via RPC', {
+    oldStatus: result?.old_status,
+    newStatus: result?.new_status
+  });
+
+  // Handle UP points for Unified Reputation Engine
+  if (result?.old_status && result?.new_status && result.old_status !== result.new_status) {
+    try {
+      const { data: contentArr } = await supabase
+        .rpc('get_content_by_id', { p_content_id: contentId });
+
+      const content = contentArr?.[0];
+
+      if (content?.organization_id) {
+        const upParams = {
+          contentId,
+          organizationId: content.organization_id,
+          oldStatus: result.old_status as ContentStatus,
+          newStatus: result.new_status as ContentStatus,
+          creatorId: content.creator_id,
+          editorId: content.editor_id,
+          recordingAt: content.recording_at,
+          recordedAt: content.recorded_at,
+          editingAt: content.editing_at,
+          deliveredAt: content.delivered_at,
+          issueAt: content.issue_at,
+          approvedAt: content.approved_at
+        };
+
+        logger.debug('ContentStatus Calling handleUPStatusChange');
+        await handleUPStatusChange(upParams);
+      }
+    } catch (upError) {
+      logger.error('ContentStatus Error handling UP points', upError);
+    }
+  }
+
+  return { success: true, oldStatus: result?.old_status, newStatus: result?.new_status };
+}
+
+/**
  * Actualiza el estado de un contenido en Supabase y dispara la lógica de puntos UP
  * (transiciones de estado que otorgan o penalizan puntos a creador/editor).
  *
@@ -20,18 +89,17 @@ interface StatusChangeParams {
  *
  * @param params - contentId, oldStatus y newStatus
  * @throws Error de Supabase si falla el update del contenido
+ * @deprecated Use updateContentStatus(contentId, newStatus) instead - doesn't require old_status
  */
 export async function updateContentStatusWithUP(params: StatusChangeParams) {
   const { contentId, oldStatus, newStatus } = params;
 
   logger.debug('ContentStatusWithUP Starting status change', { contentId, oldStatus, newStatus });
 
-  // Use the new consolidated RPC function that handles everything server-side
-  // This avoids multiple client-side queries that can trigger RLS errors
+  // Use the simplified RPC - old_status is obtained server-side
   const { data: result, error: rpcError } = await supabase
-    .rpc('update_content_status_with_up', {
+    .rpc('update_content_status_rpc', {
       p_content_id: contentId,
-      p_old_status: oldStatus,
       p_new_status: newStatus
     });
 
@@ -58,12 +126,11 @@ export async function updateContentStatusWithUP(params: StatusChangeParams) {
     const content = contentArr?.[0];
 
     if (content?.organization_id) {
-      const now = new Date().toISOString();
       const upParams = {
         contentId,
         organizationId: content.organization_id,
-        oldStatus,
-        newStatus,
+        oldStatus: result?.old_status || oldStatus,
+        newStatus: result?.new_status || newStatus,
         creatorId: content.creator_id,
         editorId: content.editor_id,
         recordingAt: content.recording_at,
