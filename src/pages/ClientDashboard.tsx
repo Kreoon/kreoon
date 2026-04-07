@@ -137,14 +137,16 @@ interface Product {
 }
 
 export default function ClientDashboard() {
-  const { user, profile, signOut, refetchUserData } = useAuth();
+  const { user, profile, signOut, refetchUserData, isClient: isClientRole } = useAuth();
   const { isImpersonating, effectiveClientId } = useImpersonation();
   const { brandClient, activeBrand, loading: brandClientLoading } = useBrandClient();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   // Detect independent brand member (no organization, just brand)
-  const isBrandMember = !!(profile as any)?.active_brand_id ||
+  // Include isClientRole for consistency with ProtectedRoute detection
+  const isBrandMember = isClientRole ||
+    !!(profile as any)?.active_brand_id ||
     (profile as any)?.active_role === 'client';
   const hasOrganization = !!(profile as any)?.current_organization_id;
 

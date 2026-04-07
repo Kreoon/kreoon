@@ -47,6 +47,11 @@ export default function NoCompany() {
     return <Navigate to="/client-dashboard" replace />;
   }
 
+  // Organization clients don't need to create a brand - they have access through the org
+  if (!orgLoading && currentOrgId) {
+    return <Navigate to="/client-dashboard" replace />;
+  }
+
   const handleSignOut = async () => {
     await signOut();
     navigate("/");

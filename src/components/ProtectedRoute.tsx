@@ -115,6 +115,14 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
         return;
       }
 
+      // Organization clients are valid - they have access through the org
+      // If user has current_organization_id, they are attached to an organization
+      // and don't need to create/join a brand
+      if (profile?.current_organization_id) {
+        setClientHasCompany(true);
+        return;
+      }
+
       setCheckingCompany(true);
       try {
         // Check client_users (org-linked), company_profiles (AI matching), and brand_members (independent brands)
@@ -162,7 +170,7 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     if (rolesLoaded && user) {
       checkClientCompany();
     }
-  }, [user, isClient, rolesLoaded, isImpersonating]);
+  }, [user, isClient, rolesLoaded, isImpersonating, profile?.current_organization_id]);
 
   // Wait for both auth loading AND roles to be loaded AND org check for platform root
   if (loading || !rolesLoaded || orgLoading || talentGateLoading || (isClient && clientHasCompany === null) || checkingCompany) {
