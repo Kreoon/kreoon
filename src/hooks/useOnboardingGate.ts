@@ -439,7 +439,10 @@ export function useOnboardingGate() {
   }, [authLoading, isLoadingCompletion, completionStatus, pendingDocuments]);
 
   const currentStep = getCurrentStep();
-  const isComplete = currentStep === 'complete';
+  // MEJORA: Si el perfil ya indica onboarding_completed, confiar en eso
+  // Esto previene que usuarios con cache desactualizado queden atascados
+  const profileOnboardingCompleted = profile && (profile as any).onboarding_completed === true;
+  const isComplete = currentStep === 'complete' || profileOnboardingCompleted;
   const isLoading = authLoading || isLoadingCompletion || isLoadingDocuments;
 
   // Datos del perfil actual para pre-llenar
