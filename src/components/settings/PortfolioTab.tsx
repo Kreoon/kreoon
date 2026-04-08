@@ -1,6 +1,7 @@
 import { useRef, useState, useMemo } from 'react';
 import {
   Upload, Video, Image as ImageIcon, Trash2, Star, Loader2, FolderOpen, Pencil,
+  Building2, Eye, EyeOff,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -164,6 +165,12 @@ export function PortfolioTab() {
                   item={item}
                   onDelete={() => handleDelete(item.id)}
                   onTogglePin={() => togglePin(item.id)}
+                  onToggleVisibility={async () => {
+                    const ok = await updateItem(item.id, { is_public: !item.is_public });
+                    if (ok) {
+                      toast.success(item.is_public ? 'Oculto del perfil' : 'Visible en perfil');
+                    }
+                  }}
                   onEdit={() => setEditingItem(item)}
                   isDeleting={deletingId === item.id}
                 />
@@ -305,12 +312,14 @@ function PortfolioItemCard({
   item,
   onDelete,
   onTogglePin,
+  onToggleVisibility,
   onEdit,
   isDeleting,
 }: {
   item: PortfolioItemData;
   onDelete: () => void;
   onTogglePin: () => void;
+  onToggleVisibility: () => void;
   onEdit: () => void;
   isDeleting: boolean;
 }) {
@@ -366,6 +375,22 @@ function PortfolioItemCard({
         </Badge>
       )}
 
+      {/* Organization content badge */}
+      {item.source_type === 'organization_content' && (
+        <Badge className="absolute top-8 left-2 bg-purple-500/90 text-white text-[10px] gap-1">
+          <Building2 className="h-3 w-3" />
+          De proyecto
+        </Badge>
+      )}
+
+      {/* Visibility badge */}
+      {!item.is_public && (
+        <Badge variant="outline" className="absolute bottom-2 left-2 bg-black/70 text-white text-[10px] gap-1 border-white/30">
+          <EyeOff className="h-3 w-3" />
+          Oculto
+        </Badge>
+      )}
+
       {/* Type badge */}
       <Badge variant="secondary" className="absolute top-2 right-2 text-[10px]">
         {item.media_type === 'video' ? 'Video' : 'Imagen'}
@@ -389,6 +414,15 @@ function PortfolioItemCard({
             >
               <Pencil className="h-3 w-3 mr-1" />
               Editar
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="h-7 text-xs"
+              onClick={onToggleVisibility}
+              title={item.is_public ? 'Ocultar del perfil' : 'Mostrar en perfil'}
+            >
+              {item.is_public ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
             </Button>
             <Button
               size="sm"

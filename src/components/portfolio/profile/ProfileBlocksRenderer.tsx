@@ -128,35 +128,53 @@ const BlockRenderer = memo(function BlockRenderer({
 // Block Components
 // =============================================================================
 
-interface Post {
+interface PortfolioItem {
   id: string;
   media_url: string;
   media_type: string;
   thumbnail_url: string | null;
   views_count: number | null;
   likes_count: number | null;
+  source_type: string | null;
+  title: string | null;
 }
 
 function PortfolioGridBlock({ userId }: { userId: string }) {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [items, setItems] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      const { data, error } = await supabase
-        .from('portfolio_posts')
-        .select('id, media_url, media_type, thumbnail_url, views_count, likes_count')
+    const fetchItems = async () => {
+      // Primero obtener el creator_profile_id del usuario
+      const { data: creatorProfile } = await supabase
+        .from('creator_profiles')
+        .select('id')
         .eq('user_id', userId)
+        .single();
+
+      if (!creatorProfile) {
+        setLoading(false);
+        return;
+      }
+
+      // Luego obtener los items del portafolio que son públicos
+      const { data, error } = await (supabase as any)
+        .from('portfolio_items')
+        .select('id, media_url, media_type, thumbnail_url, views_count, likes_count, source_type, title')
+        .eq('creator_id', creatorProfile.id)
+        .eq('is_public', true)
+        .order('is_featured', { ascending: false })
+        .order('display_order', { ascending: true })
         .order('created_at', { ascending: false })
         .limit(12);
 
       if (!error && data) {
-        setPosts(data);
+        setItems(data);
       }
       setLoading(false);
     };
 
-    fetchPosts();
+    fetchItems();
   }, [userId]);
 
   if (loading) {
@@ -169,33 +187,34 @@ function PortfolioGridBlock({ userId }: { userId: string }) {
     );
   }
 
-  if (posts.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
         <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-        <p>No hay publicaciones aún</p>
+        <p>No hay contenido en el portafolio</p>
       </div>
     );
   }
 
   return (
     <div className="grid grid-cols-3 gap-1">
-      {posts.map(post => {
+      {items.map(item => {
         // Get Bunny CDN thumbnail for videos (same as main feed)
-        const bunnyUrls = post.media_type === 'video' ? getBunnyVideoUrls(post.media_url) : null;
-        const effectiveThumbnail = bunnyUrls?.thumbnail || post.thumbnail_url;
-        
+        const bunnyUrls = item.media_type === 'video' ? getBunnyVideoUrls(item.media_url) : null;
+        const effectiveThumbnail = bunnyUrls?.thumbnail || item.thumbnail_url;
+        const isFromOrg = item.source_type === 'organization_content';
+
         return (
           <div
-            key={post.id}
+            key={item.id}
             className="aspect-[4/5] relative group cursor-pointer overflow-hidden rounded-sm bg-muted"
           >
-            {post.media_type === 'video' ? (
+            {item.media_type === 'video' ? (
               <>
                 {effectiveThumbnail ? (
                   <img
                     src={effectiveThumbnail}
-                    alt="Post"
+                    alt={item.title || 'Portfolio item'}
                     className="w-full h-full object-cover transition-transform group-hover:scale-105"
                   />
                 ) : (
@@ -207,29 +226,43 @@ function PortfolioGridBlock({ userId }: { userId: string }) {
                 <div className="absolute top-2 right-2 p-1.5 rounded-full bg-black/30 border border-white/10">
                   <Play className="h-3.5 w-3.5 text-white fill-white" />
                 </div>
+                {/* Organization badge */}
+                {isFromOrg && (
+                  <div className="absolute top-2 left-2 p-1.5 rounded-full bg-purple-500/80 border border-white/10">
+                    <Building2 className="h-3 w-3 text-white" />
+                  </div>
+                )}
                 {/* Views count */}
-                {(post.views_count ?? 0) > 0 && (
+                {(item.views_count ?? 0) > 0 && (
                   <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full bg-black/40 border border-white/10">
                     <Eye className="h-3 w-3 text-white/80" />
-                    <span className="text-white text-xs font-medium">{post.views_count}</span>
+                    <span className="text-white text-xs font-medium">{item.views_count}</span>
                   </div>
                 )}
               </>
             ) : (
-              <img
-                src={post.media_url}
-                alt="Post"
-                className="w-full h-full object-cover transition-transform group-hover:scale-105"
-              />
+              <>
+                <img
+                  src={item.media_url}
+                  alt={item.title || 'Portfolio item'}
+                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                />
+                {/* Organization badge for images */}
+                {isFromOrg && (
+                  <div className="absolute top-2 left-2 p-1.5 rounded-full bg-purple-500/80 border border-white/10">
+                    <Building2 className="h-3 w-3 text-white" />
+                  </div>
+                )}
+              </>
             )}
-            
+
             {/* Hover overlay with stats - glassmorphism style */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <div className="flex items-center gap-4 px-4 py-2 rounded-full bg-white/10 border border-white/20">
-                {(post.likes_count ?? 0) >= 0 && (
+                {(item.likes_count ?? 0) >= 0 && (
                   <span className="flex items-center gap-1.5 text-white text-sm font-semibold">
                     <Heart className="h-4 w-4 text-red-400 fill-red-400" />
-                    {post.likes_count ?? 0}
+                    {item.likes_count ?? 0}
                   </span>
                 )}
               </div>

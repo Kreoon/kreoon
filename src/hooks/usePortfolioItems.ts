@@ -24,6 +24,10 @@ export interface PortfolioItemData {
   display_order: number;
   created_at: string;
   updated_at: string;
+  // Campos para contenido de organizaciones
+  content_id: string | null;
+  source_type: 'manual' | 'organization_content';
+  organization_id: string | null;
 }
 
 interface UsePortfolioItemsOptions {
@@ -65,6 +69,10 @@ const mapRow = (row: Record<string, unknown>): PortfolioItemData => ({
   display_order: Number(row.display_order) || 0,
   created_at: row.created_at as string || '',
   updated_at: row.updated_at as string || '',
+  // Campos para contenido de organizaciones
+  content_id: (row.content_id as string) || null,
+  source_type: (row.source_type as 'manual' | 'organization_content') || 'manual',
+  organization_id: (row.organization_id as string) || null,
 });
 
 export function usePortfolioItems(options: UsePortfolioItemsOptions = {}): UsePortfolioItemsReturn {
