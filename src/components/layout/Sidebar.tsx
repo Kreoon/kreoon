@@ -57,7 +57,6 @@ import { UserOrgSwitcher } from "@/components/layout/UserOrgSwitcher";
 import { RoleSwitcher } from "@/components/layout/RoleSwitcher";
 
 import { supabase } from "@/integrations/supabase/client";
-import { SidebarAchievementsWidget, GlobalRankingWidget } from "@/components/points";
 import { AITokensPanelTrigger } from "@/components/ai/AITokensPanel";
 import { Badge } from "@/components/ui/badge";
 import { useWhiteLabel } from "@/hooks/useWhiteLabel";
@@ -881,19 +880,6 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           </div>
         )}
 
-        {/* Achievements Widget - show for everyone except clients */}
-        {!activeIsClient && (
-          <div className="border-t border-zinc-200 dark:border-zinc-800">
-            <SidebarAchievementsWidget collapsed={collapsed} />
-          </div>
-        )}
-
-        {/* Global Ranking Widget - show for everyone except clients */}
-        {!activeIsClient && !collapsed && (
-          <div className="border-t border-zinc-200 dark:border-zinc-800 p-2">
-            <GlobalRankingWidget showTopN={3} compact showNextBadges={false} />
-          </div>
-        )}
 
         {/* User & Actions - fixed at bottom */}
         <div className="shrink-0 border-t border-zinc-200 dark:border-zinc-800 py-2 px-3 bg-white dark:bg-[#0f0f14] space-y-1">

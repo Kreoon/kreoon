@@ -17,6 +17,8 @@ import { RoleUPWidget } from '@/components/points/RoleUPWidget';
 import { SeasonUrgencyBanner } from '@/components/points/SeasonUrgencyBanner';
 import { RoleLeaderboard } from '@/components/points/RoleLeaderboard';
 import { UPHistoryTable } from '@/components/points/UPHistoryTable';
+import { GlobalRankingWidget } from '@/components/points/GlobalRankingWidget';
+import { SidebarAchievementsWidget } from '@/components/points/SidebarAchievementsWidget';
 import { ThisMonthFilter, useThisMonthFilter } from '@/components/dashboard/ThisMonthFilter';
 import { TechKpiCard } from '@/components/dashboard/TechKpiCard';
 import { TechPageHeader } from '@/components/layout/TechPageHeader';
@@ -44,7 +46,8 @@ import {
   Sword,
   Sparkles,
   Zap,
-  Clapperboard
+  Clapperboard,
+  Award
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -398,6 +401,27 @@ export default function CreatorDashboard() {
               </div>
             </motion.div>
           )}
+
+          {/* Gamification Section - Ranking & Achievements */}
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.55 }}
+          >
+            <GlobalRankingWidget showTopN={3} compact className="h-full" />
+            <TechCard variant="glass" className="h-full">
+              <TechCardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-2 rounded-sm bg-amber-500/10 border border-amber-500/20">
+                    <Award className="w-4 h-4 text-amber-500" />
+                  </div>
+                  <h3 className="font-semibold text-sm">Mis Insignias</h3>
+                </div>
+                <SidebarAchievementsWidget />
+              </TechCardContent>
+            </TechCard>
+          </motion.div>
 
           {/* Pending Work Alert - Animated */}
           {inProgressContent.length > 0 && (

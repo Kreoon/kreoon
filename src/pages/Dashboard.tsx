@@ -40,6 +40,8 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { UPSystemKPIs } from "@/components/dashboard/UPSystemKPIs";
 import { ActiveSeasonBanner } from "@/components/dashboard/ActiveSeasonBanner";
 import { CollaborativeStats } from "@/components/dashboard/CollaborativeStats";
+import { GlobalRankingWidget } from "@/components/points/GlobalRankingWidget";
+import { SidebarAchievementsWidget } from "@/components/points/SidebarAchievementsWidget";
 
 // Optimized animated number counter using requestAnimationFrame (60fps, minimal re-renders)
 const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) => {
@@ -1622,13 +1624,16 @@ export default function Dashboard() {
               <CollaborativeStats organizationId={currentOrgId} />
             )}
 
-            {/* Placeholder for future UP features */}
-            <div className="rounded-sm border border-border/50 bg-card p-6 text-center">
-              <Zap className="h-12 w-12 mx-auto text-primary/50 mb-3" />
-              <h3 className="text-lg font-semibold mb-2">Sistema UP Activo</h3>
-              <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                El sistema de puntos UP está funcionando. Los creadores y editores ganan puntos basados en su desempeño y tiempos de entrega.
-              </p>
+            {/* Gamification - Ranking & Achievements */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <GlobalRankingWidget showTopN={5} className="h-full" />
+              <div className="rounded-sm border border-border/50 bg-card p-5">
+                <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-amber-500" />
+                  Mis Insignias
+                </h3>
+                <SidebarAchievementsWidget />
+              </div>
             </div>
           </TabsContent>
 
