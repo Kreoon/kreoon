@@ -7,7 +7,7 @@ import { ProjectMetadata } from "./ProjectMetadata";
 import type { AssignableUser } from "@/hooks/useOrgAssignableUsers";
 import type { Content } from "@/types/database";
 
-const CAN_ASSIGN_ROLES = ["admin", "strategist", "team_leader"];
+const CAN_ASSIGN_ROLES = ["admin", "team_leader"];
 
 interface UserAssignmentSectionProps {
   content: Content;
@@ -77,19 +77,24 @@ export function UserAssignmentSection({
             <span className="text-xs font-medium">Creador</span>
           </div>
           {content.creator ? (
-            canAssign ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
+            canAssign && onAssignCreator ? (
+              // Admin puede cambiar el creador haciendo click en el chip
+              <AssignUserDropdown
+                users={creators}
+                currentUserId={content.creator_id}
+                onSelect={(user) => user ? handleAssignCreator(user) : onAssignCreator?.('')}
+                allowUnassign={true}
+                trigger={
+                  <div className="cursor-pointer group">
                     <UserChip
                       name={content.creator.full_name || ""}
                       avatarUrl={content.creator.avatar_url}
                       borderColor="#06b6d4"
+                      className="group-hover:ring-2 group-hover:ring-cyan-500/50 transition-all"
                     />
                   </div>
-                </TooltipTrigger>
-                <TooltipContent>Creador asignado</TooltipContent>
-              </Tooltip>
+                }
+              />
             ) : (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -101,19 +106,20 @@ export function UserAssignmentSection({
                     />
                   </div>
                 </TooltipTrigger>
-                <TooltipContent>No tienes permisos para asignar</TooltipContent>
+                <TooltipContent>No tienes permisos para cambiar</TooltipContent>
               </Tooltip>
             )
           ) : canAssign && onAssignCreator ? (
             <AssignUserDropdown
               users={creators}
               currentUserId={content.creator_id}
-              onSelect={handleAssignCreator}
+              onSelect={(user) => user && handleAssignCreator(user)}
+              allowUnassign={false}
               trigger={
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-7 text-xs border-primary/40 text-primary hover:bg-[#a855f7]/10 hover:border-[#a855f7]/60 hover:shadow-[0_0_12px_rgba(168,85,247,0.2)]"
+                  className="h-7 text-xs border-dashed border-2 border-primary/50 text-primary hover:bg-[#a855f7]/10 hover:border-[#a855f7]/60 hover:shadow-[0_0_12px_rgba(168,85,247,0.2)]"
                   onClick={(e) => e.stopPropagation()}
                 >
                   + Asignar
@@ -139,11 +145,23 @@ export function UserAssignmentSection({
             <span className="text-xs font-medium">Editor</span>
           </div>
           {content.editor ? (
-            canAssign ? (
-              <UserChip
-                name={content.editor.full_name || ""}
-                avatarUrl={content.editor.avatar_url}
-                borderColor="#a855f7"
+            canAssign && onAssignEditor ? (
+              // Admin puede cambiar el editor haciendo click en el chip
+              <AssignUserDropdown
+                users={editors}
+                currentUserId={content.editor_id}
+                onSelect={(user) => user ? handleAssignEditor(user) : onAssignEditor?.('')}
+                allowUnassign={true}
+                trigger={
+                  <div className="cursor-pointer group">
+                    <UserChip
+                      name={content.editor.full_name || ""}
+                      avatarUrl={content.editor.avatar_url}
+                      borderColor="#a855f7"
+                      className="group-hover:ring-2 group-hover:ring-purple-500/50 transition-all"
+                    />
+                  </div>
+                }
               />
             ) : (
               <Tooltip>
@@ -156,19 +174,20 @@ export function UserAssignmentSection({
                     />
                   </div>
                 </TooltipTrigger>
-                <TooltipContent>No tienes permisos para asignar</TooltipContent>
+                <TooltipContent>No tienes permisos para cambiar</TooltipContent>
               </Tooltip>
             )
           ) : canAssign && onAssignEditor ? (
             <AssignUserDropdown
               users={editors}
               currentUserId={content.editor_id}
-              onSelect={handleAssignEditor}
+              onSelect={(user) => user && handleAssignEditor(user)}
+              allowUnassign={false}
               trigger={
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-7 text-xs border-primary/40 text-primary hover:bg-[#a855f7]/10 hover:border-[#a855f7]/60 hover:shadow-[0_0_12px_rgba(168,85,247,0.2)]"
+                  className="h-7 text-xs border-dashed border-2 border-primary/50 text-primary hover:bg-[#a855f7]/10 hover:border-[#a855f7]/60 hover:shadow-[0_0_12px_rgba(168,85,247,0.2)]"
                   onClick={(e) => e.stopPropagation()}
                 >
                   + Asignar

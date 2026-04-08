@@ -4,6 +4,13 @@ import { useToast } from '@/hooks/use-toast';
 import type { ProjectAssignment, AssignmentStatus, RoleId, RoleGroup } from '@/types/unifiedProject.types';
 import { getRoleGroup } from '@/types/roles';
 
+// Mapeo de roles a campos escalares en tabla content (para sincronización legacy)
+const SCALAR_ROLE_FIELDS: Record<string, { idField: string; paymentField?: string; paidField?: string }> = {
+  creator: { idField: 'creator_id', paymentField: 'creator_payment', paidField: 'creator_paid' },
+  editor: { idField: 'editor_id', paymentField: 'editor_payment', paidField: 'editor_paid' },
+  strategist: { idField: 'strategist_id' },
+};
+
 interface UseProjectAssignmentsOptions {
   projectSource: 'content' | 'marketplace';
   projectId: string;
@@ -222,7 +229,10 @@ export function useProjectAssignments({ projectSource, projectId }: UseProjectAs
   }, [toast]);
 
   // ---- Cancel (soft-delete) an assignment ----
-  const cancelAssignment = useCallback(async (assignmentId: string) => {
+  const cancelAssignment = useCallback(async (
+    assignmentId: string,
+    options?: { contentId?: string; roleId?: RoleId }
+  ) => {
     try {
       const { error } = await (supabase as any)
         .from('project_assignments')
@@ -230,13 +240,38 @@ export function useProjectAssignments({ projectSource, projectId }: UseProjectAs
         .eq('id', assignmentId);
 
       if (error) throw error;
+
+      // Limpiar campos escalares si es un content project
+      if (projectSource === 'content' && options?.contentId && options?.roleId) {
+        const roleGroup = getRoleGroup(options.roleId);
+        const scalarFields = SCALAR_ROLE_FIELDS[roleGroup];
+        if (scalarFields) {
+          const updates: Record<string, any> = { [scalarFields.idField]: null };
+          if (scalarFields.paymentField) {
+            updates[scalarFields.paymentField] = null;
+          }
+          if (scalarFields.paidField) {
+            updates[scalarFields.paidField] = false;
+          }
+
+          const { error: syncError } = await supabase.rpc('update_content_by_id', {
+            p_content_id: options.contentId,
+            p_updates: updates,
+          });
+
+          if (syncError) {
+            console.error('[useProjectAssignments] sync scalar error:', syncError);
+          }
+        }
+      }
+
       setAssignments(prev => prev.filter(a => a.id !== assignmentId));
       toast({ title: 'Asignacion cancelada' });
     } catch (err) {
       console.error('[useProjectAssignments] cancel error:', err);
       toast({ title: 'Error al cancelar asignacion', variant: 'destructive' });
     }
-  }, [toast]);
+  }, [toast, projectSource]);
 
   return {
     assignments,

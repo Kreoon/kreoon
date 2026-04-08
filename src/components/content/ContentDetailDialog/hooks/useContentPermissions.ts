@@ -87,7 +87,7 @@ const PERMISSION_MATRIX: Record<string, Partial<Record<ContentResource, ContentA
     'content.material.raw_videos': ['view', 'edit'],
     'content.material.drive': ['view', 'edit'],
     'content.general': ['view', 'edit'],
-    'content.team': ['view', 'edit'], // Strategist can assign team members
+    'content.team': ['view'], // Strategist can view but NOT assign team members (only admin/team_leader)
     'content.dates': ['view', 'edit'], // Strategist can edit dates and deadlines
     'content.comments': ['view', 'edit'],
   },

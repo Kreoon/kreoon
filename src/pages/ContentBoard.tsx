@@ -683,14 +683,16 @@ export default function ContentBoard() {
   const handleAssignCreator = useCallback(
     async (contentId: string, userId: string) => {
       try {
+        // Si userId está vacío, desasignar (poner null)
+        const creatorId = userId || null;
         const { error } = await supabase.rpc('update_content_by_id', {
           p_content_id: contentId,
-          p_updates: { creator_id: userId, updated_at: new Date().toISOString() }
+          p_updates: { creator_id: creatorId, updated_at: new Date().toISOString() }
         });
         if (error) throw error;
         refetch();
         refetchAssignable();
-        toast({ title: "Creador asignado" });
+        toast({ title: creatorId ? "Creador asignado" : "Creador removido" });
       } catch (err) {
         console.error("Error assigning creator:", err);
         toast({ title: "Error al asignar", variant: "destructive" });
@@ -702,14 +704,16 @@ export default function ContentBoard() {
   const handleAssignEditor = useCallback(
     async (contentId: string, userId: string) => {
       try {
+        // Si userId está vacío, desasignar (poner null)
+        const editorId = userId || null;
         const { error } = await supabase.rpc('update_content_by_id', {
           p_content_id: contentId,
-          p_updates: { editor_id: userId, updated_at: new Date().toISOString() }
+          p_updates: { editor_id: editorId, updated_at: new Date().toISOString() }
         });
         if (error) throw error;
         refetch();
         refetchAssignable();
-        toast({ title: "Editor asignado" });
+        toast({ title: editorId ? "Editor asignado" : "Editor removido" });
       } catch (err) {
         console.error("Error assigning editor:", err);
         toast({ title: "Error al asignar", variant: "destructive" });
@@ -1087,8 +1091,8 @@ export default function ContentBoard() {
                               }}
                               creators={assignableCreators}
                               editors={assignableEditors}
-                              onAssignCreator={showAdminControls || primaryRole === "strategist" || primaryRole === "team_leader" ? handleAssignCreator : undefined}
-                              onAssignEditor={showAdminControls || primaryRole === "strategist" || primaryRole === "team_leader" ? handleAssignEditor : undefined}
+                              onAssignCreator={showAdminControls || primaryRole === "team_leader" ? handleAssignCreator : undefined}
+                              onAssignEditor={showAdminControls || primaryRole === "team_leader" ? handleAssignEditor : undefined}
                               onUpdate={refetch}
                               socialStatus={socialStatusMap?.[item.id]}
                             />

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Check } from "lucide-react";
+import { Search, Check, X } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,10 +15,12 @@ import type { AssignableUser } from "@/hooks/useOrgAssignableUsers";
 interface AssignUserDropdownProps {
   users: AssignableUser[];
   currentUserId?: string | null;
-  onSelect: (user: AssignableUser) => void;
+  onSelect: (user: AssignableUser | null) => void;
   trigger: React.ReactNode;
   placeholder?: string;
   disabled?: boolean;
+  /** Mostrar opcion de quitar asignacion cuando hay usuario actual */
+  allowUnassign?: boolean;
 }
 
 export function AssignUserDropdown({
@@ -28,6 +30,7 @@ export function AssignUserDropdown({
   trigger,
   placeholder = "Buscar...",
   disabled,
+  allowUnassign = true,
 }: AssignUserDropdownProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -36,7 +39,7 @@ export function AssignUserDropdown({
     (u.full_name || "").toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleSelect = (user: AssignableUser) => {
+  const handleSelect = (user: AssignableUser | null) => {
     onSelect(user);
     setOpen(false);
     setSearch("");
@@ -65,6 +68,17 @@ export function AssignUserDropdown({
         </div>
         <ScrollArea className="h-[200px]">
           <div className="p-1">
+            {/* Opcion de quitar asignacion */}
+            {allowUnassign && currentUserId && (
+              <button
+                type="button"
+                onClick={() => handleSelect(null)}
+                className="w-full flex items-center gap-2 px-2 py-2 rounded-sm text-left transition-colors hover:bg-red-500/20 text-red-400 mb-1 border-b border-white/10 pb-2"
+              >
+                <X className="h-4 w-4" />
+                <span className="text-sm">Quitar asignacion</span>
+              </button>
+            )}
             {filtered.map((user) => (
               <button
                 key={user.id}
