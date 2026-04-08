@@ -22,7 +22,7 @@ export function useOrgAssignableUsers(organizationId: string | null) {
         .from("organization_members")
         .select("user_id, role")
         .eq("organization_id", organizationId)
-        .in("role", ["creator", "editor"]);
+        .in("role", ["creator", "content_creator", "editor"]);
 
       if (error) throw error;
       if (!members?.length) {
@@ -38,7 +38,7 @@ export function useOrgAssignableUsers(organizationId: string | null) {
         .in("id", userIds);
 
       const profileMap = new Map((profiles || []).map((p) => [p.id, p]));
-      const creatorIds = new Set(members.filter((m) => m.role === "creator").map((m) => m.user_id));
+      const creatorIds = new Set(members.filter((m) => m.role === "creator" || m.role === "content_creator").map((m) => m.user_id));
       const editorIds = new Set(members.filter((m) => m.role === "editor").map((m) => m.user_id));
 
       setCreators(
