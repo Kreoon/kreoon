@@ -40,46 +40,62 @@ export const SCRIPT_ROLE_PROMPTS: Record<string, PromptConfig> = {
     id: "scripts.creator",
     moduleKey: "content.script.ai",
     name: "Bloque Creador",
-    description: "Guión principal para el creador de contenido",
+    description: "Guión principal para el creador de contenido - Estructura por escenas",
     systemPrompt: `${MASTER_SCRIPT_PROMPT}
 
-🎬 BLOQUE CREADOR - GUIÓN DE VIDEO UGC
+🎬 BLOQUE CREADOR - GUIÓN POR ESCENAS
 
-Genera un guión completo con:
+IMPORTANTE: Genera un guión organizado por ESCENAS NUMERADAS.
+Cada escena debe incluir: diálogo exacto, indicación de actuación, y emoción objetivo.
 
-<h2>🎣 HOOKS ({cantidad_hooks} variantes)</h2>
-Para cada hook incluye:
-- Texto exacto a decir (máximo 3 segundos)
-- [ACCIÓN]: Indicación visual/movimiento
-- Emoción objetivo
+---
 
-<h2>📖 DESARROLLO</h2>
-<h3>Problema/Situación (10-15 seg)</h3>
-[ACCIÓN: descripción]
-<p>"Texto exacto..."</p>
+## ESTRUCTURA DE SALIDA
 
-<h3>Puente/Transición (5 seg)</h3>
-[ACCIÓN]
-<p>"Texto..."</p>
+<h2>📜 ESCENA 1: HOOK [00:00-00:03]</h2>
+<p><strong>🎙️ Diálogo:</strong> "Texto exacto que debe decir el creador"</p>
+<p><strong>🎭 Actuación:</strong> [Expresión facial específica, tono de voz, energía, gestos]</p>
+<p><strong>📹 Cámara:</strong> [Plano sugerido, ángulo]</p>
+<p><strong>💫 Emoción:</strong> [Emoción a transmitir + intensidad 1-10]</p>
 
-<h3>Solución/Producto (15-20 seg)</h3>
-[ACCIÓN: mostrar producto]
-<p>"Texto destacando beneficios..."</p>
+<h2>📜 ESCENA 2: PROBLEMA [00:03-00:12]</h2>
+<p><strong>🎙️ Diálogo:</strong> "..."</p>
+<p><strong>🎭 Actuación:</strong> [...]</p>
+<p><strong>📹 Cámara:</strong> [...]</p>
+<p><strong>💫 Emoción:</strong> [...]</p>
 
-<h3>Prueba/Resultado (10 seg)</h3>
-[ACCIÓN: demostración]
-<p>"Texto con resultado específico..."</p>
+<h2>📜 ESCENA 3: TRANSICIÓN [00:12-00:15]</h2>
+...
 
-<h2>🎯 CTA (5 segundos)</h2>
-[ACCIÓN]
-<p>"{cta}"</p>
+<h2>📜 ESCENA 4: SOLUCIÓN [00:15-00:30]</h2>
+...
 
-<h2>📝 NOTAS PARA EL CREADOR</h2>
-- Tono general
-- Vestimenta sugerida
-- Ubicación ideal
-- Props necesarios
-- Tips de delivery`,
+<h2>📜 ESCENA 5: PRUEBA/RESULTADO [00:30-00:38]</h2>
+...
+
+<h2>📜 ESCENA 6: CTA [00:38-00:45]</h2>
+...
+
+---
+
+<h2>📝 RESUMEN TÉCNICO</h2>
+<ul>
+<li><strong>Duración total:</strong> XX segundos</li>
+<li><strong>Número de escenas:</strong> X</li>
+<li><strong>Vestuario sugerido:</strong> ...</li>
+<li><strong>Props necesarios:</strong> ...</li>
+<li><strong>Locación ideal:</strong> ...</li>
+<li><strong>Tono general:</strong> ...</li>
+</ul>
+
+---
+
+REGLAS:
+1. Timecodes SIEMPRE entre corchetes [00:00-00:03]
+2. Diálogos entre comillas, listos para leer
+3. Actuación específica (no "actúa natural", sino "sonríe levemente, contacto visual directo")
+4. Adaptar número de escenas a la duración del video
+5. Incluir indicaciones de cámara adaptadas al nivel de producción`,
     variables: [
       { key: "producto_nombre", description: "Nombre del producto", required: true, type: "string" },
       { key: "producto_descripcion", description: "Descripción del producto", required: true, type: "string" },
@@ -89,9 +105,11 @@ Para cada hook incluye:
       { key: "cantidad_hooks", description: "Número de hooks", required: false, type: "number", defaultValue: 3 },
       { key: "pais_objetivo", description: "País objetivo", required: false, type: "string", defaultValue: "Colombia" },
       { key: "fase_esfera", description: "Fase ESFERA", required: false, type: "string", defaultValue: "enganchar" },
+      { key: "tipo_contenido", description: "Tipo de contenido UGC", required: false, type: "string", defaultValue: "ugc_ad" },
+      { key: "nivel_produccion", description: "Nivel de producción", required: false, type: "string", defaultValue: "smartphone" },
     ],
     outputFormat: "html",
-    defaults: { temperature: 0.7, maxTokens: 4096 },
+    defaults: { temperature: 0.7, maxTokens: 5000 },
     category: "scripts",
   },
 
@@ -344,6 +362,96 @@ Genera plan de gestión con:
     ],
     outputFormat: "html",
     defaults: { temperature: 0.4, maxTokens: 2000 },
+    category: "scripts",
+  },
+
+  director: {
+    id: "scripts.director",
+    moduleKey: "content.director.ai",
+    name: "Bloque Director",
+    description: "Guía profesional de dirección por escena",
+    systemPrompt: `${KREOON_IDENTITY}
+
+🎬 BLOQUE DIRECTOR - GUÍA DE PRODUCCIÓN POR ESCENA
+
+Eres un Director de Video profesional especializado en UGC y contenido para redes sociales.
+Tu trabajo es crear una guía de dirección detallada, escena por escena.
+
+---
+
+## PARA CADA ESCENA GENERA:
+
+<h2>🎬 ESCENA {N}: {NOMBRE} [{TIMECODE}]</h2>
+
+<h3>📹 DIRECCIÓN DE CÁMARA</h3>
+<ul>
+<li><strong>Plano:</strong> Close-up / Plano medio / Plano americano / Plano general</li>
+<li><strong>Ángulo:</strong> Eye-level / Picado leve / Contrapicado</li>
+<li><strong>Movimiento:</strong> Estático / Zoom lento / Pan / Tracking</li>
+<li><strong>Encuadre:</strong> Centrado / Regla de tercios / Espacio de mirada</li>
+</ul>
+
+<h3>🎭 DIRECCIÓN DE ACTUACIÓN</h3>
+<ul>
+<li><strong>Expresión facial:</strong> Descripción específica (cejas, ojos, boca)</li>
+<li><strong>Tono de voz:</strong> Volumen, velocidad, inflexiones</li>
+<li><strong>Energía:</strong> Baja / Media / Alta + descripción</li>
+<li><strong>Gestos:</strong> Manos, postura, movimientos</li>
+<li><strong>Pausas:</strong> Dónde y cuánto tiempo</li>
+</ul>
+
+<h3>💡 ILUMINACIÓN (según nivel de producción)</h3>
+<ul>
+<li><strong>Setup:</strong> Luz natural / Ring light / 3 puntos</li>
+<li><strong>Temperatura:</strong> Cálida / Neutra / Fría</li>
+<li><strong>Mood:</strong> Descriptivo del ambiente</li>
+</ul>
+
+<h3>🔊 AUDIO</h3>
+<ul>
+<li><strong>Captura:</strong> Mic de celular / Lavalier / Shotgun</li>
+<li><strong>Ambiente:</strong> Silencio / Ruido controlado / Natural</li>
+<li><strong>Música:</strong> Entrada, nivel, género</li>
+</ul>
+
+---
+
+## AL FINAL INCLUIR:
+
+<h2>✅ CHECKLIST PRE-PRODUCCIÓN</h2>
+<ul>
+<li>[ ] Equipos verificados</li>
+<li>[ ] Props listos</li>
+<li>[ ] Vestuario confirmado</li>
+<li>[ ] Locación preparada</li>
+<li>[ ] Guión memorizado</li>
+</ul>
+
+<h2>🎨 NOTAS DE EDICIÓN</h2>
+<ul>
+<li><strong>Transiciones:</strong> Tipo entre escenas</li>
+<li><strong>Texto overlay:</strong> Qué texto, cuándo, estilo</li>
+<li><strong>Música:</strong> Momentos de entrada/salida</li>
+<li><strong>Ritmo:</strong> Cortes por segundo según sección</li>
+</ul>
+
+---
+
+ADAPTAR según:
+- Nivel de producción: {nivel_produccion}
+- Tipo de contenido: {tipo_contenido}
+- Fase Esfera: {fase_esfera}
+- Nivel de conciencia: {nivel_conciencia}`,
+    variables: [
+      { key: "producto_nombre", description: "Nombre del producto", required: true, type: "string" },
+      { key: "duracion_video", description: "Duración del video", required: true, type: "string" },
+      { key: "nivel_produccion", description: "Nivel de producción", required: false, type: "string", defaultValue: "smartphone" },
+      { key: "tipo_contenido", description: "Tipo de contenido UGC", required: false, type: "string", defaultValue: "ugc_ad" },
+      { key: "fase_esfera", description: "Fase ESFERA", required: false, type: "string" },
+      { key: "nivel_conciencia", description: "Nivel de conciencia del avatar", required: false, type: "string" },
+    ],
+    outputFormat: "html",
+    defaults: { temperature: 0.5, maxTokens: 5000 },
     category: "scripts",
   },
 };

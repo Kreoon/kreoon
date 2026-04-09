@@ -27,11 +27,7 @@ import { sanitizeHTML } from "@/lib/sanitizeHTML";
 
 interface GeneratedContent {
   script: string;
-  editor_guidelines?: string;
-  strategist_guidelines?: string;
-  trafficker_guidelines?: string;
-  designer_guidelines?: string;
-  admin_guidelines?: string;
+  director_notes?: string;
 }
 
 // Video duration options
@@ -81,21 +77,22 @@ interface StandaloneFormData {
   video_duration: string;
   target_platform: string;
   use_perplexity: boolean;
+  // Nuevos campos Esfera + Director
+  sphere_phase: string;
+  consciousness_level: string;
+  content_type: string;
+  production_level: string;
 }
 
 interface GenerationStep {
-  key: "script" | "editor" | "strategist" | "trafficker" | "designer" | "admin";
+  key: "script" | "director";
   label: string;
   status: "pending" | "generating" | "done" | "error";
 }
 
 interface WebhookConfig {
   script: string;
-  editor: string;
-  trafficker: string;
-  strategist: string;
-  designer: string;
-  admin: string;
+  director: string;
 }
 
 const NARRATIVE_STRUCTURES = [
@@ -123,6 +120,124 @@ const BRAND_TONES = [
   { value: "lujo", label: "Premium y exclusivo" },
 ];
 
+// Método Esfera + Niveles de Conciencia de Eugene Schwartz
+const ESFERA_PHASES = [
+  {
+    value: "engage",
+    label: "🎣 ENGANCHAR",
+    color: "bg-blue-500",
+    description: "Viralidad, educar, generar curiosidad",
+    audience: "Audiencia FRÍA",
+    consciousnessLevels: ["unaware", "problem_aware"],
+    objective: "Que conozcan el problema y la marca",
+    tone: "Disruptivo, viral, sorprendente",
+    techniques: ["Pattern interrupt", "Hooks potentes", "Controversia", "Preguntas curiosas"],
+    ctaStyle: "Suave: seguir, guardar, comentar"
+  },
+  {
+    value: "solution",
+    label: "💡 SOLUCIÓN",
+    color: "bg-green-500",
+    description: "Demostrar que somos LA solución",
+    audience: "Audiencia TIBIA",
+    consciousnessLevels: ["solution_aware", "product_aware"],
+    objective: "Convencer que el producto resuelve su problema",
+    tone: "Persuasivo, empático, demostrativo",
+    techniques: ["Demos", "Testimonios", "Comparativas", "Antes/Después"],
+    ctaStyle: "Directo: comprar, probar, agendar"
+  },
+  {
+    value: "remarketing",
+    label: "🔥 REMARKETING",
+    color: "bg-orange-500",
+    description: "Urgencia, FOMO, cierre",
+    audience: "Audiencia CALIENTE",
+    consciousnessLevels: ["most_aware"],
+    objective: "Empujar al cierre con urgencia",
+    tone: "Urgente, escasez, confianza",
+    techniques: ["Ofertas limitadas", "Garantías", "Social proof", "Últimas unidades"],
+    ctaStyle: "Urgente: ahora, hoy, últimos cupos"
+  },
+  {
+    value: "fidelize",
+    label: "💎 FIDELIZAR",
+    color: "bg-purple-500",
+    description: "Retención, recompra, referidos",
+    audience: "CLIENTES existentes",
+    consciousnessLevels: ["customer"],
+    objective: "Mantener relación, generar recompra y referidos",
+    tone: "Cercano, exclusivo, premium",
+    techniques: ["Tips avanzados", "UGC de clientes", "Programa referidos", "Contenido exclusivo"],
+    ctaStyle: "Comunidad: invitar amigos, dejar reseña"
+  }
+];
+
+// Niveles de Conciencia (Eugene Schwartz - Breakthrough Advertising)
+const CONSCIOUSNESS_LEVELS = [
+  {
+    value: "unaware",
+    label: "😶 Inconsciente",
+    description: "No sabe que tiene un problema",
+    approach: "Educar sobre el problema, no vender",
+    contentType: "Contenido educativo, revelador"
+  },
+  {
+    value: "problem_aware",
+    label: "😟 Consciente del Problema",
+    description: "Sabe que tiene un problema pero no busca solución",
+    approach: "Agitar el dolor, mostrar consecuencias",
+    contentType: "Contenido de dolor, consecuencias"
+  },
+  {
+    value: "solution_aware",
+    label: "🔍 Consciente de Soluciones",
+    description: "Busca soluciones pero no conoce tu producto",
+    approach: "Posicionar tu solución como la mejor",
+    contentType: "Comparativas, demos, diferenciadores"
+  },
+  {
+    value: "product_aware",
+    label: "🤔 Consciente del Producto",
+    description: "Conoce tu producto pero no está seguro",
+    approach: "Resolver objeciones, dar garantías",
+    contentType: "Testimonios, garantías, FAQ"
+  },
+  {
+    value: "most_aware",
+    label: "🎯 Muy Consciente",
+    description: "Sabe todo, solo necesita el empujón",
+    approach: "Oferta irresistible, urgencia",
+    contentType: "Ofertas, escasez, CTA directo"
+  },
+  {
+    value: "customer",
+    label: "⭐ Cliente",
+    description: "Ya compró, buscar retención",
+    approach: "Mantener relación, upsell, referidos",
+    contentType: "Tips exclusivos, comunidad, referidos"
+  }
+];
+
+// Tipos de contenido UGC
+const CONTENT_TYPES = [
+  { value: "ugc_ad", label: "UGC Ad", description: "Publicidad estilo creador" },
+  { value: "tutorial", label: "Tutorial", description: "Paso a paso educativo" },
+  { value: "storytime", label: "Storytime", description: "Historia personal" },
+  { value: "testimonial", label: "Testimonio", description: "Experiencia real" },
+  { value: "unboxing", label: "Unboxing", description: "Descubrimiento del producto" },
+  { value: "behind_scenes", label: "Behind Scenes", description: "Detrás de cámaras" },
+  { value: "reaction", label: "Reacción", description: "Respuesta espontánea" },
+  { value: "day_in_life", label: "Día en la Vida", description: "Rutina con producto" },
+];
+
+// Nivel de producción (afecta indicaciones de cámara/iluminación)
+const PRODUCTION_LEVELS = [
+  { value: "smartphone", label: "📱 Smartphone", description: "Grabación casual" },
+  { value: "ring_light", label: "💡 Ring Light", description: "Celular + luz básica" },
+  { value: "basic_kit", label: "🎬 Kit Básico", description: "Cámara + mic + luz" },
+  { value: "studio", label: "🎥 Estudio", description: "Setup profesional" },
+];
+
 export function StandaloneScriptGenerator() {
   const { toast } = useToast();
   const { profile, roles } = useAuth();
@@ -136,11 +251,7 @@ export function StandaloneScriptGenerator() {
   const [activeResultTab, setActiveResultTab] = useState("script");
   const [webhooks, setWebhooks] = useState<WebhookConfig>({
     script: '',
-    editor: '',
-    trafficker: '',
-    strategist: '',
-    designer: '',
-    admin: '',
+    director: '',
   });
   const [webhooksLoaded, setWebhooksLoaded] = useState(false);
   
@@ -150,12 +261,8 @@ export function StandaloneScriptGenerator() {
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
 
   const [generationSteps, setGenerationSteps] = useState<GenerationStep[]>([
-    { key: "script", label: "🧍‍♂️ Bloque Creador (Guión)", status: "pending" },
-    { key: "editor", label: "🎬 Bloque Editor", status: "pending" },
-    { key: "trafficker", label: "💰 Bloque Trafficker", status: "pending" },
-    { key: "strategist", label: "🧠 Bloque Estratega", status: "pending" },
-    { key: "designer", label: "🎨 Bloque Diseñador", status: "pending" },
-    { key: "admin", label: "📋 Bloque Admin/PM", status: "pending" },
+    { key: "script", label: "📝 Bloque Creador (Guión)", status: "pending" },
+    { key: "director", label: "🎬 Bloque Director (Escenas)", status: "pending" },
   ]);
 
   const [formData, setFormData] = useState<StandaloneFormData>({
@@ -183,8 +290,22 @@ export function StandaloneScriptGenerator() {
     selected_objection: "",
     video_duration: "",
     target_platform: "",
+    use_perplexity: false,
+    // Nuevos campos Esfera + Director
+    sphere_phase: "",
+    consciousness_level: "",
+    content_type: "ugc_ad",
+    production_level: "smartphone",
   });
 
+  // Perplexity research options
+  const [perplexityQueries, setPerplexityQueries] = useState({
+    trends: true,
+    hooks: true,
+    competitors: false,
+    audience: false,
+  });
+  const [customPerplexityQuery, setCustomPerplexityQuery] = useState("");
 
   // Producto seleccionado en "Cargar Investigación de Producto"
   const [researchProduct, setResearchProduct] = useState<any | null>(null);
@@ -211,22 +332,14 @@ export function StandaloneScriptGenerator() {
           .select('key, value')
           .in('key', [
             'kreoon_ia_webhook_script',
-            'kreoon_ia_webhook_editor',
-            'kreoon_ia_webhook_trafficker',
-            'kreoon_ia_webhook_strategist',
-            'kreoon_ia_webhook_designer',
-            'kreoon_ia_webhook_admin',
+            'kreoon_ia_webhook_director',
           ]);
 
         if (error) throw error;
 
         const config: WebhookConfig = {
           script: '',
-          editor: '',
-          trafficker: '',
-          strategist: '',
-          designer: '',
-          admin: '',
+          director: '',
         };
 
         data?.forEach(setting => {
@@ -336,12 +449,8 @@ export function StandaloneScriptGenerator() {
 
   const resetSteps = () => {
     setGenerationSteps([
-      { key: "script", label: "🧍‍♂️ Bloque Creador (Guión)", status: "pending" },
-      { key: "editor", label: "🎬 Bloque Editor", status: "pending" },
-      { key: "trafficker", label: "💰 Bloque Trafficker", status: "pending" },
-      { key: "strategist", label: "🧠 Bloque Estratega", status: "pending" },
-      { key: "designer", label: "🎨 Bloque Diseñador", status: "pending" },
-      { key: "admin", label: "📋 Bloque Admin/PM", status: "pending" },
+      { key: "script", label: "📝 Bloque Creador (Guión)", status: "pending" },
+      { key: "director", label: "🎬 Bloque Director (Escenas)", status: "pending" },
     ]);
   };
 
@@ -350,7 +459,13 @@ export function StandaloneScriptGenerator() {
     const toneLabel = BRAND_TONES.find(t => t.value === formData.brand_tone)?.label || formData.brand_tone;
     const durationLabel = VIDEO_DURATIONS.find(d => d.value === formData.video_duration)?.label || formData.video_duration;
     const platformLabel = TARGET_PLATFORMS.find(p => p.value === formData.target_platform)?.label || formData.target_platform;
-    
+
+    // Obtener contexto de Esfera
+    const spherePhase = ESFERA_PHASES.find(p => p.value === formData.sphere_phase);
+    const consciousnessLevel = CONSCIOUSNESS_LEVELS.find(l => l.value === formData.consciousness_level);
+    const contentTypeInfo = CONTENT_TYPES.find(t => t.value === formData.content_type);
+    const productionLevelInfo = PRODUCTION_LEVELS.find(l => l.value === formData.production_level);
+
     return {
       // Product/Service Info
       product: {
@@ -372,10 +487,36 @@ export function StandaloneScriptGenerator() {
         suggested_hooks: formData.hooks,
         video_duration: durationLabel,
         target_platform: platformLabel,
+        content_type: contentTypeInfo?.label || formData.content_type,
+        production_level: productionLevelInfo?.label || formData.production_level,
       },
       // Avatar/Audience
       avatar: {
         ideal_avatar: formData.ideal_avatar,
+      },
+      // Método Esfera + Niveles de Conciencia
+      esfera: spherePhase ? {
+        phase: spherePhase.value,
+        phase_label: spherePhase.label,
+        objective: spherePhase.objective,
+        audience: spherePhase.audience,
+        tone: spherePhase.tone,
+        techniques: spherePhase.techniques,
+        cta_style: spherePhase.ctaStyle,
+      } : null,
+      consciousness: consciousnessLevel ? {
+        level: consciousnessLevel.value,
+        level_label: consciousnessLevel.label,
+        description: consciousnessLevel.description,
+        approach: consciousnessLevel.approach,
+        content_type_hint: consciousnessLevel.contentType,
+      } : null,
+      // Director mode info
+      director: {
+        content_type: formData.content_type,
+        content_type_description: contentTypeInfo?.description,
+        production_level: formData.production_level,
+        production_level_description: productionLevelInfo?.description,
       },
       // Research variables (pains, desires, objections)
       research_variables: {
@@ -493,76 +634,41 @@ export function StandaloneScriptGenerator() {
 
     const content: GeneratedContent = {
       script: "",
-      editor_guidelines: "",
-      strategist_guidelines: "",
-      trafficker_guidelines: "",
-      designer_guidelines: "",
-      admin_guidelines: "",
+      director_notes: "",
     };
 
     const payload = buildPayload();
 
     try {
-      // Call each webhook that is configured
+      // Solo 2 bloques: script y director
       const webhookCalls: { key: keyof GeneratedContent; webhookKey: keyof WebhookConfig; stepKey: GenerationStep['key'] }[] = [
         { key: 'script', webhookKey: 'script', stepKey: 'script' },
-        { key: 'editor_guidelines', webhookKey: 'editor', stepKey: 'editor' },
-        { key: 'trafficker_guidelines', webhookKey: 'trafficker', stepKey: 'trafficker' },
-        { key: 'strategist_guidelines', webhookKey: 'strategist', stepKey: 'strategist' },
-        { key: 'designer_guidelines', webhookKey: 'designer', stepKey: 'designer' },
-        { key: 'admin_guidelines', webhookKey: 'admin', stepKey: 'admin' },
+        { key: 'director_notes', webhookKey: 'director', stepKey: 'director' },
       ];
 
-      // Mark all configured webhooks as generating
-      for (const call of webhookCalls) {
-        if (webhooks[call.webhookKey]) {
-          updateStepStatus(call.stepKey, "generating");
-        }
-      }
-
-      // Try to get all blocks from the script webhook (single request returning all blocks)
+      // Generar Bloque Creador (Script)
       if (webhooks.script) {
         try {
-          const response = await callWebhook(webhooks.script, payload);
-          
-          // Handle response format: { bloques_html: { guion, pautas_editor, ... } }
-          // Or handle array response like the project webhook
+          updateStepStatus("script", "generating");
+          const response = await callWebhook(webhooks.script, {
+            ...payload,
+            generation_type: "script",
+          });
+
           const responseData = Array.isArray(response) ? response[0] : response;
-          
-          if (responseData?.bloques_html) {
-            const blocks = responseData.bloques_html;
-            
-            // Map response blocks to content
-            if (blocks.guion) {
-              content.script = blocks.guion;
-              updateStepStatus("script", "done");
+
+          // Handle different response formats
+          if (responseData?.bloques_html?.guion) {
+            content.script = responseData.bloques_html.guion;
+            // Si el webhook devuelve también el bloque director
+            if (responseData.bloques_html.pautas_director) {
+              content.director_notes = responseData.bloques_html.pautas_director;
             }
-            if (blocks.pautas_editor) {
-              content.editor_guidelines = blocks.pautas_editor;
-              updateStepStatus("editor", "done");
-            }
-            if (blocks.pautas_trafficker) {
-              content.trafficker_guidelines = blocks.pautas_trafficker;
-              updateStepStatus("trafficker", "done");
-            }
-            if (blocks.pautas_estratega) {
-              content.strategist_guidelines = blocks.pautas_estratega;
-              updateStepStatus("strategist", "done");
-            }
-            if (blocks.pautas_disenador) {
-              content.designer_guidelines = blocks.pautas_disenador;
-              updateStepStatus("designer", "done");
-            }
-            if (blocks.pautas_admin) {
-              content.admin_guidelines = blocks.pautas_admin;
-              updateStepStatus("admin", "done");
-            }
-          } else if (responseData?.script || responseData?.result || responseData?.guion) {
-            // Fallback: single block response
-            content.script = responseData.script || responseData.result || responseData.guion || '';
-            updateStepStatus("script", "done");
+          } else {
+            content.script = responseData?.script || responseData?.result || responseData?.guion || responseData?.content || '';
           }
 
+          updateStepStatus("script", content.script ? "done" : "error");
           setGeneratedContent({ ...content });
         } catch (scriptError) {
           console.error("Error calling script webhook:", scriptError);
@@ -571,46 +677,33 @@ export function StandaloneScriptGenerator() {
         }
       }
 
-      // If we didn't get all blocks from the script webhook, call individual webhooks
-      const needsIndividualCalls = [
-        { key: 'editor_guidelines', webhookKey: 'editor', stepKey: 'editor' },
-        { key: 'trafficker_guidelines', webhookKey: 'trafficker', stepKey: 'trafficker' },
-        { key: 'strategist_guidelines', webhookKey: 'strategist', stepKey: 'strategist' },
-        { key: 'designer_guidelines', webhookKey: 'designer', stepKey: 'designer' },
-        { key: 'admin_guidelines', webhookKey: 'admin', stepKey: 'admin' },
-      ] as const;
+      // Generar Bloque Director (si tenemos webhook configurado y no lo obtuvimos antes)
+      if (webhooks.director && !content.director_notes) {
+        try {
+          updateStepStatus("director", "generating");
+          const response = await callWebhook(webhooks.director, {
+            ...payload,
+            script_generated: content.script, // Incluir guión como contexto
+            generation_type: "director",
+          });
 
-      for (const call of needsIndividualCalls) {
-        const webhookUrl = webhooks[call.webhookKey];
-        const contentKey = call.key as keyof GeneratedContent;
-        
-        // Only call if webhook is configured and we don't already have content
-        if (webhookUrl && !content[contentKey]) {
-          try {
-            updateStepStatus(call.stepKey, "generating");
-            const response = await callWebhook(webhookUrl, {
-              ...payload,
-              script_generated: content.script, // Include generated script as context
-              generation_type: call.webhookKey,
-            });
-            
-            const responseData = Array.isArray(response) ? response[0] : response;
-            content[contentKey] = responseData?.result || responseData?.content || responseData?.html || '';
-            updateStepStatus(call.stepKey, "done");
-            setGeneratedContent({ ...content });
-          } catch (error) {
-            console.error(`Error calling ${call.webhookKey} webhook:`, error);
-            updateStepStatus(call.stepKey, "error");
-          }
-        } else if (!webhookUrl) {
-          // No webhook configured, skip
-          updateStepStatus(call.stepKey, "done");
+          const responseData = Array.isArray(response) ? response[0] : response;
+          content.director_notes = responseData?.result || responseData?.content || responseData?.director || responseData?.html || '';
+          updateStepStatus("director", content.director_notes ? "done" : "error");
+          setGeneratedContent({ ...content });
+        } catch (directorError) {
+          console.error("Error calling director webhook:", directorError);
+          updateStepStatus("director", "error");
+          // No lanzar error - el bloque director es opcional
         }
+      } else if (!webhooks.director) {
+        // No hay webhook de director configurado, marcar como completado
+        updateStepStatus("director", "done");
       }
 
       toast({
-        title: "Contenido generado exitosamente",
-        description: "Guión y pautas generados via n8n",
+        title: "Contenido generado",
+        description: "Guión y notas de dirección generados exitosamente",
       });
     } catch (error) {
       console.error("Error:", error);
@@ -643,7 +736,7 @@ export function StandaloneScriptGenerator() {
 
   const downloadAsHtml = () => {
     if (!generatedContent) return;
-    
+
     const html = `
 <!DOCTYPE html>
 <html>
@@ -657,19 +750,23 @@ export function StandaloneScriptGenerator() {
     table { width: 100%; border-collapse: collapse; margin: 10px 0; }
     td, th { border: 1px solid #ddd; padding: 8px; text-align: left; }
     blockquote { background: #f5f5f5; padding: 15px; border-left: 4px solid #333; }
+    .director-section { background: #f0f9ff; padding: 20px; border-radius: 8px; margin-top: 30px; }
   </style>
 </head>
 <body>
   <h1>Guión: ${formData.product_name}</h1>
-  ${generatedContent.script}
-  ${generatedContent.editor_guidelines || ''}
-  ${generatedContent.trafficker_guidelines || ''}
-  ${generatedContent.strategist_guidelines || ''}
-  ${generatedContent.designer_guidelines || ''}
-  ${generatedContent.admin_guidelines || ''}
+  <div class="script-section">
+    ${generatedContent.script}
+  </div>
+  ${generatedContent.director_notes ? `
+  <div class="director-section">
+    <h2>🎬 Notas del Director</h2>
+    ${generatedContent.director_notes}
+  </div>
+  ` : ''}
 </body>
 </html>`;
-    
+
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -679,12 +776,8 @@ export function StandaloneScriptGenerator() {
   };
 
   const resultTabs = [
-    { key: "script", label: "Creador", icon: FileText, content: generatedContent?.script },
-    { key: "editor", label: "Editor", icon: Video, content: generatedContent?.editor_guidelines },
-    { key: "trafficker", label: "Trafficker", icon: Target, content: generatedContent?.trafficker_guidelines },
-    { key: "strategist", label: "Estratega", icon: Lightbulb, content: generatedContent?.strategist_guidelines },
-    { key: "designer", label: "Diseñador", icon: Package, content: generatedContent?.designer_guidelines },
-    { key: "admin", label: "Admin", icon: Users, content: generatedContent?.admin_guidelines },
+    { key: "script", label: "📝 Creador", icon: FileText, content: generatedContent?.script },
+    { key: "director", label: "🎬 Director", icon: Video, content: generatedContent?.director_notes },
   ];
 
   // Check if any webhook has issues (we can detect this from step errors)
@@ -865,6 +958,97 @@ export function StandaloneScriptGenerator() {
                 </div>
               </CollapsibleContent>
             </Collapsible>
+          </CardContent>
+        </Card>
+
+        {/* Método Esfera + Nivel de Conciencia */}
+        <Card className="border-blue-200 bg-gradient-to-br from-blue-50/50 to-transparent dark:from-blue-950/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Target className="h-5 w-5 text-blue-600" />
+              Método Esfera
+            </CardTitle>
+            <CardDescription>Define la fase del embudo y nivel de conciencia del avatar</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              {/* Fase Esfera */}
+              <div className="space-y-2">
+                <Label>Fase del Embudo</Label>
+                <Select
+                  value={formData.sphere_phase}
+                  onValueChange={(v) => {
+                    const phase = ESFERA_PHASES.find(p => p.value === v);
+                    setFormData({
+                      ...formData,
+                      sphere_phase: v,
+                      consciousness_level: phase?.consciousnessLevels[0] || ""
+                    });
+                  }}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Seleccionar fase" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[100] bg-popover" position="popper" sideOffset={4}>
+                    {ESFERA_PHASES.map(phase => (
+                      <SelectItem key={phase.value} value={phase.value}>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-3 h-3 rounded-full ${phase.color}`} />
+                          <span>{phase.label}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {formData.sphere_phase && (
+                  <p className="text-xs text-muted-foreground">
+                    {ESFERA_PHASES.find(p => p.value === formData.sphere_phase)?.description}
+                  </p>
+                )}
+              </div>
+
+              {/* Nivel de Conciencia */}
+              <div className="space-y-2">
+                <Label>Nivel de Conciencia</Label>
+                <Select
+                  value={formData.consciousness_level}
+                  onValueChange={(v) => setFormData({ ...formData, consciousness_level: v })}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Seleccionar nivel" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[100] bg-popover" position="popper" sideOffset={4}>
+                    {CONSCIOUSNESS_LEVELS.map(level => (
+                      <SelectItem key={level.value} value={level.value}>
+                        {level.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {formData.consciousness_level && (
+                  <p className="text-xs text-muted-foreground">
+                    {CONSCIOUSNESS_LEVELS.find(l => l.value === formData.consciousness_level)?.description}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Info contextual de la fase seleccionada */}
+            {formData.sphere_phase && (
+              <div className="bg-white dark:bg-slate-900 rounded-lg p-3 border text-sm space-y-1">
+                {(() => {
+                  const phase = ESFERA_PHASES.find(p => p.value === formData.sphere_phase);
+                  return phase ? (
+                    <>
+                      <p><strong>Audiencia:</strong> {phase.audience}</p>
+                      <p><strong>Tono:</strong> {phase.tone}</p>
+                      <p><strong>Técnicas:</strong> {phase.techniques.slice(0, 3).join(", ")}</p>
+                      <p><strong>CTA:</strong> {phase.ctaStyle}</p>
+                    </>
+                  ) : null;
+                })()}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -1107,6 +1291,58 @@ export function StandaloneScriptGenerator() {
                     {TARGET_PLATFORMS.map(platform => (
                       <SelectItem key={platform.value} value={platform.value}>
                         {platform.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Tipo de Contenido y Nivel de Producción */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Video className="h-4 w-4 text-muted-foreground" />
+                  Tipo de Contenido
+                </Label>
+                <Select
+                  value={formData.content_type}
+                  onValueChange={(value) => setFormData({ ...formData, content_type: value })}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Seleccionar tipo" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[100] bg-popover" position="popper" sideOffset={4}>
+                    {CONTENT_TYPES.map(type => (
+                      <SelectItem key={type.value} value={type.value}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{type.label}</span>
+                          <span className="text-xs text-muted-foreground">{type.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Settings2 className="h-4 w-4 text-muted-foreground" />
+                  Nivel de Producción
+                </Label>
+                <Select
+                  value={formData.production_level}
+                  onValueChange={(value) => setFormData({ ...formData, production_level: value })}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Seleccionar nivel" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[100] bg-popover" position="popper" sideOffset={4}>
+                    {PRODUCTION_LEVELS.map(level => (
+                      <SelectItem key={level.value} value={level.value}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{level.label}</span>
+                          <span className="text-xs text-muted-foreground">{level.description}</span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
