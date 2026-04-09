@@ -600,6 +600,63 @@ export function StandaloneScriptGenerator() {
     return data;
   };
 
+  // Estado para auto-sugerencia de parámetros
+  const [suggestingParams, setSuggestingParams] = useState(false);
+
+  // Auto-sugerir parámetros del contenido con IA
+  const handleAutoSuggestParams = async () => {
+    if (!formData.product_name || !formData.ideal_avatar) {
+      toast({
+        title: "Información requerida",
+        description: "Completa el nombre del producto y el avatar ideal primero",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSuggestingParams(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('content-ai', {
+        body: {
+          action: 'suggest_params',
+          product_name: formData.product_name,
+          product_description: formData.product_description,
+          ideal_avatar: formData.ideal_avatar,
+          sphere_phase: formData.sphere_phase,
+          consciousness_level: formData.consciousness_level,
+          content_type: formData.content_type,
+          target_platform: formData.target_platform,
+        },
+      });
+
+      if (error) throw error;
+
+      // Actualizar formulario con sugerencias
+      if (data?.suggestions) {
+        setFormData(prev => ({
+          ...prev,
+          cta: data.suggestions.cta || prev.cta,
+          sales_angle: data.suggestions.sales_angle || prev.sales_angle,
+          narrative_structure: data.suggestions.narrative_structure || prev.narrative_structure,
+          hooks: data.suggestions.hooks || prev.hooks,
+        }));
+        toast({
+          title: "Parámetros sugeridos",
+          description: "Los campos han sido completados con recomendaciones de IA",
+        });
+      }
+    } catch (error) {
+      console.error("Error sugiriendo parámetros:", error);
+      toast({
+        title: "Error al sugerir",
+        description: "No se pudieron generar las sugerencias. Intenta de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setSuggestingParams(false);
+    }
+  };
+
   const handleGenerate = async () => {
     if (!formData.product_name) {
       toast({
@@ -619,15 +676,6 @@ export function StandaloneScriptGenerator() {
       return;
     }
 
-    if (!hasConfiguredWebhook) {
-      toast({
-        title: "Webhook no configurado",
-        description: "Configura al menos el webhook de guión en Configuración de Plataforma → Webhooks",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setLoading(true);
     resetSteps();
     setGeneratedContent(null);
@@ -640,64 +688,73 @@ export function StandaloneScriptGenerator() {
     const payload = buildPayload();
 
     try {
-      // Solo 2 bloques: script y director
-      const webhookCalls: { key: keyof GeneratedContent; webhookKey: keyof WebhookConfig; stepKey: GenerationStep['key'] }[] = [
-        { key: 'script', webhookKey: 'script', stepKey: 'script' },
-        { key: 'director_notes', webhookKey: 'director', stepKey: 'director' },
-      ];
+      // Generar Bloque Creador (Script) - Usar webhook si existe, sino content-ai
+      updateStepStatus("script", "generating");
 
-      // Generar Bloque Creador (Script)
+      let scriptResponse;
       if (webhooks.script) {
-        try {
-          updateStepStatus("script", "generating");
-          const response = await callWebhook(webhooks.script, {
+        // Usar webhook de n8n
+        scriptResponse = await callWebhook(webhooks.script, {
+          ...payload,
+          generation_type: "script",
+        });
+      } else {
+        // Usar content-ai directamente
+        const { data, error } = await supabase.functions.invoke('content-ai', {
+          body: {
+            action: 'generate_script',
             ...payload,
-            generation_type: "script",
-          });
-
-          const responseData = Array.isArray(response) ? response[0] : response;
-
-          // Handle different response formats
-          if (responseData?.bloques_html?.guion) {
-            content.script = responseData.bloques_html.guion;
-            // Si el webhook devuelve también el bloque director
-            if (responseData.bloques_html.pautas_director) {
-              content.director_notes = responseData.bloques_html.pautas_director;
-            }
-          } else {
-            content.script = responseData?.script || responseData?.result || responseData?.guion || responseData?.content || '';
-          }
-
-          updateStepStatus("script", content.script ? "done" : "error");
-          setGeneratedContent({ ...content });
-        } catch (scriptError) {
-          console.error("Error calling script webhook:", scriptError);
-          updateStepStatus("script", "error");
-          throw scriptError;
-        }
+            generation_type: "creator",
+          },
+        });
+        if (error) throw error;
+        scriptResponse = data;
       }
 
-      // Generar Bloque Director (si tenemos webhook configurado y no lo obtuvimos antes)
-      if (webhooks.director && !content.director_notes) {
-        try {
-          updateStepStatus("director", "generating");
-          const response = await callWebhook(webhooks.director, {
+      const scriptData = Array.isArray(scriptResponse) ? scriptResponse[0] : scriptResponse;
+
+      // Handle different response formats
+      if (scriptData?.bloques_html?.guion) {
+        content.script = scriptData.bloques_html.guion;
+        if (scriptData.bloques_html.pautas_director) {
+          content.director_notes = scriptData.bloques_html.pautas_director;
+        }
+      } else {
+        content.script = scriptData?.script || scriptData?.result || scriptData?.guion || scriptData?.content || scriptData?.html || '';
+      }
+
+      updateStepStatus("script", content.script ? "done" : "error");
+      setGeneratedContent({ ...content });
+
+      // Generar Bloque Director
+      if (!content.director_notes) {
+        updateStepStatus("director", "generating");
+
+        let directorResponse;
+        if (webhooks.director) {
+          directorResponse = await callWebhook(webhooks.director, {
             ...payload,
-            script_generated: content.script, // Incluir guión como contexto
+            script_generated: content.script,
             generation_type: "director",
           });
-
-          const responseData = Array.isArray(response) ? response[0] : response;
-          content.director_notes = responseData?.result || responseData?.content || responseData?.director || responseData?.html || '';
-          updateStepStatus("director", content.director_notes ? "done" : "error");
-          setGeneratedContent({ ...content });
-        } catch (directorError) {
-          console.error("Error calling director webhook:", directorError);
-          updateStepStatus("director", "error");
-          // No lanzar error - el bloque director es opcional
+        } else {
+          const { data, error } = await supabase.functions.invoke('content-ai', {
+            body: {
+              action: 'generate_script',
+              ...payload,
+              script_generated: content.script,
+              generation_type: "director",
+            },
+          });
+          if (error) throw error;
+          directorResponse = data;
         }
-      } else if (!webhooks.director) {
-        // No hay webhook de director configurado, marcar como completado
+
+        const directorData = Array.isArray(directorResponse) ? directorResponse[0] : directorResponse;
+        content.director_notes = directorData?.result || directorData?.content || directorData?.director || directorData?.html || '';
+        updateStepStatus("director", content.director_notes ? "done" : "error");
+        setGeneratedContent({ ...content });
+      } else {
         updateStepStatus("director", "done");
       }
 
@@ -711,15 +768,13 @@ export function StandaloneScriptGenerator() {
       if (currentStep) {
         updateStepStatus(currentStep.key, "error");
       }
-      
+
       const errorMessage = error instanceof Error ? error.message : "No se pudo generar el contenido";
-      const isN8nConfigError = errorMessage.includes('n8n') || errorMessage.includes('workflow') || errorMessage.includes('Webhook');
-      
+
       toast({
-        title: isN8nConfigError ? "Error de configuración n8n" : "Error al generar",
+        title: "Error al generar",
         description: errorMessage,
         variant: "destructive",
-        duration: isN8nConfigError ? 10000 : 5000, // Show longer for config errors
       });
     } finally {
       setLoading(false);
@@ -1184,10 +1239,34 @@ export function StandaloneScriptGenerator() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-primary" />
-              Parámetros del Contenido
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-5 w-5 text-primary" />
+                Parámetros del Contenido
+              </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAutoSuggestParams}
+                disabled={suggestingParams || !formData.product_name}
+                className="gap-2"
+              >
+                {suggestingParams ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Sugiriendo...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    Sugerir con IA
+                  </>
+                )}
+              </Button>
+            </div>
+            <CardDescription>
+              Completa manualmente o usa IA para sugerir los parámetros basados en tu producto y avatar
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -1538,9 +1617,9 @@ export function StandaloneScriptGenerator() {
             )}
 
 
-            <Button 
-              onClick={handleGenerate} 
-              disabled={loading || !formData.product_name || !hasConfiguredWebhook}
+            <Button
+              onClick={handleGenerate}
+              disabled={loading || !formData.product_name}
               className="w-full gap-2"
               size="lg"
             >
