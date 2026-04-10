@@ -1,5 +1,11 @@
 project_id = "wjkbqcrxwsmvtxmqgiqc"
 
+[functions.public-showcase]
+verify_jwt = false
+
+[functions.public-registration]
+verify_jwt = false
+
 [functions.generate-ad-banner]
 verify_jwt = false
 
