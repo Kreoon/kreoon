@@ -145,6 +145,19 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole, accountType }
     [ageConfirmed, allDocsAccepted]
   );
 
+  // Debug: mostrar estado del onboarding
+  console.log('[Onboarding Debug]', {
+    ageConfirmed,
+    allDocsAccepted,
+    canComplete: ageConfirmed && allDocsAccepted,
+    documentsToShow: documentsToShow.map(d => ({ type: d.document_type, id: d.document_id })),
+    acceptedDocs: Array.from(acceptedDocs),
+    signedDocuments: Array.from(signedDocuments),
+    isCompletingOnboarding,
+    isAccepting,
+    completionStatus,
+  });
+
   // Cargar contenido del documento
   const loadDocumentContent = useCallback(async (doc: PendingDocument) => {
     setLoadingContent(true);
