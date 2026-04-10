@@ -474,7 +474,7 @@ async function registerCreator(
   const magicLink = linkData?.properties?.action_link || "https://kreoon.com/auth";
   try {
     await resend.emails.send({
-      from: "UGC Colombia <hola@ugccolombia.co>",
+      from: "KREOON <noreply@kreoon.com>",
       to: [data.email],
       subject: "¡Bienvenido a la Comunidad UGC Colombia! 🎬",
       html: getCreatorWelcomeEmail(data.full_name, community, magicLink),
@@ -634,7 +634,7 @@ async function registerBrand(
   const magicLink = linkData?.properties?.action_link || "https://kreoon.com/auth";
   try {
     await resend.emails.send({
-      from: "UGC Colombia <hola@ugccolombia.co>",
+      from: "KREOON <noreply@kreoon.com>",
       to: [data.email],
       subject: "¡Bienvenido a la Comunidad UGC Colombia! 🚀",
       html: getBrandWelcomeEmail(data.contact_name, data.company_name, community, magicLink),
