@@ -14,6 +14,7 @@ import {
   Clock,
   FileText,
   UserPlus,
+  UserCheck,
   Palette,
   Settings,
 } from 'lucide-react';
@@ -22,6 +23,8 @@ import { OrganizationProfileEditor } from './OrganizationProfileEditor';
 import { OrgRegistrationSettings } from './OrgRegistrationSettings';
 import { EditorRandomizerSettings } from './EditorRandomizerSettings';
 import { AppearanceSettings } from './AppearanceSettings';
+import { JoinRequestsManager } from './JoinRequestsManager';
+import { useJoinRequests } from '@/hooks/useJoinRequests';
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
@@ -34,6 +37,7 @@ export function OrganizationManagement() {
     loading,
     cancelInvitation,
   } = useOrganizations();
+  const { pendingRequests } = useJoinRequests();
 
   if (loading) {
     return (
@@ -74,6 +78,13 @@ export function OrganizationManagement() {
               <span className="hidden sm:inline">Invitaciones</span>
               {invitations.length > 0 && (
                 <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{invitations.length}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="requests" className="flex items-center gap-2 py-2.5 px-3 text-xs sm:text-sm whitespace-nowrap">
+              <UserCheck className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">Solicitudes</span>
+              {pendingRequests.length > 0 && (
+                <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-orange-500/20 text-orange-500">{pendingRequests.length}</Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="branding" className="flex items-center gap-2 py-2.5 px-3 text-xs sm:text-sm whitespace-nowrap">
@@ -125,7 +136,12 @@ export function OrganizationManagement() {
             )}
           </TabsContent>
 
-          {/* Tab 4: Marca Blanca */}
+          {/* Tab 4: Solicitudes de Ingreso */}
+          <TabsContent value="requests" className="space-y-4">
+            <JoinRequestsManager />
+          </TabsContent>
+
+          {/* Tab 5: Marca Blanca */}
           <TabsContent value="branding" className="space-y-4">
             {isPlatformRoot ? (
               <AppearanceSettings />

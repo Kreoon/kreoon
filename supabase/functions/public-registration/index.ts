@@ -13,6 +13,7 @@
  * - 500 tokens AI de bienvenida
  * - Descuento en comisiones del marketplace
  * - Badge "UGC Colombia" en su perfil
+ * - Queda como referido del owner de UGC Colombia (sistema de comisiones)
  */
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
@@ -24,6 +25,9 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 // UGC Colombia slugs
 const UGC_COLOMBIA_ORG_SLUG = "ugc-colombia";
 const UGC_COLOMBIA_COMMUNITY_SLUG = "ugc-colombia";
+
+// UGC Colombia referral code (auto-generated for the org owner)
+const UGC_COLOMBIA_REFERRAL_CODE = "UGCCOLOMBIA2026";
 
 // Allowed origins for CORS
 const ALLOWED_ORIGINS = [
@@ -86,7 +90,9 @@ const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 // Cache IDs
 let cachedOrgId: string | null = null;
+let cachedOrgOwnerId: string | null = null;
 let cachedCommunity: CommunityInfo | null = null;
+let cachedReferralId: string | null = null;
 
 async function getUgcColombiaOrgId(supabase: ReturnType<typeof createClient>): Promise<string | null> {
   if (cachedOrgId) return cachedOrgId;
@@ -123,6 +129,100 @@ async function getUgcColombiaCommunity(supabase: ReturnType<typeof createClient>
 
   cachedCommunity = data as CommunityInfo;
   return cachedCommunity;
+}
+
+async function getUgcColombiaOwnerId(supabase: ReturnType<typeof createClient>, orgId: string): Promise<string | null> {
+  if (cachedOrgOwnerId) return cachedOrgOwnerId;
+
+  const { data, error } = await supabase
+    .from("organization_members")
+    .select("user_id")
+    .eq("organization_id", orgId)
+    .eq("is_owner", true)
+    .single();
+
+  if (error || !data) {
+    console.error("[public-registration] Error finding UGC Colombia owner:", error);
+    return null;
+  }
+
+  cachedOrgOwnerId = data.user_id;
+  return cachedOrgOwnerId;
+}
+
+async function getOrCreateReferral(
+  supabase: ReturnType<typeof createClient>,
+  referrerId: string,
+  referredEmail: string
+): Promise<string | null> {
+  // Check if referrer already has a referral code entry
+  const { data: existingReferral } = await supabase
+    .from("referrals")
+    .select("id")
+    .eq("referrer_id", referrerId)
+    .eq("referral_code", UGC_COLOMBIA_REFERRAL_CODE)
+    .single();
+
+  if (existingReferral) {
+    // Create new referral for this specific user
+    const { data: newReferral, error } = await supabase
+      .from("referrals")
+      .insert({
+        referrer_id: referrerId,
+        referred_email: referredEmail,
+        referral_code: `${UGC_COLOMBIA_REFERRAL_CODE}-${Date.now().toString(36)}`,
+        commission_percentage: 10,
+        status: "pending",
+      })
+      .select("id")
+      .single();
+
+    if (error) {
+      console.error("[public-registration] Error creating referral:", error);
+      return null;
+    }
+    return newReferral?.id || null;
+  }
+
+  // Create the initial referral code for UGC Colombia
+  const { data: newReferral, error } = await supabase
+    .from("referrals")
+    .insert({
+      referrer_id: referrerId,
+      referred_email: referredEmail,
+      referral_code: `${UGC_COLOMBIA_REFERRAL_CODE}-${Date.now().toString(36)}`,
+      commission_percentage: 10,
+      status: "pending",
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error("[public-registration] Error creating referral:", error);
+    return null;
+  }
+
+  return newReferral?.id || null;
+}
+
+async function activateReferral(
+  supabase: ReturnType<typeof createClient>,
+  referralId: string,
+  userId: string
+): Promise<void> {
+  const { error } = await supabase
+    .from("referrals")
+    .update({
+      referred_user_id: userId,
+      status: "registered",
+      registered_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", referralId);
+
+  if (error) {
+    console.error("[public-registration] Error activating referral:", error);
+  }
 }
 
 serve(async (req: Request) => {
@@ -205,10 +305,16 @@ serve(async (req: Request) => {
       );
     }
 
+    // Get UGC Colombia owner for referral system
+    const ownerId = await getUgcColombiaOwnerId(supabase, orgId);
+    if (!ownerId) {
+      console.warn("[public-registration] Owner not found, continuing without referral");
+    }
+
     if (body.type === "creator") {
-      return await registerCreator(supabase, body as CreatorRegistration, orgId, community, corsHeaders);
+      return await registerCreator(supabase, body as CreatorRegistration, orgId, community, ownerId, corsHeaders);
     } else {
-      return await registerBrand(supabase, body as BrandRegistration, orgId, community, corsHeaders);
+      return await registerBrand(supabase, body as BrandRegistration, orgId, community, ownerId, corsHeaders);
     }
   } catch (error) {
     console.error("[public-registration] Error:", error);
@@ -224,9 +330,17 @@ async function registerCreator(
   data: CreatorRegistration,
   orgId: string,
   community: CommunityInfo | null,
+  ownerId: string | null,
   corsHeaders: Record<string, string>
 ): Promise<Response> {
   console.log("[public-registration] Registering creator:", data.email);
+
+  // Create referral entry (before user creation to have the referral ID)
+  let referralId: string | null = null;
+  if (ownerId) {
+    referralId = await getOrCreateReferral(supabase, ownerId, data.email.toLowerCase());
+    console.log("[public-registration] Created referral:", referralId);
+  }
 
   // 1. Create auth user
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -259,46 +373,42 @@ async function registerCreator(
 
   const userId = authData.user.id;
 
-  // 2. Create profile with community badge
+  // 2. Create profile as freelance (no organization, no badge yet)
   const { error: profileError } = await supabase.from("profiles").insert({
     id: userId,
     email: data.email.toLowerCase(),
     full_name: data.full_name,
     phone: data.phone || null,
-    current_organization_id: orgId,
-    partner_community_id: community?.id || null,
-    community_badge_text: community?.custom_badge_text || "UGC Colombia",
-    community_badge_color: community?.custom_badge_color || "#f97316",
     registration_source: "ugccolombia.co",
+    // No current_organization_id - queda como freelance
+    // No badge - se asigna cuando sea aprobado
   });
 
   if (profileError) {
     console.error("[public-registration] Profile error:", profileError);
   }
 
-  // 3. Add to organization as creator
-  const { error: memberError } = await supabase.from("organization_members").insert({
-    organization_id: orgId,
-    user_id: userId,
-    is_owner: false,
-  });
-
-  if (memberError) {
-    console.error("[public-registration] Member error:", memberError);
+  // 3. Activate referral (link user to UGC Colombia owner for commissions)
+  if (referralId) {
+    await activateReferral(supabase, referralId, userId);
+    console.log("[public-registration] Activated referral for user:", userId);
   }
 
-  // 4. Assign creator role
-  const { error: roleError } = await supabase.from("organization_member_roles").insert({
+  // 4. Create join request for UGC Colombia (pending approval)
+  const { error: joinRequestError } = await supabase.from("organization_join_requests").insert({
     organization_id: orgId,
     user_id: userId,
-    role: "creator",
+    requested_role: "creator",
+    status: "pending",
+    source: "ugccolombia.co",
+    message: `Registro automatico desde ugccolombia.co - ${data.full_name}`,
   });
 
-  if (roleError) {
-    console.error("[public-registration] Role error:", roleError);
+  if (joinRequestError) {
+    console.error("[public-registration] Join request error:", joinRequestError);
   }
 
-  // 5. Create creator profile for marketplace with community badge
+  // 5. Create creator profile for marketplace (freelance, active)
   const slug = data.full_name
     .toLowerCase()
     .normalize("NFD")
@@ -312,63 +422,47 @@ async function registerCreator(
     slug: `${slug}-${Date.now().toString(36)}`,
     is_active: true,
     is_available: true,
-    partner_community_id: community?.id || null,
-    community_badge_text: community?.custom_badge_text || "UGC Colombia",
-    community_badge_color: community?.custom_badge_color || "#f97316",
+    // No badge - se asigna cuando sea aprobado en la organizacion
   });
 
   if (creatorProfileError) {
     console.error("[public-registration] Creator profile error:", creatorProfileError);
   }
 
-  // 6. Create community membership
+  // 6. Track pending membership (benefits activate on approval)
   if (community) {
-    const { error: membershipError } = await supabase.from("partner_community_memberships").insert({
+    const { error: trackingError } = await supabase.from("partner_community_memberships").insert({
       community_id: community.id,
       user_id: userId,
-      free_months_granted: community.free_months,
-      commission_discount_applied: community.commission_discount_points,
-      bonus_tokens_granted: community.bonus_ai_tokens,
-      status: "active",
+      status: "pending",
+      free_months_granted: 0,
+      commission_discount_applied: 0,
+      bonus_tokens_granted: 0,
       metadata: {
         registration_source: "ugccolombia.co",
         registration_type: "creator",
         registered_at: new Date().toISOString(),
+        pending_benefits: {
+          free_months: community.free_months,
+          bonus_tokens: community.bonus_ai_tokens,
+          commission_discount: community.commission_discount_points,
+          badge_text: community.custom_badge_text,
+          badge_color: community.custom_badge_color,
+        },
       },
     });
 
-    if (membershipError) {
-      console.error("[public-registration] Membership error:", membershipError);
+    if (trackingError) {
+      console.error("[public-registration] Tracking error:", trackingError);
     }
-
-    // 7. Grant bonus AI tokens
-    if (community.bonus_ai_tokens > 0) {
-      const { error: tokensError } = await supabase.from("ai_usage_logs").insert({
-        user_id: userId,
-        organization_id: orgId,
-        action: "community_bonus",
-        tokens_used: -community.bonus_ai_tokens, // Negative = credit
-        metadata: {
-          community: community.name,
-          reason: "Bono de bienvenida comunidad UGC Colombia",
-        },
-      });
-
-      if (tokensError) {
-        console.error("[public-registration] Tokens error:", tokensError);
-      }
-    }
-
-    // Update community redemption count
-    await supabase.rpc("increment_community_redemptions", { community_slug: UGC_COLOMBIA_COMMUNITY_SLUG }).catch(() => {});
   }
 
-  // 8. Send verification email
+  // 7. Send verification email
   const { error: emailError } = await supabase.auth.admin.generateLink({
     type: "signup",
     email: data.email.toLowerCase(),
     options: {
-      redirectTo: "https://kreoon.com/auth/callback?next=/onboarding",
+      redirectTo: "https://kreoon.com/auth/callback?next=/welcome/ugc-colombia",
     },
   });
 
@@ -388,19 +482,21 @@ async function registerCreator(
     console.error("[public-registration] Resend error:", e);
   }
 
-  console.log("[public-registration] Creator registered successfully:", userId, "Community:", community?.name);
+  console.log("[public-registration] Creator registered successfully:", userId, "Pending approval for:", community?.name);
 
   return new Response(
     JSON.stringify({
       success: true,
-      message: "Registro exitoso. Revisa tu email para verificar tu cuenta.",
+      message: "Registro exitoso. Ya puedes usar KREOON como freelance. Tu solicitud para unirte a UGC Colombia esta en revision.",
       user_id: userId,
       login_url: "https://kreoon.com/auth",
-      community: community?.name || "UGC Colombia",
-      benefits: community ? {
+      status: "pending_approval",
+      referral_active: !!referralId,
+      pending_benefits: community ? {
         free_months: community.free_months,
         bonus_tokens: community.bonus_ai_tokens,
         badge: community.custom_badge_text,
+        commission_discount: community.commission_discount_points,
       } : null,
     }),
     { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -412,9 +508,17 @@ async function registerBrand(
   data: BrandRegistration,
   orgId: string,
   community: CommunityInfo | null,
+  ownerId: string | null,
   corsHeaders: Record<string, string>
 ): Promise<Response> {
   console.log("[public-registration] Registering brand:", data.email);
+
+  // Create referral entry (before user creation to have the referral ID)
+  let referralId: string | null = null;
+  if (ownerId) {
+    referralId = await getOrCreateReferral(supabase, ownerId, data.email.toLowerCase());
+    console.log("[public-registration] Created referral:", referralId);
+  }
 
   // 1. Create auth user
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -448,113 +552,76 @@ async function registerBrand(
 
   const userId = authData.user.id;
 
-  // 2. Create profile with community badge
+  // 2. Create profile as independent (no organization, no badge yet)
   const { error: profileError } = await supabase.from("profiles").insert({
     id: userId,
     email: data.email.toLowerCase(),
     full_name: data.contact_name,
     phone: data.phone || null,
-    current_organization_id: orgId,
-    partner_community_id: community?.id || null,
-    community_badge_text: community?.custom_badge_text || "UGC Colombia",
-    community_badge_color: community?.custom_badge_color || "#f97316",
     registration_source: "ugccolombia.co",
+    // No current_organization_id - queda como independiente
+    // No badge - se asigna cuando sea aprobado
   });
 
   if (profileError) {
     console.error("[public-registration] Profile error:", profileError);
   }
 
-  // 3. Add to organization as client
-  const { error: memberError } = await supabase.from("organization_members").insert({
+  // 3. Activate referral (link user to UGC Colombia owner for commissions)
+  if (referralId) {
+    await activateReferral(supabase, referralId, userId);
+    console.log("[public-registration] Activated referral for user:", userId);
+  }
+
+  // 4. Create join request for UGC Colombia (pending approval)
+  const { error: joinRequestError } = await supabase.from("organization_join_requests").insert({
     organization_id: orgId,
     user_id: userId,
-    is_owner: false,
+    requested_role: "client",
+    status: "pending",
+    source: "ugccolombia.co",
+    message: `Marca: ${data.company_name} - Contacto: ${data.contact_name} - Registro desde ugccolombia.co`,
   });
 
-  if (memberError) {
-    console.error("[public-registration] Member error:", memberError);
+  if (joinRequestError) {
+    console.error("[public-registration] Join request error:", joinRequestError);
   }
 
-  // 4. Assign client role
-  const { error: roleError } = await supabase.from("organization_member_roles").insert({
-    organization_id: orgId,
-    user_id: userId,
-    role: "client",
-  });
-
-  if (roleError) {
-    console.error("[public-registration] Role error:", roleError);
-  }
-
-  // 5. Create client record with community info
-  const { data: clientData, error: clientError } = await supabase.from("clients").insert({
-    name: data.company_name,
-    contact_email: data.email.toLowerCase(),
-    contact_phone: data.phone || null,
-    notes: `Registrado desde ugccolombia.co - Comunidad UGC Colombia`,
-    user_id: userId,
-    organization_id: orgId,
-    created_by: userId,
-    partner_community_id: community?.id || null,
-    community_badge_text: community?.custom_badge_text || "UGC Colombia",
-    community_badge_color: community?.custom_badge_color || "#f97316",
-  }).select("id").single();
-
-  if (clientError) {
-    console.error("[public-registration] Client error:", clientError);
-  }
-
-  // 6. Create community membership
+  // 5. Track pending membership (benefits activate on approval)
   if (community) {
-    const { error: membershipError } = await supabase.from("partner_community_memberships").insert({
+    const { error: trackingError } = await supabase.from("partner_community_memberships").insert({
       community_id: community.id,
       user_id: userId,
-      brand_id: clientData?.id || null,
-      free_months_granted: community.free_months,
-      commission_discount_applied: community.commission_discount_points,
-      bonus_tokens_granted: community.bonus_ai_tokens,
-      status: "active",
+      status: "pending",
+      free_months_granted: 0,
+      commission_discount_applied: 0,
+      bonus_tokens_granted: 0,
       metadata: {
         registration_source: "ugccolombia.co",
         registration_type: "brand",
         company_name: data.company_name,
         registered_at: new Date().toISOString(),
+        pending_benefits: {
+          free_months: community.free_months,
+          bonus_tokens: community.bonus_ai_tokens,
+          commission_discount: community.commission_discount_points,
+          badge_text: community.custom_badge_text,
+          badge_color: community.custom_badge_color,
+        },
       },
     });
 
-    if (membershipError) {
-      console.error("[public-registration] Membership error:", membershipError);
+    if (trackingError) {
+      console.error("[public-registration] Tracking error:", trackingError);
     }
-
-    // 7. Grant bonus AI tokens
-    if (community.bonus_ai_tokens > 0) {
-      const { error: tokensError } = await supabase.from("ai_usage_logs").insert({
-        user_id: userId,
-        organization_id: orgId,
-        action: "community_bonus",
-        tokens_used: -community.bonus_ai_tokens,
-        metadata: {
-          community: community.name,
-          reason: "Bono de bienvenida comunidad UGC Colombia",
-        },
-      });
-
-      if (tokensError) {
-        console.error("[public-registration] Tokens error:", tokensError);
-      }
-    }
-
-    // Update community redemption count
-    await supabase.rpc("increment_community_redemptions", { community_slug: UGC_COLOMBIA_COMMUNITY_SLUG }).catch(() => {});
   }
 
-  // 8. Send verification email
+  // 6. Send verification email
   const { error: emailError } = await supabase.auth.admin.generateLink({
     type: "signup",
     email: data.email.toLowerCase(),
     options: {
-      redirectTo: "https://kreoon.com/auth/callback?next=/onboarding",
+      redirectTo: "https://kreoon.com/auth/callback?next=/welcome/ugc-colombia",
     },
   });
 
@@ -574,19 +641,21 @@ async function registerBrand(
     console.error("[public-registration] Resend error:", e);
   }
 
-  console.log("[public-registration] Brand registered successfully:", userId, "Community:", community?.name);
+  console.log("[public-registration] Brand registered successfully:", userId, "Pending approval for:", community?.name);
 
   return new Response(
     JSON.stringify({
       success: true,
-      message: "Registro exitoso. Revisa tu email para verificar tu cuenta.",
+      message: "Registro exitoso. Ya puedes explorar KREOON. Tu solicitud para unirte a UGC Colombia esta en revision.",
       user_id: userId,
       login_url: "https://kreoon.com/auth",
-      community: community?.name || "UGC Colombia",
-      benefits: community ? {
+      status: "pending_approval",
+      referral_active: !!referralId,
+      pending_benefits: community ? {
         free_months: community.free_months,
         bonus_tokens: community.bonus_ai_tokens,
         badge: community.custom_badge_text,
+        commission_discount: community.commission_discount_points,
       } : null,
     }),
     { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -594,9 +663,9 @@ async function registerBrand(
 }
 
 function getCreatorWelcomeEmail(name: string, community: CommunityInfo | null): string {
-  const benefits = community ? `
+  const pendingBenefits = community ? `
     <div class="benefits">
-      <p style="color: #f97316; font-weight: 600; margin-bottom: 12px;">🎁 Tus beneficios de comunidad:</p>
+      <p style="color: #fbbf24; font-weight: 600; margin-bottom: 12px;">⏳ Beneficios pendientes (se activan al aprobar tu solicitud):</p>
       <ul style="color: #d4d4d8; margin: 0; padding-left: 20px;">
         ${community.free_months > 0 ? `<li>${community.free_months} mes${community.free_months > 1 ? 'es' : ''} gratis de suscripcion</li>` : ''}
         ${community.bonus_ai_tokens > 0 ? `<li>${community.bonus_ai_tokens} tokens AI de bienvenida</li>` : ''}
@@ -619,12 +688,14 @@ function getCreatorWelcomeEmail(name: string, community: CommunityInfo | null): 
     .logo-ugc { color: #f97316; }
     .logo-x { color: #666; margin: 0 4px; }
     .logo-kreoon { color: #22c55e; }
-    .badge { display: inline-block; background: #f97316; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-left: 8px; }
+    .badge { display: inline-block; background: #fbbf24; color: #0a0a0a; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-left: 8px; }
     h1 { font-size: 28px; margin: 0 0 16px; }
     p { font-size: 16px; line-height: 1.6; color: #a1a1aa; margin: 16px 0; }
     .highlight { color: #22c55e; }
+    .pending { color: #fbbf24; }
     .button { display: inline-block; background: linear-gradient(135deg, #f97316, #ea580c); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 24px 0; }
-    .benefits { background: #1a1a1a; border-radius: 12px; padding: 20px; margin: 24px 0; border: 1px solid #f9731633; }
+    .benefits { background: #1a1a1a; border-radius: 12px; padding: 20px; margin: 24px 0; border: 1px solid #fbbf2433; }
+    .status-box { background: #1a1a1a; border-radius: 12px; padding: 20px; margin: 24px 0; border: 1px solid #22c55e33; }
     .features { background: #1a1a1a; border-radius: 12px; padding: 24px; margin: 24px 0; }
     .feature { display: flex; align-items: flex-start; gap: 12px; margin: 16px 0; }
     .feature-icon { font-size: 20px; }
@@ -642,30 +713,36 @@ function getCreatorWelcomeEmail(name: string, community: CommunityInfo | null): 
       </span>
     </div>
 
-    <h1>¡Bienvenido, ${name}! 🎬 <span class="badge">Comunidad UGC</span></h1>
+    <h1>¡Bienvenido, ${name}! 🎬 <span class="badge">En revision</span></h1>
 
     <p>Tu registro como <span class="highlight">Creador de Contenido</span> ha sido exitoso.</p>
 
-    <p>Ahora eres parte oficial de la <strong style="color: #f97316;">Comunidad UGC Colombia</strong>, la red de creadores UGC mas grande del pais, potenciada por KREOON.</p>
+    <div class="status-box">
+      <p style="color: #22c55e; font-weight: 600; margin: 0 0 8px;">✅ Ya puedes usar KREOON como freelance</p>
+      <p style="color: #a1a1aa; margin: 0; font-size: 14px;">Tu cuenta esta activa. Puedes crear tu portafolio y recibir proyectos.</p>
+    </div>
 
-    ${benefits}
+    <p>Tu solicitud para unirte a la <strong style="color: #f97316;">Comunidad UGC Colombia</strong> esta en revision. Te notificaremos cuando sea aprobada.</p>
+
+    ${pendingBenefits}
 
     <div class="features">
+      <p style="color: #22c55e; font-weight: 600; margin: 0 0 16px;">Mientras tanto puedes:</p>
       <div class="feature">
         <span class="feature-icon">📋</span>
-        <span class="feature-text"><strong>Recibe briefs</strong> de marcas reconocidas</span>
+        <span class="feature-text"><strong>Completar tu perfil</strong> de creador</span>
       </div>
       <div class="feature">
         <span class="feature-icon">🎥</span>
-        <span class="feature-text"><strong>Sube tu contenido</strong> y recibe feedback</span>
+        <span class="feature-text"><strong>Subir tu portafolio</strong> de trabajos</span>
       </div>
       <div class="feature">
-        <span class="feature-icon">💰</span>
-        <span class="feature-text"><strong>Cobra por tu trabajo</strong> de forma segura</span>
+        <span class="feature-icon">💼</span>
+        <span class="feature-text"><strong>Explorar proyectos</strong> disponibles</span>
       </div>
       <div class="feature">
         <span class="feature-icon">📈</span>
-        <span class="feature-text"><strong>Crece tu portafolio</strong> profesional</span>
+        <span class="feature-text"><strong>Conectar</strong> con marcas y agencias</span>
       </div>
     </div>
 
@@ -684,9 +761,9 @@ function getCreatorWelcomeEmail(name: string, community: CommunityInfo | null): 
 }
 
 function getBrandWelcomeEmail(contactName: string, companyName: string, community: CommunityInfo | null): string {
-  const benefits = community ? `
+  const pendingBenefits = community ? `
     <div class="benefits">
-      <p style="color: #f97316; font-weight: 600; margin-bottom: 12px;">🎁 Beneficios de la Comunidad UGC Colombia:</p>
+      <p style="color: #fbbf24; font-weight: 600; margin-bottom: 12px;">⏳ Beneficios pendientes (se activan al aprobar tu solicitud):</p>
       <ul style="color: #d4d4d8; margin: 0; padding-left: 20px;">
         ${community.free_months > 0 ? `<li>${community.free_months} mes${community.free_months > 1 ? 'es' : ''} gratis de suscripcion</li>` : ''}
         ${community.bonus_ai_tokens > 0 ? `<li>${community.bonus_ai_tokens} tokens AI de bienvenida</li>` : ''}
@@ -710,12 +787,13 @@ function getBrandWelcomeEmail(contactName: string, companyName: string, communit
     .logo-ugc { color: #f97316; }
     .logo-x { color: #666; margin: 0 4px; }
     .logo-kreoon { color: #22c55e; }
-    .badge { display: inline-block; background: #f97316; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-left: 8px; }
+    .badge { display: inline-block; background: #fbbf24; color: #0a0a0a; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-left: 8px; }
     h1 { font-size: 28px; margin: 0 0 16px; }
     p { font-size: 16px; line-height: 1.6; color: #a1a1aa; margin: 16px 0; }
     .highlight { color: #f97316; }
     .button { display: inline-block; background: linear-gradient(135deg, #f97316, #ea580c); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 24px 0; }
-    .benefits { background: #1a1a1a; border-radius: 12px; padding: 20px; margin: 24px 0; border: 1px solid #f9731633; }
+    .benefits { background: #1a1a1a; border-radius: 12px; padding: 20px; margin: 24px 0; border: 1px solid #fbbf2433; }
+    .status-box { background: #1a1a1a; border-radius: 12px; padding: 20px; margin: 24px 0; border: 1px solid #22c55e33; }
     .features { background: #1a1a1a; border-radius: 12px; padding: 24px; margin: 24px 0; }
     .feature { display: flex; align-items: flex-start; gap: 12px; margin: 16px 0; }
     .feature-icon { font-size: 20px; }
@@ -733,30 +811,36 @@ function getBrandWelcomeEmail(contactName: string, companyName: string, communit
       </span>
     </div>
 
-    <h1>¡Bienvenido, ${contactName}! 🚀 <span class="badge">Comunidad UGC</span></h1>
+    <h1>¡Bienvenido, ${contactName}! 🚀 <span class="badge">En revision</span></h1>
 
     <p>El registro de <span class="highlight">${companyName}</span> ha sido exitoso.</p>
 
-    <p>Ahora eres parte oficial de la <strong style="color: #f97316;">Comunidad UGC Colombia</strong>, con acceso a la red de creadores UGC mas talentosos del pais.</p>
+    <div class="status-box">
+      <p style="color: #22c55e; font-weight: 600; margin: 0 0 8px;">✅ Ya puedes explorar KREOON</p>
+      <p style="color: #a1a1aa; margin: 0; font-size: 14px;">Tu cuenta esta activa. Puedes ver creadores y explorar la plataforma.</p>
+    </div>
 
-    ${benefits}
+    <p>Tu solicitud para unirte a la <strong style="color: #f97316;">Comunidad UGC Colombia</strong> esta en revision. Te notificaremos cuando sea aprobada.</p>
+
+    ${pendingBenefits}
 
     <div class="features">
+      <p style="color: #22c55e; font-weight: 600; margin: 0 0 16px;">Mientras tanto puedes:</p>
       <div class="feature">
-        <span class="feature-icon">🎯</span>
-        <span class="feature-text"><strong>Crea campañas</strong> y define briefs</span>
+        <span class="feature-icon">🔍</span>
+        <span class="feature-text"><strong>Explorar creadores</strong> disponibles</span>
       </div>
       <div class="feature">
-        <span class="feature-icon">👥</span>
-        <span class="feature-text"><strong>Accede a +200 creadores</strong> verificados</span>
+        <span class="feature-icon">📋</span>
+        <span class="feature-text"><strong>Conocer la plataforma</strong> y sus funciones</span>
       </div>
       <div class="feature">
-        <span class="feature-icon">✅</span>
-        <span class="feature-text"><strong>Aprueba contenido</strong> en tiempo real</span>
+        <span class="feature-icon">💼</span>
+        <span class="feature-text"><strong>Completar tu perfil</strong> de marca</span>
       </div>
       <div class="feature">
-        <span class="feature-icon">📊</span>
-        <span class="feature-text"><strong>Mide resultados</strong> de tus campañas</span>
+        <span class="feature-icon">📈</span>
+        <span class="feature-text"><strong>Planear tu estrategia</strong> de contenido UGC</span>
       </div>
     </div>
 

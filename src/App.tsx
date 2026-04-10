@@ -174,6 +174,7 @@ const DevModulesPage = lazyWithRetry(() => import("./pages/admin/DevModulesPage"
 const ReferralLanding = lazyWithRetry(() => import("./pages/ReferralLanding"));
 const UnlockAccess = lazyWithRetry(() => import("./pages/UnlockAccess"));
 const WelcomeTalent = lazyWithRetry(() => import("./pages/WelcomeTalent"));
+const WelcomeUGCColombia = lazyWithRetry(() => import("./pages/welcome/WelcomeUGCColombia"));
 const OnboardingProfile = lazyWithRetry(() => import("./pages/OnboardingProfile"));
 const SubscriptionSuccess = lazyWithRetry(() => import("./pages/subscription/SubscriptionSuccess"));
 const SubscriptionCancel = lazyWithRetry(() => import("./pages/subscription/SubscriptionCancel"));
@@ -391,6 +392,7 @@ function AppRoutes() {
         <Route path="/pending-access" element={<PendingAccess />} />
         <Route path="/unlock-access" element={<UnlockAccess />} />
         <Route path="/welcome-talent" element={<WelcomeTalent />} />
+        <Route path="/welcome/ugc-colombia" element={<WelcomeUGCColombia />} />
         <Route path="/onboarding/profile" element={<OnboardingProfile />} />
         <Route path="/welcome" element={<WelcomeNewMember />} />
         <Route path="/up-documentation" element={<UPDocumentation />} />
