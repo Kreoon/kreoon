@@ -72,20 +72,11 @@ export default function Auth() {
   useEffect(() => {
     if (!user || authLoading || !rolesLoaded) return;
 
-    // Si hay un parámetro next, validar antes de redirigir
+    // Si hay un parámetro next, redirigir a esa URL
+    // Esto permite que usuarios que inician sesión desde ugccolombia.co lleguen a /welcome/ugc-colombia
     if (nextParam) {
-      // Para /welcome/ugc-colombia, solo redirigir si el usuario viene de ugccolombia.co
-      if (nextParam === '/welcome/ugc-colombia') {
-        if (profile?.registration_source === 'ugccolombia.co') {
-          navigate(nextParam, { replace: true });
-          return;
-        }
-        // Si no es de UGC Colombia, ignorar el next y continuar con flujo normal
-      } else {
-        // Para otros destinos, redirigir normalmente
-        navigate(nextParam, { replace: true });
-        return;
-      }
+      navigate(nextParam, { replace: true });
+      return;
     }
 
     // User has roles in an organization - navigate to their dashboard

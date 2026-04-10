@@ -61,12 +61,8 @@ export default function WelcomeUGCColombia() {
     }
   }, [user, loading, navigate]);
 
-  // Redirect if not from UGC Colombia
-  useEffect(() => {
-    if (!loading && profile && profile.registration_source !== 'ugccolombia.co') {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [profile, loading, navigate]);
+  // Nota: No redirigimos si el usuario no es de UGC Colombia
+  // porque cualquier usuario que inicie sesión desde ugccolombia.co debe ver esta página
 
   // Confetti effect on mount
   useEffect(() => {
