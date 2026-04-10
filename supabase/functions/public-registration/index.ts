@@ -457,12 +457,12 @@ async function registerCreator(
     }
   }
 
-  // 7. Send verification email
-  const { error: emailError } = await supabase.auth.admin.generateLink({
-    type: "signup",
+  // 7. Send magic link email (auto-login on click)
+  const { data: linkData, error: emailError } = await supabase.auth.admin.generateLink({
+    type: "magiclink",
     email: data.email.toLowerCase(),
     options: {
-      redirectTo: "https://kreoon.com/auth?next=/welcome/ugc-colombia",
+      redirectTo: "https://kreoon.com/welcome/ugc-colombia",
     },
   });
 
@@ -470,13 +470,14 @@ async function registerCreator(
     console.error("[public-registration] Email link error:", emailError);
   }
 
-  // 9. Send welcome email via Resend
+  // 9. Send welcome email via Resend with magic link
+  const magicLink = linkData?.properties?.action_link || "https://kreoon.com/auth";
   try {
     await resend.emails.send({
       from: "UGC Colombia <hola@ugccolombia.co>",
       to: [data.email],
       subject: "¡Bienvenido a la Comunidad UGC Colombia! 🎬",
-      html: getCreatorWelcomeEmail(data.full_name, community),
+      html: getCreatorWelcomeEmail(data.full_name, community, magicLink),
     });
   } catch (e) {
     console.error("[public-registration] Resend error:", e);
@@ -616,12 +617,12 @@ async function registerBrand(
     }
   }
 
-  // 6. Send verification email
-  const { error: emailError } = await supabase.auth.admin.generateLink({
-    type: "signup",
+  // 6. Send magic link email (auto-login on click)
+  const { data: linkData, error: emailError } = await supabase.auth.admin.generateLink({
+    type: "magiclink",
     email: data.email.toLowerCase(),
     options: {
-      redirectTo: "https://kreoon.com/auth?next=/welcome/ugc-colombia",
+      redirectTo: "https://kreoon.com/welcome/ugc-colombia",
     },
   });
 
@@ -629,13 +630,14 @@ async function registerBrand(
     console.error("[public-registration] Email link error:", emailError);
   }
 
-  // 9. Send welcome email via Resend
+  // 9. Send welcome email via Resend with magic link
+  const magicLink = linkData?.properties?.action_link || "https://kreoon.com/auth";
   try {
     await resend.emails.send({
       from: "UGC Colombia <hola@ugccolombia.co>",
       to: [data.email],
       subject: "¡Bienvenido a la Comunidad UGC Colombia! 🚀",
-      html: getBrandWelcomeEmail(data.contact_name, data.company_name, community),
+      html: getBrandWelcomeEmail(data.contact_name, data.company_name, community, magicLink),
     });
   } catch (e) {
     console.error("[public-registration] Resend error:", e);
@@ -662,7 +664,7 @@ async function registerBrand(
   );
 }
 
-function getCreatorWelcomeEmail(name: string, community: CommunityInfo | null): string {
+function getCreatorWelcomeEmail(name: string, community: CommunityInfo | null, loginUrl: string): string {
   const pendingBenefits = community ? `
     <div class="benefits">
       <p style="color: #fbbf24; font-weight: 600; margin-bottom: 12px;">⏳ Beneficios pendientes (se activan al aprobar tu solicitud):</p>
@@ -746,9 +748,9 @@ function getCreatorWelcomeEmail(name: string, community: CommunityInfo | null): 
       </div>
     </div>
 
-    <a href="https://kreoon.com/auth" class="button">Ingresar a la Plataforma</a>
+    <a href="${loginUrl}" class="button">Ingresar a la Plataforma</a>
 
-    <p style="font-size: 14px;">Usa el mismo email y contraseña que registraste.</p>
+    <p style="font-size: 14px;">Haz click en el boton para acceder automaticamente (link valido por 24h).</p>
 
     <div class="footer">
       <p>¿Preguntas? Escribenos a <a href="mailto:hola@ugccolombia.co" style="color: #f97316;">hola@ugccolombia.co</a></p>
@@ -760,7 +762,7 @@ function getCreatorWelcomeEmail(name: string, community: CommunityInfo | null): 
   `;
 }
 
-function getBrandWelcomeEmail(contactName: string, companyName: string, community: CommunityInfo | null): string {
+function getBrandWelcomeEmail(contactName: string, companyName: string, community: CommunityInfo | null, loginUrl: string): string {
   const pendingBenefits = community ? `
     <div class="benefits">
       <p style="color: #fbbf24; font-weight: 600; margin-bottom: 12px;">⏳ Beneficios pendientes (se activan al aprobar tu solicitud):</p>
@@ -844,9 +846,9 @@ function getBrandWelcomeEmail(contactName: string, companyName: string, communit
       </div>
     </div>
 
-    <a href="https://kreoon.com/auth" class="button">Ingresar a la Plataforma</a>
+    <a href="${loginUrl}" class="button">Ingresar a la Plataforma</a>
 
-    <p style="font-size: 14px;">Usa el mismo email y contraseña que registraste.</p>
+    <p style="font-size: 14px;">Haz click en el boton para acceder automaticamente (link valido por 24h).</p>
 
     <div class="footer">
       <p>¿Preguntas? Escribenos a <a href="mailto:hola@ugccolombia.co" style="color: #f97316;">hola@ugccolombia.co</a></p>
