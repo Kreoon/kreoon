@@ -34,6 +34,7 @@ export default function Auth() {
   const tabParam = searchParams.get("tab");
   const roleParam = searchParams.get("role");
   const intentParam = searchParams.get("intent");
+  const nextParam = searchParams.get("next"); // Para redirecciones específicas (ej: /welcome/ugc-colombia)
 
   const [view, setView] = useState<AuthView>(() => getInitialView(tabParam));
   const [direction, setDirection] = useState(0);
@@ -70,6 +71,12 @@ export default function Auth() {
 
   useEffect(() => {
     if (!user || authLoading || !rolesLoaded) return;
+
+    // Si hay un parámetro next, redirigir a esa URL primero (ej: /welcome/ugc-colombia)
+    if (nextParam) {
+      navigate(nextParam, { replace: true });
+      return;
+    }
 
     // User has roles in an organization - navigate to their dashboard
     if (roles.length > 0) {
@@ -143,7 +150,7 @@ export default function Auth() {
     };
 
     checkUserType();
-  }, [user, authLoading, rolesLoaded, roles, navigate]);
+  }, [user, authLoading, rolesLoaded, roles, navigate, nextParam]);
 
   const setViewAndSyncUrl = useCallback(
     (nextView: AuthView) => {
