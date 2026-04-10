@@ -2,21 +2,41 @@
  * WelcomeUGCColombia - Página de bienvenida a KREOON para la comunidad UGC Colombia
  *
  * Diseño Nova con branding completo de KREOON
+ * Datos de beneficios cargados dinámicamente desde partner_communities
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 import {
   ArrowRight, CheckCircle2, Clock, User, Briefcase, Users,
-  Gift, Zap, Award, Sparkles, Shield, Rocket, Star
+  Gift, Zap, Award, Sparkles, Shield, Rocket, Star, Loader2
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { KreoonLogo } from '@/components/ui/kreoon-logo';
 import { NovaPageWrapper } from '@/components/ui/nova/NovaAurora';
 import { NovaCard, NovaCardContent } from '@/components/ui/nova/NovaCard';
 import { cn } from '@/lib/utils';
 import confetti from 'canvas-confetti';
+
+interface CommunityData {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  logo_url: string | null;
+  free_months: number;
+  commission_discount_points: number;
+  bonus_ai_tokens: number;
+  custom_badge_text: string | null;
+  custom_badge_color: string | null;
+  partner_contact_email: string | null;
+  is_active: boolean;
+}
+
+const COMMUNITY_SLUG = 'ugc-colombia';
 
 const NEXT_STEPS = [
   {
@@ -39,22 +59,58 @@ const NEXT_STEPS = [
   },
 ];
 
-const COMMUNITY_BENEFITS = [
-  { icon: Gift, text: '1 mes gratis de suscripción Pro' },
-  { icon: Zap, text: '500 tokens AI de bienvenida' },
-  { icon: Award, text: 'Badge exclusivo de comunidad' },
-  { icon: Star, text: 'Descuento en comisiones' },
-];
-
 export default function WelcomeUGCColombia() {
   const navigate = useNavigate();
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
+
+  // Cargar datos de la comunidad desde la BD
+  const { data: community, isLoading: communityLoading } = useQuery({
+    queryKey: ['partner-community', COMMUNITY_SLUG],
+    queryFn: async (): Promise<CommunityData | null> => {
+      const { data, error } = await supabase
+        .from('partner_communities')
+        .select('*')
+        .eq('slug', COMMUNITY_SLUG)
+        .eq('is_active', true)
+        .single();
+
+      if (error) {
+        console.error('Error loading community:', error);
+        return null;
+      }
+
+      return data as CommunityData;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutos
+  });
+
+  // Generar beneficios dinámicamente basados en los datos de la comunidad
+  const benefits = community ? [
+    community.free_months > 0 && {
+      icon: Gift,
+      text: community.free_months === 1
+        ? '1 mes gratis de suscripción Pro'
+        : `${community.free_months} meses gratis de suscripción Pro`,
+    },
+    community.bonus_ai_tokens > 0 && {
+      icon: Zap,
+      text: `${community.bonus_ai_tokens.toLocaleString()} tokens AI de bienvenida`,
+    },
+    community.custom_badge_text && {
+      icon: Award,
+      text: `Badge exclusivo "${community.custom_badge_text}"`,
+    },
+    community.commission_discount_points > 0 && {
+      icon: Star,
+      text: `${community.commission_discount_points}% descuento en comisiones`,
+    },
+  ].filter(Boolean) : [];
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       navigate('/auth', { replace: true });
     }
-  }, [user, loading, navigate]);
+  }, [user, authLoading, navigate]);
 
   // Confetti effect
   useEffect(() => {
@@ -70,11 +126,18 @@ export default function WelcomeUGCColombia() {
   }, []);
 
   const userName = profile?.full_name?.split(' ')[0] || 'Creador';
+  const contactEmail = community?.partner_contact_email || 'soporte@kreoon.com';
+  const communityName = community?.name || 'UGC Colombia';
 
-  if (loading) {
+  const isLoading = authLoading || communityLoading;
+
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Cargando...</p>
+        </div>
       </div>
     );
   }
@@ -114,9 +177,21 @@ export default function WelcomeUGCColombia() {
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 mb-6"
+              style={community?.custom_badge_color ? {
+                backgroundColor: `${community.custom_badge_color}15`,
+                borderColor: `${community.custom_badge_color}40`,
+              } : undefined}
             >
-              <Sparkles className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Comunidad UGC Colombia</span>
+              <Sparkles
+                className="w-4 h-4"
+                style={community?.custom_badge_color ? { color: community.custom_badge_color } : undefined}
+              />
+              <span
+                className="text-sm font-medium"
+                style={community?.custom_badge_color ? { color: community.custom_badge_color } : undefined}
+              >
+                Comunidad {communityName}
+              </span>
             </motion.div>
 
             {/* Main Title */}
@@ -164,7 +239,7 @@ export default function WelcomeUGCColombia() {
                       </span>
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      Tu solicitud para unirte a la comunidad UGC Colombia está siendo revisada.
+                      Tu solicitud para unirte a la comunidad {communityName} está siendo revisada.
                       Mientras tanto, puedes usar KREOON como freelance.
                     </p>
                   </div>
@@ -173,37 +248,41 @@ export default function WelcomeUGCColombia() {
             </NovaCard>
           </motion.div>
 
-          {/* Benefits Grid */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="mb-10"
-          >
-            <h3 className="text-sm font-medium text-muted-foreground mb-4 flex items-center gap-2">
-              <Gift className="w-4 h-4 text-primary" />
-              Beneficios que se activarán al aprobar tu solicitud
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              {COMMUNITY_BENEFITS.map((benefit, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.7 + index * 0.05 }}
-                >
-                  <NovaCard variant="default" className="h-full">
-                    <NovaCardContent className="p-4 flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <benefit.icon className="w-4 h-4 text-primary" />
-                      </div>
-                      <span className="text-sm text-foreground font-medium">{benefit.text}</span>
-                    </NovaCardContent>
-                  </NovaCard>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
+          {/* Benefits Grid - Dinámico desde la BD */}
+          {benefits.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="mb-10"
+            >
+              <h3 className="text-sm font-medium text-muted-foreground mb-4 flex items-center gap-2">
+                <Gift className="w-4 h-4 text-primary" />
+                Beneficios que se activarán al aprobar tu solicitud
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                {benefits.map((benefit, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.7 + index * 0.05 }}
+                  >
+                    <NovaCard variant="default" className="h-full">
+                      <NovaCardContent className="p-4 flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-primary/10">
+                          {benefit && <benefit.icon className="w-4 h-4 text-primary" />}
+                        </div>
+                        <span className="text-sm text-foreground font-medium">
+                          {benefit && benefit.text}
+                        </span>
+                      </NovaCardContent>
+                    </NovaCard>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
 
           {/* Next Steps */}
           <motion.div
@@ -281,8 +360,8 @@ export default function WelcomeUGCColombia() {
 
             <p className="mt-6 text-sm text-muted-foreground">
               ¿Tienes preguntas? Escríbenos a{' '}
-              <a href="mailto:soporte@kreoon.com" className="text-primary hover:underline">
-                soporte@kreoon.com
+              <a href={`mailto:${contactEmail}`} className="text-primary hover:underline">
+                {contactEmail}
               </a>
             </p>
           </motion.div>
