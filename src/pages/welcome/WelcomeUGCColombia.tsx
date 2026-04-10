@@ -43,19 +43,19 @@ const NEXT_STEPS = [
     icon: User,
     title: 'Completa tu perfil',
     description: 'Agrega tu foto, bio y portafolio para destacar',
-    link: '/settings/profile',
+    link: '/settings?section=profile',
   },
   {
     icon: Briefcase,
     title: 'Explora oportunidades',
     description: 'Descubre proyectos y marcas buscando creadores',
-    link: '/marketplace',
+    link: '/dashboard',
   },
   {
     icon: Users,
     title: 'Conecta con la comunidad',
     description: 'Únete a otros creadores UGC de Colombia',
-    link: '/marketplace/explore',
+    link: '/marketplace',
   },
 ];
 
