@@ -99,6 +99,13 @@ export function NovaOnboardingWizard() {
 
   // Callback cuando se completa el perfil
   const goToLegalStep = () => {
+    // Verificación de seguridad: solo avanzar si el perfil está completo
+    // Esto previene casos donde el usuario intente avanzar sin cumplir todos los requisitos
+    if (completionStatus?.complete !== true) {
+      console.warn('[NovaOnboardingWizard] Intento de avanzar a legal sin perfil completo');
+      // El getDisplayStep() forzará volver a profile_data
+      return;
+    }
     setProfileSaved(true);
     setActiveStep('legal_consents');
   };
@@ -139,8 +146,17 @@ export function NovaOnboardingWizard() {
       return 'talent_specializations';
     }
 
+    // IMPORTANTE: Verificar que el perfil esté COMPLETAMENTE válido (incluyendo red social)
+    // Usamos 'complete' en lugar de 'profile_completed' porque 'complete' verifica TODOS los campos obligatorios
+    const isProfileComplete = completionStatus?.complete === true;
+
+    // Si intenta ir al paso legal pero el perfil no está completo, forzar volver a profile_data
+    if (activeStep === 'legal_consents' && !isProfileComplete) {
+      return 'profile_data';
+    }
+
     // Si tiene tipo pero no perfil completo
-    if (!profileSaved && !completionStatus?.profile_completed) {
+    if (!profileSaved && !isProfileComplete) {
       return activeStep === 'account_type_selection' ? 'profile_data' : activeStep;
     }
 

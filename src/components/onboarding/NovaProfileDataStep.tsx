@@ -17,7 +17,8 @@ import { motion } from 'framer-motion';
 import {
   User, Mail, Phone, MapPin, FileText, Calendar,
   AtSign, AlertCircle, CheckCircle2, Loader2,
-  AlertTriangle, ArrowRight, ArrowLeft
+  AlertTriangle, ArrowRight, ArrowLeft, Instagram,
+  Facebook, Twitter, Youtube, Linkedin, Share2
 } from 'lucide-react';
 import { useOnboardingGate, ProfileData, City } from '@/hooks/useOnboardingGate';
 import { cn } from '@/lib/utils';
@@ -41,6 +42,13 @@ const profileSchema = z.object({
   document_number: z.string().min(3, 'Número de documento requerido'),
   date_of_birth: z.string().min(1, 'Fecha de nacimiento requerida'),
   gender: z.enum(['male', 'female', 'other'], { required_error: 'Selecciona tu sexo' }),
+  // Redes sociales (al menos una requerida)
+  social_instagram: z.string().optional(),
+  social_facebook: z.string().optional(),
+  social_tiktok: z.string().optional(),
+  social_x: z.string().optional(),
+  social_youtube: z.string().optional(),
+  social_linkedin: z.string().optional(),
 }).refine((data) => {
   if (!data.date_of_birth) return false;
   const dob = new Date(data.date_of_birth);
@@ -52,6 +60,19 @@ const profileSchema = z.object({
 }, {
   message: 'Debes ser mayor de 18 años para usar KREOON',
   path: ['date_of_birth'],
+}).refine((data) => {
+  // Al menos una red social
+  return (
+    (data.social_instagram && data.social_instagram.length > 0) ||
+    (data.social_facebook && data.social_facebook.length > 0) ||
+    (data.social_tiktok && data.social_tiktok.length > 0) ||
+    (data.social_x && data.social_x.length > 0) ||
+    (data.social_youtube && data.social_youtube.length > 0) ||
+    (data.social_linkedin && data.social_linkedin.length > 0)
+  );
+}, {
+  message: 'Debes agregar al menos una red social',
+  path: ['social_network'],
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -178,6 +199,12 @@ export function NovaProfileDataStep({ onComplete, onBack, onLogout, isTalentFlow
       document_number: existingProfileData.document_number || '',
       date_of_birth: existingProfileData.date_of_birth || '',
       gender: existingProfileData.gender || undefined,
+      social_instagram: existingProfileData.social_instagram || '',
+      social_facebook: existingProfileData.social_facebook || '',
+      social_tiktok: existingProfileData.social_tiktok || '',
+      social_x: existingProfileData.social_x || '',
+      social_youtube: existingProfileData.social_youtube || '',
+      social_linkedin: existingProfileData.social_linkedin || '',
     },
   });
 
@@ -316,6 +343,7 @@ export function NovaProfileDataStep({ onComplete, onBack, onLogout, isTalentFlow
                       document_number: 'Número de documento',
                       date_of_birth: 'Fecha de nacimiento',
                       gender: 'Sexo',
+                      social_network: 'Red social (al menos una)',
                     };
                     return fieldLabels[field] || field;
                   }).join(', ')}.
@@ -324,7 +352,33 @@ export function NovaProfileDataStep({ onComplete, onBack, onLogout, isTalentFlow
             </motion.div>
           )}
 
-          <form ref={formRef} onSubmit={handleSubmit(onSubmit, () => setSubmitAttempted(true))} className="space-y-8">
+          <form ref={formRef} onSubmit={handleSubmit(onSubmit, (validationErrors) => {
+            setSubmitAttempted(true);
+            // Mostrar toast con campos faltantes
+            const errorFields = Object.keys(validationErrors);
+            if (errorFields.length > 0) {
+              const fieldNames: Record<string, string> = {
+                full_name: 'Nombre completo',
+                username: 'Username',
+                phone: 'Teléfono',
+                email: 'Email',
+                country: 'País',
+                city: 'Ciudad',
+                address: 'Dirección',
+                nationality: 'Nacionalidad',
+                document_type: 'Tipo de documento',
+                document_number: 'Número de documento',
+                date_of_birth: 'Fecha de nacimiento',
+                gender: 'Sexo',
+                social_network: 'Red social',
+              };
+              const missingFields = errorFields
+                .map(f => fieldNames[f] || f)
+                .slice(0, 3)
+                .join(', ');
+              toast.error(`Campos incompletos: ${missingFields}${errorFields.length > 3 ? '...' : ''}`);
+            }
+          })} className="space-y-8">
             {/* Section: Información Personal */}
             <section>
               <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
@@ -538,6 +592,92 @@ export function NovaProfileDataStep({ onComplete, onBack, onLogout, isTalentFlow
                   />
                 </NovaField>
               </div>
+            </section>
+
+            {/* Section: Redes Sociales */}
+            <section>
+              <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                <div className="p-1.5 rounded-[0.125rem] bg-pink-500/10">
+                  <Share2 className="w-4 h-4 text-pink-500" />
+                </div>
+                Redes Sociales
+                <span className="text-xs font-normal text-muted-foreground ml-2">(al menos una)</span>
+              </h2>
+
+              {(errors as any).social_network && submitAttempted && (
+                <div className="mb-4 p-3 rounded-[0.125rem] bg-destructive/10 border border-destructive/30">
+                  <p className="text-sm text-destructive flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    Debes agregar al menos una red social
+                  </p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Instagram */}
+                <NovaField label="Instagram" icon={<Instagram className="w-5 h-5" />} htmlFor="social_instagram">
+                  <input
+                    {...register('social_instagram')}
+                    id="social_instagram"
+                    placeholder="@tu_usuario"
+                    className={cn(inputClasses, "pl-11")}
+                  />
+                </NovaField>
+
+                {/* TikTok */}
+                <NovaField label="TikTok" icon={<AtSign className="w-5 h-5" />} htmlFor="social_tiktok">
+                  <input
+                    {...register('social_tiktok')}
+                    id="social_tiktok"
+                    placeholder="@tu_usuario"
+                    className={cn(inputClasses, "pl-11")}
+                  />
+                </NovaField>
+
+                {/* Facebook */}
+                <NovaField label="Facebook" icon={<Facebook className="w-5 h-5" />} htmlFor="social_facebook">
+                  <input
+                    {...register('social_facebook')}
+                    id="social_facebook"
+                    placeholder="Tu perfil de Facebook"
+                    className={cn(inputClasses, "pl-11")}
+                  />
+                </NovaField>
+
+                {/* YouTube */}
+                <NovaField label="YouTube" icon={<Youtube className="w-5 h-5" />} htmlFor="social_youtube">
+                  <input
+                    {...register('social_youtube')}
+                    id="social_youtube"
+                    placeholder="Tu canal de YouTube"
+                    className={cn(inputClasses, "pl-11")}
+                  />
+                </NovaField>
+
+                {/* X (Twitter) */}
+                <NovaField label="X (Twitter)" icon={<Twitter className="w-5 h-5" />} htmlFor="social_x">
+                  <input
+                    {...register('social_x')}
+                    id="social_x"
+                    placeholder="@tu_usuario"
+                    className={cn(inputClasses, "pl-11")}
+                  />
+                </NovaField>
+
+                {/* LinkedIn */}
+                <NovaField label="LinkedIn" icon={<Linkedin className="w-5 h-5" />} htmlFor="social_linkedin">
+                  <input
+                    {...register('social_linkedin')}
+                    id="social_linkedin"
+                    placeholder="Tu perfil de LinkedIn"
+                    className={cn(inputClasses, "pl-11")}
+                  />
+                </NovaField>
+              </div>
+
+              <p className="mt-3 text-xs text-muted-foreground">
+                Agrega al menos una red social para verificar tu identidad como creador
+              </p>
             </section>
 
             {/* Submit Button */}
