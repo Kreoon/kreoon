@@ -381,9 +381,23 @@ export function useOnboardingGate() {
         throw error;
       }
 
+      // Debug: verificar estado del perfil antes de completar
+      const { data: profileCheck } = await supabase.rpc('check_profile_completion', {
+        p_user_id: userId,
+      });
+      console.log('[completeOnboarding] check_profile_completion result:', profileCheck);
+
+      // Debug: verificar consentimientos pendientes
+      const { data: pendingConsents } = await supabase.rpc('get_pending_consents', {
+        p_user_id: userId,
+      });
+      console.log('[completeOnboarding] pending consents:', pendingConsents);
+
       const { data, error } = await supabase.rpc('complete_onboarding', {
         p_user_id: userId,
       });
+
+      console.log('[completeOnboarding] result:', data, 'error:', error);
 
       if (error) throw error;
       if (!data) throw new Error('Could not complete onboarding');
