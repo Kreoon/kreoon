@@ -69,7 +69,7 @@ export default function VideoTab({
       {(!canEditVideo || readOnly) && effectiveEditMode && (
         <div className="flex items-center gap-2 p-3 bg-warning/10 border border-warning/20 rounded-sm text-sm">
           <Lock className="h-4 w-4 text-warning" />
-          <span>{readOnly ? 'Este tab es de solo lectura' : 'Solo el estratega o admin pueden editar videos'}</span>
+          <span>{readOnly ? 'Este tab es de solo lectura' : 'No tienes permisos para editar videos en este proyecto'}</span>
         </div>
       )}
 

@@ -66,7 +66,7 @@ export function VideoTab({
       {(!canEditVideo || readOnly) && effectiveEditMode && (
         <div className="flex items-center gap-2 p-3 bg-[var(--nova-warning)]/10 border border-[var(--nova-warning)]/20 rounded-sm text-sm text-[var(--nova-text-secondary)]">
           <Lock className="h-4 w-4 text-[var(--nova-warning)]" />
-          <span>{readOnly ? 'Este tab es de solo lectura' : 'Solo el estratega o admin pueden editar videos'}</span>
+          <span>{readOnly ? 'Este tab es de solo lectura' : 'No tienes permisos para editar videos en este contenido'}</span>
         </div>
       )}
 
