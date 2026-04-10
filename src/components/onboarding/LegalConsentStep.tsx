@@ -94,6 +94,19 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
   );
   const canComplete = ageConfirmed && allDocsAccepted;
 
+  // Debug: mostrar estado del onboarding
+  console.log('[LegalConsent Debug]', {
+    ageConfirmed,
+    allDocsAccepted,
+    canComplete,
+    documentsToShow: documentsToShow.map(d => ({ type: d.document_type, id: d.document_id })),
+    acceptedDocs: Array.from(acceptedDocs),
+    signedDocuments: Array.from(signedDocuments),
+    isCompletingOnboarding,
+    isAccepting,
+    completionStatus,
+  });
+
   // Cargar contenido del documento desde BD o archivo público
   const loadDocumentContent = useCallback(async (doc: PendingDocument) => {
     setLoadingContent(true);
