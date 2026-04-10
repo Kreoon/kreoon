@@ -241,15 +241,12 @@ serve(async (req: Request) => {
   }
 
   try {
-    const body: RegistrationRequest = await req.json();
+    const body = await req.json();
 
-    // Validate required fields
-    if (!body.type || !["creator", "brand"].includes(body.type)) {
-      return new Response(
-        JSON.stringify({ error: "Tipo de registro invalido. Use 'creator' o 'brand'" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // Type es opcional, por defecto es 'creator'
+    const registrationType = body.type && ["creator", "brand"].includes(body.type)
+      ? body.type
+      : "creator";
 
     if (!body.email || !body.password) {
       return new Response(
@@ -311,7 +308,7 @@ serve(async (req: Request) => {
       console.warn("[public-registration] Owner not found, continuing without referral");
     }
 
-    if (body.type === "creator") {
+    if (registrationType === "creator") {
       return await registerCreator(supabase, body as CreatorRegistration, orgId, community, ownerId, corsHeaders);
     } else {
       return await registerBrand(supabase, body as BrandRegistration, orgId, community, ownerId, corsHeaders);
