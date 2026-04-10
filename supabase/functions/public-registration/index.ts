@@ -462,7 +462,7 @@ async function registerCreator(
     type: "signup",
     email: data.email.toLowerCase(),
     options: {
-      redirectTo: "https://kreoon.com/auth/callback?next=/welcome/ugc-colombia",
+      redirectTo: "https://kreoon.com/auth?next=/welcome/ugc-colombia",
     },
   });
 
@@ -621,7 +621,7 @@ async function registerBrand(
     type: "signup",
     email: data.email.toLowerCase(),
     options: {
-      redirectTo: "https://kreoon.com/auth/callback?next=/welcome/ugc-colombia",
+      redirectTo: "https://kreoon.com/auth?next=/welcome/ugc-colombia",
     },
   });
 
