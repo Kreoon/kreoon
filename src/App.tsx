@@ -106,6 +106,7 @@ const UPDocumentation = lazyWithRetry(() => import("./pages/UPDocumentation"));
 const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
 const Register = lazyWithRetry(() => import("./pages/Register"));
 const OrgRegister = lazyWithRetry(() => import("./pages/auth/OrgRegister"));
+const AuthCallback = lazyWithRetry(() => import("./pages/auth/AuthCallback"));
 // Streaming V2
 const StreamingHubPage = lazyWithRetry(() => import("./pages/streaming/StreamingHubPage"));
 const StreamingStudioPage = lazyWithRetry(() => import("./pages/streaming/StreamingStudioPage"));
@@ -387,6 +388,7 @@ function AppRoutes() {
         <Route path="/@:username" element={<PublicCreatorPage />} />
         <Route path="/review/:token" element={<PublicReviewPage />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/no-company" element={<NoCompany />} />
         <Route path="/no-organization" element={<NoOrganization />} />
         <Route path="/pending-access" element={<PendingAccess />} />
