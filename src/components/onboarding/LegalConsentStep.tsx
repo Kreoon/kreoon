@@ -94,19 +94,6 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
   );
   const canComplete = ageConfirmed && allDocsAccepted;
 
-  // Debug: mostrar estado del onboarding
-  console.log('[LegalConsent Debug]', {
-    ageConfirmed,
-    allDocsAccepted,
-    canComplete,
-    documentsToShow: documentsToShow.map(d => ({ type: d.document_type, id: d.document_id })),
-    acceptedDocs: Array.from(acceptedDocs),
-    signedDocuments: Array.from(signedDocuments),
-    isCompletingOnboarding,
-    isAccepting,
-    completionStatus,
-  });
-
   // Cargar contenido del documento desde BD o archivo público
   const loadDocumentContent = useCallback(async (doc: PendingDocument) => {
     setLoadingContent(true);
@@ -293,35 +280,26 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
     if (completionStatus && !completionStatus.profile_completed && completionStatus.missing?.length > 0) {
       const missingFields = completionStatus.missing.map(translateMissingField).join(', ');
       toast.error(`Faltan campos en tu perfil: ${missingFields}`);
-      console.error('[onboarding] Perfil incompleto. Faltan:', completionStatus.missing);
       return;
     }
 
     try {
-      console.log('[onboarding] Iniciando proceso de completar...');
-
       // Verificar edad si no está verificada
       if (!isAgeVerified() && ageConfirmed) {
-        console.log('[onboarding] Verificando edad...');
         await verifyAge(true);
       }
 
-      // Registrar todos los consentimientos en la BD (incluyendo los ya marcados localmente)
-      // Esto asegura que estén en la BD antes de llamar a completeOnboarding
+      // Registrar todos los consentimientos en la BD
       const acceptPromises = documentsToShow.map(async (doc) => {
         try {
-          console.log(`[onboarding] Registrando consentimiento: ${doc.document_type}`);
           await acceptDocument(doc.document_id);
           return { docType: doc.document_type, success: true };
-        } catch (e: any) {
-          console.warn(`[onboarding] Error aceptando ${doc.document_type}:`, e?.message || e);
-          // No fallar si ya estaba aceptado
-          return { docType: doc.document_type, success: false, error: e?.message };
+        } catch {
+          return { docType: doc.document_type, success: false };
         }
       });
 
-      const acceptResults = await Promise.all(acceptPromises);
-      console.log('[onboarding] Resultados de consentimientos:', acceptResults);
+      await Promise.all(acceptPromises);
 
       // Pequeña pausa para asegurar que la BD se sincronizó
       await new Promise(resolve => setTimeout(resolve, 300));
@@ -330,25 +308,19 @@ export function LegalConsentStep({ onBack }: LegalConsentStepProps) {
       await refetch();
 
       // Completar onboarding
-      console.log('[onboarding] Llamando a completeOnboarding...');
       const result = await completeOnboarding();
-      console.log('[onboarding] Resultado de completeOnboarding:', result);
 
       if (result) {
         toast.success('¡Bienvenido a KREOON!');
-        // Esperar un poco antes de recargar para que el toast se muestre
         setTimeout(() => {
           window.location.reload();
         }, 500);
       } else {
-        // Intentar obtener más info del error
-        console.error('[onboarding] completeOnboarding retornó false');
         toast.error('Error: Verifica que hayas completado tu perfil y aceptado todos los documentos requeridos.');
         refetch();
       }
-    } catch (error: any) {
-      console.error('[onboarding] Error completing onboarding:', error);
-      const errorMsg = error?.message || 'Error desconocido';
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Error desconocido';
       toast.error(`Error al completar: ${errorMsg}`);
       refetch();
     }

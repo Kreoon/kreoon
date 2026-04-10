@@ -191,32 +191,25 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
   }, [existingProfileData.country, getCitiesByCountry, availableCities.length]);
 
   const onSubmit = useCallback(async (data: ProfileFormData) => {
-    console.log('[onboarding] onSubmit llamado con data:', data);
-
     if (usernameStatus === 'taken') {
-      console.log('[onboarding] Username tomado, abortando');
       toast.error('El username ya está en uso');
       return;
     }
 
     try {
-      console.log('[onboarding] Llamando saveProfileData...');
-      const result = await saveProfileData(data as ProfileData);
-      console.log('[onboarding] saveProfileData exitoso:', result);
+      await saveProfileData(data as ProfileData);
       toast.success('Datos guardados correctamente');
       onComplete();
-    } catch (error: any) {
-      console.error('[onboarding] Error en saveProfileData:', error);
-      console.error('[onboarding] Error message:', error?.message);
-      console.error('[onboarding] Error completo:', JSON.stringify(error, null, 2));
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
 
-      if (error.message === 'username_taken') {
+      if (errorMessage === 'username_taken') {
         toast.error('El username ya está en uso');
         setUsernameStatus('taken');
-      } else if (error.message === 'age_under_18') {
+      } else if (errorMessage === 'age_under_18') {
         toast.error('Debes ser mayor de 18 años');
       } else {
-        toast.error(`Error al guardar: ${error?.message || 'Error desconocido'}`);
+        toast.error(`Error al guardar: ${errorMessage}`);
       }
     }
   }, [saveProfileData, usernameStatus, onComplete]);
@@ -228,8 +221,7 @@ export function ProfileDataStep({ onComplete }: ProfileDataStepProps) {
   }, []);
 
   // Callback cuando hay errores de validación
-  const onValidationError = useCallback((validationErrors: any) => {
-    console.log('[onboarding] Errores de validación:', validationErrors);
+  const onValidationError = useCallback((validationErrors: Record<string, unknown>) => {
     setSubmitAttempted(true);
 
     // Mostrar toast con los campos faltantes

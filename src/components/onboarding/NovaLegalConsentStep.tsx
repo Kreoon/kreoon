@@ -145,19 +145,6 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole, accountType }
     [ageConfirmed, allDocsAccepted]
   );
 
-  // Debug: mostrar estado del onboarding
-  console.log('[Onboarding Debug]', {
-    ageConfirmed,
-    allDocsAccepted,
-    canComplete: ageConfirmed && allDocsAccepted,
-    documentsToShow: documentsToShow.map(d => ({ type: d.document_type, id: d.document_id })),
-    acceptedDocs: Array.from(acceptedDocs),
-    signedDocuments: Array.from(signedDocuments),
-    isCompletingOnboarding,
-    isAccepting,
-    completionStatus,
-  });
-
   // Cargar contenido del documento
   const loadDocumentContent = useCallback(async (doc: PendingDocument) => {
     setLoadingContent(true);
@@ -311,37 +298,25 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole, accountType }
     }
 
     try {
-      console.log('[Onboarding] Iniciando proceso de completar...');
-
       if (!isAgeVerified() && ageConfirmed) {
-        console.log('[Onboarding] Verificando edad...');
         await verifyAge(true);
       }
 
-      console.log('[Onboarding] Aceptando documentos...');
       const acceptPromises = documentsToShow.map(async (doc) => {
         try {
           await acceptDocument(doc.document_id);
-          console.log('[Onboarding] Documento aceptado:', doc.document_type);
           return { success: true, doc: doc.document_type };
-        } catch (err) {
-          console.error('[Onboarding] Error aceptando documento:', doc.document_type, err);
+        } catch {
           return { success: false, doc: doc.document_type };
         }
       });
 
-      const results = await Promise.all(acceptPromises);
-      const failedDocs = results.filter(r => !r.success);
-      if (failedDocs.length > 0) {
-        console.warn('[Onboarding] Algunos documentos fallaron:', failedDocs);
-      }
+      await Promise.all(acceptPromises);
 
       await new Promise(resolve => setTimeout(resolve, 300));
       await refetch();
 
-      console.log('[Onboarding] Llamando completeOnboarding...');
       const result = await completeOnboarding();
-      console.log('[Onboarding] Resultado:', result);
 
       if (result) {
         toast.success('¡Bienvenido a KREOON!');
@@ -349,12 +324,10 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole, accountType }
           window.location.reload();
         }, 500);
       } else {
-        console.error('[Onboarding] completeOnboarding devolvió false. completionStatus:', completionStatus);
         toast.error('Error: Verifica que hayas completado tu perfil y aceptado todos los documentos requeridos.');
         refetch();
       }
     } catch (error: unknown) {
-      console.error('[Onboarding] Error en handleComplete:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       toast.error(`Error al completar: ${errorMessage}`);
       refetch();

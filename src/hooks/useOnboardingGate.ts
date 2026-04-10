@@ -381,39 +381,16 @@ export function useOnboardingGate() {
         throw error;
       }
 
-      // Debug: verificar estado del perfil antes de completar
-      const { data: profileCheck } = await supabase.rpc('check_profile_completion', {
-        p_user_id: userId,
-      });
-      console.log('[completeOnboarding] check_profile_completion result:', profileCheck);
-
-      // Debug: verificar consentimientos pendientes
-      const { data: pendingConsents } = await supabase.rpc('get_pending_consents', {
-        p_user_id: userId,
-      });
-      console.log('[completeOnboarding] pending consents:', pendingConsents);
-
-      // ALERT TEMPORAL para debug
-      const debugInfo = {
-        profileComplete: profileCheck?.complete,
-        missingFields: profileCheck?.missing,
-        pendingConsentsCount: pendingConsents?.length || 0,
-        pendingConsents: pendingConsents?.map((c: any) => c.document_type) || [],
-      };
-      alert('DEBUG: ' + JSON.stringify(debugInfo, null, 2));
-
       const { data, error } = await supabase.rpc('complete_onboarding', {
         p_user_id: userId,
       });
 
-      console.log('[completeOnboarding] result:', data, 'error:', error);
-
       if (error) {
-        alert('ERROR en complete_onboarding: ' + error.message);
+        logger.error('useOnboardingGate complete_onboarding error', error);
         throw error;
       }
       if (!data) {
-        alert('complete_onboarding retornó false. Ver debugInfo arriba.');
+        logger.warn('useOnboardingGate complete_onboarding returned false');
         throw new Error('Could not complete onboarding');
       }
 
