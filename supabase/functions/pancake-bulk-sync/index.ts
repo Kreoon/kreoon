@@ -16,6 +16,64 @@ serve(async (req) => {
   }
 
   try {
+    // ============ AUTHENTICATION ============
+    // SECURITY: This function syncs sensitive user data to external CRM
+    // Requires either JWT authentication or shared secret
+
+    const authHeader = req.headers.get('Authorization')
+    const syncSecret = req.headers.get('x-sync-secret')
+
+    // Check for shared secret (for internal/cron calls)
+    const EXPECTED_SECRET = Deno.env.get('PANCAKE_SYNC_SECRET')
+    const hasValidSecret = EXPECTED_SECRET && syncSecret === EXPECTED_SECRET
+
+    if (!hasValidSecret) {
+      // If no valid secret, require JWT auth
+      if (!authHeader?.startsWith('Bearer ')) {
+        return new Response(JSON.stringify({ error: 'Authorization required: JWT token or x-sync-secret header' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
+      const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      const authClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+      // Validate JWT
+      const token = authHeader.replace('Bearer ', '')
+      const { data: userData, error: userError } = await authClient.auth.getUser(token)
+
+      if (userError || !userData?.user) {
+        console.error('JWT validation failed:', userError)
+        return new Response(JSON.stringify({ error: 'Invalid or expired token' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      // Check if user is admin
+      const { data: adminRole } = await authClient
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userData.user.id)
+        .eq('role', 'admin')
+        .maybeSingle()
+
+      if (!adminRole) {
+        console.warn(`SECURITY: Unauthorized pancake-bulk-sync attempt by ${userData.user.email}`)
+        return new Response(JSON.stringify({ error: 'Forbidden: Admin role required' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      console.log(`SECURITY: pancake-bulk-sync authorized for admin ${userData.user.email}`)
+    } else {
+      console.log('SECURITY: pancake-bulk-sync authorized via sync secret')
+    }
+    // ============ END AUTHENTICATION ============
+
     const body = await req.json().catch(() => ({}))
     const {
       entity_type = 'both',  // 'users', 'organizations', 'both'

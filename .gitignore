@@ -59,3 +59,28 @@ reports/
 .env.*.local
 .env*.local
 legal.local.md
+
+# Security - Private keys and certificates (NEVER commit these)
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+id_ecdsa
+id_ecdsa.*
+
+# Service account credentials
+credentials.json
+service-account*.json
+*-credentials.json
+*-service-account.json
+
+# Package manager auth tokens
+.npmrc
+.yarnrc
+.pypirc

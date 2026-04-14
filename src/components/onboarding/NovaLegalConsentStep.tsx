@@ -28,6 +28,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useOnboardingGate, PendingDocument } from '@/hooks/useOnboardingGate';
 import { useLegalConsent } from '@/hooks/useLegalConsent';
 import { useDigitalSignature } from '@/hooks/useDigitalSignature';
+import { sanitizeHTML } from '@/lib/sanitizeHTML';
 import { SignatureModal } from '@/components/legal/SignatureModal';
 import { SignatureReceipt } from '@/components/legal/SignatureReceipt';
 import { getSignatureMethodForDocument } from '@/types/digital-signature';
@@ -725,8 +726,9 @@ const DocumentContent = memo(function DocumentContent({
 
   return (
     <div className="prose prose-neutral dark:prose-invert max-w-none">
+      {/* SECURITY: Sanitize HTML to prevent XSS attacks */}
       <div
-        dangerouslySetInnerHTML={{ __html: html }}
+        dangerouslySetInnerHTML={{ __html: sanitizeHTML(html) }}
         className={cn(
           "[&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:text-foreground",
           "[&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-6 [&_h2]:mb-3 [&_h2]:text-foreground",

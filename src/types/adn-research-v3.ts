@@ -12,6 +12,19 @@ export interface AdnResearchV3Config {
   locations?: string[];
 }
 
+// ─── Error Details ──────────────────────────────────────────────────────────
+
+export interface AdnResearchV3ErrorDetails {
+  step?: number;
+  step_name?: string;
+  error_type?: string;
+  error_code?: string;
+  provider?: string;
+  retry_count?: number;
+  stack_trace?: string;
+  timestamp?: string;
+}
+
 // ─── Session ─────────────────────────────────────────────────────────────────
 
 export type AdnResearchV3Status =
@@ -36,9 +49,9 @@ export interface AdnResearchV3Session {
   total_steps: number;
   tokens_consumed: number;
   estimated_cost_usd: number;
-  result_snapshot: any;
+  result_snapshot: AdnResearchV3Result | null;
   error_message: string | null;
-  error_details: any;
+  error_details: AdnResearchV3ErrorDetails | null;
   started_at: string;
   intelligence_completed_at: string | null;
   research_completed_at: string | null;
@@ -299,10 +312,57 @@ export interface Tab5Psychology {
   tokens_used: number;
 }
 
+export interface Tab6NeuromarketingData {
+  cognitive_biases: Array<{
+    bias: string;
+    how_to_activate: string;
+    copy_example: string;
+    visual_recommendation: string;
+  }>;
+  decision_architecture: {
+    default_option: string;
+    decoy_strategy: string;
+    choice_architecture: string;
+    friction_points_to_remove: string[];
+  };
+  sensory_triggers: {
+    visual: string[];
+    auditory: string[];
+    kinesthetic: string[];
+    dominant_sense: string;
+  };
+  memory_rules: {
+    peak_end_rule: { peak_moment: string; end_moment: string };
+    primacy_recency: { first_impression: string; last_impression: string };
+    chunking_strategy: string;
+  };
+  pricing_psychology: {
+    anchor_price: string;
+    charm_pricing: boolean;
+    payment_framing: string;
+    value_perception_tactics: string[];
+  };
+  neuro_copywriting: {
+    power_words: string[];
+    sensory_language: string[];
+    rhythm_patterns: string;
+    headline_formulas: string[];
+  };
+}
+
 export interface Tab6Neuromarketing {
-  data: any; // Estructura completa en el prompt
+  data: Tab6NeuromarketingData;
   generated_at: string;
   tokens_used: number;
+}
+
+export interface EsferaStage {
+  objective: string;
+  key_message: string;
+  content_types: string[];
+  channels: string[];
+  metrics: string[];
+  tactics: string[];
 }
 
 export interface Tab7Positioning {
@@ -342,10 +402,10 @@ export interface Tab7Positioning {
       why_existing_solutions_fail: string;
     };
     esfera_framework: {
-      enganchar: any;
-      solucion: any;
-      fidelizar: any;
-      remarketing: any;
+      enganchar: EsferaStage;
+      solucion: EsferaStage;
+      fidelizar: EsferaStage;
+      remarketing: EsferaStage;
     };
   };
   generated_at: string;
@@ -394,14 +454,73 @@ export interface Tab8Copywriting {
   tokens_used: number;
 }
 
+export interface Tab9PUVOfferData {
+  value_stack: {
+    core_offer: { name: string; value: string; description: string };
+    bonuses: Array<{ name: string; value: string; why_included: string }>;
+    total_value: string;
+  };
+  guarantees: {
+    primary_guarantee: { type: string; duration: string; conditions: string };
+    risk_reversal_messaging: string;
+  };
+  pricing_strategy: {
+    price_point: string;
+    payment_options: string[];
+    price_justification: string;
+    tiers?: Array<{ name: string; price: string; features: string[] }>;
+  };
+  scarcity_urgency: {
+    scarcity_type: string;
+    urgency_trigger: string;
+    deadline_strategy: string;
+  };
+  offer_comparison: {
+    vs_competitors: Array<{ competitor: string; their_offer: string; our_advantage: string }>;
+    vs_alternatives: Array<{ alternative: string; why_inferior: string }>;
+  };
+  irresistible_offer_statement: string;
+}
+
 export interface Tab9PUVOffer {
-  data: any;
+  data: Tab9PUVOfferData;
   generated_at: string;
   tokens_used: number;
 }
 
+export interface VideoCreativeScript {
+  format: string;
+  duration_seconds: number;
+  platform: string;
+  objective: string;
+  hook: { text: string; visual: string; duration: string };
+  body: Array<{ timestamp: string; script: string; visual: string; text_overlay?: string }>;
+  cta: { text: string; visual: string };
+  music_style: string;
+  editing_notes: string;
+}
+
+export interface Tab10VideoCreativesData {
+  ugc_scripts: VideoCreativeScript[];
+  talking_head_scripts: VideoCreativeScript[];
+  broll_scripts: VideoCreativeScript[];
+  hooks_bank: {
+    curiosity: string[];
+    pain: string[];
+    transformation: string[];
+    social_proof: string[];
+    controversy: string[];
+  };
+  visual_guidelines: {
+    color_palette: string[];
+    typography_style: string;
+    transition_style: string;
+    thumbnail_templates: string[];
+  };
+}
+
 export interface Tab10VideoCreatives {
-  data: any;
+  data: Tab10VideoCreativesData;
   generated_at: string;
   tokens_used: number;
 }
@@ -431,31 +550,126 @@ export interface Tab11ContentCalendar {
   tokens_used: number;
 }
 
+export interface LeadMagnetConcept {
+  type: string;
+  title: string;
+  description: string;
+  target_avatar: string;
+  problem_solved: string;
+  format: string;
+  estimated_conversion_rate: string;
+  production_effort: string;
+}
+
+export interface Tab12LeadMagnetsData {
+  funnel_strategy: {
+    awareness_magnets: LeadMagnetConcept[];
+    consideration_magnets: LeadMagnetConcept[];
+    decision_magnets: LeadMagnetConcept[];
+  };
+  primary_lead_magnet: {
+    concept: LeadMagnetConcept;
+    outline: string[];
+    landing_page_headline: string;
+    delivery_sequence: string[];
+  };
+  challenge_concept: {
+    name: string;
+    duration_days: number;
+    daily_structure: Array<{ day: number; topic: string; deliverable: string }>;
+    conversion_mechanism: string;
+  };
+  distribution_strategy: {
+    organic_channels: string[];
+    paid_channels: string[];
+    partner_opportunities: string[];
+  };
+}
+
 export interface Tab12LeadMagnets {
-  data: any;
+  data: Tab12LeadMagnetsData;
   generated_at: string;
   tokens_used: number;
 }
 
+export interface PlatformStrategy {
+  platform: string;
+  priority: 'primary' | 'secondary' | 'experimental';
+  tone_of_voice: string;
+  posting_frequency: string;
+  best_times: string[];
+  content_pillars: string[];
+  engagement_tactics: string[];
+  hashtag_strategy: string[];
+  growth_tactics: string[];
+}
+
+export interface Tab13SocialMediaData {
+  platform_strategies: PlatformStrategy[];
+  content_pillars: Array<{
+    pillar: string;
+    percentage: number;
+    content_types: string[];
+    example_topics: string[];
+  }>;
+  influencer_strategy: {
+    target_tiers: string[];
+    collaboration_types: string[];
+    outreach_approach: string;
+    budget_allocation: string;
+  };
+  ugc_strategy: {
+    incentives: string[];
+    campaign_ideas: string[];
+    rights_management: string;
+  };
+  community_building: {
+    engagement_rituals: string[];
+    user_recognition: string[];
+    community_events: string[];
+  };
+  analytics_focus: string[];
+}
+
 export interface Tab13SocialMedia {
-  data: any;
+  data: Tab13SocialMediaData;
   generated_at: string;
   tokens_used: number;
+}
+
+export interface MetaAdsCampaign {
+  objective: string;
+  optimization_goal: string;
+  audiences: string[];
+  placements: string[];
+  creative_types: string[];
+  budget_split: string;
+  kpis: string[];
+}
+
+export interface MetaAdsDemographics {
+  age_range: string;
+  genders: string[];
+  locations: string[];
+  languages: string[];
+  education?: string[];
+  relationship_status?: string[];
+  job_titles?: string[];
 }
 
 export interface Tab14MetaAds {
   data: {
     campaign_architecture: {
-      tofu_campaign: any;
-      mofu_campaign: any;
-      bofu_campaign: any;
+      tofu_campaign: MetaAdsCampaign;
+      mofu_campaign: MetaAdsCampaign;
+      bofu_campaign: MetaAdsCampaign;
     };
     cold_audiences: Array<{
       name: string;
       targeting: {
         interests: string[];
         behaviors: string[];
-        demographics: any;
+        demographics: MetaAdsDemographics;
       };
       estimated_reach: string;
     }>;
@@ -484,44 +698,332 @@ export interface Tab14MetaAds {
   tokens_used: number;
 }
 
+export interface TikTokAdCreative {
+  format: string;
+  hook_3s: string;
+  script_outline: string[];
+  cta: string;
+  sound_recommendation: string;
+  hashtags: string[];
+}
+
+export interface Tab15TikTokAdsData {
+  campaign_strategy: {
+    objective: string;
+    funnel_stage: string;
+    budget_recommendation: string;
+    bidding_strategy: string;
+  };
+  audience_targeting: {
+    interest_categories: string[];
+    behaviors: string[];
+    custom_audiences: string[];
+    lookalike_strategy: string;
+  };
+  creatives: {
+    spark_ads: TikTokAdCreative[];
+    native_ads: TikTokAdCreative[];
+    ugc_style_ads: TikTokAdCreative[];
+  };
+  viral_hooks: string[];
+  hashtag_strategy: {
+    branded: string[];
+    trending: string[];
+    niche: string[];
+  };
+  kpis: {
+    awareness: string[];
+    engagement: string[];
+    conversion: string[];
+  };
+}
+
 export interface Tab15TikTokAds {
-  data: any;
+  data: Tab15TikTokAdsData;
   generated_at: string;
   tokens_used: number;
+}
+
+export interface GoogleAdsCampaign {
+  campaign_type: string;
+  objective: string;
+  targeting: Record<string, string[]>;
+  ad_copy: Array<{ headline: string; description: string }>;
+  budget: string;
+}
+
+export interface Tab16GoogleAdsData {
+  keyword_strategy: {
+    primary_keywords: Array<{ keyword: string; intent: string; volume: string; competition: string }>;
+    long_tail_keywords: string[];
+    negative_keywords: string[];
+  };
+  campaigns: {
+    search: GoogleAdsCampaign;
+    display: GoogleAdsCampaign;
+    youtube: GoogleAdsCampaign;
+    pmax: GoogleAdsCampaign;
+  };
+  bid_strategy: {
+    recommended_strategy: string;
+    target_cpa: string;
+    target_roas: string;
+  };
+  campaign_structure: {
+    account_hierarchy: string;
+    ad_group_themes: string[];
+    match_type_strategy: string;
+  };
+  conversion_tracking: {
+    primary_conversion: string;
+    micro_conversions: string[];
+    attribution_model: string;
+  };
+  optimization_checklist: string[];
 }
 
 export interface Tab16GoogleAds {
-  data: any;
+  data: Tab16GoogleAdsData;
   generated_at: string;
   tokens_used: number;
+}
+
+export interface EmailSequenceEmail {
+  day: number;
+  subject_line: string;
+  preview_text: string;
+  purpose: string;
+  key_content: string[];
+  cta: string;
+}
+
+export interface Tab17EmailMarketingData {
+  welcome_sequence: EmailSequenceEmail[];
+  nurture_sequence: EmailSequenceEmail[];
+  sales_sequence: EmailSequenceEmail[];
+  post_purchase_sequence: EmailSequenceEmail[];
+  broadcast_templates: Array<{
+    type: string;
+    subject_line_formula: string;
+    content_structure: string[];
+  }>;
+  subject_line_formulas: {
+    curiosity: string[];
+    benefit: string[];
+    urgency: string[];
+    social_proof: string[];
+  };
+  segmentation_strategy: {
+    segments: Array<{ name: string; criteria: string; content_focus: string }>;
+    personalization_tactics: string[];
+  };
+  automation_triggers: Array<{
+    trigger: string;
+    action: string;
+    timing: string;
+  }>;
 }
 
 export interface Tab17EmailMarketing {
-  data: any;
+  data: Tab17EmailMarketingData;
   generated_at: string;
   tokens_used: number;
+}
+
+export interface LandingPageSection {
+  section_name: string;
+  purpose: string;
+  headline: string;
+  subheadline?: string;
+  body_copy: string;
+  cta?: string;
+  visual_elements: string[];
+}
+
+export interface LandingPageDesign {
+  style: string;
+  description: string;
+  sections: LandingPageSection[];
+  color_scheme: string[];
+  typography: { headline_font: string; body_font: string };
+  cro_elements: string[];
+}
+
+export interface Tab18LandingPagesData {
+  designs: {
+    minimalist: LandingPageDesign;
+    story_driven: LandingPageDesign;
+  };
+  above_the_fold: {
+    headline_options: string[];
+    subheadline_options: string[];
+    hero_image_concept: string;
+    primary_cta: string;
+  };
+  social_proof_section: {
+    testimonial_format: string;
+    logos_to_feature: string[];
+    statistics_to_highlight: string[];
+  };
+  faq_section: Array<{ question: string; answer: string }>;
+  cro_recommendations: string[];
 }
 
 export interface Tab18LandingPages {
-  data: any;
+  data: Tab18LandingPagesData;
   generated_at: string;
   tokens_used: number;
+}
+
+export interface LaunchPhase {
+  phase_name: string;
+  duration: string;
+  objectives: string[];
+  key_activities: string[];
+  content_calendar: Array<{ day: number; content_type: string; topic: string; channel: string }>;
+  milestones: string[];
+}
+
+export interface Tab19LaunchStrategyData {
+  launch_type: string;
+  pre_launch: LaunchPhase;
+  launch: LaunchPhase;
+  post_launch: LaunchPhase;
+  launch_offers: {
+    early_bird: { discount: string; deadline: string; messaging: string };
+    founding_member: { benefits: string[]; limit: number };
+    bonuses: Array<{ name: string; availability: string }>;
+  };
+  waitlist_strategy: {
+    incentives: string[];
+    engagement_sequence: string[];
+    conversion_tactics: string[];
+  };
+  partner_strategy: {
+    affiliate_program: { commission: string; terms: string };
+    collaboration_opportunities: string[];
+    influencer_launches: string[];
+  };
+  contingency_plans: Array<{ scenario: string; response: string }>;
+  post_launch_optimization: {
+    feedback_collection: string[];
+    iteration_priorities: string[];
+    scaling_triggers: string[];
+  };
 }
 
 export interface Tab19LaunchStrategy {
-  data: any;
+  data: Tab19LaunchStrategyData;
   generated_at: string;
   tokens_used: number;
+}
+
+export interface MetricDefinition {
+  name: string;
+  description: string;
+  formula: string;
+  target: string;
+  frequency: string;
+}
+
+export interface Tab20MetricsData {
+  north_star_metric: {
+    metric: string;
+    definition: string;
+    why_chosen: string;
+    target: string;
+  };
+  primary_metrics: MetricDefinition[];
+  funnel_metrics: {
+    awareness: MetricDefinition[];
+    consideration: MetricDefinition[];
+    conversion: MetricDefinition[];
+    retention: MetricDefinition[];
+  };
+  channel_metrics: Record<string, MetricDefinition[]>;
+  cohort_analysis: {
+    cohorts_to_track: string[];
+    retention_benchmarks: Record<string, string>;
+  };
+  leading_indicators: MetricDefinition[];
+  lagging_indicators: MetricDefinition[];
+  dashboard_recommendations: {
+    executive_dashboard: string[];
+    marketing_dashboard: string[];
+    sales_dashboard: string[];
+  };
+  alert_thresholds: Array<{ metric: string; warning_threshold: string; critical_threshold: string }>;
+  reporting_cadence: {
+    daily: string[];
+    weekly: string[];
+    monthly: string[];
+  };
 }
 
 export interface Tab20Metrics {
-  data: any;
+  data: Tab20MetricsData;
   generated_at: string;
   tokens_used: number;
 }
 
+export interface BlogPost {
+  title: string;
+  target_keyword: string;
+  search_intent: string;
+  outline: string[];
+  word_count: number;
+  internal_links: string[];
+}
+
+export interface Tab21OrganicContentData {
+  content_pillars: Array<{
+    pillar: string;
+    topics: string[];
+    content_types: string[];
+    seo_keywords: string[];
+  }>;
+  seo_strategy: {
+    primary_keywords: Array<{ keyword: string; volume: string; difficulty: string; intent: string }>;
+    content_gaps: string[];
+    competitor_keywords: string[];
+    featured_snippet_opportunities: string[];
+  };
+  blog_plan: {
+    posting_frequency: string;
+    content_calendar: BlogPost[];
+    pillar_pages: string[];
+    cluster_strategy: string;
+  };
+  youtube_strategy: {
+    channel_positioning: string;
+    content_series: string[];
+    seo_tactics: string[];
+    collaboration_opportunities: string[];
+  };
+  podcast_opportunity: {
+    show_concept: string;
+    episode_formats: string[];
+    guest_strategy: string;
+    distribution_channels: string[];
+  };
+  content_repurposing: {
+    workflows: Array<{ source: string; derivatives: string[] }>;
+    automation_opportunities: string[];
+  };
+  link_building: {
+    strategies: string[];
+    target_sites: string[];
+    outreach_templates: string[];
+  };
+  measurement_framework: {
+    content_kpis: string[];
+    attribution_model: string;
+    reporting_cadence: string;
+  };
+}
+
 export interface Tab21OrganicContent {
-  data: any;
+  data: Tab21OrganicContentData;
   generated_at: string;
   tokens_used: number;
 }

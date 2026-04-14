@@ -2,11 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getKreoonClient, isKreoonConfigured, validateKreoonAuth } from "../_shared/kreoon-client.ts";
 import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, handleCorsOptions } from "../_shared/cors.ts";
 
 // Role-based access levels for information
 const ROLE_ACCESS_LEVELS: Record<string, string[]> = {
@@ -72,8 +68,10 @@ Es un sistema integral de gestión de contenido UGC (User Generated Content) que
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
+
+  const corsHeaders = getCorsHeaders(req);
 
   try {
     const authHeader = req.headers.get('Authorization');

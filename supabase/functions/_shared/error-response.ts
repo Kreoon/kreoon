@@ -35,8 +35,8 @@ export function getStatusFromError(error: unknown): number {
     if (message.includes('payment') || message.includes('tokens')) return 402;
   }
   // Check for status property on error object
-  if (typeof (error as any)?.status === 'number') {
-    return (error as any).status;
+  if (error && typeof error === 'object' && 'status' in error && typeof error.status === 'number') {
+    return error.status;
   }
   return 500;
 }
@@ -62,7 +62,10 @@ export function errorResponse(
 
   // Rate limit specific handling
   if (status === 429) {
-    body.retry_after_seconds = (error as any)?.retryAfterSeconds ?? 60;
+    const retryAfter = error && typeof error === 'object' && 'retryAfterSeconds' in error
+      ? (error.retryAfterSeconds as number)
+      : 60;
+    body.retry_after_seconds = retryAfter;
   }
 
   console.error(`[${context?.action || 'unknown'}] Error:`, message, context);

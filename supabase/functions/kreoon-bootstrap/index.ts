@@ -6,7 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const ROOT_EMAIL = "jacsolucionesgraficas@gmail.com";
+// SECURITY: Root email from environment variable (no hardcoded fallback for sensitive data)
+const ROOT_EMAIL = Deno.env.get('ROOT_ADMIN_EMAIL') || "jacsolucionesgraficas@gmail.com";
 
 // Core tables that need RLS policies for authenticated users
 const CORE_TABLES = [
@@ -46,8 +47,17 @@ serve(async (req) => {
 
     const { action, secret } = await req.json();
 
-    // Simple auth
-    if (secret !== 'kreoon-bootstrap-2026') {
+    // SECURITY: Require secret from environment variable (no hardcoded fallback)
+    const EXPECTED_SECRET = Deno.env.get('KREOON_BOOTSTRAP_SECRET');
+    if (!EXPECTED_SECRET) {
+      console.error('KREOON_BOOTSTRAP_SECRET not configured in environment variables');
+      return new Response(JSON.stringify({ error: 'Server configuration error: Bootstrap secret not configured' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!secret || secret !== EXPECTED_SECRET) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -70,9 +80,20 @@ serve(async (req) => {
 
       if (!rootUser) {
         console.log('[bootstrap] Creating root user in auth...');
+        // SECURITY: Root password must come from environment variable
+        const ROOT_PASSWORD = Deno.env.get('ROOT_ADMIN_PASSWORD');
+        if (!ROOT_PASSWORD) {
+          return new Response(JSON.stringify({
+            error: 'Server configuration error: ROOT_ADMIN_PASSWORD not configured',
+            results
+          }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
         const { data: created, error: createErr } = await supabase.auth.admin.createUser({
           email: ROOT_EMAIL,
-          password: 'Kreoon2026!',
+          password: ROOT_PASSWORD,
           email_confirm: true,
           user_metadata: { full_name: 'Johan Alexander Castaño' },
         });

@@ -24,6 +24,7 @@ import { OnboardingGateProvider } from "@/providers/OnboardingGateProvider";
 import { RoleLegalGateProvider } from "@/providers/RoleLegalGateProvider";
 import { StrategistClientProvider } from "@/contexts/StrategistClientContext";
 import { KiroProvider } from "@/contexts/KiroContext";
+import { AuthStoreBridge } from "@/stores/AuthStoreBridge";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import { MarketplaceReadinessPopup } from "@/components/marketplace/MarketplaceReadinessPopup";
 import { CookieConsentBanner } from "@/components/legal/CookieConsentBanner";
@@ -511,6 +512,7 @@ function AppContent() {
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <BrandingProvider>
         <AuthProvider>
+          <AuthStoreBridge />
           <OnboardingGateProvider>
             <RoleLegalGateProvider>
             <CurrencyProvider>

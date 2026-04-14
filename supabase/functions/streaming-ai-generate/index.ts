@@ -3,6 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getModuleAIConfig, getPerplexityConfig } from "../_shared/get-module-ai-config.ts";
 import { makeAIRequest, corsHeaders } from "../_shared/ai-providers.ts";
 import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
+// SECURITY: Rate limiting para proteger APIs costosas
+import { checkRateLimit, RATE_LIMIT_PRESETS, rateLimitResponse, getClientIp } from "../_shared/rate-limiter.ts";
 
 const LIVE_SHOPPING_SYSTEM_PROMPT = `Eres un experto en Live Shopping y Social Commerce para Latinoamérica.
 
@@ -245,6 +247,15 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // ── SECURITY: Rate limiting por IP (20 req/min para AI) ──
+    const clientIp = getClientIp(req);
+    const rateLimitResult = await checkRateLimit(supabase, clientIp, RATE_LIMIT_PRESETS.ai);
+    if (!rateLimitResult.allowed) {
+      console.warn(`[streaming-ai-generate] Rate limit exceeded for IP: ${clientIp}`);
+      return rateLimitResponse(req, rateLimitResult, RATE_LIMIT_PRESETS.ai.limit);
+    }
+    // ─────────────────────────────────────────────────────────
 
     const body = (await req.json()) as LiveContentRequest & {
       usePerplexity?: boolean;
