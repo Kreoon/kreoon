@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrgOwner } from './useOrgOwner';
 
@@ -56,6 +56,7 @@ export type UseInternalOrgContentReturn = InternalOrgContentState & InternalOrgC
  */
 export function useInternalOrgContent(clientId?: string | null): UseInternalOrgContentReturn {
   const { currentOrgId } = useOrgOwner();
+  const instanceIdRef = useRef(Math.random().toString(36).substring(2, 9));
   const [internalBrandClientId, setInternalBrandClientId] = useState<string | null>(null);
   const [ambassadors, setAmbassadors] = useState<AmbassadorWithRole[]>([]);
   const [ambassadorCreators, setAmbassadorCreators] = useState<AmbassadorWithRole[]>([]);
@@ -164,7 +165,7 @@ export function useInternalOrgContent(clientId?: string | null): UseInternalOrgC
     if (!currentOrgId) return;
 
     const channel = supabase
-      .channel(`ambassador-badges-${currentOrgId}`)
+      .channel(`ambassador-badges-${currentOrgId}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {

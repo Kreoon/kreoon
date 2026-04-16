@@ -321,8 +321,23 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole, accountType }
 
       if (result) {
         toast.success('¡Bienvenido a KREOON!');
+
+        // Determinar la ruta según el rol del usuario
+        let redirectPath = '/creator-dashboard';
+        if (userRole === 'admin' || userRole === 'team_leader') {
+          redirectPath = '/dashboard';
+        } else if (userRole === 'strategist') {
+          redirectPath = '/strategist-dashboard';
+        } else if (userRole === 'creator' || userRole === 'content_creator') {
+          redirectPath = '/creator-dashboard';
+        } else if (userRole === 'editor') {
+          redirectPath = '/editor-dashboard';
+        } else if (userRole === 'client') {
+          redirectPath = '/client-dashboard';
+        }
+
         setTimeout(() => {
-          window.location.href = '/dashboard';
+          window.location.href = redirectPath;
         }, 500);
       } else {
         toast.error('Error: Verifica que hayas completado tu perfil y aceptado todos los documentos requeridos.');
