@@ -1,5 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -10,27 +8,35 @@ const corsHeaders = {
  * Bunny Delete V2 - Deletes a video from Bunny Stream
  * Uses: BUNNY_API_KEY, BUNNY_LIBRARY_ID
  */
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { videoId } = await req.json();
+    const body = await req.json();
+    const videoId = body?.videoId;
 
-    if (!videoId) {
+    console.log("[bunny-delete-v2] Request received, videoId:", videoId);
+
+    if (!videoId || typeof videoId !== 'string' || videoId.trim() === '') {
+      console.error("[bunny-delete-v2] Invalid videoId:", videoId);
       return new Response(
-        JSON.stringify({ success: false, error: "videoId is required" }),
+        JSON.stringify({ success: false, error: "videoId es requerido y debe ser un string válido" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     // Read secrets
-    const bunnyApiKey = Deno.env.get("BUNNY_API_KEY")!;
-    const bunnyLibraryId = Deno.env.get("BUNNY_LIBRARY_ID")!;
+    const bunnyApiKey = Deno.env.get("BUNNY_API_KEY");
+    const bunnyLibraryId = Deno.env.get("BUNNY_LIBRARY_ID");
 
     if (!bunnyApiKey || !bunnyLibraryId) {
-      throw new Error("Missing BUNNY_API_KEY or BUNNY_LIBRARY_ID");
+      console.error("[bunny-delete-v2] Missing env vars");
+      return new Response(
+        JSON.stringify({ success: false, error: "Configuración de Bunny incompleta" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Delete video from Bunny Stream

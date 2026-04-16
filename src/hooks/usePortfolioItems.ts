@@ -179,64 +179,55 @@ export function usePortfolioItems(options: UsePortfolioItemsOptions = {}): UsePo
   const deleteItem = useCallback(async (id: string): Promise<boolean> => {
     try {
       console.log('[usePortfolioItems] Deleting item:', id);
-      // Find the item to get Bunny CDN info before deleting
-      const item = items.find(i => i.id === id);
 
-      // ── 1. Delete from Bunny CDN ──────────────────────────────
-      if (item) {
-        if (item.media_type === 'video') {
-          // Video stream: delete via bunny-delete-v2
-          const videoId = item.bunny_video_id
-            || (item.media_url ? extractBunnyIds(item.media_url)?.videoId : null);
-          if (videoId) {
-            console.log('[usePortfolioItems] Deleting video from Bunny:', videoId);
-            const { error: bunnyErr } = await supabase.functions.invoke('bunny-delete-v2', {
-              body: { videoId },
-            });
-            if (bunnyErr) {
-              console.warn('[usePortfolioItems] Bunny video delete warning:', bunnyErr);
-            }
-          }
-        } else if (item.media_type === 'image' && item.media_url) {
-          // Image in Bunny Storage: extract storage path from CDN URL
-          // URL formats:
-          // - https://cdn.kreoon.com/marketplace/portfolio/{creatorId}/{file}
-          // - https://{zone}.b-cdn.net/marketplace/portfolio/{creatorId}/{file}
-          const match = item.media_url.match(/cdn\.kreoon\.com\/(.+)$/i)
-            || item.media_url.match(/b-cdn\.net\/(.+)$/i)
-            || item.media_url.match(/\.b-cdn\.net\/(.+)$/i);
-          if (match) {
-            const storagePath = decodeURIComponent(match[1].split('?')[0]);
-            console.log('[usePortfolioItems] Deleting image from Bunny:', storagePath);
-            const { error: bunnyErr } = await supabase.functions.invoke('bunny-raw-delete', {
-              body: { storagePath },
-            });
-            if (bunnyErr) {
-              console.warn('[usePortfolioItems] Bunny image delete warning:', bunnyErr);
-            }
+      // ── 1. Delete from database via Edge Function (bypasses RLS) ──
+      const { data: result, error: fnError } = await supabase.functions.invoke('portfolio-item-delete', {
+        body: { itemId: id },
+      });
+
+      console.log('[usePortfolioItems] Edge function result:', result, fnError);
+
+      if (fnError) {
+        console.error('[usePortfolioItems] Edge function error:', fnError);
+        toast.error('Error al eliminar: ' + (fnError.message || 'Error desconocido'));
+        return false;
+      }
+
+      if (!result?.success) {
+        console.error('[usePortfolioItems] Delete failed:', result?.error);
+        toast.error(result?.error || 'No se pudo eliminar el item');
+        return false;
+      }
+
+      // ── 2. Delete from Bunny CDN (using info returned by Edge Function) ──
+      const { media_type, bunny_video_id, media_url } = result;
+
+      if (media_type === 'video') {
+        const videoId = bunny_video_id
+          || (media_url ? extractBunnyIds(media_url)?.videoId : null);
+        if (videoId) {
+          console.log('[usePortfolioItems] Deleting video from Bunny:', videoId);
+          const { error: bunnyErr } = await supabase.functions.invoke('bunny-delete-v2', {
+            body: { videoId },
+          });
+          if (bunnyErr) {
+            console.warn('[usePortfolioItems] Bunny video delete warning:', bunnyErr);
           }
         }
-      }
-
-      // ── 2. Delete from database ───────────────────────────────
-      const { data: deleted, error, count } = await (supabase as any)
-        .from('portfolio_items')
-        .delete()
-        .eq('id', id)
-        .select();
-
-      console.log('[usePortfolioItems] DB delete result:', { deleted, error, count });
-
-      if (error) {
-        console.error('[usePortfolioItems] DB delete error:', error);
-        throw error;
-      }
-
-      if (!deleted || deleted.length === 0) {
-        console.warn('[usePortfolioItems] No rows deleted - RLS restriction');
-        console.warn('[usePortfolioItems] Para eliminar contenido de otro creador, necesitas is_platform_admin=true');
-        toast.error('No tienes permiso para eliminar este contenido');
-        return false;
+      } else if (media_type === 'image' && media_url) {
+        const match = media_url.match(/cdn\.kreoon\.com\/(.+)$/i)
+          || media_url.match(/b-cdn\.net\/(.+)$/i)
+          || media_url.match(/\.b-cdn\.net\/(.+)$/i);
+        if (match) {
+          const storagePath = decodeURIComponent(match[1].split('?')[0]);
+          console.log('[usePortfolioItems] Deleting image from Bunny:', storagePath);
+          const { error: bunnyErr } = await supabase.functions.invoke('bunny-raw-delete', {
+            body: { storagePath },
+          });
+          if (bunnyErr) {
+            console.warn('[usePortfolioItems] Bunny image delete warning:', bunnyErr);
+          }
+        }
       }
 
       setItems(prev => prev.filter(item => item.id !== id));
@@ -247,7 +238,7 @@ export function usePortfolioItems(options: UsePortfolioItemsOptions = {}): UsePo
       toast.error('Error al eliminar item');
       return false;
     }
-  }, [items]);
+  }, []);
 
   const reorderItems = useCallback(async (orderedIds: string[]): Promise<boolean> => {
     try {
@@ -331,20 +322,26 @@ export function usePortfolioItems(options: UsePortfolioItemsOptions = {}): UsePo
         throw new Error(slotError?.message || slotData?.error || 'Failed to create video slot');
       }
 
-      const { upload_url, access_key, video_id, embed_url, media_id } = slotData;
+      const { video_id, embed_url, media_id } = slotData;
 
-      // Step 2: Upload file directly to Bunny CDN
-      const uploadResponse = await fetch(upload_url, {
-        method: 'PUT',
+      // Step 2: Upload video through Edge Function proxy (avoids CORS issues)
+      // The Edge Function streams the video to Bunny without loading it all in memory
+      const { data: { session } } = await supabase.auth.getSession();
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+
+      const uploadResponse = await fetch(`${supabaseUrl}/functions/v1/bunny-marketplace-upload`, {
+        method: 'POST',
         headers: {
-          'AccessKey': access_key,
+          'Authorization': `Bearer ${session?.access_token}`,
           'Content-Type': 'application/octet-stream',
+          'x-video-id': video_id,
         },
         body: file,
       });
 
       if (!uploadResponse.ok) {
-        throw new Error(`Upload failed: ${uploadResponse.statusText}`);
+        const errorData = await uploadResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || `Upload failed: ${uploadResponse.statusText}`);
       }
 
       // Step 3: Confirm upload
@@ -430,8 +427,8 @@ export function usePortfolioItems(options: UsePortfolioItemsOptions = {}): UsePo
       return null;
     }
 
-    // Validar tamaño máximo (10MB)
-    const MAX_SIZE_MB = 10;
+    // Validar tamaño máximo (5MB para base64 - Edge Functions tienen límite de memoria)
+    const MAX_SIZE_MB = 5;
     if (file.size > MAX_SIZE_MB * 1024 * 1024) {
       toast.error(`La imagen es muy grande. Máximo ${MAX_SIZE_MB}MB.`);
       return null;
@@ -441,9 +438,24 @@ export function usePortfolioItems(options: UsePortfolioItemsOptions = {}): UsePo
 
     setAdding(true);
     try {
+      // Verificar sesión activa antes de invocar
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        console.error('[usePortfolioItems] No active session:', sessionError?.message);
+        throw new Error('Sesión expirada. Por favor, vuelve a iniciar sesión.');
+      }
 
-      // Step 1: Call edge function to get upload credentials AND create DB record
-      // This uses service_role to bypass RLS issues
+      console.log('[usePortfolioItems] Session active, user:', session.user.id);
+
+      // Convert file to base64
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = btoa(
+        new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+      );
+
+      console.log('[usePortfolioItems] Image converted to base64, size:', base64.length);
+
+      // Call edge function which uploads to Bunny server-side AND creates DB record
       const { data: result, error: fnError } = await supabase.functions.invoke('portfolio-image-upload', {
         body: {
           creatorProfileId,
@@ -451,28 +463,16 @@ export function usePortfolioItems(options: UsePortfolioItemsOptions = {}): UsePo
           category: metadata?.category || null,
           fileName: file.name,
           fileExt: ext,
+          imageBase64: base64,
+          contentType: file.type || 'image/jpeg',
         },
       });
 
       if (fnError || !result?.success) {
-        throw new Error(fnError?.message || result?.error || 'Error al preparar subida');
+        throw new Error(fnError?.message || result?.error || 'Error al subir imagen');
       }
 
-      // Step 2: Upload directly to Bunny Storage
-      const uploadResponse = await fetch(result.uploadUrl, {
-        method: 'PUT',
-        headers: {
-          'AccessKey': result.accessKey,
-          'Content-Type': file.type || 'image/jpeg',
-        },
-        body: file,
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error(`Upload failed: ${uploadResponse.statusText}`);
-      }
-
-      // Step 3: Add the item to local state (record already created by edge function)
+      // Add the item to local state (record already created by edge function)
       const mapped = mapRow(result.portfolioItem);
       setItems(prev => [...prev, mapped]);
 

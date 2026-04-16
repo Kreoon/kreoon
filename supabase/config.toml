@@ -199,7 +199,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.bunny-delete-v2]
-verify_jwt = true
+verify_jwt = false
 
 [functions.bunny-status-v2]
 verify_jwt = true
@@ -370,9 +370,15 @@ verify_jwt = true
 verify_jwt = true
 
 # ── Portfolio Image Upload ──
+# verify_jwt = false porque la función maneja auth internamente con userClient.auth.getUser()
 
 [functions.portfolio-image-upload]
-verify_jwt = true
+verify_jwt = false
+
+[functions.portfolio-item-delete]
+# JWT verification handled internally by the function (supabase.auth.getUser)
+# Uses service_role to bypass RLS for owner/admin deletion
+verify_jwt = false
 
 # ── Partner Communities ──
 
