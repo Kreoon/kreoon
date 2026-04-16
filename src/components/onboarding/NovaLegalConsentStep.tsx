@@ -322,7 +322,7 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole, accountType }
       if (result) {
         toast.success('¡Bienvenido a KREOON!');
         setTimeout(() => {
-          window.location.reload();
+          window.location.href = '/dashboard';
         }, 500);
       } else {
         toast.error('Error: Verifica que hayas completado tu perfil y aceptado todos los documentos requeridos.');
