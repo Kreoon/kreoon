@@ -11,7 +11,7 @@ import { Helmet } from 'react-helmet-async';
 interface PortfolioItem {
   id: string;
   media_type: 'image' | 'video';
-  url: string;
+  media_url: string;
   thumbnail_url: string | null;
 }
 
@@ -41,8 +41,8 @@ function getOgImage(profile: CreatorProfile): string {
     if (profile.featured_media.media_type === 'video' && profile.featured_media.thumbnail_url) {
       return profile.featured_media.thumbnail_url;
     }
-    if (profile.featured_media.media_type === 'image' && profile.featured_media.url) {
-      return profile.featured_media.url;
+    if (profile.featured_media.media_type === 'image' && profile.featured_media.media_url) {
+      return profile.featured_media.media_url;
     }
   }
 
@@ -171,10 +171,10 @@ export default function PublicCreatorPage() {
           rating_avg,
           rating_count,
           completed_projects,
-          portfolio_items!portfolio_items_creator_profile_id_fkey (
+          portfolio_items!portfolio_items_creator_id_fkey (
             id,
             media_type,
-            url,
+            media_url,
             thumbnail_url
           )
         `)
