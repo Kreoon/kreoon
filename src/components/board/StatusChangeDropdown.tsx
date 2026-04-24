@@ -9,10 +9,33 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { ChevronDown, Check, Lock } from 'lucide-react';
-import { ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
+import { ContentStatus, STATUS_LABELS, STATUS_COLORS, AppRole } from '@/types/database';
 import { cn } from '@/lib/utils';
-import { AppRole } from '@/types/database';
-import { getPermissionGroup, type PermissionGroup } from '@/lib/permissionGroups';
+
+type StatusPermissionGroup = 'admin' | 'team_leader' | 'strategist' | 'creator' | 'editor' | 'client';
+
+function getStatusPermissionGroup(role: AppRole | null): StatusPermissionGroup {
+  if (!role) return 'client';
+  switch (role) {
+    case 'admin':
+      return 'admin';
+    case 'team_leader':
+      return 'team_leader';
+    case 'strategist':
+    case 'digital_strategist':
+    case 'creative_strategist':
+      return 'strategist';
+    case 'creator':
+    case 'content_creator':
+      return 'creator';
+    case 'editor':
+    case 'video_editor':
+      return 'editor';
+    case 'client':
+    default:
+      return 'client';
+  }
+}
 import { useContentAnalytics } from '@/analytics';
 
 interface StatusChangeDropdownProps {
@@ -28,7 +51,7 @@ interface StatusChangeDropdownProps {
 }
 
 // Define allowed status transitions per permission group
-const GROUP_ALLOWED_STATUSES: Record<PermissionGroup, ContentStatus[]> = {
+const GROUP_ALLOWED_STATUSES: Record<StatusPermissionGroup, ContentStatus[]> = {
   admin: [
     'draft', 'script_approved', 'assigned', 'recording', 'recorded',
     'editing', 'delivered', 'issue', 'corrected', 'approved', 'paid'
@@ -47,7 +70,7 @@ const GROUP_ALLOWED_STATUSES: Record<PermissionGroup, ContentStatus[]> = {
 };
 
 // Define which statuses each group can move FROM
-const GROUP_CAN_MOVE_FROM: Record<PermissionGroup, ContentStatus[]> = {
+const GROUP_CAN_MOVE_FROM: Record<StatusPermissionGroup, ContentStatus[]> = {
   admin: [
     'draft', 'script_approved', 'assigned', 'recording', 'recorded',
     'editing', 'delivered', 'issue', 'corrected', 'approved', 'paid'
@@ -79,20 +102,20 @@ export function StatusChangeDropdown({
   const [isChanging, setIsChanging] = useState(false);
   const { trackContentApproved, trackContentRejected } = useContentAnalytics();
 
-  // Get allowed statuses for this user's role (resolved via permission group)
+  // Get allowed statuses for this user's role (resolved via status permission group)
   const getAllowedStatuses = (): ContentStatus[] => {
     if (!userRole) return [];
 
-    const group = getPermissionGroup(userRole);
-    const allowedToStatuses = GROUP_ALLOWED_STATUSES[group] || [];
-    const canMoveFrom = GROUP_CAN_MOVE_FROM[group] || [];
+    const group = getStatusPermissionGroup(userRole);
+    const allowedToStatuses = GROUP_ALLOWED_STATUSES[group];
+    const canMoveFrom = GROUP_CAN_MOVE_FROM[group];
 
     // Check if user can move from current status
     if (!canMoveFrom.includes(currentStatus) && group !== 'admin') {
       // Special cases for assigned users
       if (group === 'creator' && isAssignedCreator && ['assigned', 'recording', 'recorded', 'issue'].includes(currentStatus)) {
         // Creator can move their assigned content
-      } else if (group === 'editor' && isAssignedEditor && ['recorded', 'editing', 'issue'].includes(currentStatus)) {
+      } else if (group === 'editor' && isAssignedEditor && ['recorded', 'editing', 'issue', 'corrected'].includes(currentStatus)) {
         // Editor can move their assigned content
       } else if (group === 'strategist' && isAssignedStrategist) {
         // Strategist assigned to this content can always move it
