@@ -4,14 +4,19 @@ import { useAuth } from "@/hooks/useAuth";
 import { getDashboardPath } from "@/utils/navigation";
 
 import { LandingLayout } from "@/components/landing/LandingLayout";
-import { HeroSection } from "@/components/landing/sections/HeroSection";
-import { LogosSection } from "@/components/landing/sections/LogosSection";
-import { ValuePropositionSection } from "@/components/landing/sections/ValuePropositionSection";
-import { HowItWorksSection } from "@/components/landing/sections/HowItWorksSection";
-import { FeaturesSection } from "@/components/landing/sections/FeaturesSection";
-import { TestimonialsSection } from "@/components/landing/sections/TestimonialsSection";
+import { StoryScrollContainer } from "@/components/landing/StoryScrollContainer";
+import { StoryTransition } from "@/components/landing/StoryTransition";
+import { HeroModern } from "@/components/landing/sections/HeroModern";
+import { SolutionRolesSection } from "@/components/landing/sections/SolutionRolesSection";
+import { AIEngineSection } from "@/components/landing/sections/AIEngineSection";
+import { ProjectKanbanShowcase } from "@/components/landing/sections/ProjectKanbanShowcase";
+import { FactorySection } from "@/components/landing/sections/FactorySection";
+import { VideoShowcase } from "@/components/landing/sections/VideoShowcase";
+import { MarketplaceUniverse } from "@/components/landing/sections/MarketplaceUniverse";
 import { PricingSection } from "@/components/landing/sections/PricingSection";
 import { CTASection } from "@/components/landing/sections/CTASection";
+import { BrandsPartners } from "@/components/landing/sections/BrandsPartners";
+import { NebulaBackground } from "@/components/landing/NebulaBackground";
 
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Loader2 } from "lucide-react";
@@ -39,15 +44,6 @@ export default function HomePage() {
     setAuthModal({ open: true, tab, preselectedRole: role });
   };
 
-  const handleSelectSegment = (segment: string) => {
-    const roleMap: Record<string, string> = {
-      client: "client",
-      creator: "creator",
-      editor: "editor",
-    };
-    handleOpenAuth("register", roleMap[segment] ?? segment);
-  };
-
   const handleSelectPlan = (planId: string) => {
     handleOpenAuth("register");
   };
@@ -66,27 +62,63 @@ export default function HomePage() {
 
   return (
     <>
+      <NebulaBackground />
       <LandingLayout
         onOpenAuth={(tab) => handleOpenAuth(tab)}
       >
-        <HeroSection onGetStarted={() => handleOpenAuth("register")} />
+        <StoryScrollContainer>
+          <HeroModern
+            onGetStarted={() => handleOpenAuth("register")}
+            onWatchDemo={() => {
+              document.getElementById("factory")?.scrollIntoView({ behavior: "smooth" });
+            }}
+          />
 
-        <LogosSection />
+          <BrandsPartners />
 
-        <ValuePropositionSection onSelectSegment={handleSelectSegment} />
+          <StoryTransition label="Ecosistema" variant="glow" />
 
-        <HowItWorksSection />
+          <SolutionRolesSection />
 
-        <FeaturesSection />
+          <StoryTransition variant="line" />
 
-        <TestimonialsSection />
+          <VideoShowcase />
 
-        <PricingSection
-          onSelectPlan={handleSelectPlan}
-          highlightedPlan="marcas-starter"
-        />
+          <StoryTransition label="Inteligencia" variant="glow" />
 
-        <CTASection onGetStarted={() => handleOpenAuth("register")} />
+          <div id="ai-engine">
+            <AIEngineSection />
+          </div>
+
+          <StoryTransition variant="fade" />
+
+          <ProjectKanbanShowcase />
+
+          <StoryTransition label="Producción" variant="glow" />
+
+          <div id="factory">
+            <FactorySection />
+          </div>
+
+          <StoryTransition variant="line" />
+
+          <div id="marketplace">
+            <MarketplaceUniverse />
+          </div>
+
+          <StoryTransition label="Planes" variant="glow" />
+
+          <div id="pricing">
+            <PricingSection
+              onSelectPlan={handleSelectPlan}
+              highlightedPlan="marcas-starter"
+            />
+          </div>
+
+          <StoryTransition variant="fade" />
+
+          <CTASection onGetStarted={() => handleOpenAuth("register")} />
+        </StoryScrollContainer>
       </LandingLayout>
 
       <AuthModal

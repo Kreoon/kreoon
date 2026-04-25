@@ -8,6 +8,30 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+    @apply bg-kreoon-bg-primary;
+  }
+
+  /* Custom Scrollbar for Pro Aesthetic */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-kreoon-bg-primary;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-kreoon-purple-500/20 transition-colors;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-kreoon-purple-500/40;
+  }
+}
+
+@layer base {
   /* ===== LIGHT THEME (Editorial Studio) ===== */
   :root {
     --background: 0 0% 100%;
@@ -274,6 +298,15 @@
     overflow: visible;
     clip: auto;
     white-space: normal;
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 
   /* Gradient Text */
