@@ -92,7 +92,7 @@ const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 let cachedOrgId: string | null = null;
 let cachedOrgOwnerId: string | null = null;
 let cachedCommunity: CommunityInfo | null = null;
-let cachedReferralId: string | null = null;
+const cachedReferralId: string | null = null;
 
 async function getUgcColombiaOrgId(supabase: ReturnType<typeof createClient>): Promise<string | null> {
   if (cachedOrgId) return cachedOrgId;

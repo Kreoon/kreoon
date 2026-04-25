@@ -49,11 +49,10 @@
     <link rel="preconnect" href="https://wjkbqcrxwsmvtxmqgiqc.supabase.co" crossorigin>
     <!-- wsrv.nl: image proxy crítico para el marketplace, requiere crossorigin por CORS -->
     <link rel="preconnect" href="https://wsrv.nl" crossorigin>
-
-    <!-- DNS Prefetch: orígenes secundarios (Bunny CDN) - menor overhead que preconnect -->
-    <link rel="dns-prefetch" href="https://vz-78fcd769-050.b-cdn.net">
-    <link rel="dns-prefetch" href="https://cdn.kreoon.com">
-    <link rel="dns-prefetch" href="https://kreoon-images.b-cdn.net">
+    <!-- Bunny CDN: Optimización de velocidad máxima para videos y assets -->
+    <link rel="preconnect" href="https://vz-78fcd769-050.b-cdn.net" crossorigin>
+    <link rel="preconnect" href="https://cdn.kreoon.com" crossorigin>
+    <link rel="preconnect" href="https://kreoon-images.b-cdn.net" crossorigin>
 
     <!-- KREOON Web Fonts - Async loading to prevent render blocking -->
     <!-- Preload critical font (Outfit - used for headings) -->

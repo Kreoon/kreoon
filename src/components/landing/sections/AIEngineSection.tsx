@@ -22,7 +22,7 @@ export function AIEngineSection() {
   const brainScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1.2, 0.8]);
 
   return (
-    <div ref={containerRef} className="relative h-[300vh] bg-kreoon-bg-primary">
+    <div ref={containerRef} className="relative h-[300vh] bg-transparent">
       <div className="sticky top-0 flex h-screen w-full items-center justify-center overflow-hidden">
         {/* Tech Grid Background */}
         <motion.div 

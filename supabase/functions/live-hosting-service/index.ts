@@ -559,7 +559,7 @@ async function reviewHost(
   if (!host) throw new Error("Host not found");
 
   let newStatus: HostStatus;
-  let updateData: Record<string, any> = {};
+  const updateData: Record<string, any> = {};
 
   switch (payload.action) {
     case "shortlist":

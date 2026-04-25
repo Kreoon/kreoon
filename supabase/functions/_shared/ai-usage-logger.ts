@@ -232,12 +232,12 @@ export async function callAndLogAI(
       action: config.action,
       provider: aiConfig.provider,
       model: aiConfig.model,
-      tokens_input: result!?.usage?.prompt_tokens,
-      tokens_output: result!?.usage?.completion_tokens,
+      tokens_input: result?.usage?.prompt_tokens,
+      tokens_output: result?.usage?.completion_tokens,
       success,
       error_message: errorMessage,
       edge_function: config.edgeFunction,
-      response_time_ms: result!?.response_time_ms,
+      response_time_ms: result?.response_time_ms,
     });
 
     if (result!) {

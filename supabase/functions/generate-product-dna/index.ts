@@ -4,7 +4,7 @@ import { corsHeaders, getAPIKey } from "../_shared/ai-providers.ts";
 // ── JSON extraction and repair ─────────────────────────────────────────────
 function extractJsonFromText(text: string): string | null {
   // Remove common prefixes that Perplexity might add
-  let s = text
+  const s = text
     .replace(/^[\s\S]*?(?=\{)/m, "") // Remove everything before first {
     .replace(/```json\s*/gi, "")
     .replace(/```\s*/gi, "")

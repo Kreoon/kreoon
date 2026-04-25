@@ -1115,4 +1115,12 @@ select option {
 .dark select option {
   background-color: #27272a;
   color: #ffffff;
+}@layer components {
+  .story-section {
+    @apply relative min-h-screen flex flex-col justify-center py-32 px-4;
+    background: transparent !important;
+  }
+  .glass-card {
+    @apply backdrop-blur-3xl bg-white/[0.02] border border-white/5 shadow-2xl;
+  }
 }

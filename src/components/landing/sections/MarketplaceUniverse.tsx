@@ -44,7 +44,12 @@ export function MarketplaceUniverse() {
   }
 
   return (
-    <section ref={containerRef} className="relative min-h-screen bg-kreoon-bg-primary py-32 overflow-hidden">
+    <motion.section 
+      ref={containerRef} 
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      className="story-section min-h-screen py-32 overflow-hidden"
+    >
       {/* Background Glow */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] bg-kreoon-purple-500/10 blur-[150px]" />
@@ -164,6 +169,6 @@ export function MarketplaceUniverse() {
           ))}
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }

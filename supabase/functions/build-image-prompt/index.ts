@@ -313,7 +313,7 @@ GENERA EL JSON ESTRUCTURADO COMPLETO.`;
 
     // Extract user/org info from auth header if available
     let userId = "00000000-0000-0000-0000-000000000000";
-    let organizationId = "00000000-0000-0000-0000-000000000000";
+    const organizationId = "00000000-0000-0000-0000-000000000000";
     const authHeader = req.headers.get("authorization");
     if (authHeader) {
       try {

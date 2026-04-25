@@ -16,7 +16,7 @@ import { MarketplaceUniverse } from "@/components/landing/sections/MarketplaceUn
 import { PricingSection } from "@/components/landing/sections/PricingSection";
 import { CTASection } from "@/components/landing/sections/CTASection";
 import { BrandsPartners } from "@/components/landing/sections/BrandsPartners";
-import { NebulaBackground } from "@/components/landing/NebulaBackground";
+import { HeroOrbCanvas } from "@/components/landing/sections/HeroOrbCanvas";
 
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Loader2 } from "lucide-react";
@@ -62,7 +62,7 @@ export default function HomePage() {
 
   return (
     <>
-      <NebulaBackground />
+      <HeroOrbCanvas />
       <LandingLayout
         onOpenAuth={(tab) => handleOpenAuth(tab)}
       >

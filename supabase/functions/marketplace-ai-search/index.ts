@@ -225,7 +225,7 @@ serve(async (req) => {
       );
     }
 
-    let result = parseNaturalQuery(query);
+    const result = parseNaturalQuery(query);
 
     // Gemini para queries complejas (>12 chars y confianza baja)
     if (use_gemini && Deno.env.get('GEMINI_API_KEY') && query.length > 12 && result.parsed.confidence < 50) {

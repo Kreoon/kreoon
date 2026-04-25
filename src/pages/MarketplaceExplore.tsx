@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SlidersHorizontal, X, ChevronDown, ChevronUp, Building2 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { MarketplaceSearchBar } from '@/components/marketplace/MarketplaceSearchBar';
 import { CategoryBar } from '@/components/marketplace/CategoryBar';
@@ -649,6 +650,7 @@ function useInfiniteScrollTrigger(onTrigger: () => void, enabled: boolean) {
 
 export default function MarketplaceExplore() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Estado de filtros
   const { filters, setFilters, updateFilter, resetFilters, activeFilterCount, hasActiveFilters } =
@@ -809,14 +811,16 @@ export default function MarketplaceExplore() {
 
       {/* ── Cuerpo principal: sidebar + grid ──────────────────────────────── */}
       <div className="flex gap-6 px-4 md:px-6 py-6">
-        {/* Sidebar (lg+) */}
-        <FilterSidebar
-          filters={filters}
-          onApply={handleApplyFilters}
-          resultCount={totalCount}
-          organizations={organizations}
-          filterOptions={filterOptions}
-        />
+        {/* Sidebar (lg+) - Solo para usuarios autenticados */}
+        {user && (
+          <FilterSidebar
+            filters={filters}
+            onApply={handleApplyFilters}
+            resultCount={totalCount}
+            organizations={organizations}
+            filterOptions={filterOptions}
+          />
+        )}
 
         {/* Área principal */}
         <main className="flex-1 min-w-0 space-y-8">

@@ -69,8 +69,8 @@ export function HeroModern({ onGetStarted, onWatchDemo }: HeroModernProps) {
   }, [mouseX, mouseY]);
 
   return (
-    <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-kreoon-bg-primary px-4 py-20">
-      {/* Background Motion Elements */}
+    <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-20 bg-transparent">
+      {/* Background Motion Elements - Subtle parallax for the global scene */}
       <motion.div 
         style={{ x: bgX, y: bgY }}
         className="absolute inset-0 z-0 pointer-events-none"
@@ -79,9 +79,7 @@ export function HeroModern({ onGetStarted, onWatchDemo }: HeroModernProps) {
           style={{ y: y1, opacity }}
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[800px] w-[800px]"
         >
-          {/* Animated Background Gradients */}
-          <div className="absolute inset-0 rounded-full bg-kreoon-purple-500/10 blur-[120px] animate-pulse" />
-          <div className="absolute inset-1/4 rounded-full bg-kreoon-purple-400/5 blur-[80px] animate-glow-pulse" />
+          <div className="absolute inset-0 rounded-full bg-kreoon-purple-500/5 blur-[120px] animate-pulse" />
         </motion.div>
       </motion.div>
 
@@ -220,16 +218,6 @@ export function HeroModern({ onGetStarted, onWatchDemo }: HeroModernProps) {
                 <div className="mt-2 h-16 w-40 rounded-sm bg-kreoon-purple-500/5" />
               </motion.div>
 
-              {/* Central Orb Asset */}
-              <motion.img
-                src="/assets/landing/hero_orb.png"
-                alt="Kreoon OS Orb"
-                className="h-full w-full object-contain drop-shadow-[0_0_80px_rgba(139,92,246,0.3)]"
-                animate={{ 
-                  filter: ["brightness(1) contrast(1)", "brightness(1.2) contrast(1.1)", "brightness(1) contrast(1)"],
-                }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              />
 
               {/* Decorative Rings */}
               <div className="absolute inset-0 rounded-full border border-kreoon-purple-500/10 animate-[spin_20s_linear_infinite]" />

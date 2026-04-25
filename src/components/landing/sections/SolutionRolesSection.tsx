@@ -51,7 +51,12 @@ export function SolutionRolesSection() {
   const [activeTab, setActiveTab] = useState(ROLES[0]);
 
   return (
-    <section className="relative bg-kreoon-bg-primary py-32 overflow-hidden border-t border-white/5">
+    <motion.section 
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: false, margin: "-100px" }}
+      className="story-section"
+    >
       <div className="container relative z-10 px-4">
         <div className="max-w-3xl mb-20">
           <h2 className="text-4xl font-bold text-white md:text-6xl mb-6">Un Ecosistema, <br/>Tres Soluciones.</h2>
@@ -104,7 +109,7 @@ export function SolutionRolesSection() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.4 }}
-                className="bg-white/[0.02] border border-white/5 rounded-sm p-8 md:p-12 backdrop-blur-xl shadow-2xl"
+                className="glass-card p-8 md:p-12"
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                   <div>
@@ -146,6 +151,6 @@ export function SolutionRolesSection() {
           </div>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }
