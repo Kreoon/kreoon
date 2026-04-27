@@ -8,6 +8,30 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+    @apply bg-kreoon-bg-primary;
+  }
+
+  /* Custom Scrollbar for Pro Aesthetic */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-kreoon-bg-primary;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-kreoon-purple-500/20 transition-colors;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-kreoon-purple-500/40;
+  }
+}
+
+@layer base {
   /* ===== LIGHT THEME (Editorial Studio) ===== */
   :root {
     --background: 0 0% 100%;
@@ -274,6 +298,15 @@
     overflow: visible;
     clip: auto;
     white-space: normal;
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 
   /* Gradient Text */
@@ -1082,4 +1115,12 @@ select option {
 .dark select option {
   background-color: #27272a;
   color: #ffffff;
+}@layer components {
+  .story-section {
+    @apply relative min-h-screen flex flex-col justify-center py-32 px-4;
+    background: transparent !important;
+  }
+  .glass-card {
+    @apply backdrop-blur-3xl bg-white/[0.02] border border-white/5 shadow-2xl;
+  }
 }

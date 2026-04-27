@@ -118,7 +118,7 @@ export function useCampaignROI(campaignId: string, timeRange: '7d' | '30d' | '90
       }
 
       // Get all applications with their deliverables and metrics
-      let applicationsQuery = supabase
+      const applicationsQuery = supabase
         .from('campaign_applications')
         .select(`
           id,

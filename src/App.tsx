@@ -29,6 +29,7 @@ import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import { MarketplaceReadinessPopup } from "@/components/marketplace/MarketplaceReadinessPopup";
 import { CookieConsentBanner } from "@/components/legal/CookieConsentBanner";
 import { ThemeProvider } from "next-themes";
+import { PageLoader } from "./components/PageLoader";
 import { MainLayout } from "./components/layout/MainLayout";
 import { MarketplaceLayout } from "./components/layout/MarketplacePublicLayout";
 import { ProfileLayout } from "./components/profile-viewer/ProfileLayout";
@@ -69,10 +70,16 @@ function lazyWithRetry<T extends ComponentType<any>>(
   );
 }
 
-// Loading fallback component
-const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-background">
-    <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+// Loading fallback component - Premium animated loader
+const SuspenseLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-kreoon-bg-primary">
+    <div className="flex flex-col items-center gap-4">
+      <div className="relative">
+        <div className="absolute inset-0 rounded-full bg-kreoon-purple-500/20 blur-xl animate-pulse" />
+        <div className="relative animate-spin h-10 w-10 border-2 border-kreoon-purple-500 border-t-transparent rounded-full" />
+      </div>
+      <span className="text-sm text-kreoon-text-muted tracking-wider">Cargando...</span>
+    </div>
   </div>
 );
 
@@ -105,6 +112,8 @@ const WelcomeNewMember = lazyWithRetry(() => import("./pages/WelcomeNewMember"))
 const UPDocumentation = lazyWithRetry(() => import("./pages/UPDocumentation"));
 // OrgAuth eliminado - usar OrgRegister (/auth/org/:slug) en su lugar
 const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
+const PortfolioShowcasePage = lazyWithRetry(() => import("./pages/PortfolioShowcasePage"));
+const BlogPage = lazyWithRetry(() => import("./pages/BlogPage"));
 const Register = lazyWithRetry(() => import("./pages/Register"));
 const OrgRegister = lazyWithRetry(() => import("./pages/auth/OrgRegister"));
 const AuthCallback = lazyWithRetry(() => import("./pages/auth/AuthCallback"));
@@ -340,7 +349,7 @@ function AppRoutes() {
   useNewContentNotifications();
 
   return (
-    <Suspense fallback={<PageLoader />}>
+    <Suspense fallback={<SuspenseLoader />}>
       <Routes key={impersonationKey}>
         {/* Campaign optimization: public pages */}
         {/* Pricing pages (public) */}
@@ -360,7 +369,7 @@ function AppRoutes() {
         <Route path="/social/*" element={<Navigate to="/marketplace" replace />} />
         {/* Marketplace routes — PUBLIC browse/view, PROTECTED actions */}
         {/* Public routes wrapped with TalentGate: blocks talents without keys */}
-        <Route path="/marketplace" element={<TalentGate><MainLayout><MarketplaceExplorePage /></MainLayout></TalentGate>} />
+        <Route path="/marketplace" element={<TalentGate><MarketplaceLayout><MarketplaceExplorePage /></MarketplaceLayout></TalentGate>} />
         <Route path="/marketplace/creator/:id" element={<TalentGate><ProfileLayout><CreatorProfilePage_Marketplace /></ProfileLayout></TalentGate>} />
         <Route path="/marketplace/org/:slug" element={<TalentGate><OrgProfilePage_Marketplace /></TalentGate>} />
         <Route path="/marketplace/campaigns" element={<TalentGate><MarketplaceLayout><CampaignsFeedPage /></MarketplaceLayout></TalentGate>} />
@@ -421,6 +430,8 @@ function AppRoutes() {
         {/* Partner Communities */}
         <Route path="/comunidad/:slug" element={<PartnerCommunityLanding />} />
         <Route path="/" element={<HomePage />} />
+        <Route path="/portafolio" element={<PortfolioShowcasePage />} />
+        <Route path="/blog" element={<BlogPage />} />
         <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'team_leader']}><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'content_creator', 'editor', 'client']}><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
         <Route path="/content" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'content_creator', 'editor']}><MainLayout><Content /></MainLayout></ProtectedRoute>} />
@@ -531,6 +542,7 @@ function AppContent() {
                               <Toaster />
                               <Sonner />
                               <UpdatePrompt />
+                              <PageLoader />
                               <MarketplaceReadinessPopup />
                               <CookieConsentBanner />
                               <ErrorBoundary>

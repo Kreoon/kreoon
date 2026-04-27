@@ -487,7 +487,15 @@ export async function fetchAllCreators(): Promise<MarketplaceCreatorsResult> {
   }
 
   // ── 4. Merge: creator_profiles first, then profiles fallback ──
-  const all = [...mapped, ...profilesWithContent];
+  // Filter: only show profiles with visible thumbnail (avatar, featured_media, or portfolio)
+  const all = [...mapped, ...profilesWithContent].filter((c) => {
+    const hasThumbnail =
+      c.avatar_url ||
+      c.featured_media_url ||
+      (c.portfolio_media.length > 0 && c.portfolio_media[0]?.thumbnail_url);
+    return hasThumbnail;
+  });
+
   all.sort((a, b) => {
     const aHas = a.portfolio_media.length > 0 ? 1 : 0;
     const bHas = b.portfolio_media.length > 0 ? 1 : 0;
