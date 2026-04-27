@@ -193,7 +193,6 @@ const PlanesPage = lazyWithRetry(() => import("./pages/PlanesPage"));
 const CreatorPricingPage = lazyWithRetry(() => import("./pages/CreatorPricingPage"));
 const FreelancerDashboard = lazyWithRetry(() => import("./pages/FreelancerDashboard"));
 const PartnerCommunityLanding = lazyWithRetry(() => import("./pages/PartnerCommunityLanding"));
-const PublicPortfolioPage = lazyWithRetry(() => import("./pages/PublicPortfolioPage"));
 
 // Campaign Optimization pages
 const UGCPriceCalculator = lazyWithRetry(() => import("./components/marketplace/calculator/UGCPriceCalculator"));
@@ -357,7 +356,7 @@ function AppRoutes() {
         <Route path="/calculadora-ugc" element={<UGCPriceCalculator />} />
         <Route path="/casos-de-exito" element={<CaseStudies />} />
         <Route path="/casos-de-exito/:slug" element={<CaseStudyDetail />} />
-        <Route path="/portafolio" element={<PublicPortfolioPage />} />
+        <Route path="/portafolio" element={<PortfolioShowcasePage />} />
         <Route path="/marca-referida" element={<BrandReferralRedirect />} />
         {/* Legal pages (public, required for Meta app review) */}
         <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -430,7 +429,6 @@ function AppRoutes() {
         {/* Partner Communities */}
         <Route path="/comunidad/:slug" element={<PartnerCommunityLanding />} />
         <Route path="/" element={<HomePage />} />
-        <Route path="/portafolio" element={<PortfolioShowcasePage />} />
         <Route path="/blog" element={<BlogPage />} />
         <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'team_leader']}><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'content_creator', 'editor', 'client']}><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
