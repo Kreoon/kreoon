@@ -8,6 +8,7 @@ import { useUTMTracking } from '@/hooks/useUTMTracking';
 import { useAnalyticsContext } from '@/contexts/AnalyticsContext';
 import PhoneMockupCarousel from '@/components/landing/PhoneMockupCarousel';
 import { WizardContainer } from '@/components/registration-v2';
+import { PublicLayout } from '@/components/layout/PublicLayout';
 
 const BENEFITS = [
   { icon: Video, title: 'Red de creadores', description: 'Talento verificado y categorizado' },
@@ -36,6 +37,7 @@ export default function MarcasLanding() {
   };
 
   return (
+    <PublicLayout showFooter={true} transparentHeader={false}>
     <div className="min-h-screen overflow-x-hidden bg-[#0a0a0f] text-white">
       {/* Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -179,5 +181,6 @@ export default function MarcasLanding() {
         )}
       </AnimatePresence>
     </div>
+    </PublicLayout>
   );
 }

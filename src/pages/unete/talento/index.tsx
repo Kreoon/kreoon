@@ -11,6 +11,7 @@ import { TestimonialsSection } from '@/components/landing/sections';
 import type { Testimonial } from '@/components/landing/sections';
 import PhoneMockupCarousel from '@/components/landing/PhoneMockupCarousel';
 import { useUTMTracking } from '@/hooks/useUTMTracking';
+import { PublicLayout } from '@/components/layout/PublicLayout';
 
 // No fake testimonials — section will be hidden until we have real ones
 const TALENT_TESTIMONIALS: Testimonial[] = [];
@@ -30,6 +31,7 @@ export default function TalentoLanding() {
   };
 
   return (
+    <PublicLayout showFooter={true} transparentHeader={false}>
     <div className="min-h-screen overflow-x-hidden bg-kreoon-bg-primary text-kreoon-text-primary">
       {/* A — ATTENTION */}
       <TalentHeroSection
@@ -89,5 +91,6 @@ export default function TalentoLanding() {
         )}
       </AnimatePresence>
     </div>
+    </PublicLayout>
   );
 }
