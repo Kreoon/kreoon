@@ -30,6 +30,7 @@ import { MarketplaceReadinessPopup } from "@/components/marketplace/MarketplaceR
 import { CookieConsentBanner } from "@/components/legal/CookieConsentBanner";
 import { ThemeProvider } from "next-themes";
 import { PageLoader } from "./components/PageLoader";
+import { ScrollToTop } from "./components/ScrollToTop";
 import { MainLayout } from "./components/layout/MainLayout";
 import { MarketplaceLayout } from "./components/layout/MarketplacePublicLayout";
 import { ProfileLayout } from "./components/profile-viewer/ProfileLayout";
@@ -543,6 +544,7 @@ function AppContent() {
                               <PageLoader />
                               <MarketplaceReadinessPopup />
                               <CookieConsentBanner />
+                              <ScrollToTop />
                               <ErrorBoundary>
                                 <AppRoutes />
                               </ErrorBoundary>
