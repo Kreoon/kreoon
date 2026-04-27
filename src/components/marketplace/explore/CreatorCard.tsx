@@ -213,6 +213,16 @@ function CreatorCardComponent({ creator, onClick, style, priority = false }: Cre
         )}
       </div>
 
+      {/* ---- Trust Score badge (top-left) ---- */}
+      <div className="absolute top-2.5 left-2.5 z-20">
+        <TrustScoreBadge
+          score={creator.trust_score || 50}
+          breakdown={creator.trust_score_breakdown}
+          isNew={creator.is_new_profile}
+          compact
+        />
+      </div>
+
       {/* ---- Verified badge (top-right) ---- */}
       {creator.is_verified && (
         <div className="absolute top-2.5 right-2.5 z-20">
@@ -223,33 +233,6 @@ function CreatorCardComponent({ creator, onClick, style, priority = false }: Cre
           >
             <Sparkles className="h-3 w-3 text-white" aria-hidden="true" />
           </span>
-        </div>
-      )}
-
-      {/* ---- Organization badge (top-left) ---- */}
-      {creator.organization_id && creator.organization_name && (
-        <div className="absolute top-2.5 left-2.5 z-20">
-          <div
-            className="flex items-center gap-1 bg-black/60 backdrop-blur-sm rounded-full px-2 py-1 max-w-[120px]"
-            title={creator.organization_name}
-          >
-            {creator.organization_logo ? (
-              <img
-                src={getOptimizedImageUrl(creator.organization_logo, { width: 32, quality: 70 })}
-                alt={creator.organization_name}
-                width={14}
-                height={14}
-                loading="lazy"
-                decoding="async"
-                className="w-3.5 h-3.5 rounded-full object-cover flex-shrink-0"
-              />
-            ) : (
-              <Building2 className="h-3 w-3 text-purple-400 flex-shrink-0" aria-hidden="true" />
-            )}
-            <span className="text-[9px] text-white/90 font-medium truncate">
-              {creator.organization_name}
-            </span>
-          </div>
         </div>
       )}
 
@@ -293,15 +276,8 @@ function CreatorCardComponent({ creator, onClick, style, priority = false }: Cre
           </p>
         )}
 
-        {/* Trust Score + Rating + Proyectos */}
+        {/* Rating + Proyectos */}
         <div className="flex items-center gap-2.5 flex-wrap pt-0.5">
-          {/* Trust Score Badge prominente */}
-          <TrustScoreBadge
-            score={creator.trust_score || 50}
-            breakdown={creator.trust_score_breakdown}
-            isNew={creator.is_new_profile}
-            compact
-          />
           {/* Rating tradicional (solo si tiene reviews) */}
           {creator.rating_count > 0 && (
             <div

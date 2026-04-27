@@ -230,30 +230,63 @@ export function TrustScoreBadge({
   // Compact mode — badge pill visible con score
   // ------------------------------------------------------------------
   if (compact) {
+    // Determinar colores y estilos según score
+    const getScoreStyles = () => {
+      if (score >= 90) {
+        return {
+          bg: 'bg-gradient-to-r from-amber-500 to-orange-500',
+          text: 'text-white',
+          shadow: 'shadow-lg shadow-amber-500/30',
+          label: 'TOP'
+        };
+      }
+      if (score >= 75) {
+        return {
+          bg: 'bg-gradient-to-r from-emerald-500 to-teal-500',
+          text: 'text-white',
+          shadow: 'shadow-lg shadow-emerald-500/30',
+          label: 'PRO'
+        };
+      }
+      if (score >= 60) {
+        return {
+          bg: 'bg-gradient-to-r from-blue-500 to-cyan-500',
+          text: 'text-white',
+          shadow: 'shadow-lg shadow-blue-500/25',
+          label: null
+        };
+      }
+      // Score < 60 (nuevos o en desarrollo)
+      return {
+        bg: 'bg-gradient-to-r from-purple-500 to-pink-500',
+        text: 'text-white',
+        shadow: 'shadow-lg shadow-purple-500/25',
+        label: 'NEW'
+      };
+    };
+
+    const styles = getScoreStyles();
+
     return (
-      <span
+      <div
         className={cn(
-          'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold tabular-nums',
-          'backdrop-blur-sm shadow-sm',
-          // Colores según nivel
-          isNew || score <= 50
-            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-            : score >= 90
-              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-              : score >= 75
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                : score >= 60
-                  ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
-                  : 'bg-zinc-500/20 text-zinc-300 border border-zinc-500/40',
+          'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg',
+          'text-xs font-bold tabular-nums',
+          styles.bg,
+          styles.text,
+          styles.shadow,
           className,
         )}
         role="img"
         aria-label={`Trust Score: ${score}`}
         title={config.label}
       >
-        <config.Icon className="h-3.5 w-3.5" aria-hidden="true" />
-        <span>{score}</span>
-      </span>
+        <config.Icon className="h-4 w-4" aria-hidden="true" />
+        <span className="text-sm">{score}</span>
+        {styles.label && (
+          <span className="text-[9px] font-semibold opacity-90 ml-0.5">{styles.label}</span>
+        )}
+      </div>
     );
   }
 

@@ -91,17 +91,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
     setIsFavorite(prev => !prev);
   }, []);
 
-  const isNew = isNewCreator(creator.joined_at);
   const hasDiscount = creator.introductory_discount_pct && creator.introductory_discount_pct > 0;
-
-  // Badge priority: Elite > Gold > New
-  const badge = creator.level === 'elite'
-    ? { label: 'Top', bg: 'bg-gradient-to-r from-amber-500 to-orange-500', text: 'text-white' }
-    : creator.level === 'gold'
-      ? { label: 'Pro', bg: 'bg-gradient-to-r from-purple-500 to-pink-500', text: 'text-white' }
-      : isNew
-        ? { label: 'Nuevo', bg: 'bg-primary/90', text: 'text-white' }
-        : null;
 
   // Primary category/specialization to show
   const primarySpec = creator.specializations?.[0];
@@ -177,15 +167,15 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
         {/* Subtle gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
 
-        {/* Top left: Badge */}
-        {badge && (
-          <div className={cn(
-            'absolute top-2.5 left-2.5 z-10 px-2 py-0.5 rounded-full text-[10px] font-semibold shadow-lg',
-            badge.bg, badge.text
-          )}>
-            {badge.label}
-          </div>
-        )}
+        {/* Top left: Trust Score Badge */}
+        <div className="absolute top-2.5 left-2.5 z-10">
+          <TrustScoreBadge
+            score={creator.trust_score || 50}
+            breakdown={creator.trust_score_breakdown}
+            isNew={creator.is_new_profile}
+            compact
+          />
+        </div>
 
         {/* Top right: Favorite */}
         <button
@@ -258,14 +248,32 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
             </div>
           </div>
 
-          {/* Row 2: Trust Score prominente */}
+          {/* Row 2: Category/Spec + Price + Rating */}
           <div className="flex items-center justify-between gap-2 mb-1">
-            <TrustScoreBadge
-              score={creator.trust_score || 50}
-              breakdown={creator.trust_score_breakdown}
-              isNew={creator.is_new_profile}
-              compact
-            />
+            <div className="flex items-center gap-1.5 flex-wrap min-w-0 flex-1">
+              {primarySpec ? (
+                <span className={cn(
+                  "text-[10px] px-1.5 py-0.5 rounded truncate",
+                  getSpecializationBgColor(primarySpec as Specialization),
+                  getSpecializationColor(primarySpec as Specialization)
+                )}>
+                  {getSpecializationLabel(primarySpec as Specialization)}
+                </span>
+              ) : primaryCategory ? (
+                <span className="text-[10px] text-white/70 bg-white/10 px-1.5 py-0.5 rounded truncate">
+                  {primaryCategory}
+                </span>
+              ) : null}
+              {creator.rating_count > 0 && (
+                <div className="flex items-center gap-0.5">
+                  <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+                  <span className="text-white text-[11px] font-medium">
+                    {creator.rating_avg.toFixed(1)}
+                  </span>
+                  <span className="text-white/50 text-[10px]">({creator.rating_count})</span>
+                </div>
+              )}
+            </div>
             {/* Price */}
             {creator.base_price != null && (
               <div className="flex-shrink-0 bg-white/10 backdrop-blur-sm px-2 py-0.5 rounded">
@@ -275,32 +283,6 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
                 <span className="text-white/50 text-[10px] ml-0.5">
                   {creator.currency}
                 </span>
-              </div>
-            )}
-          </div>
-
-          {/* Row 3: Category/Spec + Rating */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {primarySpec ? (
-              <span className={cn(
-                "text-[10px] px-1.5 py-0.5 rounded truncate",
-                getSpecializationBgColor(primarySpec as Specialization),
-                getSpecializationColor(primarySpec as Specialization)
-              )}>
-                {getSpecializationLabel(primarySpec as Specialization)}
-              </span>
-            ) : primaryCategory ? (
-              <span className="text-[10px] text-white/70 bg-white/10 px-1.5 py-0.5 rounded truncate">
-                {primaryCategory}
-              </span>
-            ) : null}
-            {creator.rating_count > 0 && (
-              <div className="flex items-center gap-0.5">
-                <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
-                <span className="text-white text-[11px] font-medium">
-                  {creator.rating_avg.toFixed(1)}
-                </span>
-                <span className="text-white/50 text-[10px]">({creator.rating_count})</span>
               </div>
             )}
           </div>
@@ -341,11 +323,6 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
       </div>
     </div>
   );
-}
-
-function isNewCreator(joined: string): boolean {
-  const diff = Date.now() - new Date(joined).getTime();
-  return diff < 30 * 24 * 60 * 60 * 1000; // 30 days
 }
 
 export const MarketplaceCreatorCard = memo(CreatorCardComponent);
