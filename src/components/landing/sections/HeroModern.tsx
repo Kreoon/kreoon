@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
 import { ArrowRight, Play } from "lucide-react";
 import { KreoonButton } from "@/components/ui/kreoon";
+import { FeatheredImage } from "@/components/ui/FeatheredImage";
 
 interface HeroModernProps {
   onGetStarted: () => void;
@@ -218,6 +219,16 @@ export function HeroModern({ onGetStarted, onWatchDemo }: HeroModernProps) {
                 <div className="mt-2 h-16 w-40 rounded-sm bg-kreoon-purple-500/5" />
               </motion.div>
 
+
+              {/* Hero Orb Image - difuminado agresivo sin bordes visibles */}
+              <FeatheredImage
+                src="/assets/landing/hero_orb.png"
+                alt="Kreoon Universe"
+                variant="orb"
+                glow="aurora"
+                className="absolute inset-0 z-0"
+                imageClassName="opacity-80 scale-110"
+              />
 
               {/* Decorative Rings */}
               <div className="absolute inset-0 rounded-full border border-kreoon-purple-500/10 animate-[spin_20s_linear_infinite]" />

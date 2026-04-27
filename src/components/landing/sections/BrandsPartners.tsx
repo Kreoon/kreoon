@@ -175,27 +175,16 @@ export function BrandsPartners() {
                   className="flex items-center justify-center shrink-0"
                   aria-hidden={i >= PARTNER_BRANDS.length ? "true" : undefined}
                 >
-                  <div
-                    className="group/brand relative inline-flex items-center justify-center transition-transform duration-300 ease-out hover:scale-[1.18]"
-                    title={brand.label}
-                  >
+                  <div className="group/brand relative inline-flex items-center justify-center transition-transform duration-300 ease-out hover:scale-[1.18]">
                     <img
                       src={brand.logo}
-                      alt={brand.label}
+                      alt=""
                       draggable={false}
                       className="h-8 sm:h-10 lg:h-12 w-auto object-contain select-none brightness-0 invert opacity-50 group-hover/brand:opacity-100 transition-opacity duration-300"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
                       }}
                     />
-
-                    {/* Tooltip */}
-                    <span
-                      className="pointer-events-none absolute -bottom-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-kreoon-bg-primary/95 px-2.5 py-1 text-[10px] font-sans font-medium uppercase tracking-wider text-kreoon-purple-400 border border-kreoon-purple-500/30 shadow-[0_4px_12px_-2px_rgba(168,85,247,0.3)] opacity-0 translate-y-1 group-hover/brand:opacity-100 group-hover/brand:translate-y-0 transition-all duration-200"
-                      aria-hidden="true"
-                    >
-                      {brand.label}
-                    </span>
                   </div>
                 </li>
               ))}

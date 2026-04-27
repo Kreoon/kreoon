@@ -6,6 +6,7 @@ import { getDashboardPath } from "@/utils/navigation";
 import { LandingLayout } from "@/components/landing/LandingLayout";
 import { StoryScrollContainer } from "@/components/landing/StoryScrollContainer";
 import { StoryTransition } from "@/components/landing/StoryTransition";
+import { StorySection, StoryHeroSection } from "@/components/landing/StorySection";
 import { HeroModern } from "@/components/landing/sections/HeroModern";
 import { SolutionRolesSection } from "@/components/landing/sections/SolutionRolesSection";
 import { AIEngineSection } from "@/components/landing/sections/AIEngineSection";
@@ -67,57 +68,87 @@ export default function HomePage() {
         onOpenAuth={(tab) => handleOpenAuth(tab)}
       >
         <StoryScrollContainer>
-          <HeroModern
-            onGetStarted={() => handleOpenAuth("register")}
-            onWatchDemo={() => {
-              document.getElementById("factory")?.scrollIntoView({ behavior: "smooth" });
-            }}
-          />
+          {/* Hero - efecto especial de alejarse */}
+          <StoryHeroSection>
+            <HeroModern
+              onGetStarted={() => handleOpenAuth("register")}
+              onWatchDemo={() => {
+                document.getElementById("factory")?.scrollIntoView({ behavior: "smooth" });
+              }}
+            />
+          </StoryHeroSection>
 
-          <BrandsPartners />
+          {/* Marcas - sube con parallax suave */}
+          <StorySection intensity={0.3} scaleEffect={false}>
+            <BrandsPartners />
+          </StorySection>
 
           <StoryTransition label="Ecosistema" variant="glow" />
 
-          <SolutionRolesSection />
+          {/* Soluciones - efecto más dramático */}
+          <StorySection intensity={0.6} tiltEffect>
+            <SolutionRolesSection />
+          </StorySection>
 
           <StoryTransition variant="line" />
 
-          <VideoShowcase />
+          {/* Videos - sube con escala */}
+          <StorySection intensity={0.5}>
+            <VideoShowcase />
+          </StorySection>
 
           <StoryTransition label="Inteligencia" variant="glow" />
 
-          <div id="ai-engine">
-            <AIEngineSection />
-          </div>
+          {/* AI Engine - efecto tilt para tecnología */}
+          <StorySection intensity={0.7} tiltEffect>
+            <div id="ai-engine">
+              <AIEngineSection />
+            </div>
+          </StorySection>
 
           <StoryTransition variant="fade" />
 
-          <ProjectKanbanShowcase />
+          {/* Kanban - parallax moderado */}
+          <StorySection intensity={0.5}>
+            <ProjectKanbanShowcase />
+          </StorySection>
 
           <StoryTransition label="Producción" variant="glow" />
 
-          <div id="factory">
-            <FactorySection />
-          </div>
+          {/* Factory - dramático */}
+          <StorySection intensity={0.6} tiltEffect>
+            <div id="factory">
+              <FactorySection />
+            </div>
+          </StorySection>
 
           <StoryTransition variant="line" />
 
-          <div id="marketplace">
-            <MarketplaceUniverse />
-          </div>
+          {/* Marketplace - efecto de profundidad */}
+          <StorySection intensity={0.5}>
+            <div id="marketplace">
+              <MarketplaceUniverse />
+            </div>
+          </StorySection>
 
           <StoryTransition label="Planes" variant="glow" />
 
-          <div id="pricing">
-            <PricingSection
-              onSelectPlan={handleSelectPlan}
-              highlightedPlan="marcas-starter"
-            />
-          </div>
+          {/* Pricing - sube suave */}
+          <StorySection intensity={0.4} scaleEffect={false}>
+            <div id="pricing">
+              <PricingSection
+                onSelectPlan={handleSelectPlan}
+                highlightedPlan="marcas-starter"
+              />
+            </div>
+          </StorySection>
 
           <StoryTransition variant="fade" />
 
-          <CTASection onGetStarted={() => handleOpenAuth("register")} />
+          {/* CTA Final - impacto */}
+          <StorySection intensity={0.6}>
+            <CTASection onGetStarted={() => handleOpenAuth("register")} />
+          </StorySection>
         </StoryScrollContainer>
       </LandingLayout>
 

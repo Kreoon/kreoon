@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Building2, Sparkles, Briefcase, ChevronRight, Zap, Target, BarChart3 } from "lucide-react";
+import { FeatheredImage } from "@/components/ui/FeatheredImage";
 
 const ROLES = [
   {
@@ -134,16 +135,14 @@ export function SolutionRolesSection() {
                   </div>
 
                   <div className="relative">
-                    <div className="aspect-[4/3] rounded-sm overflow-hidden border border-white/10">
-                      <img 
-                        src={activeTab.image} 
-                        alt={activeTab.title} 
-                        className="h-full w-full object-cover grayscale-[0.2] hover:grayscale-0 transition-all duration-700"
-                      />
-                    </div>
-                    {/* Decorative Elements */}
-                    <div className="absolute -bottom-4 -right-4 h-24 w-24 bg-kreoon-purple-500/20 blur-2xl rounded-full" />
-                    <div className="absolute -top-4 -left-4 h-24 w-24 bg-blue-500/10 blur-2xl rounded-full" />
+                    <FeatheredImage
+                      src={activeTab.image}
+                      alt={activeTab.title}
+                      variant="edges"
+                      glow={activeTab.id === "talent" ? "purple" : activeTab.id === "agencies" ? "cyan" : "aurora"}
+                      className="aspect-[4/3] rounded-sm"
+                      imageClassName="grayscale-[0.15] group-hover:grayscale-0 transition-all duration-700"
+                    />
                   </div>
                 </div>
               </motion.div>

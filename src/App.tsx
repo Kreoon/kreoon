@@ -111,6 +111,8 @@ const WelcomeNewMember = lazyWithRetry(() => import("./pages/WelcomeNewMember"))
 const UPDocumentation = lazyWithRetry(() => import("./pages/UPDocumentation"));
 // OrgAuth eliminado - usar OrgRegister (/auth/org/:slug) en su lugar
 const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
+const PortfolioShowcasePage = lazyWithRetry(() => import("./pages/PortfolioShowcasePage"));
+const BlogPage = lazyWithRetry(() => import("./pages/BlogPage"));
 const Register = lazyWithRetry(() => import("./pages/Register"));
 const OrgRegister = lazyWithRetry(() => import("./pages/auth/OrgRegister"));
 const AuthCallback = lazyWithRetry(() => import("./pages/auth/AuthCallback"));
@@ -425,6 +427,8 @@ function AppRoutes() {
         {/* Partner Communities */}
         <Route path="/comunidad/:slug" element={<PartnerCommunityLanding />} />
         <Route path="/" element={<HomePage />} />
+        <Route path="/portafolio" element={<PortfolioShowcasePage />} />
+        <Route path="/blog" element={<BlogPage />} />
         <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'team_leader']}><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'content_creator', 'editor', 'client']}><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
         <Route path="/content" element={<ProtectedRoute allowedRoles={['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'content_creator', 'editor']}><MainLayout><Content /></MainLayout></ProtectedRoute>} />
