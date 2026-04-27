@@ -36,6 +36,10 @@ function mapCreatorRow(row: Record<string, unknown>): MarketplaceCreator {
     // Featured media seleccionado por el creador
     featured_media_url: row.featured_media_url as string | null,
     featured_media_type: row.featured_media_type as 'image' | 'video' | null,
+    // Trust Score - base 50 para perfiles nuevos
+    trust_score: Number(row.trust_score) || 50,
+    trust_score_breakdown: (row.trust_score_breakdown as any) || null,
+    is_new_profile: false, // se calcula después
   };
 }
 
@@ -67,6 +71,10 @@ function mapProfileRow(row: Record<string, unknown>): MarketplaceCreator {
     joined_at: (row.created_at as string) || '',
     accepts_product_exchange: false,
     marketplace_roles: [],
+    // Perfiles desde profiles table son considerados nuevos (base 50)
+    trust_score: 50,
+    trust_score_breakdown: null,
+    is_new_profile: true,
   };
 }
 
@@ -124,7 +132,8 @@ export async function fetchAllCreators(): Promise<MarketplaceCreatorsResult> {
     is_verified, rating_avg, rating_count, base_price, currency,
     is_available, languages, completed_projects, created_at,
     accepts_product_exchange, marketplace_roles,
-    featured_media_url, featured_media_type
+    featured_media_url, featured_media_type,
+    trust_score, trust_score_breakdown
   `;
   const { data: rows, error: err } = await (supabase as any)
     .from('creator_profiles')
@@ -371,6 +380,17 @@ export async function fetchAllCreators(): Promise<MarketplaceCreatorsResult> {
       const isNew = Date.now() - new Date(creator.joined_at).getTime() < fortyFiveDays;
       if (isNew && creator.completed_projects < 3) {
         creator.introductory_discount_pct = 20;
+      }
+
+      // Detectar perfil nuevo para Trust Score (< 30 días y sin proyectos)
+      const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+      const isNewProfile = creator.completed_projects === 0 &&
+        Date.now() - new Date(creator.joined_at).getTime() < thirtyDays;
+      creator.is_new_profile = isNewProfile;
+
+      // Si no hay trust_score en BD, usar 50 como base
+      if (!creator.trust_score) {
+        creator.trust_score = 50;
       }
 
       return creator;

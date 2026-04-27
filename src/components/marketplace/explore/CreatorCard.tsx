@@ -3,6 +3,7 @@ import { MapPin, Star, Package, TrendingUp, Zap, Sparkles, Building2 } from 'luc
 import { cn } from '@/lib/utils';
 import type { MarketplaceCreator, PortfolioMedia } from '../types/marketplace';
 import { getOptimizedImageUrl, getOptimizedThumbnail } from '@/lib/imageOptimization';
+import { TrustScoreBadge } from '../TrustScoreBadge';
 
 // -------------------------------------------------------------------
 // Types
@@ -292,34 +293,41 @@ function CreatorCardComponent({ creator, onClick, style, priority = false }: Cre
           </p>
         )}
 
-        {/* Rating + proyectos */}
-        {(creator.rating_count > 0 || creator.completed_projects > 0) && (
-          <div className="flex items-center gap-2.5 flex-wrap pt-0.5">
-            {creator.rating_count > 0 && (
-              <div
-                className="flex items-center gap-1"
-                aria-label={`Calificacion: ${creator.rating_avg.toFixed(1)} de 5, basado en ${creator.rating_count} resenas`}
-              >
-                <Star className="h-3 w-3 text-amber-400 fill-amber-400" aria-hidden="true" />
-                <span className="text-[#e4e4e7] text-[11px] font-medium">
-                  {creator.rating_avg.toFixed(1)}
-                </span>
-                <span className="text-[#71717a] text-[10px]">
-                  ({creator.rating_count})
-                </span>
-              </div>
-            )}
-            {creator.completed_projects > 0 && (
-              <div
-                className="flex items-center gap-1 text-[#71717a]"
-                aria-label={`${creator.completed_projects} proyectos completados`}
-              >
-                <Package className="h-3 w-3" aria-hidden="true" />
-                <span className="text-[11px]">{creator.completed_projects}</span>
-              </div>
-            )}
-          </div>
-        )}
+        {/* Trust Score + Rating + Proyectos */}
+        <div className="flex items-center gap-2.5 flex-wrap pt-0.5">
+          {/* Trust Score Badge prominente */}
+          <TrustScoreBadge
+            score={creator.trust_score || 50}
+            breakdown={creator.trust_score_breakdown}
+            isNew={creator.is_new_profile}
+            compact
+          />
+          {/* Rating tradicional (solo si tiene reviews) */}
+          {creator.rating_count > 0 && (
+            <div
+              className="flex items-center gap-1"
+              aria-label={`Calificacion: ${creator.rating_avg.toFixed(1)} de 5, basado en ${creator.rating_count} resenas`}
+            >
+              <Star className="h-3 w-3 text-amber-400 fill-amber-400" aria-hidden="true" />
+              <span className="text-[#e4e4e7] text-[11px] font-medium">
+                {creator.rating_avg.toFixed(1)}
+              </span>
+              <span className="text-[#71717a] text-[10px]">
+                ({creator.rating_count})
+              </span>
+            </div>
+          )}
+          {/* Proyectos completados */}
+          {creator.completed_projects > 0 && (
+            <div
+              className="flex items-center gap-1 text-[#71717a]"
+              aria-label={`${creator.completed_projects} proyectos completados`}
+            >
+              <Package className="h-3 w-3" aria-hidden="true" />
+              <span className="text-[11px]">{creator.completed_projects}</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import type { MarketplaceCreator, PortfolioMedia } from './types/marketplace';
 import { getOptimizedImageUrl, getOptimizedThumbnail } from '@/lib/imageOptimization';
 import { getSpecializationLabel, getSpecializationBgColor, getSpecializationColor } from '@/lib/specializations';
 import type { Specialization } from '@/types/database';
+import { TrustScoreBadge } from './TrustScoreBadge';
 
 // Card dimensions for image optimization (2x for retina)
 const CARD_WIDTH = 180;
@@ -257,37 +258,15 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
             </div>
           </div>
 
-          {/* Row 2: Category/Spec + Rating + Price */}
-          <div className="flex items-center justify-between gap-2">
-            {/* Left: Category or Specialization */}
-            <div className="flex items-center gap-1.5 min-w-0 flex-1">
-              {primarySpec ? (
-                <span className={cn(
-                  "text-[10px] px-1.5 py-0.5 rounded truncate",
-                  getSpecializationBgColor(primarySpec as Specialization),
-                  getSpecializationColor(primarySpec as Specialization)
-                )}>
-                  {getSpecializationLabel(primarySpec as Specialization)}
-                </span>
-              ) : primaryCategory ? (
-                <span className="text-[10px] text-white/70 bg-white/10 px-1.5 py-0.5 rounded truncate">
-                  {primaryCategory}
-                </span>
-              ) : null}
-
-              {/* Rating */}
-              <div className="flex items-center gap-0.5">
-                <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
-                <span className="text-white text-[11px] font-medium">
-                  {creator.rating_avg.toFixed(1)}
-                </span>
-                {creator.rating_count > 0 && (
-                  <span className="text-white/50 text-[10px]">({creator.rating_count})</span>
-                )}
-              </div>
-            </div>
-
-            {/* Right: Price */}
+          {/* Row 2: Trust Score prominente */}
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <TrustScoreBadge
+              score={creator.trust_score || 50}
+              breakdown={creator.trust_score_breakdown}
+              isNew={creator.is_new_profile}
+              compact
+            />
+            {/* Price */}
             {creator.base_price != null && (
               <div className="flex-shrink-0 bg-white/10 backdrop-blur-sm px-2 py-0.5 rounded">
                 <span className="text-white text-xs font-semibold">
@@ -296,6 +275,32 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
                 <span className="text-white/50 text-[10px] ml-0.5">
                   {creator.currency}
                 </span>
+              </div>
+            )}
+          </div>
+
+          {/* Row 3: Category/Spec + Rating */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {primarySpec ? (
+              <span className={cn(
+                "text-[10px] px-1.5 py-0.5 rounded truncate",
+                getSpecializationBgColor(primarySpec as Specialization),
+                getSpecializationColor(primarySpec as Specialization)
+              )}>
+                {getSpecializationLabel(primarySpec as Specialization)}
+              </span>
+            ) : primaryCategory ? (
+              <span className="text-[10px] text-white/70 bg-white/10 px-1.5 py-0.5 rounded truncate">
+                {primaryCategory}
+              </span>
+            ) : null}
+            {creator.rating_count > 0 && (
+              <div className="flex items-center gap-0.5">
+                <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+                <span className="text-white text-[11px] font-medium">
+                  {creator.rating_avg.toFixed(1)}
+                </span>
+                <span className="text-white/50 text-[10px]">({creator.rating_count})</span>
               </div>
             )}
           </div>

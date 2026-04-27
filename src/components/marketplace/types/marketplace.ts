@@ -15,6 +15,16 @@ export interface MarketplaceFilterOptions {
   categories: string[];
 }
 
+/** Desglose del Trust Score por dimensión */
+export interface TrustScoreBreakdown {
+  reviews: number;   // max 30
+  delivery: number;  // max 25
+  projects: number;  // max 20
+  profile: number;   // max 10
+  portfolio: number; // max 10
+  response: number;  // max 5
+}
+
 export interface MarketplaceCreator {
   id: string;
   user_id: string;
@@ -67,6 +77,12 @@ export interface MarketplaceCreator {
   } | null;
   /** Creator specializations */
   specializations?: Specialization[];
+  /** Trust Score 0-100, calculado automáticamente */
+  trust_score?: number;
+  /** Desglose del Trust Score por dimensión */
+  trust_score_breakdown?: TrustScoreBreakdown;
+  /** Es un perfil nuevo (< 30 días, 0 proyectos completados) */
+  is_new_profile?: boolean;
 }
 
 export interface PortfolioMedia {
