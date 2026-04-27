@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-video-id',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
 }
 
@@ -127,7 +127,8 @@ Deno.serve(async (req) => {
       }
 
       const videoData: BunnyVideoResponse = await createResponse.json()
-      const uploadUrl = `https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${videoData.guid}`
+
+      const directUploadUrl = `https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${videoData.guid}`
       const embedUrl = `https://iframe.mediadelivery.net/embed/${bunnyLibraryId}/${videoData.guid}`
 
       // Record in marketplace_media (use authenticated user ID, not creator_profile ID)
@@ -153,16 +154,61 @@ Deno.serve(async (req) => {
         console.error('[bunny-marketplace-upload] Media record error:', mediaError)
       }
 
+      // Return direct upload URL + API key for server-side proxy upload
+      // Client should send video to our proxy endpoint, not directly to Bunny (CORS issues)
       return new Response(
         JSON.stringify({
           success: true,
-          upload_url: uploadUrl,
+          upload_url: directUploadUrl,
           access_key: bunnyApiKey,
           video_id: videoData.guid,
           embed_url: embedUrl,
           media_id: mediaRecord?.id || null,
           library_id: bunnyLibraryId,
+          use_proxy: true, // Signal client to use proxy upload
         }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // ========== PATH A2: Proxy video upload to Bunny (avoids CORS) ==========
+    if (req.method === 'POST' && contentType.includes('application/octet-stream')) {
+      const videoId = req.headers.get('x-video-id')
+      if (!videoId) {
+        return new Response(
+          JSON.stringify({ error: 'Missing x-video-id header' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      console.log(`[bunny-marketplace-upload] Proxying video upload: ${videoId}`)
+
+      // Stream the video directly to Bunny (no buffering in memory)
+      const uploadResponse = await fetch(
+        `https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${videoId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'AccessKey': bunnyApiKey,
+            'Content-Type': 'application/octet-stream',
+          },
+          body: req.body,
+        }
+      )
+
+      if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text()
+        console.error('[bunny-marketplace-upload] Bunny upload error:', errorText)
+        return new Response(
+          JSON.stringify({ success: false, error: `Upload failed: ${errorText}` }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      console.log(`[bunny-marketplace-upload] Video uploaded successfully: ${videoId}`)
+
+      return new Response(
+        JSON.stringify({ success: true, video_id: videoId }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }

@@ -18,28 +18,40 @@ export function useOrgAssignableUsers(organizationId: string | null) {
 
     setLoading(true);
     try {
-      const { data: members, error } = await supabase
-        .from("organization_members")
-        .select("user_id, role")
-        .eq("organization_id", organizationId)
-        .in("role", ["creator", "content_creator", "editor"]);
+      const [membersResult, memberRolesResult] = await Promise.all([
+        supabase
+          .from("organization_members")
+          .select("user_id, role")
+          .eq("organization_id", organizationId)
+          .in("role", ["creator", "content_creator", "editor"]),
+        supabase
+          .from("organization_member_roles")
+          .select("user_id, role")
+          .eq("organization_id", organizationId)
+          .in("role", ["creator", "content_creator", "editor"]),
+      ]);
 
-      if (error) throw error;
-      if (!members?.length) {
+      if (membersResult.error) throw membersResult.error;
+
+      const members = membersResult.data || [];
+      const memberRoles = memberRolesResult.data || [];
+      const allRoles = [...members, ...memberRoles];
+
+      if (!allRoles.length) {
         setCreators([]);
         setEditors([]);
         return;
       }
 
-      const userIds = [...new Set(members.map((m) => m.user_id))];
+      const userIds = [...new Set(allRoles.map((m) => m.user_id))];
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, full_name, avatar_url")
         .in("id", userIds);
 
       const profileMap = new Map((profiles || []).map((p) => [p.id, p]));
-      const creatorIds = new Set(members.filter((m) => m.role === "creator" || m.role === "content_creator").map((m) => m.user_id));
-      const editorIds = new Set(members.filter((m) => m.role === "editor").map((m) => m.user_id));
+      const creatorIds = new Set(allRoles.filter((m) => m.role === "creator" || m.role === "content_creator").map((m) => m.user_id));
+      const editorIds = new Set(allRoles.filter((m) => m.role === "editor").map((m) => m.user_id));
 
       setCreators(
         [...creatorIds]

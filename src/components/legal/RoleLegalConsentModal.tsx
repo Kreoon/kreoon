@@ -28,6 +28,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { sanitizeHTML } from '@/lib/sanitizeHTML';
 import { SignatureModal } from '@/components/legal/SignatureModal';
 import { useLegalConsent } from '@/hooks/useLegalConsent';
 import { useDigitalSignature } from '@/hooks/useDigitalSignature';
@@ -423,9 +424,10 @@ export function RoleLegalConsentModal({
                   <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
                 </div>
               ) : (
+                /* SECURITY: Sanitize HTML to prevent XSS attacks */
                 <div
                   className="prose prose-zinc dark:prose-invert prose-purple max-w-none"
-                  dangerouslySetInnerHTML={{ __html: documentContent }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHTML(documentContent) }}
                   onScroll={(e) => {
                     const target = e.target as HTMLElement;
                     const isAtBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 50;

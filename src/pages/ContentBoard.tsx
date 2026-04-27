@@ -151,7 +151,12 @@ const canMoveToStatusLegacy = (
   if (role === 'editor') {
     if (content.editor_id !== userId) return false;
     if (targetStatus === 'paid' || targetStatus === 'approved') return false;
-    if (targetIndex <= currentIndex) return false;
+    // Permitir movimientos desde estados de edición hacia adelante o retroceder a edición
+    const editorStates = ['recorded', 'editing', 'delivered', 'issue', 'corrected', 'review'];
+    if (editorStates.includes(currentStatus as string) && editorStates.includes(targetStatus as string)) {
+      return true;
+    }
+    // Fallback: permitir avance desde recorded/editing
     if (currentStatus === 'recorded' && targetStatus === 'editing') return true;
     if (currentStatus === 'editing' && targetStatus === 'delivered') return true;
     return false;

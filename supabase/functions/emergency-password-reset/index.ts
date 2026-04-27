@@ -1,15 +1,13 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, handleCorsOptions } from "../_shared/cors.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
+
+  const corsHeaders = getCorsHeaders(req);
 
   try {
     // Legacy source database
@@ -92,8 +90,16 @@ serve(async (req) => {
 
     const { email, password, secret, action, newAuthId } = await req.json();
 
-    const EXPECTED_SECRET = Deno.env.get("EMERGENCY_PASSWORD_RESET_SECRET") || 'kreoon-emergency-2026';
-    if (secret !== EXPECTED_SECRET) {
+    // SECURITY: Require secret from environment variable (no hardcoded fallback)
+    const EXPECTED_SECRET = Deno.env.get("EMERGENCY_PASSWORD_RESET_SECRET");
+    if (!EXPECTED_SECRET) {
+      console.error('EMERGENCY_PASSWORD_RESET_SECRET not configured in environment variables');
+      return new Response(JSON.stringify({ error: 'Server configuration error: Emergency secret not configured' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (!secret || secret !== EXPECTED_SECRET) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

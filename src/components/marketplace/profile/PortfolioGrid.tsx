@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
-import { Play, Maximize2, ImageOff } from 'lucide-react';
+import { Play, Maximize2, ImageOff, Shuffle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import type { PortfolioMedia } from '../types/marketplace';
 import type { PortfolioItemData } from '@/hooks/usePortfolioItems';
 import { GalleryLightbox } from './GalleryLightbox';
@@ -37,6 +38,9 @@ interface PortfolioGridProps {
   creatorName: string;
   creatorAvatar: string | null;
   creatorId: string;
+  maxItems?: number;
+  onShuffle?: () => void;
+  isShuffling?: boolean;
 }
 
 type FilterTab = 'all' | 'video' | 'image';
@@ -115,13 +119,17 @@ export function PortfolioGrid({
   creatorName,
   creatorAvatar,
   creatorId,
+  maxItems = 50,
+  onShuffle,
+  isShuffling,
 }: PortfolioGridProps) {
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [showAll, setShowAll] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const filtered = activeTab === 'all' ? media : media.filter(m => m.type === activeTab);
-  const visible = showAll ? filtered : filtered.slice(0, 9);
+  const initialVisible = Math.min(9, maxItems);
+  const visible = showAll ? filtered.slice(0, maxItems) : filtered.slice(0, initialVisible);
 
   const tabs: { key: FilterTab; label: string }[] = [
     { key: 'all', label: 'Todo' },
@@ -143,7 +151,21 @@ export function PortfolioGrid({
 
   return (
     <div className="pb-8 border-b border-white/10 space-y-4">
-      <h2 className="text-xl font-semibold text-white">Portfolio</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold text-white">Portfolio</h2>
+        {onShuffle && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onShuffle}
+            disabled={isShuffling}
+            className="text-zinc-400 hover:text-white hover:bg-white/10"
+          >
+            <Shuffle className={cn("h-4 w-4 mr-2", isShuffling && "animate-spin")} />
+            Mezclar
+          </Button>
+        )}
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-2">
@@ -179,13 +201,13 @@ export function PortfolioGrid({
       </div>
 
       {/* Load more */}
-      {filtered.length > 9 && !showAll && (
+      {filtered.length > initialVisible && !showAll && (
         <div className="flex justify-center pt-2">
           <button
             onClick={() => setShowAll(true)}
             className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors"
           >
-            Ver más contenido ({filtered.length - 9} más)
+            Ver más contenido ({Math.min(filtered.length, maxItems) - initialVisible} más)
           </button>
         </div>
       )}

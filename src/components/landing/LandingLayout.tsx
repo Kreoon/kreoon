@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Instagram, Linkedin, Youtube, Video } from "lucide-react";
+import { Menu, X, Instagram, Linkedin, Youtube, Video, ChevronDown, Users, Building2, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { KreoonButton } from "@/components/ui/kreoon";
 
@@ -11,11 +11,20 @@ export interface LandingLayoutProps {
 }
 
 const NAV_LINKS = [
+  { label: "Inicio", to: "/" as const },
   { label: "Características", href: "#features" },
   { label: "Cómo funciona", href: "#how-it-works" },
+  { label: "Portafolio", to: "/portafolio" as const },
+  { label: "Blog", to: "/blog" as const },
   { label: "Precios", href: "#pricing" },
   { label: "Marketplace", to: "/marketplace" as const },
 ] as const;
+
+const SOLUTIONS_DROPDOWN = [
+  { label: "Para Talento", to: "/unete/talento", icon: Users, desc: "Creadores y editores" },
+  { label: "Para Marcas", to: "/unete/marcas", icon: Building2, desc: "Empresas y startups" },
+  { label: "Para Agencias", to: "/unete/organizaciones", icon: Briefcase, desc: "Agencias y equipos" },
+];
 
 const FOOTER_PRODUCT = [
   { label: "Para Marcas", href: "#" },
@@ -114,6 +123,67 @@ function NavLink({
   );
 }
 
+function SolutionsDropdown() {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setIsOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => setIsOpen(false), 150);
+  };
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <button
+        type="button"
+        className="flex items-center gap-1 text-sm text-kreoon-text-secondary transition-colors hover:text-white"
+      >
+        Soluciones
+        <ChevronDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.15 }}
+            className="absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2"
+          >
+            <div className="w-64 rounded-lg border border-white/10 bg-kreoon-bg-secondary/95 p-2 shadow-xl backdrop-blur-xl">
+              {SOLUTIONS_DROPDOWN.map((item) => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-kreoon-purple-500/10"
+                >
+                  <div className="flex h-9 w-9 items-center justify-center rounded-md bg-kreoon-purple-500/10 text-kreoon-purple-400">
+                    <item.icon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-white">{item.label}</p>
+                    <p className="text-xs text-kreoon-text-muted">{item.desc}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export function LandingLayout({ children, onOpenAuth }: LandingLayoutProps) {
   const [scrolled, setScrolled] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -137,7 +207,7 @@ export function LandingLayout({ children, onOpenAuth }: LandingLayoutProps) {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary">
+    <div className="relative z-10 min-h-screen bg-transparent">
       {/* Navbar */}
       <motion.header
         initial={false}
@@ -159,8 +229,10 @@ export function LandingLayout({ children, onOpenAuth }: LandingLayoutProps) {
           </div>
 
           {/* Desktop nav - centrado */}
-          <nav className="hidden flex-1 items-center justify-center gap-8 md:flex">
-            {NAV_LINKS.map((item) => (
+          <nav className="hidden flex-1 items-center justify-center gap-6 lg:gap-8 md:flex">
+            <NavLink item={NAV_LINKS[0]} />
+            <SolutionsDropdown />
+            {NAV_LINKS.slice(1).map((item) => (
               <NavLink key={item.label} item={item} />
             ))}
           </nav>
@@ -226,8 +298,41 @@ export function LandingLayout({ children, onOpenAuth }: LandingLayoutProps) {
                   <X className="h-6 w-6" />
                 </button>
               </div>
-              <nav className="flex flex-1 flex-col gap-1 p-4">
-                {NAV_LINKS.map((item) => (
+              <nav className="flex flex-1 flex-col gap-1 p-4 overflow-y-auto">
+                {/* Inicio */}
+                <div onClick={() => setMobileOpen(false)}>
+                  <Link
+                    to="/"
+                    className="block rounded-sm px-4 py-3 text-kreoon-text-secondary hover:bg-kreoon-purple-500/10 hover:text-white"
+                  >
+                    Inicio
+                  </Link>
+                </div>
+
+                {/* Soluciones - Expandido en móvil */}
+                <div className="border-t border-kreoon-border/50 pt-2 mt-2">
+                  <p className="px-4 py-2 text-xs uppercase tracking-wider text-kreoon-text-muted">
+                    Soluciones
+                  </p>
+                  {SOLUTIONS_DROPDOWN.map((item) => (
+                    <div key={item.to} onClick={() => setMobileOpen(false)}>
+                      <Link
+                        to={item.to}
+                        className="flex items-center gap-3 rounded-sm px-4 py-3 text-kreoon-text-secondary hover:bg-kreoon-purple-500/10 hover:text-white"
+                      >
+                        <item.icon className="h-5 w-5 text-kreoon-purple-400" />
+                        <div>
+                          <p className="text-sm">{item.label}</p>
+                          <p className="text-xs text-kreoon-text-muted">{item.desc}</p>
+                        </div>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Resto de links */}
+                <div className="border-t border-kreoon-border/50 pt-2 mt-2">
+                {NAV_LINKS.slice(1).map((item) => (
                   <div key={item.label} onClick={() => setMobileOpen(false)}>
                     {"to" in item ? (
                       <Link
@@ -254,6 +359,7 @@ export function LandingLayout({ children, onOpenAuth }: LandingLayoutProps) {
                     )}
                   </div>
                 ))}
+                </div>
                 <div className="mt-4 flex flex-col gap-2 border-t border-kreoon-border pt-4">
                   <KreoonButton
                     variant="ghost"

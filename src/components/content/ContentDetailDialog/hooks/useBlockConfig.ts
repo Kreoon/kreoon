@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Content } from '@/types/database';
@@ -145,36 +145,64 @@ export function useBlockConfig(
   }, [fetchConfig]);
 
   // Realtime refresh when config changes
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const subscriptionIdRef = useRef(0);
+
   useEffect(() => {
     const orgId = organizationId || contentExt?.organization_id;
     if (!orgId) return;
 
+    // Increment subscription ID to track stale cleanups
+    const currentSubscriptionId = ++subscriptionIdRef.current;
+
+    // Clean up any existing channel first
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    // Create unique channel name with timestamp to avoid conflicts
+    const channelName = `content-config-${orgId}-${effectiveRole}-${Date.now()}`;
+
     const channel = supabase
-      .channel(`content-config-${orgId}-${effectiveRole}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'content_block_config', filter: `organization_id=eq.${orgId}` },
-        () => fetchConfig()
+        () => {
+          if (currentSubscriptionId === subscriptionIdRef.current) fetchConfig();
+        }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'content_block_state_rules', filter: `organization_id=eq.${orgId}` },
-        () => fetchConfig()
+        () => {
+          if (currentSubscriptionId === subscriptionIdRef.current) fetchConfig();
+        }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'content_block_permissions', filter: `organization_id=eq.${orgId}` },
-        () => fetchConfig()
+        () => {
+          if (currentSubscriptionId === subscriptionIdRef.current) fetchConfig();
+        }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'content_advanced_config', filter: `organization_id=eq.${orgId}` },
-        () => fetchConfig()
+        () => {
+          if (currentSubscriptionId === subscriptionIdRef.current) fetchConfig();
+        }
       )
       .subscribe();
 
+    channelRef.current = channel;
+
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current === channel) {
+        supabase.removeChannel(channel);
+        channelRef.current = null;
+      }
     };
   }, [organizationId, contentExt?.organization_id, effectiveRole, fetchConfig]);
 

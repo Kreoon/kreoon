@@ -437,14 +437,20 @@ serve(async (req) => {
     
   } catch (error) {
     console.error('Security check error:', error);
-    
+
+    // SECURITY: Fail-closed - deny access on error to prevent bypass attacks
+    // Generate unique error ID for support/debugging without exposing internals
+    const errorId = crypto.randomUUID().slice(0, 8);
+    console.error(`Security check failed with errorId: ${errorId}`, error);
+
     return new Response(
-      JSON.stringify({ 
-        allowed: true, // Fail open to not block legitimate users
-        error: 'Security check failed',
-        requires_captcha: true // But require captcha as precaution
+      JSON.stringify({
+        allowed: false, // Fail-closed for security
+        error: 'Security check temporarily unavailable',
+        error_id: errorId, // For support reference
+        retry_after: 30 // Suggest retry after 30 seconds
       }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

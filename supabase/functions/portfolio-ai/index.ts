@@ -6,6 +6,8 @@ import { logAIUsage } from "../_shared/ai-usage-logger.ts";
 import { PORTFOLIO_PROMPTS } from "../_shared/portfolio-prompts.ts";
 // Nuevo: Prompts desde DB con cache y fallback
 import { getPrompt, interpolatePrompt } from "../_shared/prompts/db-prompts.ts";
+// SECURITY: Rate limiting para proteger APIs costosas
+import { checkRateLimit, RATE_LIMIT_PRESETS, rateLimitResponse, getClientIp } from "../_shared/rate-limiter.ts";
 
 interface AIRequest {
   action: "search" | "caption" | "bio" | "recommendations" | "moderation" | "blocks";
@@ -73,6 +75,15 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // ── SECURITY: Rate limiting por IP (20 req/min para AI) ──
+    const clientIp = getClientIp(req);
+    const rateLimitResult = await checkRateLimit(supabase, clientIp, RATE_LIMIT_PRESETS.ai);
+    if (!rateLimitResult.allowed) {
+      console.warn(`[portfolio-ai] Rate limit exceeded for IP: ${clientIp}`);
+      return rateLimitResponse(req, rateLimitResult, RATE_LIMIT_PRESETS.ai.limit);
+    }
+    // ─────────────────────────────────────────────────────────
 
     const { action, payload, organizationId, userId, prompts } = (await req.json()) as AIRequest;
 

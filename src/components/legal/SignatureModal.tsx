@@ -12,6 +12,7 @@ import { SignatureCanvas } from './SignatureCanvas';
 import { useDigitalSignature } from '@/hooks/useDigitalSignature';
 import { SignatureMethod, getSignatureMethodForDocument } from '@/types/digital-signature';
 import { cn } from '@/lib/utils';
+import { sanitizeHTML } from '@/lib/sanitizeHTML';
 import { toast } from 'sonner';
 
 interface LegalDocument {
@@ -190,7 +191,8 @@ export function SignatureModal({
           >
             {document.content_html ? (
               <>
-                <div dangerouslySetInnerHTML={{ __html: document.content_html }} />
+                {/* SECURITY: Sanitize HTML to prevent XSS attacks */}
+                <div dangerouslySetInnerHTML={{ __html: sanitizeHTML(document.content_html) }} />
                 <div ref={sentinelRef} className="h-4" />
               </>
             ) : (

@@ -24,6 +24,7 @@ import { OnboardingGateProvider } from "@/providers/OnboardingGateProvider";
 import { RoleLegalGateProvider } from "@/providers/RoleLegalGateProvider";
 import { StrategistClientProvider } from "@/contexts/StrategistClientContext";
 import { KiroProvider } from "@/contexts/KiroContext";
+import { AuthStoreBridge } from "@/stores/AuthStoreBridge";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import { MarketplaceReadinessPopup } from "@/components/marketplace/MarketplaceReadinessPopup";
 import { CookieConsentBanner } from "@/components/legal/CookieConsentBanner";
@@ -183,6 +184,7 @@ const PlanesPage = lazyWithRetry(() => import("./pages/PlanesPage"));
 const CreatorPricingPage = lazyWithRetry(() => import("./pages/CreatorPricingPage"));
 const FreelancerDashboard = lazyWithRetry(() => import("./pages/FreelancerDashboard"));
 const PartnerCommunityLanding = lazyWithRetry(() => import("./pages/PartnerCommunityLanding"));
+const PublicPortfolioPage = lazyWithRetry(() => import("./pages/PublicPortfolioPage"));
 
 // Campaign Optimization pages
 const UGCPriceCalculator = lazyWithRetry(() => import("./components/marketplace/calculator/UGCPriceCalculator"));
@@ -346,6 +348,7 @@ function AppRoutes() {
         <Route path="/calculadora-ugc" element={<UGCPriceCalculator />} />
         <Route path="/casos-de-exito" element={<CaseStudies />} />
         <Route path="/casos-de-exito/:slug" element={<CaseStudyDetail />} />
+        <Route path="/portafolio" element={<PublicPortfolioPage />} />
         <Route path="/marca-referida" element={<BrandReferralRedirect />} />
         {/* Legal pages (public, required for Meta app review) */}
         <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -511,6 +514,7 @@ function AppContent() {
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <BrandingProvider>
         <AuthProvider>
+          <AuthStoreBridge />
           <OnboardingGateProvider>
             <RoleLegalGateProvider>
             <CurrencyProvider>

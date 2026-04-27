@@ -37,8 +37,16 @@ serve(async (req) => {
 
     const { secret, action } = await req.json();
 
-    const EXPECTED_SECRET = Deno.env.get("EMERGENCY_PASSWORD_RESET_SECRET") || 'kreoon-emergency-2026';
-    if (secret !== EXPECTED_SECRET) {
+    // SECURITY: Require secret from environment variable (no hardcoded fallback)
+    const EXPECTED_SECRET = Deno.env.get("EMERGENCY_PASSWORD_RESET_SECRET");
+    if (!EXPECTED_SECRET) {
+      console.error('EMERGENCY_PASSWORD_RESET_SECRET not configured in environment variables');
+      return new Response(JSON.stringify({ error: 'Server configuration error: Emergency secret not configured' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (!secret || secret !== EXPECTED_SECRET) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -189,9 +197,20 @@ serve(async (req) => {
     // ACTION: cleanup_to_single_org_and_role - Ensure each user has only 1 org and 1 role
     if (action === 'cleanup_to_single_org_and_role') {
       const results: Record<string, unknown> = {};
-      const ROOT_ADMIN_EMAIL = Deno.env.get("ROOT_ADMIN_EMAIL") || 'jacsolucionesgraficas@gmail.com';
-      const ROOT_ADMIN_ID = Deno.env.get('KREOON_ROOT_AUTH_ID') || '577c72dc-f088-4e99-a109-e88e035a0540'; // Known Kreoon ID for root admin
-      const DEFAULT_ORG_ID = Deno.env.get('DEFAULT_ORGANIZATION_ID') || 'c8ae6c6d-a15d-46d9-b69e-465f7371595e'; // UGC Colombia
+
+      // SECURITY: All IDs must come from environment variables (no hardcoded fallbacks)
+      const ROOT_ADMIN_EMAIL = Deno.env.get("ROOT_ADMIN_EMAIL");
+      const ROOT_ADMIN_ID = Deno.env.get('KREOON_ROOT_AUTH_ID');
+      const DEFAULT_ORG_ID = Deno.env.get('DEFAULT_ORGANIZATION_ID');
+
+      if (!ROOT_ADMIN_EMAIL || !ROOT_ADMIN_ID || !DEFAULT_ORG_ID) {
+        return new Response(JSON.stringify({
+          error: 'Server configuration error: ROOT_ADMIN_EMAIL, KREOON_ROOT_AUTH_ID, and DEFAULT_ORGANIZATION_ID must be configured'
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       
       const rootAdminId = ROOT_ADMIN_ID;
       results.rootAdminId = rootAdminId;

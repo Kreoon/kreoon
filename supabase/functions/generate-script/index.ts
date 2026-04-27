@@ -7,6 +7,8 @@ import { makeAIRequest, corsHeaders } from "../_shared/ai-providers.ts";
 import { getPrompt } from "../_shared/prompts/db-prompts.ts";
 import { errorResponse, successResponse, moduleInactiveResponse, validationErrorResponse } from "../_shared/error-response.ts";
 import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
+// SECURITY: Rate limiting para proteger APIs costosas
+import { checkRateLimit, RATE_LIMIT_PRESETS, rateLimitResponse, getClientIp } from "../_shared/rate-limiter.ts";
 
 interface ScriptRequest {
   organizationId: string;
@@ -202,6 +204,15 @@ serve(async (req) => {
       const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       supabase = createClient(supabaseUrl, supabaseKey);
     }
+
+    // ── SECURITY: Rate limiting por IP (20 req/min para AI) ──
+    const clientIp = getClientIp(req);
+    const rateLimitResult = await checkRateLimit(supabase, clientIp, RATE_LIMIT_PRESETS.ai);
+    if (!rateLimitResult.allowed) {
+      console.warn(`[generate-script] Rate limit exceeded for IP: ${clientIp}`);
+      return rateLimitResponse(req, rateLimitResult, RATE_LIMIT_PRESETS.ai.limit);
+    }
+    // ─────────────────────────────────────────────────────────
 
     requestBody = await req.json();
     const {

@@ -15,6 +15,7 @@
  * ENDPOINTS:
  * - GET ?action=videos&limit=N  -> Videos aprobados aleatorios
  * - GET ?action=stats           -> Estadísticas de UGC Colombia
+ * - GET ?action=brands&limit=N  -> Logos de marcas/clientes con logo_url válido
  *
  * CORS: Permite ugccolombia.co, *.vercel.app, localhost:3000
  * CACHE: 60s server, 5min stale-while-revalidate
@@ -30,16 +31,21 @@ const UGC_COLOMBIA_SLUG = "ugc-colombia";
 const ALLOWED_ORIGINS = [
   "https://ugccolombia.co",
   "https://www.ugccolombia.co",
-  "http://localhost:3000",
+  "https://kreoon.com",
+  "https://www.kreoon.com",
+  "https://app.kreoon.com",
 ];
 
 function getCorsHeaders(origin: string | null): Record<string, string> {
-  let allowedOrigin = "https://ugccolombia.co";
+  let allowedOrigin = "https://kreoon.com";
 
   if (origin) {
     if (ALLOWED_ORIGINS.includes(origin)) {
       allowedOrigin = origin;
     } else if (origin.endsWith(".vercel.app")) {
+      allowedOrigin = origin;
+    } else if (origin.startsWith("http://localhost:")) {
+      // Allow all localhost ports for development
       allowedOrigin = origin;
     }
   }
@@ -106,9 +112,9 @@ serve(async (req: Request) => {
     const url = new URL(req.url);
     const action = url.searchParams.get("action");
 
-    if (!action || !["videos", "stats"].includes(action)) {
+    if (!action || !["videos", "stats", "brands"].includes(action)) {
       return new Response(
-        JSON.stringify({ error: "Invalid action. Use ?action=videos or ?action=stats" }),
+        JSON.stringify({ error: "Invalid action. Use ?action=videos, ?action=stats, or ?action=brands" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -128,6 +134,8 @@ serve(async (req: Request) => {
 
     if (action === "videos") {
       return await handleVideos(supabase, url, corsHeaders, orgId);
+    } else if (action === "brands") {
+      return await handleBrands(supabase, url, corsHeaders);
     } else {
       return await handleStats(supabase, corsHeaders, orgId);
     }
@@ -248,9 +256,7 @@ async function handleStats(
 ): Promise<Response> {
   console.log("[public-showcase] Fetching stats for org", orgId);
 
-  // Run all counts in parallel
-  // Creators and brands: entire platform
-  // Videos: UGC Colombia organization only
+  // Run all counts in parallel - ALL platform stats
   const [creatorsResult, brandsResult, videosApprovedResult, videosPaidResult] = await Promise.all([
     // Creators: active creator profiles (entire platform)
     supabase
@@ -263,18 +269,16 @@ async function handleStats(
       .from("clients")
       .select("id", { count: "exact", head: true }),
 
-    // Approved content (UGC Colombia only)
+    // Approved content (entire platform)
     supabase
       .from("content")
       .select("id", { count: "exact", head: true })
-      .eq("organization_id", orgId)
       .eq("status", "approved"),
 
-    // Paid content (UGC Colombia only)
+    // Paid content (entire platform)
     supabase
       .from("content")
       .select("id", { count: "exact", head: true })
-      .eq("organization_id", orgId)
       .eq("status", "paid"),
   ]);
 
@@ -296,6 +300,50 @@ async function handleStats(
 
   return new Response(
     JSON.stringify(stats),
+    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+}
+
+/**
+ * GET ?action=brands&limit=N
+ * Returns client brands with valid logo URLs
+ */
+async function handleBrands(
+  supabase: ReturnType<typeof createClient>,
+  url: URL,
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  let limit = parseInt(url.searchParams.get("limit") || "20", 10);
+  if (isNaN(limit) || limit < 1) limit = 1;
+  if (limit > 50) limit = 50;
+
+  console.log(`[public-showcase] Fetching ${limit} brand logos`);
+
+  const { data: brands, error } = await supabase
+    .from("clients")
+    .select("id, name, logo_url")
+    .not("logo_url", "is", null)
+    .neq("logo_url", "")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("[public-showcase] Error fetching brands:", error);
+    return new Response(
+      JSON.stringify({ error: "Internal error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  // Filter only valid HTTP URLs
+  const validBrands = (brands || []).filter((b: any) =>
+    b.logo_url && (b.logo_url.startsWith("http://") || b.logo_url.startsWith("https://"))
+  );
+
+  console.log(`[public-showcase] Returning ${validBrands.length} brands with logos`);
+
+  return new Response(
+    JSON.stringify(validBrands),
     { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 }

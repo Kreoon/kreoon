@@ -212,13 +212,33 @@ Deno.serve(async (req) => {
     const mp4Url = `https://${bunnyCdnHostname}/${videoData.guid}/play_1080p.mp4`
     const thumbnailUrl = `https://${bunnyCdnHostname}/${videoData.guid}/thumbnail.jpg`
 
-    // Return upload credentials - client will upload directly to Bunny
+    // SECURITY: Return upload URL with TUS protocol - DO NOT expose API key to client
+    // The client should use the TUS upload URL which includes authentication
+    const tusUploadUrl = `https://video.bunnycdn.com/tusupload?libraryId=${bunnyLibraryId}&videoId=${videoData.guid}&expirationTime=${Date.now() + 3600000}`
+
+    // Generate HMAC signature for TUS upload (if BUNNY_TUS_SECRET is configured)
+    const tusSecret = Deno.env.get('BUNNY_TUS_SECRET')
+    let signedTusUrl = tusUploadUrl
+    if (tusSecret) {
+      const encoder = new TextEncoder()
+      const key = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(tusSecret),
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign']
+      )
+      const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(tusUploadUrl))
+      const signatureHex = Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, '0')).join('')
+      signedTusUrl = `${tusUploadUrl}&signature=${signatureHex}`
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         video_id: videoData.guid,
-        upload_url: uploadUrl,
-        access_key: bunnyApiKey,
+        upload_url: signedTusUrl, // TUS upload URL (no API key exposed)
+        // access_key removed for security - client should not have direct API access
         embed_url: embedUrl,
         mp4_url: mp4Url,
         thumbnail_url: thumbnailUrl,
