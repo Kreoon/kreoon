@@ -20,6 +20,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { uploadImage } from '@/lib/bunnyUpload';
 import { 
   Camera, Loader2, Save, Building2, Globe, Lock, Instagram, 
   Phone, Mail, MapPin, FileText, User, Linkedin, Facebook as FacebookIcon
@@ -242,21 +243,9 @@ export function CompanyProfileEditor({
 
     setUploading(true);
     try {
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `company-${companyId}-${Date.now()}.${fileExt}`;
-      const filePath = `companies/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, selectedFile, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      return publicUrl;
+      // Upload to Bunny CDN
+      const result = await uploadImage(selectedFile, companyId);
+      return result.cdnUrl;
     } catch (error) {
       console.error('Error uploading logo:', error);
       toast({

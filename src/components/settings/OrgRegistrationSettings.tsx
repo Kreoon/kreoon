@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
+import { uploadImage } from '@/lib/bunnyUpload';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -267,20 +268,9 @@ export function OrgRegistrationSettings() {
 
     setUploadingBanner(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${currentOrgId}/registration-banner.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('organizations')
-        .upload(fileName, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('organizations')
-        .getPublicUrl(fileName);
-
-      await handleUpdatePageConfig({ banner_url: publicUrl });
+      // Upload to Bunny CDN
+      const result = await uploadImage(file, currentOrgId);
+      await handleUpdatePageConfig({ banner_url: result.cdnUrl });
     } catch (error) {
       console.error('Error uploading banner:', error);
       toast.error('Error al subir imagen');

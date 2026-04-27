@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { formatCurrency, formatDate } from '@/lib/utils/formatters';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { uploadAsset } from '@/lib/bunnyUpload';
 import type { MarketplaceProject, ProjectStatus, KanbanColumnConfig } from '../types/marketplace';
 import { ProjectAdapter } from '@/lib/projectAdapter';
 
@@ -480,18 +481,9 @@ export function ProjectDetailModal({
     if (!user?.id) return;
     setIsUploading(true);
     try {
-      // Upload to Supabase Storage
-      const ext = file.name.split('.').pop();
-      const path = `deliverables/${project.id}/${Date.now()}_${file.name}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('marketplace-media')
-        .upload(path, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('marketplace-media')
-        .getPublicUrl(path);
+      // Upload to Bunny CDN
+      const result = await uploadAsset(file, project.id);
+      const publicUrl = result.cdnUrl;
 
       // Determine file type
       let fileType: 'video' | 'image' | 'audio' | 'document' | 'other' = 'other';

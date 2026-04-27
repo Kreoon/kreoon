@@ -12,7 +12,7 @@ const CARD_HEIGHT = 320; // 9:16 aspect ratio
 const THUMB_WIDTH = CARD_WIDTH * 2; // 360px para 2x retina
 const THUMB_HEIGHT = CARD_HEIGHT * 2; // 640px para 2x retina
 
-function resolveThumb(item: PortfolioMedia): string {
+function resolveThumb(item: PortfolioMedia, isAvatar = false): string {
   // Prioridad: thumbnail_url guardado > URL del media
   // El thumbnail_url de la BD es más confiable que construir la URL
   let base = item.thumbnail_url;
@@ -28,6 +28,11 @@ function resolveThumb(item: PortfolioMedia): string {
   }
 
   if (!base) return '';
+
+  // Para avatares, usar getOptimizedImageUrl que maneja mejor las proporciones cuadradas
+  if (isAvatar) {
+    return getOptimizedImageUrl(base, { width: THUMB_WIDTH, quality: 80, forceProxy: true });
+  }
 
   // Pasar por getOptimizedThumbnail para resize via wsrv.nl
   return getOptimizedThumbnail(base, THUMB_WIDTH, THUMB_HEIGHT, 80);
@@ -45,16 +50,40 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
 
-  // Prioridad: featured_media_url seleccionado > primer item del portafolio
-  const hasFeaturedMedia = !!creator.featured_media_url;
-  const featuredMedia = hasFeaturedMedia
+  // Prioridad: featured_media (si es imagen) > imagen aleatoria del portafolio > avatar
+  // Featured media seleccionado por el usuario (solo si es imagen)
+  const userSelectedImage = creator.featured_media_url && creator.featured_media_type === 'image'
     ? {
         id: 'featured',
-        url: creator.featured_media_url!,
+        url: creator.featured_media_url,
         thumbnail_url: creator.featured_media_url,
-        type: creator.featured_media_type || 'image',
+        type: 'image' as const,
       } as PortfolioMedia
-    : creator.portfolio_media?.[0] ?? null;
+    : null;
+
+  // Si no hay imagen seleccionada, buscar imágenes en el portafolio y elegir una aleatoria
+  const portfolioImages = creator.portfolio_media?.filter(
+    (item) => item.type === 'image' && (item.thumbnail_url || item.url)
+  ) || [];
+
+  // Selección aleatoria pero consistente por creator.id (evita cambio en cada render)
+  const randomIndex = portfolioImages.length > 0
+    ? Math.abs(creator.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % portfolioImages.length
+    : 0;
+  const randomPortfolioImage = portfolioImages[randomIndex] || null;
+
+  // Avatar como imagen de tarjeta (cuando no hay imágenes del portafolio)
+  const avatarAsCard = creator.avatar_url
+    ? {
+        id: 'avatar',
+        url: creator.avatar_url,
+        thumbnail_url: creator.avatar_url,
+        type: 'image' as const,
+      } as PortfolioMedia
+    : null;
+
+  // Seleccionar: imagen seleccionada > imagen aleatoria portafolio > avatar grande
+  const featuredMedia = userSelectedImage || randomPortfolioImage || avatarAsCard;
 
   const handleFavorite = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -99,7 +128,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
               <div className="absolute inset-0 bg-gradient-to-br from-secondary to-secondary/50 animate-pulse" />
             )}
             <img
-              src={resolveThumb(featuredMedia)}
+              src={resolveThumb(featuredMedia, featuredMedia.id === 'avatar')}
               alt=""
               width={CARD_WIDTH}
               height={CARD_HEIGHT}

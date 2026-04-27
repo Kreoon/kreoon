@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Upload, Palette, Image, Loader2, Save, Info, Smartphone, Globe, Share2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { uploadImage } from "@/lib/bunnyUpload";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -186,21 +187,9 @@ export function AppearanceSettings() {
 
     setUploading(key);
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${key}_${Date.now()}.${fileExt}`;
-      const filePath = `branding/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("public-assets")
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("public-assets")
-        .getPublicUrl(filePath);
-
-      setSettings(prev => ({ ...prev, [key]: publicUrl }));
+      // Upload to Bunny CDN
+      const result = await uploadImage(file, `branding-${key}`);
+      setSettings(prev => ({ ...prev, [key]: result.cdnUrl }));
       toast.success("Imagen subida correctamente");
     } catch (error: any) {
       console.error("Upload error:", error);

@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { supabase } from '@/integrations/supabase/client';
+import { uploadImage } from '@/lib/bunnyUpload';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_SIZE_MB } from '../config';
@@ -29,20 +29,9 @@ export function ImageUploader({ value, onChange, label, storagePath, className }
 
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop() || 'png';
-      const fileName = `${storagePath}/${crypto.randomUUID()}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('ad-generator')
-        .upload(fileName, file, { contentType: file.type, upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from('ad-generator')
-        .getPublicUrl(fileName);
-
-      onChange(urlData.publicUrl);
+      // Upload to Bunny CDN
+      const result = await uploadImage(file, storagePath);
+      onChange(result.cdnUrl);
     } catch (err: any) {
       toast({ title: 'Error al subir imagen', description: err.message, variant: 'destructive' });
     } finally {

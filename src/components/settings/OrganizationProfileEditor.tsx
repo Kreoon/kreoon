@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { uploadImage } from '@/lib/bunnyUpload';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -236,22 +237,9 @@ export function OrganizationProfileEditor({ organizationId, isRootAdmin = false,
 
     setUploadingLogo(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${organizationId}/logo.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('organizations')
-        .upload(fileName, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('organizations')
-        .getPublicUrl(fileName);
-
-      // Add cache buster to force refresh
-      const urlWithCacheBuster = `${publicUrl}?t=${Date.now()}`;
-      updateField('logo_url', urlWithCacheBuster);
+      // Upload to Bunny CDN
+      const result = await uploadImage(file, organizationId);
+      updateField('logo_url', result.cdnUrl);
       toast.success('Logo subido correctamente');
     } catch (error) {
       console.error('Error uploading logo:', error);

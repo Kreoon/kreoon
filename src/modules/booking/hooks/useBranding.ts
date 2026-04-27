@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { uploadImage } from '@/lib/bunnyUpload';
 import type { BookingBranding, BookingBrandingInput } from '../types';
 
 export function useBranding() {
@@ -73,24 +74,9 @@ export function useBranding() {
 
   const uploadLogo = async (file: File): Promise<string> => {
     if (!user?.id) throw new Error('User not authenticated');
-
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${user.id}/booking-logo-${Date.now()}.${fileExt}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('booking-assets')
-      .upload(fileName, file, {
-        upsert: true,
-        contentType: file.type,
-      });
-
-    if (uploadError) throw uploadError;
-
-    const { data } = supabase.storage
-      .from('booking-assets')
-      .getPublicUrl(fileName);
-
-    return data.publicUrl;
+    // Upload to Bunny CDN
+    const result = await uploadImage(file, user.id);
+    return result.cdnUrl;
   };
 
   return {

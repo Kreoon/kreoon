@@ -13,6 +13,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { uploadAvatar as bunnyUploadAvatar } from '@/lib/bunnyUpload';
 import { Camera, Loader2, Save, X, Globe, Lock } from 'lucide-react';
 
 interface ProfileEditorProps {
@@ -146,21 +147,9 @@ export function ProfileEditor({
 
     setUploading(true);
     try {
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${userId}-${Date.now()}.${fileExt}`;
-      const filePath = `${userId}/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, selectedFile, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      return publicUrl;
+      // Upload to Bunny CDN
+      const result = await bunnyUploadAvatar(selectedFile, userId);
+      return result.cdnUrl;
     } catch (error) {
       console.error('Error uploading avatar:', error);
       toast({

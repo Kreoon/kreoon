@@ -49,15 +49,21 @@ async function fetchPortfolioContent(): Promise<PortfolioContent[]> {
   }));
 }
 
-function VideoCard({ content, index }: { content: PortfolioContent; index: number }) {
+// Primeros N videos cargan inmediatamente según breakpoint
+// 2 cols (mobile) = 4, 3 cols (sm) = 6, 4 cols (md) = 8, 5 cols (lg) = 10, 6 cols (xl) = 12
+const EAGER_LOAD_COUNT = 12;
+
+function VideoCard({ content, index, eager = false }: { content: PortfolioContent; index: number; eager?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(eager);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
 
-  // Intersection Observer para lazy loading
+  // Intersection Observer para lazy loading (solo si no es eager)
   useEffect(() => {
+    if (eager) return;
+
     const element = containerRef.current;
     if (!element) return;
 
@@ -68,12 +74,12 @@ function VideoCard({ content, index }: { content: PortfolioContent; index: numbe
           observer.disconnect();
         }
       },
-      { rootMargin: "200px", threshold: 0.1 }
+      { rootMargin: "300px", threshold: 0.1 }
     );
 
     observer.observe(element);
     return () => observer.disconnect();
-  }, []);
+  }, [eager]);
 
   // Generar thumbnail optimizado
   const thumbnailUrl = useMemo(() => {
@@ -142,7 +148,9 @@ function VideoCard({ content, index }: { content: PortfolioContent; index: numbe
         {thumbnailUrl && !isPlaying && (
           <img
             src={thumbnailUrl}
-            alt={content.title}
+            alt={`Video de ${content.creator_name}`}
+            loading={eager ? "eager" : "lazy"}
+            fetchpriority={eager ? "high" : "auto"}
             className="absolute inset-0 w-full h-full object-cover z-[1]"
           />
         )}
@@ -168,6 +176,7 @@ function VideoCard({ content, index }: { content: PortfolioContent; index: numbe
           <iframe
             ref={iframeRef}
             src={embedUrl}
+            loading={eager ? "eager" : "lazy"}
             onLoad={() => setIsPlaying(true)}
             allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
             className="absolute left-1/2 top-1/2 pointer-events-none z-[3]"
@@ -218,20 +227,18 @@ function VideoCard({ content, index }: { content: PortfolioContent; index: numbe
             )}
           </button>
         )}
-
-        {/* Status badge */}
-        <div className="absolute top-2 left-2 z-20 px-2 py-0.5 rounded-full bg-green-500/20 border border-green-500/40 backdrop-blur-sm">
-          <span className="text-[9px] font-medium text-green-400 uppercase">
-            {content.status === "paid" ? "Pagado" : "Aprobado"}
-          </span>
-        </div>
       </div>
     </motion.div>
   );
 }
 
+// Cuántos videos cargar por lote al hacer scroll
+const BATCH_SIZE = 12;
+
 export default function PortfolioShowcasePage() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState(EAGER_LOAD_COUNT);
   const [authModal, setAuthModal] = useState<{
     open: boolean;
     tab: "login" | "register";
@@ -244,6 +251,59 @@ export default function PortfolioShowcasePage() {
     gcTime: 30 * 60_000,
     refetchOnWindowFocus: false,
   });
+
+  // Preload thumbnails de los primeros videos para carga instantánea
+  useEffect(() => {
+    if (!content?.length) return;
+
+    const preloadCount = Math.min(EAGER_LOAD_COUNT, content.length);
+    const preloadedLinks: HTMLLinkElement[] = [];
+
+    content.slice(0, preloadCount).forEach((item, idx) => {
+      let thumbUrl: string | null = null;
+
+      if (item.thumbnail_url) {
+        thumbUrl = getOptimizedThumbnail(item.thumbnail_url, 400, 711, 80);
+      } else {
+        const bunnyThumb = getBunnyThumbnailUrl(item.video_url);
+        if (bunnyThumb) {
+          thumbUrl = getOptimizedThumbnail(bunnyThumb, 400, 711, 80);
+        }
+      }
+
+      if (thumbUrl) {
+        const link = document.createElement("link");
+        link.rel = "preload";
+        link.as = "image";
+        link.href = thumbUrl;
+        if (idx < 6) link.setAttribute("fetchpriority", "high");
+        document.head.appendChild(link);
+        preloadedLinks.push(link);
+      }
+    });
+
+    return () => {
+      preloadedLinks.forEach((link) => link.remove());
+    };
+  }, [content]);
+
+  // Cargar más videos cuando el usuario hace scroll al final
+  useEffect(() => {
+    const element = loadMoreRef.current;
+    if (!element || !content?.length) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && visibleCount < content.length) {
+          setVisibleCount((prev) => Math.min(prev + BATCH_SIZE, content.length));
+        }
+      },
+      { rootMargin: "200px", threshold: 0.1 }
+    );
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [content?.length, visibleCount]);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -302,11 +362,27 @@ export default function PortfolioShowcasePage() {
                   <Loader2 className="h-10 w-10 animate-spin text-kreoon-purple-500" />
                 </div>
               ) : content && content.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
-                  {content.map((item, idx) => (
-                    <VideoCard key={item.id} content={item} index={idx} />
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
+                    {content.slice(0, visibleCount).map((item, idx) => (
+                      <VideoCard
+                        key={item.id}
+                        content={item}
+                        index={idx}
+                        eager={idx < EAGER_LOAD_COUNT}
+                      />
+                    ))}
+                  </div>
+                  {/* Trigger para cargar más */}
+                  {visibleCount < content.length && (
+                    <div
+                      ref={loadMoreRef}
+                      className="flex justify-center py-8"
+                    >
+                      <Loader2 className="h-6 w-6 animate-spin text-kreoon-purple-500/50" />
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="text-center py-20">
                   <p className="text-kreoon-text-muted">

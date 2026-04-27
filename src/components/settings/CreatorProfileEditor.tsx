@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { useCreatorProfile, CreatorProfileData } from '@/hooks/useCreatorProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { uploadAvatar as bunnyUploadAvatar, uploadImage } from '@/lib/bunnyUpload';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -218,45 +219,35 @@ export function CreatorProfileEditor() {
     updateField('categories', (formData.categories || []).filter(c => c !== cat));
   };
 
-  // Upload file to Supabase Storage
-  const uploadFile = useCallback(async (file: File, bucket: string, path: string): Promise<string | null> => {
-    try {
-      setUploading(true);
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${path}/${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(fileName, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(fileName);
-
-      return publicUrl;
-    } catch (err) {
-      console.error('Error uploading file:', err);
-      toast.error('Error al subir la imagen');
-      return null;
-    } finally {
-      setUploading(false);
-    }
-  }, []);
-
+  // Upload file to Bunny CDN
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user?.id) return;
-    const url = await uploadFile(file, 'avatars', `creator-profiles/${user.id}`);
-    if (url) updateField('avatar_url', url);
+    try {
+      setUploading(true);
+      const result = await bunnyUploadAvatar(file, user.id);
+      updateField('avatar_url', result.cdnUrl);
+    } catch (err) {
+      console.error('Error uploading avatar:', err);
+      toast.error('Error al subir la imagen');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleBannerChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user?.id) return;
-    const url = await uploadFile(file, 'banners', `creator-profiles/${user.id}`);
-    if (url) updateField('banner_url', url);
+    try {
+      setUploading(true);
+      const result = await uploadImage(file, user.id);
+      updateField('banner_url', result.cdnUrl);
+    } catch (err) {
+      console.error('Error uploading banner:', err);
+      toast.error('Error al subir la imagen');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSave = async () => {

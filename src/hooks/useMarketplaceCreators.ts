@@ -200,20 +200,35 @@ export async function fetchAllCreators(): Promise<MarketplaceCreatorsResult> {
     const contentRows = contentResult?.data || [];
     const postRows = postResult?.data || [];
 
-    // Process portfolio_items
+    // Process portfolio_items - priorizar imágenes sobre videos
+    // Primero agrupar todos los items por creator
+    const tempPortfolioMap = new Map<string, Array<{
+      id: string;
+      url: string;
+      thumbnail_url: string | null;
+      type: 'image' | 'video';
+    }>>();
+
     for (const item of portfolioRows) {
-      if (!portfolioMap.has(item.creator_id)) {
-        portfolioMap.set(item.creator_id, []);
+      if (!tempPortfolioMap.has(item.creator_id)) {
+        tempPortfolioMap.set(item.creator_id, []);
       }
-      const list = portfolioMap.get(item.creator_id)!;
-      if (list.length < 8) {
-        list.push({
-          id: item.id,
-          url: item.media_url || '',
-          thumbnail_url: item.thumbnail_url,
-          type: item.media_type === 'video' ? 'video' : 'image',
-        });
-      }
+      tempPortfolioMap.get(item.creator_id)!.push({
+        id: item.id,
+        url: item.media_url || '',
+        thumbnail_url: item.thumbnail_url,
+        type: item.media_type === 'video' ? 'video' : 'image',
+      });
+    }
+
+    // Ordenar: imágenes primero, luego videos, y tomar solo 8
+    for (const [creatorId, items] of tempPortfolioMap) {
+      const sorted = items.sort((a, b) => {
+        if (a.type === 'image' && b.type === 'video') return -1;
+        if (a.type === 'video' && b.type === 'image') return 1;
+        return 0;
+      });
+      portfolioMap.set(creatorId, sorted.slice(0, 8));
     }
 
     // Track URLs already in portfolio to avoid duplicates
@@ -487,13 +502,29 @@ export async function fetchAllCreators(): Promise<MarketplaceCreatorsResult> {
   }
 
   // ── 4. Merge: creator_profiles first, then profiles fallback ──
-  // Filter: only show profiles with visible thumbnail (avatar, featured_media, or portfolio)
+  // Filter: show ONLY profiles with a VALID visible image
+  // Valid = Bunny CDN URL or other working URL (not empty Supabase URLs)
+  const isValidImageUrl = (url: string | null | undefined): boolean => {
+    if (!url || url.trim() === '') return false;
+    // Bunny CDN URLs are always valid
+    if (url.includes('b-cdn.net') || url.includes('cdn.kreoon.com') || url.includes('mediadelivery.net')) {
+      return true;
+    }
+    // Supabase storage URLs may not work, exclude them
+    if (url.includes('supabase.co/storage')) {
+      return false;
+    }
+    // Other URLs (external avatars like Google, etc.) - assume valid
+    return url.startsWith('http');
+  };
+
   const all = [...mapped, ...profilesWithContent].filter((c) => {
-    const hasThumbnail =
-      c.avatar_url ||
-      c.featured_media_url ||
-      (c.portfolio_media.length > 0 && c.portfolio_media[0]?.thumbnail_url);
-    return hasThumbnail;
+    const hasValidAvatar = isValidImageUrl(c.avatar_url);
+    const hasValidFeaturedMedia = isValidImageUrl(c.featured_media_url) && c.featured_media_type === 'image';
+    const hasValidPortfolioImage = c.portfolio_media.some(
+      (item) => item.type === 'image' && (isValidImageUrl(item.thumbnail_url) || isValidImageUrl(item.url))
+    );
+    return hasValidAvatar || hasValidFeaturedMedia || hasValidPortfolioImage;
   });
 
   all.sort((a, b) => {

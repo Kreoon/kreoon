@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { uploadImage } from '@/lib/bunnyUpload';
 import { Upload, Loader2, Check, X, Image, Trash2 } from 'lucide-react';
 
 interface ThumbnailSelectorProps {
@@ -71,31 +72,18 @@ export function ThumbnailSelector({
 
     setUploading(true);
     try {
-      // Upload to storage
-      const fileName = `${contentId}-${Date.now()}.jpg`;
-      const { error: uploadError } = await supabase.storage
-        .from('content-thumbnails')
-        .upload(fileName, previewFile, {
-          contentType: previewFile.type || 'image/jpeg',
-          upsert: true,
-        });
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('content-thumbnails')
-        .getPublicUrl(fileName);
+      // Upload to Bunny CDN
+      const result = await uploadImage(previewFile, contentId);
 
       // Update content with new thumbnail
       const { error: updateError } = await supabase
         .from('content')
-        .update({ thumbnail_url: publicUrl })
+        .update({ thumbnail_url: result.cdnUrl })
         .eq('id', contentId);
 
       if (updateError) throw updateError;
 
-      onThumbnailChange?.(publicUrl);
+      onThumbnailChange?.(result.cdnUrl);
       toast({
         title: 'Miniatura actualizada',
         description: 'La miniatura se guardó correctamente',
