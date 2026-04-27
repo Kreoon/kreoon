@@ -119,7 +119,6 @@ export { useLinkPreview } from './useLinkPreview';
 
 // ─── Portfolio ──────────────────────────────────────────────────────────────
 export { usePortfolioItems } from './usePortfolioItems';
-export { useRandomPortfolio } from './useRandomPortfolio';
 
 // ─── Analytics & Tracking ───────────────────────────────────────────────────
 export { useAnalytics } from './useAnalytics';

@@ -228,26 +228,11 @@ export default function PortfolioShowcasePage() {
                 </span>
               </h1>
 
-              <p className="text-lg md:text-xl text-kreoon-text-secondary max-w-2xl mx-auto mb-8">
+              <p className="text-lg md:text-xl text-kreoon-text-secondary max-w-2xl mx-auto">
                 Explora proyectos reales creados por nuestra comunidad de
                 creadores. Contenido que ha sido aprobado y entregado a marcas
                 reales.
               </p>
-
-              <div className="flex items-center justify-center gap-8 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-kreoon-text-muted">
-                    {content?.length || 0} proyectos
-                  </span>
-                </div>
-                <button
-                  onClick={() => refetch()}
-                  className="text-kreoon-purple-400 hover:text-kreoon-purple-300 transition-colors"
-                >
-                  Rotar contenido
-                </button>
-              </div>
             </motion.div>
           </motion.section>
 
