@@ -126,9 +126,15 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
   const [editors, setEditors] = useState<SelectOption[]>([]);
   const [strategists, setStrategists] = useState<SelectOption[]>([]);
 
+  // Check if user is the assigned strategist (for video tab editing)
+  const isContentStrategist = content?.strategist_id === user?.id;
+
   // Check if user can edit video tab (only strategist assigned or admin)
-  const isStrategist = content?.strategist_id === user?.id;
-  const canEditVideoTab = isAdmin || isStrategist;
+  const canEditVideoTab = isAdmin || isContentStrategist;
+
+  // User can upload final videos if they are admin, have editor role, OR are assigned as editor to this content
+  const isUserAssignedAsEditor = content?.editor_id === user?.id;
+  const canUploadFinalVideo = isAdmin || isEditor || isUserAssignedAsEditor;
 
   useEffect(() => {
     if (content) {
@@ -1329,7 +1335,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                 
                 <div className="grid gap-4">
                   {/* Video Final - Bunny Stream uploader for editors (Multiple Variables) */}
-                  {(isEditor || isAdmin) && (
+                  {canUploadFinalVideo && (
                     <div className="space-y-3 p-4 rounded-sm border-2 border-dashed border-green-500/30 bg-green-500/5">
                       <div className="flex items-center justify-between">
                         <Label className="font-medium flex items-center gap-2 text-green-700 dark:text-green-400">
@@ -1351,7 +1357,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                           setFormData({ ...formData, video_urls: urls });
                           if (!editMode) setEditMode(true);
                         }}
-                        disabled={!editMode && !isEditor && !isAdmin}
+                        disabled={!editMode && !canUploadFinalVideo}
                         showPreview={false}
                       />
                     </div>
