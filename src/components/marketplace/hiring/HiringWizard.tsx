@@ -3,6 +3,8 @@ import { X, ChevronLeft, ChevronRight, FileText, Package, ClipboardList, CreditC
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useCreatorPublicProfile } from '@/hooks/useCreatorPublicProfile';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { HiringStepBrief } from './HiringStepBrief';
 import { HiringStepPackage } from './HiringStepPackage';
 import { HiringStepSummary } from './HiringStepSummary';
@@ -114,6 +116,7 @@ function dbToWizardCreator(
 
 export default function HiringWizard({ creatorId, onClose }: HiringWizardProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const { data: dbData, loading: creatorLoading } = useCreatorPublicProfile(creatorId);
   const creator = useMemo(() => (dbData ? dbToWizardCreator(dbData) : null), [dbData]);
 
@@ -273,11 +276,36 @@ export default function HiringWizard({ creatorId, onClose }: HiringWizardProps) 
   const handleManualCreate = async () => {
     if (!manualTitle.trim()) return;
     setIsSubmitting(true);
-    // Simulate API call - TODO: replace with actual marketplace project creation
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    clearDraft(creatorId);
-    setIsComplete(true);
-    setIsSubmitting(false);
+
+    try {
+      const { error } = await (supabase as any)
+        .from('marketplace_projects')
+        .insert({
+          title: manualTitle.trim(),
+          creator_id: creatorId,
+          status: 'draft',
+          creation_mode: 'manual',
+          brief: {},
+        });
+
+      if (error) throw error;
+
+      clearDraft(creatorId);
+      toast({
+        title: 'Proyecto creado',
+        description: 'Puedes agregar mas detalles editando el proyecto',
+      });
+      setIsComplete(true);
+    } catch (err: any) {
+      console.error('[HiringWizard] Error creating project:', err);
+      toast({
+        title: 'Error al crear proyecto',
+        description: err.message || 'Intenta de nuevo',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const progress = isComplete ? 100 : ((currentStep + 1) / STEPS.length) * 100;

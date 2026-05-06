@@ -9,7 +9,10 @@ import { AutoSaveIndicator } from '@/components/ui/autosave-indicator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ContentConfigDialog } from '@/components/content/ContentDetailDialog/Config';
-import { Save, Trash2, Eye, Plus, Loader2, Settings, Zap, Lightbulb, RefreshCw, Heart, Building2, Target } from 'lucide-react';
+import { Save, Trash2, Eye, Plus, Loader2, Settings, Zap, Lightbulb, RefreshCw, Heart, Building2, Target, ChevronLeft } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { useUnifiedProject } from './hooks/useUnifiedProject';
 import { SECTION_TAB_CONFIG } from '@/types/unifiedProject.types';
@@ -51,6 +54,107 @@ const TAB_COMPONENTS: Record<UnifiedSectionKey, React.LazyExoticComponent<any>> 
   reference: WorkspaceTab, // Reference video embedded in workspace; kept for type compat
 };
 
+// Simple form for manual creation mode
+function ManualCreateForm({
+  source,
+  formData,
+  setFormData,
+  organizationId,
+  onBack,
+  onClose,
+  onSuccess,
+}: {
+  source: 'content' | 'marketplace';
+  formData: Record<string, any>;
+  setFormData: (fn: (prev: Record<string, any>) => Record<string, any>) => void;
+  organizationId?: string;
+  onBack: () => void;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
+  const title = formData.title || '';
+
+  const handleCreate = async () => {
+    if (!title.trim()) {
+      toast({ title: 'Error', description: 'El nombre es requerido', variant: 'destructive' });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      if (source === 'content') {
+        const { error } = await supabase.from('content').insert({
+          title: title.trim(),
+          status: 'draft',
+          creation_mode: 'manual',
+          organization_id: organizationId,
+        });
+        if (error) throw error;
+      } else {
+        const { error } = await (supabase as any).from('marketplace_projects').insert({
+          title: title.trim(),
+          status: 'draft',
+          creation_mode: 'manual',
+          brief: {},
+          organization_id: organizationId,
+        });
+        if (error) throw error;
+      }
+
+      toast({ title: 'Proyecto creado', description: 'Puedes editarlo para agregar mas detalles' });
+      onSuccess();
+    } catch (err: any) {
+      console.error('[ManualCreateForm] Error:', err);
+      toast({ title: 'Error al crear', description: err.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5 text-green-500" />
+            Creacion Rapida
+          </DialogTitle>
+          <DialogDescription>Solo el nombre. Agrega detalles despues.</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Nombre del proyecto *</label>
+            <Input
+              value={title}
+              onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+              placeholder="Ej: Video testimonial producto X"
+              autoFocus
+              className="text-base"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-between pt-2 border-t">
+          <Button variant="ghost" size="sm" onClick={onBack}>
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Volver
+          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button onClick={handleCreate} disabled={saving || !title.trim()} className="bg-green-600 hover:bg-green-500">
+              {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Zap className="h-4 w-4 mr-1" />}
+              Crear
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function TabSkeleton() {
   return (
     <div className="space-y-4 p-4">
@@ -73,6 +177,7 @@ export function UnifiedProjectModal({
   createProjectType,
 }: UnifiedProjectModalProps) {
   const isCreateMode = mode === 'create';
+  const { currentOrganizationId } = useAuth();
   const [activeTab, setActiveTab] = useState<string>('workspace');
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -159,6 +264,24 @@ export function UnifiedProjectModal({
           />
         </DialogContent>
       </Dialog>
+    );
+  }
+
+  // Manual mode in create: show simple title-only form
+  if (isCreateMode && creationMode === 'manual') {
+    return (
+      <ManualCreateForm
+        source={source}
+        formData={formData}
+        setFormData={setFormData}
+        organizationId={currentOrganizationId}
+        onBack={() => setCreationMode(null)}
+        onClose={() => onOpenChange(false)}
+        onSuccess={() => {
+          onUpdate?.();
+          onOpenChange(false);
+        }}
+      />
     );
   }
 
