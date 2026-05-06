@@ -507,14 +507,23 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
       return;
     }
 
+    if (!currentOrgId) {
+      toast({
+        title: "Error",
+        description: "No hay organizacion seleccionada",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const { error } = await supabase.from('content').insert({
-        title: title.trim(),
-        status: 'draft',
-        creation_mode: 'manual',
-        organization_id: currentOrgId
+      // Use RPC to bypass RLS
+      const { error } = await supabase.rpc('create_content_manual', {
+        p_title: title.trim(),
+        p_organization_id: currentOrgId,
+        p_creation_mode: 'manual',
       });
 
       if (error) throw error;

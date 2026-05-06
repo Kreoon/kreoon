@@ -12,7 +12,7 @@ import { ContentConfigDialog } from '@/components/content/ContentDetailDialog/Co
 import { Save, Trash2, Eye, Plus, Loader2, Settings, Zap, Lightbulb, RefreshCw, Heart, Building2, Target, ChevronLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
+import { useOrganizations } from '@/hooks/useOrganizations';
 import { cn } from '@/lib/utils';
 import { useUnifiedProject } from './hooks/useUnifiedProject';
 import { SECTION_TAB_CONFIG } from '@/types/unifiedProject.types';
@@ -82,14 +82,19 @@ function ManualCreateForm({
       return;
     }
 
+    if (source === 'content' && !organizationId) {
+      toast({ title: 'Error', description: 'No hay organizacion seleccionada', variant: 'destructive' });
+      return;
+    }
+
     setSaving(true);
     try {
       if (source === 'content') {
-        const { error } = await supabase.from('content').insert({
-          title: title.trim(),
-          status: 'draft',
-          creation_mode: 'manual',
-          organization_id: organizationId,
+        // Use RPC to bypass RLS
+        const { error } = await supabase.rpc('create_content_manual', {
+          p_title: title.trim(),
+          p_organization_id: organizationId,
+          p_creation_mode: 'manual',
         });
         if (error) throw error;
       } else {
@@ -177,7 +182,7 @@ export function UnifiedProjectModal({
   createProjectType,
 }: UnifiedProjectModalProps) {
   const isCreateMode = mode === 'create';
-  const { currentOrganizationId } = useAuth();
+  const { currentOrg } = useOrganizations();
   const [activeTab, setActiveTab] = useState<string>('workspace');
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -274,7 +279,7 @@ export function UnifiedProjectModal({
         source={source}
         formData={formData}
         setFormData={setFormData}
-        organizationId={currentOrganizationId}
+        organizationId={currentOrg?.id}
         onBack={() => setCreationMode(null)}
         onClose={() => onOpenChange(false)}
         onSuccess={() => {
