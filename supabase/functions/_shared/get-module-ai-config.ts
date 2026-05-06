@@ -30,6 +30,10 @@ function getEnvApiKey(provider: string): string {
       return Deno.env.get("ANTHROPIC_API_KEY") || "";
     case "perplexity":
       return Deno.env.get("PERPLEXITY_API_KEY") || "";
+    case "groq":
+      return Deno.env.get("GROQ_API_KEY") || "";
+    case "mistral":
+      return Deno.env.get("MISTRAL_API_KEY") || "";
     case "fal":
       return Deno.env.get("FAL_KEY") || "";
     default:
@@ -41,7 +45,7 @@ function normalizeProviderModel(provider: string, model: string): { provider: st
   let p = provider;
   let m = model;
 
-  // Handle model prefixes (google/, openai/, anthropic/, perplexity/)
+  // Handle model prefixes (google/, openai/, anthropic/, perplexity/, groq/, mistral/)
   if (m.startsWith("google/")) {
     p = "gemini";
     m = m.replace("google/", "");
@@ -54,6 +58,12 @@ function normalizeProviderModel(provider: string, model: string): { provider: st
   } else if (m.startsWith("perplexity/")) {
     p = "perplexity";
     m = m.replace("perplexity/", "");
+  } else if (m.startsWith("groq/")) {
+    p = "groq";
+    m = m.replace("groq/", "");
+  } else if (m.startsWith("mistral/")) {
+    p = "mistral";
+    m = m.replace("mistral/", "");
   }
 
   // Kreoon IA usa Gemini por defecto
@@ -128,7 +138,7 @@ export async function getModuleAIConfig(
   provider = normalized.provider;
   model = normalized.model;
 
-  if (provider !== "gemini" && provider !== "openai" && provider !== "anthropic") {
+  if (provider !== "gemini" && provider !== "openai" && provider !== "anthropic" && provider !== "groq" && provider !== "mistral") {
     const { data: providerData } = await supabase
       .from("organization_ai_providers")
       .select("api_key_encrypted")
@@ -241,13 +251,25 @@ export async function getModuleAIConfigsWithFallback(
     }
   }
 
+  const groqApiKey = Deno.env.get("GROQ_API_KEY");
+  const mistralApiKey = Deno.env.get("MISTRAL_API_KEY");
+
+  addConfig("groq", "llama-3.3-70b-versatile", groqApiKey || "");
   addConfig("gemini", "gemini-2.5-flash", googleApiKey || "");
+  addConfig("mistral", "mistral-small-latest", mistralApiKey || "");
   addConfig("openai", "gpt-4o-mini", openaiApiKey || "");
 
-  for (const key of ["anthropic"]) {
+  for (const key of ["anthropic", "groq", "mistral"]) {
     const p = providerByKey.get(key);
     if (p?.api_key_encrypted) {
-      const model = Array.isArray(p.available_models) && p.available_models.length ? p.available_models[0] : "claude-sonnet-4-20250514";
+      const defaultModels: Record<string, string> = {
+        anthropic: "claude-sonnet-4-20250514",
+        groq: "llama-3.3-70b-versatile",
+        mistral: "mistral-small-latest",
+      };
+      const model = Array.isArray(p.available_models) && p.available_models.length
+        ? p.available_models[0]
+        : defaultModels[key] || "gemini-2.5-flash";
       addConfig(key, model, p.api_key_encrypted);
     }
   }

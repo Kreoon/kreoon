@@ -8,7 +8,7 @@ export const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-export type AIProviderKey = "gemini" | "openai" | "anthropic" | "perplexity" | "kreoon";
+export type AIProviderKey = "gemini" | "openai" | "anthropic" | "perplexity" | "groq" | "mistral" | "kreoon";
 
 export interface AIMessage {
   role: "system" | "user" | "assistant";
@@ -115,6 +115,66 @@ export const AI_PROVIDERS: Record<string, AIProviderConfig> = {
     }),
     extractContent: (data: any) => data.choices?.[0]?.message?.content || "",
   },
+  // Groq - Ultra rápido (300-1000 TPS) y económico, usa modelos open-source
+  groq: {
+    url: "https://api.groq.com/openai/v1/chat/completions",
+    getHeaders: (apiKey: string) => ({
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    }),
+    getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) => {
+      const body: any = {
+        model: model || "llama-3.3-70b-versatile",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        max_tokens: 4096,
+        temperature: 0.7,
+      };
+      if (tools) {
+        body.tools = tools;
+        body.tool_choice = { type: "function", function: { name: tools[0].function.name } };
+      }
+      return body;
+    },
+    extractContent: (data: any, hasTools?: boolean) => {
+      if (hasTools && data.choices?.[0]?.message?.tool_calls?.[0]) {
+        return JSON.parse(data.choices[0].message.tool_calls[0].function.arguments);
+      }
+      return data.choices?.[0]?.message?.content || "";
+    },
+  },
+  // Mistral - Económico y bueno para multilingüe
+  mistral: {
+    url: "https://api.mistral.ai/v1/chat/completions",
+    getHeaders: (apiKey: string) => ({
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    }),
+    getBody: (model: string, systemPrompt: string, userPrompt: string, tools?: any[]) => {
+      const body: any = {
+        model: model || "mistral-small-latest",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        max_tokens: 4096,
+        temperature: 0.7,
+      };
+      if (tools) {
+        body.tools = tools;
+        body.tool_choice = { type: "function", function: { name: tools[0].function.name } };
+      }
+      return body;
+    },
+    extractContent: (data: any, hasTools?: boolean) => {
+      if (hasTools && data.choices?.[0]?.message?.tool_calls?.[0]) {
+        return JSON.parse(data.choices[0].message.tool_calls[0].function.arguments);
+      }
+      return data.choices?.[0]?.message?.content || "";
+    },
+  },
   // Kreoon IA - usa Gemini por defecto (sin API key externa requerida)
   kreoon: {
     url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
@@ -166,11 +226,23 @@ export const MODEL_MAP: Record<string, { provider: string; model: string }> = {
   "openai/gpt-5-mini": { provider: "openai", model: "gpt-4o-mini" },
   "openai/gpt-5-nano": { provider: "openai", model: "gpt-4o-mini" },
   "openai/gpt-5.2": { provider: "openai", model: "gpt-4o" },
+  // Groq models (ultra rápidos y económicos)
+  "groq/llama-3.1-8b": { provider: "groq", model: "llama-3.1-8b-instant" },
+  "groq/llama-3.3-70b": { provider: "groq", model: "llama-3.3-70b-versatile" },
+  "groq/mixtral-8x7b": { provider: "groq", model: "mixtral-8x7b-32768" },
+  "groq/llama-3.1-70b": { provider: "groq", model: "llama-3.1-70b-versatile" },
+  // Mistral models (económicos y multilingües)
+  "mistral/small": { provider: "mistral", model: "mistral-small-latest" },
+  "mistral/large": { provider: "mistral", model: "mistral-large-latest" },
+  "mistral/medium": { provider: "mistral", model: "mistral-medium-latest" },
   // Fallbacks
   "gpt-4o": { provider: "openai", model: "gpt-4o" },
   "gpt-4o-mini": { provider: "openai", model: "gpt-4o-mini" },
   "gemini-2.5-flash": { provider: "gemini", model: "gemini-2.5-flash" },
   "gemini-2.5-pro": { provider: "gemini", model: "gemini-2.5-pro" },
+  "llama-3.3-70b-versatile": { provider: "groq", model: "llama-3.3-70b-versatile" },
+  "llama-3.1-8b-instant": { provider: "groq", model: "llama-3.1-8b-instant" },
+  "mistral-small-latest": { provider: "mistral", model: "mistral-small-latest" },
 };
 
 /** Llamada única a un proveedor de IA (con soporte para tools) */
@@ -291,6 +363,10 @@ export function getAPIKey(provider: string): string | null {
       return Deno.env.get("ANTHROPIC_API_KEY") || null;
     case "perplexity":
       return Deno.env.get("PERPLEXITY_API_KEY") || null;
+    case "groq":
+      return Deno.env.get("GROQ_API_KEY") || null;
+    case "mistral":
+      return Deno.env.get("MISTRAL_API_KEY") || null;
     default:
       return null;
   }
@@ -341,12 +417,14 @@ export async function callAI(
     apiKey = getAPIKey(resolvedProvider);
   }
   
-  // Fallback chain: Gemini -> OpenAI
+  // Fallback chain: Groq (más rápido) -> Gemini -> Mistral -> OpenAI
   const providers = [
     { provider: resolvedProvider, model: resolvedModel, apiKey },
+    { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: getAPIKey("groq") },
     { provider: "gemini", model: "gemini-2.5-flash", apiKey: getAPIKey("gemini") },
+    { provider: "mistral", model: "mistral-small-latest", apiKey: getAPIKey("mistral") },
     { provider: "openai", model: "gpt-4o-mini", apiKey: getAPIKey("openai") },
-  ].filter((p, i, arr) => 
+  ].filter((p, i, arr) =>
     p.apiKey && arr.findIndex(x => x.provider === p.provider) === i
   );
   

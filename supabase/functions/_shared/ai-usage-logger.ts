@@ -7,8 +7,17 @@
 
 import { AI_PROVIDERS, resolveProvider } from "./ai-providers.ts";
 
-// Costos estimados por 1K tokens (USD) - Actualizado marzo 2026
+// Costos estimados por 1K tokens (USD) - Actualizado mayo 2026
 const TOKEN_COSTS: Record<string, { input: number; output: number }> = {
+  // Groq (ultra rápido y económico) - Precios 2026
+  "llama-3.1-8b-instant": { input: 0.00005, output: 0.00008 },
+  "llama-3.3-70b-versatile": { input: 0.00059, output: 0.00079 },
+  "llama-3.1-70b-versatile": { input: 0.00059, output: 0.00079 },
+  "mixtral-8x7b-32768": { input: 0.00024, output: 0.00024 },
+  // Mistral (económico y multilingüe) - Precios 2026
+  "mistral-small-latest": { input: 0.0001, output: 0.0004 },
+  "mistral-medium-latest": { input: 0.00027, output: 0.00081 },
+  "mistral-large-latest": { input: 0.002, output: 0.006 },
   // OpenAI
   "gpt-4o": { input: 0.0025, output: 0.01 },
   "gpt-4o-mini": { input: 0.00015, output: 0.0006 },
@@ -23,6 +32,7 @@ const TOKEN_COSTS: Record<string, { input: number; output: number }> = {
   // Perplexity
   "llama-3.1-sonar-large-128k-online": { input: 0.001, output: 0.001 },
   "llama-3.1-sonar-small-128k-online": { input: 0.0002, output: 0.0002 },
+  "sonar-pro": { input: 0.001, output: 0.001 },
   // FAL (imágenes - por imagen, no por token)
   "flux-pro": { input: 0, output: 0.05 }, // ~$0.05 por imagen
   "flux-2-pro-edit": { input: 0, output: 0.05 },
