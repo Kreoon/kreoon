@@ -30,8 +30,8 @@ export function EnhancedKanbanColumn({
   return (
     <div
       className={cn(
-        // Base layout
-        "flex flex-col shrink-0 w-[280px] sm:w-[350px] h-full",
+        // Base layout - optimized width for better flow visibility
+        "flex flex-col shrink-0 w-[260px] sm:w-[300px] h-full snap-start",
         // Nova v2 styling
         "rounded-lg border transition-all duration-200",
         "bg-zinc-100/80 dark:bg-[#0f0f22]/60",
@@ -48,9 +48,9 @@ export function EnhancedKanbanColumn({
       onDrop={onDrop}
       onDragEnter={onDragEnter}
     >
-      {/* Column Header - Nova v2 */}
+      {/* Column Header - Nova v2 compact */}
       <div className={cn(
-        "flex items-center justify-between h-[60px] shrink-0 p-4 rounded-t-lg",
+        "flex items-center justify-between h-[48px] shrink-0 px-3 py-2 rounded-t-lg",
         "bg-white dark:bg-[#0f0f22]",
         "border-b border-zinc-200/50 dark:border-purple-500/10"
       )}>

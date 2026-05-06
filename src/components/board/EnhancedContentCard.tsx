@@ -120,9 +120,9 @@ const SIZE_CONFIG = {
     iconSize: "h-2.5 w-2.5",
   },
   normal: {
-    padding: "p-4",
+    padding: "p-3",
     titleSize: "text-sm",
-    thumbnailHeight: "h-[280px]",
+    thumbnailHeight: "h-[180px]",
     avatarSize: "h-6 w-6",
     badgeSize: "text-xs px-2 py-0.5",
     spacing: "gap-2",
@@ -131,7 +131,7 @@ const SIZE_CONFIG = {
   large: {
     padding: "p-4",
     titleSize: "text-base",
-    thumbnailHeight: "h-[280px]",
+    thumbnailHeight: "h-[220px]",
     avatarSize: "h-8 w-8",
     badgeSize: "text-sm px-2.5 py-0.5",
     spacing: "gap-3",

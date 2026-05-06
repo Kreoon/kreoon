@@ -884,9 +884,10 @@ export default function ContentBoard() {
             )}
           </div>
         )}
-        {/* Board Header with View Switcher */}
+        {/* Board Header with View Switcher - 2 rows layout */}
         <div className="rounded-sm border border-border bg-card p-3 md:p-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3 md:mb-4">
+          {/* Row 1: Title + badges */}
+          <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-3 flex-wrap">
               <h2 className="text-base md:text-lg font-semibold text-card-foreground">Flujo de Trabajo</h2>
               <Badge variant="outline" className="text-xs">{filteredContent.length} items</Badge>
@@ -898,8 +899,35 @@ export default function ContentBoard() {
               )}
               <AutoSaveIndicator status={saveStatus} lastSaved={persistence.lastSaved} />
             </div>
-            <div className="flex items-center gap-2">
-              {hasActiveFilters && (
+            {/* Primary action buttons always visible */}
+            {showAdminControls && (
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => setShowConfigDialog(true)}
+                >
+                  <Settings2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Configurar</span>
+                </Button>
+                <Button
+                  variant="glow"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => guardAction(() => setShowTypeSelector(true))}
+                  disabled={isReadOnly}
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Nueva Producción</span>
+                  <span className="sm:hidden">+</span>
+                </Button>
+              </div>
+            )}
+          </div>
+          {/* Row 2: View controls + secondary actions */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {hasActiveFilters && (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button 
@@ -980,41 +1008,21 @@ export default function ContentBoard() {
                     </TooltipTrigger>
                     <TooltipContent>Analizar tablero con IA</TooltipContent>
                   </Tooltip>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5"
-                    onClick={() => setShowConfigDialog(true)}
-                  >
-                    <Settings2 className="h-4 w-4" />
-                    <span className="hidden sm:inline">Configurar</span>
-                  </Button>
                 </>
               )}
-              {showAdminControls && (
-                <Button
-                  variant="glow"
-                  size="sm"
-                  className="gap-1 md:gap-2 text-xs md:text-sm"
-                  onClick={() => guardAction(() => setShowTypeSelector(true))}
-                  disabled={isReadOnly}
-                >
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Nueva Producción</span>
-                  <span className="sm:hidden">Nueva</span>
-                </Button>
-              )}
             </div>
-          </div>
-          
+
           {/* Kanban View - Tech/IA aesthetic - Hierarchical layout */}
           {currentView === 'kanban' && (
-            <div 
-              className="flex overflow-x-auto gap-4 p-3 md:p-5 rounded-sm"
+            <div className="relative w-full overflow-hidden rounded-sm">
+            <div
+              className="flex overflow-x-auto gap-3 p-3 md:p-4 scroll-smooth"
               style={{
                 background: "linear-gradient(180deg, #0a0118 0%, #0d0220 100%)",
-                height: "calc(100vh - 200px)",
-                minHeight: "400px",
+                height: "calc(100vh - 180px)",
+                minHeight: "450px",
+                scrollbarWidth: "thin",
+                scrollbarColor: "rgba(139, 92, 246, 0.3) transparent",
               }}
             >
               {allBoardColumns.map(column => {
@@ -1131,6 +1139,7 @@ export default function ContentBoard() {
                   </EnhancedKanbanColumn>
                 );
               })}
+            </div>
             </div>
           )}
           
