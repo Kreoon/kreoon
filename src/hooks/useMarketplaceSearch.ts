@@ -1,6 +1,46 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+
+// Helper: mapear row de creator_profiles a SearchCreatorResult
+function mapCreatorProfileToSearchResult(row: Record<string, unknown>): SearchCreatorResult {
+  return {
+    id: row.id as string,
+    user_id: row.user_id as string,
+    display_name: (row.display_name as string) || '',
+    username: row.username as string | null,
+    slug: row.slug as string | null,
+    avatar_url: row.avatar_url as string | null,
+    bio: row.bio as string | null,
+    primary_role: row.primary_role as string | null,
+    location_city: row.location_city as string | null,
+    location_country: row.location_country as string | null,
+    rating_avg: Number(row.rating_avg) || 0,
+    rating_count: Number(row.rating_count) || 0,
+    total_projects: Number(row.completed_projects) || 0,
+    response_time_hours: row.response_time_hours as number | null,
+    base_price: row.base_price != null ? Number(row.base_price) : null,
+    currency: (row.currency as string) || 'USD',
+    accepts_exchange: (row.accepts_product_exchange as boolean) || false,
+    is_verified: (row.is_verified as boolean) || false,
+    portfolio_count: Number(row.portfolio_count) || 0,
+    portfolio_thumbnail: null,
+    search_score: Number(row.search_score) || 0,
+    quality_score: Number(row.quality_score) || 0,
+    activity_score: Number(row.activity_score) || 0,
+    text_rank: 1, // Búsqueda directa tiene ranking máximo
+    final_rank: 1,
+    organization_id: null,
+    organization_name: null,
+    organization_logo: null,
+    marketplace_roles: (row.marketplace_roles as string[]) || [],
+    categories: (row.categories as string[]) || [],
+    content_types: (row.content_types as string[]) || [],
+    languages: (row.languages as string[]) || ['es'],
+    level: (row.level as string) || 'bronze',
+    specializations: [],
+  };
+}
 
 export interface MarketplaceSearchFilters {
   query: string;
@@ -89,10 +129,41 @@ export function useMarketplaceSearch() {
   const [aiIntent, setAiIntent] = useState<AIIntent | null>(null);
   const [isParsingAI, setIsParsingAI] = useState(false);
 
-  // Query principal — RPC con ranking integrado
+  // Detectar búsqueda por @username
+  const usernameSearch = useMemo(() => {
+    const trimmed = filters.query.trim();
+    if (trimmed.startsWith('@') && trimmed.length > 1) {
+      return trimmed.slice(1).toLowerCase();
+    }
+    return null;
+  }, [filters.query]);
+
+  // Query principal — RPC con ranking integrado o búsqueda directa por @username
   const searchQuery = useQuery({
-    queryKey: ['marketplace-search', filters],
+    queryKey: ['marketplace-search', filters, usernameSearch],
     queryFn: async () => {
+      // Búsqueda directa por @username
+      if (usernameSearch) {
+        const { data, error } = await supabase
+          .from('creator_profiles')
+          .select(`
+            id, user_id, display_name, username, slug, avatar_url, bio,
+            primary_role, location_city, location_country, rating_avg,
+            rating_count, completed_projects, response_time_hours, base_price,
+            currency, accepts_product_exchange, is_verified, marketplace_roles,
+            categories, content_types, languages, level, search_score,
+            quality_score, activity_score
+          `)
+          .eq('is_active', true)
+          .or(`slug.ilike.%${usernameSearch}%,username.ilike.%${usernameSearch}%,display_name.ilike.%${usernameSearch}%`)
+          .order('rating_avg', { ascending: false })
+          .limit(20);
+
+        if (error) throw error;
+        return (data ?? []).map(row => mapCreatorProfileToSearchResult(row as Record<string, unknown>));
+      }
+
+      // Búsqueda normal con RPC full-text search
       const { data, error } = await (supabase.rpc as any)('search_marketplace_creators', {
         p_query: filters.query || '',
         p_roles: filters.roles.length > 0 ? filters.roles : null,
@@ -215,6 +286,7 @@ export function useMarketplaceSearch() {
     isRefetching: searchQuery.isRefetching,
     error: searchQuery.error,
     activeFilterCount,
+    isUsernameSearch: !!usernameSearch,
 
     // AI mode
     aiMode,

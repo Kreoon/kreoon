@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Search, MapPin, Film, X } from 'lucide-react';
+import { Search, MapPin, Film, X, User, AtSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CONTENT_TYPES } from './types/marketplace';
 import { supabase } from '@/integrations/supabase/client';
@@ -253,8 +253,18 @@ export function MarketplaceSearchBar({
         </div>
       </div>
 
+      {/* Indicador de búsqueda por @username */}
+      {search.startsWith('@') && search.length > 1 && (
+        <div className="flex items-center gap-1.5 mt-2 px-1">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-purple-500/20 border border-purple-500/30 text-purple-300">
+            <AtSign className="h-3 w-3" />
+            Buscando perfil: <strong className="text-purple-200">{search.slice(1)}</strong>
+          </span>
+        </div>
+      )}
+
       {/* Chips AI — solo visibles cuando hay texto y la IA detectó algo */}
-      {aiChips.length > 0 && (
+      {aiChips.length > 0 && !(search.startsWith('@')) && (
         <div className="flex flex-wrap gap-1.5 mt-2 px-1">
           {aiChips.map((chip, i) => (
             <span
