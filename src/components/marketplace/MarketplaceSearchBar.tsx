@@ -1,11 +1,14 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Search, MapPin, Film, X, User, AtSign } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, MapPin, Film, X, User, AtSign, Star, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CONTENT_TYPES } from './types/marketplace';
 import { supabase } from '@/integrations/supabase/client';
 import { useMarketplaceFilterOptions } from '@/hooks/useMarketplaceFilterOptions';
 import { LocationAutocomplete } from './filters/LocationAutocomplete';
 import { ContentTypeSelector } from './filters/ContentTypeSelector';
+import { useSearchSuggestions, SearchSuggestion } from './hooks/useSearchSuggestions';
+import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 
 interface MarketplaceSearchBarProps {
   search: string;
@@ -38,11 +41,37 @@ export function MarketplaceSearchBar({
   onSubmit,
   onAIFiltersChange,
 }: MarketplaceSearchBarProps) {
+  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<ActiveSection>(null);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Obtener opciones dinámicas de filtros
   const { data: filterOptions } = useMarketplaceFilterOptions();
+
+  // Sugerencias predictivas
+  const { data: suggestions = [], isLoading: isLoadingSuggestions } = useSearchSuggestions(
+    search,
+    activeSection === 'search'
+  );
+  const showSuggestions = activeSection === 'search' && search.length >= 2 && suggestions.length > 0;
+
+  // Reset índice cuando cambian las sugerencias
+  useEffect(() => {
+    setSelectedSuggestionIndex(-1);
+  }, [suggestions]);
+
+  // Navegar al perfil del creador en el marketplace
+  const handleSelectSuggestion = useCallback((suggestion: typeof suggestions[0]) => {
+    if (suggestion.type === 'creator' && suggestion.slug) {
+      navigate(`/marketplace/creator/${suggestion.slug}`);
+      setActiveSection(null);
+    } else {
+      onSearchChange(suggestion.display_name);
+      onSubmit();
+      setActiveSection(null);
+    }
+  }, [navigate, onSearchChange, onSubmit]);
 
   // --- AI: parseo silencioso en segundo plano ---
   const [aiChips, setAiChips] = useState<{ label: string; type: 'role' | 'location' | 'category' }[]>([]);
@@ -138,12 +167,40 @@ export function MarketplaceSearchBar({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      if (showSuggestions) {
+        switch (e.key) {
+          case 'ArrowDown':
+            e.preventDefault();
+            setSelectedSuggestionIndex(prev =>
+              prev < suggestions.length - 1 ? prev + 1 : 0
+            );
+            return;
+          case 'ArrowUp':
+            e.preventDefault();
+            setSelectedSuggestionIndex(prev =>
+              prev > 0 ? prev - 1 : suggestions.length - 1
+            );
+            return;
+          case 'Enter':
+            e.preventDefault();
+            if (selectedSuggestionIndex >= 0 && suggestions[selectedSuggestionIndex]) {
+              handleSelectSuggestion(suggestions[selectedSuggestionIndex]);
+            } else {
+              setActiveSection(null);
+              onSubmit();
+            }
+            return;
+          case 'Escape':
+            setActiveSection(null);
+            return;
+        }
+      }
       if (e.key === 'Enter') {
         setActiveSection(null);
         onSubmit();
       }
     },
-    [onSubmit],
+    [onSubmit, showSuggestions, suggestions, selectedSuggestionIndex, handleSelectSuggestion],
   );
 
   // Obtener label de ubicación actual
@@ -253,8 +310,75 @@ export function MarketplaceSearchBar({
         </div>
       </div>
 
+      {/* Dropdown de sugerencias predictivas - Cards simplificadas */}
+      {showSuggestions && (
+        <div className="absolute top-full left-0 right-0 mt-1 bg-card/95 backdrop-blur-sm border border-border rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="p-3 grid grid-cols-3 sm:grid-cols-6 gap-3">
+            {suggestions.map((suggestion, index) => (
+              <button
+                key={suggestion.id}
+                onClick={() => handleSelectSuggestion(suggestion)}
+                onMouseEnter={() => setSelectedSuggestionIndex(index)}
+                className={cn(
+                  'group flex flex-col items-center gap-2 p-2 rounded-lg transition-all duration-200',
+                  'hover:bg-muted/50',
+                  'active:scale-[0.98]',
+                  selectedSuggestionIndex === index && 'bg-purple-500/10 ring-1 ring-purple-500/30'
+                )}
+              >
+                {/* Avatar grande centrado */}
+                <div className="relative">
+                  {suggestion.avatar_url ? (
+                    <img
+                      src={getOptimizedImageUrl(suggestion.avatar_url, { width: 120, quality: 80 })}
+                      alt=""
+                      className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover ring-2 ring-border/50 group-hover:ring-purple-500/50 transition-all"
+                    />
+                  ) : (
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center ring-2 ring-border/50">
+                      <span className="text-xl font-bold text-primary">
+                        {suggestion.display_name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                  {suggestion.is_verified && (
+                    <CheckCircle2 className="absolute -bottom-0.5 -right-0.5 h-4 w-4 text-green-400 fill-green-400 bg-card rounded-full" />
+                  )}
+                </div>
+
+                {/* Nombre debajo del avatar */}
+                <span className="font-medium text-foreground text-xs text-center truncate w-full">
+                  {suggestion.display_name}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Footer hint */}
+          <div className="px-3 py-2 bg-muted/30 border-t border-border/50">
+            <p className="text-[10px] text-muted-foreground text-center">
+              <kbd className="px-1 py-0.5 bg-muted rounded text-[9px] font-mono">↑↓</kbd> navegar
+              <span className="mx-1.5">•</span>
+              <kbd className="px-1 py-0.5 bg-muted rounded text-[9px] font-mono">Enter</kbd> seleccionar
+              <span className="mx-1.5">•</span>
+              <kbd className="px-1 py-0.5 bg-muted rounded text-[9px] font-mono">Esc</kbd> cerrar
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Loading indicator para sugerencias */}
+      {activeSection === 'search' && search.length >= 2 && isLoadingSuggestions && suggestions.length === 0 && (
+        <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-xl z-50 p-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            Buscando creadores...
+          </div>
+        </div>
+      )}
+
       {/* Indicador de búsqueda por @username */}
-      {search.startsWith('@') && search.length > 1 && (
+      {search.startsWith('@') && search.length > 1 && !showSuggestions && (
         <div className="flex items-center gap-1.5 mt-2 px-1">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-purple-500/20 border border-purple-500/30 text-purple-300">
             <AtSign className="h-3 w-3" />

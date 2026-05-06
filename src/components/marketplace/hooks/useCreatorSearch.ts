@@ -1,44 +1,45 @@
-import { useMemo, useEffect, useRef } from 'react';
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import type { MarketplaceFilters, MarketplaceCreator } from '../types/marketplace';
 import { useMarketplaceCreators } from '@/hooks/useMarketplaceCreators';
 import { useMarketplaceRecommendations, ScoredMarketplaceCreator } from '@/hooks/useMarketplaceRecommendations';
-import { useMarketplaceSearch, SearchCreatorResult } from '@/hooks/useMarketplaceSearch';
+import { supabase } from '@/integrations/supabase/client';
 
-// Helper: mapear SearchCreatorResult a MarketplaceCreator
-function mapSearchResultToCreator(result: SearchCreatorResult): MarketplaceCreator {
+// Helper: mapear resultado de búsqueda a MarketplaceCreator
+function mapSearchResultToCreator(row: Record<string, unknown>): MarketplaceCreator {
   return {
-    id: result.id,
-    user_id: result.user_id,
-    slug: result.slug,
-    display_name: result.display_name,
-    avatar_url: result.avatar_url,
-    bio: result.bio,
-    location_city: result.location_city,
-    location_country: result.location_country,
+    id: row.id as string,
+    user_id: row.user_id as string,
+    slug: row.slug as string | null,
+    display_name: (row.display_name as string) || '',
+    avatar_url: row.avatar_url as string | null,
+    bio: row.bio as string | null,
+    location_city: row.location_city as string | null,
+    location_country: row.location_country as string | null,
     country_flag: null,
-    categories: result.categories,
-    content_types: result.content_types,
-    level: (result.level as 'bronze' | 'silver' | 'gold' | 'elite') || 'bronze',
-    is_verified: result.is_verified,
-    rating_avg: result.rating_avg,
-    rating_count: result.rating_count,
-    base_price: result.base_price,
-    currency: result.currency,
+    categories: (row.categories as string[]) || [],
+    content_types: (row.content_types as string[]) || [],
+    level: (row.level as 'bronze' | 'silver' | 'gold' | 'elite') || 'bronze',
+    is_verified: (row.is_verified as boolean) || false,
+    rating_avg: Number(row.rating_avg) || 0,
+    rating_count: Number(row.rating_count) || 0,
+    base_price: row.base_price != null ? Number(row.base_price) : null,
+    currency: (row.currency as string) || 'USD',
     portfolio_media: [],
     is_available: true,
-    languages: result.languages,
-    completed_projects: result.total_projects,
-    joined_at: '',
-    accepts_product_exchange: result.accepts_exchange,
-    marketplace_roles: result.marketplace_roles,
-    trust_score: result.quality_score * 100,
+    languages: (row.languages as string[]) || ['es'],
+    completed_projects: Number(row.total_projects || row.completed_projects) || 0,
+    joined_at: (row.created_at as string) || '',
+    accepts_product_exchange: (row.accepts_exchange as boolean) || (row.accepts_product_exchange as boolean) || false,
+    marketplace_roles: (row.marketplace_roles as string[]) || [],
+    trust_score: Number(row.quality_score || row.trust_score) * 100 || 50,
     trust_score_breakdown: null,
     is_new_profile: false,
   };
 }
 
 export function useCreatorSearch(filters: MarketplaceFilters) {
-  // Hook para carruseles (sin filtros de búsqueda)
+  // Hook para carruseles y fallback (sin búsqueda activa)
   const {
     creators: filteredCreators,
     allCreators,
@@ -51,47 +52,91 @@ export function useCreatorSearch(filters: MarketplaceFilters) {
     totalCount: totalCountAll,
   } = useMarketplaceCreators(filters);
 
-  // Hook optimizado para búsquedas con full-text search
-  const marketplaceSearch = useMarketplaceSearch();
-  const prevSearchRef = useRef(filters.search);
+  const { scoreCreators, isPersonalized } = useMarketplaceRecommendations();
 
   // Determinar si hay búsqueda activa (texto de al menos 2 caracteres)
   const hasActiveSearch = filters.search.length >= 2;
 
-  // Sincronizar filtros con el hook de búsqueda cuando cambia el search
-  useEffect(() => {
-    if (hasActiveSearch && filters.search !== prevSearchRef.current) {
-      prevSearchRef.current = filters.search;
-      marketplaceSearch.setFilters(prev => ({
-        ...prev,
-        query: filters.search,
-        roles: filters.marketplace_roles.length > 0 ? filters.marketplace_roles : [],
-        location_country: filters.country,
-        location_city: filters.city,
-        niches: filters.category ? [filters.category] : [],
-        specializations: filters.specializations.length > 0 ? filters.specializations : [],
-        min_rating: filters.rating_min,
-        max_price: filters.price_max,
-        accepts_exchange: filters.accepts_exchange,
-        is_available: filters.availability === 'now' ? true : null,
-        offset: 0,
-      }));
+  // Detectar búsqueda por @username
+  const usernameSearch = useMemo(() => {
+    const trimmed = filters.search.trim();
+    if (trimmed.startsWith('@') && trimmed.length > 1) {
+      return trimmed.slice(1).toLowerCase();
     }
-  }, [filters.search, hasActiveSearch]);
+    return null;
+  }, [filters.search]);
 
-  const { scoreCreators, isPersonalized } = useMarketplaceRecommendations();
+  // Query directa al RPC cuando hay búsqueda activa
+  const searchQuery = useQuery({
+    queryKey: ['marketplace-search-optimized', filters.search, usernameSearch, filters.country, filters.category, filters.marketplace_roles],
+    queryFn: async () => {
+      // Obtener IDs de usuarios excluidos (clientes)
+      const { data: excludedRows } = await supabase.rpc('get_marketplace_excluded_user_ids');
+      const excludedUserIds = new Set((excludedRows || []).map((r: { user_id: string }) => r.user_id));
 
-  // Mapear resultados de búsqueda optimizada a MarketplaceCreator
-  const searchCreators = useMemo(() => {
-    if (!hasActiveSearch || marketplaceSearch.creators.length === 0) return [];
-    return marketplaceSearch.creators.map(mapSearchResultToCreator);
-  }, [hasActiveSearch, marketplaceSearch.creators]);
+      // Búsqueda directa por @username
+      if (usernameSearch) {
+        const { data, error } = await supabase
+          .from('creator_profiles')
+          .select(`
+            id, user_id, display_name, username, slug, avatar_url, bio,
+            primary_role, location_city, location_country, rating_avg,
+            rating_count, completed_projects, base_price, currency,
+            accepts_product_exchange, is_verified, marketplace_roles,
+            categories, content_types, languages, level, trust_score,
+            quality_score, created_at
+          `)
+          .eq('is_active', true)
+          .or(`slug.ilike.%${usernameSearch}%,username.ilike.%${usernameSearch}%,display_name.ilike.%${usernameSearch}%`)
+          .order('rating_avg', { ascending: false })
+          .limit(50);
 
-  // Aplicar filtros client-side que no soporta el RPC
+        if (error) throw error;
+
+        // Filtrar clientes
+        return (data ?? [])
+          .filter(row => !excludedUserIds.has(row.user_id))
+          .slice(0, 30)
+          .map(row => mapSearchResultToCreator(row as Record<string, unknown>));
+      }
+
+      // Búsqueda con RPC full-text search
+      const { data, error } = await (supabase.rpc as any)('search_marketplace_creators', {
+        p_query: filters.search || '',
+        p_roles: filters.marketplace_roles.length > 0 ? filters.marketplace_roles : null,
+        p_location_country: filters.country,
+        p_location_city: filters.city,
+        p_niches: filters.category ? [filters.category] : null,
+        p_specializations: filters.specializations.length > 0 ? filters.specializations : null,
+        p_min_rating: filters.rating_min,
+        p_max_price: filters.price_max,
+        p_accepts_exchange: filters.accepts_exchange,
+        p_is_available: filters.availability === 'now' ? true : null,
+        p_limit: 80,
+        p_offset: 0,
+      });
+
+      if (error) {
+        console.error('[useCreatorSearch] RPC error:', error);
+        throw error;
+      }
+
+      // Filtrar clientes de los resultados del RPC
+      return (data ?? [])
+        .filter((row: Record<string, unknown>) => !excludedUserIds.has(row.user_id as string))
+        .slice(0, 50)
+        .map((row: Record<string, unknown>) => mapSearchResultToCreator(row));
+    },
+    enabled: hasActiveSearch,
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (prev) => prev,
+  });
+
+  // Aplicar filtros client-side adicionales a los resultados de búsqueda
   const filteredSearchResults = useMemo(() => {
-    if (!hasActiveSearch) return [];
+    if (!hasActiveSearch || !searchQuery.data) return [];
 
-    let result = [...searchCreators];
+    let result = [...searchQuery.data];
 
     // Level (no está en RPC)
     if (filters.level.length > 0) {
@@ -123,7 +168,7 @@ export function useCreatorSearch(filters: MarketplaceFilters) {
     }
 
     return result;
-  }, [searchCreators, filters, hasActiveSearch]);
+  }, [searchQuery.data, filters, hasActiveSearch]);
 
   // Elegir fuente de datos: búsqueda optimizada o client-side tradicional
   const baseCreators = hasActiveSearch ? filteredSearchResults : filteredCreators;
@@ -139,7 +184,6 @@ export function useCreatorSearch(filters: MarketplaceFilters) {
       return scoredCreators;
     }
 
-    // Crear copia para re-ordenar
     const sorted = [...scoredCreators];
 
     switch (filters.sort_by) {
@@ -188,8 +232,6 @@ export function useCreatorSearch(filters: MarketplaceFilters) {
     return scoreCreators(rawFeatured).slice(0, 12);
   }, [rawFeatured, scoreCreators]);
 
-  // Nuevos Talentos: NO aplicar scoring que reordene
-  // Mantener el orden cronológico (más reciente primero)
   const newTalent = useMemo(() => {
     return rawNewTalent.slice(0, 12);
   }, [rawNewTalent]);
@@ -198,19 +240,17 @@ export function useCreatorSearch(filters: MarketplaceFilters) {
     return scoreCreators(rawTopRated).slice(0, 12);
   }, [rawTopRated, scoreCreators]);
 
-  // Top Performers: mantener orden por performance score (proyectos * calidad)
   const topPerformers = useMemo(() => {
     return rawTopPerformers.slice(0, 12);
   }, [rawTopPerformers]);
 
-  // Personalized "Recomendados para ti" section from all creators
   const recommended = useMemo(() => {
     if (!isPersonalized) return [];
     return scoreCreators(allCreators).slice(0, 12);
   }, [allCreators, isPersonalized, scoreCreators]);
 
-  // Determinar estado de carga según el modo
-  const isLoading = hasActiveSearch ? marketplaceSearch.isLoading : isLoadingAll;
+  // Estado de carga según el modo
+  const isLoading = hasActiveSearch ? searchQuery.isLoading : isLoadingAll;
   const totalCount = hasActiveSearch ? creators.length : totalCountAll;
 
   return {
@@ -224,7 +264,7 @@ export function useCreatorSearch(filters: MarketplaceFilters) {
     isLoading,
     totalCount,
     isPersonalized,
-    isUsernameSearch: marketplaceSearch.isUsernameSearch,
+    isUsernameSearch: !!usernameSearch,
     hasActiveSearch,
   };
 }
