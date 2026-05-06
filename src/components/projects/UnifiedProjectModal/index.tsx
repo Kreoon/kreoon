@@ -188,6 +188,7 @@ export function UnifiedProjectModal({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
   const [creationMode, setCreationMode] = useState<CreationMode | null>(null);
+  const [availableClients, setAvailableClients] = useState<{ id: string; name: string }[]>([]);
 
   const {
     project,
@@ -248,6 +249,19 @@ export function UnifiedProjectModal({
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
   }, []);
+
+  // Load available clients for the organization
+  useEffect(() => {
+    if (!open || source !== 'content') return;
+    const fetchClients = async () => {
+      const { data } = await supabase
+        .from('clients')
+        .select('id, name')
+        .order('name');
+      if (data) setAvailableClients(data);
+    };
+    fetchClients();
+  }, [open, source]);
 
   const handleClose = () => {
     if (!isCreateMode) {
@@ -461,13 +475,24 @@ export function UnifiedProjectModal({
 
             {/* Meta info: participants + content metadata */}
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-3 mt-2 sm:mt-4 text-xs sm:text-sm">
-              {/* Client badge */}
-              {project?.clientName && (
+              {/* Client selector/badge */}
+              {source === 'content' && (editMode || isCreateMode) ? (
+                <SearchableSelect
+                  value={formData.client_id || ''}
+                  onValueChange={(val) => setFormData((prev: Record<string, any>) => ({ ...prev, client_id: val }))}
+                  options={availableClients.map(c => ({ value: c.id, label: c.name }))}
+                  placeholder="Seleccionar cliente"
+                  searchPlaceholder="Buscar cliente..."
+                  emptyMessage="Sin clientes"
+                  className="h-7 text-xs min-w-[140px]"
+                  icon={<Building2 className="h-3.5 w-3.5" />}
+                />
+              ) : project?.clientName ? (
                 <div className="flex items-center gap-1 sm:gap-1.5 bg-background/50 px-2 py-0.5 sm:px-3 sm:py-1.5 rounded-full text-muted-foreground">
                   <Building2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                   <span className="truncate max-w-[100px] sm:max-w-none">{project.clientName}</span>
                 </div>
-              )}
+              ) : null}
 
               {/* Product badge */}
               {selectedProduct?.name && (

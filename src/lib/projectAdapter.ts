@@ -125,7 +125,7 @@ export class ProjectAdapter {
       const passthroughFields = [
         'script', 'video_url', 'video_urls', 'raw_video_urls', 'hooks_count',
         'drive_url', 'notes', 'campaign_week', 'sphere_phase', 'is_published',
-        'creator_paid', 'editor_paid', 'invoiced', 'product_id',
+        'creator_paid', 'editor_paid', 'invoiced', 'product_id', 'client_id',
         'editor_guidelines', 'strategist_guidelines', 'trafficker_guidelines',
         'designer_guidelines', 'admin_guidelines', 'creation_mode', 'manual_script',
       ];
