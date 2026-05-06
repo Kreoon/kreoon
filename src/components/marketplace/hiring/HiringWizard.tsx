@@ -243,8 +243,9 @@ export default function HiringWizard({ creatorId, onClose }: HiringWizardProps) 
   const isStepValid = (step: number): boolean => {
     switch (step) {
       case 0:
+        // Manual mode: no required fields, can proceed immediately
         if (creationMode === 'manual') {
-          return manualScript.trim().length > 10;
+          return true;
         }
         return !!(brief.product_name.trim() && brief.objective);
       case 1:

@@ -36,8 +36,8 @@ export function ManualScriptInput({
       <div className="flex items-start gap-2 p-3 rounded-md bg-green-100/50 dark:bg-green-900/20 border border-green-200/50 dark:border-green-800/30">
         <Info className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
         <p className="text-sm text-green-700 dark:text-green-300">
-          Pega o escribe directamente el guion, brief o indicaciones que el cliente te envio.
-          Este modo omite el cuestionario DNA para proyectos donde ya tienes toda la informacion.
+          <strong>Todos los campos son opcionales.</strong> Puedes crear el proyecto con solo el titulo y agregar detalles despues.
+          Este modo omite el cuestionario DNA para proyectos donde ya tienes la informacion del cliente.
         </p>
       </div>
 

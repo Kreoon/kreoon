@@ -97,7 +97,7 @@ function TagInput({
 }
 
 export function HiringStepBrief({ data, onChange, creationMode, manualScript, onManualScriptChange }: HiringStepBriefProps) {
-  // Manual mode - show only script input
+  // Manual mode - minimal form, all optional
   if (creationMode === 'manual') {
     return (
       <div className="space-y-6">
@@ -108,11 +108,11 @@ export function HiringStepBrief({ data, onChange, creationMode, manualScript, on
           </div>
           <div>
             <h3 className="font-semibold text-white">Modo Manual</h3>
-            <p className="text-sm text-gray-400">Pega directamente el guion o instrucciones para el creador</p>
+            <p className="text-sm text-gray-400">Sin campos obligatorios. Puedes agregar detalles despues de crear el proyecto.</p>
           </div>
         </div>
 
-        {/* Product name (optional in manual mode) */}
+        {/* Product name (optional) */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground/80">
             Nombre del producto / marca <span className="text-gray-500">(opcional)</span>
@@ -125,25 +125,19 @@ export function HiringStepBrief({ data, onChange, creationMode, manualScript, on
           />
         </div>
 
-        {/* Manual script textarea */}
+        {/* Manual script textarea (optional) */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground/80">
-            Guion / Instrucciones <span className="text-green-400">*</span>
+            Guion / Instrucciones <span className="text-gray-500">(opcional)</span>
           </label>
           <textarea
             value={manualScript || ''}
             onChange={e => onManualScriptChange?.(e.target.value)}
-            placeholder="Pega aqui el guion completo, instrucciones detalladas o brief que el cliente te envio..."
-            rows={12}
+            placeholder="Pega aqui el guion o instrucciones si ya los tienes..."
+            rows={8}
             className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-green-500 resize-none font-mono"
           />
-          <div className="flex justify-between text-xs text-gray-500">
-            <span className="flex items-center gap-1">
-              <Info className="h-3 w-3" />
-              Incluye toda la informacion que el creador necesita
-            </span>
-            <span>{(manualScript || '').length.toLocaleString()} caracteres</span>
-          </div>
+          <p className="text-xs text-gray-500">Puedes agregar esto despues en el detalle del proyecto</p>
         </div>
 
         {/* Optional deadline */}
