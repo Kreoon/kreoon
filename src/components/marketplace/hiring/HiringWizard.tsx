@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { X, ChevronLeft, ChevronRight, FileText, Package, ClipboardList, CreditCard, Dna, ArrowRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, FileText, Package, ClipboardList, CreditCard, Dna, ArrowRight, Loader2, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useCreatorPublicProfile } from '@/hooks/useCreatorPublicProfile';
@@ -123,6 +123,7 @@ export default function HiringWizard({ creatorId, onClose }: HiringWizardProps) 
   const [currentStep, setCurrentStep] = useState(draft?.step ?? 0);
   const [brief, setBrief] = useState<HiringBrief>(draft?.brief ?? DEFAULT_BRIEF);
   const [manualScript, setManualScript] = useState('');
+  const [manualTitle, setManualTitle] = useState('');
   const [selectedPackageId, setSelectedPackageId] = useState(
     draft?.packageId ?? creator?.packages.find(p => p.is_popular)?.id ?? creator?.packages[0]?.id ?? '',
   );
@@ -268,7 +269,96 @@ export default function HiringWizard({ creatorId, onClose }: HiringWizardProps) 
     setIsSubmitting(false);
   };
 
+  // Manual mode: create project with just title
+  const handleManualCreate = async () => {
+    if (!manualTitle.trim()) return;
+    setIsSubmitting(true);
+    // Simulate API call - TODO: replace with actual marketplace project creation
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    clearDraft(creatorId);
+    setIsComplete(true);
+    setIsSubmitting(false);
+  };
+
   const progress = isComplete ? 100 : ((currentStep + 1) / STEPS.length) * 100;
+
+  // Manual mode: show simple title + create form
+  if (creationMode === 'manual' && !isComplete) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-background overflow-y-auto">
+        <div className="max-w-lg mx-auto px-4 py-8">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-8">
+            <button
+              onClick={() => setCreationMode(null)}
+              className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm transition-colors"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Volver
+            </button>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+            >
+              <X className="h-5 w-5 text-gray-400" />
+            </button>
+          </div>
+
+          {/* Card */}
+          <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
+                <Zap className="h-6 w-6 text-green-400" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-white">Creacion Rapida</h2>
+                <p className="text-sm text-gray-400">Proyecto con {creator.display_name}</p>
+              </div>
+            </div>
+
+            {/* Title input */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground/80">
+                Nombre del proyecto <span className="text-green-400">*</span>
+              </label>
+              <input
+                value={manualTitle}
+                onChange={e => setManualTitle(e.target.value)}
+                placeholder="Ej: Video testimonial producto X"
+                autoFocus
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-base placeholder:text-gray-500 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500/50"
+              />
+              <p className="text-xs text-gray-500">Podras agregar mas detalles despues de crear el proyecto</p>
+            </div>
+
+            {/* Create button */}
+            <button
+              onClick={handleManualCreate}
+              disabled={!manualTitle.trim() || isSubmitting}
+              className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold px-6 py-3 rounded-lg text-base transition-all"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Creando...
+                </>
+              ) : (
+                <>
+                  <Zap className="h-5 w-5" />
+                  Crear Proyecto
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Info */}
+          <p className="text-center text-xs text-gray-500 mt-6">
+            El proyecto se creara en estado borrador. Podras editarlo y agregar brief, paquete y forma de pago despues.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (isComplete) {
     return (

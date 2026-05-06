@@ -12,7 +12,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Video, Package, FileText, Pencil, Target, TrendingUp, Medal, Info, Sparkles, Zap, Lightbulb, RefreshCw, Heart, RotateCcw } from "lucide-react";
+import { Loader2, Video, Package, FileText, Pencil, Target, TrendingUp, Medal, Info, Sparkles, Zap, Lightbulb, RefreshCw, Heart, RotateCcw, Dna, ArrowRight, ChevronLeft } from "lucide-react";
+import type { CreationMode } from "@/types/unifiedProject.types";
 import { ScriptGenerator } from "./ScriptGenerator";
 import { useInternalBrandClient } from "@/hooks/useInternalBrandClient";
 import { useInternalOrgContent } from "@/hooks/useInternalOrgContent";
@@ -91,10 +92,13 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
   const { guardAction, isReadOnly } = useTrialGuard();
   const [loading, setLoading] = useState(false);
 
+  // Creation mode: null = show selector, 'standard' = full form, 'manual' = title only
+  const [creationMode, setCreationMode] = useState<CreationMode | null>(null);
+
   // UX: Confirm dialog al cerrar con cambios sin guardar
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [pendingClose, setPendingClose] = useState(false);
-  
+
   // Form state
   const [title, setTitle] = useState("");
   const [productId, setProductId] = useState("");
@@ -461,6 +465,7 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
   }, [open]);
 
   const resetForm = () => {
+    setCreationMode(null);
     setTitle("");
     setProductId("");
     setClientId("");
@@ -484,6 +489,56 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
     setEditorGuidelines("");
     setStrategistGuidelines("");
     setTraffickerGuidelines("");
+  };
+
+  // Manual mode: create with just title
+  const handleManualSubmit = async () => {
+    if (isReadOnly) {
+      guardAction(() => {});
+      return;
+    }
+
+    if (!title.trim()) {
+      toast({
+        title: "Error",
+        description: "El nombre del proyecto es requerido",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.from('content').insert({
+        title: title.trim(),
+        status: 'draft',
+        creation_mode: 'manual',
+        organization_id: currentOrgId
+      });
+
+      if (error) throw error;
+
+      localStorage.removeItem(DRAFT_KEY);
+
+      toast({
+        title: "Proyecto creado",
+        description: "Puedes agregar mas detalles editando el proyecto"
+      });
+
+      resetForm();
+      onOpenChange(false);
+      onSuccess?.();
+    } catch (error) {
+      console.error('Error creating content:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo crear el proyecto",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -589,16 +644,169 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
     }
   };
 
+  // Mode selector content
+  if (creationMode === null) {
+    return (
+      <>
+      <Dialog open={open} onOpenChange={handleDialogChange}>
+        <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-2xl" aria-describedby="create-content-desc">
+          <DialogHeader>
+            <DialogTitle>Nuevo Proyecto</DialogTitle>
+            <DialogDescription>Como deseas crear este proyecto?</DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            {/* Standard Mode */}
+            <button
+              type="button"
+              onClick={() => setCreationMode('standard')}
+              className="group relative p-6 rounded-lg border-2 border-transparent bg-purple-500/10 hover:border-purple-500 hover:bg-purple-500/20 transition-all duration-200 text-left"
+            >
+              <div className="flex flex-col gap-4">
+                <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
+                  <Dna className="h-6 w-6 text-purple-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-1 flex items-center gap-2">
+                    Formulario Completo
+                    <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Completa todos los campos: cliente, equipo, fechas, guion, pagos.
+                  </p>
+                </div>
+              </div>
+            </button>
+
+            {/* Manual Mode */}
+            <button
+              type="button"
+              onClick={() => setCreationMode('manual')}
+              className="group relative p-6 rounded-lg border-2 border-transparent bg-green-500/10 hover:border-green-500 hover:bg-green-500/20 transition-all duration-200 text-left"
+            >
+              <div className="flex flex-col gap-4">
+                <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
+                  <Zap className="h-6 w-6 text-green-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-1 flex items-center gap-2">
+                    Creacion Rapida
+                    <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Solo nombre. Agrega los detalles despues.
+                  </p>
+                </div>
+              </div>
+            </button>
+          </div>
+
+          <div className="flex justify-end">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      </>
+    );
+  }
+
+  // Manual mode: just title
+  if (creationMode === 'manual') {
+    return (
+      <>
+      <Dialog open={open} onOpenChange={handleDialogChange}>
+        <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-lg" aria-describedby="create-content-desc">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-green-500" />
+              Creacion Rapida
+            </DialogTitle>
+            <DialogDescription>Crea el proyecto con solo el nombre</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="manual-title">Nombre del proyecto *</Label>
+              <Input
+                id="manual-title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Ej: Video testimonial producto X"
+                autoFocus
+                className="text-base"
+              />
+              <p className="text-xs text-muted-foreground">
+                Podras agregar cliente, equipo, guion y mas detalles despues
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-between gap-3 pt-2 border-t">
+            <Button type="button" variant="ghost" size="sm" onClick={() => setCreationMode(null)}>
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Volver
+            </Button>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleManualSubmit} disabled={loading || !title.trim()} className="bg-green-600 hover:bg-green-500">
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Zap className="h-4 w-4 mr-1" />
+                Crear
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Descartar cambios?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tienes cambios sin guardar. Si cierras ahora, perderás el progreso.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDiscard}>
+              Seguir editando
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDiscard}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Descartar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      </>
+    );
+  }
+
+  // Standard mode: full form
   return (
     <>
     <Dialog open={open} onOpenChange={handleDialogChange}>
       <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-4xl max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto" aria-describedby="create-content-desc">
         <DialogHeader>
-          <DialogTitle>Nuevo Proyecto</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Dna className="h-5 w-5 text-purple-500" />
+            Nuevo Proyecto
+          </DialogTitle>
           <DialogDescription className="sr-only">Crear un nuevo proyecto de contenido</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Back to mode selector */}
+          <Button type="button" variant="ghost" size="sm" onClick={() => setCreationMode(null)} className="mb-2">
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Cambiar modo
+          </Button>
+
           {/* Información básica */}
           <div className="space-y-4">
             <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Información General</h3>
