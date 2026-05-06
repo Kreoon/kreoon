@@ -362,6 +362,7 @@ function buildFormData(project: UnifiedProject, source: 'content' | 'marketplace
       sphere_phase: c.sphere_phase || '',
       status: c.status,
       brief: project.brief,
+      creation_mode: (c as any).creation_mode || project.creationMode || 'standard',
     };
   }
 
@@ -376,5 +377,6 @@ function buildFormData(project: UnifiedProject, source: 'content' | 'marketplace
     editor_payout: project.editorPayment || 0,
     platform_fee: project.platformFee || 0,
     currency: project.currency || 'USD',
+    creation_mode: project.creationMode || 'standard',
   };
 }

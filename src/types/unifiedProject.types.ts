@@ -19,6 +19,9 @@ export type ProjectType =
 /** What kind of workspace editor each type uses */
 export type WorkspaceType = 'script' | 'checklist' | 'document' | 'technical' | 'curriculum';
 
+/** Creation mode for projects - standard uses DNA questionnaire, manual allows direct script input */
+export type CreationMode = 'standard' | 'manual';
+
 /** Superset of all possible tab/section keys */
 export type UnifiedSectionKey =
   | 'workspace'
@@ -634,6 +637,9 @@ export interface UnifiedProject {
   title: string;
   status: string;
   organizationId: string;
+
+  /** Creation mode: 'standard' = DNA questionnaire, 'manual' = client provides script directly */
+  creationMode?: CreationMode;
 
   // Common fields
   clientId?: string;

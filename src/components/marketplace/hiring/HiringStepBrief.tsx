@@ -1,10 +1,14 @@
 import { useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, FileText, Info } from 'lucide-react';
 import type { HiringBrief } from '../types/marketplace';
+import type { CreationMode } from '@/types/unifiedProject.types';
 
 interface HiringStepBriefProps {
   data: HiringBrief;
   onChange: <K extends keyof HiringBrief>(field: K, value: HiringBrief[K]) => void;
+  creationMode?: CreationMode;
+  manualScript?: string;
+  onManualScriptChange?: (value: string) => void;
 }
 
 const OBJECTIVES = [
@@ -92,7 +96,73 @@ function TagInput({
   );
 }
 
-export function HiringStepBrief({ data, onChange }: HiringStepBriefProps) {
+export function HiringStepBrief({ data, onChange, creationMode, manualScript, onManualScriptChange }: HiringStepBriefProps) {
+  // Manual mode - show only script input
+  if (creationMode === 'manual') {
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-3 p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+          <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+            <FileText className="h-5 w-5 text-green-400" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-white">Modo Manual</h3>
+            <p className="text-sm text-gray-400">Pega directamente el guion o instrucciones para el creador</p>
+          </div>
+        </div>
+
+        {/* Product name (optional in manual mode) */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground/80">
+            Nombre del producto / marca <span className="text-gray-500">(opcional)</span>
+          </label>
+          <input
+            value={data.product_name}
+            onChange={e => onChange('product_name', e.target.value)}
+            placeholder="Ej: Proteina Vegana NaturalFit"
+            className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-green-500"
+          />
+        </div>
+
+        {/* Manual script textarea */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground/80">
+            Guion / Instrucciones <span className="text-green-400">*</span>
+          </label>
+          <textarea
+            value={manualScript || ''}
+            onChange={e => onManualScriptChange?.(e.target.value)}
+            placeholder="Pega aqui el guion completo, instrucciones detalladas o brief que el cliente te envio..."
+            rows={12}
+            className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-green-500 resize-none font-mono"
+          />
+          <div className="flex justify-between text-xs text-gray-500">
+            <span className="flex items-center gap-1">
+              <Info className="h-3 w-3" />
+              Incluye toda la informacion que el creador necesita
+            </span>
+            <span>{(manualScript || '').length.toLocaleString()} caracteres</span>
+          </div>
+        </div>
+
+        {/* Optional deadline */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground/80">
+            Fecha limite <span className="text-gray-500">(opcional)</span>
+          </label>
+          <input
+            type="date"
+            value={data.deadline || ''}
+            onChange={e => onChange('deadline', e.target.value)}
+            className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm focus:outline-none focus:border-green-500"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Standard mode - full form
   return (
     <div className="space-y-6">
       {/* Product name */}

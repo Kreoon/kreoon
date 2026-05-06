@@ -3,6 +3,7 @@ import type {
   UnifiedPermissions,
   UnifiedSectionKey,
   ProjectTypeConfig,
+  CreationMode,
 } from '@/types/unifiedProject.types';
 import type { UseProjectAssignmentsReturn } from '@/hooks/useProjectAssignments';
 
@@ -51,6 +52,8 @@ export interface UnifiedTabProps {
   selectedProduct?: any;
   /** Callback to change the selected product */
   onProductChange?: (productId: string) => void;
+  /** Creation mode: 'standard' (DNA questionnaire) or 'manual' (direct script input) */
+  creationMode?: CreationMode;
 }
 
 // ============================================================

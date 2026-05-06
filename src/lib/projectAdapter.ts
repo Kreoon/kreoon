@@ -1,5 +1,5 @@
 import type { Content } from '@/types/database';
-import type { UnifiedProject, ProjectType, ProjectAssignment } from '@/types/unifiedProject.types';
+import type { UnifiedProject, ProjectType, ProjectAssignment, CreationMode } from '@/types/unifiedProject.types';
 
 /**
  * ProjectAdapter - translates between content/marketplace data sources
@@ -42,6 +42,8 @@ export class ProjectAdapter {
       creatorPayment: content.creator_payment,
       editorPayment: content.editor_payment,
       currency: 'COP',
+
+      creationMode: ((content as any).creation_mode as CreationMode) || 'standard',
 
       contentData: content,
       assignments,
@@ -90,6 +92,8 @@ export class ProjectAdapter {
       lastMessageAt: project.last_message_at || undefined,
       unreadMessages: project.unread_brand_messages || project.unread_creator_messages || 0,
 
+      creationMode: (project.creation_mode as CreationMode) || 'standard',
+
       marketplaceData: project,
       assignments,
     };
@@ -123,7 +127,7 @@ export class ProjectAdapter {
         'drive_url', 'notes', 'campaign_week', 'sphere_phase', 'is_published',
         'creator_paid', 'editor_paid', 'invoiced', 'product_id',
         'editor_guidelines', 'strategist_guidelines', 'trafficker_guidelines',
-        'designer_guidelines', 'admin_guidelines',
+        'designer_guidelines', 'admin_guidelines', 'creation_mode', 'manual_script',
       ];
       for (const field of passthroughFields) {
         if (field in formData && formData[field] !== undefined) {
@@ -151,6 +155,7 @@ export class ProjectAdapter {
       editor_payout: project.editorPayment,
       platform_fee: project.platformFee ?? 0,
       project_type: project.projectType,
+      creation_mode: project.creationMode || 'standard',
     };
   }
 }

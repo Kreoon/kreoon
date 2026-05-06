@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { X, Plus, Video, Upload, Loader2, Trash2, Link as LinkIcon } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { ProjectDNASection } from '../components/ProjectDNASection';
+import { ManualScriptInput } from '../components/ManualScriptInput';
 import { AutoPauseVideo } from '@/components/content/AutoPauseVideo';
 import { supabase, SUPABASE_FUNCTIONS_URL } from '@/integrations/supabase/client';
 import { markLocalUpdate } from '@/hooks/useContent';
@@ -66,10 +67,12 @@ function isBunnyOrDirectVideo(url: string): boolean {
   );
 }
 
-export default function BriefTab({ project, formData, setFormData, editMode, permissions, typeConfig, readOnly }: UnifiedTabProps) {
+export default function BriefTab({ project, formData, setFormData, editMode, permissions, typeConfig, readOnly, creationMode }: UnifiedTabProps) {
   const brief = formData.brief || {};
   const isEditing = editMode && !readOnly;
   const canEdit = permissions.can('project.brief', 'edit') && !readOnly;
+  const effectiveCreationMode = creationMode || formData.creation_mode || 'standard';
+  const isManualMode = effectiveCreationMode === 'manual';
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -170,15 +173,23 @@ export default function BriefTab({ project, formData, setFormData, editMode, per
         />
       )}
 
-      {/* Project DNA section */}
+      {/* Project DNA section (standard mode) or Manual Script Input (manual mode) */}
       {typeConfig.sections.brief.hasProjectDNA && (
-        <ProjectDNASection
-          projectType={typeConfig.type}
-          projectId={project?.id}
-          dnaData={brief.dna || { responses: {}, audio_url: null, audio_duration: null }}
-          onUpdate={updateDNA}
-          editing={isEditing}
-        />
+        isManualMode ? (
+          <ManualScriptInput
+            value={formData.manual_script || formData.script || ''}
+            onChange={(value) => setFormData((prev: Record<string, any>) => ({ ...prev, manual_script: value, script: value }))}
+            editing={isEditing}
+          />
+        ) : (
+          <ProjectDNASection
+            projectType={typeConfig.type}
+            projectId={project?.id}
+            dnaData={brief.dna || { responses: {}, audio_url: null, audio_duration: null }}
+            onUpdate={updateDNA}
+            editing={isEditing}
+          />
+        )
       )}
 
       {/* ============ VIDEO DE REFERENCIA ============ */}

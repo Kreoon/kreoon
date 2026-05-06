@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { X, ChevronLeft, ChevronRight, FileText, Package, ClipboardList, CreditCard } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, FileText, Package, ClipboardList, CreditCard, Dna, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useCreatorPublicProfile } from '@/hooks/useCreatorPublicProfile';
@@ -9,6 +9,7 @@ import { HiringStepSummary } from './HiringStepSummary';
 import { HiringStepPayment } from './HiringStepPayment';
 import { HiringSuccess } from './HiringSuccess';
 import type { HiringBrief, ProjectPaymentMethod, CreatorFullProfile, CreatorPackage, CreatorStats } from '../types/marketplace';
+import type { CreationMode } from '@/types/unifiedProject.types';
 
 interface HiringWizardProps {
   creatorId: string;
@@ -118,8 +119,10 @@ export default function HiringWizard({ creatorId, onClose }: HiringWizardProps) 
 
   const draft = useMemo(() => loadDraft(creatorId), [creatorId]);
 
+  const [creationMode, setCreationMode] = useState<CreationMode | null>(null);
   const [currentStep, setCurrentStep] = useState(draft?.step ?? 0);
   const [brief, setBrief] = useState<HiringBrief>(draft?.brief ?? DEFAULT_BRIEF);
+  const [manualScript, setManualScript] = useState('');
   const [selectedPackageId, setSelectedPackageId] = useState(
     draft?.packageId ?? creator?.packages.find(p => p.is_popular)?.id ?? creator?.packages[0]?.id ?? '',
   );
@@ -157,11 +160,92 @@ export default function HiringWizard({ creatorId, onClose }: HiringWizardProps) 
     );
   }
 
+  // Show creation mode selector first
+  if (creationMode === null) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-background overflow-y-auto">
+        <div className="max-w-2xl mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-xl font-bold text-white">Contratar a {creator.display_name}</h1>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+            >
+              <X className="h-5 w-5 text-gray-400" />
+            </button>
+          </div>
+
+          <div className="text-center space-y-2 mb-8">
+            <h2 className="text-lg font-semibold text-white">Como deseas crear este proyecto?</h2>
+            <p className="text-sm text-gray-400">Elige la forma de enviar el brief al creador</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Standard Mode */}
+            <button
+              onClick={() => setCreationMode('standard')}
+              className={cn(
+                'group relative p-6 rounded-lg border-2 border-transparent',
+                'bg-purple-500/10',
+                'hover:border-purple-500 hover:bg-purple-500/20',
+                'transition-all duration-200 text-left'
+              )}
+            >
+              <div className="flex flex-col gap-4">
+                <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
+                  <Dna className="h-6 w-6 text-purple-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white mb-1 flex items-center gap-2">
+                    Brief Completo
+                    <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                  </h3>
+                  <p className="text-sm text-gray-400">
+                    Completa el formulario con toda la informacion del producto, objetivo, audiencia y referencias.
+                  </p>
+                </div>
+              </div>
+            </button>
+
+            {/* Manual Mode */}
+            <button
+              onClick={() => setCreationMode('manual')}
+              className={cn(
+                'group relative p-6 rounded-lg border-2 border-transparent',
+                'bg-green-500/10',
+                'hover:border-green-500 hover:bg-green-500/20',
+                'transition-all duration-200 text-left'
+              )}
+            >
+              <div className="flex flex-col gap-4">
+                <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
+                  <FileText className="h-6 w-6 text-green-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white mb-1 flex items-center gap-2">
+                    Guion Directo
+                    <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                  </h3>
+                  <p className="text-sm text-gray-400">
+                    Ya tienes el guion listo. Pega directamente las instrucciones para el creador.
+                  </p>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const selectedPackage = creator.packages.find(p => p.id === selectedPackageId);
 
   const isStepValid = (step: number): boolean => {
     switch (step) {
       case 0:
+        if (creationMode === 'manual') {
+          return manualScript.trim().length > 10;
+        }
         return !!(brief.product_name.trim() && brief.objective);
       case 1:
         return !!selectedPackageId;
@@ -254,7 +338,13 @@ export default function HiringWizard({ creatorId, onClose }: HiringWizardProps) 
       {/* Step content */}
       <div className="max-w-2xl mx-auto px-4 py-6 pb-32">
         {currentStep === 0 && (
-          <HiringStepBrief data={brief} onChange={updateBriefField} />
+          <HiringStepBrief
+            data={brief}
+            onChange={updateBriefField}
+            creationMode={creationMode}
+            manualScript={manualScript}
+            onManualScriptChange={setManualScript}
+          />
         )}
         {currentStep === 1 && (
           <HiringStepPackage

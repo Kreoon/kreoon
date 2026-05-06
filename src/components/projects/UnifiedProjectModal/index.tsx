@@ -15,8 +15,9 @@ import { useUnifiedProject } from './hooks/useUnifiedProject';
 import { SECTION_TAB_CONFIG } from '@/types/unifiedProject.types';
 import { getWorkflowForType } from '@/types/workflows';
 import { WorkflowProgressBar } from './WorkflowProgressBar';
+import { CreationModeSelector } from './components/CreationModeSelector';
 import type { UnifiedProjectModalProps } from './types';
-import type { UnifiedSectionKey } from '@/types/unifiedProject.types';
+import type { UnifiedSectionKey, CreationMode } from '@/types/unifiedProject.types';
 
 // Sphere phase configuration for content projects
 const SPHERE_PHASES_CONFIG = [
@@ -76,6 +77,7 @@ export function UnifiedProjectModal({
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
+  const [creationMode, setCreationMode] = useState<CreationMode | null>(null);
 
   const {
     project,
@@ -102,6 +104,17 @@ export function UnifiedProjectModal({
     onUpdate,
     createProjectType,
   });
+
+  // Handle creation mode selection for projects with DNA
+  const handleCreationModeSelect = (mode: CreationMode) => {
+    setCreationMode(mode);
+    setFormData((prev: Record<string, any>) => ({ ...prev, creation_mode: mode }));
+  };
+
+  // Show creation mode selector for new projects with DNA questionnaire
+  const showCreationModeSelector = isCreateMode &&
+    typeConfig.sections.brief.hasProjectDNA &&
+    creationMode === null;
 
   // Determine visible sections based on permissions + type config
   const displaySections = useMemo(() => {
@@ -135,6 +148,20 @@ export function UnifiedProjectModal({
 
   if (!isCreateMode && !project && !loading) return null;
 
+  // Show creation mode selector dialog for new projects with DNA
+  if (showCreationModeSelector) {
+    return (
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="max-w-2xl">
+          <CreationModeSelector
+            onSelectMode={handleCreationModeSelect}
+            onCancel={() => onOpenChange(false)}
+          />
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   const tabProps = {
     project: project || ({} as any),
     formData,
@@ -147,6 +174,7 @@ export function UnifiedProjectModal({
     assignmentsHook,
     selectedProduct,
     onProductChange: handleProductChange,
+    creationMode: creationMode || (formData.creation_mode as CreationMode) || 'standard',
   };
 
   // Status options from workflow config
