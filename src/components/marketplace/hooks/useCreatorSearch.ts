@@ -7,6 +7,19 @@ import { supabase } from '@/integrations/supabase/client';
 
 // Helper: mapear resultado de búsqueda a MarketplaceCreator
 function mapSearchResultToCreator(row: Record<string, unknown>): MarketplaceCreator {
+  // portfolio_thumbnail: viene del RPC (mejor imagen del portafolio via subquery)
+  // featured_media_url: viene del query @username (imagen seleccionada por el creador)
+  const bestImage = (row.portfolio_thumbnail as string | null)
+    || (row.featured_media_url as string | null)
+    || null;
+
+  // trust_score viene como 0-100 en búsqueda @username; quality_score como 0-1 en el RPC
+  const trustScore = row.trust_score != null && Number(row.trust_score) > 1
+    ? Number(row.trust_score)
+    : row.quality_score != null
+      ? Math.round(Number(row.quality_score) * 100)
+      : 50;
+
   return {
     id: row.id as string,
     user_id: row.user_id as string,
@@ -25,6 +38,9 @@ function mapSearchResultToCreator(row: Record<string, unknown>): MarketplaceCrea
     rating_count: Number(row.rating_count) || 0,
     base_price: row.base_price != null ? Number(row.base_price) : null,
     currency: (row.currency as string) || 'USD',
+    // Imagen para mostrar en la tarjeta (portfolio thumb o featured_media del creador)
+    featured_media_url: bestImage,
+    featured_media_type: bestImage ? 'image' : null,
     portfolio_media: [],
     is_available: true,
     languages: (row.languages as string[]) || ['es'],
@@ -32,7 +48,11 @@ function mapSearchResultToCreator(row: Record<string, unknown>): MarketplaceCrea
     joined_at: (row.created_at as string) || '',
     accepts_product_exchange: (row.accepts_exchange as boolean) || (row.accepts_product_exchange as boolean) || false,
     marketplace_roles: (row.marketplace_roles as string[]) || [],
-    trust_score: Number(row.quality_score || row.trust_score) * 100 || 50,
+    // organization_name y organization_logo vienen del RPC via JOIN con organizations
+    organization_id: (row.organization_id as string) || undefined,
+    organization_name: (row.organization_name as string) || undefined,
+    organization_logo: (row.organization_logo as string) || undefined,
+    trust_score: trustScore,
     trust_score_breakdown: null,
     is_new_profile: false,
   };
@@ -84,7 +104,7 @@ export function useCreatorSearch(filters: MarketplaceFilters) {
             rating_count, completed_projects, base_price, currency,
             accepts_product_exchange, is_verified, marketplace_roles,
             categories, content_types, languages, level, trust_score,
-            quality_score, created_at
+            quality_score, created_at, featured_media_url, featured_media_type
           `)
           .eq('is_active', true)
           .or(`slug.ilike.%${usernameSearch}%,username.ilike.%${usernameSearch}%,display_name.ilike.%${usernameSearch}%`)
@@ -132,11 +152,18 @@ export function useCreatorSearch(filters: MarketplaceFilters) {
     placeholderData: (prev) => prev,
   });
 
-  // Aplicar filtros client-side adicionales a los resultados de búsqueda
+  // Enriquecer resultados de búsqueda con datos completos de allCreators
+  // El RPC determina QUÉ coincide, allCreators provee los datos completos (portafolio, org, trust score real)
   const filteredSearchResults = useMemo(() => {
     if (!hasActiveSearch || !searchQuery.data) return [];
 
-    let result = [...searchQuery.data];
+    // Mapa O(1) de id → creator enriquecido (portafolio completo, org, trust_score real)
+    const enrichedMap = new Map(allCreators.map(c => [c.id, c]));
+
+    // Reemplazar datos del RPC con datos enriquecidos cuando estén disponibles
+    let result = searchQuery.data.map(searchCreator =>
+      enrichedMap.get(searchCreator.id) ?? searchCreator
+    );
 
     // Level (no está en RPC)
     if (filters.level.length > 0) {
@@ -168,7 +195,7 @@ export function useCreatorSearch(filters: MarketplaceFilters) {
     }
 
     return result;
-  }, [searchQuery.data, filters, hasActiveSearch]);
+  }, [searchQuery.data, allCreators, filters, hasActiveSearch]);
 
   // Elegir fuente de datos: búsqueda optimizada o client-side tradicional
   const baseCreators = hasActiveSearch ? filteredSearchResults : filteredCreators;

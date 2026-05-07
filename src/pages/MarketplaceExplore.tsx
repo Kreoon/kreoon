@@ -666,6 +666,9 @@ export default function MarketplaceExplore() {
   // Mostrar carruseles solo cuando no hay búsqueda ni filtros activos
   const showCarousels = !filters.search && !filters.category && activeFilterCount === 0;
 
+  // Durante búsqueda activa, ocultar sidebar para dar el mismo ancho al grid que en la página principal
+  const hasActiveSearch = filters.search.length >= 2;
+
   // UI state
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
@@ -811,8 +814,8 @@ export default function MarketplaceExplore() {
 
       {/* ── Cuerpo principal: sidebar + grid ──────────────────────────────── */}
       <div className="flex gap-6 px-4 md:px-6 py-6">
-        {/* Sidebar (lg+) - Solo para usuarios autenticados */}
-        {user && (
+        {/* Sidebar (lg+) - Solo para usuarios autenticados y sin búsqueda activa */}
+        {user && !hasActiveSearch && (
           <FilterSidebar
             filters={filters}
             onApply={handleApplyFilters}

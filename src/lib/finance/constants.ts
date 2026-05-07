@@ -72,6 +72,10 @@ export const AI_TOKEN_COSTS = {
   "board.analyze_card": 80,
   "talent.match": 60,
   "scripts.block.script": 25,
+  "scripts.block.director": 20,
+  "scripts.block.marketing": 25,
+  "scripts.block.captions": 15,
+  // Legacy blocks (deprecated)
   "scripts.block.editor": 20,
   "scripts.block.trafficker": 20,
   "scripts.block.strategist": 20,
